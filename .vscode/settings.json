@@ -1,0 +1,15 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always"
+        }
+    },
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/scriptable",
+        "${workspaceFolder}/ecosystem"
+    ],
+    "python.analysis.diagnosticMode": "workspace",
+    "python.languageServer": "Pylance"
+}

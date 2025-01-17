@@ -1,0 +1,27 @@
+[flake8]
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    .eggs,
+    *.egg,
+    .mypy_cache,
+    .tox,
+    .pytest_cache,
+    .vscode,
+    .github,
+    **/*.pyi
+max-line-length = 100
+extend-ignore =
+    E266,
+    E501,
+    W503,
+    F401,
+    F841,
+    E704,
+    E203
+max-complexity = 18
+select = B,C,E,F,W,T4,B9

@@ -1,0 +1,11 @@
+rich
+aiofile
+pydantic
+aiohttp
+requests
+
+# verse
+# lmdb
+# solana
+# solders
+# base58

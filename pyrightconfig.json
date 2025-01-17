@@ -1,0 +1,24 @@
+{
+  "include": [
+    "scriptable",
+    "ecosystem"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.venv",
+    "**/scripts"
+  ],
+  "ignore": [
+    
+  ],
+  "extraPaths": [
+    "./scriptable",
+    "./ecosystem"
+  ],
+  "pythonVersion": "3.12",
+  "pythonPlatform": "All",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportGeneralTypeIssues": "warning"
+}

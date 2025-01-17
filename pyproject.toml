@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scriptable"
+version = "0.1.0"
+description = "scriptable"
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+package-dir = {"scriptable" = "scriptable", "ecosystem" = "ecosystem"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scriptable*", "ecosystem*"]
+
+[tool.setuptools.package-data]
+"scriptable" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
+"ecosystem" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 100
+known_first_party = ["scriptable", "ecosystem"]
+
+[tool.autoflake]
+check = false
+recursive = true
+remove_all_unused_imports = true
+ignore_init_module_imports = true
+remove_unused_variables = true
+ignore_pass_statements = false
+ignore_pass_after_docstring = true
+in_place = true
