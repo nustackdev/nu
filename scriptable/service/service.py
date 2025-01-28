@@ -8,7 +8,7 @@ from .handlers.initializer.initializer_async import ServiceInitializer as Servic
 # from .handlers.initializer.initializer_sync import ServiceInitializer as ServiceSyncInitializer
 
 
-class AsyncService(ServiceAsyncInitializer, ServiceAsyncComposer, metaclass=ServiceMeta):
+class AsyncService(ServiceAsyncComposer, ServiceAsyncInitializer, metaclass=ServiceMeta):
     pass
 
 

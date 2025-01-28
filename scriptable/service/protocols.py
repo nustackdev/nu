@@ -72,7 +72,7 @@ class ServiceInitializerSyncProtocol(ABC):
         Shutdown service and cleanup dependencies synchronously.
         """
 
-    def __aenter__(self) -> Self:
+    def __enter__(self) -> Self:
         """
         Enter context, initializing service.
 
@@ -81,7 +81,7 @@ class ServiceInitializerSyncProtocol(ABC):
         """
         raise NotImplementedError
 
-    def __aexit__(self, *exc_info: Any) -> None:
+    def __exit__(self, *exc_info: Any) -> None:
         """Exit context, shutting down service."""
 
     def setup(self) -> None:

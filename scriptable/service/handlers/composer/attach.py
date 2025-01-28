@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Type, TypeVar
+from typing import Any, Type, TypeVar
 
+from scriptable.service.base import ServiceBase, ServiceType, Spec
 from scriptable.utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
-if TYPE_CHECKING:
-    from scriptable.service.base import ServiceType, Spec
-
-
-S = TypeVar("S", bound="ServiceType")
+S = TypeVar("S", bound=ServiceType)
 T = TypeVar("T")
 
 
@@ -20,7 +17,7 @@ class AttachDescriptor(BaseDescriptor[S]):
         default_factory: Type[S] | None = None,
         /,
         *,
-        spec: "Spec | None" = None,
+        spec: Spec | None = None,
         spec_key: str | None = None,
         allow_override: bool = True,
     ) -> None:
@@ -36,14 +33,14 @@ class AttachDescriptor(BaseDescriptor[S]):
 
     def _validate_type(self, value: Any) -> bool:
         """Validate that value is a subclass of BaseService."""
-        return isinstance(value, "ServiceType")
+        return isinstance(value, (ServiceBase,))
 
     def _get_default(self) -> None:
         """Default value is None until initialized."""
         return None
 
 
-def Attach(type: type[T], spec: "Spec | None" = None) -> T:
+def Attach(type: type[T], spec: Spec | None = None) -> T:
     """Create a memory specification."""
     return AttachDescriptor[T](spec=spec)  # type: ignore
 

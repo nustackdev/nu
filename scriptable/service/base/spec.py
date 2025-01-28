@@ -52,10 +52,10 @@ class Spec(BaseModel):
     """
 
     class Config:
-        orm_mode = True
-        validate_assignment = True
-        extra = "allow"
         arbitrary_types_allowed = True
+        extra = "allow"
+        from_attributes = True
+        frozen = True
 
     name: str = Field(default="")
     factory: type | None = Field(default=None)
