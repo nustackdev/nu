@@ -6,8 +6,7 @@ from .context import ServiceContext
 from .types import ServiceRole
 
 if TYPE_CHECKING:
-    from ..base import BaseService
-    from ..types import ServiceKey
+    from scriptable.service.base import ServiceKey, ServiceType
 
 
 class DependencyNode:
@@ -30,7 +29,7 @@ class DependencyNode:
     - initiators tracks historical relationship creation for cleanup
     """
 
-    def __init__(self, service: "BaseService", is_dependency: bool) -> None:
+    def __init__(self, service: "ServiceType", is_dependency: bool) -> None:
         # The service this node represents
         self.service = service
 
@@ -38,10 +37,10 @@ class DependencyNode:
         self.context = ServiceContext(ServiceRole.DEPENDENCY if is_dependency else ServiceRole.ROOT)
 
         # Map of dependency name to service instance
-        self.dependencies: dict[str, "BaseService"] = {}
+        self.dependencies: dict[str, "ServiceType"] = {}
 
         # Set of services that depend on this one
-        self.dependents: set["BaseService"] = set()
+        self.dependents: set["ServiceType"] = set()
 
         # Track which services initiated relationships (for cleanup)
         self.initiators: set["ServiceKey"] = set()
@@ -62,7 +61,7 @@ class DependencyNode:
         """
         self.context.remove_role(ServiceRole.ROOT)
 
-    def add_dependent(self, dependent: "BaseService") -> None:
+    def add_dependent(self, dependent: "ServiceType") -> None:
         """
         Add a dependent service and update context.
 
@@ -76,7 +75,7 @@ class DependencyNode:
         self.initiators.add(dependent.key)
         self.context.add_role(ServiceRole.DEPENDENCY)
 
-    def remove_dependent(self, dependent: "BaseService") -> None:
+    def remove_dependent(self, dependent: "ServiceType") -> None:
         """
         Remove a dependent service and update context.
 
@@ -90,7 +89,7 @@ class DependencyNode:
         self.initiators.discard(dependent.key)
         self.context.remove_role(ServiceRole.DEPENDENCY)
 
-    def add_dependency(self, name: str, dependency: "BaseService") -> None:
+    def add_dependency(self, name: str, dependency: "ServiceType") -> None:
         """
         Record a named dependency relationship.
 
@@ -100,7 +99,7 @@ class DependencyNode:
         """
         self.dependencies[name] = dependency
 
-    def get_dependency(self, name: str) -> "BaseService | None":
+    def get_dependency(self, name: str) -> "ServiceType | None":
         """
         Get named dependency if it exists.
 
@@ -112,7 +111,7 @@ class DependencyNode:
         """
         return self.dependencies.get(name)
 
-    def remove_dependency(self, name: str) -> "BaseService | None":
+    def remove_dependency(self, name: str) -> "ServiceType | None":
         """
         Remove and return named dependency if it exists.
 

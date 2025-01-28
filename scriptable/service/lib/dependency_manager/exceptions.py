@@ -1,4 +1,4 @@
-from ..exceptions import ServiceError
+from scriptable.service.exceptions import ServiceError
 
 
 class DependencyError(ServiceError):

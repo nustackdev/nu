@@ -4,11 +4,12 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, TypeAlias, TypeVar
 
 if TYPE_CHECKING:
-    from ..base import BaseService
+    from scriptable.service.base import ServiceType
 
-ServiceT = TypeVar("ServiceT", bound="BaseService")
-DependencyMap: TypeAlias = dict[str, "BaseService"]
-DependentSet: TypeAlias = set["BaseService"]
+
+ServiceT = TypeVar("ServiceT", bound="ServiceType")
+DependencyMap: TypeAlias = dict[str, "ServiceType"]
+DependentSet: TypeAlias = set["ServiceType"]
 
 
 class ServiceRole(Enum):

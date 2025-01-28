@@ -3,14 +3,13 @@ from __future__ import annotations
 from threading import Lock
 from typing import TYPE_CHECKING
 
-from ..types import ServiceKey
+from scriptable.service.base.state import ServiceState
+
 from .exceptions import RegistryError, RegistryKeyError, RegistryStateError
 from .logger import logger
-from .types import ServiceState
 
 if TYPE_CHECKING:
-    from ..base import BaseService
-    from ..spec import Spec
+    from scriptable.service.base import ServiceKey, ServiceType, Spec
 
 
 class ServiceRegistry:
@@ -27,15 +26,15 @@ class ServiceRegistry:
     """
 
     def __init__(self) -> None:
-        self._instances: dict[ServiceKey, "BaseService"] = {}
-        self._states: dict[ServiceKey, ServiceState] = {}
+        self._instances: dict["ServiceKey", "ServiceType"] = {}
+        self._states: dict["ServiceKey", ServiceState] = {}
         self._lock = Lock()
         logger.debug("Initialized service registry")
 
     def get_service(
         self,
         spec: "Spec",
-    ) -> "BaseService | None":
+    ) -> "ServiceType | None":
         """
         Retrieve existing service instance for given factory and spec.
         This is the primary deduplication mechanism - same factory+spec
@@ -60,7 +59,7 @@ class ServiceRegistry:
 
     def add_service(
         self,
-        service: "BaseService",
+        service: "ServiceType",
     ) -> None:
         """
         Register new service instance. Should validate the service
@@ -84,7 +83,7 @@ class ServiceRegistry:
 
     def remove_service(
         self,
-        service: "BaseService",
+        service: "ServiceType",
     ) -> None:
         """
         Remove service registration. Should verify the service is in a valid
@@ -115,7 +114,7 @@ class ServiceRegistry:
 
     def get_service_state(
         self,
-        service: "BaseService",
+        service: "ServiceType",
     ) -> ServiceState:
         """
         Get current lifecycle state of service.
@@ -138,7 +137,7 @@ class ServiceRegistry:
 
     def set_service_state(
         self,
-        service: "BaseService",
+        service: "ServiceType",
         state: ServiceState,
     ) -> None:
         """

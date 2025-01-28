@@ -25,17 +25,18 @@ from abc import ABCMeta
 from threading import Lock
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, TypeVar, cast
 
-from .dependency import DependencyManager
+from scriptable.service.lib.dependency_manager import DependencyManager
+from scriptable.service.lib.service_registry import ServiceRegistry
+
 from .exceptions import CreationError, ServiceError
 from .logger import logger
-from .registry import ServiceRegistry
 from .spec import Spec
 
 if TYPE_CHECKING:
-    from .base import BaseService
+    from .types import ServiceType
 
 # Type variables for generic service and feature types
-ServiceT = TypeVar("ServiceT", bound="BaseService")
+ServiceT = TypeVar("ServiceT", bound="ServiceType")
 FeatureT = TypeVar("FeatureT")
 
 
@@ -169,7 +170,7 @@ class ServiceMeta(ABCMeta, Generic[ServiceT]):
             service = MyService(spec, __is_dependency__=True)
         """
         try:
-            with cls._creation_lock:
+            with cls._creation_lock:  # type: ignore
                 # Use empty spec if none provided
                 if spec is None:
                     spec = Spec(factory=cls)
@@ -227,3 +228,8 @@ class ServiceMeta(ABCMeta, Generic[ServiceT]):
             Shared dependency manager
         """
         return cls._dep_manager
+
+
+__all__ = [
+    "ServiceMeta",
+]
