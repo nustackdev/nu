@@ -1,8 +1,8 @@
 """
-Service base class providing dependency injection, lifecycle management,
+app base class providing dependency injection, lifecycle management,
 and component-based architecture.
 
-This module implements the core service functionality with:
+This module implements the core app functionality with:
 - Dependency injection and lifecycle (from Memory)
 - Component-based composition
 - State and operation platforms
@@ -13,19 +13,21 @@ from __future__ import annotations
 
 from typing import AsyncIterator
 
-from ..exceptions import StateError
-from ..types import StateAsyncCallbackFn, StateKey, StateValue
+from scriptable.app.base import AppAsyncBase
+
+from .exceptions import StateError
 from .protocols import (
-    StateProtocol,
-    SubscriptionProtocol,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
+    StateAsyncProtocol,
+    SubscriptionAsyncProtocol,
+    TransactionAsyncProtocol,
+    TransactionContextManagerAsyncProtocol,
 )
+from .types import StateAsyncCallbackFn, StateKey, StateValue
 
 
-class ServiceStateFeatureMixin:
+class AppState(AppAsyncBase):
     """
-    Service feature implementing state management.
+    app feature implementing state management.
 
     Features:
     - State adapter handling
@@ -34,8 +36,8 @@ class ServiceStateFeatureMixin:
     - State transaction management
 
     Example:
-        class DataService(
-            Service(
+        class Dataapp(
+            app(
                 as_state(RedisStorage),
                 as_platform(AsyncPlatform)
             )
@@ -49,21 +51,21 @@ class ServiceStateFeatureMixin:
     """
 
     @property
-    def state(self) -> StateProtocol:
-        """Check if service is stateful."""
+    def state(self) -> StateAsyncProtocol:
+        """Check and return app's state service."""
         if not hasattr(self, "_state_"):
             raise StateError("No state adapter configured")
         return getattr(self, "_state_")
 
     @property
-    def s(self) -> StateProtocol:
+    def s(self) -> StateAsyncProtocol:
         """Short alias for state adapter."""
         return self.state
 
     @property
     def state_key(self) -> StateKey:
-        """Base state key for this service instance."""
-        return (f"__service__{self.key}",)
+        """Base state key for this app instance."""
+        return (f"__app__{self.key}",)
 
     async def get(self, key: StateKey) -> StateValue:
         """Get state value at key."""
@@ -89,12 +91,12 @@ class ServiceStateFeatureMixin:
         """List all state keys under prefix."""
         key = self.state_key + prefix
         async for full_key in await self.s.list_keys(key):
-            # Strip service prefix from returned keys
+            # Strip app prefix from returned keys
             yield full_key[len(self.state_key) :]
 
     async def subscribe(
         self, key: StateKey, callback: StateAsyncCallbackFn
-    ) -> SubscriptionProtocol:
+    ) -> SubscriptionAsyncProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -111,7 +113,7 @@ class ServiceStateFeatureMixin:
         key = self.state_key + key
         return await self.s.subscribe(key, callback)
 
-    async def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
+    async def unsubscribe(self, subscription: SubscriptionAsyncProtocol) -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -123,7 +125,7 @@ class ServiceStateFeatureMixin:
         """
         await self.s.unsubscribe(subscription)
 
-    async def begin_transaction(self) -> TransactionProtocol:
+    async def begin_transaction(self) -> TransactionAsyncProtocol:
         """
         Begin transaction.
 
@@ -135,7 +137,7 @@ class ServiceStateFeatureMixin:
         """
         return await self.s.begin_transaction()
 
-    async def transaction(self) -> TransactionContextManagerProtocol:
+    async def transaction(self) -> TransactionContextManagerAsyncProtocol:
         """
         Get transaction context manager.
 

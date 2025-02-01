@@ -6,7 +6,7 @@ from .base_operation import Operation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from sonny import AsyncService
+    from scriptable.app.base import AppAsyncBase
 
 
 class ParallelOperation(Operation):
@@ -20,7 +20,7 @@ class ParallelOperation(Operation):
 
     Example:
         ```python
-        class ProcessMultipleItems(Service):
+        class ProcessMultipleItems(App):
             async def process_item_1(self):
                 # Process logic here
                 pass
@@ -71,15 +71,11 @@ class ParallelOperation(Operation):
         """Base key for parallel operation state in store"""
         if isinstance(key, str):
             key = (key,)
-        return (
-            (f"__service__parallel__{self._id}",) + key
-            if key
-            else (f"__service__parallel__{self._id}",)
-        )
+        return (f"__app__parallel__{self._id}",) + key if key else (f"__app__parallel__{self._id}",)
 
-    async def _initialize_state(self, service: "AsyncService") -> None:
+    async def _initialize_state(self, app: "AppAsyncBase") -> None:
         """Initialize parallel operation state in store"""
-        await service.state_set(
+        await app.set(
             self._state_key(),
             value={
                 "status": "initialized",
@@ -91,13 +87,13 @@ class ParallelOperation(Operation):
             },
         )
 
-    async def _update_completed(self, service: "AsyncService", completed: int) -> None:
+    async def _update_completed(self, app: "AppAsyncBase", completed: int) -> None:
         """Update count of completed operations in store"""
-        await service.state_set(self._state_key("completed_operations"), value=completed)
-        await service.state_set(self._state_key("status"), value="running")
+        await app.set(self._state_key("completed_operations"), value=completed)
+        await app.set(self._state_key("status"), value="running")
 
     async def _record_error(
-        self, service: "AsyncService", operation_index: int, error: Exception
+        self, app: "AppAsyncBase", operation_index: int, error: Exception
     ) -> None:
         """Record operation error in store"""
         error_data = {
@@ -105,31 +101,29 @@ class ParallelOperation(Operation):
             "error": str(error),
             "error_type": error.__class__.__name__,
         }
-        await service.state_set(
-            self._state_key("errors"), value=lambda errors: [*errors, error_data]
-        )
+        await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
     async def _execute_operation(
-        self, service: "AsyncService", operation: Operation, index: int
+        self, app: "AppAsyncBase", operation: Operation, index: int
     ) -> None:
         """Execute a single operation and handle its outcome"""
         try:
-            await operation.execute(service)
+            await operation.execute(app)
         except Exception as e:
             error_msg = f"Operation {index} failed: {str(e)}"
             logger.error(error_msg, exc_info=True)
-            await self._record_error(service, index, e)
+            await self._record_error(app, index, e)
 
             if not self.ignore_errors:
                 raise OperationError(error_msg) from e
 
-    async def execute(self, service: "AsyncService") -> None:
+    async def execute(self, app: "AppAsyncBase") -> None:
         """Execute all operations in parallel within constraints."""
         logger.info(f"Starting parallel execution of {len(self.operations)} operations")
 
         try:
-            await self._initialize_state(service)
-            await service.state_set(self._state_key("start_time"), value="now")
+            await self._initialize_state(app)
+            await app.set(self._state_key("start_time"), value="now")
 
             # Create semaphore if max_concurrent is specified
             semaphore = None
@@ -139,9 +133,9 @@ class ParallelOperation(Operation):
             async def bounded_operation(op: Operation, idx: int) -> None:
                 if semaphore:
                     async with semaphore:
-                        await self._execute_operation(service, op, idx)
+                        await self._execute_operation(app, op, idx)
                 else:
-                    await self._execute_operation(service, op, idx)
+                    await self._execute_operation(app, op, idx)
 
             # Create tasks for all operations
             tasks = [
@@ -155,24 +149,24 @@ class ParallelOperation(Operation):
                     asyncio.gather(*tasks, return_exceptions=self.ignore_errors),
                     timeout=self.timeout,
                 )
-                await service.state_set(self._state_key("status"), value="completed")
+                await app.set(self._state_key("status"), value="completed")
             except asyncio.TimeoutError:
                 error_msg = f"Parallel operation timed out after {self.timeout}s"
                 logger.error(error_msg)
-                await service.state_set(self._state_key("status"), value="timeout")
+                await app.set(self._state_key("status"), value="timeout")
                 raise OperationError(error_msg)
 
-            await service.state_set(self._state_key("end_time"), value="now")
+            await app.set(self._state_key("end_time"), value="now")
             logger.info("Parallel operation completed successfully")
 
         except asyncio.CancelledError:
-            await service.state_set(self._state_key("status"), value="cancelled")
+            await app.set(self._state_key("status"), value="cancelled")
             logger.info("Parallel operation was cancelled")
             raise
 
         except Exception as e:
-            await service.state_set(self._state_key("status"), value="failed")
-            await service.state_set(self._state_key("end_time"), value="now")
+            await app.set(self._state_key("status"), value="failed")
+            await app.set(self._state_key("end_time"), value="now")
             if not isinstance(e, OperationError):
                 logger.error("Parallel operation failed", exc_info=True)
                 raise OperationError(f"Parallel operation failed: {str(e)}") from e

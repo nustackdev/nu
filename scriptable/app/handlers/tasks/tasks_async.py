@@ -4,58 +4,51 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from sonny.service import BaseService
+from scriptable.app.base import AppAsyncBase
+from scriptable.app.lib.operations.ops_async import (
+    FunctionOperation,
+    Operation,
+    ParallelOperation,
+    RepeatOperation,
+    SequenceOperation,
+)
 
-from ..exceptions import ExecutionError
-from .protocols import OperationProtocol
 
-
-class ServiceExecutionFeatureMixin(BaseService):
+class AppTasks(AppAsyncBase):
     """
     Service feature implementing operation capabilities.
     """
 
-    @property
-    def executor(self):
-        """Check if service is stateful."""
-        if not hasattr(self, "_executor_"):
-            raise ExecutionError("No executor configured")
-        return getattr(self, "_executor_")
-
-    @property
-    def e(self):
-        """Short alias for state adapter."""
-        return self.executor
-
     async def execute(
         self,
-        operation: OperationProtocol,
+        operation: Operation,
     ) -> Any:
         """Execute operation."""
-        return await self.e.execute(operation)
 
-    def function(self, func: Callable, *, name: str | None = None) -> OperationProtocol:
+        return await operation.execute(self)
+
+    def function(self, func: Callable, *, name: str | None = None) -> Operation:
         """Create function operation."""
-        return self.e.function(func, name=name)
+        return FunctionOperation(func, name=name)
 
     def sequence(
-        self, *operations: OperationProtocol, delay: float = 0, continue_on_error: bool = False
-    ) -> OperationProtocol:
+        self, *operations: Operation, delay: float = 0, continue_on_error: bool = False
+    ) -> Operation:
         """Create function operation."""
-        return self.e.sequence(*operations, delay=delay, continue_on_error=continue_on_error)
+        return SequenceOperation(*operations, delay=delay, continue_on_error=continue_on_error)
 
     def repeat(
         self,
-        operation: OperationProtocol,
+        operation: Operation,
         times: int | None = None,
         while_key: str | tuple[str, ...] | None = None,
         max_iterations: int | None = None,
         delay: float = 0,
         ignore_errors: bool = False,
-    ) -> OperationProtocol:
+    ) -> Operation:
         """Create repeat operation."""
-        return self.e.repeat(
-            operation,
+        return RepeatOperation(
+            operation=operation,
             times=times,
             while_key=while_key,
             max_iterations=max_iterations,
@@ -65,13 +58,13 @@ class ServiceExecutionFeatureMixin(BaseService):
 
     def parallel(
         self,
-        *operations: OperationProtocol,
+        *operations: Operation,
         max_concurrent: int | None = None,
         timeout: float | None = None,
         ignore_errors: bool = False,
-    ) -> OperationProtocol:
+    ) -> Operation:
         """Create parallel operation."""
-        return self.e.parallel(
+        return ParallelOperation(
             *operations,
             max_concurrent=max_concurrent,
             timeout=timeout,
@@ -111,7 +104,7 @@ class ServiceExecutionFeatureMixin(BaseService):
 #             if self._operation is None:
 #                 self._operation = self.define()
 
-#             if not isinstance(self._operation, OperationProtocol):
+#             if not isinstance(self._operation, OperationAsyncProtocol):
 #                 raise ChainError(
 #                     f"Chain definition must return an Operation, " f"got {type(self._operation)}"
 #                 )

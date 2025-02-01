@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from sonny import Service
+    from scriptable.app.base import AppSyncBase
 
 
 class Operation(ABC):
@@ -44,7 +44,7 @@ class Operation(ABC):
     """
 
     @abstractmethod
-    def execute(self, service: "Service") -> None:
+    def execute(self, app: "AppSyncBase") -> None:
         """Execute the operation.
 
         This method should:

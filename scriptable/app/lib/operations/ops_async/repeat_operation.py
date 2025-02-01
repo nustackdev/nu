@@ -6,7 +6,7 @@ from .base_operation import Operation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from sonny import AsyncService
+    from scriptable.app.base import AppAsyncBase
 
 
 class RepeatOperation(Operation):
@@ -22,7 +22,7 @@ class RepeatOperation(Operation):
 
     Example:
         ```python
-        class ProcessBatch(Service):
+        class ProcessBatch(App):
             async def process_item(self):
                 # Process logic here
                 pass
@@ -82,15 +82,11 @@ class RepeatOperation(Operation):
         """Base key for repeat operation state in store"""
         if isinstance(key, str):
             key = (key,)
-        return (
-            (f"__service__repeat__{self._id}",) + key
-            if key
-            else (f"__service__repeat__{self._id}",)
-        )
+        return (f"__app__repeat__{self._id}",) + key if key else (f"__app__repeat__{self._id}",)
 
-    async def _initialize_state(self, service: "AsyncService") -> None:
+    async def _initialize_state(self, app: "AppAsyncBase") -> None:
         """Initialize repeat operation state in store"""
-        await service.state_set(
+        await app.set(
             self._state_key(),
             value={
                 "status": "initialized",
@@ -103,25 +99,21 @@ class RepeatOperation(Operation):
             },
         )
 
-    async def _update_iteration(self, service: "AsyncService", iteration: int) -> None:
+    async def _update_iteration(self, app: "AppAsyncBase", iteration: int) -> None:
         """Update current iteration count in store"""
-        await service.state_set(self._state_key("current_iteration"), value=iteration)
-        await service.state_set(self._state_key("status"), value="running")
+        await app.set(self._state_key("current_iteration"), value=iteration)
+        await app.set(self._state_key("status"), value="running")
 
-    async def _record_error(
-        self, service: "AsyncService", iteration: int, error: Exception
-    ) -> None:
+    async def _record_error(self, app: "AppAsyncBase", iteration: int, error: Exception) -> None:
         """Record iteration error in store"""
         error_data = {
             "iteration": iteration,
             "error": str(error),
             "error_type": error.__class__.__name__,
         }
-        await service.state_set(
-            self._state_key("errors"), value=lambda errors: [*errors, error_data]
-        )
+        await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
-    async def _should_continue(self, service: "AsyncService", iteration: int) -> bool:
+    async def _should_continue(self, app: "AppAsyncBase", iteration: int) -> bool:
         """Determine if operation should continue based on conditions"""
         if self.times is not None:
             return iteration < self.times
@@ -130,27 +122,27 @@ class RepeatOperation(Operation):
                 logger.warning("Reached maximum iterations limit")
                 return False
             try:
-                return await service.state_get(self.while_key)
+                return await app.get(self.while_key)
             except Exception as e:
                 logger.error(f"Error checking while_key condition: {str(e)}")
                 return False
         return False
 
-    async def execute(self, service: "AsyncService") -> None:
+    async def execute(self, app: "AppAsyncBase") -> None:
         """Execute the operation repeatedly based on specified conditions."""
         logger.info("Starting repeat operation")
 
         try:
-            await self._initialize_state(service)
-            await service.state_set(self._state_key("start_time"), value="now")
+            await self._initialize_state(app)
+            await app.set(self._state_key("start_time"), value="now")
 
             iteration = 0
-            while await self._should_continue(service, iteration):
+            while await self._should_continue(app, iteration):
                 try:
-                    await self._update_iteration(service, iteration)
+                    await self._update_iteration(app, iteration)
                     logger.debug(f"Executing iteration {iteration + 1}")
 
-                    await self.operation.execute(service)
+                    await self.operation.execute(app)
 
                     if self.delay > 0:
                         logger.debug(f"Waiting {self.delay}s before next iteration")
@@ -159,25 +151,25 @@ class RepeatOperation(Operation):
                 except Exception as e:
                     error_msg = f"Iteration {iteration + 1} failed: {str(e)}"
                     logger.error(error_msg, exc_info=True)
-                    await self._record_error(service, iteration, e)
+                    await self._record_error(app, iteration, e)
 
                     if not self.ignore_errors:
                         raise OperationError(error_msg) from e
 
                 iteration += 1
 
-            await service.state_set(self._state_key("status"), value="completed")
-            await service.state_set(self._state_key("end_time"), value="now")
+            await app.set(self._state_key("status"), value="completed")
+            await app.set(self._state_key("end_time"), value="now")
             logger.info(f"Repeat operation completed after {iteration} iterations")
 
         except asyncio.CancelledError:
-            await service.state_set(self._state_key("status"), value="cancelled")
+            await app.set(self._state_key("status"), value="cancelled")
             logger.info("Repeat operation was cancelled")
             raise
 
         except Exception as e:
-            await service.state_set(self._state_key("status"), value="failed")
-            await service.state_set(self._state_key("end_time"), value="now")
+            await app.set(self._state_key("status"), value="failed")
+            await app.set(self._state_key("end_time"), value="now")
             if not isinstance(e, OperationError):
                 logger.error("Repeat operation failed", exc_info=True)
                 raise OperationError(f"Repeat operation failed: {str(e)}") from e
