@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from scriptable.app.protocols import AppAsyncProtocol, AppCommonProtocol, AppSyncProtocol
 
 from .common import AppCommonBase
+
+if TYPE_CHECKING:
+    from scriptable.service import AsyncService, SyncService
 
 
 class AppBase(AppCommonBase, AppCommonProtocol):
@@ -8,11 +13,17 @@ class AppBase(AppCommonBase, AppCommonProtocol):
 
 
 class AppSyncBase(AppBase, AppSyncProtocol):
-    pass
+    def __init__(self):
+        super().__init__()
+
+        self._services: dict[str, "SyncService"] = {}
 
 
 class AppAsyncBase(AppBase, AppAsyncProtocol):
-    pass
+    def __init__(self):
+        super().__init__()
+
+        self._services: dict[str, "AsyncService"] = {}
 
 
 __all__ = [

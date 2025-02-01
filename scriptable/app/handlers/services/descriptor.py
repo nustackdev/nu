@@ -9,7 +9,7 @@ S = TypeVar("S", bound=ServiceType)
 T = TypeVar("T")
 
 
-class AttachDescriptor(BaseDescriptor[S]):
+class ServiceDescriptor(BaseDescriptor[S]):
     """Descriptor for service dependencies with protocol validation."""
 
     def __init__(
@@ -40,11 +40,6 @@ class AttachDescriptor(BaseDescriptor[S]):
         return None
 
 
-def Attach(type: type[T], spec: Spec | None = None) -> T:
+def UseService(type: type[T], spec: Spec | None = None) -> T:
     """Create a service specification."""
-    return AttachDescriptor[T](spec=spec)  # type: ignore
-
-
-def is_attach_descriptor(obj: Any) -> bool:
-    """Check if an object is a service specification."""
-    return isinstance(obj, AttachDescriptor)
+    return ServiceDescriptor[T](spec=spec)  # type: ignore
