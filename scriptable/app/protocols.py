@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import AsyncIterator, Callable, Iterator, Protocol, runtime_checkable
+from typing import Any, AsyncIterator, Callable, Iterator, Protocol, Self, runtime_checkable
 
 from .exceptions import HandlerNotImplemented
 from .handlers.state.protocols import (
@@ -22,6 +22,116 @@ class AppCommonBaseProtocol(Protocol):
     """Base protocol for common application functionality."""
 
     pass
+
+
+@runtime_checkable
+class AppInitializerSyncProtocol(Protocol):
+    """
+    Synchronous app initializer protocol.
+
+    This protocol defines the interface for app initialization.
+    """
+
+    def initialize(self) -> None:
+        """
+        Initialize app and its dependencies synchronously.
+        """
+        raise HandlerNotImplemented
+
+    def shutdown(self) -> None:
+        """
+        Shutdown app and cleanup dependencies synchronously.
+        """
+        raise HandlerNotImplemented
+
+    def __enter__(self) -> Self:
+        """
+        Enter context, initializing app.
+
+        Returns:
+            Self for context usage
+        """
+        raise HandlerNotImplemented
+
+    def __exit__(self, *exc_info: Any) -> None:
+        """Exit context, shutting down app."""
+        raise HandlerNotImplemented
+
+
+@runtime_checkable
+class AppInitializerAsyncProtocol(Protocol):
+    """
+    Async app initializer protocol.
+
+    This protocol defines the interface for apps initialization.
+    """
+
+    async def initialize(self) -> None:
+        """
+        Initialize app and its dependencies asynchronously.
+        """
+        raise HandlerNotImplemented
+
+    async def shutdown(self) -> None:
+        """
+        Shutdown app and cleanup dependencies asynchronously.
+        """
+        raise HandlerNotImplemented
+
+    async def __aenter__(self) -> Self:
+        """
+        Enter async context, initializing app.
+
+        Returns:
+            Self for context usage
+        """
+        raise HandlerNotImplemented
+
+    async def __aexit__(self, *exc_info: Any) -> None:
+        """Exit async context, shutting down app."""
+        raise HandlerNotImplemented
+
+
+@runtime_checkable
+class AppServicesAsyncProtocol(Protocol):
+    """
+    Async app services handler protocol.
+
+    This protocol defines the interface for services initialization.
+    """
+
+    async def initialize_services(self) -> None:
+        """
+        Initialize app service dependencies asynchronously.
+        """
+        raise HandlerNotImplemented
+
+    async def shutdown_services(self) -> None:
+        """
+        Shutdown app service dependencies asynchronously.
+        """
+        raise HandlerNotImplemented
+
+
+@runtime_checkable
+class AppServicesSyncProtocol(Protocol):
+    """
+    Sync app services handler protocol.
+
+    This protocol defines the interface for services initialization.
+    """
+
+    def initialize_services(self) -> None:
+        """
+        Initialize app service dependencies synchronously.
+        """
+        raise HandlerNotImplemented
+
+    def shutdown_services(self) -> None:
+        """
+        Shutdown app service dependencies synchronously.
+        """
+        raise HandlerNotImplemented
 
 
 @runtime_checkable
@@ -274,6 +384,8 @@ class AppCommonProtocol(
 
 class AppSyncProtocol(
     AppCommonProtocol,
+    AppInitializerSyncProtocol,
+    AppServicesSyncProtocol,
     AppStateSyncProtocol,
     AppTasksSyncProtocol,
     Protocol,
@@ -285,6 +397,8 @@ class AppSyncProtocol(
 
 class AppAsyncProtocol(
     AppCommonProtocol,
+    AppInitializerAsyncProtocol,
+    AppServicesAsyncProtocol,
     AppStateAsyncProtocol,
     AppTasksAsyncProtocol,
     Protocol,

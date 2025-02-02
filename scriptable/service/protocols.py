@@ -69,6 +69,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         """
         Shutdown service and cleanup dependencies synchronously.
         """
+        raise HandlerNotImplemented
 
     def __enter__(self) -> Self:
         """
@@ -81,6 +82,7 @@ class ServiceInitializerSyncProtocol(Protocol):
 
     def __exit__(self, *exc_info: Any) -> None:
         """Exit context, shutting down service."""
+        raise HandlerNotImplemented
 
     def setup(self) -> None:
         """
@@ -164,6 +166,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         """
         Shutdown service and cleanup dependencies asynchronously.
         """
+        raise HandlerNotImplemented
 
     async def __aenter__(self) -> Self:
         """
@@ -176,6 +179,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
 
     async def __aexit__(self, *exc_info: Any) -> None:
         """Exit async context, shutting down service."""
+        raise HandlerNotImplemented
 
     async def setup(self) -> None:
         """
