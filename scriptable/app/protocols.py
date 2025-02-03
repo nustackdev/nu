@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, AsyncIterator, Callable, Iterator, Protocol, Self, runtime_checkable
+from types import TracebackType
+from typing import AsyncIterator, Callable, Iterator, Protocol, Self, runtime_checkable
 
 from .exceptions import HandlerNotImplemented
 from .handlers.state.protocols import (
+    StateAsyncProtocol,
+    StateSyncProtocol,
     SubscriptionAsyncProtocol,
     SubscriptionSyncProtocol,
     TransactionAsyncProtocol,
@@ -53,7 +56,12 @@ class AppInitializerSyncProtocol(Protocol):
         """
         raise HandlerNotImplemented
 
-    def __exit__(self, *exc_info: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context, shutting down app."""
         raise HandlerNotImplemented
 
@@ -87,7 +95,12 @@ class AppInitializerAsyncProtocol(Protocol):
         """
         raise HandlerNotImplemented
 
-    async def __aexit__(self, *exc_info: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit async context, shutting down app."""
         raise HandlerNotImplemented
 
@@ -137,6 +150,16 @@ class AppServicesSyncProtocol(Protocol):
 @runtime_checkable
 class AppStateSyncProtocol(Protocol):
     """Protocol defining synchronous service state management."""
+
+    @property
+    def state(self) -> StateSyncProtocol:
+        """Check and return app's state service."""
+        raise HandlerNotImplemented
+
+    @property
+    def s(self) -> StateSyncProtocol:
+        """Short alias for state adapter."""
+        raise HandlerNotImplemented
 
     @abstractmethod
     def get(self, key: StateKey) -> StateValue:
@@ -271,6 +294,16 @@ class AppStateSyncProtocol(Protocol):
 class AppStateAsyncProtocol(Protocol):
     """Protocol defining asynchronous service state management."""
 
+    @property
+    def state(self) -> StateAsyncProtocol:
+        """Check and return app's state service."""
+        raise HandlerNotImplemented
+
+    @property
+    def s(self) -> StateAsyncProtocol:
+        """Short alias for state adapter."""
+        raise HandlerNotImplemented
+
     @abstractmethod
     async def get(self, key: StateKey) -> StateValue:
         """Get state value at path."""
@@ -373,6 +406,20 @@ class AppTasksAsyncProtocol(Protocol):
         raise HandlerNotImplemented
 
 
+@runtime_checkable
+class AppModelAsyncProtocol(Protocol):
+    def initialize_model(self) -> None:
+        """Initialize model."""
+        raise HandlerNotImplemented
+
+
+@runtime_checkable
+class AppModelSyncProtocol(Protocol):
+    def initialize_model(self) -> None:
+        """Initialize model."""
+        raise HandlerNotImplemented
+
+
 class AppCommonProtocol(
     AppCommonBaseProtocol,
     Protocol,
@@ -388,6 +435,7 @@ class AppSyncProtocol(
     AppServicesSyncProtocol,
     AppStateSyncProtocol,
     AppTasksSyncProtocol,
+    AppModelSyncProtocol,
     Protocol,
 ):
     """Synchronous application protocol."""
@@ -401,6 +449,7 @@ class AppAsyncProtocol(
     AppServicesAsyncProtocol,
     AppStateAsyncProtocol,
     AppTasksAsyncProtocol,
+    AppModelAsyncProtocol,
     Protocol,
 ):
     """Asynchronous application protocol."""

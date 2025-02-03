@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol, Self, final, runtime_checkable
 
 from .exceptions import HandlerNotImplemented
@@ -80,7 +81,12 @@ class ServiceInitializerSyncProtocol(Protocol):
         """
         raise HandlerNotImplemented
 
-    def __exit__(self, *exc_info: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context, shutting down service."""
         raise HandlerNotImplemented
 
@@ -177,7 +183,12 @@ class ServiceInitializerAsyncProtocol(Protocol):
         """
         raise HandlerNotImplemented
 
-    async def __aexit__(self, *exc_info: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit async context, shutting down service."""
         raise HandlerNotImplemented
 

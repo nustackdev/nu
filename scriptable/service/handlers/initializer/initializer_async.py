@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from asyncio import Lock
 from inspect import iscoroutinefunction
-from typing import Any, Self, cast
+from types import TracebackType
+from typing import Self, cast
 
 from scriptable.service.base import ServiceAsyncBase, ServiceState
 from scriptable.service.protocols import ServiceAsyncProtocol, ServiceSyncProtocol
@@ -208,7 +209,12 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceAsyncBase):
         await self.initialize()
         return self
 
-    async def __aexit__(self, *exc_info: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit async context, shutting down service."""
         await self.shutdown()
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from threading import Lock
-from typing import Any, Self
+from types import TracebackType
+from typing import Self
 
 from scriptable.app.base import AppSyncBase
 
@@ -41,6 +42,11 @@ class AppInitializer(AppCommonInitializer, AppSyncBase):
         self.initialize()
         return self
 
-    def __exit__(self, *exc_info: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit async context, shutting down service."""
         self.shutdown()

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from asyncio import Lock
-from typing import Any, Self
+from types import TracebackType
+from typing import Self
 
 from scriptable.app.base import AppAsyncBase
 
@@ -18,6 +19,7 @@ class AppInitializer(AppCommonInitializer, AppAsyncBase):
 
         async with self._lock:
             await self.initialize_services()
+            self.initialize_model()
 
     async def shutdown(self) -> None:
         """
@@ -41,6 +43,11 @@ class AppInitializer(AppCommonInitializer, AppAsyncBase):
         await self.initialize()
         return self
 
-    async def __aexit__(self, *exc_info: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit async context, shutting down service."""
         await self.shutdown()

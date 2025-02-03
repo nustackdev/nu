@@ -1,5 +1,6 @@
 from .handlers.initializer.initializer_async import AppInitializer as AppAsyncInitializer
 from .handlers.initializer.initializer_sync import AppInitializer as AppSyncInitializer
+from .handlers.model.model_async import AppModel as AppAsyncModel
 from .handlers.services.services_async import AppServices as AppAsyncServices
 from .handlers.services.services_sync import AppServices as AppSyncServices
 from .handlers.state.state_async import AppState as AppAsyncState
@@ -12,6 +13,7 @@ class AsyncApp(
     AppAsyncState,
     AppAsyncTasks,
     AppAsyncServices,
+    AppAsyncModel,
 ):
     pass
 
