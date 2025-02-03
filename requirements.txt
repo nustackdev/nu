@@ -4,8 +4,5 @@ pydantic
 aiohttp
 requests
 
-# verse
-# lmdb
-# solana
-# solders
-# base58
+# std
+lmdb
