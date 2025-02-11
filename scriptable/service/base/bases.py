@@ -7,23 +7,19 @@ ServiceCommonBase to share core service functionality while implementing their
 respective protocols.
 
 Classes:
-    ServiceAsyncBase: Base class for asynchronous services
-    ServiceSyncBase: Base class for synchronous services
-    ServiceBase: Base class for all services (common functionality)
+    ServiceAsync: Base class for asynchronous services
+    ServiceSync: Base class for synchronous services
+    Service: Base class for all services (common functionality)
 """
 
 from __future__ import annotations
 
-from scriptable.service.protocols import (
-    ServiceAsyncProtocol,
-    ServiceCommonProtocol,
-    ServiceSyncProtocol,
-)
+from scriptable.service.protocols import ServiceAsyncProtocol, ServiceProtocol, ServiceSyncProtocol
 
-from .common import ServiceCommonBase
+from .common import ServiceCommon
 
 
-class ServiceBase(ServiceCommonBase, ServiceCommonProtocol):
+class Service(ServiceCommon, ServiceProtocol):
     """
     Base class providing common functionality for all service types.
 
@@ -35,7 +31,7 @@ class ServiceBase(ServiceCommonBase, ServiceCommonProtocol):
     pass
 
 
-class ServiceAsyncBase(ServiceBase, ServiceAsyncProtocol):
+class ServiceAsync(Service, ServiceAsyncProtocol):
     """
     Base class for asynchronous services.
 
@@ -51,7 +47,7 @@ class ServiceAsyncBase(ServiceBase, ServiceAsyncProtocol):
     pass
 
 
-class ServiceSyncBase(ServiceBase, ServiceSyncProtocol):
+class ServiceSync(Service, ServiceSyncProtocol):
     """
     Base class for synchronous services.
 
@@ -68,7 +64,7 @@ class ServiceSyncBase(ServiceBase, ServiceSyncProtocol):
 
 
 __all__ = [
-    "ServiceAsyncBase",
-    "ServiceSyncBase",
-    "ServiceBase",
+    "ServiceAsync",
+    "ServiceSync",
+    "Service",
 ]

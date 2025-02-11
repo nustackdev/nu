@@ -1,55 +1,46 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, Self, final, runtime_checkable
-
-from .exceptions import HandlerNotImplemented
+from typing import TYPE_CHECKING, Any, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from .base import ServiceKey, ServiceState, ServiceType, Spec
+    from .base import Service, ServiceKey, ServiceState, Spec
 
 
 @runtime_checkable
-class ServiceCommonBaseProtocol(Protocol):
+class ServiceCommonProtocol(Protocol):
     @classmethod
-    def factory_name(cls) -> str:
-        raise HandlerNotImplemented
+    def factory_name(cls) -> str: ...
 
     @property
-    def spec(self) -> "Spec":
-        raise HandlerNotImplemented
+    def spec(self) -> "Spec": ...
 
     @property
-    def name(self) -> str:
-        raise HandlerNotImplemented
+    def name(self) -> str: ...
 
     @property
-    def readable_name(self) -> str:
-        raise HandlerNotImplemented
+    def readable_name(self) -> str: ...
 
     @property
-    def key(self) -> ServiceKey:
-        raise HandlerNotImplemented
+    def key(self) -> ServiceKey: ...
 
     @property
-    def service_state(self) -> "ServiceState":
-        raise HandlerNotImplemented
+    def service_state(self) -> "ServiceState": ...
 
     @property
-    def is_initialized(self) -> bool:
-        raise HandlerNotImplemented
+    def is_initialized(self) -> bool: ...
 
     def __hash__(self) -> int:
         """Hash based on service key."""
-        raise HandlerNotImplemented
+        ...
 
     def __eq__(self, other: Any) -> bool:
         """Equality based on service key."""
-        raise HandlerNotImplemented
+        ...
 
     def __repr__(self) -> str:
         """String representation including spec."""
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
@@ -64,13 +55,13 @@ class ServiceInitializerSyncProtocol(Protocol):
         """
         Initialize service and its dependencies synchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     def shutdown(self) -> None:
         """
         Shutdown service and cleanup dependencies synchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     def __enter__(self) -> Self:
         """
@@ -79,7 +70,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         Returns:
             Self for context usage
         """
-        raise HandlerNotImplemented
+        ...
 
     def __exit__(
         self,
@@ -88,7 +79,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         exc_tb: TracebackType | None,
     ) -> None:
         """Exit context, shutting down service."""
-        raise HandlerNotImplemented
+        ...
 
     def setup(self) -> None:
         """
@@ -98,7 +89,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         perform their specific setup requirements
         (opening connections, configuring service, etc).
         """
-        raise HandlerNotImplemented
+        ...
 
     def cleanup(self) -> None:
         """
@@ -107,7 +98,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         This method should be implemented by concrete services to
         perform their specific cleanup requirements.
         """
-        raise HandlerNotImplemented
+        ...
 
     def pre_initialize(self) -> None:
         """
@@ -118,7 +109,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         Raises:
             InitializationError: If pre-initialization fails
         """
-        raise HandlerNotImplemented
+        ...
 
     def post_initialize(self) -> None:
         """
@@ -129,7 +120,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         Raises:
             InitializationError: If post-initialization fails
         """
-        raise HandlerNotImplemented
+        ...
 
     def pre_shutdown(self) -> None:
         """
@@ -140,7 +131,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         Raises:
             ShutdownError: If pre-shutdown fails
         """
-        raise HandlerNotImplemented
+        ...
 
     def post_shutdown(self) -> None:
         """
@@ -151,7 +142,7 @@ class ServiceInitializerSyncProtocol(Protocol):
         Raises:
             ShutdownError: If post-shutdown fails
         """
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
@@ -166,13 +157,13 @@ class ServiceInitializerAsyncProtocol(Protocol):
         """
         Initialize service and its dependencies asynchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     async def shutdown(self) -> None:
         """
         Shutdown service and cleanup dependencies asynchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     async def __aenter__(self) -> Self:
         """
@@ -181,7 +172,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         Returns:
             Self for context usage
         """
-        raise HandlerNotImplemented
+        ...
 
     async def __aexit__(
         self,
@@ -190,7 +181,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         exc_tb: TracebackType | None,
     ) -> None:
         """Exit async context, shutting down service."""
-        raise HandlerNotImplemented
+        ...
 
     async def setup(self) -> None:
         """
@@ -200,7 +191,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         perform their specific setup requirements
         (opening connections, configuring service, etc).
         """
-        raise HandlerNotImplemented
+        ...
 
     async def cleanup(self) -> None:
         """
@@ -209,7 +200,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         This method should be implemented by concrete services to
         perform their specific cleanup requirements.
         """
-        raise HandlerNotImplemented
+        ...
 
     async def pre_initialize(self) -> None:
         """
@@ -220,7 +211,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         Raises:
             InitializationError: If pre-initialization fails
         """
-        raise HandlerNotImplemented
+        ...
 
     async def post_initialize(self) -> None:
         """
@@ -231,7 +222,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         Raises:
             InitializationError: If post-initialization fails
         """
-        raise HandlerNotImplemented
+        ...
 
     async def pre_shutdown(self) -> None:
         """
@@ -242,7 +233,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         Raises:
             ShutdownError: If pre-shutdown fails
         """
-        raise HandlerNotImplemented
+        ...
 
     async def post_shutdown(self) -> None:
         """
@@ -253,7 +244,7 @@ class ServiceInitializerAsyncProtocol(Protocol):
         Raises:
             ShutdownError: If post-shutdown fails
         """
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
@@ -266,12 +257,11 @@ class ServiceComposerProtocol(Protocol):
     ATM, no methods are defined, this is a placeholder for future use.
     """
 
-    @final
     def add_dependency(
         self,
         name: str,
         spec: Spec,
-    ) -> "ServiceType":
+    ) -> "Service":
         """
         Add service dependency.
 
@@ -282,10 +272,9 @@ class ServiceComposerProtocol(Protocol):
         Raises:
             DependencyError: If dependency invalid or creates cycle
         """
-        raise HandlerNotImplemented
+        ...
 
-    @final
-    def get_dependency(self, name: str) -> "ServiceType":
+    def get_dependency(self, name: str) -> "Service":
         """
         Get named dependency if it exists.
 
@@ -295,42 +284,45 @@ class ServiceComposerProtocol(Protocol):
         Returns:
             Dependency service
         """
-        raise HandlerNotImplemented
+        ...
 
-    @final
-    def get_dependencies(self) -> dict[str, "ServiceType"]:
+    def get_dependencies(self) -> dict[str, "Service"]:
         """
         Get all service dependencies.
 
         Returns:
             Dict mapping dependency names to services
         """
-        raise HandlerNotImplemented
+        ...
 
-    @final
-    def get_dependents(self) -> set["ServiceType"]:
+    def get_dependents(self) -> set["Service"]:
         """
         Get all dependent services.
 
         Returns:
             Set of services depending on this one
         """
-        raise HandlerNotImplemented
+        ...
 
-    @final
-    def detach_dependent(self, dependent: "ServiceType") -> None:
+    def detach_dependent(self, dependent: "Service") -> None:
         """
         Remove a dependent service.
 
         Args:
             dependent: Dependent service to remove
         """
-        raise HandlerNotImplemented
+        ...
+
+    def _initialize_attach_descriptors(self) -> None:
+        """
+        Initialize service dependency descriptors.
+        """
+        ...
 
 
 @runtime_checkable
-class ServiceCommonProtocol(
-    ServiceCommonBaseProtocol,
+class ServiceProtocol(
+    ServiceCommonProtocol,
     ServiceComposerProtocol,
     Protocol,
 ):
@@ -339,7 +331,7 @@ class ServiceCommonProtocol(
 
 @runtime_checkable
 class ServiceAsyncProtocol(
-    ServiceCommonProtocol,
+    ServiceProtocol,
     ServiceInitializerAsyncProtocol,
     Protocol,
 ):
@@ -356,7 +348,7 @@ class ServiceAsyncProtocol(
 
 @runtime_checkable
 class ServiceSyncProtocol(
-    ServiceCommonProtocol,
+    ServiceProtocol,
     ServiceInitializerSyncProtocol,
     Protocol,
 ):

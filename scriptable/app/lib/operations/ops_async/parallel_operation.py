@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 from typing import TYPE_CHECKING, Optional
 
 from ..exceptions import OperationError
-from .base_operation import Operation
+from .base_operation import BaseOperation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppAsyncBase
+    from scriptable.app.base import AsyncApp
+    from scriptable.app.handlers.tasks import AsyncOperationProtocol
 
 
-class ParallelOperation(Operation):
+class ParallelOperation(BaseOperation):
     """Executes multiple operations concurrently.
 
     Args:
@@ -49,7 +52,7 @@ class ParallelOperation(Operation):
 
     def __init__(
         self,
-        *operations: Operation,
+        *operations: "AsyncOperationProtocol",
         max_concurrent: Optional[int] = None,
         timeout: Optional[float] = None,
         ignore_errors: bool = False,
@@ -73,7 +76,7 @@ class ParallelOperation(Operation):
             key = (key,)
         return (f"__app__parallel__{self._id}",) + key if key else (f"__app__parallel__{self._id}",)
 
-    async def _initialize_state(self, app: "AppAsyncBase") -> None:
+    async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize parallel operation state in store"""
         await app.set(
             self._state_key(),
@@ -87,14 +90,12 @@ class ParallelOperation(Operation):
             },
         )
 
-    async def _update_completed(self, app: "AppAsyncBase", completed: int) -> None:
+    async def _update_completed(self, app: "AsyncApp", completed: int) -> None:
         """Update count of completed operations in store"""
         await app.set(self._state_key("completed_operations"), value=completed)
         await app.set(self._state_key("status"), value="running")
 
-    async def _record_error(
-        self, app: "AppAsyncBase", operation_index: int, error: Exception
-    ) -> None:
+    async def _record_error(self, app: "AsyncApp", operation_index: int, error: Exception) -> None:
         """Record operation error in store"""
         error_data = {
             "operation_index": operation_index,
@@ -104,7 +105,7 @@ class ParallelOperation(Operation):
         await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
     async def _execute_operation(
-        self, app: "AppAsyncBase", operation: Operation, index: int
+        self, app: "AsyncApp", operation: "AsyncOperationProtocol", index: int
     ) -> None:
         """Execute a single operation and handle its outcome"""
         try:
@@ -117,7 +118,7 @@ class ParallelOperation(Operation):
             if not self.ignore_errors:
                 raise OperationError(error_msg) from e
 
-    async def execute(self, app: "AppAsyncBase") -> None:
+    async def execute(self, app: "AsyncApp") -> None:
         """Execute all operations in parallel within constraints."""
         logger.info(f"Starting parallel execution of {len(self.operations)} operations")
 
@@ -130,7 +131,7 @@ class ParallelOperation(Operation):
             if self.max_concurrent:
                 semaphore = asyncio.Semaphore(self.max_concurrent)
 
-            async def bounded_operation(op: Operation, idx: int) -> None:
+            async def bounded_operation(op: "AsyncOperationProtocol", idx: int) -> None:
                 if semaphore:
                     async with semaphore:
                         await self._execute_operation(app, op, idx)

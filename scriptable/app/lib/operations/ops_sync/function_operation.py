@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from ..exceptions import OperationError
-from .base_operation import Operation
+from .base_operation import BaseOperation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppSyncBase
+    from scriptable.app.base import SyncApp
 
 
-class FunctionOperation(Operation):
+class FunctionOperation(BaseOperation):
     """Wraps a callable (function or method) as an operation.
 
     This is the fundamental building block that turns Python callables
@@ -57,7 +59,7 @@ class FunctionOperation(Operation):
             key = (key,)
         return (f"__app__function__{self._id}",) + key if key else (f"__app__function__{self._id}",)
 
-    def _initialize_state(self, app: "AppSyncBase") -> None:
+    def _initialize_state(self, app: "SyncApp") -> None:
         """Initialize function execution state in store"""
         app.set(
             self._state_key(),
@@ -71,7 +73,7 @@ class FunctionOperation(Operation):
             },
         )
 
-    def execute(self, app: "AppSyncBase") -> None:
+    def execute(self, app: "SyncApp") -> None:
         """Execute the wrapped function."""
         logger.info(f"Executing function: {self.name}")
 

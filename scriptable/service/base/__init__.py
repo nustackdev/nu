@@ -1,16 +1,15 @@
-from .bases import ServiceAsyncBase, ServiceBase, ServiceSyncBase
+from .bases import Service, ServiceAsync, ServiceSync
 from .exceptions import CreationError, ServiceError, SpecError
 from .meta import ServiceMeta
 from .spec import Spec
 from .state import ServiceState
-from .types import ServiceKey, ServiceType
+from .types import ServiceKey
 
 __all__ = [
     "ServiceMeta",
-    "ServiceType",
-    "ServiceSyncBase",
-    "ServiceAsyncBase",
-    "ServiceBase",
+    "ServiceSync",
+    "ServiceAsync",
+    "Service",
     "Spec",
     "ServiceKey",
     "ServiceError",

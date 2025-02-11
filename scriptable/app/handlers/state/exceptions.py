@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 from typing import Any
 
 from scriptable.app.exceptions import AppError
+
+__all__ = [
+    "StateError",
+]
 
 
 class StateError(AppError):

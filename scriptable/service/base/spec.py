@@ -24,7 +24,7 @@ from .exceptions import SpecError
 from .types import ServiceKey
 
 if TYPE_CHECKING:
-    from .types import ServiceType
+    from .bases import Service
 
 
 class Spec(BaseModel):
@@ -90,7 +90,7 @@ class Spec(BaseModel):
         return {"factory", "name"}
 
     @field_serializer("factory")
-    def serialize_factory(self, factory: "type[ServiceType]") -> str:
+    def serialize_factory(self, factory: "type[Service]") -> str:
         """
         Serialize factory class to string representation.
 

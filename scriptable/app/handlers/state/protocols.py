@@ -1,19 +1,30 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from types import TracebackType
 from typing import AsyncIterator, Iterator, Protocol, runtime_checkable
 
-from .types import StateAsyncCallbackFn, StateKey, StateSyncCallbackFn, StateValue
+from .types import AsyncStateCallbackFn, StateKey, StateValue, SyncStateCallbackFn
+
+__all__ = [
+    "AsyncStateProtocol",
+    "AsyncSubscriptionProtocol",
+    "AsyncTransactionProtocol",
+    "AsyncTransactionContextManagerProtocol",
+    "AsyncTransactionalHandlerProtocol",
+    "SyncStateProtocol",
+    "SyncSubscriptionProtocol",
+    "SyncTransactionProtocol",
+    "SyncTransactionContextManagerProtocol",
+    "SyncTransactionalHandlerProtocol",
+]
 
 # --- Protocols for asynchronous state handling --- #
 
 
 @runtime_checkable
-class StateAsyncProtocol(Protocol):
+class AsyncStateProtocol(Protocol):
     """Protocol for asynchronous state storage adapters."""
 
-    @abstractmethod
     async def get(self, key: StateKey) -> StateValue:
         """
         Get value by key.
@@ -29,7 +40,6 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def set(self, key: StateKey, value: StateValue) -> None:
         """
         Set value by key.
@@ -43,7 +53,6 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def delete(self, key: StateKey) -> None:
         """
         Delete value by key.
@@ -56,7 +65,6 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def exists(self, key: StateKey) -> bool:
         """
         Check if key exists.
@@ -72,7 +80,6 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
         """
         List all keys under prefix.
@@ -88,10 +95,9 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def subscribe(
-        self, key: StateKey, callback: StateAsyncCallbackFn
-    ) -> SubscriptionAsyncProtocol:
+        self, key: StateKey, callback: AsyncStateCallbackFn
+    ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -107,8 +113,7 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    async def unsubscribe(self, subscription: SubscriptionAsyncProtocol) -> None:
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -120,8 +125,7 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    async def begin_transaction(self) -> TransactionAsyncProtocol:
+    async def begin_transaction(self) -> AsyncTransactionProtocol:
         """
         Begin transaction.
 
@@ -133,8 +137,7 @@ class StateAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    async def transaction(self) -> TransactionContextManagerAsyncProtocol:
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol:
         """
         Get transaction context manager.
 
@@ -145,7 +148,7 @@ class StateAsyncProtocol(Protocol):
 
 
 @runtime_checkable
-class SubscriptionAsyncProtocol(Protocol):
+class AsyncSubscriptionProtocol(Protocol):
     """
     Represents an asynchronous subscription to a topic pattern.
 
@@ -162,14 +165,13 @@ class SubscriptionAsyncProtocol(Protocol):
     """
 
     topic_pattern: StateKey
-    callback: StateAsyncCallbackFn
+    callback: AsyncStateCallbackFn
 
 
 @runtime_checkable
-class TransactionAsyncProtocol(Protocol):
+class AsyncTransactionProtocol(Protocol):
     """Protocol defining the interface for asynchronous transactions."""
 
-    @abstractmethod
     async def get(self, key: StateKey) -> StateValue:
         """
         Get value within transaction context.
@@ -187,7 +189,6 @@ class TransactionAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def set(self, key: StateKey, value: StateValue) -> None:
         """
         Set value within transaction context.
@@ -202,7 +203,6 @@ class TransactionAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def delete(self, key: StateKey) -> None:
         """
         Delete value within transaction context.
@@ -216,7 +216,6 @@ class TransactionAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def exists(self, key: StateKey) -> bool:
         """
         Check if key exists within transaction context.
@@ -233,7 +232,6 @@ class TransactionAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
         """
         List all keys under prefix within transaction context.
@@ -250,7 +248,6 @@ class TransactionAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def commit(self) -> None:
         """
         Commit all changes in the transaction.
@@ -261,7 +258,6 @@ class TransactionAsyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def rollback(self) -> None:
         """
         Roll back all changes in the transaction.
@@ -273,10 +269,10 @@ class TransactionAsyncProtocol(Protocol):
 
 
 @runtime_checkable
-class TransactionContextManagerAsyncProtocol(Protocol):
+class AsyncTransactionContextManagerProtocol(Protocol):
     """Async context manager for storage transactions."""
 
-    def __init__(self, handler: TransactionalHandlerAsyncProtocol):
+    def __init__(self, handler: AsyncTransactionalHandlerProtocol):
         """
         Initialize transaction context manager.
 
@@ -285,7 +281,7 @@ class TransactionContextManagerAsyncProtocol(Protocol):
         """
         ...
 
-    async def __aenter__(self) -> TransactionAsyncProtocol:
+    async def __aenter__(self) -> AsyncTransactionProtocol:
         """
         Start a new transaction.
 
@@ -317,16 +313,14 @@ class TransactionContextManagerAsyncProtocol(Protocol):
         ...
 
 
-class TransactionalHandlerAsyncProtocol(Protocol):
+class AsyncTransactionalHandlerProtocol(Protocol):
     """Protocol defining the interface for asynchronous transactionable storage."""
 
-    @abstractmethod
-    async def begin_transaction(self) -> TransactionAsyncProtocol:
+    async def begin_transaction(self) -> AsyncTransactionProtocol:
         """Begin a new transaction."""
         ...
 
-    @abstractmethod
-    async def transaction(self) -> TransactionContextManagerAsyncProtocol:
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol:
         """Get a typed transaction context manager."""
         ...
 
@@ -335,10 +329,9 @@ class TransactionalHandlerAsyncProtocol(Protocol):
 
 
 @runtime_checkable
-class StateSyncProtocol(Protocol):
+class SyncStateProtocol(Protocol):
     """Protocol for synchronous state storage adapters."""
 
-    @abstractmethod
     def get(self, key: StateKey) -> StateValue:
         """
         Get value by key.
@@ -354,7 +347,6 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def set(self, key: StateKey, value: StateValue) -> None:
         """
         Set value by key.
@@ -368,7 +360,6 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def delete(self, key: StateKey) -> None:
         """
         Delete value by key.
@@ -381,7 +372,6 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def exists(self, key: StateKey) -> bool:
         """
         Check if key exists.
@@ -397,7 +387,6 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def list_keys(self, prefix: StateKey) -> Iterator[StateKey]:
         """
         List all keys under prefix.
@@ -413,8 +402,7 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    def subscribe(self, key: StateKey, callback: StateSyncCallbackFn) -> SubscriptionSyncProtocol:
+    def subscribe(self, key: StateKey, callback: SyncStateCallbackFn) -> SyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -430,8 +418,7 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    def unsubscribe(self, subscription: SubscriptionSyncProtocol) -> None:
+    def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -443,8 +430,7 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    def begin_transaction(self) -> TransactionSyncProtocol:
+    def begin_transaction(self) -> SyncTransactionProtocol:
         """
         Begin transaction.
 
@@ -456,8 +442,7 @@ class StateSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    def transaction(self) -> TransactionContextManagerSyncProtocol:
+    def transaction(self) -> SyncTransactionContextManagerProtocol:
         """
         Get transaction context manager.
 
@@ -468,7 +453,7 @@ class StateSyncProtocol(Protocol):
 
 
 @runtime_checkable
-class SubscriptionSyncProtocol(Protocol):
+class SyncSubscriptionProtocol(Protocol):
     """
     Represents a synchronous subscription to a topic pattern.
 
@@ -485,14 +470,13 @@ class SubscriptionSyncProtocol(Protocol):
     """
 
     topic_pattern: StateKey
-    callback: StateSyncCallbackFn
+    callback: SyncStateCallbackFn
 
 
 @runtime_checkable
-class TransactionSyncProtocol(Protocol):
+class SyncTransactionProtocol(Protocol):
     """Protocol defining the interface for synchronous transactions."""
 
-    @abstractmethod
     def get(self, key: StateKey) -> StateValue:
         """
         Get value within transaction context.
@@ -510,7 +494,6 @@ class TransactionSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def set(self, key: StateKey, value: StateValue) -> None:
         """
         Set value within transaction context.
@@ -525,7 +508,6 @@ class TransactionSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def delete(self, key: StateKey) -> None:
         """
         Delete value within transaction context.
@@ -539,7 +521,6 @@ class TransactionSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def exists(self, key: StateKey) -> bool:
         """
         Check if key exists within transaction context.
@@ -556,7 +537,6 @@ class TransactionSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def list_keys(self, prefix: StateKey) -> Iterator[StateKey]:
         """
         List all keys under prefix within transaction context.
@@ -573,7 +553,6 @@ class TransactionSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def commit(self) -> None:
         """
         Commit all changes in the transaction.
@@ -584,7 +563,6 @@ class TransactionSyncProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def rollback(self) -> None:
         """
         Roll back all changes in the transaction.
@@ -596,10 +574,10 @@ class TransactionSyncProtocol(Protocol):
 
 
 @runtime_checkable
-class TransactionContextManagerSyncProtocol(Protocol):
+class SyncTransactionContextManagerProtocol(Protocol):
     """Synchronous context manager for storage transactions."""
 
-    def __init__(self, handler: TransactionalHandlerSyncProtocol):
+    def __init__(self, handler: SyncTransactionalHandlerProtocol):
         """
         Initialize transaction context manager.
 
@@ -608,7 +586,7 @@ class TransactionContextManagerSyncProtocol(Protocol):
         """
         ...
 
-    def __enter__(self) -> TransactionSyncProtocol:
+    def __enter__(self) -> SyncTransactionProtocol:
         """
         Start a new transaction.
 
@@ -640,15 +618,13 @@ class TransactionContextManagerSyncProtocol(Protocol):
         ...
 
 
-class TransactionalHandlerSyncProtocol(Protocol):
+class SyncTransactionalHandlerProtocol(Protocol):
     """Protocol defining the interface for synchronous transactionable storage."""
 
-    @abstractmethod
-    def begin_transaction(self) -> TransactionSyncProtocol:
+    def begin_transaction(self) -> SyncTransactionProtocol:
         """Begin a new transaction."""
         ...
 
-    @abstractmethod
-    def transaction(self) -> TransactionContextManagerSyncProtocol:
+    def transaction(self) -> SyncTransactionContextManagerProtocol:
         """Get a typed transaction context manager."""
         ...

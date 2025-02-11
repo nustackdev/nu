@@ -5,7 +5,7 @@ from threading import Lock
 from types import TracebackType
 from typing import Self, cast
 
-from scriptable.service.base import ServiceState, ServiceSyncBase
+from scriptable.service.base import ServiceState, ServiceSync
 from scriptable.service.protocols import ServiceSyncProtocol
 
 from .base import ServiceCommonInitializer
@@ -13,7 +13,7 @@ from .exceptions import InitializationError, ShutdownError
 from .logger import logger
 
 
-class ServiceInitializer(ServiceCommonInitializer, ServiceSyncBase):
+class ServiceInitializer(ServiceCommonInitializer, ServiceSync):
     def initialize(self) -> None:
         """
         Initialize service and its dependencies asynchronously.
@@ -52,8 +52,8 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceSyncBase):
             try:
                 self._registry.set_service_state(self, ServiceState.INITIALIZING)
 
-                # Initialize dependencies first
-                self._init_dependencies()
+                # Do actual initialization
+                self._init_impl()
 
                 # Do service-specific setup
                 self.setup()
@@ -112,8 +112,8 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceSyncBase):
                 # Perform service-specific cleanup first
                 self.cleanup()
 
-                # Shutdown dependencies
-                self._shutdown_dependencies()
+                # Do acutal shutdown
+                self._shutdown_impl()
 
                 self._registry.set_service_state(self, ServiceState.SHUTDOWN)
 
@@ -129,6 +129,19 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceSyncBase):
             except Exception as e:
                 logger.error(f"Failed to post-shutdown '{self.readable_name}': {str(e)}")
                 raise ShutdownError(f"Failed to post-shutdown '{self.readable_name}'") from e
+
+    def _init_impl(self) -> None:
+        # Do composer-related inits
+        self._initialize_attach_descriptors()
+
+        # Initialize dependencies first
+        self._init_dependencies()
+
+    def _shutdown_impl(self) -> None:
+        # Shutdown dependencies first
+        self._shutdown_dependencies()
+
+    # --- Helpers --- #
 
     def _init_dependencies(self) -> None:
         """
@@ -216,7 +229,7 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceSyncBase):
         """Exit async context, shutting down service."""
         self.shutdown()
 
-    # --- Abstract Methods --- #
+    # --- Lifecycle Methods --- #
 
     def setup(self) -> None:
         """

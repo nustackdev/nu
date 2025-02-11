@@ -2,10 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Type, TypeVar
 
-from scriptable.service.base import ServiceBase, ServiceType, Spec
+from scriptable.service import Service, Spec
 from scriptable.utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
-S = TypeVar("S", bound=ServiceType)
+__all__ = [
+    "ServiceDescriptor",
+    "UseService",
+]
+
+
+S = TypeVar("S", bound=Service)
 T = TypeVar("T")
 
 
@@ -33,7 +39,7 @@ class ServiceDescriptor(BaseDescriptor[S]):
 
     def _validate_type(self, value: Any) -> bool:
         """Validate that value is a subclass of BaseService."""
-        return isinstance(value, (ServiceBase,))
+        return isinstance(value, (Service,))
 
     def _get_default(self) -> None:
         """Default value is None until initialized."""

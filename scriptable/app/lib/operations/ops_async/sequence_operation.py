@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 from typing import TYPE_CHECKING
 
 from ..exceptions import OperationError
-from .base_operation import Operation
+from .base_operation import BaseOperation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppAsyncBase
+    from scriptable.app.base import AsyncApp
+    from scriptable.app.handlers.tasks import AsyncOperationProtocol
 
 
-class SequenceOperation(Operation):
+class SequenceOperation(BaseOperation):
     """Executes operations in sequence, one after another.
 
     Args:
@@ -41,7 +44,10 @@ class SequenceOperation(Operation):
     """
 
     def __init__(
-        self, *operations: Operation, delay: float = 0, continue_on_error: bool = False
+        self,
+        *operations: "AsyncOperationProtocol",
+        delay: float = 0,
+        continue_on_error: bool = False,
     ) -> None:
         self.operations = operations
         self.delay = delay
@@ -55,7 +61,7 @@ class SequenceOperation(Operation):
             key = (key,)
         return (f"__app__sequence__{self._id}",) + key if key else (f"__app__sequence__{self._id}",)
 
-    async def _initialize_state(self, app: "AppAsyncBase") -> None:
+    async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize sequence state in store"""
         await app.set(
             self._state_key(),
@@ -67,17 +73,17 @@ class SequenceOperation(Operation):
             },
         )
 
-    async def _update_step(self, app: "AppAsyncBase", step: int) -> None:
+    async def _update_step(self, app: "AsyncApp", step: int) -> None:
         """Update current execution step in store"""
         await app.set(self._state_key("current_step"), value=step)
         await app.set(self._state_key("status"), value="running")
 
-    async def _record_error(self, app: "AppAsyncBase", step: int, error: Exception) -> None:
+    async def _record_error(self, app: "AsyncApp", step: int, error: Exception) -> None:
         """Record operation error in store"""
         error_data = {"step": step, "error": str(error), "error_type": error.__class__.__name__}
         await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
-    async def execute(self, app: "AppAsyncBase") -> None:
+    async def execute(self, app: "AsyncApp") -> None:
         """Execute operations in sequence with optional delay between them."""
         logger.info(f"Starting sequence execution of {len(self.operations)} operations")
 

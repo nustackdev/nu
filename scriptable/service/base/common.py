@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from .types import ServiceKey
 
 
-class ServiceCommonBase:
+class ServiceCommon:
     """
     Base class providing common functionality for all service types.
 
@@ -167,5 +167,5 @@ class ServiceCommonBase:
 
 
 __all__ = [
-    "ServiceCommonBase",
+    "ServiceCommon",
 ]

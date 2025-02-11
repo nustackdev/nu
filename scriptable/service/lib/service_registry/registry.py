@@ -9,7 +9,7 @@ from .exceptions import RegistryError, RegistryKeyError, RegistryStateError
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.service.base import ServiceKey, ServiceType, Spec
+    from scriptable.service.base import Service, ServiceKey, Spec
 
 
 class ServiceRegistry:
@@ -26,7 +26,7 @@ class ServiceRegistry:
     """
 
     def __init__(self) -> None:
-        self._instances: dict["ServiceKey", "ServiceType"] = {}
+        self._instances: dict["ServiceKey", "Service"] = {}
         self._states: dict["ServiceKey", ServiceState] = {}
         self._lock = Lock()
         logger.debug("Initialized service registry")
@@ -34,7 +34,7 @@ class ServiceRegistry:
     def get_service(
         self,
         spec: "Spec",
-    ) -> "ServiceType | None":
+    ) -> "Service | None":
         """
         Retrieve existing service instance for given factory and spec.
         This is the primary deduplication mechanism - same factory+spec
@@ -59,7 +59,7 @@ class ServiceRegistry:
 
     def add_service(
         self,
-        service: "ServiceType",
+        service: "Service",
     ) -> None:
         """
         Register new service instance. Should validate the service
@@ -83,7 +83,7 @@ class ServiceRegistry:
 
     def remove_service(
         self,
-        service: "ServiceType",
+        service: "Service",
     ) -> None:
         """
         Remove service registration. Should verify the service is in a valid
@@ -114,7 +114,7 @@ class ServiceRegistry:
 
     def get_service_state(
         self,
-        service: "ServiceType",
+        service: "Service",
     ) -> ServiceState:
         """
         Get current lifecycle state of service.
@@ -137,7 +137,7 @@ class ServiceRegistry:
 
     def set_service_state(
         self,
-        service: "ServiceType",
+        service: "Service",
         state: ServiceState,
     ) -> None:
         """

@@ -1,24 +1,27 @@
-"""Value accessor implementation."""
+"""
+Value accessor implementation.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, AsyncIterator, Generic, TypeVar, cast
 
 from scriptable.app.handlers.state.types import StateKey, StateValue
 
 if TYPE_CHECKING:
-    from scriptable.app.handlers.state.protocols import (
-        StateAsyncCallbackFn,
-        SubscriptionAsyncProtocol,
-    )
+    from scriptable.app.handlers.state import AsyncStateCallbackFn, AsyncSubscriptionProtocol
 
-    from .model_async import AppModel as AppAsyncModel
-    from .protocols import AccessorContextAsyncProtocol
+    from .model_async import AsyncAppModel
+    from .protocols import AsyncAccessorContextProtocol
+
+__all__ = [
+    "AsyncModelValue",
+]
 
 T = TypeVar("T", bound=StateValue)
 
 
-class ModelValue(Generic[T]):
+class AsyncModelValue(Generic[T]):
     """
     Value accessor that works with model's current context.
 
@@ -33,7 +36,7 @@ class ModelValue(Generic[T]):
         _name: Name of this value in the model
     """
 
-    def __init__(self, model: "AppAsyncModel", name: str) -> None:
+    def __init__(self, model: "AsyncAppModel", name: str) -> None:
         """
         Initialize value accessor.
 
@@ -54,7 +57,7 @@ class ModelValue(Generic[T]):
         return (self._name,)
 
     @property
-    def _context(self) -> "AccessorContextAsyncProtocol":
+    def _context(self) -> "AsyncAccessorContextProtocol":
         """
         Get current context from model.
 
@@ -111,10 +114,16 @@ class ModelValue(Generic[T]):
         """
         return await self._context.exists(self._make_key())
 
-    async def subscribe(self, callback: "StateAsyncCallbackFn") -> "SubscriptionAsyncProtocol":
+    async def list_keys(self) -> AsyncIterator[StateKey]:
+        """List all state keys under prefix."""
+        async for full_key in await self._context.list_keys(self._make_key()):
+            # Strip app prefix from returned keys
+            yield full_key[len(self._make_key()) :]
+
+    async def subscribe(self, callback: "AsyncStateCallbackFn") -> "AsyncSubscriptionProtocol":
         """Subscribe to item changes."""
         return await self._context.subscribe(self._make_key(), callback)
 
-    async def unsubscribe(self, subscription: "SubscriptionAsyncProtocol") -> None:
+    async def unsubscribe(self, subscription: "AsyncSubscriptionProtocol") -> None:
         """Unsubscribe from item changes."""
         await self._context.unsubscribe(subscription)

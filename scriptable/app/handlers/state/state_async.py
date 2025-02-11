@@ -1,33 +1,27 @@
-"""
-app base class providing dependency injection, lifecycle management,
-and component-based architecture.
-
-This module implements the core app functionality with:
-- Dependency injection and lifecycle (from Memory)
-- Component-based composition
-- State and operation platforms
-- Extension points
-"""
-
 from __future__ import annotations
 
 from typing import AsyncIterator
 
-from scriptable.app.base import AppAsyncBase
+from scriptable.app.base import AsyncApp
 
+from .base import AppCommonState
 from .exceptions import StateError
 from .protocols import (
-    StateAsyncProtocol,
-    SubscriptionAsyncProtocol,
-    TransactionAsyncProtocol,
-    TransactionContextManagerAsyncProtocol,
+    AsyncStateProtocol,
+    AsyncSubscriptionProtocol,
+    AsyncTransactionContextManagerProtocol,
+    AsyncTransactionProtocol,
 )
-from .types import StateAsyncCallbackFn, StateKey, StateValue
+from .types import AsyncStateCallbackFn, StateKey, StateValue
+
+__all__ = [
+    "AsyncAppState",
+]
 
 
-class AppState(AppAsyncBase):
+class AsyncAppState(AppCommonState, AsyncApp):
     """
-    app feature implementing state management.
+    App feature implementing state management.
 
     Features:
     - State adapter handling
@@ -36,29 +30,24 @@ class AppState(AppAsyncBase):
     - State transaction management
 
     Example:
-        class Dataapp(
-            app(
-                as_state(RedisStorage),
-                as_platform(AsyncPlatform)
-            )
-        ):
+        class DataApp(AsyncApp):
             ...
 
             def exec_data_process(self, key: str) -> Any:
-                self.state_set(("status",), "processing")
+                await self.set(("status",), "processing")
                 result = self.process_data(key)
-                self.state_set(("status,), "done")
+                await self.set(("status,), "done")
     """
 
     @property
-    def state(self) -> StateAsyncProtocol:
+    def state(self) -> AsyncStateProtocol:
         """Check and return app's state service."""
         if not hasattr(self, "_state_"):
             raise StateError("No state adapter configured")
         return getattr(self, "_state_")
 
     @property
-    def s(self) -> StateAsyncProtocol:
+    def s(self) -> AsyncStateProtocol:
         """Short alias for state adapter."""
         return self.state
 
@@ -87,7 +76,7 @@ class AppState(AppAsyncBase):
         key = self.state_key + key
         return await self.s.exists(key)
 
-    async def list(self, prefix: StateKey) -> AsyncIterator[StateKey]:
+    async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
         """List all state keys under prefix."""
         key = self.state_key + prefix
         async for full_key in await self.s.list_keys(key):
@@ -95,8 +84,8 @@ class AppState(AppAsyncBase):
             yield full_key[len(self.state_key) :]
 
     async def subscribe(
-        self, key: StateKey, callback: StateAsyncCallbackFn
-    ) -> SubscriptionAsyncProtocol:
+        self, key: StateKey, callback: AsyncStateCallbackFn
+    ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -113,7 +102,7 @@ class AppState(AppAsyncBase):
         key = self.state_key + key
         return await self.s.subscribe(key, callback)
 
-    async def unsubscribe(self, subscription: SubscriptionAsyncProtocol) -> None:
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -125,7 +114,7 @@ class AppState(AppAsyncBase):
         """
         await self.s.unsubscribe(subscription)
 
-    async def begin_transaction(self) -> TransactionAsyncProtocol:
+    async def begin_transaction(self) -> AsyncTransactionProtocol:
         """
         Begin transaction.
 
@@ -137,7 +126,7 @@ class AppState(AppAsyncBase):
         """
         return await self.s.begin_transaction()
 
-    async def transaction(self) -> TransactionContextManagerAsyncProtocol:
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol:
         """
         Get transaction context manager.
 

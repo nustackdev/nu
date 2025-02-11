@@ -13,7 +13,13 @@ from scriptable.app.handlers.state.types import StateValue
 from scriptable.utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
 if TYPE_CHECKING:
-    from .accesssor import ModelValue
+    from .accesssor_async import AsyncModelValue
+    from .accesssor_sync import SyncModelValue
+
+__all__ = [
+    "StateDescriptor",
+    "UseState",
+]
 
 StateValueT = TypeVar("StateValueT", bound=StateValue)
 
@@ -46,7 +52,9 @@ class StateDescriptor(BaseDescriptor[StateValueT]):
         return None
 
 
-def UseState(type: Type[StateValueT]) -> ModelValue[StateValueT]:
+def UseState(
+    type: Type[StateValueT],
+) -> "AsyncModelValue[StateValueT] | SyncModelValue[StateValueT]":
     """
     Create an item descriptor.
 

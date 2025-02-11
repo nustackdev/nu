@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 from time import sleep
 from typing import TYPE_CHECKING
 
 from ..exceptions import OperationError
-from .base_operation import Operation
+from .base_operation import BaseOperation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppSyncBase
+    from scriptable.app.base import SyncApp
+    from scriptable.app.handlers.tasks import SyncOperationProtocol
 
 
-class SequenceOperation(Operation):
+class SequenceOperation(BaseOperation):
     """Executes operations in sequence, one after another.
 
     Args:
@@ -41,7 +44,10 @@ class SequenceOperation(Operation):
     """
 
     def __init__(
-        self, *operations: Operation, delay: float = 0, continue_on_error: bool = False
+        self,
+        *operations: "SyncOperationProtocol",
+        delay: float = 0,
+        continue_on_error: bool = False,
     ) -> None:
         self.operations = operations
         self.delay = delay
@@ -55,7 +61,7 @@ class SequenceOperation(Operation):
             key = (key,)
         return (f"__app__sequence__{self._id}",) + key if key else (f"__app__sequence__{self._id}",)
 
-    def _initialize_state(self, app: "AppSyncBase") -> None:
+    def _initialize_state(self, app: "SyncApp") -> None:
         """Initialize sequence state in store"""
         app.set(
             self._state_key(),
@@ -67,17 +73,17 @@ class SequenceOperation(Operation):
             },
         )
 
-    def _update_step(self, app: "AppSyncBase", step: int) -> None:
+    def _update_step(self, app: "SyncApp", step: int) -> None:
         """Update current execution step in store"""
         app.set(self._state_key("current_step"), value=step)
         app.set(self._state_key("status"), value="running")
 
-    def _record_error(self, app: "AppSyncBase", step: int, error: Exception) -> None:
+    def _record_error(self, app: "SyncApp", step: int, error: Exception) -> None:
         """Record operation error in store"""
         error_data = {"step": step, "error": str(error), "error_type": error.__class__.__name__}
         app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
-    def execute(self, app: "AppSyncBase") -> None:
+    def execute(self, app: "SyncApp") -> None:
         """Execute operations in sequence with optional delay between them."""
         logger.info(f"Starting sequence execution of {len(self.operations)} operations")
 

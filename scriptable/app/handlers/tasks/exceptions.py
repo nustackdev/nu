@@ -1,4 +1,10 @@
+from __future__ import annotations
+
 from scriptable.app.exceptions import AppError
+
+__all__ = [
+    "ExecutionError",
+]
 
 
 class ExecutionError(AppError):

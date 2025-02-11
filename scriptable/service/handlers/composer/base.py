@@ -1,22 +1,22 @@
 from typing import TYPE_CHECKING, cast, final
 
-from scriptable.service.base import ServiceBase
+from scriptable.service.base import Service
 
 from .attach import AttachDescriptor, is_attach_descriptor
 from .exceptions import DependencyError
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.service.base import ServiceType, Spec
+    from scriptable.service.base import Spec
 
 
-class ServiceCommonComposer(ServiceBase):
+class ServiceCommonComposer(Service):
     @final
     def add_dependency(
         self,
         name: str,
         spec: "Spec",
-    ) -> "ServiceType":
+    ) -> "Service":
         """
         Add service dependency.
 
@@ -34,7 +34,7 @@ class ServiceCommonComposer(ServiceBase):
             raise
 
     @final
-    def get_dependency(self, name: str) -> "ServiceType":
+    def get_dependency(self, name: str) -> "Service":
         """
         Get named dependency if it exists.
 
@@ -53,7 +53,7 @@ class ServiceCommonComposer(ServiceBase):
         return deps[name]
 
     @final
-    def get_dependencies(self) -> dict[str, "ServiceType"]:
+    def get_dependencies(self) -> dict[str, "Service"]:
         """
         Get all service dependencies.
 
@@ -63,7 +63,7 @@ class ServiceCommonComposer(ServiceBase):
         return self._dep_manager.get_dependencies(self)
 
     @final
-    def get_dependents(self) -> set["ServiceType"]:
+    def get_dependents(self) -> set["Service"]:
         """
         Get all dependent services.
 
@@ -73,7 +73,7 @@ class ServiceCommonComposer(ServiceBase):
         return self._dep_manager.get_dependents(self)
 
     @final
-    def detach_dependent(self, dependent: "ServiceType") -> None:
+    def detach_dependent(self, dependent: "Service") -> None:
         """
         Remove a dependent service.
 
@@ -82,7 +82,8 @@ class ServiceCommonComposer(ServiceBase):
         """
         self._dep_manager.detach_relationship(dependent, self)
 
-    def _init_attach(self):
+    @final
+    def _initialize_attach_descriptors(self):
         for name, value in self.__class__.__dict__.items():
             if not is_attach_descriptor(value):
                 continue

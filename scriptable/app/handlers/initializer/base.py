@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from scriptable.app.base import AppBase
+from scriptable.app.base import App
+
+__all__ = [
+    "AppCommonInitializer",
+]
 
 
-class AppCommonInitializer(AppBase):
+class AppCommonInitializer(App):
     """
     Implementation of app initialization and lifecycle management.
 

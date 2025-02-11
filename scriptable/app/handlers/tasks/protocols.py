@@ -1,20 +1,22 @@
-"""Runtime system protocol definitions."""
-
 from __future__ import annotations
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppAsyncBase, AppSyncBase
+    from scriptable.app.base import AsyncApp, SyncApp
+
+
+__all__ = [
+    "AsyncOperationProtocol",
+    "SyncOperationProtocol",
+]
 
 
 @runtime_checkable
-class OperationAsyncProtocol(Protocol):
+class AsyncOperationProtocol(Protocol):
     """Protocol defining executable operations."""
 
-    @abstractmethod
-    async def execute(self, app: "AppAsyncBase") -> None:
+    async def execute(self, app: "AsyncApp") -> None:
         """
         Execute the operation.
 
@@ -31,11 +33,10 @@ class OperationAsyncProtocol(Protocol):
 
 
 @runtime_checkable
-class OperationSyncProtocol(Protocol):
+class SyncOperationProtocol(Protocol):
     """Protocol defining executable operations."""
 
-    @abstractmethod
-    def execute(self, app: "AppSyncBase") -> None:
+    def execute(self, app: "SyncApp") -> None:
         """
         Execute the operation.
 

@@ -4,22 +4,28 @@ from asyncio import Lock
 from types import TracebackType
 from typing import Self
 
-from scriptable.app.base import AppAsyncBase
+from scriptable.app.base import AsyncApp
 
 from .base import AppCommonInitializer
 
+__all__ = [
+    "AsyncAppInitializer",
+]
 
-class AppInitializer(AppCommonInitializer, AppAsyncBase):
+
+class AsyncAppInitializer(AppCommonInitializer, AsyncApp):
+    _lock: Lock
+
     async def initialize(self) -> None:
         """
-        Initialize service and its dependencies asynchronously.
+        Initialize app.
         """
         if not hasattr(self, "_lock"):
             self._lock = Lock()
 
         async with self._lock:
+            self._initialize_model_descriptors()
             await self.initialize_services()
-            self.initialize_model()
 
     async def shutdown(self) -> None:
         """

@@ -32,10 +32,10 @@ from .logger import logger
 from .spec import Spec
 
 if TYPE_CHECKING:
-    from .types import ServiceType
+    from .bases import Service
 
 # Type variables for generic service and feature types
-ServiceT = TypeVar("ServiceT", bound="ServiceType")
+ServiceT = TypeVar("ServiceT", bound="Service")
 FeatureT = TypeVar("FeatureT")
 
 

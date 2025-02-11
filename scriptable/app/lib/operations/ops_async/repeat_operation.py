@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from ..exceptions import OperationError
-from .base_operation import Operation
+from .base_operation import BaseOperation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppAsyncBase
+    from scriptable.app.base import AsyncApp
+    from scriptable.app.handlers.tasks import AsyncOperationProtocol
 
 
-class RepeatOperation(Operation):
+class RepeatOperation(BaseOperation):
     """Repeats an operation either a fixed number of times or while a condition is true.
 
     Args:
@@ -51,7 +54,7 @@ class RepeatOperation(Operation):
 
     def __init__(
         self,
-        operation: Operation,
+        operation: "AsyncOperationProtocol",
         *,
         times: Optional[int] = None,
         while_key: Optional[Union[str, Tuple[str, ...]]] = None,
@@ -84,7 +87,7 @@ class RepeatOperation(Operation):
             key = (key,)
         return (f"__app__repeat__{self._id}",) + key if key else (f"__app__repeat__{self._id}",)
 
-    async def _initialize_state(self, app: "AppAsyncBase") -> None:
+    async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize repeat operation state in store"""
         await app.set(
             self._state_key(),
@@ -99,12 +102,12 @@ class RepeatOperation(Operation):
             },
         )
 
-    async def _update_iteration(self, app: "AppAsyncBase", iteration: int) -> None:
+    async def _update_iteration(self, app: "AsyncApp", iteration: int) -> None:
         """Update current iteration count in store"""
         await app.set(self._state_key("current_iteration"), value=iteration)
         await app.set(self._state_key("status"), value="running")
 
-    async def _record_error(self, app: "AppAsyncBase", iteration: int, error: Exception) -> None:
+    async def _record_error(self, app: "AsyncApp", iteration: int, error: Exception) -> None:
         """Record iteration error in store"""
         error_data = {
             "iteration": iteration,
@@ -113,7 +116,7 @@ class RepeatOperation(Operation):
         }
         await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
-    async def _should_continue(self, app: "AppAsyncBase", iteration: int) -> bool:
+    async def _should_continue(self, app: "AsyncApp", iteration: int) -> bool:
         """Determine if operation should continue based on conditions"""
         if self.times is not None:
             return iteration < self.times
@@ -128,7 +131,7 @@ class RepeatOperation(Operation):
                 return False
         return False
 
-    async def execute(self, app: "AppAsyncBase") -> None:
+    async def execute(self, app: "AsyncApp") -> None:
         """Execute the operation repeatedly based on specified conditions."""
         logger.info("Starting repeat operation")
 

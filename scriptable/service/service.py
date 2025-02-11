@@ -1,4 +1,4 @@
-from typing import TypeAlias
+from __future__ import annotations
 
 from .base import ServiceMeta
 from .handlers.composer.composer_async import ServiceComposer as ServiceAsyncComposer
@@ -23,7 +23,4 @@ class SyncService(
     pass
 
 
-Service: TypeAlias = AsyncService | SyncService
-
-
-__all__ = ["Service", "AsyncService", "SyncService"]
+__all__ = ["AsyncService", "SyncService"]

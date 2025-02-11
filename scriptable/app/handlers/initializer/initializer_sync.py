@@ -4,12 +4,18 @@ from threading import Lock
 from types import TracebackType
 from typing import Self
 
-from scriptable.app.base import AppSyncBase
+from scriptable.app.base import SyncApp
 
 from .base import AppCommonInitializer
 
+__all__ = [
+    "SyncAppInitializer",
+]
 
-class AppInitializer(AppCommonInitializer, AppSyncBase):
+
+class SyncAppInitializer(AppCommonInitializer, SyncApp):
+    _lock: Lock
+
     def initialize(self) -> None:
         """
         Initialize service and its dependencies synchronously.
@@ -18,6 +24,7 @@ class AppInitializer(AppCommonInitializer, AppSyncBase):
             self._lock = Lock()
 
         with self._lock:
+            self._initialize_model_descriptors()
             self.initialize_services()
 
     def shutdown(self) -> None:

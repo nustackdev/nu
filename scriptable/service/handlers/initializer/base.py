@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from scriptable.service.base import ServiceBase, ServiceState
+from scriptable.service.base import Service, ServiceState
 from scriptable.service.lib.service_registry import RegistryError
 
 
-class ServiceCommonInitializer(ServiceBase):
+class ServiceCommonInitializer(Service):
     """
     Async implementation of service initialization and lifecycle management.
 

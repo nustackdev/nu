@@ -1,22 +1,28 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, cast, final
 
-from scriptable.app.base import AppBase
+from scriptable.app.base import App
 
 from .descriptor import ServiceDescriptor
 from .exceptions import ServiceDependencyError
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.service.base import ServiceType, Spec
+    from scriptable.service import Service, Spec
+
+__all__ = [
+    "AppCommonServices",
+]
 
 
-class AppCommonServices(AppBase):
+class AppCommonServices(App):
     @final
     def add_service_dependency(
         self,
         name: str,
         spec: "Spec",
-    ) -> "ServiceType":
+    ) -> "Service":
         """
         Add service dependency.
 
@@ -41,7 +47,7 @@ class AppCommonServices(AppBase):
         return service
 
     @final
-    def get_service_dependency(self, name: str) -> "ServiceType":
+    def get_service_dependency(self, name: str) -> "Service":
         """
         Get named dependency if it exists.
 

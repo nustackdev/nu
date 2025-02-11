@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from scriptable.app.base import AppSyncBase
+from scriptable.app.base import SyncApp
 
 from .base import AppCommonServices
 
+__all__ = [
+    "SyncAppServices",
+]
 
-class AppServices(AppCommonServices, AppSyncBase):
+
+class SyncAppServices(AppCommonServices, SyncApp):
     """
     App mixin for service location and initialization.
     """

@@ -1,31 +1,25 @@
-"""
-app base class providing dependency injection, lifecycle management,
-and component-based architecture.
-
-This module implements the core app functionality with:
-- Dependency injection and lifecycle (from Memory)
-- Component-based composition
-- State and operation platforms
-- Extension points
-"""
-
 from __future__ import annotations
 
 from typing import Iterator
 
-from scriptable.app.base import AppSyncBase
+from scriptable.app.base import SyncApp
 
+from .base import AppCommonState
 from .exceptions import StateError
 from .protocols import (
-    StateSyncProtocol,
-    SubscriptionSyncProtocol,
-    TransactionContextManagerSyncProtocol,
-    TransactionSyncProtocol,
+    SyncStateProtocol,
+    SyncSubscriptionProtocol,
+    SyncTransactionContextManagerProtocol,
+    SyncTransactionProtocol,
 )
-from .types import StateKey, StateSyncCallbackFn, StateValue
+from .types import StateKey, StateValue, SyncStateCallbackFn
+
+__all__ = [
+    "SyncAppState",
+]
 
 
-class AppState(AppSyncBase):
+class SyncAppState(AppCommonState, SyncApp):
     """
     app feature implementing state management.
 
@@ -37,14 +31,14 @@ class AppState(AppSyncBase):
     """
 
     @property
-    def state(self) -> StateSyncProtocol:
+    def state(self) -> SyncStateProtocol:
         """Check and return app's state service."""
         if not hasattr(self, "_state_"):
             raise StateError("No state adapter configured")
         return getattr(self, "_state_")
 
     @property
-    def s(self) -> StateSyncProtocol:
+    def s(self) -> SyncStateProtocol:
         """Short alias for state adapter."""
         return self.state
 
@@ -73,14 +67,14 @@ class AppState(AppSyncBase):
         key = self.state_key + key
         return self.s.exists(key)
 
-    def list(self, prefix: StateKey) -> Iterator[StateKey]:
+    def list_keys(self, prefix: StateKey) -> Iterator[StateKey]:
         """List all state keys under prefix."""
         key = self.state_key + prefix
         for full_key in self.s.list_keys(key):
             # Strip app prefix from returned keys
             yield full_key[len(self.state_key) :]
 
-    def subscribe(self, key: StateKey, callback: StateSyncCallbackFn) -> SubscriptionSyncProtocol:
+    def subscribe(self, key: StateKey, callback: SyncStateCallbackFn) -> SyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -97,7 +91,7 @@ class AppState(AppSyncBase):
         key = self.state_key + key
         return self.s.subscribe(key, callback)
 
-    def unsubscribe(self, subscription: SubscriptionSyncProtocol) -> None:
+    def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -109,7 +103,7 @@ class AppState(AppSyncBase):
         """
         self.s.unsubscribe(subscription)
 
-    def begin_transaction(self) -> TransactionSyncProtocol:
+    def begin_transaction(self) -> SyncTransactionProtocol:
         """
         Begin transaction.
 
@@ -121,7 +115,7 @@ class AppState(AppSyncBase):
         """
         return self.s.begin_transaction()
 
-    def transaction(self) -> TransactionContextManagerSyncProtocol:
+    def transaction(self) -> SyncTransactionContextManagerProtocol:
         """
         Get transaction context manager.
 

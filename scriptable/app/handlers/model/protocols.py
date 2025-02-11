@@ -1,14 +1,23 @@
-from typing import TYPE_CHECKING, AsyncIterator, Iterator, Protocol, TypeAlias
+from typing import TYPE_CHECKING, AsyncIterator, Iterator, Protocol
 
 if TYPE_CHECKING:
-    from scriptable.app.handlers.state.protocols import (
-        StateAsyncCallbackFn,
-        SubscriptionAsyncProtocol,
+    from scriptable.app.handlers.state import (
+        AsyncStateCallbackFn,
+        AsyncSubscriptionProtocol,
+        StateKey,
+        StateValue,
+        SyncStateCallbackFn,
+        SyncSubscriptionProtocol,
     )
-    from scriptable.app.handlers.state.types import StateKey, StateValue
 
 
-class AccessorContextSyncProtocol(Protocol):
+__all__ = [
+    "SyncAccessorContextProtocol",
+    "AsyncAccessorContextProtocol",
+]
+
+
+class SyncAccessorContextProtocol(Protocol):
     """Protocol defining interface for value access context (state or transaction)."""
 
     def get(self, key: "StateKey") -> "StateValue":
@@ -81,8 +90,38 @@ class AccessorContextSyncProtocol(Protocol):
         """
         ...
 
+    def subscribe(
+        self, key: "StateKey", callback: "SyncStateCallbackFn"
+    ) -> "SyncSubscriptionProtocol":
+        """
+        Subscribe to changes under key prefix.
 
-class AccessorContextAsyncProtocol(Protocol):
+        Args:
+            key: Key prefix to subscribe to
+            callback: Callback function for notifications
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Raises:
+            ObserverError: If subscription fails
+        """
+        ...
+
+    def unsubscribe(self, subscription: "SyncSubscriptionProtocol") -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        ...
+
+
+class AsyncAccessorContextProtocol(Protocol):
     """Protocol defining interface for value access context (state or transaction)."""
 
     async def get(self, key: "StateKey") -> "StateValue":
@@ -156,8 +195,8 @@ class AccessorContextAsyncProtocol(Protocol):
         ...
 
     async def subscribe(
-        self, key: "StateKey", callback: "StateAsyncCallbackFn"
-    ) -> "SubscriptionAsyncProtocol":
+        self, key: "StateKey", callback: "AsyncStateCallbackFn"
+    ) -> "AsyncSubscriptionProtocol":
         """
         Subscribe to changes under key prefix.
 
@@ -173,7 +212,7 @@ class AccessorContextAsyncProtocol(Protocol):
         """
         ...
 
-    async def unsubscribe(self, subscription: "SubscriptionAsyncProtocol") -> None:
+    async def unsubscribe(self, subscription: "AsyncSubscriptionProtocol") -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -184,6 +223,3 @@ class AccessorContextAsyncProtocol(Protocol):
             ObserverError: If unsubscribe fails
         """
         ...
-
-
-AccessorType: TypeAlias = AccessorContextSyncProtocol | AccessorContextAsyncProtocol

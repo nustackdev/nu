@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 import inspect
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from ..exceptions import OperationError
-from .base_operation import Operation
+from .base_operation import BaseOperation
 from .logger import logger
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppAsyncBase
+    from scriptable.app.base import AsyncApp
 
 
-class FunctionOperation(Operation):
+class FunctionOperation(BaseOperation):
     """Wraps a callable (function or method) as an operation.
 
     This is the fundamental building block that turns Python callables
@@ -62,7 +64,7 @@ class FunctionOperation(Operation):
             key = (key,)
         return (f"__app__function__{self._id}",) + key if key else (f"__app__function__{self._id}",)
 
-    async def _initialize_state(self, app: "AppAsyncBase") -> None:
+    async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize function execution state in store"""
         await app.set(
             self._state_key(),
@@ -85,7 +87,7 @@ class FunctionOperation(Operation):
             logger.error(f"Sync function '{self.name}' failed in thread pool", exc_info=True)
             raise OperationError(f"Sync function execution failed: {str(e)}") from e
 
-    async def execute(self, app: "AppAsyncBase") -> None:
+    async def execute(self, app: "AsyncApp") -> None:
         """Execute the wrapped function."""
         logger.info(f"Executing function: {self.name}")
 

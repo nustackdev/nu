@@ -1,34 +1,45 @@
-"""State and task management protocol definitions."""
-
 from __future__ import annotations
 
-from abc import abstractmethod
 from types import TracebackType
-from typing import AsyncIterator, Callable, Iterator, Protocol, Self, runtime_checkable
-
-from .exceptions import HandlerNotImplemented
-from .handlers.state.protocols import (
-    StateAsyncProtocol,
-    StateSyncProtocol,
-    SubscriptionAsyncProtocol,
-    SubscriptionSyncProtocol,
-    TransactionAsyncProtocol,
-    TransactionContextManagerAsyncProtocol,
-    TransactionContextManagerSyncProtocol,
-    TransactionSyncProtocol,
+from typing import (
+    TYPE_CHECKING,
+    AsyncIterator,
+    Callable,
+    Iterator,
+    Protocol,
+    Self,
+    runtime_checkable,
 )
-from .handlers.state.types import StateAsyncCallbackFn, StateKey, StateSyncCallbackFn, StateValue
-from .handlers.tasks.protocols import OperationAsyncProtocol, OperationSyncProtocol
+
+if TYPE_CHECKING:
+    from .handlers.state.protocols import (
+        AsyncStateProtocol,
+        AsyncSubscriptionProtocol,
+        AsyncTransactionContextManagerProtocol,
+        AsyncTransactionProtocol,
+        SyncStateProtocol,
+        SyncSubscriptionProtocol,
+        SyncTransactionContextManagerProtocol,
+        SyncTransactionProtocol,
+    )
+    from .handlers.state.types import (
+        AsyncStateCallbackFn,
+        StateKey,
+        StateValue,
+        SyncStateCallbackFn,
+    )
+    from .handlers.tasks.protocols import AsyncOperationProtocol, SyncOperationProtocol
 
 
-class AppCommonBaseProtocol(Protocol):
+@runtime_checkable
+class CommonAppProtocol(Protocol):
     """Base protocol for common application functionality."""
 
     pass
 
 
 @runtime_checkable
-class AppInitializerSyncProtocol(Protocol):
+class SyncAppInitializerProtocol(Protocol):
     """
     Synchronous app initializer protocol.
 
@@ -39,13 +50,13 @@ class AppInitializerSyncProtocol(Protocol):
         """
         Initialize app and its dependencies synchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     def shutdown(self) -> None:
         """
         Shutdown app and cleanup dependencies synchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     def __enter__(self) -> Self:
         """
@@ -54,7 +65,7 @@ class AppInitializerSyncProtocol(Protocol):
         Returns:
             Self for context usage
         """
-        raise HandlerNotImplemented
+        ...
 
     def __exit__(
         self,
@@ -63,11 +74,11 @@ class AppInitializerSyncProtocol(Protocol):
         exc_tb: TracebackType | None,
     ) -> None:
         """Exit context, shutting down app."""
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppInitializerAsyncProtocol(Protocol):
+class AsyncAppInitializerProtocol(Protocol):
     """
     Async app initializer protocol.
 
@@ -78,13 +89,13 @@ class AppInitializerAsyncProtocol(Protocol):
         """
         Initialize app and its dependencies asynchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     async def shutdown(self) -> None:
         """
         Shutdown app and cleanup dependencies asynchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     async def __aenter__(self) -> Self:
         """
@@ -93,7 +104,7 @@ class AppInitializerAsyncProtocol(Protocol):
         Returns:
             Self for context usage
         """
-        raise HandlerNotImplemented
+        ...
 
     async def __aexit__(
         self,
@@ -102,11 +113,11 @@ class AppInitializerAsyncProtocol(Protocol):
         exc_tb: TracebackType | None,
     ) -> None:
         """Exit async context, shutting down app."""
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppServicesAsyncProtocol(Protocol):
+class AsyncAppServicesProtocol(Protocol):
     """
     Async app services handler protocol.
 
@@ -117,17 +128,17 @@ class AppServicesAsyncProtocol(Protocol):
         """
         Initialize app service dependencies asynchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     async def shutdown_services(self) -> None:
         """
         Shutdown app service dependencies asynchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppServicesSyncProtocol(Protocol):
+class SyncAppServicesProtocol(Protocol):
     """
     Sync app services handler protocol.
 
@@ -138,31 +149,30 @@ class AppServicesSyncProtocol(Protocol):
         """
         Initialize app service dependencies synchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
     def shutdown_services(self) -> None:
         """
         Shutdown app service dependencies synchronously.
         """
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppStateSyncProtocol(Protocol):
+class SyncAppStateProtocol(Protocol):
     """Protocol defining synchronous service state management."""
 
     @property
-    def state(self) -> StateSyncProtocol:
+    def state(self) -> "SyncStateProtocol":
         """Check and return app's state service."""
-        raise HandlerNotImplemented
+        ...
 
     @property
-    def s(self) -> StateSyncProtocol:
+    def s(self) -> "SyncStateProtocol":
         """Short alias for state adapter."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def get(self, key: StateKey) -> StateValue:
+    def get(self, key: "StateKey") -> "StateValue":
         """
         Get state value at path.
 
@@ -175,10 +185,9 @@ class AppStateSyncProtocol(Protocol):
         Raises:
             StateError: If state access fails
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def set(self, key: StateKey, value: StateValue) -> None:
+    def set(self, key: "StateKey", value: "StateValue") -> None:
         """
         Set state value at path.
 
@@ -189,10 +198,9 @@ class AppStateSyncProtocol(Protocol):
         Raises:
             StateError: If state update fails
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def delete(self, key: StateKey) -> None:
+    def delete(self, key: "StateKey") -> None:
         """
         Delete state at path.
 
@@ -202,10 +210,9 @@ class AppStateSyncProtocol(Protocol):
         Raises:
             StateError: If state deletion fails
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def exists(self, key: StateKey) -> bool:
+    def exists(self, key: "StateKey") -> bool:
         """
         Check if state exists at path.
 
@@ -213,15 +220,14 @@ class AppStateSyncProtocol(Protocol):
             key: State path components
 
         Returns:
-            True if state exists, False otherwise
+            True if key exists, False otherwise
 
         Raises:
             StateError: If state check fails
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def list(self, *prefix: str) -> Iterator[StateKey]:
+    def list_keys(self, *prefix: str) -> Iterator["StateKey"]:
         """
         List all state keys under prefix.
 
@@ -234,10 +240,11 @@ class AppStateSyncProtocol(Protocol):
         Raises:
             StateError: If state listing fails
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def subscribe(self, key: StateKey, callback: StateSyncCallbackFn) -> SubscriptionSyncProtocol:
+    def subscribe(
+        self, key: "StateKey", callback: "SyncStateCallbackFn"
+    ) -> "SyncSubscriptionProtocol":
         """
         Subscribe to changes under key prefix.
 
@@ -251,10 +258,9 @@ class AppStateSyncProtocol(Protocol):
         Raises:
             ObserverError: If subscription fails
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def unsubscribe(self, subscription: SubscriptionSyncProtocol) -> None:
+    def unsubscribe(self, subscription: "SyncSubscriptionProtocol") -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -264,10 +270,9 @@ class AppStateSyncProtocol(Protocol):
         Raises:
             ObserverError: If unsubscribe fails
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def begin_transaction(self) -> TransactionSyncProtocol:
+    def begin_transaction(self) -> "SyncTransactionProtocol":
         """
         Begin transaction.
 
@@ -277,151 +282,141 @@ class AppStateSyncProtocol(Protocol):
         Raises:
             TransactionError: If transaction cannot be started
         """
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    def transaction(self) -> TransactionContextManagerSyncProtocol:
+    def transaction(self) -> "SyncTransactionContextManagerProtocol":
         """
         Get transaction context manager.
 
         Returns:
             Transaction context manager
         """
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppStateAsyncProtocol(Protocol):
+class AsyncAppStateProtocol(Protocol):
     """Protocol defining asynchronous service state management."""
 
     @property
-    def state(self) -> StateAsyncProtocol:
+    def state(self) -> "AsyncStateProtocol":
         """Check and return app's state service."""
-        raise HandlerNotImplemented
+        ...
 
     @property
-    def s(self) -> StateAsyncProtocol:
+    def s(self) -> "AsyncStateProtocol":
         """Short alias for state adapter."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def get(self, key: StateKey) -> StateValue:
+    async def get(self, key: "StateKey") -> "StateValue":
         """Get state value at path."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def set(self, key: StateKey, value: StateValue) -> None:
+    async def set(self, key: "StateKey", value: "StateValue") -> None:
         """Set state value at path."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def delete(self, key: StateKey) -> None:
+    async def delete(self, key: "StateKey") -> None:
         """Delete state at path."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def exists(self, key: StateKey) -> bool:
+    async def exists(self, key: "StateKey") -> bool:
         """Check if state exists at path."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def list(self, *prefix: str) -> AsyncIterator[StateKey]:
+    async def list_keys(self, *prefix: str) -> AsyncIterator["StateKey"]:
         """List all state keys under prefix."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
     async def subscribe(
-        self, key: StateKey, callback: StateAsyncCallbackFn
-    ) -> SubscriptionAsyncProtocol:
+        self, key: "StateKey", callback: "AsyncStateCallbackFn"
+    ) -> "AsyncSubscriptionProtocol":
         """Subscribe to changes under key prefix."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def unsubscribe(self, subscription: SubscriptionAsyncProtocol) -> None:
+    async def unsubscribe(self, subscription: "AsyncSubscriptionProtocol") -> None:
         """Unsubscribe from changes under key prefix."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def begin_transaction(self) -> TransactionAsyncProtocol:
+    async def begin_transaction(self) -> "AsyncTransactionProtocol":
         """Begin transaction."""
-        raise HandlerNotImplemented
+        ...
 
-    @abstractmethod
-    async def transaction(self) -> TransactionContextManagerAsyncProtocol:
+    async def transaction(self) -> "AsyncTransactionContextManagerProtocol":
         """Get transaction context manager."""
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppTasksSyncProtocol(Protocol):
+class SyncAppTasksProtocol(Protocol):
     """Protocol defining synchronous service operation capabilities."""
 
-    def execute(self, operation: OperationSyncProtocol) -> None:
+    def execute(self, operation: "SyncOperationProtocol") -> None:
         """Execute operation."""
-        raise HandlerNotImplemented
+        ...
 
     def function(
         self,
         func: Callable,
         *,
         name: str | None = None,
-    ) -> OperationSyncProtocol:
+    ) -> "SyncOperationProtocol":
         """Create function operation."""
-        raise HandlerNotImplemented
+        ...
 
     def sequence(
         self,
-        *operations: OperationSyncProtocol,
+        *operations: "SyncOperationProtocol",
         delay: float = 0,
         continue_on_error: bool = False,
-    ) -> OperationSyncProtocol:
+    ) -> "SyncOperationProtocol":
         """Create sequential operation."""
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppTasksAsyncProtocol(Protocol):
+class AsyncAppTasksProtocol(Protocol):
     """Protocol defining asynchronous service operation capabilities."""
 
-    async def execute(self, operation: OperationAsyncProtocol) -> None:
+    async def execute(self, operation: "AsyncOperationProtocol") -> None:
         """Execute operation."""
-        raise HandlerNotImplemented
+        ...
 
     def function(
         self,
         func: Callable,
         *,
         name: str | None = None,
-    ) -> OperationAsyncProtocol:
+    ) -> "AsyncOperationProtocol":
         """Create function operation."""
-        raise HandlerNotImplemented
+        ...
 
     def sequence(
         self,
-        *operations: OperationAsyncProtocol,
+        *operations: "AsyncOperationProtocol",
         delay: float = 0,
         continue_on_error: bool = False,
-    ) -> OperationAsyncProtocol:
+    ) -> "AsyncOperationProtocol":
         """Create sequential operation."""
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppModelAsyncProtocol(Protocol):
-    def initialize_model(self) -> None:
+class SyncAppModelProtocol(Protocol):
+    def _initialize_model_descriptors(self) -> None:
         """Initialize model."""
-        raise HandlerNotImplemented
+        ...
 
 
 @runtime_checkable
-class AppModelSyncProtocol(Protocol):
-    def initialize_model(self) -> None:
+class AsyncAppModelProtocol(Protocol):
+    def _initialize_model_descriptors(self) -> None:
         """Initialize model."""
-        raise HandlerNotImplemented
+        ...
 
 
-class AppCommonProtocol(
-    AppCommonBaseProtocol,
+class AppProtocol(
+    CommonAppProtocol,
     Protocol,
 ):
     """Common application protocol."""
@@ -429,13 +424,13 @@ class AppCommonProtocol(
     pass
 
 
-class AppSyncProtocol(
-    AppCommonProtocol,
-    AppInitializerSyncProtocol,
-    AppServicesSyncProtocol,
-    AppStateSyncProtocol,
-    AppTasksSyncProtocol,
-    AppModelSyncProtocol,
+class SyncAppProtocol(
+    AppProtocol,
+    SyncAppInitializerProtocol,
+    SyncAppServicesProtocol,
+    SyncAppStateProtocol,
+    SyncAppTasksProtocol,
+    SyncAppModelProtocol,
     Protocol,
 ):
     """Synchronous application protocol."""
@@ -443,13 +438,13 @@ class AppSyncProtocol(
     pass
 
 
-class AppAsyncProtocol(
-    AppCommonProtocol,
-    AppInitializerAsyncProtocol,
-    AppServicesAsyncProtocol,
-    AppStateAsyncProtocol,
-    AppTasksAsyncProtocol,
-    AppModelAsyncProtocol,
+class AsyncAppProtocol(
+    AppProtocol,
+    AsyncAppInitializerProtocol,
+    AsyncAppServicesProtocol,
+    AsyncAppStateProtocol,
+    AsyncAppTasksProtocol,
+    AsyncAppModelProtocol,
     Protocol,
 ):
     """Asynchronous application protocol."""

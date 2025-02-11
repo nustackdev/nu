@@ -1,33 +1,28 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from scriptable.app.protocols import AppAsyncProtocol, AppCommonProtocol, AppSyncProtocol
+from scriptable.app.protocols import AppProtocol, AsyncAppProtocol, SyncAppProtocol
 
-from .common import AppCommonBase
+from .common import AppCommon
 
 if TYPE_CHECKING:
     from scriptable.service import AsyncService, SyncService
 
+__all__ = [
+    "SyncApp",
+    "AsyncApp",
+    "App",
+]
 
-class AppBase(AppCommonBase, AppCommonProtocol):
+
+class App(AppCommon, AppProtocol):
     pass
 
 
-class AppSyncBase(AppBase, AppSyncProtocol):
-    def __init__(self):
-        super().__init__()
-
-        self._services: dict[str, "SyncService"] = {}
+class SyncApp(App, SyncAppProtocol):
+    _services: dict[str, "SyncService"]
 
 
-class AppAsyncBase(AppBase, AppAsyncProtocol):
-    def __init__(self):
-        super().__init__()
-
-        self._services: dict[str, "AsyncService"] = {}
-
-
-__all__ = [
-    "AppAsyncBase",
-    "AppSyncBase",
-    "AppBase",
-]
+class AsyncApp(App, AsyncAppProtocol):
+    _services: dict[str, "AsyncService"]

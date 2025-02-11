@@ -1,22 +1,19 @@
 """
-Service base class providing dependency injection, lifecycle management,
-and component-based architecture.
+Service base class providing dependency injection and component-based architecture.
 
 This module implements the core service functionality with:
-- Dependency injection and lifecycle (from Memory)
+- Dependency injection
 - Component-based composition
-- State and operation platforms
-- Extension points
 """
 
 from __future__ import annotations
 
-from scriptable.service.base import ServiceAsyncBase
+from scriptable.service.base import ServiceAsync
 
 from .base import ServiceCommonComposer
 
 
-class ServiceComposer(ServiceCommonComposer, ServiceAsyncBase):
+class ServiceComposer(ServiceCommonComposer, ServiceAsync):
     """
     Service mixin combining dependency injection and component architecture.
 
@@ -24,19 +21,8 @@ class ServiceComposer(ServiceCommonComposer, ServiceAsyncBase):
     - Declarative dependency specification via Attach
 
     Example:
-        class DataService(
-            Service(
-                as_state(RedisStorage),
-                as_platform(AsyncPlatform)
-            )
-        ):
-            storage = ServiceSpec(
-                protocol=StorageProtocol,
-                default_factory=DiskStorage,
-                spec_key="storage_spec",
-            )
+        class DataService(AsyncService):
+            storage = Attach(Storage)
     """
 
-    async def pre_initialize(self):
-        await super().pre_initialize()
-        self._init_attach()
+    pass

@@ -6,9 +6,16 @@ if TYPE_CHECKING:
     from scriptable.service import Service
 
 
-class AppCommonBase:
+__all__ = [
+    "AppCommon",
+]
+
+
+class AppCommon:
+    _services: dict[str, "Service"]
+
     def __init__(self):
-        self._services: dict[str, "Service"] = {}
+        self._services = {}
 
     @property
     def key(self) -> str:
@@ -17,8 +24,3 @@ class AppCommonBase:
     @property
     def readable_name(self) -> str:
         return f"{self.__class__.__name__}"
-
-
-__all__ = [
-    "AppCommonBase",
-]

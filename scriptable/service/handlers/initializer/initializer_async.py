@@ -5,7 +5,7 @@ from inspect import iscoroutinefunction
 from types import TracebackType
 from typing import Self, cast
 
-from scriptable.service.base import ServiceAsyncBase, ServiceState
+from scriptable.service.base import ServiceAsync, ServiceState
 from scriptable.service.protocols import ServiceAsyncProtocol, ServiceSyncProtocol
 
 from .base import ServiceCommonInitializer
@@ -13,7 +13,7 @@ from .exceptions import InitializationError, ShutdownError
 from .logger import logger
 
 
-class ServiceInitializer(ServiceCommonInitializer, ServiceAsyncBase):
+class ServiceInitializer(ServiceCommonInitializer, ServiceAsync):
     async def initialize(self) -> None:
         """
         Initialize service and its dependencies asynchronously.
@@ -52,8 +52,8 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceAsyncBase):
             try:
                 self._registry.set_service_state(self, ServiceState.INITIALIZING)
 
-                # Initialize dependencies first
-                await self._init_dependencies()
+                # Do actual initialization
+                await self._init_impl()
 
                 # Do service-specific setup
                 await self.setup()
@@ -112,8 +112,8 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceAsyncBase):
                 # Perform service-specific cleanup first
                 await self.cleanup()
 
-                # Shutdown dependencies
-                await self._shutdown_dependencies()
+                # Do actual shutdown
+                await self._shutdown_impl()
 
                 self._registry.set_service_state(self, ServiceState.SHUTDOWN)
 
@@ -129,6 +129,19 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceAsyncBase):
             except Exception as e:
                 logger.error(f"Failed to post-shutdown '{self.readable_name}': {str(e)}")
                 raise ShutdownError(f"Failed to post-shutdown '{self.readable_name}'") from e
+
+    async def _init_impl(self) -> None:
+        # Initializations realted to composer mixin
+        self._initialize_attach_descriptors()
+
+        # Initialize dependencies
+        await self._init_dependencies()
+
+    async def _shutdown_impl(self) -> None:
+        # Shutdown dependencies
+        await self._shutdown_dependencies()
+
+    # --- Helpers --- #
 
     async def _init_dependencies(self) -> None:
         """
@@ -218,7 +231,7 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceAsyncBase):
         """Exit async context, shutting down service."""
         await self.shutdown()
 
-    # --- Abstract Methods --- #
+    # --- Lifecycle Methods --- #
 
     async def setup(self) -> None:
         """

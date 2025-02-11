@@ -4,10 +4,10 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from scriptable.app.base import AppAsyncBase
+    from scriptable.app.base import AsyncApp
 
 
-class Operation(ABC):
+class BaseOperation(ABC):
     """Base class for all chain operations.
 
     All chain operations should inherit from this class and implement
@@ -44,7 +44,7 @@ class Operation(ABC):
     """
 
     @abstractmethod
-    async def execute(self, app: "AppAsyncBase") -> None:
+    async def execute(self, app: "AsyncApp") -> None:
         """Execute the operation.
 
         This method should:

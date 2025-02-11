@@ -1,5 +1,5 @@
-from scriptable.app.base import AppBase
+from scriptable.app.base import App
 
 
-class AppCommonModel(AppBase):
+class AppCommonModel(App):
     pass

@@ -1,4 +1,11 @@
+from __future__ import annotations
+
 from scriptable.app.exceptions import AppError
+
+__all__ = [
+    "InitializationError",
+    "ShutdownError",
+]
 
 
 class InitializationError(AppError):

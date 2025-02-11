@@ -34,7 +34,7 @@ from .logger import logger
 from .node import DependencyNode
 
 if TYPE_CHECKING:
-    from scriptable.service.base import ServiceKey, ServiceType, Spec
+    from scriptable.service.base import Service, ServiceKey, Spec
     from scriptable.service.lib.service_registry import ServiceRegistry
 
 
@@ -85,7 +85,7 @@ class DependencyManager:
         self._lock = Lock()
         logger.debug("Initialized dependency manager")
 
-    def register_service(self, service: "ServiceType", is_dependency: bool = False) -> None:
+    def register_service(self, service: "Service", is_dependency: bool = False) -> None:
         """
         Register service with proper context tracking.
 
@@ -105,10 +105,10 @@ class DependencyManager:
 
     def resolve_dependency(
         self,
-        parent: "ServiceType",
+        parent: "Service",
         name: str,
         spec: Spec,
-    ) -> "ServiceType":
+    ) -> "Service":
         """
         Resolve dependency relationship, creating service if needed.
 
@@ -152,9 +152,9 @@ class DependencyManager:
 
     def add_relationship(
         self,
-        parent: "ServiceType",
+        parent: "Service",
         name: str,
-        child: "ServiceType",
+        child: "Service",
     ) -> None:
         """
         Record new dependency relationship.
@@ -177,7 +177,7 @@ class DependencyManager:
             f"Added relationship: '{parent.readable_name}.{name}' -> '{child.readable_name}'"
         )
 
-    def get_dependencies(self, service: "ServiceType") -> dict[str, "ServiceType"]:
+    def get_dependencies(self, service: "Service") -> dict[str, "Service"]:
         """
         Get all dependencies of a service.
 
@@ -192,7 +192,7 @@ class DependencyManager:
         """
         return dict(self._get_node(service).dependencies)
 
-    def get_dependents(self, service: "ServiceType") -> set["ServiceType"]:
+    def get_dependents(self, service: "Service") -> set["Service"]:
         """
         Get all services depending on given service.
 
@@ -207,7 +207,7 @@ class DependencyManager:
         """
         return set(self._get_node(service).dependents)
 
-    def detach_relationship(self, parent: "ServiceType", child: "ServiceType") -> None:
+    def detach_relationship(self, parent: "Service", child: "Service") -> None:
         """
         Register a dateched parent (dependent) service.
 
@@ -218,7 +218,7 @@ class DependencyManager:
         child_node = self._get_node(child)
         child_node.detach_dependent(parent.key)
 
-    def can_auto_shutdown(self, service: "ServiceType") -> bool:
+    def can_auto_shutdown(self, service: "Service") -> bool:
         """
         Determine if service can be auto shut down (cascade shutdown triggered from dependent).
 
@@ -247,7 +247,7 @@ class DependencyManager:
 
         return True
 
-    def _validate_no_cycles(self, parent: "ServiceType", child: "ServiceType") -> None:
+    def _validate_no_cycles(self, parent: "Service", child: "Service") -> None:
         """
         Ensure no dependency cycles would be created.
 
@@ -257,7 +257,7 @@ class DependencyManager:
         visited: set[ServiceKey] = {parent.key}
         self._check_cycles(child, visited)
 
-    def _check_cycles(self, current: "ServiceType", visited: set[ServiceKey]) -> None:
+    def _check_cycles(self, current: "Service", visited: set[ServiceKey]) -> None:
         """Recursively check for dependency cycles."""
         if current.key in visited:
             path = " -> ".join(self._nodes[key].service.readable_name for key in visited)
@@ -270,7 +270,7 @@ class DependencyManager:
             self._check_cycles(dep, visited)
         visited.remove(current.key)
 
-    def _node_exists(self, service: "ServiceType") -> bool:
+    def _node_exists(self, service: "Service") -> bool:
         """
         Check if node exists for service.
 
@@ -282,7 +282,7 @@ class DependencyManager:
         """
         return service.key in self._nodes
 
-    def _get_node(self, service: "ServiceType") -> DependencyNode:
+    def _get_node(self, service: "Service") -> DependencyNode:
         """
         Get existing node.
 
@@ -300,7 +300,7 @@ class DependencyManager:
             raise DependencyError(f"Node not found for {service.readable_name}")
         return node
 
-    def _create_node(self, service: "ServiceType", is_dependency: bool = False) -> None:
+    def _create_node(self, service: "Service", is_dependency: bool = False) -> None:
         """
         Create a new service node with proper context.
 
