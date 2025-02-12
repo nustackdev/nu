@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, final
+from typing import TYPE_CHECKING, cast
 
 from scriptable.app.base import App
 
@@ -17,7 +17,6 @@ __all__ = [
 
 
 class AppCommonServices(App):
-    @final
     def add_service_dependency(
         self,
         name: str,
@@ -46,7 +45,6 @@ class AppCommonServices(App):
 
         return service
 
-    @final
     def get_service_dependency(self, name: str) -> "Service":
         """
         Get named dependency if it exists.

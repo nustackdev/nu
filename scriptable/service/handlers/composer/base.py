@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, final
+from typing import TYPE_CHECKING, cast
 
 from scriptable.service.base import Service
 
@@ -17,7 +17,6 @@ __all__ = [
 
 
 class ServiceCommonComposer(Service):
-    @final
     def add_dependency(
         self,
         name: str,
@@ -39,7 +38,6 @@ class ServiceCommonComposer(Service):
             logger.error(f"Failed to add dependency '{name}' to '{self.readable_name}': {str(e)}")
             raise
 
-    @final
     def get_dependency(self, name: str) -> "Service":
         """
         Get named dependency if it exists.
@@ -58,7 +56,6 @@ class ServiceCommonComposer(Service):
 
         return deps[name]
 
-    @final
     def get_dependencies(self) -> dict[str, "Service"]:
         """
         Get all service dependencies.
@@ -68,7 +65,6 @@ class ServiceCommonComposer(Service):
         """
         return self._dep_manager.get_dependencies(self)
 
-    @final
     def get_dependents(self) -> set["Service"]:
         """
         Get all dependent services.
@@ -78,7 +74,6 @@ class ServiceCommonComposer(Service):
         """
         return self._dep_manager.get_dependents(self)
 
-    @final
     def detach_dependent(self, dependent: "Service") -> None:
         """
         Remove a dependent service.
@@ -88,7 +83,6 @@ class ServiceCommonComposer(Service):
         """
         self._dep_manager.detach_relationship(dependent, self)
 
-    @final
     def _initialize_attach_descriptors(self):
         for name, value in self.__class__.__dict__.items():
             if not is_attach_descriptor(value):
