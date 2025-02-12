@@ -34,6 +34,10 @@ from .spec import Spec
 if TYPE_CHECKING:
     from .bases import Service
 
+__all__ = [
+    "ServiceMeta",
+]
+
 # Type variables for generic service and feature types
 ServiceT = TypeVar("ServiceT", bound="Service")
 FeatureT = TypeVar("FeatureT")

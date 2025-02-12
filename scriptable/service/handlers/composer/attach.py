@@ -5,6 +5,13 @@ from typing import Any, Type, TypeVar
 from scriptable.service.base import Service, Spec
 from scriptable.utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
+__all__ = [
+    "Attach",
+    "AttachDescriptor",
+    "is_attach_descriptor",
+]
+
+
 S = TypeVar("S", bound=Service)
 T = TypeVar("T")
 

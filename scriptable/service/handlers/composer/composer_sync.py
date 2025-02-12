@@ -8,12 +8,16 @@ This module implements the core service functionality with:
 
 from __future__ import annotations
 
-from scriptable.service.base import ServiceSync
+from scriptable.service.base import SyncService
 
 from .base import ServiceCommonComposer
 
+__all__ = [
+    "SyncServiceComposer",
+]
 
-class ServiceComposer(ServiceCommonComposer, ServiceSync):
+
+class SyncServiceComposer(ServiceCommonComposer, SyncService):
     """
     Service mixin combining dependency injection and component architecture.
 

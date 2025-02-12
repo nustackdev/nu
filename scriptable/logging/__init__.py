@@ -19,7 +19,7 @@ def init_logging() -> None:
         return
 
     # Configure sonny main logger
-    logger = logging.getLogger("sonnycore")
+    logger = logging.getLogger("scripter")
 
     # Add a NullHandler to prevent "No handlers could be found" warnings
     logger.addHandler(logging.NullHandler())

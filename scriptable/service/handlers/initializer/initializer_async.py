@@ -5,15 +5,19 @@ from inspect import iscoroutinefunction
 from types import TracebackType
 from typing import Self, cast
 
-from scriptable.service.base import ServiceAsync, ServiceState
-from scriptable.service.protocols import ServiceAsyncProtocol, ServiceSyncProtocol
+from scriptable.service.base import AsyncService, ServiceState
+from scriptable.service.protocols import AsyncServiceProtocol, SyncServiceProtocol
 
 from .base import ServiceCommonInitializer
 from .exceptions import InitializationError, ShutdownError
 from .logger import logger
 
+__all__ = [
+    "AsyncServiceInitializer",
+]
 
-class ServiceInitializer(ServiceCommonInitializer, ServiceAsync):
+
+class AsyncServiceInitializer(ServiceCommonInitializer, AsyncService):
     async def initialize(self) -> None:
         """
         Initialize service and its dependencies asynchronously.
@@ -163,11 +167,11 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceAsync):
             if dep.is_initialized:
                 continue
 
-            dep = cast(ServiceSyncProtocol, dep)
+            dep = cast(SyncServiceProtocol, dep)
 
             try:
                 if iscoroutinefunction(dep.initialize):
-                    dep = cast(ServiceAsyncProtocol, dep)
+                    dep = cast(AsyncServiceProtocol, dep)
                     await dep.initialize()
                 else:
                     dep.initialize()
@@ -197,11 +201,11 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceAsync):
             if not self._dep_manager.can_auto_shutdown(dep):
                 continue
 
-            dep = cast(ServiceSyncProtocol, dep)
+            dep = cast(SyncServiceProtocol, dep)
 
             try:
                 if iscoroutinefunction(dep.shutdown):
-                    dep = cast(ServiceAsyncProtocol, dep)
+                    dep = cast(AsyncServiceProtocol, dep)
                     await dep.shutdown()
                 else:
                     dep.shutdown()

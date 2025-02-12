@@ -26,6 +26,10 @@ if TYPE_CHECKING:
 
     from .types import ServiceKey
 
+__all__ = [
+    "ServiceCommon",
+]
+
 
 class ServiceCommon:
     """

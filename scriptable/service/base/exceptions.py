@@ -27,6 +27,12 @@ from __future__ import annotations
 
 from scriptable.service.exceptions import ServiceError
 
+__all__ = [
+    "CreationError",
+    "StateError",
+    "SpecError",
+]
+
 
 class CreationError(Exception):
     """

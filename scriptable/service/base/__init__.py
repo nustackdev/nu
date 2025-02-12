@@ -1,4 +1,6 @@
-from .bases import Service, ServiceAsync, ServiceSync
+from __future__ import annotations
+
+from .bases import AsyncService, Service, SyncService
 from .exceptions import CreationError, ServiceError, SpecError
 from .meta import ServiceMeta
 from .spec import Spec
@@ -7,8 +9,8 @@ from .types import ServiceKey
 
 __all__ = [
     "ServiceMeta",
-    "ServiceSync",
-    "ServiceAsync",
+    "SyncService",
+    "AsyncService",
     "Service",
     "Spec",
     "ServiceKey",

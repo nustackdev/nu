@@ -5,15 +5,19 @@ from threading import Lock
 from types import TracebackType
 from typing import Self, cast
 
-from scriptable.service.base import ServiceState, ServiceSync
-from scriptable.service.protocols import ServiceSyncProtocol
+from scriptable.service.base import ServiceState, SyncService
+from scriptable.service.protocols import SyncServiceProtocol
 
 from .base import ServiceCommonInitializer
 from .exceptions import InitializationError, ShutdownError
 from .logger import logger
 
+__all__ = [
+    "SyncServiceInitializer",
+]
 
-class ServiceInitializer(ServiceCommonInitializer, ServiceSync):
+
+class SyncServiceInitializer(ServiceCommonInitializer, SyncService):
     def initialize(self) -> None:
         """
         Initialize service and its dependencies asynchronously.
@@ -163,7 +167,7 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceSync):
             if dep.is_initialized:
                 continue
 
-            dep = cast(ServiceSyncProtocol, dep)
+            dep = cast(SyncServiceProtocol, dep)
 
             try:
                 if iscoroutinefunction(dep.initialize):
@@ -196,7 +200,7 @@ class ServiceInitializer(ServiceCommonInitializer, ServiceSync):
             if not self._dep_manager.can_auto_shutdown(dep):
                 continue
 
-            dep = cast(ServiceSyncProtocol, dep)
+            dep = cast(SyncServiceProtocol, dep)
 
             try:
                 if iscoroutinefunction(dep.shutdown):

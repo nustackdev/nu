@@ -26,6 +26,10 @@ from .types import ServiceKey
 if TYPE_CHECKING:
     from .bases import Service
 
+__all__ = [
+    "Spec",
+]
+
 
 class Spec(BaseModel):
     """

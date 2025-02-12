@@ -10,22 +10,9 @@ from __future__ import annotations
 
 from typing import NewType
 
-# if TYPE_CHECKING:
-#     from .bases import ServiceAsyncBase, ServiceBase, ServiceSyncBase
+__all__ = [
+    "ServiceKey",
+]
 
-# Core type definitions
 ServiceKey = NewType("ServiceKey", str)
 """Type for unique service instance identifiers."""
-
-# TODO: remove
-# ServiceType: TypeAlias = "ServiceSyncBase | ServiceAsyncBase | ServiceBase"
-# """
-# Type alias representing any service instance type.
-# ServiceSyncBase, ServiceAsyncBase, and ServiceCommonBase are all valid service types.
-# - ServiceSyncBase: Synchronous service instance
-# - ServiceAsyncBase: Asynchronous service instance
-# - ServiceBase: Base service instance
-# """
-
-
-__all__ = ["ServiceKey"]

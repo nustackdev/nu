@@ -10,6 +10,10 @@ from __future__ import annotations
 
 from enum import Enum, auto
 
+__all__ = [
+    "ServiceState",
+]
+
 
 class ServiceState(Enum):
     """

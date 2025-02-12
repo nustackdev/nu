@@ -1,26 +1,26 @@
 from __future__ import annotations
 
 from .base import ServiceMeta
-from .handlers.composer.composer_async import ServiceComposer as ServiceAsyncComposer
-from .handlers.composer.composer_sync import ServiceComposer as ServiceSyncComposer
-from .handlers.initializer.initializer_async import ServiceInitializer as ServiceAsyncInitializer
-from .handlers.initializer.initializer_sync import ServiceInitializer as ServiceSyncInitializer
+from .handlers.composer import AsyncServiceComposer, SyncServiceComposer
+from .handlers.initializer import AsyncServiceInitializer, SyncServiceInitializer
+
+__all__ = [
+    "AsyncService",
+    "SyncService",
+]
 
 
 class AsyncService(
-    ServiceAsyncComposer,
-    ServiceAsyncInitializer,
+    AsyncServiceComposer,
+    AsyncServiceInitializer,
     metaclass=ServiceMeta,
 ):
     pass
 
 
 class SyncService(
-    ServiceSyncComposer,
-    ServiceSyncInitializer,
+    SyncServiceComposer,
+    SyncServiceInitializer,
     metaclass=ServiceMeta,
 ):
     pass
-
-
-__all__ = ["AsyncService", "SyncService"]

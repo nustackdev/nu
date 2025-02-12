@@ -6,9 +6,19 @@ from typing import TYPE_CHECKING, Any, Protocol, Self, runtime_checkable
 if TYPE_CHECKING:
     from .base import Service, ServiceKey, ServiceState, Spec
 
+__all__ = [
+    "CommonServiceProtocol",
+    "SyncServiceInitializerProtocol",
+    "AsyncServiceInitializerProtocol",
+    "ServiceComposerProtocol",
+    "ServiceProtocol",
+    "AsyncServiceProtocol",
+    "SyncServiceProtocol",
+]
+
 
 @runtime_checkable
-class ServiceCommonProtocol(Protocol):
+class CommonServiceProtocol(Protocol):
     @classmethod
     def factory_name(cls) -> str: ...
 
@@ -22,7 +32,7 @@ class ServiceCommonProtocol(Protocol):
     def readable_name(self) -> str: ...
 
     @property
-    def key(self) -> ServiceKey: ...
+    def key(self) -> "ServiceKey": ...
 
     @property
     def service_state(self) -> "ServiceState": ...
@@ -44,7 +54,7 @@ class ServiceCommonProtocol(Protocol):
 
 
 @runtime_checkable
-class ServiceInitializerSyncProtocol(Protocol):
+class SyncServiceInitializerProtocol(Protocol):
     """
     Synchronous service initializer protocol.
 
@@ -146,7 +156,7 @@ class ServiceInitializerSyncProtocol(Protocol):
 
 
 @runtime_checkable
-class ServiceInitializerAsyncProtocol(Protocol):
+class AsyncServiceInitializerProtocol(Protocol):
     """
     Async service initializer protocol.
 
@@ -260,7 +270,7 @@ class ServiceComposerProtocol(Protocol):
     def add_dependency(
         self,
         name: str,
-        spec: Spec,
+        spec: "Spec",
     ) -> "Service":
         """
         Add service dependency.
@@ -322,7 +332,7 @@ class ServiceComposerProtocol(Protocol):
 
 @runtime_checkable
 class ServiceProtocol(
-    ServiceCommonProtocol,
+    CommonServiceProtocol,
     ServiceComposerProtocol,
     Protocol,
 ):
@@ -330,34 +340,30 @@ class ServiceProtocol(
 
 
 @runtime_checkable
-class ServiceAsyncProtocol(
+class AsyncServiceProtocol(
     ServiceProtocol,
-    ServiceInitializerAsyncProtocol,
+    AsyncServiceInitializerProtocol,
     Protocol,
 ):
     """
-    Service protocol.
+    Async service protocol.
 
-    This protocol defines the interface for services.
-
-    ATM, no methods are defined, this is a placeholder for future use.
+    This protocol defines the interface for async services.
     """
 
     pass
 
 
 @runtime_checkable
-class ServiceSyncProtocol(
+class SyncServiceProtocol(
     ServiceProtocol,
-    ServiceInitializerSyncProtocol,
+    SyncServiceInitializerProtocol,
     Protocol,
 ):
     """
     Sync service protocol.
 
-    This protocol defines the interface for services.
-
-    ATM, no methods are defined, this is a placeholder for future use.
+    This protocol defines the interface for sync services.
     """
 
     pass

@@ -14,9 +14,15 @@ Classes:
 
 from __future__ import annotations
 
-from scriptable.service.protocols import ServiceAsyncProtocol, ServiceProtocol, ServiceSyncProtocol
+from scriptable.service.protocols import AsyncServiceProtocol, ServiceProtocol, SyncServiceProtocol
 
 from .common import ServiceCommon
+
+__all__ = [
+    "AsyncService",
+    "SyncService",
+    "Service",
+]
 
 
 class Service(ServiceCommon, ServiceProtocol):
@@ -31,7 +37,7 @@ class Service(ServiceCommon, ServiceProtocol):
     pass
 
 
-class ServiceAsync(Service, ServiceAsyncProtocol):
+class AsyncService(Service, AsyncServiceProtocol):
     """
     Base class for asynchronous services.
 
@@ -47,7 +53,7 @@ class ServiceAsync(Service, ServiceAsyncProtocol):
     pass
 
 
-class ServiceSync(Service, ServiceSyncProtocol):
+class SyncService(Service, SyncServiceProtocol):
     """
     Base class for synchronous services.
 
@@ -61,10 +67,3 @@ class ServiceSync(Service, ServiceSyncProtocol):
     """
 
     pass
-
-
-__all__ = [
-    "ServiceAsync",
-    "ServiceSync",
-    "Service",
-]

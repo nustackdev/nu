@@ -3,6 +3,10 @@ from __future__ import annotations
 from scriptable.service.base import Service, ServiceState
 from scriptable.service.lib.service_registry import RegistryError
 
+__all__ = [
+    "ServiceCommonInitializer",
+]
+
 
 class ServiceCommonInitializer(Service):
     """

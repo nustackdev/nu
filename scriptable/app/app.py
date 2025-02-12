@@ -4,6 +4,11 @@ from .handlers.services import AsyncAppServices, SyncAppServices
 from .handlers.state import AsyncAppState, SyncAppState
 from .handlers.tasks import AsyncAppTasks, SyncAppTasks
 
+__all__ = [
+    "AsyncApp",
+    "SyncApp",
+]
+
 
 class AsyncApp(
     AsyncAppInitializer,
@@ -23,6 +28,3 @@ class SyncApp(
     SyncAppModel,
 ):
     pass
-
-
-__all__ = ["AsyncApp", "SyncApp"]

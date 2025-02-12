@@ -9,6 +9,10 @@ from .logger import logger
 if TYPE_CHECKING:
     from scriptable.service.base import Spec
 
+__all__ = [
+    "ServiceCommonComposer",
+]
+
 
 class ServiceCommonComposer(Service):
     @final

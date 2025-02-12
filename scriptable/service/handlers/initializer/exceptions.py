@@ -1,4 +1,11 @@
+from __future__ import annotations
+
 from scriptable.service.exceptions import ServiceError
+
+__all__ = [
+    "InitializationError",
+    "ShutdownError",
+]
 
 
 class InitializationError(ServiceError):
