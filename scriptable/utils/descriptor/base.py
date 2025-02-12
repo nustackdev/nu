@@ -14,6 +14,10 @@ from .types import (
     ValidationStrategy,
 )
 
+__all__ = [
+    "BaseDescriptor",
+]
+
 
 class BaseDescriptor(Generic[DescriptorT], ABC):
     """

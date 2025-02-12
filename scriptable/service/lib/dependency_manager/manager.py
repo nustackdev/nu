@@ -37,6 +37,10 @@ if TYPE_CHECKING:
     from scriptable.service.base import Service, ServiceKey, Spec
     from scriptable.service.lib.service_registry import ServiceRegistry
 
+__all__ = [
+    "DependencyManager",
+]
+
 
 class DependencyManager:
     """

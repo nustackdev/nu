@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
     from scriptable.service.base import Service
 
+__all__ = [
+    "ServiceRole",
+    "DependencyMap",
+    "DependentSet",
+]
 
-ServiceT = TypeVar("ServiceT", bound="Service")
 DependencyMap: TypeAlias = dict[str, "Service"]
 DependentSet: TypeAlias = set["Service"]
 

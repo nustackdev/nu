@@ -1,4 +1,12 @@
+from __future__ import annotations
+
 from scriptable.service.exceptions import ServiceError
+
+__all__ = [
+    "RegistryError",
+    "RegistryStateError",
+    "RegistryKeyError",
+]
 
 
 class RegistryError(ServiceError):

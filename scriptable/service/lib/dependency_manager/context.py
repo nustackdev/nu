@@ -4,6 +4,10 @@ from dataclasses import dataclass, field
 
 from .types import ServiceRole
 
+__all__ = [
+    "ServiceContext",
+]
+
 
 @dataclass
 class ServiceContext:

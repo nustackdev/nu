@@ -8,6 +8,10 @@ from .types import ServiceRole
 if TYPE_CHECKING:
     from scriptable.service.base import Service, ServiceKey
 
+__all__ = [
+    "DependencyNode",
+]
+
 
 class DependencyNode:
     """

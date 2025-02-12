@@ -51,6 +51,16 @@ Notes:
     - All descriptors must implement _validate_type() and _get_default()
 """
 
+from __future__ import annotations
+
 from .base import BaseDescriptor
 from .exceptions import TypeValidationError, ValueValidationError
 from .types import StorageStrategy, ValidationStrategy
+
+__all__ = [
+    "BaseDescriptor",
+    "TypeValidationError",
+    "ValueValidationError",
+    "StorageStrategy",
+    "ValidationStrategy",
+]

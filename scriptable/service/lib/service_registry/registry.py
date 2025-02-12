@@ -11,6 +11,10 @@ from .logger import logger
 if TYPE_CHECKING:
     from scriptable.service.base import Service, ServiceKey, Spec
 
+__all__ = [
+    "ServiceRegistry",
+]
+
 
 class ServiceRegistry:
     """

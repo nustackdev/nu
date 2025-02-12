@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .context import ServiceContext
 from .exceptions import CircularDependencyError, DependencyError, DependencyNotFoundError
 from .manager import DependencyManager
