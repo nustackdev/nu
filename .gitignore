@@ -162,6 +162,10 @@ cython_debug/
 .DS_Store
 
 playground/
+_playground/
+
+# Log files
+logs/
 
 # Data files
 .state/
