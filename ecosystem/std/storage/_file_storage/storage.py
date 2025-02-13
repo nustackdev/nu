@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 import aiofile
 import filelock
@@ -190,7 +190,7 @@ class FileStorage(
                 await self._load_data()  # Get latest data
                 return encoded_key in self._data
 
-    async def _list_keys_impl(self, prefix: FileStorageKey) -> AsyncIterator[FileStorageKey]:
+    async def _list_keys_impl(self, prefix: FileStorageKey) -> AsyncGenerator[FileStorageKey, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -310,7 +310,7 @@ class FileStorageTransaction(TransactionProtocol[FileStorageKey, FileStorageValu
         except StorageKeyError:
             return False
 
-    async def list_keys(self, prefix: FileStorageKey) -> AsyncIterator[FileStorageKey]:
+    async def list_keys(self, prefix: FileStorageKey) -> AsyncGenerator[FileStorageKey, None]:
         """List all keys under prefix within transaction."""
         self._check_valid()
 

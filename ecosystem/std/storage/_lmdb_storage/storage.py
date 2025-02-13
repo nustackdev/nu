@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from pathlib import Path
-from typing import AsyncIterator, TypeGuard
+from typing import AsyncGenerator, TypeGuard
 
 import lmdb
 from pydantic import Field, field_serializer
@@ -172,7 +172,7 @@ class LMDBStorage(
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 
-    async def _list_keys_impl(self, prefix: LMDBStorageKey) -> AsyncIterator[LMDBStorageKey]:
+    async def _list_keys_impl(self, prefix: LMDBStorageKey) -> AsyncGenerator[LMDBStorageKey, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -294,7 +294,7 @@ class LMDBStorageTransaction(TransactionProtocol[LMDBStorageKey, LMDBStorageValu
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 
-    async def list_keys(self, prefix: LMDBStorageKey) -> AsyncIterator[LMDBStorageKey]:
+    async def list_keys(self, prefix: LMDBStorageKey) -> AsyncGenerator[LMDBStorageKey, None]:
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
 

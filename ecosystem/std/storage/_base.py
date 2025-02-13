@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import AsyncIterator, Generic, TypeGuard, final
+from typing import AsyncGenerator, Generic, TypeGuard, final
 
 from pydantic import Field
 
@@ -159,15 +159,15 @@ class BaseStorage(
         return await self._exists_impl(key)
 
     @abstractmethod
-    async def _list_keys_impl(self, prefix: StorageKeyT) -> AsyncIterator[StorageKeyT]:
+    async def _list_keys_impl(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
         """Implementation-specific list_keys logic."""
         ...
 
     @final
-    async def list_keys(self, prefix: StorageKeyT) -> AsyncIterator[StorageKeyT]:
+    async def list_keys(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
         """List all keys under prefix."""
         self._ensure_connected()
-        async for key in self._list_keys_impl(prefix):  # type: ignore
+        async for key in self._list_keys_impl(prefix):
             yield key
 
     @abstractmethod

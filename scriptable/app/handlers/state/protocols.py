@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import AsyncIterator, Iterator, Protocol, runtime_checkable
+from typing import AsyncGenerator, Generator, Protocol
 
 from .types import AsyncStateCallbackFn, StateKey, StateValue, SyncStateCallbackFn
 
@@ -21,7 +21,6 @@ __all__ = [
 # --- Protocols for asynchronous state handling --- #
 
 
-@runtime_checkable
 class AsyncStateProtocol(Protocol):
     """Protocol for asynchronous state storage adapters."""
 
@@ -80,7 +79,7 @@ class AsyncStateProtocol(Protocol):
         """
         ...
 
-    async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
+    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
         """
         List all keys under prefix.
 
@@ -88,7 +87,7 @@ class AsyncStateProtocol(Protocol):
             prefix: Key prefix to list
 
         Returns:
-            AsyncIterator of matching state keys
+            AsyncGenerator of matching state keys
 
         Raises:
             StateError: If listing fails
@@ -147,7 +146,6 @@ class AsyncStateProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class AsyncSubscriptionProtocol(Protocol):
     """
     Represents an asynchronous subscription to a topic pattern.
@@ -168,7 +166,6 @@ class AsyncSubscriptionProtocol(Protocol):
     callback: AsyncStateCallbackFn
 
 
-@runtime_checkable
 class AsyncTransactionProtocol(Protocol):
     """Protocol defining the interface for asynchronous transactions."""
 
@@ -232,7 +229,7 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
+    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
         """
         List all keys under prefix within transaction context.
 
@@ -240,7 +237,7 @@ class AsyncTransactionProtocol(Protocol):
             prefix: Key prefix to list
 
         Returns:
-            AsyncIterator of matching keys
+            AsyncGenerator of matching keys
 
         Raises:
             TransactionError: If transaction is invalid or operation fails
@@ -268,7 +265,6 @@ class AsyncTransactionProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class AsyncTransactionContextManagerProtocol(Protocol):
     """Async context manager for storage transactions."""
 
@@ -328,7 +324,6 @@ class AsyncTransactionalHandlerProtocol(Protocol):
 # --- Protocols for synchronous state handling --- #
 
 
-@runtime_checkable
 class SyncStateProtocol(Protocol):
     """Protocol for synchronous state storage adapters."""
 
@@ -387,7 +382,7 @@ class SyncStateProtocol(Protocol):
         """
         ...
 
-    def list_keys(self, prefix: StateKey) -> Iterator[StateKey]:
+    def list_keys(self, prefix: StateKey) -> Generator[StateKey, None, None]:
         """
         List all keys under prefix.
 
@@ -395,7 +390,7 @@ class SyncStateProtocol(Protocol):
             prefix: Key prefix to list
 
         Returns:
-            Iterator of matching state keys
+            Generator of matching state keys
 
         Raises:
             StateError: If listing fails
@@ -452,7 +447,6 @@ class SyncStateProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class SyncSubscriptionProtocol(Protocol):
     """
     Represents a synchronous subscription to a topic pattern.
@@ -473,7 +467,6 @@ class SyncSubscriptionProtocol(Protocol):
     callback: SyncStateCallbackFn
 
 
-@runtime_checkable
 class SyncTransactionProtocol(Protocol):
     """Protocol defining the interface for synchronous transactions."""
 
@@ -537,7 +530,7 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def list_keys(self, prefix: StateKey) -> Iterator[StateKey]:
+    def list_keys(self, prefix: StateKey) -> Generator[StateKey, None, None]:
         """
         List all keys under prefix within transaction context.
 
@@ -545,7 +538,7 @@ class SyncTransactionProtocol(Protocol):
             prefix: Key prefix to list
 
         Returns:
-            Iterator of matching keys
+            Generator of matching keys
 
         Raises:
             TransactionError: If transaction is invalid or operation fails
@@ -573,7 +566,6 @@ class SyncTransactionProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class SyncTransactionContextManagerProtocol(Protocol):
     """Synchronous context manager for storage transactions."""
 

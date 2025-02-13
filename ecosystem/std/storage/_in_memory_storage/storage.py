@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 from ecosystem.std.codec import CodecProtocol
 from ecosystem.std.codec.passthrough import PassthroughCodec
@@ -118,7 +118,7 @@ class InMemoryStorage(
 
     async def _list_keys_impl(
         self, prefix: InMemoryStorageKey
-    ) -> AsyncIterator[InMemoryStorageKey]:
+    ) -> AsyncGenerator[InMemoryStorageKey]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -239,7 +239,9 @@ class InMemoryStorageTransaction(TransactionProtocol[InMemoryStorageKey, InMemor
         except StorageKeyError:
             return False
 
-    async def list_keys(self, prefix: InMemoryStorageKey) -> AsyncIterator[InMemoryStorageKey]:
+    async def list_keys(
+        self, prefix: InMemoryStorageKey
+    ) -> AsyncGenerator[InMemoryStorageKey, None]:
         """List all keys under prefix within transaction."""
         self._check_valid()
 

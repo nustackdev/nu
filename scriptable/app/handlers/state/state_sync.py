@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Generator
 
 from scriptable.app.base import SyncApp
 
@@ -67,7 +67,7 @@ class SyncAppState(AppCommonState, SyncApp):
         key = self.state_key + key
         return self.s.exists(key)
 
-    def list_keys(self, prefix: StateKey) -> Iterator[StateKey]:
+    def list_keys(self, prefix: StateKey) -> Generator[StateKey, None, None]:
         """List all state keys under prefix."""
         key = self.state_key + prefix
         for full_key in self.s.list_keys(key):

@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from types import TracebackType
-from typing import AsyncIterator, Protocol, runtime_checkable
+from typing import AsyncGenerator, Protocol
 
 from ecosystem.std.codec import CodecProtocol
 
 from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageValueT
 
 
-@runtime_checkable
 class StorageProtocol(
     Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
 ):
@@ -37,7 +35,6 @@ class StorageProtocol(
 
     codec: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
 
-    @abstractmethod
     async def connect(self) -> None:
         """
         Establish connection to storage backend.
@@ -52,7 +49,6 @@ class StorageProtocol(
         """
         ...
 
-    @abstractmethod
     async def disconnect(self) -> None:
         """
         Close connection to storage backend.
@@ -67,7 +63,6 @@ class StorageProtocol(
         """
         ...
 
-    @abstractmethod
     async def get(self, key: StorageKeyT) -> StorageValueT:
         """
         Retrieve value by key.
@@ -90,7 +85,6 @@ class StorageProtocol(
         """
         ...
 
-    @abstractmethod
     async def set(self, key: StorageKeyT, value: StorageValueT) -> None:
         """
         Set value for key.
@@ -111,7 +105,6 @@ class StorageProtocol(
         """
         ...
 
-    @abstractmethod
     async def delete(self, key: StorageKeyT) -> None:
         """
         Delete value by key.
@@ -130,7 +123,6 @@ class StorageProtocol(
         """
         ...
 
-    @abstractmethod
     async def exists(self, key: StorageKeyT) -> bool:
         """
         Check if key exists.
@@ -151,8 +143,7 @@ class StorageProtocol(
         """
         ...
 
-    @abstractmethod
-    async def list_keys(self, prefix: StorageKeyT) -> AsyncIterator[StorageKeyT]:
+    async def list_keys(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
         """
         List all keys under prefix.
 
@@ -165,7 +156,7 @@ class StorageProtocol(
             prefix: Key prefix to list
 
         Returns:
-            AsyncIterator of matching keys
+            AsyncGenerator of matching keys
 
         Raises:
             StorageConnectionError: If not connected
@@ -173,7 +164,6 @@ class StorageProtocol(
         """
         ...
 
-    @abstractmethod
     async def begin_transaction(self) -> TransactionProtocol[StorageKeyT, StorageValueT]:
         """
         Begin a new transaction.
@@ -208,11 +198,9 @@ class StorageProtocol(
         ...
 
 
-@runtime_checkable
 class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
     """Protocol defining the interface for transactions."""
 
-    @abstractmethod
     async def get(self, key: StorageKeyT) -> StorageValueT:
         """
         Get value within transaction context.
@@ -230,7 +218,6 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
         """
         ...
 
-    @abstractmethod
     async def set(self, key: StorageKeyT, value: StorageValueT) -> None:
         """
         Set value within transaction context.
@@ -245,7 +232,6 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
         """
         ...
 
-    @abstractmethod
     async def delete(self, key: StorageKeyT) -> None:
         """
         Delete value within transaction context.
@@ -259,7 +245,6 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
         """
         ...
 
-    @abstractmethod
     async def exists(self, key: StorageKeyT) -> bool:
         """
         Check if key exists within transaction context.
@@ -276,8 +261,7 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
         """
         ...
 
-    @abstractmethod
-    async def list_keys(self, prefix: StorageKeyT) -> AsyncIterator[StorageKeyT]:
+    async def list_keys(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
         """
         List all keys under prefix within transaction context.
 
@@ -285,7 +269,7 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
             prefix: Key prefix to list
 
         Returns:
-            AsyncIterator of matching keys
+            AsyncGenerator of matching keys
 
         Raises:
             TransactionError: If transaction is invalid or operation fails
@@ -293,7 +277,6 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
         """
         ...
 
-    @abstractmethod
     async def commit(self) -> None:
         """
         Commit all changes in the transaction.
@@ -304,7 +287,6 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
         """
         ...
 
-    @abstractmethod
     async def rollback(self) -> None:
         """
         Roll back all changes in the transaction.
@@ -315,7 +297,6 @@ class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
         ...
 
 
-@runtime_checkable
 class TransactionContextManagerProtocol(Protocol[StorageKeyT, StorageValueT]):
     """Async context manager for storage transactions."""
 
@@ -363,12 +344,10 @@ class TransactionContextManagerProtocol(Protocol[StorageKeyT, StorageValueT]):
 class TransactionalHandlerProtocol(Protocol[StorageKeyT, StorageValueT]):
     """Protocol defining the interface for transactionable storage."""
 
-    @abstractmethod
     async def begin_transaction(self) -> TransactionProtocol[StorageKeyT, StorageValueT]:
         """Begin a new transaction."""
         ...
 
-    @abstractmethod
     async def transaction(self) -> TransactionContextManagerProtocol[StorageKeyT, StorageValueT]:
         """Get a typed transaction context manager."""
         ...

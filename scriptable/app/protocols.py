@@ -1,15 +1,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import (
-    TYPE_CHECKING,
-    AsyncIterator,
-    Callable,
-    Iterator,
-    Protocol,
-    Self,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator, Protocol, Self
 
 if TYPE_CHECKING:
     from .handlers.state.protocols import (
@@ -48,14 +40,12 @@ __all__ = [
 ]
 
 
-@runtime_checkable
 class CommonAppProtocol(Protocol):
     """Base protocol for common application functionality."""
 
     pass
 
 
-@runtime_checkable
 class SyncAppInitializerProtocol(Protocol):
     """
     Synchronous app initializer protocol.
@@ -94,7 +84,6 @@ class SyncAppInitializerProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class AsyncAppInitializerProtocol(Protocol):
     """
     Async app initializer protocol.
@@ -133,7 +122,6 @@ class AsyncAppInitializerProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class AsyncAppServicesProtocol(Protocol):
     """
     Async app services handler protocol.
@@ -154,7 +142,6 @@ class AsyncAppServicesProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class SyncAppServicesProtocol(Protocol):
     """
     Sync app services handler protocol.
@@ -175,7 +162,6 @@ class SyncAppServicesProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class SyncAppStateProtocol(Protocol):
     """Protocol defining synchronous service state management."""
 
@@ -244,7 +230,7 @@ class SyncAppStateProtocol(Protocol):
         """
         ...
 
-    def list_keys(self, *prefix: str) -> Iterator["StateKey"]:
+    def list_keys(self, *prefix: str) -> Generator["StateKey", None, None]:
         """
         List all state keys under prefix.
 
@@ -252,7 +238,7 @@ class SyncAppStateProtocol(Protocol):
             *prefix: State path prefix components
 
         Returns:
-            Iterator of matching state keys
+            Generator of matching state keys
 
         Raises:
             StateError: If state listing fails
@@ -311,7 +297,6 @@ class SyncAppStateProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class AsyncAppStateProtocol(Protocol):
     """Protocol defining asynchronous service state management."""
 
@@ -341,7 +326,7 @@ class AsyncAppStateProtocol(Protocol):
         """Check if state exists at path."""
         ...
 
-    async def list_keys(self, *prefix: str) -> AsyncIterator["StateKey"]:
+    async def list_keys(self, *prefix: str) -> AsyncGenerator["StateKey", None]:
         """List all state keys under prefix."""
         ...
 
@@ -364,7 +349,6 @@ class AsyncAppStateProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class SyncAppTasksProtocol(Protocol):
     """Protocol defining synchronous service operation capabilities."""
 
@@ -391,7 +375,6 @@ class SyncAppTasksProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class AsyncAppTasksProtocol(Protocol):
     """Protocol defining asynchronous service operation capabilities."""
 
@@ -418,14 +401,12 @@ class AsyncAppTasksProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class SyncAppModelProtocol(Protocol):
     def _initialize_model_descriptors(self) -> None:
         """Initialize model."""
         ...
 
 
-@runtime_checkable
 class AsyncAppModelProtocol(Protocol):
     def _initialize_model_descriptors(self) -> None:
         """Initialize model."""

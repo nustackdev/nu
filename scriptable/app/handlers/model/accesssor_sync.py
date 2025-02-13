@@ -4,7 +4,7 @@ Value accessor implementation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, Iterator, TypeVar, cast
+from typing import TYPE_CHECKING, Generator, Generic, TypeVar, cast
 
 from scriptable.app.handlers.state.types import StateKey, StateValue
 
@@ -114,7 +114,7 @@ class SyncModelValue(Generic[T]):
         """
         return self._context.exists(self._make_key())
 
-    def list_keys(self) -> Iterator[StateKey]:
+    def list_keys(self) -> Generator[StateKey, None, None]:
         """List all state keys under prefix."""
         for full_key in self._context.list_keys(self._make_key()):
             # Strip app prefix from returned keys

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AsyncIterator, Iterator, Protocol
+from typing import TYPE_CHECKING, AsyncGenerator, Generator, Protocol
 
 if TYPE_CHECKING:
     from scriptable.app.handlers.state import (
@@ -77,7 +77,7 @@ class SyncAccessorContextProtocol(Protocol):
         """
         ...
 
-    def list_keys(self, prefix: "StateKey") -> Iterator["StateKey"]:
+    def list_keys(self, prefix: "StateKey") -> Generator["StateKey", None, None]:
         """
         List all keys under prefix.
 
@@ -85,7 +85,7 @@ class SyncAccessorContextProtocol(Protocol):
             prefix: Key prefix to list under
 
         Returns:
-            AsyncIterator yielding matching keys
+            Generator yielding matching keys
 
         Raises:
             StorageError: If listing fails
@@ -181,7 +181,7 @@ class AsyncAccessorContextProtocol(Protocol):
         """
         ...
 
-    async def list_keys(self, prefix: "StateKey") -> AsyncIterator["StateKey"]:
+    async def list_keys(self, prefix: "StateKey") -> AsyncGenerator["StateKey", None]:
         """
         List all keys under prefix.
 
@@ -189,7 +189,7 @@ class AsyncAccessorContextProtocol(Protocol):
             prefix: Key prefix to list under
 
         Returns:
-            AsyncIterator yielding matching keys
+            AsyncGenerator yielding matching keys
 
         Raises:
             StorageError: If listing fails

@@ -1,5 +1,4 @@
-from abc import abstractmethod
-from typing import Any, AsyncIterator, Protocol, runtime_checkable
+from typing import Any, AsyncGenerator, Protocol
 
 from ecosystem.std.observer import ObserverProtocol, SubscriptionProtocol
 from ecosystem.std.storage import (
@@ -11,7 +10,6 @@ from ecosystem.std.storage import (
 from ._types import StateCallbackFn, StateKey, StateValue
 
 
-@runtime_checkable
 class StateProtocol(Protocol):
     """
     Provides a unified interface for different data organization strategies
@@ -32,7 +30,6 @@ class StateProtocol(Protocol):
     storage: StorageProtocol[StateKey, StateValue, Any, Any]
     observer: ObserverProtocol[StateKey, Any]
 
-    @abstractmethod
     async def get(self, key: StateKey) -> StateValue:
         """
         Get value at key.
@@ -49,7 +46,6 @@ class StateProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def set(self, key: StateKey, value: StateValue) -> None:
         """
         Set value at key.
@@ -63,7 +59,6 @@ class StateProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def delete(self, key: StateKey) -> None:
         """
         Delete value at key.
@@ -77,7 +72,6 @@ class StateProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def exists(self, key: StateKey) -> bool:
         """
         Check if key exists.
@@ -93,8 +87,7 @@ class StateProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
-    async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
+    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
         """
         List all keys under prefix.
 
@@ -102,14 +95,13 @@ class StateProtocol(Protocol):
             prefix: Optional key prefix to filter results
 
         Returns:
-            AsyncIterator of matching keys
+            AsyncGenerator of matching keys
 
         Raises:
             StorageOperationError: If listing fails
         """
         ...
 
-    @abstractmethod
     async def subscribe(
         self, key: StateKey, callback: StateCallbackFn
     ) -> SubscriptionProtocol[StateKey]:
@@ -128,7 +120,6 @@ class StateProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def unsubscribe(self, subscription: SubscriptionProtocol[StateKey]) -> None:
         """
         Unsubscribe from changes under key prefix.
@@ -141,7 +132,6 @@ class StateProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def begin_transaction(self) -> TransactionProtocol[StateKey, StateValue]:
         """
         Begin transaction.
@@ -154,7 +144,6 @@ class StateProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     async def transaction(self) -> TransactionContextManagerProtocol[StateKey, StateValue]:
         """
         Get transaction context manager.

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, Self
 
 if TYPE_CHECKING:
     from .base import Service, ServiceKey, ServiceState, Spec
@@ -17,7 +17,6 @@ __all__ = [
 ]
 
 
-@runtime_checkable
 class CommonServiceProtocol(Protocol):
     @classmethod
     def factory_name(cls) -> str: ...
@@ -53,7 +52,6 @@ class CommonServiceProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class SyncServiceInitializerProtocol(Protocol):
     """
     Synchronous service initializer protocol.
@@ -155,7 +153,6 @@ class SyncServiceInitializerProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class AsyncServiceInitializerProtocol(Protocol):
     """
     Async service initializer protocol.
@@ -257,7 +254,6 @@ class AsyncServiceInitializerProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class ServiceComposerProtocol(Protocol):
     """
     Async service composer protocol.
@@ -330,7 +326,6 @@ class ServiceComposerProtocol(Protocol):
         ...
 
 
-@runtime_checkable
 class ServiceProtocol(
     CommonServiceProtocol,
     ServiceComposerProtocol,
@@ -339,7 +334,6 @@ class ServiceProtocol(
     pass
 
 
-@runtime_checkable
 class AsyncServiceProtocol(
     ServiceProtocol,
     AsyncServiceInitializerProtocol,
@@ -354,7 +348,6 @@ class AsyncServiceProtocol(
     pass
 
 
-@runtime_checkable
 class SyncServiceProtocol(
     ServiceProtocol,
     SyncServiceInitializerProtocol,

@@ -4,7 +4,7 @@ Value accessor implementation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AsyncIterator, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, AsyncGenerator, Generic, TypeVar, cast
 
 from scriptable.app.handlers.state.types import StateKey, StateValue
 
@@ -114,9 +114,9 @@ class AsyncModelValue(Generic[T]):
         """
         return await self._context.exists(self._make_key())
 
-    async def list_keys(self) -> AsyncIterator[StateKey]:
+    async def list_keys(self) -> AsyncGenerator[StateKey, None]:
         """List all state keys under prefix."""
-        async for full_key in await self._context.list_keys(self._make_key()):
+        async for full_key in self._context.list_keys(self._make_key()):
             # Strip app prefix from returned keys
             yield full_key[len(self._make_key()) :]
 

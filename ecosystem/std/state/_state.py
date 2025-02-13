@@ -11,7 +11,7 @@ This module provides a complete state management solution with:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncGenerator
 
 from pydantic import Field
 
@@ -121,7 +121,7 @@ class State(AsyncService):
         """
         return await self.storage.exists(key)
 
-    async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
+    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
         """
         List all keys under prefix.
 
@@ -129,12 +129,12 @@ class State(AsyncService):
             prefix: Key prefix to filter results
 
         Returns:
-            AsyncIterator of matching keys
+            AsyncGenerator of matching keys
 
         Raises:
             StorageOperationError: If listing fails
         """
-        async for key in self.storage.list_keys(prefix):  # type: ignore
+        async for key in self.storage.list_keys(prefix):
             yield key
 
     async def subscribe(
@@ -229,9 +229,9 @@ class StateTransaction(TransactionProtocol[StateKey, StateValue]):
         """Check key existence within transaction"""
         return await self.storage_txn.exists(key)
 
-    async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
+    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
         """List keys with prefix within transaction"""
-        async for key in await self.storage_txn.list_keys(prefix):
+        async for key in self.storage_txn.list_keys(prefix):
             yield key
 
     async def commit(self) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 from scriptable.app.base import AsyncApp
 
@@ -76,10 +76,11 @@ class AsyncAppState(AppCommonState, AsyncApp):
         key = self.state_key + key
         return await self.s.exists(key)
 
-    async def list_keys(self, prefix: StateKey) -> AsyncIterator[StateKey]:
+    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
         """List all state keys under prefix."""
         key = self.state_key + prefix
-        async for full_key in await self.s.list_keys(key):
+
+        async for full_key in self.s.list_keys(key):
             # Strip app prefix from returned keys
             yield full_key[len(self.state_key) :]
 

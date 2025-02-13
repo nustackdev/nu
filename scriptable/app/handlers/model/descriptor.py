@@ -7,12 +7,13 @@ interface while leveraging the existing descriptor infrastructure.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Type, TypeVar, overload
 
-from scriptable.app.handlers.state.types import StateValue
 from scriptable.utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
 if TYPE_CHECKING:
+    from scriptable.app.handlers.state import AsyncStateProtocol, StateValue, SyncStateProtocol
+
     from .accesssor_async import AsyncModelValue
     from .accesssor_sync import SyncModelValue
 
@@ -21,7 +22,7 @@ __all__ = [
     "UseState",
 ]
 
-StateValueT = TypeVar("StateValueT", bound=StateValue)
+StateValueT = TypeVar("StateValueT", bound="StateValue")
 
 
 class StateDescriptor(BaseDescriptor[StateValueT]):
@@ -34,6 +35,7 @@ class StateDescriptor(BaseDescriptor[StateValueT]):
 
     def __init__(
         self,
+        state: "Type[AsyncStateProtocol | SyncStateProtocol]",
         type: Type[StateValueT],
     ) -> None:
         super().__init__(
@@ -41,18 +43,34 @@ class StateDescriptor(BaseDescriptor[StateValueT]):
             validation_strategy=ValidationStrategy.STRICT,
             allow_none=True,
         )
+        self._state = state
         self._type = type
 
     def _validate_type(self, value: Any) -> bool:
         """Validate value matches descriptor type."""
         return True  # isinstance(value, self._metadata.type)
 
-    def _get_default(self) -> Optional[StateValueT]:
+    def _get_default(self) -> StateValueT | None:
         """Get default value if any."""
         return None
 
 
+@overload
 def UseState(
+    state: "AsyncStateProtocol",
+    type: Type[StateValueT],
+) -> "AsyncModelValue[StateValueT]": ...
+
+
+# @overload
+# def UseState(
+#     state: "SyncStateProtocol",
+#     type: Type[StateValueT],
+# ) -> "SyncModelValue[StateValueT]": ...
+
+
+def UseState(
+    state: "AsyncStateProtocol | SyncStateProtocol",
     type: Type[StateValueT],
 ) -> "AsyncModelValue[StateValueT] | SyncModelValue[StateValueT]":
     """
@@ -65,4 +83,4 @@ def UseState(
     Returns:
         Typed item descriptor
     """
-    return StateDescriptor(type=type)  # type: ignore
+    return StateDescriptor(state=state, type=type)  # type: ignore
