@@ -162,8 +162,19 @@ class AsyncSubscriptionProtocol(Protocol):
         StateKey: Topic type (tuple of strings)
     """
 
-    topic_pattern: StateKey
-    callback: AsyncStateCallbackFn
+    @property
+    def topic_pattern(self) -> StateKey:
+        """
+        Get topic pattern for subscription.
+        """
+        ...
+
+    @property
+    def callback(self) -> AsyncStateCallbackFn:
+        """
+        Get callback for subscription.
+        """
+        ...
 
 
 class AsyncTransactionProtocol(Protocol):
@@ -268,15 +279,6 @@ class AsyncTransactionProtocol(Protocol):
 class AsyncTransactionContextManagerProtocol(Protocol):
     """Async context manager for storage transactions."""
 
-    def __init__(self, handler: AsyncTransactionalHandlerProtocol):
-        """
-        Initialize transaction context manager.
-
-        Args:
-            storage: Storage instance to manage transactions for
-        """
-        ...
-
     async def __aenter__(self) -> AsyncTransactionProtocol:
         """
         Start a new transaction.
@@ -294,7 +296,7 @@ class AsyncTransactionContextManagerProtocol(Protocol):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
-    ) -> None:
+    ) -> bool:
         """
         Commit or rollback transaction based on context exit.
 
@@ -304,7 +306,7 @@ class AsyncTransactionContextManagerProtocol(Protocol):
             exc_tb (Optional[TracebackType]): Exception traceback if an error occurred.
 
         Returns:
-            None
+            bool
         """
         ...
 

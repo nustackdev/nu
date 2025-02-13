@@ -11,6 +11,7 @@ This module provides a complete state management solution with:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import TracebackType
 from typing import Any, AsyncGenerator
 
 from pydantic import Field
@@ -216,7 +217,7 @@ class State(AsyncService):
                 # Auto-rollbacks with no notifications on failure
             ```
         """
-        return StateTransactionContextManager(state=self)
+        return StateTransactionContextManager(self)
 
 
 @dataclass
@@ -273,15 +274,20 @@ class StateTransactionContextManager(TransactionContextManagerProtocol[StateKey,
     Context manager for State transactions that handles both storage and notifications.
     """
 
-    state: State  # Reference to parent State instance
+    _state: State  # Reference to parent State instance
     _transaction: StateTransaction | None = None  # Store the active transaction
 
     async def __aenter__(self) -> StateTransaction:
         """Begin new transaction with combined storage and notification handling"""
-        self._transaction = await self.state.begin_transaction()
+        self._transaction = await self._state.begin_transaction()
         return self._transaction
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
         """
         Handle transaction completion:
         - On success (no exception): commit changes and send notifications

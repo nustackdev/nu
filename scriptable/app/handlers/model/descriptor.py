@@ -62,11 +62,11 @@ def UseState(
 ) -> "AsyncModelValue[StateValueT]": ...
 
 
-# @overload
-# def UseState(
-#     state: "SyncStateProtocol",
-#     type: Type[StateValueT],
-# ) -> "SyncModelValue[StateValueT]": ...
+@overload
+def UseState(
+    state: "SyncStateProtocol",
+    type: Type[StateValueT],
+) -> "SyncModelValue[StateValueT]": ...
 
 
 def UseState(
