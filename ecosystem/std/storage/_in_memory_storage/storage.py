@@ -5,7 +5,7 @@ from typing import AsyncGenerator
 
 from ecosystem.std.codec import CodecProtocol
 from ecosystem.std.codec.passthrough import PassthroughCodec
-from scriptable.service import Attach
+from scriptable.service import AsyncService, Attach
 
 from .._base import BaseStorage, BaseStorageSpec
 from .._exceptions import (
@@ -36,7 +36,8 @@ class InMemoryStorage(
         InMemoryStorageValue,
         InMemoryStorageEncodedKey,
         InMemoryStorageEncodedValue,
-    ]
+    ],
+    AsyncService,
 ):
     """
     Simple file-based storage implementation with transaction support.
@@ -52,22 +53,22 @@ class InMemoryStorage(
 
     def __init__(self, spec: BaseStorageSpec) -> None:
         """Initialize empty storage."""
-        self._data: dict[InMemoryStorageEncodedKey, InMemoryStorageEncodedValue] = {}
-        self._lock = asyncio.Lock()
-        self._active_transactions: set[InMemoryStorageTransaction] = set()
-
         super().__init__(spec)
+
+        self._data: dict[InMemoryStorageEncodedKey, InMemoryStorageEncodedValue] = {}
+        self._data_lock = asyncio.Lock()
+        self._active_transactions: set[InMemoryStorageTransaction] = set()
 
     async def _connect_impl(self) -> None:
         """Initialize storage."""
-        async with self._lock:
+        async with self._data_lock:
             self._data.clear()
             self._active_transactions.clear()
         logger.debug("Connected to in-memory storage")
 
     async def _disconnect_impl(self) -> None:
         """Clean up storage."""
-        async with self._lock:
+        async with self._data_lock:
             # Roll back any active transactions
             for transaction in self._active_transactions.copy():
                 await transaction.rollback()
@@ -79,7 +80,7 @@ class InMemoryStorage(
         """Get value by key."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._lock:
+        async with self._data_lock:
             try:
                 if encoded_key not in self._data:
                     raise StorageKeyError(f"Key {key} not found")
@@ -93,7 +94,7 @@ class InMemoryStorage(
         """Set value for key."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._lock:
+        async with self._data_lock:
             try:
                 self._data[encoded_key] = value
             except Exception as e:
@@ -103,7 +104,7 @@ class InMemoryStorage(
         """Delete key."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._lock:
+        async with self._data_lock:
             try:
                 self._data.pop(encoded_key, None)
             except Exception as e:
@@ -113,7 +114,7 @@ class InMemoryStorage(
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._lock:
+        async with self._data_lock:
             return encoded_key in self._data
 
     async def _list_keys_impl(
@@ -123,7 +124,7 @@ class InMemoryStorage(
         encoded_prefix = self.codec.encode_key(prefix)
 
         # Get snapshot of keys
-        async with self._lock:
+        async with self._data_lock:
             matching_keys = [
                 self.codec.decode_key(encoded_key)
                 for encoded_key in self._data.keys()
@@ -139,13 +140,13 @@ class InMemoryStorage(
     ) -> InMemoryStorageTransaction:
         """Begin a new transaction."""
         transaction = InMemoryStorageTransaction(self)
-        async with self._lock:
+        async with self._data_lock:
             self._active_transactions.add(transaction)
         return transaction
 
     async def _check_conflicts(self, transaction: InMemoryStorageTransaction) -> bool:
         """Check for conflicts with other transactions."""
-        async with self._lock:
+        async with self._data_lock:
             for other_txn in self._active_transactions:
                 if other_txn is not transaction:
                     # Check for write-write conflicts
@@ -158,7 +159,7 @@ class InMemoryStorage(
 
     async def _apply_transaction(self, transaction: InMemoryStorageTransaction) -> None:
         """Apply transaction operations atomically."""
-        async with self._lock:
+        async with self._data_lock:
             try:
                 # Apply operations
                 for op in transaction._operations:

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from abc import ABC
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, Self
+from typing import TYPE_CHECKING, Any, Self
 
 if TYPE_CHECKING:
     from .base import Service, ServiceKey, ServiceState, Spec
@@ -17,7 +18,7 @@ __all__ = [
 ]
 
 
-class CommonServiceProtocol(Protocol):
+class CommonServiceProtocol(ABC):
     @classmethod
     def factory_name(cls) -> str: ...
 
@@ -52,7 +53,7 @@ class CommonServiceProtocol(Protocol):
         ...
 
 
-class SyncServiceInitializerProtocol(Protocol):
+class SyncServiceInitializerProtocol(ABC):
     """
     Synchronous service initializer protocol.
 
@@ -153,7 +154,7 @@ class SyncServiceInitializerProtocol(Protocol):
         ...
 
 
-class AsyncServiceInitializerProtocol(Protocol):
+class AsyncServiceInitializerProtocol(ABC):
     """
     Async service initializer protocol.
 
@@ -254,7 +255,7 @@ class AsyncServiceInitializerProtocol(Protocol):
         ...
 
 
-class ServiceComposerProtocol(Protocol):
+class ServiceComposerProtocol(ABC):
     """
     Async service composer protocol.
 
@@ -329,7 +330,6 @@ class ServiceComposerProtocol(Protocol):
 class ServiceProtocol(
     CommonServiceProtocol,
     ServiceComposerProtocol,
-    Protocol,
 ):
     pass
 
@@ -337,7 +337,6 @@ class ServiceProtocol(
 class AsyncServiceProtocol(
     ServiceProtocol,
     AsyncServiceInitializerProtocol,
-    Protocol,
 ):
     """
     Async service protocol.
@@ -351,7 +350,6 @@ class AsyncServiceProtocol(
 class SyncServiceProtocol(
     ServiceProtocol,
     SyncServiceInitializerProtocol,
-    Protocol,
 ):
     """
     Sync service protocol.

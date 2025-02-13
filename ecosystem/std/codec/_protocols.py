@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import Protocol, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar
 
 CodecKeyT = TypeVar("CodecKeyT")
 CodecValueT = TypeVar("CodecValueT")
@@ -9,7 +8,6 @@ CodecEncodedKeyT = TypeVar("CodecEncodedKeyT")
 CodecEncodedValueT = TypeVar("CodecEncodedValueT")
 
 
-@runtime_checkable
 class CodecProtocol(Protocol[CodecKeyT, CodecValueT, CodecEncodedKeyT, CodecEncodedValueT]):
     """
     Protocol defining data encoding/decoding.
@@ -33,7 +31,6 @@ class CodecProtocol(Protocol[CodecKeyT, CodecValueT, CodecEncodedKeyT, CodecEnco
         - Must be thread-safe
     """
 
-    @abstractmethod
     def encode_key(self, key: CodecKeyT) -> CodecEncodedKeyT:
         """
         Encode key for storage.
@@ -55,7 +52,6 @@ class CodecProtocol(Protocol[CodecKeyT, CodecValueT, CodecEncodedKeyT, CodecEnco
         """
         ...
 
-    @abstractmethod
     def decode_key(self, encoded: CodecEncodedKeyT) -> CodecKeyT:
         """
         Decode key from storage.
@@ -77,7 +73,6 @@ class CodecProtocol(Protocol[CodecKeyT, CodecValueT, CodecEncodedKeyT, CodecEnco
         """
         ...
 
-    @abstractmethod
     def encode_value(self, value: CodecValueT) -> CodecEncodedValueT:
         """
         Encode value for storage.
@@ -100,7 +95,6 @@ class CodecProtocol(Protocol[CodecKeyT, CodecValueT, CodecEncodedKeyT, CodecEnco
         """
         ...
 
-    @abstractmethod
     def decode_value(self, encoded: CodecEncodedValueT) -> CodecValueT:
         """
         Decode value from storage.

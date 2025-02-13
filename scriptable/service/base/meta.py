@@ -21,8 +21,9 @@ Example Usage:
 
 from __future__ import annotations
 
+from abc import ABCMeta
 from threading import Lock
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, TypeVar, _ProtocolMeta, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, TypeVar, cast
 
 from scriptable.service.lib.dependency_manager import DependencyManager
 from scriptable.service.lib.service_registry import ServiceRegistry
@@ -43,7 +44,7 @@ ServiceT = TypeVar("ServiceT", bound="Service")
 FeatureT = TypeVar("FeatureT")
 
 
-class ServiceMeta(_ProtocolMeta, Generic[ServiceT]):
+class ServiceMeta(ABCMeta, Generic[ServiceT]):
     """
     Metaclass for service classes.
 

@@ -33,7 +33,17 @@ class StorageProtocol(
         - Must properly encode/decode data
     """
 
-    codec: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
+    @property
+    def codec(
+        self,
+    ) -> CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]:
+        """
+        Get codec for encoding/decoding keys and values.
+
+        Returns:
+            Codec instance
+        """
+        ...
 
     async def connect(self) -> None:
         """

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol
 
 from ecosystem.std.codec import CodecProtocol
 
 from ._types import ObserverCallbackFn, ObserverEncodedKeyT, ObserverKeyT
 
 
-@runtime_checkable
 class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
     """
     Protocol defining state change observation operations.
@@ -29,9 +27,13 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         - Must support pattern matching on topics
     """
 
-    codec: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
+    @property
+    def codec(self) -> CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]:
+        """
+        Get codec for encoding/decoding topics.
+        """
+        ...
 
-    @abstractmethod
     async def connect(self) -> None:
         """
         Establish connection to notification system.
@@ -41,7 +43,6 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         """
         ...
 
-    @abstractmethod
     async def disconnect(self) -> None:
         """
         Close connection to notification system.
@@ -52,7 +53,6 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         """
         ...
 
-    @abstractmethod
     async def notify(self, topic: ObserverKeyT) -> None:
         """
         Notify all subscribers of state change.
@@ -67,7 +67,6 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         """
         ...
 
-    @abstractmethod
     async def subscribe(
         self, topic_pattern: ObserverKeyT, callback: ObserverCallbackFn[ObserverKeyT]
     ) -> SubscriptionProtocol[ObserverKeyT]:
@@ -87,7 +86,6 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         """
         ...
 
-    @abstractmethod
     async def unsubscribe(self, subscription: SubscriptionProtocol[ObserverKeyT]) -> None:
         """
         Remove subscription.
@@ -102,7 +100,6 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         ...
 
 
-@runtime_checkable
 class SubscriptionProtocol(Protocol[ObserverKeyT]):
     """
     Represents a subscription to a topic pattern.
@@ -119,5 +116,16 @@ class SubscriptionProtocol(Protocol[ObserverKeyT]):
         StorageKeyT: Topic type (tuple of strings)
     """
 
-    topic_pattern: ObserverKeyT
-    callback: ObserverCallbackFn[ObserverKeyT]
+    @property
+    def topic_pattern(self) -> ObserverKeyT:
+        """
+        Get topic pattern for subscription.
+        """
+        ...
+
+    @property
+    def callback(self) -> ObserverCallbackFn[ObserverKeyT]:
+        """
+        Get callback for subscription.
+        """
+        ...

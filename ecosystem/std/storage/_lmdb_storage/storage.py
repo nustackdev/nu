@@ -10,7 +10,7 @@ from pydantic import Field, field_serializer
 
 from ecosystem.std.codec import CodecProtocol
 from ecosystem.std.codec.binary import BinaryCodec
-from scriptable.service import Attach, Spec
+from scriptable.service import AsyncService, Attach, Spec
 
 from .._base import BaseStorage, BaseStorageSpec
 from .._exceptions import (
@@ -44,7 +44,13 @@ class LMDBStorageSpec(BaseStorageSpec):
 
 
 class LMDBStorage(
-    BaseStorage[LMDBStorageKey, LMDBStorageValue, LMDBStorageEncodedKey, LMDBStorageEncodedValue]
+    BaseStorage[
+        LMDBStorageKey,
+        LMDBStorageValue,
+        LMDBStorageEncodedKey,
+        LMDBStorageEncodedValue,
+    ],
+    AsyncService,
 ):
     """
     LMDB storage implementation with transaction support.
@@ -52,7 +58,7 @@ class LMDBStorage(
     Uses memory-mapped files for high performance and ACID guarantees.
     """
 
-    codec: CodecProtocol[
+    _codec: CodecProtocol[
         LMDBStorageKey, LMDBStorageValue, LMDBStorageEncodedKey, LMDBStorageEncodedValue
     ] = Attach(BinaryCodec)
 
@@ -74,7 +80,7 @@ class LMDBStorage(
             raise ValueError("Map size too large for platform")
 
         self._env: lmdb.Environment
-        self._lock = asyncio.Lock()
+        self._data_lock = asyncio.Lock()
         self._active_transactions: set[LMDBStorageTransaction] = set()
 
     async def _validate_value(self, value: LMDBStorageValue) -> TypeGuard[LMDBStorageValue]:
@@ -86,7 +92,7 @@ class LMDBStorage(
         # Ensure directory exists
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-        async with self._lock:
+        async with self._data_lock:
             # Open LMDB environment
             self._env = lmdb.open(
                 str(self.path),
@@ -99,7 +105,7 @@ class LMDBStorage(
 
     async def _disconnect_impl(self) -> None:
         """Close LMDB environment."""
-        async with self._lock:
+        async with self._data_lock:
             # Roll back any active transactions
             for transaction in self._active_transactions.copy():
                 try:
@@ -213,7 +219,7 @@ class LMDBStorage(
 
             # Create and track our transaction wrapper
             transaction = LMDBStorageTransaction(self, lmdb_txn)
-            async with self._lock:
+            async with self._data_lock:
                 self._active_transactions.add(transaction)
 
             return transaction
@@ -322,7 +328,7 @@ class LMDBStorageTransaction(TransactionProtocol[LMDBStorageKey, LMDBStorageValu
         try:
             self._lmdb_txn.commit()
             self._committed = True
-            async with self._storage._lock:
+            async with self._storage._data_lock:
                 self._storage._active_transactions.discard(self)
         except Exception as e:
             raise TransactionError(f"Failed to commit transaction: {e}")
@@ -333,7 +339,7 @@ class LMDBStorageTransaction(TransactionProtocol[LMDBStorageKey, LMDBStorageValu
         try:
             self._lmdb_txn.abort()
             self._rolled_back = True
-            async with self._storage._lock:
+            async with self._storage._data_lock:
                 self._storage._active_transactions.discard(self)
         except Exception as e:
             raise TransactionError(f"Failed to rollback transaction: {e}")

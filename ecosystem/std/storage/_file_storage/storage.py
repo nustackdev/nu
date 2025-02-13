@@ -12,7 +12,7 @@ from pydantic import Field, field_serializer
 
 from ecosystem.std.codec import CodecProtocol
 from ecosystem.std.codec.json import JSONCodec
-from scriptable.service import Attach, Spec
+from scriptable.service import AsyncService, Attach, Spec
 
 from .._base import BaseStorage, BaseStorageSpec
 from .._exceptions import (
@@ -49,14 +49,20 @@ class FileStorageSpec(BaseStorageSpec):
 
 
 class FileStorage(
-    BaseStorage[FileStorageKey, FileStorageValue, FileStorageEncodedKey, FileStorageEncodedValue]
+    BaseStorage[
+        FileStorageKey,
+        FileStorageValue,
+        FileStorageEncodedKey,
+        FileStorageEncodedValue,
+    ],
+    AsyncService,
 ):
     """
     Simple file-based storage implementation with transaction support.
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec: CodecProtocol[
+    _codec: CodecProtocol[
         FileStorageKey, FileStorageValue, FileStorageEncodedKey, FileStorageEncodedValue
     ] = Attach(JSONCodec)
 

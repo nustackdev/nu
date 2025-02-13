@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import AsyncGenerator, Generic, TypeGuard, final
 
 from pydantic import Field
 
 from ecosystem.std.codec import CodecProtocol
-from scriptable.service import AsyncService, Spec
+from scriptable.service import Spec
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
 from ._protocols import TransactionProtocol
@@ -32,7 +32,7 @@ class BaseStorageSpec(Spec):
 
 
 class BaseStorage(
-    AsyncService, Generic[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
+    ABC, Generic[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
 ):
     """
     Base class for storage implementations.
@@ -41,24 +41,31 @@ class BaseStorage(
         ValueT: Type of values supported by this storage
     """
 
-    codec: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
+    _codec: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
 
-    def __init__(
+    @property
+    def codec(
         self,
-        spec: BaseStorageSpec,
-    ) -> None:
-        self.mode = spec.mode
+    ) -> CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]:
+        """
+        Get codec for encoding/decoding keys and values.
+
+        Returns:
+            Codec instance
+        """
+        return self._codec
+
+    @property
+    def mode(self) -> StorageMode:
+        """Get storage mode."""
+        return self.spec.mode  # type: ignore
+
+    async def setup(self) -> None:
         self._connected = False
-
-        super().__init__(spec)
-
-    async def initialize(self) -> None:
-        await super().initialize()
         await self.connect()
 
-    async def shutdown(self) -> None:
+    async def cleanup(self) -> None:
         await self.disconnect()
-        await super().shutdown()
 
     def _ensure_connected(self) -> None:
         """Verify connection state."""

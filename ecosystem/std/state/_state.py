@@ -57,8 +57,28 @@ class State(AsyncService):
     - Async-first design
     """
 
-    storage: StorageProtocol[StateKey, StateValue, Any, Any] = Attach(StorageProtocol)
-    observer: ObserverProtocol[StateKey, Any] = Attach(ObserverProtocol)
+    _storage: StorageProtocol[StateKey, StateValue, Any, Any] = Attach(StorageProtocol)
+    _observer: ObserverProtocol[StateKey, Any] = Attach(ObserverProtocol)
+
+    @property
+    def storage(self) -> StorageProtocol[StateKey, StateValue, Any, Any]:
+        """
+        Get storage backend.
+
+        Returns:
+            Storage instance
+        """
+        return self._storage
+
+    @property
+    def observer(self) -> ObserverProtocol[StateKey, Any]:
+        """
+        Get observer backend.
+
+        Returns:
+            Observer instance
+        """
+        return self._observer
 
     async def get(self, key: StateKey) -> StateValue:
         """

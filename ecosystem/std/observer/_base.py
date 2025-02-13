@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, final
 
 from pydantic import Field
 
 from ecosystem.std.codec import CodecProtocol
-from scriptable.service import AsyncService, Spec
+from scriptable.service import Spec
 
 from ._exceptions import ObserverConnectionError, ObserverValidationError
 from ._protocols import SubscriptionProtocol
@@ -24,7 +24,7 @@ class BaseObserverSpec(Spec):
         return {"codec"}
 
 
-class BaseObserver(AsyncService, Generic[ObserverKeyT, ObserverEncodedKeyT]):
+class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     """
     Base class for observer implementations.
 
@@ -39,20 +39,30 @@ class BaseObserver(AsyncService, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         ObserverEncodedKeyT: Encoded topic type
     """
 
-    codec: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
+    _codec: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
 
-    def __init__(self, spec: BaseObserverSpec) -> None:
-        """Initialize observer state."""
-        super().__init__(spec)
+    @property
+    def codec(self) -> CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]:
+        """
+        Get codec for encoding/decoding topics.
+
+        Returns:
+            Codec instance
+        """
+        return self._codec
+
+    async def setup(self) -> None:
+        """
+        Service setup called after service initialization.
+        """
         self._connected = False
-
-    async def initialize(self) -> None:
-        await super().initialize()
         await self.connect()
 
-    async def shutdown(self) -> None:
+    async def cleanup(self) -> None:
+        """
+        Service cleanup called after service shutdown.
+        """
         await self.disconnect()
-        await super().shutdown()
 
     def _ensure_connected(self) -> None:
         """
@@ -96,7 +106,7 @@ class BaseObserver(AsyncService, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     @abstractmethod
     async def _connect_impl(self) -> None:
         """Implementation-specific connect logic."""
-        ...
+        raise NotImplementedError
 
     @final
     async def disconnect(self) -> None:
@@ -116,7 +126,7 @@ class BaseObserver(AsyncService, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     @abstractmethod
     async def _disconnect_impl(self) -> None:
         """Implementation-specific disconnect logic."""
-        ...
+        raise NotImplementedError
 
     @final
     async def notify(self, topic: ObserverKeyT) -> None:
@@ -139,7 +149,7 @@ class BaseObserver(AsyncService, Generic[ObserverKeyT, ObserverEncodedKeyT]):
             topic: Topic identifying changed state
             subscriptions: List of matching subscriptions
         """
-        ...
+        raise NotImplementedError
 
     @final
     async def subscribe(
@@ -166,7 +176,7 @@ class BaseObserver(AsyncService, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     @abstractmethod
     async def _subscribe_impl(self, subscription: Subscription[ObserverKeyT]) -> None:
         """Implementation-specific subscribe logic."""
-        ...
+        raise NotImplementedError
 
     @final
     async def unsubscribe(self, subscription: Subscription[ObserverKeyT]) -> None:
@@ -182,7 +192,7 @@ class BaseObserver(AsyncService, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     @abstractmethod
     async def _unsubscribe_impl(self, subscription: Subscription[ObserverKeyT]) -> None:
         """Implementation-specific unsubscribe logic."""
-        ...
+        raise NotImplementedError
 
 
 @dataclass
@@ -202,5 +212,13 @@ class Subscription(SubscriptionProtocol[ObserverKeyT]):
         ObserverKeyT: Topic type (tuple of strings)
     """
 
-    topic_pattern: ObserverKeyT
-    callback: ObserverCallbackFn[ObserverKeyT]
+    _topic_pattern: ObserverKeyT
+    _callback: ObserverCallbackFn[ObserverKeyT]
+
+    @property
+    def topic_pattern(self) -> ObserverKeyT:
+        return self._topic_pattern
+
+    @property
+    def callback(self) -> ObserverCallbackFn[ObserverKeyT]:
+        return self._callback

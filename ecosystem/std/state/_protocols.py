@@ -27,8 +27,25 @@ class StateProtocol(Protocol):
         StateValue: Value type
     """
 
-    storage: StorageProtocol[StateKey, StateValue, Any, Any]
-    observer: ObserverProtocol[StateKey, Any]
+    @property
+    def storage(self) -> StorageProtocol[StateKey, StateValue, Any, Any]:
+        """
+        Get storage backend.
+
+        Returns:
+            Storage instance
+        """
+        ...
+
+    @property
+    def observer(self) -> ObserverProtocol[StateKey, Any]:
+        """
+        Get observer backend.
+
+        Returns:
+            Observer instance
+        """
+        ...
 
     async def get(self, key: StateKey) -> StateValue:
         """
