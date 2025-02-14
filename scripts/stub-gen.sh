@@ -1,7 +1,7 @@
 #!/bin/bash
 
 WS_ROOT="$(pwd)"
-SRC_DIR="scriptable"
+SRC_DIR="loomi"
 
 # Step 1: Delete all existing .pyi files recursively
 echo "Deleting existing .pyi files..."
@@ -9,13 +9,13 @@ find "$SRC_DIR" -name "*.pyi" -type f -delete
 
 # Step 2: Run stubgen (placeholder command)
 echo "Running stubgen..."
-stubgen -p scriptable  # -o "$SRC_DIR"  # to specify output directory
+stubgen -p loomi  # -o "$SRC_DIR"  # to specify output directory
 # ... Add more directories here to gen stubs
 
 # Step 3: Remove .pyi files from specific directories
 echo "Cleaning up unwanted stub files..."
 DIRS_TO_CLEAN=(
-    # "scriptable/example/example"
+    # "loomi/example/example"
     # Add more directories here to clean up stubs
 )
 

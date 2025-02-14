@@ -3,22 +3,23 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "scriptable"
+name = "loomi"
 version = "0.1.0"
-description = "scriptable"
+description = "loomi"
 dynamic = ["dependencies"]
 
 [tool.setuptools]
-package-dir = {"scriptable" = "scriptable", "ecosystem" = "ecosystem"}
+package-dir = {"loomi" = "src/loomi", "loomistd" = "pkgs/loomistd", "loomiverse" = "pkgs/loomiverse"}
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["scriptable*", "ecosystem*"]
+where = ["src", "pkgs"]
+include = ["loomi*"]
 
 [tool.setuptools.package-data]
-"scriptable" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
-"ecosystem" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
+"loomi" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
+"loomistd" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
+"loomiverse" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
@@ -49,7 +50,7 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 100
-known_first_party = ["scriptable", "ecosystem"]
+known_first_party = ["loomi", "loomistd", "loomiverse"]
 
 [tool.autoflake]
 check = false

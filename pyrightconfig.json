@@ -1,7 +1,7 @@
 {
   "include": [
-    "scriptable",
-    "ecosystem"
+    "./src",
+    "./pkgs"
   ],
   "exclude": [
     "**/node_modules",
@@ -13,8 +13,9 @@
     
   ],
   "extraPaths": [
-    "./scriptable",
-    "./ecosystem"
+    "./src",
+    "./pkgs",
+    "./pkgs"
   ],
   "pythonVersion": "3.12",
   "pythonPlatform": "All",

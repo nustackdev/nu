@@ -1,0 +1,69 @@
+"""
+Base service classes providing asynchronous and synchronous service implementations.
+
+This module defines the foundational service base classes that implement common
+functionality for both async and sync service patterns. The classes inherit from
+ServiceCommonBase to share core service functionality while implementing their
+respective protocols.
+
+Classes:
+    ServiceAsync: Base class for asynchronous services
+    ServiceSync: Base class for synchronous services
+    Service: Base class for all services (common functionality)
+"""
+
+from __future__ import annotations
+
+from loomi.service.protocols import AsyncServiceProtocol, ServiceProtocol, SyncServiceProtocol
+
+from .common import ServiceCommon
+
+__all__ = [
+    "AsyncService",
+    "SyncService",
+    "Service",
+]
+
+
+class Service(ServiceCommon, ServiceProtocol):
+    """
+    Base class providing common functionality for all service types.
+
+    This class implements the core features needed by all services, whether
+    async or sync. It handles service specifications, identity management,
+    registry integration, and basic service properties.
+    """
+
+    pass
+
+
+class AsyncService(Service, AsyncServiceProtocol):
+    """
+    Base class for asynchronous services.
+
+    This class combines common service functionality from ServiceCommonBase
+    with the async interface defined in ServiceAsyncProtocol. It serves as
+    the foundation for all asynchronous service implementations.
+
+    The class inherits core service features like specification management,
+    lifecycle tracking, and identity handling while adding the async
+    protocol requirements.
+    """
+
+    pass
+
+
+class SyncService(Service, SyncServiceProtocol):
+    """
+    Base class for synchronous services.
+
+    This class combines common service functionality from ServiceCommonBase
+    with the sync interface defined in ServiceSyncProtocol. It serves as
+    the foundation for all synchronous service implementations.
+
+    The class inherits core service features like specification management,
+    lifecycle tracking, and identity handling while adding the sync
+    protocol requirements.
+    """
+
+    pass
