@@ -164,11 +164,9 @@ cython_debug/
 playground/
 _playground/
 
-# Log files
-logs/
-
-# Data files
+# Data and log files
 .state/
+.logs/
 *.db.json
 *.db.json.lock
 *.lmdb/
