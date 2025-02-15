@@ -4,7 +4,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
+    from loomi.service.base import Service  # isort: skip
 
 __all__ = [
     "ServiceRole",
