@@ -14,7 +14,7 @@ The example includes three loomi services and one app:
 - `TaskService`: Manages task lifecycle
 - `UserService`: Handles user workload tracking
 - `NotificationService`: Handles system notifications
-`TaskManagementApp`: The main app that integrates the services to provide a cohesive task management experience
+- `TaskManagementApp`: The main app that integrates the services to provide a cohesive task management experience
 
 Check out `/examples/task_management` to see it in action.
 
