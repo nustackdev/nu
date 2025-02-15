@@ -1,21 +1,23 @@
 {
   "include": [
     "./src",
-    "./pkgs"
+    "./pkgs",
+    "./stubs"
   ],
   "exclude": [
-    "**/node_modules",
     "**/__pycache__",
     "**/.venv",
     "**/scripts"
   ],
   "ignore": [
-    
+    "**/__pycache__",
+    "**/.venv",
+    "**/scripts"
   ],
   "extraPaths": [
     "./src",
     "./pkgs",
-    "./pkgs"
+    "./stubs"
   ],
   "pythonVersion": "3.12",
   "pythonPlatform": "All",

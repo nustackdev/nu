@@ -27,6 +27,13 @@ from loomistd.storage import (
 
 from ._types import StateCallbackFn, StateKey, StateValue
 
+__all__ = [
+    "State",
+    "StateSpec",
+    "StateTransaction",
+    "StateTransactionContextManager",
+]
+
 
 class StateSpec(Spec):
     """

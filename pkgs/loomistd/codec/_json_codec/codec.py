@@ -8,6 +8,10 @@ from .._exceptions import DecodeError, EncodeError
 from .constants import PATH_SEPARATOR
 from .types import JSONCodecEncodedKey, JSONCodecEncodedValue, JSONCodecKey, JSONCodecValue
 
+__all__ = [
+    "JSONCodec",
+]
+
 
 class JSONCodec(SyncService):
     """Simple string-based codec using JSON for values."""

@@ -1,12 +1,19 @@
-from typing import Protocol, TypeAlias, runtime_checkable
+from __future__ import annotations
+
+from typing import Protocol
 
 from .._protocols import ObserverProtocol
 
-InMemoryObserverKey: TypeAlias = tuple[str, ...]
-InMemoryObserverEncodedKey: TypeAlias = str
+__all__ = [
+    "InMemoryObserverKey",
+    "InMemoryObserverEncodedKey",
+    "InMemoryObserverProtocol",
+]
+
+InMemoryObserverKey = tuple[str, ...]
+InMemoryObserverEncodedKey = str
 
 
-@runtime_checkable
 class InMemoryObserverProtocol(
     ObserverProtocol[InMemoryObserverKey, InMemoryObserverEncodedKey], Protocol
 ):

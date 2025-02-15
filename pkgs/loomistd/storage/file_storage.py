@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ._file_storage import (
     FileStorage,
     FileStorageEncodedKey,

@@ -32,6 +32,12 @@ from .types import (
     TransactionOperation,
 )
 
+__all__ = [
+    "FileStorage",
+    "FileStorageSpec",
+    "FileStorageTransaction",
+]
+
 
 class FileStorageSpec(BaseStorageSpec):
     """Spec for file storage."""

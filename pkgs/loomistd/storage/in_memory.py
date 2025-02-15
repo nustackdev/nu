@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ._in_memory_storage import (
     InMemoryStorage,
     InMemoryStorageEncodedKey,

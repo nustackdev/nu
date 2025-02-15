@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ._base import BaseStorage, BaseStorageSpec
 from ._exceptions import (
     StorageConnectionError,

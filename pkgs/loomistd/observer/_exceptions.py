@@ -1,3 +1,13 @@
+from __future__ import annotations
+
+__all__ = [
+    "ObserverError",
+    "ObserverConnectionError",
+    "ObserverSubscriptionError",
+    "ObserverValidationError",
+]
+
+
 class ObserverError(Exception):
     """Base exception for observer errors."""
 

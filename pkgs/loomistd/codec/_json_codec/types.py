@@ -1,16 +1,25 @@
-from typing import Protocol, TypeAlias, runtime_checkable
+from __future__ import annotations
+
+from typing import Protocol
 
 from .._protocols import CodecProtocol
 
-JSONCodecKey: TypeAlias = tuple[str, ...]
-JSONCodecValue: TypeAlias = (
+__all__ = [
+    "JSONCodecKey",
+    "JSONCodecValue",
+    "JSONCodecEncodedKey",
+    "JSONCodecEncodedValue",
+    "JSONCodecProtocol",
+]
+
+JSONCodecKey = tuple[str, ...]
+JSONCodecValue = (
     None | bool | int | float | str | list["JSONCodecValue"] | dict[str, "JSONCodecValue"]
 )
-JSONCodecEncodedKey: TypeAlias = str
-JSONCodecEncodedValue: TypeAlias = str
+JSONCodecEncodedKey = str
+JSONCodecEncodedValue = str
 
 
-@runtime_checkable
 class JSONCodecProtocol(
     CodecProtocol[JSONCodecKey, JSONCodecValue, JSONCodecEncodedKey, JSONCodecEncodedValue],
     Protocol,

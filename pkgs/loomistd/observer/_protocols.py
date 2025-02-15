@@ -6,6 +6,11 @@ from loomistd.codec import CodecProtocol
 
 from ._types import ObserverCallbackFn, ObserverEncodedKeyT, ObserverKeyT
 
+__all__ = [
+    "ObserverProtocol",
+    "SubscriptionProtocol",
+]
+
 
 class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
     """

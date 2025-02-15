@@ -1,3 +1,12 @@
+from __future__ import annotations
+
+__all__ = [
+    "CodecError",
+    "EncodeError",
+    "DecodeError",
+]
+
+
 class CodecError(Exception):
     """Base exception for codec errors."""
 

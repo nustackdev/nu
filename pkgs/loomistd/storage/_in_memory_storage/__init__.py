@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .storage import InMemoryStorage, InMemoryStorageSpec, InMemoryStorageTransaction
 from .types import (
     InMemoryStorageEncodedKey,

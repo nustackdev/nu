@@ -1,14 +1,23 @@
-from typing import Any, Protocol, TypeAlias, runtime_checkable
+from __future__ import annotations
+
+from typing import Any, Protocol
 
 from .._protocols import CodecProtocol
 
-PassthroughCodecKey: TypeAlias = tuple[str, ...]
-PassthroughCodecValue: TypeAlias = Any
-PassthroughCodecEncodedKey: TypeAlias = str
-PassthroughCodecEncodedValue: TypeAlias = Any
+__all__ = [
+    "PassthroughCodecKey",
+    "PassthroughCodecValue",
+    "PassthroughCodecEncodedKey",
+    "PassthroughCodecEncodedValue",
+    "PassthroughCodecProtocol",
+]
+
+PassthroughCodecKey = tuple[str, ...]
+PassthroughCodecValue = Any
+PassthroughCodecEncodedKey = str
+PassthroughCodecEncodedValue = Any
 
 
-@runtime_checkable
 class PassthroughCodecProtocol(
     CodecProtocol[
         PassthroughCodecKey,

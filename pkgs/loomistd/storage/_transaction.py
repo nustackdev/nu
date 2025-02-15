@@ -7,6 +7,10 @@ from ._protocols import (
 )
 from ._types import StorageKeyT, StorageValueT
 
+__all__ = [
+    "TransactionContextManager",
+]
+
 
 class TransactionContextManager(TransactionContextManagerProtocol[StorageKeyT, StorageValueT]):
     """Async context manager for storage transactions."""

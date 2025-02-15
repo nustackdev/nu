@@ -1,0 +1,36 @@
+from pathlib import Path
+from typing import AsyncGenerator
+
+from _typeshed import Incomplete
+
+from loomi.service import AsyncService, Spec
+
+from .._base import BaseStorage, BaseStorageSpec
+from .._protocols import TransactionProtocol
+from .types import FileStorageEncodedKey, FileStorageEncodedValue, FileStorageKey, FileStorageValue
+
+__all__ = ["FileStorage", "FileStorageSpec", "FileStorageTransaction"]
+
+class FileStorageSpec(BaseStorageSpec):
+    path: Path
+    codec: Spec
+    @classmethod
+    def identity_fields(cls) -> set[str]: ...
+    def serialize_path(self, path: Path) -> str: ...
+
+class FileStorage(
+    BaseStorage[FileStorageKey, FileStorageValue, FileStorageEncodedKey, FileStorageEncodedValue],
+    AsyncService,
+):
+    path: Incomplete
+    def __init__(self, spec: FileStorageSpec) -> None: ...
+
+class FileStorageTransaction(TransactionProtocol[FileStorageKey, FileStorageValue]):
+    def __init__(self, storage: FileStorage) -> None: ...
+    async def get(self, key: FileStorageKey) -> FileStorageValue: ...
+    async def set(self, key: FileStorageKey, value: FileStorageValue) -> None: ...
+    async def delete(self, key: FileStorageKey) -> None: ...
+    async def exists(self, key: FileStorageKey) -> bool: ...
+    async def list_keys(self, prefix: FileStorageKey) -> AsyncGenerator[FileStorageKey, None]: ...
+    async def commit(self) -> None: ...
+    async def rollback(self) -> None: ...

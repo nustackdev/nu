@@ -4,22 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loomi"
-version = "0.1.0"
+version = "0.1.1"
 description = "loomi"
 dynamic = ["dependencies"]
 
 [tool.setuptools]
-package-dir = {"loomi" = "src/loomi", "loomistd" = "pkgs/loomistd", "loomiverse" = "pkgs/loomiverse"}
+package-dir = {"loomi" = "src/loomi", "loomistd" = "pkgs/loomistd", "loomiverse" = "pkgs/loomiverse", "loomi_stubs" = "stubs/loomi_stubs", "loomistd_stubs" = "stubs/loomistd_stubs", "loomiverse_stubs" = "stubs/loomiverse_stubs"}
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["src", "pkgs"]
+where = ["src", "pkgs", "stubs"]
 include = ["loomi*"]
 
 [tool.setuptools.package-data]
-"loomi" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
-"loomistd" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
-"loomiverse" = ["py.typed", "**/*.pyi", "*.yaml", "*.json"]
+"loomi" = ["py.typed", "*.yaml", "*.json"]
+"loomistd" = ["py.typed", "*.yaml", "*.json"]
+"loomiverse" = ["py.typed", "*.yaml", "*.json"]
+"loomi_stubs" = ["**/*.pyi"]
+"loomistd_stubs" = ["**/*.pyi"]
+"loomiverse_stubs" = ["**/*.pyi"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

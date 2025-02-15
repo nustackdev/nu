@@ -7,6 +7,13 @@ from loomistd.codec import CodecProtocol
 
 from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageValueT
 
+__all__ = [
+    "StorageProtocol",
+    "TransactionProtocol",
+    "TransactionContextManagerProtocol",
+    "TransactionalHandlerProtocol",
+]
+
 
 class StorageProtocol(
     Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]

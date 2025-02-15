@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .codec import JSONCodec
 from .types import (
     JSONCodecEncodedKey,

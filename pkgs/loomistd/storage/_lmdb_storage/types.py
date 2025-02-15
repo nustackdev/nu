@@ -1,9 +1,19 @@
-from typing import Protocol, TypeAlias, runtime_checkable
+from __future__ import annotations
+
+from typing import Protocol, runtime_checkable
 
 from .._protocols import StorageProtocol
 
-LMDBStorageKey: TypeAlias = tuple[str, ...]
-LMDBStorageValue: TypeAlias = (
+__all__ = [
+    "LMDBStorageKey",
+    "LMDBStorageValue",
+    "LMDBStorageEncodedKey",
+    "LMDBStorageEncodedValue",
+    "LMDBStorageProtocol",
+]
+
+LMDBStorageKey = tuple[str, ...]
+LMDBStorageValue = (
     None
     | bytes
     | bool
@@ -13,8 +23,8 @@ LMDBStorageValue: TypeAlias = (
     | list["LMDBStorageValue"]
     | dict[str, "LMDBStorageValue"]
 )
-LMDBStorageEncodedKey: TypeAlias = bytes
-LMDBStorageEncodedValue: TypeAlias = bytes
+LMDBStorageEncodedKey = bytes
+LMDBStorageEncodedValue = bytes
 
 
 @runtime_checkable

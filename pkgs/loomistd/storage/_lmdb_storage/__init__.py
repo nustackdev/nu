@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .storage import LMDBStorage, LMDBStorageSpec, LMDBStorageTransaction
 from .types import (
     LMDBStorageEncodedKey,

@@ -1,12 +1,24 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Protocol, TypeAlias, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from .._protocols import StorageProtocol
 
-InMemoryStorageKey: TypeAlias = tuple[str, ...]
-InMemoryStorageValue: TypeAlias = Any
-InMemoryStorageEncodedKey: TypeAlias = str
-InMemoryStorageEncodedValue: TypeAlias = Any
+__all__ = [
+    "InMemoryStorageKey",
+    "InMemoryStorageValue",
+    "InMemoryStorageEncodedKey",
+    "InMemoryStorageEncodedValue",
+    "InMemoryStorageProtocol",
+    "TransactionOperation",
+]
+
+
+InMemoryStorageKey = tuple[str, ...]
+InMemoryStorageValue = Any
+InMemoryStorageEncodedKey = str
+InMemoryStorageEncodedValue = Any
 
 
 @dataclass

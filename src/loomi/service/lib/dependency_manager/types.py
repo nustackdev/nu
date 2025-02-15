@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from loomi.service.base import Service
+    pass
 
 __all__ = [
     "ServiceRole",
@@ -12,8 +12,8 @@ __all__ = [
     "DependentSet",
 ]
 
-DependencyMap: TypeAlias = dict[str, "Service"]
-DependentSet: TypeAlias = set["Service"]
+DependencyMap = dict[str, "Service"]
+DependentSet = set["Service"]
 
 
 class ServiceRole(Enum):

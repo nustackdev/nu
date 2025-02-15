@@ -1,7 +1,13 @@
 from __future__ import annotations
 
-from typing import Awaitable, Callable, TypeAlias, TypeVar
+from typing import Awaitable, Callable, TypeVar
+
+__all__ = [
+    "ObserverKeyT",
+    "ObserverEncodedKeyT",
+    "ObserverCallbackFn",
+]
 
 ObserverKeyT = TypeVar("ObserverKeyT")
 ObserverEncodedKeyT = TypeVar("ObserverEncodedKeyT")
-ObserverCallbackFn: TypeAlias = Callable[[ObserverKeyT], Awaitable[None]]
+ObserverCallbackFn = Callable[[ObserverKeyT], Awaitable[None]]

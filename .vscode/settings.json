@@ -8,7 +8,8 @@
     },
     "python.autoComplete.extraPaths": [
         "${workspaceFolder}/src",
-        "${workspaceFolder}/pkgs"
+        "${workspaceFolder}/pkgs",
+        "${workspaceFolder}/stubs"
     ],
     "python.analysis.diagnosticMode": "workspace",
     "python.languageServer": "Pylance"

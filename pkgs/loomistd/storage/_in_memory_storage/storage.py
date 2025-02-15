@@ -25,6 +25,12 @@ from .types import (
     TransactionOperation,
 )
 
+__all__ = [
+    "InMemoryStorage",
+    "InMemoryStorageSpec",
+    "InMemoryStorageTransaction",
+]
+
 
 class InMemoryStorageSpec(BaseStorageSpec):
     pass

@@ -19,6 +19,12 @@ from ._types import (
     StorageValueT,
 )
 
+__all__ = [
+    "BaseStorage",
+    "BaseStorageSpec",
+    "is_valid_key",
+]
+
 
 class BaseStorageSpec(Spec):
     """Base storage spec."""

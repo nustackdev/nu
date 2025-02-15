@@ -1,14 +1,25 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Protocol, TypeAlias, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from .._protocols import StorageProtocol
 
-FileStorageKey: TypeAlias = tuple[str, ...]
-FileStorageValue: TypeAlias = (
+__all__ = [
+    "FileStorageKey",
+    "FileStorageValue",
+    "FileStorageEncodedKey",
+    "FileStorageEncodedValue",
+    "FileStorageProtocol",
+    "TransactionOperation",
+]
+
+FileStorageKey = tuple[str, ...]
+FileStorageValue = (
     None | bool | int | float | str | list["FileStorageValue"] | dict[str, "FileStorageValue"]
 )
-FileStorageEncodedKey: TypeAlias = str
-FileStorageEncodedValue: TypeAlias = str
+FileStorageEncodedKey = str
+FileStorageEncodedValue = str
 
 
 @dataclass

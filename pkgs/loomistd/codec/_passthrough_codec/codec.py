@@ -11,6 +11,10 @@ from .types import (
     PassthroughCodecValue,
 )
 
+__all__ = [
+    "PassthroughCodec",
+]
+
 
 class PassthroughCodec(SyncService):
     """

@@ -1,0 +1,3 @@
+__all__ = ["AppError"]
+
+class AppError(Exception): ...

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Protocol, TypeVar
 
+__all__ = [
+    "CodecProtocol",
+]
+
 CodecKeyT = TypeVar("CodecKeyT")
 CodecValueT = TypeVar("CodecValueT")
 CodecEncodedKeyT = TypeVar("CodecEncodedKeyT")

@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 from typing import Any, AsyncGenerator, Protocol
 
 from loomistd.observer import ObserverProtocol, SubscriptionProtocol
 from loomistd.storage import StorageProtocol, TransactionContextManagerProtocol, TransactionProtocol
 
 from ._types import StateCallbackFn, StateKey, StateValue
+
+__all__ = [
+    "StateProtocol",
+]
 
 
 class StateProtocol(Protocol):

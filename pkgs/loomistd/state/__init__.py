@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ._exceptions import StateError
 from ._protocols import StateProtocol
 from ._state import State, StateSpec

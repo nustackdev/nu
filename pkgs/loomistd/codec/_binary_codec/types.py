@@ -1,11 +1,21 @@
-# Type markers as integers for faster comparison
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Protocol, TypeAlias, runtime_checkable
+from typing import Protocol
 
 from .._protocols import CodecProtocol
 
-BinaryCodecKey: TypeAlias = tuple[str, ...]
-BinaryCodecValue: TypeAlias = (
+__all__ = [
+    "BinaryCodecKey",
+    "BinaryCodecValue",
+    "BinaryCodecEncodedKey",
+    "BinaryCodecEncodedValue",
+    "DecoderState",
+    "BinaryCodecProtocol",
+]
+
+BinaryCodecKey = tuple[str, ...]
+BinaryCodecValue = (
     None
     | bytes
     | bool
@@ -15,8 +25,8 @@ BinaryCodecValue: TypeAlias = (
     | list["BinaryCodecValue"]
     | dict[str, "BinaryCodecValue"]
 )
-BinaryCodecEncodedKey: TypeAlias = bytes
-BinaryCodecEncodedValue: TypeAlias = bytes
+BinaryCodecEncodedKey = bytes
+BinaryCodecEncodedValue = bytes
 
 
 @dataclass
@@ -28,7 +38,6 @@ class DecoderState:
     depth: int = 0
 
 
-@runtime_checkable
 class BinaryCodecProtocol(
     CodecProtocol[BinaryCodecKey, BinaryCodecValue, BinaryCodecEncodedKey, BinaryCodecEncodedValue],
     Protocol,

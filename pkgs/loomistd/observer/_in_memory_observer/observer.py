@@ -11,6 +11,11 @@ from .._base import BaseObserver, BaseObserverSpec, Subscription
 from .logger import logger
 from .types import InMemoryObserverEncodedKey, InMemoryObserverKey
 
+__all__ = [
+    "InMemoryObserverSpec",
+    "InMemoryObserver",
+]
+
 
 class InMemoryObserverSpec(BaseObserverSpec):
     pass

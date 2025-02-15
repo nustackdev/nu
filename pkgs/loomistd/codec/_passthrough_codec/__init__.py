@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .codec import PassthroughCodec
 from .types import (
     PassthroughCodecEncodedKey,

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ._binary_codec import (
     BinaryCodec,
     BinaryCodecEncodedKey,

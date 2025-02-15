@@ -34,6 +34,10 @@ from .types import (
     DecoderState,
 )
 
+__all__ = [
+    "BinaryCodec",
+]
+
 
 class BinaryCodec(SyncService):
     """

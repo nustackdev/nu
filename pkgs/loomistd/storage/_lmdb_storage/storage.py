@@ -24,6 +24,12 @@ from .._protocols import TransactionProtocol
 from .logger import logger
 from .types import LMDBStorageEncodedKey, LMDBStorageEncodedValue, LMDBStorageKey, LMDBStorageValue
 
+__all__ = [
+    "LMDBStorage",
+    "LMDBStorageSpec",
+    "LMDBStorageTransaction",
+]
+
 
 class LMDBStorageSpec(BaseStorageSpec):
     """Spec for LMDB storage."""
