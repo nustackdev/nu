@@ -70,30 +70,12 @@ class ParallelOperation(BaseOperation):
         self.ignore_errors = ignore_errors
         self._id = hex(id(self))[2:]
 
-    def _state_key(self, key: str | tuple[str, ...] | None = None) -> tuple[str, ...]:
-        """Base key for parallel operation state in store"""
-        if isinstance(key, str):
-            key = (key,)
-        return (f"__app__parallel__{self._id}",) + key if key else (f"__app__parallel__{self._id}",)
-
     async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize parallel operation state in store"""
-        await app.set(
-            self._state_key(),
-            value={
-                "status": "initialized",
-                "total_operations": len(self.operations),
-                "completed_operations": 0,
-                "errors": [],
-                "start_time": None,
-                "end_time": None,
-            },
-        )
+        pass
 
     async def _update_completed(self, app: "AsyncApp", completed: int) -> None:
         """Update count of completed operations in store"""
-        await app.set(self._state_key("completed_operations"), value=completed)
-        await app.set(self._state_key("status"), value="running")
 
     async def _record_error(self, app: "AsyncApp", operation_index: int, error: Exception) -> None:
         """Record operation error in store"""
@@ -102,7 +84,6 @@ class ParallelOperation(BaseOperation):
             "error": str(error),
             "error_type": error.__class__.__name__,
         }
-        await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
     async def _execute_operation(
         self, app: "AsyncApp", operation: "AsyncOperationProtocol", index: int
@@ -124,7 +105,6 @@ class ParallelOperation(BaseOperation):
 
         try:
             await self._initialize_state(app)
-            await app.set(self._state_key("start_time"), value="now")
 
             # Create semaphore if max_concurrent is specified
             semaphore = None
@@ -150,24 +130,18 @@ class ParallelOperation(BaseOperation):
                     asyncio.gather(*tasks, return_exceptions=self.ignore_errors),
                     timeout=self.timeout,
                 )
-                await app.set(self._state_key("status"), value="completed")
             except asyncio.TimeoutError:
                 error_msg = f"Parallel operation timed out after {self.timeout}s"
                 logger.error(error_msg)
-                await app.set(self._state_key("status"), value="timeout")
                 raise OperationError(error_msg)
 
-            await app.set(self._state_key("end_time"), value="now")
             logger.info("Parallel operation completed successfully")
 
         except asyncio.CancelledError:
-            await app.set(self._state_key("status"), value="cancelled")
             logger.info("Parallel operation was cancelled")
             raise
 
         except Exception as e:
-            await app.set(self._state_key("status"), value="failed")
-            await app.set(self._state_key("end_time"), value="now")
             if not isinstance(e, OperationError):
                 logger.error("Parallel operation failed", exc_info=True)
                 raise OperationError(f"Parallel operation failed: {str(e)}") from e

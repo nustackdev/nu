@@ -5,6 +5,7 @@ from typing import AsyncGenerator
 from loomi.app.base import AsyncApp
 
 from .base import AppCommonState
+from .config import DEFALT_APP_STATE_SCOPE
 from .exceptions import StateError
 from .protocols import (
     AsyncStateProtocol,
@@ -42,50 +43,74 @@ class AsyncAppState(AppCommonState, AsyncApp):
     @property
     def state(self) -> AsyncStateProtocol:
         """Check and return app's state service."""
-        if not hasattr(self, "_state_"):
+        if not self._state_service_name or len(self._state_service_name) == 0:
             raise StateError("No state adapter configured")
-        return getattr(self, "_state_")
+        return getattr(self, self._state_service_name)
 
     @property
     def s(self) -> AsyncStateProtocol:
         """Short alias for state adapter."""
         return self.state
 
-    @property
-    def state_key(self) -> StateKey:
-        """Base state key for this app instance."""
-        return (f"__app__{self.key}",)
-
-    async def get(self, key: StateKey) -> StateValue:
+    async def get(
+        self,
+        key: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> StateValue:
         """Get state value at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         return await self.s.get(key)
 
-    async def set(self, key: StateKey, value: StateValue) -> None:
+    async def set(
+        self,
+        key: StateKey,
+        value: StateValue,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> None:
         """Set state value at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         await self.s.set(key, value)
 
-    async def delete(self, key: StateKey) -> None:
+    async def delete(
+        self,
+        key: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> None:
         """Delete state at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         await self.s.delete(key)
 
-    async def exists(self, key: StateKey) -> bool:
+    async def exists(
+        self,
+        key: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> bool:
         """Check if state exists at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         return await self.s.exists(key)
 
-    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
+    async def list_keys(
+        self,
+        prefix: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> AsyncGenerator[StateKey, None]:
         """List all state keys under prefix."""
-        key = self.state_key + prefix
+        if local:
+            key = self._local_state_key + prefix
 
         async for full_key in self.s.list_keys(key):
             # Strip app prefix from returned keys
-            yield full_key[len(self.state_key) :]
+            yield full_key[len(self._local_state_key) :]
 
     async def subscribe(
-        self, key: StateKey, callback: AsyncStateCallbackFn
+        self,
+        key: StateKey,
+        callback: AsyncStateCallbackFn,
+        local=DEFALT_APP_STATE_SCOPE,
     ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
@@ -100,10 +125,15 @@ class AsyncAppState(AppCommonState, AsyncApp):
         Raises:
             ObserverError: If subscription fails
         """
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         return await self.s.subscribe(key, callback)
 
-    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
+    async def unsubscribe(
+        self,
+        subscription: AsyncSubscriptionProtocol,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> None:
         """
         Unsubscribe from changes under key prefix.
 

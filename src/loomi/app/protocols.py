@@ -296,6 +296,10 @@ class SyncAppStateProtocol(Protocol):
         """
         ...
 
+    def _initialize_state_descriptor(self) -> None:
+        """Initialize state descriptor."""
+        ...
+
 
 class AsyncAppStateProtocol(Protocol):
     """Protocol defining asynchronous service state management."""
@@ -346,6 +350,10 @@ class AsyncAppStateProtocol(Protocol):
 
     async def transaction(self) -> "AsyncTransactionContextManagerProtocol":
         """Get transaction context manager."""
+        ...
+
+    def _initialize_state_descriptor(self) -> None:
+        """Initialize state descriptor."""
         ...
 
 

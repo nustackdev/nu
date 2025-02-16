@@ -16,7 +16,7 @@ from loomi.app.base import SyncApp
 
 from .accesssor_sync import SyncModelValue
 from .base import AppCommonModel
-from .descriptor import StateDescriptor
+from .descriptor import ModelDescriptor
 from .exceptions import ModelTransactionError
 
 if TYPE_CHECKING:
@@ -67,7 +67,7 @@ class SyncAppModel(AppCommonModel, SyncApp):
             if hasattr(self, name):
                 continue
 
-            if isinstance(value, StateDescriptor):
+            if isinstance(value, ModelDescriptor):
                 setattr(self, name, SyncModelValue(self, name))
 
     @asynccontextmanager  # type: ignore

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .accesssor_async import AsyncModelValue
 from .accesssor_sync import SyncModelValue
-from .descriptor import StateDescriptor, UseState
+from .descriptor import ModelDescriptor, UseModel
 from .exceptions import ModelError, ModelTransactionError
 from .model_async import AsyncAppModel
 from .model_sync import SyncAppModel
@@ -13,8 +13,8 @@ __all__ = [
     "SyncAppModel",
     "AsyncModelValue",
     "SyncModelValue",
-    "StateDescriptor",
-    "UseState",
+    "ModelDescriptor",
+    "UseModel",
     "ModelError",
     "ModelTransactionError",
     "AsyncAccessorContextProtocol",

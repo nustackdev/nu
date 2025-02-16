@@ -55,33 +55,17 @@ class SequenceOperation(BaseOperation):
         # Unique identifier for this sequence instance
         self._id = hex(id(self))[2:]
 
-    def _state_key(self, key: str | tuple[str, ...] | None = None) -> tuple[str, ...]:
-        """Base key for function state in store"""
-        if isinstance(key, str):
-            key = (key,)
-        return (f"__app__sequence__{self._id}",) + key if key else (f"__app__sequence__{self._id}",)
-
     async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize sequence state in store"""
-        await app.set(
-            self._state_key(),
-            value={
-                "total_steps": len(self.operations),
-                "current_step": 0,
-                "errors": [],
-                "status": "initialized",
-            },
-        )
+        pass
 
     async def _update_step(self, app: "AsyncApp", step: int) -> None:
         """Update current execution step in store"""
-        await app.set(self._state_key("current_step"), value=step)
-        await app.set(self._state_key("status"), value="running")
+        pass
 
     async def _record_error(self, app: "AsyncApp", step: int, error: Exception) -> None:
         """Record operation error in store"""
-        error_data = {"step": step, "error": str(error), "error_type": error.__class__.__name__}
-        await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
+        pass
 
     async def execute(self, app: "AsyncApp") -> None:
         """Execute operations in sequence with optional delay between them."""
@@ -109,10 +93,8 @@ class SequenceOperation(BaseOperation):
                     if not self.continue_on_error:
                         raise OperationError(error_msg) from e
 
-            await app.set(self._state_key("status"), value="completed")
             logger.info("Sequence execution completed successfully")
 
         except Exception as e:
-            await app.set(self._state_key("status"), value="failed")
             logger.error("Sequence execution failed", exc_info=True)
             raise OperationError("Sequence execution failed") from e

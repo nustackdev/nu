@@ -12,7 +12,6 @@ __all__ = [
 
 
 S = TypeVar("S", bound=Service)
-T = TypeVar("T")
 
 
 class ServiceDescriptor(BaseDescriptor[S]):
@@ -25,7 +24,7 @@ class ServiceDescriptor(BaseDescriptor[S]):
         *,
         spec: Spec | None = None,
         spec_key: str | None = None,
-        allow_override: bool = True,
+        as_state: bool = False,
     ) -> None:
         super().__init__(
             storage=StorageStrategy.WEAKREF,
@@ -35,7 +34,7 @@ class ServiceDescriptor(BaseDescriptor[S]):
         self.default_factory = default_factory
         self.spec = spec
         self.spec_key = spec_key
-        self.allow_override = allow_override
+        self.as_state = as_state
 
     def _validate_type(self, value: Any) -> bool:
         """Validate that value is a subclass of BaseService."""
@@ -46,6 +45,6 @@ class ServiceDescriptor(BaseDescriptor[S]):
         return None
 
 
-def UseService(type: type[T], spec: Spec | None = None) -> T:
+def UseService(type: type[S], spec: Spec | None = None) -> S:
     """Create a service specification."""
-    return ServiceDescriptor[T](spec=spec)  # type: ignore
+    return ServiceDescriptor[S](spec=spec, as_state=False)  # type: ignore

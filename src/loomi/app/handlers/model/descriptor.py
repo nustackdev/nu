@@ -18,14 +18,14 @@ if TYPE_CHECKING:
     from .accesssor_sync import SyncModelValue
 
 __all__ = [
-    "StateDescriptor",
-    "UseState",
+    "ModelDescriptor",
+    "UseModel",
 ]
 
 StateValueT = TypeVar("StateValueT", bound="StateValue")
 
 
-class StateDescriptor(BaseDescriptor[StateValueT]):
+class ModelDescriptor(BaseDescriptor[StateValueT]):
     """
     Base descriptor for leaf values.
 
@@ -56,20 +56,20 @@ class StateDescriptor(BaseDescriptor[StateValueT]):
 
 
 @overload
-def UseState(
+def UseModel(
     state: "AsyncStateProtocol",
     type: Type[StateValueT],
 ) -> "AsyncModelValue[StateValueT]": ...
 
 
 @overload
-def UseState(
+def UseModel(
     state: "SyncStateProtocol",
     type: Type[StateValueT],
 ) -> "SyncModelValue[StateValueT]": ...
 
 
-def UseState(
+def UseModel(
     state: "AsyncStateProtocol | SyncStateProtocol",
     type: Type[StateValueT],
 ) -> "AsyncModelValue[StateValueT] | SyncModelValue[StateValueT]":
@@ -83,4 +83,4 @@ def UseState(
     Returns:
         Typed item descriptor
     """
-    return StateDescriptor(state=state, type=type)  # type: ignore
+    return ModelDescriptor(state=state, type=type)  # type: ignore

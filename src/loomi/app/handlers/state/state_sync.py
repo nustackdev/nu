@@ -5,6 +5,7 @@ from typing import Generator
 from loomi.app.base import SyncApp
 
 from .base import AppCommonState
+from .config import DEFALT_APP_STATE_SCOPE
 from .exceptions import StateError
 from .protocols import (
     SyncStateProtocol,
@@ -21,7 +22,7 @@ __all__ = [
 
 class SyncAppState(AppCommonState, SyncApp):
     """
-    app feature implementing state management.
+    App feature implementing state management.
 
     Features:
     - State adapter handling
@@ -33,48 +34,75 @@ class SyncAppState(AppCommonState, SyncApp):
     @property
     def state(self) -> SyncStateProtocol:
         """Check and return app's state service."""
-        if not hasattr(self, "_state_"):
+        if not self._state_service_name or len(self._state_service_name) == 0:
             raise StateError("No state adapter configured")
-        return getattr(self, "_state_")
+        return getattr(self, self._state_service_name)
 
     @property
     def s(self) -> SyncStateProtocol:
         """Short alias for state adapter."""
         return self.state
 
-    @property
-    def state_key(self) -> StateKey:
-        """Base state key for this app instance."""
-        return (f"__app__{self.key}",)
-
-    def get(self, key: StateKey) -> StateValue:
+    def get(
+        self,
+        key: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> StateValue:
         """Get state value at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         return self.s.get(key)
 
-    def set(self, key: StateKey, value: StateValue) -> None:
+    def set(
+        self,
+        key: StateKey,
+        value: StateValue,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> None:
         """Set state value at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         self.s.set(key, value)
 
-    def delete(self, key: StateKey) -> None:
+    def delete(
+        self,
+        key: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> None:
         """Delete state at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         self.s.delete(key)
 
-    def exists(self, key: StateKey) -> bool:
+    def exists(
+        self,
+        key: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> bool:
         """Check if state exists at key."""
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         return self.s.exists(key)
 
-    def list_keys(self, prefix: StateKey) -> Generator[StateKey, None, None]:
+    def list_keys(
+        self,
+        prefix: StateKey,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> Generator[StateKey, None, None]:
         """List all state keys under prefix."""
-        key = self.state_key + prefix
+        if local:
+            key = self._local_state_key + prefix
+
         for full_key in self.s.list_keys(key):
             # Strip app prefix from returned keys
-            yield full_key[len(self.state_key) :]
+            yield full_key[len(self._local_state_key) :]
 
-    def subscribe(self, key: StateKey, callback: SyncStateCallbackFn) -> SyncSubscriptionProtocol:
+    def subscribe(
+        self,
+        key: StateKey,
+        callback: SyncStateCallbackFn,
+        local=DEFALT_APP_STATE_SCOPE,
+    ) -> SyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -88,7 +116,8 @@ class SyncAppState(AppCommonState, SyncApp):
         Raises:
             ObserverError: If subscription fails
         """
-        key = self.state_key + key
+        if local:
+            key = self._local_state_key + key
         return self.s.subscribe(key, callback)
 
     def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:

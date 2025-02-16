@@ -81,31 +81,13 @@ class RepeatOperation(BaseOperation):
         self.ignore_errors = ignore_errors
         self._id = hex(id(self))[2:]
 
-    def _state_key(self, key: str | tuple[str, ...] | None = None) -> tuple[str, ...]:
-        """Base key for repeat operation state in store"""
-        if isinstance(key, str):
-            key = (key,)
-        return (f"__app__repeat__{self._id}",) + key if key else (f"__app__repeat__{self._id}",)
-
     async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize repeat operation state in store"""
-        await app.set(
-            self._state_key(),
-            value={
-                "status": "initialized",
-                "current_iteration": 0,
-                "max_iterations": self.times or self.max_iterations,
-                "while_key": self.while_key,
-                "errors": [],
-                "start_time": None,
-                "end_time": None,
-            },
-        )
+        pass
 
     async def _update_iteration(self, app: "AsyncApp", iteration: int) -> None:
         """Update current iteration count in store"""
-        await app.set(self._state_key("current_iteration"), value=iteration)
-        await app.set(self._state_key("status"), value="running")
+        pass
 
     async def _record_error(self, app: "AsyncApp", iteration: int, error: Exception) -> None:
         """Record iteration error in store"""
@@ -114,7 +96,6 @@ class RepeatOperation(BaseOperation):
             "error": str(error),
             "error_type": error.__class__.__name__,
         }
-        await app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
 
     async def _should_continue(self, app: "AsyncApp", iteration: int) -> bool:
         """Determine if operation should continue based on conditions"""
@@ -137,7 +118,6 @@ class RepeatOperation(BaseOperation):
 
         try:
             await self._initialize_state(app)
-            await app.set(self._state_key("start_time"), value="now")
 
             iteration = 0
             while await self._should_continue(app, iteration):
@@ -161,18 +141,13 @@ class RepeatOperation(BaseOperation):
 
                 iteration += 1
 
-            await app.set(self._state_key("status"), value="completed")
-            await app.set(self._state_key("end_time"), value="now")
             logger.info(f"Repeat operation completed after {iteration} iterations")
 
         except asyncio.CancelledError:
-            await app.set(self._state_key("status"), value="cancelled")
             logger.info("Repeat operation was cancelled")
             raise
 
         except Exception as e:
-            await app.set(self._state_key("status"), value="failed")
-            await app.set(self._state_key("end_time"), value="now")
             if not isinstance(e, OperationError):
                 logger.error("Repeat operation failed", exc_info=True)
                 raise OperationError(f"Repeat operation failed: {str(e)}") from e

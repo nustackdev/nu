@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .descriptor import UseState
 from .exceptions import StateError
 from .protocols import (
     AsyncStateProtocol,
@@ -35,4 +36,5 @@ __all__ = [
     "StateKey",
     "StateValue",
     "SyncStateCallbackFn",
+    "UseState",
 ]

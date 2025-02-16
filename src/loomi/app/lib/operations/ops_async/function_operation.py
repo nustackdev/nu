@@ -58,26 +58,9 @@ class FunctionOperation(BaseOperation):
         # Get function's module for better logging
         self._module = getattr(func, "__module__", "unknown")
 
-    def _state_key(self, key: str | tuple[str, ...] | None = None) -> tuple[str, ...]:
-        """Base key for function state in store"""
-        if isinstance(key, str):
-            key = (key,)
-        return (f"__app__function__{self._id}",) + key if key else (f"__app__function__{self._id}",)
-
     async def _initialize_state(self, app: "AsyncApp") -> None:
         """Initialize function execution state in store"""
-        await app.set(
-            self._state_key(),
-            value={
-                "status": "initialized",
-                "name": self.name,
-                "module": self._module,
-                "is_async": self._is_async,
-                "start_time": None,
-                "end_time": None,
-                "error": None,
-            },
-        )
+        pass
 
     async def _execute_sync_func(self) -> Any:
         """Execute synchronous function in thread pool."""
@@ -93,8 +76,6 @@ class FunctionOperation(BaseOperation):
 
         try:
             await self._initialize_state(app)
-            await app.set(self._state_key("status"), value="running")
-            await app.set(self._state_key("start_time"), value="now")  # Use actual timestamp
 
             try:
                 if self._is_async:
@@ -102,20 +83,14 @@ class FunctionOperation(BaseOperation):
                 else:
                     await self._execute_sync_func()
 
-                await app.set(self._state_key("status"), value="completed")
-                await app.set(self._state_key("end_time"), value="now")  # Use actual timestamp
                 logger.info(f"Function '{self.name}' completed successfully")
 
             except Exception as e:
                 error_msg = f"Function '{self.name}' failed: {str(e)}"
-                await app.set(self._state_key("status"), value="failed")
-                await app.set(self._state_key("error"), value=error_msg)
-                await app.set(self._state_key("end_time"), value="now")  # Use actual timestamp
                 logger.error(error_msg, exc_info=True)
                 raise OperationError(error_msg) from e
 
         except asyncio.CancelledError:
-            await app.set(self._state_key("status"), value="cancelled")
             logger.info(f"Function '{self.name}' was cancelled")
             raise
 

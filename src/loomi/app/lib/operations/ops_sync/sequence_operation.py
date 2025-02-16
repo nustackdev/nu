@@ -63,25 +63,15 @@ class SequenceOperation(BaseOperation):
 
     def _initialize_state(self, app: "SyncApp") -> None:
         """Initialize sequence state in store"""
-        app.set(
-            self._state_key(),
-            value={
-                "total_steps": len(self.operations),
-                "current_step": 0,
-                "errors": [],
-                "status": "initialized",
-            },
-        )
+        pass
 
     def _update_step(self, app: "SyncApp", step: int) -> None:
         """Update current execution step in store"""
-        app.set(self._state_key("current_step"), value=step)
-        app.set(self._state_key("status"), value="running")
+        pass
 
     def _record_error(self, app: "SyncApp", step: int, error: Exception) -> None:
         """Record operation error in store"""
-        error_data = {"step": step, "error": str(error), "error_type": error.__class__.__name__}
-        app.set(self._state_key("errors"), value=lambda errors: [*errors, error_data])
+        pass
 
     def execute(self, app: "SyncApp") -> None:
         """Execute operations in sequence with optional delay between them."""
@@ -109,10 +99,8 @@ class SequenceOperation(BaseOperation):
                     if not self.continue_on_error:
                         raise OperationError(error_msg) from e
 
-            app.set(self._state_key("status"), value="completed")
             logger.info("Sequence execution completed successfully")
 
         except Exception as e:
-            app.set(self._state_key("status"), value="failed")
             logger.error("Sequence execution failed", exc_info=True)
             raise OperationError("Sequence execution failed") from e

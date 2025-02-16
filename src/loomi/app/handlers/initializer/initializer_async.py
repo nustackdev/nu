@@ -24,8 +24,11 @@ class AsyncAppInitializer(AppCommonInitializer, AsyncApp):
             self._lock = Lock()
 
         async with self._lock:
-            self._initialize_model_descriptors()
             await self.initialize_services()
+
+            # Initialize app declarative descriptors
+            self._initialize_model_descriptors()
+            self._initialize_state_descriptor()
 
     async def shutdown(self) -> None:
         """

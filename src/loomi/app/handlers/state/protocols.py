@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import AsyncGenerator, Generator, Protocol
+from typing import AsyncGenerator, Generator, Protocol, runtime_checkable
 
 from .types import AsyncStateCallbackFn, StateKey, StateValue, SyncStateCallbackFn
 
@@ -21,6 +21,7 @@ __all__ = [
 # --- Protocols for asynchronous state handling --- #
 
 
+@runtime_checkable
 class AsyncStateProtocol(Protocol):
     """Protocol for asynchronous state storage adapters."""
 
@@ -326,6 +327,7 @@ class AsyncTransactionalHandlerProtocol(Protocol):
 # --- Protocols for synchronous state handling --- #
 
 
+@runtime_checkable
 class SyncStateProtocol(Protocol):
     """Protocol for synchronous state storage adapters."""
 

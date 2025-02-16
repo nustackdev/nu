@@ -53,25 +53,9 @@ class FunctionOperation(BaseOperation):
         # Get function's module for better logging
         self._module = getattr(func, "__module__", "unknown")
 
-    def _state_key(self, key: str | tuple[str, ...] | None = None) -> tuple[str, ...]:
-        """Base key for function state in store"""
-        if isinstance(key, str):
-            key = (key,)
-        return (f"__app__function__{self._id}",) + key if key else (f"__app__function__{self._id}",)
-
     def _initialize_state(self, app: "SyncApp") -> None:
         """Initialize function execution state in store"""
-        app.set(
-            self._state_key(),
-            value={
-                "status": "initialized",
-                "name": self.name,
-                "module": self._module,
-                "start_time": None,
-                "end_time": None,
-                "error": None,
-            },
-        )
+        pass
 
     def execute(self, app: "SyncApp") -> None:
         """Execute the wrapped function."""
@@ -79,21 +63,12 @@ class FunctionOperation(BaseOperation):
 
         try:
             self._initialize_state(app)
-            app.set(self._state_key("status"), value="running")
-            app.set(self._state_key("start_time"), value="now")  # Use actual timestamp
 
             try:
                 self.func()
-
-                app.set(self._state_key("status"), value="completed")
-                app.set(self._state_key("end_time"), value="now")  # Use actual timestamp
                 logger.info(f"Function '{self.name}' completed successfully")
-
             except Exception as e:
                 error_msg = f"Function '{self.name}' failed: {str(e)}"
-                app.set(self._state_key("status"), value="failed")
-                app.set(self._state_key("error"), value=error_msg)
-                app.set(self._state_key("end_time"), value="now")  # Use actual timestamp
                 logger.error(error_msg, exc_info=True)
                 raise OperationError(error_msg) from e
         except Exception as e:

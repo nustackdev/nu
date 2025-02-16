@@ -12,8 +12,7 @@ exclude =
     .tox,
     .pytest_cache,
     .vscode,
-    .github,
-    **/*.pyi
+    .github
 max-line-length = 100
 extend-ignore =
     E266,
