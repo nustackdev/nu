@@ -5,7 +5,7 @@ from pathlib import Path
 from services import TaskService
 from specs import state_spec, tasks_service_spec
 
-from loomi import AsyncApp, UseService, UseState
+from loomi import AsyncApp, UseModel, UseService, UseState
 from loomi.logging import setup_logging
 from loomistd.state import State
 
@@ -15,10 +15,10 @@ setup_logging(Path(".logs"), log_level=20)
 class TaskManagementApp(AsyncApp):
     # Services
     task_service = UseService(TaskService, tasks_service_spec)
-    _state_ = UseService(State, state_spec)
+    st = UseState(State, state_spec)
 
     # State
-    tasks = UseState(_state_, dict[str, dict])
+    tasks = UseModel(st, dict[str, dict])
 
     async def initialize_users(self):
         """Initialize some users in the system"""

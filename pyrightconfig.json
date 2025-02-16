@@ -1,8 +1,7 @@
 {
   "include": [
     "./src",
-    "./pkgs",
-    "./stubs"
+    "./pkgs"
   ],
   "exclude": [
     "**/__pycache__",
@@ -16,8 +15,7 @@
   ],
   "extraPaths": [
     "./src",
-    "./pkgs",
-    "./stubs"
+    "./pkgs"
   ],
   "pythonVersion": "3.12",
   "pythonPlatform": "All",

@@ -7,10 +7,10 @@ __all__ = ["DependencyNode"]
 class DependencyNode:
     service: Incomplete
     context: Incomplete
-    dependencies: Incomplete
-    dependents: Incomplete
-    initiators: Incomplete
-    detached_dependents: Incomplete
+    dependencies: dict[str, "Service"]
+    dependents: set["Service"]
+    initiators: set["ServiceKey"]
+    detached_dependents: set["ServiceKey"]
     def __init__(self, service: Service, is_dependency: bool) -> None: ...
     def register_root(self) -> None: ...
     def unregister_root(self) -> None: ...

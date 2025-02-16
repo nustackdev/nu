@@ -12,7 +12,6 @@ __all__ = ["SyncAppModel"]
 @dataclass
 class SyncModelContext:
     transaction: SyncAccessorContextProtocol | None = ...
-    def __init__(self, transaction=...) -> None: ...
 
 class SyncAppModel(AppCommonModel, SyncApp, metaclass=abc.ABCMeta):
     @property

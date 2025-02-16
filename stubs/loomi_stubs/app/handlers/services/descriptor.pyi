@@ -8,13 +8,12 @@ from loomi.utils.descriptor import BaseDescriptor
 __all__ = ["ServiceDescriptor", "UseService"]
 
 S = TypeVar("S", bound=Service)
-T = TypeVar("T")
 
 class ServiceDescriptor(BaseDescriptor[S]):
     default_factory: Incomplete
     spec: Incomplete
     spec_key: Incomplete
-    allow_override: Incomplete
+    as_state: Incomplete
     def __init__(
         self,
         default_factory: type[S] | None = None,
@@ -22,7 +21,7 @@ class ServiceDescriptor(BaseDescriptor[S]):
         *,
         spec: Spec | None = None,
         spec_key: str | None = None,
-        allow_override: bool = True,
+        as_state: bool = False,
     ) -> None: ...
 
-def UseService(type: type[T], spec: Spec | None = None) -> T: ...
+def UseService(type: type[S], spec: Spec | None = None) -> S: ...

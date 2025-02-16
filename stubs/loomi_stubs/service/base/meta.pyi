@@ -4,7 +4,6 @@ from typing import Any, Generic, TypeVar
 from loomi.service.lib.dependency_manager import DependencyManager
 from loomi.service.lib.service_registry import ServiceRegistry
 
-from .bases import Service
 from .spec import Spec
 
 __all__ = ["ServiceMeta"]

@@ -55,7 +55,7 @@ class AsyncAppState(AppCommonState, AsyncApp):
     async def get(
         self,
         key: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> StateValue:
         """Get state value at key."""
         if local:
@@ -66,7 +66,7 @@ class AsyncAppState(AppCommonState, AsyncApp):
         self,
         key: StateKey,
         value: StateValue,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> None:
         """Set state value at key."""
         if local:
@@ -76,7 +76,7 @@ class AsyncAppState(AppCommonState, AsyncApp):
     async def delete(
         self,
         key: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> None:
         """Delete state at key."""
         if local:
@@ -86,7 +86,7 @@ class AsyncAppState(AppCommonState, AsyncApp):
     async def exists(
         self,
         key: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> bool:
         """Check if state exists at key."""
         if local:
@@ -96,7 +96,7 @@ class AsyncAppState(AppCommonState, AsyncApp):
     async def list_keys(
         self,
         prefix: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> AsyncGenerator[StateKey, None]:
         """List all state keys under prefix."""
         if local:
@@ -110,7 +110,7 @@ class AsyncAppState(AppCommonState, AsyncApp):
         self,
         key: StateKey,
         callback: AsyncStateCallbackFn,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
@@ -132,7 +132,7 @@ class AsyncAppState(AppCommonState, AsyncApp):
     async def unsubscribe(
         self,
         subscription: AsyncSubscriptionProtocol,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> None:
         """
         Unsubscribe from changes under key prefix.

@@ -22,7 +22,6 @@ class TransactionOperation:
     op_type: str
     key: InMemoryStorageKey
     value: InMemoryStorageValue | None = ...
-    def __init__(self, op_type, key, value=...) -> None: ...
 
 class InMemoryStorageProtocol(
     StorageProtocol[

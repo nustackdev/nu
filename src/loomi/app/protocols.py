@@ -175,7 +175,7 @@ class SyncAppStateProtocol(Protocol):
         """Short alias for state adapter."""
         ...
 
-    def get(self, key: "StateKey") -> "StateValue":
+    def get(self, key: "StateKey", local: bool = ...) -> "StateValue":
         """
         Get state value at path.
 
@@ -190,7 +190,7 @@ class SyncAppStateProtocol(Protocol):
         """
         ...
 
-    def set(self, key: "StateKey", value: "StateValue") -> None:
+    def set(self, key: "StateKey", value: "StateValue", local: bool = ...) -> None:
         """
         Set state value at path.
 
@@ -203,7 +203,7 @@ class SyncAppStateProtocol(Protocol):
         """
         ...
 
-    def delete(self, key: "StateKey") -> None:
+    def delete(self, key: "StateKey", local: bool = ...) -> None:
         """
         Delete state at path.
 
@@ -215,7 +215,7 @@ class SyncAppStateProtocol(Protocol):
         """
         ...
 
-    def exists(self, key: "StateKey") -> bool:
+    def exists(self, key: "StateKey", local: bool = ...) -> bool:
         """
         Check if state exists at path.
 
@@ -230,12 +230,16 @@ class SyncAppStateProtocol(Protocol):
         """
         ...
 
-    def list_keys(self, *prefix: str) -> Generator["StateKey", None, None]:
+    def list_keys(
+        self,
+        prefix: "StateKey",
+        local: bool = ...,
+    ) -> Generator["StateKey", None, None]:
         """
         List all state keys under prefix.
 
         Args:
-            *prefix: State path prefix components
+            prefix: State path prefix components
 
         Returns:
             Generator of matching state keys
@@ -246,7 +250,10 @@ class SyncAppStateProtocol(Protocol):
         ...
 
     def subscribe(
-        self, key: "StateKey", callback: "SyncStateCallbackFn"
+        self,
+        key: "StateKey",
+        callback: "SyncStateCallbackFn",
+        local: bool = ...,
     ) -> "SyncSubscriptionProtocol":
         """
         Subscribe to changes under key prefix.
@@ -314,28 +321,35 @@ class AsyncAppStateProtocol(Protocol):
         """Short alias for state adapter."""
         ...
 
-    async def get(self, key: "StateKey") -> "StateValue":
+    async def get(self, key: "StateKey", local: bool = ...) -> "StateValue":
         """Get state value at path."""
         ...
 
-    async def set(self, key: "StateKey", value: "StateValue") -> None:
+    async def set(self, key: "StateKey", value: "StateValue", local: bool = ...) -> None:
         """Set state value at path."""
         ...
 
-    async def delete(self, key: "StateKey") -> None:
+    async def delete(self, key: "StateKey", local: bool = ...) -> None:
         """Delete state at path."""
         ...
 
-    async def exists(self, key: "StateKey") -> bool:
+    async def exists(self, key: "StateKey", local: bool = ...) -> bool:
         """Check if state exists at path."""
         ...
 
-    async def list_keys(self, *prefix: str) -> AsyncGenerator["StateKey", None]:
+    async def list_keys(
+        self,
+        prefix: "StateKey",
+        local: bool = ...,
+    ) -> AsyncGenerator["StateKey", None]:
         """List all state keys under prefix."""
         ...
 
     async def subscribe(
-        self, key: "StateKey", callback: "AsyncStateCallbackFn"
+        self,
+        key: "StateKey",
+        callback: "AsyncStateCallbackFn",
+        local: bool = ...,
     ) -> "AsyncSubscriptionProtocol":
         """Subscribe to changes under key prefix."""
         ...

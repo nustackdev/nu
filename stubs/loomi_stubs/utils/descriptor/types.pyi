@@ -1,5 +1,5 @@
 import weakref
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Generic, TypeVar
 
@@ -33,20 +33,9 @@ class DescriptorMetadata(Generic[DescriptorT]):
     def type(self) -> type[DescriptorT]: ...
     @property
     def name(self) -> str: ...
-    def __init__(
-        self,
-        _name=...,
-        _type=...,
-        doc=...,
-        validator=...,
-        storage=...,
-        validation_strategy=...,
-        allow_none=...,
-    ) -> None: ...
 
 @dataclass
 class DescriptorState:
-    values: weakref.WeakKeyDictionary = ...
-    def __init__(self, values=...) -> None: ...
+    values: weakref.WeakKeyDictionary = field(default_factory=weakref.WeakKeyDictionary)
 
 def validate_type(value: Any, expected_type: type[DescriptorT]) -> bool: ...

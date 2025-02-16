@@ -1,6 +1,7 @@
 from .app import AppError as AppError
 from .app import AsyncApp as AsyncApp
 from .app import SyncApp as SyncApp
+from .app import UseModel as UseModel
 from .app import UseService as UseService
 from .app import UseState as UseState
 from .service import AsyncService as AsyncService
@@ -16,6 +17,7 @@ __all__ = [
     "SyncApp",
     "UseService",
     "UseState",
+    "UseModel",
     "AppError",
     "Service",
     "AsyncService",

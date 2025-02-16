@@ -24,7 +24,6 @@ class TransactionOperation:
     op_type: str
     key: FileStorageKey
     value: FileStorageValue | None = ...
-    def __init__(self, op_type, key, value=...) -> None: ...
 
 class FileStorageProtocol(
     StorageProtocol[

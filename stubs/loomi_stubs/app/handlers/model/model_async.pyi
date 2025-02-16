@@ -12,7 +12,6 @@ __all__ = ["AsyncAppModel"]
 @dataclass
 class AsyncModelContext:
     transaction: AsyncAccessorContextProtocol | None = ...
-    def __init__(self, transaction=...) -> None: ...
 
 class AsyncAppModel(AppCommonModel, AsyncApp, metaclass=abc.ABCMeta):
     @property

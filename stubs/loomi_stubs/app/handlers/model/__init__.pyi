@@ -1,7 +1,7 @@
 from .accesssor_async import AsyncModelValue as AsyncModelValue
 from .accesssor_sync import SyncModelValue as SyncModelValue
-from .descriptor import StateDescriptor as StateDescriptor
-from .descriptor import UseState as UseState
+from .descriptor import ModelDescriptor as ModelDescriptor
+from .descriptor import UseModel as UseModel
 from .exceptions import ModelError as ModelError
 from .exceptions import ModelTransactionError as ModelTransactionError
 from .model_async import AsyncAppModel as AsyncAppModel
@@ -14,8 +14,8 @@ __all__ = [
     "SyncAppModel",
     "AsyncModelValue",
     "SyncModelValue",
-    "StateDescriptor",
-    "UseState",
+    "ModelDescriptor",
+    "UseModel",
     "ModelError",
     "ModelTransactionError",
     "AsyncAccessorContextProtocol",

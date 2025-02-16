@@ -11,7 +11,7 @@ __all__ = ["TransactionContextManager"]
 
 class TransactionContextManager(TransactionContextManagerProtocol[StorageKeyT, StorageValueT]):
     handler: Incomplete
-    transaction: Incomplete
+    transaction: TransactionProtocol[StorageKeyT, StorageValueT] | None
     def __init__(
         self, handler: TransactionalHandlerProtocol[StorageKeyT, StorageValueT]
     ) -> None: ...

@@ -1,3 +1,4 @@
+from .descriptor import UseState as UseState
 from .exceptions import StateError as StateError
 from .protocols import AsyncStateProtocol as AsyncStateProtocol
 from .protocols import AsyncSubscriptionProtocol as AsyncSubscriptionProtocol
@@ -38,4 +39,5 @@ __all__ = [
     "StateKey",
     "StateValue",
     "SyncStateCallbackFn",
+    "UseState",
 ]

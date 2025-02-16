@@ -46,7 +46,7 @@ class SyncAppState(AppCommonState, SyncApp):
     def get(
         self,
         key: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> StateValue:
         """Get state value at key."""
         if local:
@@ -57,7 +57,7 @@ class SyncAppState(AppCommonState, SyncApp):
         self,
         key: StateKey,
         value: StateValue,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> None:
         """Set state value at key."""
         if local:
@@ -67,7 +67,7 @@ class SyncAppState(AppCommonState, SyncApp):
     def delete(
         self,
         key: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> None:
         """Delete state at key."""
         if local:
@@ -77,7 +77,7 @@ class SyncAppState(AppCommonState, SyncApp):
     def exists(
         self,
         key: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> bool:
         """Check if state exists at key."""
         if local:
@@ -87,7 +87,7 @@ class SyncAppState(AppCommonState, SyncApp):
     def list_keys(
         self,
         prefix: StateKey,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> Generator[StateKey, None, None]:
         """List all state keys under prefix."""
         if local:
@@ -101,7 +101,7 @@ class SyncAppState(AppCommonState, SyncApp):
         self,
         key: StateKey,
         callback: SyncStateCallbackFn,
-        local=DEFALT_APP_STATE_SCOPE,
+        local: bool = DEFALT_APP_STATE_SCOPE,
     ) -> SyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
