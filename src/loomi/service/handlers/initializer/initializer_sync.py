@@ -18,6 +18,8 @@ __all__ = [
 
 
 class SyncServiceInitializer(ServiceCommonInitializer, SyncService):
+    _service_lock: Lock
+
     def initialize(self) -> None:
         """
         Initialize service and its dependencies asynchronously.
@@ -32,8 +34,8 @@ class SyncServiceInitializer(ServiceCommonInitializer, SyncService):
             InitializationError: If initialization fails
             ServiceStateError: If service in invalid state
         """
-        if not hasattr(self, "_lock"):
-            self._lock = Lock()
+        if not hasattr(self, "_service_lock"):
+            self._service_lock = Lock()
 
         if not self._registry._is_valid_transition(self.service_state, ServiceState.INITIALIZING):
             logger.error(
@@ -43,7 +45,7 @@ class SyncServiceInitializer(ServiceCommonInitializer, SyncService):
                 f"Service '{self.readable_name}' can not be initialized in state '{self.service_state}'"
             )
 
-        with self._lock:
+        with self._service_lock:
             # Execute pre-initialization hook
             try:
                 logger.debug(f"Running pre-initialization for '{self.readable_name}'")
@@ -102,7 +104,7 @@ class SyncServiceInitializer(ServiceCommonInitializer, SyncService):
                 f"Service '{self.readable_name}' can not be shut down in state '{self.service_state}'"
             )
 
-        with self._lock:
+        with self._service_lock:
             # Execute pre-shutdown hook
             try:
                 self.pre_shutdown()

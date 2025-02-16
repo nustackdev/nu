@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from asyncio import Lock as AsyncLock
+from threading import Lock as ThreadLock
+
 from loomi.service.base import Service, ServiceState
 from loomi.service.lib.service_registry import RegistryError
 
@@ -16,6 +19,8 @@ class ServiceCommonInitializer(Service):
     shutdown, and lifecycle management. It should be used with BaseService
     for async service implementations.
     """
+
+    _service_lock: "AsyncLock | ThreadLock"
 
     @property
     def service_state(self) -> ServiceState:
