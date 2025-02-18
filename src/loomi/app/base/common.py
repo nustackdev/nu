@@ -1,3 +1,10 @@
+"""
+Base app functionality shared between async and sync app types.
+
+The functionality here is inherited by both async and sync service base classes
+to ensure consistent behavior across all service types.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
