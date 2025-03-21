@@ -51,14 +51,6 @@ class AppCommon:
     def __init__(self) -> None:
         """
         Initialize a new app instance.
-
-        Args:
-            services: Dictionary of services used by the app. If None, an empty dictionary will be created.
-            state_service_name: Name of the state service.
-
-        Notes:
-            - Initializes services dictionary and state service name
-            - Logs initialization details at appropriate levels
         """
         self._services = {}
         self._state_service_name = ""

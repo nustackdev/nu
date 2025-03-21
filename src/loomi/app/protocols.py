@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from abc import ABC
 from types import TracebackType
-from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator, Protocol, Self
+from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator, Self
 
 if TYPE_CHECKING:
     from .handlers.state.protocols import (
@@ -40,13 +41,13 @@ __all__ = [
 ]
 
 
-class CommonAppProtocol(Protocol):
+class CommonAppProtocol(ABC):
     """Base protocol for common application functionality."""
 
     pass
 
 
-class SyncAppInitializerProtocol(Protocol):
+class SyncAppInitializerProtocol(ABC):
     """
     Synchronous app initializer protocol.
 
@@ -84,7 +85,7 @@ class SyncAppInitializerProtocol(Protocol):
         ...
 
 
-class AsyncAppInitializerProtocol(Protocol):
+class AsyncAppInitializerProtocol(ABC):
     """
     Async app initializer protocol.
 
@@ -122,7 +123,7 @@ class AsyncAppInitializerProtocol(Protocol):
         ...
 
 
-class AsyncAppServicesProtocol(Protocol):
+class AsyncAppServicesProtocol(ABC):
     """
     Async app services handler protocol.
 
@@ -142,7 +143,7 @@ class AsyncAppServicesProtocol(Protocol):
         ...
 
 
-class SyncAppServicesProtocol(Protocol):
+class SyncAppServicesProtocol(ABC):
     """
     Sync app services handler protocol.
 
@@ -162,7 +163,7 @@ class SyncAppServicesProtocol(Protocol):
         ...
 
 
-class SyncAppStateProtocol(Protocol):
+class SyncAppStateProtocol(ABC):
     """Protocol defining synchronous service state management."""
 
     @property
@@ -308,7 +309,7 @@ class SyncAppStateProtocol(Protocol):
         ...
 
 
-class AsyncAppStateProtocol(Protocol):
+class AsyncAppStateProtocol(ABC):
     """Protocol defining asynchronous service state management."""
 
     @property
@@ -371,7 +372,7 @@ class AsyncAppStateProtocol(Protocol):
         ...
 
 
-class SyncAppTasksProtocol(Protocol):
+class SyncAppTasksProtocol(ABC):
     """Protocol defining synchronous service operation capabilities."""
 
     def execute(self, operation: "SyncOperationProtocol") -> None:
@@ -397,7 +398,7 @@ class SyncAppTasksProtocol(Protocol):
         ...
 
 
-class AsyncAppTasksProtocol(Protocol):
+class AsyncAppTasksProtocol(ABC):
     """Protocol defining asynchronous service operation capabilities."""
 
     async def execute(self, operation: "AsyncOperationProtocol") -> None:
@@ -423,13 +424,13 @@ class AsyncAppTasksProtocol(Protocol):
         ...
 
 
-class SyncAppModelProtocol(Protocol):
+class SyncAppModelProtocol(ABC):
     def _initialize_model_descriptors(self) -> None:
         """Initialize model."""
         ...
 
 
-class AsyncAppModelProtocol(Protocol):
+class AsyncAppModelProtocol(ABC):
     def _initialize_model_descriptors(self) -> None:
         """Initialize model."""
         ...
@@ -437,7 +438,6 @@ class AsyncAppModelProtocol(Protocol):
 
 class AppProtocol(
     CommonAppProtocol,
-    Protocol,
 ):
     """Common application protocol."""
 
@@ -451,7 +451,6 @@ class SyncAppProtocol(
     SyncAppStateProtocol,
     SyncAppTasksProtocol,
     SyncAppModelProtocol,
-    Protocol,
 ):
     """Synchronous application protocol."""
 
@@ -465,7 +464,6 @@ class AsyncAppProtocol(
     AsyncAppStateProtocol,
     AsyncAppTasksProtocol,
     AsyncAppModelProtocol,
-    Protocol,
 ):
     """Asynchronous application protocol."""
 

@@ -14,8 +14,8 @@ setup_logging(Path(".logs"), log_level=20)
 
 class TaskManagementApp(AsyncApp):
     # Services
-    task_service = UseService(TaskService, tasks_service_spec)
-    st = UseState(State, state_spec)
+    task_service = UseService(TaskService)
+    st: State = UseState(State)
 
     # State
     tasks = UseModel(st, dict[str, dict])
@@ -85,7 +85,10 @@ class TaskManagementApp(AsyncApp):
 
 
 async def main():
-    async with TaskManagementApp() as app:
+    async with TaskManagementApp(
+        task_service_spec=tasks_service_spec,
+        st_spec=state_spec,
+    ) as app:
         await app.execute(app.demo_runner())
 
 

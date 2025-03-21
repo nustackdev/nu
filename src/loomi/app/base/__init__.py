@@ -17,9 +17,11 @@ Classes:
 from __future__ import annotations
 
 from .bases import App, AsyncApp, SyncApp
+from .meta import AppMeta
 
 __all__ = [
     "AsyncApp",
     "SyncApp",
     "App",
+    "AppMeta",
 ]

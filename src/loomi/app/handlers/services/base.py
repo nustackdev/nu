@@ -63,15 +63,27 @@ class AppCommonServices(App):
         return self._services[name]
 
     def _init_service_descriptors(self):
+        app_service_specs = getattr(self, "_specs", {})
+
         for name, value in self.__class__.__dict__.items():
             if not isinstance(value, ServiceDescriptor):
                 continue
 
-            descriptor = cast(ServiceDescriptor, value)
-            if descriptor.spec is None:
+            # Get the service spec:
+            # First, check if service spec is passed as app __init__ argument
+            spec = app_service_specs.get(name, None)
+
+            # If spec is not provided, try to use default spec from descriptor
+            if spec is None:
+                descriptor = cast(ServiceDescriptor, value)
+                if descriptor.spec is not None:
+                    spec = descriptor.spec
+
+            # Raise an exception if spec is still not found
+            if spec is None:
                 logger.error(f"No spec found for dependency '{name}'")
                 raise ServiceDependencyError(f"No spec found for dependency '{name}'")
 
-            service = self.add_service_dependency(name, descriptor.spec)
+            service = self.add_service_dependency(name, spec)
 
             setattr(self, name, service)

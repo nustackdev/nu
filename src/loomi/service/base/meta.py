@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from abc import ABCMeta
 from threading import Lock
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 from loomi.service.lib.dependency_manager import DependencyManager
 from loomi.service.lib.service_registry import ServiceRegistry
@@ -81,8 +81,7 @@ class ServiceMeta(ABCMeta, Generic[ServiceT]):
         mcs,
         name: str,
         bases: tuple[type, ...],
-        namespace: Dict[str, Any],
-        **features: Any,
+        namespace: dict[str, Any],
     ) -> type[ServiceT]:
         """
         Create new service class with registered features.

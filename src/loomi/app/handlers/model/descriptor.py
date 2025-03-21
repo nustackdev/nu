@@ -74,13 +74,10 @@ def UseModel(
     type: Type[StateValueT],
 ) -> "AsyncModelValue[StateValueT] | SyncModelValue[StateValueT]":
     """
-    Create an item descriptor.
+    Specify a state item.
 
     Args:
-        default: Optional default value
-        validator: Optional validation function
-
-    Returns:
-        Typed item descriptor
+        state: State adapter
+        type: Item type
     """
     return ModelDescriptor(state=state, type=type)  # type: ignore
