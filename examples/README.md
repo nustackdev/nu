@@ -23,5 +23,5 @@ Check out `/examples/task_management` to see it in action.
 Each example can be run directly from its directory:
 ```bash
 cd examples/task_management
-python app.py
+poetry run python app.py
 ```

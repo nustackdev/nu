@@ -1,32 +1,50 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "loomi"
 version = "0.1.2"
 description = "loomi"
-dynamic = ["dependencies"]
+authors = ["Gor Arakelyan <gorarkln@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "loomi", from = "src" },
+    { include = "loomistd", from = "pkgs" },
+    { include = "loomiverse", from = "pkgs" },
+]
+include = [
+    "src/loomi/py.typed",
+    "src/loomi/**/*.yaml",
+    "src/loomi/**/*.json",
+    "pkgs/loomistd/py.typed",
+    "pkgs/loomistd/**/*.yaml",
+    "pkgs/loomistd/**/*.json",
+    "pkgs/loomiverse/py.typed",
+    "pkgs/loomiverse/**/*.yaml",
+    "pkgs/loomiverse/**/*.json",
+    "stubs/**/*.pyi"
+]
 
-[tool.setuptools]
-package-dir = {"loomi" = "src/loomi", "loomistd" = "pkgs/loomistd", "loomiverse" = "pkgs/loomiverse", "loomi_stubs" = "stubs/loomi_stubs", "loomistd_stubs" = "stubs/loomistd_stubs", "loomiverse_stubs" = "stubs/loomiverse_stubs"}
-include-package-data = true
+[tool.poetry.dependencies]
+python = "^3.12"
+rich = "^13.9.4"
+aiofile = "^3.9.0"
+pydantic = "^2.10.6"
+lmdb = "^1.6.2"
+aiohttp = "^3.11.13"
+requests = "^2.32.3"
+pre-commit = "^4.1.0"
 
-[tool.setuptools.packages.find]
-where = ["src", "pkgs", "stubs"]
-include = ["loomi*"]
+[tool.poetry.group.dev.dependencies]
+autoflake = "*"
+black = "*"
+flake8 = "*"
+isort = "*"
+mypy = "*"
+pre-commit = "*"
 
-[tool.setuptools.package-data]
-"loomi" = ["py.typed", "*.yaml", "*.json"]
-"loomistd" = ["py.typed", "*.yaml", "*.json"]
-"loomiverse" = ["py.typed", "*.yaml", "*.json"]
-"loomi_stubs" = ["**/*.pyi"]
-"loomistd_stubs" = ["**/*.pyi"]
-"loomiverse_stubs" = ["**/*.pyi"]
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-
+# Preserving existing tool configurations
 [tool.black]
 line-length = 100
 target-version = ['py312']

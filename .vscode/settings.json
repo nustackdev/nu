@@ -12,5 +12,10 @@
         "${workspaceFolder}/stubs"
     ],
     "python.analysis.diagnosticMode": "workspace",
-    "python.languageServer": "Pylance"
+    "python.languageServer": "Pylance",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/pkgs",
+        "${workspaceFolder}/stubs"
+    ]
 }

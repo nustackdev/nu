@@ -1,8 +1,0 @@
-rich
-aiofile
-pydantic
-aiohttp
-requests
-
-# std
-lmdb

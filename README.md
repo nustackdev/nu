@@ -5,6 +5,7 @@
 ## About
 
 Turn this:
+
 ```python
 # Messy script with global state and manual dependency management
 redis_client = Redis(host="localhost")
@@ -23,6 +24,7 @@ async def main():
 ```
 
 Into this:
+
 ```python
 class DataProcessor(AsyncApp):
     # Automatic dependency injection and lifecycle management
@@ -82,14 +84,26 @@ Smart data containers that provide:
 
 ## Installation
 
+You need to have poetry installed. For that run `pip install poetry`. Poetry by default puts your env files in the user directory, which might be inconvenient for the VScode to pick up the right python to work with. To automatically create poetry env in the project's directory (and VScode to auto-pickup the right python) run the following `poetry config virtualenvs.in-project true`. It is a suggested practice to have this command in your bashrc.
+
 ```bash
 git clone ...
 cd loomi
-pip install .
+poetry install
 ```
 
 ## Examples
 
 Explore complete, production-ready examples in our `examples` directory:
+
 - Task Management System
 - More examples coming soon!
+
+### Running Examples
+
+To run the `task_management` example:
+
+```bash
+cd examples/task_management
+poetry run python app.py
+```
