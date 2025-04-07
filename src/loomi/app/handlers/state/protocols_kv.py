@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import AsyncGenerator, Generator, Protocol, runtime_checkable
+from typing import AsyncGenerator, Generator, Protocol
 
-from .types import AsyncStateCallbackFn, StateKey, StateValue, SyncStateCallbackFn
+from .types import AsyncStateCallbackFn, StateValue, SyncStateCallbackFn
 
 __all__ = [
-    "AsyncStateProtocol",
+    "AsyncStorageProtocol",
     "AsyncSubscriptionProtocol",
     "AsyncTransactionProtocol",
     "AsyncTransactionContextManagerProtocol",
     "AsyncTransactionalHandlerProtocol",
-    "SyncStateProtocol",
+    "SyncStorageProtocol",
     "SyncSubscriptionProtocol",
     "SyncTransactionProtocol",
     "SyncTransactionContextManagerProtocol",
@@ -21,11 +21,10 @@ __all__ = [
 # --- Protocols for asynchronous state handling --- #
 
 
-@runtime_checkable
-class AsyncStateProtocol(Protocol):
+class AsyncStorageProtocol(Protocol):
     """Protocol for asynchronous state storage adapters."""
 
-    async def get(self, key: StateKey) -> StateValue:
+    async def get(self, key: StateValue) -> StateValue:
         """
         Get value by key.
 
@@ -40,7 +39,7 @@ class AsyncStateProtocol(Protocol):
         """
         ...
 
-    async def set(self, key: StateKey, value: StateValue) -> None:
+    async def set(self, key: StateValue, value: StateValue) -> None:
         """
         Set value by key.
 
@@ -53,7 +52,7 @@ class AsyncStateProtocol(Protocol):
         """
         ...
 
-    async def delete(self, key: StateKey) -> None:
+    async def delete(self, key: StateValue) -> None:
         """
         Delete value by key.
 
@@ -65,7 +64,7 @@ class AsyncStateProtocol(Protocol):
         """
         ...
 
-    async def exists(self, key: StateKey) -> bool:
+    async def exists(self, key: StateValue) -> bool:
         """
         Check if key exists.
 
@@ -80,12 +79,16 @@ class AsyncStateProtocol(Protocol):
         """
         ...
 
-    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
+    async def list_keys(
+        self, prefix: StateValue, depth: int = ...
+    ) -> AsyncGenerator[StateValue, None]:
         """
         List all keys under prefix.
 
         Args:
             prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
 
         Returns:
             AsyncGenerator of matching state keys
@@ -93,10 +96,14 @@ class AsyncStateProtocol(Protocol):
         Raises:
             StateError: If listing fails
         """
-        ...
+        if False:  # This will never execute but helps type checkers
+            yield prefix  # Dummy yield to make it a true async generator
 
     async def subscribe(
-        self, key: StateKey, callback: AsyncStateCallbackFn
+        self,
+        key: StateValue,
+        callback: AsyncStateCallbackFn,
+        depth: int = ...,
     ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
@@ -104,6 +111,8 @@ class AsyncStateProtocol(Protocol):
         Args:
             key: Key prefix to subscribe to
             callback: Async callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
 
         Returns:
             Subscription object for unsubscribing
@@ -157,14 +166,14 @@ class AsyncSubscriptionProtocol(Protocol):
             Must be a tuple of strings matching state keys.
         callback:
             Async callable that will be invoked on matching notifications.
-            Must accept a single parameter of type StateKey.
+            Must accept a single parameter of type StateValue.
 
     Type Parameters:
-        StateKey: Topic type (tuple of strings)
+        StateValue: Topic type (tuple of strings)
     """
 
     @property
-    def topic_pattern(self) -> StateKey:
+    def topic_pattern(self) -> StateValue:
         """
         Get topic pattern for subscription.
         """
@@ -177,11 +186,18 @@ class AsyncSubscriptionProtocol(Protocol):
         """
         ...
 
+    @property
+    def depth(self) -> int:
+        """
+        Get depth of subscription.
+        """
+        ...
+
 
 class AsyncTransactionProtocol(Protocol):
     """Protocol defining the interface for asynchronous transactions."""
 
-    async def get(self, key: StateKey) -> StateValue:
+    async def get(self, key: StateValue) -> StateValue:
         """
         Get value within transaction context.
 
@@ -198,7 +214,7 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def set(self, key: StateKey, value: StateValue) -> None:
+    async def set(self, key: StateValue, value: StateValue) -> None:
         """
         Set value within transaction context.
 
@@ -212,7 +228,7 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def delete(self, key: StateKey) -> None:
+    async def delete(self, key: StateValue) -> None:
         """
         Delete value within transaction context.
 
@@ -225,7 +241,7 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def exists(self, key: StateKey) -> bool:
+    async def exists(self, key: StateValue) -> bool:
         """
         Check if key exists within transaction context.
 
@@ -241,12 +257,16 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def list_keys(self, prefix: StateKey) -> AsyncGenerator[StateKey, None]:
+    async def list_keys(
+        self, prefix: StateValue, depth: int = ...
+    ) -> AsyncGenerator[StateValue, None]:
         """
         List all keys under prefix within transaction context.
 
         Args:
             prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
 
         Returns:
             AsyncGenerator of matching keys
@@ -255,7 +275,8 @@ class AsyncTransactionProtocol(Protocol):
             TransactionError: If transaction is invalid or operation fails
             StorageOperationError: If list operation fails
         """
-        ...
+        if False:  # This will never execute but helps type checkers
+            yield prefix  # Dummy yield to make it a true async generator
 
     async def commit(self) -> None:
         """
@@ -327,11 +348,10 @@ class AsyncTransactionalHandlerProtocol(Protocol):
 # --- Protocols for synchronous state handling --- #
 
 
-@runtime_checkable
-class SyncStateProtocol(Protocol):
+class SyncStorageProtocol(Protocol):
     """Protocol for synchronous state storage adapters."""
 
-    def get(self, key: StateKey) -> StateValue:
+    def get(self, key: StateValue) -> StateValue:
         """
         Get value by key.
 
@@ -346,7 +366,7 @@ class SyncStateProtocol(Protocol):
         """
         ...
 
-    def set(self, key: StateKey, value: StateValue) -> None:
+    def set(self, key: StateValue, value: StateValue) -> None:
         """
         Set value by key.
 
@@ -359,7 +379,7 @@ class SyncStateProtocol(Protocol):
         """
         ...
 
-    def delete(self, key: StateKey) -> None:
+    def delete(self, key: StateValue) -> None:
         """
         Delete value by key.
 
@@ -371,7 +391,7 @@ class SyncStateProtocol(Protocol):
         """
         ...
 
-    def exists(self, key: StateKey) -> bool:
+    def exists(self, key: StateValue) -> bool:
         """
         Check if key exists.
 
@@ -386,12 +406,18 @@ class SyncStateProtocol(Protocol):
         """
         ...
 
-    def list_keys(self, prefix: StateKey) -> Generator[StateKey, None, None]:
+    def list_keys(
+        self,
+        prefix: StateValue,
+        depth: int = ...,
+    ) -> Generator[StateValue, None, None]:
         """
         List all keys under prefix.
 
         Args:
             prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
 
         Returns:
             Generator of matching state keys
@@ -401,13 +427,20 @@ class SyncStateProtocol(Protocol):
         """
         ...
 
-    def subscribe(self, key: StateKey, callback: SyncStateCallbackFn) -> SyncSubscriptionProtocol:
+    def subscribe(
+        self,
+        key: StateValue,
+        callback: SyncStateCallbackFn,
+        depth: int = ...,
+    ) -> SyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
         Args:
             key: Key prefix to subscribe to
             callback: Callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
 
         Returns:
             Subscription object for unsubscribing
@@ -461,20 +494,38 @@ class SyncSubscriptionProtocol(Protocol):
             Must be a tuple of strings matching state keys.
         callback:
             Callable that will be invoked on matching notifications.
-            Must accept a single parameter of type StateKey.
+            Must accept a single parameter of type StateValue.
 
     Type Parameters:
-        StateKey: Topic type (tuple of strings)
+        StateValue: Topic type (tuple of strings)
     """
 
-    topic_pattern: StateKey
-    callback: SyncStateCallbackFn
+    @property
+    def topic_pattern(self) -> StateValue:
+        """
+        Get topic pattern for subscription.
+        """
+        ...
+
+    @property
+    def callback(self) -> SyncStateCallbackFn:
+        """
+        Get callback for subscription.
+        """
+        ...
+
+    @property
+    def depth(self) -> int:
+        """
+        Get depth for subscription.
+        """
+        ...
 
 
 class SyncTransactionProtocol(Protocol):
     """Protocol defining the interface for synchronous transactions."""
 
-    def get(self, key: StateKey) -> StateValue:
+    def get(self, key: StateValue) -> StateValue:
         """
         Get value within transaction context.
 
@@ -491,7 +542,7 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def set(self, key: StateKey, value: StateValue) -> None:
+    def set(self, key: StateValue, value: StateValue) -> None:
         """
         Set value within transaction context.
 
@@ -505,7 +556,7 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def delete(self, key: StateKey) -> None:
+    def delete(self, key: StateValue) -> None:
         """
         Delete value within transaction context.
 
@@ -518,7 +569,7 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def exists(self, key: StateKey) -> bool:
+    def exists(self, key: StateValue) -> bool:
         """
         Check if key exists within transaction context.
 
@@ -534,12 +585,18 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def list_keys(self, prefix: StateKey) -> Generator[StateKey, None, None]:
+    def list_keys(
+        self,
+        prefix: StateValue,
+        depth: int = ...,
+    ) -> Generator[StateValue, None, None]:
         """
         List all keys under prefix within transaction context.
 
         Args:
             prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
 
         Returns:
             Generator of matching keys

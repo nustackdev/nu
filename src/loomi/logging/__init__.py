@@ -77,15 +77,15 @@ def setup_logging(log_dir_path: Path, log_level: int = logging.DEBUG):
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     root_logger.addHandler(console_handler)
-    # root_logger.addHandler(file_handler_debug)
-    # root_logger.addHandler(file_handler_info)
-    # root_logger.addHandler(file_handler_err)
+    root_logger.addHandler(file_handler_debug)
+    root_logger.addHandler(file_handler_info)
+    root_logger.addHandler(file_handler_err)
 
-    # Adjust httpcore and httpx loggers
+    # Adjust 3rd party loggers
     httpcore_logger = logging.getLogger("httpcore")
-    httpcore_logger.setLevel(log_level)
-    httpx_logger = logging.getLogger(name="httpx")
-    httpx_logger.setLevel(log_level)
+    httpcore_logger.setLevel(max(20, log_level))
+    httpx_logger = logging.getLogger(name="filelock")
+    httpx_logger.setLevel(max(20, log_level))
 
     root_logger.info(f"Set up logging to write to '{log_dir_path}'")
 

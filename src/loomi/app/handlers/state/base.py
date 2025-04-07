@@ -4,8 +4,6 @@ from loomi.app.base import App
 from loomi.app.handlers.services import ServiceDescriptor
 
 from .exceptions import StateError
-from .protocols import AsyncStateProtocol, SyncStateProtocol
-from .types import StateKey
 
 __all__ = [
     "AppCommonState",
@@ -16,11 +14,6 @@ class AppCommonState(App):
     """
     Base class for app state management.
     """
-
-    @property
-    def _local_state_key(self) -> StateKey:
-        """Base state key for this app instance."""
-        return ("__APP__", self.key.replace(".", "-"))
 
     def _initialize_state_descriptor(self) -> None:
         """Initialize state descriptor."""
@@ -35,18 +28,6 @@ class AppCommonState(App):
 
             if state_configured is True:
                 raise StateError("Multiple state descriptors not supported")
-
-            state_service = getattr(self, name)
-            if not isinstance(
-                state_service,
-                (
-                    AsyncStateProtocol,
-                    SyncStateProtocol,
-                ),
-            ):
-                raise StateError(
-                    f"Invalid state adapter. `{type(state_service)}` must implement state protocol"
-                )
 
             self._state_service_name = name
             state_configured = True

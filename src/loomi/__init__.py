@@ -1,4 +1,4 @@
-from .app import AppError, AsyncApp, SyncApp, UseModel, UseService, UseState
+from .app import AppError, AsyncApp, SyncApp, UseApp, UseService, UseState
 from .service import AsyncService, Attach, Service, ServiceError, ServiceMeta, Spec, SyncService
 
 __all__ = [
@@ -7,7 +7,7 @@ __all__ = [
     "SyncApp",
     "UseService",
     "UseState",
-    "UseModel",
+    "UseApp",
     "AppError",
     # Service-related imports
     "Service",

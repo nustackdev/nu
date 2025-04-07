@@ -2,26 +2,12 @@ from __future__ import annotations
 
 from abc import ABC
 from types import TracebackType
-from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator, Self
+from typing import TYPE_CHECKING, Any, Callable, Self
 
 if TYPE_CHECKING:
-    from .handlers.state.protocols import (
-        AsyncStateProtocol,
-        AsyncSubscriptionProtocol,
-        AsyncTransactionContextManagerProtocol,
-        AsyncTransactionProtocol,
-        SyncStateProtocol,
-        SyncSubscriptionProtocol,
-        SyncTransactionContextManagerProtocol,
-        SyncTransactionProtocol,
-    )
-    from .handlers.state.types import (
-        AsyncStateCallbackFn,
-        StateKey,
-        StateValue,
-        SyncStateCallbackFn,
-    )
-    from .handlers.tasks.protocols import AsyncOperationProtocol, SyncOperationProtocol
+    from .handlers.state.protocols_state import AsyncStateProtocol, SyncStateProtocol
+    from .handlers.state.protocols_tree import AsyncStateDictProtocol
+    from .handlers.tasks.protocols import AsyncOperationProtocol
 
 __all__ = [
     "CommonAppProtocol",
@@ -142,6 +128,10 @@ class AsyncAppServicesProtocol(ABC):
         """
         ...
 
+    def _initialize_service_descriptors(self) -> None:
+        """Initialize service descriptors."""
+        ...
+
 
 class SyncAppServicesProtocol(ABC):
     """
@@ -162,6 +152,10 @@ class SyncAppServicesProtocol(ABC):
         """
         ...
 
+    def _initialize_service_descriptors(self) -> None:
+        """Initialize service descriptors."""
+        ...
+
 
 class SyncAppStateProtocol(ABC):
     """Protocol defining synchronous service state management."""
@@ -174,134 +168,6 @@ class SyncAppStateProtocol(ABC):
     @property
     def s(self) -> "SyncStateProtocol":
         """Short alias for state adapter."""
-        ...
-
-    def get(self, key: "StateKey", local: bool = ...) -> "StateValue":
-        """
-        Get state value at path.
-
-        Args:
-            key: State path components
-
-        Returns:
-            State value if exists, None otherwise
-
-        Raises:
-            StateError: If state access fails
-        """
-        ...
-
-    def set(self, key: "StateKey", value: "StateValue", local: bool = ...) -> None:
-        """
-        Set state value at path.
-
-        Args:
-            key: State path components
-            value: Value to store
-
-        Raises:
-            StateError: If state update fails
-        """
-        ...
-
-    def delete(self, key: "StateKey", local: bool = ...) -> None:
-        """
-        Delete state at path.
-
-        Args:
-            key: State path components
-
-        Raises:
-            StateError: If state deletion fails
-        """
-        ...
-
-    def exists(self, key: "StateKey", local: bool = ...) -> bool:
-        """
-        Check if state exists at path.
-
-        Args:
-            key: State path components
-
-        Returns:
-            True if key exists, False otherwise
-
-        Raises:
-            StateError: If state check fails
-        """
-        ...
-
-    def list_keys(
-        self,
-        prefix: "StateKey",
-        local: bool = ...,
-    ) -> Generator["StateKey", None, None]:
-        """
-        List all state keys under prefix.
-
-        Args:
-            prefix: State path prefix components
-
-        Returns:
-            Generator of matching state keys
-
-        Raises:
-            StateError: If state listing fails
-        """
-        ...
-
-    def subscribe(
-        self,
-        key: "StateKey",
-        callback: "SyncStateCallbackFn",
-        local: bool = ...,
-    ) -> "SyncSubscriptionProtocol":
-        """
-        Subscribe to changes under key prefix.
-
-        Args:
-            key: Key prefix to subscribe to
-            callback: Callback function for notifications
-
-        Returns:
-            Subscription object for unsubscribing
-
-        Raises:
-            ObserverError: If subscription fails
-        """
-        ...
-
-    def unsubscribe(self, subscription: "SyncSubscriptionProtocol") -> None:
-        """
-        Unsubscribe from changes under key prefix.
-
-        Args:
-            subscription: Subscription to cancel
-
-        Raises:
-            ObserverError: If unsubscribe fails
-        """
-        ...
-
-    def begin_transaction(self) -> "SyncTransactionProtocol":
-        """
-        Begin transaction.
-
-        Returns:
-            New transaction instance
-
-        Raises:
-            TransactionError: If transaction cannot be started
-        """
-        ...
-
-    def transaction(self) -> "SyncTransactionContextManagerProtocol":
-        """
-        Get transaction context manager.
-
-        Returns:
-            Transaction context manager
-        """
         ...
 
     def _initialize_state_descriptor(self) -> None:
@@ -322,51 +188,6 @@ class AsyncAppStateProtocol(ABC):
         """Short alias for state adapter."""
         ...
 
-    async def get(self, key: "StateKey", local: bool = ...) -> "StateValue":
-        """Get state value at path."""
-        ...
-
-    async def set(self, key: "StateKey", value: "StateValue", local: bool = ...) -> None:
-        """Set state value at path."""
-        ...
-
-    async def delete(self, key: "StateKey", local: bool = ...) -> None:
-        """Delete state at path."""
-        ...
-
-    async def exists(self, key: "StateKey", local: bool = ...) -> bool:
-        """Check if state exists at path."""
-        ...
-
-    async def list_keys(
-        self,
-        prefix: "StateKey",
-        local: bool = ...,
-    ) -> AsyncGenerator["StateKey", None]:
-        """List all state keys under prefix."""
-        ...
-
-    async def subscribe(
-        self,
-        key: "StateKey",
-        callback: "AsyncStateCallbackFn",
-        local: bool = ...,
-    ) -> "AsyncSubscriptionProtocol":
-        """Subscribe to changes under key prefix."""
-        ...
-
-    async def unsubscribe(self, subscription: "AsyncSubscriptionProtocol") -> None:
-        """Unsubscribe from changes under key prefix."""
-        ...
-
-    async def begin_transaction(self) -> "AsyncTransactionProtocol":
-        """Begin transaction."""
-        ...
-
-    async def transaction(self) -> "AsyncTransactionContextManagerProtocol":
-        """Get transaction context manager."""
-        ...
-
     def _initialize_state_descriptor(self) -> None:
         """Initialize state descriptor."""
         ...
@@ -375,35 +196,29 @@ class AsyncAppStateProtocol(ABC):
 class SyncAppTasksProtocol(ABC):
     """Protocol defining synchronous service operation capabilities."""
 
-    def execute(self, operation: "SyncOperationProtocol") -> None:
-        """Execute operation."""
-        ...
-
-    def function(
-        self,
-        func: Callable,
-        *,
-        name: str | None = None,
-    ) -> "SyncOperationProtocol":
-        """Create function operation."""
-        ...
-
-    def sequence(
-        self,
-        *operations: "SyncOperationProtocol",
-        delay: float = 0,
-        continue_on_error: bool = False,
-    ) -> "SyncOperationProtocol":
-        """Create sequential operation."""
-        ...
+    ...
 
 
 class AsyncAppTasksProtocol(ABC):
     """Protocol defining asynchronous service operation capabilities."""
 
-    async def execute(self, operation: "AsyncOperationProtocol") -> None:
+    async def start(self) -> None:
+        """Run the app."""
+        ...
+
+    async def execute(
+        self,
+        operation: "AsyncOperationProtocol",
+        loc: "AsyncStateDictProtocol",
+    ) -> None:
         """Execute operation."""
         ...
+
+    async def run(
+        self,
+        context: dict[str, Any],
+        loc: "AsyncStateDictProtocol",
+    ) -> AsyncOperationProtocol: ...
 
     def function(
         self,
@@ -417,7 +232,7 @@ class AsyncAppTasksProtocol(ABC):
     def sequence(
         self,
         *operations: "AsyncOperationProtocol",
-        delay: float = 0,
+        delay: float = ...,
         continue_on_error: bool = False,
     ) -> "AsyncOperationProtocol":
         """Create sequential operation."""
@@ -436,6 +251,38 @@ class AsyncAppModelProtocol(ABC):
         ...
 
 
+class SyncAppCompositionProtocol(ABC):
+    """Defining synchronous app composition capabilities."""
+
+    def _initialize_app_composition_descriptors(self) -> None:
+        """Initialize app composition descriptors."""
+        ...
+
+    def initialize_apps(self) -> None:
+        """Initialize apps."""
+        ...
+
+    def shutdown_apps(self) -> None:
+        """Shutdown app and cleanup."""
+        ...
+
+
+class AsyncAppCompositionProtocol(ABC):
+    """Defining asynchronous app composition capabilities."""
+
+    def _initialize_app_composition_descriptors(self) -> None:
+        """Initialize app composition descriptors."""
+        ...
+
+    async def initialize_apps(self) -> None:
+        """Initialize apps."""
+        ...
+
+    async def shutdown_apps(self) -> None:
+        """Shutdown app and cleanup."""
+        ...
+
+
 class AppProtocol(
     CommonAppProtocol,
 ):
@@ -451,6 +298,7 @@ class SyncAppProtocol(
     SyncAppStateProtocol,
     SyncAppTasksProtocol,
     SyncAppModelProtocol,
+    SyncAppCompositionProtocol,
 ):
     """Synchronous application protocol."""
 
@@ -464,6 +312,7 @@ class AsyncAppProtocol(
     AsyncAppStateProtocol,
     AsyncAppTasksProtocol,
     AsyncAppModelProtocol,
+    AsyncAppCompositionProtocol,
 ):
     """Asynchronous application protocol."""
 

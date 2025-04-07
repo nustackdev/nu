@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable
+from typing import Awaitable, Callable
 
 __all__ = [
-    "StateKey",
+    "StatePath",
+    "StatePathComponent",
     "StateValue",
     "AsyncStateCallbackFn",
     "SyncStateCallbackFn",
 ]
 
-StateKey = tuple[str, ...]
-StateValue = Any
-AsyncStateCallbackFn = Callable[[StateKey], Awaitable[None]]
-SyncStateCallbackFn = Callable[[StateKey], None]
+
+StatePathComponent = str
+StatePath = tuple[StatePathComponent, ...]
+StateValue = None | bytes | bool | int | float | str | list["StateValue"] | dict[str, "StateValue"]
+
+AsyncStateCallbackFn = Callable[[StatePath], Awaitable[None]]
+SyncStateCallbackFn = Callable[[StatePath], None]

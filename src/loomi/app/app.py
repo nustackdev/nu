@@ -1,6 +1,8 @@
 from .base import AppMeta
+from .handlers.composer import AsyncAppComposer, SyncAppComposer
 from .handlers.initializer import AsyncAppInitializer, SyncAppInitializer
-from .handlers.model import AsyncAppModel, SyncAppModel
+
+# from .handlers.model import AsyncAppModel, SyncAppModel
 from .handlers.services import AsyncAppServices, SyncAppServices
 from .handlers.state import AsyncAppState, SyncAppState
 from .handlers.tasks import AsyncAppTasks, SyncAppTasks
@@ -16,7 +18,8 @@ class AsyncApp(
     AsyncAppState,
     AsyncAppTasks,
     AsyncAppServices,
-    AsyncAppModel,
+    # AsyncAppModel,
+    AsyncAppComposer,
     metaclass=AppMeta,
 ):
     pass
@@ -27,7 +30,8 @@ class SyncApp(
     SyncAppState,
     SyncAppTasks,
     SyncAppServices,
-    SyncAppModel,
+    # SyncAppModel,
+    SyncAppComposer,
     metaclass=AppMeta,
 ):
     pass
