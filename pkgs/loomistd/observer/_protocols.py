@@ -73,7 +73,10 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         ...
 
     async def subscribe(
-        self, topic_pattern: ObserverKeyT, callback: ObserverCallbackFn[ObserverKeyT]
+        self,
+        topic_pattern: ObserverKeyT,
+        callback: ObserverCallbackFn[ObserverKeyT],
+        depth: int = ...,
     ) -> SubscriptionProtocol[ObserverKeyT]:
         """
         Subscribe to topic pattern.
@@ -81,6 +84,8 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
         Args:
             topic_pattern: Topic pattern to match
             callback: Async callback for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
 
         Returns:
             Subscription for later unsubscribe
@@ -116,6 +121,9 @@ class SubscriptionProtocol(Protocol[ObserverKeyT]):
         callback:
             Async callable that will be invoked on matching notifications.
             Must accept a single parameter of type StorageKeyT.
+        exact_match:
+            If True, match exact topic; if False, match prefix.
+            Default is True.
 
     Type Parameters:
         StorageKeyT: Topic type (tuple of strings)
@@ -132,5 +140,13 @@ class SubscriptionProtocol(Protocol[ObserverKeyT]):
     def callback(self) -> ObserverCallbackFn[ObserverKeyT]:
         """
         Get callback for subscription.
+        """
+        ...
+
+    @property
+    def depth(self) -> int:
+        """
+        Get depth of topic pattern matching.
+        If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
         """
         ...

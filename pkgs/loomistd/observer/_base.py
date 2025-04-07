@@ -159,7 +159,10 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
     @final
     async def subscribe(
-        self, topic_pattern: ObserverKeyT, callback: ObserverCallbackFn[ObserverKeyT]
+        self,
+        topic_pattern: ObserverKeyT,
+        callback: ObserverCallbackFn[ObserverKeyT],
+        depth: int = 0,
     ) -> Subscription[ObserverKeyT]:
         """
         Subscribe to topic pattern.
@@ -167,6 +170,8 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         Args:
             topic_pattern: Topic pattern to match
             callback: Async callback for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
 
         Returns:
             New subscription instance
@@ -174,7 +179,11 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         self._ensure_connected()
         self._validate_topic(topic_pattern)
 
-        subscription = Subscription(topic_pattern, callback)
+        subscription = Subscription(
+            topic_pattern,
+            depth,
+            callback,
+        )
 
         await self._subscribe_impl(subscription)
         return subscription
@@ -210,6 +219,9 @@ class Subscription(SubscriptionProtocol[ObserverKeyT]):
         topic_pattern:
             Topic pattern to match against notifications.
             Must be a tuple of strings matching state keys.
+        depth:
+            Get depth of topic pattern matching.
+            If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
         callback:
             Async callable that will be invoked on matching notifications.
             Must accept a single parameter of type ObserverKeyT.
@@ -219,6 +231,7 @@ class Subscription(SubscriptionProtocol[ObserverKeyT]):
     """
 
     _topic_pattern: ObserverKeyT
+    _depth: int
     _callback: ObserverCallbackFn[ObserverKeyT]
 
     @property
@@ -228,3 +241,7 @@ class Subscription(SubscriptionProtocol[ObserverKeyT]):
     @property
     def callback(self) -> ObserverCallbackFn[ObserverKeyT]:
         return self._callback
+
+    @property
+    def depth(self) -> int:
+        return self._depth

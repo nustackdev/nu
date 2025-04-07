@@ -44,20 +44,33 @@ class InMemoryObserver(
         async with self._data_lock:
             self._subscriptions.clear()
 
-    def _matches_pattern(self, topic: InMemoryObserverKey, pattern: InMemoryObserverKey) -> bool:
+    def _matches_pattern(
+        self,
+        topic: InMemoryObserverKey,
+        pattern: InMemoryObserverKey,
+        depth: int,
+    ) -> bool:
         if len(topic) < len(pattern):
             return False
+
+        if depth != -1 and len(topic) - len(pattern) != depth:
+            return False
+
         return all(p == "*" or t == p for t, p in zip(topic, pattern))
 
     async def _notify_impl(self, topic: InMemoryObserverKey) -> None:
         async with self._data_lock:
             matching_subs = []
             for pattern, subs in self._subscriptions.items():
-                if self._matches_pattern(topic, pattern):
+                if self._matches_pattern(topic, pattern, -1):
                     matching_subs.extend(subs)
 
         # Execute callbacks outside lock
         for sub in matching_subs:
+            # Check if the subscription matches the topic with the specified depth
+            if not self._matches_pattern(topic, sub.topic_pattern, sub.depth):
+                continue
+
             try:
                 await sub.callback(topic)
             except Exception as e:
