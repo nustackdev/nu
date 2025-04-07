@@ -9,5 +9,5 @@ __all__ = [
 ]
 
 StateKey = tuple[str, ...]
-StateValue = None | bool | int | float | str | list["StateValue"] | dict[str, "StateValue"]
+StateValue = None | bytes | bool | int | float | str | list["StateValue"] | dict[str, "StateValue"]
 StateCallbackFn = ObserverCallbackFn[StateKey]
