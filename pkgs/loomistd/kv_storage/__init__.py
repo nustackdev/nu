@@ -12,16 +12,25 @@ from ._exceptions import (
     TransactionInvalidError,
 )
 from ._protocols import (
+    KVOperationsProtocol,
     StorageProtocol,
     TransactionalHandlerProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,
 )
 from ._transaction import TransactionContextManager
+from ._types import (
+    StorageEncodedKeyT,
+    StorageEncodedValueT,
+    StorageKeyT,
+    StorageMode,
+    StorageValueT,
+)
 
 __all__ = [
     "BaseStorage",
     "BaseStorageSpec",
+    "KVOperationsProtocol",
     "StorageProtocol",
     "StorageConnectionError",
     "StorageError",
@@ -36,4 +45,9 @@ __all__ = [
     "TransactionContextManagerProtocol",
     "TransactionalHandlerProtocol",
     "TransactionProtocol",
+    "StorageKeyT",
+    "StorageValueT",
+    "StorageEncodedKeyT",
+    "StorageEncodedValueT",
+    "StorageMode",
 ]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 __all__ = [
     "StorageKeyT",
@@ -10,8 +10,9 @@ __all__ = [
     "StorageMode",
 ]
 
-StorageKeyT = TypeVar("StorageKeyT")
-StorageValueT = TypeVar("StorageValueT")
+StorageKeyT = TypeVar("StorageKeyT", bound=tuple[str, ...])
+StorageValue = Any
+StorageValueT = TypeVar("StorageValueT", bound=StorageValue)
 StorageEncodedKeyT = TypeVar("StorageEncodedKeyT")
 StorageEncodedValueT = TypeVar("StorageEncodedValueT")
 StorageMode = Literal["read", "write"]

@@ -190,7 +190,12 @@ class FileStorage(
         async with self._memory_lock:
             with self._file_lock:
                 await self._load_data()  # Get latest data
-                self._data.pop(encoded_key, None)
+                try:
+                    del self._data[encoded_key]
+                except KeyError:
+                    raise StorageKeyError(f"Key {key} not found")
+                except Exception as e:
+                    raise StorageOperationError(f"Failed to delete key: {e}")
                 await self._save()
 
     async def _exists_impl(self, key: FileStorageKey) -> bool:
@@ -202,7 +207,9 @@ class FileStorage(
                 await self._load_data()  # Get latest data
                 return encoded_key in self._data
 
-    async def _list_keys_impl(self, prefix: FileStorageKey) -> AsyncGenerator[FileStorageKey, None]:
+    async def _list_keys_impl(
+        self, prefix: FileStorageKey, depth: int
+    ) -> AsyncGenerator[FileStorageKey, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -210,11 +217,13 @@ class FileStorage(
         async with self._memory_lock:
             with self._file_lock:
                 await self._load_data()  # Get latest data
-                matching_keys = [
-                    self.codec.decode_key(encoded_key)
-                    for encoded_key in self._data.keys()
-                    if encoded_key.startswith(encoded_prefix)
-                ]
+                matching_keys = []
+                for encoded_key in self._data.keys():
+                    if encoded_key.startswith(encoded_prefix):
+                        # Split the key into parts based on '/' for depth calculation
+                        decoded_key = self.codec.decode_key(encoded_key)
+                        if depth == -1 or len(decoded_key) - len(prefix) == depth:
+                            matching_keys.append(decoded_key)
 
         # Yield outside lock
         for key in matching_keys:
@@ -322,7 +331,9 @@ class FileStorageTransaction(TransactionProtocol[FileStorageKey, FileStorageValu
         except StorageKeyError:
             return False
 
-    async def list_keys(self, prefix: FileStorageKey) -> AsyncGenerator[FileStorageKey, None]:
+    async def list_keys(
+        self, prefix: FileStorageKey, depth: int = 1
+    ) -> AsyncGenerator[FileStorageKey, None]:
         """List all keys under prefix within transaction."""
         self._check_valid()
 
@@ -331,7 +342,7 @@ class FileStorageTransaction(TransactionProtocol[FileStorageKey, FileStorageValu
 
         # Get current keys from storage
         base_keys = set()
-        async for key in self._storage.list_keys(prefix):
+        async for key in self._storage.list_keys(prefix, depth):
             encoded_key = self._storage.codec.encode_key(key)
             if encoded_key.startswith(encoded_prefix):
                 base_keys.add(encoded_key)

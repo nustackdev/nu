@@ -16,7 +16,14 @@ __all__ = [
 
 FileStorageKey = tuple[str, ...]
 FileStorageValue = (
-    None | bool | int | float | str | list["FileStorageValue"] | dict[str, "FileStorageValue"]
+    None
+    | bytes
+    | bool
+    | int
+    | float
+    | str
+    | list["FileStorageValue"]
+    | dict[str, "FileStorageValue"]
 )
 FileStorageEncodedKey = str
 FileStorageEncodedValue = str

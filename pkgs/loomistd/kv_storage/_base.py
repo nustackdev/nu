@@ -140,7 +140,7 @@ class BaseStorage(
 
         self._ensure_connected()
         self._validate_key(key)
-        # TODO: Validate value type (?)
+        # Validate value type (?)
         # if not self._validate_value(value):
         #     raise StorageValidationError(f"Invalid value type: {type(value)}")
         await self._set_impl(key, value)
@@ -172,15 +172,34 @@ class BaseStorage(
         return await self._exists_impl(key)
 
     @abstractmethod
-    async def _list_keys_impl(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
+    async def _list_keys_impl(
+        self, prefix: StorageKeyT, depth: int
+    ) -> AsyncGenerator[StorageKeyT, None]:
         """Implementation-specific list_keys logic."""
-        ...
+        if False:  # This will never execute but helps type checkers
+            yield prefix  # Dummy yield to make it a true async generator
 
     @final
-    async def list_keys(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
-        """List all keys under prefix."""
+    async def list_keys(
+        self, prefix: StorageKeyT, depth: int = 1
+    ) -> AsyncGenerator[StorageKeyT, None]:
+        """
+        List all keys under prefix within transaction context.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
+
+        Returns:
+            AsyncGenerator of matching keys
+
+        Raises:
+            TransactionError: If transaction is invalid or operation fails
+            StorageOperationError: If list operation fails
+        """
         self._ensure_connected()
-        async for key in self._list_keys_impl(prefix):
+        async for key in self._list_keys_impl(prefix, depth):
             yield key
 
     @abstractmethod

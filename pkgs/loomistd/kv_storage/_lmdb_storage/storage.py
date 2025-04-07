@@ -168,6 +168,10 @@ class LMDBStorage(
 
         try:
             with self._env.begin(write=True) as txn:
+                # Check if key exists before deleting
+                if txn.get(encoded_key) is None:
+                    raise StorageKeyError(f"Key {key} not found")
+                # Delete the key
                 txn.delete(encoded_key)
 
         except Exception as e:
@@ -184,7 +188,9 @@ class LMDBStorage(
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 
-    async def _list_keys_impl(self, prefix: LMDBStorageKey) -> AsyncGenerator[LMDBStorageKey, None]:
+    async def _list_keys_impl(
+        self, prefix: LMDBStorageKey, depth: int
+    ) -> AsyncGenerator[LMDBStorageKey, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -205,7 +211,11 @@ class LMDBStorage(
                         if not encoded_key.startswith(encoded_prefix):
                             break
 
-                        yield self.codec.decode_key(encoded_key)
+                        decoded_key = self.codec.decode_key(encoded_key)
+                        if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                            break
+
+                        yield decoded_key
 
                         if not cursor.next():
                             break
@@ -306,7 +316,9 @@ class LMDBStorageTransaction(TransactionProtocol[LMDBStorageKey, LMDBStorageValu
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 
-    async def list_keys(self, prefix: LMDBStorageKey) -> AsyncGenerator[LMDBStorageKey, None]:
+    async def list_keys(
+        self, prefix: LMDBStorageKey, depth: int = 1
+    ) -> AsyncGenerator[LMDBStorageKey, None]:
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
 
@@ -320,7 +332,13 @@ class LMDBStorageTransaction(TransactionProtocol[LMDBStorageKey, LMDBStorageValu
                     encoded_key = cursor.key()
                     if not encoded_key.startswith(encoded_prefix):
                         break
-                    yield self._storage.codec.decode_key(encoded_key)
+
+                    decoded_key = self._storage.codec.decode_key(encoded_key)
+                    if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                        break
+
+                    yield decoded_key
+
                     if not cursor.next():
                         break
             finally:

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import AsyncGenerator, Protocol
+from typing import AsyncGenerator, Protocol, runtime_checkable
 
 from loomistd.codec import CodecProtocol
 
 from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageValueT
 
 __all__ = [
+    "KVOperationsProtocol",
     "StorageProtocol",
     "TransactionProtocol",
     "TransactionContextManagerProtocol",
@@ -15,8 +16,150 @@ __all__ = [
 ]
 
 
+class KVOperationsProtocol(Protocol[StorageKeyT, StorageValueT]):
+    async def get(self, key: StorageKeyT) -> StorageValueT:
+        """
+        Retrieve value by key.
+
+        This method must:
+        - Validate key format
+        - Handle missing keys
+        - Decode stored data
+
+        Args:
+            key: Key to retrieve
+
+        Returns:
+            Value if found, None if not found
+
+        Raises:
+            StorageConnectionError: If not connected
+            StorageKeyError: If key format invalid
+            StorageOperationError: If operation fails
+        """
+        ...
+
+    async def set(self, key: StorageKeyT, value: StorageValueT) -> None:
+        """
+        Set value for key.
+
+        This method must:
+        - Validate key and value
+        - Encode data for storage
+        - Handle concurrent access
+
+        Args:
+            key: Key to set
+            value: Value to store
+
+        Raises:
+            StorageConnectionError: If not connected
+            StorageOperationError: If operation fails
+            ValueError: If value type invalid
+        """
+        ...
+
+    async def delete(self, key: StorageKeyT) -> None:
+        """
+        Delete value by key.
+
+        This method must:
+        - Validate key format
+        - Handle missing keys
+        - Handle concurrent access
+
+        Args:
+            key: Key to delete
+
+        Raises:
+            StorageConnectionError: If not connected
+            StorageOperationError: If operation fails
+        """
+        ...
+
+    async def exists(self, key: StorageKeyT) -> bool:
+        """
+        Check if key exists.
+
+        This method must:
+        - Validate key format
+        - Handle concurrent access
+
+        Args:
+            key: Key to check
+
+        Returns:
+            True if key exists, False otherwise
+
+        Raises:
+            StorageConnectionError: If not connected
+            StorageOperationError: If check fails
+        """
+        ...
+
+    async def list_keys(
+        self, prefix: StorageKeyT, depth: int = ...
+    ) -> AsyncGenerator[StorageKeyT, None]:
+        """
+        List all keys under prefix.
+
+        This method must:
+        - Validate prefix format
+        - Handle recursion
+        - Support efficient iteration
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
+
+        Returns:
+            AsyncGenerator of matching keys
+
+        Raises:
+            StorageConnectionError: If not connected
+            StorageOperationError: If operation fails
+        """
+        if False:  # This will never execute but helps type checkers
+            yield prefix  # Dummy yield to make it a true async generator
+
+    async def begin_transaction(self) -> TransactionProtocol[StorageKeyT, StorageValueT]:
+        """
+        Begin a new transaction.
+
+        This method must:
+        - Create isolated transaction scope
+        - Initialize tracking structures
+        - Handle nested transactions
+
+        Returns:
+            New transaction instance
+
+        Raises:
+            StorageConnectionError: If not connected
+            StorageError: If transaction start fails
+        """
+        ...
+
+    async def transaction(self) -> TransactionContextManagerProtocol[StorageKeyT, StorageValueT]:
+        """
+        Create a transaction context manager.
+
+        Returns:
+            Context manager for handling transactions
+
+        Example:
+            async with storage.transaction() as txn:
+                await txn.set(key, value)
+                # Auto-commits if no exception
+                # Auto-rollbacks if exception occurs
+        """
+        ...
+
+
 class StorageProtocol(
-    Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
+    KVOperationsProtocol[StorageKeyT, StorageValueT],
+    Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT],
 ):
     """
     Protocol defining state storage operations.
@@ -79,6 +222,11 @@ class StorageProtocol(
             StorageConnectionError: If disconnection fails
         """
         ...
+
+
+@runtime_checkable
+class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
+    """Protocol defining the interface for transactions."""
 
     async def get(self, key: StorageKeyT) -> StorageValueT:
         """
@@ -160,7 +308,9 @@ class StorageProtocol(
         """
         ...
 
-    async def list_keys(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
+    async def list_keys(
+        self, prefix: StorageKeyT, depth: int = ...
+    ) -> AsyncGenerator[StorageKeyT, None]:
         """
         List all keys under prefix.
 
@@ -171,6 +321,8 @@ class StorageProtocol(
 
         Args:
             prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
 
         Returns:
             AsyncGenerator of matching keys
@@ -179,120 +331,8 @@ class StorageProtocol(
             StorageConnectionError: If not connected
             StorageOperationError: If operation fails
         """
-        ...
-
-    async def begin_transaction(self) -> TransactionProtocol[StorageKeyT, StorageValueT]:
-        """
-        Begin a new transaction.
-
-        This method must:
-        - Create isolated transaction scope
-        - Initialize tracking structures
-        - Handle nested transactions
-
-        Returns:
-            New transaction instance
-
-        Raises:
-            StorageConnectionError: If not connected
-            StorageError: If transaction start fails
-        """
-        ...
-
-    async def transaction(self) -> TransactionContextManagerProtocol[StorageKeyT, StorageValueT]:
-        """
-        Create a transaction context manager.
-
-        Returns:
-            Context manager for handling transactions
-
-        Example:
-            async with storage.transaction() as txn:
-                await txn.set(key, value)
-                # Auto-commits if no exception
-                # Auto-rollbacks if exception occurs
-        """
-        ...
-
-
-class TransactionProtocol(Protocol[StorageKeyT, StorageValueT]):
-    """Protocol defining the interface for transactions."""
-
-    async def get(self, key: StorageKeyT) -> StorageValueT:
-        """
-        Get value within transaction context.
-
-        Args:
-            key: Key to retrieve
-
-        Returns:
-            Value if found, None if not found
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageKeyError: If key not found
-            StorageOperationError: If get operation fails
-        """
-        ...
-
-    async def set(self, key: StorageKeyT, value: StorageValueT) -> None:
-        """
-        Set value within transaction context.
-
-        Args:
-            key: Key to set
-            value: Value to store
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If set operation fails
-        """
-        ...
-
-    async def delete(self, key: StorageKeyT) -> None:
-        """
-        Delete value within transaction context.
-
-        Args:
-            key: Key to delete
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If delete operation fails
-        """
-        ...
-
-    async def exists(self, key: StorageKeyT) -> bool:
-        """
-        Check if key exists within transaction context.
-
-        Args:
-            key: Key to check
-
-        Returns:
-            True if key exists, False otherwise
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If exists check fails
-        """
-        ...
-
-    async def list_keys(self, prefix: StorageKeyT) -> AsyncGenerator[StorageKeyT, None]:
-        """
-        List all keys under prefix within transaction context.
-
-        Args:
-            prefix: Key prefix to list
-
-        Returns:
-            AsyncGenerator of matching keys
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If list operation fails
-        """
-        ...
+        if False:  # This will never execute but helps type checkers
+            yield prefix  # Dummy yield to make it a true async generator
 
     async def commit(self) -> None:
         """
