@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, cast
 
 from ..exceptions import OperationError
 from .base_operation import BaseOperation
@@ -9,17 +9,19 @@ from .logger import logger
 
 if TYPE_CHECKING:
     from loomi.app.base import AsyncApp
+    from loomi.app.handlers.state.protocols_tree import AsyncStateDictProtocol
+    from loomi.app.handlers.state.types import StatePath
     from loomi.app.handlers.tasks import AsyncOperationProtocol
 
 
 class RepeatOperation(BaseOperation):
-    """Repeats an operation either a fixed number of times or while a condition is true.
+    """Repeats an operation either a fixed number of times, while a condition is true, or infinitely.
 
     Args:
         operation: Operation to repeat
-        times: Fixed number of times to repeat the operation
+        times: Fixed number of times to repeat the operation (None for infinite)
         while_key: State key to check for continuation condition
-        max_iterations: Maximum number of iterations when using while_key
+        max_iterations: Maximum number of iterations when using while_key or for safety with infinite loops
         delay: Delay between iterations in seconds
         ignore_errors: Whether to continue execution if an iteration fails
 
@@ -31,18 +33,27 @@ class RepeatOperation(BaseOperation):
                 pass
 
             def define(self) -> Operation:
+                # Repeat 5 times
                 return RepeatOperation(
                     FunctionOperation(self.process_item),
                     times=5,
                     delay=1.0
                 )
 
-            # Or with condition
+            # With condition
             def define_conditional(self) -> Operation:
                 return RepeatOperation(
                     FunctionOperation(self.process_item),
                     while_key="has_more_items",
                     max_iterations=100
+                )
+
+            # Infinite loop with safety max
+            def define_infinite(self) -> Operation:
+                return RepeatOperation(
+                    FunctionOperation(self.process_item),
+                    delay=1.0,
+                    max_iterations=1000  # Safety limit
                 )
         ```
 
@@ -56,9 +67,9 @@ class RepeatOperation(BaseOperation):
         self,
         operation: "AsyncOperationProtocol",
         *,
-        times: Optional[int] = None,
-        while_key: Optional[Union[str, Tuple[str, ...]]] = None,
-        max_iterations: Optional[int] = None,
+        times: int | None = None,
+        while_key: "str | StatePath | None" = None,
+        max_iterations: int | None = None,
         delay: float = 0,
         ignore_errors: bool = False,
     ) -> None:
@@ -81,51 +92,59 @@ class RepeatOperation(BaseOperation):
         self.ignore_errors = ignore_errors
         self._id = hex(id(self))[2:]
 
-    async def _initialize_state(self, app: "AsyncApp") -> None:
-        """Initialize repeat operation state in store"""
-        pass
+        # If neither times nor while_key is specified, the operation runs infinitely
+        self.infinite = times is None and while_key is None
 
-    async def _update_iteration(self, app: "AsyncApp", iteration: int) -> None:
-        """Update current iteration count in store"""
-        pass
-
-    async def _record_error(self, app: "AsyncApp", iteration: int, error: Exception) -> None:
-        """Record iteration error in store"""
-        error_data = {
-            "iteration": iteration,
-            "error": str(error),
-            "error_type": error.__class__.__name__,
-        }
-
-    async def _should_continue(self, app: "AsyncApp", iteration: int) -> bool:
+    async def _should_continue(
+        self, app: "AsyncApp", loc: "AsyncStateDictProtocol", iteration: int
+    ) -> bool:
         """Determine if operation should continue based on conditions"""
+        # Safety check for max iterations if set (applies to all modes)
+        if self.max_iterations is not None and iteration >= self.max_iterations:
+            logger.warning(f"Reached maximum iterations limit of {self.max_iterations}")
+            return False
+
+        # If infinite mode is enabled and no max_iterations has been hit
+        if self.infinite:
+            return True
+
+        # Check fixed number of iterations
         if self.times is not None:
             return iteration < self.times
+
+        # Check condition from state
         elif self.while_key is not None:
-            if self.max_iterations is not None and iteration >= self.max_iterations:
-                logger.warning("Reached maximum iterations limit")
-                return False
             try:
-                return await app.get(self.while_key)
+                return cast(bool, await loc.get(*self.while_key))
             except Exception as e:
                 logger.error(f"Error checking while_key condition: {str(e)}")
                 return False
+
+        # Default - shouldn't reach here with proper initialization
         return False
 
-    async def execute(self, app: "AsyncApp") -> None:
+    async def execute(self, app: "AsyncApp", loc: "AsyncStateDictProtocol") -> None:
         """Execute the operation repeatedly based on specified conditions."""
-        logger.info("Starting repeat operation")
+        if self.infinite and self.max_iterations is None:
+            logger.warning(
+                "Starting infinite repeat operation with no maximum iterations limit. "
+                "This could potentially run forever."
+            )
+        else:
+            logger.info("Starting repeat operation")
 
         try:
-            await self._initialize_state(app)
 
             iteration = 0
-            while await self._should_continue(app, iteration):
+            while await self._should_continue(app, loc, iteration):
                 try:
-                    await self._update_iteration(app, iteration)
-                    logger.debug(f"Executing iteration {iteration + 1}")
 
-                    await self.operation.execute(app)
+                    if self.infinite:
+                        logger.debug(f"Executing iteration {iteration + 1} (infinite mode)")
+                    else:
+                        logger.debug(f"Executing iteration {iteration + 1}")
+
+                    await self._execute_child(self.operation, app, loc)
 
                     if self.delay > 0:
                         logger.debug(f"Waiting {self.delay}s before next iteration")
@@ -134,7 +153,6 @@ class RepeatOperation(BaseOperation):
                 except Exception as e:
                     error_msg = f"Iteration {iteration + 1} failed: {str(e)}"
                     logger.error(error_msg, exc_info=True)
-                    await self._record_error(app, iteration, e)
 
                     if not self.ignore_errors:
                         raise OperationError(error_msg) from e

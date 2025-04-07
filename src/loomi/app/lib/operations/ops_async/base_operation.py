@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from loomi.app.base import AsyncApp
+    from loomi.app.handlers.state.protocols_tree import AsyncStateDictProtocol
+    from loomi.app.handlers.tasks.protocols import AsyncOperationProtocol
 
 
 class BaseOperation(ABC):
@@ -44,7 +47,7 @@ class BaseOperation(ABC):
     """
 
     @abstractmethod
-    async def execute(self, app: "AsyncApp") -> None:
+    async def execute(self, app: "AsyncApp", loc: "AsyncStateDictProtocol") -> None:
         """Execute the operation.
 
         This method should:
@@ -64,3 +67,53 @@ class BaseOperation(ABC):
 
     def __repr__(self) -> str:
         return f"Operation({self.__class__.__name__})"
+
+    @property
+    def context(self) -> dict:
+        """Return the context of the operation.
+
+        This is a placeholder method to be overridden by subclasses.
+        """
+        if not hasattr(self, "_context"):
+            # Initialize context if not already set
+            # This allows subclasses to access the context without needing
+            # to call the setter method explicitly
+            self._context = {}
+        # Return the context dictionary
+        return self._context
+
+    @context.setter
+    def context(self, value: dict[str, Any]) -> None:
+        """Set the context of the operation.
+
+        This is a placeholder method to be overridden by subclasses.
+        """
+        self._context = value
+
+    def update_context(self, context: dict[str, Any]) -> None:
+        """Inject a context dictionary into the operation.
+
+        This method allows for setting the context of the operation
+        from an external source. It can be useful for testing or
+        when the context needs to be set before execution.
+
+        Args:
+            context: Context dictionary to inject into the operation
+        """
+        if not isinstance(context, dict):
+            raise TypeError("Context must be a dictionary")
+
+        if not context or len(context) == 0:
+            return
+
+        for key, value in deepcopy(context).items():
+            self.context[key] = value
+
+    async def _execute_child(
+        self, operation: "AsyncOperationProtocol", app: "AsyncApp", loc: "AsyncStateDictProtocol"
+    ) -> None:
+        """
+        Execute a child operation by preserving the context.
+        """
+        operation.update_context(self.context)
+        await operation.execute(app, loc)

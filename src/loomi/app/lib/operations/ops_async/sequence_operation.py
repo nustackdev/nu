@@ -9,6 +9,7 @@ from .logger import logger
 
 if TYPE_CHECKING:
     from loomi.app.base import AsyncApp
+    from loomi.app.handlers.state.protocols_tree import AsyncStateDictProtocol
     from loomi.app.handlers.tasks import AsyncOperationProtocol
 
 
@@ -55,31 +56,16 @@ class SequenceOperation(BaseOperation):
         # Unique identifier for this sequence instance
         self._id = hex(id(self))[2:]
 
-    async def _initialize_state(self, app: "AsyncApp") -> None:
-        """Initialize sequence state in store"""
-        pass
-
-    async def _update_step(self, app: "AsyncApp", step: int) -> None:
-        """Update current execution step in store"""
-        pass
-
-    async def _record_error(self, app: "AsyncApp", step: int, error: Exception) -> None:
-        """Record operation error in store"""
-        pass
-
-    async def execute(self, app: "AsyncApp") -> None:
+    async def execute(self, app: "AsyncApp", loc: "AsyncStateDictProtocol") -> None:
         """Execute operations in sequence with optional delay between them."""
         logger.info(f"Starting sequence execution of {len(self.operations)} operations")
 
         try:
-            await self._initialize_state(app)
-
             for i, operation in enumerate(self.operations):
                 try:
-                    await self._update_step(app, i)
                     logger.debug(f"Executing sequence step {i + 1}/{len(self.operations)}")
 
-                    await operation.execute(app)
+                    await self._execute_child(operation, app, loc)
 
                     if i < len(self.operations) - 1 and self.delay > 0:
                         logger.debug(f"Waiting {self.delay}s before next operation")
@@ -88,7 +74,6 @@ class SequenceOperation(BaseOperation):
                 except Exception as e:
                     error_msg = f"Operation {i + 1} failed: {str(e)}"
                     logger.error(error_msg, exc_info=True)
-                    await self._record_error(app, i, e)
 
                     if not self.continue_on_error:
                         raise OperationError(error_msg) from e

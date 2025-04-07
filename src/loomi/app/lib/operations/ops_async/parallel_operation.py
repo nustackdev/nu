@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from ..exceptions import OperationError
 from .base_operation import BaseOperation
@@ -9,6 +9,7 @@ from .logger import logger
 
 if TYPE_CHECKING:
     from loomi.app.base import AsyncApp
+    from loomi.app.handlers.state.protocols_tree import AsyncStateDictProtocol
     from loomi.app.handlers.tasks import AsyncOperationProtocol
 
 
@@ -53,8 +54,8 @@ class ParallelOperation(BaseOperation):
     def __init__(
         self,
         *operations: "AsyncOperationProtocol",
-        max_concurrent: Optional[int] = None,
-        timeout: Optional[float] = None,
+        max_concurrent: int | None = None,
+        timeout: float | None = None,
         ignore_errors: bool = False,
     ) -> None:
         if not operations:
@@ -70,41 +71,28 @@ class ParallelOperation(BaseOperation):
         self.ignore_errors = ignore_errors
         self._id = hex(id(self))[2:]
 
-    async def _initialize_state(self, app: "AsyncApp") -> None:
-        """Initialize parallel operation state in store"""
-        pass
-
-    async def _update_completed(self, app: "AsyncApp", completed: int) -> None:
-        """Update count of completed operations in store"""
-
-    async def _record_error(self, app: "AsyncApp", operation_index: int, error: Exception) -> None:
-        """Record operation error in store"""
-        error_data = {
-            "operation_index": operation_index,
-            "error": str(error),
-            "error_type": error.__class__.__name__,
-        }
-
     async def _execute_operation(
-        self, app: "AsyncApp", operation: "AsyncOperationProtocol", index: int
+        self,
+        app: "AsyncApp",
+        loc: "AsyncStateDictProtocol",
+        operation: "AsyncOperationProtocol",
+        index: int,
     ) -> None:
         """Execute a single operation and handle its outcome"""
         try:
-            await operation.execute(app)
+            await self._execute_child(operation, app, loc)
         except Exception as e:
             error_msg = f"Operation {index} failed: {str(e)}"
             logger.error(error_msg, exc_info=True)
-            await self._record_error(app, index, e)
 
             if not self.ignore_errors:
                 raise OperationError(error_msg) from e
 
-    async def execute(self, app: "AsyncApp") -> None:
+    async def execute(self, app: "AsyncApp", loc: "AsyncStateDictProtocol") -> None:
         """Execute all operations in parallel within constraints."""
         logger.info(f"Starting parallel execution of {len(self.operations)} operations")
 
         try:
-            await self._initialize_state(app)
 
             # Create semaphore if max_concurrent is specified
             semaphore = None
@@ -114,9 +102,9 @@ class ParallelOperation(BaseOperation):
             async def bounded_operation(op: "AsyncOperationProtocol", idx: int) -> None:
                 if semaphore:
                     async with semaphore:
-                        await self._execute_operation(app, op, idx)
+                        await self._execute_operation(app, loc, op, idx)
                 else:
-                    await self._execute_operation(app, op, idx)
+                    await self._execute_operation(app, loc, op, idx)
 
             # Create tasks for all operations
             tasks = [

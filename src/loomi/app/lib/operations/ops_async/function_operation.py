@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable
 
 from ..exceptions import OperationError
 from .base_operation import BaseOperation
@@ -10,6 +10,7 @@ from .logger import logger
 
 if TYPE_CHECKING:
     from loomi.app.base import AsyncApp
+    from loomi.app.handlers.state.protocols_tree import AsyncStateDictProtocol
 
 
 class FunctionOperation(BaseOperation):
@@ -44,7 +45,7 @@ class FunctionOperation(BaseOperation):
         - Records execution time and result status
     """
 
-    def __init__(self, func: Callable[..., Any], *, name: Optional[str] = None) -> None:
+    def __init__(self, func: Callable[..., Any], *, name: str | None = None) -> None:
         if not callable(func):
             raise ValueError("FunctionOperation requires a callable")
 
@@ -58,30 +59,16 @@ class FunctionOperation(BaseOperation):
         # Get function's module for better logging
         self._module = getattr(func, "__module__", "unknown")
 
-    async def _initialize_state(self, app: "AsyncApp") -> None:
-        """Initialize function execution state in store"""
-        pass
-
-    async def _execute_sync_func(self) -> Any:
-        """Execute synchronous function in thread pool."""
-        try:
-            return await asyncio.to_thread(self.func)
-        except Exception as e:
-            logger.error(f"Sync function '{self.name}' failed in thread pool", exc_info=True)
-            raise OperationError(f"Sync function execution failed: {str(e)}") from e
-
-    async def execute(self, app: "AsyncApp") -> None:
+    async def execute(self, app: "AsyncApp", loc: "AsyncStateDictProtocol") -> None:
         """Execute the wrapped function."""
         logger.info(f"Executing function: {self.name}")
 
         try:
-            await self._initialize_state(app)
-
             try:
                 if self._is_async:
-                    await self.func()
+                    await self.func(context=self.context, loc=loc)
                 else:
-                    await self._execute_sync_func()
+                    self.func(context=self.context, loc=loc)
 
                 logger.info(f"Function '{self.name}' completed successfully")
 
