@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from loomi.app.base import SyncApp
+from loomi.service.base import ServiceState
 
 from .base import AppCommonServices
 
@@ -15,11 +16,11 @@ class SyncAppServices(AppCommonServices, SyncApp):
     """
 
     def initialize_services(self):
-        self._init_service_descriptors()
-
         for service in self._services.values():
-            service.initialize()
+            if service.service_state is not ServiceState.INITIALIZED:
+                service.initialize()
 
     def shutdown_services(self):
         for service in self._services.values():
-            service.shutdown()
+            if service.service_state is not ServiceState.SHUTDOWN:
+                service.shutdown()

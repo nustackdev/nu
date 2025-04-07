@@ -62,7 +62,7 @@ class AppCommonServices(App):
 
         return self._services[name]
 
-    def _init_service_descriptors(self):
+    def _initialize_service_descriptors(self) -> None:
         app_service_specs = getattr(self, "_specs", {})
 
         for name, value in self.__class__.__dict__.items():
