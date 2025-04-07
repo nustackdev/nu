@@ -53,6 +53,7 @@ class AppCommon:
         Initialize a new app instance.
         """
         self._services = {}
+        self._app_deps = {}
         self._state_service_name = ""
         logger.debug(f"Initialized app '{self.readable_name}'")
 

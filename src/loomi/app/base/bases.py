@@ -38,6 +38,7 @@ class App(AppCommon, AppProtocol):
     async or sync. It handles service management, identity management,
     and basic app properties.
     """
+
     pass
 
 
@@ -53,7 +54,9 @@ class SyncApp(App, SyncAppProtocol):
     identity handling, and basic app properties while adding the sync
     protocol requirements.
     """
+
     _services: dict[str, "SyncService"]
+    _app_deps: dict[str, "SyncApp"]
 
 
 class AsyncApp(App, AsyncAppProtocol):
@@ -68,4 +71,6 @@ class AsyncApp(App, AsyncAppProtocol):
     identity handling, and basic app properties while adding the async
     protocol requirements.
     """
+
     _services: dict[str, "AsyncService"]
+    _app_deps: dict[str, "AsyncApp"]
