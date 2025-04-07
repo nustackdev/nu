@@ -14,7 +14,7 @@ __all__ = [
 
 JSONCodecKey = tuple[str, ...]
 JSONCodecValue = (
-    None | bool | int | float | str | list["JSONCodecValue"] | dict[str, "JSONCodecValue"]
+    None | bytes | bool | int | float | str | list["JSONCodecValue"] | dict[str, "JSONCodecValue"]
 )
 JSONCodecEncodedKey = str
 JSONCodecEncodedValue = str
