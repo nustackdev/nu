@@ -9,8 +9,8 @@ from .logger import logger
 
 if TYPE_CHECKING:
     from loomi.app.base import AsyncApp
-    from loomi.app.handlers.state.protocols_kv import StatePath
     from loomi.app.handlers.state.protocols_tree import AsyncStateDictProtocol
+    from loomi.app.handlers.state.types import StatePath
     from loomi.app.handlers.tasks import AsyncOperationProtocol
 
 
