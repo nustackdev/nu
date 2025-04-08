@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import AsyncGenerator, TypeGuard
 
 import lmdb
-from pydantic import Field, field_serializer
+from pydantic import Field
 
 from loomi.service import AsyncService, Attach, Spec
 from loomistd.codec import CodecProtocol
@@ -39,14 +39,6 @@ class LMDBStorageSpec(BaseStorageSpec):
     map_size: int = Field(default=10 * 1024 * 1024 * 1024)  # 10GB default
     max_dbs: int = Field(default=0)
     lmdb_kwargs: dict = Field(default_factory=dict)
-
-    @classmethod
-    def identity_fields(cls) -> set[str]:
-        return super().identity_fields() | {"path"}
-
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
-        return str(path)
 
 
 class LMDBStorage(

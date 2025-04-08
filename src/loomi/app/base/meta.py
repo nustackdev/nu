@@ -3,8 +3,8 @@ from inspect import Parameter, Signature
 from types import FunctionType, MethodType
 from typing import Any, ClassVar, Optional, Type, TypedDict, TypeVar, cast, overload
 
-from loomi.app.handlers.composer import AppDescriptor
-from loomi.app.handlers.services import ServiceDescriptor
+from loomi.app.composer import AppDescriptor
+from loomi.app.services import ServiceDescriptor
 
 # Updated imports for Python 3.10+ style
 # Using regular dict, list instead of Dict, List

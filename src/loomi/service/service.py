@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from .base import ServiceMeta
-from .handlers.composer import AsyncServiceComposer, SyncServiceComposer
-from .handlers.initializer import AsyncServiceInitializer, SyncServiceInitializer
+from .composer import AsyncServiceComposer, SyncServiceComposer
+from .initializer import AsyncServiceInitializer, SyncServiceInitializer
 
 __all__ = [
     "AsyncService",

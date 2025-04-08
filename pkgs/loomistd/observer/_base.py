@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, final
 
-from pydantic import Field
-
 from loomi.service import Spec
 from loomistd.codec import CodecProtocol
 
@@ -23,11 +21,7 @@ __all__ = [
 class BaseObserverSpec(Spec):
     """Base observer spec."""
 
-    codec: Spec = Field(default_factory=Spec)
-
-    @classmethod
-    def identity_fields(cls) -> set[str]:
-        return {"codec"}
+    codec: Spec
 
 
 class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):

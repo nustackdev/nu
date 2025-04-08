@@ -3,7 +3,9 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from loomi.service import AsyncService, Attach
+from pydantic import Field
+
+from loomi.service import AsyncService, Attach, Spec
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodec
 
@@ -18,7 +20,7 @@ __all__ = [
 
 
 class InMemoryObserverSpec(BaseObserverSpec):
-    pass
+    codec: Spec = Field(default=Spec(factory=PassthroughCodec))
 
 
 class InMemoryObserver(

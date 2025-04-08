@@ -29,12 +29,8 @@ __all__ = [
 class BaseStorageSpec(Spec):
     """Base storage spec."""
 
-    codec: Spec = Field(default_factory=Spec)
+    codec: Spec
     mode: StorageMode = Field(default="write")
-
-    @classmethod
-    def identity_fields(cls) -> set[str]:
-        return {"codec", "mode"}
 
 
 class BaseStorage(

@@ -3,7 +3,9 @@ from __future__ import annotations
 import asyncio
 from typing import AsyncGenerator
 
-from loomi.service import AsyncService, Attach
+from pydantic import Field
+
+from loomi.service import AsyncService, Attach, Spec
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodec
 
@@ -33,7 +35,7 @@ __all__ = [
 
 
 class InMemoryStorageSpec(BaseStorageSpec):
-    pass
+    codec: Spec = Field(default=Spec(factory=PassthroughCodec))
 
 
 class InMemoryStorage(

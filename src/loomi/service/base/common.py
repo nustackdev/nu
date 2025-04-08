@@ -16,15 +16,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from loomi._lib.spec import Spec
+
 from .exceptions import SpecError
 from .logger import logger
-from .spec import Spec
+from .types import ServiceKey
 
 if TYPE_CHECKING:
-    from loomi.service.lib.dependency_manager import DependencyManager
-    from loomi.service.lib.service_registry import ServiceRegistry
+    from loomi._lib.dependency_manager import DependencyManager
+    from loomi._lib.service_registry import ServiceRegistry
 
-    from .types import ServiceKey
 
 __all__ = [
     "ServiceCommon",
@@ -128,14 +129,14 @@ class ServiceCommon:
         return ((self.spec.name + ":") if self.spec.name else "") + f"{self.__class__.__name__}"
 
     @property
-    def key(self) -> "ServiceKey":
+    def key(self) -> ServiceKey:
         """
         Get the unique service instance identifier.
 
         Returns:
             ServiceKey: Unique key generated from the specification
         """
-        return self.spec.key
+        return ServiceKey(self.spec.key)
 
     def __hash__(self) -> int:
         """
@@ -168,8 +169,3 @@ class ServiceCommon:
             str: Human-readable string showing service name and spec
         """
         return f"<Service '{self.readable_name}': spec=({self.spec})>"
-
-
-__all__ = [
-    "ServiceCommon",
-]

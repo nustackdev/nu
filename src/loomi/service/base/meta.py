@@ -25,12 +25,12 @@ from abc import ABCMeta
 from threading import Lock
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
-from loomi.service.lib.dependency_manager import DependencyManager
-from loomi.service.lib.service_registry import ServiceRegistry
+from loomi._lib.dependency_manager import DependencyManager
+from loomi._lib.service_registry import ServiceRegistry
+from loomi._lib.spec import Spec
 
 from .exceptions import CreationError, ServiceError
 from .logger import logger
-from .spec import Spec
 
 if TYPE_CHECKING:
     from .bases import Service

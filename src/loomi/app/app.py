@@ -1,11 +1,9 @@
 from .base import AppMeta
-from .handlers.composer import AsyncAppComposer, SyncAppComposer
-from .handlers.initializer import AsyncAppInitializer, SyncAppInitializer
-
-# from .handlers.model import AsyncAppModel, SyncAppModel
-from .handlers.services import AsyncAppServices, SyncAppServices
-from .handlers.state import AsyncAppState, SyncAppState
-from .handlers.tasks import AsyncAppTasks, SyncAppTasks
+from .composer import AsyncAppComposer, SyncAppComposer
+from .initializer import AsyncAppInitializer, SyncAppInitializer
+from .services import AsyncAppServices, SyncAppServices
+from .state import AsyncAppState, SyncAppState
+from .tasks import AsyncAppTasks, SyncAppTasks
 
 __all__ = [
     "AsyncApp",
@@ -18,7 +16,6 @@ class AsyncApp(
     AsyncAppState,
     AsyncAppTasks,
     AsyncAppServices,
-    # AsyncAppModel,
     AsyncAppComposer,
     metaclass=AppMeta,
 ):
@@ -30,7 +27,6 @@ class SyncApp(
     SyncAppState,
     SyncAppTasks,
     SyncAppServices,
-    # SyncAppModel,
     SyncAppComposer,
     metaclass=AppMeta,
 ):

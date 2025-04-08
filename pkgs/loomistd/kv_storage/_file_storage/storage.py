@@ -8,7 +8,7 @@ from typing import AsyncGenerator
 
 import aiofile
 import filelock
-from pydantic import Field, field_serializer
+from pydantic import Field
 
 from loomi.service import AsyncService, Attach, Spec
 from loomistd.codec import CodecProtocol
@@ -40,18 +40,8 @@ __all__ = [
 
 
 class FileStorageSpec(BaseStorageSpec):
-    """Spec for file storage."""
-
     path: Path = Field(default=Path("state/db.json"))
     codec: Spec = Field(default=Spec(factory=JSONCodec))
-
-    @classmethod
-    def identity_fields(cls) -> set[str]:
-        return super().identity_fields() | {"path"}
-
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
-        return str(path)
 
 
 class FileStorage(

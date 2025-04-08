@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from abc import ABC
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Self
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
-    from .handlers.state.protocols_state import AsyncStateProtocol, SyncStateProtocol
-    from .handlers.state.protocols_tree import AsyncStateDictProtocol
-    from .handlers.tasks.protocols import AsyncOperationProtocol
+    from .state import AsyncStateProtocol, SyncStateProtocol
 
 __all__ = [
     "CommonAppProtocol",
@@ -202,41 +200,7 @@ class SyncAppTasksProtocol(ABC):
 class AsyncAppTasksProtocol(ABC):
     """Protocol defining asynchronous service operation capabilities."""
 
-    async def start(self) -> None:
-        """Run the app."""
-        ...
-
-    async def execute(
-        self,
-        operation: "AsyncOperationProtocol",
-        loc: "AsyncStateDictProtocol",
-    ) -> None:
-        """Execute operation."""
-        ...
-
-    async def run(
-        self,
-        context: dict[str, Any],
-        loc: "AsyncStateDictProtocol",
-    ) -> AsyncOperationProtocol: ...
-
-    def function(
-        self,
-        func: Callable,
-        *,
-        name: str | None = None,
-    ) -> "AsyncOperationProtocol":
-        """Create function operation."""
-        ...
-
-    def sequence(
-        self,
-        *operations: "AsyncOperationProtocol",
-        delay: float = ...,
-        continue_on_error: bool = False,
-    ) -> "AsyncOperationProtocol":
-        """Create sequential operation."""
-        ...
+    ...
 
 
 class SyncAppModelProtocol(ABC):
