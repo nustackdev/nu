@@ -37,6 +37,7 @@ class AppCommon:
 
     _services: dict[str, "Service"]
     _state_service_name: str
+    _exec_engine_service_name: str
 
     @classmethod
     def factory_name(cls) -> str:
@@ -55,6 +56,7 @@ class AppCommon:
         self._services = {}
         self._app_deps = {}
         self._state_service_name = ""
+        self._exec_engine_service_name = ""
         logger.debug(f"Initialized app '{self.readable_name}'")
 
     @property

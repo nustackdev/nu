@@ -6,6 +6,7 @@ from .composer import UseApp
 from .exceptions import AppError
 from .services import UseService
 from .state import UseState
+from .tasks import UseEngine
 
 __all__ = [
     "App",
@@ -14,5 +15,6 @@ __all__ = [
     "UseService",
     "UseState",
     "UseApp",
+    "UseEngine",
     "AppError",
 ]

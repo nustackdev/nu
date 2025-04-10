@@ -39,6 +39,9 @@ class AsyncAppInitializer(AppCommonInitializer, AsyncApp):
             self._initialize_model_descriptors()
             self._initialize_state_descriptor()
 
+            # Initialize engine descriptor
+            self._initialize_engine_descriptor()
+
         logger.info(f"Initialized app '{self.readable_name}'")
 
     async def shutdown(self) -> None:

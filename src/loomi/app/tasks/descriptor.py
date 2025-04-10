@@ -12,12 +12,12 @@ from loomi.app.services import ServiceDescriptor
 from loomi.service import Service, Spec
 
 __all__ = [
-    "UseState",
+    "UseEngine",
 ]
 
 S = TypeVar("S", bound=Service)
 
 
-def UseState(type: type[S], spec: Spec | None = None) -> S:
+def UseEngine(type: type[S], spec: Spec | None = None) -> S:
     """Create a service specification."""
-    return ServiceDescriptor[S](spec=spec, as_state=True, as_engine=False)  # type: ignore
+    return ServiceDescriptor[S](spec=spec, as_state=False, as_engine=True)  # type: ignore

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from .state import AsyncStateProtocol, SyncStateProtocol
+    from .tasks import AsyncEngineProtocol
 
 __all__ = [
     "CommonAppProtocol",
@@ -194,13 +195,27 @@ class AsyncAppStateProtocol(ABC):
 class SyncAppTasksProtocol(ABC):
     """Protocol defining synchronous service operation capabilities."""
 
-    ...
+    def _initialize_engine_descriptor(self) -> None:
+        """Initialize engine descriptor."""
+        ...
 
 
 class AsyncAppTasksProtocol(ABC):
     """Protocol defining asynchronous service operation capabilities."""
 
-    ...
+    @property
+    def engine(self) -> "AsyncEngineProtocol":
+        """Check and return app's state service."""
+        ...
+
+    @property
+    def e(self) -> "AsyncEngineProtocol":
+        """Short alias for state adapter."""
+        ...
+
+    def _initialize_engine_descriptor(self) -> None:
+        """Initialize engine descriptor."""
+        ...
 
 
 class SyncAppModelProtocol(ABC):

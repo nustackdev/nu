@@ -37,8 +37,12 @@ class SyncAppInitializer(AppCommonInitializer, SyncApp):
 
             # Initialize state descriptors
             self._initialize_model_descriptors()
-            self._initialize_app_composition_descriptors()
-            logger.info(f"Initialized app '{self.readable_name}'")
+            self._initialize_state_descriptor()
+
+            # Initialize engine descriptor
+            self._initialize_engine_descriptor()
+
+        logger.info(f"Initialized app '{self.readable_name}'")
 
     def shutdown(self) -> None:
         """

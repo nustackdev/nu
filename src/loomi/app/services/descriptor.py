@@ -25,6 +25,7 @@ class ServiceDescriptor(BaseDescriptor[S]):
         spec: Spec | None = None,
         spec_key: str | None = None,
         as_state: bool = False,
+        as_engine: bool = False,
     ) -> None:
         super().__init__(
             storage=StorageStrategy.WEAKREF,
@@ -35,6 +36,7 @@ class ServiceDescriptor(BaseDescriptor[S]):
         self.spec = spec
         self.spec_key = spec_key
         self.as_state = as_state
+        self.as_engine = as_engine
 
     def _validate_type(self, value: Any) -> bool:
         """Validate that value is a subclass of BaseService."""
@@ -47,4 +49,4 @@ class ServiceDescriptor(BaseDescriptor[S]):
 
 def UseService(type: type[S], spec: Spec | None = None) -> S:
     """Create a service specification."""
-    return ServiceDescriptor[S](spec=spec, as_state=False)  # type: ignore
+    return ServiceDescriptor[S](spec=spec, as_state=False, as_engine=False)  # type: ignore

@@ -1,4 +1,4 @@
-from .protocols_kv import (
+from .kv_storage import (
     AsyncStorageProtocol,
     AsyncSubscriptionProtocol,
     AsyncTransactionalHandlerProtocol,
@@ -10,8 +10,8 @@ from .protocols_kv import (
     SyncTransactionContextManagerProtocol,
     SyncTransactionProtocol,
 )
-from .protocols_state import AsyncStateProtocol, SyncStateProtocol
-from .protocols_tree import (
+from .state import AsyncStateProtocol, SyncStateProtocol
+from .tree_storage import (
     AsyncStateDictProtocol,
     AsyncStateListProtocol,
     AsyncStateNodeProtocol,

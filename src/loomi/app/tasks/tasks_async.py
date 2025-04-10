@@ -1,5 +1,55 @@
-class AsyncAppTasks:
-    pass
+from __future__ import annotations
+
+from typing import cast
+
+from loomi.app.base import AsyncApp
+
+from .base import AppCommonTasks
+from .exceptions import ExecutionError
+from .protocols import AsyncEngineProtocol
+
+__all__ = [
+    "AsyncAppTasks",
+]
+
+
+class AsyncAppTasks(AppCommonTasks, AsyncApp):
+    """
+    App feature implementing state management.
+
+    Features:
+    - State adapter handling
+    - State management methods
+    - State subscription management
+    - State transaction management
+
+    Example:
+        class DataApp(AsyncApp):
+            ...
+
+            def exec_data_process(self, key: str) -> Any:
+                await self.set(("status",), "processing")
+                result = self.process_data(key)
+                await self.set(("status,), "done")
+    """
+
+    @property
+    def engine(self) -> AsyncEngineProtocol:
+        """Check and return app's state service."""
+        if not self._exec_engine_service_name or len(self._exec_engine_service_name) == 0:
+            raise ExecutionError("No execution engine adapter configured")
+
+        engine = cast(AsyncEngineProtocol, getattr(self, self._exec_engine_service_name, None))
+        engine.state = self.state
+        if not engine:
+            raise ExecutionError("Execution engine not initialized")
+
+        return engine
+
+    @property
+    def e(self) -> AsyncEngineProtocol:
+        """Short alias for state adapter."""
+        return self.engine
 
 
 # from __future__ import annotations
