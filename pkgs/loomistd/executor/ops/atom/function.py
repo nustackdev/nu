@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any, Awaitable, Callable
 
+from loomi.app.tasks.protocols.operations import FunctionOperationProtocol
+
 from ...context import Context
 from ...logger import logger
 from ...types import error_behaviors
@@ -20,7 +22,7 @@ __all__ = [
 ]
 
 
-class Function(Operation):
+class Function(Operation, FunctionOperationProtocol[Context]):
     """
     Executes a callable function or method.
 
@@ -91,4 +93,5 @@ class Function(Operation):
             context: Execution context providing access to state and services
         """
         logger.debug(f"Executing function {getattr(self._func, '__name__', '<anonymous>')}")
-        await self.execute_task(self._func, context)
+        func_context = context.with_structural_path("Function")
+        await self.execute_task(self._func, func_context)

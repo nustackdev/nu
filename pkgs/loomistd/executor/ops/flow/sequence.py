@@ -7,13 +7,15 @@ in sequential order.
 
 from __future__ import annotations
 
+from loomi.app.tasks.protocols.operations import SequenceOperationProtocol
+
 from ...context import Context
 from ...logger import logger
 from ...types import error_behaviors
 from ..base import Operation
 
 
-class Sequence(Operation):
+class Sequence(Operation, SequenceOperationProtocol[Context]):
     """
     Executes operations in sequential order.
 

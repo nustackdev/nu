@@ -10,8 +10,10 @@ from __future__ import annotations
 from typing import Any
 
 from loomi.app import AsyncApp
+from loomi.app.tasks.protocols.operations import AppOperationProtocol
 
 from ...context import Context
+from ...errors import StateAccessError
 from ...types import error_behaviors
 from ..base import Operation
 from ..metadata import OperationMetadata
@@ -21,7 +23,7 @@ __all__ = [
 ]
 
 
-class App(Operation):
+class App(Operation, AppOperationProtocol[Context]):
     """
     Executes a Loomi app as an operation.
 
@@ -64,11 +66,13 @@ class App(Operation):
         super().__init__(error_behavior=error_behavior, on_fail=on_fail)
 
         self._app = app
-        self._state_path = state_path
 
         # Process state_path
-        if isinstance(self._state_path, str):
-            self._state_path = (self._state_path,)
+        self._state_path: tuple[str, ...] | None = None
+        if isinstance(state_path, str):
+            self._state_path = (state_path,)
+        elif isinstance(state_path, tuple):
+            self._state_path = state_path
 
     @property
     def metadata(self) -> OperationMetadata:
@@ -106,25 +110,32 @@ class App(Operation):
         Raises:
             StateAccessError: If the state_path cannot be accessed
         """
-        pass
-        # # Get app state
-        # if self._state_path:
-        #     try:
-        #         app_state = await context.scoped.dict(*self._state_path)
-        #     except Exception as e:
-        #         raise StateAccessError(
-        #             f"Failed to access state path {self._state_path}",
-        #             operation=self,
-        #             context=context,
-        #             state_path=self._state_path,
-        #             cause=e,
-        #         )
-        # else:
-        #     app_state = context.state
 
-        # # Log app execution
-        # app_name = getattr(self._app, "__class__", self._app).__name__
-        # logger.debug(f"Executing app {app_name}")
+        app_structural_path = context.structural_path + ("App",)
 
-        # # Execute the app
-        # await self._app.execute(app_state)
+        if self._state_path:
+            app_state_path = context.state_path + self._state_path
+            try:
+                app_scoped = await context.scoped.dict(*self._state_path)
+            except Exception as e:
+                raise StateAccessError(
+                    f"Failed to access state path {self._state_path}",
+                    operation=self,
+                    context=context,
+                    state_path=self._state_path,
+                    cause=e,
+                )
+        else:
+            app_state_path = context.state_path
+            app_scoped = context.scoped
+
+        app_context = context.derive(
+            **{
+                "structural_path": app_structural_path,
+                "state_path": app_state_path,
+                "scoped": app_scoped,
+            }
+        )
+
+        # Execute the app
+        await self._app.start(app_context)

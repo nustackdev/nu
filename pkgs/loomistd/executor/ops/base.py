@@ -8,7 +8,7 @@ should inherit from to ensure consistent behavior.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Awaitable, Callable, final
+from typing import Awaitable, Callable, final
 
 from loomi.app.tasks.protocols import AsyncOperationProtocol
 
@@ -19,7 +19,7 @@ from ..types import error_behaviors
 from .metadata import OperationMetadata
 
 
-class Operation(ABC):
+class Operation(ABC, AsyncOperationProtocol[Context]):
     """
     Base class for all operations.
 
@@ -186,7 +186,3 @@ class Operation(ABC):
             context: Execution context providing access to state and services
         """
         pass
-
-
-if TYPE_CHECKING:
-    _: type[AsyncOperationProtocol] = Operation

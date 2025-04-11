@@ -6,7 +6,7 @@ from loomi.app.base import AsyncApp
 
 from .base import AppCommonTasks
 from .exceptions import ExecutionError
-from .protocols import AsyncEngineProtocol
+from .protocols import AsyncEngineProtocol, AsyncOperationProtocol, ContextProtocol
 
 __all__ = [
     "AsyncAppTasks",
@@ -34,7 +34,7 @@ class AsyncAppTasks(AppCommonTasks, AsyncApp):
     """
 
     @property
-    def engine(self) -> AsyncEngineProtocol:
+    def engine(self) -> AsyncEngineProtocol[AsyncOperationProtocol, ContextProtocol]:
         """Check and return app's state service."""
         if not self._exec_engine_service_name or len(self._exec_engine_service_name) == 0:
             raise ExecutionError("No execution engine adapter configured")
@@ -47,9 +47,17 @@ class AsyncAppTasks(AppCommonTasks, AsyncApp):
         return engine
 
     @property
-    def e(self) -> AsyncEngineProtocol:
+    def e(self) -> AsyncEngineProtocol[AsyncOperationProtocol, ContextProtocol]:
         """Short alias for state adapter."""
         return self.engine
+
+    async def start(self, context: ContextProtocol | None = None) -> None:
+        """Run the app."""
+        await self.e.execute(await self.run(), context)
+
+    async def run(self) -> AsyncOperationProtocol[ContextProtocol]:
+        """Run the app."""
+        ...
 
 
 # from __future__ import annotations

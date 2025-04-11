@@ -2,20 +2,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, TypeVar
 
-from .operation import AsyncOperationProtocol, ContextT
+from .operation import AsyncOperationProtocol, ContextProtocol
 
 if TYPE_CHECKING:
     from loomi.app.state import AsyncStateProtocol
+
+    from .operations import AppOperationProtocol, FunctionOperationProtocol
 
 
 __all__ = [
     "AsyncEngineProtocol",
 ]
 
-OperationT = TypeVar("OperationT", bound=AsyncOperationProtocol, contravariant=True)
+OperationT_contra = TypeVar("OperationT_contra", bound=AsyncOperationProtocol, contravariant=True)
+ContextT = TypeVar("ContextT", bound=ContextProtocol)
 
 
-class AsyncEngineProtocol(Protocol[OperationT, ContextT]):
+class AsyncEngineProtocol(Protocol[OperationT_contra, ContextT]):
     """
     Protocol defining the interface for the execution engine.
 
@@ -27,7 +30,7 @@ class AsyncEngineProtocol(Protocol[OperationT, ContextT]):
 
     async def execute(
         self,
-        operation: OperationT,
+        operation: OperationT_contra,
         parent_context: ContextT | None = None,
     ) -> None:
         """
@@ -42,3 +45,6 @@ class AsyncEngineProtocol(Protocol[OperationT, ContextT]):
             parent_context: Optional parent context to derive from
         """
         ...
+
+    Function: type[FunctionOperationProtocol[ContextT]]
+    App: type[AppOperationProtocol[ContextT]]

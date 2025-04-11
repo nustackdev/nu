@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Context:
+class Context(ContextProtocol):
     """
     Execution context for operations.
 
@@ -40,7 +40,7 @@ class Context:
     # Attributes
     attributes: Dict[str, Any] = field(default_factory=dict)
 
-    def derive(self, **updates) -> "Context":
+    def derive(self, **updates: Any) -> "Context":
         """
         Create a new context derived from this one.
 
@@ -135,7 +135,3 @@ class Context:
             State path joined with dots, or structural path if state_path is None
         """
         return ".".join(str(component) for component in self.state_path)
-
-
-if TYPE_CHECKING:
-    _: type["ContextProtocol"] = Context

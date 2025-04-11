@@ -22,10 +22,10 @@ class ContextProtocol(Protocol):
     pass
 
 
-ContextT = TypeVar("ContextT", bound=ContextProtocol, contravariant=True)
+ContextT_contra = TypeVar("ContextT_contra", bound=ContextProtocol, contravariant=True)
 
 
-class AsyncOperationProtocol(Protocol[ContextT]):
+class AsyncOperationProtocol(Protocol[ContextT_contra]):
     """
     Protocol defining the interface for all operations.
 
@@ -34,7 +34,7 @@ class AsyncOperationProtocol(Protocol[ContextT]):
     """
 
     @property
-    def children(self) -> tuple["AsyncOperationProtocol[ContextT]", ...]:
+    def children(self) -> tuple["AsyncOperationProtocol[ContextT_contra]", ...]:
         """
         Get all child operations of this operation.
 
@@ -43,7 +43,7 @@ class AsyncOperationProtocol(Protocol[ContextT]):
         """
         ...
 
-    async def execute(self, context: "ContextT") -> None:
+    async def execute(self, context: "ContextT_contra") -> None:
         """
         Execute the operation within the given context.
 
