@@ -12,7 +12,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Generic, Self
 
 from .logger import logger
-from .types import ExecutorProtocolT, StateProtocolT
+from .types import ET, ST, SyncET, SyncST
 
 if TYPE_CHECKING:
     from loomi.service import Service
@@ -24,7 +24,7 @@ __all____ = [
 ]
 
 
-class AppABC(ABC, Generic[StateProtocolT, ExecutorProtocolT]):
+class AppABC(ABC, Generic[ST, ET]):
     """
     Base class providing common functionality for all app types.
 
@@ -94,7 +94,7 @@ class AppABC(ABC, Generic[StateProtocolT, ExecutorProtocolT]):
         return f"<App '{self.readable_name}': services=({self._services})>"
 
 
-class SyncAppABC(AppABC[StateProtocolT, ExecutorProtocolT]):
+class SyncAppABC(AppABC[SyncST, SyncET]):
     """
     Base class for synchronous app functionality.
     """
@@ -159,12 +159,12 @@ class SyncAppABC(AppABC[StateProtocolT, ExecutorProtocolT]):
     """Protocol defining synchronous service state management."""
 
     @property
-    def state(self) -> StateProtocolT:
+    def state(self) -> SyncST:
         """Check and return app's state service."""
         ...
 
     @property
-    def s(self) -> StateProtocolT:
+    def s(self) -> SyncST:
         """Short alias for state adapter."""
         ...
 
@@ -193,7 +193,7 @@ class SyncAppABC(AppABC[StateProtocolT, ExecutorProtocolT]):
         ...
 
 
-class AsyncAppABC(AppABC[StateProtocolT, ExecutorProtocolT]):
+class AsyncAppABC(AppABC[ST, ET]):
     """AsyncStateProtocol for asynchronous app functionality."""
 
     """
@@ -257,12 +257,12 @@ class AsyncAppABC(AppABC[StateProtocolT, ExecutorProtocolT]):
     """Protocol defining asynchronous service state management."""
 
     @property
-    def state(self) -> StateProtocolT:
+    def state(self) -> ST:
         """Check and return app's state service."""
         ...
 
     @property
-    def s(self) -> StateProtocolT:
+    def s(self) -> ST:
         """Short alias for state adapter."""
         ...
 
@@ -273,12 +273,12 @@ class AsyncAppABC(AppABC[StateProtocolT, ExecutorProtocolT]):
     """Protocol defining asynchronous service operation capabilities."""
 
     @property
-    def engine(self) -> ExecutorProtocolT:
+    def engine(self) -> ET:
         """Check and return app's state service."""
         ...
 
     @property
-    def e(self) -> ExecutorProtocolT:
+    def e(self) -> ET:
         """Short alias for state adapter."""
         ...
 

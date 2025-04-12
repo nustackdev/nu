@@ -7,7 +7,7 @@ from loomi.interfaces.executor.protocols import ContextProtocol
 
 from .base import AppABC, AsyncAppABC, SyncAppABC
 from .exceptions import ExecutionError
-from .types import ExecutorProtocolT, StateProtocolT
+from .types import ET, ST, SyncET, SyncST
 
 __all__ = [
     "CommonAppExecutionHandler",
@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 
-class CommonAppExecutionHandler(AppABC[StateProtocolT, ExecutorProtocolT]):
+class CommonAppExecutionHandler(AppABC[ST, ET]):
     """
     Base class for app tasks execution.
     """
@@ -39,20 +39,18 @@ class CommonAppExecutionHandler(AppABC[StateProtocolT, ExecutorProtocolT]):
             engine_configured = True
 
 
-class AsyncAppExecutionHandler(
-    CommonAppExecutionHandler[StateProtocolT, ExecutorProtocolT], AsyncAppABC
-):
+class AsyncAppExecutionHandler(CommonAppExecutionHandler[ST, ET], AsyncAppABC[ST, ET]):
     """
     App feature implementing async execution engine management.
     """
 
     @property
-    def engine(self) -> ExecutorProtocolT:
+    def engine(self) -> ET:
         """Check and return app's state service."""
         if not self._exec_engine_service_name or len(self._exec_engine_service_name) == 0:
             raise ExecutionError("No execution engine adapter configured")
 
-        engine = cast(ExecutorProtocolT, getattr(self, self._exec_engine_service_name, None))
+        engine = cast(ET, getattr(self, self._exec_engine_service_name, None))
         engine.state = self.state
         if not engine:
             raise ExecutionError("Execution engine not initialized")
@@ -60,7 +58,7 @@ class AsyncAppExecutionHandler(
         return engine
 
     @property
-    def e(self) -> ExecutorProtocolT:
+    def e(self) -> ET:
         """Short alias for state adapter."""
         return self.engine
 
@@ -68,25 +66,25 @@ class AsyncAppExecutionHandler(
         """Run the app."""
         await self.e.execute(await self.run(), context)
 
-    async def run(self) -> ExecutorProtocolT:
+    async def run(self) -> ET:
         """Run the app."""
         ...
 
 
 class SyncAppExecutionHandler(
-    CommonAppExecutionHandler[StateProtocolT, ExecutorProtocolT], SyncAppABC
+    CommonAppExecutionHandler[SyncST, SyncET], SyncAppABC[SyncST, SyncET]
 ):
     """
     App feature implementing execution engine management.
     """
 
     @property
-    def engine(self) -> ExecutorProtocolT:
+    def engine(self) -> SyncET:
         """Check and return app's state service."""
         if not self._exec_engine_service_name or len(self._exec_engine_service_name) == 0:
             raise ExecutionError("No execution engine adapter configured")
 
-        engine = cast(ExecutorProtocolT, getattr(self, self._exec_engine_service_name, None))
+        engine = cast(SyncET, getattr(self, self._exec_engine_service_name, None))
         engine.state = self.state
         if not engine:
             raise ExecutionError("Execution engine not initialized")
@@ -94,7 +92,7 @@ class SyncAppExecutionHandler(
         return engine
 
     @property
-    def e(self) -> ExecutorProtocolT:
+    def e(self) -> SyncET:
         """Short alias for state adapter."""
         return self.engine
 
@@ -103,6 +101,6 @@ class SyncAppExecutionHandler(
         # TODO: implement sync execution
         ...
 
-    def run(self) -> ExecutorProtocolT:
+    def run(self) -> SyncET:
         """Run the app."""
         ...

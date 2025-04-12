@@ -4,7 +4,7 @@ from loomi.descriptors.use_service import ServiceDescriptor
 
 from .base import AppABC, AsyncAppABC, SyncAppABC
 from .exceptions import StateError
-from .types import ExecutorProtocolT, StateProtocolT
+from .types import ET, ST, SyncET, SyncST
 
 __all__ = [
     "CommonAppStateHandler",
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-class CommonAppStateHandler(AppABC[StateProtocolT, ExecutorProtocolT]):
+class CommonAppStateHandler(AppABC[ST, ET]):
     """
     Base class for app state management.
     """
@@ -36,9 +36,7 @@ class CommonAppStateHandler(AppABC[StateProtocolT, ExecutorProtocolT]):
             state_configured = True
 
 
-class AsyncCommonAppStateHandler(
-    CommonAppStateHandler[StateProtocolT, ExecutorProtocolT], AsyncAppABC
-):
+class AsyncCommonAppStateHandler(CommonAppStateHandler[ST, ET], AsyncAppABC[ST, ET]):
     """
     App feature implementing state management.
 
@@ -59,7 +57,7 @@ class AsyncCommonAppStateHandler(
     """
 
     @property
-    def state(self) -> StateProtocolT:
+    def state(self) -> ST:
         """Check and return app's state service."""
         if not self._state_service_name or len(self._state_service_name) == 0:
             raise StateError("No state adapter configured")
@@ -71,16 +69,14 @@ class AsyncCommonAppStateHandler(
         return state
 
     @property
-    def s(self) -> StateProtocolT:
+    def s(self) -> ST:
         """Short alias for state adapter."""
         return self.state
 
 
-class SyncCommonAppStateHandler(
-    CommonAppStateHandler[StateProtocolT, ExecutorProtocolT], SyncAppABC
-):
+class SyncCommonAppStateHandler(CommonAppStateHandler[SyncST, SyncET], SyncAppABC[SyncST, SyncET]):
     @property
-    def state(self) -> StateProtocolT:
+    def state(self) -> SyncST:
         """Check and return app's state service."""
         if not self._state_service_name or len(self._state_service_name) == 0:
             raise StateError("No state adapter configured")
@@ -92,6 +88,6 @@ class SyncCommonAppStateHandler(
         return state
 
     @property
-    def s(self) -> StateProtocolT:
+    def s(self) -> SyncST:
         """Short alias for state adapter."""
         return self.state

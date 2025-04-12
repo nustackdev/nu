@@ -6,9 +6,12 @@ from loomi.interfaces.executor.protocols import AsyncEngineProtocol, SyncEngineP
 from loomi.interfaces.state.protocols import AsyncStateProtocol, SyncStateProtocol
 
 __all__ = [
-    "StateProtocolT",
-    "ExecutorProtocolT",
+    "ST",
+    "ET",
 ]
 
-StateProtocolT = TypeVar("StateProtocolT", bound=AsyncStateProtocol | SyncStateProtocol)
-ExecutorProtocolT = TypeVar("ExecutorProtocolT", bound=AsyncEngineProtocol | SyncEngineProtocol)
+ST = TypeVar("ST", bound=AsyncStateProtocol | SyncStateProtocol)
+ET = TypeVar("ET", bound=AsyncEngineProtocol | SyncEngineProtocol)
+
+SyncST = TypeVar("SyncST", bound=SyncStateProtocol)
+SyncET = TypeVar("SyncET", bound=SyncEngineProtocol)

@@ -1,16 +1,27 @@
 from abc import ABCMeta
 from inspect import Parameter, Signature
 from types import FunctionType, MethodType
-from typing import Any, ClassVar, Optional, Type, TypedDict, TypeVar, cast, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Optional,
+    Type,
+    TypeAlias,
+    TypedDict,
+    cast,
+    overload,
+)
 
 from loomi.descriptors.use_app import AppDescriptor
 from loomi.descriptors.use_service import ServiceDescriptor
 
-# Updated imports for Python 3.10+ style
-# Using regular dict, list instead of Dict, List
+from .base import AsyncAppABC, SyncAppABC
 
+if TYPE_CHECKING:
+    from .app import AsyncApp, SyncApp
 
-T = TypeVar("T")
+AppType: TypeAlias = "type[AsyncApp | SyncApp]"
 
 
 # Unified TypedDict for storing both spec and nested app information
@@ -57,7 +68,7 @@ class AppMeta(ABCMeta):
         name: str,
         bases: tuple[type, ...],
         namespace: dict[str, Any],
-    ) -> Type[T]: ...  # type: ignore
+    ) -> AppType: ...
 
     @overload
     def __new__(
@@ -66,7 +77,7 @@ class AppMeta(ABCMeta):
         bases: tuple[type, ...],
         namespace: dict[str, Any],
         **kwargs: Any,
-    ) -> Type[T]: ...  # type: ignore
+    ) -> AppType: ...
 
     def __new__(  # noqa: C901
         mcs,
@@ -74,7 +85,7 @@ class AppMeta(ABCMeta):
         bases: tuple[type, ...],
         namespace: dict[str, Any],
         **kwargs: Any,
-    ) -> Type[T]:  # type: ignore
+    ) -> AppType:
         """
         Create a new App class with enhanced IDE support for services and nested apps.
 
@@ -313,4 +324,11 @@ class AppMeta(ABCMeta):
         # Set the return type hint for __new__ to help IDE show correct type for constructors
         setattr(cls, "__new__.__annotations__", {"return": cls})
 
-        return cast(Type[T], cls)
+        if issubclass(cls, AsyncAppABC):
+            return cast("type[AsyncApp]", cls)
+        elif issubclass(cls, SyncAppABC):
+            return cast("type[SyncApp]", cls)
+
+        raise TypeError(
+            f"Unsupported app type: {cls.__name__}. Expected AsyncApp or SyncApp as base class."
+        )

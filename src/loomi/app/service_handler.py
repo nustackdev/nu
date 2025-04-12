@@ -8,6 +8,7 @@ from loomi.service import AsyncService, Service, ServiceState, SyncService
 from .base import AppABC, AsyncAppABC, SyncAppABC
 from .exceptions import ServiceDependencyError
 from .logger import logger
+from .types import ET, ST, SyncET, SyncST
 
 if TYPE_CHECKING:
     from loomi.spec import Spec
@@ -19,7 +20,7 @@ __all__ = [
 ]
 
 
-class CommonAppServicesHandler(AppABC):
+class CommonAppServicesHandler(AppABC[ST, ET]):
     def add_service_dependency(
         self,
         name: str,
@@ -92,7 +93,7 @@ class CommonAppServicesHandler(AppABC):
             setattr(self, name, service)
 
 
-class AsyncAppServicesHandler(CommonAppServicesHandler, AsyncAppABC):
+class AsyncAppServicesHandler(CommonAppServicesHandler[ST, ET], AsyncAppABC[ST, ET]):
     """
     App mixin for service location and initialization.
     """
@@ -114,7 +115,7 @@ class AsyncAppServicesHandler(CommonAppServicesHandler, AsyncAppABC):
                     await service.shutdown()
 
 
-class SyncAppServicesHandler(CommonAppServicesHandler, SyncAppABC):
+class SyncAppServicesHandler(CommonAppServicesHandler[SyncST, SyncET], SyncAppABC[SyncST, SyncET]):
     """
     App mixin for service location and initialization.
     """

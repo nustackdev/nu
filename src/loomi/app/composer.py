@@ -7,6 +7,7 @@ from loomi.descriptors.use_app import AppDescriptor
 from .base import AppABC, AsyncAppABC, SyncAppABC
 from .exceptions import DependencyError
 from .logger import logger
+from .types import ET, ST, SyncET, SyncST
 
 if TYPE_CHECKING:
     pass
@@ -18,7 +19,7 @@ __all__ = [
 ]
 
 
-class CommonAppComposer(AppABC):
+class CommonAppComposer(AppABC[ST, ET]):
     def _initialize_app_composition_descriptors(self):
         apps_specs = getattr(self, "_app_deps_specs", {})
 
@@ -49,7 +50,7 @@ class CommonAppComposer(AppABC):
             setattr(self, name, app)
 
 
-class AsyncAppComposer(CommonAppComposer, AsyncAppABC):
+class AsyncAppComposer(CommonAppComposer[ST, ET], AsyncAppABC[ST, ET]):
     """
     App mixin combining dependency injection and component architecture.
 
@@ -80,7 +81,7 @@ class AsyncAppComposer(CommonAppComposer, AsyncAppABC):
             await app.shutdown()
 
 
-class SyncAppComposer(CommonAppComposer, SyncAppABC):
+class SyncAppComposer(CommonAppComposer[SyncST, SyncET], SyncAppABC[SyncST, SyncET]):
     """
     App mixin combining dependency injection and component architecture.
 

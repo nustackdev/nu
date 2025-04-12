@@ -4,6 +4,7 @@ from .initializer import AsyncAppInitializer, SyncAppInitializer
 from .meta import AppMeta
 from .service_handler import AsyncAppServicesHandler, SyncAppServicesHandler
 from .state_handler import AsyncCommonAppStateHandler, SyncCommonAppStateHandler
+from .types import ET, ST, SyncET, SyncST
 
 __all__ = [
     "AsyncApp",
@@ -13,22 +14,22 @@ __all__ = [
 
 
 class AsyncApp(
-    AsyncAppInitializer,
-    AsyncCommonAppStateHandler,
-    AsyncAppExecutionHandler,
-    AsyncAppServicesHandler,
-    AsyncAppComposer,
+    AsyncAppInitializer[ST, ET],
+    AsyncCommonAppStateHandler[ST, ET],
+    AsyncAppExecutionHandler[ST, ET],
+    AsyncAppServicesHandler[ST, ET],
+    AsyncAppComposer[ST, ET],
     metaclass=AppMeta,
 ):
     pass
 
 
 class SyncApp(
-    SyncAppInitializer,
-    SyncCommonAppStateHandler,
-    SyncAppExecutionHandler,
-    SyncAppServicesHandler,
-    SyncAppComposer,
+    SyncAppInitializer[SyncST, SyncET],
+    SyncCommonAppStateHandler[SyncST, SyncET],
+    SyncAppExecutionHandler[SyncST, SyncET],
+    SyncAppServicesHandler[SyncST, SyncET],
+    SyncAppComposer[SyncST, SyncET],
     metaclass=AppMeta,
 ):
     pass
