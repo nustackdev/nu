@@ -19,7 +19,7 @@ def init_logging() -> None:
         return
 
     # Configure main logger
-    logger = logging.getLogger("scripter")
+    logger = logging.getLogger("loomi")
 
     # Add a NullHandler to prevent "No handlers could be found" warnings
     logger.addHandler(logging.NullHandler())

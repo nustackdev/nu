@@ -7,8 +7,13 @@ for operation execution.
 
 from typing import TYPE_CHECKING
 
-from loomi.app.tasks.protocols.operations import AppOperationProtocol, FunctionOperationProtocol
-from loomi.service import AsyncService, Attach
+from loomi import AsyncService, Attach
+from loomi.interfaces.executor.protocols import (
+    AppOperationProtocol,
+    AsyncEngineProtocol,
+    FunctionOperationProtocol,
+)
+from loomi.interfaces.state.protocols import AsyncStateProtocol
 
 from .context import Context
 from .errors import OperationConfigError
@@ -16,10 +21,6 @@ from .ops import Operation
 from .ops.atom import App, Function
 from .services.task_execution import TaskExecutionService
 from .services.tracing import TracingService
-
-if TYPE_CHECKING:
-    from loomi.app.state.protocols import AsyncStateProtocol
-    from loomi.app.tasks.protocols import AsyncEngineProtocol
 
 
 class ExecutionEngine(AsyncService):

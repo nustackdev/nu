@@ -1,5 +1,11 @@
-from .app import AppError, AsyncApp, SyncApp, UseApp, UseEngine, UseService, UseState
-from .service import AsyncService, Attach, Service, ServiceError, ServiceMeta, Spec, SyncService
+from .app import App, AsyncApp, SyncApp
+from .descriptors.attach import Attach
+from .descriptors.use_app import UseApp
+from .descriptors.use_engine import UseEngine
+from .descriptors.use_service import UseService
+from .descriptors.use_state import UseState
+from .service import AsyncService, Service, SyncService
+from .spec import Spec
 
 __all__ = [
     # App-related imports
@@ -8,14 +14,11 @@ __all__ = [
     "UseService",
     "UseState",
     "UseApp",
-    "AppError",
     "UseEngine",
     # Service-related imports
     "Service",
     "AsyncService",
     "SyncService",
-    "ServiceMeta",
     "Attach",
     "Spec",
-    "ServiceError",
 ]

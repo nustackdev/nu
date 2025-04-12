@@ -1,16 +1,5 @@
-from __future__ import annotations
-
-from .base import Service, ServiceMeta, Spec
-from .composer import Attach
+from .base import AsyncServiceABC, ServiceABC, SyncServiceABC
 from .exceptions import ServiceError
-from .service import AsyncService, SyncService
-
-__all__ = [
-    "Service",
-    "AsyncService",
-    "SyncService",
-    "ServiceMeta",
-    "Attach",
-    "Spec",
-    "ServiceError",
-]
+from .meta import ServiceMeta
+from .service import AsyncService, Service, SyncService
+from .types import ServiceState

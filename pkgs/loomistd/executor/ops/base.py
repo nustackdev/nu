@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Awaitable, Callable, final
 
-from loomi.app.tasks.protocols import AsyncOperationProtocol
+from loomi.interfaces.executor.protocols import AsyncOperationProtocol
 
 from ..context import Context
 from ..errors import wrap_error

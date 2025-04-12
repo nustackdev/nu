@@ -9,7 +9,7 @@ import asyncio
 import uuid
 from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
 
-from loomi.service import AsyncService, Spec
+from loomi import AsyncService, Spec
 
 from ..context import Context
 from .exceptions import TaskExecutionCancelledError, TaskExecutionTimeoutError

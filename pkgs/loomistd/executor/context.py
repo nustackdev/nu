@@ -8,10 +8,10 @@ with access to state, services, and execution metadata.
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Tuple
 
+from loomi.interfaces.executor.protocols import ContextProtocol
+
 if TYPE_CHECKING:
-    from loomi.app.state import AsyncStateProtocol
-    from loomi.app.state.protocols import AsyncStateDictProtocol
-    from loomi.app.tasks.protocols import ContextProtocol
+    from loomi.interfaces.state.protocols import AsyncStateDictProtocol, AsyncStateProtocol
 
     from .services.task_execution import TaskExecutionService
     from .services.tracing import TracingService

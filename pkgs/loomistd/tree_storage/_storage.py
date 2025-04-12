@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, Generic
 
-from loomi.service import AsyncService, Attach
+from loomi import AsyncService, Attach
 from loomistd.kv_storage import (
     StorageProtocol,
     StorageValueT,

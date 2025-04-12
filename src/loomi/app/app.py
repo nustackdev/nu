@@ -1,21 +1,22 @@
-from .base import AppMeta
 from .composer import AsyncAppComposer, SyncAppComposer
+from .execution_handler import AsyncAppExecutionHandler, SyncAppExecutionHandler
 from .initializer import AsyncAppInitializer, SyncAppInitializer
-from .services import AsyncAppServices, SyncAppServices
-from .state import AsyncAppState, SyncAppState
-from .tasks import AsyncAppTasks, SyncAppTasks
+from .meta import AppMeta
+from .service_handler import AsyncAppServicesHandler, SyncAppServicesHandler
+from .state_handler import AsyncCommonAppStateHandler, SyncCommonAppStateHandler
 
 __all__ = [
     "AsyncApp",
     "SyncApp",
+    "App",
 ]
 
 
 class AsyncApp(
     AsyncAppInitializer,
-    AsyncAppState,
-    AsyncAppTasks,
-    AsyncAppServices,
+    AsyncCommonAppStateHandler,
+    AsyncAppExecutionHandler,
+    AsyncAppServicesHandler,
     AsyncAppComposer,
     metaclass=AppMeta,
 ):
@@ -24,10 +25,13 @@ class AsyncApp(
 
 class SyncApp(
     SyncAppInitializer,
-    SyncAppState,
-    SyncAppTasks,
-    SyncAppServices,
+    SyncCommonAppStateHandler,
+    SyncAppExecutionHandler,
+    SyncAppServicesHandler,
     SyncAppComposer,
     metaclass=AppMeta,
 ):
     pass
+
+
+App = AsyncApp | SyncApp

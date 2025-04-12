@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from .base import ServiceMeta
 from .composer import AsyncServiceComposer, SyncServiceComposer
 from .initializer import AsyncServiceInitializer, SyncServiceInitializer
+from .meta import ServiceMeta
 
 __all__ = [
     "AsyncService",
     "SyncService",
+    "Service",
 ]
 
 
@@ -24,3 +25,6 @@ class SyncService(
     metaclass=ServiceMeta,
 ):
     pass
+
+
+Service = AsyncService | SyncService

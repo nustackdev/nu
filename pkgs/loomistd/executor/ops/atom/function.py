@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Awaitable, Callable
 
-from loomi.app.tasks.protocols.operations import FunctionOperationProtocol
+from loomi.interfaces.executor.protocols import FunctionOperationProtocol
 
 from ...context import Context
 from ...logger import logger

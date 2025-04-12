@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from loomi.service import AsyncService, Attach
+from loomi import AsyncService, Attach
 from loomistd.kv_storage import StorageProtocol
 from loomistd.observer import ObserverProtocol, SubscriptionProtocol
 from loomistd.tree_storage import TreeStorageBase, TreeStorageCore

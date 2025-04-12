@@ -7,7 +7,7 @@ in sequential order.
 
 from __future__ import annotations
 
-from loomi.app.tasks.protocols.operations import SequenceOperationProtocol
+from loomi.interfaces.executor.protocols import SequenceOperationProtocol
 
 from ...context import Context
 from ...logger import logger

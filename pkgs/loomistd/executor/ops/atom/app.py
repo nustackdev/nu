@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from loomi.app import AsyncApp
-from loomi.app.tasks.protocols.operations import AppOperationProtocol
+from loomi import AsyncApp
+from loomi.interfaces.executor.protocols import AppOperationProtocol
 
 from ...context import Context
 from ...errors import StateAccessError
