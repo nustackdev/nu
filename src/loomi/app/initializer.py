@@ -7,7 +7,7 @@ from typing import Self
 
 from .base import AppABC, AsyncAppABC, SyncAppABC
 from .logger import logger
-from .types import ET, ST, SyncET, SyncST
+from .types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 
 __all__ = [
     "CommonAppInitializer",
@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 
-class CommonAppInitializer(AppABC[ST, ET]):
+class CommonAppInitializer(AppABC[StateT, ExecutorT]):
     """
     Implementation of app initialization and lifecycle management.
 
@@ -26,7 +26,7 @@ class CommonAppInitializer(AppABC[ST, ET]):
     pass
 
 
-class AsyncAppInitializer(CommonAppInitializer[ST, ET], AsyncAppABC[ST, ET]):
+class AsyncAppInitializer(CommonAppInitializer[StateT, ExecutorT], AsyncAppABC[StateT, ExecutorT]):
     _app_lock: AsyncioLock
 
     async def initialize(self) -> None:
@@ -91,7 +91,9 @@ class AsyncAppInitializer(CommonAppInitializer[ST, ET], AsyncAppABC[ST, ET]):
         await self.shutdown()
 
 
-class SyncAppInitializer(CommonAppInitializer[SyncST, SyncET], SyncAppABC[SyncST, SyncET]):
+class SyncAppInitializer(
+    CommonAppInitializer[SyncStateT, SyncExecutorT], SyncAppABC[SyncStateT, SyncExecutorT]
+):
     _app_lock: ThreadingLock
 
     def initialize(self) -> None:

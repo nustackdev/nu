@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from loomi.utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
 if TYPE_CHECKING:
-    from loomi.app import App
+    from loomi.app import AsyncApp, SyncApp
     from loomi.spec import Spec
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
     "UseApp",
 ]
 
-S = TypeVar("S", bound="App")
+S = TypeVar("S", bound="AsyncApp | SyncApp")
 
 
 class AppDescriptor(BaseDescriptor[S]):

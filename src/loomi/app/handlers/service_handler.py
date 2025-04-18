@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, cast
 from loomi.descriptors.use_service import ServiceDescriptor
 from loomi.service import AsyncService, Service, ServiceState, SyncService
 
-from .base import AppABC, AsyncAppABC, SyncAppABC
-from .exceptions import ServiceDependencyError
+from ..base import AppABC, AsyncAppABC, SyncAppABC
+from ..exceptions import ServiceDependencyError
+from ..types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 from .logger import logger
-from .types import ET, ST, SyncET, SyncST
 
 if TYPE_CHECKING:
     from loomi.spec import Spec
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class CommonAppServicesHandler(AppABC[ST, ET]):
+class CommonAppServicesHandler(AppABC[StateT, ExecutorT]):
     def add_service_dependency(
         self,
         name: str,
@@ -93,7 +93,9 @@ class CommonAppServicesHandler(AppABC[ST, ET]):
             setattr(self, name, service)
 
 
-class AsyncAppServicesHandler(CommonAppServicesHandler[ST, ET], AsyncAppABC[ST, ET]):
+class AsyncAppServicesHandler(
+    CommonAppServicesHandler[StateT, ExecutorT], AsyncAppABC[StateT, ExecutorT]
+):
     """
     App mixin for service location and initialization.
     """
@@ -115,7 +117,9 @@ class AsyncAppServicesHandler(CommonAppServicesHandler[ST, ET], AsyncAppABC[ST, 
                     await service.shutdown()
 
 
-class SyncAppServicesHandler(CommonAppServicesHandler[SyncST, SyncET], SyncAppABC[SyncST, SyncET]):
+class SyncAppServicesHandler(
+    CommonAppServicesHandler[SyncStateT, SyncExecutorT], SyncAppABC[SyncStateT, SyncExecutorT]
+):
     """
     App mixin for service location and initialization.
     """

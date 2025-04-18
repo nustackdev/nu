@@ -1,4 +1,4 @@
-from .app import App, AsyncApp, SyncApp
+from .app import AppType, AsyncApp, SyncApp
 from .descriptors.attach import Attach
 from .descriptors.use_app import UseApp
 from .descriptors.use_engine import UseEngine
@@ -15,6 +15,7 @@ __all__ = [
     "UseState",
     "UseApp",
     "UseEngine",
+    "AppType",
     # Service-related imports
     "Service",
     "AsyncService",

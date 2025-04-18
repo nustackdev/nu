@@ -6,8 +6,9 @@ This service provides concurrency control, task tracking, and cancellation manag
 from __future__ import annotations
 
 import asyncio
+import inspect
 import uuid
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar
 
 from loomi import AsyncService, Spec
 
@@ -35,8 +36,8 @@ class TaskExecutionService(AsyncService):
     async def setup(self) -> None:
         """Initialize service resources."""
         self._semaphore = asyncio.Semaphore(self.spec.max_concurrency)
-        self._active_tasks: Dict[str, asyncio.Task] = {}
-        self._results: Dict[str, Any] = {}
+        self._active_tasks: dict[str, asyncio.Task] = {}
+        self._results: dict[str, Any] = {}
 
     async def cleanup(self) -> None:
         """Cancel all tasks and clean up resources."""
@@ -46,11 +47,11 @@ class TaskExecutionService(AsyncService):
 
     async def execute(
         self,
-        func: Callable[[Context], Awaitable[T]],
+        func: Callable[[Any], Awaitable[None]],
         context: Context,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         wait: bool = True,
-    ) -> tuple[Optional[T], str]:
+    ) -> tuple[None, str]:
         """
         Execute a function as a managed task.
 
@@ -69,7 +70,12 @@ class TaskExecutionService(AsyncService):
             try:
                 async with self._semaphore:
                     start_time = asyncio.get_event_loop().time()
-                    result = await func(context)
+
+                    if inspect.iscoroutinefunction(func):
+                        result = await func(context)
+                    else:
+                        raise TypeError(f"Function {func.__name__} is not a coroutine function")
+
                     duration = (asyncio.get_event_loop().time() - start_time) * 1000
                     logger.debug(f"Task {task_id} completed in {duration:.2f}ms")
                     self._results[task_id] = result
@@ -134,7 +140,7 @@ class TaskExecutionService(AsyncService):
                 count += 1
         return count
 
-    async def wait_for_task(self, task_id: str, timeout: Optional[float] = None) -> Any:
+    async def wait_for_task(self, task_id: str, timeout: float | None = None) -> Any:
         """
         Wait for a task to complete.
 
@@ -166,7 +172,7 @@ class TaskExecutionService(AsyncService):
         """Get the number of active tasks."""
         return len(self._active_tasks)
 
-    def get_task_result(self, task_id: str) -> Optional[Any]:
+    def get_task_result(self, task_id: str) -> Any | None:
         """Get the result of a completed task."""
         return self._results.get(task_id)
 

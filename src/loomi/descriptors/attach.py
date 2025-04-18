@@ -50,7 +50,7 @@ class AttachDescriptor(BaseDescriptor[S]):
         return None
 
 
-def Attach(type: type[T], spec: "Spec | None" = None) -> T:
+def Attach(type: type[T] | None = None, spec: "Spec | None" = None) -> T:
     """Create a service specification."""
     return AttachDescriptor[T](spec=spec)  # type: ignore
 

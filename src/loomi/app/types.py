@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-from typing import TypeVar
-
-from loomi.interfaces.executor.protocols import AsyncEngineProtocol, SyncEngineProtocol
-from loomi.interfaces.state.protocols import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.executor.type_vars import ExecutorT, SyncExecutorT
+from loomi.interfaces.state.type_vars import StateT, SyncStateT
 
 __all__ = [
-    "ST",
-    "ET",
+    "ExecutorT",
+    "StateT",
+    "SyncExecutorT",
+    "SyncStateT",
 ]
-
-ST = TypeVar("ST", bound=AsyncStateProtocol | SyncStateProtocol)
-ET = TypeVar("ET", bound=AsyncEngineProtocol | SyncEngineProtocol)
-
-SyncST = TypeVar("SyncST", bound=SyncStateProtocol)
-SyncET = TypeVar("SyncET", bound=SyncEngineProtocol)

@@ -7,22 +7,24 @@ function or method.
 
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
-from loomi.interfaces.executor.protocols import FunctionOperationProtocol
+from loomi.interfaces.executor.operations import FunctionOperationProtocol
+from loomi.interfaces.executor.types import ErrorBehavior
+from loomi.interfaces.state.type_vars import StateDictT
 
-from ...context import Context
-from ...logger import logger
-from ...types import error_behaviors
-from ..base import Operation
-from ..metadata import OperationMetadata
+from .base import Operation
+from .metadata import OperationMetadata
+
+if TYPE_CHECKING:
+    from ..context import Context
 
 __all__ = [
     "Function",
 ]
 
 
-class Function(Operation, FunctionOperationProtocol[Context]):
+class Function(Operation[StateDictT]):
     """
     Executes a callable function or method.
 
@@ -43,10 +45,12 @@ class Function(Operation, FunctionOperationProtocol[Context]):
 
     def __init__(
         self,
-        func: Callable[[Context], Awaitable[None]],
+        func: (
+            Callable[[Context[StateDictT]], Awaitable[None]] | Callable[[Context[StateDictT]], None]
+        ),
         /,
         *,
-        error_behavior: error_behaviors = "fail",
+        error_behavior: ErrorBehavior = "fail",
         on_fail: Operation | None = None,
     ):
         """
@@ -85,13 +89,6 @@ class Function(Operation, FunctionOperationProtocol[Context]):
             pass
         return metadata.with_properties(**custom_properties)
 
-    async def _execute(self, context: Context) -> None:
-        """
-        Execute the function with the provided context.
 
-        Args:
-            context: Execution context providing access to state and services
-        """
-        logger.debug(f"Executing function {getattr(self._func, '__name__', '<anonymous>')}")
-        func_context = context.with_structural_path("Function")
-        await self.execute_task(self._func, func_context)
+if TYPE_CHECKING:
+    _: type[FunctionOperationProtocol[Operation, "Context"]] = Function

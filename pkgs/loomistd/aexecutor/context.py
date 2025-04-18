@@ -1,0 +1,142 @@
+"""
+Runtime context for operations execution.
+
+This module defines the Context class, which provides operations
+with access to state, services, and execution metadata.
+"""
+
+from __future__ import annotations
+
+from copy import deepcopy
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Generic
+
+from loomi.interfaces.executor.context import ContextProtocol
+from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
+from loomi.interfaces.state.type_vars import StateDictT
+
+if TYPE_CHECKING:
+    from .operations.base import Operation
+
+
+@dataclass
+class Context(Generic[StateDictT]):
+    """
+    Execution context for operations.
+
+    Provides operations with access to state, execution service, and structured path data.
+    This is the primary interface through which operations interact with their environment.
+
+    """
+
+    _operation: "Operation"  # The operation this context is associated with
+    _scope: StateDictT  # The scoped state access
+    _attributes: dict[str, Any] = field(default_factory=dict)  # Context attributes storage
+
+    # --- Properties access methods --- #
+    @property
+    def operation(self) -> "Operation":
+        """
+        Get the operation operation.
+
+        Returns:
+            The operation operation.
+        """
+        return self._operation
+
+    @property
+    def scope(self) -> StateDictT:
+        """
+        Get the scoped state access.
+
+        Returns:
+            The scoped state access.
+        """
+        return self._scope
+
+    # --- Context attributes access methods --- #
+
+    def __getitem__(self, key: str) -> Any:
+        """
+        Get an attribute by key.
+
+        Args:
+            key: Attribute key
+
+        Returns:
+            Attribute value
+        """
+        return self._attributes[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """
+        Set an attribute by key.
+
+        Args:
+            key: Attribute key
+            value: Attribute value
+        """
+        self._attributes[key] = value
+
+    def __contains__(self, key: str) -> bool:
+        """
+        Check if an attribute exists.
+
+        Args:
+            key: Attribute key
+
+        Returns:
+            True if the attribute exists, False otherwise
+        """
+        return key in self._attributes
+
+    def __delitem__(self, key: str) -> None:
+        """
+        Delete an attribute by key.
+
+        Args:
+            key: Attribute key
+        """
+        del self._attributes[key]
+
+    # --- Context creation methods --- #
+
+    def derive(
+        self,
+        operation: Operation | None = None,
+        scope: "AsyncTreeDictProtocol | SyncTreeDictProtocol | None" = None,
+    ) -> Context:
+        """
+        Create a new context derived from this one.
+
+        Used to create contexts for child operations, extending structural paths
+        and optionally updating other properties.
+
+        Args:
+            **updates: Attributes to update in the new context
+
+        Returns:
+            A new context derived from this one
+        """
+        values = {
+            "_operation": self._operation,
+            "_scope": self._scope,
+            "_attributes": deepcopy(self._attributes),
+        }
+
+        updates: dict[str, Any] = {}
+
+        if operation is not None:
+            updates["_operation"] = operation
+
+        if scope is not None:
+            updates["_scope"] = scope
+
+        values.update(updates)
+
+        # Create new context
+        return self.__class__(**values)
+
+
+if TYPE_CHECKING:
+    _: type[ContextProtocol["Operation", Any]] = Context

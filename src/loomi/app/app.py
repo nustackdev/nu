@@ -1,38 +1,40 @@
+from typing import TypeAlias
+
 from .composer import AsyncAppComposer, SyncAppComposer
-from .execution_handler import AsyncAppExecutionHandler, SyncAppExecutionHandler
+from .handlers.execution_handler import AsyncAppExecutionHandler, SyncAppExecutionHandler
+from .handlers.service_handler import AsyncAppServicesHandler, SyncAppServicesHandler
+from .handlers.state_handler import AsyncCommonAppStateHandler, SyncCommonAppStateHandler
 from .initializer import AsyncAppInitializer, SyncAppInitializer
 from .meta import AppMeta
-from .service_handler import AsyncAppServicesHandler, SyncAppServicesHandler
-from .state_handler import AsyncCommonAppStateHandler, SyncCommonAppStateHandler
-from .types import ET, ST, SyncET, SyncST
+from .types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 
 __all__ = [
     "AsyncApp",
     "SyncApp",
-    "App",
+    "AppType",
 ]
 
 
 class AsyncApp(
-    AsyncAppInitializer[ST, ET],
-    AsyncCommonAppStateHandler[ST, ET],
-    AsyncAppExecutionHandler[ST, ET],
-    AsyncAppServicesHandler[ST, ET],
-    AsyncAppComposer[ST, ET],
+    AsyncAppInitializer[StateT, ExecutorT],
+    AsyncCommonAppStateHandler[StateT, ExecutorT],
+    AsyncAppExecutionHandler[StateT, ExecutorT],
+    AsyncAppServicesHandler[StateT, ExecutorT],
+    AsyncAppComposer[StateT, ExecutorT],
     metaclass=AppMeta,
 ):
     pass
 
 
 class SyncApp(
-    SyncAppInitializer[SyncST, SyncET],
-    SyncCommonAppStateHandler[SyncST, SyncET],
-    SyncAppExecutionHandler[SyncST, SyncET],
-    SyncAppServicesHandler[SyncST, SyncET],
-    SyncAppComposer[SyncST, SyncET],
+    SyncAppInitializer[SyncStateT, SyncExecutorT],
+    SyncCommonAppStateHandler[SyncStateT, SyncExecutorT],
+    SyncAppExecutionHandler[SyncStateT, SyncExecutorT],
+    SyncAppServicesHandler[SyncStateT, SyncExecutorT],
+    SyncAppComposer[SyncStateT, SyncExecutorT],
     metaclass=AppMeta,
 ):
     pass
 
 
-App = AsyncApp | SyncApp
+AppType: TypeAlias = AsyncApp | SyncApp

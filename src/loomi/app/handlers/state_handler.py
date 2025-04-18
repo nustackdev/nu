@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from loomi.descriptors.use_service import ServiceDescriptor
 
-from .base import AppABC, AsyncAppABC, SyncAppABC
-from .exceptions import StateError
-from .types import ET, ST, SyncET, SyncST
+from ..base import AppABC, AsyncAppABC, SyncAppABC
+from ..exceptions import StateError
+from ..types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 
 __all__ = [
     "CommonAppStateHandler",
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-class CommonAppStateHandler(AppABC[ST, ET]):
+class CommonAppStateHandler(AppABC[StateT, ExecutorT]):
     """
     Base class for app state management.
     """
@@ -36,7 +36,9 @@ class CommonAppStateHandler(AppABC[ST, ET]):
             state_configured = True
 
 
-class AsyncCommonAppStateHandler(CommonAppStateHandler[ST, ET], AsyncAppABC[ST, ET]):
+class AsyncCommonAppStateHandler(
+    CommonAppStateHandler[StateT, ExecutorT], AsyncAppABC[StateT, ExecutorT]
+):
     """
     App feature implementing state management.
 
@@ -57,7 +59,7 @@ class AsyncCommonAppStateHandler(CommonAppStateHandler[ST, ET], AsyncAppABC[ST, 
     """
 
     @property
-    def state(self) -> ST:
+    def state(self) -> StateT:
         """Check and return app's state service."""
         if not self._state_service_name or len(self._state_service_name) == 0:
             raise StateError("No state adapter configured")
@@ -69,14 +71,16 @@ class AsyncCommonAppStateHandler(CommonAppStateHandler[ST, ET], AsyncAppABC[ST, 
         return state
 
     @property
-    def s(self) -> ST:
+    def s(self) -> StateT:
         """Short alias for state adapter."""
         return self.state
 
 
-class SyncCommonAppStateHandler(CommonAppStateHandler[SyncST, SyncET], SyncAppABC[SyncST, SyncET]):
+class SyncCommonAppStateHandler(
+    CommonAppStateHandler[SyncStateT, SyncExecutorT], SyncAppABC[SyncStateT, SyncExecutorT]
+):
     @property
-    def state(self) -> SyncST:
+    def state(self) -> SyncStateT:
         """Check and return app's state service."""
         if not self._state_service_name or len(self._state_service_name) == 0:
             raise StateError("No state adapter configured")
@@ -88,6 +92,6 @@ class SyncCommonAppStateHandler(CommonAppStateHandler[SyncST, SyncET], SyncAppAB
         return state
 
     @property
-    def s(self) -> SyncST:
+    def s(self) -> SyncStateT:
         """Short alias for state adapter."""
         return self.state
