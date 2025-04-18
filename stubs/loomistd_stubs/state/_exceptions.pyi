@@ -1,3 +1,0 @@
-__all__ = ["StateError"]
-
-class StateError(Exception): ...

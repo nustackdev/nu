@@ -1,6 +1,0 @@
-from loomi.service.exceptions import ServiceError
-
-__all__ = ["InitializationError", "ShutdownError"]
-
-class InitializationError(ServiceError): ...
-class ShutdownError(ServiceError): ...

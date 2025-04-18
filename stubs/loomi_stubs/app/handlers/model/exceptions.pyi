@@ -1,6 +1,0 @@
-from loomi.app.exceptions import AppError
-
-__all__ = ["ModelError", "ModelTransactionError"]
-
-class ModelError(AppError): ...
-class ModelTransactionError(ModelError): ...

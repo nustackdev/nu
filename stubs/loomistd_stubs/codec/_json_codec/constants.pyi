@@ -1,3 +1,0 @@
-__all__ = ["PATH_SEPARATOR"]
-
-PATH_SEPARATOR: str

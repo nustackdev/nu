@@ -1,9 +1,0 @@
-from loomi.service.protocols import AsyncServiceProtocol, ServiceProtocol, SyncServiceProtocol
-
-from .common import ServiceCommon
-
-__all__ = ["AsyncService", "SyncService", "Service"]
-
-class Service(ServiceCommon, ServiceProtocol): ...
-class AsyncService(Service, AsyncServiceProtocol): ...
-class SyncService(Service, SyncServiceProtocol): ...

@@ -1,6 +1,0 @@
-from loomi.app.exceptions import AppError
-
-__all__ = ["InitializationError", "ShutdownError"]
-
-class InitializationError(AppError): ...
-class ShutdownError(AppError): ...
