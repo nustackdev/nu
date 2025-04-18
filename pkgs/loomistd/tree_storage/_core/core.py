@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from typing import AsyncGenerator, Generic, cast
 
-from loomistd.kv_storage import (
-    KVOperationsProtocol,
-    StorageKeyError,
-    StorageValueT,
-    TransactionProtocol,
-)
+from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
+from loomi.interfaces.state.tree import EmptyProtocol
+from loomistd.kv_storage import StorageKeyError
 
 from .._exceptions import ObjectTypeError
-from .._types import StorageValueContainer, TreePath, TreePathComponent
+from .._types import TreePath, TreePathComponent, TreeValueContainer, TreeValueT
 
 __all__ = [
     "StorageCore",
@@ -18,14 +15,14 @@ __all__ = [
 ]
 
 
-class Empty:
+class Empty(EmptyProtocol):
     """Sentinel object representing an empty value, distinct from None."""
 
     def __repr__(self) -> str:
         return "<Empty>"
 
 
-class StorageCore(Generic[StorageValueT]):
+class StorageCore(Generic[TreeValueT]):
     """
     Base class for tree storage operations providing core utilities.
 
@@ -54,9 +51,9 @@ class StorageCore(Generic[StorageValueT]):
     _LENGTH_FIELD: str = _MARKER + "LEN"  # Length field for lists
 
     # Special sentinels
-    EMPTY = Empty()  # Sentinel for empty values
+    EMPTY: EmptyProtocol = Empty()  # Sentinel for empty values
 
-    def __init__(self, storage: KVOperationsProtocol[TreePath, StorageValueT]):
+    def __init__(self, storage: AsyncStorageProtocol[TreeValueT]):
         """
         Initialize the storage core.
 
@@ -88,8 +85,8 @@ class StorageCore(Generic[StorageValueT]):
     async def _storage_get(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> StorageValueT:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeValueT:
         """
         Get a value from the underlying key-value storage, using transaction if provided.
 
@@ -110,8 +107,8 @@ class StorageCore(Generic[StorageValueT]):
     async def _storage_set(
         self,
         path: TreePath,
-        value: StorageValueT,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        value: TreeValueT,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Set a value in the underlying key-value storage, using transaction if provided.
@@ -129,7 +126,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _storage_delete(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Delete a value from the underlying key-value storage, using transaction if provided.
@@ -149,7 +146,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _storage_exists(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path exists in the underlying key-value storage, using transaction if provided.
@@ -169,7 +166,7 @@ class StorageCore(Generic[StorageValueT]):
         self,
         prefix: TreePath,
         depth: int = 1,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> AsyncGenerator[TreePath, None]:
         """
         List paths with the given prefix from storage, using transaction if provided.
@@ -197,7 +194,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _get_node_type(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> str | None:
         """
         Get the type of a node at a specific path in the tree.
@@ -222,7 +219,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _is_dict(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a dictionary node.
@@ -246,7 +243,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _is_list(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a list node.
@@ -270,7 +267,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _is_primitive(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a primitive value (not a dict or list node).
@@ -294,7 +291,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _verify_dict(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Verify that a path contains a dictionary node or raise an error.
@@ -314,7 +311,7 @@ class StorageCore(Generic[StorageValueT]):
     async def _verify_list(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Verify that a path contains a list node or raise an error.
@@ -334,7 +331,7 @@ class StorageCore(Generic[StorageValueT]):
     # --- Subtree deletion --- #
 
     async def _delete_node(  # noqa: C901
-        self, path: TreePath, txn: TransactionProtocol[TreePath, StorageValueT]
+        self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]
     ) -> None:
         """
         Delete a node and all its nested values from the tree.
@@ -418,8 +415,8 @@ class StorageCore(Generic[StorageValueT]):
     async def _get_value_recursive(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
-    ) -> StorageValueContainer[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> TreeValueContainer[TreeValueT]:
         """
         Get a value, recursively resolving dict and list nodes in the tree.
 
@@ -457,8 +454,8 @@ class StorageCore(Generic[StorageValueT]):
     async def _dict_to_dict(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
-    ) -> dict[str, StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> dict[str, TreeValueT]:
         """
         Convert a stored dictionary node to a regular Python dictionary.
 
@@ -480,8 +477,8 @@ class StorageCore(Generic[StorageValueT]):
     async def _list_to_list(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
-    ) -> list[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> list[TreeValueT]:
         """
         Convert a stored list node to a regular Python list.
 
@@ -506,8 +503,8 @@ class StorageCore(Generic[StorageValueT]):
     async def _set_dict(
         self,
         path: TreePath,
-        value: dict[str, StorageValueT],
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        value: dict[str, TreeValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Store a dictionary as a subtree in the tree storage.
@@ -529,8 +526,8 @@ class StorageCore(Generic[StorageValueT]):
     async def _set_list(
         self,
         path: TreePath,
-        value: list[StorageValueT],
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        value: list[TreeValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Store a list as a subtree in the tree storage.

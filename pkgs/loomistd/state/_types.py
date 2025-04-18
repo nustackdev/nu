@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomistd.observer import ObserverCallbackFn
+from loomi.interfaces.state.types import AsyncCallbackFn, StatePath
 
 __all__ = [
     "StateKey",
@@ -8,6 +8,6 @@ __all__ = [
     "StateCallbackFn",
 ]
 
-StateKey = tuple[str, ...]
+StateKey = StatePath
 StateValue = None | bytes | bool | int | float | str | list["StateValue"] | dict[str, "StateValue"]
-StateCallbackFn = ObserverCallbackFn[StateKey]
+StateCallbackFn = AsyncCallbackFn

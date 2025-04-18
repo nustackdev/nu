@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import AsyncIterator
+from typing import TYPE_CHECKING
 
-from loomistd.kv_storage import StorageValueT
+from loomi.interfaces.state.tree import AsyncTreeListProtocol
 
 from .._exceptions import ObjectIndexError
-from .._types import StorageValueContainer
+from .._types import TreeValueContainer, TreeValueT
 from .tree_node import TreeNode
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-class TreeList(TreeNode[StorageValueT]):
+class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
     """
     A list-like interface to tree storage.
 
@@ -44,7 +44,7 @@ class TreeList(TreeNode[StorageValueT]):
 
     # --- Async list operations --- #
 
-    async def get(self, index: int) -> "StorageValueContainer[StorageValueT]":
+    async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from the list node at the specified index.
 
@@ -59,7 +59,7 @@ class TreeList(TreeNode[StorageValueT]):
         """
         return await self._storage.list_get(self._path, index, self._txn)
 
-    async def set(self, index: int, value: StorageValueT) -> None:
+    async def set(self, index: int, value: TreeValueT) -> None:
         """
         Set an item in the list node at the specified index.
 
@@ -72,7 +72,7 @@ class TreeList(TreeNode[StorageValueT]):
         """
         await self._storage.list_set(self._path, index, value, self._txn)
 
-    async def append(self, value: StorageValueT) -> int:
+    async def append(self, value: TreeValueT) -> int:
         """
         Append an item to the list node.
 
@@ -84,7 +84,7 @@ class TreeList(TreeNode[StorageValueT]):
         """
         return await self._storage.list_append(self._path, value, self._txn)
 
-    async def extend(self, values: list[StorageValueT]) -> int:
+    async def extend(self, values: list[TreeValueT]) -> int:
         """
         Extend the list node with multiple values.
 
@@ -96,7 +96,7 @@ class TreeList(TreeNode[StorageValueT]):
         """
         return await self._storage.list_extend(self._path, values, self._txn)
 
-    async def insert(self, index: int, value: StorageValueT) -> None:
+    async def insert(self, index: int, value: TreeValueT) -> None:
         """
         Insert an item at a specific position in the list node.
 
@@ -132,7 +132,7 @@ class TreeList(TreeNode[StorageValueT]):
 
     # --- List conversion and utilities --- #
 
-    async def to_list(self) -> list[StorageValueT]:
+    async def to_list(self) -> list[TreeValueT]:
         """
         Convert to a regular Python list.
 
@@ -154,7 +154,7 @@ class TreeList(TreeNode[StorageValueT]):
                 # Index became invalid, just skip it
                 pass
 
-    async def pop(self, index: int = -1) -> "StorageValueContainer[StorageValueT]":
+    async def pop(self, index: int = -1) -> TreeValueContainer[TreeValueT]:
         """
         Remove and return an item from the list node.
 
@@ -180,17 +180,6 @@ class TreeList(TreeNode[StorageValueT]):
         """
         return await self.length()
 
-    async def __aiter__(self) -> "AsyncIterator[StorageValueContainer[StorageValueT]]":
-        """
-        Get an async iterator over the items.
 
-        Returns:
-            Async iterator yielding items
-        """
-        length = await self.length()
-        for i in range(length):
-            try:
-                yield await self.get(i)
-            except ObjectIndexError:
-                # List was modified during iteration, stop
-                break
+if TYPE_CHECKING:
+    _: type[AsyncTreeListProtocol] = TreeList

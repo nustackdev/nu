@@ -1,22 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
-from loomistd.kv_storage import StorageValueT
+from loomi.interfaces.state.tree import AsyncTreeDictProtocol, EmptyProtocol
 
 from .._exceptions import ObjectKeyError
-from .._types import StorageValueContainer, TreePathComponent
+from .._types import TreePathComponent, TreeValueContainer, TreeValueT
 from .tree_node import TreeNode
-
-if TYPE_CHECKING:
-    from .._core import Empty
 
 __all__ = [
     "TreeDict",
 ]
 
 
-class TreeDict(TreeNode[StorageValueT]):
+class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
     """
     A dictionary-like interface to tree storage.
 
@@ -52,8 +49,8 @@ class TreeDict(TreeNode[StorageValueT]):
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        default: "StorageValueT | Empty" = TreeNode.EMPTY,
-    ) -> "StorageValueContainer[StorageValueT] | Empty":
+        default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY,
+    ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
         """
         Get a value from the dictionary node.
 
@@ -69,7 +66,7 @@ class TreeDict(TreeNode[StorageValueT]):
         return await self._storage.dict_get(self._path, complete_path, default, self._txn)
 
     async def set(
-        self, path: TreePathComponent, /, *paths: TreePathComponent, value: StorageValueT
+        self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT
     ) -> None:
         """
         Set a value in the dictionary node.
@@ -121,7 +118,7 @@ class TreeDict(TreeNode[StorageValueT]):
         """
         return await self._storage.dict_keys(self._path, self._txn)
 
-    async def values(self) -> list[StorageValueT]:
+    async def values(self) -> list[TreeValueT]:
         """
         Get all top-level values in the dictionary node.
 
@@ -130,7 +127,7 @@ class TreeDict(TreeNode[StorageValueT]):
         """
         return await self._storage.dict_values(self._path, self._txn)
 
-    async def items(self) -> list[tuple[TreePathComponent, StorageValueT]]:
+    async def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
         """
         Get all top-level key-value pairs in the dictionary node.
 
@@ -141,7 +138,7 @@ class TreeDict(TreeNode[StorageValueT]):
 
     # --- Dictionary conversion and utilities --- #
 
-    async def to_dict(self) -> dict[TreePathComponent, StorageValueT]:
+    async def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
         """
         Convert to a regular Python dictionary.
 
@@ -150,7 +147,7 @@ class TreeDict(TreeNode[StorageValueT]):
         """
         return await self._storage.dict_to_dict(self._path, self._txn)
 
-    async def update(self, other: dict[TreePathComponent, StorageValueT]) -> None:
+    async def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
         """
         Update the dictionary node with key-value pairs from another dictionary.
 
@@ -174,8 +171,8 @@ class TreeDict(TreeNode[StorageValueT]):
                 pass
 
     async def pop(
-        self, key: TreePathComponent, default: StorageValueT = TreeNode.EMPTY
-    ) -> "StorageValueContainer[StorageValueT] | Empty":
+        self, key: TreePathComponent, default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY
+    ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
         """
         Remove and return a value from the dictionary node.
 
@@ -198,9 +195,7 @@ class TreeDict(TreeNode[StorageValueT]):
                 return default
             raise
 
-    async def setdefault(
-        self, key: TreePathComponent, default: StorageValueT = None
-    ) -> StorageValueT:
+    async def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
         """
         Return the value for key if it exists, otherwise set it to default.
 
@@ -226,13 +221,6 @@ class TreeDict(TreeNode[StorageValueT]):
         keys = await self.keys()
         return len(keys)
 
-    async def __aiter__(self) -> AsyncIterator[TreePathComponent]:
-        """
-        Get an async iterator over the keys.
 
-        Returns:
-            Async iterator yielding keys
-        """
-        keys = await self.keys()
-        for key in keys:
-            yield key
+if TYPE_CHECKING:
+    _: type[AsyncTreeDictProtocol] = TreeDict

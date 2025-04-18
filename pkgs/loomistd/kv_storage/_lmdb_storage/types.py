@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from .._protocols import StorageProtocol
+from .._protocols import StorageServiceProtocol
+from .._types import StorageKey
 
 __all__ = [
     "LMDBStorageKey",
@@ -12,7 +13,7 @@ __all__ = [
     "LMDBStorageProtocol",
 ]
 
-LMDBStorageKey = tuple[str, ...]
+LMDBStorageKey = StorageKey
 LMDBStorageValue = (
     None
     | bytes
@@ -29,7 +30,7 @@ LMDBStorageEncodedValue = bytes
 
 @runtime_checkable
 class LMDBStorageProtocol(
-    StorageProtocol[
+    StorageServiceProtocol[
         LMDBStorageKey,
         LMDBStorageValue,
         LMDBStorageEncodedKey,

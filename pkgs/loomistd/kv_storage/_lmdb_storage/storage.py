@@ -3,12 +3,13 @@ from __future__ import annotations
 import asyncio
 import sys
 from pathlib import Path
-from typing import AsyncGenerator, TypeGuard
+from typing import TYPE_CHECKING, AsyncGenerator, TypeGuard
 
 import lmdb
 from pydantic import Field
 
 from loomi import AsyncService, Attach, Spec
+from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodec
 
@@ -20,7 +21,6 @@ from .._exceptions import (
     TransactionError,
     TransactionInvalidError,
 )
-from .._protocols import TransactionProtocol
 from .logger import logger
 from .types import LMDBStorageEncodedKey, LMDBStorageEncodedValue, LMDBStorageKey, LMDBStorageValue
 
@@ -236,7 +236,7 @@ class LMDBStorage(
             raise StorageError(f"Failed to begin transaction: {e}")
 
 
-class LMDBStorageTransaction(TransactionProtocol[LMDBStorageKey, LMDBStorageValue]):
+class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
     """LMDB transaction implementation with proper resource management."""
 
     def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction):
@@ -359,3 +359,7 @@ class LMDBStorageTransaction(TransactionProtocol[LMDBStorageKey, LMDBStorageValu
                 self._storage._active_transactions.discard(self)
         except Exception as e:
             raise TransactionError(f"Failed to rollback transaction: {e}")
+
+
+if TYPE_CHECKING:
+    _: type[AsyncStorageProtocol] = LMDBStorage

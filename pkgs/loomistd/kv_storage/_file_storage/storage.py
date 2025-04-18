@@ -4,13 +4,14 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING, AsyncGenerator
 
 import aiofile
 import filelock
 from pydantic import Field
 
 from loomi import AsyncService, Attach, Spec
+from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.json import JSONCodec
 
@@ -22,7 +23,6 @@ from .._exceptions import (
     TransactionError,
     TransactionInvalidError,
 )
-from .._protocols import TransactionProtocol
 from .logger import logger
 from .types import (
     FileStorageEncodedKey,
@@ -262,7 +262,7 @@ class FileStorage(
                     raise TransactionError(f"Failed to apply transaction: {e}")
 
 
-class FileStorageTransaction(TransactionProtocol[FileStorageKey, FileStorageValue]):
+class FileStorageTransaction(AsyncTransactionProtocol[FileStorageValue]):
     """Implementation of transaction for file-based storage."""
 
     def __init__(self, storage: FileStorage):
@@ -363,3 +363,7 @@ class FileStorageTransaction(TransactionProtocol[FileStorageKey, FileStorageValu
         self._operations.clear()
         self._read_set.clear()
         self._write_set.clear()
+
+
+if TYPE_CHECKING:
+    _: type[AsyncStorageProtocol] = FileStorage

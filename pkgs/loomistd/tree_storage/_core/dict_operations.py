@@ -2,18 +2,20 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from loomistd.kv_storage import StorageKeyError, StorageValueT, TransactionProtocol
+from loomi.interfaces.state.kv import AsyncTransactionProtocol
+from loomi.interfaces.state.tree import EmptyProtocol
+from loomistd.kv_storage import StorageKeyError
 
 from .._exceptions import ObjectKeyError, ObjectTypeError
-from .._types import StorageValueContainer, TreePath, TreePathComponent
-from .core import Empty, StorageCore
+from .._types import TreePath, TreePathComponent, TreeValueContainer, TreeValueT
+from .core import StorageCore
 
 __all__ = [
     "DictOperations",
 ]
 
 
-class DictOperations(StorageCore[StorageValueT]):
+class DictOperations(StorageCore[TreeValueT]):
     """
     Implementation of dictionary operations for tree storage.
 
@@ -28,9 +30,7 @@ class DictOperations(StorageCore[StorageValueT]):
 
     # --- Dictionary initialization and type management --- #
 
-    async def _insert_dict(
-        self, path: TreePath, txn: TransactionProtocol[TreePath, StorageValueT]
-    ) -> None:
+    async def _insert_dict(self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]) -> None:
         """
         Initialize an empty dictionary node at the specified path.
 
@@ -44,11 +44,9 @@ class DictOperations(StorageCore[StorageValueT]):
             txn: Transaction to use
         """
         # Set type directly on the container path
-        await self._storage_set(path, cast(StorageValueT, self._TYPE_DICT), txn)
+        await self._storage_set(path, cast(TreeValueT, self._TYPE_DICT), txn)
 
-    async def _ensure_dict(
-        self, path: TreePath, txn: TransactionProtocol[TreePath, StorageValueT]
-    ) -> None:
+    async def _ensure_dict(self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]) -> None:
         """
         Ensure that a path contains a dictionary node or initialize it if it doesn't exist.
 
@@ -75,8 +73,8 @@ class DictOperations(StorageCore[StorageValueT]):
     async def _set_dict(
         self,
         path: TreePath,
-        value: dict[TreePathComponent, StorageValueT],
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        value: dict[TreePathComponent, TreeValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Store a dictionary as a tree structure with component-value pairs.
@@ -114,9 +112,9 @@ class DictOperations(StorageCore[StorageValueT]):
         self,
         base_path: TreePath,
         dict_path: TreePath,
-        default: StorageValueContainer[StorageValueT] | Empty = StorageCore.EMPTY,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> StorageValueContainer[StorageValueT] | Empty:
+        default: TreeValueContainer[TreeValueT] | EmptyProtocol = StorageCore.EMPTY,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
         """
         Get a value from a dictionary node at the specified path.
 
@@ -135,7 +133,8 @@ class DictOperations(StorageCore[StorageValueT]):
         try:
             if txn is None:
                 async with await self._storage.transaction() as new_txn:
-                    return await self._dict_get(base_path, dict_path, new_txn)
+                    result = await self._dict_get(base_path, dict_path, new_txn)
+                return result
             else:
                 return await self._dict_get(base_path, dict_path, txn)
         except (ObjectKeyError, StorageKeyError):
@@ -145,8 +144,8 @@ class DictOperations(StorageCore[StorageValueT]):
         self,
         base_path: TreePath,
         dict_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
-    ) -> StorageValueContainer[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> TreeValueContainer[TreeValueT]:
         """
         Internal implementation for getting values from a dictionary node.
 
@@ -211,8 +210,8 @@ class DictOperations(StorageCore[StorageValueT]):
         self,
         base_path: TreePath,
         dict_path: TreePath,
-        value: StorageValueT,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        value: TreeValueT,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Set a value in a dictionary node at the specified path.
@@ -236,8 +235,8 @@ class DictOperations(StorageCore[StorageValueT]):
         self,
         base_path: TreePath,
         dict_path: TreePath,
-        value: StorageValueT,
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        value: TreeValueT,
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for setting values in a dictionary node.
@@ -315,7 +314,7 @@ class DictOperations(StorageCore[StorageValueT]):
         self,
         base_path: TreePath,
         dict_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Delete a value from a dictionary node at the specified path.
@@ -339,7 +338,7 @@ class DictOperations(StorageCore[StorageValueT]):
         self,
         base_path: TreePath,
         dict_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation of dict_delete.
@@ -411,7 +410,7 @@ class DictOperations(StorageCore[StorageValueT]):
         self,
         base_path: TreePath,
         dict_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a dictionary node contains a value at the specified path.
@@ -443,7 +442,7 @@ class DictOperations(StorageCore[StorageValueT]):
     async def dict_keys(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> list[TreePathComponent]:
         """
         Get all top-level keys in a dictionary node.
@@ -460,14 +459,15 @@ class DictOperations(StorageCore[StorageValueT]):
         """
         if txn is None:
             async with await self._storage.transaction() as new_txn:
-                return await self._dict_keys(base_path, new_txn)
+                result = await self._dict_keys(base_path, new_txn)
+            return result
         else:
             return await self._dict_keys(base_path, txn)
 
     async def _dict_keys(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> list[TreePathComponent]:
         """
         Internal implementation for getting all top-level keys in a dictionary node.
@@ -502,8 +502,8 @@ class DictOperations(StorageCore[StorageValueT]):
     async def dict_values(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> list[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> list[TreeValueT]:
         """
         Get all top-level values in a dictionary node.
 
@@ -519,15 +519,16 @@ class DictOperations(StorageCore[StorageValueT]):
         """
         if txn is None:
             async with await self._storage.transaction() as new_txn:
-                return await self._dict_values(base_path, new_txn)
+                result = await self._dict_values(base_path, new_txn)
+            return result
         else:
             return await self._dict_values(base_path, txn)
 
     async def _dict_values(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
-    ) -> list[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> list[TreeValueT]:
         """
         Internal implementation for getting all top-level values in a dictionary node.
 
@@ -561,8 +562,8 @@ class DictOperations(StorageCore[StorageValueT]):
     async def dict_items(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> list[tuple[TreePathComponent, StorageValueT]]:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> list[tuple[TreePathComponent, TreeValueT]]:
         """
         Get all top-level key-value pairs in a dictionary node.
 
@@ -578,15 +579,16 @@ class DictOperations(StorageCore[StorageValueT]):
         """
         if txn is None:
             async with await self._storage.transaction() as new_txn:
-                return await self._dict_items(base_path, new_txn)
+                result = await self._dict_items(base_path, new_txn)
+            return result
         else:
             return await self._dict_items(base_path, txn)
 
     async def _dict_items(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
-    ) -> list[tuple[TreePathComponent, StorageValueT]]:
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> list[tuple[TreePathComponent, TreeValueT]]:
         """
         Internal implementation for getting all top-level key-value pairs.
 
@@ -622,8 +624,8 @@ class DictOperations(StorageCore[StorageValueT]):
     async def dict_to_dict(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> dict[TreePathComponent, StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> dict[TreePathComponent, TreeValueT]:
         """
         Convert a stored dictionary node to a regular Python dictionary.
 
@@ -639,15 +641,16 @@ class DictOperations(StorageCore[StorageValueT]):
         """
         if txn is None:
             async with await self._storage.transaction() as new_txn:
-                return await self._dict_to_dict(base_path, new_txn)
+                result = await self._dict_to_dict(base_path, new_txn)
+            return result
         else:
             return await self._dict_to_dict(base_path, txn)
 
     async def _dict_to_dict(
         self,
         base_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
-    ) -> dict[TreePathComponent, StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> dict[TreePathComponent, TreeValueT]:
         """
         Internal implementation for converting a stored dictionary node to a Python dict.
 
@@ -667,7 +670,7 @@ class DictOperations(StorageCore[StorageValueT]):
         items = await self._dict_items(base_path, txn)
 
         # Build result dictionary
-        result: dict[TreePathComponent, StorageValueT] = {}
+        result: dict[TreePathComponent, TreeValueT] = {}
         for k, v in items:
             result[k] = v
 

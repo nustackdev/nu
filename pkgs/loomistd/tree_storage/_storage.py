@@ -4,16 +4,15 @@ from abc import ABC
 from typing import Any, Generic
 
 from loomi import AsyncService, Attach
-from loomistd.kv_storage import (
-    StorageProtocol,
-    StorageValueT,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
+from loomi.interfaces.state.kv import (
+    AsyncTransactionContextManagerProtocol,
+    AsyncTransactionProtocol,
 )
+from loomistd.kv_storage import StorageServiceProtocol
 
 from ._core import TreeStorage as TreeStorageCore
 from ._nodes import TreeDict, TreeList
-from ._types import TreePath, TreePathComponent
+from ._types import TreePath, TreePathComponent, TreeValueT
 
 __all__ = [
     "TreeStorageBase",
@@ -21,20 +20,20 @@ __all__ = [
 ]
 
 
-class TreeStorageBase(ABC, Generic[StorageValueT]):
+class TreeStorageBase(ABC, Generic[TreeValueT]):
     """
     A class to manage tree storage using a dictionary.
     """
 
-    _tree_storage_core: TreeStorageCore[StorageValueT]
+    _tree_storage_core: TreeStorageCore[TreeValueT]
 
     async def dict(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> TreeDict[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeDict[TreeValueT]:
         """
         Get a nested dictionary node interface.
 
@@ -54,8 +53,8 @@ class TreeStorageBase(ABC, Generic[StorageValueT]):
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> TreeList[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeList[TreeValueT]:
         """
         Get a nested list node interface.
 
@@ -70,7 +69,7 @@ class TreeStorageBase(ABC, Generic[StorageValueT]):
         list_path = (path,) + paths
         return await self._tree_storage_core.list(list_path, txn=txn)
 
-    async def begin_transaction(self) -> TransactionProtocol[TreePath, StorageValueT]:
+    async def begin_transaction(self) -> AsyncTransactionProtocol[TreeValueT]:
         """
         Begin a new transaction.
 
@@ -82,7 +81,7 @@ class TreeStorageBase(ABC, Generic[StorageValueT]):
         """
         return await self._tree_storage_core._storage.begin_transaction()
 
-    async def transaction(self) -> TransactionContextManagerProtocol:
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol[TreeValueT]:
         """
         Get transaction context manager.
 
@@ -92,8 +91,10 @@ class TreeStorageBase(ABC, Generic[StorageValueT]):
         return await self._tree_storage_core._storage.transaction()
 
 
-class TreeStorage(AsyncService, TreeStorageBase[StorageValueT]):
-    _kv_storage: StorageProtocol[TreePath, StorageValueT, Any, Any] = Attach(StorageProtocol)
+class TreeStorage(AsyncService, TreeStorageBase[TreeValueT]):
+    _kv_storage: StorageServiceProtocol[TreePath, TreeValueT, Any, Any] = Attach(
+        StorageServiceProtocol
+    )
 
     async def setup(self):
         """

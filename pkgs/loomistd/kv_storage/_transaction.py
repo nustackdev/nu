@@ -1,21 +1,22 @@
 from __future__ import annotations
 
-from ._protocols import (
-    TransactionalHandlerProtocol,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
+from loomi.interfaces.state.kv import (
+    AsyncTransactionalHandlerProtocol,
+    AsyncTransactionContextManagerProtocol,
+    AsyncTransactionProtocol,
 )
-from ._types import StorageKeyT, StorageValueT
+
+from ._types import StorageValueT
 
 __all__ = [
     "TransactionContextManager",
 ]
 
 
-class TransactionContextManager(TransactionContextManagerProtocol[StorageKeyT, StorageValueT]):
+class TransactionContextManager(AsyncTransactionContextManagerProtocol[StorageValueT]):
     """Async context manager for storage transactions."""
 
-    def __init__(self, handler: TransactionalHandlerProtocol[StorageKeyT, StorageValueT]):
+    def __init__(self, handler: AsyncTransactionalHandlerProtocol[StorageValueT]):
         """
         Initialize transaction context manager.
 
@@ -23,9 +24,9 @@ class TransactionContextManager(TransactionContextManagerProtocol[StorageKeyT, S
             storage: Storage instance to manage transactions for
         """
         self.handler = handler
-        self.transaction: TransactionProtocol[StorageKeyT, StorageValueT] | None = None
+        self.transaction: AsyncTransactionProtocol[StorageValueT] | None = None
 
-    async def __aenter__(self) -> TransactionProtocol[StorageKeyT, StorageValueT]:
+    async def __aenter__(self) -> AsyncTransactionProtocol[StorageValueT]:
         """
         Start a new transaction.
 

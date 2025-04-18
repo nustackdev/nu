@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+from loomi.interfaces.state.observer import AsyncObservableProtocol
 from loomistd.codec import CodecProtocol
 
-from ._types import ObserverCallbackFn, ObserverEncodedKeyT, ObserverKeyT
+from ._types import ObserverEncodedKeyT, ObserverKeyT
 
 __all__ = [
-    "ObserverProtocol",
-    "SubscriptionProtocol",
+    "ObserverServiceProtocol",
 ]
 
 
-class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
+class ObserverServiceProtocol(AsyncObservableProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
     """
     Protocol defining state change observation operations.
 
@@ -69,84 +69,5 @@ class ObserverProtocol(Protocol[ObserverKeyT, ObserverEncodedKeyT]):
             ObserverConnectionError: If not connected
             ObserverOperationError: If notification fails
             ObserverValidationError: If topic invalid
-        """
-        ...
-
-    async def subscribe(
-        self,
-        topic_pattern: ObserverKeyT,
-        callback: ObserverCallbackFn[ObserverKeyT],
-        depth: int = ...,
-    ) -> SubscriptionProtocol[ObserverKeyT]:
-        """
-        Subscribe to topic pattern.
-
-        Args:
-            topic_pattern: Topic pattern to match
-            callback: Async callback for notifications
-            depth: Depth of topic pattern matching (default: 0 for exact match)
-                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
-
-        Returns:
-            Subscription for later unsubscribe
-
-        Raises:
-            ObserverConnectionError: If not connected
-            ObserverValidationError: If topic pattern invalid
-        """
-        ...
-
-    async def unsubscribe(self, subscription: SubscriptionProtocol[ObserverKeyT]) -> None:
-        """
-        Remove subscription.
-
-        Args:
-            subscription: Subscription to remove
-
-        Raises:
-            ObserverConnectionError: If not connected
-            ObserverOperationError: If unsubscribe fails
-        """
-        ...
-
-
-class SubscriptionProtocol(Protocol[ObserverKeyT]):
-    """
-    Represents a subscription to a topic pattern.
-
-    Attributes:
-        topic_pattern:
-            Topic pattern to match against notifications.
-            Must be a tuple of strings matching state keys.
-        callback:
-            Async callable that will be invoked on matching notifications.
-            Must accept a single parameter of type StorageKeyT.
-        exact_match:
-            If True, match exact topic; if False, match prefix.
-            Default is True.
-
-    Type Parameters:
-        StorageKeyT: Topic type (tuple of strings)
-    """
-
-    @property
-    def topic_pattern(self) -> ObserverKeyT:
-        """
-        Get topic pattern for subscription.
-        """
-        ...
-
-    @property
-    def callback(self) -> ObserverCallbackFn[ObserverKeyT]:
-        """
-        Get callback for subscription.
-        """
-        ...
-
-    @property
-    def depth(self) -> int:
-        """
-        Get depth of topic pattern matching.
-        If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
         """
         ...

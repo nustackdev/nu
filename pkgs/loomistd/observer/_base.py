@@ -5,10 +5,10 @@ from dataclasses import dataclass
 from typing import Any, Generic, final
 
 from loomi import Spec
+from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import ObserverConnectionError, ObserverValidationError
-from ._protocols import SubscriptionProtocol
 from ._types import ObserverCallbackFn, ObserverEncodedKeyT, ObserverKeyT
 
 __all__ = [
@@ -155,9 +155,9 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     async def subscribe(
         self,
         topic_pattern: ObserverKeyT,
-        callback: ObserverCallbackFn[ObserverKeyT],
+        callback: ObserverCallbackFn,
         depth: int = 0,
-    ) -> Subscription[ObserverKeyT]:
+    ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to topic pattern.
 
@@ -183,12 +183,12 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         return subscription
 
     @abstractmethod
-    async def _subscribe_impl(self, subscription: Subscription[ObserverKeyT]) -> None:
+    async def _subscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
         """Implementation-specific subscribe logic."""
         raise NotImplementedError
 
     @final
-    async def unsubscribe(self, subscription: Subscription[ObserverKeyT]) -> None:
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
         """
         Remove subscription.
 
@@ -199,13 +199,13 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         await self._unsubscribe_impl(subscription)
 
     @abstractmethod
-    async def _unsubscribe_impl(self, subscription: Subscription[ObserverKeyT]) -> None:
+    async def _unsubscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
         """Implementation-specific unsubscribe logic."""
         raise NotImplementedError
 
 
 @dataclass
-class Subscription(SubscriptionProtocol[ObserverKeyT]):
+class Subscription(AsyncSubscriptionProtocol, Generic[ObserverKeyT]):
     """
     Represents a subscription to a topic pattern.
 
@@ -218,22 +218,22 @@ class Subscription(SubscriptionProtocol[ObserverKeyT]):
             If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
         callback:
             Async callable that will be invoked on matching notifications.
-            Must accept a single parameter of type ObserverKeyT.
+            Must accept a single parameter of type ObserverKey.
 
     Type Parameters:
-        ObserverKeyT: Topic type (tuple of strings)
+        ObserverKey: Topic type (tuple of strings)
     """
 
     _topic_pattern: ObserverKeyT
     _depth: int
-    _callback: ObserverCallbackFn[ObserverKeyT]
+    _callback: ObserverCallbackFn
 
     @property
     def topic_pattern(self) -> ObserverKeyT:
         return self._topic_pattern
 
     @property
-    def callback(self) -> ObserverCallbackFn[ObserverKeyT]:
+    def callback(self) -> ObserverCallbackFn:
         return self._callback
 
     @property

@@ -1,25 +1,37 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Iterator, Protocol, overload
+from typing import TYPE_CHECKING, Any, Callable, Protocol, overload
 
-from ..types import StatePath, StatePathComponent, StateValue
+from .type_vars import TreeValueT
+from .types import TreePath, TreePathComponent, TreeValueContainer
 
 if TYPE_CHECKING:
-    from .kv_storage import AsyncTransactionProtocol, SyncTransactionProtocol
+    from .kv import AsyncTransactionProtocol, SyncTransactionProtocol
 
 __all__ = [
-    "AsyncStateNodeProtocol",
-    "AsyncStateDictProtocol",
-    "AsyncStateListProtocol",
-    "SyncStateNodeProtocol",
-    "SyncStateDictProtocol",
-    "SyncStateListProtocol",
+    "AsyncTreeNodeProtocol",
+    "AsyncTreeDictProtocol",
+    "AsyncTreeListProtocol",
+    "SyncTreeNodeProtocol",
+    "SyncTreeDictProtocol",
+    "SyncTreeListProtocol",
 ]
 
 # --- Protocols for asynchronous state handling --- #
 
 
-class AsyncStateNodeProtocol(Protocol):
+class EmptyProtocol(Protocol):
+    """
+    A placeholder class representing an empty value.
+
+    This class is used to indicate the absence of a value in various contexts,
+    such as default values or optional parameters.
+    """
+
+    pass
+
+
+class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
     """
     Protocol for state tree nodes.
 
@@ -27,12 +39,14 @@ class AsyncStateNodeProtocol(Protocol):
     and list state nodes, allowing them to share code for nested node access,
     transformations, filtering, and other common operations.
 
-    AsyncStateNodeProtocol serves as a consistent interface for working with nodes,
+    AsyncTreeNodeProtocol serves as a consistent interface for working with nodes,
     regardless of their type (dictionary or list).
     """
 
+    EMPTY: EmptyProtocol
+
     @property
-    def path(self) -> StatePath:
+    def path(self) -> TreePath:
         """
         Get the base path for this state node.
 
@@ -43,11 +57,11 @@ class AsyncStateNodeProtocol(Protocol):
 
     async def dict(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
-    ) -> AsyncStateDictProtocol:
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> AsyncTreeDictProtocol[TreeValueT]:
         """
         Get a nested dictionary node interface.
 
@@ -57,17 +71,17 @@ class AsyncStateNodeProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new AsyncStateDictProtocol instance for the nested dictionary node
+            A new AsyncTreeDictProtocol instance for the nested dictionary node
         """
         ...
 
     async def list(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
-    ) -> AsyncStateListProtocol:
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> AsyncTreeListProtocol[TreeValueT]:
         """
         Get a nested list node interface.
 
@@ -77,23 +91,23 @@ class AsyncStateNodeProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new AsyncStateListProtocol instance for the nested list node
+            A new AsyncTreeListProtocol instance for the nested list node
         """
         ...
 
     @overload
     async def remove(
         self,
-        txn: "AsyncTransactionProtocol | None" = None,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     @overload
     async def remove(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     async def remove(
@@ -117,16 +131,16 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def exists(
         self,
-        txn: "AsyncTransactionProtocol | None" = None,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     @overload
     async def exists(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     async def exists(
@@ -153,16 +167,16 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def is_dict(
         self,
-        txn: "AsyncTransactionProtocol | None" = None,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     @overload
     async def is_dict(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     async def is_dict(
@@ -189,16 +203,16 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def is_list(
         self,
-        txn: "AsyncTransactionProtocol | None" = None,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     @overload
     async def is_list(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     async def is_list(
@@ -225,23 +239,23 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def to_python_object(
         self,
-        txn: "AsyncTransactionProtocol | None" = None,
-    ) -> StateValue: ...
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
 
     @overload
     async def to_python_object(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
-    ) -> StateValue: ...
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
 
     async def to_python_object(
         self,
         *args: Any,
         **kwargs: Any,
-    ) -> StateValue:
+    ) -> TreeValueContainer[TreeValueT]:
         """
         Convert a node to a standard Python object.
 
@@ -263,10 +277,10 @@ class AsyncStateNodeProtocol(Protocol):
 
     async def copy_to(
         self,
-        target: StatePathComponent,
+        target: TreePathComponent,
         /,
-        *targets: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *targets: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None:
         """
         Create a copy of this node at another location in the state tree.
@@ -280,10 +294,10 @@ class AsyncStateNodeProtocol(Protocol):
 
     async def move_to(
         self,
-        target: StatePathComponent,
+        target: TreePathComponent,
         /,
-        *targets: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *targets: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None:
         """
         Move this node to another location in the state tree.
@@ -297,7 +311,7 @@ class AsyncStateNodeProtocol(Protocol):
             txn: Optional transaction to use
 
         Note:
-            After this operation, the current AsyncStateNodeProtocol instance should not be used
+            After this operation, the current AsyncTreeNodeProtocol instance should not be used
             as its path is no longer valid.
         """
         ...
@@ -305,23 +319,23 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def transform(
         self,
-        transform_func: Callable[[StateValue], StateValue],
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         txn: "AsyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     @overload
     async def transform(
         self,
-        transform_func: Callable[[StateValue], StateValue],
-        path: StatePathComponent,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
+        *paths: TreePathComponent,
         txn: "AsyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     async def transform(
         self,
-        transform_func: Callable[[StateValue], StateValue],
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -349,23 +363,32 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def filter(
         self,
-        filter_func: Callable[[StateValue], bool] | Callable[[str, StateValue], bool],
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
         txn: "AsyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     @overload
     async def filter(
         self,
-        filter_func: Callable[[StateValue], bool] | Callable[[str, StateValue], bool],
-        path: StatePathComponent,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
+        *paths: TreePathComponent,
         txn: "AsyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     async def filter(
         self,
-        filter_func: Callable[[StateValue], bool] | Callable[[str, StateValue], bool],
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -395,23 +418,23 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def map(
         self,
-        map_func: Callable[[StateValue], StateValue],
-        txn: "AsyncTransactionProtocol | None" = None,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     @overload
     async def map(
         self,
-        map_func: Callable[[StateValue], StateValue],
-        path: StatePathComponent,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     async def map(
         self,
-        map_func: Callable[[StateValue], StateValue],
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -443,23 +466,23 @@ class AsyncStateNodeProtocol(Protocol):
     @overload
     async def store(
         self,
-        value: StateValue,
+        value: TreeValueT,
         txn: "AsyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     @overload
     async def store(
         self,
-        value: StateValue,
-        path: StatePathComponent,
+        value: TreeValueT,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     async def store(
         self,
-        value: StateValue,
+        value: TreeValueT,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -484,7 +507,7 @@ class AsyncStateNodeProtocol(Protocol):
         ...
 
 
-class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
+class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
     """
     Protocol for dictionary-like interface to state storage.
 
@@ -514,8 +537,12 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
     """
 
     async def get(
-        self, path: StatePathComponent, /, *paths: StatePathComponent, default: Any = None
-    ) -> StateValue:
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = ...,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
         """
         Get a value from the dictionary node.
 
@@ -530,7 +557,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         ...
 
     async def set(
-        self, path: StatePathComponent, /, *paths: StatePathComponent, value: StateValue
+        self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT
     ) -> None:
         """
         Set a value in the dictionary node.
@@ -544,7 +571,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def delete(self, path: StatePathComponent, /, *paths: StatePathComponent) -> None:
+    async def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
         """
         Delete a path from the dictionary node.
 
@@ -557,7 +584,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def contains(self, path: StatePathComponent, /, *paths: StatePathComponent) -> bool:
+    async def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
         """
         Check if a path exists in the dictionary node.
 
@@ -570,7 +597,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def keys(self) -> list[StatePathComponent]:
+    async def keys(self) -> list[TreePathComponent]:
         """
         Get all top-level keys in the dictionary node.
 
@@ -579,7 +606,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def values(self) -> list[StateValue]:
+    async def values(self) -> list[TreeValueT]:
         """
         Get all top-level values in the dictionary node.
 
@@ -588,7 +615,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def items(self) -> list[tuple[StatePathComponent, StateValue]]:
+    async def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
         """
         Get all top-level key-value pairs in the dictionary node.
 
@@ -597,7 +624,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def to_dict(self) -> dict[StatePathComponent, StateValue]:
+    async def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
         """
         Convert to a regular Python dictionary.
 
@@ -606,7 +633,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def update(self, other: dict[StatePathComponent, StateValue]) -> None:
+    async def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
         """
         Update the dictionary node with key-value pairs from another dictionary.
 
@@ -621,7 +648,9 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def pop(self, key: StatePathComponent, default: StateValue = None) -> StateValue:
+    async def pop(
+        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
         """
         Remove and return a value from the dictionary node.
 
@@ -637,7 +666,7 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def setdefault(self, key: StatePathComponent, default: StateValue = None) -> StateValue:
+    async def setdefault(self, key: TreePathComponent, default: TreeValueT = ...) -> TreeValueT:
         """
         Return the value for key if it exists, otherwise set it to default.
 
@@ -659,17 +688,8 @@ class AsyncStateDictProtocol(AsyncStateNodeProtocol, Protocol):
         """
         ...
 
-    async def __aiter__(self) -> AsyncIterator[StatePathComponent]:
-        """
-        Get an async iterator over the keys.
 
-        Returns:
-            Async iterator yielding keys
-        """
-        ...
-
-
-class AsyncStateListProtocol(AsyncStateNodeProtocol):
+class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT]):
     """
     Protocol for list-like interface to state storage.
 
@@ -698,7 +718,7 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         length = await state_list.length()
     """
 
-    async def get(self, index: int) -> StateValue:
+    async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from the list node at the specified index.
 
@@ -713,7 +733,7 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         """
         ...
 
-    async def set(self, index: int, value: StateValue) -> None:
+    async def set(self, index: int, value: TreeValueT) -> None:
         """
         Set an item in the list node at the specified index.
 
@@ -726,7 +746,7 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         """
         ...
 
-    async def append(self, value: StateValue) -> int:
+    async def append(self, value: TreeValueT) -> int:
         """
         Append an item to the list node.
 
@@ -738,7 +758,7 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         """
         ...
 
-    async def extend(self, values: list[StateValue]) -> int:
+    async def extend(self, values: list[TreeValueT]) -> int:
         """
         Extend the list node with multiple values.
 
@@ -750,7 +770,7 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         """
         ...
 
-    async def insert(self, index: int, value: StateValue) -> None:
+    async def insert(self, index: int, value: TreeValueT) -> None:
         """
         Insert an item at a specific position in the list node.
 
@@ -784,7 +804,7 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         """
         ...
 
-    async def to_list(self) -> list[StateValue]:
+    async def to_list(self) -> list[TreeValueT]:
         """
         Convert to a regular Python list.
 
@@ -799,7 +819,7 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         """
         ...
 
-    async def pop(self, index: int = ...) -> StateValue:
+    async def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
         """
         Remove and return an item from the list node.
 
@@ -823,20 +843,11 @@ class AsyncStateListProtocol(AsyncStateNodeProtocol):
         """
         ...
 
-    async def __aiter__(self) -> AsyncIterator[StateValue]:
-        """
-        Get an async iterator over the items.
-
-        Returns:
-            Async iterator yielding items
-        """
-        ...
-
 
 # --- Protocols for synchronous state handling --- #
 
 
-class SyncStateNodeProtocol(Protocol):
+class SyncTreeNodeProtocol(Protocol[TreeValueT]):
     """
     Protocol for state tree nodes.
 
@@ -844,12 +855,14 @@ class SyncStateNodeProtocol(Protocol):
     and list state nodes, allowing them to share code for nested node access,
     transformations, filtering, and other common operations.
 
-    SyncStateNodeProtocol serves as a consistent interface for working with nodes,
+    SyncTreeNodeProtocol serves as a consistent interface for working with nodes,
     regardless of their type (dictionary or list).
     """
 
+    EMPTY: EmptyProtocol
+
     @property
-    def path(self) -> StatePath:
+    def path(self) -> TreePath:
         """
         Get the base path for this state node.
 
@@ -860,11 +873,11 @@ class SyncStateNodeProtocol(Protocol):
 
     def dict(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
-    ) -> SyncStateDictProtocol:
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> SyncTreeDictProtocol[TreeValueT]:
         """
         Get a nested dictionary node interface.
 
@@ -874,17 +887,17 @@ class SyncStateNodeProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new SyncStateDictProtocol instance for the nested dictionary node
+            A new SyncTreeDictProtocol instance for the nested dictionary node
         """
         ...
 
     def list(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
-    ) -> SyncStateListProtocol:
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> SyncTreeListProtocol[TreeValueT]:
         """
         Get a nested list node interface.
 
@@ -894,23 +907,23 @@ class SyncStateNodeProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new SyncStateListProtocol instance for the nested list node
+            A new SyncTreeListProtocol instance for the nested list node
         """
         ...
 
     @overload
     def remove(
         self,
-        txn: "SyncTransactionProtocol | None" = None,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     @overload
     def remove(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     def remove(
@@ -934,16 +947,16 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def exists(
         self,
-        txn: "SyncTransactionProtocol | None" = None,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     @overload
     def exists(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     def exists(
@@ -970,16 +983,16 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def is_dict(
         self,
-        txn: "SyncTransactionProtocol | None" = None,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     @overload
     def is_dict(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     def is_dict(
@@ -1006,16 +1019,16 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def is_list(
         self,
-        txn: "SyncTransactionProtocol | None" = None,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     @overload
     def is_list(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> bool: ...
 
     def is_list(
@@ -1042,23 +1055,23 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def to_python_object(
         self,
-        txn: "SyncTransactionProtocol | None" = None,
-    ) -> StateValue: ...
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
 
     @overload
     def to_python_object(
         self,
-        path: StatePathComponent,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
-    ) -> StateValue: ...
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
 
     def to_python_object(
         self,
         *args: Any,
         **kwargs: Any,
-    ) -> StateValue:
+    ) -> TreeValueContainer[TreeValueT]:
         """
         Convert a node to a standard Python object.
 
@@ -1080,10 +1093,10 @@ class SyncStateNodeProtocol(Protocol):
 
     def copy_to(
         self,
-        target: StatePathComponent,
+        target: TreePathComponent,
         /,
-        *targets: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *targets: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None:
         """
         Create a copy of this node at another location in the state tree.
@@ -1097,10 +1110,10 @@ class SyncStateNodeProtocol(Protocol):
 
     def move_to(
         self,
-        target: StatePathComponent,
+        target: TreePathComponent,
         /,
-        *targets: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *targets: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None:
         """
         Move this node to another location in the state tree.
@@ -1114,7 +1127,7 @@ class SyncStateNodeProtocol(Protocol):
             txn: Optional transaction to use
 
         Note:
-            After this operation, the current SyncStateNodeProtocol instance should not be used
+            After this operation, the current SyncTreeNodeProtocol instance should not be used
             as its path is no longer valid.
         """
         ...
@@ -1122,23 +1135,23 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def transform(
         self,
-        transform_func: Callable[[StateValue], StateValue],
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         txn: "SyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     @overload
     def transform(
         self,
-        transform_func: Callable[[StateValue], StateValue],
-        path: StatePathComponent,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
+        *paths: TreePathComponent,
         txn: "SyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     def transform(
         self,
-        transform_func: Callable[[StateValue], StateValue],
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -1166,23 +1179,32 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def filter(
         self,
-        filter_func: Callable[[StateValue], bool] | Callable[[str, StateValue], bool],
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
         txn: "SyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     @overload
     def filter(
         self,
-        filter_func: Callable[[StateValue], bool] | Callable[[str, StateValue], bool],
-        path: StatePathComponent,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
+        *paths: TreePathComponent,
         txn: "SyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     def filter(
         self,
-        filter_func: Callable[[StateValue], bool] | Callable[[str, StateValue], bool],
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -1212,23 +1234,23 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def map(
         self,
-        map_func: Callable[[StateValue], StateValue],
-        txn: "SyncTransactionProtocol | None" = None,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     @overload
     def map(
         self,
-        map_func: Callable[[StateValue], StateValue],
-        path: StatePathComponent,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     def map(
         self,
-        map_func: Callable[[StateValue], StateValue],
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -1260,23 +1282,23 @@ class SyncStateNodeProtocol(Protocol):
     @overload
     def store(
         self,
-        value: StateValue,
+        value: TreeValueT,
         txn: "SyncTransactionProtocol | None" = None,
     ) -> None: ...
 
     @overload
     def store(
         self,
-        value: StateValue,
-        path: StatePathComponent,
+        value: TreeValueT,
+        path: TreePathComponent,
         /,
-        *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
     ) -> None: ...
 
     def store(
         self,
-        value: StateValue,
+        value: TreeValueT,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -1301,7 +1323,7 @@ class SyncStateNodeProtocol(Protocol):
         ...
 
 
-class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
+class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
     """
     Protocol for dictionary-like interface to state storage.
 
@@ -1331,8 +1353,12 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
     """
 
     def get(
-        self, path: StatePathComponent, /, *paths: StatePathComponent, default: Any = None
-    ) -> StateValue:
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = None,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
         """
         Get a value from the dictionary node.
 
@@ -1346,9 +1372,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def set(
-        self, path: StatePathComponent, /, *paths: StatePathComponent, value: StateValue
-    ) -> None:
+    def set(self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT) -> None:
         """
         Set a value in the dictionary node.
 
@@ -1361,7 +1385,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def delete(self, path: StatePathComponent, /, *paths: StatePathComponent) -> None:
+    def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
         """
         Delete a path from the dictionary node.
 
@@ -1374,7 +1398,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def contains(self, path: StatePathComponent, /, *paths: StatePathComponent) -> bool:
+    def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
         """
         Check if a path exists in the dictionary node.
 
@@ -1387,7 +1411,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def keys(self) -> list[StatePathComponent]:
+    def keys(self) -> list[TreePathComponent]:
         """
         Get all top-level keys in the dictionary node.
 
@@ -1396,7 +1420,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def values(self) -> list[StateValue]:
+    def values(self) -> list[TreeValueT]:
         """
         Get all top-level values in the dictionary node.
 
@@ -1405,7 +1429,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def items(self) -> list[tuple[StatePathComponent, StateValue]]:
+    def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
         """
         Get all top-level key-value pairs in the dictionary node.
 
@@ -1414,7 +1438,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def to_dict(self) -> dict[StatePathComponent, StateValue]:
+    def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
         """
         Convert to a regular Python dictionary.
 
@@ -1423,7 +1447,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def update(self, other: dict[StatePathComponent, StateValue]) -> None:
+    def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
         """
         Update the dictionary node with key-value pairs from another dictionary.
 
@@ -1438,7 +1462,9 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def pop(self, key: StatePathComponent, default: StateValue = None) -> StateValue:
+    def pop(
+        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
         """
         Remove and return a value from the dictionary node.
 
@@ -1454,7 +1480,7 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def setdefault(self, key: StatePathComponent, default: StateValue = None) -> StateValue:
+    def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
         """
         Return the value for key if it exists, otherwise set it to default.
 
@@ -1476,17 +1502,8 @@ class SyncStateDictProtocol(SyncStateNodeProtocol, Protocol):
         """
         ...
 
-    def __iter__(self) -> Iterator[StatePathComponent]:
-        """
-        Get an iterator over the keys.
 
-        Returns:
-            Iterator yielding keys
-        """
-        ...
-
-
-class SyncStateListProtocol(SyncStateNodeProtocol):
+class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT]):
     """
     Protocol for list-like interface to state storage.
 
@@ -1515,7 +1532,7 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
         length = state_list.length()
     """
 
-    def get(self, index: int) -> StateValue:
+    def get(self, index: int) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from the list node at the specified index.
 
@@ -1530,7 +1547,7 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
         """
         ...
 
-    def set(self, index: int, value: StateValue) -> None:
+    def set(self, index: int, value: TreeValueT) -> None:
         """
         Set an item in the list node at the specified index.
 
@@ -1543,7 +1560,7 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
         """
         ...
 
-    def append(self, value: StateValue) -> int:
+    def append(self, value: TreeValueT) -> int:
         """
         Append an item to the list node.
 
@@ -1555,7 +1572,7 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
         """
         ...
 
-    def extend(self, values: list[StateValue]) -> int:
+    def extend(self, values: list[TreeValueT]) -> int:
         """
         Extend the list node with multiple values.
 
@@ -1567,7 +1584,7 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
         """
         ...
 
-    def insert(self, index: int, value: StateValue) -> None:
+    def insert(self, index: int, value: TreeValueT) -> None:
         """
         Insert an item at a specific position in the list node.
 
@@ -1601,7 +1618,7 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
         """
         ...
 
-    def to_list(self) -> list[StateValue]:
+    def to_list(self) -> list[TreeValueT]:
         """
         Convert to a regular Python list.
 
@@ -1616,7 +1633,7 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
         """
         ...
 
-    def pop(self, index: int = ...) -> StateValue:
+    def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
         """
         Remove and return an item from the list node.
 
@@ -1637,14 +1654,5 @@ class SyncStateListProtocol(SyncStateNodeProtocol):
 
         Returns:
             The number of items
-        """
-        ...
-
-    def __iter__(self) -> Iterator[StateValue]:
-        """
-        Get an iterator over the items.
-
-        Returns:
-            Iterator yielding items
         """
         ...

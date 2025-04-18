@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from .._protocols import ObserverProtocol
+from .._protocols import ObserverServiceProtocol
+from .._types import ObserverKey
 
 __all__ = [
     "InMemoryObserverKey",
@@ -10,12 +11,13 @@ __all__ = [
     "InMemoryObserverProtocol",
 ]
 
-InMemoryObserverKey = tuple[str, ...]
+InMemoryObserverKey = ObserverKey
 InMemoryObserverEncodedKey = str
 
 
 class InMemoryObserverProtocol(
-    ObserverProtocol[InMemoryObserverKey, InMemoryObserverEncodedKey], Protocol
+    ObserverServiceProtocol[InMemoryObserverKey, InMemoryObserverEncodedKey],
+    Protocol,
 ):
     """
     In-memory observer protocol.

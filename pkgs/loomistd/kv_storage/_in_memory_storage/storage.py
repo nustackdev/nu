@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING, AsyncGenerator
 
 from pydantic import Field
 
 from loomi import AsyncService, Attach, Spec
+from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodec
 
@@ -17,7 +18,6 @@ from .._exceptions import (
     TransactionError,
     TransactionInvalidError,
 )
-from .._protocols import TransactionProtocol
 from .logger import logger
 from .types import (
     InMemoryStorageEncodedKey,
@@ -193,7 +193,7 @@ class InMemoryStorage(
                 raise TransactionError(f"Failed to apply transaction: {e}")
 
 
-class InMemoryStorageTransaction(TransactionProtocol[InMemoryStorageKey, InMemoryStorageValue]):
+class InMemoryStorageTransaction(AsyncTransactionProtocol[InMemoryStorageValue]):
     """Simple in-memory transaction implementation."""
 
     def __init__(self, storage: InMemoryStorage):
@@ -301,3 +301,7 @@ class InMemoryStorageTransaction(TransactionProtocol[InMemoryStorageKey, InMemor
         self._operations.clear()
         self._read_set.clear()
         self._write_set.clear()
+
+
+if TYPE_CHECKING:
+    _: type[AsyncStorageProtocol] = InMemoryStorage

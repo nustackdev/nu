@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-from loomistd.kv_storage import StorageValueT
+from loomi.interfaces.state.type_vars import TreeValueT
+from loomi.interfaces.state.types import TreePath, TreePathComponent, TreeValueContainer
 
 __all__ = [
     "TreePathComponent",
     "TreePath",
-    "StorageValueContainer",
+    "TreeValueContainer",
+    "TreeValueT",
 ]
-
-TreePathComponent = str
-TreePath = tuple[TreePathComponent, ...]
-
-# Return types that could be values or containers of values
-StorageValueContainer = (
-    StorageValueT | list["StorageValueT"] | dict[TreePathComponent, "StorageValueT"]
-)

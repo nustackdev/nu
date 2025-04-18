@@ -10,11 +10,13 @@ This module provides a complete state management solution with:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loomi import AsyncService, Attach
-from loomistd.kv_storage import StorageProtocol
-from loomistd.observer import ObserverProtocol, SubscriptionProtocol
+from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
+from loomi.interfaces.state.state import AsyncStateProtocol
+from loomistd.kv_storage import StorageServiceProtocol
+from loomistd.observer import ObserverServiceProtocol
 from loomistd.tree_storage import TreeStorageBase, TreeStorageCore
 
 from ._observable_kv import ObservableKVStorageCore
@@ -37,8 +39,10 @@ class State(AsyncService, TreeStorageBase[StateValue]):
     - Async-first design
     """
 
-    _storage: StorageProtocol[StateKey, StateValue, Any, Any] = Attach(StorageProtocol)
-    _observer: ObserverProtocol[StateKey, Any] = Attach(ObserverProtocol)
+    _storage: StorageServiceProtocol[StateKey, StateValue, Any, Any] = Attach(
+        StorageServiceProtocol
+    )
+    _observer: ObserverServiceProtocol[StateKey, Any] = Attach(ObserverServiceProtocol)
 
     async def setup(self):
         self._observable_kv_storage = ObservableKVStorageCore(
@@ -52,7 +56,7 @@ class State(AsyncService, TreeStorageBase[StateValue]):
         key: StateKey,
         callback: StateCallbackFn,
         depth: int = 0,
-    ) -> SubscriptionProtocol[StateKey]:
+    ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -62,7 +66,6 @@ class State(AsyncService, TreeStorageBase[StateValue]):
             depth: Depth of topic pattern matching (default: 0 for exact match)
                 If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
 
-
         Returns:
             Subscription object for unsubscribing
 
@@ -71,7 +74,7 @@ class State(AsyncService, TreeStorageBase[StateValue]):
         """
         return await self._observable_kv_storage.subscribe(key, callback, depth)
 
-    async def unsubscribe(self, subscription: SubscriptionProtocol[StateKey]) -> None:
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -82,3 +85,7 @@ class State(AsyncService, TreeStorageBase[StateValue]):
             ObserverError: If unsubscribe fails
         """
         await self._observable_kv_storage.unsubscribe(subscription)
+
+
+if TYPE_CHECKING:
+    _: type[AsyncStateProtocol] = State

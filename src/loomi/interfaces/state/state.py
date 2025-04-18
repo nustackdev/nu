@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
-from ..types import AsyncStateCallbackFn, StatePath, StatePathComponent, SyncStateCallbackFn
-from .kv_storage import (
-    AsyncSubscriptionProtocol,
+from .kv import (
     AsyncTransactionContextManagerProtocol,
     AsyncTransactionProtocol,
-    SyncSubscriptionProtocol,
     SyncTransactionContextManagerProtocol,
     SyncTransactionProtocol,
 )
-from .tree_storage import (
-    AsyncStateDictProtocol,
-    AsyncStateListProtocol,
-    SyncStateDictProtocol,
-    SyncStateListProtocol,
+from .observer import AsyncSubscriptionProtocol, SyncSubscriptionProtocol
+from .tree import (
+    AsyncTreeDictProtocol,
+    AsyncTreeListProtocol,
+    SyncTreeDictProtocol,
+    SyncTreeListProtocol,
 )
+from .type_vars import StateValueT
+from .types import AsyncCallbackFn, StatePath, StatePathComponent, SyncCallbackFn
 
 __all__ = [
     "AsyncStateProtocol",
@@ -24,7 +24,8 @@ __all__ = [
 ]
 
 
-class AsyncStateProtocol(Protocol):
+@runtime_checkable
+class AsyncStateProtocol(Protocol[StateValueT]):
     """
     Protocol for asynchronous state management.
 
@@ -38,8 +39,8 @@ class AsyncStateProtocol(Protocol):
         path: StatePathComponent,
         /,
         *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
-    ) -> AsyncStateDictProtocol:
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> AsyncTreeDictProtocol[StateValueT]:
         """
         Get a nested dictionary node interface.
 
@@ -49,7 +50,7 @@ class AsyncStateProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new AsyncStateDictProtocol instance for the nested dictionary node
+            A new AsyncTreeDictProtocol instance for the nested dictionary node
         """
         ...
 
@@ -58,8 +59,8 @@ class AsyncStateProtocol(Protocol):
         path: StatePathComponent,
         /,
         *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol | None" = None,
-    ) -> AsyncStateListProtocol:
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> AsyncTreeListProtocol[StateValueT]:
         """
         Get a nested list node interface.
 
@@ -69,11 +70,11 @@ class AsyncStateProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new AsyncStateListProtocol instance for the nested list node
+            A new AsyncTreeListProtocol instance for the nested list node
         """
         ...
 
-    async def begin_transaction(self) -> "AsyncTransactionProtocol":
+    async def begin_transaction(self) -> "AsyncTransactionProtocol[StateValueT]":
         """
         Begin a new transaction.
 
@@ -85,7 +86,7 @@ class AsyncStateProtocol(Protocol):
         """
         ...
 
-    async def transaction(self) -> AsyncTransactionContextManagerProtocol:
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol[StateValueT]:
         """
         Get transaction context manager.
 
@@ -97,7 +98,7 @@ class AsyncStateProtocol(Protocol):
     async def subscribe(
         self,
         key: StatePath,
-        callback: AsyncStateCallbackFn,
+        callback: AsyncCallbackFn,
         depth: int = ...,
     ) -> AsyncSubscriptionProtocol:
         """
@@ -131,7 +132,8 @@ class AsyncStateProtocol(Protocol):
         ...
 
 
-class SyncStateProtocol(Protocol):
+@runtime_checkable
+class SyncStateProtocol(Protocol[StateValueT]):
     """
     Protocol for synchronous state management.
 
@@ -145,8 +147,8 @@ class SyncStateProtocol(Protocol):
         path: StatePathComponent,
         /,
         *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
-    ) -> SyncStateDictProtocol:
+        txn: "SyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> SyncTreeDictProtocol[StateValueT]:
         """
         Get a nested dictionary node interface.
 
@@ -156,7 +158,7 @@ class SyncStateProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new SyncStateDictProtocol instance for the nested dictionary node
+            A new SyncTreeDictProtocol instance for the nested dictionary node
         """
         ...
 
@@ -165,8 +167,8 @@ class SyncStateProtocol(Protocol):
         path: StatePathComponent,
         /,
         *paths: StatePathComponent,
-        txn: "SyncTransactionProtocol | None" = None,
-    ) -> SyncStateListProtocol:
+        txn: "SyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> SyncTreeListProtocol[StateValueT]:
         """
         Get a nested list node interface.
 
@@ -176,11 +178,11 @@ class SyncStateProtocol(Protocol):
             txn: Optional transaction to use
 
         Returns:
-            A new SyncStateListProtocol instance for the nested list node
+            A new SyncTreeListProtocol instance for the nested list node
         """
         ...
 
-    def begin_transaction(self) -> "SyncTransactionProtocol":
+    def begin_transaction(self) -> "SyncTransactionProtocol[StateValueT]":
         """
         Begin a new transaction.
 
@@ -192,7 +194,7 @@ class SyncStateProtocol(Protocol):
         """
         ...
 
-    def transaction(self) -> SyncTransactionContextManagerProtocol:
+    def transaction(self) -> SyncTransactionContextManagerProtocol[StateValueT]:
         """
         Get transaction context manager.
 
@@ -204,7 +206,7 @@ class SyncStateProtocol(Protocol):
     def subscribe(
         self,
         key: StatePath,
-        callback: SyncStateCallbackFn,
+        callback: SyncCallbackFn,
         depth: int = ...,
     ) -> SyncSubscriptionProtocol:
         """

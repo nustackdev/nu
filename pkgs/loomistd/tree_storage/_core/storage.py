@@ -2,17 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Callable, cast
 
-from loomistd.kv_storage import (
-    KVOperationsProtocol,
-    StorageKeyError,
-    StorageValueT,
-    TransactionProtocol,
-)
+from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
+from loomistd.kv_storage import StorageKeyError
 
 from .._exceptions import ObjectTypeError
 from .._nodes.tree_dict import TreeDict
 from .._nodes.tree_list import TreeList
-from .._types import TreePath
+from .._types import TreePath, TreeValueT
 from .dict_operations import DictOperations
 from .list_operations import ListOperations
 
@@ -21,7 +17,7 @@ __all__ = [
 ]
 
 
-class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
+class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
     """
     Hierarchical tree storage system built on top of a flat key-value store.
 
@@ -39,7 +35,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     within the tree without having to retrieve the entire structure.
     """
 
-    def __init__(self, storage: KVOperationsProtocol[TreePath, StorageValueT]):
+    def __init__(self, storage: AsyncStorageProtocol[TreeValueT]):
         """
         Initialize the tree storage wrapper.
 
@@ -53,8 +49,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def dict(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> TreeDict[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeDict[TreeValueT]:
         """
         Get a proxy object for dictionary-like access to a tree node.
 
@@ -86,8 +82,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def list(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
-    ) -> TreeList[StorageValueT]:
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeList[TreeValueT]:
         """
         Get a proxy object for list-like access to a tree node.
 
@@ -119,7 +115,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def delete_node(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Delete a node and all its contained values.
@@ -142,7 +138,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def to_python_object(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> Any:
         """
         Convert a stored tree node to a standard Python object.
@@ -169,7 +165,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def _to_python_object(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> Any:
         """
         Internal implementation for converting a stored tree node.
@@ -201,8 +197,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def store_python_object(
         self,
         path: TreePath,
-        value: StorageValueT,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        value: TreeValueT,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Store a Python object at the specified path in the tree.
@@ -227,8 +223,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def _store_python_object(
         self,
         path: TreePath,
-        value: StorageValueT,
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        value: TreeValueT,
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for storing a Python object in the tree.
@@ -254,7 +250,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
             await self._set_list(path, value, txn)
         elif value is None or isinstance(value, (str, int, float, bool, bytes)):
             # These are the primitive types that can be stored directly
-            await self._storage_set(path, cast(StorageValueT, value), txn)
+            await self._storage_set(path, cast(TreeValueT, value), txn)
         else:
             # Unsupported type
             raise TypeError(f"Cannot store object of type {type(value).__name__}")
@@ -264,7 +260,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def is_dict(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a dictionary node.
@@ -278,14 +274,15 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         """
         if txn is None:
             async with await self._storage.transaction() as new_txn:
-                return await self._is_dict(path, new_txn)
+                result = await self._is_dict(path, new_txn)
+            return result
         else:
             return await self._is_dict(path, txn)
 
     async def is_list(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a list node.
@@ -299,14 +296,15 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         """
         if txn is None:
             async with await self._storage.transaction() as new_txn:
-                return await self._is_list(path, new_txn)
+                result = await self._is_list(path, new_txn)
+            return result
         else:
             return await self._is_list(path, txn)
 
     async def exists(
         self,
         path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path exists in the tree.
@@ -320,7 +318,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         """
         if txn is None:
             async with await self._storage.transaction() as new_txn:
-                return await self._storage_exists(path, new_txn)
+                result = await self._storage_exists(path, new_txn)
+            return result
         else:
             return await self._storage_exists(path, txn)
 
@@ -330,7 +329,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Copy a node from one path to another.
@@ -353,7 +352,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for copying a node.
@@ -393,7 +392,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Move a node from one path to another.
@@ -419,7 +418,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for moving a node.
@@ -441,8 +440,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def transform_node(
         self,
         path: TreePath,
-        transform_func: Callable[[StorageValueT], StorageValueT],
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        transform_func: Callable[[TreeValueT], TreeValueT],
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Apply a transformation function to a tree node.
@@ -468,8 +467,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def _transform_node(
         self,
         path: TreePath,
-        transform_func: Callable[[StorageValueT], StorageValueT],
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        transform_func: Callable[[TreeValueT], TreeValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for transforming a tree node.
@@ -495,8 +494,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def filter_node(
         self,
         path: TreePath,
-        filter_func: Callable[[StorageValueT], bool] | Callable[[str, StorageValueT], bool],
-        txn: TransactionProtocol[TreePath, StorageValueT] | None = None,
+        filter_func: Callable[[TreeValueT], bool] | Callable[[str, TreeValueT], bool],
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Filter elements of a list or dictionary node using a filter function.
@@ -522,8 +521,8 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
     async def _filter_node(
         self,
         path: TreePath,
-        filter_func: Callable[[StorageValueT], bool] | Callable[[str, StorageValueT], bool],
-        txn: TransactionProtocol[TreePath, StorageValueT],
+        filter_func: Callable[[TreeValueT], bool] | Callable[[str, TreeValueT], bool],
+        txn: AsyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for filtering tree nodes.
@@ -543,7 +542,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         if node_type == self._TYPE_LIST:
             # Filter the list node
             items = await self._list_to_list(path, txn)
-            filter_func_list = cast(Callable[[StorageValueT], bool], filter_func)
+            filter_func_list = cast(Callable[[TreeValueT], bool], filter_func)
             filtered_items = [item for item in items if filter_func_list(item)]
 
             # Replace with filtered list
@@ -552,7 +551,7 @@ class TreeStorage(DictOperations[StorageValueT], ListOperations[StorageValueT]):
         elif node_type == self._TYPE_DICT:
             # Filter the dictionary node
             items = await self._dict_items(path, txn)
-            filter_func_dict = cast(Callable[[str, StorageValueT], bool], filter_func)
+            filter_func_dict = cast(Callable[[str, TreeValueT], bool], filter_func)
             keys_to_delete = [k for k, v in items if not filter_func_dict(k, v)]
 
             # Delete filtered keys

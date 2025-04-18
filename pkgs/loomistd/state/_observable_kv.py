@@ -10,14 +10,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from types import TracebackType
-from typing import Any, AsyncGenerator
+from typing import TYPE_CHECKING, Any, AsyncGenerator
 
-from loomistd.kv_storage import (
-    StorageProtocol,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
+from loomi.interfaces.state.kv import (
+    AsyncObservableStorageProtocol,
+    AsyncTransactionContextManagerProtocol,
+    AsyncTransactionProtocol,
 )
-from loomistd.observer import ObserverProtocol, SubscriptionProtocol
+from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
+from loomistd.kv_storage import StorageServiceProtocol
+from loomistd.observer import ObserverServiceProtocol
 
 from ._types import StateCallbackFn, StateKey, StateValue
 
@@ -29,13 +31,13 @@ __all__ = [
 
 
 class ObservableKVStorageCore:
-    _storage: StorageProtocol[StateKey, StateValue, Any, Any]
-    _observer: ObserverProtocol[StateKey, Any]
+    _storage: StorageServiceProtocol[StateKey, StateValue, Any, Any]
+    _observer: ObserverServiceProtocol[StateKey, Any]
 
     def __init__(
         self,
-        storage: StorageProtocol[StateKey, StateValue, Any, Any],
-        observer: ObserverProtocol[StateKey, Any],
+        storage: StorageServiceProtocol[StateKey, StateValue, Any, Any],
+        observer: ObserverServiceProtocol[StateKey, Any],
     ) -> None:
         """
         Initialize ObservableKVStorage with storage and observer.
@@ -48,7 +50,7 @@ class ObservableKVStorageCore:
         self._observer = observer
 
     @property
-    def storage(self) -> StorageProtocol[StateKey, StateValue, Any, Any]:
+    def storage(self) -> StorageServiceProtocol[StateKey, StateValue, Any, Any]:
         """
         Get storage backend.
 
@@ -58,7 +60,7 @@ class ObservableKVStorageCore:
         return self._storage
 
     @property
-    def observer(self) -> ObserverProtocol[StateKey, Any]:
+    def observer(self) -> ObserverServiceProtocol[StateKey, Any]:
         """
         Get observer backend.
 
@@ -148,10 +150,10 @@ class ObservableKVStorageCore:
 
     async def subscribe(
         self,
-        key: StateKey,
+        topic_pattern: StateKey,
         callback: StateCallbackFn,
         depth: int = 0,
-    ) -> SubscriptionProtocol[StateKey]:
+    ) -> AsyncSubscriptionProtocol:
         """
         Subscribe to changes under key prefix.
 
@@ -168,9 +170,9 @@ class ObservableKVStorageCore:
         Raises:
             ObserverError: If subscription fails
         """
-        return await self.observer.subscribe(key, callback, depth)
+        return await self.observer.subscribe(topic_pattern, callback, depth)
 
-    async def unsubscribe(self, subscription: SubscriptionProtocol[StateKey]) -> None:
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
         """
         Unsubscribe from changes under key prefix.
 
@@ -215,14 +217,14 @@ class ObservableKVStorageCore:
 
 
 @dataclass
-class ObservableKVTransaction(TransactionProtocol[StateKey, StateValue]):
+class ObservableKVTransaction(AsyncTransactionProtocol[StateValue]):
     """
     Transaction implementation that combines storage operations and notifications.
     Ensures atomicity between storage changes and observer notifications.
     """
 
-    storage_txn: TransactionProtocol[StateKey, StateValue]
-    observer: ObserverProtocol[StateKey, Any]
+    storage_txn: AsyncTransactionProtocol[StateValue]
+    observer: ObserverServiceProtocol[StateKey, Any]
     # Track modified keys for notification after commit
     modified_keys: set[StateKey] = field(default_factory=set)
 
@@ -263,9 +265,7 @@ class ObservableKVTransaction(TransactionProtocol[StateKey, StateValue]):
 
 
 @dataclass
-class ObservableKVTransactionContextManager(
-    TransactionContextManagerProtocol[StateKey, StateValue]
-):
+class ObservableKVTransactionContextManager(AsyncTransactionContextManagerProtocol[StateValue]):
     """
     Context manager for State transactions that handles both storage and notifications.
     """
@@ -303,3 +303,7 @@ class ObservableKVTransactionContextManager(
         finally:
             # Clear the transaction reference
             self._transaction = None
+
+
+if TYPE_CHECKING:
+    _: type[AsyncObservableStorageProtocol] = ObservableKVStorageCore

@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import AsyncGenerator, Generator, Protocol
+from typing import AsyncGenerator, Generator, Protocol, runtime_checkable
 
-from ..types import AsyncStateCallbackFn, StateValue, SyncStateCallbackFn
+from .observer import AsyncObservableProtocol, SyncObservableProtocol
+from .type_vars import StorageValueT
+from .types import StorageKey
 
 __all__ = [
     "AsyncStorageProtocol",
-    "AsyncSubscriptionProtocol",
+    "AsyncObservableProtocol",
+    "AsyncObservableStorageProtocol",
     "AsyncTransactionProtocol",
     "AsyncTransactionContextManagerProtocol",
     "AsyncTransactionalHandlerProtocol",
     "SyncStorageProtocol",
-    "SyncSubscriptionProtocol",
+    "SyncObservableProtocol",
+    "SyncObservableStorageProtocol",
     "SyncTransactionProtocol",
     "SyncTransactionContextManagerProtocol",
     "SyncTransactionalHandlerProtocol",
@@ -21,10 +25,10 @@ __all__ = [
 # --- Protocols for asynchronous state handling --- #
 
 
-class AsyncStorageProtocol(Protocol):
+class AsyncStorageProtocol(Protocol[StorageValueT]):
     """Protocol for asynchronous state storage adapters."""
 
-    async def get(self, key: StateValue) -> StateValue:
+    async def get(self, key: StorageKey) -> StorageValueT:
         """
         Get value by key.
 
@@ -39,7 +43,7 @@ class AsyncStorageProtocol(Protocol):
         """
         ...
 
-    async def set(self, key: StateValue, value: StateValue) -> None:
+    async def set(self, key: StorageKey, value: StorageValueT) -> None:
         """
         Set value by key.
 
@@ -52,7 +56,7 @@ class AsyncStorageProtocol(Protocol):
         """
         ...
 
-    async def delete(self, key: StateValue) -> None:
+    async def delete(self, key: StorageKey) -> None:
         """
         Delete value by key.
 
@@ -64,7 +68,7 @@ class AsyncStorageProtocol(Protocol):
         """
         ...
 
-    async def exists(self, key: StateValue) -> bool:
+    async def exists(self, key: StorageKey) -> bool:
         """
         Check if key exists.
 
@@ -80,8 +84,8 @@ class AsyncStorageProtocol(Protocol):
         ...
 
     async def list_keys(
-        self, prefix: StateValue, depth: int = ...
-    ) -> AsyncGenerator[StateValue, None]:
+        self, prefix: StorageKey, depth: int = ...
+    ) -> AsyncGenerator[StorageKey, None]:
         """
         List all keys under prefix.
 
@@ -98,41 +102,6 @@ class AsyncStorageProtocol(Protocol):
         """
         if False:  # This will never execute but helps type checkers
             yield prefix  # Dummy yield to make it a true async generator
-
-    async def subscribe(
-        self,
-        key: StateValue,
-        callback: AsyncStateCallbackFn,
-        depth: int = ...,
-    ) -> AsyncSubscriptionProtocol:
-        """
-        Subscribe to changes under key prefix.
-
-        Args:
-            key: Key prefix to subscribe to
-            callback: Async callback function for notifications
-            depth: Depth of topic pattern matching (default: 0 for exact match)
-                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
-
-        Returns:
-            Subscription object for unsubscribing
-
-        Raises:
-            ObserverError: If subscription fails
-        """
-        ...
-
-    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
-        """
-        Unsubscribe from changes under key prefix.
-
-        Args:
-            subscription: Subscription to cancel
-
-        Raises:
-            ObserverError: If unsubscribe fails
-        """
-        ...
 
     async def begin_transaction(self) -> AsyncTransactionProtocol:
         """
@@ -156,48 +125,19 @@ class AsyncStorageProtocol(Protocol):
         ...
 
 
-class AsyncSubscriptionProtocol(Protocol):
-    """
-    Represents an asynchronous subscription to a topic pattern.
+class AsyncObservableStorageProtocol(
+    AsyncStorageProtocol[StorageValueT], AsyncObservableProtocol, Protocol
+):
+    """Protocol for asynchronous observable state storage adapters."""
 
-    Attributes:
-        topic_pattern:
-            Topic pattern to match against notifications.
-            Must be a tuple of strings matching state keys.
-        callback:
-            Async callable that will be invoked on matching notifications.
-            Must accept a single parameter of type StateValue.
-
-    Type Parameters:
-        StateValue: Topic type (tuple of strings)
-    """
-
-    @property
-    def topic_pattern(self) -> StateValue:
-        """
-        Get topic pattern for subscription.
-        """
-        ...
-
-    @property
-    def callback(self) -> AsyncStateCallbackFn:
-        """
-        Get callback for subscription.
-        """
-        ...
-
-    @property
-    def depth(self) -> int:
-        """
-        Get depth of subscription.
-        """
-        ...
+    pass
 
 
-class AsyncTransactionProtocol(Protocol):
+@runtime_checkable
+class AsyncTransactionProtocol(Protocol[StorageValueT]):
     """Protocol defining the interface for asynchronous transactions."""
 
-    async def get(self, key: StateValue) -> StateValue:
+    async def get(self, key: StorageKey) -> StorageValueT:
         """
         Get value within transaction context.
 
@@ -214,7 +154,7 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def set(self, key: StateValue, value: StateValue) -> None:
+    async def set(self, key: StorageKey, value: StorageValueT) -> None:
         """
         Set value within transaction context.
 
@@ -228,7 +168,7 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def delete(self, key: StateValue) -> None:
+    async def delete(self, key: StorageKey) -> None:
         """
         Delete value within transaction context.
 
@@ -241,7 +181,7 @@ class AsyncTransactionProtocol(Protocol):
         """
         ...
 
-    async def exists(self, key: StateValue) -> bool:
+    async def exists(self, key: StorageKey) -> bool:
         """
         Check if key exists within transaction context.
 
@@ -258,8 +198,8 @@ class AsyncTransactionProtocol(Protocol):
         ...
 
     async def list_keys(
-        self, prefix: StateValue, depth: int = ...
-    ) -> AsyncGenerator[StateValue, None]:
+        self, prefix: StorageKey, depth: int = ...
+    ) -> AsyncGenerator[StorageKey, None]:
         """
         List all keys under prefix within transaction context.
 
@@ -298,10 +238,10 @@ class AsyncTransactionProtocol(Protocol):
         ...
 
 
-class AsyncTransactionContextManagerProtocol(Protocol):
+class AsyncTransactionContextManagerProtocol(Protocol[StorageValueT]):
     """Async context manager for storage transactions."""
 
-    async def __aenter__(self) -> AsyncTransactionProtocol:
+    async def __aenter__(self) -> AsyncTransactionProtocol[StorageValueT]:
         """
         Start a new transaction.
 
@@ -333,14 +273,14 @@ class AsyncTransactionContextManagerProtocol(Protocol):
         ...
 
 
-class AsyncTransactionalHandlerProtocol(Protocol):
+class AsyncTransactionalHandlerProtocol(Protocol[StorageValueT]):
     """Protocol defining the interface for asynchronous transactionable storage."""
 
-    async def begin_transaction(self) -> AsyncTransactionProtocol:
+    async def begin_transaction(self) -> AsyncTransactionProtocol[StorageValueT]:
         """Begin a new transaction."""
         ...
 
-    async def transaction(self) -> AsyncTransactionContextManagerProtocol:
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol[StorageValueT]:
         """Get a typed transaction context manager."""
         ...
 
@@ -348,10 +288,10 @@ class AsyncTransactionalHandlerProtocol(Protocol):
 # --- Protocols for synchronous state handling --- #
 
 
-class SyncStorageProtocol(Protocol):
+class SyncStorageProtocol(Protocol[StorageValueT]):
     """Protocol for synchronous state storage adapters."""
 
-    def get(self, key: StateValue) -> StateValue:
+    def get(self, key: StorageKey) -> StorageValueT:
         """
         Get value by key.
 
@@ -366,7 +306,7 @@ class SyncStorageProtocol(Protocol):
         """
         ...
 
-    def set(self, key: StateValue, value: StateValue) -> None:
+    def set(self, key: StorageKey, value: StorageValueT) -> None:
         """
         Set value by key.
 
@@ -379,7 +319,7 @@ class SyncStorageProtocol(Protocol):
         """
         ...
 
-    def delete(self, key: StateValue) -> None:
+    def delete(self, key: StorageKey) -> None:
         """
         Delete value by key.
 
@@ -391,7 +331,7 @@ class SyncStorageProtocol(Protocol):
         """
         ...
 
-    def exists(self, key: StateValue) -> bool:
+    def exists(self, key: StorageKey) -> bool:
         """
         Check if key exists.
 
@@ -408,9 +348,9 @@ class SyncStorageProtocol(Protocol):
 
     def list_keys(
         self,
-        prefix: StateValue,
+        prefix: StorageKey,
         depth: int = ...,
-    ) -> Generator[StateValue, None, None]:
+    ) -> Generator[StorageValueT, None, None]:
         """
         List all keys under prefix.
 
@@ -424,41 +364,6 @@ class SyncStorageProtocol(Protocol):
 
         Raises:
             StateError: If listing fails
-        """
-        ...
-
-    def subscribe(
-        self,
-        key: StateValue,
-        callback: SyncStateCallbackFn,
-        depth: int = ...,
-    ) -> SyncSubscriptionProtocol:
-        """
-        Subscribe to changes under key prefix.
-
-        Args:
-            key: Key prefix to subscribe to
-            callback: Callback function for notifications
-            depth: Depth of topic pattern matching (default: 0 for exact match)
-                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
-
-        Returns:
-            Subscription object for unsubscribing
-
-        Raises:
-            ObserverError: If subscription fails
-        """
-        ...
-
-    def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:
-        """
-        Unsubscribe from changes under key prefix.
-
-        Args:
-            subscription: Subscription to cancel
-
-        Raises:
-            ObserverError: If unsubscribe fails
         """
         ...
 
@@ -484,48 +389,18 @@ class SyncStorageProtocol(Protocol):
         ...
 
 
-class SyncSubscriptionProtocol(Protocol):
-    """
-    Represents a synchronous subscription to a topic pattern.
+class SyncObservableStorageProtocol(
+    SyncStorageProtocol[StorageValueT], SyncObservableProtocol, Protocol
+):
+    """Protocol for synchronous observable state storage adapters."""
 
-    Attributes:
-        topic_pattern:
-            Topic pattern to match against notifications.
-            Must be a tuple of strings matching state keys.
-        callback:
-            Callable that will be invoked on matching notifications.
-            Must accept a single parameter of type StateValue.
-
-    Type Parameters:
-        StateValue: Topic type (tuple of strings)
-    """
-
-    @property
-    def topic_pattern(self) -> StateValue:
-        """
-        Get topic pattern for subscription.
-        """
-        ...
-
-    @property
-    def callback(self) -> SyncStateCallbackFn:
-        """
-        Get callback for subscription.
-        """
-        ...
-
-    @property
-    def depth(self) -> int:
-        """
-        Get depth for subscription.
-        """
-        ...
+    pass
 
 
-class SyncTransactionProtocol(Protocol):
+class SyncTransactionProtocol(Protocol[StorageValueT]):
     """Protocol defining the interface for synchronous transactions."""
 
-    def get(self, key: StateValue) -> StateValue:
+    def get(self, key: StorageKey) -> StorageValueT:
         """
         Get value within transaction context.
 
@@ -542,7 +417,7 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def set(self, key: StateValue, value: StateValue) -> None:
+    def set(self, key: StorageKey, value: StorageValueT) -> None:
         """
         Set value within transaction context.
 
@@ -556,7 +431,7 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def delete(self, key: StateValue) -> None:
+    def delete(self, key: StorageKey) -> None:
         """
         Delete value within transaction context.
 
@@ -569,7 +444,7 @@ class SyncTransactionProtocol(Protocol):
         """
         ...
 
-    def exists(self, key: StateValue) -> bool:
+    def exists(self, key: StorageKey) -> bool:
         """
         Check if key exists within transaction context.
 
@@ -587,9 +462,9 @@ class SyncTransactionProtocol(Protocol):
 
     def list_keys(
         self,
-        prefix: StateValue,
+        prefix: StorageKey,
         depth: int = ...,
-    ) -> Generator[StateValue, None, None]:
+    ) -> Generator[StorageValueT, None, None]:
         """
         List all keys under prefix within transaction context.
 
@@ -627,19 +502,10 @@ class SyncTransactionProtocol(Protocol):
         ...
 
 
-class SyncTransactionContextManagerProtocol(Protocol):
+class SyncTransactionContextManagerProtocol(Protocol[StorageValueT]):
     """Synchronous context manager for storage transactions."""
 
-    def __init__(self, handler: SyncTransactionalHandlerProtocol):
-        """
-        Initialize transaction context manager.
-
-        Args:
-            storage: Storage instance to manage transactions for
-        """
-        ...
-
-    def __enter__(self) -> SyncTransactionProtocol:
+    def __enter__(self) -> SyncTransactionProtocol[StorageValueT]:
         """
         Start a new transaction.
 
@@ -671,13 +537,13 @@ class SyncTransactionContextManagerProtocol(Protocol):
         ...
 
 
-class SyncTransactionalHandlerProtocol(Protocol):
+class SyncTransactionalHandlerProtocol(Protocol[StorageValueT]):
     """Protocol defining the interface for synchronous transactionable storage."""
 
-    def begin_transaction(self) -> SyncTransactionProtocol:
+    def begin_transaction(self) -> SyncTransactionProtocol[StorageValueT]:
         """Begin a new transaction."""
         ...
 
-    def transaction(self) -> SyncTransactionContextManagerProtocol:
+    def transaction(self) -> SyncTransactionContextManagerProtocol[StorageValueT]:
         """Get a typed transaction context manager."""
         ...

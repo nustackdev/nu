@@ -6,10 +6,10 @@ from typing import AsyncGenerator, Generic, TypeGuard, final
 from pydantic import Field
 
 from loomi import Spec
+from loomi.interfaces.state.kv import AsyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
-from ._protocols import TransactionProtocol
 from ._transaction import TransactionContextManager
 from ._types import (
     StorageEncodedKeyT,
@@ -199,12 +199,12 @@ class BaseStorage(
             yield key
 
     @abstractmethod
-    async def _begin_transaction_impl(self) -> TransactionProtocol[StorageKeyT, StorageValueT]:
+    async def _begin_transaction_impl(self) -> AsyncTransactionProtocol[StorageValueT]:
         """Implementation-specific transaction creation."""
         ...
 
     @final
-    async def begin_transaction(self) -> TransactionProtocol[StorageKeyT, StorageValueT]:
+    async def begin_transaction(self) -> AsyncTransactionProtocol[StorageValueT]:
         """Begin a new transaction."""
         self._ensure_connected()
         try:
@@ -213,7 +213,7 @@ class BaseStorage(
             raise StorageOperationError(f"Failed to begin transaction: {e}") from e
 
     @final
-    async def transaction(self) -> TransactionContextManager[StorageKeyT, StorageValueT]:
+    async def transaction(self) -> TransactionContextManager[StorageValueT]:
         """
         Create a transaction context manager.
 
@@ -226,7 +226,7 @@ class BaseStorage(
                 # Auto-commits if no exception
                 # Auto-rollbacks if exception occurs
         """
-        return TransactionContextManager[StorageKeyT, StorageValueT](self)
+        return TransactionContextManager[StorageValueT](self)
 
 
 def is_valid_key(value: StorageKeyT) -> TypeGuard[StorageKeyT]:

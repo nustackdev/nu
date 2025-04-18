@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-from .._protocols import StorageProtocol
+from .._protocols import StorageServiceProtocol
+from .._types import StorageKey
 
 __all__ = [
     "FileStorageKey",
@@ -14,7 +15,7 @@ __all__ = [
     "TransactionOperation",
 ]
 
-FileStorageKey = tuple[str, ...]
+FileStorageKey = StorageKey
 FileStorageValue = (
     None
     | bytes
@@ -40,7 +41,7 @@ class TransactionOperation:
 
 @runtime_checkable
 class FileStorageProtocol(
-    StorageProtocol[
+    StorageServiceProtocol[
         FileStorageKey, FileStorageValue, FileStorageEncodedKey, FileStorageEncodedValue
     ],
     Protocol,

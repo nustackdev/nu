@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import Field
 
 from loomi import AsyncService, Attach, Spec
+from loomi.interfaces.state.observer import AsyncObservableProtocol, AsyncSubscriptionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodec
 
-from .._base import BaseObserver, BaseObserverSpec, Subscription
+from .._base import BaseObserver, BaseObserverSpec
 from .logger import logger
 from .types import InMemoryObserverEncodedKey, InMemoryObserverKey
 
@@ -40,7 +41,7 @@ class InMemoryObserver(
         if not hasattr(self, "_data_lock"):
             self._data_lock: asyncio.Lock = asyncio.Lock()
 
-        self._subscriptions: dict[InMemoryObserverKey, list[Subscription[InMemoryObserverKey]]] = {}
+        self._subscriptions: dict[InMemoryObserverKey, list[AsyncSubscriptionProtocol]] = {}
 
     async def _disconnect_impl(self) -> None:
         async with self._data_lock:
@@ -78,14 +79,14 @@ class InMemoryObserver(
             except Exception as e:
                 logger.error(f"Callback failed for {topic}: {e}")
 
-    async def _subscribe_impl(self, subscription: Subscription[InMemoryObserverKey]) -> None:
+    async def _subscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
         topic_pattern = subscription.topic_pattern
         async with self._data_lock:
             if topic_pattern not in self._subscriptions:
                 self._subscriptions[topic_pattern] = []
             self._subscriptions[topic_pattern].append(subscription)
 
-    async def _unsubscribe_impl(self, subscription: Subscription[InMemoryObserverKey]) -> None:
+    async def _unsubscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
         async with self._data_lock:
             if subscription.topic_pattern in self._subscriptions:
                 subs = self._subscriptions[subscription.topic_pattern]
@@ -94,3 +95,7 @@ class InMemoryObserver(
                     self._subscriptions[subscription.topic_pattern] = subs
                 else:
                     del self._subscriptions[subscription.topic_pattern]
+
+
+if TYPE_CHECKING:
+    _: type[AsyncObservableProtocol] = InMemoryObserver

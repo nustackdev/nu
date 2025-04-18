@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from .._protocols import StorageProtocol
+from .._protocols import StorageServiceProtocol
+from .._types import StorageKey, StorageValue
 
 __all__ = [
     "InMemoryStorageKey",
@@ -15,10 +16,10 @@ __all__ = [
 ]
 
 
-InMemoryStorageKey = tuple[str, ...]
-InMemoryStorageValue = Any
+InMemoryStorageKey = StorageKey
+InMemoryStorageValue = StorageValue
 InMemoryStorageEncodedKey = str
-InMemoryStorageEncodedValue = Any
+InMemoryStorageEncodedValue = StorageValue
 
 
 @dataclass
@@ -32,7 +33,7 @@ class TransactionOperation:
 
 @runtime_checkable
 class InMemoryStorageProtocol(
-    StorageProtocol[
+    StorageServiceProtocol[
         InMemoryStorageKey,
         InMemoryStorageValue,
         InMemoryStorageEncodedKey,

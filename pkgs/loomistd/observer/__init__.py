@@ -7,16 +7,25 @@ from ._exceptions import (
     ObserverSubscriptionError,
     ObserverValidationError,
 )
-from ._protocols import ObserverProtocol, SubscriptionProtocol
-from ._types import ObserverCallbackFn
+from ._protocols import ObserverServiceProtocol
+from ._types import (
+    ObserverCallbackFn,
+    ObserverEncodedKey,
+    ObserverEncodedKeyT,
+    ObserverKey,
+    ObserverKeyT,
+)
 
 __all__ = [
+    "ObserverServiceProtocol",
     "BaseObserver",
     "BaseObserverSpec",
-    "ObserverProtocol",
     "Subscription",
-    "SubscriptionProtocol",
     "ObserverCallbackFn",
+    "ObserverKey",
+    "ObserverKeyT",
+    "ObserverEncodedKey",
+    "ObserverEncodedKeyT",
     "ObserverError",
     "ObserverConnectionError",
     "ObserverSubscriptionError",
