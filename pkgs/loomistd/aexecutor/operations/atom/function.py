@@ -7,17 +7,17 @@ function or method.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 from loomi.interfaces.executor.operations import FunctionOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
-from .base import Operation
-from .metadata import OperationMetadata
+from ..base import Operation
+from ..metadata import OperationMetadata
 
 if TYPE_CHECKING:
-    from ..context.context import Context
+    from ...context import Context
 
 __all__ = [
     "Function",
@@ -45,13 +45,11 @@ class Function(Operation[StateDictT]):
 
     def __init__(
         self,
-        func: (
-            Callable[[Context[StateDictT]], Awaitable[None]] | Callable[[Context[StateDictT]], None]
-        ),
+        func: Callable[[Context[StateDictT]], Awaitable[None] | None],
         /,
         *,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Operation | None = None,
+        on_fail: Optional[Operation[StateDictT]] = None,
     ):
         """
         Initialize the Function operation.

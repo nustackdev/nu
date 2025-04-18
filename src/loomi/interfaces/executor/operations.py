@@ -43,7 +43,7 @@ class FunctionOperationProtocol(OperationProtocol[OperationT, ContextT_co], Prot
 
     def __init__(
         self,
-        func: Callable[["ContextT_co"], Awaitable[None]] | Callable[["ContextT_co"], None],
+        func: Callable[["ContextT_co"], Awaitable[None] | None],
         /,
         *,
         error_behavior: ErrorBehavior = "fail",

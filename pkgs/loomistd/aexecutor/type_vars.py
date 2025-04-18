@@ -6,9 +6,8 @@ if TYPE_CHECKING:
     from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
 
     from .context.context import Context
+    from .operations import Function, Sequence
     from .operations.base import Operation
-    from .operations.function import Function
-    from .operations.sequence import Sequence
 
 __all__ = [
     "ContextT",

@@ -11,7 +11,7 @@ from __future__ import annotations
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context.context import Context
-from ..operations.function import Function
+from ..operations import Function
 from .base import EngineBase
 
 

@@ -10,20 +10,17 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Awaitable, Callable, Generic, Optional, TypeVar, cast
+from typing import Awaitable, Callable, Generic, Optional, TypeVar, cast
 
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context.context import Context
+from ..operations import Branch, Function, Loop, Parallel, Sequence
 from ..operations.base import Operation
 from ..services.logging import LoggingService
 from ..services.task_execution import TaskExecutionService
 from ..services.tracing import TracingService
 from .exceptions import OperationConfigError, wrap_error
-
-if TYPE_CHECKING:
-    from ..operations.function import Function
-    from ..operations.sequence import Sequence
 
 # Type variables for static typing
 T = TypeVar("T")
@@ -122,13 +119,16 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             # This will be extended as we add more operation types
             operation_type = type(operation)
 
-            from ..operations.function import Function
-            from ..operations.sequence import Sequence
-
             if operation_type is Function:
                 await self.exec_function(cast("Function[StateDictT]", operation), context)
             elif operation_type is Sequence:
                 await self.exec_sequence(cast("Sequence[StateDictT]", operation), context)
+            elif operation_type is Parallel:
+                await self.exec_parallel(cast("Parallel[StateDictT]", operation), context)
+            elif operation_type is Branch:
+                await self.exec_branch(cast("Branch[StateDictT]", operation), context)
+            elif operation_type is Loop:
+                await self.exec_loop(cast("Loop[StateDictT]", operation), context)
             else:
                 await self._exec_unknown(operation, context)
 
@@ -167,9 +167,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
     async def execute_task(
         self,
-        func: (
-            Callable[[Context[StateDictT]], Awaitable[None]] | Callable[[Context[StateDictT]], None]
-        ),
+        func: Callable[[Context[StateDictT]], Awaitable[None] | None],
         context: Context[StateDictT],
         timeout: Optional[float] = None,
     ) -> None:
@@ -222,6 +220,49 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
         Args:
             operation: The Sequence operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_parallel(
+        self, operation: Parallel[StateDictT], context: Context[StateDictT]
+    ) -> None:
+        """
+        Execute a Parallel operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Parallel operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_branch(
+        self, operation: Branch[StateDictT], context: Context[StateDictT]
+    ) -> None:
+        """
+        Execute a Branch operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Branch operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_loop(self, operation: Loop[StateDictT], context: Context[StateDictT]) -> None:
+        """
+        Execute a Loop operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Loop operation to execute
             context: The execution context
         """
         pass

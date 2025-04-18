@@ -43,7 +43,7 @@ class LoggingService(AsyncService):
         msg_parts = [f"Operation[{operation_name}]"]
 
         if context_path:
-            path_str = ".".join(str(p) for p in context_path)
+            path_str = context_path
             msg_parts.append(f"Path[{path_str}]")
 
         msg_parts.append(f"Status[{status}]")
@@ -146,13 +146,13 @@ class LoggingService(AsyncService):
         """
         logger.warning(message)
 
-    def error(self, message: str) -> None:
+    def error(self, message: str, exc_info: Exception | None = None) -> None:
         """
         Log an error message.
         Args:
             message: The error message to log
         """
-        logger.error(message)
+        logger.error(message, exc_info=exc_info)
 
     def critical(self, message: str) -> None:
         """
