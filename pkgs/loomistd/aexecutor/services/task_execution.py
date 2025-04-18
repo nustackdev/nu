@@ -12,7 +12,7 @@ from typing import Any, Awaitable, Callable, TypeVar
 
 from loomi import AsyncService, Spec
 
-from ..context import Context
+from ..context.context import Context
 from .exceptions import TaskExecutionCancelledError, TaskExecutionTimeoutError
 from .logger import logger
 

@@ -17,7 +17,7 @@ from .base import Operation
 from .metadata import OperationMetadata
 
 if TYPE_CHECKING:
-    from ..context import Context
+    from ..context.context import Context
 
 __all__ = [
     "Function",

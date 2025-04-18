@@ -1,12 +1,24 @@
 """
-Error types and utilities for the operations framework.
+Custom exceptions for the operations execution engine.
 
-This module defines the error hierarchy and helper functions for
-consistent error handling throughout the operations framework.
+This module defines the exception hierarchy for the execution engine,
+providing rich context information and consistent error handling.
 """
 
+from __future__ import annotations
+
 import traceback
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, TypeVar
+
+if TYPE_CHECKING:
+    pass
+
+    from ..context.context import Context
+    from ..operations.base import Operation
+
+# Type variable for operation type
+OperationT = TypeVar("OperationT")
+ContextT = TypeVar("ContextT")
 
 
 class OperationError(Exception):
@@ -15,13 +27,21 @@ class OperationError(Exception):
 
     Provides context about where the error occurred and what the operation
     was attempting to do.
+
+    Attributes:
+        operation: The operation that raised the error
+        context: The execution context when the error occurred
+        state_path: The state path involved in the error
+        config: Additional configuration that led to the error
+        cause: The original exception that caused this error
+        traceback: The formatted traceback when the error occurred
     """
 
     def __init__(
         self,
         message: str,
-        operation=None,
-        context=None,
+        operation: Optional[Operation] = None,
+        context: Optional[Context] = None,
         state_path: Optional[Tuple[str, ...]] = None,
         config: Optional[Dict[str, Any]] = None,
         cause: Optional[Exception] = None,
@@ -45,8 +65,8 @@ class OperationError(Exception):
             op_name = getattr(self.operation, "__class__", self.operation).__name__
             parts.append(f"Operation: {op_name}")
 
-        if self.context and hasattr(self.context, "path"):
-            parts.append(f"Context path: {self.context.path}")
+        if self.context and hasattr(self.context, "scope") and hasattr(self.context.scope, "path"):
+            parts.append(f"Context path: {self.context.scope.path}")
 
         if self.state_path:
             parts.append(f"State path: {self.state_path}")
@@ -65,8 +85,7 @@ class OperationTimeoutError(OperationError):
     """
     Raised when an operation exceeds its time limit.
 
-    This error is raised by the Timeout operation when the wrapped
-    operation takes longer than the specified timeout.
+    This error is raised when an operation takes longer than the specified timeout.
     """
 
     pass
@@ -117,9 +136,15 @@ class OperationExecutionError(OperationError):
     pass
 
 
-def wrap_error(error: Exception, operation=None, context=None) -> OperationError:
+def wrap_error(
+    error: Exception, operation: Optional[Operation] = None, context: Optional[Context] = None
+) -> OperationError:
     """
     Wrap a generic exception in an appropriate OperationError.
+
+    This function examines the type of the original exception and wraps it
+    in the most specific OperationError subclass that applies. If the original
+    exception is already an OperationError, it is returned unchanged.
 
     Args:
         error: The original exception

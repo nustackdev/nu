@@ -16,7 +16,7 @@ from loomi.interfaces.state.type_vars import StateDictT
 from .base import Operation
 
 if TYPE_CHECKING:
-    from ..context import Context
+    from ..context.context import Context
 
 
 class Sequence(Operation[StateDictT]):

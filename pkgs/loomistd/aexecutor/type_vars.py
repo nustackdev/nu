@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, TypeVar
 if TYPE_CHECKING:
     from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
 
-    from .context import Context
+    from .context.context import Context
     from .operations.base import Operation
     from .operations.function import Function
     from .operations.sequence import Sequence

@@ -16,7 +16,7 @@ from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProto
 from loomi.interfaces.state.type_vars import StateDictT
 
 if TYPE_CHECKING:
-    from .operations.base import Operation
+    from ..operations.base import Operation
 
 
 @dataclass

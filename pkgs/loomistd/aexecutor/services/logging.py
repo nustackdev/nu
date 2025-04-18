@@ -4,11 +4,17 @@ Logging utilities for the operations framework.
 This module provides a consistent logging interface for the operations framework.
 """
 
+from __future__ import annotations
+
 from typing import Any, Dict, Optional
 
 from loomi.service import AsyncService
 
 from .logger import logger
+
+__all__ = [
+    "LoggingService",
+]
 
 
 class LoggingService(AsyncService):
@@ -112,3 +118,46 @@ class LoggingService(AsyncService):
                 ),
             )
         )
+
+    def debug(self, message: str) -> None:
+        """
+        Log a debug message.
+
+        Args:
+            message: The debug message to log
+        """
+        logger.debug(message)
+
+    def info(self, message: str) -> None:
+        """
+        Log an info message.
+
+        Args:
+            message: The info message to log
+        """
+        logger.info(message)
+
+    def warning(self, message: str) -> None:
+        """
+        Log a warning message.
+
+        Args:
+            message: The warning message to log
+        """
+        logger.warning(message)
+
+    def error(self, message: str) -> None:
+        """
+        Log an error message.
+        Args:
+            message: The error message to log
+        """
+        logger.error(message)
+
+    def critical(self, message: str) -> None:
+        """
+        Log a critical message.
+        Args:
+            message: The critical message to log
+        """
+        logger.critical(message)

@@ -19,7 +19,7 @@ from loomi.interfaces.state.type_vars import StateDictT
 from .metadata import OperationMetadata
 
 if TYPE_CHECKING:
-    from ..context import Context
+    from ..context.context import Context
 
 
 class Operation(ABC, NodeMixin, Generic[StateDictT]):
