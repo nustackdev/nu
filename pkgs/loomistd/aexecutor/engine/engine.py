@@ -20,9 +20,15 @@ from ..services.task_execution import TaskExecutionService
 from ..services.tracing import TracingService
 from .atom import AtomEngine
 from .flow import FlowEngine
+from .timing import TimingEngine
 
 
-class ExecutionEngine(AsyncService, AtomEngine[StateT, StateDictT], FlowEngine[StateT, StateDictT]):
+class ExecutionEngine(
+    AsyncService,
+    AtomEngine[StateT, StateDictT],
+    FlowEngine[StateT, StateDictT],
+    TimingEngine[StateT, StateDictT],
+):
     """
     Central orchestrator for operation execution.
 
@@ -63,7 +69,7 @@ class ExecutionEngine(AsyncService, AtomEngine[StateT, StateDictT], FlowEngine[S
         # functionality specific to the combined engine
         await super().exec_operation(context)
 
-    def render_tree(self, tree: Operation[StateDictT]) -> str:
+    def render_tree(self, tree: Operation[StateDictT]) -> str:  # noqa: C901
         """
         Render an operation tree as a string visualization.
 
@@ -81,15 +87,52 @@ class ExecutionEngine(AsyncService, AtomEngine[StateT, StateDictT], FlowEngine[S
             # Get node name
             node_name = node.__class__.__name__
 
-            # Add function name if available
+            # Add function name if available for Function operations
             func_name = ""
             if hasattr(node, "_func"):
                 func_name = getattr(node._func, "__name__", str(node._func))
                 if func_name:
                     func_name = f" {func_name}"
 
+            # Add operation-specific information
+            extra_info = ""
+
+            # Flow operations
+            if hasattr(node, "branch_ops") and hasattr(node, "condition"):
+                if node.condition:
+                    extra_info = " (condition_func)"
+                elif node.condition_path:
+                    extra_info = f" (condition_path={node.condition_path})"
+            elif hasattr(node, "loop_op") and hasattr(node, "max_iterations"):
+                if node.max_iterations:
+                    extra_info = f" (max_iterations={node.max_iterations})"
+                if node.condition:
+                    extra_info += " (condition_func)"
+                elif node.condition_path:
+                    extra_info += f" (condition_path={node.condition_path})"
+            elif hasattr(node, "max_concurrency"):
+                extra_info = f" (max_concurrency={node.max_concurrency})"
+
+            # Timing operations
+            elif hasattr(node, "delay") and hasattr(node, "delay_path"):
+                if callable(node.delay):
+                    extra_info = " (delay_func)"
+                elif node.delay is not None:
+                    extra_info = f" (delay={node.delay}s)"
+                elif node.delay_path:
+                    extra_info = f" (delay_path={node.delay_path})"
+            elif hasattr(node, "timeout") and hasattr(node, "timeout_op"):
+                extra_info = f" (timeout={node.timeout}s)"
+                if node.on_timeout:
+                    extra_info += " with on_timeout"
+            elif hasattr(node, "max_attempts") and hasattr(node, "retry_op"):
+                extra_info = f" (max_attempts={node.max_attempts})"
+                if node.retry_on:
+                    retry_exceptions = [exc.__name__ for exc in node.retry_on]
+                    extra_info += f" retry_on={retry_exceptions}"
+
             # Add to result
-            result.append(f"{pre}{node_name}{func_name}")
+            result.append(f"{pre}{node_name}{func_name}{extra_info}")
 
         return "\n".join(result)
 

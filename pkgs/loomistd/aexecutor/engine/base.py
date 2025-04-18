@@ -15,7 +15,7 @@ from typing import Awaitable, Callable, Generic, Optional, TypeVar, cast
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context.context import Context
-from ..operations import Branch, Function, Loop, Parallel, Sequence
+from ..operations import Branch, Delay, Function, Loop, Parallel, Retry, Sequence, Timeout
 from ..operations.base import Operation
 from ..services.logging import LoggingService
 from ..services.task_execution import TaskExecutionService
@@ -120,15 +120,21 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             operation_type = type(operation)
 
             if operation_type is Function:
-                await self.exec_function(cast("Function[StateDictT]", operation), context)
+                await self.exec_function(cast(Function[StateDictT], operation), context)
             elif operation_type is Sequence:
-                await self.exec_sequence(cast("Sequence[StateDictT]", operation), context)
+                await self.exec_sequence(cast(Sequence[StateDictT], operation), context)
             elif operation_type is Parallel:
-                await self.exec_parallel(cast("Parallel[StateDictT]", operation), context)
+                await self.exec_parallel(cast(Parallel[StateDictT], operation), context)
             elif operation_type is Branch:
-                await self.exec_branch(cast("Branch[StateDictT]", operation), context)
+                await self.exec_branch(cast(Branch[StateDictT], operation), context)
             elif operation_type is Loop:
-                await self.exec_loop(cast("Loop[StateDictT]", operation), context)
+                await self.exec_loop(cast(Loop[StateDictT], operation), context)
+            elif operation_type is Delay:
+                await self.exec_delay(cast(Delay[StateDictT], operation), context)
+            elif operation_type is Retry:
+                await self.exec_retry(cast(Retry[StateDictT], operation), context)
+            elif operation_type is Timeout:
+                await self.exec_timeout(cast(Timeout[StateDictT], operation), context)
             else:
                 await self._exec_unknown(operation, context)
 
@@ -263,6 +269,47 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
         Args:
             operation: The Loop operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_delay(self, operation: Delay[StateDictT], context: Context[StateDictT]) -> None:
+        """
+        Execute a Delay operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Delay operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_retry(self, operation: Retry[StateDictT], context: Context[StateDictT]) -> None:
+        """
+        Execute a Retry operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Retry operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_timeout(
+        self, operation: Timeout[StateDictT], context: Context[StateDictT]
+    ) -> None:
+        """
+        Execute a Timeout operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Timeout operation to execute
             context: The execution context
         """
         pass
