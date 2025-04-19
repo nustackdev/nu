@@ -21,6 +21,7 @@ from ..operations import (
     Delay,
     Function,
     Loop,
+    Map,
     Operation,
     Parallel,
     Retry,
@@ -147,6 +148,8 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
                 await self.exec_retry(cast(Retry[StateDictT], operation), context)
             elif operation_type is Timeout:
                 await self.exec_timeout(cast(Timeout[StateDictT], operation), context)
+            elif operation_type is Map:
+                await self.exec_map(cast(Map[StateDictT], operation), context)
             else:
                 await self._exec_unknown(operation, context)
 
@@ -335,6 +338,19 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
         Args:
             operation: The Timeout operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_map(self, operation: Map[StateDictT], context: Context[StateDictT]) -> None:
+        """
+        Execute a Map operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Map operation to execute
             context: The execution context
         """
         pass

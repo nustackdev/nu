@@ -19,6 +19,7 @@ from ..services.logging import LoggingService
 from ..services.task_execution import TaskExecutionService
 from ..services.tracing import TracingService
 from .atom import AtomEngine
+from .collections import CollectionEngine
 from .flow import FlowEngine
 from .timing import TimingEngine
 
@@ -28,6 +29,7 @@ class ExecutionEngine(
     AtomEngine[StateT, StateDictT],
     FlowEngine[StateT, StateDictT],
     TimingEngine[StateT, StateDictT],
+    CollectionEngine[StateT, StateDictT],
 ):
     """
     Central orchestrator for operation execution.

@@ -69,7 +69,7 @@ class AsyncAppExecutionHandler(
         operation = None
         if inspect.iscoroutinefunction(operation_def_fn):
             operation = await operation_def_fn(context)
-        elif inspect.isfunction(operation_def_fn):
+        elif inspect.ismethod(operation_def_fn):
             operation = operation_def_fn(context)
         else:
             raise ExecutionError("Operation definition is not a function")
@@ -113,7 +113,7 @@ class SyncAppExecutionHandler(
         operation = None
         if inspect.iscoroutinefunction(operation_def_fn):
             raise ExecutionError("Async operation definition not supported")
-        elif inspect.isfunction(operation_def_fn):
+        elif inspect.ismethod(operation_def_fn):
             operation = operation_def_fn(context)
         else:
             raise ExecutionError("Operation definition is not a function")

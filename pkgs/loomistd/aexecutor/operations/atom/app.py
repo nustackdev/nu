@@ -75,6 +75,8 @@ class App(Operation[StateDictT]):
         elif isinstance(state_path, tuple):
             self._state_path = state_path
 
+        self.children = [self._app.define()]
+
     @property
     def app(self) -> Union[AsyncApp, SyncApp]:
         """
@@ -94,16 +96,6 @@ class App(Operation[StateDictT]):
             The state path or None if using current context's path
         """
         return self._state_path
-
-    @property
-    def is_async(self) -> bool:
-        """
-        Check if the app is asynchronous.
-
-        Returns:
-            True if the app is an AsyncApp, False if it's a SyncApp
-        """
-        return isinstance(self._app, AsyncApp)
 
     @property
     def metadata(self) -> OperationMetadata:

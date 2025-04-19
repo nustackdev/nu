@@ -1,6 +1,7 @@
 from .atom.app import App
 from .atom.function import Function
 from .base import Operation
+from .collections.map import Map
 from .flow.branch import Branch
 from .flow.loop import Loop
 from .flow.parallel import Parallel

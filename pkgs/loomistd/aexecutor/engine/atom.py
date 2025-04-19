@@ -96,7 +96,7 @@ class AtomEngine(EngineBase[StateT, StateDictT]):
         app_context = context.derive(operation=operation, scope=app_scope)
 
         # Execute the app
-        if operation.is_async:
+        if inspect.iscoroutinefunction(app.start):
             await app.start(app_context)
         else:
             app.start(app_context)
