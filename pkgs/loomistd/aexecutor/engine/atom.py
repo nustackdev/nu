@@ -8,11 +8,14 @@ the fundamental building blocks that don't contain child operations.
 
 from __future__ import annotations
 
+import inspect
+
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context.context import Context
-from ..operations import Function
+from ..operations import App, Function
 from .base import EngineBase
+from .exceptions import StateAccessError
 
 
 class AtomEngine(EngineBase[StateT, StateDictT]):
@@ -46,3 +49,56 @@ class AtomEngine(EngineBase[StateT, StateDictT]):
 
         # Execute the function through the task executor service
         await self.execute_task(operation._func, context)
+
+    async def exec_app(self, operation: App[StateDictT], context: Context[StateDictT]) -> None:
+        """
+        Execute an App operation.
+
+        Executes a Loomi app as an operation, optionally mounting it at a specific
+        state path. Handles both synchronous and asynchronous apps.
+
+        Args:
+            operation: The App operation to execute
+            context: The execution context
+
+        Raises:
+            StateAccessError: If the state path cannot be accessed
+            Exception: Any exception raised by the app
+        """
+        app = operation.app
+        state_path = operation.state_path
+
+        app_name = getattr(app, "__class__", app).__name__
+        self.logger.debug(f"Executing app {app_name}")
+
+        # Handle state path mounting
+        if state_path:
+            self.logger.debug(f"Mounting app at state path: {state_path}")
+
+            try:
+                if inspect.iscoroutinefunction(context.scope.dict):
+                    app_scope = await context.scope.dict(*state_path)
+                else:
+                    app_scope = context.scope.dict(*state_path)
+            except Exception as e:
+                raise StateAccessError(
+                    f"Failed to access state path {state_path}",
+                    operation=operation,
+                    context=context,
+                    state_path=state_path,
+                    cause=e,
+                )
+        else:
+            # Use current context's scope
+            app_scope = context.scope
+
+        # Create a derived context for the app
+        app_context = context.derive(operation=operation, scope=app_scope)
+
+        # Execute the app
+        if operation.is_async:
+            await app.start(app_context)
+        else:
+            app.start(app_context)
+
+        self.logger.debug(f"App {app_name} execution completed")

@@ -13,8 +13,8 @@ import anytree
 from loomi import AsyncService, Attach
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
-from ..context.context import Context
-from ..operations.base import Operation
+from ..context import Context
+from ..operations import Operation
 from ..services.logging import LoggingService
 from ..services.task_execution import TaskExecutionService
 from ..services.tracing import TracingService

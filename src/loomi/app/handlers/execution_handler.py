@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import inspect
 from typing import cast
 
 from loomi.descriptors.use_service import ServiceDescriptor
+from loomi.interfaces.executor.context import ContextProtocol
+from loomi.interfaces.executor.executor import AsyncExecutorProtocol, SyncExecutorProtocol
 
 from ..base import AppABC, AsyncAppABC, SyncAppABC
 from ..exceptions import ExecutionError
@@ -57,26 +60,24 @@ class AsyncAppExecutionHandler(
         """Short alias for state adapter."""
         return self.executor
 
-    # async def start(self, context: ContextProtocol[StateT] | None = None) -> None:
-    #     """Run the app."""
-    #     operation_def_fn = getattr(self, "define", None)
-    #     if not operation_def_fn:
-    #         raise ExecutionError("No operation defined")
+    async def start(self, context: ContextProtocol | None = None) -> None:
+        """Run the app."""
+        operation_def_fn = getattr(self, "define", None)
+        if not operation_def_fn:
+            raise ExecutionError("No operation defined")
 
-    #     operation = None
-    #     if inspect.iscoroutinefunction(operation_def_fn):
-    #         operation = await operation_def_fn(context)
-    #     elif inspect.isfunction(operation_def_fn):
-    #         operation = operation_def_fn(context)
-    #     else:
-    #         raise ExecutionError("Operation definition is not a function")
+        operation = None
+        if inspect.iscoroutinefunction(operation_def_fn):
+            operation = await operation_def_fn(context)
+        elif inspect.isfunction(operation_def_fn):
+            operation = operation_def_fn(context)
+        else:
+            raise ExecutionError("Operation definition is not a function")
 
-    #     if isinstance(self.executor, AsyncExecutorProtocol):
-    #         await self.executor.execute(operation, context)
-    #     elif isinstance(self.e, SyncExecutorProtocol):
-    #         if isinstance(operation, AsyncOperationProtocol):
-    #             raise ExecutionError("Async operation cannot be executed in sync engine")
-    #         self.executor.execute(operation, context)
+        if isinstance(self.executor, AsyncExecutorProtocol):
+            await self.executor.execute(operation, context)
+        elif isinstance(self.executor, SyncExecutorProtocol):
+            self.executor.execute(operation, context)
 
 
 class SyncAppExecutionHandler(
@@ -103,7 +104,21 @@ class SyncAppExecutionHandler(
         """Short alias for state adapter."""
         return self.executor
 
-    # def start(self, context: ContextProtocol[StateT] | None = None) -> None:
-    #     """Run the app."""
-    #     # TODO: implement sync execution
-    #     ...
+    def start(self, context: ContextProtocol | None = None) -> None:
+        """Run the app."""
+        operation_def_fn = getattr(self, "define", None)
+        if not operation_def_fn:
+            raise ExecutionError("No operation defined")
+
+        operation = None
+        if inspect.iscoroutinefunction(operation_def_fn):
+            raise ExecutionError("Async operation definition not supported")
+        elif inspect.isfunction(operation_def_fn):
+            operation = operation_def_fn(context)
+        else:
+            raise ExecutionError("Operation definition is not a function")
+
+        if isinstance(self.executor, AsyncExecutorProtocol):
+            raise ExecutionError("Async execution engine not supported")
+        elif isinstance(self.executor, SyncExecutorProtocol):
+            self.executor.execute(operation, context)

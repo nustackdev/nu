@@ -15,12 +15,9 @@ from typing import TYPE_CHECKING, Union
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
-from ..engine.exceptions import OperationConfigError, OperationExecutionError
-from ..operations.flow.branch import Branch
-from ..operations.flow.loop import Loop
-from ..operations.flow.parallel import Parallel
-from ..operations.flow.sequence import Sequence
+from ..operations import Branch, Loop, Parallel, Sequence
 from .base import EngineBase
+from .exceptions import OperationConfigError, OperationExecutionError
 
 if TYPE_CHECKING:
     from ..operations import Operation

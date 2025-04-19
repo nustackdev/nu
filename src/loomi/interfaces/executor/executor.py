@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from .type_vars import (
     ContextT_contra,
@@ -11,6 +11,7 @@ from .type_vars import (
 )
 
 
+@runtime_checkable
 class AsyncExecutorProtocol(
     Protocol[
         ContextT_contra,
@@ -50,6 +51,7 @@ class AsyncExecutorProtocol(
     ) -> None: ...
 
 
+@runtime_checkable
 class SyncExecutorProtocol(
     Protocol[
         SyncContextT_contra,

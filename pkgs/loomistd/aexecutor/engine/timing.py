@@ -13,11 +13,9 @@ import inspect
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
-from ..engine.exceptions import OperationExecutionError, OperationTimeoutError
-from ..operations.timing.delay import Delay
-from ..operations.timing.retry import Retry
-from ..operations.timing.timeout import Timeout
+from ..operations import Delay, Retry, Timeout
 from .base import EngineBase
+from .exceptions import OperationExecutionError, OperationTimeoutError
 
 
 class TimingEngine(EngineBase[StateT, StateDictT]):

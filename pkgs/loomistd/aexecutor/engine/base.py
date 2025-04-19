@@ -14,9 +14,19 @@ from typing import Awaitable, Callable, Generic, Optional, TypeVar, cast
 
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
-from ..context.context import Context
-from ..operations import Branch, Delay, Function, Loop, Parallel, Retry, Sequence, Timeout
-from ..operations.base import Operation
+from ..context import Context
+from ..operations import (
+    App,
+    Branch,
+    Delay,
+    Function,
+    Loop,
+    Operation,
+    Parallel,
+    Retry,
+    Sequence,
+    Timeout,
+)
 from ..services.logging import LoggingService
 from ..services.task_execution import TaskExecutionService
 from ..services.tracing import TracingService
@@ -121,6 +131,8 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
             if operation_type is Function:
                 await self.exec_function(cast(Function[StateDictT], operation), context)
+            elif operation_type is App:
+                await self.exec_app(cast(App[StateDictT], operation), context)
             elif operation_type is Sequence:
                 await self.exec_sequence(cast(Sequence[StateDictT], operation), context)
             elif operation_type is Parallel:
@@ -211,6 +223,19 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
         Args:
             operation: The Function operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_app(self, operation: App[StateDictT], context: Context[StateDictT]) -> None:
+        """
+        Execute a App operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The App operation to execute
             context: The execution context
         """
         pass
