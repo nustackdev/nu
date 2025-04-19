@@ -21,6 +21,7 @@ from ..services.tracing import TracingService
 from .atom import AtomEngine
 from .collections import CollectionEngine
 from .flow import FlowEngine
+from .reactive import ReactiveEngine
 from .timing import TimingEngine
 
 
@@ -30,6 +31,7 @@ class ExecutionEngine(
     FlowEngine[StateT, StateDictT],
     TimingEngine[StateT, StateDictT],
     CollectionEngine[StateT, StateDictT],
+    ReactiveEngine[StateT, StateDictT],
 ):
     """
     Central orchestrator for operation execution.
@@ -52,6 +54,25 @@ class ExecutionEngine(
     executor = Attach(TaskExecutionService)
     tracing = Attach(TracingService)
     logger = Attach(LoggingService)
+
+    async def setup(self):
+        """
+        Setup the execution engine.
+
+        This method sets up the engine, initializes services, and prepares
+        for operation execution. It should be called before executing any
+        operations.
+        """
+        await self.setup_reactive()
+
+    async def cleanup(self):
+        """
+        Cleanup the engine and clean up resources.
+
+        This method ensures that all active operations are completed and
+        resources are released properly.
+        """
+        await self.cleanup_reactive()
 
     async def exec_operation(self, context: Context[StateDictT]) -> None:
         """

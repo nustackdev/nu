@@ -26,6 +26,7 @@ from ..operations import (
     Parallel,
     Retry,
     Sequence,
+    Subscribe,
     Timeout,
 )
 from ..services.logging import LoggingService
@@ -150,6 +151,8 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
                 await self.exec_timeout(cast(Timeout[StateDictT], operation), context)
             elif operation_type is Map:
                 await self.exec_map(cast(Map[StateDictT], operation), context)
+            elif operation_type is Subscribe:
+                await self.exec_subscribe(cast(Subscribe[StateDictT], operation), context)
             else:
                 await self._exec_unknown(operation, context)
 
@@ -351,6 +354,21 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
         Args:
             operation: The Map operation to execute
+            context: The execution context
+        """
+        pass
+
+    @abstractmethod
+    async def exec_subscribe(
+        self, operation: Subscribe[StateDictT], context: Context[StateDictT]
+    ) -> None:
+        """
+        Execute a Subscribe operation.
+
+        Abstract method to be implemented by specialized engines.
+
+        Args:
+            operation: The Subscribe operation to execute
             context: The execution context
         """
         pass
