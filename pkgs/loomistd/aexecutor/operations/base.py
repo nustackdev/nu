@@ -72,6 +72,14 @@ class Operation(ABC, DAGNodeMixin["Operation"], Generic[StateDictT]):
             custom_properties={},
         )
 
+    def __repr__(self):
+        """Return a string representation of the operation."""
+        return (
+            f"{self.__class__.__name__}("
+            f"error_behavior={self._error_behavior}, "
+            f"on_fail={self._on_fail})"
+        )
+
 
 if TYPE_CHECKING:
     _: type[OperationProtocol[Operation, "Context"]] = Operation

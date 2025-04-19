@@ -69,6 +69,69 @@ class TreeStorageBase(ABC, Generic[TreeValueT]):
         list_path = (path,) + paths
         return await self._tree_storage_core.list(list_path, txn=txn)
 
+    async def is_dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path is a dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a dictionary node, False otherwise
+        """
+        dict_path = (path,) + paths
+        return await self._tree_storage_core.is_dict(dict_path, txn=txn)
+
+    async def is_list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path is a list node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a list node, False otherwise
+        """
+        list_path = (path,) + paths
+        return await self._tree_storage_core.is_list(list_path, txn=txn)
+
+    async def exists(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path exists.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        exists_path = (path,) + paths
+        return await self._tree_storage_core.exists(exists_path, txn=txn)
+
     async def begin_transaction(self) -> AsyncTransactionProtocol[TreeValueT]:
         """
         Begin a new transaction.

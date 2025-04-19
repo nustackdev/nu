@@ -74,6 +74,66 @@ class AsyncStateProtocol(Protocol[StateValueT]):
         """
         ...
 
+    async def is_dict(
+        self,
+        path: StatePathComponent,
+        /,
+        *paths: StatePathComponent,
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> bool:
+        """
+        Check if the path is a dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a dictionary node, False otherwise
+        """
+        ...
+
+    async def is_list(
+        self,
+        path: StatePathComponent,
+        /,
+        *paths: StatePathComponent,
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> bool:
+        """
+        Check if the path is a list node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a list node, False otherwise
+        """
+        ...
+
+    async def exists(
+        self,
+        path: StatePathComponent,
+        /,
+        *paths: StatePathComponent,
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> bool:
+        """
+        Check if the path exists.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        ...
+
     async def begin_transaction(self) -> "AsyncTransactionProtocol[StateValueT]":
         """
         Begin a new transaction.
@@ -179,6 +239,66 @@ class SyncStateProtocol(Protocol[StateValueT]):
 
         Returns:
             A new SyncTreeListProtocol instance for the nested list node
+        """
+        ...
+
+    def is_dict(
+        self,
+        path: StatePathComponent,
+        /,
+        *paths: StatePathComponent,
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> bool:
+        """
+        Check if the path is a dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a dictionary node, False otherwise
+        """
+        ...
+
+    def is_list(
+        self,
+        path: StatePathComponent,
+        /,
+        *paths: StatePathComponent,
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> bool:
+        """
+        Check if the path is a list node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a list node, False otherwise
+        """
+        ...
+
+    def exists(
+        self,
+        path: StatePathComponent,
+        /,
+        *paths: StatePathComponent,
+        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+    ) -> bool:
+        """
+        Check if the path exists.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path exists, False otherwise
         """
         ...
 

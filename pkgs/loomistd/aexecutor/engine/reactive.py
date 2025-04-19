@@ -162,19 +162,11 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
         self.logger.debug(f"Handling change at {change_path} for Subscribe operation")
 
         try:
-            # # Create a scope for the change path
-            # if inspect.iscoroutinefunction(parent_context.scope.dict):
-            #     change_scope = await parent_context.scope.dict(*change_path)
-            # else:
-            #     change_scope = parent_context.scope.dict(*change_path)
-
             # # Create context for this execution
-            # change_context = parent_context.derive(operation=subscribe_op, scope=change_scope)
             change_context = parent_context.derive(operation=subscribe_op)
 
             # Add change metadata to context
             change_context["change_path"] = change_path
-            change_context["subscription_id"] = subscription_id
 
             # Execute the operation
             await self.exec_operation(change_context)

@@ -11,7 +11,6 @@ import asyncio
 import inspect
 from typing import List, Tuple
 
-from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
@@ -53,10 +52,10 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
         )
 
         # Check if the items path exists
-        if inspect.iscoroutinefunction(context.scope.exists):
-            path_exists = await context.scope.exists(*items_path)
+        if inspect.iscoroutinefunction(self.state.exists):
+            path_exists = await self.state.exists(*items_path)
         else:
-            path_exists = context.scope.exists(*items_path)
+            path_exists = self.state.exists(*items_path)
 
         if not path_exists:
             raise StateAccessError(
@@ -67,10 +66,10 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
             )
 
         # Verify it's a dictionary
-        if inspect.iscoroutinefunction(context.scope.is_dict):
-            is_dict = await context.scope.is_dict(*items_path)
+        if inspect.iscoroutinefunction(self.state.is_dict):
+            is_dict = await self.state.is_dict(*items_path)
         else:
-            is_dict = context.scope.is_dict(*items_path)
+            is_dict = self.state.is_dict(*items_path)
 
         if not is_dict:
             raise StateAccessError(
@@ -81,11 +80,11 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
             )
 
         # Get the dictionary object
-        if inspect.iscoroutinefunction(context.scope.dict):
-            dict_obj: AsyncTreeDictProtocol = await context.scope.dict(*items_path)
+        if inspect.iscoroutinefunction(self.state.dict):
+            dict_obj = await self.state.dict(*items_path)
             keys = await dict_obj.keys()
         else:
-            dict_obj: SyncTreeDictProtocol = context.scope.dict(*items_path)
+            dict_obj = self.state.dict(*items_path)
             keys = dict_obj.keys()
 
         item_count = len(keys)
@@ -133,18 +132,12 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
             self.logger.debug(f"Processing item {index + 1}/{len(keys)}: {key}")
 
             try:
-                # Get the scope for this item
-                if inspect.iscoroutinefunction(context.scope.dict):
-                    item_scope = await context.scope.dict(*items_path, key)
-                else:
-                    item_scope = context.scope.dict(*items_path, key)
-
                 # Create context for this item
-                item_context = context.derive(operation=map_op, scope=item_scope)
+                item_context = context.derive(operation=map_op)
 
                 # Add map metadata to context
                 item_context["map_key"] = key
-                item_context["map_index"] = index
+                item_context["map_path"] = items_path + (key,)
 
                 # Execute the operation for this item
                 await self.exec_operation(item_context)
@@ -210,7 +203,7 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
                 await self._process_map_item(operation, context, items_path, key, index)
 
         # Create tasks for all items
-        tasks = []
+        tasks: list[asyncio.Task] = []
         for index, key in enumerate(keys):
             task = asyncio.create_task(process_item(key, index), name=f"map-{index}")
             tasks.append(task)
@@ -264,18 +257,12 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
         map_op = operation.map_op
 
         try:
-            # Get the scope for this item
-            if inspect.iscoroutinefunction(context.scope.dict):
-                item_scope = await context.scope.dict(*items_path, key)
-            else:
-                item_scope = context.scope.dict(*items_path, key)
-
             # Create context for this item
-            item_context = context.derive(operation=map_op, scope=item_scope)
+            item_context = context.derive(operation=map_op)
 
             # Add map metadata to context
             item_context["map_key"] = key
-            item_context["map_index"] = index
+            item_context["map_path"] = items_path + (key,)
 
             # Execute the operation for this item
             await self.exec_operation(item_context)

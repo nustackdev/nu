@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from typing import Generic, TypeVar
 
 import networkx as nx
@@ -19,45 +20,48 @@ class DAGNodeMixin(Generic[NodeT]):
     def __init__(self) -> None:
         """Initialize the DAG node."""
         self._parents: set[NodeT] = set()
-        self._children: set[NodeT] = set()
+        # Use OrderedDict instead of set to preserve insertion order of children
+        self._children: OrderedDict[int, NodeT] = OrderedDict()
         DAGNodeMixin._dag.add_node(id(self), obj=self)
 
     @property
     def children(self) -> tuple[NodeT, ...]:
         """Get children of this node."""
-        return tuple(self._children)
+        return tuple(self._children.values())
 
     @children.setter
     def children(self, children: tuple[NodeT, ...]) -> None:
         """Set children of this node."""
         # Remove existing children
-        for child in list(self._children):
+        for child in list(self._children.values()):
             self._remove_child(child)
 
-        # Add new children
+        # Add new children in the given order
         for child in children:
             self._add_child(child)
 
     @children.deleter
     def children(self) -> None:
         """Delete all children of this node."""
-        for child in list(self._children):
+        for child in list(self._children.values()):
             self._remove_child(child)
 
     def _add_child(self, child: NodeT) -> None:
         """Add a child to this node."""
-        if child not in self._children:
-            self._children.add(child)
+        child_id = id(child)
+        if child_id not in self._children:
+            self._children[child_id] = child
             child._parents.add(self)
-            DAGNodeMixin._dag.add_edge(id(self), id(child))
+            DAGNodeMixin._dag.add_edge(id(self), child_id)
 
     def _remove_child(self, child: NodeT) -> None:
         """Remove a child from this node."""
-        if child in self._children:
-            self._children.remove(child)
+        child_id = id(child)
+        if child_id in self._children:
+            del self._children[child_id]
             child._parents.remove(self)
-            if DAGNodeMixin._dag.has_edge(id(self), id(child)):
-                DAGNodeMixin._dag.remove_edge(id(self), id(child))
+            if DAGNodeMixin._dag.has_edge(id(self), child_id):
+                DAGNodeMixin._dag.remove_edge(id(self), child_id)
 
     @property
     def parents(self) -> tuple[NodeT, ...]:
@@ -93,7 +97,7 @@ class DAGNodeMixin(Generic[NodeT]):
             if id(node) not in visited:
                 visited.add(id(node))
                 ancestors.append(node)
-                nodes_to_visit.extend(node._parents)
+                nodes_to_visit.extend(node._parents)  # type: ignore
 
         return ancestors
 
@@ -101,7 +105,7 @@ class DAGNodeMixin(Generic[NodeT]):
     def descendants(self) -> list[NodeT]:
         """Get all descendants of this node."""
         descendants = []
-        nodes_to_visit: list[NodeT] = list(self._children)
+        nodes_to_visit: list[NodeT] = list(self._children.values())
         visited = set()
 
         while nodes_to_visit:
@@ -109,7 +113,7 @@ class DAGNodeMixin(Generic[NodeT]):
             if id(node) not in visited:
                 visited.add(id(node))
                 descendants.append(node)
-                nodes_to_visit.extend(node._children)
+                nodes_to_visit.extend(node._children.values())
 
         return descendants
 

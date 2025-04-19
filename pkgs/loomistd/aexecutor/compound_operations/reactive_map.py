@@ -13,6 +13,7 @@ from typing import Optional, Tuple, Union
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
+from ..context import Context
 from ..operations.atom.function import Function
 from ..operations.base import Operation
 from ..operations.collections.map import Map
@@ -76,7 +77,7 @@ def ReactiveMap(
     processed_keys = set()
 
     # Define a wrapper function that updates our registry
-    async def process_item(context):
+    async def process_item(context: Context[StateDictT]):
         """Process a single item and track it in our registry."""
         # Get the key from the context (added by Map operation)
         key = context["map_key"]
@@ -87,30 +88,21 @@ def ReactiveMap(
         # The engine will execute the operation with this context
 
     # Define a change handler function
-    async def handle_change(context):
+    async def handle_change(context: Context[StateDictT]):
         """Handle collection changes and process new items."""
         # Extract change information
         change_path = context["change_path"]
 
         # The last element of the path is the key that changed
-        if not change_path or len(change_path) <= len(items_path):
-            # Not a change to an item in our collection
-            return
+        if len(change_path) != len(items_path) + 1:
+            raise ValueError(
+                f"Invalid change path length: {len(change_path)}. Expected {len(items_path) + 1}"
+            )
 
         # Get the key that changed
-        key = change_path[len(items_path)]
+        key = change_path[-1]
 
-        # Check if this key exists in state
-        try:
-            # Navigate to the collection
-            collection = await context.scope.dict(*items_path)
-            # Check if the key exists
-            key_exists = key in await collection.keys()
-        except Exception:
-            # If we can't check, assume it doesn't exist
-            key_exists = False
-
-        if key_exists and key not in processed_keys:
+        if key not in processed_keys:
             # New item added - process it
             logger.debug(f"New item added at key {key}, processing")
 
@@ -118,15 +110,9 @@ def ReactiveMap(
             processed_keys.add(key)
 
             # The engine will execute the operation with this context
-
-        elif key_exists and key in processed_keys:
+        elif key in processed_keys:
             # Existing item updated - just log
             logger.debug(f"Item at key {key} was updated, not reprocessing")
-
-        elif not key_exists and key in processed_keys:
-            # Item removed - log and remove from processed set
-            logger.debug(f"Item at key {key} was removed")
-            processed_keys.discard(key)
 
     # First map over all existing items
     initial_map = Map(
