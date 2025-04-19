@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from loomi.interfaces.executor.operations import TimeoutOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
 from ..base import Operation
 
 if TYPE_CHECKING:
-    pass
+    from ...context import Context
 
 
 class Timeout(Operation[StateDictT]):
@@ -109,3 +110,7 @@ class Timeout(Operation[StateDictT]):
             The on_timeout operation or None if not specified
         """
         return self._on_timeout
+
+
+if TYPE_CHECKING:
+    _: type[TimeoutOperationProtocol[Operation, "Context"]] = Timeout

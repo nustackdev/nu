@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Tuple
 
+from loomi.interfaces.executor.operations import LoopOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
@@ -159,5 +160,5 @@ class Loop(Operation[StateDictT]):
         return self._on_finish
 
 
-# if TYPE_CHECKING:
-#     _: type[FunctionOperationProtocol[Operation, "Context"]] = Function
+if TYPE_CHECKING:
+    _: type[LoopOperationProtocol[Operation, "Context"]] = Loop

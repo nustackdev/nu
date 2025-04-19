@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional, Type
 
+from loomi.interfaces.executor.operations import RetryOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
 from ..base import Operation
 
 if TYPE_CHECKING:
-    pass
+    from ...context import Context
 
 
 class Retry(Operation[StateDictT]):
@@ -156,3 +157,7 @@ class Retry(Operation[StateDictT]):
             The exception types or None if retrying on any exception
         """
         return self._retry_on
+
+
+if TYPE_CHECKING:
+    _: type[RetryOperationProtocol[Operation, "Context"]] = Retry

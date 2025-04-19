@@ -5,7 +5,8 @@ from typing import cast
 
 from loomi.descriptors.use_service import ServiceDescriptor
 from loomi.interfaces.executor.context import ContextProtocol
-from loomi.interfaces.executor.executor import AsyncExecutorProtocol, SyncExecutorProtocol
+from loomi.interfaces.executor.executor import SyncExecutorProtocol
+from loomi.interfaces.executor.operations import OperationProtocol
 
 from ..base import AppABC, AsyncAppABC, SyncAppABC
 from ..exceptions import ExecutionError
@@ -74,10 +75,14 @@ class AsyncAppExecutionHandler(
         else:
             raise ExecutionError("Operation definition is not a function")
 
-        if isinstance(self.executor, AsyncExecutorProtocol):
+        if inspect.iscoroutinefunction(self.executor.execute):
             await self.executor.execute(operation, context)
-        elif isinstance(self.executor, SyncExecutorProtocol):
+        else:
             self.executor.execute(operation, context)
+
+    def define(self, context: ContextProtocol | None = None) -> OperationProtocol:
+        """Define the operation to execute."""
+        raise NotImplementedError("Subclasses must implement this method")
 
 
 class SyncAppExecutionHandler(
@@ -118,7 +123,11 @@ class SyncAppExecutionHandler(
         else:
             raise ExecutionError("Operation definition is not a function")
 
-        if isinstance(self.executor, AsyncExecutorProtocol):
+        if inspect.iscoroutinefunction(self.executor.execute):
             raise ExecutionError("Async execution engine not supported")
         elif isinstance(self.executor, SyncExecutorProtocol):
             self.executor.execute(operation, context)
+
+    def define(self, context: ContextProtocol | None = None) -> OperationProtocol:
+        """Define the operation to execute."""
+        raise NotImplementedError("Subclasses must implement this method")

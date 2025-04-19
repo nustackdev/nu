@@ -7,13 +7,17 @@ for each item in a collection from the state.
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
+from loomi.interfaces.executor.operations import MapOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
 from ..base import Operation
 from ..metadata import OperationMetadata
+
+if TYPE_CHECKING:
+    from ...context import Context
 
 
 class Map(Operation[StateDictT]):
@@ -145,3 +149,7 @@ class Map(Operation[StateDictT]):
         }
 
         return metadata.with_properties(**custom_properties)
+
+
+if TYPE_CHECKING:
+    _: type[MapOperationProtocol[Operation, "Context"]] = Map

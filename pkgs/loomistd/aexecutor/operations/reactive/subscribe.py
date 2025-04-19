@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
+from loomi.interfaces.executor.operations import SubscribeOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
@@ -15,7 +16,7 @@ from ..base import Operation
 from ..metadata import OperationMetadata
 
 if TYPE_CHECKING:
-    pass
+    from ...context import Context
 
 __all__ = [
     "Subscribe",
@@ -173,3 +174,7 @@ class Subscribe(Operation[StateDictT]):
         }
 
         return metadata.with_properties(**custom_properties)
+
+
+if TYPE_CHECKING:
+    _: type[SubscribeOperationProtocol[Operation, "Context"]] = Subscribe

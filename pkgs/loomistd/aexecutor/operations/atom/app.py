@@ -7,9 +7,10 @@ as an operation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union, cast
 
 from loomi import AsyncApp, SyncApp
+from loomi.interfaces.executor.operations import AppOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
@@ -17,7 +18,7 @@ from ..base import Operation
 from ..metadata import OperationMetadata
 
 if TYPE_CHECKING:
-    pass
+    from ...context import Context
 
 __all__ = [
     "App",
@@ -75,7 +76,9 @@ class App(Operation[StateDictT]):
         elif isinstance(state_path, tuple):
             self._state_path = state_path
 
-        self.children = [self._app.define()]
+        app_operation = cast(Operation[StateDictT], self._app.define())
+
+        self.children = (app_operation,)
 
     @property
     def app(self) -> Union[AsyncApp, SyncApp]:
@@ -122,3 +125,7 @@ class App(Operation[StateDictT]):
             pass
 
         return metadata.with_properties(**custom_properties)
+
+
+if TYPE_CHECKING:
+    _: type[AppOperationProtocol[Operation, "Context"]] = App

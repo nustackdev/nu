@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from loomi.interfaces.executor.operations import ParallelOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
 from ..base import Operation
 
 if TYPE_CHECKING:
-    pass
+    from ...context import Context
 
 
 class Parallel(Operation[StateDictT]):
@@ -88,5 +89,5 @@ class Parallel(Operation[StateDictT]):
         return self._max_concurrency
 
 
-# if TYPE_CHECKING:
-#     _: type[FunctionOperationProtocol[Operation, "Context"]] = Function
+if TYPE_CHECKING:
+    _: type[ParallelOperationProtocol[Operation, "Context"]] = Parallel

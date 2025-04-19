@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Tuple, Union
 
+from loomi.interfaces.executor.operations import DelayOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
@@ -101,3 +102,7 @@ class Delay(Operation[StateDictT]):
             Tuple representing the path to the delay value or None if using delay
         """
         return self._delay_path
+
+
+if TYPE_CHECKING:
+    _: type[DelayOperationProtocol[Operation, "Context"]] = Delay

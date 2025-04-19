@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, Optional, Tuple
 
+from loomi.interfaces.executor.operations import BranchOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
 from loomi.interfaces.state.type_vars import StateDictT
 
@@ -121,5 +122,5 @@ class Branch(Operation[StateDictT]):
         return self._condition_path
 
 
-# if TYPE_CHECKING:
-#     _: type[FunctionOperationProtocol[Operation, "Context"]] = Function
+if TYPE_CHECKING:
+    _: type[BranchOperationProtocol[Operation, "Context"]] = Branch
