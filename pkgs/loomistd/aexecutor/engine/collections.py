@@ -212,9 +212,7 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
         # Create tasks for all items
         tasks = []
         for index, key in enumerate(keys):
-            task = asyncio.create_task(
-                process_item(key, index), name=f"map-{operation.structural_path_str}-{index}"
-            )
+            task = asyncio.create_task(process_item(key, index), name=f"map-{index}")
             tasks.append(task)
 
         # Wait for all tasks based on error handling behavior

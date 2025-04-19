@@ -123,8 +123,7 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
 
             # Create a task to manage the subscription
             task = asyncio.create_task(
-                self._manage_subscription(subscription_id, subscription, operation),
-                name=f"subscribe-{operation.structural_path_str}",
+                self._manage_subscription(subscription_id, subscription, operation)
             )
 
             # Store the task for cleanup

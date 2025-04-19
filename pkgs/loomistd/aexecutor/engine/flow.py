@@ -129,10 +129,7 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
             child_context = context.derive(operation=child_op)
 
             # Create a task for this operation
-            task = asyncio.create_task(
-                execute_with_semaphore(child_op, child_context),
-                name=f"parallel-{child_op.structural_path_str}",
-            )
+            task = asyncio.create_task(execute_with_semaphore(child_op, child_context))
             tasks.append(task)
 
         # Wait for all tasks to complete, gathering errors

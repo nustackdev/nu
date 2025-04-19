@@ -121,7 +121,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         operation = context.operation
 
         # Log operation start
-        self.logger.log_operation_start(operation.metadata.name, operation.structural_path_str)
+        self.logger.log_operation_start(operation.metadata.name)
 
         # Initialize tracing if enabled
         # self.tracing.start_span(operation, context)
@@ -157,16 +157,14 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
                 await self._exec_unknown(operation, context)
 
             # Log operation completion
-            self.logger.log_operation_end(operation.metadata.name, operation.structural_path_str)
+            self.logger.log_operation_end(operation.metadata.name)
 
             # Finalize tracing
             # self.tracing.end_span(operation, context)
 
         except Exception as e:
             # Log the error
-            self.logger.log_operation_error(
-                operation.metadata.name, e, operation.structural_path_str
-            )
+            self.logger.log_operation_error(operation.metadata.name, e)
 
             # Record error in tracing
             # self.tracing.record_exception(operation, context, e)
@@ -178,11 +176,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
                     await self.exec_operation(fail_context)
                 except Exception as fail_e:
                     # Log error in on_fail handler
-                    self.logger.log_operation_error(
-                        f"{operation.metadata.name}.on_fail",
-                        fail_e,
-                        operation._on_fail.structural_path_str,
-                    )
+                    self.logger.log_operation_error(f"{operation.metadata.name}.on_fail", fail_e)
 
             # Handle error based on configured behavior
             if operation._error_behavior == "fail":

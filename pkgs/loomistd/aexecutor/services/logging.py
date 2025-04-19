@@ -21,7 +21,6 @@ class LoggingService(AsyncService):
     @staticmethod
     def format_operation_log(
         operation_name: str,
-        context_path: str,
         status: str = "info",
         details: Optional[Dict[str, Any]] = None,
     ) -> str:
@@ -42,10 +41,6 @@ class LoggingService(AsyncService):
         """
         msg_parts = [f"Operation[{operation_name}]"]
 
-        if context_path:
-            path_str = context_path
-            msg_parts.append(f"Path[{path_str}]")
-
         msg_parts.append(f"Status[{status}]")
 
         if details:
@@ -54,7 +49,7 @@ class LoggingService(AsyncService):
 
         return " ".join(msg_parts)
 
-    def log_operation_start(self, operation_name: str, context_path: str, **kwargs) -> None:
+    def log_operation_start(self, operation_name: str, **kwargs) -> None:
         """
         Log the start of an operation.
 
@@ -66,13 +61,12 @@ class LoggingService(AsyncService):
         logger.debug(
             self.format_operation_log(
                 operation_name,
-                context_path,
                 status="start",
                 details=kwargs if kwargs else None,
             )
         )
 
-    def log_operation_end(self, operation_name: str, context_path: str, **kwargs) -> None:
+    def log_operation_end(self, operation_name: str, **kwargs) -> None:
         """
         Log the end of an operation.
 
@@ -84,7 +78,6 @@ class LoggingService(AsyncService):
         logger.debug(
             self.format_operation_log(
                 operation_name,
-                context_path,
                 status="end",
                 details=kwargs if kwargs else None,
             )
@@ -94,7 +87,6 @@ class LoggingService(AsyncService):
         self,
         operation_name: str,
         error: BaseException,
-        context_path: str,
         **kwargs,
     ) -> None:
         """
@@ -109,7 +101,6 @@ class LoggingService(AsyncService):
         logger.error(
             self.format_operation_log(
                 operation_name,
-                context_path,
                 status="error",
                 details=(
                     {"error_type": type(error).__name__, "error": str(error), **kwargs}

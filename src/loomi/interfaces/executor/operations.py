@@ -39,16 +39,16 @@ class OperationProtocol(Protocol[OperationT, ContextT_co]):
     """
 
     @property
-    def parent(self) -> OperationT | None: ...
-
-    @parent.setter
-    def parent(self, parent: OperationT | None) -> None: ...
+    def parents(self) -> tuple[OperationT, ...]: ...
 
     @property
     def children(self) -> tuple[OperationT, ...]: ...
 
     @children.setter
     def children(self, children: tuple[OperationT, ...]) -> None: ...
+
+    @children.deleter
+    def children(self) -> None: ...
 
 
 @runtime_checkable

@@ -35,7 +35,7 @@ lmdb = "^1.6.2"
 aiohttp = "^3.11.13"
 requests = "^2.32.3"
 pre-commit = "^4.1.0"
-anytree = "^2.13.0"
+networkx = "^3.4.2"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "*"
