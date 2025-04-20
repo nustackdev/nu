@@ -2,45 +2,6 @@
 
 🌟 Transform scrappy python scripts into reliable and maintainable applications.
 
-## About
-
-Turn this:
-
-```python
-# Messy script with global state and manual dependency management
-redis_client = Redis(host="localhost")
-db = Database(host="localhost", redis=redis_client)
-
-def process_data(data):
-    # Manual error handling, no type safety
-    if db.is_valid(data):
-        redis_client.set("data", data)
-    
-async def main():
-    # Manual lifecycle management
-    await db.connect()
-    await process_data({"key": "value"})
-    await db.disconnect()
-```
-
-Into this:
-
-```python
-class DataProcessor(AsyncApp):
-    # Automatic dependency injection and lifecycle management
-    db = UseService(DatabaseService, db_spec)
-    cache = UseService(RedisService, cache_spec)
-    
-    # Type-safe state management
-    data = UseModel(state, dict[str, str])
-    
-    async def process(self, input_data: dict[str, str]):
-        async with self.state.transaction():
-            await self.data.set(input_data)  # Automatic persistence
-```
-
-Check out `/examples` directory for more examples.
-
 ## Core Concepts
 
 ### Application Architecture
@@ -72,15 +33,12 @@ A powerful state system that gives you:
 - **Real-time Updates**: Subscribe to changes with type-safe callbacks
 - **Async by Default**: Handle state changes efficiently
 
-### Models
+### Workflows
 
-Smart data containers that provide:
-
-- **Runtime Type Safety**: Catch data errors as they happen
-- **Automatic Defaults**: Values initialize correctly every time
-- **Flexible Persistence**: Store what you need, where you need it
-- **Change Tracking**: Know what changed and when
-- **Schema Updates**: Evolve your data model safely
+- **Composable Workflows**: Complex patterns built through sequential, parallel, conditional, and reactive composition of simpler operations
+- **First-Class Operations**: Encapsulated units of asynchronous behavior with standardized interfaces for state access and lifecycle management
+- **Consistent Operation Design**: All operations follow uniform patterns for arguments, error handling, and concurrency control
+- **Logical Organization**: Operations grouped into intuitive categories (Core, Flow Control, Timing, Collection, Reactive) for easy discovery
 
 ## Installation
 
@@ -94,16 +52,4 @@ poetry install
 
 ## Examples
 
-Explore complete, production-ready examples in our `examples` directory:
-
-- Task Management System
-- More examples coming soon!
-
-### Running Examples
-
-To run the `task_management` example:
-
-```bash
-cd examples/task_management
-poetry run python app.py
-```
+Explore getting started examples in the `examples` directory.
