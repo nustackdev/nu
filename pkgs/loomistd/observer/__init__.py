@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._base import BaseObserver, BaseObserverSpec, Subscription
+from ._base import BaseObserver, Subscription
 from ._exceptions import (
     ObserverConnectionError,
     ObserverError,

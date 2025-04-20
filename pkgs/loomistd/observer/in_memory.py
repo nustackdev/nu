@@ -10,8 +10,8 @@ from ._in_memory_observer import (
 
 __all__ = [
     "InMemoryObserver",
-    "InMemoryObserverProtocol",
     "InMemoryObserverSpec",
+    "InMemoryObserverProtocol",
     "InMemoryObserverKey",
     "InMemoryObserverEncodedKey",
 ]

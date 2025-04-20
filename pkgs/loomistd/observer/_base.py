@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Any, Generic, final
 
 from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
-from loomi.spec import Spec
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import ObserverConnectionError, ObserverValidationError
@@ -13,15 +12,8 @@ from ._types import ObserverCallbackFn, ObserverEncodedKeyT, ObserverKeyT
 
 __all__ = [
     "BaseObserver",
-    "BaseObserverSpec",
     "Subscription",
 ]
-
-
-class BaseObserverSpec(Spec):
-    """Base observer spec."""
-
-    codec: Spec
 
 
 class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
@@ -39,7 +31,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         ObserverEncodedKeyT: Encoded topic type
     """
 
-    _codec: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
+    codec_srv: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
 
     @property
     def codec(self) -> CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]:
@@ -49,7 +41,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         Returns:
             Codec instance
         """
-        return self._codec
+        return self.codec_srv
 
     async def setup(self) -> None:
         """

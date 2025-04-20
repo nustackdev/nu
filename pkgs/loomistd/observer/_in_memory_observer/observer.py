@@ -3,16 +3,14 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from pydantic import Field
-
 from loomi.attr import Attach
 from loomi.interfaces.state.observer import AsyncObservableProtocol, AsyncSubscriptionProtocol
 from loomi.service import AsyncService
-from loomi.spec import Spec
+from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodec
 
-from .._base import BaseObserver, BaseObserverSpec
+from .._base import BaseObserver
 from .logger import logger
 from .types import InMemoryObserverEncodedKey, InMemoryObserverKey
 
@@ -20,10 +18,6 @@ __all__ = [
     "InMemoryObserverSpec",
     "InMemoryObserver",
 ]
-
-
-class InMemoryObserverSpec(BaseObserverSpec):
-    codec: Spec = Field(default=Spec(factory=PassthroughCodec))
 
 
 class InMemoryObserver(
@@ -35,7 +29,7 @@ class InMemoryObserver(
 ):
     """In-memory observer with thread-safe subscription management."""
 
-    _codec: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = Attach(
+    codec_srv: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = Attach(
         PassthroughCodec
     )
 
@@ -97,6 +91,12 @@ class InMemoryObserver(
                     self._subscriptions[subscription.topic_pattern] = subs
                 else:
                     del self._subscriptions[subscription.topic_pattern]
+
+
+class InMemoryObserverSpec(Spec):
+    name: str = "in_memory_observer"
+    factory: type = SpecField(default=InMemoryObserver)
+    codec_srv: Spec = SpecField(default=Spec(factory=PassthroughCodec))
 
 
 if TYPE_CHECKING:
