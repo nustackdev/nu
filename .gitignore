@@ -165,7 +165,7 @@ playground/
 _playground/
 
 # Data and log files
-.state/
+.db/
 .logs/
 *.db.json
 *.db.json.lock
