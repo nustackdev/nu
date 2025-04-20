@@ -19,7 +19,6 @@ from ._types import (
 __all__ = [
     "ObserverServiceProtocol",
     "BaseObserver",
-    "BaseObserverSpec",
     "Subscription",
     "ObserverCallbackFn",
     "ObserverKey",

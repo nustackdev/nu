@@ -16,8 +16,11 @@ from loomi.attr import Attach
 from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
 from loomi.interfaces.state.state import AsyncStateProtocol
 from loomi.service import AsyncService
+from loomi.spec import Spec, SpecField
 from loomistd.kv_storage import StorageServiceProtocol
+from loomistd.kv_storage.file_storage import FileStorageSpec
 from loomistd.observer import ObserverServiceProtocol
+from loomistd.observer.in_memory import InMemoryObserverSpec
 from loomistd.tree_storage import TreeStorageBase, TreeStorageCore
 
 from ._observable_kv import ObservableKVStorageCore
@@ -25,6 +28,7 @@ from ._types import StateCallbackFn, StateKey, StateValue
 
 __all__ = [
     "State",
+    "StateSpec",
 ]
 
 
@@ -40,15 +44,15 @@ class State(AsyncService, TreeStorageBase[StateValue]):
     - Async-first design
     """
 
-    _storage: StorageServiceProtocol[StateKey, StateValue, Any, Any] = Attach(
+    storage_srv: StorageServiceProtocol[StateKey, StateValue, Any, Any] = Attach(
         StorageServiceProtocol
     )
-    _observer: ObserverServiceProtocol[StateKey, Any] = Attach(ObserverServiceProtocol)
+    observer_srv: ObserverServiceProtocol[StateKey, Any] = Attach(ObserverServiceProtocol)
 
     async def setup(self):
         self._observable_kv_storage = ObservableKVStorageCore(
-            storage=self._storage,
-            observer=self._observer,
+            storage=self.storage_srv,
+            observer=self.observer_srv,
         )
         self._tree_storage_core = TreeStorageCore(self._observable_kv_storage)
 
@@ -86,6 +90,13 @@ class State(AsyncService, TreeStorageBase[StateValue]):
             ObserverError: If unsubscribe fails
         """
         await self._observable_kv_storage.unsubscribe(subscription)
+
+
+class StateSpec(Spec):
+    name: str = SpecField(default="state")
+    factory: type = SpecField(default=State)
+    storage_srv: Spec = SpecField(default=FileStorageSpec())
+    observer_srv: Spec = SpecField(default=InMemoryObserverSpec())
 
 
 if TYPE_CHECKING:
