@@ -5,8 +5,8 @@ from typing import AsyncGenerator, Generic, TypeGuard, final
 
 from pydantic import Field
 
-from loomi import Spec
 from loomi.interfaces.state.kv import AsyncTransactionProtocol
+from loomi.spec import Spec
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError

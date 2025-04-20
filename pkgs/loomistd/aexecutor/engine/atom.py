@@ -9,6 +9,7 @@ the fundamental building blocks that don't contain child operations.
 from __future__ import annotations
 
 import inspect
+from typing import cast
 
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
@@ -77,9 +78,10 @@ class AtomEngine(EngineBase[StateT, StateDictT]):
 
             try:
                 if inspect.iscoroutinefunction(context.scope.dict):
-                    app_scope = await context.scope.dict(*state_path)
+                    app_scope = cast(StateDictT, await context.scope.dict(*state_path))
                 else:
-                    app_scope = context.scope.dict(*state_path)
+                    app_scope = cast(StateDictT, context.scope.dict(*state_path))
+
             except Exception as e:
                 raise StateAccessError(
                     f"Failed to access state path {state_path}",

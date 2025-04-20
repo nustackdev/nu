@@ -1,23 +1,17 @@
-from .app import AppType, AsyncApp, SyncApp
-from .descriptors.attach import Attach
-from .descriptors.use_app import UseApp
-from .descriptors.use_engine import UseEngine
-from .descriptors.use_service import UseService
-from .descriptors.use_state import UseState
-from .service import AsyncService, Service, SyncService
+from __future__ import annotations
+
+from .app import AsyncApp, SyncApp
+from .declarative import Attach, UseApp, UseEngine, UseService, UseState
+from .service import AsyncService, SyncService
 from .spec import Spec
 
 __all__ = [
-    # App-related imports
     "AsyncApp",
     "SyncApp",
     "UseService",
     "UseState",
     "UseApp",
     "UseEngine",
-    "AppType",
-    # Service-related imports
-    "Service",
     "AsyncService",
     "SyncService",
     "Attach",

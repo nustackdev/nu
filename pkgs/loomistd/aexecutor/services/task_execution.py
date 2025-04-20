@@ -10,7 +10,8 @@ import inspect
 import uuid
 from typing import Any, Awaitable, Callable, TypeVar
 
-from loomi import AsyncService, Spec
+from loomi.service import AsyncService
+from loomi.spec import Spec
 
 from ..context.context import Context
 from .exceptions import TaskExecutionCancelledError, TaskExecutionTimeoutError

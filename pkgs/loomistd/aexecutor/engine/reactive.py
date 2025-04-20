@@ -119,7 +119,13 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
             if inspect.iscoroutinefunction(self.state.subscribe):
                 subscription = await self.state.subscribe(watch_path, on_change, depth=depth)
             else:
-                subscription = self.state.subscribe(watch_path, on_change, depth=depth)
+                if inspect.iscoroutinefunction(on_change):
+                    # Wrap the callback in a coroutine if needed
+                    raise ValueError(
+                        "on_change callback cannot be a coroutine function when state.subscribe is not async"
+                    )
+                else:
+                    subscription = self.state.subscribe(watch_path, on_change, depth=depth)
 
             # Create a task to manage the subscription
             task = asyncio.create_task(

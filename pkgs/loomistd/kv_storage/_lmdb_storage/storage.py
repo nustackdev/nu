@@ -8,8 +8,10 @@ from typing import TYPE_CHECKING, AsyncGenerator, TypeGuard
 import lmdb
 from pydantic import Field
 
-from loomi import AsyncService, Attach, Spec
+from loomi.declarative import Attach
 from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
+from loomi.service import AsyncService
+from loomi.spec import Spec
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodec
 

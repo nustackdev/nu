@@ -3,11 +3,12 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, Generic
 
-from loomi import AsyncService, Attach
+from loomi.declarative import Attach
 from loomi.interfaces.state.kv import (
     AsyncTransactionContextManagerProtocol,
     AsyncTransactionProtocol,
 )
+from loomi.service import AsyncService
 from loomistd.kv_storage import StorageServiceProtocol
 
 from ._core import TreeStorage as TreeStorageCore

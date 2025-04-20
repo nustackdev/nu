@@ -4,7 +4,7 @@ import base64
 import json
 from typing import Any
 
-from loomi.service import SyncService
+from loomi._service import SyncService
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import PATH_SEPARATOR

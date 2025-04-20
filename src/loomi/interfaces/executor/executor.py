@@ -3,20 +3,20 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 from .type_vars import (
-    AppOperationT_contra,
-    BranchOperationT_contra,
+    AppOperationT,
+    BranchOperationT,
     ContextT_contra,
-    DelayOperationT_contra,
-    FunctionOperationT_contra,
-    LoopOperationT_contra,
-    MapOperationT_contra,
+    DelayOperationT,
+    FunctionOperationT,
+    LoopOperationT,
+    MapOperationT,
     OperationT_contra,
-    ParallelOperationT_contra,
-    RetryOperationT_contra,
-    SequenceOperationT_contra,
-    SubscribeOperationT_contra,
+    ParallelOperationT,
+    RetryOperationT,
+    SequenceOperationT,
+    SubscribeOperationT,
     SyncContextT_contra,
-    TimeoutOperationT_contra,
+    TimeoutOperationT,
 )
 
 
@@ -25,17 +25,17 @@ class AsyncExecutorProtocol(
     Protocol[
         ContextT_contra,
         OperationT_contra,
-        AppOperationT_contra,
-        BranchOperationT_contra,
-        DelayOperationT_contra,
-        FunctionOperationT_contra,
-        LoopOperationT_contra,
-        MapOperationT_contra,
-        ParallelOperationT_contra,
-        RetryOperationT_contra,
-        SequenceOperationT_contra,
-        SubscribeOperationT_contra,
-        TimeoutOperationT_contra,
+        AppOperationT,
+        BranchOperationT,
+        DelayOperationT,
+        FunctionOperationT,
+        LoopOperationT,
+        MapOperationT,
+        ParallelOperationT,
+        RetryOperationT,
+        SequenceOperationT,
+        SubscribeOperationT,
+        TimeoutOperationT,
     ]
 ):
     """
@@ -44,6 +44,22 @@ class AsyncExecutorProtocol(
     The execution engine is responsible for executing operations and
     providing them with context and services.
     """
+
+    # --- Operations --- #
+
+    Function: type[FunctionOperationT]
+    App: type[AppOperationT]
+    Branch: type[BranchOperationT]
+    Delay: type[DelayOperationT]
+    Loop: type[LoopOperationT]
+    Map: type[MapOperationT]
+    Parallel: type[ParallelOperationT]
+    Retry: type[RetryOperationT]
+    Sequence: type[SequenceOperationT]
+    Subscribe: type[SubscribeOperationT]
+    Timeout: type[TimeoutOperationT]
+
+    # --- Methods --- #
 
     async def execute(
         self,
@@ -59,71 +75,71 @@ class AsyncExecutorProtocol(
     # Atomic operations
     async def exec_function(
         self,
-        operation: FunctionOperationT_contra,
+        operation: FunctionOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     async def exec_app(
         self,
-        operation: AppOperationT_contra,
+        operation: AppOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     # Flow control operations
     async def exec_sequence(
         self,
-        operation: SequenceOperationT_contra,
+        operation: SequenceOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     async def exec_parallel(
         self,
-        operation: ParallelOperationT_contra,
+        operation: ParallelOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     async def exec_branch(
         self,
-        operation: BranchOperationT_contra,
+        operation: BranchOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     async def exec_loop(
         self,
-        operation: LoopOperationT_contra,
+        operation: LoopOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     # Timing operations
     async def exec_delay(
         self,
-        operation: DelayOperationT_contra,
+        operation: DelayOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     async def exec_timeout(
         self,
-        operation: TimeoutOperationT_contra,
+        operation: TimeoutOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     async def exec_retry(
         self,
-        operation: RetryOperationT_contra,
+        operation: RetryOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     # Collection operations
     async def exec_map(
         self,
-        operation: MapOperationT_contra,
+        operation: MapOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
     # Reactive operations
     async def exec_subscribe(
         self,
-        operation: SubscribeOperationT_contra,
+        operation: SubscribeOperationT,
         context: ContextT_contra,
     ) -> None: ...
 
@@ -133,17 +149,17 @@ class SyncExecutorProtocol(
     Protocol[
         SyncContextT_contra,
         OperationT_contra,
-        AppOperationT_contra,
-        BranchOperationT_contra,
-        DelayOperationT_contra,
-        FunctionOperationT_contra,
-        LoopOperationT_contra,
-        MapOperationT_contra,
-        ParallelOperationT_contra,
-        RetryOperationT_contra,
-        SequenceOperationT_contra,
-        SubscribeOperationT_contra,
-        TimeoutOperationT_contra,
+        AppOperationT,
+        BranchOperationT,
+        DelayOperationT,
+        FunctionOperationT,
+        LoopOperationT,
+        MapOperationT,
+        ParallelOperationT,
+        RetryOperationT,
+        SequenceOperationT,
+        SubscribeOperationT,
+        TimeoutOperationT,
     ]
 ):
     """
@@ -152,6 +168,22 @@ class SyncExecutorProtocol(
     The execution engine is responsible for executing operations and
     providing them with context and services.
     """
+
+    # --- Operations --- #
+
+    Function: type[FunctionOperationT]
+    App: type[AppOperationT]
+    Branch: type[BranchOperationT]
+    Delay: type[DelayOperationT]
+    Loop: type[LoopOperationT]
+    Map: type[MapOperationT]
+    Parallel: type[ParallelOperationT]
+    Retry: type[RetryOperationT]
+    Sequence: type[SequenceOperationT]
+    Subscribe: type[SubscribeOperationT]
+    Timeout: type[TimeoutOperationT]
+
+    # --- Methods --- #
 
     def execute(
         self,
@@ -167,70 +199,70 @@ class SyncExecutorProtocol(
     # Atomic operations
     def exec_function(
         self,
-        operation: FunctionOperationT_contra,
+        operation: FunctionOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     def exec_app(
         self,
-        operation: AppOperationT_contra,
+        operation: AppOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     # Flow control operations
     def exec_sequence(
         self,
-        operation: SequenceOperationT_contra,
+        operation: SequenceOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     def exec_parallel(
         self,
-        operation: ParallelOperationT_contra,
+        operation: ParallelOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     def exec_branch(
         self,
-        operation: BranchOperationT_contra,
+        operation: BranchOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     def exec_loop(
         self,
-        operation: LoopOperationT_contra,
+        operation: LoopOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     # Timing operations
     def exec_delay(
         self,
-        operation: DelayOperationT_contra,
+        operation: DelayOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     def exec_timeout(
         self,
-        operation: TimeoutOperationT_contra,
+        operation: TimeoutOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     def exec_retry(
         self,
-        operation: RetryOperationT_contra,
+        operation: RetryOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     # Collection operations
     def exec_map(
         self,
-        operation: MapOperationT_contra,
+        operation: MapOperationT,
         context: SyncContextT_contra,
     ) -> None: ...
 
     # Reactive operations
     def exec_subscribe(
         self,
-        operation: SubscribeOperationT_contra,
+        operation: SubscribeOperationT,
         context: SyncContextT_contra,
     ) -> None: ...

@@ -5,7 +5,7 @@ This module implements the TracingService, which provides tracing and
 observability for operation execution.
 """
 
-from loomi.service import AsyncService
+from loomi._service import AsyncService
 
 
 class TracingService(AsyncService):

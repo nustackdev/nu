@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, final
 
-from loomi import Spec
 from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
+from loomi.spec import Spec
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import ObserverConnectionError, ObserverValidationError

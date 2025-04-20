@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from loomi.service import AsyncService
+from loomi._service import AsyncService
 
 from .logger import logger
 
