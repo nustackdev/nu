@@ -5,7 +5,8 @@ This module implements the TracingService, which provides tracing and
 observability for operation execution.
 """
 
-from loomi._service import AsyncService
+from loomi.service import AsyncService
+from loomi.spec import Spec, SpecField
 
 
 class TracingService(AsyncService):
@@ -22,3 +23,15 @@ class TracingService(AsyncService):
     async def cleanup(self) -> None:
         """Shutdown the tracing service."""
         pass
+
+
+class TracingServiceSpec(Spec):
+    """
+    Specification for the TracingService.
+
+    This specification defines the configuration and dependencies for the
+    TracingService.
+    """
+
+    name: str = SpecField(default="tracing_service")
+    factory: type = SpecField(default=TracingService)

@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from loomi._service import AsyncService
+from loomi.service import AsyncService
+from loomi.spec import Spec, SpecField
 
 from .logger import logger
 
@@ -152,3 +153,8 @@ class LoggingService(AsyncService):
             message: The critical message to log
         """
         logger.critical(message)
+
+
+class LoggingServiceSpec(Spec):
+    name: str = SpecField(default="logging_service")
+    factory: type = SpecField(default=LoggingService)

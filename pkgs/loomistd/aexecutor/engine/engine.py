@@ -11,6 +11,8 @@ from __future__ import annotations
 from loomi.attr import Attach
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 from loomi.service import AsyncService
+from loomi.spec import Spec, SpecField
+from loomistd.state import StateSpec
 
 from ..context import Context
 from ..operations import (
@@ -26,9 +28,9 @@ from ..operations import (
     Subscribe,
     Timeout,
 )
-from ..services.logging import LoggingService
-from ..services.task_execution import TaskExecutionService
-from ..services.tracing import TracingService
+from ..services.logging import LoggingService, LoggingServiceSpec
+from ..services.task_execution import TaskExecutionService, TaskExecutionServiceSpec
+from ..services.tracing import TracingService, TracingServiceSpec
 from .atom import AtomEngine
 from .collections import CollectionEngine
 from .flow import FlowEngine
@@ -122,3 +124,19 @@ class ExecutionEngine(
         # In the future, we might customize this method to add additional
         # functionality specific to the combined engine
         await super().exec_operation(context)
+
+
+class ExecutionEngineSpec(Spec):
+    """
+    Specification for the ExecutionEngine.
+
+    This specification defines the configuration and dependencies for the
+    ExecutionEngine.
+    """
+
+    name: str = SpecField(default="execution_engine")
+    factory: type = SpecField(default=ExecutionEngine)
+    state: Spec = SpecField(default=StateSpec())
+    executor: Spec = SpecField(default=TaskExecutionServiceSpec())
+    tracing: Spec = SpecField(default=TracingServiceSpec())
+    logger: Spec = SpecField(default=LoggingServiceSpec())

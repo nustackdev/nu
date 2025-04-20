@@ -11,7 +11,7 @@ import uuid
 from typing import Any, Awaitable, Callable, TypeVar
 
 from loomi.service import AsyncService
-from loomi.spec import Spec
+from loomi.spec import Spec, SpecField
 
 from ..context.context import Context
 from .exceptions import TaskExecutionCancelledError, TaskExecutionTimeoutError
@@ -179,9 +179,7 @@ class TaskExecutionService(AsyncService):
 
 
 class TaskExecutionServiceSpec(Spec):
-    """Specification for the TaskExecutionService."""
-
-    name: str = "task_execution_service"
-    factory: type[AsyncService] = TaskExecutionService
-    max_concurrency: int = 100
-    default_timeout: float = 300.0
+    name: str = SpecField(default="task_execution_service")
+    factory: type = SpecField(default=TaskExecutionService)
+    max_concurrency: int = SpecField(default=100)
+    default_timeout: float = SpecField(default=300.0)

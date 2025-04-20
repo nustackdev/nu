@@ -69,9 +69,9 @@ class AsyncAppExecutionHandler(
 
         operation = None
         if inspect.iscoroutinefunction(operation_def_fn):
-            operation = await operation_def_fn(context)
+            operation = await operation_def_fn()
         elif inspect.ismethod(operation_def_fn):
-            operation = operation_def_fn(context)
+            operation = operation_def_fn()
         else:
             raise ExecutionError("Operation definition is not a function")
 
@@ -119,7 +119,7 @@ class SyncAppExecutionHandler(
         if inspect.iscoroutinefunction(operation_def_fn):
             raise ExecutionError("Async operation definition not supported")
         elif inspect.ismethod(operation_def_fn):
-            operation = operation_def_fn(context)
+            operation = operation_def_fn()
         else:
             raise ExecutionError("Operation definition is not a function")
 
@@ -128,6 +128,6 @@ class SyncAppExecutionHandler(
         elif isinstance(self.executor, SyncExecutorProtocol):
             self.executor.execute(operation, context)
 
-    def define(self, context: ContextProtocol | None = None) -> OperationProtocol:
+    def define(self) -> OperationProtocol:
         """Define the operation to execute."""
         raise NotImplementedError("Subclasses must implement this method")
