@@ -13,6 +13,7 @@ from ._file_storage import (
 
 __all__ = [
     "FileStorage",
+    "FileStorageSpec",
     "FileStorageProtocol",
     "FileStorageSpec",
     "FileStorageTransaction",

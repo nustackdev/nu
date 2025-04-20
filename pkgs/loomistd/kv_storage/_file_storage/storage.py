@@ -8,16 +8,15 @@ from typing import TYPE_CHECKING, AsyncGenerator
 
 import aiofile
 import filelock
-from pydantic import Field
 
 from loomi.attr import Attach
 from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomi.service import AsyncService
-from loomi.spec import Spec
+from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
-from loomistd.codec.json import JSONCodec
+from loomistd.codec.json import JSONCodec, JSONCodecSpec
 
-from .._base import BaseStorage, BaseStorageSpec
+from .._base import BaseStorage
 from .._exceptions import (
     StorageError,
     StorageKeyError,
@@ -41,11 +40,6 @@ __all__ = [
 ]
 
 
-class FileStorageSpec(BaseStorageSpec):
-    path: Path = Field(default=Path("state/db.json"))
-    codec: Spec = Field(default=Spec(factory=JSONCodec))
-
-
 class FileStorage(
     BaseStorage[
         FileStorageKey,
@@ -60,17 +54,14 @@ class FileStorage(
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    _codec: CodecProtocol[
+    codec_srv: CodecProtocol[
         FileStorageKey, FileStorageValue, FileStorageEncodedKey, FileStorageEncodedValue
     ] = Attach(JSONCodec)
 
-    def __init__(
-        self,
-        spec: FileStorageSpec,
-    ):
-        """Initialize file storage."""
-        super().__init__(spec)
-        self.path = spec.path
+    spec: FileStorageSpec
+
+    async def setup(self):
+        self.path = self.spec.path
 
         # Single lock for all in-process synchronization
         self._memory_lock = asyncio.Lock()
@@ -80,8 +71,22 @@ class FileStorage(
         self._file_lock = filelock.FileLock(self._lock_file)
 
         self._data: dict[str, str] = {}
-        self._connected = False
         self._active_transactions: set[FileStorageTransaction] = set()
+
+        await super().setup()
+
+    async def cleanup(self):
+        await super().cleanup()
+
+        # Clean up lock file
+        if self._lock_file.exists():
+            self._lock_file.unlink()
+        if self._memory_lock.locked():
+            self._memory_lock.release()
+        if self._file_lock.is_locked:
+            self._file_lock.release()
+        self._data.clear()
+        self._active_transactions.clear()
 
     async def _connect_impl(self) -> None:
         """Load data from file if it exists."""
@@ -117,7 +122,6 @@ class FileStorage(
                 if self.mode == "write":
                     await self._save()
 
-        self._connected = False
         logger.debug("Disconnected from file storage")
 
     async def _load_data(self) -> None:
@@ -365,6 +369,14 @@ class FileStorageTransaction(AsyncTransactionProtocol[FileStorageValue]):
         self._operations.clear()
         self._read_set.clear()
         self._write_set.clear()
+
+
+class FileStorageSpec(Spec):
+    name: str = SpecField(default="file_storage")
+    factory: type = SpecField(default=FileStorage)
+    mode: str = SpecField(default="write")
+    path: Path = SpecField(default=Path("db/db.json"))
+    codec_srv: Spec = SpecField(default=JSONCodecSpec())
 
 
 if TYPE_CHECKING:

@@ -3,10 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, Generic, TypeGuard, final
 
-from pydantic import Field
-
 from loomi.interfaces.state.kv import AsyncTransactionProtocol
-from loomi.spec import Spec
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
@@ -21,16 +18,8 @@ from ._types import (
 
 __all__ = [
     "BaseStorage",
-    "BaseStorageSpec",
     "is_valid_key",
 ]
-
-
-class BaseStorageSpec(Spec):
-    """Base storage spec."""
-
-    codec: Spec
-    mode: StorageMode = Field(default="write")
 
 
 class BaseStorage(
@@ -43,7 +32,7 @@ class BaseStorage(
         ValueT: Type of values supported by this storage
     """
 
-    _codec: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
+    codec_srv: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
 
     @property
     def codec(
@@ -55,7 +44,7 @@ class BaseStorage(
         Returns:
             Codec instance
         """
-        return self._codec
+        return self.codec_srv
 
     @property
     def mode(self) -> StorageMode:

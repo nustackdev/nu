@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._base import BaseStorage, BaseStorageSpec
+from ._base import BaseStorage
 from ._exceptions import (
     StorageConnectionError,
     StorageError,
@@ -25,7 +25,6 @@ from ._types import (
 
 __all__ = [
     "BaseStorage",
-    "BaseStorageSpec",
     "StorageServiceProtocol",
     "StorageConnectionError",
     "StorageError",

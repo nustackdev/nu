@@ -3,16 +3,14 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, AsyncGenerator
 
-from pydantic import Field
-
 from loomi.attr import Attach
 from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomi.service import AsyncService
-from loomi.spec import Spec
+from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
-from loomistd.codec.passthrough import PassthroughCodec
+from loomistd.codec.passthrough import PassthroughCodec, PassthroughCodecSpec
 
-from .._base import BaseStorage, BaseStorageSpec
+from .._base import BaseStorage
 from .._exceptions import (
     StorageKeyError,
     StorageOperationError,
@@ -36,10 +34,6 @@ __all__ = [
 ]
 
 
-class InMemoryStorageSpec(BaseStorageSpec):
-    codec: Spec = Field(default=Spec(factory=PassthroughCodec))
-
-
 class InMemoryStorage(
     BaseStorage[
         InMemoryStorageKey,
@@ -54,20 +48,27 @@ class InMemoryStorage(
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec: CodecProtocol[
+    codec_srv: CodecProtocol[
         InMemoryStorageKey,
         InMemoryStorageValue,
         InMemoryStorageEncodedKey,
         InMemoryStorageEncodedValue,
     ] = Attach(PassthroughCodec)
 
-    def __init__(self, spec: BaseStorageSpec) -> None:
-        """Initialize empty storage."""
-        super().__init__(spec)
+    spec: InMemoryStorageSpec
 
+    async def setup(self):
         self._data: dict[InMemoryStorageEncodedKey, InMemoryStorageEncodedValue] = {}
         self._data_lock = asyncio.Lock()
         self._active_transactions: set[InMemoryStorageTransaction] = set()
+        await super().setup()
+
+    async def cleanup(self):
+        await super().cleanup()
+        self._data.clear()
+        self._active_transactions.clear()
+        if self._data_lock.locked():
+            self._data_lock.release()
 
     async def _connect_impl(self) -> None:
         """Initialize storage."""
@@ -303,6 +304,13 @@ class InMemoryStorageTransaction(AsyncTransactionProtocol[InMemoryStorageValue])
         self._operations.clear()
         self._read_set.clear()
         self._write_set.clear()
+
+
+class InMemoryStorageSpec(Spec):
+    name: str = SpecField(default="in_memory_storage")
+    factory: type = SpecField(default=InMemoryStorage)
+    mode: str = SpecField(default="write")
+    codec_srv: Spec = SpecField(default=PassthroughCodecSpec())
 
 
 if TYPE_CHECKING:

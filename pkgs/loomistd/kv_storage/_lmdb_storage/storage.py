@@ -6,16 +6,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, AsyncGenerator, TypeGuard
 
 import lmdb
-from pydantic import Field
 
 from loomi.attr import Attach
 from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomi.service import AsyncService
-from loomi.spec import Spec
+from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
-from loomistd.codec.binary import BinaryCodec
+from loomistd.codec.binary import BinaryCodec, BinaryCodecSpec
 
-from .._base import BaseStorage, BaseStorageSpec
+from .._base import BaseStorage
 from .._exceptions import (
     StorageError,
     StorageKeyError,
@@ -33,16 +32,6 @@ __all__ = [
 ]
 
 
-class LMDBStorageSpec(BaseStorageSpec):
-    """Spec for LMDB storage."""
-
-    path: Path = Field(default=Path("data"))
-    codec: Spec = Field(default=Spec(factory=BinaryCodec))
-    map_size: int = Field(default=10 * 1024 * 1024 * 1024)  # 10GB default
-    max_dbs: int = Field(default=0)
-    lmdb_kwargs: dict = Field(default_factory=dict)
-
-
 class LMDBStorage(
     BaseStorage[
         LMDBStorageKey,
@@ -58,30 +47,30 @@ class LMDBStorage(
     Uses memory-mapped files for high performance and ACID guarantees.
     """
 
-    _codec: CodecProtocol[
+    codec_srv: CodecProtocol[
         LMDBStorageKey, LMDBStorageValue, LMDBStorageEncodedKey, LMDBStorageEncodedValue
     ] = Attach(BinaryCodec)
 
-    def __init__(
-        self,
-        spec: LMDBStorageSpec,
-    ):
-        """Initialize LMDB storage."""
-        super().__init__(spec)
+    spec: LMDBStorageSpec
 
-        self.path = spec.path
-        self.map_size = spec.map_size
-        self.max_dbs = spec.max_dbs
-        self.lmdb_kwargs = spec.lmdb_kwargs
-
-        if self.map_size <= 0:
+    async def setup(self):
+        if self.spec.map_size <= 0:
             raise ValueError("Map size must be positive")
-        if self.map_size > sys.maxsize:
+        if self.spec.map_size > sys.maxsize:
             raise ValueError("Map size too large for platform")
 
         self._env: lmdb.Environment
         self._data_lock = asyncio.Lock()
         self._active_transactions: set[LMDBStorageTransaction] = set()
+
+        await super().setup()
+
+    async def cleanup(self):
+        await super().cleanup()
+
+        if self._data_lock.locked():
+            self._data_lock.release()
+        self._active_transactions.clear()
 
     async def _validate_value(self, value: LMDBStorageValue) -> TypeGuard[LMDBStorageValue]:
         return True
@@ -90,18 +79,18 @@ class LMDBStorage(
         """Initialize LMDB environment."""
 
         # Ensure directory exists
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.spec.path.parent.mkdir(parents=True, exist_ok=True)
 
         async with self._data_lock:
             # Open LMDB environment
             self._env = lmdb.open(
-                str(self.path),
-                map_size=self.map_size,
-                max_dbs=self.max_dbs,
+                str(self.spec.path),
+                map_size=self.spec.map_size,
+                max_dbs=self.spec.max_dbs,
                 readonly=self.mode == "read",
-                **self.lmdb_kwargs,
+                **self.spec.lmdb_kwargs,
             )
-            logger.debug(f"Connected to LMDB at {self.path} in {self.mode} mode")
+            logger.debug(f"Connected to LMDB at {self.spec.path} in {self.mode} mode")
 
     async def _disconnect_impl(self) -> None:
         """Close LMDB environment."""
@@ -361,6 +350,16 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
                 self._storage._active_transactions.discard(self)
         except Exception as e:
             raise TransactionError(f"Failed to rollback transaction: {e}")
+
+
+class LMDBStorageSpec(Spec):
+    name: str = SpecField(default="lmdb_storage")
+    factory: type = SpecField(default=LMDBStorage)
+    path: Path = SpecField(default=Path("db"))
+    codec_srv: Spec = SpecField(default=BinaryCodecSpec())
+    map_size: int = SpecField(default=10 * 1024 * 1024 * 1024)  # 10GB default
+    max_dbs: int = SpecField(default=0)
+    lmdb_kwargs: dict = SpecField(default_factory=dict)
 
 
 if TYPE_CHECKING:
