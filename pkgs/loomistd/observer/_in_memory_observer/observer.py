@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import Field
 
-from loomi.declarative import Attach
+from loomi.attr import Attach
 from loomi.interfaces.state.observer import AsyncObservableProtocol, AsyncSubscriptionProtocol
 from loomi.service import AsyncService
 from loomi.spec import Spec

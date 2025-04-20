@@ -8,7 +8,7 @@ components to provide a complete execution environment.
 
 from __future__ import annotations
 
-from loomi.declarative import Attach
+from loomi.attr import Attach
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 from loomi.service import AsyncService
 

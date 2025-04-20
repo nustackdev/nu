@@ -10,7 +10,7 @@ import aiofile
 import filelock
 from pydantic import Field
 
-from loomi.declarative import Attach
+from loomi.attr import Attach
 from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomi.service import AsyncService
 from loomi.spec import Spec

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from loomi.declarative import Attach
+from loomi.attr import Attach
 from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
 from loomi.interfaces.state.state import AsyncStateProtocol
 from loomi.service import AsyncService

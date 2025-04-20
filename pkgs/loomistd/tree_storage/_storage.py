@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, Generic
 
-from loomi.declarative import Attach
+from loomi.attr import Attach
 from loomi.interfaces.state.kv import (
     AsyncTransactionContextManagerProtocol,
     AsyncTransactionProtocol,

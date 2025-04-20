@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .app import AsyncApp, SyncApp
-from .declarative import Attach, UseApp, UseEngine, UseService, UseState
+from .attr import Attach, UseApp, UseEngine, UseService, UseState
 from .service import AsyncService, SyncService
 from .spec import Spec
 
