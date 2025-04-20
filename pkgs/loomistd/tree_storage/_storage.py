@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, Generic
 
-from loomi.attr import Attach
+from loomi.attr import UseService
 from loomi.interfaces.state.kv import (
     AsyncTransactionContextManagerProtocol,
     AsyncTransactionProtocol,
@@ -156,9 +156,7 @@ class TreeStorageBase(ABC, Generic[TreeValueT]):
 
 
 class TreeStorage(AsyncService, TreeStorageBase[TreeValueT]):
-    _kv_storage: StorageServiceProtocol[TreePath, TreeValueT, Any, Any] = Attach(
-        StorageServiceProtocol
-    )
+    _kv_storage: StorageServiceProtocol[TreePath, TreeValueT, Any, Any] = UseService()
 
     async def setup(self):
         """

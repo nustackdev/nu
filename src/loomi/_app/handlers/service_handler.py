@@ -67,7 +67,11 @@ class CommonAppServicesHandler(AppABC[StateT, ExecutorT]):
         return self._services[name]
 
     def _initialize_service_descriptors(self) -> None:
-        app_service_specs = getattr(self, "_specs", {})
+        # Add state and executor services
+        if self.state_spec is not None:
+            self.add_service_dependency("STATE", self.state_spec)
+        if self.executor_spec is not None:
+            self.add_service_dependency("EXECUTOR", self.executor_spec)
 
         for name, value in self.__class__.__dict__.items():
             if not isinstance(value, ServiceDescriptor):
@@ -75,7 +79,7 @@ class CommonAppServicesHandler(AppABC[StateT, ExecutorT]):
 
             # Get the service spec:
             # First, check if service spec is passed as app __init__ argument
-            spec = app_service_specs.get(name, None)
+            spec = getattr(self.spec, name, None)
 
             # If spec is not provided, try to use default spec from descriptor
             if spec is None:

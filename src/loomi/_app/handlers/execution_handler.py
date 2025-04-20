@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from typing import cast
+from typing import cast, final
 
-from loomi._descriptors.use_service import ServiceDescriptor
 from loomi.interfaces.executor.context import ContextProtocol
 from loomi.interfaces.executor.executor import SyncExecutorProtocol
 from loomi.interfaces.executor.operations import OperationProtocol
@@ -18,22 +17,7 @@ class CommonAppExecutionHandler(AppABC[StateT, ExecutorT]):
     Base class for app tasks execution.
     """
 
-    def _initialize_engine_descriptor(self) -> None:
-        """Initialize engine descriptor."""
-
-        engine_configured = False
-        for name, value in self.__class__.__dict__.items():
-            if not isinstance(value, ServiceDescriptor):
-                continue
-
-            if value.as_engine is not True:
-                continue
-
-            if engine_configured is True:
-                raise ExecutionError("Multiple engine descriptors not supported")
-
-            self._exec_engine_service_name = name
-            engine_configured = True
+    pass
 
 
 class AsyncAppExecutionHandler(
@@ -43,19 +27,21 @@ class AsyncAppExecutionHandler(
     App feature implementing async execution engine management.
     """
 
+    @final
     @property
     def executor(self) -> ExecutorT:
         """Check and return app's state service."""
-        if not self._exec_engine_service_name or len(self._exec_engine_service_name) == 0:
+        if "EXECUTOR" not in self._services:
             raise ExecutionError("No execution engine adapter configured")
 
-        executor = cast(ExecutorT, getattr(self, self._exec_engine_service_name, None))
+        executor = cast(ExecutorT, self.get_service_dependency("EXECUTOR"))
 
         if not executor:
             raise ExecutionError("Execution engine not initialized")
 
         return executor
 
+    @final
     @property
     def ex(self) -> ExecutorT:
         """Short alias for state adapter."""
@@ -92,18 +78,21 @@ class SyncAppExecutionHandler(
     App feature implementing execution engine management.
     """
 
+    @final
     @property
     def executor(self) -> SyncExecutorT:
         """Check and return app's state service."""
-        if not self._exec_engine_service_name or len(self._exec_engine_service_name) == 0:
+        if "EXECUTOR" not in self._services:
             raise ExecutionError("No execution engine adapter configured")
 
-        engine = cast(SyncExecutorT, getattr(self, self._exec_engine_service_name, None))
-        if not engine:
+        executor = cast(SyncExecutorT, self.get_service_dependency("EXECUTOR"))
+
+        if not executor:
             raise ExecutionError("Execution engine not initialized")
 
-        return engine
+        return executor
 
+    @final
     @property
     def ex(self) -> SyncExecutorT:
         """Short alias for state adapter."""

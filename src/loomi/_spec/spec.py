@@ -60,7 +60,7 @@ class Spec(BaseModel):
         frozen = True
 
     name: str = Field(default="")
-    factory: type = Field()
+    factory: type
 
     @field_serializer("factory")
     def serialize_factory(self, factory: type) -> str:

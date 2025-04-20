@@ -11,6 +11,8 @@ from abc import ABC
 from types import TracebackType
 from typing import TYPE_CHECKING, Generic, Self
 
+from loomi._spec import Spec
+
 from .logger import logger
 from .types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 
@@ -41,8 +43,6 @@ class AppABC(ABC, Generic[StateT, ExecutorT]):
     """
 
     _services: dict[str, "Service"]
-    _state_service_name: str
-    _exec_engine_service_name: str
 
     @classmethod
     def factory_name(cls) -> str:
@@ -54,14 +54,22 @@ class AppABC(ABC, Generic[StateT, ExecutorT]):
         """
         return f"{cls.__module__}.{cls.__name__}"
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        spec: Spec | None = None,
+        state_spec: Spec | None = None,
+        executor_spec: Spec | None = None,
+    ) -> None:
         """
         Initialize a new app instance.
         """
+        self.spec = spec
+        self.state_spec = state_spec
+        self.executor_spec = executor_spec
+
         self._services = {}
         self._app_deps = {}
-        self._state_service_name = ""
-        self._exec_engine_service_name = ""
+
         logger.debug(f"Initialized app '{self.readable_name}'")
 
     @property
@@ -92,6 +100,24 @@ class AppABC(ABC, Generic[StateT, ExecutorT]):
             str: Human-readable string showing app name and services
         """
         return f"<App '{self.readable_name}': services=({self._services})>"
+
+    def add_service_dependency(
+        self,
+        name: str,
+        spec: "Spec",
+    ) -> "Service": ...
+
+    def get_service_dependency(self, name: str) -> "Service":
+        """
+        Get named dependency if it exists.
+
+        Args:
+            name: Dependency name to retrieve
+
+        Returns:
+            Dependency service
+        """
+        ...
 
 
 class SyncAppABC(AppABC[SyncStateT, SyncExecutorT]):

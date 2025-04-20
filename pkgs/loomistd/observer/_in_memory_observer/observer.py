@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from loomi.attr import Attach
+from loomi.attr import UseService
 from loomi.interfaces.state.observer import AsyncObservableProtocol, AsyncSubscriptionProtocol
 from loomi.service import AsyncService
 from loomi.spec import Spec, SpecField
@@ -29,8 +29,8 @@ class InMemoryObserver(
 ):
     """In-memory observer with thread-safe subscription management."""
 
-    codec_srv: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = Attach(
-        PassthroughCodec
+    codec_srv: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = (
+        UseService()
     )
 
     async def _connect_impl(self) -> None:

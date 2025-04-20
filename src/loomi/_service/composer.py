@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from loomi._descriptors.attach import AttachDescriptor, is_attach_descriptor
+from loomi._descriptors.use_service import ServiceDescriptor
 
 from .base import AsyncServiceABC, ServiceABC, SyncServiceABC
 from .exceptions import DependencyError
@@ -83,10 +83,10 @@ class CommonServiceComposer(ServiceABC):
 
     def _initialize_attach_descriptors(self):
         for name, value in self.__class__.__dict__.items():
-            if not is_attach_descriptor(value):
+            if not isinstance(value, ServiceDescriptor):
                 continue
 
-            attach = cast(AttachDescriptor, value)
+            attach = cast(ServiceDescriptor, value)
 
             # Get service spec by priority
             attach_spec = None
@@ -114,11 +114,11 @@ class AsyncServiceComposer(CommonServiceComposer, AsyncServiceABC):
     Service mixin combining dependency injection and component architecture.
 
     Features:
-    - Declarative dependency specification via Attach
+    - Declarative dependency specification via UseService
 
     Example:
         class DataService(AsyncService):
-            storage = Attach(Storage)
+            storage = UseService(Storage)
     """
 
     pass
@@ -129,11 +129,11 @@ class SyncServiceComposer(CommonServiceComposer, SyncServiceABC):
     Service mixin combining dependency injection and component architecture.
 
     Features:
-    - Declarative dependency specification via Attach
+    - Declarative dependency specification via UseService
 
     Example:
         class DataService(SyncService):
-            storage = Attach(Storage)
+            storage = UseService(Storage)
     """
 
     pass

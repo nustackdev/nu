@@ -8,7 +8,7 @@ components to provide a complete execution environment.
 
 from __future__ import annotations
 
-from loomi.attr import Attach
+from loomi.attr import UseService
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 from loomi.service import AsyncService
 from loomi.spec import Spec, SpecField
@@ -65,10 +65,10 @@ class ExecutionEngine(
 
     # --- Service specifications --- #
 
-    state: StateT = Attach()
-    executor = Attach(TaskExecutionService)
-    tracing = Attach(TracingService)
-    logger = Attach(LoggingService)
+    state: StateT = UseService()
+    executor = UseService(TaskExecutionService)
+    tracing = UseService(TracingService)
+    logger = UseService(LoggingService)
 
     # --- Operations --- #
 

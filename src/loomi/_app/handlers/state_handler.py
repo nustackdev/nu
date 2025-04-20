@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi._descriptors.use_service import ServiceDescriptor
+from typing import cast, final
 
 from ..base import AppABC, AsyncAppABC, SyncAppABC
 from ..exceptions import StateError
@@ -18,22 +18,7 @@ class CommonAppStateHandler(AppABC[StateT, ExecutorT]):
     Base class for app state management.
     """
 
-    def _initialize_state_descriptor(self) -> None:
-        """Initialize state descriptor."""
-
-        state_configured = False
-        for name, value in self.__class__.__dict__.items():
-            if not isinstance(value, ServiceDescriptor):
-                continue
-
-            if value.as_state is not True:
-                continue
-
-            if state_configured is True:
-                raise StateError("Multiple state descriptors not supported")
-
-            self._state_service_name = name
-            state_configured = True
+    pass
 
 
 class AsyncCommonAppStateHandler(
@@ -58,18 +43,21 @@ class AsyncCommonAppStateHandler(
                 await self.set(("status,), "done")
     """
 
+    @final
     @property
     def state(self) -> StateT:
         """Check and return app's state service."""
-        if not self._state_service_name or len(self._state_service_name) == 0:
+        if "EXECUTOR" not in self._services:
             raise StateError("No state adapter configured")
 
-        state = getattr(self, self._state_service_name, None)
+        state = cast(StateT, self.get_service_dependency("STATE"))
+
         if not state:
-            raise StateError("State adapter not initialized")
+            raise StateError("State not initialized")
 
         return state
 
+    @final
     @property
     def s(self) -> StateT:
         """Short alias for state adapter."""
@@ -79,18 +67,21 @@ class AsyncCommonAppStateHandler(
 class SyncCommonAppStateHandler(
     CommonAppStateHandler[SyncStateT, SyncExecutorT], SyncAppABC[SyncStateT, SyncExecutorT]
 ):
+    @final
     @property
     def state(self) -> SyncStateT:
         """Check and return app's state service."""
-        if not self._state_service_name or len(self._state_service_name) == 0:
+        if "EXECUTOR" not in self._services:
             raise StateError("No state adapter configured")
 
-        state = getattr(self, self._state_service_name, None)
+        state = cast(SyncStateT, self.get_service_dependency("STATE"))
+
         if not state:
-            raise StateError("State adapter not initialized")
+            raise StateError("State not initialized")
 
         return state
 
+    @final
     @property
     def s(self) -> SyncStateT:
         """Short alias for state adapter."""

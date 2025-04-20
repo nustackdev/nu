@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Type, TypeVar, cast
 
 from loomi._utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
@@ -27,8 +27,6 @@ class ServiceDescriptor(BaseDescriptor[S]):
         *,
         spec: "Spec | None" = None,
         spec_key: str | None = None,
-        as_state: bool = False,
-        as_engine: bool = False,
     ) -> None:
         super().__init__(
             storage=StorageStrategy.WEAKREF,
@@ -38,8 +36,6 @@ class ServiceDescriptor(BaseDescriptor[S]):
         self.default_factory = default_factory
         self.spec = spec
         self.spec_key = spec_key
-        self.as_state = as_state
-        self.as_engine = as_engine
 
     def _validate_type(self, value: Any) -> bool:
         """Validate that value is a subclass of BaseService."""
@@ -50,6 +46,6 @@ class ServiceDescriptor(BaseDescriptor[S]):
         return None
 
 
-def UseService(type: type[S], spec: "Spec | None" = None) -> S:
+def UseService(spec: "Spec | None" = None) -> S:  # type: ignore
     """Create a service specification."""
-    return ServiceDescriptor[S](spec=spec, as_state=False, as_engine=False)  # type: ignore
+    return cast(S, ServiceDescriptor[S](spec=spec))

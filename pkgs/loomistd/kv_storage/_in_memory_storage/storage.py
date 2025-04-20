@@ -3,12 +3,12 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, AsyncGenerator
 
-from loomi.attr import Attach
+from loomi.attr import UseService
 from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomi.service import AsyncService
 from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
-from loomistd.codec.passthrough import PassthroughCodec, PassthroughCodecSpec
+from loomistd.codec.passthrough import PassthroughCodecSpec
 
 from .._base import BaseStorage
 from .._exceptions import (
@@ -53,7 +53,7 @@ class InMemoryStorage(
         InMemoryStorageValue,
         InMemoryStorageEncodedKey,
         InMemoryStorageEncodedValue,
-    ] = Attach(PassthroughCodec)
+    ] = UseService()
 
     spec: InMemoryStorageSpec
 

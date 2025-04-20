@@ -1,6 +1,5 @@
 from .app import AsyncApp, SyncApp
 from .base import AppABC, AsyncAppABC, SyncAppABC
-from .meta import AppMeta
 
 __all__ = [
     "AsyncApp",
@@ -8,5 +7,4 @@ __all__ = [
     "AppABC",
     "AsyncAppABC",
     "SyncAppABC",
-    "AppMeta",
 ]

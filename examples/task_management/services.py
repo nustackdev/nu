@@ -1,4 +1,4 @@
-from loomi import AsyncService, Attach
+from loomi import AsyncService, UseService
 
 
 class NotificationService(AsyncService):
@@ -39,8 +39,8 @@ class UserService(AsyncService):
 class TaskService(AsyncService):
     """Manages task operations with user assignment and notifications"""
 
-    notification_service = Attach(NotificationService)
-    user_service = Attach(UserService)
+    notification_service = UseService(NotificationService)
+    user_service = UseService(UserService)
 
     async def create_task(self, task_id: str, description: str) -> bool:
         # Auto-assign to least loaded user

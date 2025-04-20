@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from loomi.attr import Attach
+from loomi.attr import UseService
 from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
 from loomi.interfaces.state.state import AsyncStateProtocol
 from loomi.service import AsyncService
@@ -44,10 +44,8 @@ class State(AsyncService, TreeStorageBase[StateValue]):
     - Async-first design
     """
 
-    storage_srv: StorageServiceProtocol[StateKey, StateValue, Any, Any] = Attach(
-        StorageServiceProtocol
-    )
-    observer_srv: ObserverServiceProtocol[StateKey, Any] = Attach(ObserverServiceProtocol)
+    storage_srv: StorageServiceProtocol[StateKey, StateValue, Any, Any] = UseService()
+    observer_srv: ObserverServiceProtocol[StateKey, Any] = UseService()
 
     async def setup(self):
         self._observable_kv_storage = ObservableKVStorageCore(
