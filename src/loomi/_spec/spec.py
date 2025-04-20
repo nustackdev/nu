@@ -25,7 +25,10 @@ from .exceptions import SpecError
 
 __all__ = [
     "Spec",
+    "SpecField",
 ]
+
+SpecField = Field
 
 
 class Spec(BaseModel):

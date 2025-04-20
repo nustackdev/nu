@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from loomi._service import SyncService
+from loomi.service import SyncService
+from loomi.spec import Spec, SpecField
 
 from .._exceptions import DecodeError, EncodeError
 from .constans import PATH_SEPARATOR
@@ -13,6 +14,7 @@ from .types import (
 
 __all__ = [
     "PassthroughCodec",
+    "PassthroughCodecSpec",
 ]
 
 
@@ -85,3 +87,8 @@ class PassthroughCodec(SyncService):
             Same value without modification
         """
         return encoded
+
+
+class PassthroughCodecSpec(Spec):
+    name: str = SpecField(default="passthrough_codec")
+    factory: type = SpecField(default=PassthroughCodec)

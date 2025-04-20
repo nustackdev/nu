@@ -3,7 +3,8 @@ from __future__ import annotations
 import struct
 from typing import Any
 
-from loomi._service import SyncService
+from loomi.service import SyncService
+from loomi.spec import Spec, SpecField
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import (
@@ -36,6 +37,7 @@ from .types import (
 
 __all__ = [
     "BinaryCodec",
+    "BinaryCodecSpec",
 ]
 
 
@@ -350,3 +352,8 @@ class BinaryCodec(SyncService):
             count += 1
 
         raise DecodeError("Unterminated container")
+
+
+class BinaryCodecSpec(Spec):
+    name: str = SpecField(default="binary_codec")
+    factory: type = SpecField(default=BinaryCodec)

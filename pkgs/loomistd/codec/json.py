@@ -6,11 +6,13 @@ from ._json_codec import (
     JSONCodecEncodedValue,
     JSONCodecKey,
     JSONCodecProtocol,
+    JSONCodecSpec,
     JSONCodecValue,
 )
 
 __all__ = [
     "JSONCodec",
+    "JSONCodecSpec",
     "JSONCodecProtocol",
     "JSONCodecKey",
     "JSONCodecValue",

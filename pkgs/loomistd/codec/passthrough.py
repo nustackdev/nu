@@ -6,11 +6,13 @@ from ._passthrough_codec import (
     PassthroughCodecEncodedValue,
     PassthroughCodecKey,
     PassthroughCodecProtocol,
+    PassthroughCodecSpec,
     PassthroughCodecValue,
 )
 
 __all__ = [
     "PassthroughCodec",
+    "PassthroughCodecSpec",
     "PassthroughCodecProtocol",
     "PassthroughCodecKey",
     "PassthroughCodecValue",

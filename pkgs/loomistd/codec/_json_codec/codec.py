@@ -4,13 +4,17 @@ import base64
 import json
 from typing import Any
 
-from loomi._service import SyncService
+from loomi.service import SyncService
+from loomi.spec import Spec, SpecField
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import PATH_SEPARATOR
 from .types import JSONCodecEncodedKey, JSONCodecEncodedValue, JSONCodecKey, JSONCodecValue
 
-__all__ = ["JSONCodec"]
+__all__ = [
+    "JSONCodec",
+    "JSONCodecSpec",
+]
 
 
 class JSONCodec(SyncService):
@@ -180,3 +184,8 @@ class JSONCodec(SyncService):
         else:
             # Return other values as is
             return value
+
+
+class JSONCodecSpec(Spec):
+    name: str = SpecField(default="json_codec")
+    factory: type = SpecField(default=JSONCodec)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .codec import JSONCodec
+from .codec import JSONCodec, JSONCodecSpec
 from .types import (
     JSONCodecEncodedKey,
     JSONCodecEncodedValue,
@@ -11,6 +11,7 @@ from .types import (
 
 __all__ = [
     "JSONCodec",
+    "JSONCodecSpec",
     "JSONCodecProtocol",
     "JSONCodecKey",
     "JSONCodecValue",

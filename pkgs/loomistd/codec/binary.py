@@ -6,11 +6,13 @@ from ._binary_codec import (
     BinaryCodecEncodedValue,
     BinaryCodecKey,
     BinaryCodecProtocol,
+    BinaryCodecSpec,
     BinaryCodecValue,
 )
 
 __all__ = [
     "BinaryCodec",
+    "BinaryCodecSpec",
     "BinaryCodecProtocol",
     "BinaryCodecKey",
     "BinaryCodecValue",
