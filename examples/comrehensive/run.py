@@ -17,14 +17,22 @@ from pathlib import Path
 
 # Loomi
 from loomi import AsyncApp, AsyncContext, AsyncOperation, Spec, UseApp
-from loomi._logging import setup_logging
 from loomistd.aexecutor import ExecutionEngineSpec
+from loomistd.aexecutor.services.tracing import TracingServiceSpec
+from loomistd.kv_storage.file_storage import FileStorageSpec
 from loomistd.state import StateSpec
+from loomix.logging import setup_logging
 
 setup_logging(Path(".logs"), log_level=10)
 
 state_spec = StateSpec()
-executor_spec = ExecutionEngineSpec(state=state_spec)
+tracing_state_spec = StateSpec(
+    name="tracing_state", storage_srv=FileStorageSpec(path=Path(".tracing/db"))
+)
+executor_spec = ExecutionEngineSpec(
+    state=state_spec,
+    tracing=TracingServiceSpec(tracing_state=tracing_state_spec),
+)
 
 
 class NestedApp(AsyncApp):
@@ -201,6 +209,7 @@ class ComprehensiveApp(AsyncApp):
 
         # Build a workflow demonstrating all operations
         workflow = self.ex.Sequence(
+            self.ex.Delay(10),
             # Setup phase
             self.ex.Function(self.setup_data),
             # 1. Simple Function operation

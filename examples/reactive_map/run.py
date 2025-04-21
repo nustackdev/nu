@@ -12,10 +12,10 @@ import time
 from pathlib import Path
 
 from loomi import AsyncApp, AsyncContext, AsyncOperation
-from loomi._logging import setup_logging
 from loomistd.aexecutor import ExecutionEngineSpec
 from loomistd.aexecutor.compound_operations import ReactiveMap
 from loomistd.state import StateSpec
+from loomix.logging import setup_logging
 
 # Basic setup
 setup_logging(Path(".logs"), log_level=10)
