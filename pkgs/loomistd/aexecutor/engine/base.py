@@ -101,8 +101,14 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             {},  # Empty attributes dict
         )
 
-        # Execute the operation with its context
-        await self.exec_operation(context)
+        await self.tracing.start_execution(operation)
+
+        try:
+            # Execute the operation with its context
+            await self.exec_operation(context)
+        finally:
+            # Finalize tracing
+            await self.tracing.end_execution()
 
     async def exec_operation(self, context: Context[StateDictT]) -> None:
         """
@@ -124,7 +130,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         self.logger.log_operation_start(operation.metadata.name)
 
         # Initialize tracing if enabled
-        # self.tracing.start_span(operation, context)
+        await self.tracing.start_span(operation, context)
 
         try:
             # Dispatch to the appropriate execution method based on operation type
@@ -160,14 +166,14 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             self.logger.log_operation_end(operation.metadata.name)
 
             # Finalize tracing
-            # self.tracing.end_span(operation, context)
+            await self.tracing.end_span(operation, context)
 
         except Exception as e:
             # Log the error
             self.logger.log_operation_error(operation.metadata.name, e)
 
             # Record error in tracing
-            # self.tracing.record_exception(operation, context, e)
+            await self.tracing.record_exception(operation, context, e)
 
             # Handle on_fail operation if specified
             if operation._on_fail:
@@ -206,6 +212,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             TaskExecutionCancelledError: If task is cancelled during execution
         """
         # Execute the function through the task executor
+
         if inspect.iscoroutinefunction(func):
             await self.executor.execute(func=func, context=context, timeout=timeout, wait=True)
         else:

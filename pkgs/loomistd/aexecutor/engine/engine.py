@@ -138,5 +138,5 @@ class ExecutionEngineSpec(Spec):
     factory: type = SpecField(default=ExecutionEngine)
     state: Spec = SpecField(default=StateSpec())
     executor: Spec = SpecField(default=TaskExecutionServiceSpec())
-    tracing: Spec = SpecField(default=TracingServiceSpec())
     logger: Spec = SpecField(default=LoggingServiceSpec())
+    tracing: Spec = SpecField(default=TracingServiceSpec())
