@@ -21,8 +21,12 @@ class DAGNodeMixin(Generic[NodeT]):
         """Initialize the DAG node."""
         self._parents: set[NodeT] = set()
         # Use OrderedDict instead of set to preserve insertion order of children
-        self._children: OrderedDict[int, NodeT] = OrderedDict()
-        DAGNodeMixin._dag.add_node(id(self), obj=self)
+        self._children: OrderedDict[str, NodeT] = OrderedDict()
+        DAGNodeMixin._dag.add_node(self.key(), obj=self)
+
+    def key(self) -> str:
+        """Return a unique key combining object id and class name."""
+        return f"{id(self)}_{self.__class__.__name__}"
 
     @property
     def children(self) -> tuple[NodeT, ...]:
@@ -48,20 +52,20 @@ class DAGNodeMixin(Generic[NodeT]):
 
     def _add_child(self, child: NodeT) -> None:
         """Add a child to this node."""
-        child_id = id(child)
-        if child_id not in self._children:
-            self._children[child_id] = child
+        child_key = child.key()
+        if child_key not in self._children:
+            self._children[child_key] = child
             child._parents.add(self)
-            DAGNodeMixin._dag.add_edge(id(self), child_id)
+            DAGNodeMixin._dag.add_edge(self.key(), child_key)
 
     def _remove_child(self, child: NodeT) -> None:
         """Remove a child from this node."""
-        child_id = id(child)
-        if child_id in self._children:
-            del self._children[child_id]
+        child_key = child.key()
+        if child_key in self._children:
+            del self._children[child_key]
             child._parents.remove(self)
-            if DAGNodeMixin._dag.has_edge(id(self), child_id):
-                DAGNodeMixin._dag.remove_edge(id(self), child_id)
+            if DAGNodeMixin._dag.has_edge(self.key(), child_key):
+                DAGNodeMixin._dag.remove_edge(self.key(), child_key)
 
     @property
     def parents(self) -> tuple[NodeT, ...]:
@@ -94,8 +98,8 @@ class DAGNodeMixin(Generic[NodeT]):
 
         while nodes_to_visit:
             node = nodes_to_visit.pop(0)
-            if id(node) not in visited:
-                visited.add(id(node))
+            if node.key() not in visited:
+                visited.add(node.key())
                 ancestors.append(node)
                 nodes_to_visit.extend(node._parents)  # type: ignore
 
@@ -110,8 +114,8 @@ class DAGNodeMixin(Generic[NodeT]):
 
         while nodes_to_visit:
             node = nodes_to_visit.pop(0)
-            if id(node) not in visited:
-                visited.add(id(node))
+            if node.key() not in visited:
+                visited.add(node.key())
                 descendants.append(node)
                 nodes_to_visit.extend(node._children.values())
 

@@ -66,9 +66,9 @@ class ExecutionEngine(
     # --- Service specifications --- #
 
     state: StateT = UseService()
-    executor = UseService(TaskExecutionService)
-    tracing = UseService(TracingService)
-    logger = UseService(LoggingService)
+    executor: TaskExecutionService = UseService()
+    tracing: TracingService = UseService()
+    logger: LoggingService = UseService()
 
     # --- Operations --- #
 
