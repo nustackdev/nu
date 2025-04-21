@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 from base64 import b64encode
 from functools import cached_property
-from typing import final
+from typing import Hashable, final
 
 from pydantic import BaseModel, Field, field_serializer
 
@@ -31,7 +31,7 @@ __all__ = [
 SpecField = Field
 
 
-class Spec(BaseModel):
+class Spec(BaseModel, Hashable):
     """
     Base specification class for all apps and services.
 
@@ -100,3 +100,6 @@ class Spec(BaseModel):
         key = b64encode(sorted_items.encode()).decode()
 
         return str(key)
+
+    def __hash__(self) -> int:
+        return hash(self.key)

@@ -26,6 +26,9 @@ include = [
     "stubs/**/*.pyi"
 ]
 
+[tool.poetry.scripts]
+loomix = "loomix.cli.entrypoint:loomix"
+
 [tool.poetry.dependencies]
 python = "^3.12"
 rich = "^13.9.4"
@@ -36,6 +39,7 @@ aiohttp = "^3.11.13"
 requests = "^2.32.3"
 pre-commit = "^4.1.0"
 networkx = "^3.4.2"
+rich-click = "^1.8.8"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "*"

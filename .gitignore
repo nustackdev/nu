@@ -167,6 +167,7 @@ _playground/
 # Data and log files
 .db/
 .logs/
+.tracing/
 *.db.json
 *.db.json.lock
 *.lmdb/

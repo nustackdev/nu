@@ -3,7 +3,7 @@ from __future__ import annotations
 from .app import AsyncApp, AsyncContext, AsyncOperation, SyncApp, SyncContext, SyncOperation
 from .attr import UseApp, UseService
 from .service import AsyncService, SyncService
-from .spec import Spec
+from .spec import Spec, SpecField
 
 # --- Public API ---
 
@@ -28,4 +28,5 @@ __all__ += [
     "UseApp",
     "UseService",
     "Spec",
+    "SpecField",
 ]
