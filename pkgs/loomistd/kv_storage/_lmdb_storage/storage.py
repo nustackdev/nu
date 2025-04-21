@@ -355,6 +355,7 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
 class LMDBStorageSpec(Spec):
     name: str = SpecField(default="lmdb_storage")
     factory: type = SpecField(default=LMDBStorage)
+    mode: str = SpecField(default="write")
     path: Path = SpecField(default=Path(".db"))
     codec_srv: Spec = SpecField(default=BinaryCodecSpec())
     map_size: int = SpecField(default=10 * 1024 * 1024 * 1024)  # 10GB default
