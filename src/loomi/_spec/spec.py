@@ -1,15 +1,6 @@
 """
-specification system for defining service/app properties and identity.
-
-This module provides the Spec class which serves as the foundation for
-defining instances. It handles:
-- Basic properties like name and factory
-- Identity field management for instance deduplication
-- Key generation for unique instance identification
-- Serialization of complex types like factory classes
-
-The specification system is extensible through subclassing while maintaining
-consistent identity and key generation behavior.
+Specification system for defining service/app properties and identity.
+Note: temporary solution until we have a more robust system in place.
 """
 
 from __future__ import annotations
@@ -17,85 +8,75 @@ from __future__ import annotations
 import json
 from base64 import b64encode
 from functools import cached_property
-from typing import Hashable, final
+from pathlib import Path
+from typing import Any, Dict, Hashable, final
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field
 
 from .exceptions import SpecError
 
-__all__ = [
-    "Spec",
-    "SpecField",
-]
+__all__ = ["Spec", "SpecField"]
 
 SpecField = Field
 
 
 class Spec(BaseModel, Hashable):
     """
-    Base specification class for all apps and services.
+    Temporary specification class for defining service/app properties and identity.
+    Should be replaced with a more ergonomic and robust system in the future.
 
-    This class defines the core properties and behavior for service and app specifications.
-    It handles identity management, key generation, and factory configuration
-    while supporting extension through subclassing.
-
-    Attributes:
-        name (str): Instance name, defaults to empty string
-        factory (type | None): Factory class
-
-    Class Configuration:
-        - Supports ORM mode
-        - Validates attribute assignments
-        - Allows extra attributes
-        - Supports arbitrary types
-
-    Notes:
-        - Key generation is final and cannot be overridden
+    This class is used to define the properties of a service or app, including its name,
+    factory, and any additional fields.
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-        extra = "allow"
-        from_attributes = True
-        frozen = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        extra="allow",
+        from_attributes=True,
+        frozen=True,
+    )
 
     name: str = Field(default="")
     factory: type
 
-    @field_serializer("factory")
-    def serialize_factory(self, factory: type) -> str:
-        """
-        Serialize factory class to string representation.
+    def _serialize_value(self, value: Any) -> Any:
+        if value is None:
+            return None
+        elif isinstance(value, Spec):
+            return value._dump()
+        elif isinstance(value, Path):
+            return str(value)
+        elif isinstance(value, type):
+            return value.factory_name() if hasattr(value, "factory_name") else value.__name__
+        elif isinstance(value, list):
+            return [self._serialize_value(item) for item in value]
+        elif isinstance(value, dict):
+            return {str(k): self._serialize_value(v) for k, v in value.items()}
+        else:
+            return value
 
-        Args:
-            factory: Service factory class
+    def _dump(self) -> Dict[str, Any]:
+        result = {}
 
-        Returns:
-            str: String representation of factory or 'None'
-        """
-        return factory.factory_name() if hasattr(factory, "factory_name") else "None"
+        # Process model fields
+        for field_name in self.model_fields:
+            if hasattr(self, field_name):
+                result[field_name] = self._serialize_value(getattr(self, field_name))
+
+        # Process extra fields
+        for field_name, value in self.__dict__.items():
+            if field_name not in result and not field_name.startswith("_"):
+                result[field_name] = self._serialize_value(value)
+
+        return result
 
     @final
     @cached_property
     def key(self) -> str:
-        """
-        Generate unique key for instance deduplication.
-
-        Returns:
-            str: Unique identifier based on identity fields
-
-        Raises:
-            SpecError: If factory is not defined
-
-        Notes:
-            - Uses JSON serialization for stable dictionary representation
-            - Encodes result in base64 for clean string format
-            - Method is final and cannot be overridden
-        """
         if self.factory is None:
             raise SpecError("Factory is not defined")
 
-        identity_dict = self.model_dump(mode="json")
+        identity_dict = self._dump()
         sorted_items = json.dumps(identity_dict, sort_keys=True)
         key = b64encode(sorted_items.encode()).decode()
 
@@ -103,3 +84,8 @@ class Spec(BaseModel, Hashable):
 
     def __hash__(self) -> int:
         return hash(self.key)
+
+    def __eq__(self, other):
+        if not isinstance(other, Spec):
+            return False
+        return self.key == other.key

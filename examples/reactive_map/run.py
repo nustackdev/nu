@@ -25,9 +25,7 @@ setup_logging(Path(".logs"), log_level=10)
 # Configure service specs
 state_spec = StateSpec()
 
-tracing_state_spec = StateSpec(
-    name="tracing_state", storage_srv=FileStorageSpec(path=Path(".tracing/db"))
-)
+tracing_state_spec = StateSpec(storage_srv=FileStorageSpec(path=Path(".tracing/db")))
 executor_spec = ExecutionEngineSpec(
     state=state_spec,
     tracing=TracingServiceSpec(tracing_state=tracing_state_spec),
