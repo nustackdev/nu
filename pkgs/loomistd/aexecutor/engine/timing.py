@@ -10,12 +10,13 @@ from __future__ import annotations
 import asyncio
 import inspect
 
+from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
 from ..operations import Delay, Retry, Timeout
 from .base import EngineBase
-from .exceptions import OperationExecutionError, OperationTimeoutError
+from .exceptions import OperationExecutionError, OperationTimeoutError, StateAccessError
 
 
 class TimingEngine(EngineBase[StateT, StateDictT]):
@@ -94,7 +95,7 @@ class TimingEngine(EngineBase[StateT, StateDictT]):
                 task.cancel()
                 try:
                     # Wait for the task to be cancelled
-                    await task
+                    await task  # type: ignore
                 except asyncio.CancelledError:
                     pass
 
@@ -254,10 +255,15 @@ class TimingEngine(EngineBase[StateT, StateDictT]):
 
             # Get value from state
             try:
-                if inspect.iscoroutinefunction(context.scope.get):
+                if isinstance(context.scope, AsyncTreeDictProtocol):
                     value = await context.scope.get(*delay_path)
-                else:
+                elif isinstance(context.scope, SyncTreeDictProtocol):
                     value = context.scope.get(*delay_path)
+                else:
+                    raise StateAccessError(
+                        f"Unsupported dict type: {type(context.scope)}",
+                        operation=operation,
+                    )
 
                 if not isinstance(value, (int, float)):
                     raise ValueError(f"Delay path must resolve to a number, got {type(value)}")

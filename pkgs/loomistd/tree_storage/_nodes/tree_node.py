@@ -36,6 +36,16 @@ class TreeNode(Generic[TreeValueT], ABC):
 
     EMPTY: EmptyProtocol = StorageCore.EMPTY
 
+    @property
+    def is_async(self) -> bool:
+        """
+        Check if the node is asynchronous.
+
+        Returns:
+            True if the node is asynchronous, False otherwise
+        """
+        return True
+
     def __init__(
         self,
         storage: TreeStorage[TreeValueT],

@@ -12,12 +12,13 @@ import inspect
 import uuid
 from typing import Any, Dict, Tuple
 
+from loomi.interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
 from ..operations import Operation, Subscribe
 from .base import EngineBase
-from .exceptions import OperationExecutionError
+from .exceptions import OperationExecutionError, StateAccessError
 
 
 class ReactiveEngine(EngineBase[StateT, StateDictT]):
@@ -116,16 +117,22 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
 
         try:
             # Create the subscription
-            if inspect.iscoroutinefunction(self.state.subscribe):
+
+            if isinstance(self.state, AsyncStateProtocol):
                 subscription = await self.state.subscribe(watch_path, on_change, depth=depth)
-            else:
+            elif isinstance(self.state, SyncStateProtocol):
                 if inspect.iscoroutinefunction(on_change):
                     # Wrap the callback in a coroutine if needed
                     raise ValueError(
                         "on_change callback cannot be a coroutine function when state.subscribe is not async"
                     )
                 else:
-                    subscription = self.state.subscribe(watch_path, on_change, depth=depth)
+                    subscription = self.state.subscribe(watch_path, on_change, depth=depth)  # type: ignore
+            else:
+                raise StateAccessError(
+                    f"Unsupported state type: {type(self.state)}",
+                    operation=operation,
+                )
 
             # Create a task to manage the subscription
             task = asyncio.create_task(
@@ -253,10 +260,15 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
 
         # Unsubscribe from state
         try:
-            if inspect.iscoroutinefunction(self.state.unsubscribe):
+            if isinstance(self.state, AsyncStateProtocol):
                 await self.state.unsubscribe(subscription)
-            else:
+
+            elif isinstance(self.state, SyncStateProtocol):
                 self.state.unsubscribe(subscription)
+
+            else:
+                raise StateAccessError(f"Unsupported state type: {type(self.state)}")
+
         except Exception as e:
             self.logger.error(f"Error unsubscribing: {e}", exc_info=e)
 

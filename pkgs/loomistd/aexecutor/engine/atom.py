@@ -11,6 +11,7 @@ from __future__ import annotations
 import inspect
 from typing import cast
 
+from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context.context import Context
@@ -77,10 +78,16 @@ class AtomEngine(EngineBase[StateT, StateDictT]):
             self.logger.debug(f"Mounting app at state path: {state_path}")
 
             try:
-                if inspect.iscoroutinefunction(context.scope.dict):
+                # Get the dictionary object
+                if isinstance(context.scope, AsyncTreeDictProtocol):
                     app_scope = cast(StateDictT, await context.scope.dict(*state_path))
-                else:
+                elif isinstance(context.scope, SyncTreeDictProtocol):
                     app_scope = cast(StateDictT, context.scope.dict(*state_path))
+                else:
+                    raise StateAccessError(
+                        f"Unsupported dict type: {type(context.scope)}",
+                        operation=operation,
+                    )
 
             except Exception as e:
                 raise StateAccessError(

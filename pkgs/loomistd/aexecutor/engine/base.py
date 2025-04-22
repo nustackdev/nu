@@ -12,6 +12,7 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Awaitable, Callable, Generic, Optional, TypeVar, cast
 
+from loomi.interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
@@ -32,7 +33,7 @@ from ..operations import (
 from ..services.logging import LoggingService
 from ..services.task_execution import TaskExecutionService
 from ..services.tracing import TracingService
-from .exceptions import OperationConfigError, wrap_error
+from .exceptions import OperationConfigError, StateAccessError, wrap_error
 
 # Type variables for static typing
 T = TypeVar("T")
@@ -88,11 +89,16 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         else:
             state_path = parent_context.scope.path
 
-        # Get state dict from appropriate path
-        if inspect.iscoroutinefunction(self.state.dict):
+        # Get the dictionary object
+        if isinstance(self.state, AsyncStateProtocol):
             scope = await self.state.dict(*state_path)
-        else:
+        elif isinstance(self.state, SyncStateProtocol):
             scope = self.state.dict(*state_path)
+        else:
+            raise StateAccessError(
+                f"Unsupported state type: {type(self.state)}",
+                operation=operation,
+            )
 
         # Create root context for the operation
         context = Context[StateDictT](

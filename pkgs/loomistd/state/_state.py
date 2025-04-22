@@ -47,6 +47,16 @@ class State(AsyncService, TreeStorageBase[StateValue]):
     storage_srv: StorageServiceProtocol[StateKey, StateValue, Any, Any] = UseService()
     observer_srv: ObserverServiceProtocol[StateKey, Any] = UseService()
 
+    @property
+    def is_async(self) -> bool:
+        """
+        Check if the state is asynchronous.
+
+        Returns:
+            True if the state is asynchronous, False otherwise
+        """
+        return True
+
     async def setup(self):
         self._observable_kv_storage = ObservableKVStorageCore(
             storage=self.storage_srv,

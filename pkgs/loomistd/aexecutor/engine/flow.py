@@ -12,12 +12,13 @@ import asyncio
 import inspect
 from typing import TYPE_CHECKING, Union
 
+from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
 from ..operations import Branch, Loop, Parallel, Sequence
 from .base import EngineBase
-from .exceptions import OperationConfigError, OperationExecutionError
+from .exceptions import OperationConfigError, OperationExecutionError, StateAccessError
 
 if TYPE_CHECKING:
     from ..operations import Operation
@@ -315,10 +316,15 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
 
             # Get value from state
             try:
-                if inspect.iscoroutinefunction(context.scope.get):
+                if isinstance(context.scope, AsyncTreeDictProtocol):
                     value = await context.scope.get(*condition_path)
-                else:
+                elif isinstance(context.scope, SyncTreeDictProtocol):
                     value = context.scope.get(*condition_path)
+                else:
+                    raise StateAccessError(
+                        f"Unsupported dict type: {type(context.scope)}",
+                        operation=operation,
+                    )
 
                 if value is context.scope.EMPTY:
                     value = None
@@ -382,10 +388,15 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
 
             # Get value from state
             try:
-                if inspect.iscoroutinefunction(context.scope.get):
+                if isinstance(context.scope, AsyncTreeDictProtocol):
                     value = await context.scope.get(*condition_path)
-                else:
+                elif isinstance(context.scope, SyncTreeDictProtocol):
                     value = context.scope.get(*condition_path)
+                else:
+                    raise StateAccessError(
+                        f"Unsupported dict type: {type(context.scope)}",
+                        operation=operation,
+                    )
 
                 if value is context.scope.EMPTY:
                     value = None

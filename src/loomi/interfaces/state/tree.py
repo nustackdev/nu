@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Protocol, overload
+from typing import TYPE_CHECKING, Any, Callable, Protocol, overload, runtime_checkable
 
 from .type_vars import TreeValueT
 from .types import TreePath, TreePathComponent, TreeValueContainer
@@ -31,6 +31,7 @@ class EmptyProtocol(Protocol):
     pass
 
 
+@runtime_checkable
 class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
     """
     Protocol for state tree nodes.
@@ -44,6 +45,16 @@ class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
     """
 
     EMPTY: EmptyProtocol
+
+    @property
+    def is_async(self) -> bool:
+        """
+        Check if the protocol is asynchronous.
+
+        Returns:
+            True if the protocol is asynchronous, False otherwise
+        """
+        return True
 
     @property
     def path(self) -> TreePath:
@@ -507,6 +518,7 @@ class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
         ...
 
 
+@runtime_checkable
 class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
     """
     Protocol for dictionary-like interface to state storage.
@@ -689,6 +701,7 @@ class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         ...
 
 
+@runtime_checkable
 class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT]):
     """
     Protocol for list-like interface to state storage.
@@ -847,6 +860,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT]):
 # --- Protocols for synchronous state handling --- #
 
 
+@runtime_checkable
 class SyncTreeNodeProtocol(Protocol[TreeValueT]):
     """
     Protocol for state tree nodes.
@@ -860,6 +874,16 @@ class SyncTreeNodeProtocol(Protocol[TreeValueT]):
     """
 
     EMPTY: EmptyProtocol
+
+    @property
+    def is_sync(self) -> bool:
+        """
+        Check if the protocol is synchronous.
+
+        Returns:
+            True if the protocol is synchronous, False otherwise
+        """
+        return True
 
     @property
     def path(self) -> TreePath:
@@ -1323,6 +1347,7 @@ class SyncTreeNodeProtocol(Protocol[TreeValueT]):
         ...
 
 
+@runtime_checkable
 class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
     """
     Protocol for dictionary-like interface to state storage.
@@ -1503,6 +1528,7 @@ class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         ...
 
 
+@runtime_checkable
 class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT]):
     """
     Protocol for list-like interface to state storage.

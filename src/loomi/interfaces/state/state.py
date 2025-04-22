@@ -34,6 +34,16 @@ class AsyncStateProtocol(Protocol[StateValueT]):
     as well as transaction management.
     """
 
+    @property
+    def is_async(self) -> bool:
+        """
+        Check if the protocol is asynchronous.
+
+        Returns:
+            True if the protocol is asynchronous, False otherwise
+        """
+        return True
+
     async def dict(
         self,
         path: StatePathComponent,
@@ -201,6 +211,16 @@ class SyncStateProtocol(Protocol[StateValueT]):
     providing methods to access dictionary and list nodes in the state tree,
     as well as transaction management.
     """
+
+    @property
+    def is_sync(self) -> bool:
+        """
+        Check if the protocol is synchronous.
+
+        Returns:
+            True if the protocol is synchronous, False otherwise
+        """
+        return True
 
     def dict(
         self,

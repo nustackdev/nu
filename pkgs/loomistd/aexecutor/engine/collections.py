@@ -8,9 +8,9 @@ Map, which apply operations to elements in collections.
 from __future__ import annotations
 
 import asyncio
-import inspect
 from typing import List, Tuple
 
+from loomi.interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 
 from ..context import Context
@@ -51,11 +51,16 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
             f"max_concurrency={max_concurrency}"
         )
 
-        # Check if the items path exists
-        if inspect.iscoroutinefunction(self.state.exists):
+        # Get the dictionary object
+        if isinstance(self.state, AsyncStateProtocol):
             path_exists = await self.state.exists(*items_path)
-        else:
+        elif isinstance(self.state, SyncStateProtocol):
             path_exists = self.state.exists(*items_path)
+        else:
+            raise StateAccessError(
+                f"Unsupported state type: {type(self.state)}",
+                operation=operation,
+            )
 
         if not path_exists:
             raise StateAccessError(
@@ -65,11 +70,16 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
                 state_path=items_path,
             )
 
-        # Verify it's a dictionary
-        if inspect.iscoroutinefunction(self.state.is_dict):
+        # Get the dictionary object
+        if isinstance(self.state, AsyncStateProtocol):
             is_dict = await self.state.is_dict(*items_path)
-        else:
+        elif isinstance(self.state, SyncStateProtocol):
             is_dict = self.state.is_dict(*items_path)
+        else:
+            raise StateAccessError(
+                f"Unsupported state type: {type(self.state)}",
+                operation=operation,
+            )
 
         if not is_dict:
             raise StateAccessError(
@@ -80,12 +90,17 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
             )
 
         # Get the dictionary object
-        if inspect.iscoroutinefunction(self.state.dict):
+        if isinstance(self.state, AsyncStateProtocol):
             dict_obj = await self.state.dict(*items_path)
             keys = await dict_obj.keys()
-        else:
+        elif isinstance(self.state, SyncStateProtocol):
             dict_obj = self.state.dict(*items_path)
             keys = dict_obj.keys()
+        else:
+            raise StateAccessError(
+                f"Unsupported state type: {type(self.state)}",
+                operation=operation,
+            )
 
         item_count = len(keys)
         self.logger.info(f"Retrieved {item_count} items to process")
