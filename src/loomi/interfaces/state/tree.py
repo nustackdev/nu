@@ -702,7 +702,7 @@ class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
 
 
 @runtime_checkable
-class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT]):
+class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
     """
     Protocol for list-like interface to state storage.
 
@@ -1529,7 +1529,7 @@ class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
 
 
 @runtime_checkable
-class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT]):
+class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
     """
     Protocol for list-like interface to state storage.
 

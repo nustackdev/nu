@@ -310,7 +310,7 @@ class InMemoryStorageSpec(Spec):
     name: str = SpecField(default="in_memory_storage")
     factory: type = SpecField(default=InMemoryStorage)
     mode: str = SpecField(default="write")
-    codec_srv: Spec = SpecField(default=PassthroughCodecSpec())
+    codec_srv: Spec = SpecField(default_factory=PassthroughCodecSpec)
 
 
 if TYPE_CHECKING:

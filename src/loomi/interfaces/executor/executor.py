@@ -1,30 +1,35 @@
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Callable, Concatenate, ParamSpec, Protocol, runtime_checkable
 
 from .type_vars import (
     AppOperationT,
+    AsyncExecutorT_co,
     BranchOperationT,
     ContextT_contra,
     DelayOperationT,
     FunctionOperationT,
     LoopOperationT,
     MapOperationT,
-    OperationT_contra,
+    OperationT,
     ParallelOperationT,
     RetryOperationT,
     SequenceOperationT,
     SubscribeOperationT,
     SyncContextT_contra,
+    SyncExecutorT_co,
     TimeoutOperationT,
 )
+
+P = ParamSpec("P")
 
 
 @runtime_checkable
 class AsyncExecutorProtocol(
     Protocol[
+        AsyncExecutorT_co,
         ContextT_contra,
-        OperationT_contra,
+        OperationT,
         AppOperationT,
         BranchOperationT,
         DelayOperationT,
@@ -59,11 +64,16 @@ class AsyncExecutorProtocol(
     Subscribe: type[SubscribeOperationT]
     Timeout: type[TimeoutOperationT]
 
+    def Compound(
+        self,
+        op: Callable[Concatenate[AsyncExecutorT_co, P], OperationT],
+    ) -> Callable[P, OperationT]: ...
+
     # --- Methods --- #
 
     async def execute(
         self,
-        operation: OperationT_contra,
+        operation: OperationT,
         parent_context: ContextT_contra | None = None,
     ) -> None: ...
 
@@ -147,8 +157,9 @@ class AsyncExecutorProtocol(
 @runtime_checkable
 class SyncExecutorProtocol(
     Protocol[
+        SyncExecutorT_co,
         SyncContextT_contra,
-        OperationT_contra,
+        OperationT,
         AppOperationT,
         BranchOperationT,
         DelayOperationT,
@@ -183,11 +194,16 @@ class SyncExecutorProtocol(
     Subscribe: type[SubscribeOperationT]
     Timeout: type[TimeoutOperationT]
 
+    def Compound(
+        self,
+        compound_op: Callable[Concatenate[SyncExecutorT_co, P], OperationT],
+    ) -> Callable[P, OperationT]: ...
+
     # --- Methods --- #
 
     def execute(
         self,
-        operation: OperationT_contra,
+        operation: OperationT,
         parent_context: SyncContextT_contra | None = None,
     ) -> None: ...
 

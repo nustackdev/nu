@@ -376,7 +376,7 @@ class FileStorageSpec(Spec):
     factory: type = SpecField(default=FileStorage)
     mode: str = SpecField(default="write")
     path: Path = SpecField(default=Path(".db/db.json"))
-    codec_srv: Spec = SpecField(default=JSONCodecSpec())
+    codec_srv: Spec = SpecField(default_factory=JSONCodecSpec)
 
 
 if TYPE_CHECKING:

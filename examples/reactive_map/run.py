@@ -13,7 +13,7 @@ from pathlib import Path
 
 from loomi import AsyncApp, AsyncContext, AsyncOperation
 from loomistd.aexecutor import ExecutionEngineSpec
-from loomistd.aexecutor.compound_operations import ReactiveMap
+from loomistd.compound_ops import ReactiveMap
 from loomistd.state import StateSpec
 from loomix.logging import setup_logging
 
@@ -89,10 +89,10 @@ class TodoReactiveMapApp(AsyncApp):
         print(f"[{time.strftime('%H:%M:%S')}] ➕ ADDED: '{title}' with key {key}")
 
     def define(self) -> AsyncOperation:
-        workflow = self.ex.Sequence(
+        return self.ex.Sequence(
             self.ex.Function(self.init_state),
             self.ex.Parallel(
-                ReactiveMap(
+                self.ex.Compound(ReactiveMap)(
                     self.ex.Function(self.process_todo),
                     items_path=("_", "todos"),
                     max_concurrency=2,
@@ -110,8 +110,6 @@ class TodoReactiveMapApp(AsyncApp):
                 ),
             ),
         )
-
-        return workflow
 
 
 async def main():

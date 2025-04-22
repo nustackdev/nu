@@ -8,7 +8,11 @@ components to provide a complete execution environment.
 
 from __future__ import annotations
 
+from functools import wraps
+from typing import TYPE_CHECKING, Any, Callable, Concatenate, ParamSpec
+
 from loomi.attr import UseService
+from loomi.interfaces.executor.executor import AsyncExecutorProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
 from loomi.service import AsyncService
 from loomi.spec import Spec, SpecField
@@ -32,10 +36,13 @@ from ..services.logging import LoggingService, LoggingServiceSpec
 from ..services.task_execution import TaskExecutionService, TaskExecutionServiceSpec
 from ..services.tracing import TracingService, TracingServiceSpec
 from .atom import AtomEngine
+from .base import Operation
 from .collections import CollectionEngine
 from .flow import FlowEngine
 from .reactive import ReactiveEngine
 from .timing import TimingEngine
+
+P = ParamSpec("P")
 
 
 class ExecutionEngine(
@@ -83,6 +90,36 @@ class ExecutionEngine(
     Sequence: type[Sequence[StateDictT]] = Sequence
     Subscribe: type[Subscribe[StateDictT]] = Subscribe
     Timeout: type[Timeout[StateDictT]] = Timeout
+
+    def Compound(
+        self,
+        op: Callable[Concatenate[ExecutionEngine, P], Operation],
+    ) -> Callable[P, Operation]:
+        """
+        A decorator factory that injects an executor engine into a function.
+
+        This decorator allows the creation of complex, composite operations
+        by giving the decorated function direct access to the engine.
+
+        Args:
+            engine: The executor engine to inject into the decorated function
+
+        Returns:
+            A decorator that injects the engine into the decorated function
+
+        Example:
+            >>> @compound(my_engine)
+            >>> def ReactiveMap(op, *, items_path, max_concurrency=1, error_behavior="fail", on_fail=None):
+            >>>     # Now has access to `my_engine` without having to pass it as an argument
+            >>>     return my_engine.Sequence(...)
+        """
+
+        @wraps(op)
+        def wrapper(*args: Any, **kwargs: Any) -> Operation:
+            # Call the original function with the engine as the first argument
+            return op(self, *args, **kwargs)
+
+        return wrapper
 
     # --- Initialization and cleanup methods --- #
 
@@ -140,3 +177,24 @@ class ExecutionEngineSpec(Spec):
     executor: Spec = SpecField(default=TaskExecutionServiceSpec())
     logger: Spec = SpecField(default=LoggingServiceSpec())
     tracing: Spec = SpecField(default=TracingServiceSpec())
+
+
+if TYPE_CHECKING:
+    _: type[
+        AsyncExecutorProtocol[
+            ExecutionEngine,
+            Context,
+            Operation,
+            App,
+            Branch,
+            Delay,
+            Function,
+            Loop,
+            Map,
+            Parallel,
+            Retry,
+            Sequence,
+            Subscribe,
+            Timeout,
+        ]
+    ] = ExecutionEngine

@@ -39,33 +39,62 @@ __all__ = [
 # --- Type aliases --- #
 
 AsyncContext = ContextProtocol["AsyncOperation", AsyncTreeDictProtocol[StateValue]]
-AsyncOperation = OperationProtocol[OperationProtocol, "AsyncContext"]
+AsyncOperation = OperationProtocol["AsyncOperation", "AsyncContext"]
 SyncContext = ContextProtocol["SyncOperation", SyncTreeDictProtocol[StateValue]]
-SyncOperation = OperationProtocol[OperationProtocol, "SyncContext"]
+SyncOperation = OperationProtocol["SyncOperation", "SyncContext"]
+AsyncExecutor = AsyncExecutorProtocol[
+    "AsyncExecutor",
+    AsyncContext,
+    OperationProtocol[AsyncOperation, AsyncContext],
+    AppOperationProtocol[AsyncOperation, AsyncContext],
+    BranchOperationProtocol[AsyncOperation, AsyncContext],
+    DelayOperationProtocol[AsyncOperation, AsyncContext],
+    FunctionOperationProtocol[AsyncOperation, AsyncContext],
+    LoopOperationProtocol[AsyncOperation, AsyncContext],
+    MapOperationProtocol[AsyncOperation, AsyncContext],
+    ParallelOperationProtocol[AsyncOperation, AsyncContext],
+    RetryOperationProtocol[AsyncOperation, AsyncContext],
+    SequenceOperationProtocol[AsyncOperation, AsyncContext],
+    SubscribeOperationProtocol[AsyncOperation, AsyncContext],
+    TimeoutOperationProtocol[AsyncOperation, AsyncContext],
+]
+SyncExecutor = SyncExecutorProtocol[
+    "SyncExecutor",
+    SyncContext,
+    OperationProtocol[SyncOperation, SyncContext],
+    AppOperationProtocol[SyncOperation, SyncContext],
+    BranchOperationProtocol[SyncOperation, SyncContext],
+    DelayOperationProtocol[SyncOperation, SyncContext],
+    FunctionOperationProtocol[SyncOperation, SyncContext],
+    LoopOperationProtocol[SyncOperation, SyncContext],
+    MapOperationProtocol[SyncOperation, SyncContext],
+    ParallelOperationProtocol[SyncOperation, SyncContext],
+    RetryOperationProtocol[SyncOperation, SyncContext],
+    SequenceOperationProtocol[SyncOperation, SyncContext],
+    SubscribeOperationProtocol[SyncOperation, SyncContext],
+    TimeoutOperationProtocol[SyncOperation, SyncContext],
+]
+AsyncExecutorSyncState = AsyncExecutorProtocol[
+    "AsyncExecutorSyncState",
+    SyncContext,
+    OperationProtocol[SyncOperation, SyncContext],
+    AppOperationProtocol[SyncOperation, SyncContext],
+    BranchOperationProtocol[SyncOperation, SyncContext],
+    DelayOperationProtocol[SyncOperation, SyncContext],
+    FunctionOperationProtocol[SyncOperation, SyncContext],
+    LoopOperationProtocol[SyncOperation, SyncContext],
+    MapOperationProtocol[SyncOperation, SyncContext],
+    ParallelOperationProtocol[SyncOperation, SyncContext],
+    RetryOperationProtocol[SyncOperation, SyncContext],
+    SequenceOperationProtocol[SyncOperation, SyncContext],
+    SubscribeOperationProtocol[SyncOperation, SyncContext],
+    TimeoutOperationProtocol[SyncOperation, SyncContext],
+]
 
 # --- Construct app types --- #
 
 
-class AsyncApp(
-    AsyncAppGeneric[
-        AsyncStateProtocol[StateValue],
-        AsyncExecutorProtocol[
-            AsyncContext,
-            OperationProtocol[AsyncOperation, AsyncContext],
-            AppOperationProtocol[AsyncOperation, AsyncContext],
-            BranchOperationProtocol[AsyncOperation, AsyncContext],
-            DelayOperationProtocol[AsyncOperation, AsyncContext],
-            FunctionOperationProtocol[AsyncOperation, AsyncContext],
-            LoopOperationProtocol[AsyncOperation, AsyncContext],
-            MapOperationProtocol[AsyncOperation, AsyncContext],
-            ParallelOperationProtocol[AsyncOperation, AsyncContext],
-            RetryOperationProtocol[AsyncOperation, AsyncContext],
-            SequenceOperationProtocol[AsyncOperation, AsyncContext],
-            SubscribeOperationProtocol[AsyncOperation, AsyncContext],
-            TimeoutOperationProtocol[AsyncOperation, AsyncContext],
-        ],
-    ]
-):
+class AsyncApp(AsyncAppGeneric[AsyncStateProtocol[StateValue], AsyncExecutor]):
     """
     App that implements the AsyncStateProtocol and AsyncExecutorProtocol interfaces.
     It is used to create asynchronous applications with state management and
@@ -75,26 +104,7 @@ class AsyncApp(
     """
 
 
-class SyncApp(
-    SyncAppGeneric[
-        SyncStateProtocol[StateValue],
-        SyncExecutorProtocol[
-            SyncContext,
-            OperationProtocol[SyncOperation, SyncContext],
-            AppOperationProtocol[SyncOperation, SyncContext],
-            BranchOperationProtocol[SyncOperation, SyncContext],
-            DelayOperationProtocol[SyncOperation, SyncContext],
-            FunctionOperationProtocol[SyncOperation, SyncContext],
-            LoopOperationProtocol[SyncOperation, SyncContext],
-            MapOperationProtocol[SyncOperation, SyncContext],
-            ParallelOperationProtocol[SyncOperation, SyncContext],
-            RetryOperationProtocol[SyncOperation, SyncContext],
-            SequenceOperationProtocol[SyncOperation, SyncContext],
-            SubscribeOperationProtocol[SyncOperation, SyncContext],
-            TimeoutOperationProtocol[SyncOperation, SyncContext],
-        ],
-    ]
-):
+class SyncApp(SyncAppGeneric[SyncStateProtocol[StateValue], SyncExecutor]):
     """
     App that implements the SyncStateProtocol and SyncExecutorProtocol interfaces.
     It is used to create synchronous applications with state management and
@@ -104,26 +114,7 @@ class SyncApp(
     """
 
 
-class AsyncAppSSAE(
-    AsyncAppGeneric[
-        SyncStateProtocol[StateValue],
-        AsyncExecutorProtocol[
-            SyncContext,
-            OperationProtocol[SyncOperation, SyncContext],
-            AppOperationProtocol[SyncOperation, SyncContext],
-            BranchOperationProtocol[SyncOperation, SyncContext],
-            DelayOperationProtocol[SyncOperation, SyncContext],
-            FunctionOperationProtocol[SyncOperation, SyncContext],
-            LoopOperationProtocol[SyncOperation, SyncContext],
-            MapOperationProtocol[SyncOperation, SyncContext],
-            ParallelOperationProtocol[SyncOperation, SyncContext],
-            RetryOperationProtocol[SyncOperation, SyncContext],
-            SequenceOperationProtocol[SyncOperation, SyncContext],
-            SubscribeOperationProtocol[SyncOperation, SyncContext],
-            TimeoutOperationProtocol[SyncOperation, SyncContext],
-        ],
-    ]
-):
+class AsyncAppSyncState(AsyncAppGeneric[SyncStateProtocol[StateValue], AsyncExecutorSyncState]):
     """
     App that implements the SyncStateProtocol and AsyncExecutorProtocol interfaces.
     It is used to create asynchronous applications with synchronous state management
@@ -146,12 +137,12 @@ def app_type_factory(
 @overload
 def app_type_factory(
     base_async: bool = True, state_async: bool = False, executor_async: bool = True
-) -> type[AsyncAppSSAE]: ...
+) -> type[AsyncAppSyncState]: ...
 
 
 def app_type_factory(
     base_async: bool = True, state_async: bool = True, executor_async: bool = True
-) -> type[AsyncApp | SyncApp | AsyncAppSSAE]:
+) -> type[AsyncApp | SyncApp | AsyncAppSyncState]:
     """
     Construct a new class that inherits from the provided base class and
     the provided state and executor classes.
@@ -162,6 +153,6 @@ def app_type_factory(
     elif not base_async and not state_async and not executor_async:
         return SyncApp
     elif base_async and not state_async and executor_async:
-        return AsyncAppSSAE
+        return AsyncAppSyncState
     else:
         raise TypeError("Invalid combination of async and sync types.")

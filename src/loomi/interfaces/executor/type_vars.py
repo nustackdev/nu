@@ -69,6 +69,9 @@ __all__ = [
     "SyncExecutorT",
     "SyncExecutorT_co",
     "SyncExecutorT_contra",
+    "AsyncExecutorT",
+    "AsyncExecutorT_co",
+    "AsyncExecutorT_contra",
 ]
 
 
@@ -254,6 +257,20 @@ ExecutorT_co = TypeVar(
 ExecutorT_contra = TypeVar(
     "ExecutorT_contra",
     bound="AsyncExecutorProtocol | SyncExecutorProtocol",
+    contravariant=True,
+)
+AsyncExecutorT = TypeVar(
+    "AsyncExecutorT",
+    bound="AsyncExecutorProtocol",
+)
+AsyncExecutorT_co = TypeVar(
+    "AsyncExecutorT_co",
+    bound="AsyncExecutorProtocol",
+    covariant=True,
+)
+AsyncExecutorT_contra = TypeVar(
+    "AsyncExecutorT_contra",
+    bound="AsyncExecutorProtocol",
     contravariant=True,
 )
 SyncExecutorT = TypeVar(

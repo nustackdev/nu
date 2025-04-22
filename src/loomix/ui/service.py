@@ -253,7 +253,7 @@ class VisualizationServiceSpec(Spec):
 
     name: str = SpecField(default="visualization_service")
     factory: type = SpecField(default=VisualizationService)
-    state: Spec = SpecField(default=StateSpec())
+    state: Spec = SpecField(default_factory=StateSpec)
     tracing_path: tuple[str, ...] = SpecField(default=("_", "tracing"))
     theme: Literal["default"] = SpecField(default="default")
     streamlit_title: str = SpecField(default="Loomi Dashboard")
