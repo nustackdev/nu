@@ -235,7 +235,10 @@ class TracingService(AsyncService):
         await exec_dict.delete(op_id)
 
         # Remove from active spans
-        del self._active_spans[op_id]
+        try:
+            del self._active_spans[op_id]
+        except KeyError:
+            pass
 
     async def record_exception(self, operation, context, exception):
         """

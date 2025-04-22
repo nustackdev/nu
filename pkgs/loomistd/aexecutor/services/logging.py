@@ -40,15 +40,15 @@ class LoggingService(AsyncService):
         Returns:
             Formatted log message
         """
-        msg_parts = [f"Operation[{operation_name}]"]
+        msg_parts = [f"Operation: '{operation_name}'"]
 
-        msg_parts.append(f"Status[{status}]")
+        msg_parts.append(f"Status: '{status}'")
 
         if details:
             details_str = " ".join(f"{k}={v}" for k, v in details.items())
-            msg_parts.append(f"Details[{details_str}]")
+            msg_parts.append(f"Details: {details_str}]")
 
-        return " ".join(msg_parts)
+        return ", ".join(msg_parts)
 
     def log_operation_start(self, operation_name: str, **kwargs) -> None:
         """
