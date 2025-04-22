@@ -237,7 +237,7 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
                 await asyncio.Future()
 
         except asyncio.CancelledError:
-            self.logger.debug(f"Subscription {subscription_id} cancelled")
+            self.logger.warning(f"Subscription {subscription_id} cancelled")
             # Allow the cancellation to propagate after cleanup
 
         finally:

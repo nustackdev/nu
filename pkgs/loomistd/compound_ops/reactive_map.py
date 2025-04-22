@@ -1,7 +1,7 @@
 """
 ReactiveMap operation.
 
-This module provides the ReactiveMap function, which creates a composite operation that:
+This module provides the ReactiveMap function, which creates a compound operation that:
 1. First processes all existing items in the collection.
 2. Then establishes a subscription to watch for changes. When new items are added,
     it automatically applies the operation to them.
@@ -79,7 +79,9 @@ def ReactiveMap(
     on_fail: OperationT_contra | None = None,
 ) -> SequenceOperationT:
     """
-    Create a composite operation that continuously maps an operation to new items
+    ReactiveMap compound operation.
+
+    Create a compound operation that continuously maps an operation to new items
     in a collection as they are added.
 
     This operation first processes all existing items in the collection,
@@ -94,7 +96,7 @@ def ReactiveMap(
         on_fail: Operation to execute when an error occurs
 
     Returns:
-        A composite operation that implements the reactive mapping behavior
+        A compound operation that implements the reactive mapping behavior
     """
     if not items_path:
         raise ValueError("items_path must be provided")

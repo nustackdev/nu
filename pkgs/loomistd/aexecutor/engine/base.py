@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import Awaitable, Callable, Generic, Optional, TypeVar, cast
+from typing import Awaitable, Callable, Generic, Optional, cast
 
 from loomi.interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
 from loomi.interfaces.state.type_vars import StateDictT, StateT
@@ -34,9 +34,6 @@ from ..services.logging import LoggingService
 from ..services.task_execution import TaskExecutionService
 from ..services.tracing import TracingService
 from .exceptions import OperationConfigError, StateAccessError, wrap_error
-
-# Type variables for static typing
-T = TypeVar("T")
 
 
 class EngineBase(ABC, Generic[StateT, StateDictT]):

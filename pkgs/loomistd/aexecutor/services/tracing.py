@@ -57,8 +57,6 @@ class TracingService(AsyncService):
         # Record execution start time
         self._execution_start_time = time.time()
 
-        print(self.tracing_state)
-
         # Get the graph dict from state
         graph_dict = await self.tracing_state.dict(*self.state_path, "graph")
         metadata_dict = await self.tracing_state.dict(*self.state_path, "metadata")
@@ -110,7 +108,6 @@ class TracingService(AsyncService):
             if parent_id:
                 parent_data: dict = cast(dict, await graph_dict.get(parent_id))
                 if parent_data:
-                    print(parent_data)
                     children = parent_data.get("children", [])
                     if op_id not in children:
                         children.append(op_id)

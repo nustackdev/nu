@@ -13,7 +13,9 @@ from pathlib import Path
 
 from loomi import AsyncApp, AsyncContext, AsyncOperation
 from loomistd.aexecutor import ExecutionEngineSpec
+from loomistd.aexecutor.services.tracing import TracingServiceSpec
 from loomistd.compound_ops import ReactiveMap
+from loomistd.kv_storage.file_storage import FileStorageSpec
 from loomistd.state import StateSpec
 from loomix.logging import setup_logging
 
@@ -22,7 +24,14 @@ setup_logging(Path(".logs"), log_level=10)
 
 # Configure service specs
 state_spec = StateSpec()
-executor_spec = ExecutionEngineSpec(state=state_spec)
+
+tracing_state_spec = StateSpec(
+    name="tracing_state", storage_srv=FileStorageSpec(path=Path(".tracing/db"))
+)
+executor_spec = ExecutionEngineSpec(
+    state=state_spec,
+    tracing=TracingServiceSpec(tracing_state=tracing_state_spec),
+)
 
 
 class TodoReactiveMapApp(AsyncApp):
