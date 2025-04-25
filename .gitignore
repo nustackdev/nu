@@ -179,3 +179,6 @@ _playground/
 # Poetry
 poetry.lock
 .aider*
+
+# 3rd party libraries
+repomix*
