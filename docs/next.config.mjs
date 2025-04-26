@@ -1,6 +1,6 @@
 import nextra from 'nextra'
 
-const withNextra = nextra({
+const withNextra = nextra({ 
   // nextra-specific options
 })
 

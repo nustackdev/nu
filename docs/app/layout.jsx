@@ -33,6 +33,10 @@ export default async function RootLayout({ children }) {
       </Head>
       <body>
         <Layout
+          sidebar={{
+            defaultMenuCollapseLevel: 1,  // collapse all by default
+            autoCollapse: true            // shrink inactive groups
+          }}
           navbar={navbar}
           pageMap={await getPageMap()}
           docsRepositoryBase="https://github.com/loomi-lab/loomi/tree/main/docs"

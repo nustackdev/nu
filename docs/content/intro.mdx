@@ -1,0 +1,210 @@
+# Introduction 
+
+## When Good Scripts Go Bad 🔥
+
+### From Script to Spaghetti: The Developer's Descent
+
+**Day 1: "Just a simple script!"**
+
+```python
+def process_data():
+    data = load_data()
+    results = analyze(data)
+    save_results(results)
+```
+
+**Day 3: "It works! Ship it!"**
+
+**Day 30: "Dear god, what have I created?"**
+
+```python
+global_config = {}
+_CACHE = {}
+DB_CONNECTION = None
+active_workers = []
+
+def initialize_services():
+    global DB_CONNECTION
+    try:
+        DB_CONNECTION = setup_database()
+        # Remember to call shutdown_services() or we'll leak connections!
+    except Exception as e:
+        log.error(f"Failed to initialize: {e}")
+        # Did we remember to clean up partial initialization?
+```
+*...and 2000 more lines of code that make you question your life choices.*
+
+Sound familiar? You're not alone. We've all been there.
+
+### The Circles of Python Hell
+
+As your Python application grows, it passes through predictable stages of pain:
+
+1. **Function Hell** - A mess of top-level functions with implicit dependencies
+2. **Global State Carnival** - Mysterious values changing when you least expect
+3. **Thread/Async Nightmare** - Concurrency bugs that only appear in production
+4. **Dependency Explosion** - Services, connections, and resources with tangled lifecycles
+5. **Error Handling Afterthought** - Exception catching sprinkled randomly throughout
+
+What if there was a better way to build Python applications—one that scaled with complexity without adding boilerplate?
+
+## Loomi: The Upgrade 🚀 
+
+They say a good example is worth 100 pages of API documentation, a million directives, or a thousand words.
+
+Well, "they" probably lie... but here's an example anyway:
+
+> Don't worry about understanding everything yet—notice how the architecture makes the code's intent clear.
+
+```python
+from loomi import AsyncApp, AsyncContext, AsyncOperation, Spec, UseApp, UseService
+
+# ------------------------------------------------------
+# Define services
+# ------------------------------------------------------
+class ImageStorageService(AsyncService):
+    async def load_image(self, filename): pass
+    async def save_image(self, filename, data): pass
+
+class AnalysisService(AsyncService):
+    async def analyze_image(self, image_data): pass
+
+
+# ------------------------------------------------------
+# Image Filter App
+# ------------------------------------------------------
+class ImageProcessorApp(AsyncApp):
+    # Service dependencies
+    analysis: AnalysisService = UseService()
+    storage: ImageStorageService = UseService()
+    
+    # Define the execution logic
+    def define(self) -> AsyncOperation:
+        return self.ex.Sequence(
+            # Step 1: Set up initial state
+            self.ex.Function(self.init_state),
+            
+            # Step 2: Analyze image and store result in state 
+            self.ex.Function(self.analyze_image),
+            
+            # Step 3: Branch based on state value
+            self.ex.Branch(
+                {
+                    # Different processing paths based on analysis
+                    "dark": self.ex.Sequence(
+                        # For dark images, apply two filters
+                        self.ex.Function(self.apply_brightness_correction),
+                        self.ex.Function(self.apply_sharpening)
+                    ),
+                    "bright": self.ex.Function(self.apply_contrast_reduction),
+                    "normal": self.ex.Function(self.apply_standard_enhancement)
+                },
+                # Use path in state to determine branch
+                condition_path=("analysis", "brightness_category")
+            ),
+            
+            # Step 4: Iterative enhancement with loop based on state condition
+            self.ex.Loop(
+                # Process to run in each iteration
+                self.ex.Function(self.enhance_quality),
+                
+                # Continue loop while this condition is true
+                condition_path=("analysis", "quality_met")
+            ),
+            
+            # Step 5: Save result
+            self.ex.Function(self.save_result)
+        )
+    
+    # Method implementations...
+    async def apply_brightness_correction(self, ctx): pass
+    async def apply_sharpening(self, ctx): pass
+    async def apply_contrast_reduction(self, ctx): pass
+    async def apply_standard_enhancement(self, ctx): pass
+    async def enhance_quality(self, ctx): pass
+    async def save_result(self, ctx): pass
+
+
+# ------------------------------------------------------
+# Main Processor App
+# ------------------------------------------------------
+class ImageProcessingPipeline(AsyncApp):
+    # Dependencies
+    storage: ImageStorageService = UseService()
+    filter_app: ImageProcessorApp = UseApp()
+    
+    # Define the execution logic
+    def define(self) -> AsyncOperation:
+        return self.ex.Sequence(
+            # Step 1: Initialize state with image list
+            self.ex.Function(self.initialize_pipeline_state),
+            
+            # Step 2: Process all images in parallel with Map
+            self.ex.Map(
+                # For each image...
+                self.ex.Sequence(
+                    # Load the image
+                    self.ex.Function(self.load_image),
+                    
+                    # Process with isolated state scope
+                    self.ex.App(
+                        self.filter_processor,
+                        # Each image gets its own state path
+                        state_path=("processing", "$map_path")
+                    ),
+                    
+                    # Collect results
+                    self.ex.Function(self.update_progress)
+                ),
+                # Source items from state path
+                items_path=("images"),
+                # Concurrency limit
+                max_concurrency=3,
+                # Error handling
+                error_behavior="continue",
+                on_fail=self.ex.Function(self.log_error)
+            ),
+            
+            # Step 3: Generate report
+            self.ex.Function(self.generate_report)
+        )
+    
+    # Method implementations ...
+    async def initialize_pipeline_state(self, filenames): pass
+    async def load_image(self, ctx): pass
+    async def update_progress(self, ctx): pass
+    async def log_error(self, ctx): pass
+    async def generate_report(self, ctx): pass
+```
+
+## Loomi in a Nutshell 🧩 
+
+Let's clear up some misconceptions:
+
+### What Loomi is **NOT**
+
+- **Not a web framework** - It doesn't compete with Flask, FastAPI, or Django. In fact, Loomi apps can run inside those frameworks.
+- **Not a workflow engine** - It's not Airflow or Prefect. While it has workflow features, Loomi is a paradigm for building applications, not scheduling distributed jobs.
+- **Not a data processing library** - It doesn't replace Pandas or Spark. Loomi helps you structure the application that might use those tools.
+- **Not an ORM** - It doesn't replace SQLAlchemy or Pydantic. Loomi gives structure to the app that might use those libraries.
+
+### What Loomi **IS**
+
+Loomi is an architectural blueprint for Python applications that transforms how you build software. 
+It's a unified system that combines explicit component boundaries, structured state management, 
+and declarative business logic into a coherent whole - making complexity manageable instead of maddening.
+
+At its core, Loomi isn't just a library or framework - it's a paradigm shift in how Python applications can be structured to grow gracefully. 
+It provides the missing foundation that lets your code scale with complexity while keeping the clarity and simplicity that made Python attractive in the first place.
+
+###  Why You'll **LOVE** Loomi
+
+1. **Say goodbye to hunting for who modified global state**
+2. **Compose complex operations declaratively**
+3. **Write concurrent code without spaghetti error handling**
+4. **Make dependencies explicit and automatically managed**
+5. **Get state structure with transactions and built-in reactivity**
+
+## Ready to Learn More?
+
+Continue to [About Loomi](./about) to dive deeper into core concepts and see how all the pieces fit together.
