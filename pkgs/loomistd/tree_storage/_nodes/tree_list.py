@@ -21,25 +21,6 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
     for interacting with list nodes in the tree storage.
     It implements async methods for list operations that map
     to the underlying tree structure.
-
-    Usage:
-        # Create or access a list node
-        tree_list = await tree_storage.list("users", "123", "posts")
-
-        # Append items
-        await tree_list.append("New post content")
-
-        # Get items
-        first_post = await tree_list.get(0)
-
-        # Set items
-        await tree_list.set(1, "Updated post content")
-
-        # Remove items
-        await tree_list.delete(2)
-
-        # Get the length
-        length = await tree_list.length()
     """
 
     # --- Async list operations --- #

@@ -13,15 +13,6 @@ Key Features:
 - Thread-safe composite operations (to implement)
 - Circular dependency detection
 
-Example Usage:
-    # Creating a service with dependencies
-    service = MyService()  # Root service
-    dep = service.get_dependency("cache")  # Dependency
-
-    # Later transitioning
-    dep_as_root = CacheService()  # Same service, now as root
-
-    # System properly tracks both usages
 """
 
 from __future__ import annotations
@@ -64,19 +55,6 @@ class DependencyManager(Generic[ServiceT]):
     - Smart cleanup based on both history and current state
     - Thread-safe operations
     - Circular dependency detection
-
-    Example Usage:
-        manager = DependencyManager(registry)
-
-        # Register a service
-        manager.register_service(service, is_dependency=False)
-
-        # Resolve dependency
-        dep = manager.resolve_dependency(service, "cache", spec)
-
-        # Check cleanup
-        if manager.should_cleanup(service, initiator.key):
-            # Handle cleanup
     """
 
     def __init__(self, registry: "ServiceRegistry[ServiceT]") -> None:

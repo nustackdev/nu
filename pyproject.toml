@@ -56,16 +56,6 @@ streamlit = "^1.44.1"
 streamlit-flow-component = "^1.6.1"
 graphviz = "^0.20.3"
 
-[tool.poetry.group.docs.dependencies]
-mistune = "0.8.4"
-sphinx = "^8.2.3"
-furo = "^2024.8.6"
-sphinxcontrib-mermaid = "^1.0.0"
-m2r2 = "^0.3.3.post2"
-sphinx-copybutton = "^0.5.2"
-sphinx-click = "^6.0.0"
-setuptools = "^79.0.0"
-
 [tool.black]
 line-length = 100
 target-version = ['py312']

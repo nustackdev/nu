@@ -24,12 +24,6 @@ class ServiceContext:
         active_roles: Current roles service holds (can change over time)
         root_usage_count: Number of times used as root service
         dependency_usage_count: Number of times used as dependency
-
-    Usage:
-        context = ServiceContext.create(is_dependency=True)
-        context.add_role(ServiceRole.ROOT)  # Service now has dual role
-        if context.is_active:
-            # Service is still in use
     """
 
     # Immutable creation context

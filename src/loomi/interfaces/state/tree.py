@@ -527,25 +527,6 @@ class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
     for interacting with dictionary nodes in the state storage.
     It implements async methods for dictionary operations that map
     to the underlying state structure.
-
-    Usage:
-        # Create or access a dictionary node
-        state_dict = await async_state.dict("users", "123")
-
-        # Set values
-        await state_dict.set("name", "Alice")
-        await state_dict.set("settings", {"theme": "dark", "notifications": True})
-
-        # Get values
-        name = await state_dict.get("name")
-        theme = await state_dict.get("settings", "theme")
-
-        # Delete values
-        await state_dict.delete("settings")
-
-        # Check if a key exists
-        if await state_dict.contains("email"):
-            email = await state_dict.get("email")
     """
 
     async def get(
@@ -710,25 +691,6 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
     for interacting with list nodes in the state storage.
     It implements async methods for list operations that map
     to the underlying state structure.
-
-    Usage:
-        # Create or access a list node
-        state_list = await async_state.list("users", "123", "posts")
-
-        # Append items
-        await state_list.append("New post content")
-
-        # Get items
-        first_post = await state_list.get(0)
-
-        # Set items
-        await state_list.set(1, "Updated post content")
-
-        # Remove items
-        await state_list.delete(2)
-
-        # Get the length
-        length = await state_list.length()
     """
 
     async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
@@ -1356,25 +1318,6 @@ class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
     for interacting with dictionary nodes in the state storage.
     It implements methods for dictionary operations that map
     to the underlying state structure.
-
-    Usage:
-        # Create or access a dictionary node
-        state_dict = state.dict("users", "123")
-
-        # Set values
-        state_dict.set("name", "Alice")
-        state_dict.set("settings", {"theme": "dark", "notifications": True})
-
-        # Get values
-        name = state_dict.get("name")
-        theme = state_dict.get("settings", "theme")
-
-        # Delete values
-        state_dict.delete("settings")
-
-        # Check if a key exists
-        if state_dict.contains("email"):
-            email = state_dict.get("email")
     """
 
     def get(
@@ -1537,25 +1480,6 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
     for interacting with list nodes in the state storage.
     It implements methods for list operations that map
     to the underlying state structure.
-
-    Usage:
-        # Create or access a list node
-        state_list = state.list("users", "123", "posts")
-
-        # Append items
-        state_list.append("New post content")
-
-        # Get items
-        first_post = state_list.get(0)
-
-        # Set items
-        state_list.set(1, "Updated post content")
-
-        # Remove items
-        state_list.delete(2)
-
-        # Get the length
-        length = state_list.length()
     """
 
     def get(self, index: int) -> TreeValueContainer[TreeValueT]:

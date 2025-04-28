@@ -11,12 +11,6 @@ Key Features:
 - Context-aware instantiation
 - Thread-safe service creation
 - Proper dependency and registry coordination
-
-Example Usage:
-    class MyService(BaseService, metaclass=ServiceMeta, special_feature=Feature()):
-        def __init__(self, spec):
-            super().__init__(spec)
-            # Service now has self.special_feature property
 """
 
 from __future__ import annotations

@@ -21,25 +21,6 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
     for interacting with dictionary nodes in the tree storage.
     It implements async methods for dictionary operations that map
     to the underlying tree structure.
-
-    Usage:
-        # Create or access a dictionary node
-        tree_dict = await tree_storage.dict("users", "123")
-
-        # Set values
-        await tree_dict.set("name", "Alice")
-        await tree_dict.set("settings", {"theme": "dark", "notifications": True})
-
-        # Get values
-        name = await tree_dict.get("name")
-        theme = await tree_dict.get("settings", "theme")
-
-        # Delete values
-        await tree_dict.delete("settings")
-
-        # Check if a key exists
-        if await tree_dict.contains("email"):
-            email = await tree_dict.get("email")
     """
 
     # --- Async dictionary operations --- #
