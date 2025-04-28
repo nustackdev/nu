@@ -10,9 +10,9 @@ from __future__ import annotations
 import json
 import logging
 import os
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import Dict, Set
+from typing import Any, Dict, Set
 
 from ..config.models import OutputConfig
 from ..core.models import ModuleInfo
@@ -127,23 +127,39 @@ class OutputManager:
             os.makedirs(full_dir_path, exist_ok=True)
 
             # Prepare the meta file content
-            meta_content: Dict[str, str] = {}
+            meta_content: OrderedDict[str, Any] = OrderedDict()
 
             # Add index first if it's a directory with submodules
             if self.config.create_index and (
                 dir_path in directories_with_modules or dir_path == ""
             ):
-                meta_content["index"] = "Overview"
+                meta_content["index"] = {
+                    "title": "Overview",
+                }
 
                 # Generate index.mdx file for this directory
                 self._generate_directory_index(dir_path, items, discovered_modules, parsed_modules)
 
             # Add other items (excluding any that would create duplicates)
+            # First render folders, then files
             for name, item_info in sorted(items.items()):
-                if name != "index" and not self._would_create_duplicate(
-                    dir_path, name, discovered_modules
-                ):
-                    meta_content[name] = item_info["title"]
+                for item_type in ["folder", "file"]:
+                    if item_info["type"] != item_type:
+                        continue
+
+                    if name != "index" and not self._would_create_duplicate(
+                        dir_path, name, discovered_modules
+                    ):
+                        meta_content[name] = {
+                            "title": "",
+                        }
+                        if item_info["type"] == "file":
+                            # This is a file, add it to the meta content
+                            meta_content[name]["title"] = item_info["title"].split(".")[-1]
+                        elif item_info["type"] == "folder":
+                            # This is a folder, add it to the meta content
+                            # Use the folder name as the title
+                            meta_content[name]["title"] = item_info["title"]
 
             # Write the _meta.json file
             meta_file_path = os.path.join(full_dir_path, self.config.meta_filename)
@@ -187,8 +203,16 @@ class OutputManager:
 
         # Build index content
         content = []
+
+        # Add frontmatter
+        content.append("---\n")
+        content.append(f"title: {dir_name.capitalize()}\n")
+        content.append(f"sidebarTitle: {dir_name.capitalize()}\n")
+        content.append("asIndexPage: true\n")
+        content.append("---\n\n")
+
         content.append("import { Cards, Callout } from 'nextra/components'\n\n")
-        content.append(f"# {dir_name.capitalize()} API Reference\n\n")
+        content.append(f"# `{dir_name.capitalize()}` Reference\n\n")
 
         # Try to get description from __init__.py if available
         init_module_name = dir_path.replace(os.path.sep, ".") if dir_path else None

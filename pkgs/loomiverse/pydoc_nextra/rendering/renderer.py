@@ -54,7 +54,7 @@ class MDXRenderer:
         self.section_order = config.section_order
         self.include_source_code = config.include_source_code
 
-    def render_module(self, module_info: ModuleInfo) -> str:
+    def render_module(self, module_info: ModuleInfo) -> str:  # noqa: C901
         """
         Render a module to MDX format.
 
@@ -67,6 +67,18 @@ class MDXRenderer:
         logger.debug(f"Rendering module: {module_info.name}")
 
         result: List[str] = []
+
+        # Add frontmatter
+        page_title = module_info.name.split(".")[-1]  # Get the last part of the module name
+        is_index = page_title == "index" or page_title == "__init__"
+
+        # Start frontmatter
+        result.append("---\n")
+        result.append(f"title: {page_title}\n")
+        result.append(f"sidebarTitle: {self.emojis['module']} {page_title}\n")
+        if is_index:
+            result.append("asIndexPage: true\n")
+        result.append("---\n\n")
 
         # Add Nextra component imports
         result.append("import { Cards, Callout, Tabs } from 'nextra/components'\n\n")

@@ -1,0 +1,305 @@
+---
+title: exceptions
+sidebarTitle: 📦 exceptions
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi._app.exceptions 📦
+
+## Classes
+
+<Cards>
+  <Cards.Card title="AppError" href="#apperror"/>
+  <Cards.Card title="DependencyError" href="#dependencyerror"/>
+  <Cards.Card title="ExecutionError" href="#executionerror"/>
+  <Cards.Card title="ServiceDependencyError" href="#servicedependencyerror"/>
+  <Cards.Card title="StateError" href="#stateerror"/>
+</Cards>
+
+---
+
+<a id='apperror'></a>
+
+## AppError 🧩
+
+<Callout type='info'>
+  Inherits from: `Exception`
+</Callout>
+
+Base class all app-related exceptions.
+
+```python filename='class.py'
+class AppError(Exception):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class AppError(Exception):
+    """Base class all app-related exceptions."""
+
+    pass
+
+```
+
+<a id='dependencyerror'></a>
+
+## DependencyError 🧩
+
+<Callout type='info'>
+  Inherits from: `AppError`
+</Callout>
+
+Raised for dependency-related errors.
+
+```python filename='class.py'
+class DependencyError(AppError):
+    ...
+```
+
+### Examples
+
+```python filename='example.py'
+- Missing dependency
+- Circular dependency
+- Initialization failure
+```
+
+### Source Code
+
+```python filename='source.py'
+class DependencyError(AppError):
+    """
+    Raised for dependency-related errors.
+
+    Examples:
+    - Missing dependency
+    - Circular dependency
+    - Initialization failure
+    """
+
+    def __init__(self, message: str, dependency_type: Type | None = None, **context: Any) -> None:
+        self.dependency_type = dependency_type
+        self.context = context
+        super().__init__(message)
+
+```
+
+<a id='executionerror'></a>
+
+## ExecutionError 🧩
+
+<Callout type='info'>
+  Inherits from: `AppError`
+</Callout>
+
+Raised for execution-related errors.
+
+```python filename='class.py'
+class ExecutionError(AppError):
+    ...
+```
+
+### Examples
+
+```python filename='example.py'
+- Execution failure
+- Invalid execution type
+- Platform errors
+```
+
+### Source Code
+
+```python filename='source.py'
+class ExecutionError(AppError):
+    """
+    Raised for execution-related errors.
+
+    Examples:
+    - Execution failure
+    - Invalid execution type
+    - Platform errors
+    """
+
+    pass
+
+```
+
+<a id='servicedependencyerror'></a>
+
+## ServiceDependencyError 🧩
+
+<Callout type='info'>
+  Inherits from: `AppError`
+</Callout>
+
+Raised for service-related errors.
+
+```python filename='class.py'
+class ServiceDependencyError(AppError):
+    ...
+```
+
+### Examples
+
+```python filename='example.py'
+- Serivce dependency errors
+- Service lifecycle errors
+```
+
+### Source Code
+
+```python filename='source.py'
+class ServiceDependencyError(AppError):
+    """
+    Raised for service-related errors.
+
+    Examples:
+    - Serivce dependency errors
+    - Service lifecycle errors
+    """
+
+    pass
+
+```
+
+<a id='stateerror'></a>
+
+## StateError 🧩
+
+<Callout type='info'>
+  Inherits from: `AppError`
+</Callout>
+
+Raised for state-related errors.
+
+```python filename='class.py'
+class StateError(AppError):
+    ...
+```
+
+### Examples
+
+```python filename='example.py'
+- Invalid state access
+- State modification failure
+- State adapter errors
+```
+
+### Source Code
+
+```python filename='source.py'
+class StateError(AppError):
+    """
+    Raised for state-related errors.
+
+    Examples:
+    - Invalid state access
+    - State modification failure
+    - State adapter errors
+    """
+
+    def __init__(self, message: str, key: tuple[str, ...] | None = None, **context: Any) -> None:
+        self.key = key
+        self.context = context
+        super().__init__(message)
+
+```
+
+## Variables & Constants
+
+<Cards>
+  <Cards.Card title="Type" href="#variables"/>
+  <Cards.Card title="annotations" href="#variables"/>
+</Cards>
+
+<a id='variables'></a>
+
+### Variables
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `Type` | `_SpecialGenericAlias` | `typing.Type` |  |
+| `annotations` | `_Feature` | `_Feature((3, 7, 0, &#x27;beta&#x27;, 1), None, 16777216)` |  |
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import Any, Type
+
+__all__ = [
+    "AppError",
+    "DependencyError",
+    "ServiceDependencyError",
+    "StateError",
+]
+
+
+class AppError(Exception):
+    """Base class all app-related exceptions."""
+
+    pass
+
+
+class DependencyError(AppError):
+    """
+    Raised for dependency-related errors.
+
+    Examples:
+    - Missing dependency
+    - Circular dependency
+    - Initialization failure
+    """
+
+    def __init__(self, message: str, dependency_type: Type | None = None, **context: Any) -> None:
+        self.dependency_type = dependency_type
+        self.context = context
+        super().__init__(message)
+
+
+class ServiceDependencyError(AppError):
+    """
+    Raised for service-related errors.
+
+    Examples:
+    - Serivce dependency errors
+    - Service lifecycle errors
+    """
+
+    pass
+
+
+class StateError(AppError):
+    """
+    Raised for state-related errors.
+
+    Examples:
+    - Invalid state access
+    - State modification failure
+    - State adapter errors
+    """
+
+    def __init__(self, message: str, key: tuple[str, ...] | None = None, **context: Any) -> None:
+        self.key = key
+        self.context = context
+        super().__init__(message)
+
+
+class ExecutionError(AppError):
+    """
+    Raised for execution-related errors.
+
+    Examples:
+    - Execution failure
+    - Invalid execution type
+    - Platform errors
+    """
+
+    pass
+
+```
+

@@ -1,0 +1,136 @@
+---
+title: types
+sidebarTitle: 📦 types
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi._service.types 📦
+
+## Classes
+
+<Cards>
+  <Cards.Card title="ServiceState" href="#servicestate"/>
+</Cards>
+
+---
+
+<a id='servicestate'></a>
+
+## ServiceState 🧩
+
+<Callout type='info'>
+  Inherits from: `Enum`
+</Callout>
+
+Enumeration of possible service lifecycle states.
+
+States:
+    CREATED: Initial state after instance creation
+    INITIALIZING: Service is starting up
+    INITIALIZED: Service is ready for operation
+    SHUTTING_DOWN: Service is in the process of shutting down
+    SHUTDOWN: Service has completed shutdown
+    ERROR: Service encountered an error
+
+Notes:
+    - States generally progress in order but may skip states on errors
+    - ERROR state can be entered from any other state
+
+```python filename='class.py'
+class ServiceState(Enum):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `CREATED` | `ServiceState` | `&lt;ServiceState.CREATED: 1&gt;` |  |
+| `ERROR` | `ServiceState` | `&lt;ServiceState.ERROR: 6&gt;` |  |
+| `INITIALIZED` | `ServiceState` | `&lt;ServiceState.INITIALIZED: 3&gt;` |  |
+| `INITIALIZING` | `ServiceState` | `&lt;ServiceState.INITIALIZING: 2&gt;` |  |
+| `SHUTDOWN` | `ServiceState` | `&lt;ServiceState.SHUTDOWN: 5&gt;` |  |
+| `SHUTTING_DOWN` | `ServiceState` | `&lt;ServiceState.SHUTTING_DOWN: 4&gt;` |  |
+
+### Source Code
+
+```python filename='source.py'
+class ServiceState(Enum):
+    """
+    Enumeration of possible service lifecycle states.
+
+    States:
+        CREATED: Initial state after instance creation
+        INITIALIZING: Service is starting up
+        INITIALIZED: Service is ready for operation
+        SHUTTING_DOWN: Service is in the process of shutting down
+        SHUTDOWN: Service has completed shutdown
+        ERROR: Service encountered an error
+
+    Notes:
+        - States generally progress in order but may skip states on errors
+        - ERROR state can be entered from any other state
+    """
+
+    CREATED = auto()
+    INITIALIZING = auto()
+    INITIALIZED = auto()
+    SHUTTING_DOWN = auto()
+    SHUTDOWN = auto()
+    ERROR = auto()
+
+```
+
+## Variables & Constants
+
+<Cards>
+  <Cards.Card title="annotations" href="#variables"/>
+</Cards>
+
+<a id='variables'></a>
+
+### Variables
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `annotations` | `_Feature` | `_Feature((3, 7, 0, &#x27;beta&#x27;, 1), None, 16777216)` |  |
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from enum import Enum, auto
+
+__all__ = [
+    "ServiceState",
+]
+
+
+class ServiceState(Enum):
+    """
+    Enumeration of possible service lifecycle states.
+
+    States:
+        CREATED: Initial state after instance creation
+        INITIALIZING: Service is starting up
+        INITIALIZED: Service is ready for operation
+        SHUTTING_DOWN: Service is in the process of shutting down
+        SHUTDOWN: Service has completed shutdown
+        ERROR: Service encountered an error
+
+    Notes:
+        - States generally progress in order but may skip states on errors
+        - ERROR state can be entered from any other state
+    """
+
+    CREATED = auto()
+    INITIALIZING = auto()
+    INITIALIZED = auto()
+    SHUTTING_DOWN = auto()
+    SHUTDOWN = auto()
+    ERROR = auto()
+
+```
+

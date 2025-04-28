@@ -1,0 +1,57 @@
+---
+title: types
+sidebarTitle: 📦 types
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi.interfaces.executor.types 📦
+
+## Variables & Constants
+
+<Cards>
+  <Cards.Card title="TYPE_CHECKING" href="#constants"/>
+</Cards>
+
+<Cards>
+  <Cards.Card title="ErrorBehavior" href="#variables"/>
+  <Cards.Card title="Literal" href="#variables"/>
+  <Cards.Card title="annotations" href="#variables"/>
+</Cards>
+
+<a id='constants'></a>
+
+### Constants
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `TYPE_CHECKING` | `bool` | `False` |  |
+
+<a id='variables'></a>
+
+### Variables
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `ErrorBehavior` | `_LiteralGenericAlias` | `typing.Literal[&#x27;fail&#x27;, &#x27;continue&#x27;]` |  |
+| `Literal` | `_LiteralSpecialForm` | `typing.Literal` |  |
+| `annotations` | `_Feature` | `_Feature((3, 7, 0, &#x27;beta&#x27;, 1), None, 16777216)` |  |
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    pass
+
+__all__ = [
+    "ErrorBehavior",
+]
+
+ErrorBehavior = Literal["fail", "continue"]
+
+```
+

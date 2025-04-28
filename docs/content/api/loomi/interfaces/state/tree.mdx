@@ -1,0 +1,6134 @@
+---
+title: tree
+sidebarTitle: 📦 tree
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi.interfaces.state.tree 📦
+
+## Classes
+
+<Cards>
+  <Cards.Card title="AsyncTreeDictProtocol" href="#asynctreedictprotocol"/>
+  <Cards.Card title="AsyncTreeListProtocol" href="#asynctreelistprotocol"/>
+  <Cards.Card title="AsyncTreeNodeProtocol" href="#asynctreenodeprotocol"/>
+  <Cards.Card title="EmptyProtocol" href="#emptyprotocol"/>
+  <Cards.Card title="SyncTreeDictProtocol" href="#synctreedictprotocol"/>
+  <Cards.Card title="SyncTreeListProtocol" href="#synctreelistprotocol"/>
+  <Cards.Card title="SyncTreeNodeProtocol" href="#synctreenodeprotocol"/>
+</Cards>
+
+---
+
+<a id='asynctreedictprotocol'></a>
+
+## AsyncTreeDictProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncTreeNodeProtocol`, `Protocol`
+</Callout>
+
+Protocol for dictionary-like interface to state storage.
+
+This class provides an interface similar to a Python dictionary
+for interacting with dictionary nodes in the state storage.
+It implements async methods for dictionary operations that map
+to the underlying state structure.
+
+```python filename='class.py'
+class AsyncTreeDictProtocol(AsyncTreeNodeProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_async` | Check if the protocol is asynchronous. |
+| `path` | Get the base path for this state node. |
+
+### Methods
+
+<Tabs items={['clear', 'contains', 'copy_to', 'delete', 'dict', 'exists', 'filter', 'get', 'is_dict', 'is_list', 'items', 'keys', 'list', 'map', 'move_to', 'pop', 'remove', 'set', 'setdefault', 'store', 'to_dict', 'to_python_object', 'transform', 'update', 'values']}>
+<Tabs.Tab>
+
+### clear() 🔧
+
+```python filename='method.py'
+def clear(self) -> 'None'
+```
+
+Remove all items from the dictionary node.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### contains() 🔧
+
+```python filename='method.py'
+def contains(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent') -> 'bool'
+```
+
+Check if a path exists in the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+
+**Returns:** `bool` - True if the path exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### copy_to() 🔧
+
+```python filename='method.py'
+def copy_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Create a copy of this node at another location in the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent') -> 'None'
+```
+
+Delete a path from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'AsyncTreeDictProtocol[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeDictProtocol[TreeValueT]` - A new AsyncTreeDictProtocol instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node exists in the state tree.
+
+When called with no path arguments, checks if the current node exists.
+When called with path segments, checks if the specified nested node exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### filter() 🔧
+
+```python filename='method.py'
+def filter(self, filter_func: 'Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Filter elements of a list or dictionary node.
+
+For list nodes, filter_func takes (value) and returns a boolean.
+For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+Elements for which filter_func returns False will be removed.
+
+When called with just the filter function, filters the current node.
+When called with path segments, filters the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `filter_func` | `Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]` | Function that takes elements and returns whether to keep them | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', default: "'TreeValueT | EmptyProtocol'" = Ellipsis) -> 'TreeValueContainer[TreeValueT] | EmptyProtocol'
+```
+
+Get a value from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `default` | `'TreeValueT | EmptyProtocol'` | Value to return if path doesn't exist | `Ellipsis` |
+
+**Returns:** `TreeValueContainer[TreeValueT] | EmptyProtocol` - The value associated with the path, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a dictionary node.
+
+When called with no path arguments, checks if the current node is a dictionary.
+When called with path segments, checks if the specified nested node is a dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a dictionary, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a list node.
+
+When called with no path arguments, checks if the current node is a list.
+When called with path segments, checks if the specified nested node is a list.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a list, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### items() 🔧
+
+```python filename='method.py'
+def items(self) -> 'list[tuple[TreePathComponent, TreeValueT]]'
+```
+
+Get all top-level key-value pairs in the dictionary node.
+
+**Returns:** `list[tuple[TreePathComponent, TreeValueT]]` - List of (key, value) tuples
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### keys() 🔧
+
+```python filename='method.py'
+def keys(self) -> 'list[TreePathComponent]'
+```
+
+Get all top-level keys in the dictionary node.
+
+**Returns:** `list[TreePathComponent]` - List of keys in the dictionary
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'AsyncTreeListProtocol[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeListProtocol[TreeValueT]` - A new AsyncTreeListProtocol instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### map() 🔧
+
+```python filename='method.py'
+def map(self, map_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a mapping function to each element in a list or dictionary node.
+
+For list nodes, each element is replaced with the result of map_func(element).
+For dictionary nodes, each value is replaced with the result of map_func(value).
+
+This is a convenience method that transforms the node by applying the map function
+to each element while preserving the structure.
+
+When called with just the map function, maps the current node elements.
+When called with path segments, maps the specified nested node elements.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `map_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function to apply to each element | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### move_to() 🔧
+
+```python filename='method.py'
+def move_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Move this node to another location in the state tree.
+
+This operation is atomic - either the move completes successfully,
+or no changes are made to the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use Note: After this operation, the current AsyncTreeNodeProtocol instance should not be used as its path is no longer valid. | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pop() 🔧
+
+```python filename='method.py'
+def pop(self, key: 'TreePathComponent', default: 'TreeValueT | EmptyProtocol' = Ellipsis) -> 'TreeValueContainer[TreeValueT] | EmptyProtocol'
+```
+
+Remove and return a value from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `TreePathComponent` | Key to remove | `Required` |
+| `default` | `TreeValueT | EmptyProtocol` | Value to return if key doesn't exist | `Ellipsis` |
+
+**Returns:** `TreeValueContainer[TreeValueT] | EmptyProtocol` - The value associated with the key, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### remove() 🔧
+
+```python filename='method.py'
+def remove(self, *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Delete a node from the state tree.
+
+When called with no path arguments, deletes the current node.
+When called with path segments, deletes the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', value: 'TreeValueT') -> 'None'
+```
+
+Set a value in the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths_and_value: Additional path segments followed by the value to set | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setdefault() 🔧
+
+```python filename='method.py'
+def setdefault(self, key: 'TreePathComponent', default: 'TreeValueT' = Ellipsis) -> 'TreeValueT'
+```
+
+Return the value for key if it exists, otherwise set it to default.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `TreePathComponent` | Key to check and potentially set | `Required` |
+| `default` | `TreeValueT` | Value to set and return if key doesn't exist | `Ellipsis` |
+
+**Returns:** `TreeValueT` - The value associated with the key, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### store() 🔧
+
+```python filename='method.py'
+def store(self, value: 'TreeValueT', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Store a Python object at a specified node.
+
+This is a convenience method for directly storing Python objects
+(dictionaries, lists, or primitive values) in the state tree.
+
+When called with just the value, replaces the current node.
+When called with path segments, stores at the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Python object to store | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_dict() 🔧
+
+```python filename='method.py'
+def to_dict(self) -> 'dict[TreePathComponent, TreeValueT]'
+```
+
+Convert to a regular Python dictionary.
+
+**Returns:** `dict[TreePathComponent, TreeValueT]` - Python dictionary containing all data from this dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_python_object() 🔧
+
+```python filename='method.py'
+def to_python_object(self, *args: 'Any', **kwargs: 'Any') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Convert a node to a standard Python object.
+
+When called with no path arguments, converts the current node.
+When called with path segments, converts the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The Python representation of the node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transform() 🔧
+
+```python filename='method.py'
+def transform(self, transform_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a transformation function to a node.
+
+The transformation function takes the current value as a Python object
+and returns a new transformed Python object.
+
+When called with just the transform function, transforms the current node.
+When called with path segments, transforms the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `transform_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function that takes a Python object and returns a transformed version | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### update() 🔧
+
+```python filename='method.py'
+def update(self, other: 'dict[TreePathComponent, TreeValueT]') -> 'None'
+```
+
+Update the dictionary node with key-value pairs from another dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `other` | `dict[TreePathComponent, TreeValueT]` | Dictionary containing key-value pairs to update | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### values() 🔧
+
+```python filename='method.py'
+def values(self) -> 'list[TreeValueT]'
+```
+
+Get all top-level values in the dictionary node.
+
+**Returns:** `list[TreeValueT]` - List of values in the dictionary
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for dictionary-like interface to state storage.
+
+    This class provides an interface similar to a Python dictionary
+    for interacting with dictionary nodes in the state storage.
+    It implements async methods for dictionary operations that map
+    to the underlying state structure.
+    """
+
+    async def get(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = ...,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Get a value from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            default: Value to return if path doesn't exist
+
+        Returns:
+            The value associated with the path, or default if not found
+        """
+        ...
+
+    async def set(
+        self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT
+    ) -> None:
+        """
+        Set a value in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths_and_value: Additional path segments followed by the value to set
+
+        Raises:
+            ValueError: If no value is provided
+        """
+        ...
+
+    async def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
+        """
+        Delete a path from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Raises:
+            KeyError: If the path doesn't exist
+        """
+        ...
+
+    async def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
+        """
+        Check if a path exists in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        ...
+
+    async def keys(self) -> list[TreePathComponent]:
+        """
+        Get all top-level keys in the dictionary node.
+
+        Returns:
+            List of keys in the dictionary
+        """
+        ...
+
+    async def values(self) -> list[TreeValueT]:
+        """
+        Get all top-level values in the dictionary node.
+
+        Returns:
+            List of values in the dictionary
+        """
+        ...
+
+    async def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Get all top-level key-value pairs in the dictionary node.
+
+        Returns:
+            List of (key, value) tuples
+        """
+        ...
+
+    async def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Convert to a regular Python dictionary.
+
+        Returns:
+            Python dictionary containing all data from this dictionary node
+        """
+        ...
+
+    async def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
+        """
+        Update the dictionary node with key-value pairs from another dictionary.
+
+        Args:
+            other: Dictionary containing key-value pairs to update
+        """
+        ...
+
+    async def clear(self) -> None:
+        """
+        Remove all items from the dictionary node.
+        """
+        ...
+
+    async def pop(
+        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Remove and return a value from the dictionary node.
+
+        Args:
+            key: Key to remove
+            default: Value to return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+
+        Raises:
+            KeyError: If the key doesn't exist and no default is provided
+        """
+        ...
+
+    async def setdefault(self, key: TreePathComponent, default: TreeValueT = ...) -> TreeValueT:
+        """
+        Return the value for key if it exists, otherwise set it to default.
+
+        Args:
+            key: Key to check and potentially set
+            default: Value to set and return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+        """
+        ...
+
+    async def __len__(self) -> int:
+        """
+        Get the number of items in the dictionary node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+```
+
+<a id='asynctreelistprotocol'></a>
+
+## AsyncTreeListProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncTreeNodeProtocol`, `Protocol`
+</Callout>
+
+Protocol for list-like interface to state storage.
+
+This class provides an interface similar to a Python list
+for interacting with list nodes in the state storage.
+It implements async methods for list operations that map
+to the underlying state structure.
+
+```python filename='class.py'
+class AsyncTreeListProtocol(AsyncTreeNodeProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_async` | Check if the protocol is asynchronous. |
+| `path` | Get the base path for this state node. |
+
+### Methods
+
+<Tabs items={['append', 'clear', 'copy_to', 'delete', 'dict', 'exists', 'extend', 'filter', 'get', 'insert', 'is_dict', 'is_list', 'length', 'list', 'map', 'move_to', 'pop', 'remove', 'set', 'store', 'to_list', 'to_python_object', 'transform']}>
+<Tabs.Tab>
+
+### append() 🔧
+
+```python filename='method.py'
+def append(self, value: 'TreeValueT') -> 'int'
+```
+
+Append an item to the list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Value to append | `Required` |
+
+**Returns:** `int` - New length of the list
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### clear() 🔧
+
+```python filename='method.py'
+def clear(self) -> 'None'
+```
+
+Remove all items from the list node.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### copy_to() 🔧
+
+```python filename='method.py'
+def copy_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Create a copy of this node at another location in the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, index: 'int') -> 'None'
+```
+
+Remove an item from the list node at the specified index.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to remove | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'AsyncTreeDictProtocol[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeDictProtocol[TreeValueT]` - A new AsyncTreeDictProtocol instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node exists in the state tree.
+
+When called with no path arguments, checks if the current node exists.
+When called with path segments, checks if the specified nested node exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### extend() 🔧
+
+```python filename='method.py'
+def extend(self, values: 'list[TreeValueT]') -> 'int'
+```
+
+Extend the list node with multiple values.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `values` | `list[TreeValueT]` | List of values to append | `Required` |
+
+**Returns:** `int` - New length of the list
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### filter() 🔧
+
+```python filename='method.py'
+def filter(self, filter_func: 'Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Filter elements of a list or dictionary node.
+
+For list nodes, filter_func takes (value) and returns a boolean.
+For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+Elements for which filter_func returns False will be removed.
+
+When called with just the filter function, filters the current node.
+When called with path segments, filters the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `filter_func` | `Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]` | Function that takes elements and returns whether to keep them | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, index: 'int') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Get an item from the list node at the specified index.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to retrieve | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The item at the specified index
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### insert() 🔧
+
+```python filename='method.py'
+def insert(self, index: 'int', value: 'TreeValueT') -> 'None'
+```
+
+Insert an item at a specific position in the list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Position to insert the value | `Required` |
+| `value` | `TreeValueT` | Value to insert | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a dictionary node.
+
+When called with no path arguments, checks if the current node is a dictionary.
+When called with path segments, checks if the specified nested node is a dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a dictionary, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a list node.
+
+When called with no path arguments, checks if the current node is a list.
+When called with path segments, checks if the specified nested node is a list.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a list, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### length() 🔧
+
+```python filename='method.py'
+def length(self) -> 'int'
+```
+
+Get the length of the list node.
+
+**Returns:** `int` - Number of items in the list
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'AsyncTreeListProtocol[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeListProtocol[TreeValueT]` - A new AsyncTreeListProtocol instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### map() 🔧
+
+```python filename='method.py'
+def map(self, map_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a mapping function to each element in a list or dictionary node.
+
+For list nodes, each element is replaced with the result of map_func(element).
+For dictionary nodes, each value is replaced with the result of map_func(value).
+
+This is a convenience method that transforms the node by applying the map function
+to each element while preserving the structure.
+
+When called with just the map function, maps the current node elements.
+When called with path segments, maps the specified nested node elements.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `map_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function to apply to each element | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### move_to() 🔧
+
+```python filename='method.py'
+def move_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Move this node to another location in the state tree.
+
+This operation is atomic - either the move completes successfully,
+or no changes are made to the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use Note: After this operation, the current AsyncTreeNodeProtocol instance should not be used as its path is no longer valid. | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pop() 🔧
+
+```python filename='method.py'
+def pop(self, index: 'int' = Ellipsis) -> 'TreeValueContainer[TreeValueT]'
+```
+
+Remove and return an item from the list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to remove (default: last item) | `Ellipsis` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The item at the specified index
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### remove() 🔧
+
+```python filename='method.py'
+def remove(self, *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Delete a node from the state tree.
+
+When called with no path arguments, deletes the current node.
+When called with path segments, deletes the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, index: 'int', value: 'TreeValueT') -> 'None'
+```
+
+Set an item in the list node at the specified index.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to set | `Required` |
+| `value` | `TreeValueT` | Value to set | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### store() 🔧
+
+```python filename='method.py'
+def store(self, value: 'TreeValueT', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Store a Python object at a specified node.
+
+This is a convenience method for directly storing Python objects
+(dictionaries, lists, or primitive values) in the state tree.
+
+When called with just the value, replaces the current node.
+When called with path segments, stores at the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Python object to store | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_list() 🔧
+
+```python filename='method.py'
+def to_list(self) -> 'list[TreeValueT]'
+```
+
+Convert to a regular Python list.
+
+**Returns:** `list[TreeValueT]` - Python list containing all items from this list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_python_object() 🔧
+
+```python filename='method.py'
+def to_python_object(self, *args: 'Any', **kwargs: 'Any') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Convert a node to a standard Python object.
+
+When called with no path arguments, converts the current node.
+When called with path segments, converts the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The Python representation of the node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transform() 🔧
+
+```python filename='method.py'
+def transform(self, transform_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a transformation function to a node.
+
+The transformation function takes the current value as a Python object
+and returns a new transformed Python object.
+
+When called with just the transform function, transforms the current node.
+When called with path segments, transforms the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `transform_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function that takes a Python object and returns a transformed version | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for list-like interface to state storage.
+
+    This class provides an interface similar to a Python list
+    for interacting with list nodes in the state storage.
+    It implements async methods for list operations that map
+    to the underlying state structure.
+    """
+
+    async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+        """
+        Get an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to retrieve
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def set(self, index: int, value: TreeValueT) -> None:
+        """
+        Set an item in the list node at the specified index.
+
+        Args:
+            index: Index of the item to set
+            value: Value to set
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def append(self, value: TreeValueT) -> int:
+        """
+        Append an item to the list node.
+
+        Args:
+            value: Value to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    async def extend(self, values: list[TreeValueT]) -> int:
+        """
+        Extend the list node with multiple values.
+
+        Args:
+            values: List of values to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    async def insert(self, index: int, value: TreeValueT) -> None:
+        """
+        Insert an item at a specific position in the list node.
+
+        Args:
+            index: Position to insert the value
+            value: Value to insert
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def delete(self, index: int) -> None:
+        """
+        Remove an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to remove
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def length(self) -> int:
+        """
+        Get the length of the list node.
+
+        Returns:
+            Number of items in the list
+        """
+        ...
+
+    async def to_list(self) -> list[TreeValueT]:
+        """
+        Convert to a regular Python list.
+
+        Returns:
+            Python list containing all items from this list node
+        """
+        ...
+
+    async def clear(self) -> None:
+        """
+        Remove all items from the list node.
+        """
+        ...
+
+    async def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
+        """
+        Remove and return an item from the list node.
+
+        Args:
+            index: Index of the item to remove (default: last item)
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def __len__(self) -> int:
+        """
+        Get the number of items in the list node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+```
+
+<a id='asynctreenodeprotocol'></a>
+
+## AsyncTreeNodeProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+Protocol for state tree nodes.
+
+This abstract base class provides common functionality for both dictionary
+and list state nodes, allowing them to share code for nested node access,
+transformations, filtering, and other common operations.
+
+AsyncTreeNodeProtocol serves as a consistent interface for working with nodes,
+regardless of their type (dictionary or list).
+
+```python filename='class.py'
+class AsyncTreeNodeProtocol(Protocol):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `is_async` | `property` | `&lt;property object at 0x108bad760&gt;` |  |
+| `path` | `property` | `&lt;property object at 0x108bad800&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_async` | Check if the protocol is asynchronous. |
+| `path` | Get the base path for this state node. |
+
+### Methods
+
+<Tabs items={['copy_to', 'dict', 'exists', 'filter', 'is_dict', 'is_list', 'list', 'map', 'move_to', 'remove', 'store', 'to_python_object', 'transform']}>
+<Tabs.Tab>
+
+### copy_to() 🔧
+
+```python filename='method.py'
+def copy_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Create a copy of this node at another location in the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'AsyncTreeDictProtocol[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeDictProtocol[TreeValueT]` - A new AsyncTreeDictProtocol instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node exists in the state tree.
+
+When called with no path arguments, checks if the current node exists.
+When called with path segments, checks if the specified nested node exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### filter() 🔧
+
+```python filename='method.py'
+def filter(self, filter_func: 'Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Filter elements of a list or dictionary node.
+
+For list nodes, filter_func takes (value) and returns a boolean.
+For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+Elements for which filter_func returns False will be removed.
+
+When called with just the filter function, filters the current node.
+When called with path segments, filters the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `filter_func` | `Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]` | Function that takes elements and returns whether to keep them | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a dictionary node.
+
+When called with no path arguments, checks if the current node is a dictionary.
+When called with path segments, checks if the specified nested node is a dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a dictionary, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a list node.
+
+When called with no path arguments, checks if the current node is a list.
+When called with path segments, checks if the specified nested node is a list.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a list, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'AsyncTreeListProtocol[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeListProtocol[TreeValueT]` - A new AsyncTreeListProtocol instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### map() 🔧
+
+```python filename='method.py'
+def map(self, map_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a mapping function to each element in a list or dictionary node.
+
+For list nodes, each element is replaced with the result of map_func(element).
+For dictionary nodes, each value is replaced with the result of map_func(value).
+
+This is a convenience method that transforms the node by applying the map function
+to each element while preserving the structure.
+
+When called with just the map function, maps the current node elements.
+When called with path segments, maps the specified nested node elements.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `map_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function to apply to each element | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### move_to() 🔧
+
+```python filename='method.py'
+def move_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'AsyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Move this node to another location in the state tree.
+
+This operation is atomic - either the move completes successfully,
+or no changes are made to the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'AsyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use Note: After this operation, the current AsyncTreeNodeProtocol instance should not be used as its path is no longer valid. | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### remove() 🔧
+
+```python filename='method.py'
+def remove(self, *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Delete a node from the state tree.
+
+When called with no path arguments, deletes the current node.
+When called with path segments, deletes the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### store() 🔧
+
+```python filename='method.py'
+def store(self, value: 'TreeValueT', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Store a Python object at a specified node.
+
+This is a convenience method for directly storing Python objects
+(dictionaries, lists, or primitive values) in the state tree.
+
+When called with just the value, replaces the current node.
+When called with path segments, stores at the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Python object to store | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_python_object() 🔧
+
+```python filename='method.py'
+def to_python_object(self, *args: 'Any', **kwargs: 'Any') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Convert a node to a standard Python object.
+
+When called with no path arguments, converts the current node.
+When called with path segments, converts the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The Python representation of the node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transform() 🔧
+
+```python filename='method.py'
+def transform(self, transform_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a transformation function to a node.
+
+The transformation function takes the current value as a Python object
+and returns a new transformed Python object.
+
+When called with just the transform function, transforms the current node.
+When called with path segments, transforms the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `transform_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function that takes a Python object and returns a transformed version | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
+    """
+    Protocol for state tree nodes.
+
+    This abstract base class provides common functionality for both dictionary
+    and list state nodes, allowing them to share code for nested node access,
+    transformations, filtering, and other common operations.
+
+    AsyncTreeNodeProtocol serves as a consistent interface for working with nodes,
+    regardless of their type (dictionary or list).
+    """
+
+    EMPTY: EmptyProtocol
+
+    @property
+    def is_async(self) -> bool:
+        """
+        Check if the protocol is asynchronous.
+
+        Returns:
+            True if the protocol is asynchronous, False otherwise
+        """
+        return True
+
+    @property
+    def path(self) -> TreePath:
+        """
+        Get the base path for this state node.
+
+        Returns:
+            The base path
+        """
+        ...
+
+    async def dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> AsyncTreeDictProtocol[TreeValueT]:
+        """
+        Get a nested dictionary node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new AsyncTreeDictProtocol instance for the nested dictionary node
+        """
+        ...
+
+    async def list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> AsyncTreeListProtocol[TreeValueT]:
+        """
+        Get a nested list node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new AsyncTreeListProtocol instance for the nested list node
+        """
+        ...
+
+    @overload
+    async def remove(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def remove(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    async def remove(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Delete a node from the state tree.
+
+        When called with no path arguments, deletes the current node.
+        When called with path segments, deletes the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+        """
+        ...
+
+    @overload
+    async def exists(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    async def exists(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    async def exists(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node exists in the state tree.
+
+        When called with no path arguments, checks if the current node exists.
+        When called with path segments, checks if the specified nested node exists.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node exists, False otherwise
+        """
+        ...
+
+    @overload
+    async def is_dict(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    async def is_dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    async def is_dict(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a dictionary node.
+
+        When called with no path arguments, checks if the current node is a dictionary.
+        When called with path segments, checks if the specified nested node is a dictionary.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a dictionary, False otherwise
+        """
+        ...
+
+    @overload
+    async def is_list(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    async def is_list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    async def is_list(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a list node.
+
+        When called with no path arguments, checks if the current node is a list.
+        When called with path segments, checks if the specified nested node is a list.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a list, False otherwise
+        """
+        ...
+
+    @overload
+    async def to_python_object(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    @overload
+    async def to_python_object(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    async def to_python_object(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> TreeValueContainer[TreeValueT]:
+        """
+        Convert a node to a standard Python object.
+
+        When called with no path arguments, converts the current node.
+        When called with path segments, converts the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            The Python representation of the node
+
+        Raises:
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    async def copy_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Create a copy of this node at another location in the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+        """
+        ...
+
+    async def move_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Move this node to another location in the state tree.
+
+        This operation is atomic - either the move completes successfully,
+        or no changes are made to the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+
+        Note:
+            After this operation, the current AsyncTreeNodeProtocol instance should not be used
+            as its path is no longer valid.
+        """
+        ...
+
+    @overload
+    async def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    async def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a transformation function to a node.
+
+        The transformation function takes the current value as a Python object
+        and returns a new transformed Python object.
+
+        When called with just the transform function, transforms the current node.
+        When called with path segments, transforms the specified nested node.
+
+        Args:
+            transform_func: Function that takes a Python object and returns a transformed version
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            KeyError: If the node doesn't exist
+            TypeError: If the transformation result is not of a compatible type
+        """
+        ...
+
+    @overload
+    async def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    async def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Filter elements of a list or dictionary node.
+
+        For list nodes, filter_func takes (value) and returns a boolean.
+        For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+        Elements for which filter_func returns False will be removed.
+
+        When called with just the filter function, filters the current node.
+        When called with path segments, filters the specified nested node.
+
+        Args:
+            filter_func: Function that takes elements and returns whether to keep them
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    @overload
+    async def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    async def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a mapping function to each element in a list or dictionary node.
+
+        For list nodes, each element is replaced with the result of map_func(element).
+        For dictionary nodes, each value is replaced with the result of map_func(value).
+
+        This is a convenience method that transforms the node by applying the map function
+        to each element while preserving the structure.
+
+        When called with just the map function, maps the current node elements.
+        When called with path segments, maps the specified nested node elements.
+
+        Args:
+            map_func: Function to apply to each element
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+            TypeError: If the mapping result contains unsupported types
+        """
+        ...
+
+    @overload
+    async def store(
+        self,
+        value: TreeValueT,
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def store(
+        self,
+        value: TreeValueT,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    async def store(
+        self,
+        value: TreeValueT,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Store a Python object at a specified node.
+
+        This is a convenience method for directly storing Python objects
+        (dictionaries, lists, or primitive values) in the state tree.
+
+        When called with just the value, replaces the current node.
+        When called with path segments, stores at the specified nested node.
+
+        Args:
+            value: Python object to store
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the value is of an unsupported type
+        """
+        ...
+
+```
+
+<a id='emptyprotocol'></a>
+
+## EmptyProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+A placeholder class representing an empty value.
+
+This class is used to indicate the absence of a value in various contexts,
+such as default values or optional parameters.
+
+```python filename='class.py'
+class EmptyProtocol(Protocol):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class EmptyProtocol(Protocol):
+    """
+    A placeholder class representing an empty value.
+
+    This class is used to indicate the absence of a value in various contexts,
+    such as default values or optional parameters.
+    """
+
+    pass
+
+```
+
+<a id='synctreedictprotocol'></a>
+
+## SyncTreeDictProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `SyncTreeNodeProtocol`, `Protocol`
+</Callout>
+
+Protocol for dictionary-like interface to state storage.
+
+This class provides an interface similar to a Python dictionary
+for interacting with dictionary nodes in the state storage.
+It implements methods for dictionary operations that map
+to the underlying state structure.
+
+```python filename='class.py'
+class SyncTreeDictProtocol(SyncTreeNodeProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_sync` | Check if the protocol is synchronous. |
+| `path` | Get the base path for this state node. |
+
+### Methods
+
+<Tabs items={['clear', 'contains', 'copy_to', 'delete', 'dict', 'exists', 'filter', 'get', 'is_dict', 'is_list', 'items', 'keys', 'list', 'map', 'move_to', 'pop', 'remove', 'set', 'setdefault', 'store', 'to_dict', 'to_python_object', 'transform', 'update', 'values']}>
+<Tabs.Tab>
+
+### clear() 🔧
+
+```python filename='method.py'
+def clear(self) -> 'None'
+```
+
+Remove all items from the dictionary node.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### contains() 🔧
+
+```python filename='method.py'
+def contains(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent') -> 'bool'
+```
+
+Check if a path exists in the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+
+**Returns:** `bool` - True if the path exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### copy_to() 🔧
+
+```python filename='method.py'
+def copy_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Create a copy of this node at another location in the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent') -> 'None'
+```
+
+Delete a path from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'SyncTreeDictProtocol[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `SyncTreeDictProtocol[TreeValueT]` - A new SyncTreeDictProtocol instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node exists in the state tree.
+
+When called with no path arguments, checks if the current node exists.
+When called with path segments, checks if the specified nested node exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### filter() 🔧
+
+```python filename='method.py'
+def filter(self, filter_func: 'Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Filter elements of a list or dictionary node.
+
+For list nodes, filter_func takes (value) and returns a boolean.
+For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+Elements for which filter_func returns False will be removed.
+
+When called with just the filter function, filters the current node.
+When called with path segments, filters the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `filter_func` | `Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]` | Function that takes elements and returns whether to keep them | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', default: "'TreeValueT | EmptyProtocol'" = None) -> 'TreeValueContainer[TreeValueT] | EmptyProtocol'
+```
+
+Get a value from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `default` | `'TreeValueT | EmptyProtocol'` | Value to return if path doesn't exist | `None` |
+
+**Returns:** `TreeValueContainer[TreeValueT] | EmptyProtocol` - The value associated with the path, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a dictionary node.
+
+When called with no path arguments, checks if the current node is a dictionary.
+When called with path segments, checks if the specified nested node is a dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a dictionary, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a list node.
+
+When called with no path arguments, checks if the current node is a list.
+When called with path segments, checks if the specified nested node is a list.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a list, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### items() 🔧
+
+```python filename='method.py'
+def items(self) -> 'list[tuple[TreePathComponent, TreeValueT]]'
+```
+
+Get all top-level key-value pairs in the dictionary node.
+
+**Returns:** `list[tuple[TreePathComponent, TreeValueT]]` - List of (key, value) tuples
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### keys() 🔧
+
+```python filename='method.py'
+def keys(self) -> 'list[TreePathComponent]'
+```
+
+Get all top-level keys in the dictionary node.
+
+**Returns:** `list[TreePathComponent]` - List of keys in the dictionary
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'SyncTreeListProtocol[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `SyncTreeListProtocol[TreeValueT]` - A new SyncTreeListProtocol instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### map() 🔧
+
+```python filename='method.py'
+def map(self, map_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a mapping function to each element in a list or dictionary node.
+
+For list nodes, each element is replaced with the result of map_func(element).
+For dictionary nodes, each value is replaced with the result of map_func(value).
+
+This is a convenience method that transforms the node by applying the map function
+to each element while preserving the structure.
+
+When called with just the map function, maps the current node elements.
+When called with path segments, maps the specified nested node elements.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `map_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function to apply to each element | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### move_to() 🔧
+
+```python filename='method.py'
+def move_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Move this node to another location in the state tree.
+
+This operation is atomic - either the move completes successfully,
+or no changes are made to the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use Note: After this operation, the current SyncTreeNodeProtocol instance should not be used as its path is no longer valid. | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pop() 🔧
+
+```python filename='method.py'
+def pop(self, key: 'TreePathComponent', default: 'TreeValueT | EmptyProtocol' = Ellipsis) -> 'TreeValueContainer[TreeValueT] | EmptyProtocol'
+```
+
+Remove and return a value from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `TreePathComponent` | Key to remove | `Required` |
+| `default` | `TreeValueT | EmptyProtocol` | Value to return if key doesn't exist | `Ellipsis` |
+
+**Returns:** `TreeValueContainer[TreeValueT] | EmptyProtocol` - The value associated with the key, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### remove() 🔧
+
+```python filename='method.py'
+def remove(self, *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Delete a node from the state tree.
+
+When called with no path arguments, deletes the current node.
+When called with path segments, deletes the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', value: 'TreeValueT') -> 'None'
+```
+
+Set a value in the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths_and_value: Additional path segments followed by the value to set | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setdefault() 🔧
+
+```python filename='method.py'
+def setdefault(self, key: 'TreePathComponent', default: 'TreeValueT' = None) -> 'TreeValueT'
+```
+
+Return the value for key if it exists, otherwise set it to default.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `TreePathComponent` | Key to check and potentially set | `Required` |
+| `default` | `TreeValueT` | Value to set and return if key doesn't exist | `None` |
+
+**Returns:** `TreeValueT` - The value associated with the key, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### store() 🔧
+
+```python filename='method.py'
+def store(self, value: 'TreeValueT', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Store a Python object at a specified node.
+
+This is a convenience method for directly storing Python objects
+(dictionaries, lists, or primitive values) in the state tree.
+
+When called with just the value, replaces the current node.
+When called with path segments, stores at the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Python object to store | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_dict() 🔧
+
+```python filename='method.py'
+def to_dict(self) -> 'dict[TreePathComponent, TreeValueT]'
+```
+
+Convert to a regular Python dictionary.
+
+**Returns:** `dict[TreePathComponent, TreeValueT]` - Python dictionary containing all data from this dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_python_object() 🔧
+
+```python filename='method.py'
+def to_python_object(self, *args: 'Any', **kwargs: 'Any') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Convert a node to a standard Python object.
+
+When called with no path arguments, converts the current node.
+When called with path segments, converts the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The Python representation of the node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transform() 🔧
+
+```python filename='method.py'
+def transform(self, transform_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a transformation function to a node.
+
+The transformation function takes the current value as a Python object
+and returns a new transformed Python object.
+
+When called with just the transform function, transforms the current node.
+When called with path segments, transforms the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `transform_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function that takes a Python object and returns a transformed version | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### update() 🔧
+
+```python filename='method.py'
+def update(self, other: 'dict[TreePathComponent, TreeValueT]') -> 'None'
+```
+
+Update the dictionary node with key-value pairs from another dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `other` | `dict[TreePathComponent, TreeValueT]` | Dictionary containing key-value pairs to update | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### values() 🔧
+
+```python filename='method.py'
+def values(self) -> 'list[TreeValueT]'
+```
+
+Get all top-level values in the dictionary node.
+
+**Returns:** `list[TreeValueT]` - List of values in the dictionary
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for dictionary-like interface to state storage.
+
+    This class provides an interface similar to a Python dictionary
+    for interacting with dictionary nodes in the state storage.
+    It implements methods for dictionary operations that map
+    to the underlying state structure.
+    """
+
+    def get(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = None,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Get a value from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            default: Value to return if path doesn't exist
+
+        Returns:
+            The value associated with the path, or default if not found
+        """
+        ...
+
+    def set(self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT) -> None:
+        """
+        Set a value in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths_and_value: Additional path segments followed by the value to set
+
+        Raises:
+            ValueError: If no value is provided
+        """
+        ...
+
+    def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
+        """
+        Delete a path from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Raises:
+            KeyError: If the path doesn't exist
+        """
+        ...
+
+    def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
+        """
+        Check if a path exists in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        ...
+
+    def keys(self) -> list[TreePathComponent]:
+        """
+        Get all top-level keys in the dictionary node.
+
+        Returns:
+            List of keys in the dictionary
+        """
+        ...
+
+    def values(self) -> list[TreeValueT]:
+        """
+        Get all top-level values in the dictionary node.
+
+        Returns:
+            List of values in the dictionary
+        """
+        ...
+
+    def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Get all top-level key-value pairs in the dictionary node.
+
+        Returns:
+            List of (key, value) tuples
+        """
+        ...
+
+    def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Convert to a regular Python dictionary.
+
+        Returns:
+            Python dictionary containing all data from this dictionary node
+        """
+        ...
+
+    def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
+        """
+        Update the dictionary node with key-value pairs from another dictionary.
+
+        Args:
+            other: Dictionary containing key-value pairs to update
+        """
+        ...
+
+    def clear(self) -> None:
+        """
+        Remove all items from the dictionary node.
+        """
+        ...
+
+    def pop(
+        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Remove and return a value from the dictionary node.
+
+        Args:
+            key: Key to remove
+            default: Value to return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+
+        Raises:
+            KeyError: If the key doesn't exist and no default is provided
+        """
+        ...
+
+    def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+        """
+        Return the value for key if it exists, otherwise set it to default.
+
+        Args:
+            key: Key to check and potentially set
+            default: Value to set and return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+        """
+        ...
+
+    def __len__(self) -> int:
+        """
+        Get the number of items in the dictionary node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+```
+
+<a id='synctreelistprotocol'></a>
+
+## SyncTreeListProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `SyncTreeNodeProtocol`, `Protocol`
+</Callout>
+
+Protocol for list-like interface to state storage.
+
+This class provides an interface similar to a Python list
+for interacting with list nodes in the state storage.
+It implements methods for list operations that map
+to the underlying state structure.
+
+```python filename='class.py'
+class SyncTreeListProtocol(SyncTreeNodeProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_sync` | Check if the protocol is synchronous. |
+| `path` | Get the base path for this state node. |
+
+### Methods
+
+<Tabs items={['append', 'clear', 'copy_to', 'delete', 'dict', 'exists', 'extend', 'filter', 'get', 'insert', 'is_dict', 'is_list', 'length', 'list', 'map', 'move_to', 'pop', 'remove', 'set', 'store', 'to_list', 'to_python_object', 'transform']}>
+<Tabs.Tab>
+
+### append() 🔧
+
+```python filename='method.py'
+def append(self, value: 'TreeValueT') -> 'int'
+```
+
+Append an item to the list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Value to append | `Required` |
+
+**Returns:** `int` - New length of the list
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### clear() 🔧
+
+```python filename='method.py'
+def clear(self) -> 'None'
+```
+
+Remove all items from the list node.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### copy_to() 🔧
+
+```python filename='method.py'
+def copy_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Create a copy of this node at another location in the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, index: 'int') -> 'None'
+```
+
+Remove an item from the list node at the specified index.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to remove | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'SyncTreeDictProtocol[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `SyncTreeDictProtocol[TreeValueT]` - A new SyncTreeDictProtocol instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node exists in the state tree.
+
+When called with no path arguments, checks if the current node exists.
+When called with path segments, checks if the specified nested node exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### extend() 🔧
+
+```python filename='method.py'
+def extend(self, values: 'list[TreeValueT]') -> 'int'
+```
+
+Extend the list node with multiple values.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `values` | `list[TreeValueT]` | List of values to append | `Required` |
+
+**Returns:** `int` - New length of the list
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### filter() 🔧
+
+```python filename='method.py'
+def filter(self, filter_func: 'Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Filter elements of a list or dictionary node.
+
+For list nodes, filter_func takes (value) and returns a boolean.
+For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+Elements for which filter_func returns False will be removed.
+
+When called with just the filter function, filters the current node.
+When called with path segments, filters the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `filter_func` | `Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]` | Function that takes elements and returns whether to keep them | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, index: 'int') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Get an item from the list node at the specified index.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to retrieve | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The item at the specified index
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### insert() 🔧
+
+```python filename='method.py'
+def insert(self, index: 'int', value: 'TreeValueT') -> 'None'
+```
+
+Insert an item at a specific position in the list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Position to insert the value | `Required` |
+| `value` | `TreeValueT` | Value to insert | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a dictionary node.
+
+When called with no path arguments, checks if the current node is a dictionary.
+When called with path segments, checks if the specified nested node is a dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a dictionary, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a list node.
+
+When called with no path arguments, checks if the current node is a list.
+When called with path segments, checks if the specified nested node is a list.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a list, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### length() 🔧
+
+```python filename='method.py'
+def length(self) -> 'int'
+```
+
+Get the length of the list node.
+
+**Returns:** `int` - Number of items in the list
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'SyncTreeListProtocol[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `SyncTreeListProtocol[TreeValueT]` - A new SyncTreeListProtocol instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### map() 🔧
+
+```python filename='method.py'
+def map(self, map_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a mapping function to each element in a list or dictionary node.
+
+For list nodes, each element is replaced with the result of map_func(element).
+For dictionary nodes, each value is replaced with the result of map_func(value).
+
+This is a convenience method that transforms the node by applying the map function
+to each element while preserving the structure.
+
+When called with just the map function, maps the current node elements.
+When called with path segments, maps the specified nested node elements.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `map_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function to apply to each element | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### move_to() 🔧
+
+```python filename='method.py'
+def move_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Move this node to another location in the state tree.
+
+This operation is atomic - either the move completes successfully,
+or no changes are made to the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use Note: After this operation, the current SyncTreeNodeProtocol instance should not be used as its path is no longer valid. | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pop() 🔧
+
+```python filename='method.py'
+def pop(self, index: 'int' = Ellipsis) -> 'TreeValueContainer[TreeValueT]'
+```
+
+Remove and return an item from the list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to remove (default: last item) | `Ellipsis` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The item at the specified index
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### remove() 🔧
+
+```python filename='method.py'
+def remove(self, *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Delete a node from the state tree.
+
+When called with no path arguments, deletes the current node.
+When called with path segments, deletes the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, index: 'int', value: 'TreeValueT') -> 'None'
+```
+
+Set an item in the list node at the specified index.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `index` | `int` | Index of the item to set | `Required` |
+| `value` | `TreeValueT` | Value to set | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### store() 🔧
+
+```python filename='method.py'
+def store(self, value: 'TreeValueT', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Store a Python object at a specified node.
+
+This is a convenience method for directly storing Python objects
+(dictionaries, lists, or primitive values) in the state tree.
+
+When called with just the value, replaces the current node.
+When called with path segments, stores at the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Python object to store | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_list() 🔧
+
+```python filename='method.py'
+def to_list(self) -> 'list[TreeValueT]'
+```
+
+Convert to a regular Python list.
+
+**Returns:** `list[TreeValueT]` - Python list containing all items from this list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_python_object() 🔧
+
+```python filename='method.py'
+def to_python_object(self, *args: 'Any', **kwargs: 'Any') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Convert a node to a standard Python object.
+
+When called with no path arguments, converts the current node.
+When called with path segments, converts the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The Python representation of the node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transform() 🔧
+
+```python filename='method.py'
+def transform(self, transform_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a transformation function to a node.
+
+The transformation function takes the current value as a Python object
+and returns a new transformed Python object.
+
+When called with just the transform function, transforms the current node.
+When called with path segments, transforms the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `transform_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function that takes a Python object and returns a transformed version | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for list-like interface to state storage.
+
+    This class provides an interface similar to a Python list
+    for interacting with list nodes in the state storage.
+    It implements methods for list operations that map
+    to the underlying state structure.
+    """
+
+    def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+        """
+        Get an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to retrieve
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def set(self, index: int, value: TreeValueT) -> None:
+        """
+        Set an item in the list node at the specified index.
+
+        Args:
+            index: Index of the item to set
+            value: Value to set
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def append(self, value: TreeValueT) -> int:
+        """
+        Append an item to the list node.
+
+        Args:
+            value: Value to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    def extend(self, values: list[TreeValueT]) -> int:
+        """
+        Extend the list node with multiple values.
+
+        Args:
+            values: List of values to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    def insert(self, index: int, value: TreeValueT) -> None:
+        """
+        Insert an item at a specific position in the list node.
+
+        Args:
+            index: Position to insert the value
+            value: Value to insert
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def delete(self, index: int) -> None:
+        """
+        Remove an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to remove
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def length(self) -> int:
+        """
+        Get the length of the list node.
+
+        Returns:
+            Number of items in the list
+        """
+        ...
+
+    def to_list(self) -> list[TreeValueT]:
+        """
+        Convert to a regular Python list.
+
+        Returns:
+            Python list containing all items from this list node
+        """
+        ...
+
+    def clear(self) -> None:
+        """
+        Remove all items from the list node.
+        """
+        ...
+
+    def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
+        """
+        Remove and return an item from the list node.
+
+        Args:
+            index: Index of the item to remove (default: last item)
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def __len__(self) -> int:
+        """
+        Get the number of items in the list node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+```
+
+<a id='synctreenodeprotocol'></a>
+
+## SyncTreeNodeProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+Protocol for state tree nodes.
+
+This abstract base class provides common functionality for both dictionary
+and list state nodes, allowing them to share code for nested node access,
+transformations, filtering, and other common operations.
+
+SyncTreeNodeProtocol serves as a consistent interface for working with nodes,
+regardless of their type (dictionary or list).
+
+```python filename='class.py'
+class SyncTreeNodeProtocol(Protocol):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `is_sync` | `property` | `&lt;property object at 0x108badb20&gt;` |  |
+| `path` | `property` | `&lt;property object at 0x108badb70&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_sync` | Check if the protocol is synchronous. |
+| `path` | Get the base path for this state node. |
+
+### Methods
+
+<Tabs items={['copy_to', 'dict', 'exists', 'filter', 'is_dict', 'is_list', 'list', 'map', 'move_to', 'remove', 'store', 'to_python_object', 'transform']}>
+<Tabs.Tab>
+
+### copy_to() 🔧
+
+```python filename='method.py'
+def copy_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Create a copy of this node at another location in the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'SyncTreeDictProtocol[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `SyncTreeDictProtocol[TreeValueT]` - A new SyncTreeDictProtocol instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node exists in the state tree.
+
+When called with no path arguments, checks if the current node exists.
+When called with path segments, checks if the specified nested node exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### filter() 🔧
+
+```python filename='method.py'
+def filter(self, filter_func: 'Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Filter elements of a list or dictionary node.
+
+For list nodes, filter_func takes (value) and returns a boolean.
+For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+Elements for which filter_func returns False will be removed.
+
+When called with just the filter function, filters the current node.
+When called with path segments, filters the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `filter_func` | `Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]` | Function that takes elements and returns whether to keep them | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a dictionary node.
+
+When called with no path arguments, checks if the current node is a dictionary.
+When called with path segments, checks if the specified nested node is a dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a dictionary, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a list node.
+
+When called with no path arguments, checks if the current node is a list.
+When called with path segments, checks if the specified nested node is a list.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a list, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'SyncTreeListProtocol[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use | `None` |
+
+**Returns:** `SyncTreeListProtocol[TreeValueT]` - A new SyncTreeListProtocol instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### map() 🔧
+
+```python filename='method.py'
+def map(self, map_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a mapping function to each element in a list or dictionary node.
+
+For list nodes, each element is replaced with the result of map_func(element).
+For dictionary nodes, each value is replaced with the result of map_func(value).
+
+This is a convenience method that transforms the node by applying the map function
+to each element while preserving the structure.
+
+When called with just the map function, maps the current node elements.
+When called with path segments, maps the specified nested node elements.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `map_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function to apply to each element | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### move_to() 🔧
+
+```python filename='method.py'
+def move_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: "'SyncTransactionProtocol[TreeValueT] | None'" = None) -> 'None'
+```
+
+Move this node to another location in the state tree.
+
+This operation is atomic - either the move completes successfully,
+or no changes are made to the state tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `'SyncTransactionProtocol[TreeValueT] | None'` | Optional transaction to use Note: After this operation, the current SyncTreeNodeProtocol instance should not be used as its path is no longer valid. | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### remove() 🔧
+
+```python filename='method.py'
+def remove(self, *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Delete a node from the state tree.
+
+When called with no path arguments, deletes the current node.
+When called with path segments, deletes the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### store() 🔧
+
+```python filename='method.py'
+def store(self, value: 'TreeValueT', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Store a Python object at a specified node.
+
+This is a convenience method for directly storing Python objects
+(dictionaries, lists, or primitive values) in the state tree.
+
+When called with just the value, replaces the current node.
+When called with path segments, stores at the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Python object to store | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_python_object() 🔧
+
+```python filename='method.py'
+def to_python_object(self, *args: 'Any', **kwargs: 'Any') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Convert a node to a standard Python object.
+
+When called with no path arguments, converts the current node.
+When called with path segments, converts the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The Python representation of the node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transform() 🔧
+
+```python filename='method.py'
+def transform(self, transform_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a transformation function to a node.
+
+The transformation function takes the current value as a Python object
+and returns a new transformed Python object.
+
+When called with just the transform function, transforms the current node.
+When called with path segments, transforms the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `transform_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function that takes a Python object and returns a transformed version | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class SyncTreeNodeProtocol(Protocol[TreeValueT]):
+    """
+    Protocol for state tree nodes.
+
+    This abstract base class provides common functionality for both dictionary
+    and list state nodes, allowing them to share code for nested node access,
+    transformations, filtering, and other common operations.
+
+    SyncTreeNodeProtocol serves as a consistent interface for working with nodes,
+    regardless of their type (dictionary or list).
+    """
+
+    EMPTY: EmptyProtocol
+
+    @property
+    def is_sync(self) -> bool:
+        """
+        Check if the protocol is synchronous.
+
+        Returns:
+            True if the protocol is synchronous, False otherwise
+        """
+        return True
+
+    @property
+    def path(self) -> TreePath:
+        """
+        Get the base path for this state node.
+
+        Returns:
+            The base path
+        """
+        ...
+
+    def dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> SyncTreeDictProtocol[TreeValueT]:
+        """
+        Get a nested dictionary node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new SyncTreeDictProtocol instance for the nested dictionary node
+        """
+        ...
+
+    def list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> SyncTreeListProtocol[TreeValueT]:
+        """
+        Get a nested list node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new SyncTreeListProtocol instance for the nested list node
+        """
+        ...
+
+    @overload
+    def remove(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    def remove(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    def remove(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Delete a node from the state tree.
+
+        When called with no path arguments, deletes the current node.
+        When called with path segments, deletes the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+        """
+        ...
+
+    @overload
+    def exists(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    def exists(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    def exists(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node exists in the state tree.
+
+        When called with no path arguments, checks if the current node exists.
+        When called with path segments, checks if the specified nested node exists.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node exists, False otherwise
+        """
+        ...
+
+    @overload
+    def is_dict(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    def is_dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    def is_dict(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a dictionary node.
+
+        When called with no path arguments, checks if the current node is a dictionary.
+        When called with path segments, checks if the specified nested node is a dictionary.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a dictionary, False otherwise
+        """
+        ...
+
+    @overload
+    def is_list(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    def is_list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    def is_list(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a list node.
+
+        When called with no path arguments, checks if the current node is a list.
+        When called with path segments, checks if the specified nested node is a list.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a list, False otherwise
+        """
+        ...
+
+    @overload
+    def to_python_object(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    @overload
+    def to_python_object(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    def to_python_object(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> TreeValueContainer[TreeValueT]:
+        """
+        Convert a node to a standard Python object.
+
+        When called with no path arguments, converts the current node.
+        When called with path segments, converts the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            The Python representation of the node
+
+        Raises:
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    def copy_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Create a copy of this node at another location in the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+        """
+        ...
+
+    def move_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Move this node to another location in the state tree.
+
+        This operation is atomic - either the move completes successfully,
+        or no changes are made to the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+
+        Note:
+            After this operation, the current SyncTreeNodeProtocol instance should not be used
+            as its path is no longer valid.
+        """
+        ...
+
+    @overload
+    def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a transformation function to a node.
+
+        The transformation function takes the current value as a Python object
+        and returns a new transformed Python object.
+
+        When called with just the transform function, transforms the current node.
+        When called with path segments, transforms the specified nested node.
+
+        Args:
+            transform_func: Function that takes a Python object and returns a transformed version
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            KeyError: If the node doesn't exist
+            TypeError: If the transformation result is not of a compatible type
+        """
+        ...
+
+    @overload
+    def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Filter elements of a list or dictionary node.
+
+        For list nodes, filter_func takes (value) and returns a boolean.
+        For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+        Elements for which filter_func returns False will be removed.
+
+        When called with just the filter function, filters the current node.
+        When called with path segments, filters the specified nested node.
+
+        Args:
+            filter_func: Function that takes elements and returns whether to keep them
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    @overload
+    def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a mapping function to each element in a list or dictionary node.
+
+        For list nodes, each element is replaced with the result of map_func(element).
+        For dictionary nodes, each value is replaced with the result of map_func(value).
+
+        This is a convenience method that transforms the node by applying the map function
+        to each element while preserving the structure.
+
+        When called with just the map function, maps the current node elements.
+        When called with path segments, maps the specified nested node elements.
+
+        Args:
+            map_func: Function to apply to each element
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+            TypeError: If the mapping result contains unsupported types
+        """
+        ...
+
+    @overload
+    def store(
+        self,
+        value: TreeValueT,
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    def store(
+        self,
+        value: TreeValueT,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    def store(
+        self,
+        value: TreeValueT,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Store a Python object at a specified node.
+
+        This is a convenience method for directly storing Python objects
+        (dictionaries, lists, or primitive values) in the state tree.
+
+        When called with just the value, replaces the current node.
+        When called with path segments, stores at the specified nested node.
+
+        Args:
+            value: Python object to store
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the value is of an unsupported type
+        """
+        ...
+
+```
+
+## Variables & Constants
+
+<Cards>
+  <Cards.Card title="TYPE_CHECKING" href="#constants"/>
+</Cards>
+
+<Cards>
+  <Cards.Card title="Callable" href="#variables"/>
+  <Cards.Card title="TreePath" href="#variables"/>
+  <Cards.Card title="TreeValueContainer" href="#variables"/>
+  <Cards.Card title="TreeValueT" href="#variables"/>
+  <Cards.Card title="annotations" href="#variables"/>
+</Cards>
+
+<a id='constants'></a>
+
+### Constants
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `TYPE_CHECKING` | `bool` | `False` |  |
+
+<a id='variables'></a>
+
+### Variables
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `Callable` | `_CallableType` | `typing.Callable` |  |
+| `TreePath` | `GenericAlias` | `tuple[str, ...]` |  |
+| `TreeValueContainer` | `str` | `&#x27;TreeValueT | list[TreeValueT] | dict[TreePathC...` |  |
+| `TreeValueT` | `TypeVar` | `~TreeValueT` |  |
+| `annotations` | `_Feature` | `_Feature((3, 7, 0, &#x27;beta&#x27;, 1), None, 16777216)` |  |
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Callable, Protocol, overload, runtime_checkable
+
+from .type_vars import TreeValueT
+from .types import TreePath, TreePathComponent, TreeValueContainer
+
+if TYPE_CHECKING:
+    from .kv import AsyncTransactionProtocol, SyncTransactionProtocol
+
+__all__ = [
+    "AsyncTreeNodeProtocol",
+    "AsyncTreeDictProtocol",
+    "AsyncTreeListProtocol",
+    "SyncTreeNodeProtocol",
+    "SyncTreeDictProtocol",
+    "SyncTreeListProtocol",
+]
+
+# --- Protocols for asynchronous state handling --- #
+
+
+class EmptyProtocol(Protocol):
+    """
+    A placeholder class representing an empty value.
+
+    This class is used to indicate the absence of a value in various contexts,
+    such as default values or optional parameters.
+    """
+
+    pass
+
+
+@runtime_checkable
+class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
+    """
+    Protocol for state tree nodes.
+
+    This abstract base class provides common functionality for both dictionary
+    and list state nodes, allowing them to share code for nested node access,
+    transformations, filtering, and other common operations.
+
+    AsyncTreeNodeProtocol serves as a consistent interface for working with nodes,
+    regardless of their type (dictionary or list).
+    """
+
+    EMPTY: EmptyProtocol
+
+    @property
+    def is_async(self) -> bool:
+        """
+        Check if the protocol is asynchronous.
+
+        Returns:
+            True if the protocol is asynchronous, False otherwise
+        """
+        return True
+
+    @property
+    def path(self) -> TreePath:
+        """
+        Get the base path for this state node.
+
+        Returns:
+            The base path
+        """
+        ...
+
+    async def dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> AsyncTreeDictProtocol[TreeValueT]:
+        """
+        Get a nested dictionary node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new AsyncTreeDictProtocol instance for the nested dictionary node
+        """
+        ...
+
+    async def list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> AsyncTreeListProtocol[TreeValueT]:
+        """
+        Get a nested list node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new AsyncTreeListProtocol instance for the nested list node
+        """
+        ...
+
+    @overload
+    async def remove(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def remove(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    async def remove(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Delete a node from the state tree.
+
+        When called with no path arguments, deletes the current node.
+        When called with path segments, deletes the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+        """
+        ...
+
+    @overload
+    async def exists(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    async def exists(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    async def exists(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node exists in the state tree.
+
+        When called with no path arguments, checks if the current node exists.
+        When called with path segments, checks if the specified nested node exists.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node exists, False otherwise
+        """
+        ...
+
+    @overload
+    async def is_dict(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    async def is_dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    async def is_dict(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a dictionary node.
+
+        When called with no path arguments, checks if the current node is a dictionary.
+        When called with path segments, checks if the specified nested node is a dictionary.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a dictionary, False otherwise
+        """
+        ...
+
+    @overload
+    async def is_list(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    async def is_list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    async def is_list(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a list node.
+
+        When called with no path arguments, checks if the current node is a list.
+        When called with path segments, checks if the specified nested node is a list.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a list, False otherwise
+        """
+        ...
+
+    @overload
+    async def to_python_object(
+        self,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    @overload
+    async def to_python_object(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    async def to_python_object(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> TreeValueContainer[TreeValueT]:
+        """
+        Convert a node to a standard Python object.
+
+        When called with no path arguments, converts the current node.
+        When called with path segments, converts the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            The Python representation of the node
+
+        Raises:
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    async def copy_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Create a copy of this node at another location in the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+        """
+        ...
+
+    async def move_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Move this node to another location in the state tree.
+
+        This operation is atomic - either the move completes successfully,
+        or no changes are made to the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+
+        Note:
+            After this operation, the current AsyncTreeNodeProtocol instance should not be used
+            as its path is no longer valid.
+        """
+        ...
+
+    @overload
+    async def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    async def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a transformation function to a node.
+
+        The transformation function takes the current value as a Python object
+        and returns a new transformed Python object.
+
+        When called with just the transform function, transforms the current node.
+        When called with path segments, transforms the specified nested node.
+
+        Args:
+            transform_func: Function that takes a Python object and returns a transformed version
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            KeyError: If the node doesn't exist
+            TypeError: If the transformation result is not of a compatible type
+        """
+        ...
+
+    @overload
+    async def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    async def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Filter elements of a list or dictionary node.
+
+        For list nodes, filter_func takes (value) and returns a boolean.
+        For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+        Elements for which filter_func returns False will be removed.
+
+        When called with just the filter function, filters the current node.
+        When called with path segments, filters the specified nested node.
+
+        Args:
+            filter_func: Function that takes elements and returns whether to keep them
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    @overload
+    async def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    async def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a mapping function to each element in a list or dictionary node.
+
+        For list nodes, each element is replaced with the result of map_func(element).
+        For dictionary nodes, each value is replaced with the result of map_func(value).
+
+        This is a convenience method that transforms the node by applying the map function
+        to each element while preserving the structure.
+
+        When called with just the map function, maps the current node elements.
+        When called with path segments, maps the specified nested node elements.
+
+        Args:
+            map_func: Function to apply to each element
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+            TypeError: If the mapping result contains unsupported types
+        """
+        ...
+
+    @overload
+    async def store(
+        self,
+        value: TreeValueT,
+        txn: "AsyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    async def store(
+        self,
+        value: TreeValueT,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    async def store(
+        self,
+        value: TreeValueT,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Store a Python object at a specified node.
+
+        This is a convenience method for directly storing Python objects
+        (dictionaries, lists, or primitive values) in the state tree.
+
+        When called with just the value, replaces the current node.
+        When called with path segments, stores at the specified nested node.
+
+        Args:
+            value: Python object to store
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the value is of an unsupported type
+        """
+        ...
+
+
+@runtime_checkable
+class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for dictionary-like interface to state storage.
+
+    This class provides an interface similar to a Python dictionary
+    for interacting with dictionary nodes in the state storage.
+    It implements async methods for dictionary operations that map
+    to the underlying state structure.
+    """
+
+    async def get(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = ...,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Get a value from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            default: Value to return if path doesn't exist
+
+        Returns:
+            The value associated with the path, or default if not found
+        """
+        ...
+
+    async def set(
+        self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT
+    ) -> None:
+        """
+        Set a value in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths_and_value: Additional path segments followed by the value to set
+
+        Raises:
+            ValueError: If no value is provided
+        """
+        ...
+
+    async def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
+        """
+        Delete a path from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Raises:
+            KeyError: If the path doesn't exist
+        """
+        ...
+
+    async def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
+        """
+        Check if a path exists in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        ...
+
+    async def keys(self) -> list[TreePathComponent]:
+        """
+        Get all top-level keys in the dictionary node.
+
+        Returns:
+            List of keys in the dictionary
+        """
+        ...
+
+    async def values(self) -> list[TreeValueT]:
+        """
+        Get all top-level values in the dictionary node.
+
+        Returns:
+            List of values in the dictionary
+        """
+        ...
+
+    async def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Get all top-level key-value pairs in the dictionary node.
+
+        Returns:
+            List of (key, value) tuples
+        """
+        ...
+
+    async def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Convert to a regular Python dictionary.
+
+        Returns:
+            Python dictionary containing all data from this dictionary node
+        """
+        ...
+
+    async def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
+        """
+        Update the dictionary node with key-value pairs from another dictionary.
+
+        Args:
+            other: Dictionary containing key-value pairs to update
+        """
+        ...
+
+    async def clear(self) -> None:
+        """
+        Remove all items from the dictionary node.
+        """
+        ...
+
+    async def pop(
+        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Remove and return a value from the dictionary node.
+
+        Args:
+            key: Key to remove
+            default: Value to return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+
+        Raises:
+            KeyError: If the key doesn't exist and no default is provided
+        """
+        ...
+
+    async def setdefault(self, key: TreePathComponent, default: TreeValueT = ...) -> TreeValueT:
+        """
+        Return the value for key if it exists, otherwise set it to default.
+
+        Args:
+            key: Key to check and potentially set
+            default: Value to set and return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+        """
+        ...
+
+    async def __len__(self) -> int:
+        """
+        Get the number of items in the dictionary node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+
+@runtime_checkable
+class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for list-like interface to state storage.
+
+    This class provides an interface similar to a Python list
+    for interacting with list nodes in the state storage.
+    It implements async methods for list operations that map
+    to the underlying state structure.
+    """
+
+    async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+        """
+        Get an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to retrieve
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def set(self, index: int, value: TreeValueT) -> None:
+        """
+        Set an item in the list node at the specified index.
+
+        Args:
+            index: Index of the item to set
+            value: Value to set
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def append(self, value: TreeValueT) -> int:
+        """
+        Append an item to the list node.
+
+        Args:
+            value: Value to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    async def extend(self, values: list[TreeValueT]) -> int:
+        """
+        Extend the list node with multiple values.
+
+        Args:
+            values: List of values to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    async def insert(self, index: int, value: TreeValueT) -> None:
+        """
+        Insert an item at a specific position in the list node.
+
+        Args:
+            index: Position to insert the value
+            value: Value to insert
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def delete(self, index: int) -> None:
+        """
+        Remove an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to remove
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def length(self) -> int:
+        """
+        Get the length of the list node.
+
+        Returns:
+            Number of items in the list
+        """
+        ...
+
+    async def to_list(self) -> list[TreeValueT]:
+        """
+        Convert to a regular Python list.
+
+        Returns:
+            Python list containing all items from this list node
+        """
+        ...
+
+    async def clear(self) -> None:
+        """
+        Remove all items from the list node.
+        """
+        ...
+
+    async def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
+        """
+        Remove and return an item from the list node.
+
+        Args:
+            index: Index of the item to remove (default: last item)
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    async def __len__(self) -> int:
+        """
+        Get the number of items in the list node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+
+# --- Protocols for synchronous state handling --- #
+
+
+@runtime_checkable
+class SyncTreeNodeProtocol(Protocol[TreeValueT]):
+    """
+    Protocol for state tree nodes.
+
+    This abstract base class provides common functionality for both dictionary
+    and list state nodes, allowing them to share code for nested node access,
+    transformations, filtering, and other common operations.
+
+    SyncTreeNodeProtocol serves as a consistent interface for working with nodes,
+    regardless of their type (dictionary or list).
+    """
+
+    EMPTY: EmptyProtocol
+
+    @property
+    def is_sync(self) -> bool:
+        """
+        Check if the protocol is synchronous.
+
+        Returns:
+            True if the protocol is synchronous, False otherwise
+        """
+        return True
+
+    @property
+    def path(self) -> TreePath:
+        """
+        Get the base path for this state node.
+
+        Returns:
+            The base path
+        """
+        ...
+
+    def dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> SyncTreeDictProtocol[TreeValueT]:
+        """
+        Get a nested dictionary node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new SyncTreeDictProtocol instance for the nested dictionary node
+        """
+        ...
+
+    def list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> SyncTreeListProtocol[TreeValueT]:
+        """
+        Get a nested list node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new SyncTreeListProtocol instance for the nested list node
+        """
+        ...
+
+    @overload
+    def remove(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    def remove(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    def remove(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Delete a node from the state tree.
+
+        When called with no path arguments, deletes the current node.
+        When called with path segments, deletes the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+        """
+        ...
+
+    @overload
+    def exists(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    def exists(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    def exists(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node exists in the state tree.
+
+        When called with no path arguments, checks if the current node exists.
+        When called with path segments, checks if the specified nested node exists.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node exists, False otherwise
+        """
+        ...
+
+    @overload
+    def is_dict(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    def is_dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    def is_dict(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a dictionary node.
+
+        When called with no path arguments, checks if the current node is a dictionary.
+        When called with path segments, checks if the specified nested node is a dictionary.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a dictionary, False otherwise
+        """
+        ...
+
+    @overload
+    def is_list(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    @overload
+    def is_list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> bool: ...
+
+    def is_list(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        """
+        Check if a node is a list node.
+
+        When called with no path arguments, checks if the current node is a list.
+        When called with path segments, checks if the specified nested node is a list.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the node is a list, False otherwise
+        """
+        ...
+
+    @overload
+    def to_python_object(
+        self,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    @overload
+    def to_python_object(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> TreeValueContainer[TreeValueT]: ...
+
+    def to_python_object(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> TreeValueContainer[TreeValueT]:
+        """
+        Convert a node to a standard Python object.
+
+        When called with no path arguments, converts the current node.
+        When called with path segments, converts the specified nested node.
+
+        Args:
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            The Python representation of the node
+
+        Raises:
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    def copy_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Create a copy of this node at another location in the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+        """
+        ...
+
+    def move_to(
+        self,
+        target: TreePathComponent,
+        /,
+        *targets: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None:
+        """
+        Move this node to another location in the state tree.
+
+        This operation is atomic - either the move completes successfully,
+        or no changes are made to the state tree.
+
+        Args:
+            target: First segment of the target path
+            *targets: Additional segments of the target path
+            txn: Optional transaction to use
+
+        Note:
+            After this operation, the current SyncTreeNodeProtocol instance should not be used
+            as its path is no longer valid.
+        """
+        ...
+
+    @overload
+    def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    def transform(
+        self,
+        transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a transformation function to a node.
+
+        The transformation function takes the current value as a Python object
+        and returns a new transformed Python object.
+
+        When called with just the transform function, transforms the current node.
+        When called with path segments, transforms the specified nested node.
+
+        Args:
+            transform_func: Function that takes a Python object and returns a transformed version
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            KeyError: If the node doesn't exist
+            TypeError: If the transformation result is not of a compatible type
+        """
+        ...
+
+    @overload
+    def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    def filter(
+        self,
+        filter_func: (
+            Callable[[TreeValueContainer[TreeValueT]], bool]
+            | Callable[[str, TreeValueContainer[TreeValueT]], bool]
+        ),
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Filter elements of a list or dictionary node.
+
+        For list nodes, filter_func takes (value) and returns a boolean.
+        For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+        Elements for which filter_func returns False will be removed.
+
+        When called with just the filter function, filters the current node.
+        When called with path segments, filters the specified nested node.
+
+        Args:
+            filter_func: Function that takes elements and returns whether to keep them
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+        """
+        ...
+
+    @overload
+    def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    @overload
+    def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    def map(
+        self,
+        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Apply a mapping function to each element in a list or dictionary node.
+
+        For list nodes, each element is replaced with the result of map_func(element).
+        For dictionary nodes, each value is replaced with the result of map_func(value).
+
+        This is a convenience method that transforms the node by applying the map function
+        to each element while preserving the structure.
+
+        When called with just the map function, maps the current node elements.
+        When called with path segments, maps the specified nested node elements.
+
+        Args:
+            map_func: Function to apply to each element
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the node is neither a list nor a dictionary
+            KeyError: If the node doesn't exist
+            TypeError: If the mapping result contains unsupported types
+        """
+        ...
+
+    @overload
+    def store(
+        self,
+        value: TreeValueT,
+        txn: "SyncTransactionProtocol | None" = None,
+    ) -> None: ...
+
+    @overload
+    def store(
+        self,
+        value: TreeValueT,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
+    ) -> None: ...
+
+    def store(
+        self,
+        value: TreeValueT,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Store a Python object at a specified node.
+
+        This is a convenience method for directly storing Python objects
+        (dictionaries, lists, or primitive values) in the state tree.
+
+        When called with just the value, replaces the current node.
+        When called with path segments, stores at the specified nested node.
+
+        Args:
+            value: Python object to store
+            path: Optional first path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Raises:
+            TypeError: If the value is of an unsupported type
+        """
+        ...
+
+
+@runtime_checkable
+class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for dictionary-like interface to state storage.
+
+    This class provides an interface similar to a Python dictionary
+    for interacting with dictionary nodes in the state storage.
+    It implements methods for dictionary operations that map
+    to the underlying state structure.
+    """
+
+    def get(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = None,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Get a value from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            default: Value to return if path doesn't exist
+
+        Returns:
+            The value associated with the path, or default if not found
+        """
+        ...
+
+    def set(self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT) -> None:
+        """
+        Set a value in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths_and_value: Additional path segments followed by the value to set
+
+        Raises:
+            ValueError: If no value is provided
+        """
+        ...
+
+    def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
+        """
+        Delete a path from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Raises:
+            KeyError: If the path doesn't exist
+        """
+        ...
+
+    def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
+        """
+        Check if a path exists in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        ...
+
+    def keys(self) -> list[TreePathComponent]:
+        """
+        Get all top-level keys in the dictionary node.
+
+        Returns:
+            List of keys in the dictionary
+        """
+        ...
+
+    def values(self) -> list[TreeValueT]:
+        """
+        Get all top-level values in the dictionary node.
+
+        Returns:
+            List of values in the dictionary
+        """
+        ...
+
+    def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Get all top-level key-value pairs in the dictionary node.
+
+        Returns:
+            List of (key, value) tuples
+        """
+        ...
+
+    def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Convert to a regular Python dictionary.
+
+        Returns:
+            Python dictionary containing all data from this dictionary node
+        """
+        ...
+
+    def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
+        """
+        Update the dictionary node with key-value pairs from another dictionary.
+
+        Args:
+            other: Dictionary containing key-value pairs to update
+        """
+        ...
+
+    def clear(self) -> None:
+        """
+        Remove all items from the dictionary node.
+        """
+        ...
+
+    def pop(
+        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Remove and return a value from the dictionary node.
+
+        Args:
+            key: Key to remove
+            default: Value to return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+
+        Raises:
+            KeyError: If the key doesn't exist and no default is provided
+        """
+        ...
+
+    def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+        """
+        Return the value for key if it exists, otherwise set it to default.
+
+        Args:
+            key: Key to check and potentially set
+            default: Value to set and return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+        """
+        ...
+
+    def __len__(self) -> int:
+        """
+        Get the number of items in the dictionary node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+
+@runtime_checkable
+class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
+    """
+    Protocol for list-like interface to state storage.
+
+    This class provides an interface similar to a Python list
+    for interacting with list nodes in the state storage.
+    It implements methods for list operations that map
+    to the underlying state structure.
+    """
+
+    def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+        """
+        Get an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to retrieve
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def set(self, index: int, value: TreeValueT) -> None:
+        """
+        Set an item in the list node at the specified index.
+
+        Args:
+            index: Index of the item to set
+            value: Value to set
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def append(self, value: TreeValueT) -> int:
+        """
+        Append an item to the list node.
+
+        Args:
+            value: Value to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    def extend(self, values: list[TreeValueT]) -> int:
+        """
+        Extend the list node with multiple values.
+
+        Args:
+            values: List of values to append
+
+        Returns:
+            New length of the list
+        """
+        ...
+
+    def insert(self, index: int, value: TreeValueT) -> None:
+        """
+        Insert an item at a specific position in the list node.
+
+        Args:
+            index: Position to insert the value
+            value: Value to insert
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def delete(self, index: int) -> None:
+        """
+        Remove an item from the list node at the specified index.
+
+        Args:
+            index: Index of the item to remove
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def length(self) -> int:
+        """
+        Get the length of the list node.
+
+        Returns:
+            Number of items in the list
+        """
+        ...
+
+    def to_list(self) -> list[TreeValueT]:
+        """
+        Convert to a regular Python list.
+
+        Returns:
+            Python list containing all items from this list node
+        """
+        ...
+
+    def clear(self) -> None:
+        """
+        Remove all items from the list node.
+        """
+        ...
+
+    def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
+        """
+        Remove and return an item from the list node.
+
+        Args:
+            index: Index of the item to remove (default: last item)
+
+        Returns:
+            The item at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+        ...
+
+    def __len__(self) -> int:
+        """
+        Get the number of items in the list node.
+
+        Returns:
+            The number of items
+        """
+        ...
+
+```
+

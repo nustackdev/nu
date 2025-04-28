@@ -1,0 +1,23 @@
+{
+  "index": {
+    "title": "Overview"
+  },
+  "app": {
+    "title": "app"
+  },
+  "base": {
+    "title": "base"
+  },
+  "composer": {
+    "title": "composer"
+  },
+  "exceptions": {
+    "title": "exceptions"
+  },
+  "initializer": {
+    "title": "initializer"
+  },
+  "types": {
+    "title": "types"
+  }
+}

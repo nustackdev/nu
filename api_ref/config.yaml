@@ -1,0 +1,71 @@
+# pydoc-mdx Configuration File
+
+# Discovery settings
+discovery:
+  # Path to your package
+  source_dir: "../src/loomi"
+  
+  # Recursively discover modules in subdirectories
+  recursive: true
+  
+  # Modules to exclude from documentation
+  exclude_modules:
+    - "loomi._utils"
+    - "loomi._lib"
+    - "loomi._descriptors"
+    - "loomi._logging"
+  
+  # Patterns to exclude modules matching these regex patterns
+  exclude_patterns:
+    - '^(?:.+\.)*\_?logger$'  # Skip loggers
+  
+  # Specific module configurations
+  modules:
+    - name: "loomi"
+      title: "Loomi"  # Custom title
+      include_private: true  # Include private members in this module
+      include_dunder: true  # Exclude dunder methods
+    
+
+# Rendering settings
+rendering:
+  # Include private members (starting with _)
+  show_private: true
+  
+  # Include dunder methods (like __str__)
+  show_dunder: true
+  
+  # Include source code in the documentation
+  include_source_code: true
+  
+  # Order of sections in the documentation
+  section_order:
+    - "Classes"
+    - "Functions"
+    - "Variables"
+    - "Modules"
+  
+  # Emoji mapping for different types
+  emojis:
+    module: "📦"
+    class: "🧩"
+    function: "⚙️"
+    method: "🔧"
+    property: "🔑"
+    attribute: "📄"
+    variable: "🔢"
+    constant: "🔒"
+
+# Output settings
+output:
+  # Path where to output MDX files
+  output_dir: "../docs/content/api"
+  
+  # Filename for metadata files (used by Nextra)
+  meta_filename: "_meta.json"
+  
+  # Whether to create index.mdx files for directories
+  create_index: true
+  
+  # Whether to overwrite existing files
+  overwrite: true

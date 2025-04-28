@@ -1,0 +1,37 @@
+---
+title: _app
+sidebarTitle: 📦 _app
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi._app 📦
+
+## Modules
+
+<Cards>
+  <Cards.Card title="app" href="./app"/>
+  <Cards.Card title="base" href="./base"/>
+  <Cards.Card title="composer" href="./composer"/>
+  <Cards.Card title="exceptions" href="./exceptions"/>
+  <Cards.Card title="handlers" href="./handlers"/>
+  <Cards.Card title="initializer" href="./initializer"/>
+  <Cards.Card title="types" href="./types"/>
+</Cards>
+
+## Source Code
+
+```python filename='source.py'
+from .app import AsyncApp, SyncApp
+from .base import AppABC, AsyncAppABC, SyncAppABC
+
+__all__ = [
+    "AsyncApp",
+    "SyncApp",
+    "AppABC",
+    "AsyncAppABC",
+    "SyncAppABC",
+]
+
+```
+

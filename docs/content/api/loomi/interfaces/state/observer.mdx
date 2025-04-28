@@ -1,0 +1,550 @@
+---
+title: observer
+sidebarTitle: 📦 observer
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi.interfaces.state.observer 📦
+
+## Classes
+
+<Cards>
+  <Cards.Card title="AsyncObservableProtocol" href="#asyncobservableprotocol"/>
+  <Cards.Card title="AsyncSubscriptionProtocol" href="#asyncsubscriptionprotocol"/>
+  <Cards.Card title="SyncObservableProtocol" href="#syncobservableprotocol"/>
+  <Cards.Card title="SyncSubscriptionProtocol" href="#syncsubscriptionprotocol"/>
+</Cards>
+
+---
+
+<a id='asyncobservableprotocol'></a>
+
+## AsyncObservableProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+Protocol for asynchronous observable state adapters.
+
+```python filename='class.py'
+class AsyncObservableProtocol(Protocol):
+    ...
+```
+
+### Methods
+
+<a id='subscribe'></a>
+
+#### subscribe() 🔧
+
+```python filename='method.py'
+def subscribe(self, topic_pattern: 'ObserverKey', callback: 'AsyncCallbackFn', depth: 'int' = Ellipsis) -> 'AsyncSubscriptionProtocol'
+```
+
+Subscribe to changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `topic_pattern` | `ObserverKey` | Key prefix to subscribe to | `Required` |
+| `callback` | `AsyncCallbackFn` | Async callback function for notifications | `Required` |
+| `depth` | `int` | Depth of topic pattern matching (default: 0 for exact match) If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics. | `Ellipsis` |
+
+**Returns:** `AsyncSubscriptionProtocol` - Subscription object for unsubscribing
+
+<a id='unsubscribe'></a>
+
+#### unsubscribe() 🔧
+
+```python filename='method.py'
+def unsubscribe(self, subscription: 'AsyncSubscriptionProtocol') -> 'None'
+```
+
+Unsubscribe from changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `subscription` | `AsyncSubscriptionProtocol` | Subscription to cancel | `Required` |
+
+### Source Code
+
+```python filename='source.py'
+class AsyncObservableProtocol(Protocol):
+    """Protocol for asynchronous observable state adapters."""
+
+    async def subscribe(
+        self,
+        topic_pattern: ObserverKey,
+        callback: AsyncCallbackFn,
+        depth: int = ...,
+    ) -> AsyncSubscriptionProtocol:
+        """
+        Subscribe to changes under key prefix.
+
+        Args:
+            topic_pattern: Key prefix to subscribe to
+            callback: Async callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Raises:
+            ObserverError: If subscription fails
+        """
+        ...
+
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        ...
+
+```
+
+<a id='asyncsubscriptionprotocol'></a>
+
+## AsyncSubscriptionProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+Represents an asynchronous subscription to a topic pattern.
+
+```python filename='class.py'
+class AsyncSubscriptionProtocol(Protocol):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `callback` | `property` | `&lt;property object at 0x108b95f80&gt;` |  |
+| `depth` | `property` | `&lt;property object at 0x108b96020&gt;` |  |
+| `topic_pattern` | `property` | `&lt;property object at 0x108b95fd0&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `callback` | Get callback for subscription. |
+| `depth` | Get depth of subscription. |
+| `topic_pattern` | Get topic pattern for subscription. |
+
+### Source Code
+
+```python filename='source.py'
+class AsyncSubscriptionProtocol(Protocol):
+    """
+    Represents an asynchronous subscription to a topic pattern.
+
+    Attributes:
+        topic_pattern:
+            Topic pattern to match against notifications.
+            Must be a tuple of strings matching state keys.
+        callback:
+            Async callable that will be invoked on matching notifications.
+            Must accept a single parameter of type StorageValueT.
+
+    Type Parameters:
+        StorageValueT: Topic type (tuple of strings)
+    """
+
+    @property
+    def topic_pattern(self) -> ObserverKey:
+        """
+        Get topic pattern for subscription.
+        """
+        ...
+
+    @property
+    def callback(self) -> AsyncCallbackFn:
+        """
+        Get callback for subscription.
+        """
+        ...
+
+    @property
+    def depth(self) -> int:
+        """
+        Get depth of subscription.
+        """
+        ...
+
+```
+
+<a id='syncobservableprotocol'></a>
+
+## SyncObservableProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+Protocol for synchronous observable adapters.
+
+```python filename='class.py'
+class SyncObservableProtocol(Protocol):
+    ...
+```
+
+### Methods
+
+<a id='subscribe'></a>
+
+#### subscribe() 🔧
+
+```python filename='method.py'
+def subscribe(self, key: 'ObserverKey', callback: 'SyncCallbackFn', depth: 'int' = Ellipsis) -> 'SyncSubscriptionProtocol'
+```
+
+Subscribe to changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `ObserverKey` | Key prefix to subscribe to | `Required` |
+| `callback` | `SyncCallbackFn` | Callback function for notifications | `Required` |
+| `depth` | `int` | Depth of topic pattern matching (default: 0 for exact match) If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics. | `Ellipsis` |
+
+**Returns:** `SyncSubscriptionProtocol` - Subscription object for unsubscribing
+
+<a id='unsubscribe'></a>
+
+#### unsubscribe() 🔧
+
+```python filename='method.py'
+def unsubscribe(self, subscription: 'SyncSubscriptionProtocol') -> 'None'
+```
+
+Unsubscribe from changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `subscription` | `SyncSubscriptionProtocol` | Subscription to cancel | `Required` |
+
+### Source Code
+
+```python filename='source.py'
+class SyncObservableProtocol(Protocol):
+    """Protocol for synchronous observable adapters."""
+
+    def subscribe(
+        self,
+        key: ObserverKey,
+        callback: SyncCallbackFn,
+        depth: int = ...,
+    ) -> SyncSubscriptionProtocol:
+        """
+        Subscribe to changes under key prefix.
+
+        Args:
+            key: Key prefix to subscribe to
+            callback: Callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Raises:
+            ObserverError: If subscription fails
+        """
+        ...
+
+    def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        ...
+
+```
+
+<a id='syncsubscriptionprotocol'></a>
+
+## SyncSubscriptionProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+Represents a synchronous subscription to a topic pattern.
+
+```python filename='class.py'
+class SyncSubscriptionProtocol(Protocol):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `callback` | `property` | `&lt;property object at 0x108b96160&gt;` |  |
+| `depth` | `property` | `&lt;property object at 0x108b961b0&gt;` |  |
+| `topic_pattern` | `property` | `&lt;property object at 0x108b96110&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `callback` | Get callback for subscription. |
+| `depth` | Get depth for subscription. |
+| `topic_pattern` | Get topic pattern for subscription. |
+
+### Source Code
+
+```python filename='source.py'
+class SyncSubscriptionProtocol(Protocol):
+    """
+    Represents a synchronous subscription to a topic pattern.
+
+    Attributes:
+        topic_pattern:
+            Topic pattern to match against notifications.
+            Must be a tuple of strings matching state keys.
+        callback:
+            Callable that will be invoked on matching notifications.
+            Must accept a single parameter of type StorageValueT.
+
+    Type Parameters:
+        StorageValueT: Topic type (tuple of strings)
+    """
+
+    @property
+    def topic_pattern(self) -> ObserverKey:
+        """
+        Get topic pattern for subscription.
+        """
+        ...
+
+    @property
+    def callback(self) -> SyncCallbackFn:
+        """
+        Get callback for subscription.
+        """
+        ...
+
+    @property
+    def depth(self) -> int:
+        """
+        Get depth for subscription.
+        """
+        ...
+
+```
+
+## Variables & Constants
+
+<Cards>
+  <Cards.Card title="AsyncCallbackFn" href="#variables"/>
+  <Cards.Card title="ObserverKey" href="#variables"/>
+  <Cards.Card title="SyncCallbackFn" href="#variables"/>
+  <Cards.Card title="annotations" href="#variables"/>
+</Cards>
+
+<a id='variables'></a>
+
+### Variables
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `AsyncCallbackFn` | `_CallableGenericAlias` | `typing.Callable[[tuple[str, ...]], typing.Await...` |  |
+| `ObserverKey` | `GenericAlias` | `tuple[str, ...]` |  |
+| `SyncCallbackFn` | `_CallableGenericAlias` | `typing.Callable[[tuple[str, ...]], NoneType]` |  |
+| `annotations` | `_Feature` | `_Feature((3, 7, 0, &#x27;beta&#x27;, 1), None, 16777216)` |  |
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import Protocol
+
+from .types import AsyncCallbackFn, ObserverKey, SyncCallbackFn
+
+__all__ = [
+    "AsyncObservableProtocol",
+    "SyncObservableProtocol",
+    "AsyncSubscriptionProtocol",
+    "SyncSubscriptionProtocol",
+]
+
+
+class AsyncObservableProtocol(Protocol):
+    """Protocol for asynchronous observable state adapters."""
+
+    async def subscribe(
+        self,
+        topic_pattern: ObserverKey,
+        callback: AsyncCallbackFn,
+        depth: int = ...,
+    ) -> AsyncSubscriptionProtocol:
+        """
+        Subscribe to changes under key prefix.
+
+        Args:
+            topic_pattern: Key prefix to subscribe to
+            callback: Async callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Raises:
+            ObserverError: If subscription fails
+        """
+        ...
+
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        ...
+
+
+class SyncObservableProtocol(Protocol):
+    """Protocol for synchronous observable adapters."""
+
+    def subscribe(
+        self,
+        key: ObserverKey,
+        callback: SyncCallbackFn,
+        depth: int = ...,
+    ) -> SyncSubscriptionProtocol:
+        """
+        Subscribe to changes under key prefix.
+
+        Args:
+            key: Key prefix to subscribe to
+            callback: Callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Raises:
+            ObserverError: If subscription fails
+        """
+        ...
+
+    def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        ...
+
+
+class AsyncSubscriptionProtocol(Protocol):
+    """
+    Represents an asynchronous subscription to a topic pattern.
+
+    Attributes:
+        topic_pattern:
+            Topic pattern to match against notifications.
+            Must be a tuple of strings matching state keys.
+        callback:
+            Async callable that will be invoked on matching notifications.
+            Must accept a single parameter of type StorageValueT.
+
+    Type Parameters:
+        StorageValueT: Topic type (tuple of strings)
+    """
+
+    @property
+    def topic_pattern(self) -> ObserverKey:
+        """
+        Get topic pattern for subscription.
+        """
+        ...
+
+    @property
+    def callback(self) -> AsyncCallbackFn:
+        """
+        Get callback for subscription.
+        """
+        ...
+
+    @property
+    def depth(self) -> int:
+        """
+        Get depth of subscription.
+        """
+        ...
+
+
+class SyncSubscriptionProtocol(Protocol):
+    """
+    Represents a synchronous subscription to a topic pattern.
+
+    Attributes:
+        topic_pattern:
+            Topic pattern to match against notifications.
+            Must be a tuple of strings matching state keys.
+        callback:
+            Callable that will be invoked on matching notifications.
+            Must accept a single parameter of type StorageValueT.
+
+    Type Parameters:
+        StorageValueT: Topic type (tuple of strings)
+    """
+
+    @property
+    def topic_pattern(self) -> ObserverKey:
+        """
+        Get topic pattern for subscription.
+        """
+        ...
+
+    @property
+    def callback(self) -> SyncCallbackFn:
+        """
+        Get callback for subscription.
+        """
+        ...
+
+    @property
+    def depth(self) -> int:
+        """
+        Get depth for subscription.
+        """
+        ...
+
+```
+

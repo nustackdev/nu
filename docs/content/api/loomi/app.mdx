@@ -1,0 +1,850 @@
+---
+title: app
+sidebarTitle: 📦 app
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi.app 📦
+
+## Classes
+
+<Cards>
+  <Cards.Card title="AsyncApp" href="#asyncapp"/>
+  <Cards.Card title="AsyncAppSyncState" href="#asyncappsyncstate"/>
+  <Cards.Card title="SyncApp" href="#syncapp"/>
+</Cards>
+
+---
+
+<a id='asyncapp'></a>
+
+## AsyncApp 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncApp`
+</Callout>
+
+App that implements the AsyncStateProtocol and AsyncExecutorProtocol interfaces.
+
+It is used to create asynchronous applications with state management and
+execution capabilities.
+
+Future handlers are going to also follow asynchronous patterns.
+
+```python filename='class.py'
+class AsyncApp(AsyncApp):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `e` | Short alias for state adapter. |
+| `engine` | Check and return app's state service. |
+| `ex` | Short alias for state adapter. |
+| `executor` | Check and return app's state service. |
+| `key` | Get the unique app instance identifier. |
+| `readable_name` | Get a human-readable identifier for the app. |
+| `s` | Short alias for state adapter. |
+| `state` | Check and return app's state service. |
+
+### Methods
+
+<Tabs items={['add_service_dependency', 'define', 'factory_name', 'get_service_dependency', 'initialize', 'initialize_apps', 'initialize_services', 'shutdown', 'shutdown_apps', 'shutdown_services', 'start']}>
+<Tabs.Tab>
+
+### add_service_dependency() 🔧
+
+```python filename='method.py'
+def add_service_dependency(self, name: 'str', spec: "'Spec'") -> "'Service'"
+```
+
+Add service dependency.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name | `Required` |
+| `spec` | `'Spec'` | Spec of the service | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### define() 🔧
+
+```python filename='method.py'
+def define(self) -> 'OperationProtocol'
+```
+
+Define the operation to execute.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the app class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get_service_dependency() 🔧
+
+```python filename='method.py'
+def get_service_dependency(self, name: 'str') -> "'Service'"
+```
+
+Get named dependency if it exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name to retrieve | `Required` |
+
+**Returns:** `'Service'` - Dependency service
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize app.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_apps() 🔧
+
+```python filename='method.py'
+def initialize_apps(self)
+```
+
+Initialize apps.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_services() 🔧
+
+```python filename='method.py'
+def initialize_services(self)
+```
+
+Initialize app service dependencies asynchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_apps() 🔧
+
+```python filename='method.py'
+def shutdown_apps(self)
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_services() 🔧
+
+```python filename='method.py'
+def shutdown_services(self)
+```
+
+Shutdown app service dependencies asynchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### start() 🔧
+
+```python filename='method.py'
+def start(self, context: 'ContextProtocol | None' = None) -> 'None'
+```
+
+Run the app.
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class AsyncApp(AsyncAppGeneric[AsyncStateProtocol[StateValue], AsyncExecutor]):
+    """
+    App that implements the AsyncStateProtocol and AsyncExecutorProtocol interfaces.
+    It is used to create asynchronous applications with state management and
+    execution capabilities.
+
+    Future handlers are going to also follow asynchronous patterns.
+    """
+
+```
+
+<a id='asyncappsyncstate'></a>
+
+## AsyncAppSyncState 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncApp`
+</Callout>
+
+App that implements the SyncStateProtocol and AsyncExecutorProtocol interfaces.
+
+It is used to create asynchronous applications with synchronous state management
+and execution capabilities.
+
+```python filename='class.py'
+class AsyncAppSyncState(AsyncApp):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `e` | Short alias for state adapter. |
+| `engine` | Check and return app's state service. |
+| `ex` | Short alias for state adapter. |
+| `executor` | Check and return app's state service. |
+| `key` | Get the unique app instance identifier. |
+| `readable_name` | Get a human-readable identifier for the app. |
+| `s` | Short alias for state adapter. |
+| `state` | Check and return app's state service. |
+
+### Methods
+
+<Tabs items={['add_service_dependency', 'define', 'factory_name', 'get_service_dependency', 'initialize', 'initialize_apps', 'initialize_services', 'shutdown', 'shutdown_apps', 'shutdown_services', 'start']}>
+<Tabs.Tab>
+
+### add_service_dependency() 🔧
+
+```python filename='method.py'
+def add_service_dependency(self, name: 'str', spec: "'Spec'") -> "'Service'"
+```
+
+Add service dependency.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name | `Required` |
+| `spec` | `'Spec'` | Spec of the service | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### define() 🔧
+
+```python filename='method.py'
+def define(self) -> 'OperationProtocol'
+```
+
+Define the operation to execute.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the app class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get_service_dependency() 🔧
+
+```python filename='method.py'
+def get_service_dependency(self, name: 'str') -> "'Service'"
+```
+
+Get named dependency if it exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name to retrieve | `Required` |
+
+**Returns:** `'Service'` - Dependency service
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize app.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_apps() 🔧
+
+```python filename='method.py'
+def initialize_apps(self)
+```
+
+Initialize apps.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_services() 🔧
+
+```python filename='method.py'
+def initialize_services(self)
+```
+
+Initialize app service dependencies asynchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_apps() 🔧
+
+```python filename='method.py'
+def shutdown_apps(self)
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_services() 🔧
+
+```python filename='method.py'
+def shutdown_services(self)
+```
+
+Shutdown app service dependencies asynchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### start() 🔧
+
+```python filename='method.py'
+def start(self, context: 'ContextProtocol | None' = None) -> 'None'
+```
+
+Run the app.
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class AsyncAppSyncState(AsyncAppGeneric[SyncStateProtocol[StateValue], AsyncExecutorSyncState]):
+    """
+    App that implements the SyncStateProtocol and AsyncExecutorProtocol interfaces.
+    It is used to create asynchronous applications with synchronous state management
+    and execution capabilities.
+    """
+
+```
+
+<a id='syncapp'></a>
+
+## SyncApp 🧩
+
+<Callout type='info'>
+  Inherits from: `SyncApp`
+</Callout>
+
+App that implements the SyncStateProtocol and SyncExecutorProtocol interfaces.
+
+It is used to create synchronous applications with state management and
+execution capabilities.
+
+Future handlers are going to also follow synchronous patterns.
+
+```python filename='class.py'
+class SyncApp(SyncApp):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `ex` | Short alias for state adapter. |
+| `executor` | Check and return app's state service. |
+| `key` | Get the unique app instance identifier. |
+| `readable_name` | Get a human-readable identifier for the app. |
+| `s` | Short alias for state adapter. |
+| `state` | Check and return app's state service. |
+
+### Methods
+
+<Tabs items={['add_service_dependency', 'define', 'factory_name', 'get_service_dependency', 'initialize', 'initialize_apps', 'initialize_services', 'shutdown', 'shutdown_apps', 'shutdown_services', 'start']}>
+<Tabs.Tab>
+
+### add_service_dependency() 🔧
+
+```python filename='method.py'
+def add_service_dependency(self, name: 'str', spec: "'Spec'") -> "'Service'"
+```
+
+Add service dependency.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name | `Required` |
+| `spec` | `'Spec'` | Spec of the service | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### define() 🔧
+
+```python filename='method.py'
+def define(self) -> 'OperationProtocol'
+```
+
+Define the operation to execute.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the app class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get_service_dependency() 🔧
+
+```python filename='method.py'
+def get_service_dependency(self, name: 'str') -> "'Service'"
+```
+
+Get named dependency if it exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name to retrieve | `Required` |
+
+**Returns:** `'Service'` - Dependency service
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize service and its dependencies synchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_apps() 🔧
+
+```python filename='method.py'
+def initialize_apps(self)
+```
+
+Initialize apps.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_services() 🔧
+
+```python filename='method.py'
+def initialize_services(self)
+```
+
+Initialize app service dependencies synchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_apps() 🔧
+
+```python filename='method.py'
+def shutdown_apps(self)
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_services() 🔧
+
+```python filename='method.py'
+def shutdown_services(self)
+```
+
+Shutdown app service dependencies synchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### start() 🔧
+
+```python filename='method.py'
+def start(self, context: 'ContextProtocol | None' = None) -> 'None'
+```
+
+Run the app.
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class SyncApp(SyncAppGeneric[SyncStateProtocol[StateValue], SyncExecutor]):
+    """
+    App that implements the SyncStateProtocol and SyncExecutorProtocol interfaces.
+    It is used to create synchronous applications with state management and
+    execution capabilities.
+
+    Future handlers are going to also follow synchronous patterns.
+    """
+
+```
+
+## Functions
+
+<Cards>
+  <Cards.Card title="app_type_factory()" href="#app_type_factory"/>
+</Cards>
+
+---
+
+<a id='app_type_factory'></a>
+
+## app_type_factory() ⚙️
+
+```python filename='function.py'
+def app_type_factory(base_async: 'bool' = True, state_async: 'bool' = True, executor_async: 'bool' = True) -> 'type[AsyncApp | SyncApp | AsyncAppSyncState]'
+```
+
+Construct a new class that inherits from the provided base class and
+
+the provided state and executor classes.
+
+### Source Code
+
+```python filename='source.py'
+def app_type_factory(
+    base_async: bool = True, state_async: bool = True, executor_async: bool = True
+) -> type[AsyncApp | SyncApp | AsyncAppSyncState]:
+    """
+    Construct a new class that inherits from the provided base class and
+    the provided state and executor classes.
+    """
+
+    if base_async and state_async and executor_async:
+        return AsyncApp
+    elif not base_async and not state_async and not executor_async:
+        return SyncApp
+    elif base_async and not state_async and executor_async:
+        return AsyncAppSyncState
+    else:
+        raise TypeError("Invalid combination of async and sync types.")
+
+```
+
+## Variables & Constants
+
+<Cards>
+  <Cards.Card title="AsyncContext" href="#variables"/>
+  <Cards.Card title="AsyncExecutor" href="#variables"/>
+  <Cards.Card title="AsyncExecutorSyncState" href="#variables"/>
+  <Cards.Card title="AsyncOperation" href="#variables"/>
+  <Cards.Card title="SyncContext" href="#variables"/>
+  <Cards.Card title="SyncExecutor" href="#variables"/>
+  <Cards.Card title="SyncOperation" href="#variables"/>
+  <Cards.Card title="annotations" href="#variables"/>
+</Cards>
+
+<a id='variables'></a>
+
+### Variables
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `AsyncContext` | `_GenericAlias` | `loomi.interfaces.executor.context.ContextProtoc...` |  |
+| `AsyncExecutor` | `_GenericAlias` | `loomi.interfaces.executor.executor.AsyncExecuto...` |  |
+| `AsyncExecutorSyncState` | `_GenericAlias` | `loomi.interfaces.executor.executor.AsyncExecuto...` |  |
+| `AsyncOperation` | `_GenericAlias` | `loomi.interfaces.executor.operations.OperationP...` |  |
+| `SyncContext` | `_GenericAlias` | `loomi.interfaces.executor.context.ContextProtoc...` |  |
+| `SyncExecutor` | `_GenericAlias` | `loomi.interfaces.executor.executor.SyncExecutor...` |  |
+| `SyncOperation` | `_GenericAlias` | `loomi.interfaces.executor.operations.OperationP...` |  |
+| `annotations` | `_Feature` | `_Feature((3, 7, 0, &#x27;beta&#x27;, 1), None, 16777216)` |  |
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import overload
+
+from ._app import AsyncApp as AsyncAppGeneric
+from ._app import SyncApp as SyncAppGeneric
+from .interfaces.executor.context import ContextProtocol
+from .interfaces.executor.executor import AsyncExecutorProtocol, SyncExecutorProtocol
+from .interfaces.executor.operations import (
+    AppOperationProtocol,
+    BranchOperationProtocol,
+    DelayOperationProtocol,
+    FunctionOperationProtocol,
+    LoopOperationProtocol,
+    MapOperationProtocol,
+    OperationProtocol,
+    ParallelOperationProtocol,
+    RetryOperationProtocol,
+    SequenceOperationProtocol,
+    SubscribeOperationProtocol,
+    TimeoutOperationProtocol,
+)
+from .interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
+from .interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
+from .interfaces.state.types import StateValue
+
+__all__ = [
+    "app_type_factory",
+    "AsyncApp",
+    "SyncApp",
+    "AsyncContext",
+    "SyncContext",
+    "AsyncOperation",
+    "SyncOperation",
+    "AsyncAppGeneric",
+    "SyncAppGeneric",
+]
+
+# --- Type aliases --- #
+
+AsyncContext = ContextProtocol["AsyncOperation", AsyncTreeDictProtocol[StateValue]]
+AsyncOperation = OperationProtocol["AsyncOperation", "AsyncContext"]
+SyncContext = ContextProtocol["SyncOperation", SyncTreeDictProtocol[StateValue]]
+SyncOperation = OperationProtocol["SyncOperation", "SyncContext"]
+AsyncExecutor = AsyncExecutorProtocol[
+    "AsyncExecutor",
+    AsyncContext,
+    OperationProtocol[AsyncOperation, AsyncContext],
+    AppOperationProtocol[AsyncOperation, AsyncContext],
+    BranchOperationProtocol[AsyncOperation, AsyncContext],
+    DelayOperationProtocol[AsyncOperation, AsyncContext],
+    FunctionOperationProtocol[AsyncOperation, AsyncContext],
+    LoopOperationProtocol[AsyncOperation, AsyncContext],
+    MapOperationProtocol[AsyncOperation, AsyncContext],
+    ParallelOperationProtocol[AsyncOperation, AsyncContext],
+    RetryOperationProtocol[AsyncOperation, AsyncContext],
+    SequenceOperationProtocol[AsyncOperation, AsyncContext],
+    SubscribeOperationProtocol[AsyncOperation, AsyncContext],
+    TimeoutOperationProtocol[AsyncOperation, AsyncContext],
+]
+SyncExecutor = SyncExecutorProtocol[
+    "SyncExecutor",
+    SyncContext,
+    OperationProtocol[SyncOperation, SyncContext],
+    AppOperationProtocol[SyncOperation, SyncContext],
+    BranchOperationProtocol[SyncOperation, SyncContext],
+    DelayOperationProtocol[SyncOperation, SyncContext],
+    FunctionOperationProtocol[SyncOperation, SyncContext],
+    LoopOperationProtocol[SyncOperation, SyncContext],
+    MapOperationProtocol[SyncOperation, SyncContext],
+    ParallelOperationProtocol[SyncOperation, SyncContext],
+    RetryOperationProtocol[SyncOperation, SyncContext],
+    SequenceOperationProtocol[SyncOperation, SyncContext],
+    SubscribeOperationProtocol[SyncOperation, SyncContext],
+    TimeoutOperationProtocol[SyncOperation, SyncContext],
+]
+AsyncExecutorSyncState = AsyncExecutorProtocol[
+    "AsyncExecutorSyncState",
+    SyncContext,
+    OperationProtocol[SyncOperation, SyncContext],
+    AppOperationProtocol[SyncOperation, SyncContext],
+    BranchOperationProtocol[SyncOperation, SyncContext],
+    DelayOperationProtocol[SyncOperation, SyncContext],
+    FunctionOperationProtocol[SyncOperation, SyncContext],
+    LoopOperationProtocol[SyncOperation, SyncContext],
+    MapOperationProtocol[SyncOperation, SyncContext],
+    ParallelOperationProtocol[SyncOperation, SyncContext],
+    RetryOperationProtocol[SyncOperation, SyncContext],
+    SequenceOperationProtocol[SyncOperation, SyncContext],
+    SubscribeOperationProtocol[SyncOperation, SyncContext],
+    TimeoutOperationProtocol[SyncOperation, SyncContext],
+]
+
+# --- Construct app types --- #
+
+
+class AsyncApp(AsyncAppGeneric[AsyncStateProtocol[StateValue], AsyncExecutor]):
+    """
+    App that implements the AsyncStateProtocol and AsyncExecutorProtocol interfaces.
+    It is used to create asynchronous applications with state management and
+    execution capabilities.
+
+    Future handlers are going to also follow asynchronous patterns.
+    """
+
+
+class SyncApp(SyncAppGeneric[SyncStateProtocol[StateValue], SyncExecutor]):
+    """
+    App that implements the SyncStateProtocol and SyncExecutorProtocol interfaces.
+    It is used to create synchronous applications with state management and
+    execution capabilities.
+
+    Future handlers are going to also follow synchronous patterns.
+    """
+
+
+class AsyncAppSyncState(AsyncAppGeneric[SyncStateProtocol[StateValue], AsyncExecutorSyncState]):
+    """
+    App that implements the SyncStateProtocol and AsyncExecutorProtocol interfaces.
+    It is used to create asynchronous applications with synchronous state management
+    and execution capabilities.
+    """
+
+
+@overload
+def app_type_factory(
+    base_async: bool = True, state_async: bool = True, executor_async: bool = True
+) -> type[AsyncApp]: ...
+
+
+@overload
+def app_type_factory(
+    base_async: bool = False, state_async: bool = False, executor_async: bool = False
+) -> type[SyncApp]: ...
+
+
+@overload
+def app_type_factory(
+    base_async: bool = True, state_async: bool = False, executor_async: bool = True
+) -> type[AsyncAppSyncState]: ...
+
+
+def app_type_factory(
+    base_async: bool = True, state_async: bool = True, executor_async: bool = True
+) -> type[AsyncApp | SyncApp | AsyncAppSyncState]:
+    """
+    Construct a new class that inherits from the provided base class and
+    the provided state and executor classes.
+    """
+
+    if base_async and state_async and executor_async:
+        return AsyncApp
+    elif not base_async and not state_async and not executor_async:
+        return SyncApp
+    elif base_async and not state_async and executor_async:
+        return AsyncAppSyncState
+    else:
+        raise TypeError("Invalid combination of async and sync types.")
+
+```
+

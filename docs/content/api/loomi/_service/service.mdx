@@ -1,0 +1,450 @@
+---
+title: service
+sidebarTitle: 📦 service
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# loomi._service.service 📦
+
+## Classes
+
+<Cards>
+  <Cards.Card title="AsyncService" href="#asyncservice"/>
+  <Cards.Card title="SyncService" href="#syncservice"/>
+</Cards>
+
+---
+
+<a id='asyncservice'></a>
+
+## AsyncService 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncServiceComposer`, `AsyncServiceInitializer`
+</Callout>
+
+Service mixin combining dependency injection and component architecture.
+
+Features:
+- Declarative dependency specification via UseService
+
+```python filename='class.py'
+class AsyncService(AsyncServiceComposer, AsyncServiceInitializer):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_initialized` | Check if service is fully initialized. |
+| `key` | Get the unique service instance identifier. |
+| `name` | Get the service instance name. |
+| `readable_name` | Get a human-readable identifier for the service. |
+| `service_state` | Current service lifecycle state. |
+| `spec` | Get the service's specification. |
+
+### Methods
+
+<Tabs items={['cleanup', 'factory_name', 'initialize', 'post_initialize', 'post_shutdown', 'pre_initialize', 'pre_shutdown', 'setup', 'shutdown']}>
+<Tabs.Tab>
+
+### cleanup() 🔧
+
+```python filename='method.py'
+def cleanup(self) -> 'None'
+```
+
+Service-specific cleanup.
+
+This method should be implemented by concrete services to
+perform their specific cleanup requirements.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the service class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize service and its dependencies asynchronously.
+
+This method handles the complete initialization process:
+1. Validates service state
+2. Initializes dependencies
+3. Performs service-specific initialization
+4. Updates service state
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_initialize() 🔧
+
+```python filename='method.py'
+def post_initialize(self) -> 'None'
+```
+
+Post-initialization hook.
+
+This method is called after service initialization.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_shutdown() 🔧
+
+```python filename='method.py'
+def post_shutdown(self) -> 'None'
+```
+
+Post-shutdown hook.
+
+This method is called after service shutdown.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_initialize() 🔧
+
+```python filename='method.py'
+def pre_initialize(self) -> 'None'
+```
+
+Pre-initialization hook.
+
+This method is called before service initialization.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_shutdown() 🔧
+
+```python filename='method.py'
+def pre_shutdown(self) -> 'None'
+```
+
+Pre-shutdown hook.
+
+This method is called before service shutdown.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setup() 🔧
+
+```python filename='method.py'
+def setup(self) -> 'None'
+```
+
+Service-specific setup.
+
+This method should be implemented by concrete services to
+perform their specific setup requirements
+(opening connections, configuring service, etc).
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown service and cleanup dependencies asynchronously.
+
+This method handles the complete shutdown process:
+1. Validates service state
+2. Performs service-specific shutdown
+3. Cleans up orphaned dependencies
+4. Updates service state
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Examples
+
+```python filename='example.py'
+class DataService(AsyncService):
+        storage = UseService(Storage)
+```
+
+### Source Code
+
+```python filename='source.py'
+class AsyncService(
+    AsyncServiceComposer,
+    AsyncServiceInitializer,
+    metaclass=ServiceMeta,
+):
+    pass
+
+```
+
+<a id='syncservice'></a>
+
+## SyncService 🧩
+
+<Callout type='info'>
+  Inherits from: `SyncServiceComposer`, `SyncServiceInitializer`
+</Callout>
+
+Service mixin combining dependency injection and component architecture.
+
+Features:
+- Declarative dependency specification via UseService
+
+```python filename='class.py'
+class SyncService(SyncServiceComposer, SyncServiceInitializer):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_initialized` | Check if service is fully initialized. |
+| `key` | Get the unique service instance identifier. |
+| `name` | Get the service instance name. |
+| `readable_name` | Get a human-readable identifier for the service. |
+| `service_state` | Current service lifecycle state. |
+| `spec` | Get the service's specification. |
+
+### Methods
+
+<Tabs items={['cleanup', 'factory_name', 'initialize', 'post_initialize', 'post_shutdown', 'pre_initialize', 'pre_shutdown', 'setup', 'shutdown']}>
+<Tabs.Tab>
+
+### cleanup() 🔧
+
+```python filename='method.py'
+def cleanup(self) -> 'None'
+```
+
+Service-specific cleanup.
+
+This method should be implemented by concrete services to
+perform their specific cleanup requirements.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the service class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize service and its dependencies asynchronously.
+
+This method handles the complete initialization process:
+1. Validates service state
+2. Initializes dependencies
+3. Performs service-specific initialization
+4. Updates service state
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_initialize() 🔧
+
+```python filename='method.py'
+def post_initialize(self) -> 'None'
+```
+
+Post-initialization hook.
+
+This method is called after service initialization.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_shutdown() 🔧
+
+```python filename='method.py'
+def post_shutdown(self) -> 'None'
+```
+
+Post-shutdown hook.
+
+This method is called after service shutdown.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_initialize() 🔧
+
+```python filename='method.py'
+def pre_initialize(self) -> 'None'
+```
+
+Pre-initialization hook.
+
+This method is called before service initialization.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_shutdown() 🔧
+
+```python filename='method.py'
+def pre_shutdown(self) -> 'None'
+```
+
+Pre-shutdown hook.
+
+This method is called before service shutdown.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setup() 🔧
+
+```python filename='method.py'
+def setup(self) -> 'None'
+```
+
+Service-specific setup.
+
+This method should be implemented by concrete services to
+perform their specific setup requirements
+(opening connections, configuring service, etc).
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown service and cleanup dependencies asynchronously.
+
+This method handles the complete shutdown process:
+1. Validates service state
+2. Performs service-specific shutdown
+3. Cleans up orphaned dependencies
+4. Updates service state
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Examples
+
+```python filename='example.py'
+class DataService(SyncService):
+        storage = UseService(Storage)
+```
+
+### Source Code
+
+```python filename='source.py'
+class SyncService(
+    SyncServiceComposer,
+    SyncServiceInitializer,
+    metaclass=ServiceMeta,
+):
+    pass
+
+```
+
+## Variables & Constants
+
+<Cards>
+  <Cards.Card title="Service" href="#variables"/>
+  <Cards.Card title="annotations" href="#variables"/>
+</Cards>
+
+<a id='variables'></a>
+
+### Variables
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `Service` | `UnionType` | `loomi._service.service.AsyncService | loomi._se...` |  |
+| `annotations` | `_Feature` | `_Feature((3, 7, 0, &#x27;beta&#x27;, 1), None, 16777216)` |  |
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from .composer import AsyncServiceComposer, SyncServiceComposer
+from .initializer import AsyncServiceInitializer, SyncServiceInitializer
+from .meta import ServiceMeta
+
+__all__ = [
+    "AsyncService",
+    "SyncService",
+    "Service",
+]
+
+
+class AsyncService(
+    AsyncServiceComposer,
+    AsyncServiceInitializer,
+    metaclass=ServiceMeta,
+):
+    pass
+
+
+class SyncService(
+    SyncServiceComposer,
+    SyncServiceInitializer,
+    metaclass=ServiceMeta,
+):
+    pass
+
+
+Service = AsyncService | SyncService
+
+```
+

@@ -126,7 +126,7 @@ class ModuleDiscoverer:
             # Check exclusion patterns
             excluded = False
             for pattern in self.config.exclude_patterns:
-                if re.match(pattern, name):
+                if re.match(re.compile(pattern, re.IGNORECASE), name):
                     excluded = True
                     break
 
@@ -169,7 +169,7 @@ class ModuleDiscoverer:
             # Check exclusion patterns
             excluded = False
             for pattern in self.config.exclude_patterns:
-                if re.match(pattern, name):
+                if re.match(re.compile(pattern, re.IGNORECASE), name):
                     excluded = True
                     break
 
