@@ -1,0 +1,290 @@
+---
+title: _exceptions
+sidebarTitle: 📄 _exceptions
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.kv_storage._exceptions` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="StorageConnectionError" href="#storageconnectionerror"/>
+  <Cards.Card title="StorageError" href="#storageerror"/>
+  <Cards.Card title="StorageKeyError" href="#storagekeyerror"/>
+  <Cards.Card title="StorageOperationError" href="#storageoperationerror"/>
+  <Cards.Card title="StorageValidationError" href="#storagevalidationerror"/>
+  <Cards.Card title="TransactionConflictError" href="#transactionconflicterror"/>
+  <Cards.Card title="TransactionError" href="#transactionerror"/>
+  <Cards.Card title="TransactionInvalidError" href="#transactioninvaliderror"/>
+</Cards>
+
+---
+
+<a id='storageconnectionerror'></a>
+
+## StorageConnectionError 🧩
+
+<Callout type='info'>
+  Inherits from: `StorageError`
+</Callout>
+
+Raised when storage connection fails.
+
+```python filename='class.py'
+class StorageConnectionError(StorageError):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class StorageConnectionError(StorageError):
+    """Raised when storage connection fails."""
+
+    pass
+
+```
+
+<a id='storageerror'></a>
+
+## StorageError 🧩
+
+<Callout type='info'>
+  Inherits from: `Exception`
+</Callout>
+
+Base exception for storage errors.
+
+```python filename='class.py'
+class StorageError(Exception):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class StorageError(Exception):
+    """Base exception for storage errors."""
+
+    pass
+
+```
+
+<a id='storagekeyerror'></a>
+
+## StorageKeyError 🧩
+
+<Callout type='info'>
+  Inherits from: `StorageOperationError`
+</Callout>
+
+Raised when storage key does not exist.
+
+```python filename='class.py'
+class StorageKeyError(StorageOperationError):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class StorageKeyError(StorageOperationError):
+    """Raised when storage key does not exist."""
+
+    pass
+
+```
+
+<a id='storageoperationerror'></a>
+
+## StorageOperationError 🧩
+
+<Callout type='info'>
+  Inherits from: `StorageError`
+</Callout>
+
+Raised when storage operation fails.
+
+```python filename='class.py'
+class StorageOperationError(StorageError):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class StorageOperationError(StorageError):
+    """Raised when storage operation fails."""
+
+    pass
+
+```
+
+<a id='storagevalidationerror'></a>
+
+## StorageValidationError 🧩
+
+<Callout type='info'>
+  Inherits from: `StorageOperationError`
+</Callout>
+
+Raised when storage key does not exist.
+
+```python filename='class.py'
+class StorageValidationError(StorageOperationError):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class StorageValidationError(StorageOperationError):
+    """Raised when storage key does not exist."""
+
+    pass
+
+```
+
+<a id='transactionconflicterror'></a>
+
+## TransactionConflictError 🧩
+
+<Callout type='info'>
+  Inherits from: `TransactionError`
+</Callout>
+
+Raised when transaction is invalid.
+
+```python filename='class.py'
+class TransactionConflictError(TransactionError):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class TransactionConflictError(TransactionError):
+    """Raised when transaction is invalid."""
+
+    pass
+
+```
+
+<a id='transactionerror'></a>
+
+## TransactionError 🧩
+
+<Callout type='info'>
+  Inherits from: `StorageError`
+</Callout>
+
+Raised when transaction fails.
+
+```python filename='class.py'
+class TransactionError(StorageError):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class TransactionError(StorageError):
+    """Raised when transaction fails."""
+
+    pass
+
+```
+
+<a id='transactioninvaliderror'></a>
+
+## TransactionInvalidError 🧩
+
+<Callout type='info'>
+  Inherits from: `TransactionError`
+</Callout>
+
+Raised when transaction is invalid.
+
+```python filename='class.py'
+class TransactionInvalidError(TransactionError):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class TransactionInvalidError(TransactionError):
+    """Raised when transaction is invalid."""
+
+    pass
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+__all__ = [
+    "StorageError",
+    "StorageConnectionError",
+    "StorageOperationError",
+    "StorageKeyError",
+    "StorageValidationError",
+    "TransactionError",
+    "TransactionConflictError",
+    "TransactionInvalidError",
+]
+
+
+class StorageError(Exception):
+    """Base exception for storage errors."""
+
+    pass
+
+
+class StorageConnectionError(StorageError):
+    """Raised when storage connection fails."""
+
+    pass
+
+
+class StorageOperationError(StorageError):
+    """Raised when storage operation fails."""
+
+    pass
+
+
+class StorageKeyError(StorageOperationError):
+    """Raised when storage key does not exist."""
+
+    pass
+
+
+class StorageValidationError(StorageOperationError):
+    """Raised when storage key does not exist."""
+
+    pass
+
+
+class TransactionError(StorageError):
+    """Raised when transaction fails."""
+
+    pass
+
+
+class TransactionConflictError(TransactionError):
+    """Raised when transaction is invalid."""
+
+    pass
+
+
+class TransactionInvalidError(TransactionError):
+    """Raised when transaction is invalid."""
+
+    pass
+
+```
+

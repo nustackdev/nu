@@ -1,0 +1,844 @@
+---
+title: _storage
+sidebarTitle: 📄 _storage
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.tree_storage._storage` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="TreeStorage" href="#treestorage"/>
+  <Cards.Card title="TreeStorageBase" href="#treestoragebase"/>
+</Cards>
+
+---
+
+<a id='treestorage'></a>
+
+## TreeStorage 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncService`, `TreeStorageBase`
+</Callout>
+
+Service mixin combining dependency injection and component architecture.
+
+Features:
+- Declarative dependency specification via UseService
+
+```python filename='class.py'
+class TreeStorage(AsyncService, TreeStorageBase):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_initialized` | Check if service is fully initialized. |
+| `key` | Get the unique service instance identifier. |
+| `name` | Get the service instance name. |
+| `readable_name` | Get a human-readable identifier for the service. |
+| `service_state` | Current service lifecycle state. |
+| `spec` | Get the service's specification. |
+
+### Methods
+
+<Tabs items={['begin_transaction', 'cleanup', 'dict', 'exists', 'factory_name', 'initialize', 'is_dict', 'is_list', 'list', 'post_initialize', 'post_shutdown', 'pre_initialize', 'pre_shutdown', 'setup', 'shutdown', 'transaction']}>
+<Tabs.Tab>
+
+### begin_transaction() 🔧
+
+```python filename='method.py'
+def begin_transaction(self) -> 'AsyncTransactionProtocol[TreeValueT]'
+```
+
+Begin a new transaction.
+
+**Returns:** `AsyncTransactionProtocol[TreeValueT]` - New transaction instance
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `TransactionError` | If transaction cannot be started |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### cleanup() 🔧
+
+```python filename='method.py'
+def cleanup(self) -> 'None'
+```
+
+Service-specific cleanup.
+
+This method should be implemented by concrete services to
+perform their specific cleanup requirements.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'TreeDict[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `TreeDict[TreeValueT]` - A new TreeDict instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'bool'
+```
+
+Check if the path exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `bool` - True if the path exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the service class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize service and its dependencies asynchronously.
+
+This method handles the complete initialization process:
+1. Validates service state
+2. Initializes dependencies
+3. Performs service-specific initialization
+4. Updates service state
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If initialization fails |
+| `ServiceStateError` | If service in invalid state |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'bool'
+```
+
+Check if the path is a dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `bool` - True if the path is a dictionary node, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'bool'
+```
+
+Check if the path is a list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `bool` - True if the path is a list node, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'TreeList[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `TreeList[TreeValueT]` - A new TreeList instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_initialize() 🔧
+
+```python filename='method.py'
+def post_initialize(self) -> 'None'
+```
+
+Post-initialization hook.
+
+This method is called after service initialization.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If post-initialization fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_shutdown() 🔧
+
+```python filename='method.py'
+def post_shutdown(self) -> 'None'
+```
+
+Post-shutdown hook.
+
+This method is called after service shutdown.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If post-shutdown fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_initialize() 🔧
+
+```python filename='method.py'
+def pre_initialize(self) -> 'None'
+```
+
+Pre-initialization hook.
+
+This method is called before service initialization.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If pre-initialization fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_shutdown() 🔧
+
+```python filename='method.py'
+def pre_shutdown(self) -> 'None'
+```
+
+Pre-shutdown hook.
+
+This method is called before service shutdown.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If pre-shutdown fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setup() 🔧
+
+```python filename='method.py'
+def setup(self)
+```
+
+Setup the tree storage.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown service and cleanup dependencies asynchronously.
+
+This method handles the complete shutdown process:
+1. Validates service state
+2. Performs service-specific shutdown
+3. Cleans up orphaned dependencies
+4. Updates service state
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If shutdown fails |
+| `ServiceStateError` | If service in invalid state |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transaction() 🔧
+
+```python filename='method.py'
+def transaction(self) -> 'AsyncTransactionContextManagerProtocol[TreeValueT]'
+```
+
+Get transaction context manager.
+
+**Returns:** `AsyncTransactionContextManagerProtocol[TreeValueT]` - Transaction context manager for use in async with statements
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class TreeStorage(AsyncService, TreeStorageBase[TreeValueT]):
+    _kv_storage: StorageServiceProtocol[TreePath, TreeValueT, Any, Any] = UseService()
+
+    async def setup(self):
+        """
+        Setup the tree storage.
+        """
+        self._tree_storage_core = TreeStorageCore(self._kv_storage)
+
+```
+
+<a id='treestoragebase'></a>
+
+## TreeStorageBase 🧩
+
+<Callout type='info'>
+  Inherits from: `ABC`, `Generic`
+</Callout>
+
+A class to manage tree storage using a dictionary.
+
+```python filename='class.py'
+class TreeStorageBase(ABC, Generic):
+    ...
+```
+
+### Methods
+
+<Tabs items={['begin_transaction', 'dict', 'exists', 'is_dict', 'is_list', 'list', 'transaction']}>
+<Tabs.Tab>
+
+### begin_transaction() 🔧
+
+```python filename='method.py'
+def begin_transaction(self) -> 'AsyncTransactionProtocol[TreeValueT]'
+```
+
+Begin a new transaction.
+
+**Returns:** `AsyncTransactionProtocol[TreeValueT]` - New transaction instance
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `TransactionError` | If transaction cannot be started |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'TreeDict[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `TreeDict[TreeValueT]` - A new TreeDict instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'bool'
+```
+
+Check if the path exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `bool` - True if the path exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'bool'
+```
+
+Check if the path is a dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `bool` - True if the path is a dictionary node, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'bool'
+```
+
+Check if the path is a list node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `bool` - True if the path is a list node, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'TreeList[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `TreeList[TreeValueT]` - A new TreeList instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transaction() 🔧
+
+```python filename='method.py'
+def transaction(self) -> 'AsyncTransactionContextManagerProtocol[TreeValueT]'
+```
+
+Get transaction context manager.
+
+**Returns:** `AsyncTransactionContextManagerProtocol[TreeValueT]` - Transaction context manager for use in async with statements
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class TreeStorageBase(ABC, Generic[TreeValueT]):
+    """
+    A class to manage tree storage using a dictionary.
+    """
+
+    _tree_storage_core: TreeStorageCore[TreeValueT]
+
+    async def dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeDict[TreeValueT]:
+        """
+        Get a nested dictionary node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new TreeDict instance for the nested dictionary node
+        """
+        dict_path = (path,) + paths
+        return await self._tree_storage_core.dict(dict_path, txn=txn)
+
+    async def list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeList[TreeValueT]:
+        """
+        Get a nested list node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new TreeList instance for the nested list node
+        """
+        list_path = (path,) + paths
+        return await self._tree_storage_core.list(list_path, txn=txn)
+
+    async def is_dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path is a dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a dictionary node, False otherwise
+        """
+        dict_path = (path,) + paths
+        return await self._tree_storage_core.is_dict(dict_path, txn=txn)
+
+    async def is_list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path is a list node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a list node, False otherwise
+        """
+        list_path = (path,) + paths
+        return await self._tree_storage_core.is_list(list_path, txn=txn)
+
+    async def exists(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path exists.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        exists_path = (path,) + paths
+        return await self._tree_storage_core.exists(exists_path, txn=txn)
+
+    async def begin_transaction(self) -> AsyncTransactionProtocol[TreeValueT]:
+        """
+        Begin a new transaction.
+
+        Returns:
+            New transaction instance
+
+        Raises:
+            TransactionError: If transaction cannot be started
+        """
+        return await self._tree_storage_core._storage.begin_transaction()
+
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol[TreeValueT]:
+        """
+        Get transaction context manager.
+
+        Returns:
+            Transaction context manager for use in async with statements
+        """
+        return await self._tree_storage_core._storage.transaction()
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from abc import ABC
+from typing import Any, Generic
+
+from loomi.attr import UseService
+from loomi.interfaces.state.kv import (
+    AsyncTransactionContextManagerProtocol,
+    AsyncTransactionProtocol,
+)
+from loomi.service import AsyncService
+from loomistd.kv_storage import StorageServiceProtocol
+
+from ._core import TreeStorage as TreeStorageCore
+from ._nodes import TreeDict, TreeList
+from ._types import TreePath, TreePathComponent, TreeValueT
+
+__all__ = [
+    "TreeStorageBase",
+    "TreeStorage",
+]
+
+
+class TreeStorageBase(ABC, Generic[TreeValueT]):
+    """
+    A class to manage tree storage using a dictionary.
+    """
+
+    _tree_storage_core: TreeStorageCore[TreeValueT]
+
+    async def dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeDict[TreeValueT]:
+        """
+        Get a nested dictionary node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new TreeDict instance for the nested dictionary node
+        """
+        dict_path = (path,) + paths
+        return await self._tree_storage_core.dict(dict_path, txn=txn)
+
+    async def list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeList[TreeValueT]:
+        """
+        Get a nested list node interface.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            A new TreeList instance for the nested list node
+        """
+        list_path = (path,) + paths
+        return await self._tree_storage_core.list(list_path, txn=txn)
+
+    async def is_dict(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path is a dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a dictionary node, False otherwise
+        """
+        dict_path = (path,) + paths
+        return await self._tree_storage_core.is_dict(dict_path, txn=txn)
+
+    async def is_list(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path is a list node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path is a list node, False otherwise
+        """
+        list_path = (path,) + paths
+        return await self._tree_storage_core.is_list(list_path, txn=txn)
+
+    async def exists(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if the path exists.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            txn: Optional transaction to use
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        exists_path = (path,) + paths
+        return await self._tree_storage_core.exists(exists_path, txn=txn)
+
+    async def begin_transaction(self) -> AsyncTransactionProtocol[TreeValueT]:
+        """
+        Begin a new transaction.
+
+        Returns:
+            New transaction instance
+
+        Raises:
+            TransactionError: If transaction cannot be started
+        """
+        return await self._tree_storage_core._storage.begin_transaction()
+
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol[TreeValueT]:
+        """
+        Get transaction context manager.
+
+        Returns:
+            Transaction context manager for use in async with statements
+        """
+        return await self._tree_storage_core._storage.transaction()
+
+
+class TreeStorage(AsyncService, TreeStorageBase[TreeValueT]):
+    _kv_storage: StorageServiceProtocol[TreePath, TreeValueT, Any, Any] = UseService()
+
+    async def setup(self):
+        """
+        Setup the tree storage.
+        """
+        self._tree_storage_core = TreeStorageCore(self._kv_storage)
+
+```
+

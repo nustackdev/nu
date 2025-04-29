@@ -10,9 +10,8 @@ from __future__ import annotations
 import json
 import logging
 import os
-from collections import OrderedDict, defaultdict
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Dict, List
 
 from ..config.models import OutputConfig
 from ..core.models import ModuleInfo
@@ -22,6 +21,10 @@ logger = logging.getLogger(__name__)
 
 class OutputManager:
     """Manages writing MDX files and navigation structures."""
+
+    # Constants for private module handling
+    PRIVATE_PREFIX = "p__"
+    PRIVATE_MARKER = "_"
 
     def __init__(self, config: OutputConfig):
         """
@@ -46,12 +49,13 @@ class OutputManager:
         Returns:
             Path to the written file
         """
-        # Convert module name to path
+        # Convert module name to path and handle private modules with "_" prefix
         parts = module_name.split(".")
-        output_file = self.config.output_dir.joinpath(*parts).with_suffix(".mdx")
+        parts = [self._replace_private_names(part) for part in parts]
+        output_file = self.config.output_dir.joinpath(*parts)
 
         # Create parent directories if needed
-        os.makedirs(output_file.parent, exist_ok=True)
+        os.makedirs(output_file, exist_ok=True)
 
         # Check if overwrite is allowed
         if not self.config.overwrite and output_file.exists():
@@ -59,7 +63,7 @@ class OutputManager:
             return output_file
 
         # Write content
-        with open(output_file, "w", encoding="utf-8") as f:
+        with open(output_file.joinpath("page.mdx"), "w", encoding="utf-8") as f:
             f.write(content)
 
         logger.info(f"Written documentation for {module_name} to {output_file}")
@@ -70,7 +74,7 @@ class OutputManager:
         self, discovered_modules: Dict[str, object], parsed_modules: Dict[str, ModuleInfo]
     ) -> None:
         """
-        Generate _meta.json files for Nextra navigation.
+        Generate _meta.js files for Nextra navigation.
 
         Args:
             discovered_modules: Dictionary of discovered modules
@@ -78,148 +82,169 @@ class OutputManager:
         """
         logger.info("Generating navigation files")
 
-        # Build directory structure
-        directory_structure: Dict[str, Dict] = defaultdict(dict)
-        directories_with_modules: Set[str] = set()
+        # Build module tree
+        module_tree = self._build_module_tree(discovered_modules)
 
-        # First pass: collect all modules and organize by directory
-        for module_name in discovered_modules.keys():
-            # Convert module name to path parts
+        # Generate navigation files based on the tree
+        self._write_navigation_files(module_tree, parsed_modules)
+
+    def _build_module_tree(self, discovered_modules: Dict[str, object]) -> Dict:
+        """
+        Build a hierarchical tree structure from discovered modules.
+
+        Args:
+            discovered_modules: Dictionary of discovered modules
+
+        Returns:
+            Dictionary representing the module tree
+        """
+        module_tree = {}
+
+        # Process all modules in a single pass
+        for module_name in discovered_modules:
             parts = module_name.split(".")
+            current = module_tree
 
-            # Keep track of directories that have modules
-            if len(parts) > 1:
-                # This is a submodule
-                parent_dir = os.path.join(*parts[:-1])
-                directories_with_modules.add(parent_dir)
+            # Handle private modules with "_" prefix
+            for i, part in enumerate(parts):
+                parts[i] = self._replace_private_names(part)
 
-            # Process each level of the module path
-            for i in range(len(parts)):
-                # Determine current directory and item name
-                if i == 0:
-                    # Root level
-                    dir_path = ""
-                    current_name = parts[0]
-                else:
-                    # Nested directory
-                    dir_path = os.path.join(*parts[:i])
-                    current_name = parts[i]
+            # Build tree path
+            for i, part in enumerate(parts):
+                is_leaf = i == len(parts) - 1
 
-                # Skip adding if it would create both dir/module.mdx and dir/module/
-                if i == len(parts) - 1:
-                    # Add as a file
-                    directory_structure[dir_path][current_name] = {
-                        "title": f"{current_name}",
-                        "type": "file",
+                if part not in current:
+                    # Store the original name for later reference
+                    original_name = part
+                    if part.startswith(self.PRIVATE_PREFIX):
+                        original_name = self._restore_private_names(part)
+
+                    current[part] = {
+                        "is_file": is_leaf,
+                        "children": {},
+                        "original_name": original_name,
                     }
-                else:
-                    # Add as a directory if not already present
-                    if current_name not in directory_structure[dir_path]:
-                        directory_structure[dir_path][current_name] = {
-                            "title": f"{current_name}",
-                            "type": "folder",
-                        }
+                elif is_leaf:
+                    # If we previously saw this as a directory, mark it as both
+                    current[part]["is_file"] = True
 
-        # Second pass: create _meta.json file for each directory
-        for dir_path, items in directory_structure.items():
-            # Create the directory if it doesn't exist
-            full_dir_path = os.path.join(self.config.output_dir, dir_path)
-            os.makedirs(full_dir_path, exist_ok=True)
+                if not is_leaf:
+                    current = current[part]["children"]
 
-            # Prepare the meta file content
-            meta_content: OrderedDict[str, Any] = OrderedDict()
+        return module_tree
 
-            # Add index first if it's a directory with submodules
-            if self.config.create_index and (
-                dir_path in directories_with_modules or dir_path == ""
-            ):
-                meta_content["index"] = {
-                    "title": "Overview",
-                }
+    def _write_navigation_files(
+        self, tree: Dict, parsed_modules: Dict[str, ModuleInfo], path: str = ""
+    ) -> None:
+        """
+        Generate _meta.js files and index pages recursively.
 
-                # Generate index.mdx file for this directory
-                self._generate_directory_index(dir_path, items, discovered_modules, parsed_modules)
+        Args:
+            tree: Module tree dictionary
+            parsed_modules: Dictionary of parsed module information
+            path: Current path in the tree
+        """
+        meta = {}
 
-            # Add other items (excluding any that would create duplicates)
-            # First render folders, then files
-            for name, item_info in sorted(items.items()):
-                for item_type in ["folder", "file"]:
-                    if item_info["type"] != item_type:
-                        continue
+        # Add index if needed
+        # if self.config.create_index:
+        #     meta["index"] = "Overview"
 
-                    if name != "index" and not self._would_create_duplicate(
-                        dir_path, name, discovered_modules
-                    ):
-                        meta_content[name] = {
-                            "title": "",
-                        }
-                        if item_info["type"] == "file":
-                            # This is a file, add it to the meta content
-                            meta_content[name]["title"] = item_info["title"].split(".")[-1]
-                        elif item_info["type"] == "folder":
-                            # This is a folder, add it to the meta content
-                            # Use the folder name as the title
-                            meta_content[name]["title"] = item_info["title"]
+        # Separate folders and files
+        folders = []
+        files = []
 
-            # Write the _meta.json file
-            meta_file_path = os.path.join(full_dir_path, self.config.meta_filename)
+        for name, info in tree.items():
+            # Add to appropriate list
+            if info["is_file"] and not info["children"]:
+                files.append(name)
+            else:
+                folders.append(name)
+
+        # Add folders to meta
+        for folder in sorted(folders):
+            # Get the original name for display, but keep folder name for paths
+            meta[folder] = ""
+
+        # Add files to meta
+        for file in sorted(files):
+            # Get the original name for display, but keep file name for paths
+            meta[file] = ""
+
+        # Create output directory
+        output_path = os.path.join(self.config.output_dir, path)
+        os.makedirs(output_path, exist_ok=True)
+
+        # Write _meta.js
+        meta_file_path = os.path.join(output_path, "_meta.js")
+        if path:
             with open(meta_file_path, "w", encoding="utf-8") as f:
-                json.dump(meta_content, f, indent=2)
+                f.write(f"export default {json.dumps(meta, indent=2)}")
 
-            logger.info(
-                f"Generated {self.config.meta_filename} for directory: {dir_path or 'root'}"
-            )
+        logger.info(f"Generated _meta.js for directory: {path or 'root'}")
 
-    def _generate_directory_index(  # noqa: C901
+        # Generate index file if needed
+        if self.config.create_index and path:
+            self._generate_simple_index(path, folders, files, tree, parsed_modules)
+
+        # Process subdirectories
+        for folder in folders:
+            folder_path = os.path.join(path, folder) if path else folder
+            self._write_navigation_files(tree[folder]["children"], parsed_modules, folder_path)
+
+    def _generate_simple_index(
         self,
         dir_path: str,
-        items: Dict[str, Dict],
-        discovered_modules: Dict[str, object],
+        folders: List[str],
+        files: List[str],
+        tree: Dict,
         parsed_modules: Dict[str, ModuleInfo],
     ) -> None:
         """
-        Generate an index.mdx file for a directory listing its modules.
+        Generate a simple index file listing subdirectories and modules.
 
         Args:
-            dir_path: Path to the directory
-            items: Dictionary of items in the directory
-            discovered_modules: Dictionary of discovered modules
+            dir_path: Directory path
+            folders: List of folder names
+            files: List of file names
+            tree: Module tree dictionary
             parsed_modules: Dictionary of parsed module information
         """
-        if not self.config.create_index:
+        if not dir_path:
             return
 
-        # Create full path for the index file
-        full_dir_path = os.path.join(self.config.output_dir, dir_path)
-        index_path = os.path.join(full_dir_path, "index.mdx")
-
-        # Check if overwrite is allowed
-        if not self.config.overwrite and os.path.exists(index_path):
-            logger.warning(f"Skipping existing index file: {index_path}")
+        # Skip if overwrite not allowed and file exists
+        full_path = os.path.join(self.config.output_dir, dir_path, "page.mdx")
+        if not self.config.overwrite and os.path.exists(full_path):
+            logger.warning(f"Skipping existing index file: {full_path}")
             return
-
-        # Determine the directory name for the title
-        dir_name = os.path.basename(dir_path) if dir_path else "API Reference"
 
         # Build index content
         content = []
+        dir_name = os.path.basename(dir_path)
+
+        # Fix displayed name for private modules
+        dir_name = self._restore_private_names(dir_name)
 
         # Add frontmatter
         content.append("---\n")
-        content.append(f"title: {dir_name.capitalize()}\n")
-        content.append(f"sidebarTitle: {dir_name.capitalize()}\n")
+        content.append(f"title: {dir_name}\n")
+        content.append(f"sidebarTitle: 📦 {dir_name}\n")
         content.append("asIndexPage: true\n")
         content.append("---\n\n")
 
         content.append("import { Cards, Callout } from 'nextra/components'\n\n")
-        content.append(f"# `{dir_name.capitalize()}` Reference\n\n")
+        content.append(f"# 📦 `{dir_name}` Reference\n\n")
 
         # Try to get description from __init__.py if available
-        init_module_name = dir_path.replace(os.path.sep, ".") if dir_path else None
-        init_module_name = init_module_name.lstrip(".") if init_module_name else None
+        module_path = dir_path.replace(os.path.sep, ".")
+        module_path = module_path.lstrip(".")
 
-        if init_module_name and init_module_name in parsed_modules:
-            module_info = parsed_modules[init_module_name]
+        # Convert prefixed paths back to original for lookup
+        lookup_module_path = self._get_original_module_path(module_path)
+
+        if lookup_module_path and lookup_module_path in parsed_modules:
+            module_info = parsed_modules[lookup_module_path]
             if module_info.docstring:
                 # Add summary in callout
                 if module_info.docstring.summary:
@@ -229,89 +254,116 @@ class OutputManager:
                 if module_info.docstring.description:
                     content.append(f"{module_info.docstring.description}\n\n")
 
-        # Get all direct modules in this directory
-        modules_in_dir = []
-        for name, info in items.items():
-            if info["type"] == "file" and not self._would_create_duplicate(
-                dir_path, name, discovered_modules
-            ):
-                module_full_name = (
-                    f"{dir_path}.{name}".replace(os.path.sep, ".") if dir_path else name
-                )
-                module_full_name = module_full_name.lstrip(".")
-
-                # Get module summary if available
-                summary = ""
-                if module_full_name in parsed_modules:
-                    module_info = parsed_modules[module_full_name]
-                    if module_info.docstring and module_info.docstring.summary:
-                        summary = module_info.docstring.summary
-
-                modules_in_dir.append((name, summary))
-
-        # Get all subdirectories
-        subdirs_in_dir = []
-        for name, info in items.items():
-            if info["type"] == "folder":
-                subdir_module = f"{dir_path}.{name}".replace(os.path.sep, ".") if dir_path else name
-                subdir_module = subdir_module.lstrip(".")
-
-                # Try to get summary from directory's __init__.py if available
-                summary = ""
-                if subdir_module in parsed_modules:
-                    module_info = parsed_modules[subdir_module]
-                    if module_info.docstring and module_info.docstring.summary:
-                        summary = module_info.docstring.summary
-
-                subdirs_in_dir.append((name, summary))
-
-        # Add modules and packages to the index
-        if subdirs_in_dir:
-            content.append("## Packages\n\n")
+        # Add packages section
+        if folders:
+            content.append("## Subpackages\n\n")
             content.append("<Cards>\n")
-            for name, summary in sorted(subdirs_in_dir):
-                content.append(f'  <Cards.Card title="{name}" href="./{name}"/>\n')
+            for folder in sorted(folders):
+                original_name = tree[folder].get("original_name", folder)
+                display_name = self._restore_private_names(original_name)
+
+                # Try to get summary
+                folder_module = (
+                    f"{dir_path}.{original_name}".replace(os.path.sep, ".")
+                    if dir_path
+                    else original_name
+                )
+                folder_module = folder_module.lstrip(".")
+
+                # Convert prefixed paths back to original for lookup
+                lookup_folder_module = self._get_original_module_path(folder_module)
+
+                summary = ""
+
+                if lookup_folder_module in parsed_modules:
+                    module_info = parsed_modules[lookup_folder_module]
+                    if module_info.docstring and module_info.docstring.summary:
+                        summary = f" - {module_info.docstring.summary}"
+
+                content.append(
+                    f'  <Cards.Card title="{display_name}{summary}" href="/api/{dir_path}/{folder}"/>\n'
+                )
             content.append("</Cards>\n\n")
 
-        if modules_in_dir:
+        # Add modules section
+        if files:
             content.append("## Modules\n\n")
             content.append("<Cards>\n")
-            for name, summary in sorted(modules_in_dir):
-                content.append(f'  <Cards.Card title="{name}" href="./{name}"/>\n')
+            for file in sorted(files):
+                original_name = tree[file].get("original_name", file)
+                display_name = self._restore_private_names(original_name)
+
+                # Try to get summary
+                file_module = (
+                    f"{dir_path}.{original_name}".replace(os.path.sep, ".")
+                    if dir_path
+                    else original_name
+                )
+                file_module = file_module.lstrip(".")
+
+                # Convert prefixed paths back to original for lookup
+                lookup_file_module = self._get_original_module_path(file_module)
+
+                summary = ""
+
+                if lookup_file_module in parsed_modules:
+                    module_info = parsed_modules[lookup_file_module]
+                    if module_info.docstring and module_info.docstring.summary:
+                        summary = f": {module_info.docstring.summary}"
+
+                content.append(
+                    f'  <Cards.Card title="{display_name}{summary}" href="/api/{dir_path}/{file}" />\n'
+                )
             content.append("</Cards>\n\n")
 
-        # Write the index file
-        with open(index_path, "w", encoding="utf-8") as f:
+        # Write index file
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "w", encoding="utf-8") as f:
             f.write("".join(content))
 
-        logger.info(f"Generated index.mdx for directory: {dir_path or 'root'}")
+        logger.info(f"Generated index page for directory: {dir_path or 'root'}")
 
-    def _would_create_duplicate(
-        self, dir_path: str, name: str, discovered_modules: Dict[str, object]
-    ) -> bool:
+    def _replace_private_names(self, name: str) -> str:
         """
-        Check if adding this item would create a duplicate name issue.
+        Replace private module names with prefixed versions.
 
         Args:
-            dir_path: Directory path
-            name: Item name
-            discovered_modules: Dictionary of discovered modules
+            name: Module name
 
         Returns:
-            True if adding this item would create both dir/name.mdx and dir/name/
+            Modified module name with p__ prefix instead of _
         """
-        # Check if there's both a module and directory with the same name
-        module_path = os.path.join(dir_path, name) if dir_path else name
-        module_path = module_path.replace(os.path.sep, ".")
-        module_path = module_path.lstrip(".")
+        if name.startswith(self.PRIVATE_MARKER):
+            return f"{self.PRIVATE_PREFIX}{name[1:]}"
+        return name
 
-        # Check if this exists as both a module and a directory prefix
-        is_module = module_path in discovered_modules
+    def _restore_private_names(self, name: str) -> str:
+        """
+        Restore original private module names from prefixed versions.
 
-        # Check if it's a directory prefix (has submodules)
-        is_dir_prefix = any(
-            mod_name.startswith(module_path + ".") for mod_name in discovered_modules
-        )
+        Args:
+            name: Prefixed module name
 
-        # If it's both a module and a directory, it would create a duplicate
-        return is_module and is_dir_prefix
+        Returns:
+            Original module name with _ prefix
+        """
+        if name.startswith(self.PRIVATE_PREFIX):
+            return f"{self.PRIVATE_MARKER}{name[len(self.PRIVATE_PREFIX):]}"
+        return name
+
+    def _get_original_module_path(self, module_path: str) -> str:
+        """
+        Convert a path with p__ prefixes back to original form with _ prefixes.
+
+        Args:
+            module_path: Module path with p__ prefixes
+
+        Returns:
+            Original module path with _ prefixes
+        """
+        if not module_path:
+            return module_path
+
+        parts = module_path.split(".")
+        parts = [self._restore_private_names(part) for part in parts]
+        return ".".join(parts)

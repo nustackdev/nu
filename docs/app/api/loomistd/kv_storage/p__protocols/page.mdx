@@ -1,0 +1,431 @@
+---
+title: _protocols
+sidebarTitle: 📄 _protocols
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.kv_storage._protocols` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="StorageServiceProtocol" href="#storageserviceprotocol"/>
+</Cards>
+
+---
+
+<a id='storageserviceprotocol'></a>
+
+## StorageServiceProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncStorageProtocol`, `Protocol`
+</Callout>
+
+Protocol defining state storage operations.
+
+Storage implementations handle the persistence of state data with:
+- Transactional guarantees
+- Proper error handling
+- Resource management
+- Type safety
+
+Type Parameters:
+    KeyT: Key type (must be tuple of strings)
+    ValueT: Value type (must be valid state value)
+    EncodedKeyT: Encoded key type for storage
+    EncodedValueT: Encoded value type for storage
+
+Implementation Requirements:
+    - Must maintain ACID guarantees
+    - Must handle concurrent access
+    - Must validate all inputs
+    - Must properly encode/decode data
+
+```python filename='class.py'
+class StorageServiceProtocol(AsyncStorageProtocol, Protocol):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `codec` | `property` | `&lt;property object at 0x10f719f80&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `codec` | Get codec for encoding/decoding keys and values. |
+
+### Methods
+
+<Tabs items={['begin_transaction', 'connect', 'delete', 'disconnect', 'exists', 'get', 'list_keys', 'set', 'transaction']}>
+<Tabs.Tab>
+
+### begin_transaction() 🔧
+
+```python filename='method.py'
+def begin_transaction(self) -> 'AsyncTransactionProtocol'
+```
+
+Begin transaction.
+
+**Returns:** `AsyncTransactionProtocol` - New transaction instance
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `TransactionError` | If transaction cannot be started |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### connect() 🔧
+
+```python filename='method.py'
+def connect(self) -> 'None'
+```
+
+Establish connection to storage backend.
+
+This method must:
+- Initialize resources
+- Verify backend health
+- Set up any required structures
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageConnectionError` | If connection fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, key: 'StorageKey') -> 'None'
+```
+
+Delete value by key.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StorageKey` | State key to delete | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StateError` | If value cannot be deleted |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### disconnect() 🔧
+
+```python filename='method.py'
+def disconnect(self) -> 'None'
+```
+
+Close connection to storage backend.
+
+This method must:
+- Clean up resources
+- Flush pending changes
+- Handle existing transactions
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageConnectionError` | If disconnection fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, key: 'StorageKey') -> 'bool'
+```
+
+Check if key exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StorageKey` | State key to check | `Required` |
+
+**Returns:** `bool` - True if key exists, False otherwise
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StateError` | If check fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, key: 'StorageKey') -> 'StorageValueT'
+```
+
+Get value by key.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StorageKey` | State key to retrieve | `Required` |
+
+**Returns:** `StorageValueT` - State value if found, None otherwise
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StateError` | If value cannot be retrieved |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list_keys() 🔧
+
+```python filename='method.py'
+def list_keys(self, prefix: 'StorageKey', depth: 'int' = Ellipsis) -> 'AsyncGenerator[StorageKey, None]'
+```
+
+List all keys under prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `prefix` | `StorageKey` | Key prefix to list | `Required` |
+| `depth` | `int` | Depth of listing (default is 1) If depth is -1, lists all keys under prefix. | `Ellipsis` |
+
+**Returns:** `AsyncGenerator[StorageKey, None]` - AsyncGenerator of matching state keys
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StateError` | If listing fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, key: 'StorageKey', value: 'StorageValueT') -> 'None'
+```
+
+Set value by key.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StorageKey` | State key to set | `Required` |
+| `value` | `StorageValueT` | Value to store | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StateError` | If value cannot be stored |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transaction() 🔧
+
+```python filename='method.py'
+def transaction(self) -> 'AsyncTransactionContextManagerProtocol'
+```
+
+Get transaction context manager.
+
+**Returns:** `AsyncTransactionContextManagerProtocol` - Transaction context manager
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class StorageServiceProtocol(
+    AsyncStorageProtocol[StorageValueT],
+    Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT],
+):
+    """
+    Protocol defining state storage operations.
+
+    Storage implementations handle the persistence of state data with:
+    - Transactional guarantees
+    - Proper error handling
+    - Resource management
+    - Type safety
+
+    Type Parameters:
+        KeyT: Key type (must be tuple of strings)
+        ValueT: Value type (must be valid state value)
+        EncodedKeyT: Encoded key type for storage
+        EncodedValueT: Encoded value type for storage
+
+    Implementation Requirements:
+        - Must maintain ACID guarantees
+        - Must handle concurrent access
+        - Must validate all inputs
+        - Must properly encode/decode data
+    """
+
+    @property
+    def codec(
+        self,
+    ) -> CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]:
+        """
+        Get codec for encoding/decoding keys and values.
+
+        Returns:
+            Codec instance
+        """
+        ...
+
+    async def connect(self) -> None:
+        """
+        Establish connection to storage backend.
+
+        This method must:
+        - Initialize resources
+        - Verify backend health
+        - Set up any required structures
+
+        Raises:
+            StorageConnectionError: If connection fails
+        """
+        ...
+
+    async def disconnect(self) -> None:
+        """
+        Close connection to storage backend.
+
+        This method must:
+        - Clean up resources
+        - Flush pending changes
+        - Handle existing transactions
+
+        Raises:
+            StorageConnectionError: If disconnection fails
+        """
+        ...
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import Protocol
+
+from loomi.interfaces.state.kv import AsyncStorageProtocol
+from loomistd.codec import CodecProtocol
+
+from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageValueT
+
+__all__ = [
+    "StorageServiceProtocol",
+]
+
+
+class StorageServiceProtocol(
+    AsyncStorageProtocol[StorageValueT],
+    Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT],
+):
+    """
+    Protocol defining state storage operations.
+
+    Storage implementations handle the persistence of state data with:
+    - Transactional guarantees
+    - Proper error handling
+    - Resource management
+    - Type safety
+
+    Type Parameters:
+        KeyT: Key type (must be tuple of strings)
+        ValueT: Value type (must be valid state value)
+        EncodedKeyT: Encoded key type for storage
+        EncodedValueT: Encoded value type for storage
+
+    Implementation Requirements:
+        - Must maintain ACID guarantees
+        - Must handle concurrent access
+        - Must validate all inputs
+        - Must properly encode/decode data
+    """
+
+    @property
+    def codec(
+        self,
+    ) -> CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]:
+        """
+        Get codec for encoding/decoding keys and values.
+
+        Returns:
+            Codec instance
+        """
+        ...
+
+    async def connect(self) -> None:
+        """
+        Establish connection to storage backend.
+
+        This method must:
+        - Initialize resources
+        - Verify backend health
+        - Set up any required structures
+
+        Raises:
+            StorageConnectionError: If connection fails
+        """
+        ...
+
+    async def disconnect(self) -> None:
+        """
+        Close connection to storage backend.
+
+        This method must:
+        - Clean up resources
+        - Flush pending changes
+        - Handle existing transactions
+
+        Raises:
+            StorageConnectionError: If disconnection fails
+        """
+        ...
+
+```
+

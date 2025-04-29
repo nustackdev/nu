@@ -1,0 +1,580 @@
+---
+title: state_handler
+sidebarTitle: 📄 state_handler
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomi._app.handlers.state_handler` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="AsyncCommonAppStateHandler" href="#asynccommonappstatehandler"/>
+  <Cards.Card title="CommonAppStateHandler" href="#commonappstatehandler"/>
+  <Cards.Card title="SyncCommonAppStateHandler" href="#synccommonappstatehandler"/>
+</Cards>
+
+---
+
+<a id='asynccommonappstatehandler'></a>
+
+## AsyncCommonAppStateHandler 🧩
+
+<Callout type='info'>
+  Inherits from: `CommonAppStateHandler`, `AsyncAppABC`
+</Callout>
+
+App feature implementing state management.
+
+Features:
+- State adapter handling
+- State management methods
+- State subscription management
+- State transaction management
+
+```python filename='class.py'
+class AsyncCommonAppStateHandler(CommonAppStateHandler, AsyncAppABC):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `s` | `property` | `&lt;property object at 0x10f4cb4c0&gt;` |  |
+| `state` | `property` | `&lt;property object at 0x10f4cb420&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `e` | Short alias for state adapter. |
+| `engine` | Check and return app's state service. |
+| `key` | Get the unique app instance identifier. |
+| `readable_name` | Get a human-readable identifier for the app. |
+| `s` | Short alias for state adapter. |
+| `state` | Check and return app's state service. |
+
+### Methods
+
+<Tabs items={['add_service_dependency', 'factory_name', 'get_service_dependency', 'initialize', 'initialize_apps', 'initialize_services', 'shutdown', 'shutdown_apps', 'shutdown_services']}>
+<Tabs.Tab>
+
+### add_service_dependency() 🔧
+
+```python filename='method.py'
+def add_service_dependency(self, name: 'str', spec: "'Spec'") -> "'Service'"
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the app class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get_service_dependency() 🔧
+
+```python filename='method.py'
+def get_service_dependency(self, name: 'str') -> "'Service'"
+```
+
+Get named dependency if it exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name to retrieve | `Required` |
+
+**Returns:** `'Service'` - Dependency service
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize app and its dependencies asynchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_apps() 🔧
+
+```python filename='method.py'
+def initialize_apps(self) -> 'None'
+```
+
+Initialize apps.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_services() 🔧
+
+```python filename='method.py'
+def initialize_services(self) -> 'None'
+```
+
+Initialize app service dependencies asynchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown app and cleanup dependencies asynchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_apps() 🔧
+
+```python filename='method.py'
+def shutdown_apps(self) -> 'None'
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_services() 🔧
+
+```python filename='method.py'
+def shutdown_services(self) -> 'None'
+```
+
+Shutdown app service dependencies asynchronously.
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Examples
+
+```python filename='example.py'
+
+```
+
+### Source Code
+
+```python filename='source.py'
+class AsyncCommonAppStateHandler(
+    CommonAppStateHandler[StateT, ExecutorT], AsyncAppABC[StateT, ExecutorT]
+):
+    """
+    App feature implementing state management.
+
+    Features:
+    - State adapter handling
+    - State management methods
+    - State subscription management
+    - State transaction management
+
+    Example:
+        class DataApp(AsyncApp):
+            ...
+
+            def exec_data_process(self, key: str) -> Any:
+                await self.set(("status",), "processing")
+                result = self.process_data(key)
+                await self.set(("status,), "done")
+    """
+
+    @final
+    @property
+    def state(self) -> StateT:
+        """Check and return app's state service."""
+        if "EXECUTOR" not in self._services:
+            raise StateError("No state adapter configured")
+
+        state = cast(StateT, self.get_service_dependency("STATE"))
+
+        if not state:
+            raise StateError("State not initialized")
+
+        return state
+
+    @final
+    @property
+    def s(self) -> StateT:
+        """Short alias for state adapter."""
+        return self.state
+
+```
+
+<a id='commonappstatehandler'></a>
+
+## CommonAppStateHandler 🧩
+
+<Callout type='info'>
+  Inherits from: `AppABC`
+</Callout>
+
+Base class for app state management.
+
+```python filename='class.py'
+class CommonAppStateHandler(AppABC):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `key` | Get the unique app instance identifier. |
+| `readable_name` | Get a human-readable identifier for the app. |
+
+### Methods
+
+<a id='add_service_dependency'></a>
+
+#### add_service_dependency() 🔧
+
+```python filename='method.py'
+def add_service_dependency(self, name: 'str', spec: "'Spec'") -> "'Service'"
+```
+
+<a id='factory_name'></a>
+
+#### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the app class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+<a id='get_service_dependency'></a>
+
+#### get_service_dependency() 🔧
+
+```python filename='method.py'
+def get_service_dependency(self, name: 'str') -> "'Service'"
+```
+
+Get named dependency if it exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name to retrieve | `Required` |
+
+**Returns:** `'Service'` - Dependency service
+
+### Source Code
+
+```python filename='source.py'
+class CommonAppStateHandler(AppABC[StateT, ExecutorT]):
+    """
+    Base class for app state management.
+    """
+
+    pass
+
+```
+
+<a id='synccommonappstatehandler'></a>
+
+## SyncCommonAppStateHandler 🧩
+
+<Callout type='info'>
+  Inherits from: `CommonAppStateHandler`, `SyncAppABC`
+</Callout>
+
+Base class for app state management.
+
+```python filename='class.py'
+class SyncCommonAppStateHandler(CommonAppStateHandler, SyncAppABC):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `s` | `property` | `&lt;property object at 0x10f4cb600&gt;` |  |
+| `state` | `property` | `&lt;property object at 0x10f4cb560&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `key` | Get the unique app instance identifier. |
+| `readable_name` | Get a human-readable identifier for the app. |
+| `s` | Short alias for state adapter. |
+| `state` | Check and return app's state service. |
+
+### Methods
+
+<Tabs items={['add_service_dependency', 'factory_name', 'get_service_dependency', 'initialize', 'initialize_apps', 'initialize_services', 'shutdown', 'shutdown_apps', 'shutdown_services']}>
+<Tabs.Tab>
+
+### add_service_dependency() 🔧
+
+```python filename='method.py'
+def add_service_dependency(self, name: 'str', spec: "'Spec'") -> "'Service'"
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the app class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get_service_dependency() 🔧
+
+```python filename='method.py'
+def get_service_dependency(self, name: 'str') -> "'Service'"
+```
+
+Get named dependency if it exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `name` | `str` | Dependency name to retrieve | `Required` |
+
+**Returns:** `'Service'` - Dependency service
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize app and its dependencies synchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_apps() 🔧
+
+```python filename='method.py'
+def initialize_apps(self) -> 'None'
+```
+
+Initialize apps.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize_services() 🔧
+
+```python filename='method.py'
+def initialize_services(self) -> 'None'
+```
+
+Initialize app service dependencies synchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown app and cleanup dependencies synchronously.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_apps() 🔧
+
+```python filename='method.py'
+def shutdown_apps(self) -> 'None'
+```
+
+Shutdown app and cleanup.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown_services() 🔧
+
+```python filename='method.py'
+def shutdown_services(self) -> 'None'
+```
+
+Shutdown app service dependencies synchronously.
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class SyncCommonAppStateHandler(
+    CommonAppStateHandler[SyncStateT, SyncExecutorT], SyncAppABC[SyncStateT, SyncExecutorT]
+):
+    @final
+    @property
+    def state(self) -> SyncStateT:
+        """Check and return app's state service."""
+        if "EXECUTOR" not in self._services:
+            raise StateError("No state adapter configured")
+
+        state = cast(SyncStateT, self.get_service_dependency("STATE"))
+
+        if not state:
+            raise StateError("State not initialized")
+
+        return state
+
+    @final
+    @property
+    def s(self) -> SyncStateT:
+        """Short alias for state adapter."""
+        return self.state
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import cast, final
+
+from ..base import AppABC, AsyncAppABC, SyncAppABC
+from ..exceptions import StateError
+from ..types import ExecutorT, StateT, SyncExecutorT, SyncStateT
+
+__all__ = [
+    "CommonAppStateHandler",
+    "AsyncCommonAppStateHandler",
+    "SyncCommonAppStateHandler",
+]
+
+
+class CommonAppStateHandler(AppABC[StateT, ExecutorT]):
+    """
+    Base class for app state management.
+    """
+
+    pass
+
+
+class AsyncCommonAppStateHandler(
+    CommonAppStateHandler[StateT, ExecutorT], AsyncAppABC[StateT, ExecutorT]
+):
+    """
+    App feature implementing state management.
+
+    Features:
+    - State adapter handling
+    - State management methods
+    - State subscription management
+    - State transaction management
+
+    Example:
+        class DataApp(AsyncApp):
+            ...
+
+            def exec_data_process(self, key: str) -> Any:
+                await self.set(("status",), "processing")
+                result = self.process_data(key)
+                await self.set(("status,), "done")
+    """
+
+    @final
+    @property
+    def state(self) -> StateT:
+        """Check and return app's state service."""
+        if "EXECUTOR" not in self._services:
+            raise StateError("No state adapter configured")
+
+        state = cast(StateT, self.get_service_dependency("STATE"))
+
+        if not state:
+            raise StateError("State not initialized")
+
+        return state
+
+    @final
+    @property
+    def s(self) -> StateT:
+        """Short alias for state adapter."""
+        return self.state
+
+
+class SyncCommonAppStateHandler(
+    CommonAppStateHandler[SyncStateT, SyncExecutorT], SyncAppABC[SyncStateT, SyncExecutorT]
+):
+    @final
+    @property
+    def state(self) -> SyncStateT:
+        """Check and return app's state service."""
+        if "EXECUTOR" not in self._services:
+            raise StateError("No state adapter configured")
+
+        state = cast(SyncStateT, self.get_service_dependency("STATE"))
+
+        if not state:
+            raise StateError("State not initialized")
+
+        return state
+
+    @final
+    @property
+    def s(self) -> SyncStateT:
+        """Short alias for state adapter."""
+        return self.state
+
+```
+

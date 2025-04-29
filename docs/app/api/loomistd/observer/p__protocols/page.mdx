@@ -1,0 +1,323 @@
+---
+title: _protocols
+sidebarTitle: 📄 _protocols
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.observer._protocols` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="ObserverServiceProtocol" href="#observerserviceprotocol"/>
+</Cards>
+
+---
+
+<a id='observerserviceprotocol'></a>
+
+## ObserverServiceProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncObservableProtocol`, `Protocol`
+</Callout>
+
+Protocol defining state change observation operations.
+
+Observer implementations handle state change notifications with:
+- Topic-based routing using StorageKeyT (tuple[str, ...])
+- Async notification delivery
+- Proper error handling and validation
+- Type safety through StorageKeyT constraints
+
+Type Parameters:
+    StorageKeyT: Topic type (tuple of strings matching state keys)
+
+Implementation Requirements:
+    - Must validate topic formats
+    - Must handle concurrent subscriptions
+    - Must guarantee notification delivery
+    - Must support pattern matching on topics
+
+```python filename='class.py'
+class ObserverServiceProtocol(AsyncObservableProtocol, Protocol):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `codec` | `property` | `&lt;property object at 0x10f7e7380&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `codec` | Get codec for encoding/decoding topics. |
+
+### Methods
+
+<Tabs items={['connect', 'disconnect', 'notify', 'subscribe', 'unsubscribe']}>
+<Tabs.Tab>
+
+### connect() 🔧
+
+```python filename='method.py'
+def connect(self) -> 'None'
+```
+
+Establish connection to notification system.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObserverConnectionError` | If connection fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### disconnect() 🔧
+
+```python filename='method.py'
+def disconnect(self) -> 'None'
+```
+
+Close connection to notification system.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObserverConnectionError` | If disconnection fails |
+| `ObserverError` | If cleanup fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### notify() 🔧
+
+```python filename='method.py'
+def notify(self, topic: 'ObserverKeyT') -> 'None'
+```
+
+Notify all subscribers of state change.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `topic` | `ObserverKeyT` | Topic identifying changed state | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObserverConnectionError` | If not connected |
+| `ObserverOperationError` | If notification fails |
+| `ObserverValidationError` | If topic invalid |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### subscribe() 🔧
+
+```python filename='method.py'
+def subscribe(self, topic_pattern: 'ObserverKey', callback: 'AsyncCallbackFn', depth: 'int' = Ellipsis) -> 'AsyncSubscriptionProtocol'
+```
+
+Subscribe to changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `topic_pattern` | `ObserverKey` | Key prefix to subscribe to | `Required` |
+| `callback` | `AsyncCallbackFn` | Async callback function for notifications | `Required` |
+| `depth` | `int` | Depth of topic pattern matching (default: 0 for exact match) If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics. | `Ellipsis` |
+
+**Returns:** `AsyncSubscriptionProtocol` - Subscription object for unsubscribing
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObserverError` | If subscription fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### unsubscribe() 🔧
+
+```python filename='method.py'
+def unsubscribe(self, subscription: 'AsyncSubscriptionProtocol') -> 'None'
+```
+
+Unsubscribe from changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `subscription` | `AsyncSubscriptionProtocol` | Subscription to cancel | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObserverError` | If unsubscribe fails |
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class ObserverServiceProtocol(AsyncObservableProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
+    """
+    Protocol defining state change observation operations.
+
+    Observer implementations handle state change notifications with:
+    - Topic-based routing using StorageKeyT (tuple[str, ...])
+    - Async notification delivery
+    - Proper error handling and validation
+    - Type safety through StorageKeyT constraints
+
+    Type Parameters:
+        StorageKeyT: Topic type (tuple of strings matching state keys)
+
+    Implementation Requirements:
+        - Must validate topic formats
+        - Must handle concurrent subscriptions
+        - Must guarantee notification delivery
+        - Must support pattern matching on topics
+    """
+
+    @property
+    def codec(self) -> CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]:
+        """
+        Get codec for encoding/decoding topics.
+        """
+        ...
+
+    async def connect(self) -> None:
+        """
+        Establish connection to notification system.
+
+        Raises:
+            ObserverConnectionError: If connection fails
+        """
+        ...
+
+    async def disconnect(self) -> None:
+        """
+        Close connection to notification system.
+
+        Raises:
+            ObserverConnectionError: If disconnection fails
+            ObserverError: If cleanup fails
+        """
+        ...
+
+    async def notify(self, topic: ObserverKeyT) -> None:
+        """
+        Notify all subscribers of state change.
+
+        Args:
+            topic: Topic identifying changed state
+
+        Raises:
+            ObserverConnectionError: If not connected
+            ObserverOperationError: If notification fails
+            ObserverValidationError: If topic invalid
+        """
+        ...
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import Any, Protocol
+
+from loomi.interfaces.state.observer import AsyncObservableProtocol
+from loomistd.codec import CodecProtocol
+
+from ._types import ObserverEncodedKeyT, ObserverKeyT
+
+__all__ = [
+    "ObserverServiceProtocol",
+]
+
+
+class ObserverServiceProtocol(AsyncObservableProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
+    """
+    Protocol defining state change observation operations.
+
+    Observer implementations handle state change notifications with:
+    - Topic-based routing using StorageKeyT (tuple[str, ...])
+    - Async notification delivery
+    - Proper error handling and validation
+    - Type safety through StorageKeyT constraints
+
+    Type Parameters:
+        StorageKeyT: Topic type (tuple of strings matching state keys)
+
+    Implementation Requirements:
+        - Must validate topic formats
+        - Must handle concurrent subscriptions
+        - Must guarantee notification delivery
+        - Must support pattern matching on topics
+    """
+
+    @property
+    def codec(self) -> CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]:
+        """
+        Get codec for encoding/decoding topics.
+        """
+        ...
+
+    async def connect(self) -> None:
+        """
+        Establish connection to notification system.
+
+        Raises:
+            ObserverConnectionError: If connection fails
+        """
+        ...
+
+    async def disconnect(self) -> None:
+        """
+        Close connection to notification system.
+
+        Raises:
+            ObserverConnectionError: If disconnection fails
+            ObserverError: If cleanup fails
+        """
+        ...
+
+    async def notify(self, topic: ObserverKeyT) -> None:
+        """
+        Notify all subscribers of state change.
+
+        Args:
+            topic: Topic identifying changed state
+
+        Raises:
+            ObserverConnectionError: If not connected
+            ObserverOperationError: If notification fails
+            ObserverValidationError: If topic invalid
+        """
+        ...
+
+```
+

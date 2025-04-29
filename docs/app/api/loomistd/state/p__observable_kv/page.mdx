@@ -1,0 +1,997 @@
+---
+title: _observable_kv
+sidebarTitle: 📄 _observable_kv
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.state._observable_kv` Reference
+
+<Callout>
+This module includes an observable kv storage solution with:
+</Callout>
+
+- Persistent storage
+- Change notifications
+- Transactional operations
+- Type safety
+
+## Classes
+
+<Cards>
+  <Cards.Card title="ObservableKVStorageCore" href="#observablekvstoragecore"/>
+  <Cards.Card title="ObservableKVTransaction" href="#observablekvtransaction"/>
+  <Cards.Card title="ObservableKVTransactionContextManager" href="#observablekvtransactioncontextmanager"/>
+</Cards>
+
+---
+
+<a id='observablekvstoragecore'></a>
+
+## ObservableKVStorageCore 🧩
+
+```python filename='class.py'
+class ObservableKVStorageCore:
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `observer` | `property` | `&lt;property object at 0x10f866610&gt;` |  |
+| `storage` | `property` | `&lt;property object at 0x10f865f80&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `observer` | Get observer backend. |
+| `storage` | Get storage backend. |
+
+### Methods
+
+<Tabs items={['begin_transaction', 'delete', 'exists', 'get', 'list_keys', 'set', 'subscribe', 'transaction', 'unsubscribe']}>
+<Tabs.Tab>
+
+### begin_transaction() 🔧
+
+```python filename='method.py'
+def begin_transaction(self) -> 'ObservableKVTransaction'
+```
+
+Begin a new transaction that handles both storage and notifications.
+
+**Returns:** `ObservableKVTransaction` - New transaction instance combining storage and notifications
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `TransactionError` | If transaction cannot be started |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, key: 'StateKey') -> 'None'
+```
+
+Delete value at key and notify observers.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StateKey` | Key to delete | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageOperationError` | If deletion fails |
+| `ObserverError` | If notification fails |
+| `StorageKeyError` | If key not found |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, key: 'StateKey') -> 'bool'
+```
+
+Check if key exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StateKey` | Key to check | `Required` |
+
+**Returns:** `bool` - True if key exists, False otherwise
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageOperationError` | If check fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, key: 'StateKey') -> 'StateValue'
+```
+
+Get value at key.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StateKey` | Key to retrieve | `Required` |
+
+**Returns:** `StateValue` - Value stored at key
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageOperationError` | If retrieval fails |
+| `StorageKeyError` | If key not found |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list_keys() 🔧
+
+```python filename='method.py'
+def list_keys(self, prefix: 'StateKey', depth: 'int' = 1) -> 'AsyncGenerator[StateKey, None]'
+```
+
+List all keys under prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `prefix` | `StateKey` | Key prefix to filter results | `Required` |
+| `depth` | `int` | Depth of listing (default is 1) If depth is -1, lists all keys under prefix. | `1` |
+
+**Returns:** `AsyncGenerator[StateKey, None]` - AsyncGenerator of matching keys
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageOperationError` | If listing fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, key: 'StateKey', value: 'StateValue') -> 'None'
+```
+
+Set value at key and notify observers.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `StateKey` | Key to set | `Required` |
+| `value` | `StateValue` | Value to store | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageOperationError` | If storage fails |
+| `ObserverError` | If notification fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### subscribe() 🔧
+
+```python filename='method.py'
+def subscribe(self, topic_pattern: 'StateKey', callback: 'StateCallbackFn', depth: 'int' = 0) -> 'AsyncSubscriptionProtocol'
+```
+
+Subscribe to changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `Any` | Key prefix to subscribe to | `Required` |
+| `callback` | `StateCallbackFn` | Async callback function for notifications | `Required` |
+| `depth` | `int` | Depth of topic pattern matching (default: 0 for exact match) If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics. | `0` |
+
+**Returns:** `AsyncSubscriptionProtocol` - Subscription object for unsubscribing
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObserverError` | If subscription fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transaction() 🔧
+
+```python filename='method.py'
+def transaction(self) -> 'ObservableKVTransactionContextManager'
+```
+
+Get transaction context manager for combined storage and notification handling.
+
+**Returns:** `ObservableKVTransactionContextManager` - Transaction context manager for use in async with statements
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### unsubscribe() 🔧
+
+```python filename='method.py'
+def unsubscribe(self, subscription: 'AsyncSubscriptionProtocol') -> 'None'
+```
+
+Unsubscribe from changes under key prefix.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `subscription` | `AsyncSubscriptionProtocol` | Subscription to cancel | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObserverError` | If unsubscribe fails |
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class ObservableKVStorageCore:
+    _storage: StorageServiceProtocol[StateKey, StateValue, Any, Any]
+    _observer: ObserverServiceProtocol[StateKey, Any]
+
+    def __init__(
+        self,
+        storage: StorageServiceProtocol[StateKey, StateValue, Any, Any],
+        observer: ObserverServiceProtocol[StateKey, Any],
+    ) -> None:
+        """
+        Initialize ObservableKVStorage with storage and observer.
+
+        Args:
+            storage: Storage backend
+            observer: Observer backend
+        """
+        self._storage = storage
+        self._observer = observer
+
+    @property
+    def storage(self) -> StorageServiceProtocol[StateKey, StateValue, Any, Any]:
+        """
+        Get storage backend.
+
+        Returns:
+            Storage instance
+        """
+        return self._storage
+
+    @property
+    def observer(self) -> ObserverServiceProtocol[StateKey, Any]:
+        """
+        Get observer backend.
+
+        Returns:
+            Observer instance
+        """
+        return self._observer
+
+    async def get(self, key: StateKey) -> StateValue:
+        """
+        Get value at key.
+
+        Args:
+            key: Key to retrieve
+
+        Returns:
+            Value stored at key
+
+        Raises:
+            StorageOperationError: If retrieval fails
+            StorageKeyError: If key not found
+        """
+        return await self.storage.get(key)
+
+    async def set(self, key: StateKey, value: StateValue) -> None:
+        """
+        Set value at key and notify observers.
+
+        Args:
+            key: Key to set
+            value: Value to store
+
+        Raises:
+            StorageOperationError: If storage fails
+            ObserverError: If notification fails
+        """
+        await self.storage.set(key, value)
+        await self.observer.notify(key)
+
+    async def delete(self, key: StateKey) -> None:
+        """
+        Delete value at key and notify observers.
+
+        Args:
+            key: Key to delete
+
+        Raises:
+            StorageOperationError: If deletion fails
+            ObserverError: If notification fails
+            StorageKeyError: If key not found
+        """
+        await self.storage.delete(key)
+        await self.observer.notify(key)
+
+    async def exists(self, key: StateKey) -> bool:
+        """
+        Check if key exists.
+
+        Args:
+            key: Key to check
+
+        Returns:
+            True if key exists, False otherwise
+
+        Raises:
+            StorageOperationError: If check fails
+        """
+        return await self.storage.exists(key)
+
+    async def list_keys(self, prefix: StateKey, depth: int = 1) -> AsyncGenerator[StateKey, None]:
+        """
+        List all keys under prefix.
+
+        Args:
+            prefix: Key prefix to filter results
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
+
+        Returns:
+            AsyncGenerator of matching keys
+
+        Raises:
+            StorageOperationError: If listing fails
+        """
+        async for key in self.storage.list_keys(prefix, depth):
+            yield key
+
+    async def subscribe(
+        self,
+        topic_pattern: StateKey,
+        callback: StateCallbackFn,
+        depth: int = 0,
+    ) -> AsyncSubscriptionProtocol:
+        """
+        Subscribe to changes under key prefix.
+
+        Args:
+            key: Key prefix to subscribe to
+            callback: Async callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Raises:
+            ObserverError: If subscription fails
+        """
+        return await self.observer.subscribe(topic_pattern, callback, depth)
+
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        await self.observer.unsubscribe(subscription)
+
+    async def begin_transaction(self) -> ObservableKVTransaction:
+        """
+        Begin a new transaction that handles both storage and notifications.
+
+        Returns:
+            New transaction instance combining storage and notifications
+
+        Raises:
+            TransactionError: If transaction cannot be started
+        """
+        storage_txn = await self.storage.begin_transaction()
+        return ObservableKVTransaction(storage_txn=storage_txn, observer=self.observer)
+
+    async def transaction(self) -> ObservableKVTransactionContextManager:
+        """
+        Get transaction context manager for combined storage and notification handling.
+
+        Returns:
+            Transaction context manager for use in async with statements
+
+        Example:
+            ```python
+            async with kv.transaction() as txn:
+                await txn.set(key1, value1)
+                await txn.set(key2, value2)
+                # Auto-commits and notifies on success
+                # Auto-rollbacks with no notifications on failure
+            ```
+        """
+        return ObservableKVTransactionContextManager(self)
+
+```
+
+<a id='observablekvtransaction'></a>
+
+## ObservableKVTransaction 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncTransactionProtocol`
+</Callout>
+
+Transaction implementation that combines storage operations and notifications.
+
+Ensures atomicity between storage changes and observer notifications.
+
+```python filename='class.py'
+class ObservableKVTransaction(AsyncTransactionProtocol):
+    ...
+```
+
+### Methods
+
+<Tabs items={['commit', 'delete', 'exists', 'get', 'list_keys', 'rollback', 'set']}>
+<Tabs.Tab>
+
+### commit() 🔧
+
+```python filename='method.py'
+def commit(self) -> 'None'
+```
+
+Commit transaction and notify observers of changes
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, key: 'StateKey') -> 'None'
+```
+
+Delete value and track key for notification
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, key: 'StateKey') -> 'bool'
+```
+
+Check key existence within transaction
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, key: 'StateKey') -> 'StateValue'
+```
+
+Get value within transaction context
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list_keys() 🔧
+
+```python filename='method.py'
+def list_keys(self, prefix: 'StateKey', depth: 'int' = 1) -> 'AsyncGenerator[StateKey, None]'
+```
+
+List keys with prefix within transaction
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### rollback() 🔧
+
+```python filename='method.py'
+def rollback(self) -> 'None'
+```
+
+Rollback transaction without notifications
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, key: 'StateKey', value: 'StateValue') -> 'None'
+```
+
+Set value and track key for notification
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+@dataclass
+class ObservableKVTransaction(AsyncTransactionProtocol[StateValue]):
+    """
+    Transaction implementation that combines storage operations and notifications.
+    Ensures atomicity between storage changes and observer notifications.
+    """
+
+    storage_txn: AsyncTransactionProtocol[StateValue]
+    observer: ObserverServiceProtocol[StateKey, Any]
+    # Track modified keys for notification after commit
+    modified_keys: set[StateKey] = field(default_factory=set)
+
+    async def get(self, key: StateKey) -> StateValue:
+        """Get value within transaction context"""
+        return await self.storage_txn.get(key)
+
+    async def set(self, key: StateKey, value: StateValue) -> None:
+        """Set value and track key for notification"""
+        await self.storage_txn.set(key, value)
+        self.modified_keys.add(key)
+
+    async def delete(self, key: StateKey) -> None:
+        """Delete value and track key for notification"""
+        await self.storage_txn.delete(key)
+        self.modified_keys.add(key)
+
+    async def exists(self, key: StateKey) -> bool:
+        """Check key existence within transaction"""
+        return await self.storage_txn.exists(key)
+
+    async def list_keys(self, prefix: StateKey, depth: int = 1) -> AsyncGenerator[StateKey, None]:
+        """List keys with prefix within transaction"""
+        async for key in self.storage_txn.list_keys(prefix, depth):
+            yield key
+
+    async def commit(self) -> None:
+        """Commit transaction and notify observers of changes"""
+        await self.storage_txn.commit()
+        # After successful storage commit, notify observers of all modified keys
+        for key in self.modified_keys:
+            await self.observer.notify(key)
+
+    async def rollback(self) -> None:
+        """Rollback transaction without notifications"""
+        await self.storage_txn.rollback()
+        self.modified_keys.clear()
+
+```
+
+<a id='observablekvtransactioncontextmanager'></a>
+
+## ObservableKVTransactionContextManager 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncTransactionContextManagerProtocol`
+</Callout>
+
+Context manager for State transactions that handles both storage and notifications.
+
+```python filename='class.py'
+class ObservableKVTransactionContextManager(AsyncTransactionContextManagerProtocol):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+@dataclass
+class ObservableKVTransactionContextManager(AsyncTransactionContextManagerProtocol[StateValue]):
+    """
+    Context manager for State transactions that handles both storage and notifications.
+    """
+
+    _observable_kv: ObservableKVStorageCore  # Reference to parent State instance
+    _transaction: ObservableKVTransaction | None = None  # Store the active transaction
+
+    async def __aenter__(self) -> ObservableKVTransaction:
+        """Begin new transaction with combined storage and notification handling"""
+        self._transaction = await self._observable_kv.begin_transaction()
+        return self._transaction
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """
+        Handle transaction completion:
+        - On success (no exception): commit changes and send notifications
+        - On failure (exception): rollback changes, no notifications
+        """
+        if self._transaction is None:
+            raise RuntimeError("Transaction not initialized")
+
+        try:
+            if exc_type is not None:
+                # Exception occurred, rollback
+                await self._transaction.rollback()
+                return False
+            # No exception, commit
+            await self._transaction.commit()
+            return True
+        finally:
+            # Clear the transaction reference
+            self._transaction = None
+
+```
+
+## Source Code
+
+```python filename='source.py'
+"""
+This module includes an observable kv storage solution with:
+- Persistent storage
+- Change notifications
+- Transactional operations
+- Type safety
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, AsyncGenerator
+
+from loomi.interfaces.state.kv import (
+    AsyncObservableStorageProtocol,
+    AsyncTransactionContextManagerProtocol,
+    AsyncTransactionProtocol,
+)
+from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
+from loomistd.kv_storage import StorageServiceProtocol
+from loomistd.observer import ObserverServiceProtocol
+
+from ._types import StateCallbackFn, StateKey, StateValue
+
+__all__ = [
+    "ObservableKVStorageCore",
+    "ObservableKVTransaction",
+    "ObservableKVTransactionContextManager",
+]
+
+
+class ObservableKVStorageCore:
+    _storage: StorageServiceProtocol[StateKey, StateValue, Any, Any]
+    _observer: ObserverServiceProtocol[StateKey, Any]
+
+    def __init__(
+        self,
+        storage: StorageServiceProtocol[StateKey, StateValue, Any, Any],
+        observer: ObserverServiceProtocol[StateKey, Any],
+    ) -> None:
+        """
+        Initialize ObservableKVStorage with storage and observer.
+
+        Args:
+            storage: Storage backend
+            observer: Observer backend
+        """
+        self._storage = storage
+        self._observer = observer
+
+    @property
+    def storage(self) -> StorageServiceProtocol[StateKey, StateValue, Any, Any]:
+        """
+        Get storage backend.
+
+        Returns:
+            Storage instance
+        """
+        return self._storage
+
+    @property
+    def observer(self) -> ObserverServiceProtocol[StateKey, Any]:
+        """
+        Get observer backend.
+
+        Returns:
+            Observer instance
+        """
+        return self._observer
+
+    async def get(self, key: StateKey) -> StateValue:
+        """
+        Get value at key.
+
+        Args:
+            key: Key to retrieve
+
+        Returns:
+            Value stored at key
+
+        Raises:
+            StorageOperationError: If retrieval fails
+            StorageKeyError: If key not found
+        """
+        return await self.storage.get(key)
+
+    async def set(self, key: StateKey, value: StateValue) -> None:
+        """
+        Set value at key and notify observers.
+
+        Args:
+            key: Key to set
+            value: Value to store
+
+        Raises:
+            StorageOperationError: If storage fails
+            ObserverError: If notification fails
+        """
+        await self.storage.set(key, value)
+        await self.observer.notify(key)
+
+    async def delete(self, key: StateKey) -> None:
+        """
+        Delete value at key and notify observers.
+
+        Args:
+            key: Key to delete
+
+        Raises:
+            StorageOperationError: If deletion fails
+            ObserverError: If notification fails
+            StorageKeyError: If key not found
+        """
+        await self.storage.delete(key)
+        await self.observer.notify(key)
+
+    async def exists(self, key: StateKey) -> bool:
+        """
+        Check if key exists.
+
+        Args:
+            key: Key to check
+
+        Returns:
+            True if key exists, False otherwise
+
+        Raises:
+            StorageOperationError: If check fails
+        """
+        return await self.storage.exists(key)
+
+    async def list_keys(self, prefix: StateKey, depth: int = 1) -> AsyncGenerator[StateKey, None]:
+        """
+        List all keys under prefix.
+
+        Args:
+            prefix: Key prefix to filter results
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
+
+        Returns:
+            AsyncGenerator of matching keys
+
+        Raises:
+            StorageOperationError: If listing fails
+        """
+        async for key in self.storage.list_keys(prefix, depth):
+            yield key
+
+    async def subscribe(
+        self,
+        topic_pattern: StateKey,
+        callback: StateCallbackFn,
+        depth: int = 0,
+    ) -> AsyncSubscriptionProtocol:
+        """
+        Subscribe to changes under key prefix.
+
+        Args:
+            key: Key prefix to subscribe to
+            callback: Async callback function for notifications
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Raises:
+            ObserverError: If subscription fails
+        """
+        return await self.observer.subscribe(topic_pattern, callback, depth)
+
+    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        await self.observer.unsubscribe(subscription)
+
+    async def begin_transaction(self) -> ObservableKVTransaction:
+        """
+        Begin a new transaction that handles both storage and notifications.
+
+        Returns:
+            New transaction instance combining storage and notifications
+
+        Raises:
+            TransactionError: If transaction cannot be started
+        """
+        storage_txn = await self.storage.begin_transaction()
+        return ObservableKVTransaction(storage_txn=storage_txn, observer=self.observer)
+
+    async def transaction(self) -> ObservableKVTransactionContextManager:
+        """
+        Get transaction context manager for combined storage and notification handling.
+
+        Returns:
+            Transaction context manager for use in async with statements
+
+        Example:
+            ```python
+            async with kv.transaction() as txn:
+                await txn.set(key1, value1)
+                await txn.set(key2, value2)
+                # Auto-commits and notifies on success
+                # Auto-rollbacks with no notifications on failure
+            ```
+        """
+        return ObservableKVTransactionContextManager(self)
+
+
+@dataclass
+class ObservableKVTransaction(AsyncTransactionProtocol[StateValue]):
+    """
+    Transaction implementation that combines storage operations and notifications.
+    Ensures atomicity between storage changes and observer notifications.
+    """
+
+    storage_txn: AsyncTransactionProtocol[StateValue]
+    observer: ObserverServiceProtocol[StateKey, Any]
+    # Track modified keys for notification after commit
+    modified_keys: set[StateKey] = field(default_factory=set)
+
+    async def get(self, key: StateKey) -> StateValue:
+        """Get value within transaction context"""
+        return await self.storage_txn.get(key)
+
+    async def set(self, key: StateKey, value: StateValue) -> None:
+        """Set value and track key for notification"""
+        await self.storage_txn.set(key, value)
+        self.modified_keys.add(key)
+
+    async def delete(self, key: StateKey) -> None:
+        """Delete value and track key for notification"""
+        await self.storage_txn.delete(key)
+        self.modified_keys.add(key)
+
+    async def exists(self, key: StateKey) -> bool:
+        """Check key existence within transaction"""
+        return await self.storage_txn.exists(key)
+
+    async def list_keys(self, prefix: StateKey, depth: int = 1) -> AsyncGenerator[StateKey, None]:
+        """List keys with prefix within transaction"""
+        async for key in self.storage_txn.list_keys(prefix, depth):
+            yield key
+
+    async def commit(self) -> None:
+        """Commit transaction and notify observers of changes"""
+        await self.storage_txn.commit()
+        # After successful storage commit, notify observers of all modified keys
+        for key in self.modified_keys:
+            await self.observer.notify(key)
+
+    async def rollback(self) -> None:
+        """Rollback transaction without notifications"""
+        await self.storage_txn.rollback()
+        self.modified_keys.clear()
+
+
+@dataclass
+class ObservableKVTransactionContextManager(AsyncTransactionContextManagerProtocol[StateValue]):
+    """
+    Context manager for State transactions that handles both storage and notifications.
+    """
+
+    _observable_kv: ObservableKVStorageCore  # Reference to parent State instance
+    _transaction: ObservableKVTransaction | None = None  # Store the active transaction
+
+    async def __aenter__(self) -> ObservableKVTransaction:
+        """Begin new transaction with combined storage and notification handling"""
+        self._transaction = await self._observable_kv.begin_transaction()
+        return self._transaction
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """
+        Handle transaction completion:
+        - On success (no exception): commit changes and send notifications
+        - On failure (exception): rollback changes, no notifications
+        """
+        if self._transaction is None:
+            raise RuntimeError("Transaction not initialized")
+
+        try:
+            if exc_type is not None:
+                # Exception occurred, rollback
+                await self._transaction.rollback()
+                return False
+            # No exception, commit
+            await self._transaction.commit()
+            return True
+        finally:
+            # Clear the transaction reference
+            self._transaction = None
+
+
+if TYPE_CHECKING:
+    _: type[AsyncObservableStorageProtocol] = ObservableKVStorageCore
+
+```
+

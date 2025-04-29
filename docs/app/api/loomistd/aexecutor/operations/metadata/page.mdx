@@ -1,0 +1,126 @@
+---
+title: metadata
+sidebarTitle: 📄 metadata
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.aexecutor.operations.metadata` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="OperationMetadata" href="#operationmetadata"/>
+</Cards>
+
+---
+
+<a id='operationmetadata'></a>
+
+## OperationMetadata 🧩
+
+Metadata for operations, used for introspection and visualization.
+
+```python filename='class.py'
+class OperationMetadata:
+    ...
+```
+
+### Methods
+
+<a id='with_properties'></a>
+
+#### with_properties() 🔧
+
+```python filename='method.py'
+def with_properties(self, **properties: 'dict[str, Any]') -> "'OperationMetadata'"
+```
+
+Create a new OperationMetadata with additional properties.
+
+**Returns:** `'OperationMetadata'` - A new OperationMetadata instance with the additional properties
+
+### Source Code
+
+```python filename='source.py'
+@dataclass(frozen=True)
+class OperationMetadata:
+    """
+    Metadata for operations, used for introspection and visualization.
+
+    Attributes:
+        name: The name of the operation type
+        description: A human-readable description of the operation
+        custom_properties: Additional operation-specific metadata
+    """
+
+    name: str
+    description: str
+    custom_properties: dict[str, Any]
+
+    def with_properties(self, **properties: dict[str, Any]) -> "OperationMetadata":
+        """
+        Create a new OperationMetadata with additional properties.
+
+        Args:
+            **properties: Additional properties to add
+
+        Returns:
+            A new OperationMetadata instance with the additional properties
+        """
+        return OperationMetadata(
+            name=self.name,
+            description=self.description,
+            custom_properties={
+                **self.custom_properties,
+                **properties,
+            },
+        )
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass(frozen=True)
+class OperationMetadata:
+    """
+    Metadata for operations, used for introspection and visualization.
+
+    Attributes:
+        name: The name of the operation type
+        description: A human-readable description of the operation
+        custom_properties: Additional operation-specific metadata
+    """
+
+    name: str
+    description: str
+    custom_properties: dict[str, Any]
+
+    def with_properties(self, **properties: dict[str, Any]) -> "OperationMetadata":
+        """
+        Create a new OperationMetadata with additional properties.
+
+        Args:
+            **properties: Additional properties to add
+
+        Returns:
+            A new OperationMetadata instance with the additional properties
+        """
+        return OperationMetadata(
+            name=self.name,
+            description=self.description,
+            custom_properties={
+                **self.custom_properties,
+                **properties,
+            },
+        )
+
+```
+

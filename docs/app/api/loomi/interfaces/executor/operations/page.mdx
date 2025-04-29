@@ -1,0 +1,1782 @@
+---
+title: operations
+sidebarTitle: 📄 operations
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomi.interfaces.executor.operations` Reference
+
+<Callout>
+Operation protocol definitions for the operations framework.
+</Callout>
+
+This module defines the protocols for all operation types in the framework,
+ensuring consistent interfaces across implementations.
+
+## Classes
+
+<Cards>
+  <Cards.Card title="AppOperationProtocol" href="#appoperationprotocol"/>
+  <Cards.Card title="BranchOperationProtocol" href="#branchoperationprotocol"/>
+  <Cards.Card title="DelayOperationProtocol" href="#delayoperationprotocol"/>
+  <Cards.Card title="FunctionOperationProtocol" href="#functionoperationprotocol"/>
+  <Cards.Card title="LoopOperationProtocol" href="#loopoperationprotocol"/>
+  <Cards.Card title="MapOperationProtocol" href="#mapoperationprotocol"/>
+  <Cards.Card title="OperationProtocol" href="#operationprotocol"/>
+  <Cards.Card title="ParallelOperationProtocol" href="#paralleloperationprotocol"/>
+  <Cards.Card title="RetryOperationProtocol" href="#retryoperationprotocol"/>
+  <Cards.Card title="SequenceOperationProtocol" href="#sequenceoperationprotocol"/>
+  <Cards.Card title="SubscribeOperationProtocol" href="#subscribeoperationprotocol"/>
+  <Cards.Card title="TimeoutOperationProtocol" href="#timeoutoperationprotocol"/>
+</Cards>
+
+---
+
+<a id='appoperationprotocol'></a>
+
+## AppOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Executes a Loomi app as an operation.
+
+This operation adapts a Loomi app to the operations framework,
+allowing apps to be composed within workflows.
+
+```python filename='class.py'
+class AppOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+from loomi import AsyncApp
+my_app = AsyncApp()
+op = App(my_app, state_path=("apps", "my_app"))
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class AppOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes a Loomi app as an operation.
+
+    This operation adapts a Loomi app to the operations framework,
+    allowing apps to be composed within workflows.
+
+    Args:
+        app: The app to execute
+        state_path: Optional path to mount the app's state
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> from loomi import AsyncApp
+        >>> my_app = AsyncApp()
+        >>> op = App(my_app, state_path=("apps", "my_app"))
+    """
+
+    def __init__(
+        self,
+        app: "Union[AsyncApp, SyncApp]",
+        /,
+        *,
+        state_path: Optional[Union[Tuple[str, ...], str]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the App operation.
+
+        Args:
+            app: The app to execute
+            state_path: Optional path to mount the app's state
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            OperationConfigError: If app is not a valid Loomi app
+        """
+
+```
+
+<a id='branchoperationprotocol'></a>
+
+## BranchOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Conditionally executes operations based on a condition.
+
+This operation evaluates a condition and executes the operation
+corresponding to the condition's result value. The condition can be
+specified as a function or as a path to a value in the state.
+
+```python filename='class.py'
+class BranchOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+branch = Branch(
+    {
+        True: Function(handle_true),
+        False: Function(handle_false),
+        "other": Function(handle_other),
+    },
+    condition=lambda ctx: ctx.scope.get("flag"),
+)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class BranchOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Conditionally executes operations based on a condition.
+
+    This operation evaluates a condition and executes the operation
+    corresponding to the condition's result value. The condition can be
+    specified as a function or as a path to a value in the state.
+
+    Args:
+        ops: Dictionary mapping condition values to operations
+        condition: Function that returns a condition value
+        condition_path: Path to a value in the state to use as condition
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> branch = Branch(
+        ...     {
+        ...         True: Function(handle_true),
+        ...         False: Function(handle_false),
+        ...         "other": Function(handle_other),
+        ...     },
+        ...     condition=lambda ctx: ctx.scope.get("flag"),
+        ... )
+    """
+
+    def __init__(
+        self,
+        ops: Dict[Union[str, bool, int, float, None], OperationT],
+        /,
+        *,
+        condition: Optional[Callable[["ContextT_co"], Awaitable[Any] | Any]] = None,
+        condition_path: Optional[Union[Tuple[str, ...], str]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Branch operation.
+
+        Args:
+            ops: Dictionary mapping condition values to operations
+            condition: Function that returns a condition value
+            condition_path: Path to a value in the state to use as condition
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both condition and condition_path are None, or if ops is empty
+        """
+
+```
+
+<a id='delayoperationprotocol'></a>
+
+## DelayOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Introduces a delay in the execution flow.
+
+This operation pauses execution for a specified duration. The delay
+can be a fixed value, derived from a function, or from a state path.
+
+```python filename='class.py'
+class DelayOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+# Fixed delay of 2 seconds
+delay_op = Delay(2.0)
+
+# Dynamic delay from a function
+delay_op = Delay(lambda ctx: random.uniform(1.0, 5.0))
+
+# Delay from state path
+delay_op = Delay(delay_path=("config", "retry_delay"))
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class DelayOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Introduces a delay in the execution flow.
+
+    This operation pauses execution for a specified duration. The delay
+    can be a fixed value, derived from a function, or from a state path.
+
+    Args:
+        delay: Fixed delay in seconds, or function that returns the delay
+        delay_path: Path to a value in the state to use as delay
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Fixed delay of 2 seconds
+        >>> delay_op = Delay(2.0)
+        >>>
+        >>> # Dynamic delay from a function
+        >>> delay_op = Delay(lambda ctx: random.uniform(1.0, 5.0))
+        >>>
+        >>> # Delay from state path
+        >>> delay_op = Delay(delay_path=("config", "retry_delay"))
+    """
+
+    def __init__(
+        self,
+        delay: Optional[Union[float, Callable[["ContextT_co"], Awaitable[float] | float]]] = None,
+        *,
+        delay_path: Optional[Union[Tuple[str, ...], str]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Delay operation.
+
+        Args:
+            delay: Fixed delay in seconds, or function that returns the delay
+            delay_path: Path to a value in the state to use as delay
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both delay and delay_path are None, or if delay is negative
+        """
+
+```
+
+<a id='functionoperationprotocol'></a>
+
+## FunctionOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Executes a callable function or method.
+
+This is the most basic operation, allowing arbitrary async callables
+to be used within the operations framework.
+
+```python filename='class.py'
+class FunctionOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+async def greet(context):
+    print(f"Hello from path {context.path}")
+
+op = Function(greet)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class FunctionOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes a callable function or method.
+
+    This is the most basic operation, allowing arbitrary async callables
+    to be used within the operations framework.
+
+    Args:
+        func: The function to execute
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> async def greet(context):
+        ...     print(f"Hello from path {context.path}")
+        ...
+        >>> op = Function(greet)
+    """
+
+    def __init__(
+        self,
+        func: Callable[["ContextT_co"], Awaitable[None] | None],
+        /,
+        *,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Function operation.
+
+        Args:
+            func: The function to execute
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            OperationConfigError: If func is not a callable
+        """
+
+```
+
+<a id='loopoperationprotocol'></a>
+
+## LoopOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Repeatedly executes an operation while a condition is true.
+
+This operation runs a child operation repeatedly until a condition
+becomes false or a maximum number of iterations is reached. The
+condition can be specified as a function or as a path to a value
+in the state.
+
+```python filename='class.py'
+class LoopOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+# Loop with condition function
+loop = Loop(
+    Function(process_item),
+    condition=lambda ctx: ctx.scope.get("has_more_items", False),
+    max_iterations=100,
+)
+
+# Loop with condition path
+loop = Loop(
+    Function(process_item),
+    condition_path=("queue", "has_more_items"),
+    on_finish=Function(finalize),
+)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class LoopOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Repeatedly executes an operation while a condition is true.
+
+    This operation runs a child operation repeatedly until a condition
+    becomes false or a maximum number of iterations is reached. The
+    condition can be specified as a function or as a path to a value
+    in the state.
+
+    Args:
+        op: The operation to execute repeatedly
+        condition: Function that returns a boolean indicating whether to continue
+        condition_path: Path to a boolean value in the state
+        max_iterations: Maximum number of iterations (None means no limit)
+        on_finish: Operation to execute after all iterations are complete
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Loop with condition function
+        >>> loop = Loop(
+        ...     Function(process_item),
+        ...     condition=lambda ctx: ctx.scope.get("has_more_items", False),
+        ...     max_iterations=100,
+        ... )
+        >>>
+        >>> # Loop with condition path
+        >>> loop = Loop(
+        ...     Function(process_item),
+        ...     condition_path=("queue", "has_more_items"),
+        ...     on_finish=Function(finalize),
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        condition: Optional[Callable[["ContextT_co"], Awaitable[bool] | bool]] = None,
+        condition_path: Optional[Union[Tuple[str, ...], str]] = None,
+        max_iterations: Optional[int] = None,
+        on_finish: Optional[OperationT] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Loop operation.
+
+        Args:
+            op: The operation to execute repeatedly
+            condition: Function that returns a boolean indicating whether to continue
+            condition_path: Path to a boolean value in the state
+            max_iterations: Maximum number of iterations (None means no limit)
+            on_finish: Operation to execute after all iterations are complete
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both condition and condition_path are None and max_iterations is None
+        """
+
+```
+
+<a id='mapoperationprotocol'></a>
+
+## MapOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Executes an operation for each item in a collection.
+
+This operation retrieves a dictionary from the state using the specified
+path, then executes the provided operation once for each item. Operations can be
+executed sequentially or concurrently based on max_concurrency.
+
+The context for each executed operation is enriched with 'map_key' (the key or index
+of the current item) and 'map_index' (the position in the iteration).
+
+```python filename='class.py'
+class MapOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+# Process items sequentially
+map_op = Map(
+    Function(process_item),
+    items_path=("data", "items"),
+)
+
+# Process items concurrently (up to 5 at a time)
+map_op = Map(
+    Function(process_item),
+    items_path=("data", "items"),
+    max_concurrency=5,
+)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class MapOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes an operation for each item in a collection.
+
+    This operation retrieves a dictionary from the state using the specified
+    path, then executes the provided operation once for each item. Operations can be
+    executed sequentially or concurrently based on max_concurrency.
+
+    The context for each executed operation is enriched with 'map_key' (the key or index
+    of the current item) and 'map_index' (the position in the iteration).
+
+    Args:
+        op: The operation to execute for each item
+        items_path: Path to the collection in state
+        max_concurrency: Maximum number of concurrent operations
+            - 1 means sequential execution
+            - >1 means limited concurrent execution
+            - 0 or -1 means unlimited concurrency
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Process items sequentially
+        >>> map_op = Map(
+        ...     Function(process_item),
+        ...     items_path=("data", "items"),
+        ... )
+        >>>
+        >>> # Process items concurrently (up to 5 at a time)
+        >>> map_op = Map(
+        ...     Function(process_item),
+        ...     items_path=("data", "items"),
+        ...     max_concurrency=5,
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        items_path: Union[Tuple[str, ...], str],
+        max_concurrency: int = 1,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Map operation.
+
+        Args:
+            op: The operation to execute for each item
+            items_path: Path to the collection in state
+            max_concurrency: Maximum number of concurrent operations
+                - 1 means sequential execution
+                - >1 means limited concurrent execution
+                - 0 or -1 means unlimited concurrency
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If items_path is empty or max_concurrency is invalid
+        """
+
+```
+
+<a id='operationprotocol'></a>
+
+## OperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `Protocol`
+</Callout>
+
+Base protocol for all operations.
+
+Defines the core functionality that all operations must implement,
+including parent-child relationships for the operation tree.
+
+```python filename='class.py'
+class OperationProtocol(Protocol):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `children` | `property` | `&lt;property object at 0x10f3e5990&gt;` |  |
+| `parents` | `property` | `&lt;property object at 0x10f3e58f0&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class OperationProtocol(Protocol[OperationT, ContextT_co]):
+    """
+    Base protocol for all operations.
+
+    Defines the core functionality that all operations must implement,
+    including parent-child relationships for the operation tree.
+    """
+
+    @property
+    def parents(self) -> tuple[OperationT, ...]: ...
+
+    @property
+    def children(self) -> tuple[OperationT, ...]: ...
+
+    @children.setter
+    def children(self, children: tuple[OperationT, ...]) -> None: ...
+
+    @children.deleter
+    def children(self) -> None: ...
+
+```
+
+<a id='paralleloperationprotocol'></a>
+
+## ParallelOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Executes operations concurrently.
+
+This operation runs child operations in parallel, with configurable
+maximum concurrency. When max_concurrency is 1, it behaves like
+a Sequence. When negative, it runs all operations with no limit.
+
+```python filename='class.py'
+class ParallelOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+op1 = Function(func1)
+op2 = Function(func2)
+op3 = Function(func3)
+parallel = Parallel(op1, op2, op3, max_concurrency=2)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class ParallelOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes operations concurrently.
+
+    This operation runs child operations in parallel, with configurable
+    maximum concurrency. When max_concurrency is 1, it behaves like
+    a Sequence. When negative, it runs all operations with no limit.
+
+    Args:
+        op: The first operation to execute
+        *ops: Additional operations to execute in parallel
+        max_concurrency: Maximum number of concurrent operations
+            - 1 means sequential execution (same as Sequence)
+            - >1 means limit to N concurrent operations
+            - -1 or 0 means unlimited concurrency
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> op1 = Function(func1)
+        >>> op2 = Function(func2)
+        >>> op3 = Function(func3)
+        >>> parallel = Parallel(op1, op2, op3, max_concurrency=2)
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *ops: OperationT,
+        max_concurrency: int = -1,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Parallel operation.
+
+        Args:
+            op: The first operation to execute
+            *ops: Additional operations to execute in parallel
+            max_concurrency: Maximum number of concurrent operations
+                - 1 means sequential execution (same as Sequence)
+                - >1 means limit to N concurrent operations
+                - -1 or 0 means unlimited concurrency
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If max_concurrency is invalid
+        """
+
+```
+
+<a id='retryoperationprotocol'></a>
+
+## RetryOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Retries an operation with configurable backoff.
+
+This operation attempts to execute a child operation multiple times,
+with exponential backoff between attempts. It can be configured to
+retry only on specific exception types.
+
+```python filename='class.py'
+class RetryOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+# Retry a network operation with exponential backoff
+retry_op = Retry(
+    Function(network_request),
+    max_attempts=5,
+    backoff_factor=2.0,
+    initial_delay=1.0,
+    retry_on=[NetworkError, TimeoutError]
+)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class RetryOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Retries an operation with configurable backoff.
+
+    This operation attempts to execute a child operation multiple times,
+    with exponential backoff between attempts. It can be configured to
+    retry only on specific exception types.
+
+    Args:
+        op: The operation to retry
+        max_attempts: Maximum number of attempts (including the first)
+        backoff_factor: Factor to multiply delay by after each failure
+        initial_delay: Initial delay in seconds before first retry
+        max_delay: Maximum delay in seconds between retries
+        retry_on: Exception types to retry on (None means retry on any exception)
+        error_behavior: How to handle errors after all retries fail
+        on_fail: Operation to execute when all retries fail
+
+    Examples:
+        >>> # Retry a network operation with exponential backoff
+        >>> retry_op = Retry(
+        ...     Function(network_request),
+        ...     max_attempts=5,
+        ...     backoff_factor=2.0,
+        ...     initial_delay=1.0,
+        ...     retry_on=[NetworkError, TimeoutError]
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        max_attempts: int = 3,
+        backoff_factor: float = 2.0,
+        initial_delay: float = 1.0,
+        max_delay: float = 30.0,
+        retry_on: Optional[List[Type[Exception]]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Retry operation.
+
+        Args:
+            op: The operation to retry
+            max_attempts: Maximum number of attempts (including the first)
+            backoff_factor: Factor to multiply delay by after each failure
+            initial_delay: Initial delay in seconds before first retry
+            max_delay: Maximum delay in seconds between retries
+            retry_on: Exception types to retry on (None means retry on any exception)
+            error_behavior: How to handle errors after all retries fail
+            on_fail: Operation to execute when all retries fail
+
+        Raises:
+            ValueError: If max_attempts is less than 1 or other parameters are invalid
+        """
+
+```
+
+<a id='sequenceoperationprotocol'></a>
+
+## SequenceOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Executes operations in sequential order.
+
+This operation runs each child operation in sequence, waiting for
+each to complete before executing the next.
+
+```python filename='class.py'
+class SequenceOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+op1 = Function(func1)
+op2 = Function(func2)
+op3 = Function(func3)
+sequence = Sequence(op1, op2, op3)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class SequenceOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes operations in sequential order.
+
+    This operation runs each child operation in sequence, waiting for
+    each to complete before executing the next.
+
+    Args:
+        *ops: The operations to execute in sequence
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> op1 = Function(func1)
+        >>> op2 = Function(func2)
+        >>> op3 = Function(func3)
+        >>> sequence = Sequence(op1, op2, op3)
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *ops: OperationT,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Sequence operation.
+
+        Args:
+            op: The first operation to execute
+            *ops: Additional operations to execute in sequence
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            OperationConfigError: If no operations are provided
+        """
+
+```
+
+<a id='subscribeoperationprotocol'></a>
+
+## SubscribeOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Executes an operation when state changes occur.
+
+This operation monitors a path in the state store and executes the
+specified operation when changes are detected. It can be configured
+to execute only once or continuously monitor for changes.
+
+```python filename='class.py'
+class SubscribeOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+# Execute log_change when user status changes
+subscribe = Subscribe(
+    Function(log_change),
+    watch_path=("users", "status"),
+    depth=0,
+)
+
+# Execute update_ui once when preferences change
+subscribe = Subscribe(
+    Function(update_ui),
+    watch_path=("preferences"),
+    once=True,
+)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class SubscribeOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes an operation when state changes occur.
+
+    This operation monitors a path in the state store and executes the
+    specified operation when changes are detected. It can be configured
+    to execute only once or continuously monitor for changes.
+
+    Args:
+        op: The operation to execute when changes occur
+        watch_path: Path to watch for changes
+        depth: Depth of monitoring (0=exact match, 1=direct children, -1=any descendant)
+        once: If True, execute once then complete
+        max_concurrency: Maximum number of concurrent operation executions
+        ignore_self_changes: Whether to ignore changes made by the operation itself
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Execute log_change when user status changes
+        >>> subscribe = Subscribe(
+        ...     Function(log_change),
+        ...     watch_path=("users", "status"),
+        ...     depth=0,
+        ... )
+        >>>
+        >>> # Execute update_ui once when preferences change
+        >>> subscribe = Subscribe(
+        ...     Function(update_ui),
+        ...     watch_path=("preferences"),
+        ...     once=True,
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        watch_path: Union[Tuple[str, ...], str],
+        depth: int = 0,
+        once: bool = False,
+        max_concurrency: int = 1,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Subscribe operation.
+
+        Args:
+            op: The operation to execute when changes occur
+            watch_path: Path to watch for changes
+            depth: Depth of monitoring (0=exact match, 1=direct children, -1=any descendant)
+            once: If True, execute once then complete
+            max_concurrency: Maximum number of concurrent operation executions
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If watch_path is empty or max_concurrency is invalid
+        """
+
+```
+
+<a id='timeoutoperationprotocol'></a>
+
+## TimeoutOperationProtocol 🧩
+
+<Callout type='info'>
+  Inherits from: `OperationProtocol`, `Protocol`
+</Callout>
+
+Adds a timeout constraint to an operation.
+
+This operation executes a child operation with a timeout constraint,
+cancelling it if execution exceeds the specified timeout duration.
+Optionally executes an on_timeout operation if the timeout is reached.
+
+```python filename='class.py'
+class TimeoutOperationProtocol(OperationProtocol, Protocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `children` |  |
+| `parents` |  |
+
+### Examples
+
+```python filename='example.py'
+# Execute with a 5-second timeout
+timeout_op = Timeout(
+    Function(long_running_task),
+    timeout=5.0,
+    on_timeout=Function(handle_timeout)
+)
+```
+
+### Source Code
+
+```python filename='source.py'
+@runtime_checkable
+class TimeoutOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Adds a timeout constraint to an operation.
+
+    This operation executes a child operation with a timeout constraint,
+    cancelling it if execution exceeds the specified timeout duration.
+    Optionally executes an on_timeout operation if the timeout is reached.
+
+    Args:
+        op: The operation to execute with a timeout
+        timeout: Timeout duration in seconds
+        on_timeout: Operation to execute if the timeout is reached
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Execute with a 5-second timeout
+        >>> timeout_op = Timeout(
+        ...     Function(long_running_task),
+        ...     timeout=5.0,
+        ...     on_timeout=Function(handle_timeout)
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        timeout: float = 30.0,
+        on_timeout: Optional[OperationT] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Timeout operation.
+
+        Args:
+            op: The operation to execute with a timeout
+            timeout: Timeout duration in seconds
+            on_timeout: Operation to execute if the timeout is reached
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If timeout is not positive
+        """
+
+```
+
+## Source Code
+
+```python filename='source.py'
+"""
+Operation protocol definitions for the operations framework.
+
+This module defines the protocols for all operation types in the framework,
+ensuring consistent interfaces across implementations.
+"""
+
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    Type,
+    Union,
+    runtime_checkable,
+)
+
+from .type_vars import ContextT_co, OperationT
+from .types import ErrorBehavior
+
+if TYPE_CHECKING:
+    from loomi._app import AsyncApp, SyncApp
+
+
+@runtime_checkable
+class OperationProtocol(Protocol[OperationT, ContextT_co]):
+    """
+    Base protocol for all operations.
+
+    Defines the core functionality that all operations must implement,
+    including parent-child relationships for the operation tree.
+    """
+
+    @property
+    def parents(self) -> tuple[OperationT, ...]: ...
+
+    @property
+    def children(self) -> tuple[OperationT, ...]: ...
+
+    @children.setter
+    def children(self, children: tuple[OperationT, ...]) -> None: ...
+
+    @children.deleter
+    def children(self) -> None: ...
+
+
+@runtime_checkable
+class FunctionOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes a callable function or method.
+
+    This is the most basic operation, allowing arbitrary async callables
+    to be used within the operations framework.
+
+    Args:
+        func: The function to execute
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> async def greet(context):
+        ...     print(f"Hello from path {context.path}")
+        ...
+        >>> op = Function(greet)
+    """
+
+    def __init__(
+        self,
+        func: Callable[["ContextT_co"], Awaitable[None] | None],
+        /,
+        *,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Function operation.
+
+        Args:
+            func: The function to execute
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            OperationConfigError: If func is not a callable
+        """
+
+
+@runtime_checkable
+class SequenceOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes operations in sequential order.
+
+    This operation runs each child operation in sequence, waiting for
+    each to complete before executing the next.
+
+    Args:
+        *ops: The operations to execute in sequence
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> op1 = Function(func1)
+        >>> op2 = Function(func2)
+        >>> op3 = Function(func3)
+        >>> sequence = Sequence(op1, op2, op3)
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *ops: OperationT,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Sequence operation.
+
+        Args:
+            op: The first operation to execute
+            *ops: Additional operations to execute in sequence
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            OperationConfigError: If no operations are provided
+        """
+
+
+@runtime_checkable
+class AppOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes a Loomi app as an operation.
+
+    This operation adapts a Loomi app to the operations framework,
+    allowing apps to be composed within workflows.
+
+    Args:
+        app: The app to execute
+        state_path: Optional path to mount the app's state
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> from loomi import AsyncApp
+        >>> my_app = AsyncApp()
+        >>> op = App(my_app, state_path=("apps", "my_app"))
+    """
+
+    def __init__(
+        self,
+        app: "Union[AsyncApp, SyncApp]",
+        /,
+        *,
+        state_path: Optional[Union[Tuple[str, ...], str]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the App operation.
+
+        Args:
+            app: The app to execute
+            state_path: Optional path to mount the app's state
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            OperationConfigError: If app is not a valid Loomi app
+        """
+
+
+@runtime_checkable
+class ParallelOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes operations concurrently.
+
+    This operation runs child operations in parallel, with configurable
+    maximum concurrency. When max_concurrency is 1, it behaves like
+    a Sequence. When negative, it runs all operations with no limit.
+
+    Args:
+        op: The first operation to execute
+        *ops: Additional operations to execute in parallel
+        max_concurrency: Maximum number of concurrent operations
+            - 1 means sequential execution (same as Sequence)
+            - >1 means limit to N concurrent operations
+            - -1 or 0 means unlimited concurrency
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> op1 = Function(func1)
+        >>> op2 = Function(func2)
+        >>> op3 = Function(func3)
+        >>> parallel = Parallel(op1, op2, op3, max_concurrency=2)
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *ops: OperationT,
+        max_concurrency: int = -1,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Parallel operation.
+
+        Args:
+            op: The first operation to execute
+            *ops: Additional operations to execute in parallel
+            max_concurrency: Maximum number of concurrent operations
+                - 1 means sequential execution (same as Sequence)
+                - >1 means limit to N concurrent operations
+                - -1 or 0 means unlimited concurrency
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If max_concurrency is invalid
+        """
+
+
+@runtime_checkable
+class BranchOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Conditionally executes operations based on a condition.
+
+    This operation evaluates a condition and executes the operation
+    corresponding to the condition's result value. The condition can be
+    specified as a function or as a path to a value in the state.
+
+    Args:
+        ops: Dictionary mapping condition values to operations
+        condition: Function that returns a condition value
+        condition_path: Path to a value in the state to use as condition
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> branch = Branch(
+        ...     {
+        ...         True: Function(handle_true),
+        ...         False: Function(handle_false),
+        ...         "other": Function(handle_other),
+        ...     },
+        ...     condition=lambda ctx: ctx.scope.get("flag"),
+        ... )
+    """
+
+    def __init__(
+        self,
+        ops: Dict[Union[str, bool, int, float, None], OperationT],
+        /,
+        *,
+        condition: Optional[Callable[["ContextT_co"], Awaitable[Any] | Any]] = None,
+        condition_path: Optional[Union[Tuple[str, ...], str]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: OperationT | None = None,
+    ) -> None:
+        """
+        Initialize the Branch operation.
+
+        Args:
+            ops: Dictionary mapping condition values to operations
+            condition: Function that returns a condition value
+            condition_path: Path to a value in the state to use as condition
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both condition and condition_path are None, or if ops is empty
+        """
+
+
+@runtime_checkable
+class LoopOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Repeatedly executes an operation while a condition is true.
+
+    This operation runs a child operation repeatedly until a condition
+    becomes false or a maximum number of iterations is reached. The
+    condition can be specified as a function or as a path to a value
+    in the state.
+
+    Args:
+        op: The operation to execute repeatedly
+        condition: Function that returns a boolean indicating whether to continue
+        condition_path: Path to a boolean value in the state
+        max_iterations: Maximum number of iterations (None means no limit)
+        on_finish: Operation to execute after all iterations are complete
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Loop with condition function
+        >>> loop = Loop(
+        ...     Function(process_item),
+        ...     condition=lambda ctx: ctx.scope.get("has_more_items", False),
+        ...     max_iterations=100,
+        ... )
+        >>>
+        >>> # Loop with condition path
+        >>> loop = Loop(
+        ...     Function(process_item),
+        ...     condition_path=("queue", "has_more_items"),
+        ...     on_finish=Function(finalize),
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        condition: Optional[Callable[["ContextT_co"], Awaitable[bool] | bool]] = None,
+        condition_path: Optional[Union[Tuple[str, ...], str]] = None,
+        max_iterations: Optional[int] = None,
+        on_finish: Optional[OperationT] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Loop operation.
+
+        Args:
+            op: The operation to execute repeatedly
+            condition: Function that returns a boolean indicating whether to continue
+            condition_path: Path to a boolean value in the state
+            max_iterations: Maximum number of iterations (None means no limit)
+            on_finish: Operation to execute after all iterations are complete
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both condition and condition_path are None and max_iterations is None
+        """
+
+
+@runtime_checkable
+class DelayOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Introduces a delay in the execution flow.
+
+    This operation pauses execution for a specified duration. The delay
+    can be a fixed value, derived from a function, or from a state path.
+
+    Args:
+        delay: Fixed delay in seconds, or function that returns the delay
+        delay_path: Path to a value in the state to use as delay
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Fixed delay of 2 seconds
+        >>> delay_op = Delay(2.0)
+        >>>
+        >>> # Dynamic delay from a function
+        >>> delay_op = Delay(lambda ctx: random.uniform(1.0, 5.0))
+        >>>
+        >>> # Delay from state path
+        >>> delay_op = Delay(delay_path=("config", "retry_delay"))
+    """
+
+    def __init__(
+        self,
+        delay: Optional[Union[float, Callable[["ContextT_co"], Awaitable[float] | float]]] = None,
+        *,
+        delay_path: Optional[Union[Tuple[str, ...], str]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Delay operation.
+
+        Args:
+            delay: Fixed delay in seconds, or function that returns the delay
+            delay_path: Path to a value in the state to use as delay
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both delay and delay_path are None, or if delay is negative
+        """
+
+
+@runtime_checkable
+class TimeoutOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Adds a timeout constraint to an operation.
+
+    This operation executes a child operation with a timeout constraint,
+    cancelling it if execution exceeds the specified timeout duration.
+    Optionally executes an on_timeout operation if the timeout is reached.
+
+    Args:
+        op: The operation to execute with a timeout
+        timeout: Timeout duration in seconds
+        on_timeout: Operation to execute if the timeout is reached
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Execute with a 5-second timeout
+        >>> timeout_op = Timeout(
+        ...     Function(long_running_task),
+        ...     timeout=5.0,
+        ...     on_timeout=Function(handle_timeout)
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        timeout: float = 30.0,
+        on_timeout: Optional[OperationT] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Timeout operation.
+
+        Args:
+            op: The operation to execute with a timeout
+            timeout: Timeout duration in seconds
+            on_timeout: Operation to execute if the timeout is reached
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If timeout is not positive
+        """
+
+
+@runtime_checkable
+class RetryOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Retries an operation with configurable backoff.
+
+    This operation attempts to execute a child operation multiple times,
+    with exponential backoff between attempts. It can be configured to
+    retry only on specific exception types.
+
+    Args:
+        op: The operation to retry
+        max_attempts: Maximum number of attempts (including the first)
+        backoff_factor: Factor to multiply delay by after each failure
+        initial_delay: Initial delay in seconds before first retry
+        max_delay: Maximum delay in seconds between retries
+        retry_on: Exception types to retry on (None means retry on any exception)
+        error_behavior: How to handle errors after all retries fail
+        on_fail: Operation to execute when all retries fail
+
+    Examples:
+        >>> # Retry a network operation with exponential backoff
+        >>> retry_op = Retry(
+        ...     Function(network_request),
+        ...     max_attempts=5,
+        ...     backoff_factor=2.0,
+        ...     initial_delay=1.0,
+        ...     retry_on=[NetworkError, TimeoutError]
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        max_attempts: int = 3,
+        backoff_factor: float = 2.0,
+        initial_delay: float = 1.0,
+        max_delay: float = 30.0,
+        retry_on: Optional[List[Type[Exception]]] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Retry operation.
+
+        Args:
+            op: The operation to retry
+            max_attempts: Maximum number of attempts (including the first)
+            backoff_factor: Factor to multiply delay by after each failure
+            initial_delay: Initial delay in seconds before first retry
+            max_delay: Maximum delay in seconds between retries
+            retry_on: Exception types to retry on (None means retry on any exception)
+            error_behavior: How to handle errors after all retries fail
+            on_fail: Operation to execute when all retries fail
+
+        Raises:
+            ValueError: If max_attempts is less than 1 or other parameters are invalid
+        """
+
+
+@runtime_checkable
+class MapOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes an operation for each item in a collection.
+
+    This operation retrieves a dictionary from the state using the specified
+    path, then executes the provided operation once for each item. Operations can be
+    executed sequentially or concurrently based on max_concurrency.
+
+    The context for each executed operation is enriched with 'map_key' (the key or index
+    of the current item) and 'map_index' (the position in the iteration).
+
+    Args:
+        op: The operation to execute for each item
+        items_path: Path to the collection in state
+        max_concurrency: Maximum number of concurrent operations
+            - 1 means sequential execution
+            - >1 means limited concurrent execution
+            - 0 or -1 means unlimited concurrency
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Process items sequentially
+        >>> map_op = Map(
+        ...     Function(process_item),
+        ...     items_path=("data", "items"),
+        ... )
+        >>>
+        >>> # Process items concurrently (up to 5 at a time)
+        >>> map_op = Map(
+        ...     Function(process_item),
+        ...     items_path=("data", "items"),
+        ...     max_concurrency=5,
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        items_path: Union[Tuple[str, ...], str],
+        max_concurrency: int = 1,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Map operation.
+
+        Args:
+            op: The operation to execute for each item
+            items_path: Path to the collection in state
+            max_concurrency: Maximum number of concurrent operations
+                - 1 means sequential execution
+                - >1 means limited concurrent execution
+                - 0 or -1 means unlimited concurrency
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If items_path is empty or max_concurrency is invalid
+        """
+
+
+@runtime_checkable
+class SubscribeOperationProtocol(OperationProtocol[OperationT, ContextT_co], Protocol):
+    """
+    Executes an operation when state changes occur.
+
+    This operation monitors a path in the state store and executes the
+    specified operation when changes are detected. It can be configured
+    to execute only once or continuously monitor for changes.
+
+    Args:
+        op: The operation to execute when changes occur
+        watch_path: Path to watch for changes
+        depth: Depth of monitoring (0=exact match, 1=direct children, -1=any descendant)
+        once: If True, execute once then complete
+        max_concurrency: Maximum number of concurrent operation executions
+        ignore_self_changes: Whether to ignore changes made by the operation itself
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> # Execute log_change when user status changes
+        >>> subscribe = Subscribe(
+        ...     Function(log_change),
+        ...     watch_path=("users", "status"),
+        ...     depth=0,
+        ... )
+        >>>
+        >>> # Execute update_ui once when preferences change
+        >>> subscribe = Subscribe(
+        ...     Function(update_ui),
+        ...     watch_path=("preferences"),
+        ...     once=True,
+        ... )
+    """
+
+    def __init__(
+        self,
+        op: OperationT,
+        /,
+        *,
+        watch_path: Union[Tuple[str, ...], str],
+        depth: int = 0,
+        once: bool = False,
+        max_concurrency: int = 1,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[OperationT] = None,
+    ) -> None:
+        """
+        Initialize the Subscribe operation.
+
+        Args:
+            op: The operation to execute when changes occur
+            watch_path: Path to watch for changes
+            depth: Depth of monitoring (0=exact match, 1=direct children, -1=any descendant)
+            once: If True, execute once then complete
+            max_concurrency: Maximum number of concurrent operation executions
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If watch_path is empty or max_concurrency is invalid
+        """
+
+```
+

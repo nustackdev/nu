@@ -1,0 +1,59 @@
+---
+title: _exceptions
+sidebarTitle: 📄 _exceptions
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.state._exceptions` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="StateError" href="#stateerror"/>
+</Cards>
+
+---
+
+<a id='stateerror'></a>
+
+## StateError 🧩
+
+<Callout type='info'>
+  Inherits from: `Exception`
+</Callout>
+
+Base exception for state errors.
+
+```python filename='class.py'
+class StateError(Exception):
+    ...
+```
+
+### Source Code
+
+```python filename='source.py'
+class StateError(Exception):
+    """Base exception for state errors."""
+
+    pass
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+__all__ = [
+    "StateError",
+]
+
+
+class StateError(Exception):
+    """Base exception for state errors."""
+
+    pass
+
+```
+

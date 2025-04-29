@@ -1,11 +1,15 @@
-# Loomi docs
+## Getting Started
 
-Created with node, next, nextra, nextra-docs theme.
+First, run the development server:
 
-## Run dev
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-Install deps: `pnpm i`
-
-Run dev `pnpm dev`
-
-Open `localhost:3000`
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

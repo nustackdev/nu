@@ -1,0 +1,398 @@
+---
+title: branch
+sidebarTitle: 📄 branch
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.aexecutor.operations.flow.branch` Reference
+
+<Callout>
+Branch operation.
+</Callout>
+
+This module provides the Branch operation, which conditionally executes
+operations based on the result of a condition.
+
+## Classes
+
+<Cards>
+  <Cards.Card title="Branch" href="#branch"/>
+</Cards>
+
+---
+
+<a id='branch'></a>
+
+## Branch 🧩
+
+<Callout type='info'>
+  Inherits from: `Operation`
+</Callout>
+
+Conditionally executes operations based on a condition.
+
+This operation evaluates a condition and executes the operation
+corresponding to the condition's result value. The condition can be
+specified as a function or as a path to a value in the state.
+
+```python filename='class.py'
+class Branch(Operation):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `branch_ops` | `property` | `&lt;property object at 0x11036b920&gt;` |  |
+| `condition` | `property` | `&lt;property object at 0x11036b9c0&gt;` |  |
+| `condition_path` | `property` | `&lt;property object at 0x11036ba10&gt;` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `ancestors` | Get all ancestors of this node. |
+| `branch_ops` | Get the branch operations dictionary. |
+| `children` | Get children of this node. |
+| `condition` | Get the condition function. |
+| `condition_path` | Get the condition path. |
+| `descendants` | Get all descendants of this node. |
+| `metadata` | Get the operation's metadata. |
+| `parents` | Get parents of this node. |
+
+#### Property Details
+
+##### `metadata`
+
+The metadata includes the operation's name, description, and any
+custom properties. By default, the name is the class name and
+the description is the class docstring.
+
+### Methods
+
+<Tabs items={['add_child', 'add_parent', 'is_dag', 'is_leaf', 'is_root', 'key']}>
+<Tabs.Tab>
+
+### add_child() 🔧
+
+```python filename='method.py'
+def add_child(self, child: 'NodeT') -> 'None'
+```
+
+Add a child to this node.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### add_parent() 🔧
+
+```python filename='method.py'
+def add_parent(self, parent: 'NodeT') -> 'None'
+```
+
+Add a parent to this node (DAG specific).
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dag() 🔧
+
+```python filename='method.py'
+def is_dag(self) -> 'bool'
+```
+
+Check if the graph is a DAG.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_leaf() 🔧
+
+```python filename='method.py'
+def is_leaf(self) -> 'bool'
+```
+
+Return True if this node has no children.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_root() 🔧
+
+```python filename='method.py'
+def is_root(self) -> 'bool'
+```
+
+Return True if this node has no parents.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### key() 🔧
+
+```python filename='method.py'
+def key(self) -> 'str'
+```
+
+Return a unique key combining object id and class name.
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Examples
+
+```python filename='example.py'
+branch = Branch(
+    {
+        True: Function(handle_true),
+        False: Function(handle_false),
+        "other": Function(handle_other),
+    },
+    condition=lambda ctx: ctx.scope.get("flag"),
+)
+```
+
+### Source Code
+
+```python filename='source.py'
+class Branch(Operation[StateDictT]):
+    """
+    Conditionally executes operations based on a condition.
+
+    This operation evaluates a condition and executes the operation
+    corresponding to the condition's result value. The condition can be
+    specified as a function or as a path to a value in the state.
+
+    Args:
+        ops: Dictionary mapping condition values to operations
+        condition: Function that returns a condition value
+        condition_path: Path to a value in the state to use as condition
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> branch = Branch(
+        ...     {
+        ...         True: Function(handle_true),
+        ...         False: Function(handle_false),
+        ...         "other": Function(handle_other),
+        ...     },
+        ...     condition=lambda ctx: ctx.scope.get("flag"),
+        ... )
+    """
+
+    def __init__(
+        self,
+        ops: Dict[BranchConditionValue, Operation[StateDictT]],
+        /,
+        *,
+        condition: Optional[Callable[[Context[StateDictT]], Awaitable[Any] | Any]] = None,
+        condition_path: Optional[Tuple[str, ...] | str] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[Operation[StateDictT]] = None,
+    ):
+        """
+        Initialize the Branch operation.
+
+        Args:
+            ops: Dictionary mapping condition values to operations
+            condition: Function that returns a condition value
+            condition_path: Path to a value in the state to use as condition
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both condition and condition_path are None, or if ops is empty
+        """
+        super().__init__(error_behavior=error_behavior, on_fail=on_fail)
+
+        if not ops:
+            raise ValueError("At least one operation must be provided in the ops dictionary")
+
+        if condition is None and condition_path is None:
+            raise ValueError("Either condition or condition_path must be provided")
+
+        self._ops = ops
+        self._condition = condition
+
+        # Normalize condition_path to tuple if string
+        if isinstance(condition_path, str):
+            self._condition_path = (condition_path,)
+        else:
+            self._condition_path = condition_path
+
+        # Set child operations
+        self.children = tuple(ops.values())
+
+    @property
+    def branch_ops(self) -> Dict[BranchConditionValue, Operation[StateDictT]]:
+        """
+        Get the branch operations dictionary.
+
+        Returns:
+            Dictionary mapping condition values to operations
+        """
+        return self._ops
+
+    @property
+    def condition(self) -> Optional[Callable[[Context[StateDictT]], Awaitable[Any] | Any]]:
+        """
+        Get the condition function.
+
+        Returns:
+            The condition function or None if using condition_path
+        """
+        return self._condition
+
+    @property
+    def condition_path(self) -> Optional[Tuple[str, ...]]:
+        """
+        Get the condition path.
+
+        Returns:
+            Tuple representing the path to the condition value or None if using condition
+        """
+        return self._condition_path
+
+```
+
+## Source Code
+
+```python filename='source.py'
+"""
+Branch operation.
+
+This module provides the Branch operation, which conditionally executes
+operations based on the result of a condition.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, Optional, Tuple
+
+from loomi.interfaces.executor.operations import BranchOperationProtocol
+from loomi.interfaces.executor.types import ErrorBehavior
+from loomi.interfaces.state.type_vars import StateDictT
+
+from ..base import Operation
+
+if TYPE_CHECKING:
+    from ...context import Context
+
+# Type for branch condition values
+BranchConditionValue = str | bool | int | float | None
+
+
+class Branch(Operation[StateDictT]):
+    """
+    Conditionally executes operations based on a condition.
+
+    This operation evaluates a condition and executes the operation
+    corresponding to the condition's result value. The condition can be
+    specified as a function or as a path to a value in the state.
+
+    Args:
+        ops: Dictionary mapping condition values to operations
+        condition: Function that returns a condition value
+        condition_path: Path to a value in the state to use as condition
+        error_behavior: How to handle errors that occur during execution
+        on_fail: Operation to execute when an error occurs
+
+    Examples:
+        >>> branch = Branch(
+        ...     {
+        ...         True: Function(handle_true),
+        ...         False: Function(handle_false),
+        ...         "other": Function(handle_other),
+        ...     },
+        ...     condition=lambda ctx: ctx.scope.get("flag"),
+        ... )
+    """
+
+    def __init__(
+        self,
+        ops: Dict[BranchConditionValue, Operation[StateDictT]],
+        /,
+        *,
+        condition: Optional[Callable[[Context[StateDictT]], Awaitable[Any] | Any]] = None,
+        condition_path: Optional[Tuple[str, ...] | str] = None,
+        error_behavior: ErrorBehavior = "fail",
+        on_fail: Optional[Operation[StateDictT]] = None,
+    ):
+        """
+        Initialize the Branch operation.
+
+        Args:
+            ops: Dictionary mapping condition values to operations
+            condition: Function that returns a condition value
+            condition_path: Path to a value in the state to use as condition
+            error_behavior: How to handle errors that occur during execution
+            on_fail: Operation to execute when an error occurs
+
+        Raises:
+            ValueError: If both condition and condition_path are None, or if ops is empty
+        """
+        super().__init__(error_behavior=error_behavior, on_fail=on_fail)
+
+        if not ops:
+            raise ValueError("At least one operation must be provided in the ops dictionary")
+
+        if condition is None and condition_path is None:
+            raise ValueError("Either condition or condition_path must be provided")
+
+        self._ops = ops
+        self._condition = condition
+
+        # Normalize condition_path to tuple if string
+        if isinstance(condition_path, str):
+            self._condition_path = (condition_path,)
+        else:
+            self._condition_path = condition_path
+
+        # Set child operations
+        self.children = tuple(ops.values())
+
+    @property
+    def branch_ops(self) -> Dict[BranchConditionValue, Operation[StateDictT]]:
+        """
+        Get the branch operations dictionary.
+
+        Returns:
+            Dictionary mapping condition values to operations
+        """
+        return self._ops
+
+    @property
+    def condition(self) -> Optional[Callable[[Context[StateDictT]], Awaitable[Any] | Any]]:
+        """
+        Get the condition function.
+
+        Returns:
+            The condition function or None if using condition_path
+        """
+        return self._condition
+
+    @property
+    def condition_path(self) -> Optional[Tuple[str, ...]]:
+        """
+        Get the condition path.
+
+        Returns:
+            Tuple representing the path to the condition value or None if using condition
+        """
+        return self._condition_path
+
+
+if TYPE_CHECKING:
+    _: type[BranchOperationProtocol[Operation, "Context"]] = Branch
+
+```
+

@@ -63,7 +63,6 @@ def parse_google_docstring(docstring: str) -> DocstringInfo:  # noqa: C901
     current_exception = None
     description_lines = []
     example_lines = []
-    in_example = False
 
     for line in lines:
         line_stripped = line.strip()
@@ -84,7 +83,6 @@ def parse_google_docstring(docstring: str) -> DocstringInfo:  # noqa: C901
             continue
         elif re.match(r"^Examples?:", line_stripped, re.I):
             current_section = "examples"
-            in_example = False
             continue
         elif re.match(r"^Attributes:", line_stripped, re.I):
             current_section = "attributes"
@@ -103,13 +101,28 @@ def parse_google_docstring(docstring: str) -> DocstringInfo:  # noqa: C901
                 param_type = param_match.group(3) if param_match.group(2) else None
                 param_desc = param_match.group(4).strip()
 
+                # Extract default value if present
+                default_value = None
+                default_match = re.search(r"Defaults to ([^\.]+)\.", param_desc)
+                if default_match:
+                    default_value = default_match.group(1).strip()
+
                 current_param = param_name
                 result.parameters[param_name] = DocstringParameter(
-                    name=param_name, description=param_desc, type_hint=param_type
+                    name=param_name,
+                    description=param_desc,
+                    type_hint=param_type,
+                    default=default_value,
                 )
             elif current_param and line_stripped:
                 # Continuation of the previous parameter description
                 result.parameters[current_param].description += " " + line_stripped
+
+                # Check for default value in continuation
+                if not result.parameters[current_param].default:
+                    default_match = re.search(r"Defaults to ([^\.]+)\.", line_stripped)
+                    if default_match:
+                        result.parameters[current_param].default = default_match.group(1).strip()
 
         elif current_section == "returns":
             if not result.returns:
@@ -128,7 +141,7 @@ def parse_google_docstring(docstring: str) -> DocstringInfo:  # noqa: C901
         elif current_section == "exceptions":
             # Check for exception definition
             exception_match = re.match(
-                r"^\s*(\w+(?:\.\w+)*(?:Error|Exception))(\s*\(.+\))?\s*: (.+)$", line_stripped
+                r"^\s*(\w+(?:\.\w+)*(?:\w+)?)(\s*\(.+\))?\s*: (.+)$", line_stripped
             )
             if exception_match:
                 # New exception
@@ -144,38 +157,10 @@ def parse_google_docstring(docstring: str) -> DocstringInfo:  # noqa: C901
                 result.exceptions[current_exception].description += " " + line_stripped
 
         elif current_section == "examples":
-            # Handling code blocks in examples
-            if (
-                line_stripped.startswith("```")
-                or line_stripped.startswith("'''")
-                or line_stripped.startswith('"""')
-            ):
-                in_example = not in_example
-                # Start a new example if we're starting a code block
-                if in_example:
-                    example_lines = []
-                # Finish the example if we're ending a code block
-                elif example_lines:
-                    code = "\n".join(example_lines).strip()
-                    result.examples.append(DocstringExample(code=code))
-            elif in_example:
-                example_lines.append(line)
-            elif line_stripped and not example_lines and not result.examples:
-                # First line outside a code block might be a description
-                example_lines = [line]
-            elif line_stripped and example_lines and not in_example:
-                # Description line outside a code block
-                if not result.examples:
-                    # If no examples yet, this could be a descriptive example without code blocks
-                    example_lines.append(line)
-                    # Check if we have enough lines for a complete example
-                    if len(example_lines) > 3:  # Arbitrary threshold
-                        code = "\n".join(example_lines).strip()
-                        result.examples.append(DocstringExample(code=code))
-                        example_lines = []
-                elif example_lines:
-                    # This could be a description for a new example
-                    example_lines = [line]
+            # Simplified example handling - just collect lines that start with >>>
+            if line_stripped.startswith(">>>") or line_stripped.startswith("..."):
+                # Remove the >>> prefix and add to example lines
+                example_lines.append(line_stripped[4:])
 
         elif current_section == "attributes":
             # Check for attribute definition
@@ -187,9 +172,9 @@ def parse_google_docstring(docstring: str) -> DocstringInfo:  # noqa: C901
                 result.attributes[attr_name] = attr_desc
             # No continuation support for attributes
 
-    # Process any remaining example
-    if example_lines and not in_example and not result.examples:
-        code = "\n".join(example_lines).strip()
+    # If we have example lines, add them as a single example
+    if example_lines:
+        code = "\n".join(example_lines)
         result.examples.append(DocstringExample(code=code))
 
     # Combine description lines
@@ -507,17 +492,17 @@ class ModuleParser:
         Returns:
             True if the member should be included, False otherwise
         """
-        # Skip dunder methods if not explicitly included
-        if name.startswith("__") and name.endswith("__") and not self.show_dunder:
-            return False
-
-        # Skip private members if not explicitly included
-        if name.startswith("_") and not self.show_private:
-            return False
-
         # Check exclusion patterns
         for pattern in self.excluded_patterns:
             if re.match(pattern, name):
                 return False
+
+        if name.startswith("_"):
+            # Check dunder methods inclision
+            if name.startswith("__") and name.endswith("__"):
+                return self.show_dunder
+
+            # Check private member inclusion
+            return self.show_private
 
         return True

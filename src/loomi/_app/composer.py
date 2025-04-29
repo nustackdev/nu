@@ -1,3 +1,10 @@
+"""
+Mixin for app composition and dependency management.
+
+This module provides classes for composing apps with dependencies, including
+synchronous and asynchronous apps.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast

@@ -108,6 +108,7 @@ class ModuleDiscoverer:
                         logger.warning(f"Failed to import module {name}: {e}")
         except Exception as e:
             logger.error(f"Error discovering module {module_config.name}: {e}")
+            raise e
 
     def _discover_all_modules(self, modules: Dict[str, object]) -> None:
         """
@@ -209,8 +210,8 @@ class ModuleDiscoverer:
                     # Create a temporary RenderingConfig from ModuleConfig
                     # This fixes the type error by creating a compatible config object
                     temp_config = RenderingConfig(
-                        show_private=module_config.include_private,
-                        show_dunder=module_config.include_dunder,
+                        show_private=module_config.show_private,
+                        show_dunder=module_config.show_dunder,
                         excluded_patterns=module_config.exclude_patterns,
                     )
                     parser = ModuleParser(temp_config)

@@ -1,0 +1,1162 @@
+---
+title: task_execution
+sidebarTitle: 📄 task_execution
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.aexecutor.services.task_execution` Reference
+
+<Callout>
+Task execution service for managing and executing tasks in an asyncio environment.
+</Callout>
+
+This service provides concurrency control, task tracking, and cancellation management.
+
+## Classes
+
+<Cards>
+  <Cards.Card title="TaskExecutionService" href="#taskexecutionservice"/>
+  <Cards.Card title="TaskExecutionServiceSpec" href="#taskexecutionservicespec"/>
+</Cards>
+
+---
+
+<a id='taskexecutionservice'></a>
+
+## TaskExecutionService 🧩
+
+<Callout type='info'>
+  Inherits from: `AsyncService`
+</Callout>
+
+Simple service for executing operation functions as managed asyncio tasks.
+
+Provides concurrency control, task tracking, and cancellation management.
+
+```python filename='class.py'
+class TaskExecutionService(AsyncService):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_initialized` | Check if service is fully initialized. |
+| `key` | Get the unique service instance identifier. |
+| `name` | Get the service instance name. |
+| `readable_name` | Get a human-readable identifier for the service. |
+| `service_state` | Current service lifecycle state. |
+| `spec` | Get the service's specification. |
+
+### Methods
+
+<Tabs items={['cancel_all_tasks', 'cancel_task', 'cleanup', 'execute', 'factory_name', 'get_active_task_count', 'get_task_result', 'initialize', 'post_initialize', 'post_shutdown', 'pre_initialize', 'pre_shutdown', 'setup', 'shutdown', 'wait_for_task']}>
+<Tabs.Tab>
+
+### cancel_all_tasks() 🔧
+
+```python filename='method.py'
+def cancel_all_tasks(self) -> 'int'
+```
+
+Cancel all running tasks.
+
+**Returns:** `int` - Number of tasks cancelled
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### cancel_task() 🔧
+
+```python filename='method.py'
+def cancel_task(self, task_id: 'str') -> 'bool'
+```
+
+Cancel a specific task.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `task_id` | `str` | ID of the task to cancel | `Required` |
+
+**Returns:** `bool` - True if task was found and cancelled, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### cleanup() 🔧
+
+```python filename='method.py'
+def cleanup(self) -> 'None'
+```
+
+Cancel all tasks and clean up resources.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### execute() 🔧
+
+```python filename='method.py'
+def execute(self, func: 'Callable[[Any], Awaitable[None]]', context: 'Context', timeout: 'float | None' = None, wait: 'bool' = True) -> 'tuple[None, str]'
+```
+
+Execute a function as a managed task.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `func` | `Callable[[Any], Awaitable[None]]` | The async function to execute | `Required` |
+| `context` | `Context` | Context to pass to the function | `Required` |
+| `timeout` | `float | None` | Optional timeout in seconds (0 means no timeout) | `None` |
+| `wait` | `bool` | Whether to wait for completion | `True` |
+
+**Returns:** `tuple[None, str]` - Tuple of (result, task_id) if wait=True, otherwise (None, task_id)
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the service class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get_active_task_count() 🔧
+
+```python filename='method.py'
+def get_active_task_count(self) -> 'int'
+```
+
+Get the number of active tasks.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get_task_result() 🔧
+
+```python filename='method.py'
+def get_task_result(self, task_id: 'str') -> 'Any | None'
+```
+
+Get the result of a completed task.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize service and its dependencies asynchronously.
+
+This method handles the complete initialization process:
+1. Validates service state
+2. Initializes dependencies
+3. Performs service-specific initialization
+4. Updates service state
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If initialization fails |
+| `ServiceStateError` | If service in invalid state |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_initialize() 🔧
+
+```python filename='method.py'
+def post_initialize(self) -> 'None'
+```
+
+Post-initialization hook.
+
+This method is called after service initialization.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If post-initialization fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_shutdown() 🔧
+
+```python filename='method.py'
+def post_shutdown(self) -> 'None'
+```
+
+Post-shutdown hook.
+
+This method is called after service shutdown.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If post-shutdown fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_initialize() 🔧
+
+```python filename='method.py'
+def pre_initialize(self) -> 'None'
+```
+
+Pre-initialization hook.
+
+This method is called before service initialization.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If pre-initialization fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_shutdown() 🔧
+
+```python filename='method.py'
+def pre_shutdown(self) -> 'None'
+```
+
+Pre-shutdown hook.
+
+This method is called before service shutdown.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If pre-shutdown fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setup() 🔧
+
+```python filename='method.py'
+def setup(self) -> 'None'
+```
+
+Initialize service resources.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown service and cleanup dependencies asynchronously.
+
+This method handles the complete shutdown process:
+1. Validates service state
+2. Performs service-specific shutdown
+3. Cleans up orphaned dependencies
+4. Updates service state
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If shutdown fails |
+| `ServiceStateError` | If service in invalid state |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### wait_for_task() 🔧
+
+```python filename='method.py'
+def wait_for_task(self, task_id: 'str', timeout: 'float | None' = None) -> 'Any'
+```
+
+Wait for a task to complete.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `task_id` | `str` | The task ID to wait for | `Required` |
+| `timeout` | `float | None` | Optional timeout in seconds (0 means no timeout) | `None` |
+
+**Returns:** `Any` - Task result
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class TaskExecutionService(AsyncService):
+    """
+    Simple service for executing operation functions as managed asyncio tasks.
+
+    Provides concurrency control, task tracking, and cancellation management.
+    """
+
+    spec: TaskExecutionServiceSpec
+
+    async def setup(self) -> None:
+        """Initialize service resources."""
+        self._semaphore = asyncio.Semaphore(self.spec.max_concurrency)
+        self._active_tasks: dict[str, asyncio.Task] = {}
+        self._results: dict[str, Any] = {}
+
+    async def cleanup(self) -> None:
+        """Cancel all tasks and clean up resources."""
+        await self.cancel_all_tasks()
+        self._active_tasks.clear()
+        self._results.clear()
+
+    async def execute(
+        self,
+        func: Callable[[Any], Awaitable[None]],
+        context: Context,
+        timeout: float | None = None,
+        wait: bool = True,
+    ) -> tuple[None, str]:
+        """
+        Execute a function as a managed task.
+
+        Args:
+            func: The async function to execute
+            context: Context to pass to the function
+            timeout: Optional timeout in seconds (0 means no timeout)
+            wait: Whether to wait for completion
+
+        Returns:
+            Tuple of (result, task_id) if wait=True, otherwise (None, task_id)
+        """
+        task_id = str(uuid.uuid4())
+
+        async def _run_task():
+            try:
+                async with self._semaphore:
+                    start_time = asyncio.get_event_loop().time()
+
+                    if inspect.iscoroutinefunction(func):
+                        result = await func(context)
+                    else:
+                        raise TypeError(f"Function {func.__name__} is not a coroutine function")
+
+                    duration = (asyncio.get_event_loop().time() - start_time) * 1000
+                    logger.debug(f"Task {task_id} completed in {duration:.2f}ms")
+                    self._results[task_id] = result
+                    return result
+            except asyncio.CancelledError:
+                logger.info(f"Task {task_id} was cancelled")
+                raise TaskExecutionCancelledError(f"Task cancelled: {task_id}")
+            finally:
+                if task_id in self._active_tasks:
+                    del self._active_tasks[task_id]
+
+        # Create the task
+        task = asyncio.create_task(_run_task(), name=f"task:{task_id}")
+        self._active_tasks[task_id] = task
+
+        if not wait:
+            return None, task_id
+
+        try:
+            # Determine actual timeout
+            actual_timeout = timeout if timeout is not None else self.spec.default_timeout
+
+            # If timeout is 0, wait without a timeout
+            if actual_timeout == 0:
+                result = await task
+            else:
+                result = await asyncio.wait_for(task, actual_timeout)
+
+            return result, task_id
+        except asyncio.TimeoutError:
+            task.cancel()
+            raise TaskExecutionTimeoutError(f"Task timed out after {actual_timeout}s: {task_id}")
+
+    async def cancel_task(self, task_id: str) -> bool:
+        """
+        Cancel a specific task.
+
+        Args:
+            task_id: ID of the task to cancel
+
+        Returns:
+            True if task was found and cancelled, False otherwise
+        """
+        if task_id in self._active_tasks:
+            task = self._active_tasks[task_id]
+            if not task.done():
+                task.cancel()
+                return True
+        return False
+
+    async def cancel_all_tasks(self) -> int:
+        """
+        Cancel all running tasks.
+
+        Returns:
+            Number of tasks cancelled
+        """
+        count = 0
+        for task_id, task in list(self._active_tasks.items()):
+            if not task.done():
+                task.cancel()
+                count += 1
+        return count
+
+    async def wait_for_task(self, task_id: str, timeout: float | None = None) -> Any:
+        """
+        Wait for a task to complete.
+
+        Args:
+            task_id: The task ID to wait for
+            timeout: Optional timeout in seconds (0 means no timeout)
+
+        Returns:
+            Task result
+        """
+        if task_id not in self._active_tasks:
+            if task_id in self._results:
+                return self._results[task_id]
+            raise ValueError(f"Task {task_id} not found")
+
+        task = self._active_tasks[task_id]
+        actual_timeout = timeout if timeout is not None else self.spec.default_timeout
+
+        try:
+            # If timeout is 0, wait without a timeout
+            if actual_timeout == 0:
+                return await task
+            else:
+                return await asyncio.wait_for(task, actual_timeout)
+        except asyncio.TimeoutError:
+            raise TaskExecutionTimeoutError(f"Waiting timed out after {actual_timeout}s")
+
+    def get_active_task_count(self) -> int:
+        """Get the number of active tasks."""
+        return len(self._active_tasks)
+
+    def get_task_result(self, task_id: str) -> Any | None:
+        """Get the result of a completed task."""
+        return self._results.get(task_id)
+
+```
+
+<a id='taskexecutionservicespec'></a>
+
+## TaskExecutionServiceSpec 🧩
+
+<Callout type='info'>
+  Inherits from: `Spec`
+</Callout>
+
+Temporary specification class for defining service/app properties and identity.
+
+Should be replaced with a more ergonomic and robust system in the future.
+
+This class is used to define the properties of a service or app, including its name,
+factory, and any additional fields.
+
+```python filename='class.py'
+class TaskExecutionServiceSpec(Spec):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `model_config` | `dict` | `{&#x27;arbitrary_types_allowed&#x27;: True, &#x27;extra&#x27;: &#x27;all...` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `model_extra` | Get extra fields set during validation. |
+| `model_fields_set` | Returns the set of fields that have been explicitly set on this model instance. |
+
+### Methods
+
+<Tabs items={['construct', 'copy', 'dict', 'from_orm', 'json', 'model_construct', 'model_copy', 'model_dump', 'model_dump_json', 'model_json_schema', 'model_parametrized_name', 'model_post_init', 'model_rebuild', 'model_validate', 'model_validate_json', 'model_validate_strings', 'parse_file', 'parse_obj', 'parse_raw', 'schema', 'schema_json', 'update_forward_refs', 'validate']}>
+<Tabs.Tab>
+
+### construct() 🔧
+
+```python filename='method.py'
+def construct(self_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### copy() 🔧
+
+```python filename='method.py'
+def copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'
+```
+
+Returns a copy of the model.
+
+!!! warning "Deprecated"
+    This method is now deprecated; use `model_copy` instead.
+
+If you need `include` or `exclude`, use:
+
+```python {test="skip" lint="skip"}
+data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+data = {**data, **(update or {})}
+copied = self.model_validate(data)
+```
+
+<Callout type='warning'>
+  **Deprecated:** This feature is deprecated and may be removed in a future version.
+</Callout>
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `include` | `AbstractSetIntStr | MappingIntStrAny | None` | Optional set or mapping specifying which fields to include in the copied model. | `None` |
+| `exclude` | `AbstractSetIntStr | MappingIntStrAny | None` | Optional set or mapping specifying which fields to exclude in the copied model. | `None` |
+| `update` | `Dict[str, Any] | None` | Optional dictionary of field-value pairs to override field values in the copied model. | `None` |
+| `deep` | `bool` | If True, the values of fields that are Pydantic models will be deep-copied. | `False` |
+
+**Returns:** `Self` - A copy of the model with included, excluded and updated fields as specified.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### from_orm() 🔧
+
+```python filename='method.py'
+def from_orm(selfobj: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### json() 🔧
+
+```python filename='method.py'
+def json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_construct() 🔧
+
+```python filename='method.py'
+def model_construct(self_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'
+```
+
+Creates a new instance of the `Model` class with validated data.
+
+Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+Default values are respected, but no other validation is performed.
+
+!!! note
+    `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+    That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+    and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+    Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+    an error if extra values are passed, but they will be ignored.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `_fields_set` | `set[str] | None` | A set of field names that were originally explicitly set during instantiation. If provided, this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute. Otherwise, the field names from the `values` argument will be used. | `None` |
+| `values` | `Any` | Trusted or pre-validated data dictionary. | `Required` |
+
+**Returns:** `Self` - A new instance of the `Model` class with validated data.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_copy() 🔧
+
+```python filename='method.py'
+def model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#model_copy
+
+Returns a copy of the model.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `update` | `Mapping[str, Any] | None` | Values to change/add in the new model. Note: the data is not validated before creating the new model. You should trust this data. | `None` |
+| `deep` | `bool` | Set to `True` to make a deep copy of the model. | `False` |
+
+**Returns:** `Self` - New model instance.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_dump() 🔧
+
+```python filename='method.py'
+def model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, serialize_as_any: 'bool' = False) -> 'dict[str, Any]'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#modelmodel_dump
+
+Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `mode` | `Literal['json', 'python'] | str` | The mode in which `to_python` should run. If mode is 'json', the output will only contain JSON serializable types. If mode is 'python', the output may contain non-JSON-serializable Python objects. | `'python'` |
+| `include` | `IncEx | None` | A set of fields to include in the output. | `None` |
+| `exclude` | `IncEx | None` | A set of fields to exclude from the output. | `None` |
+| `context` | `Any | None` | Additional context to pass to the serializer. | `None` |
+| `by_alias` | `bool` | Whether to use the field's alias in the dictionary key if defined. | `False` |
+| `exclude_unset` | `bool` | Whether to exclude fields that have not been explicitly set. | `False` |
+| `exclude_defaults` | `bool` | Whether to exclude fields that are set to their default value. | `False` |
+| `exclude_none` | `bool` | Whether to exclude fields that have a value of `None`. | `False` |
+| `round_trip` | `bool` | If True, dumped values should be valid as input for non-idempotent types such as Json[T]. | `False` |
+| `warnings` | `bool | Literal['none', 'warn', 'error']` | How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors, "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError]. | `True` |
+| `serialize_as_any` | `bool` | Whether to serialize fields with duck-typing serialization behavior. | `False` |
+
+**Returns:** `dict[str, Any]` - A dictionary representation of the model.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_dump_json() 🔧
+
+```python filename='method.py'
+def model_dump_json(self, *, indent: 'int | None' = None, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, serialize_as_any: 'bool' = False) -> 'str'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#modelmodel_dump_json
+
+Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `indent` | `int | None` | Indentation to use in the JSON output. If None is passed, the output will be compact. | `None` |
+| `include` | `IncEx | None` | Field(s) to include in the JSON output. | `None` |
+| `exclude` | `IncEx | None` | Field(s) to exclude from the JSON output. | `None` |
+| `context` | `Any | None` | Additional context to pass to the serializer. | `None` |
+| `by_alias` | `bool` | Whether to serialize using field aliases. | `False` |
+| `exclude_unset` | `bool` | Whether to exclude fields that have not been explicitly set. | `False` |
+| `exclude_defaults` | `bool` | Whether to exclude fields that are set to their default value. | `False` |
+| `exclude_none` | `bool` | Whether to exclude fields that have a value of `None`. | `False` |
+| `round_trip` | `bool` | If True, dumped values should be valid as input for non-idempotent types such as Json[T]. | `False` |
+| `warnings` | `bool | Literal['none', 'warn', 'error']` | How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors, "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError]. | `True` |
+| `serialize_as_any` | `bool` | Whether to serialize fields with duck-typing serialization behavior. | `False` |
+
+**Returns:** `str` - A JSON string representation of the model.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_json_schema() 🔧
+
+```python filename='method.py'
+def model_json_schema(selfby_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation') -> 'dict[str, Any]'
+```
+
+Generates a JSON schema for a model class.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `by_alias` | `bool` | Whether to use attribute aliases or not. | `True` |
+| `ref_template` | `str` | The reference template. | `'#/$defs/{model}'` |
+| `schema_generator` | `type[GenerateJsonSchema]` | To override the logic used to generate the JSON schema, as a subclass of `GenerateJsonSchema` with your desired modifications | `<class 'pydantic.json_schema.GenerateJsonSchema'>` |
+| `mode` | `JsonSchemaMode` | The mode in which to generate the schema. | `'validation'` |
+
+**Returns:** `dict[str, Any]` - The JSON schema for the given model class.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_parametrized_name() 🔧
+
+```python filename='method.py'
+def model_parametrized_name(selfparams: 'tuple[type[Any], ...]') -> 'str'
+```
+
+Compute the class name for parametrizations of generic classes.
+
+This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `params` | `tuple[type[Any], ...]` | Tuple of types of the class. Given a generic class `Model` with 2 type variables and a concrete model `Model[str, int]`, the value `(str, int)` would be passed to `params`. | `Required` |
+
+**Returns:** `str` - String representing the new class where `params` are passed to `cls` as type variables.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `TypeError` | Raised when trying to generate concrete names for non-generic models. |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_post_init() 🔧
+
+```python filename='method.py'
+def model_post_init(self, _BaseModel__context: 'Any') -> 'None'
+```
+
+Override this method to perform additional initialization after `__init__` and `model_construct`.
+
+This is useful if you want to do some validation that requires the entire model to be initialized.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_rebuild() 🔧
+
+```python filename='method.py'
+def model_rebuild(self*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'
+```
+
+Try to rebuild the pydantic-core schema for the model.
+
+This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+the initial attempt to build the schema, and automatic rebuilding fails.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `force` | `bool` | Whether to force the rebuilding of the model schema, defaults to `False`. | `False` |
+| `raise_errors` | `bool` | Whether to raise errors, defaults to `True`. | `True` |
+| `_parent_namespace_depth` | `int` | The depth level of the parent namespace, defaults to 2. | `2` |
+| `_types_namespace` | `MappingNamespace | None` | The types namespace, defaults to `None`. | `None` |
+
+**Returns:** `bool | None` - Returns `None` if the schema is already "complete" and rebuilding was not required. If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_validate() 🔧
+
+```python filename='method.py'
+def model_validate(selfobj: 'Any', *, strict: 'bool | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None) -> 'Self'
+```
+
+Validate a pydantic model instance.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `obj` | `Any` | The object to validate. | `Required` |
+| `strict` | `bool | None` | Whether to enforce types strictly. | `None` |
+| `from_attributes` | `bool | None` | Whether to extract data from object attributes. | `None` |
+| `context` | `Any | None` | Additional context to pass to the validator. | `None` |
+
+**Returns:** `Self` - The validated model instance.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ValidationError` | If the object could not be validated. |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_validate_json() 🔧
+
+```python filename='method.py'
+def model_validate_json(selfjson_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, context: 'Any | None' = None) -> 'Self'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/json/#json-parsing
+
+Validate the given JSON data against the Pydantic model.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `json_data` | `str | bytes | bytearray` | The JSON data to validate. | `Required` |
+| `strict` | `bool | None` | Whether to enforce types strictly. | `None` |
+| `context` | `Any | None` | Extra variables to pass to the validator. | `None` |
+
+**Returns:** `Self` - The validated Pydantic model.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ValidationError` | If `json_data` is not a JSON string or the object could not be validated. |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_validate_strings() 🔧
+
+```python filename='method.py'
+def model_validate_strings(selfobj: 'Any', *, strict: 'bool | None' = None, context: 'Any | None' = None) -> 'Self'
+```
+
+Validate the given object with string data against the Pydantic model.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `obj` | `Any` | The object containing string data to validate. | `Required` |
+| `strict` | `bool | None` | Whether to enforce types strictly. | `None` |
+| `context` | `Any | None` | Extra variables to pass to the validator. | `None` |
+
+**Returns:** `Self` - The validated Pydantic model.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### parse_file() 🔧
+
+```python filename='method.py'
+def parse_file(selfpath: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### parse_obj() 🔧
+
+```python filename='method.py'
+def parse_obj(selfobj: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### parse_raw() 🔧
+
+```python filename='method.py'
+def parse_raw(selfb: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### schema() 🔧
+
+```python filename='method.py'
+def schema(selfby_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### schema_json() 🔧
+
+```python filename='method.py'
+def schema_json(self*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### update_forward_refs() 🔧
+
+```python filename='method.py'
+def update_forward_refs(self**localns: 'Any') -> 'None'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### validate() 🔧
+
+```python filename='method.py'
+def validate(selfvalue: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class TaskExecutionServiceSpec(Spec):
+    name: str = SpecField(default="task_execution_service")
+    factory: type = SpecField(default=TaskExecutionService)
+    max_concurrency: int = SpecField(default=100)
+    default_timeout: float = SpecField(default=300.0)
+
+```
+
+## Source Code
+
+```python filename='source.py'
+"""
+Task execution service for managing and executing tasks in an asyncio environment.
+This service provides concurrency control, task tracking, and cancellation management.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import inspect
+import uuid
+from typing import Any, Awaitable, Callable, TypeVar
+
+from loomi.service import AsyncService
+from loomi.spec import Spec, SpecField
+
+from ..context.context import Context
+from .exceptions import TaskExecutionCancelledError, TaskExecutionTimeoutError
+from .logger import logger
+
+__all__ = [
+    "TaskExecutionService",
+    "TaskExecutionServiceSpec",
+]
+
+T = TypeVar("T")  # Generic type for task result
+
+
+class TaskExecutionService(AsyncService):
+    """
+    Simple service for executing operation functions as managed asyncio tasks.
+
+    Provides concurrency control, task tracking, and cancellation management.
+    """
+
+    spec: TaskExecutionServiceSpec
+
+    async def setup(self) -> None:
+        """Initialize service resources."""
+        self._semaphore = asyncio.Semaphore(self.spec.max_concurrency)
+        self._active_tasks: dict[str, asyncio.Task] = {}
+        self._results: dict[str, Any] = {}
+
+    async def cleanup(self) -> None:
+        """Cancel all tasks and clean up resources."""
+        await self.cancel_all_tasks()
+        self._active_tasks.clear()
+        self._results.clear()
+
+    async def execute(
+        self,
+        func: Callable[[Any], Awaitable[None]],
+        context: Context,
+        timeout: float | None = None,
+        wait: bool = True,
+    ) -> tuple[None, str]:
+        """
+        Execute a function as a managed task.
+
+        Args:
+            func: The async function to execute
+            context: Context to pass to the function
+            timeout: Optional timeout in seconds (0 means no timeout)
+            wait: Whether to wait for completion
+
+        Returns:
+            Tuple of (result, task_id) if wait=True, otherwise (None, task_id)
+        """
+        task_id = str(uuid.uuid4())
+
+        async def _run_task():
+            try:
+                async with self._semaphore:
+                    start_time = asyncio.get_event_loop().time()
+
+                    if inspect.iscoroutinefunction(func):
+                        result = await func(context)
+                    else:
+                        raise TypeError(f"Function {func.__name__} is not a coroutine function")
+
+                    duration = (asyncio.get_event_loop().time() - start_time) * 1000
+                    logger.debug(f"Task {task_id} completed in {duration:.2f}ms")
+                    self._results[task_id] = result
+                    return result
+            except asyncio.CancelledError:
+                logger.info(f"Task {task_id} was cancelled")
+                raise TaskExecutionCancelledError(f"Task cancelled: {task_id}")
+            finally:
+                if task_id in self._active_tasks:
+                    del self._active_tasks[task_id]
+
+        # Create the task
+        task = asyncio.create_task(_run_task(), name=f"task:{task_id}")
+        self._active_tasks[task_id] = task
+
+        if not wait:
+            return None, task_id
+
+        try:
+            # Determine actual timeout
+            actual_timeout = timeout if timeout is not None else self.spec.default_timeout
+
+            # If timeout is 0, wait without a timeout
+            if actual_timeout == 0:
+                result = await task
+            else:
+                result = await asyncio.wait_for(task, actual_timeout)
+
+            return result, task_id
+        except asyncio.TimeoutError:
+            task.cancel()
+            raise TaskExecutionTimeoutError(f"Task timed out after {actual_timeout}s: {task_id}")
+
+    async def cancel_task(self, task_id: str) -> bool:
+        """
+        Cancel a specific task.
+
+        Args:
+            task_id: ID of the task to cancel
+
+        Returns:
+            True if task was found and cancelled, False otherwise
+        """
+        if task_id in self._active_tasks:
+            task = self._active_tasks[task_id]
+            if not task.done():
+                task.cancel()
+                return True
+        return False
+
+    async def cancel_all_tasks(self) -> int:
+        """
+        Cancel all running tasks.
+
+        Returns:
+            Number of tasks cancelled
+        """
+        count = 0
+        for task_id, task in list(self._active_tasks.items()):
+            if not task.done():
+                task.cancel()
+                count += 1
+        return count
+
+    async def wait_for_task(self, task_id: str, timeout: float | None = None) -> Any:
+        """
+        Wait for a task to complete.
+
+        Args:
+            task_id: The task ID to wait for
+            timeout: Optional timeout in seconds (0 means no timeout)
+
+        Returns:
+            Task result
+        """
+        if task_id not in self._active_tasks:
+            if task_id in self._results:
+                return self._results[task_id]
+            raise ValueError(f"Task {task_id} not found")
+
+        task = self._active_tasks[task_id]
+        actual_timeout = timeout if timeout is not None else self.spec.default_timeout
+
+        try:
+            # If timeout is 0, wait without a timeout
+            if actual_timeout == 0:
+                return await task
+            else:
+                return await asyncio.wait_for(task, actual_timeout)
+        except asyncio.TimeoutError:
+            raise TaskExecutionTimeoutError(f"Waiting timed out after {actual_timeout}s")
+
+    def get_active_task_count(self) -> int:
+        """Get the number of active tasks."""
+        return len(self._active_tasks)
+
+    def get_task_result(self, task_id: str) -> Any | None:
+        """Get the result of a completed task."""
+        return self._results.get(task_id)
+
+
+class TaskExecutionServiceSpec(Spec):
+    name: str = SpecField(default="task_execution_service")
+    factory: type = SpecField(default=TaskExecutionService)
+    max_concurrency: int = SpecField(default=100)
+    default_timeout: float = SpecField(default=300.0)
+
+```
+

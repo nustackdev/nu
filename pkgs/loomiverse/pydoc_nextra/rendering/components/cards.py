@@ -28,7 +28,8 @@ def render_module_cards(modules: List[str]) -> str:
 
     for module_name in sorted(modules):
         short_name = module_name.split(".")[-1]
-        lines.append(f'  <Cards.Card title="{short_name}" href="./{short_name}"/>\n')
+        href = [f"p_{part}" if part.startswith("_") else part for part in module_name.split(".")]
+        lines.append(f'  <Cards.Card title="{short_name}" href="/api/{"/".join(href)}"/>\n')
 
     lines.append("</Cards>\n\n")
 

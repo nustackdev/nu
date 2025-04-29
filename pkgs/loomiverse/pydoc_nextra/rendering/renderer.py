@@ -84,7 +84,7 @@ class MDXRenderer:
         result.append("import { Cards, Callout, Tabs } from 'nextra/components'\n\n")
 
         # Module header with emoji
-        result.append(f"# {module_info.name} {self.emojis['module']}\n\n")
+        result.append(f"# {self.emojis['module']} `{module_info.name}` Reference\n\n")
 
         # Module docstring
         if module_info.docstring:
@@ -107,8 +107,8 @@ class MDXRenderer:
             sections.append(("Classes", self._render_classes_section(module_info)))
         if module_info.functions:
             sections.append(("Functions", self._render_functions_section(module_info)))
-        if module_info.variables:
-            sections.append(("Variables", self._render_variables_section(module_info)))
+        # if module_info.variables:
+        #     sections.append(("Variables", self._render_variables_section(module_info)))
 
         # Sort sections according to config
         ordered_sections = []
@@ -467,13 +467,6 @@ class MDXRenderer:
             result.append(f"#### {method_info.name}() {self.emojis['method']}\n\n")
 
         # Method signature
-        if method_info.is_static:
-            pass
-        elif method_info.is_class_method:
-            pass
-        elif method_info.is_property:
-            pass
-
         result.append(render_method_signature(method_info))
 
         # Method docstring
@@ -516,7 +509,12 @@ class MDXRenderer:
                         continue
 
                     type_hint = param.type_hint or param_types.get(name, "Any")
-                    default = param_defaults.get(name, "Required")
+
+                    # Use docstring default if available, otherwise use signature default
+                    if hasattr(param, "default") and param.default:
+                        default = param.default
+                    else:
+                        default = param_defaults.get(name, "Required")
 
                     result.append(
                         f"| `{name}` | `{type_hint}` | {param.description} | `{default}` |\n"
@@ -531,20 +529,21 @@ class MDXRenderer:
                     f"**Returns:** `{return_type}` - {method_info.docstring.returns.description}\n\n"
                 )
 
-            # Add examples if available and in tab view
-            if in_tab and method_info.docstring.examples:
-                if len(method_info.docstring.examples) == 1:
-                    result.append("**Example:**\n\n")
-                    result.append(f"```python\n{method_info.docstring.examples[0].code}\n```\n\n")
-                else:
-                    result.append("**Examples:**\n\n")
-                    result.append(
-                        render_examples_tabs([e.code for e in method_info.docstring.examples])
-                    )
-            # Add just first example if not in tab view
-            elif not in_tab and method_info.docstring.examples:
+            # Add exceptions documentation
+            if method_info.docstring.exceptions:
+                result.append("**Raises:**\n\n")
+                result.append("| Exception | Description |\n")
+                result.append("| --------- | ----------- |\n")
+
+                for name, exc in method_info.docstring.exceptions.items():
+                    result.append(f"| `{name}` | {exc.description} |\n")
+                result.append("\n")
+
+            # Add examples if available (always include them regardless of tab view)
+            if method_info.docstring.examples:
                 result.append("**Example:**\n\n")
-                result.append(f"```python\n{method_info.docstring.examples[0].code}\n```\n\n")
+                for example in method_info.docstring.examples:
+                    result.append(f"```python\n{example.code}\n```\n\n")
 
         # Add source code if in tab and requested
         if in_tab and self.include_source_code:

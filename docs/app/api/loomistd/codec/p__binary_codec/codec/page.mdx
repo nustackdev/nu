@@ -1,0 +1,1445 @@
+---
+title: codec
+sidebarTitle: 📄 codec
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.codec._binary_codec.codec` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="BinaryCodec" href="#binarycodec"/>
+  <Cards.Card title="BinaryCodecSpec" href="#binarycodecspec"/>
+</Cards>
+
+---
+
+<a id='binarycodec'></a>
+
+## BinaryCodec 🧩
+
+<Callout type='info'>
+  Inherits from: `SyncService`
+</Callout>
+
+Optimized binary codec implementation with nested structure support.
+
+Features:
+- Explicit handling of nested structures with depth tracking
+- Memory usage limits
+- Performance optimizations for large datasets
+- Detailed error messages without exception wrapping
+
+```python filename='class.py'
+class BinaryCodec(SyncService):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_initialized` | Check if service is fully initialized. |
+| `key` | Get the unique service instance identifier. |
+| `name` | Get the service instance name. |
+| `readable_name` | Get a human-readable identifier for the service. |
+| `service_state` | Current service lifecycle state. |
+| `spec` | Get the service's specification. |
+
+### Methods
+
+<Tabs items={['cleanup', 'decode_key', 'decode_value', 'encode_key', 'encode_value', 'factory_name', 'initialize', 'post_initialize', 'post_shutdown', 'pre_initialize', 'pre_shutdown', 'setup', 'shutdown']}>
+<Tabs.Tab>
+
+### cleanup() 🔧
+
+```python filename='method.py'
+def cleanup(self) -> 'None'
+```
+
+Service-specific cleanup.
+
+This method should be implemented by concrete services to
+perform their specific cleanup requirements.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### decode_key() 🔧
+
+```python filename='method.py'
+def decode_key(self, encoded: 'BinaryCodecEncodedKey') -> 'BinaryCodecKey'
+```
+
+Decode bytes back to key tuple.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### decode_value() 🔧
+
+```python filename='method.py'
+def decode_value(self, encoded: 'BinaryCodecEncodedValue') -> 'BinaryCodecValue'
+```
+
+Decode value from bytes with nested structure support.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### encode_key() 🔧
+
+```python filename='method.py'
+def encode_key(self, key: 'BinaryCodecKey') -> 'BinaryCodecEncodedKey'
+```
+
+Encode key tuple into bytes with lexicographical ordering.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### encode_value() 🔧
+
+```python filename='method.py'
+def encode_value(self, value: 'BinaryCodecValue') -> 'BinaryCodecEncodedValue'
+```
+
+Encode value into bytes with nested structure support.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### factory_name() 🔧
+
+```python filename='method.py'
+def factory_name(self) -> 'str'
+```
+
+Get the fully qualified name of the service class.
+
+**Returns:** `str` - String in format "module.ClassName"
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### initialize() 🔧
+
+```python filename='method.py'
+def initialize(self) -> 'None'
+```
+
+Initialize service and its dependencies asynchronously.
+
+This method handles the complete initialization process:
+1. Validates service state
+2. Initializes dependencies
+3. Performs service-specific initialization
+4. Updates service state
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If initialization fails |
+| `ServiceStateError` | If service in invalid state |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_initialize() 🔧
+
+```python filename='method.py'
+def post_initialize(self) -> 'None'
+```
+
+Post-initialization hook.
+
+This method is called after service initialization.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If post-initialization fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### post_shutdown() 🔧
+
+```python filename='method.py'
+def post_shutdown(self) -> 'None'
+```
+
+Post-shutdown hook.
+
+This method is called after service shutdown.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If post-shutdown fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_initialize() 🔧
+
+```python filename='method.py'
+def pre_initialize(self) -> 'None'
+```
+
+Pre-initialization hook.
+
+This method is called before service initialization.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `InitializationError` | If pre-initialization fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pre_shutdown() 🔧
+
+```python filename='method.py'
+def pre_shutdown(self) -> 'None'
+```
+
+Pre-shutdown hook.
+
+This method is called before service shutdown.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If pre-shutdown fails |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setup() 🔧
+
+```python filename='method.py'
+def setup(self) -> 'None'
+```
+
+Service-specific setup.
+
+This method should be implemented by concrete services to
+perform their specific setup requirements
+(opening connections, configuring service, etc).
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### shutdown() 🔧
+
+```python filename='method.py'
+def shutdown(self) -> 'None'
+```
+
+Shutdown service and cleanup dependencies asynchronously.
+
+This method handles the complete shutdown process:
+1. Validates service state
+2. Performs service-specific shutdown
+3. Cleans up orphaned dependencies
+4. Updates service state
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ShutdownError` | If shutdown fails |
+| `ServiceStateError` | If service in invalid state |
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class BinaryCodec(SyncService):
+    """
+    Optimized binary codec implementation with nested structure support.
+
+    Features:
+    - Explicit handling of nested structures with depth tracking
+    - Memory usage limits
+    - Performance optimizations for large datasets
+    - Detailed error messages without exception wrapping
+    """
+
+    def encode_key(self, key: BinaryCodecKey) -> BinaryCodecEncodedKey:
+        """Encode key tuple into bytes with lexicographical ordering."""
+        if not isinstance(key, tuple):
+            raise EncodeError("Key must be a tuple")
+
+        parts = bytearray()
+
+        for part in key:
+            if isinstance(part, str):
+                try:
+                    encoded = part.encode("utf-8")
+                    if not encoded:
+                        raise EncodeError("Empty string not allowed in key")
+                    if PATH_SEPARATOR in encoded:
+                        raise EncodeError("Key string contains forbidden byte sequence")
+                    if len(encoded) > MAX_STR_SIZE:
+                        raise EncodeError(f"Key string too large: {len(encoded)} bytes")
+                    parts.extend(encoded)
+
+                except UnicodeEncodeError:
+                    raise EncodeError("Key string contains invalid UTF-8")
+
+            elif isinstance(part, int):
+                if not (-(2**63) <= part < 2**63):
+                    raise EncodeError("Integer key out of range")
+                parts.extend(PATH_SEPARATOR)
+                parts.extend(INT64_STRUCT.pack(part))
+
+            else:
+                raise EncodeError(f"Key parts must be str or int, got {type(part)}")
+
+            parts.extend(PATH_SEPARATOR)
+
+        return bytes(parts[:-1])  # Remove trailing separator
+
+    def decode_key(self, encoded: BinaryCodecEncodedKey) -> BinaryCodecKey:
+        """Decode bytes back to key tuple."""
+        if not isinstance(encoded, bytes):
+            raise DecodeError(f"Expected bytes, got {type(encoded)}")
+
+        parts = encoded.split(PATH_SEPARATOR)
+        result: list[str] = []
+
+        for part in parts:
+            if not part:
+                continue
+
+            # Check for int marker (exactly 8 bytes)
+            # if len(part) == 8:
+            #     try:
+            #         value = INT64_STRUCT.unpack(part)[0]
+            #         result.append(value)
+            #         continue
+            #     except struct.error:
+            #         raise DecodeError("Invalid integer encoding in key")
+
+            # Decode as UTF-8 string
+            try:
+                if len(part) > MAX_STR_SIZE:
+                    raise DecodeError(f"Key string too large: {len(part)} bytes")
+                result.append(part.decode("utf-8"))
+            except UnicodeDecodeError:
+                raise DecodeError("Invalid UTF-8 in key string")
+
+        return tuple(result)
+
+    def encode_value(self, value: BinaryCodecValue) -> BinaryCodecEncodedValue:
+        """Encode value into bytes with nested structure support."""
+        return self._encode_value_impl(value, 0)
+
+    def decode_value(self, encoded: BinaryCodecEncodedValue) -> BinaryCodecValue:
+        """Decode value from bytes with nested structure support."""
+        return self._decode_value_impl(encoded, 0)
+
+    def _encode_size(self, size: int) -> bytes:
+        """Encode size value with range check."""
+        if not 0 <= size <= 0xFFFFFFFF:
+            raise EncodeError(f"Size out of range: {size}")
+        return UINT32_STRUCT.pack(size)
+
+    def _encode_container(
+        self, value: list[Any] | dict[str, Any], depth: int, type_marker: int
+    ) -> bytes:
+        """Encode list or dict with depth tracking."""
+        if depth >= MAX_DEPTH:
+            raise EncodeError(f"Maximum nesting depth ({MAX_DEPTH}) exceeded")
+
+        if len(value) > MAX_COLLECTION_SIZE:
+            raise EncodeError(f"Collection too large: {len(value)} items")
+
+        parts = bytearray(TYPE_MARKERS[type_marker])
+
+        if isinstance(value, list):
+            for item in value:
+                encoded = self.encode_value(item)
+                parts.extend(self._encode_size(len(encoded)))
+                parts.extend(encoded)
+
+        else:  # dict
+            for k, v in value.items():
+                if not isinstance(k, str):
+                    raise EncodeError(f"Dict keys must be strings, got {type(k)}")
+
+                key_encoded = self.encode_value(k)
+                val_encoded = self.encode_value(v)
+
+                parts.extend(self._encode_size(len(key_encoded)))
+                parts.extend(key_encoded)
+                parts.extend(self._encode_size(len(val_encoded)))
+                parts.extend(val_encoded)
+
+        parts.extend(TYPE_MARKERS[TYPE_END])
+        return bytes(parts)
+
+    def _encode_value_impl(self, value: BinaryCodecValue, depth: int) -> BinaryCodecEncodedValue:
+        if value is None:
+            return TYPE_MARKERS[TYPE_NONE]
+
+        elif isinstance(value, bool):
+            return TYPE_MARKERS[TYPE_TRUE] if value else TYPE_MARKERS[TYPE_FALSE]
+
+        elif isinstance(value, int):
+            if not (-(2**63) <= value < 2**63):
+                raise EncodeError("Integer out of range")
+            return TYPE_MARKERS[TYPE_INT] + INT64_STRUCT.pack(value)
+
+        elif isinstance(value, float):
+            try:
+                return TYPE_MARKERS[TYPE_FLOAT] + DOUBLE_STRUCT.pack(value)
+            except struct.error:
+                raise EncodeError("Invalid float value")
+
+        elif isinstance(value, str):
+            try:
+                encoded = value.encode("utf-8")
+                if len(encoded) > MAX_STR_SIZE:
+                    raise EncodeError(f"String too large: {len(encoded)} bytes")
+                return TYPE_MARKERS[TYPE_STR] + self._encode_size(len(encoded)) + encoded
+            except UnicodeEncodeError:
+                raise EncodeError("String contains invalid UTF-8")
+
+        elif isinstance(value, bytes):
+            if len(value) > MAX_STR_SIZE:
+                raise EncodeError(f"Bytes too large: {len(value)}")
+            return TYPE_MARKERS[TYPE_BYTES] + self._encode_size(len(value)) + value
+
+        elif isinstance(value, list):
+            return self._encode_container(value, depth, TYPE_LIST)
+
+        elif isinstance(value, dict):
+            return self._encode_container(value, depth, TYPE_DICT)
+
+        else:
+            raise EncodeError(f"Unsupported type: {type(value)}")
+
+    def _decode_value_impl(  # noqa: C901
+        self, encoded: BinaryCodecEncodedValue, depth: int
+    ) -> BinaryCodecValue:
+        if not isinstance(encoded, bytes):
+            raise DecodeError(f"Expected bytes, got {type(encoded)}")
+
+        if not encoded:
+            return None
+
+        type_marker = encoded[0]
+        data = encoded[1:]
+
+        if type_marker == TYPE_NONE:
+            if data:
+                raise DecodeError("Extra data after None")
+            return None
+
+        if type_marker == TYPE_TRUE:
+            if data:
+                raise DecodeError("Extra data after True")
+            return True
+
+        if type_marker == TYPE_FALSE:
+            if data:
+                raise DecodeError("Extra data after False")
+            return False
+
+        if type_marker == TYPE_INT:
+            if len(data) != 8:
+                raise DecodeError("Invalid integer size")
+            try:
+                return INT64_STRUCT.unpack(data)[0]
+            except struct.error:
+                raise DecodeError("Failed to decode integer")
+
+        if type_marker == TYPE_FLOAT:
+            if len(data) != 8:
+                raise DecodeError("Invalid float size")
+            try:
+                return DOUBLE_STRUCT.unpack(data)[0]
+            except struct.error:
+                raise DecodeError("Failed to decode float")
+
+        if type_marker == TYPE_STR:
+            state = DecoderState(data)
+            size = self._decode_size(state)
+            if size > MAX_STR_SIZE:
+                raise DecodeError(f"String too large: {size} bytes")
+
+            str_data = data[state.offset : state.offset + size]
+            if len(str_data) != size:
+                raise DecodeError("String data truncated")
+
+            try:
+                return str_data.decode("utf-8")
+            except UnicodeDecodeError:
+                raise DecodeError("Invalid UTF-8 in string")
+
+        if type_marker == TYPE_BYTES:
+            state = DecoderState(data)
+            size = self._decode_size(state)
+            if size > MAX_STR_SIZE:
+                raise DecodeError(f"Bytes too large: {size}")
+
+            bytes_data = data[state.offset : state.offset + size]
+            if len(bytes_data) != size:
+                raise DecodeError("Bytes data truncated")
+            return bytes_data
+
+        if type_marker == TYPE_LIST:
+            state = DecoderState(data, depth=depth)
+            return self._decode_container(state, is_list=True)
+
+        if type_marker == TYPE_DICT:
+            state = DecoderState(data, depth=depth)
+            return self._decode_container(state, is_list=False)
+
+        raise DecodeError(f"Unknown type marker: {type_marker}")
+
+    def _decode_size(self, state: DecoderState) -> int:
+        """Decode size value from current position."""
+        if state.offset + 4 > len(state.data):
+            raise DecodeError("Truncated size field")
+
+        try:
+            size = UINT32_STRUCT.unpack(state.data[state.offset : state.offset + 4])[0]
+            state.offset += 4
+            return size
+        except struct.error:
+            raise DecodeError("Invalid size field")
+
+    def _decode_container(self, state: DecoderState, is_list: bool) -> list[Any] | dict[str, Any]:
+        """Decode list or dict from current position."""
+        if state.depth >= MAX_DEPTH:
+            raise DecodeError(f"Maximum nesting depth ({MAX_DEPTH}) exceeded")
+
+        result: list[BinaryCodecValue] | dict[str, BinaryCodecValue] = [] if is_list else {}
+        count = 0
+
+        while state.offset < len(state.data):
+            if state.data[state.offset : state.offset + 1] == TYPE_MARKERS[TYPE_END]:
+                state.offset += 1
+                return result
+
+            if count >= MAX_COLLECTION_SIZE:
+                raise DecodeError(f"Collection too large: {count} items")
+
+            if is_list:
+                size = self._decode_size(state)
+                if state.offset + size > len(state.data):
+                    raise DecodeError("List item truncated")
+
+                value = self._decode_value_impl(
+                    state.data[state.offset : state.offset + size], state.depth + 1
+                )
+                result.append(value)  # type: ignore
+                state.offset += size
+
+            else:  # dict
+                # Decode key
+                key_size = self._decode_size(state)
+                if state.offset + key_size > len(state.data):
+                    raise DecodeError("Dict key truncated")
+
+                key = self._decode_value_impl(
+                    state.data[state.offset : state.offset + key_size], state.depth + 1
+                )
+                if not isinstance(key, str):
+                    raise DecodeError(f"Dict keys must be strings, got {type(key)}")
+                state.offset += key_size
+
+                # Decode value
+                val_size = self._decode_size(state)
+                if state.offset + val_size > len(state.data):
+                    raise DecodeError("Dict value truncated")
+
+                value = self._decode_value_impl(
+                    state.data[state.offset : state.offset + val_size], state.depth + 1
+                )
+                result[key] = value  # type: ignore
+                state.offset += val_size
+
+            count += 1
+
+        raise DecodeError("Unterminated container")
+
+```
+
+<a id='binarycodecspec'></a>
+
+## BinaryCodecSpec 🧩
+
+<Callout type='info'>
+  Inherits from: `Spec`
+</Callout>
+
+Temporary specification class for defining service/app properties and identity.
+
+Should be replaced with a more ergonomic and robust system in the future.
+
+This class is used to define the properties of a service or app, including its name,
+factory, and any additional fields.
+
+```python filename='class.py'
+class BinaryCodecSpec(Spec):
+    ...
+```
+
+### Class Attributes
+
+| Name | Type | Value | Description |
+| ---- | ---- | ----- | ----------- |
+| `model_config` | `dict` | `{&#x27;arbitrary_types_allowed&#x27;: True, &#x27;extra&#x27;: &#x27;all...` |  |
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `model_extra` | Get extra fields set during validation. |
+| `model_fields_set` | Returns the set of fields that have been explicitly set on this model instance. |
+
+### Methods
+
+<Tabs items={['construct', 'copy', 'dict', 'from_orm', 'json', 'model_construct', 'model_copy', 'model_dump', 'model_dump_json', 'model_json_schema', 'model_parametrized_name', 'model_post_init', 'model_rebuild', 'model_validate', 'model_validate_json', 'model_validate_strings', 'parse_file', 'parse_obj', 'parse_raw', 'schema', 'schema_json', 'update_forward_refs', 'validate']}>
+<Tabs.Tab>
+
+### construct() 🔧
+
+```python filename='method.py'
+def construct(self_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### copy() 🔧
+
+```python filename='method.py'
+def copy(self, *, include: 'AbstractSetIntStr | MappingIntStrAny | None' = None, exclude: 'AbstractSetIntStr | MappingIntStrAny | None' = None, update: 'Dict[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'
+```
+
+Returns a copy of the model.
+
+!!! warning "Deprecated"
+    This method is now deprecated; use `model_copy` instead.
+
+If you need `include` or `exclude`, use:
+
+```python {test="skip" lint="skip"}
+data = self.model_dump(include=include, exclude=exclude, round_trip=True)
+data = {**data, **(update or {})}
+copied = self.model_validate(data)
+```
+
+<Callout type='warning'>
+  **Deprecated:** This feature is deprecated and may be removed in a future version.
+</Callout>
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `include` | `AbstractSetIntStr | MappingIntStrAny | None` | Optional set or mapping specifying which fields to include in the copied model. | `None` |
+| `exclude` | `AbstractSetIntStr | MappingIntStrAny | None` | Optional set or mapping specifying which fields to exclude in the copied model. | `None` |
+| `update` | `Dict[str, Any] | None` | Optional dictionary of field-value pairs to override field values in the copied model. | `None` |
+| `deep` | `bool` | If True, the values of fields that are Pydantic models will be deep-copied. | `False` |
+
+**Returns:** `Self` - A copy of the model with included, excluded and updated fields as specified.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### from_orm() 🔧
+
+```python filename='method.py'
+def from_orm(selfobj: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### json() 🔧
+
+```python filename='method.py'
+def json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_construct() 🔧
+
+```python filename='method.py'
+def model_construct(self_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'
+```
+
+Creates a new instance of the `Model` class with validated data.
+
+Creates a new model setting `__dict__` and `__pydantic_fields_set__` from trusted or pre-validated data.
+Default values are respected, but no other validation is performed.
+
+!!! note
+    `model_construct()` generally respects the `model_config.extra` setting on the provided model.
+    That is, if `model_config.extra == 'allow'`, then all extra passed values are added to the model instance's `__dict__`
+    and `__pydantic_extra__` fields. If `model_config.extra == 'ignore'` (the default), then all extra passed values are ignored.
+    Because no validation is performed with a call to `model_construct()`, having `model_config.extra == 'forbid'` does not result in
+    an error if extra values are passed, but they will be ignored.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `_fields_set` | `set[str] | None` | A set of field names that were originally explicitly set during instantiation. If provided, this is directly used for the [`model_fields_set`][pydantic.BaseModel.model_fields_set] attribute. Otherwise, the field names from the `values` argument will be used. | `None` |
+| `values` | `Any` | Trusted or pre-validated data dictionary. | `Required` |
+
+**Returns:** `Self` - A new instance of the `Model` class with validated data.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_copy() 🔧
+
+```python filename='method.py'
+def model_copy(self, *, update: 'Mapping[str, Any] | None' = None, deep: 'bool' = False) -> 'Self'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#model_copy
+
+Returns a copy of the model.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `update` | `Mapping[str, Any] | None` | Values to change/add in the new model. Note: the data is not validated before creating the new model. You should trust this data. | `None` |
+| `deep` | `bool` | Set to `True` to make a deep copy of the model. | `False` |
+
+**Returns:** `Self` - New model instance.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_dump() 🔧
+
+```python filename='method.py'
+def model_dump(self, *, mode: "Literal['json', 'python'] | str" = 'python', include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, serialize_as_any: 'bool' = False) -> 'dict[str, Any]'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#modelmodel_dump
+
+Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `mode` | `Literal['json', 'python'] | str` | The mode in which `to_python` should run. If mode is 'json', the output will only contain JSON serializable types. If mode is 'python', the output may contain non-JSON-serializable Python objects. | `'python'` |
+| `include` | `IncEx | None` | A set of fields to include in the output. | `None` |
+| `exclude` | `IncEx | None` | A set of fields to exclude from the output. | `None` |
+| `context` | `Any | None` | Additional context to pass to the serializer. | `None` |
+| `by_alias` | `bool` | Whether to use the field's alias in the dictionary key if defined. | `False` |
+| `exclude_unset` | `bool` | Whether to exclude fields that have not been explicitly set. | `False` |
+| `exclude_defaults` | `bool` | Whether to exclude fields that are set to their default value. | `False` |
+| `exclude_none` | `bool` | Whether to exclude fields that have a value of `None`. | `False` |
+| `round_trip` | `bool` | If True, dumped values should be valid as input for non-idempotent types such as Json[T]. | `False` |
+| `warnings` | `bool | Literal['none', 'warn', 'error']` | How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors, "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError]. | `True` |
+| `serialize_as_any` | `bool` | Whether to serialize fields with duck-typing serialization behavior. | `False` |
+
+**Returns:** `dict[str, Any]` - A dictionary representation of the model.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_dump_json() 🔧
+
+```python filename='method.py'
+def model_dump_json(self, *, indent: 'int | None' = None, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, context: 'Any | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, round_trip: 'bool' = False, warnings: "bool | Literal['none', 'warn', 'error']" = True, serialize_as_any: 'bool' = False) -> 'str'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#modelmodel_dump_json
+
+Generates a JSON representation of the model using Pydantic's `to_json` method.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `indent` | `int | None` | Indentation to use in the JSON output. If None is passed, the output will be compact. | `None` |
+| `include` | `IncEx | None` | Field(s) to include in the JSON output. | `None` |
+| `exclude` | `IncEx | None` | Field(s) to exclude from the JSON output. | `None` |
+| `context` | `Any | None` | Additional context to pass to the serializer. | `None` |
+| `by_alias` | `bool` | Whether to serialize using field aliases. | `False` |
+| `exclude_unset` | `bool` | Whether to exclude fields that have not been explicitly set. | `False` |
+| `exclude_defaults` | `bool` | Whether to exclude fields that are set to their default value. | `False` |
+| `exclude_none` | `bool` | Whether to exclude fields that have a value of `None`. | `False` |
+| `round_trip` | `bool` | If True, dumped values should be valid as input for non-idempotent types such as Json[T]. | `False` |
+| `warnings` | `bool | Literal['none', 'warn', 'error']` | How to handle serialization errors. False/"none" ignores them, True/"warn" logs errors, "error" raises a [`PydanticSerializationError`][pydantic_core.PydanticSerializationError]. | `True` |
+| `serialize_as_any` | `bool` | Whether to serialize fields with duck-typing serialization behavior. | `False` |
+
+**Returns:** `str` - A JSON string representation of the model.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_json_schema() 🔧
+
+```python filename='method.py'
+def model_json_schema(selfby_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', schema_generator: 'type[GenerateJsonSchema]' = <class 'pydantic.json_schema.GenerateJsonSchema'>, mode: 'JsonSchemaMode' = 'validation') -> 'dict[str, Any]'
+```
+
+Generates a JSON schema for a model class.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `by_alias` | `bool` | Whether to use attribute aliases or not. | `True` |
+| `ref_template` | `str` | The reference template. | `'#/$defs/{model}'` |
+| `schema_generator` | `type[GenerateJsonSchema]` | To override the logic used to generate the JSON schema, as a subclass of `GenerateJsonSchema` with your desired modifications | `<class 'pydantic.json_schema.GenerateJsonSchema'>` |
+| `mode` | `JsonSchemaMode` | The mode in which to generate the schema. | `'validation'` |
+
+**Returns:** `dict[str, Any]` - The JSON schema for the given model class.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_parametrized_name() 🔧
+
+```python filename='method.py'
+def model_parametrized_name(selfparams: 'tuple[type[Any], ...]') -> 'str'
+```
+
+Compute the class name for parametrizations of generic classes.
+
+This method can be overridden to achieve a custom naming scheme for generic BaseModels.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `params` | `tuple[type[Any], ...]` | Tuple of types of the class. Given a generic class `Model` with 2 type variables and a concrete model `Model[str, int]`, the value `(str, int)` would be passed to `params`. | `Required` |
+
+**Returns:** `str` - String representing the new class where `params` are passed to `cls` as type variables.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `TypeError` | Raised when trying to generate concrete names for non-generic models. |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_post_init() 🔧
+
+```python filename='method.py'
+def model_post_init(self, _BaseModel__context: 'Any') -> 'None'
+```
+
+Override this method to perform additional initialization after `__init__` and `model_construct`.
+
+This is useful if you want to do some validation that requires the entire model to be initialized.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_rebuild() 🔧
+
+```python filename='method.py'
+def model_rebuild(self*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'
+```
+
+Try to rebuild the pydantic-core schema for the model.
+
+This may be necessary when one of the annotations is a ForwardRef which could not be resolved during
+the initial attempt to build the schema, and automatic rebuilding fails.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `force` | `bool` | Whether to force the rebuilding of the model schema, defaults to `False`. | `False` |
+| `raise_errors` | `bool` | Whether to raise errors, defaults to `True`. | `True` |
+| `_parent_namespace_depth` | `int` | The depth level of the parent namespace, defaults to 2. | `2` |
+| `_types_namespace` | `MappingNamespace | None` | The types namespace, defaults to `None`. | `None` |
+
+**Returns:** `bool | None` - Returns `None` if the schema is already "complete" and rebuilding was not required. If rebuilding _was_ required, returns `True` if rebuilding was successful, otherwise `False`.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_validate() 🔧
+
+```python filename='method.py'
+def model_validate(selfobj: 'Any', *, strict: 'bool | None' = None, from_attributes: 'bool | None' = None, context: 'Any | None' = None) -> 'Self'
+```
+
+Validate a pydantic model instance.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `obj` | `Any` | The object to validate. | `Required` |
+| `strict` | `bool | None` | Whether to enforce types strictly. | `None` |
+| `from_attributes` | `bool | None` | Whether to extract data from object attributes. | `None` |
+| `context` | `Any | None` | Additional context to pass to the validator. | `None` |
+
+**Returns:** `Self` - The validated model instance.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ValidationError` | If the object could not be validated. |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_validate_json() 🔧
+
+```python filename='method.py'
+def model_validate_json(selfjson_data: 'str | bytes | bytearray', *, strict: 'bool | None' = None, context: 'Any | None' = None) -> 'Self'
+```
+
+Usage docs: https://docs.pydantic.dev/2.10/concepts/json/#json-parsing
+
+Validate the given JSON data against the Pydantic model.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `json_data` | `str | bytes | bytearray` | The JSON data to validate. | `Required` |
+| `strict` | `bool | None` | Whether to enforce types strictly. | `None` |
+| `context` | `Any | None` | Extra variables to pass to the validator. | `None` |
+
+**Returns:** `Self` - The validated Pydantic model.
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ValidationError` | If `json_data` is not a JSON string or the object could not be validated. |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### model_validate_strings() 🔧
+
+```python filename='method.py'
+def model_validate_strings(selfobj: 'Any', *, strict: 'bool | None' = None, context: 'Any | None' = None) -> 'Self'
+```
+
+Validate the given object with string data against the Pydantic model.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `obj` | `Any` | The object containing string data to validate. | `Required` |
+| `strict` | `bool | None` | Whether to enforce types strictly. | `None` |
+| `context` | `Any | None` | Extra variables to pass to the validator. | `None` |
+
+**Returns:** `Self` - The validated Pydantic model.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### parse_file() 🔧
+
+```python filename='method.py'
+def parse_file(selfpath: 'str | Path', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### parse_obj() 🔧
+
+```python filename='method.py'
+def parse_obj(selfobj: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### parse_raw() 🔧
+
+```python filename='method.py'
+def parse_raw(selfb: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### schema() 🔧
+
+```python filename='method.py'
+def schema(selfby_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### schema_json() 🔧
+
+```python filename='method.py'
+def schema_json(self*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### update_forward_refs() 🔧
+
+```python filename='method.py'
+def update_forward_refs(self**localns: 'Any') -> 'None'
+```
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### validate() 🔧
+
+```python filename='method.py'
+def validate(selfvalue: 'Any') -> 'Self'
+```
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class BinaryCodecSpec(Spec):
+    name: str = SpecField(default="binary_codec")
+    factory: type = SpecField(default=BinaryCodec)
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+import struct
+from typing import Any
+
+from loomi.service import SyncService
+from loomi.spec import Spec, SpecField
+
+from .._exceptions import DecodeError, EncodeError
+from .constants import (
+    DOUBLE_STRUCT,
+    INT64_STRUCT,
+    MAX_COLLECTION_SIZE,
+    MAX_DEPTH,
+    MAX_STR_SIZE,
+    PATH_SEPARATOR,
+    TYPE_BYTES,
+    TYPE_DICT,
+    TYPE_END,
+    TYPE_FALSE,
+    TYPE_FLOAT,
+    TYPE_INT,
+    TYPE_LIST,
+    TYPE_MARKERS,
+    TYPE_NONE,
+    TYPE_STR,
+    TYPE_TRUE,
+    UINT32_STRUCT,
+)
+from .types import (
+    BinaryCodecEncodedKey,
+    BinaryCodecEncodedValue,
+    BinaryCodecKey,
+    BinaryCodecValue,
+    DecoderState,
+)
+
+__all__ = [
+    "BinaryCodec",
+    "BinaryCodecSpec",
+]
+
+
+class BinaryCodec(SyncService):
+    """
+    Optimized binary codec implementation with nested structure support.
+
+    Features:
+    - Explicit handling of nested structures with depth tracking
+    - Memory usage limits
+    - Performance optimizations for large datasets
+    - Detailed error messages without exception wrapping
+    """
+
+    def encode_key(self, key: BinaryCodecKey) -> BinaryCodecEncodedKey:
+        """Encode key tuple into bytes with lexicographical ordering."""
+        if not isinstance(key, tuple):
+            raise EncodeError("Key must be a tuple")
+
+        parts = bytearray()
+
+        for part in key:
+            if isinstance(part, str):
+                try:
+                    encoded = part.encode("utf-8")
+                    if not encoded:
+                        raise EncodeError("Empty string not allowed in key")
+                    if PATH_SEPARATOR in encoded:
+                        raise EncodeError("Key string contains forbidden byte sequence")
+                    if len(encoded) > MAX_STR_SIZE:
+                        raise EncodeError(f"Key string too large: {len(encoded)} bytes")
+                    parts.extend(encoded)
+
+                except UnicodeEncodeError:
+                    raise EncodeError("Key string contains invalid UTF-8")
+
+            elif isinstance(part, int):
+                if not (-(2**63) <= part < 2**63):
+                    raise EncodeError("Integer key out of range")
+                parts.extend(PATH_SEPARATOR)
+                parts.extend(INT64_STRUCT.pack(part))
+
+            else:
+                raise EncodeError(f"Key parts must be str or int, got {type(part)}")
+
+            parts.extend(PATH_SEPARATOR)
+
+        return bytes(parts[:-1])  # Remove trailing separator
+
+    def decode_key(self, encoded: BinaryCodecEncodedKey) -> BinaryCodecKey:
+        """Decode bytes back to key tuple."""
+        if not isinstance(encoded, bytes):
+            raise DecodeError(f"Expected bytes, got {type(encoded)}")
+
+        parts = encoded.split(PATH_SEPARATOR)
+        result: list[str] = []
+
+        for part in parts:
+            if not part:
+                continue
+
+            # Check for int marker (exactly 8 bytes)
+            # if len(part) == 8:
+            #     try:
+            #         value = INT64_STRUCT.unpack(part)[0]
+            #         result.append(value)
+            #         continue
+            #     except struct.error:
+            #         raise DecodeError("Invalid integer encoding in key")
+
+            # Decode as UTF-8 string
+            try:
+                if len(part) > MAX_STR_SIZE:
+                    raise DecodeError(f"Key string too large: {len(part)} bytes")
+                result.append(part.decode("utf-8"))
+            except UnicodeDecodeError:
+                raise DecodeError("Invalid UTF-8 in key string")
+
+        return tuple(result)
+
+    def encode_value(self, value: BinaryCodecValue) -> BinaryCodecEncodedValue:
+        """Encode value into bytes with nested structure support."""
+        return self._encode_value_impl(value, 0)
+
+    def decode_value(self, encoded: BinaryCodecEncodedValue) -> BinaryCodecValue:
+        """Decode value from bytes with nested structure support."""
+        return self._decode_value_impl(encoded, 0)
+
+    def _encode_size(self, size: int) -> bytes:
+        """Encode size value with range check."""
+        if not 0 <= size <= 0xFFFFFFFF:
+            raise EncodeError(f"Size out of range: {size}")
+        return UINT32_STRUCT.pack(size)
+
+    def _encode_container(
+        self, value: list[Any] | dict[str, Any], depth: int, type_marker: int
+    ) -> bytes:
+        """Encode list or dict with depth tracking."""
+        if depth >= MAX_DEPTH:
+            raise EncodeError(f"Maximum nesting depth ({MAX_DEPTH}) exceeded")
+
+        if len(value) > MAX_COLLECTION_SIZE:
+            raise EncodeError(f"Collection too large: {len(value)} items")
+
+        parts = bytearray(TYPE_MARKERS[type_marker])
+
+        if isinstance(value, list):
+            for item in value:
+                encoded = self.encode_value(item)
+                parts.extend(self._encode_size(len(encoded)))
+                parts.extend(encoded)
+
+        else:  # dict
+            for k, v in value.items():
+                if not isinstance(k, str):
+                    raise EncodeError(f"Dict keys must be strings, got {type(k)}")
+
+                key_encoded = self.encode_value(k)
+                val_encoded = self.encode_value(v)
+
+                parts.extend(self._encode_size(len(key_encoded)))
+                parts.extend(key_encoded)
+                parts.extend(self._encode_size(len(val_encoded)))
+                parts.extend(val_encoded)
+
+        parts.extend(TYPE_MARKERS[TYPE_END])
+        return bytes(parts)
+
+    def _encode_value_impl(self, value: BinaryCodecValue, depth: int) -> BinaryCodecEncodedValue:
+        if value is None:
+            return TYPE_MARKERS[TYPE_NONE]
+
+        elif isinstance(value, bool):
+            return TYPE_MARKERS[TYPE_TRUE] if value else TYPE_MARKERS[TYPE_FALSE]
+
+        elif isinstance(value, int):
+            if not (-(2**63) <= value < 2**63):
+                raise EncodeError("Integer out of range")
+            return TYPE_MARKERS[TYPE_INT] + INT64_STRUCT.pack(value)
+
+        elif isinstance(value, float):
+            try:
+                return TYPE_MARKERS[TYPE_FLOAT] + DOUBLE_STRUCT.pack(value)
+            except struct.error:
+                raise EncodeError("Invalid float value")
+
+        elif isinstance(value, str):
+            try:
+                encoded = value.encode("utf-8")
+                if len(encoded) > MAX_STR_SIZE:
+                    raise EncodeError(f"String too large: {len(encoded)} bytes")
+                return TYPE_MARKERS[TYPE_STR] + self._encode_size(len(encoded)) + encoded
+            except UnicodeEncodeError:
+                raise EncodeError("String contains invalid UTF-8")
+
+        elif isinstance(value, bytes):
+            if len(value) > MAX_STR_SIZE:
+                raise EncodeError(f"Bytes too large: {len(value)}")
+            return TYPE_MARKERS[TYPE_BYTES] + self._encode_size(len(value)) + value
+
+        elif isinstance(value, list):
+            return self._encode_container(value, depth, TYPE_LIST)
+
+        elif isinstance(value, dict):
+            return self._encode_container(value, depth, TYPE_DICT)
+
+        else:
+            raise EncodeError(f"Unsupported type: {type(value)}")
+
+    def _decode_value_impl(  # noqa: C901
+        self, encoded: BinaryCodecEncodedValue, depth: int
+    ) -> BinaryCodecValue:
+        if not isinstance(encoded, bytes):
+            raise DecodeError(f"Expected bytes, got {type(encoded)}")
+
+        if not encoded:
+            return None
+
+        type_marker = encoded[0]
+        data = encoded[1:]
+
+        if type_marker == TYPE_NONE:
+            if data:
+                raise DecodeError("Extra data after None")
+            return None
+
+        if type_marker == TYPE_TRUE:
+            if data:
+                raise DecodeError("Extra data after True")
+            return True
+
+        if type_marker == TYPE_FALSE:
+            if data:
+                raise DecodeError("Extra data after False")
+            return False
+
+        if type_marker == TYPE_INT:
+            if len(data) != 8:
+                raise DecodeError("Invalid integer size")
+            try:
+                return INT64_STRUCT.unpack(data)[0]
+            except struct.error:
+                raise DecodeError("Failed to decode integer")
+
+        if type_marker == TYPE_FLOAT:
+            if len(data) != 8:
+                raise DecodeError("Invalid float size")
+            try:
+                return DOUBLE_STRUCT.unpack(data)[0]
+            except struct.error:
+                raise DecodeError("Failed to decode float")
+
+        if type_marker == TYPE_STR:
+            state = DecoderState(data)
+            size = self._decode_size(state)
+            if size > MAX_STR_SIZE:
+                raise DecodeError(f"String too large: {size} bytes")
+
+            str_data = data[state.offset : state.offset + size]
+            if len(str_data) != size:
+                raise DecodeError("String data truncated")
+
+            try:
+                return str_data.decode("utf-8")
+            except UnicodeDecodeError:
+                raise DecodeError("Invalid UTF-8 in string")
+
+        if type_marker == TYPE_BYTES:
+            state = DecoderState(data)
+            size = self._decode_size(state)
+            if size > MAX_STR_SIZE:
+                raise DecodeError(f"Bytes too large: {size}")
+
+            bytes_data = data[state.offset : state.offset + size]
+            if len(bytes_data) != size:
+                raise DecodeError("Bytes data truncated")
+            return bytes_data
+
+        if type_marker == TYPE_LIST:
+            state = DecoderState(data, depth=depth)
+            return self._decode_container(state, is_list=True)
+
+        if type_marker == TYPE_DICT:
+            state = DecoderState(data, depth=depth)
+            return self._decode_container(state, is_list=False)
+
+        raise DecodeError(f"Unknown type marker: {type_marker}")
+
+    def _decode_size(self, state: DecoderState) -> int:
+        """Decode size value from current position."""
+        if state.offset + 4 > len(state.data):
+            raise DecodeError("Truncated size field")
+
+        try:
+            size = UINT32_STRUCT.unpack(state.data[state.offset : state.offset + 4])[0]
+            state.offset += 4
+            return size
+        except struct.error:
+            raise DecodeError("Invalid size field")
+
+    def _decode_container(self, state: DecoderState, is_list: bool) -> list[Any] | dict[str, Any]:
+        """Decode list or dict from current position."""
+        if state.depth >= MAX_DEPTH:
+            raise DecodeError(f"Maximum nesting depth ({MAX_DEPTH}) exceeded")
+
+        result: list[BinaryCodecValue] | dict[str, BinaryCodecValue] = [] if is_list else {}
+        count = 0
+
+        while state.offset < len(state.data):
+            if state.data[state.offset : state.offset + 1] == TYPE_MARKERS[TYPE_END]:
+                state.offset += 1
+                return result
+
+            if count >= MAX_COLLECTION_SIZE:
+                raise DecodeError(f"Collection too large: {count} items")
+
+            if is_list:
+                size = self._decode_size(state)
+                if state.offset + size > len(state.data):
+                    raise DecodeError("List item truncated")
+
+                value = self._decode_value_impl(
+                    state.data[state.offset : state.offset + size], state.depth + 1
+                )
+                result.append(value)  # type: ignore
+                state.offset += size
+
+            else:  # dict
+                # Decode key
+                key_size = self._decode_size(state)
+                if state.offset + key_size > len(state.data):
+                    raise DecodeError("Dict key truncated")
+
+                key = self._decode_value_impl(
+                    state.data[state.offset : state.offset + key_size], state.depth + 1
+                )
+                if not isinstance(key, str):
+                    raise DecodeError(f"Dict keys must be strings, got {type(key)}")
+                state.offset += key_size
+
+                # Decode value
+                val_size = self._decode_size(state)
+                if state.offset + val_size > len(state.data):
+                    raise DecodeError("Dict value truncated")
+
+                value = self._decode_value_impl(
+                    state.data[state.offset : state.offset + val_size], state.depth + 1
+                )
+                result[key] = value  # type: ignore
+                state.offset += val_size
+
+            count += 1
+
+        raise DecodeError("Unterminated container")
+
+
+class BinaryCodecSpec(Spec):
+    name: str = SpecField(default="binary_codec")
+    factory: type = SpecField(default=BinaryCodec)
+
+```
+

@@ -1,3 +1,7 @@
+"""
+Mixin for app initialization and shutdown management.
+"""
+
 from __future__ import annotations
 
 from asyncio import Lock as AsyncioLock

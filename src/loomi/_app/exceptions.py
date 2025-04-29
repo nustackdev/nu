@@ -1,3 +1,14 @@
+"""
+Exceptions for the app module.
+
+This module provides custom exceptions for the app module, including
+- AppError: Base class for all app-related exceptions
+- DependencyError: Raised for dependency-related errors
+- ServiceDependencyError: Raised for service-related errors
+- StateError: Raised for state-related errors
+- ExecutionError: Raised for execution-related errors
+"""
+
 from __future__ import annotations
 
 from typing import Any, Type

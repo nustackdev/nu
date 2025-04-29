@@ -1,9 +1,9 @@
 import nextra from 'nextra'
 
-const withNextra = nextra({ 
-  // nextra-specific options
+const withNextra = nextra({
+
 })
 
 export default withNextra({
-  // next-specific options
+
 })

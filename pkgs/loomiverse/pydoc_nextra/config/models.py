@@ -22,10 +22,10 @@ class ModuleConfig:
     title: Optional[str] = None
     """Override title for the module in documentation."""
 
-    include_private: bool = False
+    show_private: bool = False
     """Whether to include private members (prefixed with _)."""
 
-    include_dunder: bool = False
+    show_dunder: bool = False
     """Whether to include dunder methods (__method__)."""
 
     exclude_patterns: List[str] = field(default_factory=list)

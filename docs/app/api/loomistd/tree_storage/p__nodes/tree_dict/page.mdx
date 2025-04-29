@@ -1,0 +1,1023 @@
+---
+title: tree_dict
+sidebarTitle: 📄 tree_dict
+---
+
+import { Cards, Callout, Tabs } from 'nextra/components'
+
+# 📄 `loomistd.tree_storage._nodes.tree_dict` Reference
+
+## Classes
+
+<Cards>
+  <Cards.Card title="TreeDict" href="#treedict"/>
+</Cards>
+
+---
+
+<a id='treedict'></a>
+
+## TreeDict 🧩
+
+<Callout type='info'>
+  Inherits from: `TreeNode`, `AsyncTreeDictProtocol`
+</Callout>
+
+A dictionary-like interface to tree storage.
+
+This class provides an interface similar to a Python dictionary
+for interacting with dictionary nodes in the tree storage.
+It implements async methods for dictionary operations that map
+to the underlying tree structure.
+
+```python filename='class.py'
+class TreeDict(TreeNode, AsyncTreeDictProtocol):
+    ...
+```
+
+### Properties
+
+| Name | Description |
+| ---- | ----------- |
+| `is_async` | Check if the node is asynchronous. |
+| `path` | Get the base path for this tree node. |
+
+### Methods
+
+<Tabs items={['clear', 'contains', 'copy_to', 'delete', 'dict', 'exists', 'filter', 'get', 'is_dict', 'is_list', 'items', 'keys', 'list', 'map', 'move_to', 'pop', 'remove', 'set', 'setdefault', 'store', 'to_dict', 'to_python_object', 'transform', 'update', 'values']}>
+<Tabs.Tab>
+
+### clear() 🔧
+
+```python filename='method.py'
+def clear(self) -> 'None'
+```
+
+Remove all items from the dictionary node.
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### contains() 🔧
+
+```python filename='method.py'
+def contains(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent') -> 'bool'
+```
+
+Check if a path exists in the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+
+**Returns:** `bool` - True if the path exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### copy_to() 🔧
+
+```python filename='method.py'
+def copy_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'None'
+```
+
+Create a copy of this node at another location in the tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### delete() 🔧
+
+```python filename='method.py'
+def delete(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent') -> 'None'
+```
+
+Delete a path from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObjectKeyError` | If the path doesn't exist |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### dict() 🔧
+
+```python filename='method.py'
+def dict(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'AsyncTreeDictProtocol[TreeValueT]'
+```
+
+Get a nested dictionary node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeDictProtocol[TreeValueT]` - A new TreeDict instance for the nested dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### exists() 🔧
+
+```python filename='method.py'
+def exists(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node exists in the tree.
+
+When called with no path arguments, checks if the current node exists.
+When called with path segments, checks if the specified nested node exists.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node exists, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### filter() 🔧
+
+```python filename='method.py'
+def filter(self, filter_func: 'Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Filter elements of a list or dictionary node.
+
+For list nodes, filter_func takes (value) and returns a boolean.
+For dictionary nodes, filter_func takes (key, value) and returns a boolean.
+
+Elements for which filter_func returns False will be removed.
+
+When called with just the filter function, filters the current node.
+When called with path segments, filters the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `filter_func` | `Callable[[TreeValueContainer[TreeValueT]], bool] | Callable[[str, TreeValueContainer[TreeValueT]], bool]` | Function that takes elements and returns whether to keep them | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObjectTypeError` | If the node is neither a list nor a dictionary |
+| `StorageKeyError` | If the node doesn't exist |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### get() 🔧
+
+```python filename='method.py'
+def get(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', default: "'TreeValueT | EmptyProtocol'" = <Empty>) -> "'TreeValueContainer[TreeValueT] | EmptyProtocol'"
+```
+
+Get a value from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `default` | `'TreeValueT | EmptyProtocol'` | Value to return if path doesn't exist | `<Empty>` |
+
+**Returns:** `'TreeValueContainer[TreeValueT] | EmptyProtocol'` - The value associated with the path, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_dict() 🔧
+
+```python filename='method.py'
+def is_dict(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a dictionary node.
+
+When called with no path arguments, checks if the current node is a dictionary.
+When called with path segments, checks if the specified nested node is a dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a dictionary, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### is_list() 🔧
+
+```python filename='method.py'
+def is_list(self, *args: 'Any', **kwargs: 'Any') -> 'bool'
+```
+
+Check if a node is a list node.
+
+When called with no path arguments, checks if the current node is a list.
+When called with path segments, checks if the specified nested node is a list.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `bool` - True if the node is a list, False otherwise
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### items() 🔧
+
+```python filename='method.py'
+def items(self) -> 'list[tuple[TreePathComponent, TreeValueT]]'
+```
+
+Get all top-level key-value pairs in the dictionary node.
+
+**Returns:** `list[tuple[TreePathComponent, TreeValueT]]` - List of (key, value) tuples
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### keys() 🔧
+
+```python filename='method.py'
+def keys(self) -> 'list[TreePathComponent]'
+```
+
+Get all top-level keys in the dictionary node.
+
+**Returns:** `list[TreePathComponent]` - List of keys in the dictionary
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### list() 🔧
+
+```python filename='method.py'
+def list(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'AsyncTreeListProtocol[TreeValueT]'
+```
+
+Get a nested list node interface.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths: Additional path segments | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use | `None` |
+
+**Returns:** `AsyncTreeListProtocol[TreeValueT]` - A new TreeList instance for the nested list node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### map() 🔧
+
+```python filename='method.py'
+def map(self, map_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a mapping function to each element in a list or dictionary node.
+
+For list nodes, each element is replaced with the result of map_func(element).
+For dictionary nodes, each value is replaced with the result of map_func(value).
+
+This is a convenience method that transforms the node by applying the map function
+to each element while preserving the structure.
+
+When called with just the map function, maps the current node elements.
+When called with path segments, maps the specified nested node elements.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `map_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function to apply to each element | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObjectTypeError` | If the node is neither a list nor a dictionary |
+| `StorageKeyError` | If the node doesn't exist |
+| `TypeError` | If the mapping result contains unsupported types |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### move_to() 🔧
+
+```python filename='method.py'
+def move_to(self, target: 'TreePathComponent', /, *targets: 'TreePathComponent', txn: 'AsyncTransactionProtocol[TreeValueT] | None' = None) -> 'None'
+```
+
+Move this node to another location in the tree.
+
+This operation is atomic - either the move completes successfully,
+or no changes are made to the tree.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `target` | `TreePathComponent` | First segment of the target path *targets: Additional segments of the target path | `Required` |
+| `txn` | `AsyncTransactionProtocol[TreeValueT] | None` | Optional transaction to use Note: After this operation, the current TreeNode instance should not be used as its path is no longer valid. | `None` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### pop() 🔧
+
+```python filename='method.py'
+def pop(self, key: 'TreePathComponent', default: "'TreeValueT | EmptyProtocol'" = <Empty>) -> "'TreeValueContainer[TreeValueT] | EmptyProtocol'"
+```
+
+Remove and return a value from the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `TreePathComponent` | Key to remove | `Required` |
+| `default` | `'TreeValueT | EmptyProtocol'` | Value to return if key doesn't exist | `<Empty>` |
+
+**Returns:** `'TreeValueContainer[TreeValueT] | EmptyProtocol'` - The value associated with the key, or default if not found
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ObjectKeyError` | If the key doesn't exist and no default is provided |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### remove() 🔧
+
+```python filename='method.py'
+def remove(self, *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Delete a node from the tree.
+
+When called with no path arguments, deletes the current node.
+When called with path segments, deletes the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### set() 🔧
+
+```python filename='method.py'
+def set(self, path: 'TreePathComponent', /, *paths: 'TreePathComponent', value: 'TreeValueT') -> 'None'
+```
+
+Set a value in the dictionary node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `TreePathComponent` | First path segment *paths_and_value: Additional path segments followed by the value to set | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `ValueError` | If no value is provided |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### setdefault() 🔧
+
+```python filename='method.py'
+def setdefault(self, key: 'TreePathComponent', default: 'TreeValueT' = None) -> 'TreeValueT'
+```
+
+Return the value for key if it exists, otherwise set it to default.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `key` | `TreePathComponent` | Key to check and potentially set | `Required` |
+| `default` | `TreeValueT` | Value to set and return if key doesn't exist | `None` |
+
+**Returns:** `TreeValueT` - The value associated with the key, or default if not found
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### store() 🔧
+
+```python filename='method.py'
+def store(self, value: 'TreeValueT', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Store a Python object at a specified node.
+
+This is a convenience method for directly storing Python objects
+(dictionaries, lists, or primitive values) in the tree.
+
+When called with just the value, replaces the current node.
+When called with path segments, stores at the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `value` | `TreeValueT` | Python object to store | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `TypeError` | If the value is of an unsupported type |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_dict() 🔧
+
+```python filename='method.py'
+def to_dict(self) -> 'dict[TreePathComponent, TreeValueT]'
+```
+
+Convert to a regular Python dictionary.
+
+**Returns:** `dict[TreePathComponent, TreeValueT]` - Python dictionary containing all data from this dictionary node
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### to_python_object() 🔧
+
+```python filename='method.py'
+def to_python_object(self, *args: 'Any', **kwargs: 'Any') -> 'TreeValueContainer[TreeValueT]'
+```
+
+Convert a node to a standard Python object.
+
+When called with no path arguments, converts the current node.
+When called with path segments, converts the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Returns:** `TreeValueContainer[TreeValueT]` - The Python representation of the node
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageKeyError` | If the node doesn't exist |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### transform() 🔧
+
+```python filename='method.py'
+def transform(self, transform_func: 'Callable[[TreeValueContainer[TreeValueT]], TreeValueT]', *args: 'Any', **kwargs: 'Any') -> 'None'
+```
+
+Apply a transformation function to a node.
+
+The transformation function takes the current value as a Python object
+and returns a new transformed Python object.
+
+When called with just the transform function, transforms the current node.
+When called with path segments, transforms the specified nested node.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `transform_func` | `Callable[[TreeValueContainer[TreeValueT]], TreeValueT]` | Function that takes a Python object and returns a transformed version | `Required` |
+| `path` | `Any` | Optional first path segment *paths: Additional path segments | `Required` |
+| `txn` | `Any` | Optional transaction to use | `Required` |
+
+**Raises:**
+
+| Exception | Description |
+| --------- | ----------- |
+| `StorageKeyError` | If the node doesn't exist |
+| `TypeError` | If the transformation result is not of a compatible type |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### update() 🔧
+
+```python filename='method.py'
+def update(self, other: 'dict[TreePathComponent, TreeValueT]') -> 'None'
+```
+
+Update the dictionary node with key-value pairs from another dictionary.
+
+**Parameters:**
+
+| Name | Type | Description | Default |
+| ---- | ---- | ----------- | ------- |
+| `other` | `dict[TreePathComponent, TreeValueT]` | Dictionary containing key-value pairs to update | `Required` |
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+
+### values() 🔧
+
+```python filename='method.py'
+def values(self) -> 'list[TreeValueT]'
+```
+
+Get all top-level values in the dictionary node.
+
+**Returns:** `list[TreeValueT]` - List of values in the dictionary
+
+</Tabs.Tab>
+
+</Tabs>
+
+### Source Code
+
+```python filename='source.py'
+class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
+    """
+    A dictionary-like interface to tree storage.
+
+    This class provides an interface similar to a Python dictionary
+    for interacting with dictionary nodes in the tree storage.
+    It implements async methods for dictionary operations that map
+    to the underlying tree structure.
+    """
+
+    # --- Async dictionary operations --- #
+
+    async def get(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY,
+    ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
+        """
+        Get a value from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            default: Value to return if path doesn't exist
+
+        Returns:
+            The value associated with the path, or default if not found
+        """
+        complete_path = (path,) + paths
+        return await self._storage.dict_get(self._path, complete_path, default, self._txn)
+
+    async def set(
+        self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT
+    ) -> None:
+        """
+        Set a value in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths_and_value: Additional path segments followed by the value to set
+
+        Raises:
+            ValueError: If no value is provided
+        """
+        complete_path = (path,) + tuple(paths)
+        await self._storage.dict_set(self._path, complete_path, value, self._txn)
+
+    async def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
+        """
+        Delete a path from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Raises:
+            ObjectKeyError: If the path doesn't exist
+        """
+        complete_path = (path,) + paths
+        await self._storage.dict_delete(self._path, complete_path, self._txn)
+
+    async def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
+        """
+        Check if a path exists in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        complete_path = (path,) + paths
+        return await self._storage.dict_contains(self._path, complete_path, self._txn)
+
+    async def keys(self) -> list[TreePathComponent]:
+        """
+        Get all top-level keys in the dictionary node.
+
+        Returns:
+            List of keys in the dictionary
+        """
+        return await self._storage.dict_keys(self._path, self._txn)
+
+    async def values(self) -> list[TreeValueT]:
+        """
+        Get all top-level values in the dictionary node.
+
+        Returns:
+            List of values in the dictionary
+        """
+        return await self._storage.dict_values(self._path, self._txn)
+
+    async def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Get all top-level key-value pairs in the dictionary node.
+
+        Returns:
+            List of (key, value) tuples
+        """
+        return await self._storage.dict_items(self._path, self._txn)
+
+    # --- Dictionary conversion and utilities --- #
+
+    async def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Convert to a regular Python dictionary.
+
+        Returns:
+            Python dictionary containing all data from this dictionary node
+        """
+        return await self._storage.dict_to_dict(self._path, self._txn)
+
+    async def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
+        """
+        Update the dictionary node with key-value pairs from another dictionary.
+
+        Args:
+            other: Dictionary containing key-value pairs to update
+        """
+        for key, value in other.items():
+            await self.set(key, value=value)
+
+    async def clear(self) -> None:
+        """
+        Remove all items from the dictionary node.
+        """
+        # Get all keys first, then delete them one by one
+        keys = await self.keys()
+        for key in keys:
+            try:
+                await self.delete(key)
+            except ObjectKeyError:
+                # Key disappeared, just skip it
+                pass
+
+    async def pop(
+        self, key: TreePathComponent, default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY
+    ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
+        """
+        Remove and return a value from the dictionary node.
+
+        Args:
+            key: Key to remove
+            default: Value to return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+
+        Raises:
+            ObjectKeyError: If the key doesn't exist and no default is provided
+        """
+        try:
+            value = await self.get(key)  # type: ignore
+            await self.delete(key)
+            return value
+        except ObjectKeyError:
+            if default is not None:
+                return default
+            raise
+
+    async def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+        """
+        Return the value for key if it exists, otherwise set it to default.
+
+        Args:
+            key: Key to check and potentially set
+            default: Value to set and return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+        """
+        if await self.contains(key):
+            return await self.get(key)  # type: ignore
+        await self.set(key, value=default)
+        return default
+
+    async def __len__(self) -> int:
+        """
+        Get the number of items in the dictionary node.
+
+        Returns:
+            The number of items
+        """
+        keys = await self.keys()
+        return len(keys)
+
+```
+
+## Source Code
+
+```python filename='source.py'
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from loomi.interfaces.state.tree import AsyncTreeDictProtocol, EmptyProtocol
+
+from .._exceptions import ObjectKeyError
+from .._types import TreePathComponent, TreeValueContainer, TreeValueT
+from .tree_node import TreeNode
+
+__all__ = [
+    "TreeDict",
+]
+
+
+class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
+    """
+    A dictionary-like interface to tree storage.
+
+    This class provides an interface similar to a Python dictionary
+    for interacting with dictionary nodes in the tree storage.
+    It implements async methods for dictionary operations that map
+    to the underlying tree structure.
+    """
+
+    # --- Async dictionary operations --- #
+
+    async def get(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY,
+    ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
+        """
+        Get a value from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+            default: Value to return if path doesn't exist
+
+        Returns:
+            The value associated with the path, or default if not found
+        """
+        complete_path = (path,) + paths
+        return await self._storage.dict_get(self._path, complete_path, default, self._txn)
+
+    async def set(
+        self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT
+    ) -> None:
+        """
+        Set a value in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths_and_value: Additional path segments followed by the value to set
+
+        Raises:
+            ValueError: If no value is provided
+        """
+        complete_path = (path,) + tuple(paths)
+        await self._storage.dict_set(self._path, complete_path, value, self._txn)
+
+    async def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
+        """
+        Delete a path from the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Raises:
+            ObjectKeyError: If the path doesn't exist
+        """
+        complete_path = (path,) + paths
+        await self._storage.dict_delete(self._path, complete_path, self._txn)
+
+    async def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
+        """
+        Check if a path exists in the dictionary node.
+
+        Args:
+            path: First path segment
+            *paths: Additional path segments
+
+        Returns:
+            True if the path exists, False otherwise
+        """
+        complete_path = (path,) + paths
+        return await self._storage.dict_contains(self._path, complete_path, self._txn)
+
+    async def keys(self) -> list[TreePathComponent]:
+        """
+        Get all top-level keys in the dictionary node.
+
+        Returns:
+            List of keys in the dictionary
+        """
+        return await self._storage.dict_keys(self._path, self._txn)
+
+    async def values(self) -> list[TreeValueT]:
+        """
+        Get all top-level values in the dictionary node.
+
+        Returns:
+            List of values in the dictionary
+        """
+        return await self._storage.dict_values(self._path, self._txn)
+
+    async def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Get all top-level key-value pairs in the dictionary node.
+
+        Returns:
+            List of (key, value) tuples
+        """
+        return await self._storage.dict_items(self._path, self._txn)
+
+    # --- Dictionary conversion and utilities --- #
+
+    async def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Convert to a regular Python dictionary.
+
+        Returns:
+            Python dictionary containing all data from this dictionary node
+        """
+        return await self._storage.dict_to_dict(self._path, self._txn)
+
+    async def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
+        """
+        Update the dictionary node with key-value pairs from another dictionary.
+
+        Args:
+            other: Dictionary containing key-value pairs to update
+        """
+        for key, value in other.items():
+            await self.set(key, value=value)
+
+    async def clear(self) -> None:
+        """
+        Remove all items from the dictionary node.
+        """
+        # Get all keys first, then delete them one by one
+        keys = await self.keys()
+        for key in keys:
+            try:
+                await self.delete(key)
+            except ObjectKeyError:
+                # Key disappeared, just skip it
+                pass
+
+    async def pop(
+        self, key: TreePathComponent, default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY
+    ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
+        """
+        Remove and return a value from the dictionary node.
+
+        Args:
+            key: Key to remove
+            default: Value to return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+
+        Raises:
+            ObjectKeyError: If the key doesn't exist and no default is provided
+        """
+        try:
+            value = await self.get(key)  # type: ignore
+            await self.delete(key)
+            return value
+        except ObjectKeyError:
+            if default is not None:
+                return default
+            raise
+
+    async def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+        """
+        Return the value for key if it exists, otherwise set it to default.
+
+        Args:
+            key: Key to check and potentially set
+            default: Value to set and return if key doesn't exist
+
+        Returns:
+            The value associated with the key, or default if not found
+        """
+        if await self.contains(key):
+            return await self.get(key)  # type: ignore
+        await self.set(key, value=default)
+        return default
+
+    async def __len__(self) -> int:
+        """
+        Get the number of items in the dictionary node.
+
+        Returns:
+            The number of items
+        """
+        keys = await self.keys()
+        return len(keys)
+
+
+if TYPE_CHECKING:
+    _: type[AsyncTreeDictProtocol] = TreeDict
+
+```
+
