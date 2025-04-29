@@ -10,7 +10,14 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Union
 
-from .models import Configuration, DiscoveryConfig, ModuleConfig, OutputConfig, RenderingConfig
+from .models import (
+    Configuration,
+    DiscoveryConfig,
+    MetaConfig,
+    ModuleConfig,
+    OutputConfig,
+    RenderingConfig,
+)
 
 
 def load_config_from_file(file_path: Union[str, Path]) -> Configuration:
@@ -60,6 +67,9 @@ def load_config_from_dict(config_dict: Dict[str, Any]) -> Configuration:
     Returns:
         Configuration instance
     """
+    # Extract meta config
+    meta_dict = config_dict.get("meta", {})
+
     # Extract source_dir and output_dir (required)
     source_dir = config_dict.get("discovery", {}).get("source_dir")
     if not source_dir:
@@ -170,7 +180,15 @@ def load_config_from_dict(config_dict: Dict[str, Any]) -> Configuration:
         overwrite=output_dict.get("overwrite", True),
     )
 
+    meta_config = MetaConfig(
+        name=meta_dict.get("name"),
+        version=meta_dict.get("version", "0.0.0"),
+    )
+
     # Create final configuration
     return Configuration(
-        discovery=discovery_config, rendering=rendering_config, output=output_config
+        meta=meta_config,
+        discovery=discovery_config,
+        rendering=rendering_config,
+        output=output_config,
     )

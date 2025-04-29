@@ -13,6 +13,17 @@ from typing import Any, Dict, List, Optional, Union
 
 
 @dataclass
+class MetaConfig:
+    """Metadata configuration for the documentation."""
+
+    name: str
+    """Title of the documentation."""
+
+    version: str
+    """Version of the documentation."""
+
+
+@dataclass
 class ModuleConfig:
     """Configuration for a specific module."""
 
@@ -109,6 +120,9 @@ class OutputConfig:
 class Configuration:
     """Main configuration for the documentation generator."""
 
+    meta: MetaConfig
+    """Metadata for the documentation."""
+
     discovery: DiscoveryConfig
     """Configuration for module discovery."""
 
@@ -140,6 +154,7 @@ class Configuration:
         discovery_kwargs = {}
         rendering_kwargs = {}
         output_kwargs = {}
+        meta_kwargs = {}
 
         # Handle modules list specially
         modules_list = kwargs.pop("modules", [])
@@ -162,10 +177,18 @@ class Configuration:
                 rendering_kwargs[key] = value
             elif hasattr(OutputConfig, key):
                 output_kwargs[key] = value
+            elif hasattr(MetaConfig, key):
+                meta_kwargs[key] = value
 
         # Create config objects
         discovery_config = DiscoveryConfig(source_dir=source_path, **discovery_kwargs)
         rendering_config = RenderingConfig(**rendering_kwargs)
         output_config = OutputConfig(output_dir=output_path, **output_kwargs)
+        meta_config = MetaConfig(**meta_kwargs)
 
-        return cls(discovery=discovery_config, rendering=rendering_config, output=output_config)
+        return cls(
+            meta=meta_config,
+            discovery=discovery_config,
+            rendering=rendering_config,
+            output=output_config,
+        )

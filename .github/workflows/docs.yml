@@ -1,0 +1,33 @@
+# .github/workflows/generate-api-docs.yml
+name: Generate API Docs & Deploy
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      
+      - name: Generate API docs
+        run: |
+          poetry install
+          cd docs/scripts/api_ref
+          poetry run python generate.py
+      
+      - name: Setup deployment branch
+        run: |
+          git checkout -b docs
+          git add docs/
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Update API documentation [skip ci]" || echo "No changes to commit"
+          git push -f origin docs

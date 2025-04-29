@@ -4,8 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm run generate-api-ref && next build && npm run cleanup-api-ref",
     "start": "next start",
+
+    "build:vercel": "next build",
+
+    "generate-api-ref": "cd ./scripts/api_ref && poetry run python generate.py",
+    "cleanup-api-ref": "cd ./scripts/api_ref && poetry run python cleanup.py",
+
     "lint": "next lint"
   },
   "dependencies": {

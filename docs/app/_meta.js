@@ -11,6 +11,9 @@ export default{
   docs: {
     type: 'page',
   },
+  stack: {
+    type: 'page',
+  },
   api: {
     type: 'page',
   },
