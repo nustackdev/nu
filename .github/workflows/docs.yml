@@ -3,6 +3,9 @@ name: Generate API Docs & Deploy
 on:
   workflow_dispatch:  # Manual trigger only
 
+permissions:
+  contents: write
+
 jobs:
   generate:
     runs-on: ubuntu-latest
