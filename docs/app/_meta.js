@@ -5,7 +5,7 @@ export default{
     type: 'page',
     display: 'hidden',
   },
-  intro: {
+  introduction: {
     type: 'page',
   },
   docs: {

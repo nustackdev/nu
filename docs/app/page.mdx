@@ -1,23 +1,60 @@
 import { Cards } from 'nextra/components'
 
-# Welcome to Loomi
+# Loomi
 
-**Build better Python apps, faster!**
+**Build composable Python apps from declarative state-bound operations.**
 
-Loomi provides a refreshing approach to Python application development with a clean, 
-composable architecture that just makes sense.
+```python
 
-## Your Loomi Journey
+class MyApp(AsyncApp):
+    ...
 
-Loomi is designed to be easy to learn and intuitive to use, 
-so you can start building your applications right away.
+    def define(self) -> AsyncOperation:
+        return self.ex.Sequence(
+            self.ex.Retry(
+                self.ex.Function(self.get_data),
+                retry_delay=5,
+                backoff=2,
+            ),
+            self.ex.Map(self.process_item, map_path=("data", "items")),
+            self.ex.Function(self.save_data),
+            self.ex.Branch({
+                True: self.ex.Function(self.notify_slack_success),
+                False: self.ex.Function(self.notify_slack_failure),
+            }, condition_path=("result", "success")),
+        )
 
-### Start Here
+```
+
+## What is Loomi?
+
+**Loomi changes how Python apps work - control flow and state become one thing through composable, declarative, state-bound operations.**
+
+**This means:**
+1. Build apps from basic operations - functions, sequences, loops, ...
+2. Combine apps to make bigger apps
+3. Operations are bound to state they need to make decisions - choosing paths, repeating steps, ...
+
+**You get:**
+1. 10x easier to design and build apps
+2. 10x easier to maintain and extend apps
+2. 10x upgraded robustness and reliability
+
+**Superpowers included:**
+- Concurrency out of the box without spaghetti code
+- Resumable, reproducible executions with persistent fast state
+- UI to visualize executions and state
+- Debugging and profiling tools
+- LoomiSTD and LoomiVerse - a collection of reusable apps
+
+## How to use Loomi
+
+### Start here
 
 <Cards num={2}>
     <Cards.Card
-    title="Loomi Introduction"
-    href="/intro"
+    title="Introduction"
+    href="/introduction"
     arrow
     />
 </Cards>
@@ -27,37 +64,12 @@ so you can start building your applications right away.
 <Cards num={2}>
     <Cards.Card
         title="Documentation"
-        href="/docs/overview"
+        href="/docs"
         arrow
     />
     <Cards.Card
         title="API Reference"
         href="/api"
-        arrow
-    />
-</Cards>
-
-### Loomi Stack
-
-<Cards num={2}>
-    <Cards.Card
-        title="Overview"
-        href="/stack/overview"
-        arrow
-    />
-    <Cards.Card
-        title="LoomiSTD"
-        href="/stack/loomistd"
-        arrow
-    />
-    <Cards.Card
-        title="LoomiVerse"
-        href="/stack/loomiverse"
-        arrow
-    />
-    <Cards.Card
-        title="LoomiX"
-        href="/stack/loomix"
         arrow
     />
 </Cards>
@@ -77,8 +89,35 @@ so you can start building your applications right away.
     />
 </Cards>
 
+### Loomi Stack
+
+<Cards num={2}>
+    <Cards.Card
+        title="Overview"
+        href="/stack"
+        arrow
+    />
+    <Cards.Card
+        title="LoomiX (high-level framework for Loomi)"
+        href="/stack/loomix"
+        arrow
+    />
+    <Cards.Card
+        title="LoomiSTD (standard library for common tasks)"
+        href="/stack/loomistd"
+        arrow
+    />
+    <Cards.Card
+        title="LoomiVerse (community library of reusable apps)"
+        href="/stack/loomiverse"
+        arrow
+    />
+</Cards>
+
+
 ---
 
 At its core, Loomi isn't yet another library or framework - it's a paradigm shift in how Python applications can be structured to grow gracefully. 
+
 It provides the missing foundation that lets your code scale with complexity
 while keeping the clarity and simplicity that made Python attractive in the first place.
