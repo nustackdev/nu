@@ -1,7 +1,12 @@
+---
+title: "Introduction"
+---
+
 import { Steps } from 'nextra/components'
 
 # Introduction 
 
+Every Python developer's journey starts with simple scripts that gradually evolve into complex messes.
 ## When Good Scripts Go Bad 🔥
  
 <Steps>
@@ -40,19 +45,62 @@ def initialize_services():
 
 **Sound familiar? You're not alone. We've all been there.**
 
-### The Circles of Python Hell
+### The Stages of Python Pain
 
-As your Python application grows, it passes through predictable stages of pain:
+As your Python code grows, it hits these common problems:
 
-1. **Function Hell** - A mess of top-level functions with implicit dependencies
-2. **Global State Carnival** - Mysterious values changing when you least expect
-3. **Thread/Async Nightmare** - Concurrency bugs that only appear in production
-4. **Dependency Explosion** - Services, connections, and resources with tangled lifecycles
-5. **Error Handling Afterthought** - Exception catching sprinkled randomly throughout
+- **Function Mess**: Too many loose functions that depend on each other in hidden ways
+- **State Trouble**: Data that changes unexpectedly across your program
+- **Threading Headaches**: Code that breaks only when running in parallel
+- **Service Tangle**: Databases, APIs, and resources that fight with each other
+- **Error Gaps**: Try/except blocks scattered randomly as afterthoughts
 
-What if there was a better way to build Python applications—one that scaled with complexity without adding boilerplate?
+What if you could build Python apps that stay clean as they grow?
 
-## Loomi: The Upgrade 🚀 
+## Loomi in a Nutshell 🧩 
+
+### What Loomi **IS**
+
+Every Python application, from simple scripts to complex systems, juggles three core elements:
+
+- **State**: How data flows through your application
+- **Control Flow**: The instructions that transform data and create behavior
+- **Services**: External dependencies from databases to APIs
+
+As your codebase grows, managing these elements becomes increasingly complex.
+
+Loomi is a new way to build Python applications that keeps these three elements in harmony.
+It provides a unified system for managing state, control flow, and services in a way that scales with complexity while remaining simple and clear.
+
+```mermaid
+flowchart TB
+    App["**Loomi App**: foundation for services, state, and control flow"]
+    Services["**Loomi Services**: manage dependencies"]
+    State["**Loomi State**: dict-structured data"]
+    Operations["**Loomi Operations**: operations and flow control"]
+
+    App --> Services
+    App --> State
+    App --> Operations
+
+    classDef primary fill:#f9f,stroke:#333,stroke-width:2px,color:#000
+    classDef secondary fill:#bbf,stroke:#333,stroke-width:1px,color:#000
+    
+    class App primary
+    class Services,State,Operations secondary
+```
+
+### What Loomi is **NOT**
+
+Let's clear up some misconceptions:
+
+- **Not a web framework** - It doesn't compete with Flask, FastAPI, or Django. In fact, Loomi apps can run inside those frameworks.
+- **Not a workflow engine** - It's not Airflow or Prefect. While it has workflow features, Loomi is a paradigm for building applications, not scheduling distributed jobs.
+- **Not a data processing library** - It doesn't replace Pandas or Spark. Loomi helps you structure the application that might use those tools.
+- **Not an ORM** - It doesn't replace SQLAlchemy or Pydantic. Loomi gives structure to the app that might use those libraries.
+
+
+### Demonstration
 
 They say a good example is worth 100 pages of API documentation, a million directives, or a thousand words.
 
@@ -180,35 +228,3 @@ class ImageProcessingPipeline(AsyncApp):
     async def log_error(self, ctx): pass
     async def generate_report(self, ctx): pass
 ```
-
-## Loomi in a Nutshell 🧩 
-
-Let's clear up some misconceptions:
-
-### What Loomi is **NOT**
-
-- **Not a web framework** - It doesn't compete with Flask, FastAPI, or Django. In fact, Loomi apps can run inside those frameworks.
-- **Not a workflow engine** - It's not Airflow or Prefect. While it has workflow features, Loomi is a paradigm for building applications, not scheduling distributed jobs.
-- **Not a data processing library** - It doesn't replace Pandas or Spark. Loomi helps you structure the application that might use those tools.
-- **Not an ORM** - It doesn't replace SQLAlchemy or Pydantic. Loomi gives structure to the app that might use those libraries.
-
-### What Loomi **IS**
-
-Loomi is an architectural blueprint for Python applications that transforms how you build software. 
-It's a unified system that combines explicit component boundaries, structured state management, 
-and declarative business logic into a coherent whole - making complexity manageable instead of maddening.
-
-At its core, Loomi isn't just a library or framework - it's a paradigm shift in how Python applications can be structured to grow gracefully. 
-It provides the missing foundation that lets your code scale with complexity while keeping the clarity and simplicity that made Python attractive in the first place.
-
-###  Why You'll **LOVE** Loomi
-
-1. **Say goodbye to hunting for who modified global state**
-2. **Compose complex operations declaratively**
-3. **Write concurrent code without spaghetti error handling**
-4. **Make dependencies explicit and automatically managed**
-5. **Get state structure with transactions and built-in reactivity**
-
-## Ready to Learn More?
-
-Continue to [About Loomi](./about) to dive deeper into core concepts and see how all the pieces fit together.

@@ -6,15 +6,13 @@
     "dev": "next dev --turbopack",
     "build": "npm run generate-api-ref && next build && npm run cleanup-api-ref",
     "start": "next start",
-
     "build:vercel": "next build",
-
     "generate-api-ref": "cd ./scripts/api_ref && poetry run python generate.py",
     "cleanup-api-ref": "cd ./scripts/api_ref && poetry run python cleanup.py",
-
     "lint": "next lint"
   },
   "dependencies": {
+    "@theguild/remark-mermaid": "^0.3.0",
     "next": "15.3.1",
     "nextra": "^4.2.17",
     "nextra-theme-docs": "^4.2.17",

@@ -1,5 +1,6 @@
 export default{
-  index: '',
+  introduction: '',
+  concepts: '',
   quick_start: '',
   learn: '',
   advanced: '',

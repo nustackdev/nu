@@ -1,12 +1,10 @@
 import { type } from "os";
+import { title } from "process";
 
 export default{
   index: {
     type: 'page',
     display: 'hidden',
-  },
-  introduction: {
-    type: 'page',
   },
   docs: {
     type: 'page',
@@ -16,6 +14,7 @@ export default{
   },
   api: {
     type: 'page',
+    title: 'API',
   },
   philosophy: {
     type: 'page',

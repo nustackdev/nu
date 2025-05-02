@@ -47,24 +47,44 @@ class MyApp(AsyncApp):
 - Debugging and profiling tools
 - LoomiSTD and LoomiVerse - a collection of reusable apps
 
-## How to use Loomi
+## When to use Loomi?
+
+Complex decisions need state and easy-to-understand control flow. 
+
+Loomi is the perfect fit for:
+- **AI Agents**: LLM agents need shared context. With traditional code, you'd spend 50% of your time just passing state between agents. Loomi eliminates this boilerplate.
+- **Financial Systems**: Risk calculation examining multiple factors often turns into nested if-else spaghetti. Loomi keeps your code readable with declarative branches that know which state to check.
+- **Data Pipelines**: Validation that finds anomalies typically requires duplicated state tracking. Loomi's operations bind directly to the exact data points they need.
+- **ML Workflows**: Adaptive training usually means rebuilding state between runs. Loomi persists state automatically, reducing restart code by 80%.
+
+## How to use Loomi?
 
 ### Start here
 
-<Cards num={2}>
+<Cards num={3}>
     <Cards.Card
     title="Introduction"
-    href="/introduction"
+    href="/docs/introduction"
+    arrow
+    />
+    <Cards.Card
+    title="Concepts"
+    href="/docs/concepts"
+    arrow
+    />
+    <Cards.Card
+    title="Quick Start"
+    href="/docs/quick_start"
     arrow
     />
 </Cards>
 
-### Docs and API
+### Explore Further
 
 <Cards num={2}>
     <Cards.Card
         title="Documentation"
-        href="/docs"
+        href="/docs/learn"
         arrow
     />
     <Cards.Card
@@ -74,7 +94,7 @@ class MyApp(AsyncApp):
     />
 </Cards>
 
-### Philosophy
+### Learn the Philosophy
 
 <Cards num={2}>
     <Cards.Card
@@ -91,24 +111,19 @@ class MyApp(AsyncApp):
 
 ### Loomi Stack
 
-<Cards num={2}>
+<Cards num={1}>
     <Cards.Card
-        title="Overview"
-        href="/stack"
-        arrow
-    />
-    <Cards.Card
-        title="LoomiX (high-level framework for Loomi)"
+        title="LoomiX: High-level framework for Loomi"
         href="/stack/loomix"
         arrow
     />
     <Cards.Card
-        title="LoomiSTD (standard library for common tasks)"
+        title="LoomiSTD: Standard library for common tasks"
         href="/stack/loomistd"
         arrow
     />
     <Cards.Card
-        title="LoomiVerse (community library of reusable apps)"
+        title="LoomiVerse: Community library of reusable apps"
         href="/stack/loomiverse"
         arrow
     />

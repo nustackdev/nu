@@ -1,36 +1,131 @@
 ---
-title: Overview
+title: Concepts
 ---
 
-# Build Better Python Apps, Faster
+# Concepts
 
-## Without Loomi
+Here’s a look at what each core concept is and why it’s important in Loomi’s architecture:
 
-Every Python application, from simple scripts to complex systems, juggles three core elements:
+**App**
+- What: the foundament orchestrating State, Operations, and Services.
+- Why: to provide a self-contained unit that groups state, control flow and dependencies.
 
-- **State**: How data flows through your application
-- **Logic**: The instructions that transform data and create behavior
-- **Services**: External dependencies from databases to APIs
+**State**
+- What: a dict-structured data store offering transactions and observers. 
+- Why: to centralize data management for consistent, atomic updates and reactive change propagation.
 
-As your codebase grows, managing these elements becomes increasingly complex. 
-Dependencies entangle, state scatters across modules, and what was once clean design drowns in boilerplate. Sound familiar?
+**Operations**
+- What: the operations engine defining composable tasks and flow controls. 
+- Why: to express business logic declaratively and modularly, avoiding tangled imperative code.
 
-## With Loomi
+**Services**
+- What: lifecycle-managed external dependencies. 
+- Why: to abstract and automate resource management, ensuring reliable setup and cleanup without manual boilerplate.
 
-What if there was a better way to structure Python applications—one that scales with complexity but doesn't sacrifice simplicity?
+```mermaid
+flowchart TB
+    App["**App**: foundation for services, state, and control flow"]
+    Services["**Services**: manage dependencies"]
+    State["**State**: dict-structured data"]
+    Operations["**Operations**: operations and flow control"]
 
-Loomi gives you a way for building applications that are:
+    App --> Services
+    App --> State
+    App --> Operations
 
-- **Composable**: Build complex systems from simple, reusable parts that fit together seamlessly
-- **Explicit**: Dependencies and data flows are clear and intentional, no more hidden coupling
-- **Resilient**: Proper lifecycle management prevents common runtime errors like resource leaks
-- **Declarative**: Express business logic in a high-level, intention-revealing syntax
-- **Maintainable**: Code becomes easier to understand, extend, and refactor as needs evolve
-- **Testable**: Clean boundaries make testing straightforward with proper isolation
+    classDef primary fill:#f9f,stroke:#333,stroke-width:2px,color:#000
+    classDef secondary fill:#bbf,stroke:#333,stroke-width:1px,color:#000
+    
+    class App primary
+    class Services,State,Operations secondary
+```
 
-## Core Concepts
+## Concepts Mindmap
 
-### **Apps**: The Foundation
+```mermaid
+flowchart TB
+    subgraph Loomi[ ]
+        App["**App** (AsyncApp/SyncApp)"] --> State
+        App --> Operations
+        App --> Services
+        
+        subgraph S[ ]
+            State["**State Interface** (AsyncState/SyncState)"] --> TreeDict["**Dictionary Interface**:
+                get/set/delete,
+                contains/keys/values,
+                items/update,
+                transform/filter/map"]
+            State --> TreeList["**List Interface**:
+                get/set/append
+                extend/insert/delete
+                length/clear/pop"]
+            State --> Transaction["**Transaction Support**:
+                begin/commit/rollback
+                atomic operations"]
+            State --> Observer["**State Observer**:
+                subscribe/unsubscribe
+                notification callbacks"]
+            
+        end
+        
+        subgraph E[ ]
+            Operations["**Operations Interface** (AsyncExecutor/SyncExecutor)"]
+            
+            Operations --> AtomicOps["**Atomic Operations**:
+                Function: execute a callable
+                App: execute another app"]
+                
+            Operations --> FlowOps["**Flow Control**:
+                Sequence: execute in order
+                Parallel: execute concurrently
+                Branch: conditional execution
+                Loop: repeat until condition"]
+                
+            Operations --> TimingOps["**Timing Operations**:
+                Delay: pause execution
+                Timeout: constrain execution time
+                Retry: retry failed operations"]
+                
+            Operations --> CollectionOps["**Collection Operations**:
+                Map: process collection items"]
+                
+            Operations --> ReactiveOps["**Reactive Operations**:
+                Subscribe: execute on state changes"]
+
+            Operations --> ReactiveOps["**Higher-order Operations**:
+                ReactiveMap: process items as added"]
+        end
+        
+        subgraph Srv[ ]
+            Services["**Service Interface** (AsyncService/SyncService)"] --> ServiceLifecycle["**Service Lifecycle**:
+                - initialization
+                - dependency resolution
+                - shutdown"]
+                
+            Services --> DependencyManager["**Service Dependency Management**:
+                - auto service discovery
+                - dependency injection"]
+                
+            Services --> Registry["**Service Registry**:
+                - service instance tracking
+                - lifecycle state tracking"]
+                
+            Services --> Composer["**Service Composition**:
+                - declarative dependency specification
+                - app composition"]
+        end
+    end
+    
+    classDef primary fill:#f9f,stroke:#333,stroke-width:2px,color:#000,font-size:1.1em
+    classDef secondary fill:#bbf,stroke:#333,stroke-width:1px,color:#000,font-size:1.05em
+    classDef tertiary fill:#ddf,stroke:#333,stroke-width:1px,color:#000,font-size:1em
+    
+    class App primary
+    class Services,State,Operations secondary
+    class TreeDict,TreeList,Transaction,Observer,AtomicOps,FlowOps,TimingOps,CollectionOps,ReactiveOps,ServiceLifecycle,DependencyManager,Registry,Composer tertiary
+```
+
+## **Apps**: The Foundation
 
 Loomi is built around a single, powerful building block: the App. 
 
@@ -79,7 +174,7 @@ class UserService(AsyncApp):
 
 [Learn more about Apps →](/docs/learn/app)
 
-### **Services**: Managed Dependencies
+## **Services**: Managed Dependencies
 
 Remember that time you tracked down a mysterious connection leak only to find someone forgot to close a resource? 
 Or when your app crashed because dependencies initialized in the wrong order?
@@ -121,7 +216,7 @@ class CacheService(AsyncService):
 
 [Learn more about Services →](/docs/learn/service)
 
-### **State**: Tree-Structured Data That Just Works
+## **State**: Tree-Structured Data That Just Works
 
 State management is one of those things that starts simple and quickly spirals out of control. 
 Where does data live? How is it accessed? What happens when multiple components need it?
@@ -167,7 +262,7 @@ async def transfer_points(self, from_id, to_id, amount):
 
 [Learn more about State →](/docs/learn/state)
 
-### **Operations**: Logic You Can Actually Follow
+## **Operations**: Logic You Can Actually Follow
 
 We've all seen that function—you know, the one with six nested if-statements,
 three try-except blocks, and a comment that just says "Here be dragons." 
@@ -227,11 +322,6 @@ and automatically react to state changes without complex wiring.
 
 This creates a declarative, expressive paradigm where your data and logic collaborate naturally, making even complex workflows both powerful and readable.
 
-In a nutshell:
-
-- **Direct state-based decisions**: Operations like read from state paths to control flow (e.g. `Branch` or `Map`)
-- **Seamless data sharing**: - No parameter passing; one operation writes to state, another reads from it
-
 Example: State directly controls your workflow branching
 
 ```python
@@ -245,6 +335,7 @@ self.ex.Branch(
 ```
 
 Example: Process items as they're added to your state
+
 ```python
 self.ex.Subscribe(
     self.ex.Function(self.process_todo),
@@ -252,7 +343,3 @@ self.ex.Subscribe(
     max_concurrency=2
 )
 ```
-
-## Next Steps
-
-Check out the [quick start guide →](/docs/quick_start/install) to install Loomi and run the hello world example.
