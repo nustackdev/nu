@@ -1,1 +1,364 @@
-# App
+---
+title: App Interface
+---
+
+# Introduction to Apps
+
+Apps are the fundamental building blocks of Loomi. They're where your operations live, where state management happens, and where the real power of composition shines through.
+
+## What is an App?
+
+An App in Loomi is a self-contained unit of functionality that defines a set of operations bound to state.
+It's not just a container for code—it's a composable piece of your application that knows what state it needs and what operations it can perform with that state.
+
+```python
+from loomi import AsyncApp, AsyncContext, AsyncOperation
+
+class GreeterApp(AsyncApp):
+    async def greet(self, context: AsyncContext):
+        name = await self.state.get("user", "name", default="World")
+        print(f"Hello, {name}!")
+        
+    def define(self) -> AsyncOperation:
+        return self.ex.Function(self.greet)
+```
+
+Apps solve a problem you've likely faced before: how to structure code so that operations and the state they need stay together. No more passing state through long chains of function calls or relying on global variables.
+
+## Philosophy
+
+Apps in Loomi embrace several key patterns:
+
+1. **Composition over inheritance** - Build complex apps by composing simpler ones
+2. **Separation of concerns** - Each app has a single clear responsibility
+3. **Declarative operations** - Define what your app does, not how it does it
+4. **State binding** - Operations automatically get the state they need
+5. **Contextual execution** - Everything runs within a context that provides access to state and services
+
+This isn't just architectural fluff. These patterns lead to code that's easier to write, test, and maintain—especially as complexity grows.
+
+## App Types
+
+Loomi provides two main types of apps:
+
+### AsyncApp
+
+Use `AsyncApp` when your operations need to:
+- Make network requests
+- Perform I/O operations
+- Wait for external events
+- Run concurrently
+
+```python
+from loomi import AsyncApp
+
+class DataFetcherApp(AsyncApp):
+    async def fetch_data(self, context):
+        response = await http_client.get("https://api.example.com/data")
+        await self.state.set("data", value=response.json())
+```
+
+### SyncApp
+
+Use `SyncApp` when your operations:
+- Are purely computational
+- Don't need concurrency
+- Don't perform I/O or network operations
+
+```python
+from loomi import SyncApp
+
+class CalculatorApp(SyncApp):
+    def calculate_totals(self, context):
+        items = self.state.get("cart", "items")
+        total = sum(item["price"] for item in items)
+        self.state.set("cart", "total", value=total)
+```
+
+Choose the right app type for your needs. When in doubt, start with `AsyncApp`—you can always use synchronous operations within an async app, but not vice versa.
+
+## App Interface Basics
+
+Let's look at the core interfaces you'll use when working with apps.
+
+### The define() Method
+
+Every app needs a `define()` method that returns an operation tree. This is where you declare what your app does:
+
+```python
+def define(self) -> AsyncOperation:
+    return self.ex.Sequence(
+        self.ex.Function(self.load_data),
+        self.ex.Function(self.process_data),
+        self.ex.Function(self.save_results)
+    )
+```
+
+The `define()` method is where the magic happens. It's a declarative description of your app's behavior using operations like:
+
+- `Function` - Run a single function
+- `Sequence` - Run operations in order
+- `Parallel` - Run operations concurrently
+- `Branch` - Choose a path based on a condition
+- `Loop` - Repeat an operation
+- And many more...
+
+All these operations come from your app's executor, accessed through `self.ex` (short for `self.executor`).
+
+### Accessing State
+
+Apps provide direct access to your application state:
+
+```python
+async def update_user(self, context: AsyncContext):
+    # Full state access
+    user = await self.state.dict("users", "uuid")
+    
+    # Short alias
+    profile = await self.s.dict("users", "uuid", "profile")
+    
+    # Update state
+    await user.set("last_login", value=datetime.now().isoformat())
+```
+
+The beauty is how clean this looks—no passing state around or importing global state managers. The state your operation needs is right there.
+
+### Accessing Services
+
+Services in apps are declared with `UseService` and accessed as attributes:
+
+```python
+from loomi import AsyncApp, UseService
+from services import DatabaseService, CacheService
+
+class UserApp(AsyncApp):
+    db = UseService(DatabaseService)
+    cache = UseService(CacheService)
+    
+    async def load_user(self, context: AsyncContext):
+        user_id = context["user_id"]
+        # Access service directly
+        user = await self.db.query("SELECT * FROM users WHERE id = ?", user_id)
+        await self.cache.set(f"user:{user_id}", user)
+        return user
+```
+
+Each service becomes a first-class part of your app, making your code more modular and testable.
+
+### App Lifecycle Management
+
+Apps have a clear lifecycle:
+
+1. **Initialization** - Set up services, state, and nested apps
+2. **Execution** - Run the operations defined in `define()`
+3. **Shutdown** - Clean up resources
+
+You can manage this explicitly:
+
+```python
+app = MyApp(state_spec=state_spec, executor_spec=executor_spec)
+
+# Initialize everything
+await app.initialize()
+
+# Run the app
+await app.start()
+
+# Clean up
+await app.shutdown()
+```
+
+Or use context managers for automatic lifecycle management:
+
+```python
+async with MyApp(state_spec=state_spec, executor_spec=executor_spec) as app:
+    await app.start()  # Everything else is handled automatically
+```
+
+The context manager approach is cleaner and ensures proper cleanup even if exceptions occur.
+
+## App Composition
+
+One of Loomi's most powerful features is app composition—building complex apps from simpler ones:
+
+### Nesting Apps with UseApp
+
+```python
+from loomi import AsyncApp, UseApp
+
+class OrdersApp(AsyncApp):
+    # Operations for order management
+    ...
+
+class PaymentsApp(AsyncApp):
+    # Operations for payment processing
+    ...
+
+class EcommerceApp(AsyncApp):
+    # Compose apps together
+    orders = UseApp(OrdersApp)
+    payments = UseApp(PaymentsApp)
+    
+    def define(self) -> AsyncOperation:
+        return self.ex.Sequence(
+            self.ex.App(self.orders),
+            self.ex.App(self.payments)
+        )
+```
+
+This clean hierarchical structure helps manage complexity in larger applications.
+
+### Sharing State Between Apps
+
+Apps can share state through state paths:
+
+```python
+def define(self) -> AsyncOperation:
+    return self.ex.Sequence(
+        # Run orders app with its state at path ("orders",)
+        self.ex.App(self.orders, state_path=("orders",)),
+        
+        # Run payments app with its state at path ("payments",)
+        self.ex.App(self.payments, state_path=("payments",))
+    )
+```
+
+This isolates each app's state while still allowing state sharing when needed.
+
+### Building Complex Applications
+
+Complex applications emerge naturally from composing simpler apps:
+
+```python
+class CheckoutWorkflow(AsyncApp):
+    cart_app = UseApp(CartApp)
+    inventory_app = UseApp(InventoryApp)
+    payment_app = UseApp(PaymentApp)
+    shipping_app = UseApp(ShippingApp)
+    
+    def define(self) -> AsyncOperation:
+        return self.ex.Sequence(
+            self.ex.App(self.cart_app),
+            self.ex.Branch(
+                {
+                    "in_stock": self.ex.Sequence(
+                        self.ex.App(self.payment_app),
+                        self.ex.App(self.shipping_app)
+                    ),
+                    "out_of_stock": self.ex.Function(self.handle_out_of_stock)
+                },
+                condition=self.check_inventory
+            )
+        )
+```
+
+Each app handles its specific concerns, making the code easier to understand, test, and maintain.
+
+## App Configuration with Specs
+
+Specs are how you configure apps and their dependencies:
+
+### Using Specs to Configure Apps
+
+TODO: add documentation about specs.
+
+1. Keep configuration separated from implementation
+2. Use default specs for common configurations
+3. Allow overrides for flexibility
+4. Document your configuration options
+
+
+```python
+from loomi import AsyncApp, Spec
+from loomistd.state import StateSpec
+from loomistd.aexecutor import ExecutionEngineSpec
+
+# Create service specs
+state_spec = StateSpec(storage=MemoryStorageSpec())
+executor_spec = ExecutionEngineSpec(state=state_spec)
+
+# Create and configure app
+app = MyApp(
+    spec=Spec(
+        factory=MyApp,
+        # App-specific configuration
+        timeout=30,
+        retries=3
+    ),
+    # Core services
+    state_spec=state_spec,
+    executor_spec=executor_spec
+)
+```
+
+### Passing Configuration Through the App Hierarchy
+
+Configuration flows naturally through your app hierarchy:
+
+```python
+# Configure nested apps
+app = MainApp(
+    spec=Spec(
+        factory=MainApp,
+        # Configure nested apps
+        feature_a=Spec(
+            factory=FeatureAApp,
+            timeout=5
+        ),
+        feature_b=Spec(
+            factory=FeatureBApp,
+            max_items=100
+        )
+    ),
+    state_spec=state_spec,
+    executor_spec=executor_spec
+)
+```
+
+This gives you fine-grained control over every part of your application.
+
+### Service Configuration with Specs
+
+Configure services using specs when creating your app:
+
+```python
+# Create service specs
+logging_spec = Spec(
+    factory=LoggingService,
+    log_level="INFO",
+    output_dir="/var/logs"
+)
+
+metrics_spec = Spec(
+    factory=MetricsService,
+    endpoint="https://metrics.example.com/api"
+)
+
+# Create app with configured services
+app = FeatureApp(
+    spec=Spec(
+        logger=logging_spec,
+        metrics=metrics_spec
+    )
+)
+```
+
+This keeps configuration separate from implementation, making your apps more reusable.
+
+## Conclusion and What's Next
+
+Apps are the core building blocks in Loomi. They give you:
+
+- A clean way to organize your code around state and operations
+- Composability for building complex applications
+- Clear separation of concerns through the app hierarchy
+- Built-in lifecycle management
+
+Now that you understand apps, you're ready to dive deeper into:
+
+- **Operations Interface** - Explore the full range of operations and how to combine them
+- **State Interface** - Learn more about state management and data access patterns
+- **Service Interface** - Discover how to create and use custom services in your apps
+
+Remember, apps aren't just containers for code—they're self-contained units of functionality that understand both their operations and the state they need.
+This state-bound approach is what makes Loomi different from traditional frameworks.
