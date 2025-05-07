@@ -1,1 +1,526 @@
-# Service
+---
+title: Service Interface
+---
+
+# Introduction to Services
+
+Services are the workhorses of your Loomi application. They handle external resources, wrap infrastructure concerns, and provide specialized functionality to your apps without cluttering your business logic.
+
+## What is a Service?
+
+A Service in Loomi is a reusable component with its own lifecycle that manages a specific resource or concern. It might be a database connection, a logging client, a cache, or any other external system your app needs to interact with.
+
+```python
+from loomi import AsyncService
+
+class DatabaseService(AsyncService):
+    async def setup(self):
+        # Connect to database
+        self.client = await db.connect(self.spec.connection_string)
+        
+    async def cleanup(self):
+        # Disconnect when service shuts down
+        await self.client.disconnect()
+        
+    async def query(self, sql, *args):
+        return await self.client.execute(sql, *args)
+```
+
+Services solve a common problem: how to manage dependencies with complex lifecycles. Instead of scattered connection management code and tangled initialization, Services give you a clean, consistent pattern.
+
+## Service Philosophy
+
+Loomi Services follow several key principles:
+
+1. **Lifecycle awareness** - Services know how to initialize and shut down cleanly
+2. **Dependency management** - Services can depend on other services
+3. **Resource isolation** - Each service manages its own resources
+4. **Composition** - Build complex services from simpler ones
+5. **Shared access** - Multiple parts of your application can use the same service instance
+
+This isn't just architectural nicety—it results in more maintainable code, especially as your application grows.
+
+## Service Types
+
+Loomi provides two main types of services:
+
+### AsyncService
+
+Use `AsyncService` when your service needs to:
+- Make network requests
+- Perform I/O operations
+- Use async/await patterns
+- Work with external async systems
+
+```python
+from loomi import AsyncService
+
+class CacheService(AsyncService):
+    async def setup(self):
+        self.client = await redis.create_connection()
+        
+    async def get(self, key):
+        return await self.client.get(key)
+        
+    async def set(self, key, value, ttl=None):
+        await self.client.set(key, value, ex=ttl)
+```
+
+### SyncService
+
+Use `SyncService` when your service:
+- Only performs synchronous operations
+- Doesn't need async/await
+- Wraps synchronous resources
+
+```python
+from loomi import SyncService
+
+class ConfigService(SyncService):
+    def setup(self):
+        self.config = self._load_config()
+        
+    def get(self, key, default=None):
+        return self.config.get(key, default)
+        
+    def _load_config(self):
+        # Load from file, environment, etc.
+        return {"timeout": 30, "retries": 3}
+```
+
+Choose the right service type for your needs. When interacting with external systems, `AsyncService` is usually the better choice for modern applications.
+
+## Service Lifecycle
+
+Every service goes through a defined lifecycle:
+
+1. **Creation**: Service instance is created
+2. **Initialization**: Resources are acquired, connections opened
+3. **Active use**: Service methods are called by your application
+4. **Shutdown**: Resources are released, connections closed
+
+### Initialization Flow
+
+When you initialize a service, several things happen in sequence:
+
+1. `pre_initialize()` - Prepare for initialization
+2. Dependencies are initialized
+3. `setup()` - Service-specific setup code runs
+4. `post_initialize()` - Final initialization steps
+
+### Shutdown Flow
+
+When shutting down, a similar sequence occurs:
+
+1. `pre_shutdown()` - Prepare for shutdown
+2. `cleanup()` - Service-specific cleanup runs
+3. Dependencies are shut down (if they have no other dependents)
+4. `post_shutdown()` - Final cleanup steps
+
+### Using Lifecycle Hooks
+
+Implement these hooks to control exactly what happens during these phases:
+
+```python
+from loomi import AsyncService
+
+class ApiService(AsyncService):
+    async def pre_initialize(self):
+        # Run before initialization begins
+        print(f"Initializing API service: {self.spec.api_url}")
+        
+    async def setup(self):
+        # Main setup - establish connection
+        self.client = ApiClient(self.spec.api_url)
+        await self.client.connect()
+        
+    async def post_initialize(self):
+        # Final initialization steps
+        await self.client.authenticate(self.spec.api_key)
+        
+    async def pre_shutdown(self):
+        # Prepare for shutdown
+        await self.client.flush_pending_requests()
+        
+    async def cleanup(self):
+        # Main cleanup - close connection
+        await self.client.disconnect()
+        
+    async def post_shutdown(self):
+        # Final cleanup steps
+        print(f"API service shut down: {self.spec.api_url}")
+```
+
+Most services only need to implement `setup()` and `cleanup()`, but the other hooks give you fine-grained control when needed.
+
+## Service Lifecycle Management
+
+You can manage the service lifecycle explicitly or with context managers:
+
+### Explicit Management
+
+```python
+# Create the service
+db = DatabaseService(spec=db_spec)
+
+# Initialize (establishes connection)
+await db.initialize()
+
+# Use the service
+users = await db.query("SELECT * FROM users")
+
+# Shut down (closes connection)
+await db.shutdown()
+```
+
+### Context Managers
+
+For automatic lifecycle management:
+
+```python
+# Service is initialized on enter, shut down on exit
+async with DatabaseService(spec=db_spec) as db:
+    users = await db.query("SELECT * FROM users")
+```
+
+The context manager approach ensures proper cleanup even if exceptions occur.
+
+## Service Composition
+
+One of Loomi's most powerful features is service composition—building complex services from simpler ones.
+
+### Declaring Dependencies with UseService
+
+```python
+from loomi import AsyncService, UseService
+from services import DatabaseService, CacheService
+
+class UserService(AsyncService):
+    # Declare service dependencies
+    db = UseService(DatabaseService)
+    cache = UseService(CacheService)
+    
+    async def get_user(self, user_id):
+        # Try cache first
+        cached_user = await self.cache.get(f"user:{user_id}")
+        if cached_user:
+            return cached_user
+            
+        # Fall back to database
+        user = await self.db.query("SELECT * FROM users WHERE id = ?", user_id)
+        if user:
+            # Update cache for next time
+            await self.cache.set(f"user:{user_id}", user, ttl=3600)
+        return user
+```
+
+The `UseService` descriptor creates a clean, declarative way to specify dependencies. Each service becomes available as a property on your service instance.
+
+### Dependency Management
+
+Loomi handles service dependencies for you:
+
+1. Services are initialized in the correct order (dependencies before dependents)
+2. Circular dependencies are detected and prevented
+3. Services are shut down only when no longer needed
+4. Shared dependencies are initialized only once
+
+This keeps your code clean and prevents common issues with manual dependency management.
+
+## Using Services in Apps
+
+Services are meant to be used in your Loomi apps. Here's how they work together:
+
+### Declaring Services in Apps
+
+```python
+from loomi import AsyncApp, UseService
+from services import LoggingService, MetricsService
+
+class AnalyticsApp(AsyncApp):
+    # Declare needed services
+    logger = UseService(LoggingService)
+    metrics = UseService(MetricsService)
+    
+    async def process_event(self, context):
+        event = await context.scope.get("event")
+        
+        # Use services directly
+        await self.logger.info(f"Processing event: {event['type']}")
+        await self.metrics.increment(f"events.{event['type']}")
+        
+        # Process event...
+        
+    def define(self):
+        return self.ex.Function(self.process_event)
+```
+
+The same `UseService` descriptor works in both services and apps, creating a consistent pattern throughout your codebase.
+
+### Service Configuration with Specs
+
+Configure services using specs:
+
+```python
+from loomi import Spec
+
+# Create service specs
+db_spec = Spec(
+    factory=DatabaseService,
+    connection_string="postgresql://user:pass@localhost/mydb",
+    pool_size=10
+)
+
+cache_spec = Spec(
+    factory=CacheService,
+    url="redis://localhost:6379",
+    default_ttl=3600
+)
+
+# Create app with configured services
+app = MyApp(
+    spec=Spec(
+        # App configuration
+        factory=MyApp,
+        # Service configurations
+        db=db_spec,
+        cache=cache_spec
+    )
+)
+```
+
+This separation of configuration from implementation makes your code more flexible and testable.
+
+## Common Service Patterns
+
+Services work best for specific types of concerns. Here are common patterns:
+
+### External Resource Services
+
+Wrap connections to external systems:
+
+```python
+class S3Service(AsyncService):
+    async def setup(self):
+        self.client = boto3.client('s3')
+        
+    async def upload_file(self, local_path, bucket, key):
+        return await self.client.upload_file(local_path, bucket, key)
+```
+
+These services ensure resources are properly initialized and cleaned up.
+
+### Cross-Cutting Concern Services
+
+Handle concerns that span multiple parts of your application:
+
+```python
+class LoggingService(AsyncService):
+    def setup(self):
+        self.logger = logging.getLogger(self.spec.name)
+        self.logger.setLevel(self.spec.level)
+        # Configure handlers, formatters, etc.
+        
+    def info(self, message):
+        self.logger.info(message)
+        
+    def error(self, message, exc_info=None):
+        self.logger.error(message, exc_info=exc_info)
+```
+
+These create a consistent interface for common functionality.
+
+### Adapter Services
+
+Wrap third-party libraries with a cleaner interface:
+
+```python
+class EmailService(AsyncService):
+    async def setup(self):
+        self.client = ThirdPartyEmailClient(
+            api_key=self.spec.api_key,
+            region=self.spec.region
+        )
+        
+    async def send_email(self, to, subject, body):
+        """Simplified interface to the underlying client."""
+        return await self.client.messages.create(
+            destination={"ToAddresses": [to]},
+            message={"Subject": {"Data": subject}, "Body": {"Text": {"Data": body}}}
+        )
+```
+
+These shield your application from complex or changing third-party APIs.
+
+## Service Design Best Practices
+
+Follow these guidelines for effective services:
+
+### Granularity
+
+- **Single Responsibility**: Each service should do one thing well
+- **Right-Sized**: Not too small (creates unnecessary overhead) or too large (becomes unwieldy)
+- **Cohesive**: Group related functionality that changes together
+
+### Interface Design
+
+- **Use Clear Method Names**: Self-documenting methods are easier to use
+- **Hide Implementation Details**: Expose only what's needed
+- **Consistent Error Handling**: Use exceptions or result types consistently
+- **Async Where Appropriate**: Async methods for I/O, sync for pure computation
+
+### Dependency Management
+
+- **Minimize Dependencies**: Each dependency adds complexity
+- **Layer Services Properly**: Build higher-level services on top of lower-level ones
+- **Avoid Circular Dependencies**: Create clean hierarchies
+
+## Examples
+
+### Database Service
+
+```python
+from loomi import AsyncService
+
+class DatabaseService(AsyncService):
+    async def setup(self):
+        # Connect with parameters from spec
+        self.pool = await asyncpg.create_pool(
+            host=self.spec.host,
+            port=self.spec.port,
+            user=self.spec.user,
+            password=self.spec.password,
+            database=self.spec.database,
+            min_size=self.spec.min_connections or 1,
+            max_size=self.spec.max_connections or 10
+        )
+        
+    async def cleanup(self):
+        # Close all connections
+        await self.pool.close()
+        
+    async def query(self, sql, *args):
+        """Run a query and return all results."""
+        async with self.pool.acquire() as conn:
+            return await conn.fetch(sql, *args)
+            
+    async def execute(self, sql, *args):
+        """Execute a command and return affected row count."""
+        async with self.pool.acquire() as conn:
+            return await conn.execute(sql, *args)
+            
+    async def transaction(self):
+        """Get a connection with a transaction."""
+        conn = await self.pool.acquire()
+        tx = conn.transaction()
+        await tx.start()
+        
+        try:
+            return conn, tx
+        except:
+            await tx.rollback()
+            await conn.close()
+            raise
+```
+
+### Configuration Service
+
+```python
+from loomi import SyncService
+import yaml
+import os
+
+class ConfigService(SyncService):
+    def setup(self):
+        # Load config from file with environment overrides
+        self.config = self._load_config_file()
+        self._apply_env_overrides()
+        
+    def get(self, key, default=None):
+        """Get a config value with dot notation."""
+        parts = key.split('.')
+        value = self.config
+        
+        for part in parts:
+            if isinstance(value, dict) and part in value:
+                value = value[part]
+            else:
+                return default
+                
+        return value
+        
+    def _load_config_file(self):
+        with open(self.spec.config_path, 'r') as f:
+            return yaml.safe_load(f)
+            
+    def _apply_env_overrides(self):
+        # Override with environment variables
+        prefix = self.spec.env_prefix
+        if not prefix:
+            return
+            
+        for key, value in os.environ.items():
+            if key.startswith(prefix):
+                config_key = key[len(prefix):].lower().replace('__', '.')
+                self._set_nested_key(self.config, config_key, value)
+                
+    def _set_nested_key(self, config, key, value):
+        parts = key.split('.')
+        for i, part in enumerate(parts):
+            if i == len(parts) - 1:
+                config[part] = value
+            else:
+                if part not in config:
+                    config[part] = {}
+                config = config[part]
+```
+
+### Using Services in an App
+
+```python
+from loomi import AsyncApp, UseService, UseApp
+from services import DatabaseService, CacheService
+
+class UserDataApp(AsyncApp):
+    db = UseService(DatabaseService)
+    cache = UseService(CacheService)
+    
+    async def get_user(self, context):
+        user_id = await context.scope.get("user_id")
+        
+        # Try cache first
+        cache_key = f"user:{user_id}"
+        cached = await self.cache.get(cache_key)
+        if cached:
+            await context.scope.store(cached, "user")
+            return
+            
+        # Fall back to database
+        user = await self.db.query("SELECT * FROM users WHERE id = $1", user_id)
+        if user:
+            # Update cache
+            await self.cache.set(cache_key, user, ttl=3600)
+            await context.scope.store(user, "user")
+    
+    def define(self):
+        return self.ex.Function(self.get_user)
+```
+
+## Conclusion
+
+Services in Loomi provide a clean, consistent way to manage external resources and cross-cutting concerns. They give you:
+
+- Proper lifecycle management for resources
+- Clean dependency injection patterns
+- Separation of concerns in your codebase
+- Reusable components across your application
+
+By using services, you keep your app logic focused on what it does best without getting bogged down in infrastructure details.
+
+## What's Next?
+
+- Review the [App Interface](/learn/app) to see how apps and services work together
+- Explore the [State Interface](/learn/state) to understand Loomi's state management
+- Check out the [Operations Interface](/learn/operations) to learn how to build powerful workflows
+
+With services as part of your Loomi toolkit, you're well-equipped to build maintainable, modular applications that can grow with your needs.
