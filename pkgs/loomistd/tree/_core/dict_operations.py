@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from loomi.interfaces.state.kv import AsyncTransactionProtocol
 from loomi.interfaces.state.tree import EmptyProtocol
-from loomistd.kv_storage import StorageKeyError
+from loomistd.kv import StorageKeyError
 
 from .._exceptions import ObjectKeyError, ObjectTypeError
 from .._types import TreePath, TreePathComponent, TreeValueContainer, TreeValueT

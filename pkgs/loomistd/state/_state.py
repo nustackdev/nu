@@ -17,11 +17,11 @@ from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
 from loomi.interfaces.state.state import AsyncStateProtocol
 from loomi.service import AsyncService
 from loomi.spec import Spec, SpecField
-from loomistd.kv_storage import StorageServiceProtocol
-from loomistd.kv_storage.file_storage import FileStorageSpec
+from loomistd.kv import StorageServiceProtocol
+from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.observer import ObserverServiceProtocol
 from loomistd.observer.in_memory import InMemoryObserverSpec
-from loomistd.tree_storage import TreeStorageBase, TreeStorageCore
+from loomistd.tree import TreeStorageBase, TreeStorageCore
 
 from ._observable_kv import ObservableKVStorageCore
 from ._types import StateCallbackFn, StateKey, StateValue

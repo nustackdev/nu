@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Callable, cast
 
 from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
-from loomistd.kv_storage import StorageKeyError
+from loomistd.kv import StorageKeyError
 
 from .._exceptions import ObjectTypeError
 from .._nodes.tree_dict import TreeDict

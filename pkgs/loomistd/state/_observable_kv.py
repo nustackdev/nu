@@ -18,7 +18,7 @@ from loomi.interfaces.state.kv import (
     AsyncTransactionProtocol,
 )
 from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
-from loomistd.kv_storage import StorageServiceProtocol
+from loomistd.kv import StorageServiceProtocol
 from loomistd.observer import ObserverServiceProtocol
 
 from ._types import StateCallbackFn, StateKey, StateValue

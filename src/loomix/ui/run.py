@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from loomistd.kv_storage.file_storage import FileStorageSpec
+from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.state import StateSpec
 from loomix.ui.dashboard.render import apply_custom_css, render_dashboard, setup_streamlit_page
 from loomix.ui.service import VisualizationService, VisualizationServiceSpec

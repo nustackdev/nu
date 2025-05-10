@@ -9,7 +9,7 @@ from loomi.interfaces.state.kv import (
     AsyncTransactionProtocol,
 )
 from loomi.service import AsyncService
-from loomistd.kv_storage import StorageServiceProtocol
+from loomistd.kv import StorageServiceProtocol
 
 from ._core import TreeStorage as TreeStorageCore
 from ._nodes import TreeDict, TreeList
