@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Generic, TypeGuard, final
+from typing import Generator, Generic, TypeGuard, final
 
-from loomi.interfaces.state.kv import AsyncTransactionProtocol
+from loomi.interfaces.state.kv import SyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
@@ -51,12 +51,12 @@ class BaseStorage(
         """Get storage mode."""
         return self.spec.mode  # type: ignore
 
-    async def setup(self) -> None:
+    def setup(self) -> None:
         self._connected = False
-        await self.connect()
+        self.connect()
 
-    async def cleanup(self) -> None:
-        await self.disconnect()
+    def cleanup(self) -> None:
+        self.disconnect()
 
     def _ensure_connected(self) -> None:
         """Verify connection state."""
@@ -70,55 +70,55 @@ class BaseStorage(
 
     # Connection Management
     @abstractmethod
-    async def _connect_impl(self) -> None:
+    def _connect_impl(self) -> None:
         """Implementation-specific connect logic."""
         ...
 
     @final
-    async def connect(self) -> None:
+    def connect(self) -> None:
         """Connect to storage backend."""
         if self._connected:
             return
         try:
-            await self._connect_impl()
+            self._connect_impl()
             self._connected = True
         except Exception as e:
             raise StorageConnectionError(f"Failed to connect: {e}") from e
 
     @abstractmethod
-    async def _disconnect_impl(self) -> None:
+    def _disconnect_impl(self) -> None:
         """Implementation-specific disconnect logic."""
         ...
 
     @final
-    async def disconnect(self) -> None:
+    def disconnect(self) -> None:
         """Disconnect from storage backend."""
         if not self._connected:
             return
         try:
-            await self._disconnect_impl()
+            self._disconnect_impl()
         finally:
             self._connected = False
 
     # Core Operations
     @abstractmethod
-    async def _get_impl(self, key: StorageKeyT) -> StorageValueT:
+    def _get_impl(self, key: StorageKeyT) -> StorageValueT:
         """Implementation-specific get logic."""
         ...
 
     @final
-    async def get(self, key: StorageKeyT) -> StorageValueT:
+    def get(self, key: StorageKeyT) -> StorageValueT:
         """Get value by key."""
         self._ensure_connected()
-        return await self._get_impl(key)
+        return self._get_impl(key)
 
     @abstractmethod
-    async def _set_impl(self, key: StorageKeyT, value: StorageValueT) -> None:
+    def _set_impl(self, key: StorageKeyT, value: StorageValueT) -> None:
         """Implementation-specific set logic."""
         ...
 
     @final
-    async def set(self, key: StorageKeyT, value: StorageValueT) -> None:
+    def set(self, key: StorageKeyT, value: StorageValueT) -> None:
         """Set value by key."""
         if self.mode != "write":
             raise StorageOperationError("Cannot set value in read-only mode")
@@ -128,46 +128,42 @@ class BaseStorage(
         # Validate value type (?)
         # if not self._validate_value(value):
         #     raise StorageValidationError(f"Invalid value type: {type(value)}")
-        await self._set_impl(key, value)
+        self._set_impl(key, value)
 
     @abstractmethod
-    async def _delete_impl(self, key: StorageKeyT) -> None:
+    def _delete_impl(self, key: StorageKeyT) -> None:
         """Implementation-specific delete logic."""
         ...
 
     @final
-    async def delete(self, key: StorageKeyT) -> None:
+    def delete(self, key: StorageKeyT) -> None:
         """Delete value by key."""
         if self.mode != "write":
             raise StorageOperationError("Cannot set value in read-only mode")
 
         self._ensure_connected()
         self._validate_key(key)
-        await self._delete_impl(key)
+        self._delete_impl(key)
 
     @abstractmethod
-    async def _exists_impl(self, key: StorageKeyT) -> bool:
+    def _exists_impl(self, key: StorageKeyT) -> bool:
         """Implementation-specific exists logic."""
         ...
 
     @final
-    async def exists(self, key: StorageKeyT) -> bool:
+    def exists(self, key: StorageKeyT) -> bool:
         """Check if key exists."""
         self._ensure_connected()
-        return await self._exists_impl(key)
+        return self._exists_impl(key)
 
     @abstractmethod
-    async def _list_keys_impl(
-        self, prefix: StorageKeyT, depth: int
-    ) -> AsyncGenerator[StorageKeyT, None]:
+    def _list_keys_impl(self, prefix: StorageKeyT, depth: int) -> Generator[StorageKeyT, None]:
         """Implementation-specific list_keys logic."""
         if False:  # This will never execute but helps type checkers
-            yield prefix  # Dummy yield to make it a true async generator
+            yield prefix  # Dummy yield to make it a true generator
 
     @final
-    async def list_keys(
-        self, prefix: StorageKeyT, depth: int = 1
-    ) -> AsyncGenerator[StorageKeyT, None]:
+    def list_keys(self, prefix: StorageKeyT, depth: int = 1) -> Generator[StorageKeyT, None]:
         """
         List all keys under prefix within transaction context.
 
@@ -177,32 +173,32 @@ class BaseStorage(
                 If depth is -1, lists all keys under prefix.
 
         Returns:
-            AsyncGenerator of matching keys
+            Generator of matching keys
 
         Raises:
             TransactionError: If transaction is invalid or operation fails
             StorageOperationError: If list operation fails
         """
         self._ensure_connected()
-        async for key in self._list_keys_impl(prefix, depth):
+        for key in self._list_keys_impl(prefix, depth):
             yield key
 
     @abstractmethod
-    async def _begin_transaction_impl(self) -> AsyncTransactionProtocol[StorageValueT]:
+    def _begin_transaction_impl(self) -> SyncTransactionProtocol[StorageValueT]:
         """Implementation-specific transaction creation."""
         ...
 
     @final
-    async def begin_transaction(self) -> AsyncTransactionProtocol[StorageValueT]:
+    def begin_transaction(self) -> SyncTransactionProtocol[StorageValueT]:
         """Begin a new transaction."""
         self._ensure_connected()
         try:
-            return await self._begin_transaction_impl()
+            return self._begin_transaction_impl()
         except Exception as e:
             raise StorageOperationError(f"Failed to begin transaction: {e}") from e
 
     @final
-    async def transaction(self) -> TransactionContextManager[StorageValueT]:
+    def transaction(self) -> TransactionContextManager[StorageValueT]:
         """
         Create a transaction context manager.
 
@@ -210,8 +206,8 @@ class BaseStorage(
             Context manager for handling transactions
 
         Example:
-            async with storage.transaction() as txn:
-                await txn.set(key, value)
+            with storage.transaction() as txn:
+                txn.set(key, value)
                 # Auto-commits if no exception
                 # Auto-rollbacks if exception occurs
         """

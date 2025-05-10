@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import asyncio
 import sys
+import threading
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncGenerator, TypeGuard
+from typing import TYPE_CHECKING, Generator, TypeGuard
 
 import lmdb
 
 from loomi.attr import UseService
-from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
-from loomi.service import AsyncService
+from loomi.interfaces.state.kv import SyncStorageProtocol, SyncTransactionProtocol
+from loomi.service import SyncService
 from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
@@ -39,7 +39,7 @@ class LMDBStorage(
         LMDBStorageEncodedKey,
         LMDBStorageEncodedValue,
     ],
-    AsyncService,
+    SyncService,
 ):
     """
     LMDB storage implementation with transaction support.
@@ -53,35 +53,35 @@ class LMDBStorage(
 
     spec: LMDBStorageSpec
 
-    async def setup(self):
+    def setup(self):
         if self.spec.map_size <= 0:
             raise ValueError("Map size must be positive")
         if self.spec.map_size > sys.maxsize:
             raise ValueError("Map size too large for platform")
 
         self._env: lmdb.Environment
-        self._data_lock = asyncio.Lock()
+        self._data_lock = threading.Lock()
         self._active_transactions: set[LMDBStorageTransaction] = set()
 
-        await super().setup()
+        super().setup()
 
-    async def cleanup(self):
-        await super().cleanup()
+    def cleanup(self):
+        super().cleanup()
 
         if self._data_lock.locked():
             self._data_lock.release()
         self._active_transactions.clear()
 
-    async def _validate_value(self, value: LMDBStorageValue) -> TypeGuard[LMDBStorageValue]:
+    def _validate_value(self, value: LMDBStorageValue) -> TypeGuard[LMDBStorageValue]:
         return True
 
-    async def _connect_impl(self) -> None:
+    def _connect_impl(self) -> None:
         """Initialize LMDB environment."""
 
         # Ensure directory exists
         self.spec.path.parent.mkdir(parents=True, exist_ok=True)
 
-        async with self._data_lock:
+        with self._data_lock:
             # Open LMDB environment
             self._env = lmdb.open(
                 str(self.spec.path),
@@ -92,13 +92,13 @@ class LMDBStorage(
             )
             logger.debug(f"Connected to LMDB at {self.spec.path} in {self.mode} mode")
 
-    async def _disconnect_impl(self) -> None:
+    def _disconnect_impl(self) -> None:
         """Close LMDB environment."""
-        async with self._data_lock:
+        with self._data_lock:
             # Roll back any active transactions
             for transaction in self._active_transactions.copy():
                 try:
-                    await transaction.rollback()
+                    transaction.rollback()
                 except Exception as e:
                     logger.error(f"Failed to rollback transaction during disconnect: {e}")
 
@@ -111,7 +111,7 @@ class LMDBStorage(
             self._connected = False
             logger.debug("Disconnected from LMDB")
 
-    async def _get_impl(self, key: LMDBStorageKey) -> LMDBStorageValue:
+    def _get_impl(self, key: LMDBStorageKey) -> LMDBStorageValue:
         """Get value by key."""
         try:
             encoded_key = self.codec.encode_key(key)
@@ -132,7 +132,7 @@ class LMDBStorage(
         except Exception as e:
             raise StorageOperationError(f"Failed to get key {key}: {e}")
 
-    async def _set_impl(self, key: LMDBStorageKey, value: LMDBStorageValue) -> None:
+    def _set_impl(self, key: LMDBStorageKey, value: LMDBStorageValue) -> None:
         """Set value for key."""
         # Encode both before transaction to avoid partial failure
         encoded_key = self.codec.encode_key(key)
@@ -145,7 +145,7 @@ class LMDBStorage(
         except Exception as e:
             raise StorageOperationError(f"Failed to set key {key}: {e}")
 
-    async def _delete_impl(self, key: LMDBStorageKey) -> None:
+    def _delete_impl(self, key: LMDBStorageKey) -> None:
         """Delete value by key."""
         encoded_key = self.codec.encode_key(key)
 
@@ -160,7 +160,7 @@ class LMDBStorage(
         except Exception as e:
             raise StorageOperationError(f"Failed to delete key {key}: {e}")
 
-    async def _exists_impl(self, key: LMDBStorageKey) -> bool:
+    def _exists_impl(self, key: LMDBStorageKey) -> bool:
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
@@ -171,9 +171,9 @@ class LMDBStorage(
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 
-    async def _list_keys_impl(
+    def _list_keys_impl(
         self, prefix: LMDBStorageKey, depth: int
-    ) -> AsyncGenerator[LMDBStorageKey, None]:
+    ) -> Generator[LMDBStorageKey, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -208,7 +208,7 @@ class LMDBStorage(
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}")
 
-    async def _begin_transaction_impl(
+    def _begin_transaction_impl(
         self,
     ) -> LMDBStorageTransaction:
         """Begin a new transaction."""
@@ -218,7 +218,7 @@ class LMDBStorage(
 
             # Create and track our transaction wrapper
             transaction = LMDBStorageTransaction(self, lmdb_txn)
-            async with self._data_lock:
+            with self._data_lock:
                 self._active_transactions.add(transaction)
 
             return transaction
@@ -227,7 +227,7 @@ class LMDBStorage(
             raise StorageError(f"Failed to begin transaction: {e}")
 
 
-class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
+class LMDBStorageTransaction(SyncTransactionProtocol[LMDBStorageValue]):
     """LMDB transaction implementation with proper resource management."""
 
     def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction):
@@ -244,7 +244,7 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
         if self._rolled_back:
             raise TransactionInvalidError("Transaction already rolled back")
 
-    async def get(self, key: LMDBStorageKey) -> LMDBStorageValue:
+    def get(self, key: LMDBStorageKey) -> LMDBStorageValue:
         """Get value within transaction context."""
         self._check_valid()
         try:
@@ -264,7 +264,7 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
         except Exception as e:
             raise StorageOperationError(f"Failed to get key {key}: {e}")
 
-    async def set(self, key: LMDBStorageKey, value: LMDBStorageValue) -> None:
+    def set(self, key: LMDBStorageKey, value: LMDBStorageValue) -> None:
         """Set value within transaction context."""
         self._check_valid()
 
@@ -277,7 +277,7 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
         except Exception as e:
             raise StorageOperationError(f"Failed to set key {key}: {e}")
 
-    async def delete(self, key: LMDBStorageKey) -> None:
+    def delete(self, key: LMDBStorageKey) -> None:
         """Delete key within transaction context."""
         self._check_valid()
 
@@ -288,7 +288,7 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
         except Exception as e:
             raise StorageOperationError(f"Failed to delete key {key}: {e}")
 
-    async def exists(self, key: LMDBStorageKey) -> bool:
+    def exists(self, key: LMDBStorageKey) -> bool:
         """Check if key exists within transaction context."""
         self._check_valid()
 
@@ -299,9 +299,7 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 
-    async def list_keys(
-        self, prefix: LMDBStorageKey, depth: int = 1
-    ) -> AsyncGenerator[LMDBStorageKey, None]:
+    def list_keys(self, prefix: LMDBStorageKey, depth: int = 1) -> Generator[LMDBStorageKey, None]:
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
 
@@ -329,24 +327,24 @@ class LMDBStorageTransaction(AsyncTransactionProtocol[LMDBStorageValue]):
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}")
 
-    async def commit(self) -> None:
+    def commit(self) -> None:
         """Commit transaction changes."""
         self._check_valid()
         try:
             self._lmdb_txn.commit()
             self._committed = True
-            async with self._storage._data_lock:
+            with self._storage._data_lock:
                 self._storage._active_transactions.discard(self)
         except Exception as e:
             raise TransactionError(f"Failed to commit transaction: {e}")
 
-    async def rollback(self) -> None:
+    def rollback(self) -> None:
         """Roll back transaction changes."""
         self._check_valid()
         try:
             self._lmdb_txn.abort()
             self._rolled_back = True
-            async with self._storage._data_lock:
+            with self._storage._data_lock:
                 self._storage._active_transactions.discard(self)
         except Exception as e:
             raise TransactionError(f"Failed to rollback transaction: {e}")
@@ -364,4 +362,4 @@ class LMDBStorageSpec(Spec):
 
 
 if TYPE_CHECKING:
-    _: type[AsyncStorageProtocol] = LMDBStorage
+    _: type[SyncStorageProtocol] = LMDBStorage

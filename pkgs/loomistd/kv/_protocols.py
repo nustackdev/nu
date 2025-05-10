@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from loomi.interfaces.state.kv import AsyncStorageProtocol
+from loomi.interfaces.state.kv import SyncStorageProtocol
 from loomistd.codec import CodecProtocol
 
 from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageValueT
@@ -13,7 +13,7 @@ __all__ = [
 
 
 class StorageServiceProtocol(
-    AsyncStorageProtocol[StorageValueT],
+    SyncStorageProtocol[StorageValueT],
     Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT],
 ):
     """
@@ -50,7 +50,7 @@ class StorageServiceProtocol(
         """
         ...
 
-    async def connect(self) -> None:
+    def connect(self) -> None:
         """
         Establish connection to storage backend.
 
@@ -64,7 +64,7 @@ class StorageServiceProtocol(
         """
         ...
 
-    async def disconnect(self) -> None:
+    def disconnect(self) -> None:
         """
         Close connection to storage backend.
 

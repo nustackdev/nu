@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import asyncio
-from typing import TYPE_CHECKING, AsyncGenerator
+import threading
+from typing import TYPE_CHECKING, Generator
 
 from loomi.attr import UseService
-from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
-from loomi.service import AsyncService
+from loomi.interfaces.state.kv import SyncStorageProtocol, SyncTransactionProtocol
+from loomi.service import SyncService
 from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
@@ -41,7 +41,7 @@ class InMemoryStorage(
         InMemoryStorageEncodedKey,
         InMemoryStorageEncodedValue,
     ],
-    AsyncService,
+    SyncService,
 ):
     """
     Simple file-based storage implementation with transaction support.
@@ -57,41 +57,41 @@ class InMemoryStorage(
 
     spec: InMemoryStorageSpec
 
-    async def setup(self):
+    def setup(self):
         self._data: dict[InMemoryStorageEncodedKey, InMemoryStorageEncodedValue] = {}
-        self._data_lock = asyncio.Lock()
+        self._data_lock = threading.Lock()
         self._active_transactions: set[InMemoryStorageTransaction] = set()
-        await super().setup()
+        super().setup()
 
-    async def cleanup(self):
-        await super().cleanup()
+    def cleanup(self):
+        super().cleanup()
         self._data.clear()
         self._active_transactions.clear()
         if self._data_lock.locked():
             self._data_lock.release()
 
-    async def _connect_impl(self) -> None:
+    def _connect_impl(self) -> None:
         """Initialize storage."""
-        async with self._data_lock:
+        with self._data_lock:
             self._data.clear()
             self._active_transactions.clear()
         logger.debug("Connected to in-memory storage")
 
-    async def _disconnect_impl(self) -> None:
+    def _disconnect_impl(self) -> None:
         """Clean up storage."""
-        async with self._data_lock:
+        with self._data_lock:
             # Roll back any active transactions
             for transaction in self._active_transactions.copy():
-                await transaction.rollback()
+                transaction.rollback()
 
             self._data.clear()
         logger.debug("Disconnected from in-memory storage")
 
-    async def _get_impl(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
+    def _get_impl(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
         """Get value by key."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._data_lock:
+        with self._data_lock:
             try:
                 if encoded_key not in self._data:
                     raise StorageKeyError(f"Key {key} not found")
@@ -101,21 +101,21 @@ class InMemoryStorage(
                     raise StorageOperationError(f"Failed to get key {key}: {e}")
                 raise
 
-    async def _set_impl(self, key: InMemoryStorageKey, value: InMemoryStorageValue) -> None:
+    def _set_impl(self, key: InMemoryStorageKey, value: InMemoryStorageValue) -> None:
         """Set value for key."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._data_lock:
+        with self._data_lock:
             try:
                 self._data[encoded_key] = value
             except Exception as e:
                 raise StorageOperationError(f"Failed to set key {key}: {e}")
 
-    async def _delete_impl(self, key: InMemoryStorageKey) -> None:
+    def _delete_impl(self, key: InMemoryStorageKey) -> None:
         """Delete key."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._data_lock:
+        with self._data_lock:
             try:
                 self._data.pop(encoded_key, None)
             except KeyError:
@@ -123,21 +123,21 @@ class InMemoryStorage(
             except Exception as e:
                 raise StorageOperationError(f"Failed to delete key {key}: {e}")
 
-    async def _exists_impl(self, key: InMemoryStorageKey) -> bool:
+    def _exists_impl(self, key: InMemoryStorageKey) -> bool:
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
-        async with self._data_lock:
+        with self._data_lock:
             return encoded_key in self._data
 
-    async def _list_keys_impl(
+    def _list_keys_impl(
         self, prefix: InMemoryStorageKey, depth: int
-    ) -> AsyncGenerator[InMemoryStorageKey, None]:
+    ) -> Generator[InMemoryStorageKey, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
         # Get snapshot of keys
-        async with self._data_lock:
+        with self._data_lock:
             matching_keys = []
             for encoded_key in self._data.keys():
                 if encoded_key.startswith(encoded_prefix):
@@ -150,18 +150,18 @@ class InMemoryStorage(
         for key in matching_keys:
             yield key
 
-    async def _begin_transaction_impl(
+    def _begin_transaction_impl(
         self,
     ) -> InMemoryStorageTransaction:
         """Begin a new transaction."""
         transaction = InMemoryStorageTransaction(self)
-        async with self._data_lock:
+        with self._data_lock:
             self._active_transactions.add(transaction)
         return transaction
 
-    async def _check_conflicts(self, transaction: InMemoryStorageTransaction) -> bool:
+    def _check_conflicts(self, transaction: InMemoryStorageTransaction) -> bool:
         """Check for conflicts with other transactions."""
-        async with self._data_lock:
+        with self._data_lock:
             for other_txn in self._active_transactions:
                 if other_txn is not transaction:
                     # Check for write-write conflicts
@@ -172,9 +172,9 @@ class InMemoryStorage(
                         return False
             return True
 
-    async def _apply_transaction(self, transaction: InMemoryStorageTransaction) -> None:
+    def _apply_transaction(self, transaction: InMemoryStorageTransaction) -> None:
         """Apply transaction operations atomically."""
-        async with self._data_lock:
+        with self._data_lock:
             try:
                 # Apply operations
                 for op in transaction._operations:
@@ -190,13 +190,13 @@ class InMemoryStorage(
             except Exception as e:
                 # Attempt rollback
                 try:
-                    await transaction.rollback()
+                    transaction.rollback()
                 except Exception as rollback_error:
                     logger.error(f"Failed to rollback transaction: {rollback_error}")
                 raise TransactionError(f"Failed to apply transaction: {e}")
 
 
-class InMemoryStorageTransaction(AsyncTransactionProtocol[InMemoryStorageValue]):
+class InMemoryStorageTransaction(SyncTransactionProtocol[InMemoryStorageValue]):
     """Simple in-memory transaction implementation."""
 
     def __init__(self, storage: InMemoryStorage):
@@ -215,7 +215,7 @@ class InMemoryStorageTransaction(AsyncTransactionProtocol[InMemoryStorageValue])
         if self._rolled_back:
             raise TransactionInvalidError("Transaction already rolled back")
 
-    async def get(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
+    def get(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
         """Get value within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
@@ -228,36 +228,36 @@ class InMemoryStorageTransaction(AsyncTransactionProtocol[InMemoryStorageValue])
                 return op.value
 
         # Get from storage
-        value = await self._storage.get(key)
+        value = self._storage.get(key)
         self._read_set.add(encoded_key)
         return value
 
-    async def set(self, key: InMemoryStorageKey, value: InMemoryStorageValue) -> None:
+    def set(self, key: InMemoryStorageKey, value: InMemoryStorageValue) -> None:
         """Set value within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
         self._write_set.add(encoded_key)
         self._operations.append(TransactionOperation("set", key, value))
 
-    async def delete(self, key: InMemoryStorageKey) -> None:
+    def delete(self, key: InMemoryStorageKey) -> None:
         """Delete key within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
         self._write_set.add(encoded_key)
         self._operations.append(TransactionOperation("delete", key))
 
-    async def exists(self, key: InMemoryStorageKey) -> bool:
+    def exists(self, key: InMemoryStorageKey) -> bool:
         """Check if key exists within transaction context."""
         self._check_valid()
         try:
-            await self.get(key)
+            self.get(key)
             return True
         except StorageKeyError:
             return False
 
-    async def list_keys(
+    def list_keys(
         self, prefix: InMemoryStorageKey, depth: int = 1
-    ) -> AsyncGenerator[InMemoryStorageKey, None]:
+    ) -> Generator[InMemoryStorageKey, None]:
         """List all keys under prefix within transaction."""
         self._check_valid()
 
@@ -266,7 +266,7 @@ class InMemoryStorageTransaction(AsyncTransactionProtocol[InMemoryStorageValue])
 
         # Get current keys from storage
         base_keys = set()
-        async for key in self._storage.list_keys(prefix, depth):
+        for key in self._storage.list_keys(prefix, depth):
             encoded_key = self._storage.codec.encode_key(key)
             if encoded_key.startswith(encoded_prefix):
                 base_keys.add(encoded_key)
@@ -284,20 +284,20 @@ class InMemoryStorageTransaction(AsyncTransactionProtocol[InMemoryStorageValue])
         for encoded_key in sorted(base_keys):  # Sort for consistent ordering
             yield self._storage.codec.decode_key(encoded_key)
 
-    async def commit(self) -> None:
+    def commit(self) -> None:
         """Commit transaction changes."""
         self._check_valid()
 
-        if not await self._storage._check_conflicts(self):
+        if not self._storage._check_conflicts(self):
             raise TransactionConflictError("Transaction conflicts with other changes")
 
         try:
-            await self._storage._apply_transaction(self)
+            self._storage._apply_transaction(self)
             self._committed = True
         except Exception as e:
             raise TransactionError(f"Failed to commit transaction: {e}")
 
-    async def rollback(self) -> None:
+    def rollback(self) -> None:
         """Roll back transaction changes."""
         self._check_valid()
         self._rolled_back = True
@@ -314,4 +314,4 @@ class InMemoryStorageSpec(Spec):
 
 
 if TYPE_CHECKING:
-    _: type[AsyncStorageProtocol] = InMemoryStorage
+    _: type[SyncStorageProtocol] = InMemoryStorage

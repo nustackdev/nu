@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from loomi.interfaces.state.kv import (
-    AsyncTransactionalHandlerProtocol,
-    AsyncTransactionContextManagerProtocol,
-    AsyncTransactionProtocol,
+    SyncTransactionalHandlerProtocol,
+    SyncTransactionContextManagerProtocol,
+    SyncTransactionProtocol,
 )
 
 from ._types import StorageValueT
@@ -13,10 +13,10 @@ __all__ = [
 ]
 
 
-class TransactionContextManager(AsyncTransactionContextManagerProtocol[StorageValueT]):
-    """Async context manager for storage transactions."""
+class TransactionContextManager(SyncTransactionContextManagerProtocol[StorageValueT]):
+    """Sync context manager for storage transactions."""
 
-    def __init__(self, handler: AsyncTransactionalHandlerProtocol[StorageValueT]):
+    def __init__(self, handler: SyncTransactionalHandlerProtocol[StorageValueT]):
         """
         Initialize transaction context manager.
 
@@ -24,9 +24,9 @@ class TransactionContextManager(AsyncTransactionContextManagerProtocol[StorageVa
             storage: Storage instance to manage transactions for
         """
         self.handler = handler
-        self.transaction: AsyncTransactionProtocol[StorageValueT] | None = None
+        self.transaction: SyncTransactionProtocol[StorageValueT] | None = None
 
-    async def __aenter__(self) -> AsyncTransactionProtocol[StorageValueT]:
+    def __enter__(self) -> SyncTransactionProtocol[StorageValueT]:
         """
         Start a new transaction.
 
@@ -36,10 +36,10 @@ class TransactionContextManager(AsyncTransactionContextManagerProtocol[StorageVa
         Raises:
             StorageError: If transaction cannot be started
         """
-        self.transaction = await self.handler.begin_transaction()
+        self.transaction = self.handler.begin_transaction()
         return self.transaction
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """
         Commit or rollback transaction based on context exit.
 
@@ -50,6 +50,6 @@ class TransactionContextManager(AsyncTransactionContextManagerProtocol[StorageVa
         """
         if self.transaction:
             if exc_type is None:
-                await self.transaction.commit()
+                self.transaction.commit()
             else:
-                await self.transaction.rollback()
+                self.transaction.rollback()
