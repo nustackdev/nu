@@ -1,0 +1,677 @@
+from __future__ import annotations
+
+from typing import Any, cast
+
+from loomi.interfaces.state.kv import AsyncTransactionProtocol
+from loomi.interfaces.state.tree import EmptyProtocol
+from loomistd.kv import StorageKeyError
+
+from .._exceptions import ObjectKeyError, ObjectTypeError
+from .._types import TreePath, TreePathComponent, TreeValueContainer, TreeValueT
+from .core import StorageCore
+
+__all__ = [
+    "DictOperations",
+]
+
+
+class DictOperations(StorageCore[TreeValueT]):
+    """
+    Implementation of dictionary operations for tree storage.
+
+    This class provides methods for manipulating dictionary-like structures
+    in the underlying key-value storage. It extends the StorageCore class
+    with dictionary-specific operations while maintaining the same
+    transactional guarantees and error handling protocols.
+
+    Dictionary nodes in the tree represent Python dict objects, with each
+    dict key becoming a child node in the tree.
+    """
+
+    # --- Dictionary initialization and type management --- #
+
+    async def _insert_dict(self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]) -> None:
+        """
+        Initialize an empty dictionary node at the specified path.
+
+        This method creates all the required structure for an empty dictionary
+        at the given path location. It does not check if the path already exists,
+        so it should only be called for paths that don't exist or need to be
+        completely re-initialized.
+
+        Args:
+            path: Path where to create the dictionary node
+            txn: Transaction to use
+        """
+        # Set type directly on the container path
+        await self._storage_set(path, cast(TreeValueT, self._TYPE_DICT), txn)
+
+    async def _ensure_dict(self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]) -> None:
+        """
+        Ensure that a path contains a dictionary node or initialize it if it doesn't exist.
+
+        Args:
+            path: Path to check and potentially initialize
+            txn: Transaction to use
+
+        Raises:
+            ObjectTypeError: If the path exists but is not a dictionary node
+        """
+        try:
+            # Check if the path exists and what it contains
+            node_type = await self._get_node_type(path, txn)
+
+            # If it's not a dictionary type marker
+            if node_type != self._TYPE_DICT:
+                raise ObjectTypeError(
+                    f"Path {path} exists but is not a dictionary node (current type: {node_type})"
+                )
+        except StorageKeyError:
+            # Path doesn't exist, initialize as empty dictionary
+            await self._insert_dict(path, txn)
+
+    async def _set_dict(
+        self,
+        path: TreePath,
+        value: dict[TreePathComponent, TreeValueT],
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> None:
+        """
+        Store a dictionary as a tree structure with component-value pairs.
+
+        This method recursively stores a Python dictionary into the tree storage
+        system, preserving its structure.
+
+        Args:
+            path: Base path for the dictionary node
+            value: Dictionary to store
+            txn: Transaction to use
+        """
+        # If replacing an existing value, delete old data first
+        await self._delete_node(path, txn)
+
+        # Initialize the dictionary structure
+        await self._insert_dict(path, txn)
+
+        # Store each key-value pair
+        for k, v in value.items():
+            item_path = self._make_path(path, k)
+
+            # Handle nested nodes
+            if isinstance(v, dict):
+                await self._set_dict(item_path, v, txn)
+            elif isinstance(v, list):
+                await self._set_list(item_path, v, txn)
+            else:
+                # Regular value
+                await self._storage_set(item_path, v, txn)
+
+    # --- Dictionary retrieval operations --- #
+
+    async def dict_get(
+        self,
+        base_path: TreePath,
+        dict_path: TreePath,
+        default: TreeValueContainer[TreeValueT] | EmptyProtocol = StorageCore.EMPTY,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
+        """
+        Get a value from a dictionary node at the specified path.
+
+        Args:
+            base_path: Base path of the dictionary node
+            dict_path: Path to the value within the dictionary
+            default: Value to return if path doesn't exist (default is Empty)
+            txn: Optional transaction to use
+
+        Returns:
+            Value at the specified path or default if not found
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        try:
+            if txn is None:
+                async with await self._storage.transaction() as new_txn:
+                    result = await self._dict_get(base_path, dict_path, new_txn)
+                return result
+            else:
+                return await self._dict_get(base_path, dict_path, txn)
+        except (ObjectKeyError, StorageKeyError):
+            return default
+
+    async def _dict_get(
+        self,
+        base_path: TreePath,
+        dict_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> TreeValueContainer[TreeValueT]:
+        """
+        Internal implementation for getting values from a dictionary node.
+
+        Args:
+            base_path: Base path of the dictionary node
+            dict_path: Path to the value within the dictionary
+            txn: Transaction to use
+
+        Returns:
+            Value at the specified path
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+            ObjectKeyError: If dict_path doesn't exist
+            StorageKeyError: If paths don't exist in underlying storage
+        """
+        # Verify this is a dictionary node
+        await self._verify_dict(base_path, txn)
+
+        current_path = base_path
+
+        # Navigate to the target item
+        for i, component in enumerate(dict_path):
+            # Check if we're at the final component
+            if i == len(dict_path) - 1:
+                # Get the value directly
+                item_path = self._make_path(current_path, component)
+                try:
+                    return await self._get_value_recursive(item_path, txn)
+                except StorageKeyError:
+                    path_str = ".".join(str(p) for p in dict_path)
+                    raise ObjectKeyError(f"Path {path_str} not found")
+            else:
+                # Navigate to the next level
+                next_path = self._make_path(current_path, component)
+
+                # Verify it's a dictionary
+                try:
+                    if not await self._is_dict(next_path, txn):
+                        # Check if it exists but isn't a dictionary
+                        if await self._storage_exists(next_path, txn):
+                            path_str = ".".join(str(p) for p in dict_path[: i + 1])
+                            raise ObjectTypeError(
+                                f"Path component {path_str} is not a dictionary node"
+                            )
+                        else:
+                            path_str = ".".join(str(p) for p in dict_path[: i + 1])
+                            raise ObjectKeyError(f"Path component {path_str} not found")
+                except StorageKeyError:
+                    path_str = ".".join(str(p) for p in dict_path[: i + 1])
+                    raise ObjectKeyError(f"Path component {path_str} not found")
+
+                current_path = next_path
+
+        # If we reach here, it means we didn't find the path
+        path_str = ".".join(str(p) for p in dict_path)
+        raise ObjectKeyError(f"Path {path_str} not found")
+
+    # --- Dictionary modification operations --- #
+
+    async def dict_set(
+        self,
+        base_path: TreePath,
+        dict_path: TreePath,
+        value: TreeValueT,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> None:
+        """
+        Set a value in a dictionary node at the specified path.
+
+        Args:
+            base_path: Base path of the dictionary node
+            dict_path: Path where to set the value
+            value: Value to set
+            txn: Optional transaction to use
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        if txn is None:
+            async with await self._storage.transaction() as new_txn:
+                await self._dict_set(base_path, dict_path, value, new_txn)
+        else:
+            await self._dict_set(base_path, dict_path, value, txn)
+
+    async def _dict_set(
+        self,
+        base_path: TreePath,
+        dict_path: TreePath,
+        value: TreeValueT,
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> None:
+        """
+        Internal implementation for setting values in a dictionary node.
+
+        Args:
+            base_path: Base path of the dictionary node
+            dict_path: Path where to set the value
+            value: Value to set
+            txn: Transaction to use
+
+        Raises:
+            ObjectTypeError: If a path component exists but is not a dictionary node
+        """
+        # Ensure the base path is a dictionary node
+        try:
+            node_type = await self._get_node_type(base_path, txn)
+            if node_type is not None and node_type != self._TYPE_DICT:
+                raise ObjectTypeError(
+                    f"Path {base_path} is not a dictionary node (current type: {node_type})"
+                )
+        except StorageKeyError:
+            # Path doesn't exist, initialize as dictionary
+            await self._insert_dict(base_path, txn)
+
+        current_path = base_path
+
+        # Navigate/create the path to the target item
+        for i, component in enumerate(dict_path):
+            # Check if we're at the final component
+            if i == len(dict_path) - 1:
+                # Set the value
+                item_path = self._make_path(current_path, component)
+
+                # Check if it's currently a dict or list node and delete it if needed
+                try:
+                    if await self._is_dict(item_path, txn) or await self._is_list(item_path, txn):
+                        # Recursively delete the existing node
+                        await self._delete_node(item_path, txn)
+                    else:
+                        # Delete any existing simple value
+                        try:
+                            await self._storage_delete(item_path, txn)
+                        except StorageKeyError:
+                            pass  # May not exist
+                except StorageKeyError:
+                    pass  # Path doesn't exist, nothing to delete
+
+                # Store the new value
+                if isinstance(value, dict):
+                    await self._set_dict(item_path, value, txn)
+                elif isinstance(value, list):
+                    await self._set_list(item_path, value, txn)
+                else:
+                    # Regular value
+                    await self._storage_set(item_path, value, txn)
+            else:
+                # Navigate to the next level, creating if needed
+                next_path = self._make_path(current_path, component)
+
+                # Check if this component exists
+                try:
+                    node_type = await self._get_node_type(next_path, txn)
+
+                    # If it exists but is not a dictionary, raise error
+                    if node_type is not None and node_type != self._TYPE_DICT:
+                        path_str = ".".join(str(p) for p in dict_path[: i + 1])
+                        raise ObjectTypeError(f"Path component {path_str} is not a dictionary node")
+                except StorageKeyError:
+                    # Create intermediate dictionary node
+                    await self._insert_dict(next_path, txn)
+
+                current_path = next_path
+
+    async def dict_delete(
+        self,
+        base_path: TreePath,
+        dict_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> None:
+        """
+        Delete a value from a dictionary node at the specified path.
+
+        Args:
+            base_path: Base path of the dictionary node
+            dict_path: Path to the value to delete
+            txn: Optional transaction to use
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+            ObjectKeyError: If dict_path doesn't exist
+        """
+        if txn is None:
+            async with await self._storage.transaction() as new_txn:
+                await self._dict_delete(base_path, dict_path, new_txn)
+        else:
+            await self._dict_delete(base_path, dict_path, txn)
+
+    async def _dict_delete(
+        self,
+        base_path: TreePath,
+        dict_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> None:
+        """
+        Internal implementation of dict_delete.
+
+        Args:
+            base_path: Base path of the dictionary node
+            dict_path: Path to the value to delete
+            txn: Transaction to use
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+            ObjectKeyError: If dict_path doesn't exist
+        """
+        # Verify this is a dictionary node
+        await self._verify_dict(base_path, txn)
+
+        current_path = base_path
+
+        # Navigate to the target item
+        for i, component in enumerate(dict_path):
+            # Check if we're at the final component
+            if i == len(dict_path) - 1:
+                # Delete the item
+                item_path = self._make_path(current_path, component)
+
+                # Check if it's a dict or list node
+                try:
+                    if await self._is_dict(item_path, txn) or await self._is_list(item_path, txn):
+                        # It's a dict or list node, delete recursively
+                        await self._delete_node(item_path, txn)
+                    else:
+                        # Not a dict or list node, delete directly
+                        try:
+                            await self._storage_delete(item_path, txn)
+                        except StorageKeyError:
+                            path_str = ".".join(str(p) for p in dict_path)
+                            raise ObjectKeyError(
+                                f"Path {path_str} not found in dictionary node at {base_path}"
+                            )
+                except StorageKeyError:
+                    path_str = ".".join(str(p) for p in dict_path)
+                    raise ObjectKeyError(
+                        f"Path {path_str} not found in dictionary node at {base_path}"
+                    )
+            else:
+                # Navigate to the next level
+                next_path = self._make_path(current_path, component)
+
+                # Verify it exists and is a dictionary node
+                try:
+                    if not await self._is_dict(next_path, txn):
+                        path_str = ".".join(str(p) for p in dict_path[: i + 1])
+                        # Check if the path exists but is not a dictionary
+                        if await self._storage_exists(next_path, txn):
+                            raise ObjectTypeError(
+                                f"Path component {path_str} is not a dictionary node"
+                            )
+                        else:
+                            raise ObjectKeyError(f"Path component {path_str} not found")
+                except StorageKeyError:
+                    path_str = ".".join(str(p) for p in dict_path[: i + 1])
+                    raise ObjectKeyError(f"Path component {path_str} not found")
+
+                current_path = next_path
+
+    # --- Dictionary query and inspection operations --- #
+
+    async def dict_contains(
+        self,
+        base_path: TreePath,
+        dict_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> bool:
+        """
+        Check if a dictionary node contains a value at the specified path.
+
+        Args:
+            base_path: Base path of the dictionary node
+            dict_path: Path to check
+            txn: Optional transaction to use
+
+        Returns:
+            True if path exists, False otherwise
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        try:
+            if txn is None:
+                async with await self._storage.transaction() as new_txn:
+                    await self._dict_get(base_path, dict_path, new_txn)
+            else:
+                await self._dict_get(base_path, dict_path, txn)
+            return True
+        except (ObjectKeyError, StorageKeyError):
+            return False
+        except ObjectTypeError:
+            # Re-raise type errors as they indicate a more serious issue
+            raise
+
+    async def dict_keys(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> list[TreePathComponent]:
+        """
+        Get all top-level keys in a dictionary node.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Optional transaction to use
+
+        Returns:
+            List of top-level keys
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        if txn is None:
+            async with await self._storage.transaction() as new_txn:
+                result = await self._dict_keys(base_path, new_txn)
+            return result
+        else:
+            return await self._dict_keys(base_path, txn)
+
+    async def _dict_keys(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> list[TreePathComponent]:
+        """
+        Internal implementation for getting all top-level keys in a dictionary node.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Transaction to use
+
+        Returns:
+            List of top-level keys
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        # Verify this is a dictionary node
+        await self._verify_dict(base_path, txn)
+
+        # Get all direct children paths
+        result: list[TreePathComponent] = []
+
+        async for storage_path in self._storage_list_paths(base_path, 1, txn):
+            # Only include paths that are direct children and not metadata
+            if len(storage_path) == len(base_path) + 1 and not storage_path[-1].startswith(
+                self._MARKER
+            ):
+                attr_name = storage_path[-1]
+                if attr_name not in result:
+                    result.append(attr_name)
+
+        return result
+
+    async def dict_values(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> list[TreeValueT]:
+        """
+        Get all top-level values in a dictionary node.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Optional transaction to use
+
+        Returns:
+            List of top-level values
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        if txn is None:
+            async with await self._storage.transaction() as new_txn:
+                result = await self._dict_values(base_path, new_txn)
+            return result
+        else:
+            return await self._dict_values(base_path, txn)
+
+    async def _dict_values(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> list[TreeValueT]:
+        """
+        Internal implementation for getting all top-level values in a dictionary node.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Transaction to use
+
+        Returns:
+            List of top-level values
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        keys = await self._dict_keys(base_path, txn)
+        values: list[Any] = []
+
+        for k in keys:
+            try:
+                value = await self._dict_get(
+                    base_path,
+                    (k,),  # Single component path
+                    txn,
+                )
+                values.append(value)
+            except (ObjectKeyError, StorageKeyError):
+                # Key disappeared during iteration (concurrent modification)
+                continue
+
+        return values
+
+    async def dict_items(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Get all top-level key-value pairs in a dictionary node.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Optional transaction to use
+
+        Returns:
+            List of (key, value) tuples
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        if txn is None:
+            async with await self._storage.transaction() as new_txn:
+                result = await self._dict_items(base_path, new_txn)
+            return result
+        else:
+            return await self._dict_items(base_path, txn)
+
+    async def _dict_items(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> list[tuple[TreePathComponent, TreeValueT]]:
+        """
+        Internal implementation for getting all top-level key-value pairs.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Transaction to use
+
+        Returns:
+            List of (key, value) tuples
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        keys = await self._dict_keys(base_path, txn)
+        items: list[tuple[TreePathComponent, Any]] = []
+
+        for k in keys:
+            try:
+                value = await self._dict_get(
+                    base_path,
+                    (k,),  # Single component path
+                    txn,
+                )
+                items.append((k, value))
+            except (ObjectKeyError, StorageKeyError):
+                # Key disappeared during iteration (concurrent modification)
+                continue
+
+        return items
+
+    # --- Dictionary conversion operations --- #
+
+    async def dict_to_dict(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Convert a stored dictionary node to a regular Python dictionary.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Optional transaction to use
+
+        Returns:
+            Dict containing all data from the stored dictionary node
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        if txn is None:
+            async with await self._storage.transaction() as new_txn:
+                result = await self._dict_to_dict(base_path, new_txn)
+            return result
+        else:
+            return await self._dict_to_dict(base_path, txn)
+
+    async def _dict_to_dict(
+        self,
+        base_path: TreePath,
+        txn: AsyncTransactionProtocol[TreeValueT],
+    ) -> dict[TreePathComponent, TreeValueT]:
+        """
+        Internal implementation for converting a stored dictionary node to a Python dict.
+
+        Args:
+            base_path: Base path of the dictionary node
+            txn: Transaction to use
+
+        Returns:
+            Dict containing all data from the stored dictionary node
+
+        Raises:
+            ObjectTypeError: If base_path is not a dictionary node
+        """
+        await self._verify_dict(base_path, txn)
+
+        # Get all key-value pairs
+        items = await self._dict_items(base_path, txn)
+
+        # Build result dictionary
+        result: dict[TreePathComponent, TreeValueT] = {}
+        for k, v in items:
+            result[k] = v
+
+        return result
