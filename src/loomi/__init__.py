@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .app import AsyncApp, AsyncContext, AsyncOperation, SyncApp, SyncContext, SyncOperation
+from .app import AsyncApp, Context, ContextAsyncState, Operation, OperationAsyncState, SyncApp
 from .attr import UseApp, UseService
 from .service import AsyncService, SyncService
 from .spec import Spec, SpecField
@@ -11,10 +11,10 @@ from .spec import Spec, SpecField
 __all__ = [
     "AsyncApp",
     "SyncApp",
-    "AsyncContext",
-    "SyncContext",
-    "AsyncOperation",
-    "SyncOperation",
+    "Context",
+    "Operation",
+    "ContextAsyncState",
+    "OperationAsyncState",
 ]
 
 # Service

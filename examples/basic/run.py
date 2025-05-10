@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 # Loomi imports
-from loomi import AsyncApp, AsyncContext, AsyncOperation, Spec
+from loomi import AsyncApp, Context, Operation, Spec
 from loomistd.aexecutor import ExecutionEngineSpec
 from loomistd.state import StateSpec
 from loomix.logging import setup_logging
@@ -32,7 +32,7 @@ class BasicApp(AsyncApp):
     """A simple app demonstrating basic Loomi operations."""
 
     # --- Basic tasks ---
-    async def hello_world(self, context: AsyncContext):
+    async def hello_world(self, context: Context):
         """Simple task that prints a hello message and sets state."""
         print(f"[{time.strftime('%H:%M:%S')}] Hello, Loomi world!")
 
@@ -42,7 +42,7 @@ class BasicApp(AsyncApp):
 
         print(f"[{time.strftime('%H:%M:%S')}] Set path to '{path_choice}' in state")
 
-    async def flaky_task(self, context: AsyncContext):
+    async def flaky_task(self, context: Context):
         """Task that sometimes fails, demonstrating retry functionality."""
         attempt = context["retry_attempt"] if "retry_attempt" in context else 0
         print(f"[{time.strftime('%H:%M:%S')}] Flaky task executing (attempt {attempt + 1})")
@@ -57,7 +57,7 @@ class BasicApp(AsyncApp):
             print(f"[{time.strftime('%H:%M:%S')}] Flaky task succeeded on attempt {attempt + 1}")
 
     # --- Flow control functions ---
-    async def branch_decision(self, context: AsyncContext):
+    async def branch_decision(self, context: Context):
         """Return a path based on state value."""
         # Get path from state using the "_" root
         result = context.scope.get("path")
@@ -65,19 +65,19 @@ class BasicApp(AsyncApp):
         return result
 
     # --- Branch path functions ---
-    async def path_a_task(self, context: AsyncContext):
+    async def path_a_task(self, context: Context):
         """Execute when branch takes path A."""
         print(f"[{time.strftime('%H:%M:%S')}] PATH A task executing")
         await asyncio.sleep(0.5)
         print(f"[{time.strftime('%H:%M:%S')}] PATH A task completed")
 
-    async def path_b_task(self, context: AsyncContext):
+    async def path_b_task(self, context: Context):
         """Execute when branch takes path B."""
         print(f"[{time.strftime('%H:%M:%S')}] PATH B task executing")
         await asyncio.sleep(0.5)
         print(f"[{time.strftime('%H:%M:%S')}] PATH B task completed")
 
-    def define(self) -> AsyncOperation:
+    def define(self) -> Operation:
         """Define the workflow for this app."""
         return self.ex.Sequence(
             # 1. Simple Function operation that also sets state

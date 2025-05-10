@@ -18,10 +18,10 @@ import statistics
 import time
 from pathlib import Path
 
-from loomi import AsyncApp, AsyncContext, AsyncOperation
+from loomi import AsyncApp, Context, Operation
 from loomistd.aexecutor import ExecutionEngineSpec
-from loomistd.kv_storage.in_memory import InMemoryStorageSpec
-from loomistd.kv_storage.lmdb import LMDBStorageSpec
+from loomistd.kv.in_memory import InMemoryStorageSpec
+from loomistd.kv.lmdb import LMDBStorageSpec
 from loomistd.state import StateSpec
 from loomix.logging import setup_logging
 
@@ -47,7 +47,7 @@ executor_spec = ExecutionEngineSpec(state=state_spec)
 
 
 class BenchmarkApp(AsyncApp):
-    async def setup(self, context: AsyncContext):
+    async def setup(self, context: Context):
         self.metrics = {
             "populate": {"start": 0, "end": 0, "batches": []},
             "read": {"start": 0, "end": 0, "batches": [], "patterns": {}},
@@ -65,7 +65,7 @@ class BenchmarkApp(AsyncApp):
                 "miss_rate": 0,
             }
 
-    async def populate_storage(self, context: AsyncContext):
+    async def populate_storage(self, context: Context):
         """Populate storage with 1 million random numbers."""
         self.metrics["populate"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting population phase...")
@@ -73,14 +73,14 @@ class BenchmarkApp(AsyncApp):
         # Process in batches
         for batch_idx in range(0, NUM_ENTRIES, BATCH_SIZE):
             batch_start = time.time()
-            async with await self.state.transaction() as txn:
-                obj = await context.scope.dict("data", txn=txn)
+            with self.state.transaction() as txn:
+                obj = context.scope.dict("data", txn=txn)
 
                 # Generate and store batch of random numbers
                 for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_ENTRIES)):
                     key = f"key_{i}"
                     value = random.randint(1, 10000)
-                    await obj.set(key, value=value)
+                    obj.set(key, value=value)
 
             batch_time = time.time() - batch_start
             self.metrics["populate"]["batches"].append(batch_time)
@@ -98,7 +98,7 @@ class BenchmarkApp(AsyncApp):
         count = await self._count_items(context)
         print(f"  Verified {count} items in storage")
 
-    async def read_storage(self, context: AsyncContext):  # noqa: C901
+    async def read_storage(self, context: Context):  # noqa: C901
         """Benchmark different read patterns."""
         self.metrics["read"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting read phase...")
@@ -113,13 +113,13 @@ class BenchmarkApp(AsyncApp):
                 # Sequential reads from start to end
                 for batch_idx in range(0, NUM_READS, BATCH_SIZE):
                     batch_start = time.time()
-                    async with await self.state.transaction() as txn:
-                        obj = await context.scope.dict("data", txn=txn)
+                    with self.state.transaction() as txn:
+                        obj = context.scope.dict("data", txn=txn)
 
                         for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_READS)):
                             key = f"key_{i % NUM_ENTRIES}"
                             try:
-                                value = await obj.get(key)
+                                value = obj.get(key)
                                 if value is not None:
                                     hits += 1
                                 else:
@@ -139,13 +139,13 @@ class BenchmarkApp(AsyncApp):
                 # Random reads
                 for batch_idx in range(0, NUM_READS, BATCH_SIZE):
                     batch_start = time.time()
-                    async with await self.state.transaction() as txn:
-                        obj = await context.scope.dict("data", txn=txn)
+                    with self.state.transaction() as txn:
+                        obj = context.scope.dict("data", txn=txn)
 
                         for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_READS)):
                             key = f"key_{random.randint(0, NUM_ENTRIES * 2)}"  # Intentionally include some out-of-range keys
                             try:
-                                value = await obj.get(key)
+                                value = obj.get(key)
                                 if value is not None:
                                     hits += 1
                                 else:
@@ -167,8 +167,8 @@ class BenchmarkApp(AsyncApp):
 
                 for batch_idx in range(0, NUM_READS, BATCH_SIZE):
                     batch_start = time.time()
-                    async with await self.state.transaction() as txn:
-                        obj = await context.scope.dict("data", txn=txn)
+                    with self.state.transaction() as txn:
+                        obj = context.scope.dict("data", txn=txn)
 
                         for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_READS)):
                             # 80% hot keys, 20% random keys
@@ -178,7 +178,7 @@ class BenchmarkApp(AsyncApp):
                                 key = f"key_{random.randint(0, NUM_ENTRIES - 1)}"
 
                             try:
-                                value = await obj.get(key)
+                                value = obj.get(key)
                                 if value is not None:
                                     hits += 1
                                 else:
@@ -216,7 +216,7 @@ class BenchmarkApp(AsyncApp):
         total_time = self.metrics["read"]["end"] - self.metrics["read"]["start"]
         print(f"[{time.strftime('%H:%M:%S')}] Read phase complete in {total_time:.2f}s")
 
-    async def alter_storage(self, context: AsyncContext):
+    async def alter_storage(self, context: Context):
         """Randomly update entries."""
         self.metrics["alter"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting alteration phase...")
@@ -224,14 +224,14 @@ class BenchmarkApp(AsyncApp):
         # Process updates in batches
         for batch_idx in range(0, NUM_UPDATES, BATCH_SIZE):
             batch_start = time.time()
-            async with await self.state.transaction() as txn:
-                obj = await context.scope.dict("data", txn=txn)
+            with self.state.transaction() as txn:
+                obj = context.scope.dict("data", txn=txn)
 
                 # Perform random updates
                 for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_UPDATES)):
                     key = f"key_{random.randint(0, NUM_ENTRIES - 1)}"
                     value = random.randint(1, 10000)
-                    await obj.set(key, value=value)
+                    obj.set(key, value=value)
 
             batch_time = time.time() - batch_start
             self.metrics["alter"]["batches"].append(batch_time)
@@ -245,7 +245,7 @@ class BenchmarkApp(AsyncApp):
         total_time = self.metrics["alter"]["end"] - self.metrics["alter"]["start"]
         print(f"[{time.strftime('%H:%M:%S')}] Alteration complete in {total_time:.2f}s")
 
-    async def dump_storage(self, context: AsyncContext):
+    async def dump_storage(self, context: Context):
         """Clear all storage."""
         self.metrics["dump"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting dump phase...")
@@ -257,13 +257,13 @@ class BenchmarkApp(AsyncApp):
         # Process deletion in batches
         for batch_idx in range(0, NUM_ENTRIES, BATCH_SIZE):
             batch_start = time.time()
-            async with await self.state.transaction() as txn:
-                obj = await context.scope.dict("data", txn=txn)
+            with self.state.transaction() as txn:
+                obj = context.scope.dict("data", txn=txn)
 
                 # Delete batch of keys
                 for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_ENTRIES)):
                     key = f"key_{i}"
-                    await obj.remove(key)
+                    obj.remove(key)
 
             batch_time = time.time() - batch_start
             self.metrics["dump"]["batches"].append(batch_time)
@@ -281,15 +281,15 @@ class BenchmarkApp(AsyncApp):
         total_time = self.metrics["dump"]["end"] - self.metrics["dump"]["start"]
         print(f"[{time.strftime('%H:%M:%S')}] Dump complete in {total_time:.2f}s")
 
-    async def _count_items(self, context: AsyncContext) -> int:
+    async def _count_items(self, context: Context) -> int:
         """Helper to count items in storage."""
         keys = 0
-        async with await self.state.transaction() as txn:
-            obj = await context.scope.dict("data", txn=txn)
-            keys = len(list(await obj.keys()))
+        with self.state.transaction() as txn:
+            obj = context.scope.dict("data", txn=txn)
+            keys = len(list(obj.keys()))
         return keys
 
-    async def print_report(self, context: AsyncContext):
+    async def print_report(self, context: Context):
         """Print performance report."""
         print("\n" + "=" * 50)
         print("BENCHMARK PERFORMANCE REPORT")
@@ -395,7 +395,7 @@ class BenchmarkApp(AsyncApp):
 
         print("\n" + "=" * 50)
 
-    def define(self) -> AsyncOperation:
+    def define(self) -> Operation:
         """Define the benchmark sequence."""
         return self.ex.Sequence(
             # Setup

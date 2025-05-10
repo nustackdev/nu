@@ -11,11 +11,11 @@ import random
 import time
 from pathlib import Path
 
-from loomi import AsyncApp, AsyncContext, AsyncOperation
+from loomi import AsyncApp, Context, Operation
 from loomistd.aexecutor import ExecutionEngineSpec
 from loomistd.aexecutor.services.tracing import TracingServiceSpec
 from loomistd.compound_ops import ReactiveMap
-from loomistd.kv_storage.file_storage import FileStorageSpec
+from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.state import StateSpec
 from loomix.logging import setup_logging
 
@@ -35,38 +35,38 @@ executor_spec = ExecutionEngineSpec(
 class TodoReactiveMapApp(AsyncApp):
     """App demonstrating ReactiveMap to process to-do items."""
 
-    async def init_state(self, context: AsyncContext):
+    async def init_state(self, context: Context):
         """Initialize the state with an empty collection of todos."""
-        await context.scope.dict("todos")
+        context.scope.dict("todos")
         print(f"[{time.strftime('%H:%M:%S')}] Initialized state with empty todos collection.")
 
-    async def process_todo(self, context: AsyncContext):
+    async def process_todo(self, context: Context):
         """Process a single to-do item."""
 
         # Get the to-do item from context
         change_path: tuple[str, ...] = (
             context["change_path"] if "change_path" in context else context["map_path"]
         )
-        todo_dict = await self.state.dict(*change_path)
+        todo_dict = self.state.dict(*change_path)
 
-        title = await todo_dict.get("title", default="Untitled")
-        priority = await todo_dict.get("priority", default="normal")
+        title = todo_dict.get("title", default="Untitled")
+        priority = todo_dict.get("priority", default="normal")
 
         print(f"[{time.strftime('%H:%M:%S')}] 🔄 PROCESSING: '{title}' (priority: {priority})")
 
         # Mark as processed
-        await todo_dict.set("processed", value=True)
-        await todo_dict.set("processed_at", value=time.strftime("%H:%M:%S"))
+        todo_dict.set("processed", value=True)
+        todo_dict.set("processed_at", value=time.strftime("%H:%M:%S"))
 
         # Simulate processing time
         await asyncio.sleep(0.5)
 
         print(f"[{time.strftime('%H:%M:%S')}] ✅ COMPLETED: '{title}'")
 
-    async def add_random_todo(self, context: AsyncContext):
+    async def add_random_todo(self, context: Context):
         """Add a new to-do item to the collection."""
         # Get todos collection
-        todos = await context.scope.dict("todos")
+        todos = context.scope.dict("todos")
 
         title = random.choice(
             [
@@ -83,7 +83,7 @@ class TodoReactiveMapApp(AsyncApp):
         key = f"{int(time.time())}-{title.replace(' ', '_')}"
 
         # Add the new item
-        await todos.set(
+        todos.set(
             key,
             value={
                 "title": title,
@@ -95,7 +95,7 @@ class TodoReactiveMapApp(AsyncApp):
 
         print(f"[{time.strftime('%H:%M:%S')}] ➕ ADDED: '{title}' with key {key}")
 
-    def define(self) -> AsyncOperation:
+    def define(self) -> Operation:
         return self.ex.Sequence(
             self.ex.Function(self.init_state),
             self.ex.Parallel(
