@@ -499,4 +499,4 @@ class TracingServiceSpec(Spec):
 
     name: str = SpecField(default="tracing_service")
     factory: type = SpecField(default=TracingService)
-    tracing_state: Spec = SpecField(default_factory=StateSpec)
+    tracing_state: Spec = SpecField(default=StateSpec())
