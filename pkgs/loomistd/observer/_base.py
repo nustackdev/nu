@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, final
 
-from loomi.interfaces.state.observer import AsyncSubscriptionProtocol
+from loomi.interfaces.state.observer import SyncSubscriptionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import ObserverConnectionError, ObserverValidationError
@@ -24,7 +24,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     - Connection management
     - Topic validation
     - Thread-safe subscription tracking
-    - Async notification delivery
+    - Sync notification delivery
 
     Type Parameters:
         ObserverKeyT: Topic type (tuple of strings)
@@ -43,18 +43,18 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         """
         return self.codec_srv
 
-    async def setup(self) -> None:
+    def setup(self) -> None:
         """
         Service setup called after service initialization.
         """
         self._connected = False
-        await self.connect()
+        self.connect()
 
-    async def cleanup(self) -> None:
+    def cleanup(self) -> None:
         """
         Service cleanup called after service shutdown.
         """
-        await self.disconnect()
+        self.disconnect()
 
     def _ensure_connected(self) -> None:
         """
@@ -80,7 +80,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
             raise ObserverValidationError(f"Invalid topic format: {topic}")
 
     @final
-    async def connect(self) -> None:
+    def connect(self) -> None:
         """
         Connect to notification system.
 
@@ -90,18 +90,18 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         if self._connected:
             return
         try:
-            await self._connect_impl()
+            self._connect_impl()
             self._connected = True
         except Exception as e:
             raise ObserverConnectionError(f"Failed to connect: {e}") from e
 
     @abstractmethod
-    async def _connect_impl(self) -> None:
+    def _connect_impl(self) -> None:
         """Implementation-specific connect logic."""
         raise NotImplementedError
 
     @final
-    async def disconnect(self) -> None:
+    def disconnect(self) -> None:
         """
         Disconnect from notification system.
 
@@ -111,17 +111,17 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         if not self._connected:
             return
         try:
-            await self._disconnect_impl()
+            self._disconnect_impl()
         finally:
             self._connected = False
 
     @abstractmethod
-    async def _disconnect_impl(self) -> None:
+    def _disconnect_impl(self) -> None:
         """Implementation-specific disconnect logic."""
         raise NotImplementedError
 
     @final
-    async def notify(self, topic: ObserverKeyT) -> None:
+    def notify(self, topic: ObserverKeyT) -> None:
         """
         Notify subscribers of state change.
 
@@ -130,10 +130,10 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         """
         self._ensure_connected()
         self._validate_topic(topic)
-        await self._notify_impl(topic)
+        self._notify_impl(topic)
 
     @abstractmethod
-    async def _notify_impl(self, topic: ObserverKeyT) -> None:
+    def _notify_impl(self, topic: ObserverKeyT) -> None:
         """
         Implementation-specific notify logic.
 
@@ -144,18 +144,18 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         raise NotImplementedError
 
     @final
-    async def subscribe(
+    def subscribe(
         self,
-        topic_pattern: ObserverKeyT,
+        key: ObserverKeyT,
         callback: ObserverCallbackFn,
         depth: int = 0,
-    ) -> AsyncSubscriptionProtocol:
+    ) -> SyncSubscriptionProtocol:
         """
         Subscribe to topic pattern.
 
         Args:
-            topic_pattern: Topic pattern to match
-            callback: Async callback for notifications
+            key: Topic pattern to match
+            callback: Sync callback for notifications
             depth: Depth of topic pattern matching (default: 0 for exact match)
                 If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
 
@@ -163,24 +163,24 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
             New subscription instance
         """
         self._ensure_connected()
-        self._validate_topic(topic_pattern)
+        self._validate_topic(key)
 
         subscription = Subscription(
-            topic_pattern,
+            key,
             depth,
             callback,
         )
 
-        await self._subscribe_impl(subscription)
+        self._subscribe_impl(subscription)
         return subscription
 
     @abstractmethod
-    async def _subscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
+    def _subscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
         """Implementation-specific subscribe logic."""
         raise NotImplementedError
 
     @final
-    async def unsubscribe(self, subscription: AsyncSubscriptionProtocol) -> None:
+    def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:
         """
         Remove subscription.
 
@@ -188,16 +188,16 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
             subscription: Subscription to remove
         """
         self._ensure_connected()
-        await self._unsubscribe_impl(subscription)
+        self._unsubscribe_impl(subscription)
 
     @abstractmethod
-    async def _unsubscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
+    def _unsubscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
         """Implementation-specific unsubscribe logic."""
         raise NotImplementedError
 
 
 @dataclass
-class Subscription(AsyncSubscriptionProtocol, Generic[ObserverKeyT]):
+class Subscription(SyncSubscriptionProtocol, Generic[ObserverKeyT]):
     """
     Represents a subscription to a topic pattern.
 
@@ -209,7 +209,7 @@ class Subscription(AsyncSubscriptionProtocol, Generic[ObserverKeyT]):
             Get depth of topic pattern matching.
             If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
         callback:
-            Async callable that will be invoked on matching notifications.
+            Sync callable that will be invoked on matching notifications.
             Must accept a single parameter of type ObserverKey.
 
     Type Parameters:

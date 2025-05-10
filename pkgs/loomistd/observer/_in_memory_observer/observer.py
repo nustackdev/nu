@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import asyncio
+import threading
 from typing import TYPE_CHECKING, Any
 
 from loomi.attr import UseService
-from loomi.interfaces.state.observer import AsyncObservableProtocol, AsyncSubscriptionProtocol
-from loomi.service import AsyncService
+from loomi.interfaces.state.observer import SyncObservableProtocol, SyncSubscriptionProtocol
+from loomi.service import SyncService
 from loomi.spec import Spec, SpecField
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodec
@@ -25,7 +25,7 @@ class InMemoryObserver(
         InMemoryObserverKey,
         InMemoryObserverEncodedKey,
     ],
-    AsyncService,
+    SyncService,
 ):
     """In-memory observer with thread-safe subscription management."""
 
@@ -33,14 +33,14 @@ class InMemoryObserver(
         UseService()
     )
 
-    async def _connect_impl(self) -> None:
+    def _connect_impl(self) -> None:
         if not hasattr(self, "_data_lock"):
-            self._data_lock: asyncio.Lock = asyncio.Lock()
+            self._data_lock: threading.Lock = threading.Lock()
 
-        self._subscriptions: dict[InMemoryObserverKey, list[AsyncSubscriptionProtocol]] = {}
+        self._subscriptions: dict[InMemoryObserverKey, list[SyncSubscriptionProtocol]] = {}
 
-    async def _disconnect_impl(self) -> None:
-        async with self._data_lock:
+    def _disconnect_impl(self) -> None:
+        with self._data_lock:
             self._subscriptions.clear()
 
     def _matches_pattern(
@@ -57,8 +57,8 @@ class InMemoryObserver(
 
         return all(p == "*" or t == p for t, p in zip(topic, pattern))
 
-    async def _notify_impl(self, topic: InMemoryObserverKey) -> None:
-        async with self._data_lock:
+    def _notify_impl(self, topic: InMemoryObserverKey) -> None:
+        with self._data_lock:
             matching_subs = []
             for pattern, subs in self._subscriptions.items():
                 if self._matches_pattern(topic, pattern, -1):
@@ -71,19 +71,19 @@ class InMemoryObserver(
                 continue
 
             try:
-                await sub.callback(topic)
+                sub.callback(topic)
             except Exception as e:
                 logger.error(f"Callback failed for {topic}: {e}")
 
-    async def _subscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
+    def _subscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
         topic_pattern = subscription.topic_pattern
-        async with self._data_lock:
+        with self._data_lock:
             if topic_pattern not in self._subscriptions:
                 self._subscriptions[topic_pattern] = []
             self._subscriptions[topic_pattern].append(subscription)
 
-    async def _unsubscribe_impl(self, subscription: AsyncSubscriptionProtocol) -> None:
-        async with self._data_lock:
+    def _unsubscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
+        with self._data_lock:
             if subscription.topic_pattern in self._subscriptions:
                 subs = self._subscriptions[subscription.topic_pattern]
                 subs = [s for s in subs if s != subscription]
@@ -100,4 +100,4 @@ class InMemoryObserverSpec(Spec):
 
 
 if TYPE_CHECKING:
-    _: type[AsyncObservableProtocol] = InMemoryObserver
+    _: type[SyncObservableProtocol] = InMemoryObserver

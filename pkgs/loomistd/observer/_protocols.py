@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from loomi.interfaces.state.observer import AsyncObservableProtocol
+from loomi.interfaces.state.observer import SyncObservableProtocol
 from loomistd.codec import CodecProtocol
 
 from ._types import ObserverEncodedKeyT, ObserverKeyT
@@ -12,13 +12,13 @@ __all__ = [
 ]
 
 
-class ObserverServiceProtocol(AsyncObservableProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
+class ObserverServiceProtocol(SyncObservableProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
     """
     Protocol defining state change observation operations.
 
     Observer implementations handle state change notifications with:
     - Topic-based routing using StorageKeyT (tuple[str, ...])
-    - Async notification delivery
+    - Sync notification delivery
     - Proper error handling and validation
     - Type safety through StorageKeyT constraints
 
@@ -39,7 +39,7 @@ class ObserverServiceProtocol(AsyncObservableProtocol, Protocol[ObserverKeyT, Ob
         """
         ...
 
-    async def connect(self) -> None:
+    def connect(self) -> None:
         """
         Establish connection to notification system.
 
@@ -48,7 +48,7 @@ class ObserverServiceProtocol(AsyncObservableProtocol, Protocol[ObserverKeyT, Ob
         """
         ...
 
-    async def disconnect(self) -> None:
+    def disconnect(self) -> None:
         """
         Close connection to notification system.
 
@@ -58,7 +58,7 @@ class ObserverServiceProtocol(AsyncObservableProtocol, Protocol[ObserverKeyT, Ob
         """
         ...
 
-    async def notify(self, topic: ObserverKeyT) -> None:
+    def notify(self, topic: ObserverKeyT) -> None:
         """
         Notify all subscribers of state change.
 
