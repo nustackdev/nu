@@ -3,12 +3,12 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Callable, Generic, cast, overload
 
-from loomi.interfaces.state.kv import AsyncTransactionProtocol
+from loomi.interfaces.state.kv import SyncTransactionProtocol
 from loomi.interfaces.state.tree import (
-    AsyncTreeDictProtocol,
-    AsyncTreeListProtocol,
-    AsyncTreeNodeProtocol,
     EmptyProtocol,
+    SyncTreeDictProtocol,
+    SyncTreeListProtocol,
+    SyncTreeNodeProtocol,
 )
 
 from .._core import StorageCore
@@ -37,12 +37,12 @@ class TreeNode(Generic[TreeValueT], ABC):
     EMPTY: EmptyProtocol = StorageCore.EMPTY
 
     @property
-    def is_async(self) -> bool:
+    def is_sync(self) -> bool:
         """
-        Check if the node is asynchronous.
+        Check if the node is synchronous.
 
         Returns:
-            True if the node is asynchronous, False otherwise
+            True if the node is synchronous, False otherwise
         """
         return True
 
@@ -50,7 +50,7 @@ class TreeNode(Generic[TreeValueT], ABC):
         self,
         storage: TreeStorage[TreeValueT],
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ):
         """
         Initialize a tree node interface.
@@ -74,13 +74,13 @@ class TreeNode(Generic[TreeValueT], ABC):
         """
         return self._path
 
-    async def dict(
+    def dict(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
-    ) -> AsyncTreeDictProtocol[TreeValueT]:
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> SyncTreeDictProtocol[TreeValueT]:
         """
         Get a nested dictionary node interface.
 
@@ -94,15 +94,15 @@ class TreeNode(Generic[TreeValueT], ABC):
         """
         rel_path = self._make_relative_path(path, *paths)
         combined_path = self._combine_paths(self._path, rel_path)
-        return await self._storage.dict(combined_path, txn or self._txn)
+        return self._storage.dict(combined_path, txn or self._txn)
 
-    async def list(
+    def list(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
-    ) -> AsyncTreeListProtocol[TreeValueT]:
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> SyncTreeListProtocol[TreeValueT]:
         """
         Get a nested list node interface.
 
@@ -116,24 +116,24 @@ class TreeNode(Generic[TreeValueT], ABC):
         """
         rel_path = self._make_relative_path(path, *paths)
         combined_path = self._combine_paths(self._path, rel_path)
-        return await self._storage.list(combined_path, txn or self._txn)
+        return self._storage.list(combined_path, txn or self._txn)
 
     @overload
-    async def remove(
+    def remove(
         self,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
     @overload
-    async def remove(
+    def remove(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
-    async def remove(
+    def remove(
         self,
         *args: Any,
         **kwargs: Any,
@@ -150,24 +150,24 @@ class TreeNode(Generic[TreeValueT], ABC):
             txn: Optional transaction to use
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        await self._storage.delete_node(target_path, txn)
+        self._storage.delete_node(target_path, txn)
 
     @overload
-    async def exists(
+    def exists(
         self,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool: ...
 
     @overload
-    async def exists(
+    def exists(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool: ...
 
-    async def exists(
+    def exists(
         self,
         *args: Any,
         **kwargs: Any,
@@ -187,24 +187,24 @@ class TreeNode(Generic[TreeValueT], ABC):
             True if the node exists, False otherwise
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        return await self._storage.exists(target_path, txn)
+        return self._storage.exists(target_path, txn)
 
     @overload
-    async def is_dict(
+    def is_dict(
         self,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool: ...
 
     @overload
-    async def is_dict(
+    def is_dict(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool: ...
 
-    async def is_dict(
+    def is_dict(
         self,
         *args: Any,
         **kwargs: Any,
@@ -224,24 +224,24 @@ class TreeNode(Generic[TreeValueT], ABC):
             True if the node is a dictionary, False otherwise
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        return await self._storage.is_dict(target_path, txn)
+        return self._storage.is_dict(target_path, txn)
 
     @overload
-    async def is_list(
+    def is_list(
         self,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool: ...
 
     @overload
-    async def is_list(
+    def is_list(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool: ...
 
-    async def is_list(
+    def is_list(
         self,
         *args: Any,
         **kwargs: Any,
@@ -261,24 +261,24 @@ class TreeNode(Generic[TreeValueT], ABC):
             True if the node is a list, False otherwise
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        return await self._storage.is_list(target_path, txn)
+        return self._storage.is_list(target_path, txn)
 
     @overload
-    async def to_python_object(
+    def to_python_object(
         self,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> TreeValueContainer[TreeValueT]: ...
 
     @overload
-    async def to_python_object(
+    def to_python_object(
         self,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> TreeValueContainer[TreeValueT]: ...
 
-    async def to_python_object(
+    def to_python_object(
         self,
         *args: Any,
         **kwargs: Any,
@@ -301,14 +301,14 @@ class TreeNode(Generic[TreeValueT], ABC):
             StorageKeyError: If the node doesn't exist
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        return await self._storage.to_python_object(target_path, txn)
+        return self._storage.to_python_object(target_path, txn)
 
-    async def copy_to(
+    def copy_to(
         self,
         target: TreePathComponent,
         /,
         *targets: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Create a copy of this node at another location in the tree.
@@ -319,14 +319,14 @@ class TreeNode(Generic[TreeValueT], ABC):
             txn: Optional transaction to use
         """
         target_path = self._make_relative_path(target, *targets)
-        await self._storage.copy_node(self._path, target_path, txn or self._txn)
+        self._storage.copy_node(self._path, target_path, txn or self._txn)
 
-    async def move_to(
+    def move_to(
         self,
         target: TreePathComponent,
         /,
         *targets: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Move this node to another location in the tree.
@@ -344,26 +344,26 @@ class TreeNode(Generic[TreeValueT], ABC):
             as its path is no longer valid.
         """
         target_path = self._make_relative_path(target, *targets)
-        await self._storage.move_node(self._path, target_path, txn or self._txn)
+        self._storage.move_node(self._path, target_path, txn or self._txn)
 
     @overload
-    async def transform(
+    def transform(
         self,
         transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
     @overload
-    async def transform(
+    def transform(
         self,
         transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
-    async def transform(
+    def transform(
         self,
         transform_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         *args: Any,
@@ -389,20 +389,20 @@ class TreeNode(Generic[TreeValueT], ABC):
             TypeError: If the transformation result is not of a compatible type
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        await self._storage.transform_node(target_path, transform_func, txn)
+        self._storage.transform_node(target_path, transform_func, txn)
 
     @overload
-    async def filter(
+    def filter(
         self,
         filter_func: (
             Callable[[TreeValueContainer[TreeValueT]], bool]
             | Callable[[str, TreeValueContainer[TreeValueT]], bool]
         ),
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
     @overload
-    async def filter(
+    def filter(
         self,
         filter_func: (
             Callable[[TreeValueContainer[TreeValueT]], bool]
@@ -411,10 +411,10 @@ class TreeNode(Generic[TreeValueT], ABC):
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
-    async def filter(
+    def filter(
         self,
         filter_func: (
             Callable[[TreeValueContainer[TreeValueT]], bool]
@@ -445,26 +445,26 @@ class TreeNode(Generic[TreeValueT], ABC):
             StorageKeyError: If the node doesn't exist
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        await self._storage.filter_node(target_path, filter_func, txn)
+        self._storage.filter_node(target_path, filter_func, txn)
 
     @overload
-    async def map(
+    def map(
         self,
         map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
     @overload
-    async def map(
+    def map(
         self,
         map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
-    async def map(
+    def map(
         self,
         map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
         *args: Any,
@@ -496,43 +496,39 @@ class TreeNode(Generic[TreeValueT], ABC):
         target_path, txn = self._process_path_args(args, kwargs)
 
         # Get the current value
-        value = await self._storage.to_python_object(target_path, txn)
+        value = self._storage.to_python_object(target_path, txn)
 
         # Apply mapping based on type
         if isinstance(value, list):
             # Map each list element
             mapped_value = [map_func(item) for item in value]
-            await self._storage.store_python_object(
-                target_path, cast(TreeValueT, mapped_value), txn
-            )
+            self._storage.store_python_object(target_path, cast(TreeValueT, mapped_value), txn)
         elif isinstance(value, dict):
             # Map each dictionary value
             mapped_value = {key: map_func(val) for key, val in value.items()}
-            await self._storage.store_python_object(
-                target_path, cast(TreeValueT, mapped_value), txn
-            )
+            self._storage.store_python_object(target_path, cast(TreeValueT, mapped_value), txn)
         else:
             # For primitive values, apply transform directly
-            await self._storage.transform_node(target_path, lambda x: map_func(x), txn)
+            self._storage.transform_node(target_path, lambda x: map_func(x), txn)
 
     @overload
-    async def store(
+    def store(
         self,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
     @overload
-    async def store(
+    def store(
         self,
         value: TreeValueT,
         path: TreePathComponent,
         /,
         *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None: ...
 
-    async def store(
+    def store(
         self,
         value: TreeValueT,
         *args: Any,
@@ -557,7 +553,7 @@ class TreeNode(Generic[TreeValueT], ABC):
             TypeError: If the value is of an unsupported type
         """
         target_path, txn = self._process_path_args(args, kwargs)
-        await self._storage.store_python_object(target_path, value, txn)
+        self._storage.store_python_object(target_path, value, txn)
 
     def _process_path_args(self, args, kwargs):
         """
@@ -575,7 +571,7 @@ class TreeNode(Generic[TreeValueT], ABC):
         txn = kwargs.get("txn")
 
         # Handle case where the first argument might be a transaction
-        if args and isinstance(args[0], AsyncTransactionProtocol):
+        if args and isinstance(args[0], SyncTransactionProtocol):
             txn = args[0]
             args = args[1:]
 
@@ -622,4 +618,4 @@ class TreeNode(Generic[TreeValueT], ABC):
 
 
 if TYPE_CHECKING:
-    _: type[AsyncTreeNodeProtocol] = TreeNode
+    _: type[SyncTreeNodeProtocol] = TreeNode

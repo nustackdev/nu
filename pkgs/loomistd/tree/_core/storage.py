@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, cast
 
-from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
+from loomi.interfaces.state.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomistd.kv import StorageKeyError
 
 from .._exceptions import ObjectTypeError
@@ -35,7 +35,7 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
     within the tree without having to retrieve the entire structure.
     """
 
-    def __init__(self, storage: AsyncStorageProtocol[TreeValueT]):
+    def __init__(self, storage: SyncStorageProtocol[TreeValueT]):
         """
         Initialize the tree storage wrapper.
 
@@ -46,10 +46,10 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
 
     # --- Public tree node object methods --- #
 
-    async def dict(
+    def dict(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> TreeDict[TreeValueT]:
         """
         Get a proxy object for dictionary-like access to a tree node.
@@ -70,19 +70,19 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             ObjectTypeError: If the path exists but is not a dictionary node
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
+            with self._storage.transaction() as new_txn:
                 # Initialize or verify the dictionary node
-                await self._ensure_dict(path, new_txn)
+                self._ensure_dict(path, new_txn)
             return TreeDict(self, path)
         else:
             # Use the provided transaction
-            await self._ensure_dict(path, txn)
+            self._ensure_dict(path, txn)
             return TreeDict(self, path, txn)
 
-    async def list(
+    def list(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> TreeList[TreeValueT]:
         """
         Get a proxy object for list-like access to a tree node.
@@ -103,19 +103,19 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             ObjectTypeError: If the path exists but is not a list node
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
+            with self._storage.transaction() as new_txn:
                 # Initialize or verify the list node
-                await self._ensure_list(path, new_txn)
+                self._ensure_list(path, new_txn)
             return TreeList(self, path)
         else:
             # Use the provided transaction
-            await self._ensure_list(path, txn)
+            self._ensure_list(path, txn)
             return TreeList(self, path, txn)
 
-    async def delete_node(
+    def delete_node(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Delete a node and all its contained values.
@@ -128,17 +128,17 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             txn: Optional transaction to use
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._delete_node(path, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._delete_node(path, new_txn)
         else:
-            await self._delete_node(path, txn)
+            self._delete_node(path, txn)
 
     # --- Utility method for recursive conversion --- #
 
-    async def to_python_object(
+    def to_python_object(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> Any:
         """
         Convert a stored tree node to a standard Python object.
@@ -157,15 +157,15 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             StorageKeyError: If the path doesn't exist
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                return await self._to_python_object(path, new_txn)
+            with self._storage.transaction() as new_txn:
+                return self._to_python_object(path, new_txn)
         else:
-            return await self._to_python_object(path, txn)
+            return self._to_python_object(path, txn)
 
-    async def _to_python_object(
+    def _to_python_object(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> Any:
         """
         Internal implementation for converting a stored tree node.
@@ -180,25 +180,25 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
         Raises:
             StorageKeyError: If the path doesn't exist
         """
-        node_type = await self._get_node_type(path, txn)
+        node_type = self._get_node_type(path, txn)
 
         if node_type == self._TYPE_DICT:
             # It's a dictionary node
-            return await self._dict_to_dict(path, txn)
+            return self._dict_to_dict(path, txn)
         elif node_type == self._TYPE_LIST:
             # It's a list node
-            return await self._list_to_list(path, txn)
+            return self._list_to_list(path, txn)
         else:
             # It's a primitive value node
-            return await self._storage_get(path, txn)
+            return self._storage_get(path, txn)
 
     # --- Utility method for storing Python objects --- #
 
-    async def store_python_object(
+    def store_python_object(
         self,
         path: TreePath,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Store a Python object at the specified path in the tree.
@@ -215,16 +215,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             TypeError: If the value is of an unsupported type
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._store_python_object(path, value, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._store_python_object(path, value, new_txn)
         else:
-            await self._store_python_object(path, value, txn)
+            self._store_python_object(path, value, txn)
 
-    async def _store_python_object(
+    def _store_python_object(
         self,
         path: TreePath,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for storing a Python object in the tree.
@@ -239,28 +239,28 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
         """
         # First, delete any existing data at this path
         try:
-            await self._delete_node(path, txn)
+            self._delete_node(path, txn)
         except StorageKeyError:
             pass  # Path doesn't exist, nothing to delete
 
         # Store the value according to its type
         if isinstance(value, dict):
-            await self._set_dict(path, value, txn)
+            self._set_dict(path, value, txn)
         elif isinstance(value, list):
-            await self._set_list(path, value, txn)
+            self._set_list(path, value, txn)
         elif value is None or isinstance(value, (str, int, float, bool, bytes)):
             # These are the primitive types that can be stored directly
-            await self._storage_set(path, cast(TreeValueT, value), txn)
+            self._storage_set(path, cast(TreeValueT, value), txn)
         else:
             # Unsupported type
             raise TypeError(f"Cannot store object of type {type(value).__name__}")
 
     # --- Utility methods for type checking --- #
 
-    async def is_dict(
+    def is_dict(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a dictionary node.
@@ -273,16 +273,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             True if the path contains a dictionary node, False otherwise
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._is_dict(path, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._is_dict(path, new_txn)
             return result
         else:
-            return await self._is_dict(path, txn)
+            return self._is_dict(path, txn)
 
-    async def is_list(
+    def is_list(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a list node.
@@ -295,16 +295,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             True if the path contains a list node, False otherwise
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._is_list(path, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._is_list(path, new_txn)
             return result
         else:
-            return await self._is_list(path, txn)
+            return self._is_list(path, txn)
 
-    async def exists(
+    def exists(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path exists in the tree.
@@ -317,19 +317,19 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             True if the path exists, False otherwise
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._storage_exists(path, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._storage_exists(path, new_txn)
             return result
         else:
-            return await self._storage_exists(path, txn)
+            return self._storage_exists(path, txn)
 
     # --- Utility methods for tree operations --- #
 
-    async def copy_node(
+    def copy_node(
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Copy a node from one path to another.
@@ -343,16 +343,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             StorageKeyError: If the source path doesn't exist
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._copy_node(source_path, target_path, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._copy_node(source_path, target_path, new_txn)
         else:
-            await self._copy_node(source_path, target_path, txn)
+            self._copy_node(source_path, target_path, txn)
 
-    async def _copy_node(
+    def _copy_node(
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for copying a node.
@@ -367,32 +367,32 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
         """
         # Get the node type
         try:
-            node_type = await self._get_node_type(source_path, txn)
+            node_type = self._get_node_type(source_path, txn)
 
             # Delete any existing data at the target
-            await self._delete_node(target_path, txn)
+            self._delete_node(target_path, txn)
 
             if node_type == self._TYPE_DICT:
                 # It's a dictionary node
-                source_dict = await self._dict_to_dict(source_path, txn)
-                await self._set_dict(target_path, source_dict, txn)
+                source_dict = self._dict_to_dict(source_path, txn)
+                self._set_dict(target_path, source_dict, txn)
             elif node_type == self._TYPE_LIST:
                 # It's a list node
-                source_list = await self._list_to_list(source_path, txn)
-                await self._set_list(target_path, source_list, txn)
+                source_list = self._list_to_list(source_path, txn)
+                self._set_list(target_path, source_list, txn)
             else:
                 # It's a primitive value
-                value = await self._storage_get(source_path, txn)
-                await self._storage_set(target_path, value, txn)
+                value = self._storage_get(source_path, txn)
+                self._storage_set(target_path, value, txn)
         except StorageKeyError:
             # Source path doesn't exist
             raise
 
-    async def move_node(
+    def move_node(
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Move a node from one path to another.
@@ -409,16 +409,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             StorageKeyError: If the source path doesn't exist
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._move_node(source_path, target_path, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._move_node(source_path, target_path, new_txn)
         else:
-            await self._move_node(source_path, target_path, txn)
+            self._move_node(source_path, target_path, txn)
 
-    async def _move_node(
+    def _move_node(
         self,
         source_path: TreePath,
         target_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for moving a node.
@@ -432,16 +432,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             StorageKeyError: If the source path doesn't exist
         """
         # Copy the node
-        await self._copy_node(source_path, target_path, txn)
+        self._copy_node(source_path, target_path, txn)
 
         # Delete the source
-        await self._delete_node(source_path, txn)
+        self._delete_node(source_path, txn)
 
-    async def transform_node(
+    def transform_node(
         self,
         path: TreePath,
         transform_func: Callable[[TreeValueT], TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Apply a transformation function to a tree node.
@@ -459,16 +459,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             TypeError: If the transformation result is not of a compatible type
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._transform_node(path, transform_func, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._transform_node(path, transform_func, new_txn)
         else:
-            await self._transform_node(path, transform_func, txn)
+            self._transform_node(path, transform_func, txn)
 
-    async def _transform_node(
+    def _transform_node(
         self,
         path: TreePath,
         transform_func: Callable[[TreeValueT], TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for transforming a tree node.
@@ -483,19 +483,19 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             TypeError: If the transformation result is not of a compatible type
         """
         # Get the current node as a Python object
-        obj = await self._to_python_object(path, txn)
+        obj = self._to_python_object(path, txn)
 
         # Apply the transformation
         transformed_obj = transform_func(obj)
 
         # Store the transformed object
-        await self._store_python_object(path, transformed_obj, txn)
+        self._store_python_object(path, transformed_obj, txn)
 
-    async def filter_node(
+    def filter_node(
         self,
         path: TreePath,
         filter_func: Callable[[TreeValueT], bool] | Callable[[str, TreeValueT], bool],
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Filter elements of a list or dictionary node using a filter function.
@@ -513,16 +513,16 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             StorageKeyError: If the path doesn't exist
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._filter_node(path, filter_func, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._filter_node(path, filter_func, new_txn)
         else:
-            await self._filter_node(path, filter_func, txn)
+            self._filter_node(path, filter_func, txn)
 
-    async def _filter_node(
+    def _filter_node(
         self,
         path: TreePath,
         filter_func: Callable[[TreeValueT], bool] | Callable[[str, TreeValueT], bool],
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for filtering tree nodes.
@@ -537,26 +537,26 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             StorageKeyError: If the path doesn't exist
         """
         # Check the node type
-        node_type = await self._get_node_type(path, txn)
+        node_type = self._get_node_type(path, txn)
 
         if node_type == self._TYPE_LIST:
             # Filter the list node
-            items = await self._list_to_list(path, txn)
+            items = self._list_to_list(path, txn)
             filter_func_list = cast(Callable[[TreeValueT], bool], filter_func)
             filtered_items = [item for item in items if filter_func_list(item)]
 
             # Replace with filtered list
-            await self._set_list(path, filtered_items, txn)
+            self._set_list(path, filtered_items, txn)
 
         elif node_type == self._TYPE_DICT:
             # Filter the dictionary node
-            items = await self._dict_items(path, txn)
+            items = self._dict_items(path, txn)
             filter_func_dict = cast(Callable[[str, TreeValueT], bool], filter_func)
             keys_to_delete = [k for k, v in items if not filter_func_dict(k, v)]
 
             # Delete filtered keys
             for k in keys_to_delete:
-                await self._dict_delete(
+                self._dict_delete(
                     path,
                     (k,),  # Single component path for the key
                     txn,

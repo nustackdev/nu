@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from loomi.interfaces.state.tree import AsyncTreeListProtocol
+from loomi.interfaces.state.tree import SyncTreeListProtocol
 
 from .._exceptions import ObjectIndexError
 from .._types import TreeValueContainer, TreeValueT
@@ -13,19 +13,19 @@ __all__ = [
 ]
 
 
-class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
+class TreeList(TreeNode[TreeValueT], SyncTreeListProtocol[TreeValueT]):
     """
     A list-like interface to tree storage.
 
     This class provides an interface similar to a Python list
     for interacting with list nodes in the tree storage.
-    It implements async methods for list operations that map
+    It implements methods for list operations that map
     to the underlying tree structure.
     """
 
-    # --- Async list operations --- #
+    # --- Sync list operations --- #
 
-    async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+    def get(self, index: int) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from the list node at the specified index.
 
@@ -38,9 +38,9 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         Raises:
             ObjectIndexError: If the index is out of range
         """
-        return await self._storage.list_get(self._path, index, self._txn)
+        return self._storage.list_get(self._path, index, self._txn)
 
-    async def set(self, index: int, value: TreeValueT) -> None:
+    def set(self, index: int, value: TreeValueT) -> None:
         """
         Set an item in the list node at the specified index.
 
@@ -51,9 +51,9 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         Raises:
             ObjectIndexError: If the index is out of range
         """
-        await self._storage.list_set(self._path, index, value, self._txn)
+        self._storage.list_set(self._path, index, value, self._txn)
 
-    async def append(self, value: TreeValueT) -> int:
+    def append(self, value: TreeValueT) -> int:
         """
         Append an item to the list node.
 
@@ -63,9 +63,9 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         Returns:
             New length of the list
         """
-        return await self._storage.list_append(self._path, value, self._txn)
+        return self._storage.list_append(self._path, value, self._txn)
 
-    async def extend(self, values: list[TreeValueT]) -> int:
+    def extend(self, values: list[TreeValueT]) -> int:
         """
         Extend the list node with multiple values.
 
@@ -75,9 +75,9 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         Returns:
             New length of the list
         """
-        return await self._storage.list_extend(self._path, values, self._txn)
+        return self._storage.list_extend(self._path, values, self._txn)
 
-    async def insert(self, index: int, value: TreeValueT) -> None:
+    def insert(self, index: int, value: TreeValueT) -> None:
         """
         Insert an item at a specific position in the list node.
 
@@ -88,9 +88,9 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         Raises:
             ObjectIndexError: If the index is out of range
         """
-        await self._storage.list_insert(self._path, index, value, self._txn)
+        self._storage.list_insert(self._path, index, value, self._txn)
 
-    async def delete(self, index: int) -> None:
+    def delete(self, index: int) -> None:
         """
         Remove an item from the list node at the specified index.
 
@@ -100,42 +100,42 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         Raises:
             ObjectIndexError: If the index is out of range
         """
-        await self._storage.list_remove(self._path, index, self._txn)
+        self._storage.list_remove(self._path, index, self._txn)
 
-    async def length(self) -> int:
+    def length(self) -> int:
         """
         Get the length of the list node.
 
         Returns:
             Number of items in the list
         """
-        return await self._storage.list_length(self._path, self._txn)
+        return self._storage.list_length(self._path, self._txn)
 
     # --- List conversion and utilities --- #
 
-    async def to_list(self) -> list[TreeValueT]:
+    def to_list(self) -> list[TreeValueT]:
         """
         Convert to a regular Python list.
 
         Returns:
             Python list containing all items from this list node
         """
-        return await self._storage.list_to_list(self._path, self._txn)
+        return self._storage.list_to_list(self._path, self._txn)
 
-    async def clear(self) -> None:
+    def clear(self) -> None:
         """
         Remove all items from the list node.
         """
         # Get the current length and remove items one by one from the end
-        length = await self.length()
+        length = self.length()
         for i in range(length - 1, -1, -1):
             try:
-                await self.delete(i)
+                self.delete(i)
             except ObjectIndexError:
                 # Index became invalid, just skip it
                 pass
 
-    async def pop(self, index: int = -1) -> TreeValueContainer[TreeValueT]:
+    def pop(self, index: int = -1) -> TreeValueContainer[TreeValueT]:
         """
         Remove and return an item from the list node.
 
@@ -148,19 +148,19 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         Raises:
             ObjectIndexError: If the index is out of range
         """
-        value = await self.get(index)
-        await self.delete(index)
+        value = self.get(index)
+        self.delete(index)
         return value
 
-    async def __len__(self) -> int:
+    def __len__(self) -> int:
         """
         Get the number of items in the list node.
 
         Returns:
             The number of items
         """
-        return await self.length()
+        return self.length()
 
 
 if TYPE_CHECKING:
-    _: type[AsyncTreeListProtocol] = TreeList
+    _: type[SyncTreeListProtocol] = TreeList

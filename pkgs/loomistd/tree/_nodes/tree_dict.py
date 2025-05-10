@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from loomi.interfaces.state.tree import AsyncTreeDictProtocol, EmptyProtocol
+from loomi.interfaces.state.tree import EmptyProtocol, SyncTreeDictProtocol
 
 from .._exceptions import ObjectKeyError
 from .._types import TreePathComponent, TreeValueContainer, TreeValueT
@@ -13,19 +13,19 @@ __all__ = [
 ]
 
 
-class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
+class TreeDict(TreeNode[TreeValueT], SyncTreeDictProtocol[TreeValueT]):
     """
     A dictionary-like interface to tree storage.
 
     This class provides an interface similar to a Python dictionary
     for interacting with dictionary nodes in the tree storage.
-    It implements async methods for dictionary operations that map
+    It implements methods for dictionary operations that map
     to the underlying tree structure.
     """
 
-    # --- Async dictionary operations --- #
+    # --- Sync dictionary operations --- #
 
-    async def get(
+    def get(
         self,
         path: TreePathComponent,
         /,
@@ -44,11 +44,9 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
             The value associated with the path, or default if not found
         """
         complete_path = (path,) + paths
-        return await self._storage.dict_get(self._path, complete_path, default, self._txn)
+        return self._storage.dict_get(self._path, complete_path, default, self._txn)
 
-    async def set(
-        self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT
-    ) -> None:
+    def set(self, path: TreePathComponent, /, *paths: TreePathComponent, value: TreeValueT) -> None:
         """
         Set a value in the dictionary node.
 
@@ -60,9 +58,9 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
             ValueError: If no value is provided
         """
         complete_path = (path,) + tuple(paths)
-        await self._storage.dict_set(self._path, complete_path, value, self._txn)
+        self._storage.dict_set(self._path, complete_path, value, self._txn)
 
-    async def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
+    def delete(self, path: TreePathComponent, /, *paths: TreePathComponent) -> None:
         """
         Delete a path from the dictionary node.
 
@@ -74,9 +72,9 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
             ObjectKeyError: If the path doesn't exist
         """
         complete_path = (path,) + paths
-        await self._storage.dict_delete(self._path, complete_path, self._txn)
+        self._storage.dict_delete(self._path, complete_path, self._txn)
 
-    async def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
+    def contains(self, path: TreePathComponent, /, *paths: TreePathComponent) -> bool:
         """
         Check if a path exists in the dictionary node.
 
@@ -88,47 +86,47 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
             True if the path exists, False otherwise
         """
         complete_path = (path,) + paths
-        return await self._storage.dict_contains(self._path, complete_path, self._txn)
+        return self._storage.dict_contains(self._path, complete_path, self._txn)
 
-    async def keys(self) -> list[TreePathComponent]:
+    def keys(self) -> list[TreePathComponent]:
         """
         Get all top-level keys in the dictionary node.
 
         Returns:
             List of keys in the dictionary
         """
-        return await self._storage.dict_keys(self._path, self._txn)
+        return self._storage.dict_keys(self._path, self._txn)
 
-    async def values(self) -> list[TreeValueT]:
+    def values(self) -> list[TreeValueT]:
         """
         Get all top-level values in the dictionary node.
 
         Returns:
             List of values in the dictionary
         """
-        return await self._storage.dict_values(self._path, self._txn)
+        return self._storage.dict_values(self._path, self._txn)
 
-    async def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
+    def items(self) -> list[tuple[TreePathComponent, TreeValueT]]:
         """
         Get all top-level key-value pairs in the dictionary node.
 
         Returns:
             List of (key, value) tuples
         """
-        return await self._storage.dict_items(self._path, self._txn)
+        return self._storage.dict_items(self._path, self._txn)
 
     # --- Dictionary conversion and utilities --- #
 
-    async def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
+    def to_dict(self) -> dict[TreePathComponent, TreeValueT]:
         """
         Convert to a regular Python dictionary.
 
         Returns:
             Python dictionary containing all data from this dictionary node
         """
-        return await self._storage.dict_to_dict(self._path, self._txn)
+        return self._storage.dict_to_dict(self._path, self._txn)
 
-    async def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
+    def update(self, other: dict[TreePathComponent, TreeValueT]) -> None:
         """
         Update the dictionary node with key-value pairs from another dictionary.
 
@@ -136,22 +134,22 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
             other: Dictionary containing key-value pairs to update
         """
         for key, value in other.items():
-            await self.set(key, value=value)
+            self.set(key, value=value)
 
-    async def clear(self) -> None:
+    def clear(self) -> None:
         """
         Remove all items from the dictionary node.
         """
         # Get all keys first, then delete them one by one
-        keys = await self.keys()
+        keys = self.keys()
         for key in keys:
             try:
-                await self.delete(key)
+                self.delete(key)
             except ObjectKeyError:
                 # Key disappeared, just skip it
                 pass
 
-    async def pop(
+    def pop(
         self, key: TreePathComponent, default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY
     ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
         """
@@ -168,15 +166,15 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
             ObjectKeyError: If the key doesn't exist and no default is provided
         """
         try:
-            value = await self.get(key)  # type: ignore
-            await self.delete(key)
+            value = self.get(key)  # type: ignore
+            self.delete(key)
             return value
         except ObjectKeyError:
             if default is not None:
                 return default
             raise
 
-    async def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+    def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
         """
         Return the value for key if it exists, otherwise set it to default.
 
@@ -187,21 +185,21 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
         Returns:
             The value associated with the key, or default if not found
         """
-        if await self.contains(key):
-            return await self.get(key)  # type: ignore
-        await self.set(key, value=default)
+        if self.contains(key):
+            return self.get(key)  # type: ignore
+        self.set(key, value=default)
         return default
 
-    async def __len__(self) -> int:
+    def __len__(self) -> int:
         """
         Get the number of items in the dictionary node.
 
         Returns:
             The number of items
         """
-        keys = await self.keys()
+        keys = self.keys()
         return len(keys)
 
 
 if TYPE_CHECKING:
-    _: type[AsyncTreeDictProtocol] = TreeDict
+    _: type[SyncTreeDictProtocol] = TreeDict

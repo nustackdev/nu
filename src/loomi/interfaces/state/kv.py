@@ -397,6 +397,7 @@ class SyncObservableStorageProtocol(
     pass
 
 
+@runtime_checkable
 class SyncTransactionProtocol(Protocol[StorageValueT]):
     """Protocol defining the interface for synchronous transactions."""
 

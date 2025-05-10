@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import AsyncGenerator, Generic, cast
+from typing import Generator, Generic, cast
 
-from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
+from loomi.interfaces.state.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomi.interfaces.state.tree import EmptyProtocol
 from loomistd.kv import StorageKeyError
 
@@ -53,7 +53,7 @@ class StorageCore(Generic[TreeValueT]):
     # Special sentinels
     EMPTY: EmptyProtocol = Empty()  # Sentinel for empty values
 
-    def __init__(self, storage: AsyncStorageProtocol[TreeValueT]):
+    def __init__(self, storage: SyncStorageProtocol[TreeValueT]):
         """
         Initialize the storage core.
 
@@ -82,10 +82,10 @@ class StorageCore(Generic[TreeValueT]):
             raise TypeError("Base path must be a tuple")
         return base_path + tuple(components)  # type: ignore
 
-    async def _storage_get(
+    def _storage_get(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> TreeValueT:
         """
         Get a value from the underlying key-value storage, using transaction if provided.
@@ -101,14 +101,14 @@ class StorageCore(Generic[TreeValueT]):
             StorageKeyError: If the path doesn't exist in the underlying storage
         """
         if txn is not None:
-            return await txn.get(path)
-        return await self._storage.get(path)
+            return txn.get(path)
+        return self._storage.get(path)
 
-    async def _storage_set(
+    def _storage_set(
         self,
         path: TreePath,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Set a value in the underlying key-value storage, using transaction if provided.
@@ -119,14 +119,14 @@ class StorageCore(Generic[TreeValueT]):
             txn: Optional transaction to use
         """
         if txn is not None:
-            await txn.set(path, value)
+            txn.set(path, value)
         else:
-            await self._storage.set(path, value)
+            self._storage.set(path, value)
 
-    async def _storage_delete(
+    def _storage_delete(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Delete a value from the underlying key-value storage, using transaction if provided.
@@ -139,14 +139,14 @@ class StorageCore(Generic[TreeValueT]):
             StorageKeyError: If the path doesn't exist
         """
         if txn is not None:
-            await txn.delete(path)
+            txn.delete(path)
         else:
-            await self._storage.delete(path)
+            self._storage.delete(path)
 
-    async def _storage_exists(
+    def _storage_exists(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path exists in the underlying key-value storage, using transaction if provided.
@@ -159,15 +159,15 @@ class StorageCore(Generic[TreeValueT]):
             True if the path exists, False otherwise
         """
         if txn is not None:
-            return await txn.exists(path)
-        return await self._storage.exists(path)
+            return txn.exists(path)
+        return self._storage.exists(path)
 
-    async def _storage_list_paths(
+    def _storage_list_paths(
         self,
         prefix: TreePath,
         depth: int = 1,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
-    ) -> AsyncGenerator[TreePath, None]:
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
+    ) -> Generator[TreePath, None]:
         """
         List paths with the given prefix from storage, using transaction if provided.
 
@@ -183,18 +183,18 @@ class StorageCore(Generic[TreeValueT]):
             Tree paths matching the prefix
         """
         if txn is not None:
-            async for path in txn.list_keys(prefix, depth):
+            for path in txn.list_keys(prefix, depth):
                 yield path
         else:
-            async for path in self._storage.list_keys(prefix, depth):
+            for path in self._storage.list_keys(prefix, depth):
                 yield path
 
     # --- Node type detection --- #
 
-    async def _get_node_type(
+    def _get_node_type(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> str | None:
         """
         Get the type of a node at a specific path in the tree.
@@ -210,16 +210,16 @@ class StorageCore(Generic[TreeValueT]):
             StorageKeyError: If the path doesn't exist
         """
         # This will raise StorageKeyError if path doesn't exist
-        value = await self._storage_get(path, txn)
+        value = self._storage_get(path, txn)
 
         if value == self._TYPE_DICT or value == self._TYPE_LIST:
             return cast(str, value)
         return None  # Not a dict or list node but a primitive value
 
-    async def _is_dict(
+    def _is_dict(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a dictionary node.
@@ -235,15 +235,15 @@ class StorageCore(Generic[TreeValueT]):
             Returns False if the path doesn't exist (doesn't raise StorageKeyError)
         """
         try:
-            node_type = await self._get_node_type(path, txn)
+            node_type = self._get_node_type(path, txn)
             return node_type == self._TYPE_DICT
         except StorageKeyError:
             return False
 
-    async def _is_list(
+    def _is_list(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a list node.
@@ -259,15 +259,15 @@ class StorageCore(Generic[TreeValueT]):
             Returns False if the path doesn't exist (doesn't raise StorageKeyError)
         """
         try:
-            node_type = await self._get_node_type(path, txn)
+            node_type = self._get_node_type(path, txn)
             return node_type == self._TYPE_LIST
         except StorageKeyError:
             return False
 
-    async def _is_primitive(
+    def _is_primitive(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> bool:
         """
         Check if a path contains a primitive value (not a dict or list node).
@@ -283,15 +283,15 @@ class StorageCore(Generic[TreeValueT]):
             Returns False if the path doesn't exist (doesn't raise StorageKeyError)
         """
         try:
-            node_type = await self._get_node_type(path, txn)
+            node_type = self._get_node_type(path, txn)
             return node_type is None  # None indicates a primitive value
         except StorageKeyError:
             return False
 
-    async def _verify_dict(
+    def _verify_dict(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Verify that a path contains a dictionary node or raise an error.
@@ -304,14 +304,14 @@ class StorageCore(Generic[TreeValueT]):
             ObjectTypeError: If the path exists but is not a dictionary node
             StorageKeyError: If the path doesn't exist
         """
-        node_type = await self._get_node_type(path, txn)
+        node_type = self._get_node_type(path, txn)
         if node_type != self._TYPE_DICT:
             raise ObjectTypeError(f"Path {path} is not a dictionary node")
 
-    async def _verify_list(
+    def _verify_list(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Verify that a path contains a list node or raise an error.
@@ -324,14 +324,14 @@ class StorageCore(Generic[TreeValueT]):
             ObjectTypeError: If the path exists but is not a list node
             StorageKeyError: If the path doesn't exist
         """
-        node_type = await self._get_node_type(path, txn)
+        node_type = self._get_node_type(path, txn)
         if node_type != self._TYPE_LIST:
             raise ObjectTypeError(f"Path {path} is not a list node")
 
     # --- Subtree deletion --- #
 
-    async def _delete_node(  # noqa: C901
-        self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]
+    def _delete_node(  # noqa: C901
+        self, path: TreePath, txn: SyncTransactionProtocol[TreeValueT]
     ) -> None:
         """
         Delete a node and all its nested values from the tree.
@@ -349,12 +349,12 @@ class StorageCore(Generic[TreeValueT]):
         """
         # Check if it's a dict or list node
         try:
-            node_type = await self._get_node_type(path, txn)
+            node_type = self._get_node_type(path, txn)
 
             # If it's not a dict or list node, try to delete it directly
             if node_type is None:
                 try:
-                    await self._storage_delete(path, txn)
+                    self._storage_delete(path, txn)
                 except StorageKeyError:
                     # Path doesn't exist, nothing to do
                     pass
@@ -364,7 +364,7 @@ class StorageCore(Generic[TreeValueT]):
             if node_type == self._TYPE_LIST:
                 length_path = self._make_path(path, self._LENGTH_FIELD)
                 try:
-                    await self._storage_delete(length_path, txn)
+                    self._storage_delete(length_path, txn)
                 except StorageKeyError:
                     # Length field might not exist (corrupted data)
                     pass
@@ -373,17 +373,17 @@ class StorageCore(Generic[TreeValueT]):
             paths_to_delete = []
 
             # Get all paths in the subtree (for nested values)
-            async for storage_path in self._storage_list_paths(path, depth=-1, txn=txn):
+            for storage_path in self._storage_list_paths(path, depth=-1, txn=txn):
                 # Skip the path itself (will be processed separately)
                 if storage_path == path:
                     continue
 
                 # Check if it's a nested subtree
                 try:
-                    nested_node_type = await self._get_node_type(storage_path, txn)
+                    nested_node_type = self._get_node_type(storage_path, txn)
                     if nested_node_type is not None:
                         # It's a nested dict or list node, delete recursively
-                        await self._delete_node(storage_path, txn)
+                        self._delete_node(storage_path, txn)
                     else:
                         # Not a dict or list node, add to list to delete
                         paths_to_delete.append(storage_path)
@@ -394,14 +394,14 @@ class StorageCore(Generic[TreeValueT]):
             # Delete all collected paths
             for p in paths_to_delete:
                 try:
-                    await self._storage_delete(p, txn)
+                    self._storage_delete(p, txn)
                 except StorageKeyError:
                     # May have been deleted as part of nested cleanup or by another process
                     pass
 
             # Finally, delete the node type marker itself
             try:
-                await self._storage_delete(path, txn)
+                self._storage_delete(path, txn)
             except StorageKeyError:
                 # Already deleted
                 pass
@@ -412,10 +412,10 @@ class StorageCore(Generic[TreeValueT]):
 
     # --- Recursive value retrieval --- #
 
-    async def _get_value_recursive(
+    def _get_value_recursive(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> TreeValueContainer[TreeValueT]:
         """
         Get a value, recursively resolving dict and list nodes in the tree.
@@ -436,25 +436,25 @@ class StorageCore(Generic[TreeValueT]):
             StorageKeyError: If the path doesn't exist
         """
         # Check if it's a dict or list node
-        node_type = await self._get_node_type(path, txn)
+        node_type = self._get_node_type(path, txn)
 
         if node_type == self._TYPE_DICT:
             # It's a dictionary node, get all its contents recursively
-            return await self._dict_to_dict(path, txn)
+            return self._dict_to_dict(path, txn)
         elif node_type == self._TYPE_LIST:
             # It's a list node, get all its contents recursively
-            return await self._list_to_list(path, txn)
+            return self._list_to_list(path, txn)
         else:
             # Not a dict or list node, return direct value
-            return await self._storage_get(path, txn)
+            return self._storage_get(path, txn)
 
     # --- Placeholder methods for node conversion --- #
     # These will be implemented in the derived classes
 
-    async def _dict_to_dict(
+    def _dict_to_dict(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> dict[str, TreeValueT]:
         """
         Convert a stored dictionary node to a regular Python dictionary.
@@ -474,10 +474,10 @@ class StorageCore(Generic[TreeValueT]):
         """
         raise NotImplementedError("Must be implemented by derived class")
 
-    async def _list_to_list(
+    def _list_to_list(
         self,
         path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> list[TreeValueT]:
         """
         Convert a stored list node to a regular Python list.
@@ -500,11 +500,11 @@ class StorageCore(Generic[TreeValueT]):
     # --- Placeholder methods for node creation --- #
     # These will be implemented in the derived classes
 
-    async def _set_dict(
+    def _set_dict(
         self,
         path: TreePath,
         value: dict[str, TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Store a dictionary as a subtree in the tree storage.
@@ -523,11 +523,11 @@ class StorageCore(Generic[TreeValueT]):
         """
         raise NotImplementedError("Must be implemented by derived class")
 
-    async def _set_list(
+    def _set_list(
         self,
         path: TreePath,
         value: list[TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Store a list as a subtree in the tree storage.

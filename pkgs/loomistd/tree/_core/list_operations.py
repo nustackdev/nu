@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from loomi.interfaces.state.kv import AsyncTransactionProtocol
+from loomi.interfaces.state.kv import SyncTransactionProtocol
 from loomistd.kv import StorageKeyError
 
 from .._exceptions import ObjectIndexError, ObjectTypeError
@@ -30,7 +30,7 @@ class ListOperations(StorageCore[TreeValueT]):
 
     # --- List initialization and type management --- #
 
-    async def _insert_list(self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]) -> None:
+    def _insert_list(self, path: TreePath, txn: SyncTransactionProtocol[TreeValueT]) -> None:
         """
         Initialize an empty list node at the specified path.
 
@@ -44,13 +44,13 @@ class ListOperations(StorageCore[TreeValueT]):
             txn: Transaction to use
         """
         # Set type directly on the container path
-        await self._storage_set(path, cast(TreeValueT, self._TYPE_LIST), txn)
+        self._storage_set(path, cast(TreeValueT, self._TYPE_LIST), txn)
 
         # Initialize length to 0
         length_path = self._make_path(path, self._LENGTH_FIELD)
-        await self._storage_set(length_path, cast(TreeValueT, 0), txn)
+        self._storage_set(length_path, cast(TreeValueT, 0), txn)
 
-    async def _ensure_list(self, path: TreePath, txn: AsyncTransactionProtocol[TreeValueT]) -> None:
+    def _ensure_list(self, path: TreePath, txn: SyncTransactionProtocol[TreeValueT]) -> None:
         """
         Ensure that a path contains a list node or initialize it if it doesn't exist.
 
@@ -63,7 +63,7 @@ class ListOperations(StorageCore[TreeValueT]):
         """
         try:
             # Check if the path exists and what it contains
-            node_type = await self._get_node_type(path, txn)
+            node_type = self._get_node_type(path, txn)
 
             # If it's not a list type marker
             if node_type != self._TYPE_LIST:
@@ -72,13 +72,13 @@ class ListOperations(StorageCore[TreeValueT]):
                 )
         except StorageKeyError:
             # Path doesn't exist, initialize as empty list
-            await self._insert_list(path, txn)
+            self._insert_list(path, txn)
 
-    async def _set_list(
+    def _set_list(
         self,
         path: TreePath,
         value: list[TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Store a list as a tree structure with index-value pairs.
@@ -92,14 +92,14 @@ class ListOperations(StorageCore[TreeValueT]):
             txn: Transaction to use
         """
         # If replacing an existing value, delete old data first
-        await self._delete_node(path, txn)
+        self._delete_node(path, txn)
 
         # Initialize the list structure
-        await self._insert_list(path, txn)
+        self._insert_list(path, txn)
 
         # Update length to match the provided list
         length_path = self._make_path(path, self._LENGTH_FIELD)
-        await self._storage_set(length_path, cast(TreeValueT, len(value)), txn)
+        self._storage_set(length_path, cast(TreeValueT, len(value)), txn)
 
         # Store each item
         for i, v in enumerate(value):
@@ -107,19 +107,19 @@ class ListOperations(StorageCore[TreeValueT]):
 
             # Handle nested nodes
             if isinstance(v, dict):
-                await self._set_dict(item_path, v, txn)
+                self._set_dict(item_path, v, txn)
             elif isinstance(v, list):
-                await self._set_list(item_path, v, txn)
+                self._set_list(item_path, v, txn)
             else:
                 # Regular value
-                await self._storage_set(item_path, v, txn)
+                self._storage_set(item_path, v, txn)
 
     # --- List length management --- #
 
-    async def list_length(
+    def list_length(
         self,
         base_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> int:
         """
         Get the length of a list node.
@@ -135,16 +135,16 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectTypeError: If base_path is not a list node
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._list_length(base_path, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._list_length(base_path, new_txn)
             return result
         else:
-            return await self._list_length(base_path, txn)
+            return self._list_length(base_path, txn)
 
-    async def _list_length(
+    def _list_length(
         self,
         base_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> int:
         """
         Internal implementation for getting the length of a list node.
@@ -160,26 +160,26 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectTypeError: If base_path is not a list node
         """
         # Verify this is a list node
-        await self._verify_list(base_path, txn)
+        self._verify_list(base_path, txn)
 
         # Get the length
         length_path = self._make_path(base_path, self._LENGTH_FIELD)
         try:
-            return await self._storage_get(length_path, txn)
+            return self._storage_get(length_path, txn)
         except StorageKeyError:
             # Length not set, assume empty list
             # This should not happen with properly initialized lists
             length = 0
-            await self._storage_set(length_path, cast(TreeValueT, length), txn)
+            self._storage_set(length_path, cast(TreeValueT, length), txn)
             return length
 
     # --- List item access operations --- #
 
-    async def list_get(
+    def list_get(
         self,
         base_path: TreePath,
         index: int,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from a list node at the specified index.
@@ -197,17 +197,17 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._list_get(base_path, index, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._list_get(base_path, index, new_txn)
             return result
         else:
-            return await self._list_get(base_path, index, txn)
+            return self._list_get(base_path, index, txn)
 
-    async def _list_get(
+    def _list_get(
         self,
         base_path: TreePath,
         index: int,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> TreeValueContainer[TreeValueT]:
         """
         Internal implementation for getting an item from a list node.
@@ -225,10 +225,10 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         # Verify this is a list node
-        await self._verify_list(base_path, txn)
+        self._verify_list(base_path, txn)
 
         # Get list length
-        length = await self._list_length(base_path, txn)
+        length = self._list_length(base_path, txn)
 
         # Normalize negative indices
         if index < 0:
@@ -241,14 +241,14 @@ class ListOperations(StorageCore[TreeValueT]):
         # Get the item
         item_path = self._make_path(base_path, str(index))
 
-        return await self._get_value_recursive(item_path, txn)
+        return self._get_value_recursive(item_path, txn)
 
-    async def list_set(
+    def list_set(
         self,
         base_path: TreePath,
         index: int,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Set an item in a list node at the specified index.
@@ -264,17 +264,17 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._list_set(base_path, index, value, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._list_set(base_path, index, value, new_txn)
         else:
-            await self._list_set(base_path, index, value, txn)
+            self._list_set(base_path, index, value, txn)
 
-    async def _list_set(
+    def _list_set(
         self,
         base_path: TreePath,
         index: int,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for setting an item in a list node.
@@ -290,10 +290,10 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         # Verify this is a list node
-        await self._verify_list(base_path, txn)
+        self._verify_list(base_path, txn)
 
         # Get list length
-        length = await self._list_length(base_path, txn)
+        length = self._list_length(base_path, txn)
 
         # Normalize negative indices
         if index < 0:
@@ -308,13 +308,13 @@ class ListOperations(StorageCore[TreeValueT]):
 
         # Delete existing item if it's a dict or list node
         try:
-            if await self._is_dict(item_path, txn) or await self._is_list(item_path, txn):
+            if self._is_dict(item_path, txn) or self._is_list(item_path, txn):
                 # Recursively delete the existing node
-                await self._delete_node(item_path, txn)
+                self._delete_node(item_path, txn)
             else:
                 # Delete the simple value if it exists
                 try:
-                    await self._storage_delete(item_path, txn)
+                    self._storage_delete(item_path, txn)
                 except StorageKeyError:
                     pass  # Item might not exist
         except StorageKeyError:
@@ -322,20 +322,20 @@ class ListOperations(StorageCore[TreeValueT]):
 
         # Store the new value
         if isinstance(value, dict):
-            await self._set_dict(item_path, value, txn)
+            self._set_dict(item_path, value, txn)
         elif isinstance(value, list):
-            await self._set_list(item_path, value, txn)
+            self._set_list(item_path, value, txn)
         else:
             # Regular value
-            await self._storage_set(item_path, value, txn)
+            self._storage_set(item_path, value, txn)
 
     # --- List modification operations --- #
 
-    async def list_append(
+    def list_append(
         self,
         base_path: TreePath,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> int:
         """
         Append an item to a list node.
@@ -352,17 +352,17 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectTypeError: If base_path is not a list node
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._list_append(base_path, value, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._list_append(base_path, value, new_txn)
             return result
         else:
-            return await self._list_append(base_path, value, txn)
+            return self._list_append(base_path, value, txn)
 
-    async def _list_append(
+    def _list_append(
         self,
         base_path: TreePath,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> int:
         """
         Internal implementation for appending an item to a list node.
@@ -380,45 +380,45 @@ class ListOperations(StorageCore[TreeValueT]):
         """
         # Verify this is a list node or create it
         try:
-            node_type = await self._get_node_type(base_path, txn)
+            node_type = self._get_node_type(base_path, txn)
             if node_type is not None and node_type != self._TYPE_LIST:
                 raise ObjectTypeError(
                     f"Path {base_path} is not a list node (current type: {node_type})"
                 )
         except StorageKeyError:
             # Initialize as empty list if it doesn't exist
-            await self._insert_list(base_path, txn)
+            self._insert_list(base_path, txn)
 
         # Get current length
         length_path = self._make_path(base_path, self._LENGTH_FIELD)
         try:
-            length = await self._storage_get(length_path, txn)
+            length = self._storage_get(length_path, txn)
         except StorageKeyError:
             # Should not happen if properly initialized, but let's be safe
             length = 0
-            await self._storage_set(length_path, cast(TreeValueT, length), txn)
+            self._storage_set(length_path, cast(TreeValueT, length), txn)
 
         # Append the item
         item_path = self._make_path(base_path, str(length))
         if isinstance(value, dict):
-            await self._set_dict(item_path, value, txn)
+            self._set_dict(item_path, value, txn)
         elif isinstance(value, list):
-            await self._set_list(item_path, value, txn)
+            self._set_list(item_path, value, txn)
         else:
             # Regular value
-            await self._storage_set(item_path, value, txn)
+            self._storage_set(item_path, value, txn)
 
         # Update length
         new_length = length + 1
-        await self._storage_set(length_path, cast(TreeValueT, new_length), txn)
+        self._storage_set(length_path, cast(TreeValueT, new_length), txn)
 
         return new_length
 
-    async def list_extend(
+    def list_extend(
         self,
         base_path: TreePath,
         values: list[TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> int:
         """
         Extend a list node with multiple values.
@@ -435,17 +435,17 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectTypeError: If base_path is not a list node
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._list_extend(base_path, values, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._list_extend(base_path, values, new_txn)
             return result
         else:
-            return await self._list_extend(base_path, values, txn)
+            return self._list_extend(base_path, values, txn)
 
-    async def _list_extend(
+    def _list_extend(
         self,
         base_path: TreePath,
         values: list[TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> int:
         """
         Internal implementation for extending a list node with multiple values.
@@ -463,50 +463,50 @@ class ListOperations(StorageCore[TreeValueT]):
         """
         # Ensure it's a list node or initialize it
         try:
-            node_type = await self._get_node_type(base_path, txn)
+            node_type = self._get_node_type(base_path, txn)
             if node_type is not None and node_type != self._TYPE_LIST:
                 raise ObjectTypeError(
                     f"Path {base_path} is not a list node (current type: {node_type})"
                 )
         except StorageKeyError:
             # Initialize as empty list if it doesn't exist
-            await self._insert_list(base_path, txn)
+            self._insert_list(base_path, txn)
 
         # Get the current length
         try:
-            current_length = await self._list_length(base_path, txn)
+            current_length = self._list_length(base_path, txn)
         except StorageKeyError:
             # Should not happen with proper initialization, but let's be safe
             current_length = 0
             length_path = self._make_path(base_path, self._LENGTH_FIELD)
-            await self._storage_set(length_path, cast(TreeValueT, current_length), txn)
+            self._storage_set(length_path, cast(TreeValueT, current_length), txn)
 
         # Append each value
         for i, value in enumerate(values):
             item_path = self._make_path(base_path, str(current_length + i))
 
             if isinstance(value, dict):
-                await self._set_dict(item_path, value, txn)
+                self._set_dict(item_path, value, txn)
             elif isinstance(value, list):
-                await self._set_list(item_path, value, txn)
+                self._set_list(item_path, value, txn)
             else:
                 # Regular value
-                await self._storage_set(item_path, value, txn)
+                self._storage_set(item_path, value, txn)
 
         # Update length
         new_length = current_length + len(values)
         length_path = self._make_path(base_path, self._LENGTH_FIELD)
-        await self._storage_set(length_path, cast(TreeValueT, new_length), txn)
+        self._storage_set(length_path, cast(TreeValueT, new_length), txn)
 
         # Return new length
         return new_length
 
-    async def list_insert(
+    def list_insert(
         self,
         base_path: TreePath,
         index: int,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Insert an item at a specific position in a list node.
@@ -522,17 +522,17 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._list_insert(base_path, index, value, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._list_insert(base_path, index, value, new_txn)
         else:
-            await self._list_insert(base_path, index, value, txn)
+            self._list_insert(base_path, index, value, txn)
 
-    async def _list_insert(
+    def _list_insert(
         self,
         base_path: TreePath,
         index: int,
         value: TreeValueT,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> None:
         """
         Internal implementation for inserting an item in a list node.
@@ -548,7 +548,7 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         # Get current list data
-        current_list = await self._list_to_list(base_path, txn)
+        current_list = self._list_to_list(base_path, txn)
 
         # Normalize negative indices
         if index < 0:
@@ -561,13 +561,13 @@ class ListOperations(StorageCore[TreeValueT]):
         current_list.insert(index, value)
 
         # Store the updated list - this could be optimized but using the direct approach for safety
-        await self._set_list(base_path, current_list, txn)
+        self._set_list(base_path, current_list, txn)
 
-    async def list_remove(
+    def list_remove(
         self,
         base_path: TreePath,
         index: int,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> None:
         """
         Remove an item from a list node at the specified index.
@@ -582,13 +582,13 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                await self._list_remove(base_path, index, new_txn)
+            with self._storage.transaction() as new_txn:
+                self._list_remove(base_path, index, new_txn)
         else:
-            await self._list_remove(base_path, index, txn)
+            self._list_remove(base_path, index, txn)
 
-    async def _list_remove(
-        self, base_path: TreePath, index: int, txn: AsyncTransactionProtocol[TreeValueT]
+    def _list_remove(
+        self, base_path: TreePath, index: int, txn: SyncTransactionProtocol[TreeValueT]
     ) -> None:
         """
         Internal implementation for removing an item from a list node.
@@ -606,10 +606,10 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectIndexError: If index is out of range
         """
         # Verify this is a list node
-        await self._verify_list(base_path, txn)
+        self._verify_list(base_path, txn)
 
         # Get current length
-        length = await self._list_length(base_path, txn)
+        length = self._list_length(base_path, txn)
 
         # Normalize negative indices
         if index < 0:
@@ -624,7 +624,7 @@ class ListOperations(StorageCore[TreeValueT]):
         item_to_remove = self._make_path(base_path, str(index))
 
         # First, delete the item we're removing
-        await self._delete_node(item_to_remove, txn)
+        self._delete_node(item_to_remove, txn)
 
         # Shift all subsequent items up by one index
         for i in range(index + 1, length):
@@ -633,42 +633,42 @@ class ListOperations(StorageCore[TreeValueT]):
 
             # Check if it's a dict or list node
             try:
-                if await self._is_dict(src_path, txn):
+                if self._is_dict(src_path, txn):
                     # It's a dictionary node, copy it recursively
-                    src_dict = await self._dict_to_dict(src_path, txn)
+                    src_dict = self._dict_to_dict(src_path, txn)
                     # Delete the destination first in case it exists
-                    await self._delete_node(dst_path, txn)
+                    self._delete_node(dst_path, txn)
                     # Copy the dictionary
-                    await self._set_dict(dst_path, src_dict, txn)
-                elif await self._is_list(src_path, txn):
+                    self._set_dict(dst_path, src_dict, txn)
+                elif self._is_list(src_path, txn):
                     # It's a list node, copy it recursively
-                    src_list = await self._list_to_list(src_path, txn)
+                    src_list = self._list_to_list(src_path, txn)
                     # Delete the destination first in case it exists
-                    await self._delete_node(dst_path, txn)
+                    self._delete_node(dst_path, txn)
                     # Copy the list
-                    await self._set_list(dst_path, src_list, txn)
+                    self._set_list(dst_path, src_list, txn)
                 else:
                     # Regular value
-                    value = await self._storage_get(src_path, txn)
-                    await self._storage_set(dst_path, value, txn)
+                    value = self._storage_get(src_path, txn)
+                    self._storage_set(dst_path, value, txn)
             except StorageKeyError:
                 # Source path disappeared (rare race condition)
                 # Just skip this item
                 continue
 
             # Delete the source after copying
-            await self._delete_node(src_path, txn)
+            self._delete_node(src_path, txn)
 
         # Update the length
         length_path = self._make_path(base_path, self._LENGTH_FIELD)
-        await self._storage_set(length_path, cast(TreeValueT, length - 1), txn)
+        self._storage_set(length_path, cast(TreeValueT, length - 1), txn)
 
     # --- List conversion operations --- #
 
-    async def list_to_list(
+    def list_to_list(
         self,
         base_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
+        txn: SyncTransactionProtocol[TreeValueT] | None = None,
     ) -> list[TreeValueT]:
         """
         Convert a stored list node to a regular Python list.
@@ -684,16 +684,16 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectTypeError: If base_path is not a list node
         """
         if txn is None:
-            async with await self._storage.transaction() as new_txn:
-                result = await self._list_to_list(base_path, new_txn)
+            with self._storage.transaction() as new_txn:
+                result = self._list_to_list(base_path, new_txn)
             return result
         else:
-            return await self._list_to_list(base_path, txn)
+            return self._list_to_list(base_path, txn)
 
-    async def _list_to_list(
+    def _list_to_list(
         self,
         base_path: TreePath,
-        txn: AsyncTransactionProtocol[TreeValueT],
+        txn: SyncTransactionProtocol[TreeValueT],
     ) -> list[TreeValueT]:
         """
         Internal implementation for converting a stored list node to a Python list.
@@ -709,16 +709,16 @@ class ListOperations(StorageCore[TreeValueT]):
             ObjectTypeError: If base_path is not a list node
         """
         # Verify this is a list node
-        await self._verify_list(base_path, txn)
+        self._verify_list(base_path, txn)
 
         # Get list length
-        length = await self._list_length(base_path, txn)
+        length = self._list_length(base_path, txn)
 
         # Build result list
         result: list[Any] = []
         for i in range(length):
             try:
-                item = await self._list_get(base_path, i, txn)
+                item = self._list_get(base_path, i, txn)
                 result.append(item)
             except (StorageKeyError, ObjectIndexError):
                 # Handle potential race conditions
