@@ -267,7 +267,7 @@ class SyncStateProtocol(Protocol[StateValueT]):
         path: StatePathComponent,
         /,
         *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+        txn: "SyncTransactionProtocol[StateValueT] | None" = None,
     ) -> bool:
         """
         Check if the path is a dictionary node.
@@ -287,7 +287,7 @@ class SyncStateProtocol(Protocol[StateValueT]):
         path: StatePathComponent,
         /,
         *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+        txn: "SyncTransactionProtocol[StateValueT] | None" = None,
     ) -> bool:
         """
         Check if the path is a list node.
@@ -307,7 +307,7 @@ class SyncStateProtocol(Protocol[StateValueT]):
         path: StatePathComponent,
         /,
         *paths: StatePathComponent,
-        txn: "AsyncTransactionProtocol[StateValueT] | None" = None,
+        txn: "SyncTransactionProtocol[StateValueT] | None" = None,
     ) -> bool:
         """
         Check if the path exists.

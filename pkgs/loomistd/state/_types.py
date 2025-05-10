@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi.interfaces.state.types import AsyncCallbackFn, StatePath
+from loomi.interfaces.state.types import StatePath, SyncCallbackFn
 
 __all__ = [
     "StateKey",
@@ -10,4 +10,4 @@ __all__ = [
 
 StateKey = StatePath
 StateValue = None | bytes | bool | int | float | str | list["StateValue"] | dict[str, "StateValue"]
-StateCallbackFn = AsyncCallbackFn
+StateCallbackFn = SyncCallbackFn

@@ -350,7 +350,7 @@ class SyncStorageProtocol(Protocol[StorageValueT]):
         self,
         prefix: StorageKey,
         depth: int = ...,
-    ) -> Generator[StorageValueT, None, None]:
+    ) -> Generator[StorageKey, None, None]:
         """
         List all keys under prefix.
 
@@ -465,7 +465,7 @@ class SyncTransactionProtocol(Protocol[StorageValueT]):
         self,
         prefix: StorageKey,
         depth: int = ...,
-    ) -> Generator[StorageValueT, None, None]:
+    ) -> Generator[StorageKey, None, None]:
         """
         List all keys under prefix within transaction context.
 
