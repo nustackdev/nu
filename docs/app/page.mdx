@@ -5,25 +5,38 @@ import { Cards } from 'nextra/components'
 **Build composable Python apps from declarative state-bound operations.**
 
 ```python
+class PriorityTaskApp(AsyncApp):
+    """A priority-based task processing"""
 
-class MyApp(AsyncApp):
-    ...
-
-    def define(self) -> AsyncOperation:
+    def define(self) -> Operation:
         return self.ex.Sequence(
-            self.ex.Retry(
-                self.ex.Function(self.get_data),
-                retry_delay=5,
-                backoff=2,
+            # Initialize priority queues
+            self.ex.Function(self.init_state),
+            # Loop through tasks until all are processed
+            self.ex.Loop(
+                # Process tasks in priority order
+                self.ex.Branch(
+                    {
+                        # When high priority tasks exist, process those first
+                        True: self.ex.Map(
+                            self.ex.Function(self.process_high_priority_task),
+                            items_path=("_", "tasks", "high_priority"),
+                            max_concurrency=5,
+                        ),
+                        # Otherwise process low priority task
+                        False: self.ex.Map(
+                            self.ex.Function(self.process_low_priority_task),
+                            items_path=("_", "tasks", "low_priority"),
+                            max_concurrency=5,
+                        ),
+                    },
+                    condition=self.has_high_priority_tasks,
+                ),
+                condition=self.has_tasks,
             ),
-            self.ex.Map(self.process_item, map_path=("data", "items")),
-            self.ex.Function(self.save_data),
-            self.ex.Branch({
-                True: self.ex.Function(self.notify_slack_success),
-                False: self.ex.Function(self.notify_slack_failure),
-            }, condition_path=("result", "success")),
         )
 
+    ...
 ```
 
 ## What is Loomi?
@@ -31,12 +44,12 @@ class MyApp(AsyncApp):
 **Loomi changes how Python apps work - control flow and state become one thing through composable, declarative, state-bound operations.**
 
 **This means:**
-1. Build apps from basic operations - functions, sequences, loops, ...
+1. Build apps from basic operations - functions, sequences, loops, and more
 2. Combine apps to make bigger apps
-3. Operations are bound to state they need to make decisions - choosing paths, repeating steps, ...
+3. Operations are bound to state they need to make decisions - choosing paths, repeating steps, etc
 
 **You get:**
-1. 10x easier to design and build apps
+1. 10x easier to design and build complex apps
 2. 10x easier to maintain and extend apps
 2. 10x upgraded robustness and reliability
 
@@ -61,30 +74,25 @@ Loomi is the perfect fit for:
 
 ### Start here
 
-<Cards num={3}>
+<Cards num={2}>
     <Cards.Card
     title="Introduction"
     href="/docs/introduction"
     arrow
     />
     <Cards.Card
-    title="Concepts"
-    href="/docs/concepts"
-    arrow
-    />
-    <Cards.Card
     title="Quick Start"
-    href="/docs/quick_start"
+    href="/docs/quickstart"
     arrow
     />
 </Cards>
 
-### Explore Further
+### Learn Loomi
 
 <Cards num={2}>
     <Cards.Card
-        title="Documentation"
-        href="/docs/learn"
+        title="User Guide"
+        href="/docs/concepts"
         arrow
     />
     <Cards.Card
@@ -94,7 +102,7 @@ Loomi is the perfect fit for:
     />
 </Cards>
 
-### Learn the Philosophy
+### Philosophy
 
 <Cards num={2}>
     <Cards.Card

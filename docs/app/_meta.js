@@ -8,6 +8,7 @@ export default{
   },
   docs: {
     type: 'page',
+    title: 'User Guide',
   },
   stack: {
     type: 'page',
