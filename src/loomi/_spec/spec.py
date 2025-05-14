@@ -41,7 +41,7 @@ class Spec(BaseModel, Hashable):
     name: str = Field(default="")
     factory: type
 
-    def set_value_at(self, path: str, /, *paths: str, value: Any) -> Self:
+    def with_value_at(self, path: str, /, *paths: str, value: Any) -> Self:
         """
         Update the value at the specified path directly.
 
@@ -59,7 +59,7 @@ class Spec(BaseModel, Hashable):
         self._set_nested_value(self, (path,) + paths, value)
         return self
 
-    def _set_nested_value(self, obj, path_parts: tuple, value: Any) -> None:
+    def _set_nested_value(self, obj: Spec, path_parts: tuple[str, ...], value: Any) -> None:
         """
         Helper method to set a value at a nested path.
 
@@ -98,7 +98,7 @@ class Spec(BaseModel, Hashable):
             )
 
         # If this isn't a Spec object but we need to go deeper, that's an error
-        if not isinstance(next_obj, Spec) and not isinstance(next_obj, dict):
+        if not isinstance(next_obj, Spec):
             raise ValueError(
                 f"Cannot navigate path: '{current_key}' in {obj.__class__.__name__} "
                 f"is {type(next_obj).__name__} which doesn't support nested paths"
@@ -106,16 +106,6 @@ class Spec(BaseModel, Hashable):
 
         # Continue traversing
         self._set_nested_value(next_obj, remaining_path, value)
-
-    def with_value_at(self, *path_segments, value: Any) -> Self:
-        """
-        Semantic alias for set_value_at that reads better in chained calls.
-
-        Examples:
-            spec.with_value_at("tracing", "state", "storage_srv", "path", value="/new/path")
-                .with_value_at("state", "max_items", value=2000)
-        """
-        return self.set_value_at(*path_segments, value=value)
 
     def _serialize_value(self, value: Any) -> Any:
         if value is None:

@@ -5,6 +5,8 @@ This module provides the TracingService class which captures execution informati
 about operations and maintains a DAG representation for visualization purposes.
 """
 
+from __future__ import annotations
+
 import time
 from typing import Any, cast
 
@@ -26,11 +28,13 @@ class TracingService(AsyncService):
     Supports both synchronous and asynchronous state implementations.
     """
 
-    tracing_state: AsyncStateProtocol | SyncStateProtocol = UseService()
+    state: AsyncStateProtocol | SyncStateProtocol = UseService()
+
+    spec: TracingServiceSpec
 
     async def setup(self) -> None:
         """Initialize the tracing service."""
-        self.state_path = ("_", "tracing")
+        self._state_path = self.spec.state_root_path
         self._active_spans: dict[str, dict[str, Any]] = {}  # Maps operation keys to span data
         self._registered_operations: set[str] = set()  # Set of registered operation keys
         self._execution_start_time: float | None = None
@@ -45,10 +49,10 @@ class TracingService(AsyncService):
         """Initialize the tracing state structure."""
         # Get the trace root based on state protocol
         trace_root = None
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            trace_root = await self.tracing_state.dict(*self.state_path)
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            trace_root = self.tracing_state.dict(*self.state_path)
+        if isinstance(self.state, AsyncStateProtocol):
+            trace_root = await self.state.dict(*self._state_path)
+        elif isinstance(self.state, SyncStateProtocol):
+            trace_root = self.state.dict(*self._state_path)
         else:
             # Unsupported state protocol
             return
@@ -81,12 +85,12 @@ class TracingService(AsyncService):
         # Get the dictionaries based on state protocol
         graph_dict = None
         metadata_dict = None
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            graph_dict = await self.tracing_state.dict(*self.state_path, "graph")
-            metadata_dict = await self.tracing_state.dict(*self.state_path, "metadata")
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            graph_dict = self.tracing_state.dict(*self.state_path, "graph")
-            metadata_dict = self.tracing_state.dict(*self.state_path, "metadata")
+        if isinstance(self.state, AsyncStateProtocol):
+            graph_dict = await self.state.dict(*self._state_path, "graph")
+            metadata_dict = await self.state.dict(*self._state_path, "metadata")
+        elif isinstance(self.state, SyncStateProtocol):
+            graph_dict = self.state.dict(*self._state_path, "graph")
+            metadata_dict = self.state.dict(*self._state_path, "metadata")
         else:
             # Unsupported state protocol
             return
@@ -170,10 +174,10 @@ class TracingService(AsyncService):
 
         # Store execution start time
         exec_root = None
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            exec_root = await self.tracing_state.dict(*self.state_path)
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            exec_root = self.tracing_state.dict(*self.state_path)
+        if isinstance(self.state, AsyncStateProtocol):
+            exec_root = await self.state.dict(*self._state_path)
+        elif isinstance(self.state, SyncStateProtocol):
+            exec_root = self.state.dict(*self._state_path)
 
         # Set execution start time based on dict protocol
         if isinstance(exec_root, AsyncTreeDictProtocol):
@@ -193,10 +197,10 @@ class TracingService(AsyncService):
 
         # Get the exec_root based on state protocol
         exec_root = None
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            exec_root = await self.tracing_state.dict(*self.state_path)
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            exec_root = self.tracing_state.dict(*self.state_path)
+        if isinstance(self.state, AsyncStateProtocol):
+            exec_root = await self.state.dict(*self._state_path)
+        elif isinstance(self.state, SyncStateProtocol):
+            exec_root = self.state.dict(*self._state_path)
         else:
             # Unsupported state protocol
             return
@@ -267,10 +271,10 @@ class TracingService(AsyncService):
 
         # Get the exec_dict based on state protocol
         exec_dict = None
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            exec_dict = await self.tracing_state.dict(*self.state_path, "execution")
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            exec_dict = self.tracing_state.dict(*self.state_path, "execution")
+        if isinstance(self.state, AsyncStateProtocol):
+            exec_dict = await self.state.dict(*self._state_path, "execution")
+        elif isinstance(self.state, SyncStateProtocol):
+            exec_dict = self.state.dict(*self._state_path, "execution")
         else:
             # Unsupported state protocol
             return
@@ -314,12 +318,12 @@ class TracingService(AsyncService):
         # Get dictionaries based on state protocol
         ops_dict = None
         exec_dict = None
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            ops_dict = await self.tracing_state.dict(*self.state_path, "operations")
-            exec_dict = await self.tracing_state.dict(*self.state_path, "execution")
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            ops_dict = self.tracing_state.dict(*self.state_path, "operations")
-            exec_dict = self.tracing_state.dict(*self.state_path, "execution")
+        if isinstance(self.state, AsyncStateProtocol):
+            ops_dict = await self.state.dict(*self._state_path, "operations")
+            exec_dict = await self.state.dict(*self._state_path, "execution")
+        elif isinstance(self.state, SyncStateProtocol):
+            ops_dict = self.state.dict(*self._state_path, "operations")
+            exec_dict = self.state.dict(*self._state_path, "execution")
         else:
             # Unsupported state protocol
             return
@@ -365,10 +369,10 @@ class TracingService(AsyncService):
 
         # Get the exec_dict based on state protocol
         exec_dict = None
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            exec_dict = await self.tracing_state.dict(*self.state_path, "execution")
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            exec_dict = self.tracing_state.dict(*self.state_path, "execution")
+        if isinstance(self.state, AsyncStateProtocol):
+            exec_dict = await self.state.dict(*self._state_path, "execution")
+        elif isinstance(self.state, SyncStateProtocol):
+            exec_dict = self.state.dict(*self._state_path, "execution")
         else:
             # Unsupported state protocol
             return
@@ -406,14 +410,14 @@ class TracingService(AsyncService):
         ops_dict = None
         exec_dict = None
 
-        if isinstance(self.tracing_state, AsyncStateProtocol):
-            graph_dict = await self.tracing_state.dict(*self.state_path, "graph")
-            ops_dict = await self.tracing_state.dict(*self.state_path, "operations")
-            exec_dict = await self.tracing_state.dict(*self.state_path, "execution")
-        elif isinstance(self.tracing_state, SyncStateProtocol):
-            graph_dict = self.tracing_state.dict(*self.state_path, "graph")
-            ops_dict = self.tracing_state.dict(*self.state_path, "operations")
-            exec_dict = self.tracing_state.dict(*self.state_path, "execution")
+        if isinstance(self.state, AsyncStateProtocol):
+            graph_dict = await self.state.dict(*self._state_path, "graph")
+            ops_dict = await self.state.dict(*self._state_path, "operations")
+            exec_dict = await self.state.dict(*self._state_path, "execution")
+        elif isinstance(self.state, SyncStateProtocol):
+            graph_dict = self.state.dict(*self._state_path, "graph")
+            ops_dict = self.state.dict(*self._state_path, "operations")
+            exec_dict = self.state.dict(*self._state_path, "execution")
         else:
             # Unsupported state protocol
             return default_stats
@@ -499,4 +503,7 @@ class TracingServiceSpec(Spec):
 
     name: str = SpecField(default="tracing_service")
     factory: type = SpecField(default=TracingService)
-    tracing_state: Spec = SpecField(default=StateSpec())
+    state: Spec = SpecField(
+        default=StateSpec().with_value_at("storage_srv", "path", value=".tracing")
+    )
+    state_root_path: tuple[str, ...] = SpecField(default=("_", "tracing"))

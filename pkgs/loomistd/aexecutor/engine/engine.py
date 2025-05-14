@@ -1,5 +1,5 @@
 """
-Execution engine for the operations framework.
+Async execution engine for the operations framework.
 
 This module provides the ExecutionEngine, which is the central orchestrator
 for operation execution. It combines the functionality of specialized engine
@@ -45,7 +45,7 @@ from .timing import TimingEngine
 P = ParamSpec("P")
 
 
-class ExecutionEngine(
+class Executor(
     AsyncService,
     AtomEngine[StateT, StateDictT],
     FlowEngine[StateT, StateDictT],
@@ -93,7 +93,7 @@ class ExecutionEngine(
 
     def Compound(
         self,
-        op: Callable[Concatenate[ExecutionEngine, P], Operation],
+        op: Callable[Concatenate[Executor, P], Operation],
     ) -> Callable[P, Operation]:
         """
         A decorator factory that injects an executor engine into a function.
@@ -163,7 +163,7 @@ class ExecutionEngine(
         await super().exec_operation(context)
 
 
-class ExecutionEngineSpec(Spec):
+class ExecutorSpec(Spec):
     """
     Specification for the ExecutionEngine.
 
@@ -172,17 +172,19 @@ class ExecutionEngineSpec(Spec):
     """
 
     name: str = SpecField(default="execution_engine")
-    factory: type = SpecField(default=ExecutionEngine)
-    state: Spec = SpecField(default=StateSpec())
-    executor: Spec = SpecField(default=TaskExecutionServiceSpec())
-    logger: Spec = SpecField(default=LoggingServiceSpec())
-    tracing: Spec = SpecField(default=TracingServiceSpec())
+    factory: type = SpecField(default=Executor)
+    state: Spec = SpecField(default_factory=StateSpec)
+    executor: Spec = SpecField(default_factory=TaskExecutionServiceSpec)
+    logger: Spec = SpecField(default_factory=LoggingServiceSpec)
+    tracing: Spec = SpecField(
+        default=TracingServiceSpec().with_value_at("state", "storage_srv", "path", value=".tracing")
+    )
 
 
 if TYPE_CHECKING:
     _: type[
         AsyncExecutorProtocol[
-            ExecutionEngine,
+            Executor,
             Context,
             Operation,
             App,
@@ -197,4 +199,4 @@ if TYPE_CHECKING:
             Subscribe,
             Timeout,
         ]
-    ] = ExecutionEngine
+    ] = Executor

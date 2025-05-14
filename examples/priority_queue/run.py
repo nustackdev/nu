@@ -15,21 +15,10 @@ from typing import cast
 
 # Loomi imports
 from loomi import AsyncApp, Context, Operation, Spec
-from loomistd.aexecutor import ExecutionEngineSpec
-from loomistd.aexecutor.services.tracing import TracingServiceSpec
-from loomistd.kv.file_storage import FileStorageSpec
-from loomistd.state import StateSpec
 from loomix.logging import setup_logging
 
 # Setup logging
 setup_logging(Path(".logs"), log_level=10)
-
-# Basic state configuration
-state_spec = StateSpec()
-trasing_spec = TracingServiceSpec(
-    tracing_state=StateSpec(storage_srv=FileStorageSpec(path=Path(".tracing/db")))
-)
-executor_spec = ExecutionEngineSpec(state=state_spec, tracing=trasing_spec)
 
 
 class PriorityTaskApp(AsyncApp):
@@ -463,9 +452,18 @@ class PriorityTaskApp(AsyncApp):
 
 async def main():
     """Run the priority task processing example."""
-    print(f"\n[{time.strftime('%H:%M:%S')}] Starting priority-based task processing example\n")
+
+    # Basic configuration
+    from loomistd.specs import AsyncExecutorSpec, SyncStateSpec
+
+    state_spec = SyncStateSpec().with_value_at("storage_srv", "path", value=".db")
+    executor_spec = AsyncExecutorSpec(state=state_spec).with_value_at(
+        "tracing", "state", "storage_srv", "path", value=".tracing"
+    )
 
     # Create and run the application
+    print(f"\n[{time.strftime('%H:%M:%S')}] Starting priority-based task processing example\n")
+
     async with PriorityTaskApp(
         Spec(factory=PriorityTaskApp),
         state_spec=state_spec,

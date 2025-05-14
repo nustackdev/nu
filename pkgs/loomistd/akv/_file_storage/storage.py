@@ -99,6 +99,7 @@ class FileStorage(
         """Load data from file if it exists."""
         # Ensure directory exists
         self.path.mkdir(parents=True, exist_ok=True)
+        self._data_file_path.touch(exist_ok=True)
 
         async with self._memory_lock:
             with self._file_lock:

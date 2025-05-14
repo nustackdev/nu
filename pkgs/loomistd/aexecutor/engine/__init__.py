@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from .engine import ExecutionEngine, ExecutionEngineSpec
+from .engine import Executor, ExecutorSpec
 
 __all__ = [
-    "ExecutionEngine",
-    "ExecutionEngineSpec",
+    "Executor",
+    "ExecutorSpec",
 ]
