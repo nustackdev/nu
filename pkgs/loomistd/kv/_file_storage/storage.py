@@ -53,7 +53,7 @@ class FileStorage(
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec_srv: CodecProtocol[
+    codec: CodecProtocol[
         FileStorageKey, FileStorageValue, FileStorageEncodedKey, FileStorageEncodedValue
     ] = UseService()
 
@@ -381,7 +381,7 @@ class FileStorageSpec(Spec):
     factory: type = SpecField(default=FileStorage)
     mode: str = SpecField(default="write")
     path: Path | str = SpecField(default=Path(".db"))
-    codec_srv: Spec = SpecField(default_factory=JSONCodecSpec)
+    codec: Spec = SpecField(default_factory=JSONCodecSpec)
 
 
 if TYPE_CHECKING:

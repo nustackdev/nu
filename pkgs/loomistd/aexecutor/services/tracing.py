@@ -503,7 +503,5 @@ class TracingServiceSpec(Spec):
 
     name: str = SpecField(default="tracing_service")
     factory: type = SpecField(default=TracingService)
-    state: Spec = SpecField(
-        default=StateSpec().with_value_at("storage_srv", "path", value=".tracing")
-    )
+    state: Spec = SpecField(default=StateSpec().with_value_at("storage", "path", value=".tracing"))
     state_root_path: tuple[str, ...] = SpecField(default=("_", "tracing"))

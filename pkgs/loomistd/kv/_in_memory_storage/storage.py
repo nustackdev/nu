@@ -48,7 +48,7 @@ class InMemoryStorage(
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec_srv: CodecProtocol[
+    codec: CodecProtocol[
         InMemoryStorageKey,
         InMemoryStorageValue,
         InMemoryStorageEncodedKey,
@@ -310,7 +310,7 @@ class InMemoryStorageSpec(Spec):
     name: str = SpecField(default="in_memory_storage")
     factory: type = SpecField(default=InMemoryStorage)
     mode: str = SpecField(default="write")
-    codec_srv: Spec = SpecField(default_factory=PassthroughCodecSpec)
+    codec: Spec = SpecField(default_factory=PassthroughCodecSpec)
 
 
 if TYPE_CHECKING:

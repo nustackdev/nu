@@ -29,9 +29,7 @@ class InMemoryObserver(
 ):
     """In-memory observer with thread-safe subscription management."""
 
-    codec_srv: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = (
-        UseService()
-    )
+    codec: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = UseService()
 
     def _connect_impl(self) -> None:
         if not hasattr(self, "_data_lock"):
@@ -96,7 +94,7 @@ class InMemoryObserver(
 class InMemoryObserverSpec(Spec):
     name: str = "in_memory_observer"
     factory: type = SpecField(default=InMemoryObserver)
-    codec_srv: Spec = SpecField(default_factory=PassthroughCodecSpec)
+    codec: Spec = SpecField(default_factory=PassthroughCodecSpec)
 
 
 if TYPE_CHECKING:

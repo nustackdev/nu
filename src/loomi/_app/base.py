@@ -56,7 +56,9 @@ class AppABC(ABC, Generic[StateT, ExecutorT]):
 
     def __init__(
         self,
+        /,
         spec: Spec | None = None,
+        *,
         state_spec: Spec | None = None,
         executor_spec: Spec | None = None,
     ) -> None:

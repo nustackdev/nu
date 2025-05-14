@@ -39,9 +39,9 @@ READ_PATTERNS = ["sequential", "random", "repeated"]  # Different read patterns 
 USE_LMDB = True  # Set to True to use LMDB instead of in-memory storage
 
 if USE_LMDB:
-    state_spec = StateSpec(storage_srv=LMDBStorageSpec())
+    state_spec = StateSpec(storage=LMDBStorageSpec())
 else:
-    state_spec = StateSpec(storage_srv=InMemoryStorageSpec())
+    state_spec = StateSpec(storage=InMemoryStorageSpec())
 
 executor_spec = ExecutionEngineSpec(state=state_spec)
 

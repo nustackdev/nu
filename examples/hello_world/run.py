@@ -1,8 +1,6 @@
 import asyncio
 
-from loomi import AsyncApp, Context, Operation, Spec
-from loomistd.aexecutor import ExecutionEngineSpec
-from loomistd.state import StateSpec
+from loomi import AsyncApp, Context, Operation
 
 
 class HelloWorldApp(AsyncApp):
@@ -55,12 +53,15 @@ class HelloWorldApp(AsyncApp):
 
 
 async def main():
+    # Basic configuration
+    from loomistd.specs import AsyncExecutorSpec, SyncStateSpec
+
+    state_spec = SyncStateSpec().with_value_at("storage", "path", value=".db")
+    executor_spec = AsyncExecutorSpec(state=state_spec).with_value_at(
+        "tracing", "state", "storage", "path", value=".tracing"
+    )
     # Create and run the application
-    async with HelloWorldApp(
-        Spec(factory=HelloWorldApp),
-        state_spec=StateSpec(),
-        executor_spec=ExecutionEngineSpec(),
-    ) as app:
+    async with HelloWorldApp(state_spec=state_spec, executor_spec=executor_spec) as app:
         await app.start()
 
 

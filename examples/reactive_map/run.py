@@ -12,24 +12,11 @@ import time
 from pathlib import Path
 
 from loomi import AsyncApp, Context, Operation
-from loomistd.aexecutor import ExecutionEngineSpec
-from loomistd.aexecutor.services.tracing import TracingServiceSpec
 from loomistd.compound_ops import ReactiveMap
-from loomistd.kv.file_storage import FileStorageSpec
-from loomistd.state import StateSpec
 from loomix.logging import setup_logging
 
 # Basic setup
 setup_logging(Path(".logs"), log_level=10)
-
-# Configure service specs
-state_spec = StateSpec()
-
-tracing_state_spec = StateSpec(storage_srv=FileStorageSpec(path=Path(".tracing/db")))
-executor_spec = ExecutionEngineSpec(
-    state=state_spec,
-    tracing=TracingServiceSpec(tracing_state=tracing_state_spec),
-)
 
 
 class TodoReactiveMapApp(AsyncApp):
@@ -121,9 +108,18 @@ class TodoReactiveMapApp(AsyncApp):
 
 async def main():
     """Run the ReactiveMap example."""
-    print(f"\n[{time.strftime('%H:%M:%S')}] Starting ReactiveMap Todo example\n")
+
+    # Basic configuration
+    from loomistd.specs import AsyncExecutorSpec, SyncStateSpec
+
+    state_spec = SyncStateSpec().with_value_at("storage", "path", value=".db")
+    executor_spec = AsyncExecutorSpec(state=state_spec).with_value_at(
+        "tracing", "state", "storage", "path", value=".tracing"
+    )
 
     # Create and run the application
+    print(f"\n[{time.strftime('%H:%M:%S')}] Starting ReactiveMap Todo example\n")
+
     async with TodoReactiveMapApp(
         state_spec=state_spec,
         executor_spec=executor_spec,

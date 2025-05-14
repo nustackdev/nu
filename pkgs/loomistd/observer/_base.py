@@ -31,17 +31,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         ObserverEncodedKeyT: Encoded topic type
     """
 
-    codec_srv: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
-
-    @property
-    def codec(self) -> CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]:
-        """
-        Get codec for encoding/decoding topics.
-
-        Returns:
-            Codec instance
-        """
-        return self.codec_srv
+    codec: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
 
     def setup(self) -> None:
         """

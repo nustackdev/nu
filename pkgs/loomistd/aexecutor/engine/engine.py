@@ -177,7 +177,7 @@ class ExecutorSpec(Spec):
     executor: Spec = SpecField(default_factory=TaskExecutionServiceSpec)
     logger: Spec = SpecField(default_factory=LoggingServiceSpec)
     tracing: Spec = SpecField(
-        default=TracingServiceSpec().with_value_at("state", "storage_srv", "path", value=".tracing")
+        default=TracingServiceSpec().with_value_at("state", "storage", "path", value=".tracing")
     )
 
 

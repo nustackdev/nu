@@ -78,7 +78,7 @@ async def run_dashboard(
 
 if __name__ == "__main__":
     tracing_state_spec = StateSpec(
-        name="tracing_state", storage_srv=FileStorageSpec(path=Path(".tracing/db"))
+        name="tracing_state", storage=FileStorageSpec(path=Path(".tracing"))
     )
     spec = VisualizationServiceSpec(state=tracing_state_spec)
     asyncio.run(run_dashboard(spec))

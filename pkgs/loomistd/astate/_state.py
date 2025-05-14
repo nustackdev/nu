@@ -43,8 +43,8 @@ class State(AsyncService, TreeStorageBase[StateValue]):
     - Async-first design
     """
 
-    storage_srv: StorageServiceProtocol[StateKey, StateValue, Any, Any] = UseService()
-    observer_srv: ObserverServiceProtocol[StateKey, Any] = UseService()
+    storage: StorageServiceProtocol[StateKey, StateValue, Any, Any] = UseService()
+    observer: ObserverServiceProtocol[StateKey, Any] = UseService()
 
     @property
     def is_async(self) -> bool:
@@ -58,8 +58,8 @@ class State(AsyncService, TreeStorageBase[StateValue]):
 
     async def setup(self):
         self._observable_kv_storage = ObservableKVStorageCore(
-            storage=self.storage_srv,
-            observer=self.observer_srv,
+            storage=self.storage,
+            observer=self.observer,
         )
         self._tree_storage_core = TreeStorageCore(self._observable_kv_storage)
 
@@ -102,8 +102,8 @@ class State(AsyncService, TreeStorageBase[StateValue]):
 class StateSpec(Spec):
     name: str = SpecField(default="state")
     factory: type = SpecField(default=State)
-    storage_srv: Spec = SpecField(default_factory=FileStorageSpec)
-    observer_srv: Spec
+    storage: Spec = SpecField(default_factory=FileStorageSpec)
+    observer: Spec
 
 
 if TYPE_CHECKING:

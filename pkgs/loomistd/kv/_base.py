@@ -32,19 +32,7 @@ class BaseStorage(
         ValueT: Type of values supported by this storage
     """
 
-    codec_srv: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
-
-    @property
-    def codec(
-        self,
-    ) -> CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]:
-        """
-        Get codec for encoding/decoding keys and values.
-
-        Returns:
-            Codec instance
-        """
-        return self.codec_srv
+    codec: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
 
     @property
     def mode(self) -> StorageMode:

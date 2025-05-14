@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import cast
 
 # Loomi imports
-from loomi import AsyncApp, Context, Operation, Spec
+from loomi import AsyncApp, Context, Operation
 from loomix.logging import setup_logging
 
 # Setup logging
@@ -456,16 +456,15 @@ async def main():
     # Basic configuration
     from loomistd.specs import AsyncExecutorSpec, SyncStateSpec
 
-    state_spec = SyncStateSpec().with_value_at("storage_srv", "path", value=".db")
+    state_spec = SyncStateSpec().with_value_at("storage", "path", value=".db")
     executor_spec = AsyncExecutorSpec(state=state_spec).with_value_at(
-        "tracing", "state", "storage_srv", "path", value=".tracing"
+        "tracing", "state", "storage", "path", value=".tracing"
     )
 
     # Create and run the application
     print(f"\n[{time.strftime('%H:%M:%S')}] Starting priority-based task processing example\n")
 
     async with PriorityTaskApp(
-        Spec(factory=PriorityTaskApp),
         state_spec=state_spec,
         executor_spec=executor_spec,
     ) as app:
