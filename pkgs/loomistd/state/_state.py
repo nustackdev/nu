@@ -102,8 +102,8 @@ class State(SyncService, TreeStorageBase[StateValue]):
 class StateSpec(Spec):
     name: str = SpecField(default="state")
     factory: type = SpecField(default=State)
-    storage_srv: Spec = SpecField(default=FileStorageSpec())
-    observer_srv: Spec = SpecField(default=InMemoryObserverSpec())
+    storage_srv: Spec = SpecField(default_factory=FileStorageSpec)
+    observer_srv: Spec = SpecField(default_factory=InMemoryObserverSpec)
 
 
 if TYPE_CHECKING:

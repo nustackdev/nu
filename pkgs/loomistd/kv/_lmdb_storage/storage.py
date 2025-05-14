@@ -54,6 +54,12 @@ class LMDBStorage(
     spec: LMDBStorageSpec
 
     def setup(self):
+        self.path = (
+            self.spec.path.resolve()
+            if isinstance(self.spec.path, Path)
+            else Path(self.spec.path).resolve()
+        )
+
         if self.spec.map_size <= 0:
             raise ValueError("Map size must be positive")
         if self.spec.map_size > sys.maxsize:
@@ -79,18 +85,18 @@ class LMDBStorage(
         """Initialize LMDB environment."""
 
         # Ensure directory exists
-        self.spec.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.mkdir(parents=True, exist_ok=True)
 
         with self._data_lock:
             # Open LMDB environment
             self._env = lmdb.open(
-                str(self.spec.path),
+                str(self.path),
                 map_size=self.spec.map_size,
                 max_dbs=self.spec.max_dbs,
                 readonly=self.mode == "read",
                 **self.spec.lmdb_kwargs,
             )
-            logger.debug(f"Connected to LMDB at {self.spec.path} in {self.mode} mode")
+            logger.debug(f"Connected to LMDB at {self.path} in {self.mode} mode")
 
     def _disconnect_impl(self) -> None:
         """Close LMDB environment."""
@@ -354,7 +360,7 @@ class LMDBStorageSpec(Spec):
     name: str = SpecField(default="lmdb_storage")
     factory: type = SpecField(default=LMDBStorage)
     mode: str = SpecField(default="write")
-    path: Path = SpecField(default=Path(".db"))
+    path: Path | str = SpecField(default=Path(".db"))
     codec_srv: Spec = SpecField(default_factory=BinaryCodecSpec)
     map_size: int = SpecField(default=10 * 1024 * 1024 * 1024)  # 10GB default
     max_dbs: int = SpecField(default=0)

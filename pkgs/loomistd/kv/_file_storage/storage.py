@@ -60,13 +60,20 @@ class FileStorage(
     spec: FileStorageSpec
 
     def setup(self):
-        self.path = self.spec.path
+        self.path = (
+            self.spec.path.resolve()
+            if isinstance(self.spec.path, Path)
+            else Path(self.spec.path).resolve()
+        )
 
         # Single lock for all in-process synchronization
         self._memory_lock = threading.Lock()
 
+        # Database file path
+        self._data_file_path = self.path / "db.json"
+
         # Single lock file for all inter-process synchronization
-        self._lock_file = self.path.parent / f"{self.path.name}.lock"
+        self._lock_file = self.path / f"{self.path.name}.lock"
         self._file_lock = filelock.FileLock(self._lock_file)
 
         self._data: dict[str, str] = {}
@@ -90,14 +97,14 @@ class FileStorage(
     def _connect_impl(self) -> None:
         """Load data from file if it exists."""
         # Ensure directory exists
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.mkdir(parents=True, exist_ok=True)
 
         with self._memory_lock:
             with self._file_lock:
                 # Create file if needed
                 if not self.path.exists():
                     if self.mode == "write":
-                        with open(self.path, "w") as f:
+                        with open(self._data_file_path, "w") as f:
                             f.write("{}")
                     else:
                         raise StorageError(
@@ -126,7 +133,7 @@ class FileStorage(
     def _load_data(self) -> None:
         """Load data from file. Must be called with both locks held."""
         try:
-            content = self.path.read_text()
+            content = self._data_file_path.read_text()
             self._data = json.loads(content) if content else {}
         except json.JSONDecodeError as e:
             raise StorageError(f"Corrupted storage file: {e}")
@@ -138,12 +145,12 @@ class FileStorage(
         if self.mode != "write":
             raise StorageError("Cannot save in read-only mode")
 
-        temp_path = self.path.with_suffix(".tmp")
+        temp_path = self._data_file_path.with_suffix(".tmp")
         try:
             content = json.dumps(self._data, indent=2)
             with open(temp_path, "w") as f:
                 f.write(content)
-            os.replace(temp_path, self.path)
+            os.replace(temp_path, self._data_file_path)
         except Exception as e:
             if temp_path.exists():
                 temp_path.unlink()
@@ -372,7 +379,7 @@ class FileStorageSpec(Spec):
     name: str = SpecField(default="file_storage")
     factory: type = SpecField(default=FileStorage)
     mode: str = SpecField(default="write")
-    path: Path = SpecField(default=Path(".db/db.json"))
+    path: Path | str = SpecField(default=Path(".db"))
     codec_srv: Spec = SpecField(default_factory=JSONCodecSpec)
 
 

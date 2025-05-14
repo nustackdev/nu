@@ -102,7 +102,7 @@ class State(AsyncService, TreeStorageBase[StateValue]):
 class StateSpec(Spec):
     name: str = SpecField(default="state")
     factory: type = SpecField(default=State)
-    storage_srv: Spec = SpecField(default=FileStorageSpec())
+    storage_srv: Spec = SpecField(default_factory=FileStorageSpec)
     observer_srv: Spec
 
 
