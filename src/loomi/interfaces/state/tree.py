@@ -351,13 +351,13 @@ class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
         **kwargs: Any,
     ) -> None:
         """
-        Apply a transformation function to a node.
+        Apply a transformation function to a node **in-place**.
 
         The transformation function takes the current value as a Python object
-        and returns a new transformed Python object.
+        and returns a new transformed Python object to replace the value in node.
 
         When called with just the transform function, transforms the current node.
-        When called with path segments, transforms the specified nested node.
+        When called with path segments, transforms the specified nested node
 
         Args:
             transform_func: Function that takes a Python object and returns a transformed version
@@ -404,7 +404,7 @@ class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
         **kwargs: Any,
     ) -> None:
         """
-        Filter elements of a list or dictionary node.
+        Filter elements of a list or dictionary node **in-place**.
 
         For list nodes, filter_func takes (value) and returns a boolean.
         For dictionary nodes, filter_func takes (key, value) and returns a boolean.
@@ -423,54 +423,6 @@ class AsyncTreeNodeProtocol(Protocol[TreeValueT]):
         Raises:
             TypeError: If the node is neither a list nor a dictionary
             KeyError: If the node doesn't exist
-        """
-        ...
-
-    @overload
-    async def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
-    ) -> None: ...
-
-    @overload
-    async def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        path: TreePathComponent,
-        /,
-        *paths: TreePathComponent,
-        txn: "AsyncTransactionProtocol[TreeValueT] | None" = None,
-    ) -> None: ...
-
-    async def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Apply a mapping function to each element in a list or dictionary node.
-
-        For list nodes, each element is replaced with the result of map_func(element).
-        For dictionary nodes, each value is replaced with the result of map_func(value).
-
-        This is a convenience method that transforms the node by applying the map function
-        to each element while preserving the structure.
-
-        When called with just the map function, maps the current node elements.
-        When called with path segments, maps the specified nested node elements.
-
-        Args:
-            map_func: Function to apply to each element
-            path: Optional first path segment
-            *paths: Additional path segments
-            txn: Optional transaction to use
-
-        Raises:
-            TypeError: If the node is neither a list nor a dictionary
-            KeyError: If the node doesn't exist
-            TypeError: If the mapping result contains unsupported types
         """
         ...
 
@@ -642,13 +594,18 @@ class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         ...
 
     async def pop(
-        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: TreeValueT | EmptyProtocol = ...,
     ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
         """
         Remove and return a value from the dictionary node.
 
         Args:
-            key: Key to remove
+            path: First path segment
+            *paths: Additional path segments
             default: Value to return if key doesn't exist
 
         Returns:
@@ -659,12 +616,15 @@ class AsyncTreeDictProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    async def setdefault(self, key: TreePathComponent, default: TreeValueT = ...) -> TreeValueT:
+    async def setdefault(
+        self, path: TreePathComponent, /, *paths: TreePathComponent, default: TreeValueT = ...
+    ) -> TreeValueT:
         """
         Return the value for key if it exists, otherwise set it to default.
 
         Args:
-            key: Key to check and potentially set
+            path: First path segment
+            *paths: Additional path segments
             default: Value to set and return if key doesn't exist
 
         Returns:
@@ -693,7 +653,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
     to the underlying state structure.
     """
 
-    async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+    async def get(self, index: int, /) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from the list node at the specified index.
 
@@ -708,7 +668,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    async def set(self, index: int, value: TreeValueT) -> None:
+    async def set(self, index: int, value: TreeValueT, /) -> None:
         """
         Set an item in the list node at the specified index.
 
@@ -721,7 +681,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    async def append(self, value: TreeValueT) -> int:
+    async def append(self, value: TreeValueT, /) -> int:
         """
         Append an item to the list node.
 
@@ -733,7 +693,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    async def extend(self, values: list[TreeValueT]) -> int:
+    async def extend(self, values: list[TreeValueT], /) -> int:
         """
         Extend the list node with multiple values.
 
@@ -745,7 +705,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    async def insert(self, index: int, value: TreeValueT) -> None:
+    async def insert(self, index: int, value: TreeValueT, /) -> None:
         """
         Insert an item at a specific position in the list node.
 
@@ -758,7 +718,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    async def delete(self, index: int) -> None:
+    async def delete(self, index: int, /) -> None:
         """
         Remove an item from the list node at the specified index.
 
@@ -794,7 +754,7 @@ class AsyncTreeListProtocol(AsyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    async def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
+    async def pop(self, index: int = -1, /) -> TreeValueContainer[TreeValueT]:
         """
         Remove and return an item from the list node.
 
@@ -1142,10 +1102,10 @@ class SyncTreeNodeProtocol(Protocol[TreeValueT]):
         **kwargs: Any,
     ) -> None:
         """
-        Apply a transformation function to a node.
+        Apply a transformation function to a node **in-place**.
 
         The transformation function takes the current value as a Python object
-        and returns a new transformed Python object.
+        and returns a new transformed Python object to replace the value in node.
 
         When called with just the transform function, transforms the current node.
         When called with path segments, transforms the specified nested node.
@@ -1195,7 +1155,7 @@ class SyncTreeNodeProtocol(Protocol[TreeValueT]):
         **kwargs: Any,
     ) -> None:
         """
-        Filter elements of a list or dictionary node.
+        Filter elements of a list or dictionary node **in-place**.
 
         For list nodes, filter_func takes (value) and returns a boolean.
         For dictionary nodes, filter_func takes (key, value) and returns a boolean.
@@ -1214,54 +1174,6 @@ class SyncTreeNodeProtocol(Protocol[TreeValueT]):
         Raises:
             TypeError: If the node is neither a list nor a dictionary
             KeyError: If the node doesn't exist
-        """
-        ...
-
-    @overload
-    def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
-    ) -> None: ...
-
-    @overload
-    def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        path: TreePathComponent,
-        /,
-        *paths: TreePathComponent,
-        txn: "SyncTransactionProtocol[TreeValueT] | None" = None,
-    ) -> None: ...
-
-    def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Apply a mapping function to each element in a list or dictionary node.
-
-        For list nodes, each element is replaced with the result of map_func(element).
-        For dictionary nodes, each value is replaced with the result of map_func(value).
-
-        This is a convenience method that transforms the node by applying the map function
-        to each element while preserving the structure.
-
-        When called with just the map function, maps the current node elements.
-        When called with path segments, maps the specified nested node elements.
-
-        Args:
-            map_func: Function to apply to each element
-            path: Optional first path segment
-            *paths: Additional path segments
-            txn: Optional transaction to use
-
-        Raises:
-            TypeError: If the node is neither a list nor a dictionary
-            KeyError: If the node doesn't exist
-            TypeError: If the mapping result contains unsupported types
         """
         ...
 
@@ -1431,13 +1343,18 @@ class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         ...
 
     def pop(
-        self, key: TreePathComponent, default: TreeValueT | EmptyProtocol = ...
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: TreeValueT | EmptyProtocol = ...,
     ) -> TreeValueContainer[TreeValueT] | EmptyProtocol:
         """
         Remove and return a value from the dictionary node.
 
         Args:
-            key: Key to remove
+            path: First path segment
+            *paths: Additional path segments
             default: Value to return if key doesn't exist
 
         Returns:
@@ -1448,12 +1365,15 @@ class SyncTreeDictProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+    def setdefault(
+        self, path: TreePathComponent, /, *paths: TreePathComponent, default: TreeValueT = ...
+    ) -> TreeValueT:
         """
         Return the value for key if it exists, otherwise set it to default.
 
         Args:
-            key: Key to check and potentially set
+            path: First path segment
+            *paths: Additional path segments
             default: Value to set and return if key doesn't exist
 
         Returns:
@@ -1482,7 +1402,7 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
     to the underlying state structure.
     """
 
-    def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+    def get(self, index: int, /) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from the list node at the specified index.
 
@@ -1497,7 +1417,7 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    def set(self, index: int, value: TreeValueT) -> None:
+    def set(self, index: int, value: TreeValueT, /) -> None:
         """
         Set an item in the list node at the specified index.
 
@@ -1510,7 +1430,7 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    def append(self, value: TreeValueT) -> int:
+    def append(self, value: TreeValueT, /) -> int:
         """
         Append an item to the list node.
 
@@ -1522,7 +1442,7 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    def extend(self, values: list[TreeValueT]) -> int:
+    def extend(self, values: list[TreeValueT], /) -> int:
         """
         Extend the list node with multiple values.
 
@@ -1534,7 +1454,7 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    def insert(self, index: int, value: TreeValueT) -> None:
+    def insert(self, index: int, value: TreeValueT, /) -> None:
         """
         Insert an item at a specific position in the list node.
 
@@ -1547,7 +1467,7 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    def delete(self, index: int) -> None:
+    def delete(self, index: int, /) -> None:
         """
         Remove an item from the list node at the specified index.
 
@@ -1583,7 +1503,7 @@ class SyncTreeListProtocol(SyncTreeNodeProtocol[TreeValueT], Protocol):
         """
         ...
 
-    def pop(self, index: int = ...) -> TreeValueContainer[TreeValueT]:
+    def pop(self, index: int = -1, /) -> TreeValueContainer[TreeValueT]:
         """
         Remove and return an item from the list node.
 

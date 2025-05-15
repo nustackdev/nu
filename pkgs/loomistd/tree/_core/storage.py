@@ -482,14 +482,31 @@ class TreeStorage(DictOperations[TreeValueT], ListOperations[TreeValueT]):
             StorageKeyError: If the path doesn't exist
             TypeError: If the transformation result is not of a compatible type
         """
-        # Get the current node as a Python object
-        obj = self._to_python_object(path, txn)
+        # Check the node type
+        node_type = self._get_node_type(path, txn)
 
-        # Apply the transformation
-        transformed_obj = transform_func(obj)
+        if node_type == self._TYPE_LIST:
+            # Transform the list node
+            items = self._list_to_list(path, txn)
+            transform_func_list = cast(Callable[[TreeValueT], TreeValueT], transform_func)
+            transformed_items = [transform_func_list(item) for item in items]
 
-        # Store the transformed object
-        self._store_python_object(path, transformed_obj, txn)
+            # Replace with transformed list
+            self._set_list(path, transformed_items, txn)
+
+        elif node_type == self._TYPE_DICT:
+            # Transform the dictionary node
+            items = self._dict_items(path, txn)
+            transform_func_dict = cast(Callable[[str, TreeValueT], TreeValueT], transform_func)
+            transformed_items = {k: transform_func_dict(k, v) for k, v in items}
+
+            # Replace with transformed dict
+            self._set_dict(path, transformed_items, txn)
+
+        else:
+            raise ObjectTypeError(
+                f"Node at path {path} must be a list or dictionary node for filtering"
+            )
 
     def filter_node(
         self,

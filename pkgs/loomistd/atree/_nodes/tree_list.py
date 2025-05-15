@@ -25,7 +25,7 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
 
     # --- Async list operations --- #
 
-    async def get(self, index: int) -> TreeValueContainer[TreeValueT]:
+    async def get(self, index: int, /) -> TreeValueContainer[TreeValueT]:
         """
         Get an item from the list node at the specified index.
 
@@ -40,7 +40,7 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         """
         return await self._storage.list_get(self._path, index, self._txn)
 
-    async def set(self, index: int, value: TreeValueT) -> None:
+    async def set(self, index: int, value: TreeValueT, /) -> None:
         """
         Set an item in the list node at the specified index.
 
@@ -53,7 +53,7 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         """
         await self._storage.list_set(self._path, index, value, self._txn)
 
-    async def append(self, value: TreeValueT) -> int:
+    async def append(self, value: TreeValueT, /) -> int:
         """
         Append an item to the list node.
 
@@ -65,7 +65,7 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         """
         return await self._storage.list_append(self._path, value, self._txn)
 
-    async def extend(self, values: list[TreeValueT]) -> int:
+    async def extend(self, values: list[TreeValueT], /) -> int:
         """
         Extend the list node with multiple values.
 
@@ -77,7 +77,7 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         """
         return await self._storage.list_extend(self._path, values, self._txn)
 
-    async def insert(self, index: int, value: TreeValueT) -> None:
+    async def insert(self, index: int, value: TreeValueT, /) -> None:
         """
         Insert an item at a specific position in the list node.
 
@@ -90,7 +90,7 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
         """
         await self._storage.list_insert(self._path, index, value, self._txn)
 
-    async def delete(self, index: int) -> None:
+    async def delete(self, index: int, /) -> None:
         """
         Remove an item from the list node at the specified index.
 
@@ -135,7 +135,7 @@ class TreeList(TreeNode[TreeValueT], AsyncTreeListProtocol[TreeValueT]):
                 # Index became invalid, just skip it
                 pass
 
-    async def pop(self, index: int = -1) -> TreeValueContainer[TreeValueT]:
+    async def pop(self, index: int = -1, /) -> TreeValueContainer[TreeValueT]:
         """
         Remove and return an item from the list node.
 

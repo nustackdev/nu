@@ -1,0 +1,224 @@
+---
+title: "Cheatsheet"
+sidebarTitle: "Cheatsheet"
+---
+
+# State Cheatsheet
+
+Think of Loomi's state as a mix between a nested Python dictionary and a mini-database. 
+It's a hierarchical tree where every node can be a dictionary, list, or primitive value.
+You can traverse, modify, and observe this tree with a clean and intuitive API.
+
+## 🧠 The Mental Model
+
+Loomi's state management works like a tree:
+
+```
+state
+├── users
+│   ├── user1
+│   │   ├── name: "Alice"
+│   │   └── settings: {theme: "dark"}
+│   └── user2
+│       └── name: "Bob"
+└── tasks
+    ├── high_priority: {...}
+    └── low_priority: {...}
+```
+
+You navigate this tree with path components like `state.dict("users", "user1")` to access the `user1` node.
+
+## 🧩 Key Concepts
+
+- **Path Navigation**: Access nested data with dot notation or path components
+- **Dictionary & List Nodes**: State nodes are either dict-like, list-like, or primitive values
+- **Transactions**: Atomic operations across multiple state changes
+- **Observers**: Subscribe to changes at specific paths
+- **Synchronous & Asynchronous**: Both APIs available (choose what fits your app)
+
+## 🔍 Core State Access
+
+| Operation | Sync Syntax | Async Syntax |
+|-----------|-------------|-------------|
+| Access dict node | `state.dict("users")` | `await state.dict("users")` |
+| Access list node | `state.list("tasks")` | `await state.list("tasks")` |
+| Check if path exists | `state.exists("users", "alice")` | `await state.exists("users", "alice")` |
+| Check if dict node | `state.is_dict("users")` | `await state.is_dict("users")` |
+| Check if list node | `state.is_list("tasks")` | `await state.is_list("tasks")` |
+
+## 🛣️ Path Access Deep Dive
+
+Paths in Loomi are flexible and can be specified in multiple ways:
+
+| Path Style | Example | Notes |
+|------------|---------|-------|
+| Single argument | `state.dict("users")` | Accesses the "users" node |
+| Multiple arguments | `state.dict("users", "alice", "settings")` | Most common, clean syntax for hierarchical access |
+| Convention for root | `state.dict("_")` | Accesses the root node |
+
+## 📚 Dictionary Operations
+
+| Operation | Sync Syntax | Async Syntax |
+|-----------|-------------|-------------|
+| Get value | `dict_node.get("name")` | `await dict_node.get("name")` |
+| Get with default | `dict_node.get("name", default="Unknown")` | `await dict_node.get("name", default="Unknown")` |
+| Set value | `dict_node.set("name", value="Alice")` | `await dict_node.set("name", value="Alice")` |
+| Delete key | `dict_node.delete("name")` | `await dict_node.delete("name")` |
+| Check if key exists | `dict_node.contains("name")` | `await dict_node.contains("name")` |
+| Get all keys | `dict_node.keys()` | `await dict_node.keys()` |
+| Get all values | `dict_node.values()` | `await dict_node.values()` |
+| Get all items | `dict_node.items()` | `await dict_node.items()` |
+| Convert to Python dict | `dict_node.to_dict()` | `await dict_node.to_dict()` |
+| Update from dict | `dict_node.update({"a": 1, "b": 2})` | `await dict_node.update({"a": 1, "b": 2})` |
+| Clear all items | `dict_node.clear()` | `await dict_node.clear()` |
+| Pop key | `dict_node.pop("key")` | `await dict_node.pop("key")` |
+| Set default | `dict_node.setdefault("key", default="default")` | `await dict_node.setdefault("key", default="default")` |
+
+## 📋 List Operations
+
+| Operation | Sync Syntax | Async Syntax |
+|-----------|-------------|-------------|
+| Get item by index | `list_node.get(0)` | `await list_node.get(0)` |
+| Set item by index | `list_node.set(1, "value")` | `await list_node.set(1, "value")` |
+| Append item | `list_node.append("value")` | `await list_node.append("value")` |
+| Extend with multiple values | `list_node.extend(["a", "b"])` | `await list_node.extend(["a", "b"])` |
+| Insert at position | `list_node.insert(0, "value")` | `await list_node.insert(0, "value")` |
+| Delete by index | `list_node.delete(1)` | `await list_node.delete(1)` |
+| Get length | `list_node.length()` | `await list_node.length()` |
+| Convert to Python list | `list_node.to_list()` | `await list_node.to_list()` |
+| Clear all items | `list_node.clear()` | `await list_node.clear()` |
+| Pop item | `list_node.pop()` | `await list_node.pop()` |
+| Pop at index | `list_node.pop(1)` | `await list_node.pop(1)` |
+
+## 🔄 Node Operations
+
+Node operations work on any tree node (dictionary or list) and provide powerful manipulation capabilities. All node operations can be applied at both the current node level or at nested paths.
+
+### Node Operation Patterns
+
+| Pattern | Sync Example | Async Example | Description |
+|---------|-------------|---------------|-------------|
+| Root operation | `node.operation()` | `await node.operation()` | Operates on the current node |
+| Path operation | `node.operation("path", "to", "nested")` | `await node.operation("path", "to", "nested")` | Operates on a nested node |
+| Root with transaction | `node.operation(txn=txn)` | `await node.operation(txn=txn)` | Operates on root with transaction |
+| Path with transaction | `node.operation("path", "to", "nested", txn=txn)` | `await node.operation("path", "to", "nested", txn=txn)` | Operates on path with transaction |
+
+### Complete Node Operations
+
+| Operation | Sync Examples | Async Examples | Description |
+|-----------|---------------|----------------|-------------|
+| **Node Access** |
+| Get dictionary node | `node.dict("path")` or <br/> `node.dict("path", txn=txn)` | `await node.dict("path")` or <br/> `await node.dict("path", txn=txn)` | Get a nested dictionary node |
+| Get list node | `node.list("path")` or <br/> `node.list("path", txn=txn)` | `await node.list("path")` or <br/> `await node.list("path", txn=txn)` | Get a nested list node |
+| **Node Inspection** |
+| Check existence | `node.exists()` or <br/> `node.exists("path")` or <br/> `node.exists(txn=txn)` or <br/> `node.exists("path", txn=txn)` | `await node.exists()` or <br/> `await node.exists("path")` or <br/> `await node.exists(txn=txn)` or <br/> `await node.exists("path", txn=txn)` | Check if node exists |
+| Check if dict | `node.is_dict()` or <br/> `node.is_dict("path")` or <br/> `node.is_dict(txn=txn)` or <br/> `node.is_dict("path", txn=txn)` | `await node.is_dict()` or <br/> `await node.is_dict("path")` or <br/> `await node.is_dict(txn=txn)` or <br/> `await node.is_dict("path", txn=txn)` | Check if node is a dictionary |
+| Check if list | `node.is_list()` or <br/> `node.is_list("path")` or <br/> `node.is_list(txn=txn)` or <br/> `node.is_list("path", txn=txn)` | `await node.is_list()` or <br/> `await node.is_list("path")` or <br/> `await node.is_list(txn=txn)` or <br/> `await node.is_list("path", txn=txn)` | Check if node is a list |
+| **Manipulation** |
+| Remove node | `node.remove()` or <br/> `node.remove("path")` or <br/> `node.remove(txn=txn)` or <br/> `node.remove("path", txn=txn)` | `await node.remove()` or <br/> `await node.remove("path")` or <br/> `await node.remove(txn=txn)` or <br/> `await node.remove("path", txn=txn)` | Delete the node |
+| Copy node | `node.copy_to("target")` or <br/> `node.copy_to("target", txn=txn)` | `await node.copy_to("target")` or <br/> `await node.copy_to("target", txn=txn)` | Copy node to new location |
+| Move node | `node.move_to("target")` or <br/> `node.move_to("target", txn=txn)` | `await node.move_to("target")` or <br/> `await node.move_to("target", txn=txn)` | Move node to new location |
+| Store value | `node.store(value)` or <br/> `node.store(value, "path")` or <br/> `node.store(value, txn=txn)` or <br/> `node.store(value, "path", txn=txn)` | `await node.store(value)` or <br/> `await node.store(value, "path")` or <br/> `await node.store(value, txn=txn)` or <br/> `await node.store(value, "path", txn=txn)` | Store Python object |
+| **In-place Transformations** |
+| Transform | `node.transform(transform_func)` or <br/> `node.transform(transform_func, "path")` or <br/> `node.transform(transform_func, txn=txn)` or <br/> `node.transform(transform_func, "path", txn=txn)` | `await node.transform(transform_func)` or <br/> `await node.transform(transform_func, "path")` or <br/> `await node.transform(transform_func, txn=txn)` or <br/> `await node.transform(transform_func, "path", txn=txn)` | Apply transformation |
+| Filter | `node.filter(filter_func)` or <br/> `node.filter(filter_func, "path")` or <br/> `node.filter(filter_func, txn=txn)` or <br/> `node.filter(filter_func, "path", txn=txn)` | `await node.filter(filter_func)` or <br/> `await node.filter(filter_func, "path")` or <br/> `await node.filter(filter_func, txn=txn)` or <br/> `await node.filter(filter_func, "path", txn=txn)` | Filter elements |
+| **Conversion** |
+| To Python object | `node.to_python_object()` or <br/> `node.to_python_object("path")` or <br/> `node.to_python_object(txn=txn)` or <br/> `node.to_python_object("path", txn=txn)` | `await node.to_python_object()` or <br/> `await node.to_python_object("path")` or <br/> `await node.to_python_object(txn=txn)` or <br/> `await node.to_python_object("path", txn=txn)` | Convert to Python object |
+
+### Transactions and Node Operations
+
+**Creating nodes within a transaction**:
+   ```python
+   # Sync
+   with state.transaction() as txn:
+       dict_node = state.dict("users", txn=txn)  # Node created within transaction
+       dict_node.set("alice", value={"active": True})  # Automatically uses transaction
+   
+   # Async
+   async with await state.transaction() as txn:
+       dict_node = await state.dict("users", txn=txn)
+       await dict_node.set("alice", value={"active": True})
+   ```
+
+When a node is created with a transaction, all operations on that node will automatically use that transaction unless explicitly overridden.
+
+### Node Transformation Methods
+
+The transformation methods (`transform`, `filter`,) provide powerful ways to manipulate node data:
+
+- **Transform**: Applies function to each element while preserving structure
+  ```python
+  # Transform each item in a list
+  node.transform(lambda x: x.upper())
+  
+  # Transform each value in a dictionary (keys remain the same)
+  node.transform(lambda x: x * 2)
+  ```
+
+- **Filter**: Removes elements from a collection based on a predicate
+  ```python 
+  # Dictionary: filter_func takes (key, value)
+  node.filter(lambda k, v: v["active"] == True)
+  
+  # List: filter_func takes (value)
+  node.filter(lambda x: x > 10)
+  ```
+
+### Key Differences from Python Dictionaries/Lists
+
+- All modifications are persistent and immediately visible to other clients
+- Operations like `move_to` and `copy_to` are atomic
+- Transactions ensure consistency across multiple operations
+- Paths can navigate to deeply nested structures in a single call
+
+## 🔒 Transactions
+
+| Operation | Sync Syntax | Async Syntax |
+|-----------|-------------|-------------|
+| Context manager | `with state.transaction() as txn:` | `async with await state.transaction() as txn:` |
+| Begin transaction | `txn = state.begin_transaction()` | `txn = await state.begin_transaction()` |
+| Commit transaction | `txn.commit()` | `await txn.commit()` |
+| Rollback transaction | `txn.rollback()` | `await txn.rollback()` |
+| Use with operation | `state.dict("path", txn=txn)` | `await state.dict("path", txn=txn)` |
+
+## 📡 Observers
+
+| Operation | Sync Syntax | Async Syntax |
+|-----------|-------------|-------------|
+| Subscribe | `sub = state.subscribe(("path",), callback)` | `sub = await state.subscribe(("path",), callback)` |
+| Subscribe with depth | `sub = state.subscribe(("path",), callback, depth=1)` | `sub = await state.subscribe(("path",), callback, depth=1)` |
+| Unsubscribe | `state.unsubscribe(sub)` | `await state.unsubscribe(sub)` |
+
+## 💡 Pro Tips
+
+1. **Chain operations** for cleaner code:
+   ```python 
+   # Instead of:
+   settings = state.dict("users", "user1").get("settings")
+   theme = settings.get("theme")
+   
+   # Do this:
+   theme = state.dict("users", "user1", "settings").get("theme")
+   ```
+
+2. **Use transactions** for complex state updates to avoid race conditions:
+   ```python
+   with state.transaction() as txn:
+       balance = state.dict("accounts", "alice", txn=txn).get("balance")
+       state.dict("accounts", "alice", txn=txn).set("balance", value=balance - 100)
+       state.dict("accounts", "bob", txn=txn).set("balance", value=bob_balance + 100)
+   ```
+
+3. **Pattern: Check-then-operate**
+   ```python
+   if state.exists("users", "alice"):
+       user = state.dict("users", "alice")
+       # Safe to operate on user
+   ```
+
+4. **Watch selectively** - Use appropriate depth for observers:
+   - `depth=0`: Exact path only
+   - `depth=1`: Direct children only
+   - `depth=-1`: All descendants (use cautiously!)
+
+Remember, Loomi's state is designed to be predictable, observable, and efficient. The tree model maps naturally to how we think about application state!

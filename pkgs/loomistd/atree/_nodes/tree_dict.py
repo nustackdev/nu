@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from loomi.interfaces.state.tree import AsyncTreeDictProtocol, EmptyProtocol
 
@@ -152,13 +152,18 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
                 pass
 
     async def pop(
-        self, key: TreePathComponent, default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY,
     ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
         """
         Remove and return a value from the dictionary node.
 
         Args:
-            key: Key to remove
+            path: First path segment
+            *paths: Additional path segments
             default: Value to return if key doesn't exist
 
         Returns:
@@ -167,29 +172,38 @@ class TreeDict(TreeNode[TreeValueT], AsyncTreeDictProtocol[TreeValueT]):
         Raises:
             ObjectKeyError: If the key doesn't exist and no default is provided
         """
+        complete_path = (path,) + paths
         try:
-            value = await self.get(key)  # type: ignore
-            await self.delete(key)
+            value = await self.get(*complete_path)
+            await self.delete(*complete_path)
             return value
         except ObjectKeyError:
             if default is not None:
                 return default
             raise
 
-    async def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+    async def setdefault(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: TreeValueT = None,
+    ) -> TreeValueContainer[TreeValueT]:
         """
         Return the value for key if it exists, otherwise set it to default.
 
         Args:
-            key: Key to check and potentially set
+            path: First path segment
+            *paths: Additional path segments
             default: Value to set and return if key doesn't exist
 
         Returns:
             The value associated with the key, or default if not found
         """
-        if await self.contains(key):
-            return await self.get(key)  # type: ignore
-        await self.set(key, value=default)
+        complete_path = (path,) + paths
+        if await self.contains(*complete_path):
+            return cast(TreeValueContainer[TreeValueT], await self.get(*complete_path))
+        await self.set(*complete_path, value=default)
         return default
 
     async def __len__(self) -> int:

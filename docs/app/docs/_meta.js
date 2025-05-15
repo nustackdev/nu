@@ -12,7 +12,7 @@ export default{
   concepts: '',
   app: '',
   service: '',
-  state: '',
+  state: 'State Interface',
   operation: '',
   '---3': {
     type: 'separator',

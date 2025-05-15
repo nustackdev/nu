@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from loomi.interfaces.state.tree import EmptyProtocol, SyncTreeDictProtocol
 
@@ -150,13 +150,18 @@ class TreeDict(TreeNode[TreeValueT], SyncTreeDictProtocol[TreeValueT]):
                 pass
 
     def pop(
-        self, key: TreePathComponent, default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: "TreeValueT | EmptyProtocol" = TreeNode.EMPTY,
     ) -> "TreeValueContainer[TreeValueT] | EmptyProtocol":
         """
         Remove and return a value from the dictionary node.
 
         Args:
-            key: Key to remove
+            path: First path segment
+            *paths: Additional path segments
             default: Value to return if key doesn't exist
 
         Returns:
@@ -165,16 +170,23 @@ class TreeDict(TreeNode[TreeValueT], SyncTreeDictProtocol[TreeValueT]):
         Raises:
             ObjectKeyError: If the key doesn't exist and no default is provided
         """
+        complete_path = (path,) + paths
         try:
-            value = self.get(key)  # type: ignore
-            self.delete(key)
+            value = self.get(*complete_path)
+            self.delete(*complete_path)
             return value
         except ObjectKeyError:
             if default is not None:
                 return default
             raise
 
-    def setdefault(self, key: TreePathComponent, default: TreeValueT = None) -> TreeValueT:
+    def setdefault(
+        self,
+        path: TreePathComponent,
+        /,
+        *paths: TreePathComponent,
+        default: TreeValueT = None,
+    ) -> TreeValueContainer[TreeValueT]:
         """
         Return the value for key if it exists, otherwise set it to default.
 
@@ -185,9 +197,10 @@ class TreeDict(TreeNode[TreeValueT], SyncTreeDictProtocol[TreeValueT]):
         Returns:
             The value associated with the key, or default if not found
         """
-        if self.contains(key):
-            return self.get(key)  # type: ignore
-        self.set(key, value=default)
+        complete_path = (path,) + paths
+        if self.contains(*complete_path):
+            return cast(TreeValueContainer[TreeValueT], self.get(*complete_path))
+        self.set(*complete_path, value=default)
         return default
 
     def __len__(self) -> int:

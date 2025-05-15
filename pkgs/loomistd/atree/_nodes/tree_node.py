@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Callable, Generic, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Generic, overload
 
 from loomi.interfaces.state.kv import AsyncTransactionProtocol
 from loomi.interfaces.state.tree import (
@@ -370,10 +370,10 @@ class TreeNode(Generic[TreeValueT], ABC):
         **kwargs: Any,
     ) -> None:
         """
-        Apply a transformation function to a node.
+        Apply a transformation function to a node **in-place**.
 
         The transformation function takes the current value as a Python object
-        and returns a new transformed Python object.
+        and returns a new transformed Python object to replace the value in node.
 
         When called with just the transform function, transforms the current node.
         When called with path segments, transforms the specified nested node.
@@ -423,8 +423,7 @@ class TreeNode(Generic[TreeValueT], ABC):
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        """
-        Filter elements of a list or dictionary node.
+        """Filter elements of a list or dictionary node **in-place**.
 
         For list nodes, filter_func takes (value) and returns a boolean.
         For dictionary nodes, filter_func takes (key, value) and returns a boolean.
@@ -446,74 +445,6 @@ class TreeNode(Generic[TreeValueT], ABC):
         """
         target_path, txn = self._process_path_args(args, kwargs)
         await self._storage.filter_node(target_path, filter_func, txn)
-
-    @overload
-    async def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
-    ) -> None: ...
-
-    @overload
-    async def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        path: TreePathComponent,
-        /,
-        *paths: TreePathComponent,
-        txn: AsyncTransactionProtocol[TreeValueT] | None = None,
-    ) -> None: ...
-
-    async def map(
-        self,
-        map_func: Callable[[TreeValueContainer[TreeValueT]], TreeValueT],
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Apply a mapping function to each element in a list or dictionary node.
-
-        For list nodes, each element is replaced with the result of map_func(element).
-        For dictionary nodes, each value is replaced with the result of map_func(value).
-
-        This is a convenience method that transforms the node by applying the map function
-        to each element while preserving the structure.
-
-        When called with just the map function, maps the current node elements.
-        When called with path segments, maps the specified nested node elements.
-
-        Args:
-            map_func: Function to apply to each element
-            path: Optional first path segment
-            *paths: Additional path segments
-            txn: Optional transaction to use
-
-        Raises:
-            ObjectTypeError: If the node is neither a list nor a dictionary
-            StorageKeyError: If the node doesn't exist
-            TypeError: If the mapping result contains unsupported types
-        """
-        target_path, txn = self._process_path_args(args, kwargs)
-
-        # Get the current value
-        value = await self._storage.to_python_object(target_path, txn)
-
-        # Apply mapping based on type
-        if isinstance(value, list):
-            # Map each list element
-            mapped_value = [map_func(item) for item in value]
-            await self._storage.store_python_object(
-                target_path, cast(TreeValueT, mapped_value), txn
-            )
-        elif isinstance(value, dict):
-            # Map each dictionary value
-            mapped_value = {key: map_func(val) for key, val in value.items()}
-            await self._storage.store_python_object(
-                target_path, cast(TreeValueT, mapped_value), txn
-            )
-        else:
-            # For primitive values, apply transform directly
-            await self._storage.transform_node(target_path, lambda x: map_func(x), txn)
 
     @overload
     async def store(
