@@ -8,7 +8,21 @@ throughout the library, establishing a consistent type system.
 """
 
 from enum import Enum, Flag, auto
-from typing import Any, Callable, Dict, List, Set, Union
+
+# Type definitions
+PathComponent = str  # A component of a path (string key or integer index)
+PrimitiveValue = None | bytes | bool | int | float | str  # Basic primitive types
+ComplexValue = (
+    PrimitiveValue
+    | list["ComplexValue"]
+    | set["ComplexValue"]
+    | tuple["ComplexValue", ...]
+    | dict[PathComponent, "ComplexValue"]
+)  # Complex types that can be serialized
+StateValue = PrimitiveValue | ComplexValue  # Any value that can be stored
+StateValueComposite = (
+    list[StateValue] | set[StateValue] | tuple[StateValue, ...] | dict[PathComponent, StateValue]
+)  # Variant of StateValue that enforces at least one level of nesting
 
 
 # Node type enumeration
@@ -74,22 +88,8 @@ class ContainerProtocol(Flag):
         return "|".join(parts)
 
 
-# Type definitions
-PathComponent = Union[str, int]  # A component of a path (string key or integer index)
-PrimitiveValue = Union[str, int, float, bool, None]  # Basic primitive types
-ComplexValue = Union[Dict, List, Set]  # Complex types that can be serialized
-StateValue = Union[PrimitiveValue, ComplexValue]  # Any value that can be stored
-
-
-# Subscription callback type
-SubscriptionCallback = Callable[[List[PathComponent], Any, Any], None]
-"""
-Type for subscription callbacks: (path, old_value, new_value) -> None
-"""
-
-
 # Common protocol combinations
-class CommonProtocols:
+class CommonContainerProtocols:
     """Predefined protocol combinations for common container types."""
 
     # Standard mutable containers
