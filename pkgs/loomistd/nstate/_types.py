@@ -7,7 +7,10 @@ This module defines the core types, protocols, and enumerations used
 throughout the library, establishing a consistent type system.
 """
 
+from __future__ import annotations
+
 from enum import Enum, Flag, auto
+from typing import TypeVar
 
 from loomi.interfaces.state.state import SyncCallbackFn
 
@@ -128,3 +131,7 @@ class CommonContainerProtocols:
     # Flat variants (primitive-only)
     FLAT_DICT = DICT | ContainerProtocol.FLAT
     FLAT_LIST = LIST | ContainerProtocol.FLAT
+
+
+# Type variables for view classes
+ViewT = TypeVar("ViewT")

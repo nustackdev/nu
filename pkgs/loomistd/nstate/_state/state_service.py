@@ -37,7 +37,7 @@ class StateService(SyncService):
             storage=self.storage,
             observer=self.observer,
         )
-        self._state = State()
+        self._state = State(self._backend)
 
     @property
     def is_sync(self) -> bool:

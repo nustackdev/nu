@@ -1,2 +1,679 @@
+"""
+State implementation for the state management system.
+
+This module defines the State class, which is the primary interface for accessing
+and manipulating the state tree. It provides methods for navigation, accessing nodes,
+checking types, and creating views.
+"""
+
+from __future__ import annotations
+
+from typing import Any, cast
+
+from loomi.interfaces.state.observer import SyncSubscriptionProtocol
+
+from .._core.container import ContainerNode
+from .._core.path import StatePath
+from .._core.primitive import PrimitiveNode
+from .._exceptions import IncompatibleViewError, PathNotFoundError, PathTypeError
+from .._state.backend import (
+    ObservableKVBackend,
+    ObservableKVTransaction,
+    ObservableKVTransactionContextManager,
+)
+from .._types import (
+    CommonContainerProtocols,
+    ContainerProtocol,
+    NodeType,
+    PathComponent,
+    StateCallbackFn,
+    ViewT,
+)
+from .._views.dict_view import DictView
+from .._views.flat_view import FlatView
+from .._views.list_view import ListView
+from .._views.set_view import SetView
+
+__all__ = [
+    "State",
+]
+
+
 class State:
-    pass
+    """
+    Primary interface for accessing the state tree.
+
+    State provides methods for navigating the tree, querying and manipulating nodes,
+    and creating appropriate views for container nodes. It follows a filesystem-like
+    mental model, where containers are like directories and primitives are like files.
+
+    Example:
+        ```python
+        state = state_service.state
+
+        # Navigation
+        users = state.at("users")
+        alice = users.at("alice")
+
+        # Checking paths
+        if alice.exists():
+            print(f"User type: {alice.type()}")
+
+        # Getting and setting values
+        name = alice.at("name").get()
+        alice.at("email").set("alice@example.com")
+
+        # Using views
+        profile = alice.at("profile").dict_view()
+        profile.set("location", "San Francisco")
+
+        skills = profile.list_view("skills")
+        skills.append("Python")
+        ```
+    """
+
+    def __init__(
+        self,
+        backend: ObservableKVBackend,
+        path: StatePath | None = None,
+        tx: ObservableKVTransaction | None = None,
+    ):
+        """
+        Initialize a State instance.
+
+        Args:
+            backend: The backend storage interface
+            path: The current path location (default: root)
+            tx: Optional transaction for atomic operations
+        """
+        self._backend = backend
+        self._path = path if path is not None else StatePath()
+        self._tx = tx
+
+    @property
+    def path(self) -> StatePath:
+        """
+        Get the current path location.
+
+        Returns:
+            The current StatePath
+        """
+        return self._path
+
+    def at(self, *paths: PathComponent) -> State:
+        """
+        Navigate to a path (relative to current path).
+
+        This creates a new State instance pointing to the specified path.
+
+        Args:
+            *paths: Path components to navigate to
+
+        Returns:
+            A new State instance for the specified path
+
+        Example:
+            ```python
+            user = state.at("users", "alice")
+            email = state.at("users", "alice", "email")
+            ```
+        """
+        new_path = self._path.join(*paths)
+        return State(self._backend, new_path, self._tx)
+
+    @property
+    def parent(self) -> State:
+        """
+        Navigate to parent path.
+
+        Returns:
+            A new State instance for the parent path,
+            or self if already at root
+
+        Example:
+            ```python
+            user = state.at("users", "alice")
+            users = user.parent
+            ```
+        """
+        parent_path = self._path.parent()
+        if parent_path is None:
+            # Already at root
+            return self
+        return State(self._backend, parent_path, self._tx)
+
+    @property
+    def root(self) -> State:
+        """
+        Navigate to root path.
+
+        Returns:
+            A new State instance for the root path
+
+        Example:
+            ```python
+            root = state.at("deeply", "nested", "path").root
+            ```
+        """
+        return State(self._backend, StatePath(), self._tx)
+
+    def exists(self) -> bool:
+        """
+        Check if the current path exists.
+
+        Returns:
+            True if the path exists, False otherwise
+
+        Example:
+            ```python
+            if state.at("users", "alice").exists():
+                print("User exists")
+            ```
+        """
+        return self._backend.exists(self._path.to_tuple())
+
+    def type(self) -> NodeType:
+        """
+        Get the type of node at the current path.
+
+        Returns:
+            NodeType.CONTAINER: If path points to a container
+            NodeType.PRIMITIVE: If path points to a primitive value
+            NodeType.NOT_FOUND: If path doesn't exist
+
+        Example:
+            ```python
+            if state.at("users").type() == NodeType.CONTAINER:
+                # Handle container
+            ```
+        """
+        if not self.exists():
+            return NodeType.NOT_FOUND
+
+        node = self._get_node()
+        return node.node_type()
+
+    def protocols(self) -> ContainerProtocol:
+        """
+        Get protocols supported by the container at the current path.
+
+        Returns:
+            ContainerProtocol flags indicating supported protocols
+
+        Raises:
+            PathNotFoundError: If path doesn't exist
+            PathTypeError: If path exists but is not a container
+
+        Example:
+            ```python
+            protocols = state.at("users").protocols()
+            if protocols & ContainerProtocol.MAPPING:
+                print("Container supports dictionary-like access")
+            ```
+        """
+        if not self.exists():
+            raise PathNotFoundError(f"Path {self._path} does not exist")
+
+        node = self._get_node()
+        if node.node_type() != NodeType.CONTAINER:
+            raise PathTypeError(f"Path {self._path} is not a container")
+
+        return node.protocols()
+
+    def get(self) -> Any:
+        """
+        Get value at the current path.
+
+        For primitive nodes, returns the primitive value.
+        For container nodes, returns a nested structure representing the container.
+
+        Returns:
+            The value at the current path
+
+        Raises:
+            PathNotFoundError: If path doesn't exist
+
+        Example:
+            ```python
+            user_data = state.at("users", "alice").get()
+            ```
+        """
+        if not self.exists():
+            raise PathNotFoundError(f"Path {self._path} does not exist")
+
+        node = self._get_node()
+        if node.node_type() == NodeType.PRIMITIVE:
+            # Primitive node
+            primitive = cast(PrimitiveNode, node)
+            return primitive.value
+        else:
+            # Container node, recursively get all children
+            container = cast(ContainerNode, node)
+            result = {}
+
+            for key in container.keys():
+                child_state = self.at(key)
+                result[key] = child_state.get()
+
+            return result
+
+    def set(self, value: Any) -> None:
+        """
+        Set value at the current path.
+
+        For primitive values, creates or updates a primitive node.
+        For container values (dict, list, etc.), creates or updates a container node.
+
+        Args:
+            value: The value to set
+
+        Raises:
+            PathTypeError: If trying to set primitive at container path or vice versa
+
+        Example:
+            ```python
+            # Set primitive value
+            state.at("users", "alice", "name").set("Alice Smith")
+
+            # Set nested structure
+            state.at("users", "alice").set({
+                "name": "Alice Smith",
+                "email": "alice@example.com"
+            })
+            ```
+        """
+        if isinstance(value, dict):
+            # Create or update a mapping container
+            self._ensure_container(CommonContainerProtocols.DICT)
+
+            # Set all key-value pairs
+            for key, val in value.items():
+                child_state = self.at(key)
+                child_state.set(val)
+        elif isinstance(value, (list, tuple, set)):
+            # Create or update a sequence container for lists/tuples
+            # or a set container for sets
+            if isinstance(value, set):
+                protocols = CommonContainerProtocols.SET
+            else:
+                protocols = CommonContainerProtocols.LIST
+
+            self._ensure_container(protocols)
+
+            # For lists/tuples, set index-value pairs
+            if isinstance(value, (list, tuple)):
+                for i, val in enumerate(value):
+                    child_state = self.at(str(i))
+                    child_state.set(val)
+            else:  # Set
+                # Clear existing items
+                container_node = cast(ContainerNode, self._get_node())
+                if container_node.supports_protocol(ContainerProtocol.MUTABLE):
+                    for key in list(container_node.keys()):
+                        container_node.remove_child(key)
+
+                # Add new items
+                for i, val in enumerate(value):
+                    child_state = self.at(str(i))
+                    child_state.set(val)
+        else:
+            # Create or update a primitive node
+            if self.exists() and self.type() == NodeType.CONTAINER:
+                raise PathTypeError(f"Cannot set primitive value at container path {self._path}")
+
+            # Ensure parent paths exist
+            parent_path = self._path.parent()
+            if parent_path is not None:
+                parent_state = State(self._backend, parent_path, self._tx)
+                if not parent_state.exists():
+                    parent_state._ensure_container(CommonContainerProtocols.DICT)
+
+            # Create or update primitive node
+            primitive = PrimitiveNode(self._backend, self._path, tx=self._tx)
+            primitive.value = value
+
+    def remove(self) -> None:
+        """
+        Remove the node at the current path and all its children.
+
+        Raises:
+            PathNotFoundError: If path doesn't exist
+
+        Example:
+            ```python
+            state.at("users", "alice").remove()
+            ```
+        """
+        if not self.exists():
+            raise PathNotFoundError(f"Path {self._path} does not exist")
+
+        node = self._get_node()
+        if node.node_type() == NodeType.CONTAINER:
+            # Container node - remove all children first
+            container = cast(ContainerNode, node)
+            for key in list(container.keys()):
+                child_state = self.at(key)
+                child_state.remove()
+
+        # Remove the node itself
+        self._backend.delete(self._path, self._tx)
+
+    def dict_view(self, tx=None) -> DictView:
+        """
+        Access container as dictionary view.
+
+        If path doesn't exist, creates a new mapping container.
+        If path exists but is not a container with MAPPING protocol,
+        raises an error.
+
+        Args:
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            DictView for the container
+
+        Raises:
+            IncompatibleViewError: If container doesn't support MAPPING protocol
+
+        Example:
+            ```python
+            users = state.at("users").dict_view()
+            users.set("alice", {"email": "alice@example.com"})
+            ```
+        """
+        # Use transaction from args or instance
+        tx = tx or self._tx
+
+        # Ensure container exists and supports MAPPING protocol
+        container = self._ensure_container(CommonContainerProtocols.DICT)
+        if not container.supports_protocol(ContainerProtocol.MAPPING):
+            raise IncompatibleViewError(
+                f"Container at {self._path} does not support the MAPPING protocol"
+            )
+
+        # Create DictView for the container
+        return DictView(self._backend, self._path, tx)
+
+    def list_view(self, tx=None) -> ListView:
+        """
+        Access container as list view.
+
+        If path doesn't exist, creates a new sequence container.
+        If path exists but is not a container with SEQUENCE protocol,
+        raises an error.
+
+        Args:
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            ListView for the container
+
+        Raises:
+            IncompatibleViewError: If container doesn't support SEQUENCE protocol
+
+        Example:
+            ```python
+            tasks = state.at("tasks").list_view()
+            tasks.append("Buy groceries")
+            ```
+        """
+        # Use transaction from args or instance
+        tx = tx or self._tx
+
+        # Ensure container exists and supports SEQUENCE protocol
+        container = self._ensure_container(CommonContainerProtocols.LIST)
+        if not container.supports_protocol(ContainerProtocol.SEQUENCE):
+            raise IncompatibleViewError(
+                f"Container at {self._path} does not support the SEQUENCE protocol"
+            )
+
+        # Create ListView for the container
+        return ListView(self._backend, self._path, tx)
+
+    def set_view(self, tx=None) -> SetView:
+        """
+        Access container as set view.
+
+        If path doesn't exist, creates a new set container.
+        If path exists but is not a container with SET protocol,
+        raises an error.
+
+        Args:
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            SetView for the container
+
+        Raises:
+            IncompatibleViewError: If container doesn't support SET protocol
+
+        Example:
+            ```python
+            tags = state.at("tags").set_view()
+            tags.add("important")
+            ```
+        """
+        # Use transaction from args or instance
+        tx = tx or self._tx
+
+        # Ensure container exists and supports SET protocol
+        container = self._ensure_container(CommonContainerProtocols.SET)
+        if not container.supports_protocol(ContainerProtocol.SET):
+            raise IncompatibleViewError(
+                f"Container at {self._path} does not support the SET protocol"
+            )
+
+        # Create SetView for the container
+        return SetView(self._backend, self._path, tx)
+
+    def flat_view(self, tx=None) -> FlatView:
+        """
+        Access container as flat view.
+
+        If path doesn't exist, creates a new flat mapping container.
+        If path exists but is not a container with MAPPING and FLAT protocols,
+        raises an error.
+
+        Args:
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            FlatView for the container
+
+        Raises:
+            IncompatibleViewError: If container doesn't support required protocols
+
+        Example:
+            ```python
+            config = state.at("config").flat_view()
+            config.set("theme", "dark")
+            ```
+        """
+        # Use transaction from args or instance
+        tx = tx or self._tx
+
+        # Ensure container exists and supports MAPPING and FLAT protocols
+        container = self._ensure_container(CommonContainerProtocols.FLAT_DICT)
+        if not (
+            container.supports_protocol(ContainerProtocol.MAPPING)
+            and container.supports_protocol(ContainerProtocol.FLAT)
+        ):
+            raise IncompatibleViewError(
+                f"Container at {self._path} does not support the MAPPING and FLAT protocols"
+            )
+
+        # Create FlatView for the container
+        return FlatView(self._backend, self._path, tx)
+
+    def view(self, view_class: type[ViewT], tx=None) -> ViewT:
+        """
+        Access container via custom view class.
+
+        If path doesn't exist, creates a new container with protocols
+        required by the view class.
+        If path exists but doesn't support required protocols, raises an error.
+
+        Args:
+            view_class: The view class to use
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            Instance of the specified view class
+
+        Raises:
+            IncompatibleViewError: If container doesn't support required protocols
+
+        Example:
+            ```python
+            custom_view = state.at("custom").view(CustomView)
+            ```
+        """
+        # Use transaction from args or instance
+        tx = tx or self._tx
+
+        # Get required protocols from view class
+        required_protocols = getattr(
+            view_class, "required_protocols", lambda: ContainerProtocol.CONTAINER
+        )()
+
+        # Ensure container exists and supports required protocols
+        container = self._ensure_container(required_protocols)
+        for protocol in [p for p in ContainerProtocol if p & required_protocols]:
+            if not container.supports_protocol(protocol):
+                raise IncompatibleViewError(
+                    f"Container at {self._path} does not support required protocol {protocol}"
+                )
+
+        # Create view instance
+        return view_class(self._backend, self._path, tx)
+
+    def begin_transaction(self) -> ObservableKVTransaction:
+        """
+        Start a new transaction.
+
+        Returns:
+            New transaction object
+
+        Example:
+            ```python
+            tx = state.begin_transaction()
+            try:
+                # Perform operations with tx
+                state.commit(tx)
+            except Exception:
+                state.rollback(tx)
+            ```
+        """
+        return self._backend.begin_transaction()
+
+    def transaction(self) -> ObservableKVTransactionContextManager:
+        """
+        Get a transaction context manager.
+
+        Returns:
+            Transaction context manager
+
+        Example:
+            ```python
+            with state.transaction() as tx:
+                # Perform operations with tx
+                # Auto-commits on success, auto-rollbacks on exception
+            ```
+        """
+        return self._backend.transaction()
+
+    def subscribe(self, callback: StateCallbackFn, depth: int = 0) -> SyncSubscriptionProtocol:
+        """
+        Subscribe to changes at the current path.
+
+        Args:
+            callback: Function to call when changes occur
+            depth: Depth of topic pattern matching (default: 0 for exact match)
+                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+
+        Returns:
+            Subscription object for unsubscribing
+
+        Example:
+            ```python
+            def on_change(path):
+                print(f"Path {path} changed")
+
+            sub = state.at("users").subscribe(on_change)
+            # Later, unsubscribe
+            sub.unsubscribe()
+            ```
+        """
+        return self._backend.subscribe(self._path.to_tuple(), callback, depth)
+
+    def _get_node(self):
+        """
+        Get the node at the current path.
+
+        Returns:
+            Node object (ContainerNode or PrimitiveNode)
+
+        Raises:
+            PathNotFoundError: If path doesn't exist
+        """
+        if not self.exists():
+            raise PathNotFoundError(f"Path {self._path} does not exist")
+
+        # Check if it's a container by checking for a type marker
+        type_marker_path = self._path.join("__type__")
+        if self._backend.exists(type_marker_path, self._tx):
+            # It's a container, get its protocols
+            type_value = self._backend.get(type_marker_path, self._tx)
+            if type_value == NodeType.CONTAINER.value:
+                protocols_path = self._path.join("__protocols__")
+                try:
+                    protocols_value = self._backend.get(protocols_path, self._tx)
+                    protocols = ContainerProtocol(protocols_value)
+                except (PathNotFoundError, ValueError):
+                    # Default to basic container if protocols not found
+                    protocols = ContainerProtocol.CONTAINER
+
+                return ContainerNode(self._backend, self._path, protocols, self._tx)
+
+        # No type marker or not a container, treat as primitive
+        return PrimitiveNode(self._backend, self._path, self._tx)
+
+    def _ensure_container(self, protocols: ContainerProtocol) -> ContainerNode:
+        """
+        Ensure a container node exists at the current path with specified protocols.
+
+        If path exists and is a container, validates it supports the protocols.
+        If path doesn't exist, creates parent paths and a container node.
+
+        Args:
+            protocols: The protocols the container should support
+
+        Returns:
+            ContainerNode at the current path
+
+        Raises:
+            PathTypeError: If path exists but is not a container
+            ContainerProtocolError: If container exists but doesn't support required protocols
+        """
+        if self.exists():
+            if self.type() != NodeType.CONTAINER:
+                raise PathTypeError(f"Path {self._path} exists but is not a container")
+
+            # Path exists and is a container, get the node
+            container = cast(ContainerNode, self._get_node())
+
+            # Validate it supports the specified protocols
+            # (If not, we could potentially update its protocols here)
+            return container
+        else:
+            # Path doesn't exist, ensure parent paths exist
+            parent_path = self._path.parent()
+            if parent_path is not None:
+                parent_state = State(self._backend, parent_path, self._tx)
+                if not parent_state.exists():
+                    # Create parent path with default dict protocol
+                    parent_state._ensure_container(CommonContainerProtocols.DICT)
+
+            # Create container node at path
+            container = ContainerNode(self._backend, self._path, protocols, tx=self._tx)
+            return container

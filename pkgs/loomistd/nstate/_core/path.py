@@ -50,6 +50,15 @@ class StatePath:
         """
         return self._components
 
+    def to_tuple(self) -> tuple[PathComponent, ...]:
+        """
+        Get the path as a tuple of components.
+
+        Returns:
+            A tuple of path components.
+        """
+        return self._components
+
     def __str__(self) -> str:
         """
         Convert path to a string representation.

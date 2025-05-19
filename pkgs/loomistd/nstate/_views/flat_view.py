@@ -1,0 +1,2 @@
+class FlatView:
+    pass
