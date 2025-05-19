@@ -9,8 +9,11 @@ throughout the library, establishing a consistent type system.
 
 from enum import Enum, Flag, auto
 
+from loomi.interfaces.state.state import SyncCallbackFn
+
 # Type definitions
 PathComponent = str  # A component of a path (string key or integer index)
+StatePath = tuple[PathComponent, ...]  # A path represented as a tuple of components
 PrimitiveValue = None | bytes | bool | int | float | str  # Basic primitive types
 ComplexValue = (
     PrimitiveValue
@@ -23,6 +26,7 @@ StateValue = PrimitiveValue | ComplexValue  # Any value that can be stored
 StateValueComposite = (
     list[StateValue] | set[StateValue] | tuple[StateValue, ...] | dict[PathComponent, StateValue]
 )  # Variant of StateValue that enforces at least one level of nesting
+StateCallbackFn = SyncCallbackFn
 
 
 # Node type enumeration
