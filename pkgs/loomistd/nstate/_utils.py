@@ -11,11 +11,9 @@ the state management system, including:
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Any, Generic, Optional, TypeGuard, TypeVar
+from typing import Any, Optional, TypeGuard
 
 from ._state.backend import ObservableKVBackend, ObservableKVTransaction
-
-T = TypeVar("T")
 
 
 class Empty:
@@ -39,10 +37,6 @@ class Empty:
         return False
 
 
-# Singleton instance
-EMPTY = Empty()
-
-
 def is_empty(value: Any) -> TypeGuard[Empty]:
     """
     Check if a value is the EMPTY sentinel.
@@ -56,7 +50,7 @@ def is_empty(value: Any) -> TypeGuard[Empty]:
     return isinstance(value, Empty)
 
 
-class TransactionContext(Generic[T]):
+class TransactionContext:
     """
     Context manager for transaction handling.
 

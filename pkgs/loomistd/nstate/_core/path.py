@@ -11,9 +11,7 @@ from typing import Iterator
 
 from .._types import PathComponent
 
-__all__ = [
-    "StatePath",
-]
+__all__ = ["StatePath"]
 
 
 class StatePath:
@@ -24,38 +22,54 @@ class StatePath:
     through the state tree. It provides methods for joining paths, getting parent
     paths, and other path operations similar to filesystem paths.
 
+    A StatePath always has a root component, ensuring proper hierarchical organization.
+
     Example:
+        ```python
+        # Create a path with components
         path = StatePath("users", "alice", "profile")
+
+        # Get the parent path
         parent_path = path.parent()
+
+        # Join with additional components
         extended_path = path.join("settings")
+
+        # Create a path from a string
+        from_str = StatePath.from_string("/users/alice")
+        ```
     """
+
+    # Root marker for the root component
+    ROOT_MARKER: str = "/"
 
     def __init__(self, *components: PathComponent) -> None:
         """
         Initialize a path with the given components.
 
+        Always includes a root component as the first element.
+
         Args:
-            *components: Variable length argument list of path components.
-                Each component should be a valid PathComponent (string).
+            *components: Path components after the root
         """
-        self._components: tuple[PathComponent, ...] = tuple(*components)
+        self._components = (self.ROOT_MARKER,) + tuple(components)
 
     @property
     def components(self) -> tuple[PathComponent, ...]:
         """
-        Get a copy of the path components.
+        Get the path components as a tuple.
 
         Returns:
-            A list of path components.
+            tuple[PathComponent, ...]: Path components including root
         """
         return self._components
 
     def to_tuple(self) -> tuple[PathComponent, ...]:
         """
-        Get the path as a tuple of components.
+        Get the path as a tuple for use with the backend.
 
         Returns:
-            A tuple of path components.
+            tuple[PathComponent, ...]: Path components as a tuple
         """
         return self._components
 
@@ -64,30 +78,35 @@ class StatePath:
         Convert path to a string representation.
 
         Returns:
-            A string representation of the path using '/' as separator.
+            str: Path as a string with '/' separator
         """
-        if not self._components:
-            return "/"
-        return "/" + "/".join(str(comp) for comp in self._components)
+        if len(self._components) == 1:
+            # Just the root
+            return self.ROOT_MARKER
+
+        return self.ROOT_MARKER + self.ROOT_MARKER.join(str(comp) for comp in self._components[1:])
 
     def __repr__(self) -> str:
         """
         Get a detailed string representation for debugging.
 
         Returns:
-            A detailed string representation of the path.
+            str: Detailed representation of the path
         """
-        return f"StatePath({', '.join(repr(c) for c in self._components)})"
+        if len(self._components) == 1:
+            return "StatePath()"
+
+        return f"StatePath({', '.join(repr(c) for c in self._components[1:])})"
 
     def __eq__(self, other: object) -> bool:
         """
         Check if two paths are equal.
 
         Args:
-            other: Another object to compare with.
+            other: Another object to compare with
 
         Returns:
-            True if the paths have the same components, False otherwise.
+            bool: True if paths have the same components
         """
         if not isinstance(other, StatePath):
             return False
@@ -98,16 +117,16 @@ class StatePath:
         Get hash value for the path.
 
         Returns:
-            Hash value based on the path components.
+            int: Hash based on path components
         """
-        return hash(tuple(self._components))
+        return hash(self._components)
 
     def __len__(self) -> int:
         """
-        Get the number of components in the path.
+        Get the number of components in the path (including root).
 
         Returns:
-            The number of components.
+            int: Number of components
         """
         return len(self._components)
 
@@ -116,42 +135,64 @@ class StatePath:
         Get an iterator over the path components.
 
         Returns:
-            An iterator yielding each path component.
+            Iterator[PathComponent]: Iterator over components
         """
         return iter(self._components)
 
-    def join(self, component: PathComponent, /, *components: PathComponent) -> StatePath:
+    def join(self, *components: PathComponent) -> StatePath:
         """
         Create a new path by joining with additional components.
 
         Args:
-            *components: Additional path components to append.
+            *components: Additional components to append
 
         Returns:
-            A new StatePath with the combined components.
-        """
-        return StatePath(*(self._components + tuple(component) + tuple(components)))
+            StatePath: New path with combined components
 
-    def parent(self) -> "StatePath | None":
+        Example:
+            ```python
+            path = StatePath("users")
+            user_path = path.join("alice", "profile")
+            ```
+        """
+        return StatePath(*self._components[1:], *components)
+
+    def parent(self) -> StatePath | None:
         """
         Get the parent path.
 
         Returns:
-            The parent path, or None if this is the root path.
+            StatePath: Parent path, or None if this is the root path
+
+        Example:
+            ```python
+            path = StatePath("users", "alice")
+            parent = path.parent()  # StatePath("users")
+            ```
         """
-        if not self._components:
+        if len(self._components) <= 1:
+            # This is the root path
             return None
-        return StatePath(*self._components[:-1])
+
+        return StatePath(*self._components[1:-1])
 
     def last(self) -> PathComponent | None:
         """
         Get the last component of the path.
 
         Returns:
-            The last component, or None if the path is empty.
+            PathComponent: Last component, or None if this is the root path
+
+        Example:
+            ```python
+            path = StatePath("users", "alice")
+            last = path.last()  # "alice"
+            ```
         """
-        if not self._components:
+        if len(self._components) <= 1:
+            # This is the root path
             return None
+
         return self._components[-1]
 
     def is_root(self) -> bool:
@@ -159,9 +200,15 @@ class StatePath:
         Check if this is the root path.
 
         Returns:
-            True if this is the root path (empty components), False otherwise.
+            bool: True if this is the root path (only has root component)
+
+        Example:
+            ```python
+            root = StatePath()
+            is_root = root.is_root()  # True
+            ```
         """
-        return len(self._components) == 0
+        return len(self._components) == 1
 
     @classmethod
     def from_string(cls, path_str: str) -> StatePath:
@@ -169,16 +216,23 @@ class StatePath:
         Create a StatePath from a string representation.
 
         Args:
-            path_str: A string representation of a path, using '/' as separator.
-                      Leading and trailing slashes are ignored.
+            path_str: String representation with '/' separator
 
         Returns:
-            A new StatePath instance.
+            StatePath: New path from the string
+
+        Example:
+            ```python
+            path = StatePath.from_string("/users/alice/profile")
+            ```
         """
-        # Strip leading and trailing slashes, then split by slash
-        parts = path_str.strip("/").split("/")
-        # Filter out empty parts (happens with consecutive slashes)
-        components = [part for part in parts if part]
+        # Strip leading/trailing slashes, then split by slash
+        clean_str = path_str.strip("/")
+        if not clean_str:
+            # Root path
+            return cls()
+
+        components = clean_str.split("/")
         return cls(*components)
 
     def is_ancestor_of(self, other: StatePath) -> bool:
@@ -186,45 +240,63 @@ class StatePath:
         Check if this path is an ancestor of another path.
 
         Args:
-            other: Another StatePath to check.
+            other: Path to check against
 
         Returns:
-            True if this path is an ancestor of the other path, False otherwise.
+            bool: True if this path is an ancestor of other
+
+        Example:
+            ```python
+            users = StatePath("users")
+            alice = StatePath("users", "alice")
+            is_ancestor = users.is_ancestor_of(alice)  # True
+            ```
         """
-        if len(self) >= len(other):
+        if len(self._components) >= len(other._components):
             return False
 
-        for i, comp in enumerate(self._components):
-            if other._components[i] != comp:
-                return False
-
-        return True
+        # Check if all components match up to the length of self
+        return other._components[: len(self._components)] == self._components
 
     def is_descendant_of(self, other: StatePath) -> bool:
         """
         Check if this path is a descendant of another path.
 
         Args:
-            other: Another StatePath to check.
+            other: Path to check against
 
         Returns:
-            True if this path is a descendant of the other path, False otherwise.
+            bool: True if this path is a descendant of other
+
+        Example:
+            ```python
+            users = StatePath("users")
+            alice = StatePath("users", "alice")
+            is_descendant = alice.is_descendant_of(users)  # True
+            ```
         """
         return other.is_ancestor_of(self)
 
-    def relative_to(self, ancestor: StatePath) -> "StatePath | None":
+    def relative_to(self, ancestor: StatePath) -> StatePath | None:
         """
         Get the relative path from an ancestor path to this path.
 
         Args:
-            ancestor: The ancestor path.
+            ancestor: Ancestor path
 
         Returns:
-            A new StatePath representing the relative path, or None if
-            the given path is not an ancestor.
+            StatePath: Relative path, or None if not a descendant
+
+        Example:
+            ```python
+            users = StatePath("users")
+            alice_profile = StatePath("users", "alice", "profile")
+            relative = alice_profile.relative_to(users)  # StatePath("alice", "profile")
+            ```
         """
         if not self.is_descendant_of(ancestor):
             return None
 
-        relative_components = self._components[len(ancestor) :]
+        # Get components after the ancestor
+        relative_components = self._components[len(ancestor._components) :]
         return StatePath(*relative_components)
