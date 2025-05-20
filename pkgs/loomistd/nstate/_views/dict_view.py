@@ -7,21 +7,18 @@ interface for containers implementing the MAPPING protocol.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from .._core.container import ContainerNode
-from .._core.primitive import PrimitiveNode
+from .._exceptions import ContainerProtocolError
 from .._state.backend import ObservableKVTransaction
-from .._types import CommonContainerProtocols, ContainerProtocol, NodeType, PathComponent
-from .._utils import is_empty
-from .view import BaseView
+from .._types import CommonContainerProtocols, ContainerProtocol, PathComponent
+from .._utils import TransactionContext
+from .view import BaseView, ViewT
 
 if TYPE_CHECKING:
     from .flat_view import FlatView
     from .list_view import ListView
     from .set_view import SetView
-
-ViewT = TypeVar("ViewT", bound=BaseView)
 
 __all__ = ["DictView"]
 
@@ -88,49 +85,8 @@ class DictView(BaseView):
         if child is None:
             return None
 
-        # Handle primitive nodes
-        if child.node_type() == NodeType.PRIMITIVE:
-            primitive = cast(PrimitiveNode, child)
-            value = primitive.get_value(tx=self._tx)
-            return None if is_empty(value) else value
-
-        # Handle container nodes (recursively get values)
-        child_container = cast(ContainerNode, child)
-        return self._extract_container_value(child_container)
-
-    def _extract_container_value(self, container: ContainerNode) -> Any:
-        """
-        Extract a value from a container node.
-
-        Recursively extracts values from a container by creating a dictionary
-        representation of its children.
-
-        Args:
-            container: Container node to extract value from
-
-        Returns:
-            Any: Dictionary representation of the container's children
-        """
-        result = {}
-
-        # Get all child keys
-        for key in container.keys(tx=self._tx):
-            child = container.get_child(key, tx=self._tx)
-            if child is None:
-                continue
-
-            if child.node_type() == NodeType.PRIMITIVE:
-                # Extract primitive value
-                primitive = cast(PrimitiveNode, child)
-                value = primitive.get_value(tx=self._tx)
-                if not is_empty(value):
-                    result[key] = value
-            else:
-                # Recursively extract container value
-                child_container = cast(ContainerNode, child)
-                result[key] = self._extract_container_value(child_container)
-
-        return result
+        # Extract value from node using helper method
+        return self._extract_value(child)
 
     def set(self, key: PathComponent, value: Any, /) -> None:
         """
@@ -148,66 +104,15 @@ class DictView(BaseView):
             users.set("alice", {"name": "Alice Smith", "email": "alice@example.com"})
             ```
         """
-        # Create child path
-        child_path = self.container.path.join(key)
+        with TransactionContext(self.container.backend, self._tx) as transaction:
+            # Validate container supports mutation
+            if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
+                raise ContainerProtocolError(
+                    f"Container at {self.container.path} does not support mutation"
+                )
 
-        # Handle different value types
-        if isinstance(value, dict):
-            # Create a container node with DICT protocol
-            child_container = ContainerNode(
-                self.container.backend, child_path, CommonContainerProtocols.DICT, tx=self._tx
-            )
-
-            # Set the container as child
-            self.container.set_child(key, child_container, tx=self._tx)
-
-            # Set all key-value pairs in the dictionary
-            for k, v in value.items():
-                # Create a DictView for the child container
-                child_view = DictView(child_container, tx=self._tx)
-                child_view.set(k, v)
-
-        elif isinstance(value, (list, tuple)):
-            # Create a container node with LIST protocol
-            child_container = ContainerNode(
-                self.container.backend, child_path, CommonContainerProtocols.LIST, tx=self._tx
-            )
-
-            # Set the container as child
-            self.container.set_child(key, child_container, tx=self._tx)
-
-            # Import here to avoid circular imports
-            from .list_view import ListView
-
-            # Set all items in the list
-            list_view = ListView(child_container, tx=self._tx)
-            for i, item in enumerate(value):
-                list_view.set(i, item)
-
-        elif isinstance(value, set):
-            # Create a container node with SET protocol
-            child_container = ContainerNode(
-                self.container.backend, child_path, CommonContainerProtocols.SET, tx=self._tx
-            )
-
-            # Set the container as child
-            self.container.set_child(key, child_container, tx=self._tx)
-
-            # Import here to avoid circular imports
-            from .set_view import SetView
-
-            # Set all items in the set
-            set_view = SetView(child_container, tx=self._tx)
-            for item in value:
-                set_view.add(item)
-
-        else:
-            # Create a primitive node for the value
-            primitive = PrimitiveNode(self.container.backend, child_path, tx=self._tx)
-
-            # Set the value and add the primitive to the container
-            primitive.set_value(value, tx=self._tx)
-            self.container.set_child(key, primitive, tx=self._tx)
+            # Store value using helper method
+            self._store_value(key, value)
 
     def has(self, key: PathComponent, /) -> bool:
         """
@@ -343,42 +248,12 @@ class DictView(BaseView):
         """
         transaction = tx or self._tx
 
-        # Create child path
-        child_path = self.container.path.join(key)
+        # Ensure child container exists with DICT protocol using helper method
+        child_container = self._ensure_child_container(
+            key, CommonContainerProtocols.DICT, tx=transaction
+        )
 
-        # Check if child exists and is a container
-        child = None
-        if self.container.has_child(key, tx=transaction):
-            child = self.container.get_child(key, tx=transaction)
-
-            # If child exists but is not a container, remove it
-            if child is not None and child.node_type() != NodeType.CONTAINER:
-                self.container.remove_child(key, tx=transaction)
-                child = None
-
-        # Create container if needed
-        if child is None:
-            # Create a container with DICT protocols
-            child = ContainerNode(
-                self.container.backend,
-                child_path,
-                CommonContainerProtocols.DICT,
-                tx=transaction,
-            )
-
-            # Set as child
-            self.container.set_child(key, child, tx=transaction)
-
-        # Ensure child has required protocols
-        child_container = cast(ContainerNode, child)
-        current_protocols = child_container.protocols(tx=transaction)
-        required_protocols = CommonContainerProtocols.DICT
-
-        # Update protocols if needed
-        if (current_protocols & required_protocols) != required_protocols:
-            child_container.update_protocols(current_protocols | required_protocols, tx=transaction)
-
-        # Return view for child container
+        # Return dictionary view
         return DictView(child_container, tx=transaction)
 
     def list_view(
@@ -408,42 +283,12 @@ class DictView(BaseView):
 
         transaction = tx or self._tx
 
-        # Create child path
-        child_path = self.container.path.join(key)
+        # Ensure child container exists with LIST protocol using helper method
+        child_container = self._ensure_child_container(
+            key, CommonContainerProtocols.LIST, tx=transaction
+        )
 
-        # Check if child exists and is a container
-        child = None
-        if self.container.has_child(key, tx=transaction):
-            child = self.container.get_child(key, tx=transaction)
-
-            # If child exists but is not a container, remove it
-            if child is not None and child.node_type() != NodeType.CONTAINER:
-                self.container.remove_child(key, tx=transaction)
-                child = None
-
-        # Create container if needed
-        if child is None:
-            # Create a container with LIST protocols
-            child = ContainerNode(
-                self.container.backend,
-                child_path,
-                CommonContainerProtocols.LIST,
-                tx=transaction,
-            )
-
-            # Set as child
-            self.container.set_child(key, child, tx=transaction)
-
-        # Ensure child has required protocols
-        child_container = cast(ContainerNode, child)
-        current_protocols = child_container.protocols(tx=transaction)
-        required_protocols = CommonContainerProtocols.LIST
-
-        # Update protocols if needed
-        if (current_protocols & required_protocols) != required_protocols:
-            child_container.update_protocols(current_protocols | required_protocols, tx=transaction)
-
-        # Return view for child container
+        # Return list view
         return ListView(child_container, tx=transaction)
 
     def set_view(
@@ -473,42 +318,12 @@ class DictView(BaseView):
 
         transaction = tx or self._tx
 
-        # Create child path
-        child_path = self.container.path.join(key)
+        # Ensure child container exists with SET protocol using helper method
+        child_container = self._ensure_child_container(
+            key, CommonContainerProtocols.SET, tx=transaction
+        )
 
-        # Check if child exists and is a container
-        child = None
-        if self.container.has_child(key, tx=transaction):
-            child = self.container.get_child(key, tx=transaction)
-
-            # If child exists but is not a container, remove it
-            if child is not None and child.node_type() != NodeType.CONTAINER:
-                self.container.remove_child(key, tx=transaction)
-                child = None
-
-        # Create container if needed
-        if child is None:
-            # Create a container with SET protocols
-            child = ContainerNode(
-                self.container.backend,
-                child_path,
-                CommonContainerProtocols.SET,
-                tx=transaction,
-            )
-
-            # Set as child
-            self.container.set_child(key, child, tx=transaction)
-
-        # Ensure child has required protocols
-        child_container = cast(ContainerNode, child)
-        current_protocols = child_container.protocols(tx=transaction)
-        required_protocols = CommonContainerProtocols.SET
-
-        # Update protocols if needed
-        if (current_protocols & required_protocols) != required_protocols:
-            child_container.update_protocols(current_protocols | required_protocols, tx=transaction)
-
-        # Return view for child container
+        # Return set view
         return SetView(child_container, tx=transaction)
 
     def flat_view(
@@ -538,42 +353,12 @@ class DictView(BaseView):
 
         transaction = tx or self._tx
 
-        # Create child path
-        child_path = self.container.path.join(key)
+        # Ensure child container exists with FLAT_DICT protocol using helper method
+        child_container = self._ensure_child_container(
+            key, CommonContainerProtocols.FLAT_DICT, tx=transaction
+        )
 
-        # Check if child exists and is a container
-        child = None
-        if self.container.has_child(key, tx=transaction):
-            child = self.container.get_child(key, tx=transaction)
-
-            # If child exists but is not a container, remove it
-            if child is not None and child.node_type() != NodeType.CONTAINER:
-                self.container.remove_child(key, tx=transaction)
-                child = None
-
-        # Create container if needed
-        if child is None:
-            # Create a container with FLAT_DICT protocols
-            child = ContainerNode(
-                self.container.backend,
-                child_path,
-                CommonContainerProtocols.FLAT_DICT,
-                tx=transaction,
-            )
-
-            # Set as child
-            self.container.set_child(key, child, tx=transaction)
-
-        # Ensure child has required protocols
-        child_container = cast(ContainerNode, child)
-        current_protocols = child_container.protocols(tx=transaction)
-        required_protocols = CommonContainerProtocols.FLAT_DICT
-
-        # Update protocols if needed
-        if (current_protocols & required_protocols) != required_protocols:
-            child_container.update_protocols(current_protocols | required_protocols, tx=transaction)
-
-        # Return view for child container
+        # Return flat view
         return FlatView(child_container, tx=transaction)
 
     def view(
@@ -610,41 +395,10 @@ class DictView(BaseView):
 
         transaction = tx or self._tx
 
-        # Create child path
-        child_path = self.container.path.join(key)
+        # Ensure child container exists with required protocols using helper method
+        child_container = self._ensure_child_container(key, required_protocols, tx=transaction)
 
-        # Check if child exists and is a container
-        child = None
-        if self.container.has_child(key, tx=transaction):
-            child = self.container.get_child(key, tx=transaction)
-
-            # If child exists but is not a container, remove it
-            if child is not None and child.node_type() != NodeType.CONTAINER:
-                self.container.remove_child(key, tx=transaction)
-                child = None
-
-        # Create container if needed
-        if child is None:
-            # Create a container with required protocols
-            child = ContainerNode(
-                self.container.backend,
-                child_path,
-                required_protocols,
-                tx=transaction,
-            )
-
-            # Set as child
-            self.container.set_child(key, child, tx=transaction)
-
-        # Ensure child has required protocols
-        child_container = cast(ContainerNode, child)
-        current_protocols = child_container.protocols(tx=transaction)
-
-        # Update protocols if needed
-        if (current_protocols & required_protocols) != required_protocols:
-            child_container.update_protocols(current_protocols | required_protocols, tx=transaction)
-
-        # Return view for child container
+        # Return custom view
         return view_class(child_container, tx=transaction)
 
     def to_dict(self) -> Dict[PathComponent, Any]:

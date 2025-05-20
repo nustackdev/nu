@@ -209,7 +209,7 @@ class BaseView(ABC):
         """
         # Create child path
         child_path = self.container.path.join(key)
-
+        child_container: Node
         with TransactionContext(self.container.backend, self._tx) as transaction:
             # Handle different value types
             if isinstance(value, dict):
@@ -231,8 +231,6 @@ class BaseView(ABC):
                     dict_view = self.__class__(nested_container, tx=transaction)
                     dict_view._store_value(k, v)
 
-                return child_container
-
             elif isinstance(value, (list, tuple)):
                 # Create container with LIST protocol
                 child_container = self._ensure_child_container(
@@ -247,8 +245,6 @@ class BaseView(ABC):
                 list_view.clear()
                 for i, item in enumerate(value):
                     list_view.set(i, item)
-
-                return child_container
 
             elif isinstance(value, set):
                 # Create container with SET protocol
@@ -265,14 +261,13 @@ class BaseView(ABC):
                 for item in value:
                     set_view.add(item)
 
-                return child_container
-
             else:
                 # Create or update primitive node
-                primitive = PrimitiveNode(self.container.backend, child_path, tx=transaction)
-                primitive.set_value(value, tx=transaction)
-                self.container.set_child(key, primitive, tx=transaction)
-                return primitive
+                child_container = PrimitiveNode(self.container.backend, child_path, tx=transaction)
+                self.container.set_child(key, child_container, tx=transaction)
+                child_container.set_value(value, tx=transaction)
+
+        return child_container
 
     def _ensure_child_container(
         self,

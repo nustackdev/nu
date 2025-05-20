@@ -176,6 +176,7 @@ class ContainerNode(Node):
         protocols_path = self._path.join(self._PROTOCOLS_KEY)
 
         with TransactionContext(self._backend, tx or self._tx) as transaction:
+            transaction.set(self._path.to_tuple(), None)
             transaction.set(type_path.to_tuple(), self._TYPE_CONTAINER)
             transaction.set(protocols_path.to_tuple(), self._protocols.value)
 
