@@ -100,3 +100,15 @@ class SerializationError(OperationError):
     """Raised when serialization or deserialization fails."""
 
     pass
+
+
+class IndexOutOfBoundsError(OperationError):
+    """Raised when attempting to access an index outside the valid range."""
+
+    pass
+
+
+class ValueTypeError(OperationError):
+    """Raised when attempting to access an index outside the valid range."""
+
+    pass

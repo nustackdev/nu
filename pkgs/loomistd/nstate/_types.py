@@ -54,12 +54,12 @@ class ContainerProtocol(Flag):
     """
 
     # Base protocols
-    CONTAINER = auto()  # Base protocol for all containers
+    CONTAINER = 1  # Base protocol for all containers
 
     # Core container types
-    MAPPING = auto() | CONTAINER  # Key-based access (dict-like)
-    SEQUENCE = auto() | CONTAINER  # Index-based ordered access (list-like)
-    SET = auto() | CONTAINER  # Collection of unique values (set-like)
+    MAPPING = 2 | CONTAINER  # Key-based access (dict-like)
+    SEQUENCE = 4 | CONTAINER  # Index-based ordered access (list-like)
+    SET = 8 | CONTAINER  # Collection of unique values (set-like)
 
     # Container attributes
     SIZED = auto()  # Has countable size

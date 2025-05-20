@@ -62,6 +62,6 @@ class StateService(SyncService):
 
 class StateSpec(Spec):
     name: str = SpecField(default="state")
-    factory: type = SpecField(default=State)
+    factory: type = SpecField(default=StateService)
     storage: Spec = SpecField(default_factory=SyncFileStorageSpec)
     observer: Spec = SpecField(default_factory=InMemoryObserverSpec)

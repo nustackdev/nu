@@ -21,8 +21,9 @@ from .._views.dict_view import DictView
 from .._views.flat_view import FlatView
 from .._views.list_view import ListView
 from .._views.set_view import SetView
+from .._views.view import BaseView
 
-ViewT = TypeVar("ViewT")
+ViewT = TypeVar("ViewT", bound=BaseView)
 
 __all__ = ["State"]
 
@@ -298,8 +299,6 @@ class State:
             custom_view = state.at("custom").view(CustomView)
             ```
         """
-        tx or self._tx
-
         # Get required protocols from view class
         required_protocols = getattr(
             view_class, "required_protocols", lambda: ContainerProtocol.CONTAINER
