@@ -13,14 +13,14 @@ from loomistd.kv import StorageKeyError
 
 from .._state.backend import ObservableKVBackend, ObservableKVTransaction
 from .._types import ContainerProtocol, NodeType, StateValue
-from .._utils import TransactionContext
 from .node import Node
 from .path import StatePath
+from .transaction import TransactionContext
 
 __all__ = ["PrimitiveNode"]
 
 
-class PrimitiveNode(Node):
+class PrimitiveNode(Node["PrimitiveNode"]):
     """
     Primitive value node (leaf node).
 
@@ -30,6 +30,20 @@ class PrimitiveNode(Node):
 
     Primitive nodes are simply wrappers around values in storage
     and provide methods to get and set those values.
+
+    PrimitiveNode inherits from Node, which implements TransactionalBase, allowing
+    it to be used as a context manager for transaction handling.
+
+    Example:
+        ```python
+        # Create a primitive node
+        node = PrimitiveNode(backend, path)
+
+        # Use as context manager for transaction handling
+        with node as n:
+            n.set_value("Hello, world!")
+        # Transaction automatically committed on success or rolled back on exception
+        ```
     """
 
     def __init__(
@@ -73,14 +87,14 @@ class PrimitiveNode(Node):
         Get the primitive value.
 
         Args:
-            tx: Optional transaction
+            tx: Optional transaction (defaults to current transaction)
 
         Returns:
             Any: Value of the primitive node, or EMPTY if not found
         """
-        with TransactionContext(self._backend, tx or self._tx) as transaction:
+        with TransactionContext(self._backend, tx=tx or self.tx) as tx:
             try:
-                result = transaction.get(self._path.to_tuple())
+                result = tx.get(self._path.to_tuple())
             except StorageKeyError:
                 # Handle case where the key doesn't exist
                 result = self.EMPTY
@@ -95,7 +109,7 @@ class PrimitiveNode(Node):
 
         Args:
             value: New value to store
-            tx: Optional transaction
+            tx: Optional transaction (defaults to current transaction)
         """
-        with TransactionContext(self._backend, tx or self._tx) as transaction:
-            transaction.set(self._path.to_tuple(), value)
+        with TransactionContext(self._backend, tx=tx or self.tx) as tx:
+            tx.set(self._path.to_tuple(), value)

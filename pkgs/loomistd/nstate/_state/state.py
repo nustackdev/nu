@@ -14,11 +14,10 @@ from loomi.interfaces.state.observer import SyncSubscriptionProtocol
 
 from .._core.container import ContainerNode
 from .._core.path import StatePath
+from .._core.transaction import TransactionalBase
 from .._state.backend import ObservableKVBackend, ObservableKVTransaction
 from .._types import CommonContainerProtocols, ContainerProtocol, PathComponent, StateCallbackFn
-from .._utils import TransactionContext
 from .._views.dict_view import DictView
-from .._views.flat_view import FlatView
 from .._views.list_view import ListView
 from .._views.set_view import SetView
 from .._views.view import BaseView
@@ -28,7 +27,7 @@ ViewT = TypeVar("ViewT", bound=BaseView)
 __all__ = ["State"]
 
 
-class State:
+class State(TransactionalBase["State"]):
     """
     Primary interface for accessing the state tree.
 
@@ -76,9 +75,21 @@ class State:
             path: The current path location (default: root)
             tx: Optional transaction for atomic operations
         """
+        super().__init__()
         self._backend = backend
-        self._path = path if path is not None else StatePath()
         self._tx = tx
+        self._path = path if path is not None else StatePath()
+
+    @property
+    def backend(self) -> ObservableKVBackend:
+        """
+        Get the backend storage interface.
+
+        Returns:
+            ObservableKVBackend: Backend storage interface
+            ```
+        """
+        return self._backend
 
     @property
     def path(self) -> StatePath:
@@ -90,7 +101,7 @@ class State:
         """
         return self._path
 
-    def at(self, *paths: PathComponent, tx: ObservableKVTransaction | None = None) -> State:
+    def at(self, *paths: PathComponent, tx: Optional[ObservableKVTransaction] = None) -> State:
         """
         Navigate to a path (relative to current path).
 
@@ -98,21 +109,27 @@ class State:
 
         Args:
             *paths: Path components to navigate to
+            tx: Optional transaction (defaults to current transaction)
 
         Returns:
             State: New State for the specified path
 
         Example:
             ```python
+            # Basic navigation
             user = state.at("users", "alice")
             email = state.at("users", "alice", "email")
+
+            # With context manager (transaction)
+            with state.at("users") as users_state:
+                # Operations with transaction
+                pass
             ```
         """
         new_path = self._path.join(*paths)
-        return State(self._backend, new_path, tx=tx or self._tx)
+        return State(self.backend, new_path, tx=tx)
 
-    @property
-    def parent(self) -> State:
+    def parent(self, *, tx: Optional[ObservableKVTransaction] = None) -> State:
         """
         Navigate to parent path.
 
@@ -129,10 +146,9 @@ class State:
         if parent_path is None:
             # Already at root
             return self
-        return State(self._backend, parent_path, tx=self._tx)
+        return State(self._backend, parent_path, tx=tx)
 
-    @property
-    def root(self) -> State:
+    def root(self, *, tx: Optional[ObservableKVTransaction] = None) -> State:
         """
         Navigate to root path.
 
@@ -144,7 +160,7 @@ class State:
             root = state.at("deeply", "nested", "path").root
             ```
         """
-        return State(self._backend, StatePath(), tx=self._tx)
+        return State(self._backend, StatePath(), tx=tx)
 
     def dict_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> DictView:
         """
@@ -173,10 +189,9 @@ class State:
             self._backend,
             self._path,
             CommonContainerProtocols.DICT,
-            tx=tx or self._tx,
         )
 
-        return DictView(container, tx=tx or self._tx)
+        return DictView(container, tx=tx)
 
     def list_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> ListView:
         """
@@ -205,10 +220,10 @@ class State:
             self._backend,
             self._path,
             CommonContainerProtocols.LIST,
-            tx=tx or self._tx,
+            tx=tx,
         )
 
-        return ListView(container, tx=tx or self._tx)
+        return ListView(container, tx=tx)
 
     def set_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> SetView:
         """
@@ -237,42 +252,10 @@ class State:
             self._backend,
             self._path,
             CommonContainerProtocols.SET,
-            tx=tx or self._tx,
+            tx=tx,
         )
 
-        return SetView(container, tx=tx or self._tx)
-
-    def flat_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> FlatView:
-        """
-        Access container as flat view.
-
-        If path doesn't exist, creates a new flat mapping container.
-        If path exists but is not a container with MAPPING and FLAT protocols,
-        raises an error.
-
-        Args:
-            tx: Optional transaction (defaults to current transaction)
-
-        Returns:
-            FlatView: Flat view for the container
-
-        Raises:
-            IncompatibleViewError: If container doesn't support required protocols
-
-        Example:
-            ```python
-            config = state.at("config").flat_view()
-            config.set("theme", "dark")
-            ```
-        """
-        container = ContainerNode(
-            self._backend,
-            self._path,
-            CommonContainerProtocols.FLAT_DICT,
-            tx=tx or self._tx,
-        )
-
-        return FlatView(container, tx=tx or self._tx)
+        return SetView(container, tx=tx)
 
     def view(
         self, view_class: type[ViewT], *, tx: Optional[ObservableKVTransaction] = None
@@ -308,10 +291,9 @@ class State:
             self._backend,
             self._path,
             required_protocols,
-            tx=tx or self._tx,
         )
 
-        return view_class(container, tx=tx or self._tx)
+        return view_class(container, tx=tx)
 
     def begin_transaction(self) -> ObservableKVTransaction:
         """
@@ -333,23 +315,6 @@ class State:
             ```
         """
         return self._backend.begin_transaction()
-
-    def transaction(self) -> TransactionContext:
-        """
-        Get a transaction context manager.
-
-        Returns:
-            TransactionContext: Transaction context manager
-
-        Example:
-            ```python
-            with state.transaction() as tx:
-                # Perform operations with tx
-                state.at("users").dict_view(tx=tx).set("alice", {"name": "Alice"})
-                # Auto-commits on success, auto-rollbacks on exception
-            ```
-        """
-        return TransactionContext(self._backend)
 
     def subscribe(self, callback: StateCallbackFn, depth: int = 0) -> SyncSubscriptionProtocol:
         """

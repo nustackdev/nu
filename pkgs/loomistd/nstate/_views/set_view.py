@@ -10,10 +10,10 @@ from __future__ import annotations
 from typing import Any, List, Optional, Set
 
 from .._core.primitive import PrimitiveNode
+from .._core.transaction import TransactionContext
 from .._exceptions import ContainerProtocolError
 from .._state.backend import ObservableKVTransaction
 from .._types import ContainerProtocol
-from .._utils import TransactionContext
 from .view import BaseView
 
 __all__ = ["SetView"]
@@ -83,7 +83,7 @@ class SetView(BaseView):
             value: Value to store
             tx: Optional transaction
         """
-        with TransactionContext(self.container.backend, tx or self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Get hash key for the value
             hash_key = self._hash_value(value)
 
@@ -113,7 +113,7 @@ class SetView(BaseView):
             tags.add("important")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -144,7 +144,7 @@ class SetView(BaseView):
             tags.remove("important")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -183,7 +183,7 @@ class SetView(BaseView):
                 print("Tag exists")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Get hash key for the value
             hash_key = self._hash_value(value)
 
@@ -203,7 +203,7 @@ class SetView(BaseView):
             tags.clear()
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(

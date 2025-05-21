@@ -10,9 +10,10 @@ from __future__ import annotations
 from typing import Any, Dict, List, Tuple, cast
 
 from .._core.primitive import PrimitiveNode
+from .._core.transaction import TransactionContext
 from .._exceptions import ContainerProtocolError, ValueTypeError
 from .._types import ContainerProtocol, NodeType, PathComponent
-from .._utils import TransactionContext, is_empty
+from .._utils import is_empty
 from .view import BaseView
 
 __all__ = ["FlatView"]
@@ -124,7 +125,7 @@ class FlatView(BaseView):
             config.set("theme", "dark")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self._tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -179,7 +180,7 @@ class FlatView(BaseView):
             config.remove("theme")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self._tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -213,7 +214,7 @@ class FlatView(BaseView):
             })
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self._tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -291,7 +292,7 @@ class FlatView(BaseView):
             config.clear()
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self._tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(

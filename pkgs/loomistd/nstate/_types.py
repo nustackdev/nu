@@ -10,9 +10,13 @@ throughout the library, establishing a consistent type system.
 from __future__ import annotations
 
 from enum import Enum, Flag, auto
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from loomi.interfaces.state.state import SyncCallbackFn
+
+if TYPE_CHECKING:
+    from ._views.view import BaseView
+
 
 # Type definitions
 PathComponent = str  # A component of a path (string key or integer index)
@@ -134,4 +138,4 @@ class CommonContainerProtocols:
 
 
 # Type variables for view classes
-ViewT = TypeVar("ViewT")
+ViewT = TypeVar("ViewT", bound="BaseView")

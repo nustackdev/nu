@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+from .._core.transaction import TransactionContext
 from .._exceptions import ContainerProtocolError
 from .._state.backend import ObservableKVTransaction
 from .._types import CommonContainerProtocols, ContainerProtocol, PathComponent
-from .._utils import TransactionContext
 from .view import BaseView, ViewT
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 __all__ = ["DictView"]
 
 
-class DictView(BaseView):
+class DictView(BaseView["DictView"]):
     """
     Dictionary view for containers implementing the MAPPING protocol.
 
@@ -77,11 +77,11 @@ class DictView(BaseView):
             ```
         """
         # Check if child exists
-        if not self.container.has_child(key, tx=self._tx):
+        if not self.container.has_child(key, tx=self.tx):
             return None
 
         # Get child node
-        child = self.container.get_child(key, tx=self._tx)
+        child = self.container.get_child(key, tx=self.tx)
         if child is None:
             return None
 
@@ -104,7 +104,7 @@ class DictView(BaseView):
             users.set("alice", {"name": "Alice Smith", "email": "alice@example.com"})
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -130,7 +130,7 @@ class DictView(BaseView):
                 print("User Alice exists")
             ```
         """
-        return self.container.has_child(key, tx=self._tx)
+        return self.container.has_child(key, tx=self.tx)
 
     def remove(self, key: PathComponent, /) -> None:
         """
@@ -148,7 +148,7 @@ class DictView(BaseView):
             users.remove("alice")
             ```
         """
-        self.container.remove_child(key, tx=self._tx)
+        self.container.remove_child(key, tx=self.tx)
 
     def update(self, mapping: Dict[PathComponent, Any], /) -> None:
         """
@@ -222,7 +222,7 @@ class DictView(BaseView):
             users.clear()
             ```
         """
-        self.container.clear(tx=self._tx)
+        self.container.clear(tx=self.tx)
 
     def dict_view(
         self, key: PathComponent, /, *, tx: Optional[ObservableKVTransaction] = None
@@ -246,7 +246,7 @@ class DictView(BaseView):
             alice.set("name", "Alice Smith")
             ```
         """
-        transaction = tx or self._tx
+        transaction = tx or self.tx
 
         # Ensure child container exists with DICT protocol using helper method
         child_container = self._ensure_child_container(
@@ -281,7 +281,7 @@ class DictView(BaseView):
         # Import here to avoid circular imports
         from .list_view import ListView
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
 
         # Ensure child container exists with LIST protocol using helper method
         child_container = self._ensure_child_container(
@@ -316,7 +316,7 @@ class DictView(BaseView):
         # Import here to avoid circular imports
         from .set_view import SetView
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
 
         # Ensure child container exists with SET protocol using helper method
         child_container = self._ensure_child_container(
@@ -351,7 +351,7 @@ class DictView(BaseView):
         # Import here to avoid circular imports
         from .flat_view import FlatView
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
 
         # Ensure child container exists with FLAT_DICT protocol using helper method
         child_container = self._ensure_child_container(
@@ -393,7 +393,7 @@ class DictView(BaseView):
             view_class, "required_protocols", lambda: ContainerProtocol.CONTAINER
         )()
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
 
         # Ensure child container exists with required protocols using helper method
         child_container = self._ensure_child_container(key, required_protocols, tx=transaction)

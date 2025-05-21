@@ -8,24 +8,38 @@ for all nodes in the state tree.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, TypeVar
 
+from .._core.transaction import TransactionalBase
 from .._exceptions import ContainerProtocolError
 from .._state.backend import ObservableKVBackend, ObservableKVTransaction
 from .._types import ContainerProtocol, NodeType
 from .._utils import Empty
 from .path import StatePath
 
+# Type variable for self-referential typing with TransactionalBase
+NodeT = TypeVar("NodeT", bound="Node")
+
 __all__ = ["Node"]
 
 
-class Node(ABC):
+class Node(TransactionalBase[NodeT], ABC):
     """
     Abstract base class for all nodes in the state tree.
 
     Nodes are the building blocks of the state tree and come in two types:
     - Container nodes: Can contain other nodes (like directories)
     - Primitive nodes: Contain a single value (like files)
+
+    Nodes can be used as context managers for transaction handling:
+
+    Example:
+        ```python
+        with node as n:
+            # Operations on node with transaction
+            value = n.some_operation()
+        # Transaction automatically committed
+        ```
     """
 
     EMPTY: Empty = Empty()
@@ -55,9 +69,20 @@ class Node(ABC):
             path: Path to this node
             tx: Optional transaction for atomic operations
         """
+        super().__init__()  # Initialize TransactionalBase
         self._backend = backend
         self._path = path
-        self._tx = tx
+        self._tx = tx  # Override the None from the base class
+
+    @property
+    def backend(self) -> ObservableKVBackend:
+        """
+        Get the backend storage interface.
+
+        Returns:
+            ObservableKVBackend: Backend storage interface
+        """
+        return self._backend
 
     @property
     def path(self) -> StatePath:
@@ -68,16 +93,6 @@ class Node(ABC):
             StatePath: Path to this node
         """
         return self._path
-
-    @property
-    def backend(self) -> ObservableKVBackend:
-        """
-        Get the backend of this node.
-
-        Returns:
-            ObservableKVBackend: Backend storage interface
-        """
-        return self._backend
 
     @abstractmethod
     def node_type(self) -> NodeType:

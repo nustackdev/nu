@@ -10,10 +10,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from .._core.primitive import PrimitiveNode
+from .._core.transaction import TransactionContext
 from .._exceptions import ContainerProtocolError, IndexOutOfBoundsError
 from .._state.backend import ObservableKVTransaction
 from .._types import CommonContainerProtocols, ContainerProtocol
-from .._utils import TransactionContext, is_empty
+from .._utils import is_empty
 from .view import BaseView, ViewT
 
 if TYPE_CHECKING:
@@ -77,7 +78,7 @@ class ListView(BaseView):
             count = tasks.length()
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Get the list length from metadata
             length_key = self.container._LIST_LENGTH_KEY
             child_path = self.container.path.join(length_key)
@@ -127,7 +128,7 @@ class ListView(BaseView):
             new_length: New length to store
             tx: Optional transaction
         """
-        with TransactionContext(self.container.backend, tx or self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Update the list length metadata
             length_key = self.container._LIST_LENGTH_KEY
             child_path = self.container.path.join(length_key)
@@ -168,11 +169,11 @@ class ListView(BaseView):
         key = str(index)
 
         # Check if child exists
-        if not self.container.has_child(key, tx=self._tx):
+        if not self.container.has_child(key, tx=self.tx):
             return None
 
         # Get child node
-        child = self.container.get_child(key, tx=self._tx)
+        child = self.container.get_child(key, tx=self.tx)
         if child is None:
             return None
 
@@ -196,7 +197,7 @@ class ListView(BaseView):
             tasks.set(0, "Updated task")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -236,7 +237,7 @@ class ListView(BaseView):
             tasks.append("New task")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -272,7 +273,7 @@ class ListView(BaseView):
             tasks.insert(1, "New second task")
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -323,7 +324,7 @@ class ListView(BaseView):
             tasks.remove(0)  # Remove first task
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -370,7 +371,7 @@ class ListView(BaseView):
             tasks.clear()
             ```
         """
-        with TransactionContext(self.container.backend, self._tx) as transaction:
+        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
             # Validate container supports mutation
             if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
                 raise ContainerProtocolError(
@@ -416,7 +417,7 @@ class ListView(BaseView):
         # Import here to avoid circular imports
         from .dict_view import DictView
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
         length = self.length()
 
         # Handle negative indices
@@ -460,7 +461,7 @@ class ListView(BaseView):
             tasks = user.list_view("tasks")
             ```
         """
-        transaction = tx or self._tx
+        transaction = tx or self.tx
         length = self.length()
 
         # Handle negative indices
@@ -505,7 +506,7 @@ class ListView(BaseView):
         # Import here to avoid circular imports
         from .set_view import SetView
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
         length = self.length()
 
         # Handle negative indices
@@ -552,7 +553,7 @@ class ListView(BaseView):
         # Import here to avoid circular imports
         from .flat_view import FlatView
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
         length = self.length()
 
         # Handle negative indices
@@ -606,7 +607,7 @@ class ListView(BaseView):
             view_class, "required_protocols", lambda: ContainerProtocol.CONTAINER
         )()
 
-        transaction = tx or self._tx
+        transaction = tx or self.tx
         length = self.length()
 
         # Handle negative indices
