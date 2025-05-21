@@ -19,7 +19,6 @@ from .view import BaseView, ViewT
 
 if TYPE_CHECKING:
     from .dict_view import DictView
-    from .flat_view import FlatView
     from .set_view import SetView
 
 __all__ = ["ListView"]
@@ -527,53 +526,6 @@ class ListView(BaseView):
 
         # Return set view
         return SetView(child_container, tx=transaction)
-
-    def flat_view(
-        self, index: int, /, *, tx: Optional[ObservableKVTransaction] = None
-    ) -> "FlatView":
-        """
-        Get a flat view for a child container at the given index.
-
-        Creates the child container if it doesn't exist.
-
-        Args:
-            index: Index of child container
-            tx: Optional transaction
-
-        Returns:
-            FlatView: Flat view for child container
-
-        Example:
-            ```python
-            # Get flat view for nested configuration
-            user = users.get(0)
-            settings = user.flat_view("settings")
-            ```
-        """
-        # Import here to avoid circular imports
-        from .flat_view import FlatView
-
-        transaction = tx or self.tx
-        length = self.length()
-
-        # Handle negative indices
-        if index < 0:
-            index = length + index
-
-        # Check bounds
-        if index < 0 or index >= length:
-            raise IndexOutOfBoundsError(f"Index {index} out of bounds for list of length {length}")
-
-        # Convert index to string key
-        key = str(index)
-
-        # Ensure child container exists with FLAT_DICT protocol
-        child_container = self._ensure_child_container(
-            key, CommonContainerProtocols.FLAT_DICT, tx=transaction
-        )
-
-        # Return flat view
-        return FlatView(child_container, tx=transaction)
 
     def view(
         self,

@@ -16,7 +16,6 @@ from .._types import CommonContainerProtocols, ContainerProtocol, PathComponent
 from .view import BaseView, ViewT
 
 if TYPE_CHECKING:
-    from .flat_view import FlatView
     from .list_view import ListView
     from .set_view import SetView
 
@@ -325,41 +324,6 @@ class DictView(BaseView["DictView"]):
 
         # Return set view
         return SetView(child_container, tx=transaction)
-
-    def flat_view(
-        self, key: PathComponent, /, *, tx: Optional[ObservableKVTransaction] = None
-    ) -> "FlatView":
-        """
-        Get a flat view for a child container.
-
-        Creates the child container if it doesn't exist.
-
-        Args:
-            key: Key of child container
-            tx: Optional transaction
-
-        Returns:
-            FlatView: Flat view for child container
-
-        Example:
-            ```python
-            # Access flat dictionary
-            settings = user.flat_view("settings")
-            settings.set("theme", "dark")
-            ```
-        """
-        # Import here to avoid circular imports
-        from .flat_view import FlatView
-
-        transaction = tx or self.tx
-
-        # Ensure child container exists with FLAT_DICT protocol using helper method
-        child_container = self._ensure_child_container(
-            key, CommonContainerProtocols.FLAT_DICT, tx=transaction
-        )
-
-        # Return flat view
-        return FlatView(child_container, tx=transaction)
 
     def view(
         self,
