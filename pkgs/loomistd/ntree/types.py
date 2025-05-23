@@ -10,7 +10,7 @@ throughout the package, establishing a consistent type system.
 from __future__ import annotations
 
 from enum import Enum, Flag, auto
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 
 from loomi.interfaces.state.state import SyncCallbackFn
 
@@ -156,3 +156,42 @@ class ContainerProtocol(Flag):
     READ_ONLY_FLAT_LIST = READ_ONLY_LIST | FLAT
     READ_ONLY_FLAT_SET = READ_ONLY_SET | FLAT
     READ_ONLY_FLAT_TUPLE = READ_ONLY_TUPLE | FLAT
+
+
+# -------------------------------------------------------------------------
+# Empty Types (for handling non-existent values in the tree)
+# -------------------------------------------------------------------------
+
+
+class Empty:
+    """
+    Sentinel object representing an empty value, distinct from None.
+
+    Used for distinguishing between a legitimate None value and a
+    nonexistent value in operations that may return None normally.
+    """
+
+    def __repr__(self) -> str:
+        """String representation for debugging."""
+        return "<Empty>"
+
+    def __str__(self) -> str:
+        """String representation for display."""
+        return "Empty"
+
+    def __bool__(self) -> bool:
+        """Boolean evaluation, always False."""
+        return False
+
+
+def is_empty(value: Any) -> TypeGuard[Empty]:
+    """
+    Check if a value is the EMPTY sentinel.
+
+    Args:
+        value: Value to check
+
+    Returns:
+        True if value is the EMPTY sentinel, False otherwise
+    """
+    return isinstance(value, Empty)
