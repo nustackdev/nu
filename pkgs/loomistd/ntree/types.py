@@ -15,21 +15,18 @@ from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 from loomi.interfaces.state.state import SyncCallbackFn
 
 if TYPE_CHECKING:
+    from .node import BaseNode
     from .transaction import TransactionalBase
-
-    # from .views.base import BaseView
+    from .view import BaseView
 
 
 # -------------------------------------------------------------------------
 # Type Variables
 # -------------------------------------------------------------------------
 
-# Generic type for views.
-# ViewT = TypeVar("ViewT", bound="BaseView")
-
-# Generic type for transactional objects.
+ViewT = TypeVar("ViewT", bound="BaseView")
 TransactionalT = TypeVar("TransactionalT", bound="TransactionalBase")
-
+NodeT = TypeVar("NodeT", bound="BaseNode")
 
 # -------------------------------------------------------------------------
 # Primitive Types
