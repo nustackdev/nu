@@ -2,29 +2,33 @@
 DictView implementation for the state management system.
 
 This module defines the DictView class, which provides a dictionary-like
-interface for containers implementing the MAPPING protocol.
+interface for containers implementing the MAPPING structure.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, cast
 
-from .._core.transaction import TransactionContext
+import attrs
+
+from .._core.primitive import PrimitiveNode
 from .._exceptions import ContainerProtocolError
-from .._state.backend import ObservableKVTransaction
-from .._types import CommonContainerProtocols, ContainerProtocol, PathComponent
-from .view import BaseView, ViewT
+from .._types import ContainerProtocol, ContainerStructure, NodeType, PathComponent, StateValue
+from .view import BaseView
 
 if TYPE_CHECKING:
-    from .list_view import ListView
-    from .set_view import SetView
+    pass
+
+    # from .list_view import ListView
+    # from .set_view import SetView
 
 __all__ = ["DictView"]
 
 
-class DictView(BaseView["DictView"]):
+@attrs.define(frozen=True, kw_only=True)
+class DictView(BaseView):
     """
-    Dictionary view for containers implementing the MAPPING protocol.
+    Dictionary view for containers implementing the MAPPING structure.
 
     DictView provides a dictionary-like interface for interacting with
     containers, allowing key-based access and modification of child nodes.
@@ -38,7 +42,7 @@ class DictView(BaseView["DictView"]):
 
         # Set and get values
         users.set("alice", {"email": "alice@example.com"})
-        alice_email = users.get("alice").get("email")
+        alice_data = users.get("alice")
 
         # Check for keys
         if users.has("bob"):
@@ -47,75 +51,130 @@ class DictView(BaseView["DictView"]):
         # Iterate over items
         for username, user_data in users.items():
             print(f"{username}: {user_data}")
+
+        # Convert to regular dict
+        users_dict = users.to_dict()
+
+        # Access nested containers
+        alice_profile = users.dict_view("alice")
+        alice_profile.set("location", "San Francisco")
         ```
     """
 
-    @staticmethod
-    def required_protocols() -> ContainerProtocol:
-        """
-        Get the protocols required by this view.
+    structure: ContainerStructure = attrs.field(
+        default=ContainerStructure.MAPPING_CONTAINER,
+        init=False,
+        eq=False,
+        hash=False,
+        alias=None,
+    )
 
-        Returns:
-            ContainerProtocol: MAPPING protocol
-        """
-        return ContainerProtocol.MAPPING
+    protocol: ContainerProtocol = attrs.field(
+        default=ContainerProtocol.DICT,
+        init=False,
+        eq=False,
+        hash=False,
+        alias=None,
+    )
 
-    def get(self, key: PathComponent, /) -> Any:
+    def get(self, key: PathComponent, default: Any = None) -> Any:
         """
-        Get the value associated with a key.
+        Get value at key.
+
+        For primitive values, returns the actual value.
+        For container values, returns a new State object for navigation.
 
         Args:
-            key: Key to get value for
+            key: Key to retrieve
+            default: Default value if key doesn't exist
 
         Returns:
-            Any: Value associated with key, or None if key doesn't exist
+            Any: Value at key, State object for containers, or default
 
         Example:
             ```python
-            user_data = users.get("alice")
+            # Get primitive value
+            email = users.get("alice").get("email")
+
+            # Get with default
+            status = users.get("alice").get("status", "active")
             ```
         """
-        # Check if child exists
-        if not self.container.has_child(key, tx=self.tx):
-            return None
+        container = self.container
+        if not container.has_child(key):
+            return default
 
-        # Get child node
-        child = self.container.get_child(key, tx=self.tx)
-        if child is None:
-            return None
+        child_node = container.get_child(key)
+        if child_node is None:
+            return default
 
-        # Extract value from node using helper method
-        return self._extract_value(child)
-
-    def set(self, key: PathComponent, value: Any, /) -> None:
-        """
-        Set a value for a key.
-
-        Args:
-            key: Key to set value for
-            value: Value to associate with key
-
-        Raises:
-            ContainerProtocolError: If container doesn't support mutation
-
-        Example:
-            ```python
-            users.set("alice", {"name": "Alice Smith", "email": "alice@example.com"})
-            ```
-        """
-        with TransactionContext(self.container.backend, tx=self.tx) as transaction:
-            # Validate container supports mutation
-            if not self.container.supports_protocol(ContainerProtocol.MUTABLE):
-                raise ContainerProtocolError(
-                    f"Container at {self.container.path} does not support mutation"
+        if child_node.node_type == NodeType.PRIMITIVE:
+            primitive_node = cast(PrimitiveNode, child_node)
+            value = primitive_node.get_value()
+            return (
+                value
+                if not hasattr(value, "__class__") or value.__class__.__name__ != "Empty"
+                else default
+            )
+        elif child_node.node_type == NodeType.CONTAINER:
+            result = {}
+            if child_node.supports_structure(ContainerStructure.MAPPING_CONTAINER):
+                view = DictView(
+                    backend=self.backend,
+                    path=child_node.path,
+                    tx=self.tx,
                 )
+                for k in view.keys():
+                    result[k] = view.get(k)
+            return result
 
-            # Store value using helper method
-            self._store_value(key, value)
-
-    def has(self, key: PathComponent, /) -> bool:
+    def set(self, key: PathComponent, value: StateValue) -> None:
         """
-        Check if a key exists.
+        Set value at key.
+
+        Creates appropriate node type based on the value.
+        Primitive values create primitive nodes.
+        Dict values create mapping containers.
+        List values create sequence containers.
+
+        Args:
+            key: Key to set
+            value: Value to store
+
+        Example:
+            ```python
+            # Set primitive value
+            users.set("alice", {"email": "alice@example.com"})
+
+            # Set nested structure
+            users.set("bob", {"profile": {"location": "NYC"}})
+            ```
+        """
+        container = self.container
+
+        if isinstance(value, dict):
+            # Recursively set the dict contents
+            child_view = DictView(
+                backend=self.backend,
+                path=self.path.join(key),
+                tx=self.tx,
+            )
+            for k, v in value.items():
+                child_view.set(k, v)
+
+        else:
+            # Create primitive node
+            primitive_node = PrimitiveNode(
+                backend=self.backend,
+                path=self.path.join(key),
+                tx=self.tx,
+            )
+            container.set_child(key, primitive_node)
+            primitive_node.set_value(value)
+
+    def has(self, key: PathComponent) -> bool:
+        """
+        Check if key exists in the container.
 
         Args:
             key: Key to check
@@ -126,38 +185,90 @@ class DictView(BaseView["DictView"]):
         Example:
             ```python
             if users.has("alice"):
-                print("User Alice exists")
+                print("Alice exists")
             ```
         """
-        return self.container.has_child(key, tx=self.tx)
+        return self.container.has_child(key)
 
-    def remove(self, key: PathComponent, /) -> None:
+    def delete(self, key: PathComponent) -> None:
         """
-        Remove a key and its associated value.
+        Delete key from the container.
 
         Args:
-            key: Key to remove
+            key: Key to delete
 
         Raises:
             KeyError: If key doesn't exist
-            ContainerProtocolError: If container doesn't support mutation
 
         Example:
             ```python
-            users.remove("alice")
+            users.delete("alice")
             ```
         """
-        self.container.remove_child(key, tx=self.tx)
+        self.container.remove_child(key)
 
-    def update(self, mapping: Dict[PathComponent, Any], /) -> None:
+    def clear(self) -> None:
         """
-        Update multiple key-value pairs.
+        Remove all items from the container.
+
+        Example:
+            ```python
+            users.clear()
+            ```
+        """
+        self.container.clear()
+
+    def keys(self) -> List[PathComponent]:
+        """
+        Get all keys in the container.
+
+        Returns:
+            List[PathComponent]: List of keys
+
+        Example:
+            ```python
+            for key in users.keys():
+                print(f"User: {key}")
+            ```
+        """
+        return self.container.keys()
+
+    def values(self) -> List[Any]:
+        """
+        Get all values in the container.
+
+        Returns:
+            List[Any]: List of values (primitives or State objects)
+
+        Example:
+            ```python
+            for value in users.values():
+                print(f"Value: {value}")
+            ```
+        """
+        return [self.get(key) for key in self.keys()]
+
+    def items(self) -> List[Tuple[PathComponent, Any]]:
+        """
+        Get all key-value pairs in the container.
+
+        Returns:
+            List[Tuple[PathComponent, Any]]: List of (key, value) tuples
+
+        Example:
+            ```python
+            for key, value in users.items():
+                print(f"{key}: {value}")
+            ```
+        """
+        return [(key, self.get(key)) for key in self.keys()]
+
+    def update(self, other: Dict[PathComponent, StateValue]) -> None:
+        """
+        Update container with key-value pairs from another dict.
 
         Args:
-            mapping: Dictionary of key-value pairs to update
-
-        Raises:
-            ContainerProtocolError: If container doesn't support mutation
+            other: Dictionary to update from
 
         Example:
             ```python
@@ -167,217 +278,68 @@ class DictView(BaseView["DictView"]):
             })
             ```
         """
-        for key, value in mapping.items():
+        for key, value in other.items():
             self.set(key, value)
 
-    def values(self) -> List[Any]:
+    def dict_view(self, key: PathComponent) -> DictView:
         """
-        Get all values in the dictionary.
+        Get a dictionary view for a nested container.
+
+        Args:
+            key: Key of the nested container
 
         Returns:
-            List[Any]: List of values
-
-        Example:
-            ```python
-            user_data_list = users.values()
-            ```
-        """
-        result = []
-        for key in self.keys():
-            value = self.get(key)
-            if value is not None:
-                result.append(value)
-        return result
-
-    def items(self) -> List[Tuple[PathComponent, Any]]:
-        """
-        Get all key-value pairs.
-
-        Returns:
-            List[Tuple[PathComponent, Any]]: List of (key, value) tuples
-
-        Example:
-            ```python
-            for username, user_data in users.items():
-                print(f"{username}: {user_data}")
-            ```
-        """
-        result = []
-        for key in self.keys():
-            value = self.get(key)
-            if value is not None:
-                result.append((key, value))
-        return result
-
-    def clear(self) -> None:
-        """
-        Remove all key-value pairs.
+            DictView: Dictionary view for the nested container
 
         Raises:
-            ContainerProtocolError: If container doesn't support mutation
+            KeyError: If key doesn't exist
+            ContainerProtocolError: If child is not a mapping container
 
         Example:
             ```python
-            users.clear()
+            alice_profile = users.dict_view("alice")
+            alice_profile.set("location", "San Francisco")
             ```
         """
-        self.container.clear(tx=self.tx)
+        container = self.container
+        if not container.has_child(key):
+            raise KeyError(f"Key '{key}' not found")
 
-    def dict_view(
-        self, key: PathComponent, /, *, tx: Optional[ObservableKVTransaction] = None
-    ) -> DictView:
-        """
-        Get a dictionary view for a child container.
-
-        Creates the child container if it doesn't exist.
-
-        Args:
-            key: Key of child container
-            tx: Optional transaction
-
-        Returns:
-            DictView: Dictionary view for child container
-
-        Example:
-            ```python
-            # Access nested dictionary
-            alice = users.dict_view("alice")
-            alice.set("name", "Alice Smith")
-            ```
-        """
-        transaction = tx or self.tx
-
-        # Ensure child container exists with DICT protocol using helper method
-        child_container = self._ensure_child_container(
-            key, CommonContainerProtocols.DICT, tx=transaction
-        )
-
-        # Return dictionary view
-        return DictView(child_container, tx=transaction)
-
-    def list_view(
-        self, key: PathComponent, /, *, tx: Optional[ObservableKVTransaction] = None
-    ) -> "ListView":
-        """
-        Get a list view for a child container.
-
-        Creates the child container if it doesn't exist.
-
-        Args:
-            key: Key of child container
-            tx: Optional transaction
-
-        Returns:
-            ListView: List view for child container
-
-        Example:
-            ```python
-            # Access nested list
-            skills = user.list_view("skills")
-            skills.append("Python")
-            ```
-        """
-        # Import here to avoid circular imports
-        from .list_view import ListView
-
-        transaction = tx or self.tx
-
-        # Ensure child container exists with LIST protocol using helper method
-        child_container = self._ensure_child_container(
-            key, CommonContainerProtocols.LIST, tx=transaction
-        )
-
-        # Return list view
-        return ListView(child_container, tx=transaction)
-
-    def set_view(
-        self, key: PathComponent, /, *, tx: Optional[ObservableKVTransaction] = None
-    ) -> "SetView":
-        """
-        Get a set view for a child container.
-
-        Creates the child container if it doesn't exist.
-
-        Args:
-            key: Key of child container
-            tx: Optional transaction
-
-        Returns:
-            SetView: Set view for child container
-
-        Example:
-            ```python
-            # Access nested set
-            tags = user.set_view("tags")
-            tags.add("important")
-            ```
-        """
-        # Import here to avoid circular imports
-        from .set_view import SetView
-
-        transaction = tx or self.tx
-
-        # Ensure child container exists with SET protocol using helper method
-        child_container = self._ensure_child_container(
-            key, CommonContainerProtocols.SET, tx=transaction
-        )
-
-        # Return set view
-        return SetView(child_container, tx=transaction)
-
-    def view(
-        self,
-        key: PathComponent,
-        view_class: type[ViewT],
-        /,
-        *,
-        tx: Optional[ObservableKVTransaction] = None,
-    ) -> ViewT:
-        """
-        Get a custom view for a child container.
-
-        Creates the child container if it doesn't exist.
-
-        Args:
-            key: Key of child container
-            view_class: View class to use
-            tx: Optional transaction
-
-        Returns:
-            ViewT: Custom view for child container
-
-        Example:
-            ```python
-            # Access with custom view
-            custom_view = user.view("data", CustomView)
-            ```
-        """
-        # Get required protocols from view class
-        required_protocols = getattr(
-            view_class, "required_protocols", lambda: ContainerProtocol.CONTAINER
-        )()
-
-        transaction = tx or self.tx
-
-        # Ensure child container exists with required protocols using helper method
-        child_container = self._ensure_child_container(key, required_protocols, tx=transaction)
-
-        # Return custom view
-        return view_class(child_container, tx=transaction)
+        child_node = container.get_child(key)
+        if child_node and child_node.node_type == NodeType.CONTAINER:
+            if not child_node.supports_structure(ContainerStructure.MAPPING_CONTAINER):
+                raise ContainerProtocolError(f"Child at key '{key}' is not a mapping container")
+            return DictView(
+                backend=self.backend,
+                path=child_node.path,
+                tx=self.tx,
+            )
+        else:
+            raise ContainerProtocolError(f"Child at key '{key}' is not a container")
 
     def to_dict(self) -> Dict[PathComponent, Any]:
         """
-        Convert to a Python dictionary.
+        Convert container to a regular Python dictionary.
+
+        Recursively converts nested containers to their Python equivalents:
+        - Mapping containers become dicts
+        - Sequence containers become lists
+        - Set containers become sets
+        - Primitive values remain as-is
 
         Returns:
-            Dict[PathComponent, Any]: Dictionary representation
+            Dict[PathComponent, Any]: Python dictionary representation
 
         Example:
             ```python
-            user_dict = user.to_dict()
+            users_dict = users.to_dict()
+            print(users_dict)
+            # {'alice': {'email': 'alice@example.com', 'profile': {...}}}
             ```
         """
         result = {}
-        for key, value in self.items():
-            result[key] = value
+
+        for key in self.keys():
+            result[key] = self.get(key)
+
         return result

@@ -181,7 +181,7 @@ class StatePath:
         Get the last component of the path.
 
         Returns:
-            PathComponent: Last component, or None if this is the root path
+            PathComponent: Last component
 
         Example:
             ```python
@@ -189,7 +189,7 @@ class StatePath:
             last = path.last()  # "alice"
             ```
         """
-        if len(self._components) <= 1:
+        if len(self._components) == 0:
             # This is the root path
             return None
 

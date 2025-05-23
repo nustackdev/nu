@@ -10,10 +10,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import ClassVar, Optional, TypeVar
 
-from .._core.transaction import TransactionalBase
+import attrs
+
 from .._exceptions import ContainerProtocolError
 from .._state.backend import ObservableKVBackend, ObservableKVTransaction
-from .._types import ContainerProtocol, NodeType
+from .._types import ContainerProtocol, ContainerStructure, NodeType
 from .._utils import Empty
 from .path import StatePath
 
@@ -23,7 +24,8 @@ NodeT = TypeVar("NodeT", bound="Node")
 __all__ = ["Node"]
 
 
-class Node(TransactionalBase[NodeT], ABC):
+@attrs.define(frozen=True, kw_only=True)
+class Node(ABC):
     """
     Abstract base class for all nodes in the state tree.
 
@@ -42,58 +44,25 @@ class Node(TransactionalBase[NodeT], ABC):
         ```
     """
 
-    EMPTY: Empty = Empty()
+    # Path to this node in the state tree
+    path: StatePath = attrs.field(eq=False, hash=False, kw_only=True, alias=None)
+
+    # Backend instance for transaction management
+    backend: ObservableKVBackend = attrs.field(eq=False, hash=False, alias=None)
+
+    # Current transaction if any
+    tx: Optional[ObservableKVTransaction] = attrs.field(
+        default=None, eq=False, hash=False, alias=None
+    )
+
+    EMPTY: ClassVar[Empty] = Empty()
 
     # Special markers for node metadata
     _MARKER: ClassVar[str] = "\ue000"  # Unicode Private Use Area character
-    _TYPE_KEY: ClassVar[str] = _MARKER + "TYPE"
-    _PROTOCOLS_KEY: ClassVar[str] = _MARKER + "PROTOCOLS"
-
-    # Container type marker values
-    _TYPE_CONTAINER: ClassVar[str] = "CONTAINER"
-    _TYPE_PRIMITIVE: ClassVar[str] = "PRIMITIVE"
-
-    def __init__(
-        self,
-        backend: ObservableKVBackend,
-        path: StatePath,
-        /,
-        *,
-        tx: Optional[ObservableKVTransaction] = None,
-    ) -> None:
-        """
-        Initialize a node.
-
-        Args:
-            backend: The backend storage interface
-            path: Path to this node
-            tx: Optional transaction for atomic operations
-        """
-        super().__init__()  # Initialize TransactionalBase
-        self._backend = backend
-        self._path = path
-        self._tx = tx  # Override the None from the base class
+    _TYPE_KEY: ClassVar[str] = _MARKER + "T"
+    _SIZE_KEY: ClassVar[str] = _MARKER + "S"
 
     @property
-    def backend(self) -> ObservableKVBackend:
-        """
-        Get the backend storage interface.
-
-        Returns:
-            ObservableKVBackend: Backend storage interface
-        """
-        return self._backend
-
-    @property
-    def path(self) -> StatePath:
-        """
-        Get the path of this node.
-
-        Returns:
-            StatePath: Path to this node
-        """
-        return self._path
-
     @abstractmethod
     def node_type(self) -> NodeType:
         """
@@ -104,15 +73,39 @@ class Node(TransactionalBase[NodeT], ABC):
         """
         pass
 
+    @property
     @abstractmethod
-    def protocols(self) -> ContainerProtocol:
+    def node_structure(self) -> ContainerStructure:
         """
-        Get the protocols implemented by this node.
+        Get the structure implemented by this node.
 
         Returns:
-            ContainerProtocol: Supported protocols (empty for primitive nodes)
+            ContainerStructure: Supported protocol (empty for primitive nodes)
         """
         pass
+
+    @property
+    @abstractmethod
+    def node_protocol(self) -> ContainerProtocol:
+        """
+        Get the protocol implemented by this node.
+
+        Returns:
+            ContainerProtocol: Supported protocol (empty for primitive nodes)
+        """
+        pass
+
+    def supports_structure(self, structure: ContainerStructure, /) -> bool:
+        """
+        Check if this node supports a specific structure.
+
+        Args:
+            structure: Structure to check
+
+        Returns:
+            bool: True if the structure is supported
+        """
+        return bool(self.node_structure & structure == structure)
 
     def supports_protocol(self, protocol: ContainerProtocol, /) -> bool:
         """
@@ -124,7 +117,7 @@ class Node(TransactionalBase[NodeT], ABC):
         Returns:
             bool: True if the protocol is supported
         """
-        return bool(self.protocols() & protocol)
+        return bool(self.node_protocol & protocol)
 
     def validate_protocol(self, protocol: ContainerProtocol, /) -> None:
         """
@@ -137,8 +130,23 @@ class Node(TransactionalBase[NodeT], ABC):
             ContainerProtocolError: If protocol is not supported
         """
         if not self.supports_protocol(protocol):
-            supported = self.protocols()
+            supported = self.node_protocol
             raise ContainerProtocolError(
-                f"Node at {self._path} does not support protocol {protocol}. "
-                f"Supported protocols: {supported}"
+                f"Node at {self.path} does not support protocol {protocol}. "
+                f"Supported protocol: {supported}"
+            )
+
+    def validate_structure(self, structure: ContainerStructure, /) -> None:
+        """
+        Validate that this node supports a specific structure.
+        Args:
+            structure: Structure to validate
+        Raises:
+            ContainerProtocolError: If structure is not supported
+        """
+        if not self.supports_structure(structure):
+            supported = self.node_structure
+            raise ContainerProtocolError(
+                f"Node at {self.path} does not support structure {structure}. "
+                f"Supported structure: {supported}"
             )

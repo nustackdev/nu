@@ -3,37 +3,42 @@ State implementation for the state management system.
 
 This module defines the State class, which is the primary interface for accessing
 and manipulating the state tree. It provides methods for navigation, accessing nodes,
-checking types, and creating views.
+checking types, and creating views with clean separation between context manager
+and direct access patterns.
 """
 
 from __future__ import annotations
 
-from typing import Optional, TypeVar
+from typing import Optional
+
+import attrs
 
 from loomi.interfaces.state.observer import SyncSubscriptionProtocol
 
-from .._core.container import ContainerNode
 from .._core.path import StatePath
-from .._core.transaction import TransactionalBase
-from .._state.backend import ObservableKVBackend, ObservableKVTransaction
-from .._types import CommonContainerProtocols, ContainerProtocol, PathComponent, StateCallbackFn
+from .._core.transaction import TransactionalBase, create_view_context_manager
+from .._state.backend import ObservableKVTransaction
+from .._types import PathComponent, StateCallbackFn
 from .._views.dict_view import DictView
-from .._views.list_view import ListView
-from .._views.set_view import SetView
-from .._views.view import BaseView
 
-ViewT = TypeVar("ViewT", bound=BaseView)
+# from .._views.list_view import ListView
+# from .._views.set_view import SetView
 
 __all__ = ["State"]
 
 
-class State(TransactionalBase["State"]):
+@attrs.define(frozen=True, kw_only=True)
+class State(TransactionalBase):
     """
     Primary interface for accessing the state tree.
 
     State provides methods for navigating the tree, querying and manipulating nodes,
     and creating appropriate views for container nodes. It follows a filesystem-like
     mental model, where containers are like directories and primitives are like files.
+
+    The State class now provides two patterns for accessing views:
+    1. Context manager methods (with_*_view) - Automatic transaction management
+    2. Direct access methods (*_view) - Manual transaction management
 
     Example:
         ```python
@@ -43,63 +48,35 @@ class State(TransactionalBase["State"]):
         users = state.at("users")
         alice = users.at("alice")
 
-        # Checking paths
-        if alice.exists():
-            print(f"User type: {alice.type()}")
+        # Context manager usage (recommended for mutations)
+        with state.at("users").with_dict_view() as users:
+            users.set("alice", {"email": "alice@example.com"})
+            users.set("bob", {"email": "bob@example.com"})
 
-        # Getting and setting values
-        name = alice.at("name").get()
-        alice.at("email").set("alice@example.com")
+        # Direct usage (for reads or manual transaction management)
+        users = state.at("users").dict_view()
+        user_count = len(users.keys())
+        users_dict = users.to_dict()
 
-        # Using views
-        profile = alice.at("profile").dict_view()
-        profile.set("location", "San Francisco")
+        # Navigation with context manager
+        with state.at("users").with_dict_view() as users:
+            if users.has("alice"):
+                alice_profile = users.dict_view("alice")  # Inherits transaction
+                alice_profile.set("location", "San Francisco")
 
-        skills = profile.list_view("skills")
-        skills.append("Python")
+        # Manual transaction management
+        tx = state.begin_transaction()
+        try:
+            users = state.at("users").dict_view(tx=tx)
+            users.set("charlie", {"email": "charlie@example.com"})
+            tx.commit()
+        except Exception:
+            tx.rollback()
+            raise
         ```
     """
 
-    def __init__(
-        self,
-        backend: ObservableKVBackend,
-        path: Optional[StatePath] = None,
-        *,
-        tx: Optional[ObservableKVTransaction] = None,
-    ) -> None:
-        """
-        Initialize a State instance.
-
-        Args:
-            backend: The backend storage interface
-            path: The current path location (default: root)
-            tx: Optional transaction for atomic operations
-        """
-        super().__init__()
-        self._backend = backend
-        self._tx = tx
-        self._path = path if path is not None else StatePath()
-
-    @property
-    def backend(self) -> ObservableKVBackend:
-        """
-        Get the backend storage interface.
-
-        Returns:
-            ObservableKVBackend: Backend storage interface
-            ```
-        """
-        return self._backend
-
-    @property
-    def path(self) -> StatePath:
-        """
-        Get the current path location.
-
-        Returns:
-            StatePath: Current path
-        """
-        return self._path
+    path: StatePath = attrs.field(factory=StatePath, eq=False, hash=False, alias=None)
 
     def at(self, *paths: PathComponent, tx: Optional[ObservableKVTransaction] = None) -> State:
         """
@@ -120,14 +97,18 @@ class State(TransactionalBase["State"]):
             user = state.at("users", "alice")
             email = state.at("users", "alice", "email")
 
-            # With context manager (transaction)
-            with state.at("users") as users_state:
+            # Navigation with context manager
+            with state.at("users").with_dict_view() as users:
                 # Operations with transaction
-                pass
+                users.set("alice", {"name": "Alice"})
+
+            # Navigation with direct access
+            users = state.at("users").dict_view()
+            alice_data = users.get("alice")
             ```
         """
-        new_path = self._path.join(*paths)
-        return State(self.backend, new_path, tx=tx)
+        new_path = self.path.join(*paths)
+        return attrs.evolve(self, path=new_path, tx=tx or self.tx)
 
     def parent(self, *, tx: Optional[ObservableKVTransaction] = None) -> State:
         """
@@ -139,14 +120,14 @@ class State(TransactionalBase["State"]):
         Example:
             ```python
             user = state.at("users", "alice")
-            users = user.parent
+            users = user.parent()
             ```
         """
-        parent_path = self._path.parent()
+        parent_path = self.path.parent()
         if parent_path is None:
             # Already at root
             return self
-        return State(self._backend, parent_path, tx=tx)
+        return attrs.evolve(self, path=parent_path, tx=tx or self.tx)
 
     def root(self, *, tx: Optional[ObservableKVTransaction] = None) -> State:
         """
@@ -157,18 +138,111 @@ class State(TransactionalBase["State"]):
 
         Example:
             ```python
-            root = state.at("deeply", "nested", "path").root
+            root = state.at("deeply", "nested", "path").root()
             ```
         """
-        return State(self._backend, StatePath(), tx=tx)
+        return attrs.evolve(self, path=StatePath(), tx=tx or self.tx)
+
+    # =========================================================================
+    # Context Manager Methods (Automatic Transaction Management)
+    # =========================================================================
+
+    def with_dict_view(self):
+        """
+        Access container as dictionary view with automatic transaction management.
+
+        Returns a context manager that yields a DictView with transaction context.
+        If path doesn't exist, creates a new mapping container.
+
+        Returns:
+            Context manager yielding DictView with transaction
+
+        Example:
+            ```python
+            # Automatic transaction - recommended for mutations
+            with state.at("users").with_dict_view() as users:
+                users.set("alice", {"email": "alice@example.com"})
+                users.set("bob", {"email": "bob@example.com"})
+
+                # Nested operations inherit the transaction
+                alice_profile = users.dict_view("alice")
+                alice_profile.set("location", "San Francisco")
+            # Transaction automatically committed on success
+
+            # Error handling
+            try:
+                with state.at("users").with_dict_view() as users:
+                    users.set("invalid", None)  # This might raise an error
+                    raise ValueError("Something went wrong")
+            except ValueError:
+                # Transaction automatically rolled back
+                pass
+            ```
+        """
+        return create_view_context_manager(
+            DictView, backend=self.backend, path=self.path, tx=self.tx
+        )
+
+    # def with_list_view(self):
+    #     """
+    #     Access container as list view with automatic transaction management.
+
+    #     Returns a context manager that yields a ListView with transaction context.
+    #     If path doesn't exist, creates a new sequence container.
+
+    #     Returns:
+    #         Context manager yielding ListView with transaction
+
+    #     Example:
+    #         ```python
+    #         with state.at("tasks").with_list_view() as tasks:
+    #             tasks.append("Buy groceries")
+    #             tasks.append("Walk the dog")
+    #         # Transaction automatically committed
+    #         ```
+    #     """
+    #     return create_view_context_manager(
+    #         ListView,
+    #         _backend=self._backend,
+    #         _path=self._path,
+    #         _tx=self.tx
+    #     )
+
+    # def with_set_view(self):
+    #     """
+    #     Access container as set view with automatic transaction management.
+
+    #     Returns a context manager that yields a SetView with transaction context.
+    #     If path doesn't exist, creates a new set container.
+
+    #     Returns:
+    #         Context manager yielding SetView with transaction
+
+    #     Example:
+    #         ```python
+    #         with state.at("tags").with_set_view() as tags:
+    #             tags.add("important")
+    #             tags.add("urgent")
+    #         # Transaction automatically committed
+    #         ```
+    #     """
+    #     return create_view_context_manager(
+    #         SetView,
+    #         _backend=self._backend,
+    #         _path=self._path,
+    #         _tx=self.tx
+    #     )
+
+    # =========================================================================
+    # Direct Access Methods (Manual Transaction Management)
+    # =========================================================================
 
     def dict_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> DictView:
         """
-        Access container as dictionary view.
+        Access container as dictionary view with manual transaction management.
 
-        If path doesn't exist, creates a new mapping container.
-        If path exists but is not a container with MAPPING protocol,
-        raises an error.
+        Returns a DictView object directly. No automatic transaction handling.
+        If path doesn't exist, creates a new mapping container when accessed.
 
         Args:
             tx: Optional transaction (defaults to current transaction)
@@ -176,124 +250,107 @@ class State(TransactionalBase["State"]):
         Returns:
             DictView: Dictionary view for the container
 
-        Raises:
-            IncompatibleViewError: If container doesn't support MAPPING protocol
-
         Example:
             ```python
+            # Direct usage - good for reads
             users = state.at("users").dict_view()
-            users.set("alice", {"email": "alice@example.com"})
+            user_count = len(users.keys())
+            users_dict = users.to_dict()
+
+            # Manual transaction management
+            tx = state.begin_transaction()
+            try:
+                users = state.at("users").dict_view(tx=tx)
+                users.set("alice", {"email": "alice@example.com"})
+                tx.commit()
+            except Exception:
+                tx.rollback()
+                raise
+
+            # Use existing transaction from context
+            with state.with_dict_view() as root_dict:
+                # This inherits the transaction from the context
+                users = state.at("users").dict_view()
+                users.set("bob", {"email": "bob@example.com"})
             ```
         """
-        container = ContainerNode(
-            self._backend,
-            self._path,
-            CommonContainerProtocols.DICT,
-        )
+        return DictView(backend=self.backend, path=self.path, tx=tx or self.tx)
 
-        return DictView(container, tx=tx)
+    # def list_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> ListView:
+    #     """
+    #     Access container as list view with manual transaction management.
 
-    def list_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> ListView:
-        """
-        Access container as list view.
+    #     Returns a ListView object directly. No automatic transaction handling.
+    #     If path doesn't exist, creates a new sequence container when accessed.
 
-        If path doesn't exist, creates a new sequence container.
-        If path exists but is not a container with SEQUENCE protocol,
-        raises an error.
+    #     Args:
+    #         tx: Optional transaction (defaults to current transaction)
 
-        Args:
-            tx: Optional transaction (defaults to current transaction)
+    #     Returns:
+    #         ListView: List view for the container
 
-        Returns:
-            ListView: List view for the container
+    #     Example:
+    #         ```python
+    #         # Direct usage
+    #         tasks = state.at("tasks").list_view()
+    #         task_count = len(tasks)
 
-        Raises:
-            IncompatibleViewError: If container doesn't support SEQUENCE protocol
+    #         # Manual transaction
+    #         tx = state.begin_transaction()
+    #         try:
+    #             tasks = state.at("tasks").list_view(tx=tx)
+    #             tasks.append("Buy groceries")
+    #             tx.commit()
+    #         except Exception:
+    #             tx.rollback()
+    #             raise
+    #         ```
+    #     """
+    #     return ListView(
+    #         _backend=self._backend,
+    #         _path=self._path,
+    #         _tx=tx or self.tx
+    #     )
 
-        Example:
-            ```python
-            tasks = state.at("tasks").list_view()
-            tasks.append("Buy groceries")
-            ```
-        """
-        container = ContainerNode(
-            self._backend,
-            self._path,
-            CommonContainerProtocols.LIST,
-            tx=tx,
-        )
+    # def set_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> SetView:
+    #     """
+    #     Access container as set view with manual transaction management.
 
-        return ListView(container, tx=tx)
+    #     Returns a SetView object directly. No automatic transaction handling.
+    #     If path doesn't exist, creates a new set container when accessed.
 
-    def set_view(self, *, tx: Optional[ObservableKVTransaction] = None) -> SetView:
-        """
-        Access container as set view.
+    #     Args:
+    #         tx: Optional transaction (defaults to current transaction)
 
-        If path doesn't exist, creates a new set container.
-        If path exists but is not a container with SET protocol,
-        raises an error.
+    #     Returns:
+    #         SetView: Set view for the container
 
-        Args:
-            tx: Optional transaction (defaults to current transaction)
+    #     Example:
+    #         ```python
+    #         # Direct usage
+    #         tags = state.at("tags").set_view()
+    #         has_important = tags.contains("important")
 
-        Returns:
-            SetView: Set view for the container
+    #         # Manual transaction
+    #         tx = state.begin_transaction()
+    #         try:
+    #             tags = state.at("tags").set_view(tx=tx)
+    #             tags.add("urgent")
+    #             tx.commit()
+    #         except Exception:
+    #             tx.rollback()
+    #             raise
+    #         ```
+    #     """
+    #     return SetView(
+    #         _backend=self._backend,
+    #         _path=self._path,
+    #         _tx=tx or self.tx
+    #     )
 
-        Raises:
-            IncompatibleViewError: If container doesn't support SET protocol
-
-        Example:
-            ```python
-            tags = state.at("tags").set_view()
-            tags.add("important")
-            ```
-        """
-        container = ContainerNode(
-            self._backend,
-            self._path,
-            CommonContainerProtocols.SET,
-            tx=tx,
-        )
-
-        return SetView(container, tx=tx)
-
-    def view(
-        self, view_class: type[ViewT], *, tx: Optional[ObservableKVTransaction] = None
-    ) -> ViewT:
-        """
-        Access container via custom view class.
-
-        If path doesn't exist, creates a new container with protocols
-        required by the view class.
-        If path exists but doesn't support required protocols, raises an error.
-
-        Args:
-            view_class: View class to use
-            tx: Optional transaction (defaults to current transaction)
-
-        Returns:
-            ViewT: Instance of the specified view class
-
-        Raises:
-            IncompatibleViewError: If container doesn't support required protocols
-
-        Example:
-            ```python
-            custom_view = state.at("custom").view(CustomView)
-            ```
-        """
-        # Get required protocols from view class
-        required_protocols = getattr(
-            view_class, "required_protocols", lambda: ContainerProtocol.CONTAINER
-        )()
-
-        container = ContainerNode(
-            self._backend,
-            self._path,
-            required_protocols,
-        )
-
-        return view_class(container, tx=tx)
+    # =========================================================================
+    # Transaction and Subscription Methods
+    # =========================================================================
 
     def begin_transaction(self) -> ObservableKVTransaction:
         """
@@ -304,17 +361,27 @@ class State(TransactionalBase["State"]):
 
         Example:
             ```python
+            # Manual transaction management
             tx = state.begin_transaction()
             try:
-                # Perform operations with tx
-                state.at("users").dict_view(tx=tx).set("alice", {"name": "Alice"})
+                users = state.at("users").dict_view(tx=tx)
+                users.set("alice", {"name": "Alice"})
+
+                tasks = state.at("tasks").list_view(tx=tx)
+                tasks.append("Greet Alice")
+
                 tx.commit()
             except Exception:
                 tx.rollback()
                 raise
+
+            # Or use context manager for automatic management
+            with state.at("users").with_dict_view() as users:
+                users.set("alice", {"name": "Alice"})
+            # Much cleaner!
             ```
         """
-        return self._backend.begin_transaction()
+        return self.backend.begin_transaction()
 
     def subscribe(self, callback: StateCallbackFn, depth: int = 0) -> SyncSubscriptionProtocol:
         """
@@ -332,12 +399,18 @@ class State(TransactionalBase["State"]):
 
         Example:
             ```python
-            def on_change(path):
-                print(f"Path {path} changed")
+            def on_user_change(path):
+                print(f"User path {path} changed")
 
-            sub = state.at("users").subscribe(on_change)
+            # Subscribe to changes in the users container
+            sub = state.at("users").subscribe(on_user_change, depth=1)
+
+            # Make some changes (will trigger callback)
+            with state.at("users").with_dict_view() as users:
+                users.set("alice", {"name": "Alice"})  # Triggers callback
+
             # Later, unsubscribe
             sub.unsubscribe()
             ```
         """
-        return self._backend.subscribe(self._path.to_tuple(), callback, depth)
+        return self.backend.subscribe(self.path.to_tuple(), callback, depth)

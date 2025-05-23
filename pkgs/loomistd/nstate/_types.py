@@ -23,16 +23,12 @@ PathComponent = str  # A component of a path (string key or integer index)
 StatePath = tuple[PathComponent, ...]  # A path represented as a tuple of components
 PrimitiveValue = None | bytes | bool | int | float | str  # Basic primitive types
 ComplexValue = (
-    PrimitiveValue
-    | list["ComplexValue"]
-    | set["ComplexValue"]
-    | tuple["ComplexValue", ...]
-    | dict[PathComponent, "ComplexValue"]
+    list["PrimitiveValue | ComplexValue"]
+    | set["PrimitiveValue | ComplexValue"]
+    | tuple["PrimitiveValue | ComplexValue", ...]
+    | dict[PathComponent, "PrimitiveValue | ComplexValue"]
 )  # Complex types that can be serialized
 StateValue = PrimitiveValue | ComplexValue  # Any value that can be stored
-StateValueComposite = (
-    list[StateValue] | set[StateValue] | tuple[StateValue, ...] | dict[PathComponent, StateValue]
-)  # Variant of StateValue that enforces at least one level of nesting
 StateCallbackFn = SyncCallbackFn
 
 
@@ -49,7 +45,7 @@ class NodeType(Enum):
 
 
 # Container protocol flags
-class ContainerProtocol(Flag):
+class ContainerStructure(Flag):
     """
     Protocol flags defining container capabilities and interfaces.
 
@@ -61,80 +57,75 @@ class ContainerProtocol(Flag):
     CONTAINER = 1  # Base protocol for all containers
 
     # Core container types
-    MAPPING = 2 | CONTAINER  # Key-based access (dict-like)
-    SEQUENCE = 4 | CONTAINER  # Index-based ordered access (list-like)
-    SET = 8 | CONTAINER  # Collection of unique values (set-like)
-
-    # Container attributes
-    SIZED = auto()  # Has countable size
-    ITERABLE = auto()  # Can be iterated over
-    MUTABLE = auto()  # Can be modified after creation
-    FLAT = auto()  # Can contain only primitives (no nested containers)
+    MAPPING_CONTAINER = 2 | CONTAINER  # Key-based access (dict-like)
+    SEQUENCE_CONTAINER = 2 << 1 | CONTAINER  # Index-based ordered access (list-like)
+    SET_CONTAINER = 2 << 2 | CONTAINER  # Collection of unique values (set-like)
+    SERIES_CONTAINER = 2 << 3 | CONTAINER  # Series (timeseries-like)
 
     def __str__(self) -> str:
         """Return a string representation of protocols."""
-        # Start with base protocols
         parts = []
 
-        # Check for main container types
-        if self & ContainerProtocol.MAPPING == ContainerProtocol.MAPPING:
-            parts.append("MAPPING")
-        elif self & ContainerProtocol.SEQUENCE == ContainerProtocol.SEQUENCE:
-            parts.append("SEQUENCE")
-        elif self & ContainerProtocol.SET == ContainerProtocol.SET:
-            parts.append("SET")
-        elif self & ContainerProtocol.CONTAINER == ContainerProtocol.CONTAINER:
+        if self & self.CONTAINER:
             parts.append("CONTAINER")
+        if self & self.MAPPING_CONTAINER == self.MAPPING_CONTAINER:
+            parts.append("MAPPING")
+        elif self & self.SEQUENCE_CONTAINER == self.SEQUENCE_CONTAINER:
+            parts.append("SEQUENCE")
+        elif self & self.SET_CONTAINER == self.SET_CONTAINER:
+            parts.append("SET")
+        elif self & self.SERIES_CONTAINER == self.SERIES_CONTAINER:
+            parts.append("SERIES")
 
-        # Add attributes
-        if self & ContainerProtocol.SIZED:
+        return " | ".join(parts)
+
+
+class ContainerProtocol(Flag):
+    """
+    Container protocols defining container attributes and capabilities.
+    These attributes determine how the container can be used and modified.
+    """
+
+    # Container protocols
+    SIZED = 1  # Has countable size
+    MUTABLE = 2 << 1  # Can be modified after creation
+    FLAT = 2 << 2  # Can contain only primitives (no nested containers)
+
+    def __str__(self) -> str:
+        parts = []
+
+        if self & self.SIZED:
             parts.append("SIZED")
-        if self & ContainerProtocol.ITERABLE:
-            parts.append("ITERABLE")
-        if self & ContainerProtocol.MUTABLE:
+        if self & self.MUTABLE:
             parts.append("MUTABLE")
-        if self & ContainerProtocol.FLAT:
+        if self & self.FLAT:
             parts.append("FLAT")
 
         return "|".join(parts)
 
+    # Standard variants
+    DICT = SIZED | MUTABLE
+    LIST = SIZED | MUTABLE
+    SET = SIZED | MUTABLE
+    TUPLE = SIZED
 
-# Common protocol combinations
-class CommonContainerProtocols:
-    """Predefined protocol combinations for common container types."""
-
-    # Standard mutable containers
-    DICT = (
-        ContainerProtocol.MAPPING
-        | ContainerProtocol.SIZED
-        | ContainerProtocol.ITERABLE
-        | ContainerProtocol.MUTABLE
-    )
-    LIST = (
-        ContainerProtocol.SEQUENCE
-        | ContainerProtocol.SIZED
-        | ContainerProtocol.ITERABLE
-        | ContainerProtocol.MUTABLE
-    )
-    SET = (
-        ContainerProtocol.SET
-        | ContainerProtocol.SIZED
-        | ContainerProtocol.ITERABLE
-        | ContainerProtocol.MUTABLE
-    )
+    # Standard variants with flat structure
+    FLAT_DICT = DICT | FLAT
+    FLAT_LIST = LIST | FLAT
+    FLAT_SET = SET | FLAT
+    FLAT_TUPLE = TUPLE | FLAT
 
     # Read-only variants
-    READ_ONLY_DICT = (
-        ContainerProtocol.MAPPING | ContainerProtocol.SIZED | ContainerProtocol.ITERABLE
-    )
-    READ_ONLY_LIST = (
-        ContainerProtocol.SEQUENCE | ContainerProtocol.SIZED | ContainerProtocol.ITERABLE
-    )
-    READ_ONLY_SET = ContainerProtocol.SET | ContainerProtocol.SIZED | ContainerProtocol.ITERABLE
+    READ_ONLY_DICT = DICT ^ MUTABLE
+    READ_ONLY_LIST = LIST ^ MUTABLE
+    READ_ONLY_SET = SET ^ MUTABLE
+    READ_ONLY_TUPLE = TUPLE ^ MUTABLE
 
-    # Flat variants (primitive-only)
-    FLAT_DICT = DICT | ContainerProtocol.FLAT
-    FLAT_LIST = LIST | ContainerProtocol.FLAT
+    # Read-only variants with flat structure
+    READ_ONLY_FLAT_DICT = READ_ONLY_DICT | FLAT
+    READ_ONLY_FLAT_LIST = READ_ONLY_LIST | FLAT
+    READ_ONLY_FLAT_SET = READ_ONLY_SET | FLAT
+    READ_ONLY_FLAT_TUPLE = READ_ONLY_TUPLE | FLAT
 
 
 # Type variables for view classes

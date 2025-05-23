@@ -9,18 +9,20 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+import attrs
+
 from loomistd.kv import StorageKeyError
 
-from .._state.backend import ObservableKVBackend, ObservableKVTransaction
-from .._types import ContainerProtocol, NodeType, StateValue
+from .._state.backend import ObservableKVTransaction
+from .._types import ContainerProtocol, ContainerStructure, NodeType, StateValue
 from .node import Node
-from .path import StatePath
 from .transaction import TransactionContext
 
 __all__ = ["PrimitiveNode"]
 
 
-class PrimitiveNode(Node["PrimitiveNode"]):
+@attrs.define(frozen=True, kw_only=True)
+class PrimitiveNode(Node):
     """
     Primitive value node (leaf node).
 
@@ -46,24 +48,7 @@ class PrimitiveNode(Node["PrimitiveNode"]):
         ```
     """
 
-    def __init__(
-        self,
-        backend: ObservableKVBackend,
-        path: StatePath,
-        /,
-        *,
-        tx: Optional[ObservableKVTransaction] = None,
-    ) -> None:
-        """
-        Initialize a primitive node.
-
-        Args:
-            backend: Backend storage interface
-            path: Path to this node
-            tx: Optional transaction
-        """
-        super().__init__(backend, path, tx=tx)
-
+    @property
     def node_type(self) -> NodeType:
         """
         Get the type of this node.
@@ -73,14 +58,25 @@ class PrimitiveNode(Node["PrimitiveNode"]):
         """
         return NodeType.PRIMITIVE
 
-    def protocols(self) -> ContainerProtocol:
+    @property
+    def node_protocol(self) -> ContainerProtocol:
         """
-        Get the protocols implemented by this node.
+        Get the protocol implemented by this node.
 
         Returns:
-            ContainerProtocol: Empty (no protocols for primitive nodes)
+            ContainerProtocol: Empty (no protocol for primitive nodes)
         """
-        return ContainerProtocol(0)  # No protocols for primitive nodes
+        return ContainerProtocol(0)  # No protocol for primitive nodes
+
+    @property
+    def node_structure(self) -> ContainerStructure:
+        """
+        Get the structure implemented by this node.
+
+        Returns:
+            ContainerStructure: Empty (no structure for primitive nodes)
+        """
+        return ContainerStructure(0)
 
     def get_value(self, *, tx: Optional[ObservableKVTransaction] = None) -> Any:
         """
@@ -92,9 +88,9 @@ class PrimitiveNode(Node["PrimitiveNode"]):
         Returns:
             Any: Value of the primitive node, or EMPTY if not found
         """
-        with TransactionContext(self._backend, tx=tx or self.tx) as tx:
+        with TransactionContext(self.backend, self.tx) as tx:
             try:
-                result = tx.get(self._path.to_tuple())
+                result = tx.get(self.path.to_tuple())
             except StorageKeyError:
                 # Handle case where the key doesn't exist
                 result = self.EMPTY
@@ -111,5 +107,5 @@ class PrimitiveNode(Node["PrimitiveNode"]):
             value: New value to store
             tx: Optional transaction (defaults to current transaction)
         """
-        with TransactionContext(self._backend, tx=tx or self.tx) as tx:
-            tx.set(self._path.to_tuple(), value)
+        with TransactionContext(self.backend, self.tx) as tx:
+            tx.set(self.path.to_tuple(), value)
