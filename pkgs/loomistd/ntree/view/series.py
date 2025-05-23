@@ -1,0 +1,2 @@
+class SeriesView:
+    pass

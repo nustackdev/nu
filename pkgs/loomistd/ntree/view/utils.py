@@ -1,32 +1,3 @@
-"""
-Clean transaction management for frozen dataclasses using contextlib.
-
-This module provides transaction handling for immutable dataclass objects using
-a pure contextlib-based approach with clear separation between direct access
-and context manager usage.
-
-Typical usage:
-    # Context manager usage (automatic transaction)
-    with state.with_dict_view() as users:
-        users.set("alice", {"name": "Alice"})
-        users.set("bob", {"name": "Bob"})
-    # Transaction automatically committed
-
-    # Direct usage (manual transaction management)
-    users = state.dict_view()
-    users.set("alice", {"name": "Alice"})  # No automatic transaction
-
-    # Manual transaction with direct access
-    tx = state.begin_transaction()
-    try:
-        users = state.dict_view(tx=tx)
-        users.set("alice", {"name": "Alice"})
-        tx.commit()
-    except Exception:
-        tx.rollback()
-        raise
-"""
-
 from __future__ import annotations
 
 from contextlib import contextmanager
