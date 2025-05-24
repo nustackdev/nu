@@ -4,7 +4,8 @@ import json
 import os
 import threading
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, Generator
+from uuid import uuid4
 
 import filelock
 
@@ -212,7 +213,7 @@ class FileStorage(
 
     def _list_keys_impl(
         self, prefix: FileStorageKey, depth: int
-    ) -> Generator[FileStorageKey, None]:
+    ) -> Generator[FileStorageKey, None, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -275,7 +276,7 @@ class FileStorage(
                     raise TransactionError(f"Failed to apply transaction: {e}")
 
 
-class FileStorageTransaction(SyncTransactionProtocol[FileStorageValue]):
+class FileStorageTransaction:
     """Implementation of transaction for file-based storage."""
 
     def __init__(self, storage: FileStorage):
@@ -286,6 +287,7 @@ class FileStorageTransaction(SyncTransactionProtocol[FileStorageValue]):
         self._write_set: set[str] = set()
         self._committed = False
         self._rolled_back = False
+        self._uuid = uuid4()
 
     def _check_valid(self) -> None:
         """Check if transaction is still valid."""
@@ -334,7 +336,9 @@ class FileStorageTransaction(SyncTransactionProtocol[FileStorageValue]):
         except StorageKeyError:
             return False
 
-    def list_keys(self, prefix: FileStorageKey, depth: int = 1) -> Generator[FileStorageKey, None]:
+    def list_keys(
+        self, prefix: FileStorageKey, depth: int = 1
+    ) -> Generator[FileStorageKey, None, None]:
         """List all keys under prefix within transaction."""
         self._check_valid()
 
@@ -375,6 +379,14 @@ class FileStorageTransaction(SyncTransactionProtocol[FileStorageValue]):
         self._read_set.clear()
         self._write_set.clear()
 
+    def __hash__(self) -> int:
+        return hash(str(self._uuid))
+
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return isinstance(other, type(self)) and self._uuid == other._uuid
+
 
 class FileStorageSpec(Spec):
     name: str = SpecField(default="file_storage")
@@ -386,3 +398,4 @@ class FileStorageSpec(Spec):
 
 if TYPE_CHECKING:
     _: type[SyncStorageProtocol] = FileStorage
+    __: type[SyncTransactionProtocol] = FileStorageTransaction

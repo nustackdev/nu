@@ -3,7 +3,8 @@ from __future__ import annotations
 import sys
 import threading
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator, TypeGuard
+from typing import TYPE_CHECKING, Any, Generator, TypeGuard
+from uuid import uuid4
 
 import lmdb
 
@@ -179,7 +180,7 @@ class LMDBStorage(
 
     def _list_keys_impl(
         self, prefix: LMDBStorageKey, depth: int
-    ) -> Generator[LMDBStorageKey, None]:
+    ) -> Generator[LMDBStorageKey, None, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -233,7 +234,7 @@ class LMDBStorage(
             raise StorageError(f"Failed to begin transaction: {e}")
 
 
-class LMDBStorageTransaction(SyncTransactionProtocol[LMDBStorageValue]):
+class LMDBStorageTransaction:
     """LMDB transaction implementation with proper resource management."""
 
     def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction):
@@ -242,6 +243,7 @@ class LMDBStorageTransaction(SyncTransactionProtocol[LMDBStorageValue]):
         self._lmdb_txn = txn
         self._committed = False
         self._rolled_back = False
+        self._uuid = uuid4()
 
     def _check_valid(self) -> None:
         """Check if transaction is still valid."""
@@ -305,7 +307,9 @@ class LMDBStorageTransaction(SyncTransactionProtocol[LMDBStorageValue]):
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 
-    def list_keys(self, prefix: LMDBStorageKey, depth: int = 1) -> Generator[LMDBStorageKey, None]:
+    def list_keys(
+        self, prefix: LMDBStorageKey, depth: int = 1
+    ) -> Generator[LMDBStorageKey, None, None]:
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
 
@@ -355,6 +359,14 @@ class LMDBStorageTransaction(SyncTransactionProtocol[LMDBStorageValue]):
         except Exception as e:
             raise TransactionError(f"Failed to rollback transaction: {e}")
 
+    def __hash__(self) -> int:
+        return hash(str(self._uuid))
+
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return isinstance(other, type(self)) and self._uuid == other._uuid
+
 
 class LMDBStorageSpec(Spec):
     name: str = SpecField(default="lmdb_storage")
@@ -369,3 +381,4 @@ class LMDBStorageSpec(Spec):
 
 if TYPE_CHECKING:
     _: type[SyncStorageProtocol] = LMDBStorage
+    __: type[SyncTransactionProtocol] = LMDBStorageTransaction

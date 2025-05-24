@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
+from typing import Generator
 
 from ..transaction import with_transaction
+from ..types import ViewT
 
 __all__ = [
     "create_view_context_manager",
 ]
 
 
-def create_view_context_manager(view_factory, *args, **kwargs):
+def create_view_context_manager(
+    view_factory: type[ViewT], *args, **kwargs
+) -> AbstractContextManager[ViewT]:
     """
     Helper function to create context managers for view methods.
 
@@ -37,7 +41,7 @@ def create_view_context_manager(view_factory, *args, **kwargs):
     """
 
     @contextmanager
-    def view_context():
+    def view_context() -> Generator[ViewT, None, None]:
         view_obj = view_factory(*args, **kwargs)
         with with_transaction(view_obj) as transactional_view:
             yield transactional_view

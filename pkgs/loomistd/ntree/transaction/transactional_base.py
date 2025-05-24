@@ -29,7 +29,7 @@ Typical usage:
 
 from __future__ import annotations
 
-from typing import Any, Optional, TypeGuard
+from typing import Any, Optional, Self, TypeGuard
 
 import attrs
 
@@ -71,12 +71,12 @@ class TransactionalBase:
     """
 
     # Backend instance for transaction management
-    backend: BackendProtocol = attrs.field(eq=False, hash=False)
+    backend: BackendProtocol = attrs.field()
 
     # Current transaction if any
-    tx: Optional[TransactionProtocol] = attrs.field(default=None, eq=False, hash=False)
+    tx: Optional[TransactionProtocol] = attrs.field(default=None)
 
-    def with_transaction(self, tx: TransactionProtocol):
+    def with_transaction(self, tx: TransactionProtocol) -> Self:
         """
         Create a copy of this object with a specific transaction.
 
@@ -100,7 +100,7 @@ class TransactionalBase:
         """
         return attrs.evolve(self, tx=tx)
 
-    def without_transaction(self):
+    def without_transaction(self) -> Self:
         """
         Create a copy of this object without any transaction.
 
@@ -123,6 +123,21 @@ class TransactionalBase:
             True if object has a transaction
         """
         return self.tx is not None
+
+    def get_ensured_transaction(self) -> TransactionProtocol:
+        """
+        Check if an object is a transaction.
+
+        Args:
+            obj: Object to check
+
+        Returns:
+            True if object is a transaction
+        """
+        if self.tx is None:
+            raise ValueError("Object has no transaction")
+
+        return self.tx
 
 
 def is_transactional(obj: Any) -> TypeGuard[TransactionalBase]:

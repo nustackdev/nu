@@ -67,13 +67,13 @@ class BaseView(TransactionalBase, ABC):
     """
 
     # Path to the container
-    path: DataPath = attrs.field(eq=False, hash=False, alias=None)
+    path: DataPath = attrs.field()
 
     # Container structure type
-    structure: ContainerStructure = attrs.field(eq=False, hash=False, alias=None)
+    structure: ContainerStructure = attrs.field()
 
     # Container protocol type
-    protocol: ContainerProtocol = attrs.field(eq=False, hash=False, alias=None)
+    protocol: ContainerProtocol = attrs.field()
 
     @property
     def container(self) -> ContainerNode:

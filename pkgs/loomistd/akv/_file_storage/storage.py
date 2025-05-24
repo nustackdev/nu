@@ -4,7 +4,8 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncGenerator
+from typing import TYPE_CHECKING, Any, AsyncGenerator
+from uuid import uuid4
 
 import aiofile
 import filelock
@@ -276,7 +277,7 @@ class FileStorage(
                     raise TransactionError(f"Failed to apply transaction: {e}")
 
 
-class FileStorageTransaction(AsyncTransactionProtocol[FileStorageValue]):
+class FileStorageTransaction:
     """Implementation of transaction for file-based storage."""
 
     def __init__(self, storage: FileStorage):
@@ -287,6 +288,7 @@ class FileStorageTransaction(AsyncTransactionProtocol[FileStorageValue]):
         self._write_set: set[str] = set()
         self._committed = False
         self._rolled_back = False
+        self._uuid = uuid4()
 
     def _check_valid(self) -> None:
         """Check if transaction is still valid."""
@@ -378,6 +380,14 @@ class FileStorageTransaction(AsyncTransactionProtocol[FileStorageValue]):
         self._read_set.clear()
         self._write_set.clear()
 
+    def __hash__(self) -> int:
+        return hash(str(self._uuid))
+
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return isinstance(other, type(self)) and self._uuid == other._uuid
+
 
 class FileStorageSpec(Spec):
     name: str = SpecField(default="file_storage")
@@ -389,3 +399,4 @@ class FileStorageSpec(Spec):
 
 if TYPE_CHECKING:
     _: type[AsyncStorageProtocol] = FileStorage
+    __: type[AsyncTransactionProtocol] = FileStorageTransaction

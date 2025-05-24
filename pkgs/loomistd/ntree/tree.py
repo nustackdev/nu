@@ -9,6 +9,7 @@ and direct access patterns.
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from typing import Optional, Self
 
 import attrs
@@ -142,7 +143,7 @@ class Tree(TransactionalBase):
     # Context Manager Methods (Automatic Transaction Management)
     # =========================================================================
 
-    def with_dict_view(self):
+    def with_dict_view(self) -> AbstractContextManager[DictView]:
         """
         Access container as dictionary view with automatic transaction management.
 

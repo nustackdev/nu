@@ -114,15 +114,12 @@ class ContainerProtocol(Flag):
     """
 
     # Container protocols
-    SIZED = 1  # Has countable size
-    MUTABLE = 2 << 1  # Can be modified after creation
-    FLAT = 2 << 2  # Can contain only primitives (no nested containers)
+    MUTABLE = 1  # Can be modified after creation
+    FLAT = 2 << 1  # Can contain only primitives (no nested containers)
 
     def __str__(self) -> str:
         parts = []
 
-        if self & self.SIZED:
-            parts.append("SIZED")
         if self & self.MUTABLE:
             parts.append("MUTABLE")
         if self & self.FLAT:
@@ -131,10 +128,10 @@ class ContainerProtocol(Flag):
         return "|".join(parts)
 
     # Standard variants
-    DICT = SIZED | MUTABLE
-    LIST = SIZED | MUTABLE
-    SET = SIZED | MUTABLE
-    TUPLE = SIZED
+    DICT = MUTABLE
+    LIST = MUTABLE
+    SET = MUTABLE
+    TUPLE = 0
 
     # Standard variants with flat structure
     FLAT_DICT = DICT | FLAT
@@ -179,6 +176,14 @@ class Empty:
     def __bool__(self) -> bool:
         """Boolean evaluation, always False."""
         return False
+
+    def __hash__(self) -> int:
+        """Hash value for the Empty sentinel."""
+        return hash("Empty")
+
+    def __eq__(self, other: object) -> bool:
+        """Equality check, only equal to itself."""
+        return isinstance(other, Empty)
 
 
 def is_empty(value: Any) -> TypeGuard[Empty]:

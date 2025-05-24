@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import AsyncGenerator, Generator, Protocol, runtime_checkable
+from typing import Any, AsyncGenerator, Generator, Protocol, runtime_checkable
 
 from .observer import AsyncObservableProtocol, SyncObservableProtocol
 from .type_vars import StorageValueT
@@ -124,13 +124,53 @@ class AsyncStorageProtocol(Protocol[StorageValueT]):
         """
         ...
 
+    def __hash__(self) -> int:
+        """
+        Get hash of the storage.
+
+        Returns:
+            Hash value of the storage
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the storage.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
+        """
+        ...
+
 
 class AsyncObservableStorageProtocol(
     AsyncStorageProtocol[StorageValueT], AsyncObservableProtocol, Protocol
 ):
     """Protocol for asynchronous observable state storage adapters."""
 
-    pass
+    def __hash__(self) -> int:
+        """
+        Get hash of the storage.
+
+        Returns:
+            Hash value of the storage
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the storage.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
+        """
+        ...
 
 
 @runtime_checkable
@@ -234,6 +274,27 @@ class AsyncTransactionProtocol(Protocol[StorageValueT]):
 
         Raises:
             TransactionError: If rollback fails or transaction is invalid
+        """
+        ...
+
+    def __hash__(self) -> int:
+        """
+        Get hash of the transaction.
+
+        Returns:
+            Hash value of the transaction
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the transaction.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
         """
         ...
 
@@ -388,6 +449,27 @@ class SyncStorageProtocol(Protocol[StorageValueT]):
         """
         ...
 
+    def __hash__(self) -> int:
+        """
+        Get hash of the service.
+
+        Returns:
+            Hash value of the service.
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the service.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
+        """
+        ...
+
 
 class SyncObservableStorageProtocol(
     SyncStorageProtocol[StorageValueT], SyncObservableProtocol, Protocol
@@ -499,6 +581,27 @@ class SyncTransactionProtocol(Protocol[StorageValueT]):
 
         Raises:
             TransactionError: If rollback fails or transaction is invalid
+        """
+        ...
+
+    def __hash__(self) -> int:
+        """
+        Get hash of the transaction.
+
+        Returns:
+            Hash value of the transaction
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the transaction.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
         """
         ...
 

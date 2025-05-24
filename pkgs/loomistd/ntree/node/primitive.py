@@ -14,8 +14,8 @@ import attrs
 from loomistd.kv import StorageKeyError
 
 from ..backend import TransactionProtocol
-from ..transaction import TransactionContext
-from ..types import ContainerProtocol, ContainerStructure, NodeType, Value
+from ..transaction import with_transaction
+from ..types import NodeType, Value
 from .base import BaseNode
 
 __all__ = ["PrimitiveNode"]
@@ -58,26 +58,6 @@ class PrimitiveNode(BaseNode):
         """
         return NodeType.PRIMITIVE
 
-    @property
-    def node_protocol(self) -> ContainerProtocol:
-        """
-        Get the protocol implemented by this node.
-
-        Returns:
-            ContainerProtocol: Empty (no protocol for primitive nodes)
-        """
-        return ContainerProtocol(0)  # No protocol for primitive nodes
-
-    @property
-    def node_structure(self) -> ContainerStructure:
-        """
-        Get the structure implemented by this node.
-
-        Returns:
-            ContainerStructure: Empty (no structure for primitive nodes)
-        """
-        return ContainerStructure(0)
-
     def get_value(self, *, tx: Optional[TransactionProtocol] = None) -> Any:
         """
         Get the primitive value.
@@ -88,12 +68,14 @@ class PrimitiveNode(BaseNode):
         Returns:
             Any: Value of the primitive node, or EMPTY if not found
         """
-        with TransactionContext(self.backend, self.tx) as tx:
+        with with_transaction(self) as node:
+            tx = node.get_ensured_transaction()
+
             try:
-                result = tx.get(self.path.to_tuple())
+                result = tx.get(node.path.to_tuple())
             except StorageKeyError:
                 # Handle case where the key doesn't exist
-                result = self.EMPTY
+                result = node.EMPTY
 
         return result
 
@@ -105,5 +87,6 @@ class PrimitiveNode(BaseNode):
             value: New value to store
             tx: Optional transaction (defaults to current transaction)
         """
-        with TransactionContext(self.backend, self.tx) as tx:
-            tx.set(self.path.to_tuple(), value)
+        with with_transaction(self) as node:
+            tx = node.get_ensured_transaction()
+            tx.set(node.path.to_tuple(), value)

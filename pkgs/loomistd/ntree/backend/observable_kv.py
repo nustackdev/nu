@@ -8,9 +8,11 @@ This module includes an observable kv storage solution with:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Generator
+
+import attrs
 
 from loomistd.kv import StorageServiceProtocol
 from loomistd.observer import ObserverServiceProtocol
@@ -215,9 +217,21 @@ class ObservableKVBackend:
         """
         return ObservableKVTransactionContextManager(self)
 
+    def __hash__(self) -> int:
+        return hash((self.storage, self.observer))
 
-@dataclass
-class ObservableKVTransaction(TransactionProtocol):
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return (
+            isinstance(other, type(self))
+            and self.storage == other.storage
+            and self.observer == other.observer
+        )
+
+
+@attrs.define()
+class ObservableKVTransaction:
     """
     Transaction implementation that combines storage operations and notifications.
     Ensures atomicity between storage changes and observer notifications.
@@ -226,7 +240,7 @@ class ObservableKVTransaction(TransactionProtocol):
     storage_txn: TransactionProtocol
     observer: ObserverServiceProtocol[PathTuple, Any]
     # Track modified keys for notification after commit
-    modified_keys: set[PathTuple] = field(default_factory=set)
+    modified_keys: set[PathTuple] = attrs.field(factory=set)
 
     def get(self, key: PathTuple) -> Value:
         """Get value within transaction context"""
@@ -262,6 +276,14 @@ class ObservableKVTransaction(TransactionProtocol):
         """Rollback transaction without notifications"""
         self.storage_txn.rollback()
         self.modified_keys.clear()
+
+    def __hash__(self) -> int:
+        return hash(self.storage_txn)
+
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return isinstance(other, type(self)) and self.storage_txn == other.storage_txn
 
 
 @dataclass
@@ -307,3 +329,4 @@ class ObservableKVTransactionContextManager(TransactionContextManagerProtocol):
 
 if TYPE_CHECKING:
     _: type[BackendProtocol] = ObservableKVBackend
+    __: type[TransactionProtocol] = ObservableKVTransaction

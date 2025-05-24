@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 from .types import AsyncCallbackFn, ObserverKey, SyncCallbackFn
 
@@ -50,6 +50,27 @@ class AsyncObservableProtocol(Protocol):
         """
         ...
 
+    def __hash__(self) -> int:
+        """
+        Get hash of the observer.
+
+        Returns:
+            Hash value of the observer
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the observer.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
+        """
+        ...
+
 
 class SyncObservableProtocol(Protocol):
     """Protocol for synchronous observable adapters."""
@@ -86,6 +107,27 @@ class SyncObservableProtocol(Protocol):
 
         Raises:
             ObserverError: If unsubscribe fails
+        """
+        ...
+
+    def __hash__(self) -> int:
+        """
+        Get hash of the observer.
+
+        Returns:
+            Hash value of the observer
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the observer.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
         """
         ...
 
