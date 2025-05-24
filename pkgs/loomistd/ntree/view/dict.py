@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 import attrs
 
 from ..exceptions import ContainerProtocolError
+from ..transaction import with_transaction
 from ..types import ContainerProtocol, ContainerStructure, PathComponent, Value
 from .base import BaseView
 
@@ -88,29 +89,29 @@ class DictView(BaseView):
             status = users.get("alice").get("status", "active")
             ```
         """
-        container = self.container
+        with with_transaction(self.container) as container:
 
-        if not container.has_child(key):
-            return default
+            if not container.has_child(key):
+                return default
 
-        result = {}
-        container = self.container
+            result = {}
+            container = self.container
 
-        if not container.exists():
-            return result
+            if not container.exists():
+                return result
 
-        for key in self.keys():
-            if container.is_child_primitive(key):
-                result[key] = container.get_primitive_value(key)
-            elif container.is_child_container(key):
-                # Recursively convert nested containers
-                try:
-                    child_view = self.dict_view(key)
-                    result[key] = child_view.to_dict()
-                except (KeyError, ContainerProtocolError):
-                    # If we can't create a dict view, skip this key
-                    # This handles cases where the child container has incompatible structure
-                    continue
+            for key in self.keys():
+                if container.is_child_primitive(key):
+                    result[key] = container.get_primitive_value(key)
+                elif container.is_child_container(key):
+                    # Recursively convert nested containers
+                    try:
+                        child_view = self.dict_view(key)
+                        result[key] = child_view.to_dict()
+                    except (KeyError, ContainerProtocolError):
+                        # If we can't create a dict view, skip this key
+                        # This handles cases where the child container has incompatible structure
+                        continue
 
         return result
 
@@ -136,20 +137,20 @@ class DictView(BaseView):
             users.set("alice", {"email": "alice@example.com", "age": 30})
             ```
         """
-        container = self.container
+        with with_transaction(self.container) as container:
 
-        if isinstance(value, dict):
-            # Create nested container and recursively set contents
-            child_view = DictView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=self.tx,
-            )
-            for k, v in value.items():
-                child_view.set(k, v)
-        else:
-            # Store primitive value directly
-            container.set_primitive_value(key, value)
+            if isinstance(value, dict):
+                # Create nested container and recursively set contents
+                child_view = DictView(
+                    backend=self.backend,
+                    path=self.path.join(key),
+                    tx=container.tx,
+                )
+                for k, v in value.items():
+                    child_view.set(k, v)
+            else:
+                # Store primitive value directly
+                container.set_primitive_value(key, value)
 
     def has(self, key: PathComponent) -> bool:
         """
@@ -167,7 +168,8 @@ class DictView(BaseView):
                 print("Alice exists")
             ```
         """
-        return self.container.has_child(key)
+        with with_transaction(self.container) as container:
+            return container.has_child(key)
 
     def delete(self, key: PathComponent) -> None:
         """
@@ -184,7 +186,8 @@ class DictView(BaseView):
             users.delete("alice")
             ```
         """
-        self.container.delete_child(key)
+        with with_transaction(self.container) as container:
+            container.delete_child(key)
 
     def clear(self) -> None:
         """
@@ -195,7 +198,8 @@ class DictView(BaseView):
             users.clear()
             ```
         """
-        self.container.clear()
+        with with_transaction(self.container) as container:
+            container.clear()
 
     def keys(self) -> List[PathComponent]:
         """
@@ -210,11 +214,11 @@ class DictView(BaseView):
                 print(f"User: {key}")
             ```
         """
-        container = self.container
-        if not container.exists():
-            return []
+        with with_transaction(self.container) as container:
+            if not container.exists():
+                return []
 
-        return list(container.keys())
+            return list(container.keys())
 
     def values(self) -> List[Value]:
         """
@@ -308,23 +312,24 @@ class DictView(BaseView):
             # {'alice': {'email': 'alice@example.com', 'profile': {...}}}
             ```
         """
-        result = {}
-        container = self.container
+        with with_transaction(self.container) as container:
 
-        if not container.exists():
+            result = {}
+
+            if not container.exists():
+                return result
+
+            for key in self.keys():
+                if container.is_child_primitive(key):
+                    result[key] = container.get_primitive_value(key)
+                elif container.is_child_container(key):
+                    # Recursively convert nested containers
+                    try:
+                        child_view = self.dict_view(key)
+                        result[key] = child_view.to_dict()
+                    except (KeyError, ContainerProtocolError):
+                        # If we can't create a dict view, skip this key
+                        # This handles cases where the child container has incompatible structure
+                        continue
+
             return result
-
-        for key in self.keys():
-            if container.is_child_primitive(key):
-                result[key] = container.get_primitive_value(key)
-            elif container.is_child_container(key):
-                # Recursively convert nested containers
-                try:
-                    child_view = self.dict_view(key)
-                    result[key] = child_view.to_dict()
-                except (KeyError, ContainerProtocolError):
-                    # If we can't create a dict view, skip this key
-                    # This handles cases where the child container has incompatible structure
-                    continue
-
-        return result

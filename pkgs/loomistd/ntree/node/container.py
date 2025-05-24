@@ -51,7 +51,6 @@ from loomistd.kv import StorageKeyError
 
 from ..exceptions import ContainerProtocolError, PathTypeError
 from ..path import DataPath, StructPath
-from ..transaction import with_transaction
 from ..types import ContainerProtocol, ContainerStructure, NodeType
 from .base import BaseNode
 
@@ -115,9 +114,8 @@ class ContainerNode(BaseNode):
         Raises:
             ContainerProtocolError: If requirements not met
         """
-        with with_transaction(self) as node:
-            node.validate_structure(required_structure)
-            node.validate_protocol(required_protocol)
+        self.validate_structure(required_structure)
+        self.validate_protocol(required_protocol)
 
     def validate_structure(self, required_structure: ContainerStructure) -> None:
         """
@@ -171,39 +169,38 @@ class ContainerNode(BaseNode):
         Raises:
             PathTypeError: If parent path exists but is not a container
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            parent_path = node.path.parent()
-            if parent_path is None:
-                # No parent path, we are on a root node, nothing to validate
-                return
+        parent_path = self.path.parent()
+        if parent_path is None:
+            # No parent path, we are on a root node, nothing to validate
+            return
 
-            # Check if parent exists
-            try:
-                tx.get(parent_path.to_tuple())
+        # Check if parent exists
+        try:
+            tx.get(parent_path.to_tuple())
 
-                # Verify it's a container
-                type_info = tx.get(StructPath(*parent_path.components[1:]).to_tuple())
+            # Verify it's a container
+            type_info = tx.get(StructPath(*parent_path.components[1:]).to_tuple())
 
-                if not isinstance(type_info, list) or len(type_info) != 2:
-                    raise PathTypeError(
-                        f"Parent path {parent_path} exists but is not a valid container"
-                    )
-
-                # Parent exists and is valid
-                return
-
-            except StorageKeyError:
-                # Parent doesn't exist, create it
-                parent_container = ContainerNode(
-                    backend=node.backend,
-                    path=parent_path,
-                    structure=ContainerStructure.MAPPING_CONTAINER,
-                    protocol=ContainerProtocol.DICT,
-                    tx=tx,
+            if not isinstance(type_info, list) or len(type_info) != 2:
+                raise PathTypeError(
+                    f"Parent path {parent_path} exists but is not a valid container"
                 )
-                parent_container.ensure_exists()
+
+            # Parent exists and is valid
+            return
+
+        except StorageKeyError:
+            # Parent doesn't exist, create it
+            parent_container = ContainerNode(
+                backend=self.backend,
+                path=parent_path,
+                structure=ContainerStructure.MAPPING_CONTAINER,
+                protocol=ContainerProtocol.DICT,
+                tx=tx,
+            )
+            parent_container.ensure_exists()
 
     # =========================================================================
     # Container Lifecycle
@@ -225,30 +222,29 @@ class ContainerNode(BaseNode):
         Returns:
             bool: True if container exists with matching type
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            try:
-                # Check type metadata
-                type_info = tx.get(node.struct_path.to_tuple())
+        try:
+            # Check type metadata
+            type_info = tx.get(self.struct_path.to_tuple())
 
-                # Ensure type info is a sequence with two elements (structure, protocol)
-                if not isinstance(type_info, (list, tuple)) or len(type_info) != 2:
-                    raise PathTypeError(f"Path {node.path} exists but is not a valid container")
+            # Ensure type info is a sequence with two elements (structure, protocol)
+            if not isinstance(type_info, (list, tuple)) or len(type_info) != 2:
+                raise PathTypeError(f"Path {self.path} exists but is not a valid container")
 
-                stored_structure = ContainerStructure(type_info[0])
-                stored_protocol = ContainerProtocol(type_info[1])
+            stored_structure = ContainerStructure(type_info[0])
+            stored_protocol = ContainerProtocol(type_info[1])
 
-                # Verify type matches
-                node.validate_compatibility(
-                    required_structure=stored_structure,
-                    required_protocol=stored_protocol,
-                )
+            # Verify type matches
+            self.validate_compatibility(
+                required_structure=stored_structure,
+                required_protocol=stored_protocol,
+            )
 
-                return True
+            return True
 
-            except (StorageKeyError,):
-                return False
+        except (StorageKeyError,):
+            return False
 
     def create(self) -> None:
         """
@@ -257,18 +253,17 @@ class ContainerNode(BaseNode):
         Raises:
             PathTypeError: If path already exists with different type
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            # Check if container already exists
-            if node.exists():
-                raise PathTypeError(f"Container at {node.path} already exists")
+        # Check if container already exists
+        if self.exists():
+            raise PathTypeError(f"Container at {self.path} already exists")
 
-            # Ensure parent containers exist
-            node.validate_parents_exist()
+        # Ensure parent containers exist
+        self.validate_parents_exist()
 
-            # Store type metadata
-            tx.set(node.struct_path.to_tuple(), [node.structure.value, node.protocol.value])
+        # Store type metadata
+        tx.set(self.struct_path.to_tuple(), [self.structure.value, self.protocol.value])
 
     def ensure_exists(self) -> None:
         """
@@ -280,11 +275,10 @@ class ContainerNode(BaseNode):
             PathTypeError: If path exists but with incompatible type
             ContainerProtocolError: If existing container has different structure/protocol
         """
-        with with_transaction(self) as node:
-            if node.exists():
-                return
+        if self.exists():
+            return
 
-            node.create()
+        self.create()
 
     # =========================================================================
     # Child Operations
@@ -301,17 +295,16 @@ class ContainerNode(BaseNode):
         Returns:
             Primitive value or default
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            child_path = node.path.join(key)
+        child_path = self.path.join(key)
 
-            try:
-                value = tx.get(child_path.to_tuple())
-                return value if value is not node.EMPTY else default
+        try:
+            value = tx.get(child_path.to_tuple())
+            return value if value is not self.EMPTY else default
 
-            except StorageKeyError:
-                return default
+        except StorageKeyError:
+            return default
 
     def set_primitive_value(self, key: str, value: Any) -> None:
         """
@@ -326,11 +319,10 @@ class ContainerNode(BaseNode):
         """
         self.validate_mutability()
 
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            child_path = node.path.join(key)
-            tx.set(child_path.to_tuple(), value)
+        child_path = self.path.join(key)
+        tx.set(child_path.to_tuple(), value)
 
     def delete_child(self, key: str) -> None:
         """
@@ -346,20 +338,19 @@ class ContainerNode(BaseNode):
         """
         self.validate_mutability()
 
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            if not node.has_child(key):
-                raise KeyError(f"No child with key '{key}'")
+        if not self.has_child(key):
+            raise KeyError(f"No child with key '{key}'")
 
-            child_path = node.path.join(key)
+        child_path = self.path.join(key)
 
-            if node.is_child_container(key):
-                # Delete all descendants
-                node._delete_subtree(child_path)
-            else:
-                # Delete primitive
-                tx.delete(child_path.to_tuple())
+        if self.is_child_container(key):
+            # Delete all descendants
+            self._delete_subtree(child_path)
+        else:
+            # Delete primitive
+            tx.delete(child_path.to_tuple())
 
     def clear(self) -> None:
         """
@@ -370,16 +361,15 @@ class ContainerNode(BaseNode):
         """
         self.validate_mutability()
 
-        with with_transaction(self) as node:
-            if not node.exists():
-                raise KeyError(f"Container at {node.path} does not exist")
+        if not self.exists():
+            raise KeyError(f"Container at {self.path} does not exist")
 
-            # Delete all children
-            for key in node.keys():
-                try:
-                    node.delete_child(key)
-                except KeyError:
-                    pass
+        # Delete all children
+        for key in self.keys():
+            try:
+                self.delete_child(key)
+            except KeyError:
+                pass
 
     def _delete_subtree(self, path: DataPath) -> None:
         """
@@ -389,35 +379,34 @@ class ContainerNode(BaseNode):
             path: Root path to delete
             tx: Transaction to use
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
-            # Delete all data paths
-            data_paths = list(tx.list_keys(path.to_tuple(), depth=-1))
-            data_paths.sort(key=len, reverse=True)  # Delete deepest first
+        tx = self.get_ensured_transaction()
+        # Delete all data paths
+        data_paths = list(tx.list_keys(path.to_tuple(), depth=-1))
+        data_paths.sort(key=len, reverse=True)  # Delete deepest first
 
-            for data_path in data_paths:
-                try:
-                    tx.delete(data_path)
-                except StorageKeyError:
-                    pass
-
-            # Delete all struct paths
-            struct_path = StructPath(*path.components[1:])
-            struct_paths = list(tx.list_keys(struct_path.to_tuple(), depth=-1))
-            struct_paths.sort(key=len, reverse=True)
-
-            for s_path in struct_paths:
-                try:
-                    tx.delete(s_path)
-                except StorageKeyError:
-                    pass
-
-            # Delete root paths
+        for data_path in data_paths:
             try:
-                tx.delete(path.to_tuple())
-                tx.delete(struct_path.to_tuple())
+                tx.delete(data_path)
             except StorageKeyError:
                 pass
+
+        # Delete all struct paths
+        struct_path = StructPath(*path.components[1:])
+        struct_paths = list(tx.list_keys(struct_path.to_tuple(), depth=-1))
+        struct_paths.sort(key=len, reverse=True)
+
+        for s_path in struct_paths:
+            try:
+                tx.delete(s_path)
+            except StorageKeyError:
+                pass
+
+        # Delete root paths
+        try:
+            tx.delete(path.to_tuple())
+            tx.delete(struct_path.to_tuple())
+        except StorageKeyError:
+            pass
 
     # =========================================================================
     # Structure Queries
@@ -433,17 +422,16 @@ class ContainerNode(BaseNode):
         Returns:
             bool: True if child exists and is a container
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            child_path = node.path.join(key)
-            child_struct_path = StructPath(*child_path.components[1:])
+        child_path = self.path.join(key)
+        child_struct_path = StructPath(*child_path.components[1:])
 
-            try:
-                tx.get(child_struct_path.to_tuple())
-                return True
-            except StorageKeyError:
-                return False
+        try:
+            tx.get(child_struct_path.to_tuple())
+            return True
+        except StorageKeyError:
+            return False
 
     def is_child_primitive(self, key: str) -> bool:
         """
@@ -457,14 +445,13 @@ class ContainerNode(BaseNode):
         """
         child_path = self.path.join(key)
 
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            try:
-                tx.get(child_path.to_tuple())
-                return True
-            except StorageKeyError:
-                return False
+        try:
+            tx.get(child_path.to_tuple())
+            return True
+        except StorageKeyError:
+            return False
 
     def has_child(self, key: str) -> bool:
         """
@@ -476,8 +463,7 @@ class ContainerNode(BaseNode):
         Returns:
             bool: True if child exists
         """
-        with with_transaction(self) as node:
-            return node.is_child_container(key) or node.is_child_primitive(key)
+        return self.is_child_container(key) or self.is_child_primitive(key)
 
     def keys(self, include_containers: bool = True) -> Generator[str, None, None]:
         """
@@ -491,22 +477,21 @@ class ContainerNode(BaseNode):
             str: Child keys (primitive or container)
         """
 
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            if not node.exists():
-                return
+        if not self.exists():
+            return
 
-            # List primitive keys
-            for path_tuple in tx.list_keys(node.path.to_tuple(), depth=1):
-                yield path_tuple[-1]  # Get last component (key)
+        # List primitive keys
+        for path_tuple in tx.list_keys(self.path.to_tuple(), depth=1):
+            yield path_tuple[-1]  # Get last component (key)
 
-            if not include_containers:
-                return
+        if not include_containers:
+            return
 
-            # List container keys
-            for key in tx.list_keys(node.struct_path.to_tuple(), depth=1):
-                yield key[-1]  # Get last component (key)
+        # List container keys
+        for key in tx.list_keys(self.struct_path.to_tuple(), depth=1):
+            yield key[-1]  # Get last component (key)
 
     # =========================================================================
     # Metadata Operations (View-Specific Data)
@@ -525,14 +510,13 @@ class ContainerNode(BaseNode):
         Returns:
             Metadata value or default
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            metadata_path = node.struct_path.join(key)
-            try:
-                return tx.get(metadata_path.to_tuple())
-            except StorageKeyError:
-                return default
+        metadata_path = self.struct_path.join(key)
+        try:
+            return tx.get(metadata_path.to_tuple())
+        except StorageKeyError:
+            return default
 
     def set_metadata(self, key: str, value: Any) -> None:
         """
@@ -542,10 +526,9 @@ class ContainerNode(BaseNode):
             key: Metadata key
             value: Metadata value to store
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
-            metadata_path = node.struct_path.join(key)
-            tx.set(metadata_path.to_tuple(), value)
+        tx = self.get_ensured_transaction()
+        metadata_path = self.struct_path.join(key)
+        tx.set(metadata_path.to_tuple(), value)
 
     def has_metadata(self, key: str) -> bool:
         """
@@ -557,10 +540,9 @@ class ContainerNode(BaseNode):
         Returns:
             bool: True if metadata exists
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
-            metadata_path = node.struct_path.join(key)
-            return tx.exists(metadata_path.to_tuple())
+        tx = self.get_ensured_transaction()
+        metadata_path = self.struct_path.join(key)
+        return tx.exists(metadata_path.to_tuple())
 
     def delete_metadata(self, key: str) -> None:
         """
@@ -572,10 +554,9 @@ class ContainerNode(BaseNode):
         Raises:
             KeyError: If metadata doesn't exist
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
-            metadata_path = node.struct_path.join(key)
-            try:
-                tx.delete(metadata_path.to_tuple())
-            except StorageKeyError:
-                raise KeyError(f"Metadata key '{key}' not found")
+        tx = self.get_ensured_transaction()
+        metadata_path = self.struct_path.join(key)
+        try:
+            tx.delete(metadata_path.to_tuple())
+        except StorageKeyError:
+            raise KeyError(f"Metadata key '{key}' not found")

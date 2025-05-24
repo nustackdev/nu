@@ -5,9 +5,34 @@ This module defines the BaseView class, which provides common functionality
 for all view implementations. Views provide protocol-specific interfaces
 for interacting with container nodes.
 
-BaseView is now a pure frozen dataclass that provides shared functionality
-without any transaction context manager logic. Transaction handling is
-managed by the State class factory methods.
+IMPORTANT: This implementation uses immutable views with smart transaction handling
+to provide thread-safe operations and consistent data access patterns.
+
+**Immutability & Thread Safety**
+DictView instances are frozen (attrs.frozen=True) and cannot be modified after creation.
+All operations return new data or modify the underlying storage through transactions,
+never changing the view object itself. This eliminates race conditions in concurrent
+environments since multiple threads can safely share the same view instance.
+
+**Automatic Transaction Management**
+Every operation uses with_transaction() to ensure proper transaction handling.
+If the view has no transaction, the context manager creates one automatically and
+commits/rollbacks based on success or failure. If a transaction already exists,
+it reuses that transaction without additional management. This provides both
+convenience for simple operations and flexibility for complex multi-operation scenarios.
+
+**Transaction Context Pattern**
+Methods like get(), set(), and to_dict() wrap their operations with:
+- `with with_transaction(self.container) as container:`
+This pattern ensures every storage access happens within a transaction boundary,
+providing ACID guarantees while allowing operations to be composed safely within
+larger transaction scopes.
+
+**Trade-off: Safety vs Performance**
+The immutable design trades some performance for safety and correctness. Each
+operation may create temporary objects, but this overhead is minimal compared to
+the benefits of eliminating concurrency bugs, providing predictable behavior,
+and enabling safe caching strategies throughout the system.
 """
 
 from __future__ import annotations
