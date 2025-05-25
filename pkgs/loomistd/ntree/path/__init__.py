@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from .paths import DataPath, StructPath
+from .paths import MetaPath, Path, StructPath
 
 __all__ = [
-    "DataPath",
+    "Path",
     "StructPath",
+    "MetaPath",
 ]

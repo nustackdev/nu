@@ -18,7 +18,7 @@ import attrs
 from loomistd.kv import StorageKeyError
 
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
-from ..path import Path, StructPath
+from ..path import Path
 from ..types import ContainerProtocol, ContainerStructure, NodeType
 from .base import BaseNode
 
@@ -42,7 +42,7 @@ class ContainerState(Enum):
 class ParentInfo:
     """Information about a parent container."""
 
-    path: str
+    path: Path
     exists: bool
     structure: ContainerStructure | None = None
     protocol: ContainerProtocol | None = None
@@ -60,11 +60,13 @@ class ContainerInfo:
     protocol_match: bool = True
     type_error: str | None = None
 
-    # Parent chain information (from root to immediate parent)
-    parents: list[ParentInfo] = []
     parent_chain_valid: bool = True
-    missing_parents: list[str] = []  # Paths of missing parents
-    invalid_parents: list[str] = []  # Paths of parents with type errors
+    # Parent chain information (from root to immediate parent)
+    parents: tuple[ParentInfo, ...] = dataclasses.field(default_factory=tuple)
+    # Paths of missing parents
+    missing_parents: tuple[Path, ...] = dataclasses.field(default_factory=tuple)
+    # Paths of parents with type errors
+    invalid_parents: tuple[Path, ...] = dataclasses.field(default_factory=tuple)
 
 
 @attrs.define(frozen=True, kw_only=True)
@@ -122,7 +124,7 @@ class ContainerNode(BaseNode):
         tx = self.get_ensured_transaction()
 
         # Collect all paths to check (root to target)
-        paths_to_check = []
+        paths_to_check: list[Path] = []
         current_path = self.path
         while current_path is not None:
             paths_to_check.append(current_path)
@@ -132,14 +134,14 @@ class ContainerNode(BaseNode):
         paths_to_check.reverse()
 
         # Batch check all struct paths
-        parent_infos = []
-        missing_parents = []
-        invalid_parents = []
-        parent_chain_valid = True
+        parent_infos: list[ParentInfo] = []
+        missing_parents: list[Path] = []
+        invalid_parents: list[Path] = []
+        parent_chain_valid: bool = True
 
         # Check all parents (excluding target container)
         for path in paths_to_check[:-1]:  # All except last (target)
-            struct_path = StructPath(*path.components[1:])
+            struct_path = path.struct_path
 
             try:
                 # Touch key for transaction locking
@@ -153,41 +155,39 @@ class ContainerNode(BaseNode):
 
                         parent_infos.append(
                             ParentInfo(
-                                path=str(path), exists=True, structure=structure, protocol=protocol
+                                path=path, exists=True, structure=structure, protocol=protocol
                             )
                         )
 
                         # Check if parent can contain children
                         if not (protocol & ContainerProtocol.MUTABLE):
-                            invalid_parents.append(str(path))
+                            invalid_parents.append(path)
                             parent_chain_valid = False
 
                     except ValueError:
                         # Invalid enum values
                         error_msg = f"Invalid structure/protocol values: {type_info}"
                         parent_infos.append(
-                            ParentInfo(path=str(path), exists=True, type_error=error_msg)
+                            ParentInfo(path=path, exists=True, type_error=error_msg)
                         )
-                        invalid_parents.append(str(path))
+                        invalid_parents.append(path)
                         parent_chain_valid = False
                 else:
                     # Invalid type metadata format
                     error_msg = f"Invalid type metadata format: {type_info}"
-                    parent_infos.append(
-                        ParentInfo(path=str(path), exists=True, type_error=error_msg)
-                    )
-                    invalid_parents.append(str(path))
+                    parent_infos.append(ParentInfo(path=path, exists=True, type_error=error_msg))
+                    invalid_parents.append(path)
                     parent_chain_valid = False
 
             except StorageKeyError:
                 # Parent doesn't exist
-                parent_infos.append(ParentInfo(path=str(path), exists=False))
-                missing_parents.append(str(path))
+                parent_infos.append(ParentInfo(path=path, exists=False))
+                missing_parents.append(path)
                 parent_chain_valid = False
 
         # Now check target container
         target_path = paths_to_check[-1]  # Last item is target
-        target_struct_path = StructPath(*target_path.components[1:])
+        target_struct_path = target_path.struct_path
 
         try:
             # Touch target key for transaction locking
@@ -201,10 +201,10 @@ class ContainerNode(BaseNode):
                     structure_match=False,
                     protocol_match=False,
                     type_error="Invalid type metadata format",
-                    parents=parent_infos,
+                    parents=tuple(parent_infos),
                     parent_chain_valid=parent_chain_valid,
-                    missing_parents=missing_parents,
-                    invalid_parents=invalid_parents,
+                    missing_parents=tuple(missing_parents),
+                    invalid_parents=tuple(invalid_parents),
                 )
 
             try:
@@ -217,10 +217,10 @@ class ContainerNode(BaseNode):
                     structure_match=False,
                     protocol_match=False,
                     type_error=f"Invalid structure/protocol values: {type_info}",
-                    parents=parent_infos,
+                    parents=tuple(parent_infos),
                     parent_chain_valid=parent_chain_valid,
-                    missing_parents=missing_parents,
-                    invalid_parents=invalid_parents,
+                    missing_parents=tuple(missing_parents),
+                    invalid_parents=tuple(invalid_parents),
                 )
 
             # Check compatibility with expected structure/protocol
@@ -240,10 +240,10 @@ class ContainerNode(BaseNode):
                 structure_match=structure_match,
                 protocol_match=protocol_match,
                 type_error=error_msg,
-                parents=parent_infos,
+                parents=tuple(parent_infos),
                 parent_chain_valid=parent_chain_valid,
-                missing_parents=missing_parents,
-                invalid_parents=invalid_parents,
+                missing_parents=tuple(missing_parents),
+                invalid_parents=tuple(invalid_parents),
             )
 
         except StorageKeyError:
@@ -251,10 +251,10 @@ class ContainerNode(BaseNode):
             return ContainerInfo(
                 exists=False,
                 state=ContainerState.NOT_FOUND,
-                parents=parent_infos,
+                parents=tuple(parent_infos),
                 parent_chain_valid=parent_chain_valid,
-                missing_parents=missing_parents,
-                invalid_parents=invalid_parents,
+                missing_parents=tuple(missing_parents),
+                invalid_parents=tuple(invalid_parents),
             )
 
     # =========================================================================
@@ -554,8 +554,7 @@ class ContainerNode(BaseNode):
 
         for parent_path in info.missing_parents:
             # Create as MAPPING container with DICT protocol
-            path_obj = Path.from_string(parent_path)
-            struct_path = StructPath(*path_obj.components[1:])
+            struct_path = parent_path.struct_path
 
             tx.set(
                 struct_path.to_tuple(),
