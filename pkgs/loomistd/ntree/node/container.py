@@ -43,7 +43,7 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum, auto
-from typing import Any, Generator
+from typing import Generator
 
 import attrs
 
@@ -51,7 +51,16 @@ from loomistd.kv import StorageKeyError
 
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
 from ..path import Path
-from ..types import ContainerProtocol, ContainerStructure, NodeType
+from ..types import (
+    EMPTY,
+    ContainerProtocol,
+    ContainerStructure,
+    Empty,
+    NodeType,
+    PathComponent,
+    PathTuple,
+    Value,
+)
 from .base import BaseNode
 
 __all__ = [
@@ -59,6 +68,8 @@ __all__ = [
     "ContainerState",
     "ParentInfo",
     "ContainerInfo",
+    "ChildInfo",
+    "ChildType",
 ]
 
 
@@ -74,10 +85,10 @@ class ChildType(Enum):
 class ChildInfo:
     """Basic information about a child."""
 
-    key: str
+    key: PathComponent
     exists: bool
     child_type: ChildType
-    value: Any = None  # For primitives
+    value: Value | Empty = EMPTY  # For primitives
 
 
 @dataclasses.dataclass(frozen=True)
@@ -88,7 +99,7 @@ class ParentInfo:
     exists: bool
     stored_structure: ContainerStructure | None = None
     stored_protocol: ContainerProtocol | None = None
-    raw_type_data: Any = None  # Raw data from storage, could be malformed
+    raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
 
 
 @dataclasses.dataclass(frozen=True)
@@ -99,7 +110,7 @@ class ContainerInfo:
     exists: bool
     stored_structure: ContainerStructure | None = None
     stored_protocol: ContainerProtocol | None = None
-    raw_type_data: Any = None  # Raw data from storage, could be malformed
+    raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
 
     # Parent chain raw data (from root to immediate parent)
     parents: tuple[ParentInfo, ...] = dataclasses.field(default_factory=tuple)
@@ -791,7 +802,7 @@ class ContainerNode(BaseNode):
     # INFORMATION LAYER - Simple Child Data Gathering
     # ------------------------------------------------------------------------
 
-    def get_child_info(self, key: str, /) -> ChildInfo:
+    def get_child_info(self, key: PathComponent, /) -> ChildInfo:
         """Get basic information about a child.
 
         Args:
@@ -836,7 +847,7 @@ class ContainerNode(BaseNode):
     # ------------------------------------------------------------------------
 
     def validate_child_key_available(
-        self, key: str, /, *, child_info: ChildInfo | None = None
+        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
     ) -> None:
         """Validate that key is available for new primitive child.
 
@@ -856,7 +867,9 @@ class ContainerNode(BaseNode):
                 f"Child '{key}' already exists as {child_info.child_type.name.lower()}"
             )
 
-    def validate_child_exists(self, key: str, /, *, child_info: ChildInfo | None = None) -> None:
+    def validate_child_exists(
+        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
+    ) -> None:
         """Validate that child exists.
 
         Args:
@@ -870,7 +883,9 @@ class ContainerNode(BaseNode):
         if not child_info.exists:
             raise PathNotFoundError(f"Child '{key}' does not exist")
 
-    def validate_child_primitive(self, key: str, /, *, child_info: ChildInfo | None = None) -> None:
+    def validate_child_primitive(
+        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
+    ) -> None:
         """Validate that child is primitive type.
 
         Args:
@@ -890,7 +905,9 @@ class ContainerNode(BaseNode):
                 f"Child '{key}' is {child_info.child_type.name.lower()}, not primitive"
             )
 
-    def validate_child_container(self, key: str, /, *, child_info: ChildInfo | None = None) -> None:
+    def validate_child_container(
+        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
+    ) -> None:
         """Validate that child is container type.
 
         Args:
@@ -914,7 +931,7 @@ class ContainerNode(BaseNode):
     # EXECUTION LAYER - Operations with Health Checks
     # ------------------------------------------------------------------------
 
-    def has_child(self, key: str, /, *, child_info: ChildInfo | None = None) -> bool:
+    def has_child(self, key: PathComponent, /, *, child_info: ChildInfo | None = None) -> bool:
         """Check if child exists with health checking.
 
         Args:
@@ -930,7 +947,9 @@ class ContainerNode(BaseNode):
         child_info = child_info or self.get_child_info(key)
         return child_info.exists
 
-    def get_child_type(self, key: str, /, *, child_info: ChildInfo | None = None) -> ChildType:
+    def get_child_type(
+        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
+    ) -> ChildType:
         """Get child type with health checking.
 
         Args:
@@ -946,7 +965,7 @@ class ContainerNode(BaseNode):
         child_info = child_info or self.get_child_info(key)
         return child_info.child_type
 
-    def remove_child(self, key: str, /, *, child_info: ChildInfo | None = None) -> bool:
+    def remove_child(self, key: PathComponent, /, *, child_info: ChildInfo | None = None) -> bool:
         """Remove child (primitive or container) with full validation.
 
         Args:
@@ -1034,8 +1053,13 @@ class ContainerNode(BaseNode):
             yield self.get_child_info(key)
 
     def get_primitive_value(
-        self, key: str, /, *, child_info: ChildInfo | None = None, default: Any = None
-    ) -> Any:
+        self,
+        key: PathComponent,
+        /,
+        *,
+        child_info: ChildInfo | None = None,
+        default: Value | Empty = EMPTY,
+    ) -> Value | Empty:
         """Get primitive child value with full health checking.
 
         Args:
@@ -1068,7 +1092,7 @@ class ContainerNode(BaseNode):
         return child_info.value
 
     def set_primitive_value(
-        self, key: str, value: Any, /, *, child_info: ChildInfo | None = None
+        self, key: PathComponent, value: Value, /, *, child_info: ChildInfo | None = None
     ) -> bool:
         """Set primitive child value with full validation.
 
@@ -1149,7 +1173,7 @@ class ContainerNode(BaseNode):
         tx = self.get_ensured_transaction()
 
         # Collect all paths
-        paths_to_delete: list[tuple[str, ...]] = []
+        paths_to_delete: list[PathTuple] = []
         paths_to_delete.extend([p for p in tx.list_keys(path.to_tuple(), depth=-1)])
         paths_to_delete.extend([p for p in tx.list_keys(path.struct_path.to_tuple(), depth=-1)])
         paths_to_delete.extend([p for p in tx.list_keys(path.meta_path.to_tuple(), depth=-1)])
@@ -1171,7 +1195,7 @@ class ContainerNode(BaseNode):
     # Metadata Operations
     # =========================================================================
 
-    def get_metadata(self, key: str, default=None) -> Any:
+    def get_metadata(self, key: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
         """
         Get metadata value (e.g., __length__ for ListView).
 
@@ -1192,7 +1216,7 @@ class ContainerNode(BaseNode):
         except StorageKeyError:
             return default
 
-    def set_metadata(self, key: str, value: Any) -> None:
+    def set_metadata(self, key: PathComponent, value: Value) -> None:
         """
         Set metadata value (e.g., __length__ for ListView).
 
@@ -1204,7 +1228,7 @@ class ContainerNode(BaseNode):
         metadata_path = self.path.struct_path.join(key)
         tx.set(metadata_path.to_tuple(), value)
 
-    def has_metadata(self, key: str) -> bool:
+    def has_metadata(self, key: PathComponent) -> bool:
         """
         Check if metadata key exists.
 
@@ -1218,7 +1242,7 @@ class ContainerNode(BaseNode):
         metadata_path = self.path.struct_path.join(key)
         return tx.exists(metadata_path.to_tuple())
 
-    def delete_metadata(self, key: str) -> None:
+    def delete_metadata(self, key: PathComponent) -> None:
         """
         Delete metadata key.
 

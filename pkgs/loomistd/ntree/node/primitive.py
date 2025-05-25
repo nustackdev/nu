@@ -7,15 +7,11 @@ in the state tree that contains a primitive value.
 
 from __future__ import annotations
 
-from typing import Any, Optional
-
 import attrs
 
 from loomistd.kv import StorageKeyError
 
-from ..backend import TransactionProtocol
-from ..transaction import with_transaction
-from ..types import NodeType, Value
+from ..types import Empty, NodeType, Value
 from .base import BaseNode
 
 __all__ = ["PrimitiveNode"]
@@ -58,7 +54,7 @@ class PrimitiveNode(BaseNode):
         """
         return NodeType.PRIMITIVE
 
-    def get_value(self, *, tx: Optional[TransactionProtocol] = None) -> Any:
+    def get_value(self) -> Empty | Value:
         """
         Get the primitive value.
 
@@ -68,18 +64,15 @@ class PrimitiveNode(BaseNode):
         Returns:
             Any: Value of the primitive node, or EMPTY if not found
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
+        tx = self.get_ensured_transaction()
 
-            try:
-                result = tx.get(node.path.to_tuple())
-            except StorageKeyError:
-                # Handle case where the key doesn't exist
-                result = node.EMPTY
+        try:
+            return tx.get(self.path.to_tuple())
+        except StorageKeyError:
+            # Handle case where the key doesn't exist
+            return self.EMPTY
 
-        return result
-
-    def set_value(self, value: Value, /, *, tx: Optional[TransactionProtocol] = None) -> None:
+    def set_value(self, value: Value, /) -> None:
         """
         Set the primitive value.
 
@@ -87,6 +80,5 @@ class PrimitiveNode(BaseNode):
             value: New value to store
             tx: Optional transaction (defaults to current transaction)
         """
-        with with_transaction(self) as node:
-            tx = node.get_ensured_transaction()
-            tx.set(node.path.to_tuple(), value)
+        tx = self.get_ensured_transaction()
+        tx.set(self.path.to_tuple(), value)

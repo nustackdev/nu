@@ -14,7 +14,7 @@ import attrs
 
 from ..path import Path
 from ..transaction import TransactionalBase
-from ..types import Empty, NodeType
+from ..types import EMPTY, Empty, NodeType
 
 __all__ = [
     "BaseNode",
@@ -45,7 +45,7 @@ class BaseNode(TransactionalBase, ABC):
     path: Path = attrs.field(eq=False, kw_only=True)
 
     # Empty marker for non-existent values
-    EMPTY: ClassVar[Empty] = Empty()
+    EMPTY: ClassVar[Empty] = EMPTY
 
     # Markers for node types
     TYPE_FIELD_SUFFIX: ClassVar[str] = "T"
