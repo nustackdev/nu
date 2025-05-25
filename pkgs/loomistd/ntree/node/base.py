@@ -12,7 +12,7 @@ from typing import ClassVar
 
 import attrs
 
-from ..path import DataPath
+from ..path import Path
 from ..transaction import TransactionalBase
 from ..types import Empty, NodeType
 
@@ -42,7 +42,7 @@ class BaseNode(TransactionalBase, ABC):
     """
 
     # Path to this node in the state tree
-    path: DataPath = attrs.field(eq=False, kw_only=True)
+    path: Path = attrs.field(eq=False, kw_only=True)
 
     # Empty marker for non-existent values
     EMPTY: ClassVar[Empty] = Empty()
