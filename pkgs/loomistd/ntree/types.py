@@ -89,6 +89,8 @@ class ContainerStructure(Flag):
     SET_CONTAINER = 2 << 2 | CONTAINER  # Collection of unique values (set-like)
     SERIES_CONTAINER = 2 << 3 | CONTAINER  # Series (timeseries-like)
 
+    DEFAULT_CONTAINER = MAPPING_CONTAINER
+
     def __str__(self) -> str:
         """Return a string representation of protocols."""
         parts = []
@@ -114,8 +116,13 @@ class ContainerProtocol(Flag):
     """
 
     # Container protocols
+
     MUTABLE = 1  # Can be modified after creation
+
     FLAT = 2 << 1  # Can contain only primitives (no nested containers)
+    # Note: Not implemented yet, but reserved for future use
+
+    DEFAULT_PROTOCOL = MUTABLE
 
     def __str__(self) -> str:
         parts = []
@@ -126,30 +133,6 @@ class ContainerProtocol(Flag):
             parts.append("FLAT")
 
         return "|".join(parts)
-
-    # Standard variants
-    DICT = MUTABLE
-    LIST = MUTABLE
-    SET = MUTABLE
-    TUPLE = 0
-
-    # Standard variants with flat structure
-    FLAT_DICT = DICT | FLAT
-    FLAT_LIST = LIST | FLAT
-    FLAT_SET = SET | FLAT
-    FLAT_TUPLE = TUPLE | FLAT
-
-    # Read-only variants
-    READ_ONLY_DICT = DICT ^ MUTABLE
-    READ_ONLY_LIST = LIST ^ MUTABLE
-    READ_ONLY_SET = SET ^ MUTABLE
-    READ_ONLY_TUPLE = TUPLE ^ MUTABLE
-
-    # Read-only variants with flat structure
-    READ_ONLY_FLAT_DICT = READ_ONLY_DICT | FLAT
-    READ_ONLY_FLAT_LIST = READ_ONLY_LIST | FLAT
-    READ_ONLY_FLAT_SET = READ_ONLY_SET | FLAT
-    READ_ONLY_FLAT_TUPLE = READ_ONLY_TUPLE | FLAT
 
 
 # -------------------------------------------------------------------------

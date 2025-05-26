@@ -734,9 +734,8 @@ class ContainerNode(BaseNode):
     def try_create_parents(self) -> list[Path]:
         """Create missing parent containers.
 
-        Creates any missing parent containers using default MAPPING_CONTAINER
-        structure and DICT protocol. Only creates parents that are actually
-        missing - existing parents are left unchanged.
+        Creates any missing parent containers using default structure and protocol.
+        Only creates parents that are actually missing - existing parents are left unchanged.
 
         Returns:
             list[Path]: List of parent paths that were actually created.
@@ -768,7 +767,10 @@ class ContainerNode(BaseNode):
         for parent_path in self.info.missing_parent_paths:
             self.tx.set(
                 parent_path.struct_path.to_tuple(),
-                [ContainerStructure.MAPPING_CONTAINER.value, ContainerProtocol.DICT.value],
+                [
+                    ContainerStructure.DEFAULT_CONTAINER.value,
+                    ContainerProtocol.DEFAULT_PROTOCOL.value,
+                ],
             )
             created.append(parent_path)
 
@@ -844,7 +846,9 @@ class ContainerNode(BaseNode):
     # INFORMATION LAYER - Simple Child Data Gathering
     # ------------------------------------------------------------------------
 
-    def get_child_info(self, key: PathComponent, /) -> ChildInfo:
+    def get_child_info(
+        self, key: PathComponent, /, only_primitive_check: bool = False
+    ) -> ChildInfo:
         """Get basic information about a child.
 
         Args:
@@ -873,6 +877,10 @@ class ContainerNode(BaseNode):
             )
         except StorageKeyError:
             pass
+
+        # If only primitive check is requested, return early
+        if only_primitive_check:
+            return ChildInfo(key=key, exists=False, child_type=ChildType.NOT_FOUND)
 
         # Check if it's a container
         try:
@@ -1022,7 +1030,7 @@ class ContainerNode(BaseNode):
         child_info = child_info or self.get_child_info(key)
         return child_info.child_type
 
-    def remove_child(self, key: PathComponent, /, *, child_info: ChildInfo | None = None) -> bool:
+    def remove_child(self, key: PathComponent, /) -> bool:
         """Remove child (primitive or container) with mutability validation.
 
         Args:
@@ -1048,21 +1056,17 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable()
 
-        child_info = child_info or self.get_child_info(key)
-
-        # Handle non-existent child
-        if not child_info.exists:
-            return False
-
-        # Remove child
         child_path = self.path.join(key)
 
-        if child_info.child_type == ChildType.CONTAINER:
-            self._delete_subtree(child_path)
-        else:
-            self.tx.delete(child_path.to_tuple())
+        # Try to delete primitive child first
+        try:
+            self.tx.delete(self.path.join(key).to_tuple())
+            return True
+        except StorageKeyError:
+            # Primitive key doesn't exist, try container
+            pass
 
-        return True
+        return self._delete_subtree(child_path)
 
     def keys(self, *, primitives_only: bool = False) -> Generator[PathComponent, None, None]:
         """Get child keys with container health validation.
@@ -1083,9 +1087,6 @@ class ContainerNode(BaseNode):
                 print(f"Child: {key}")
             ```
         """
-        # Validate container health first
-        self.validate_compatible()
-
         yield from self._get_keys_impl(primitives_only=primitives_only)
 
     def clear(self) -> int:
@@ -1135,9 +1136,6 @@ class ContainerNode(BaseNode):
                 print(f"Child {child.key}: {child.child_type}")
             ```
         """
-        # Validate container health first
-        self.validate_compatible()
-
         for key in self._get_keys_impl(primitives_only=primitives_only):
             yield self.get_child_info(key)
 
@@ -1170,10 +1168,7 @@ class ContainerNode(BaseNode):
             print(f"Value: {value}")
             ```
         """
-        # Validate container health
-        self.validate_compatible()
-
-        child_info = child_info or self.get_child_info(key)
+        child_info = child_info or self.get_child_info(key, only_primitive_check=True)
 
         # Handle non-existent child
         if not child_info.exists:
@@ -1215,7 +1210,8 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable()
 
-        child_info = child_info or self.get_child_info(key)
+        # Get child info
+        child_info = child_info or self.get_child_info(key, only_primitive_check=True)
 
         # Validate operation
         if child_info.exists:
@@ -1261,12 +1257,15 @@ class ContainerNode(BaseNode):
             except StorageKeyError:
                 pass  # No container children
 
-    def _delete_subtree(self, path: Path) -> None:
+    def _delete_subtree(self, path: Path) -> bool:
         """
         Recursively delete a container and all its descendants.
 
         Args:
             path: Root path to delete
+
+        Returns:
+            bool: True if deleted, False if not found
         """
         # Collect all paths
         paths_to_delete: list[PathTuple] = []
@@ -1283,11 +1282,20 @@ class ContainerNode(BaseNode):
             ]
         )
 
-        for path_to_delete in paths_to_delete:
+        # Remove duplicates
+        set_paths_to_delete = set(paths_to_delete)
+
+        # Keep track whether at least one path was deleted
+        path_deleted = False
+
+        for path_to_delete in set_paths_to_delete:
             try:
                 self.tx.delete(path_to_delete)
+                path_deleted = True  # At least one path was successfully deleted
             except StorageKeyError:
                 pass
+
+        return path_deleted
 
     # =========================================================================
     # Metadata Operations
@@ -1360,12 +1368,15 @@ class ContainerNode(BaseNode):
         metadata_path = self.path.struct_path.join(key)
         return self.tx.exists(metadata_path.to_tuple())
 
-    def delete_metadata(self, key: PathComponent) -> None:
+    def delete_metadata(self, key: PathComponent) -> bool:
         """
         Delete metadata key.
 
         Args:
             key: Metadata key to delete
+
+        Returns:
+            bool: True if metadata was deleted, False if it didn't exist
 
         Raises:
             PathNotFoundError: If container doesn't exist.
@@ -1383,5 +1394,6 @@ class ContainerNode(BaseNode):
         metadata_path = self.path.struct_path.join(key)
         try:
             self.tx.delete(metadata_path.to_tuple())
+            return True
         except StorageKeyError:
-            pass
+            return False  # Metadata didn't exist

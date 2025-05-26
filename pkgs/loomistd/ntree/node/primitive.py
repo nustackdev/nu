@@ -11,8 +11,11 @@ import attrs
 
 from loomistd.kv import StorageKeyError
 
-from ..types import Empty, NodeType, Value
+from ..backend import BackendProtocol, TransactionProtocol
+from ..path import Path
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, NodeType, Value
 from .base import BaseNode
+from .container import ContainerNode
 
 __all__ = ["PrimitiveNode"]
 
@@ -44,6 +47,47 @@ class PrimitiveNode(BaseNode):
         ```
     """
 
+    @classmethod
+    def create(
+        cls,
+        backend: BackendProtocol,
+        tx: TransactionProtocol,
+        path: Path,
+    ) -> PrimitiveNode:
+        """
+        Create a new PrimitiveNode instance.
+
+        Args:
+            backend: The backend storage interface
+            tx: The transaction to use
+            path: The path to the node in the state tree
+
+        Returns:
+            PrimitiveNode: A new instance of PrimitiveNode
+        """
+        return cls(backend=backend, tx=tx, path=path)
+
+    @property
+    def parent_container(self) -> ContainerNode:
+        """
+        Get the parent container of this node.
+
+        Returns:
+            BaseNode: Always None for primitive nodes, as they have no parent container
+        """
+        parent_path = self.path.parent()
+        if parent_path is None:
+            raise ValueError("Primitive nodes cannot be root nodes")
+
+        parent_container = ContainerNode.create(
+            backend=self.backend,
+            tx=self.tx,
+            path=parent_path,
+            structure=ContainerStructure.DEFAULT_CONTAINER,
+            protocol=ContainerProtocol.DEFAULT_PROTOCOL,
+        )
+        return parent_container
+
     @property
     def node_type(self) -> NodeType:
         """
@@ -54,7 +98,7 @@ class PrimitiveNode(BaseNode):
         """
         return NodeType.PRIMITIVE
 
-    def get_value(self) -> Empty | Value:
+    def get_value(self, *, default: Value | Empty = EMPTY) -> Value | Empty:
         """
         Get the primitive value.
 
@@ -64,14 +108,12 @@ class PrimitiveNode(BaseNode):
         Returns:
             Any: Value of the primitive node, or EMPTY if not found
         """
+        key = self.path.last()
+        if key is None:
+            raise ValueError("Cannot get value from a node without a key")
+        return self.parent_container.get_primitive_value(key, default=default)
 
-        try:
-            return self.tx.get(self.path.to_tuple())
-        except StorageKeyError:
-            # Handle case where the key doesn't exist
-            return self.EMPTY
-
-    def set_value(self, value: Value, /) -> None:
+    def set_value(self, value: Value, /) -> bool:
         """
         Set the primitive value.
 
@@ -79,4 +121,30 @@ class PrimitiveNode(BaseNode):
             value: New value to store
             tx: Optional transaction (defaults to current transaction)
         """
-        self.tx.set(self.path.to_tuple(), value)
+        key = self.path.last()
+        if key is None:
+            raise ValueError("Cannot get value from a node without a key")
+        return self.parent_container.set_primitive_value(key, value)
+
+    def remove_value(self) -> bool:
+        """
+        Delete the primitive value.
+
+        Args:
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            bool: True if the value was deleted, False if it did not exist or was not a primitive type
+        """
+        key = self.path.last()
+        if key is None:
+            raise ValueError("Cannot delete value from a node without a key")
+
+        child_info = self.parent_container.get_child_info(key, only_primitive_check=True)
+        if child_info.child_type != NodeType.PRIMITIVE:
+            return False
+
+        try:
+            return self.parent_container.remove_child(key)
+        except StorageKeyError:
+            return False

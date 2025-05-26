@@ -158,11 +158,9 @@ class LMDBStorage(
 
         try:
             with self._env.begin(write=True) as txn:
-                # Check if key exists before deleting
-                if txn.get(encoded_key) is None:
-                    raise StorageKeyError(f"Key {key} not found")
                 # Delete the key
-                txn.delete(encoded_key)
+                if not txn.delete(encoded_key):
+                    raise StorageKeyError(f"Key {key} not found")
 
         except Exception as e:
             raise StorageOperationError(f"Failed to delete key {key}: {e}")
