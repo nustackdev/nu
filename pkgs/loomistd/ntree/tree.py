@@ -15,10 +15,10 @@ from typing import Optional, Self
 import attrs
 
 from .backend import SubscriptionProtocol, TransactionProtocol
-from .path import DataPath
+from .path import Path
 from .transaction import TransactionalBase
 from .types import CallbackFn, PathComponent
-from .view import DictView, create_view_context_manager
+from .view import DictView, ListView, SetView, create_view_context_manager
 
 __all__ = [
     "Tree",
@@ -72,7 +72,7 @@ class Tree(TransactionalBase):
         ```
     """
 
-    path: DataPath = attrs.field(factory=DataPath, eq=False, hash=False, alias=None)
+    path: Path = attrs.field(factory=Path, eq=False, hash=False, alias=None)
 
     def at(self, *paths: PathComponent, tx: Optional[TransactionProtocol] = None) -> Self:
         """
@@ -137,7 +137,7 @@ class Tree(TransactionalBase):
             root = tree.at("deeply", "nested", "path").root()
             ```
         """
-        return attrs.evolve(self, path=DataPath(), tx=tx or self.tx)
+        return attrs.evolve(self, path=Path(), tx=tx or self.tx)
 
     # =========================================================================
     # Context Manager Methods (Automatic Transaction Management)
@@ -177,6 +177,71 @@ class Tree(TransactionalBase):
         """
         return create_view_context_manager(
             DictView, backend=self.backend, path=self.path, tx=self.tx
+        )
+
+    def with_list_view(self) -> AbstractContextManager[ListView]:
+        """
+        Access container as list view with automatic transaction management.
+
+        Returns a context manager that yields a ListView with transaction context.
+        If path doesn't exist, creates a new sequence container.
+
+        Returns:
+            Context manager yielding ListView with transaction
+
+        Example:
+            ```python
+            # Automatic transaction - recommended for mutations
+            with tree.at("tasks").with_list_view() as tasks:
+                tasks.append("Setup project")
+                tasks.append("Write documentation")
+                tasks.insert(1, "Create tests")
+            # Transaction automatically committed on success
+
+            # Nested container operations
+            with tree.at("projects").with_list_view() as projects:
+                projects.append({"name": "Project 1", "tasks": []})
+
+                # Access nested dict in list
+                project_dict = projects.dict_view(0)
+                project_dict.set("status", "active")
+            ```
+        """
+        return create_view_context_manager(
+            ListView, backend=self.backend, path=self.path, tx=self.tx
+        )
+
+    def with_set_view(self) -> AbstractContextManager[SetView]:
+        """
+        Access container as set view with automatic transaction management.
+
+        Returns a context manager that yields a SetView with transaction context.
+        If path doesn't exist, creates a new set container.
+
+        Returns:
+            Context manager yielding SetView with transaction
+
+        Example:
+            ```python
+            # Automatic transaction - recommended for mutations
+            with tree.at("tags").with_set_view() as tags:
+                tags.add("important")
+                tags.add("urgent")
+                tags.add("important")  # Duplicate ignored
+            # Transaction automatically committed on success
+
+            # Working with complex values in sets
+            with tree.at("categories").with_set_view() as categories:
+                categories.add({"type": "work", "priority": "high"})
+                categories.add({"type": "personal", "priority": "low"})
+
+                # Access nested dict in set
+                work_dict = categories.dict_view({"type": "work", "priority": "high"})
+                work_dict.set("deadline", "2024-01-01")
+            ```
+        """
+        return create_view_context_manager(
+            SetView, backend=self.backend, path=self.path, tx=self.tx
         )
 
     # =========================================================================
@@ -222,6 +287,85 @@ class Tree(TransactionalBase):
         """
         return DictView(backend=self.backend, path=self.path, tx=tx or self.tx)
 
+    def list_view(self, *, tx: Optional[TransactionProtocol] = None) -> ListView:
+        """
+        Access container as list view with manual transaction management.
+
+        Returns a ListView object directly. No automatic transaction handling.
+        If path doesn't exist, creates a new sequence container when accessed.
+
+        Args:
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            ListView: List view for the container
+
+        Example:
+            ```python
+            # Direct usage - good for reads
+            tasks = tree.at("tasks").list_view()
+            task_count = tasks.length()
+            tasks_list = tasks.to_list()
+
+            # Manual transaction management
+            tx = tree.begin_transaction()
+            try:
+                tasks = tree.at("tasks").list_view(tx=tx)
+                tasks.append("New task")
+                tx.commit()
+            except Exception:
+                tx.rollback()
+                raise
+
+            # Accessing nested containers
+            tasks = tree.at("tasks").list_view()
+            if tasks.length() > 0:
+                first_task_dict = tasks.dict_view(0)  # Access first item as dict
+                first_task_dict.set("completed", True)
+            ```
+        """
+        return ListView(backend=self.backend, path=self.path, tx=tx or self.tx)
+
+    def set_view(self, *, tx: Optional[TransactionProtocol] = None) -> SetView:
+        """
+        Access container as set view with manual transaction management.
+
+        Returns a SetView object directly. No automatic transaction handling.
+        If path doesn't exist, creates a new set container when accessed.
+
+        Args:
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            SetView: Set view for the container
+
+        Example:
+            ```python
+            # Direct usage - good for reads
+            tags = tree.at("tags").set_view()
+            tag_count = tags.size()
+            tags_set = tags.to_set()
+
+            # Manual transaction management
+            tx = tree.begin_transaction()
+            try:
+                tags = tree.at("tags").set_view(tx=tx)
+                tags.add("important")
+                tx.commit()
+            except Exception:
+                tx.rollback()
+                raise
+
+            # Working with complex values
+            categories = tree.at("categories").set_view()
+            work_category = {"type": "work", "priority": "high"}
+            if categories.contains(work_category):
+                work_dict = categories.dict_view(work_category)
+                work_dict.set("updated", True)
+            ```
+        """
+        return SetView(backend=self.backend, path=self.path, tx=tx or self.tx)
+
     # =========================================================================
     # Transaction and Subscription Methods
     # =========================================================================
@@ -243,6 +387,9 @@ class Tree(TransactionalBase):
 
                 tasks = tree.at("tasks").list_view(tx=tx)
                 tasks.append("Greet Alice")
+
+                tags = tree.at("tags").set_view(tx=tx)
+                tags.add("user_management")
 
                 tx.commit()
             except Exception:
@@ -282,6 +429,9 @@ class Tree(TransactionalBase):
             # Make some changes (will trigger callback)
             with tree.at("users").with_dict_view() as users:
                 users.set("alice", {"name": "Alice"})  # Triggers callback
+
+            with tree.at("tasks").with_list_view() as tasks:
+                tasks.append("New task")  # Triggers callback if subscribed to root
 
             # Later, unsubscribe
             sub.unsubscribe()

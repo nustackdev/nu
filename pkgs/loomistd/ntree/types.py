@@ -197,3 +197,6 @@ def is_empty(value: Any) -> TypeGuard[Empty]:
         True if value is the EMPTY sentinel, False otherwise
     """
     return isinstance(value, Empty)
+
+
+EMPTY = Empty()  # Global instance of the Empty sentinel

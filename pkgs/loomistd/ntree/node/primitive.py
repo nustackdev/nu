@@ -64,10 +64,9 @@ class PrimitiveNode(BaseNode):
         Returns:
             Any: Value of the primitive node, or EMPTY if not found
         """
-        tx = self.get_ensured_transaction()
 
         try:
-            return tx.get(self.path.to_tuple())
+            return self.tx.get(self.path.to_tuple())
         except StorageKeyError:
             # Handle case where the key doesn't exist
             return self.EMPTY
@@ -80,5 +79,4 @@ class PrimitiveNode(BaseNode):
             value: New value to store
             tx: Optional transaction (defaults to current transaction)
         """
-        tx = self.get_ensured_transaction()
-        tx.set(self.path.to_tuple(), value)
+        self.tx.set(self.path.to_tuple(), value)

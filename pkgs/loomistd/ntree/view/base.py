@@ -42,7 +42,7 @@ from abc import ABC
 import attrs
 
 from ..node import ContainerNode
-from ..path import DataPath
+from ..path import Path
 from ..transaction import TransactionalBase
 from ..types import ContainerProtocol, ContainerStructure
 
@@ -92,7 +92,7 @@ class BaseView(TransactionalBase, ABC):
     """
 
     # Path to the container
-    path: DataPath = attrs.field()
+    path: Path = attrs.field()
 
     # Container structure type
     structure: ContainerStructure = attrs.field()
@@ -111,7 +111,10 @@ class BaseView(TransactionalBase, ABC):
         Returns:
             ContainerNode: The container node
         """
-        container = ContainerNode(
+        if self.tx is None:
+            raise ValueError("Cannot access container without a transaction")
+
+        container = ContainerNode.create(
             backend=self.backend,
             path=self.path,
             structure=self.structure,
@@ -121,4 +124,5 @@ class BaseView(TransactionalBase, ABC):
 
         # Ensure container exists
         container.ensure_exists()
+
         return container

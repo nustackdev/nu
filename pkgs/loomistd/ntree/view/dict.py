@@ -17,7 +17,8 @@ from ..types import ContainerProtocol, ContainerStructure, PathComponent, Value
 from .base import BaseView
 
 if TYPE_CHECKING:
-    pass
+    from .list import ListView
+    from .set import SetView
 
 __all__ = [
     "DictView",
@@ -71,31 +72,30 @@ class DictView(BaseView):
         Get value at key.
 
         For primitive values, returns the actual value.
-        For container values, returns a new DictView object for navigation.
+        For container values, returns the converted Python object (dict/list/set).
 
         Args:
             key: Key to retrieve
             default: Default value if key doesn't exist
 
         Returns:
-            Any: Value at key, DictView object for containers, or default
+            Any: Value at key, Python object for containers, or default
 
         Example:
             ```python
             # Get primitive value
-            email = users.get("alice").get("email")
+            email = users.get("alice", {}).get("email")
+
+            # Get nested dict (returns actual dict, not view)
+            alice_data = users.get("alice", {})  # Returns dict
 
             # Get with default
-            status = users.get("alice").get("status", "active")
+            status = users.get("alice", {}).get("status", "active")
             ```
         """
+
         with with_transaction(self.container) as container:
-
-            if not container.has_child(key):
-                return default
-
             result = {}
-            container = self.container
 
             if not container.exists():
                 return result
@@ -106,14 +106,20 @@ class DictView(BaseView):
                 elif container.is_child_container(key):
                     # Recursively convert nested containers
                     try:
-                        child_view = self.dict_view(key)
-                        result[key] = child_view.to_dict()
+                        child_view = self._get_child_view(key)
+                        if hasattr(child_view, "to_dict"):
+                            result[key] = child_view.to_dict()
+                        elif hasattr(child_view, "to_list"):
+                            result[key] = child_view.to_list()
+                        elif hasattr(child_view, "to_set"):
+                            result[key] = child_view.to_set()
+                        else:
+                            result[key] = None  # Fallback
                     except (KeyError, ContainerProtocolError):
-                        # If we can't create a dict view, skip this key
-                        # This handles cases where the child container has incompatible structure
+                        # If we can't create a view, skip this key
                         continue
 
-        return result
+            return result
 
     def set(self, key: PathComponent, value: Value) -> None:
         """
@@ -122,7 +128,8 @@ class DictView(BaseView):
         Creates appropriate node type based on the value.
         Primitive values are stored directly.
         Dict values create nested mapping containers.
-        List values would need ListView (not implemented here).
+        List values create nested sequence containers.
+        Set values create nested set containers.
 
         Args:
             key: Key to set
@@ -135,22 +142,16 @@ class DictView(BaseView):
 
             # Set nested structure
             users.set("alice", {"email": "alice@example.com", "age": 30})
+
+            # Set list structure
+            users.set("alice_tasks", ["task1", "task2"])
+
+            # Set set structure
+            users.set("alice_tags", {"important", "user"})
             ```
         """
         with with_transaction(self.container) as container:
-
-            if isinstance(value, dict):
-                # Create nested container and recursively set contents
-                child_view = DictView(
-                    backend=self.backend,
-                    path=self.path.join(key),
-                    tx=container.tx,
-                )
-                for k, v in value.items():
-                    child_view.set(k, v)
-            else:
-                # Store primitive value directly
-                container.set_primitive_value(key, value)
+            self._set_value_with_type_detection(container, key, value)
 
     def has(self, key: PathComponent) -> bool:
         """
@@ -225,7 +226,7 @@ class DictView(BaseView):
         Get all values in the container.
 
         Returns:
-            List[Any]: List of values (primitives or DictView objects)
+            List[Any]: List of values (primitives or view objects)
 
         Example:
             ```python
@@ -294,12 +295,70 @@ class DictView(BaseView):
             tx=self.tx,
         )
 
+    def list_view(self, key: PathComponent) -> ListView:
+        """
+        Get a list view for a nested container.
+
+        Args:
+            key: Key of the nested container
+
+        Returns:
+            ListView: List view for the nested container
+
+        Raises:
+            KeyError: If key doesn't exist
+            ContainerProtocolError: If child is not a sequence container
+
+        Example:
+            ```python
+            alice_tasks = users.list_view("alice_tasks")
+            alice_tasks.append("new task")
+            ```
+        """
+        from .list import ListView
+
+        return ListView(
+            backend=self.backend,
+            path=self.path.join(key),
+            tx=self.tx,
+        )
+
+    def set_view(self, key: PathComponent) -> SetView:
+        """
+        Get a set view for a nested container.
+
+        Args:
+            key: Key of the nested container
+
+        Returns:
+            SetView: Set view for the nested container
+
+        Raises:
+            KeyError: If key doesn't exist
+            ContainerProtocolError: If child is not a set container
+
+        Example:
+            ```python
+            alice_tags = users.set_view("alice_tags")
+            alice_tags.add("important")
+            ```
+        """
+        from .set import SetView
+
+        return SetView(
+            backend=self.backend,
+            path=self.path.join(key),
+            tx=self.tx,
+        )
+
     def to_dict(self) -> Dict[PathComponent, Any]:
         """
         Convert container to a regular Python dictionary.
 
         Recursively converts nested containers to their Python equivalents:
         - Mapping containers become dicts
+        - Sequence containers become lists
+        - Set containers become sets
         - Primitive values remain as-is
 
         Returns:
@@ -309,11 +368,10 @@ class DictView(BaseView):
             ```python
             users_dict = users.to_dict()
             print(users_dict)
-            # {'alice': {'email': 'alice@example.com', 'profile': {...}}}
+            # {'alice': {'email': 'alice@example.com', 'tasks': [...], 'tags': {...}}}
             ```
         """
         with with_transaction(self.container) as container:
-
             result = {}
 
             if not container.exists():
@@ -325,11 +383,95 @@ class DictView(BaseView):
                 elif container.is_child_container(key):
                     # Recursively convert nested containers
                     try:
-                        child_view = self.dict_view(key)
-                        result[key] = child_view.to_dict()
+                        child_view = self._get_child_view(key)
+                        if hasattr(child_view, "to_dict"):
+                            result[key] = child_view.to_dict()
+                        elif hasattr(child_view, "to_list"):
+                            result[key] = child_view.to_list()
+                        elif hasattr(child_view, "to_set"):
+                            result[key] = child_view.to_set()
+                        else:
+                            result[key] = None  # Fallback
                     except (KeyError, ContainerProtocolError):
-                        # If we can't create a dict view, skip this key
-                        # This handles cases where the child container has incompatible structure
+                        # If we can't create a view, skip this key
                         continue
 
             return result
+
+    # Helper methods
+    def _set_value_with_type_detection(self, container, key: str, value: Value) -> None:
+        """Set value with automatic type detection and container creation."""
+        if isinstance(value, dict):
+            # Create nested mapping container
+            child_view = DictView(
+                backend=self.backend,
+                path=self.path.join(key),
+                tx=container.tx,
+            )
+            for k, v in value.items():
+                child_view.set(k, v)
+        elif isinstance(value, list):
+            # Create nested sequence container
+            from .list import ListView
+
+            child_view = ListView(
+                backend=self.backend,
+                path=self.path.join(key),
+                tx=container.tx,
+            )
+            for item in value:
+                child_view.append(item)
+        elif isinstance(value, set):
+            # Create nested set container
+            from .set import SetView
+
+            child_view = SetView(
+                backend=self.backend,
+                path=self.path.join(key),
+                tx=container.tx,
+            )
+            for item in value:
+                child_view.add(item)
+        else:
+            # Store primitive value directly
+            container.set_primitive_value(key, value)
+
+    def _get_child_view(self, key: str):
+        """Get appropriate view for child container based on its structure."""
+        with with_transaction(self.container) as container:
+            # Get container structure from metadata
+            child_path = self.path.join(key)
+            child_container = container.__class__(
+                backend=self.backend,
+                path=child_path,
+                structure=ContainerStructure.CONTAINER,  # Will be validated
+                protocol=ContainerProtocol.DICT,  # Will be validated
+                tx=container.tx,
+            )
+
+            try:
+                # Try to determine structure from stored metadata
+                from ..path import StructPath
+
+                struct_path = StructPath(*child_path.components[1:])
+                type_info = container.tx.get(struct_path.to_tuple())
+
+                if isinstance(type_info, (list, tuple)) and len(type_info) == 2:
+                    stored_structure = ContainerStructure(type_info[0])
+
+                    if stored_structure & ContainerStructure.MAPPING_CONTAINER:
+                        return DictView(backend=self.backend, path=child_path, tx=self.tx)
+                    elif stored_structure & ContainerStructure.SEQUENCE_CONTAINER:
+                        from .list import ListView
+
+                        return ListView(backend=self.backend, path=child_path, tx=self.tx)
+                    elif stored_structure & ContainerStructure.SET_CONTAINER:
+                        from .set import SetView
+
+                        return SetView(backend=self.backend, path=child_path, tx=self.tx)
+
+            except Exception:
+                pass
+
+            # Fallback to dict view
+            return DictView(backend=self.backend, path=child_path, tx=self.tx)

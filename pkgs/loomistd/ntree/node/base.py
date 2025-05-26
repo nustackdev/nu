@@ -12,8 +12,8 @@ from typing import ClassVar
 
 import attrs
 
+from ..backend import BackendProtocol, TransactionProtocol
 from ..path import Path
-from ..transaction import TransactionalBase
 from ..types import EMPTY, Empty, NodeType
 
 __all__ = [
@@ -22,7 +22,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class BaseNode(TransactionalBase, ABC):
+class BaseNode(ABC):
     """
     Abstract base class for all nodes in the state tree.
 
@@ -40,6 +40,12 @@ class BaseNode(TransactionalBase, ABC):
         # Transaction automatically committed
         ```
     """
+
+    # Backend instance for transaction management
+    backend: BackendProtocol = attrs.field(kw_only=True)
+
+    # Current transaction if any
+    tx: TransactionProtocol = attrs.field(kw_only=True)
 
     # Path to this node in the state tree
     path: Path = attrs.field(eq=False, kw_only=True)
