@@ -469,7 +469,9 @@ class ContainerNode(BaseNode):
         self.validate_compatible(info)
 
         if info.stored_protocol is None:
-            raise PathTypeError(f"Container at {self.path} has malformed protocol data")
+            raise PathTypeError(
+                f"Container at {self.path} has malformed protocol data. Can not check mutability."
+            )
 
         if ~(info.stored_protocol & ContainerProtocol.MUTABLE):
             raise ContainerProtocolError(f"Container at {self.path} is not mutable")
@@ -480,6 +482,7 @@ class ContainerNode(BaseNode):
         Checks conditions required for successful container creation, including
         non-existence of the target and parent chain requirements based on
         whether parent creation is allowed.
+        Validates parent mutability when creating in existing parent.
 
         Args:
             info: Container information from get_info().
@@ -508,6 +511,9 @@ class ContainerNode(BaseNode):
             # Without parent creation, need complete valid chain
             self.validate_parents_chain(info)
 
+        # Validate parent is mutable
+        self.validate_parent_mutable(info)
+
     def validate_parents_createable(self, info: ContainerInfo, /) -> None:
         """Validate that missing parent containers can be created.
 
@@ -529,6 +535,45 @@ class ContainerNode(BaseNode):
         """
         # Only malformed parents prevent creation
         self.validate_parents_healthy(info)
+
+    def validate_parent_mutable(self, info: ContainerInfo, /) -> None:
+        """Validate that the immediate parent container is mutable.
+
+        Used when creating a new container to ensure the parent can accept
+        new children. Only checks the immediate parent, not the entire chain.
+
+        Args:
+            info: Container information from get_info().
+
+        Raises:
+            PathNotFoundError: If immediate parent does not exist.
+            PathTypeError: If parent has malformed data.
+            ContainerProtocolError: If parent is not mutable.
+
+        Example:
+            ```python
+            info = container.get_info()
+            container.validate_parent_mutable(info)  # Check parent can accept children
+            ```
+        """
+        if not info.parents:
+            # No parents - root level creation always allowed
+            return
+
+        first_existing_parent_mutable = True
+        for parent_info in info.parents[-1::-1]:  # Iterate from immediate parent to root
+            if parent_info.exists:
+                if parent_info.stored_protocol is None:
+                    raise PathTypeError(
+                        f"Parent container at {parent_info.path} has malformed protocol data. Can not check mutability."
+                    )
+                first_existing_parent_mutable = (
+                    parent_info.stored_protocol & ContainerProtocol.MUTABLE
+                )
+                break
+
+        if first_existing_parent_mutable is False:
+            raise ContainerProtocolError(f"Parent container at {parent_info.path} is not mutable")
 
     # ------------------------------------------------------------------------
     # SUPPORT LAYER - Boolean Feasibility Checks
@@ -853,7 +898,7 @@ class ContainerNode(BaseNode):
 
         Args:
             key: Child key to check.
-            container_info: Container info from get_info().
+            child_info: Child info from get_child_info().
 
         Raises:
             PathExistsError: If child already exists (primitive or container).
@@ -932,10 +977,11 @@ class ContainerNode(BaseNode):
     # ------------------------------------------------------------------------
 
     def has_child(self, key: PathComponent, /, *, child_info: ChildInfo | None = None) -> bool:
-        """Check if child exists with health checking.
+        """Check if child exists.
 
         Args:
             key: Child key to check.
+            child_info: Optional child info from get_child_info().
 
         Returns:
             bool: True if child exists (primitive or container).
@@ -950,10 +996,11 @@ class ContainerNode(BaseNode):
     def get_child_type(
         self, key: PathComponent, /, *, child_info: ChildInfo | None = None
     ) -> ChildType:
-        """Get child type with health checking.
+        """Get child type.
 
         Args:
             key: Child key to check.
+            child_info: Optional child info from get_child_info().
 
         Returns:
             ChildType: Type of child (PRIMITIVE, CONTAINER, NOT_FOUND).
@@ -966,10 +1013,11 @@ class ContainerNode(BaseNode):
         return child_info.child_type
 
     def remove_child(self, key: PathComponent, /, *, child_info: ChildInfo | None = None) -> bool:
-        """Remove child (primitive or container) with full validation.
+        """Remove child (primitive or container) with mutability validation.
 
         Args:
             key: Child key to remove.
+            child_info: Optional child info from get_child_info().
 
         Returns:
             bool: True if removed, False if didn't exist.
@@ -981,9 +1029,11 @@ class ContainerNode(BaseNode):
 
         Process:
             1. Handle non-existent child (return False)
-            3. Remove child (primitive or container)
+            2. Remove child (primitive or container)
         """
         child_info = child_info or self.get_child_info(key)
+
+        # self.validate_mutable(self.get_info())
 
         # 1. Handle non-existent child
         if not child_info.exists:
@@ -1000,14 +1050,14 @@ class ContainerNode(BaseNode):
 
         return True
 
-    def keys(self, *, primitives_only: bool = False) -> Generator[str, None, None]:
-        """Get child keys with health checking.
+    def keys(self, *, primitives_only: bool = False) -> Generator[PathComponent, None, None]:
+        """Get child keys.
 
         Args:
             primitives_only: If True, only return primitive child keys.
 
         Returns:
-            tuple[str, ...]: Child keys.
+            Generator[PathComponent, None, None]: Child keys.
 
         Raises:
             PathNotFoundError: If container doesn't exist.
@@ -1016,7 +1066,7 @@ class ContainerNode(BaseNode):
         yield from self._get_keys_impl(primitives_only=primitives_only)
 
     def clear(self) -> int:
-        """Remove all children with health checking.
+        """Remove all children with mutability validation.
 
         Returns:
             int: Number of children removed.
@@ -1026,18 +1076,18 @@ class ContainerNode(BaseNode):
             PathTypeError: If container incompatible.
             ContainerProtocolError: If container not mutable.
         """
-        # Health check done by keys() and remove_child()
-        child_keys = self.keys()
+        # self.validate_mutable(self.get_info())
+
         removed_count = 0
 
-        for key in child_keys:
+        for key in self.keys():
             if self.remove_child(key):
                 removed_count += 1
 
         return removed_count
 
     def children(self, *, primitives_only: bool = False) -> Generator[ChildInfo, None, None]:
-        """Get child information with health checking.
+        """Get child information.
 
         Args:
             primitives_only: If True, only return primitive children.
@@ -1064,10 +1114,11 @@ class ContainerNode(BaseNode):
 
         Args:
             key: Child key.
+            child_info: Optional child info from get_child_info().
             default: Default value if child doesn't exist.
 
         Returns:
-            Any: Primitive value or default.
+            Value | Empty: Primitive value or default.
 
         Raises:
             PathNotFoundError: If container doesn't exist.
@@ -1094,11 +1145,12 @@ class ContainerNode(BaseNode):
     def set_primitive_value(
         self, key: PathComponent, value: Value, /, *, child_info: ChildInfo | None = None
     ) -> bool:
-        """Set primitive child value with full validation.
+        """Set primitive child value with mutability validation.
 
         Args:
             key: Child key.
             value: Primitive value to set.
+            child_info: Optional child info from get_child_info().
 
         Returns:
             bool: True if value was set, False if already existed with same value.
@@ -1113,6 +1165,8 @@ class ContainerNode(BaseNode):
             1. Validate operation (exists + compatible + primitive)
             2. Set value in transaction
         """
+        # self.validate_mutable(info)
+
         child_info = child_info or self.get_child_info(key)
 
         # 1. Validate operation
@@ -1168,7 +1222,6 @@ class ContainerNode(BaseNode):
 
         Args:
             path: Root path to delete
-            tx: Transaction to use
         """
         tx = self.get_ensured_transaction()
 
@@ -1224,6 +1277,8 @@ class ContainerNode(BaseNode):
             key: Metadata key
             value: Metadata value to store
         """
+        # self.validate_mutable(info)
+
         tx = self.get_ensured_transaction()
         metadata_path = self.path.struct_path.join(key)
         tx.set(metadata_path.to_tuple(), value)
@@ -1249,6 +1304,8 @@ class ContainerNode(BaseNode):
         Args:
             key: Metadata key to delete
         """
+        # self.validate_mutable(info)
+
         tx = self.get_ensured_transaction()
         metadata_path = self.path.struct_path.join(key)
         try:
