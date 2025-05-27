@@ -8,6 +8,7 @@ for all nodes in the state tree.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import cached_property
 from typing import ClassVar
 
 import attrs
@@ -56,7 +57,7 @@ class BaseNode(ABC):
     # Markers for node types
     TYPE_FIELD_SUFFIX: ClassVar[str] = "T"
 
-    @property
+    @cached_property
     @abstractmethod
     def node_type(self) -> NodeType:
         """

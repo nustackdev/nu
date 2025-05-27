@@ -55,6 +55,7 @@ mermaid-py = "^0.7.1"
 streamlit = "^1.44.1"
 streamlit-flow-component = "^1.6.1"
 graphviz = "^0.20.3"
+py-spy = "^0.4.0"
 
 [tool.black]
 line-length = 100

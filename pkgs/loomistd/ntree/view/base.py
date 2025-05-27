@@ -21,23 +21,16 @@ commits/rollbacks based on success or failure. If a transaction already exists,
 it reuses that transaction without additional management. This provides both
 convenience for simple operations and flexibility for complex multi-operation scenarios.
 
-**Transaction Context Pattern**
-Methods like get(), set(), and to_dict() wrap their operations with:
-- `with with_transaction(self.container) as container:`
-This pattern ensures every storage access happens within a transaction boundary,
-providing ACID guarantees while allowing operations to be composed safely within
-larger transaction scopes.
-
-**Trade-off: Safety vs Performance**
-The immutable design trades some performance for safety and correctness. Each
-operation may create temporary objects, but this overhead is minimal compared to
-the benefits of eliminating concurrency bugs, providing predictable behavior,
-and enabling safe caching strategies throughout the system.
+**Cache and Performance**
+The container property is cached using @cached_property to avoid repeated lookups.
+cached_property is thread-safe and ensures the container node creation can not be
+intervened by other threads.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import cached_property
 
 import attrs
 
@@ -229,7 +222,7 @@ class BaseView(TransactionalBase, ABC):
         """
         raise NotImplementedError("Subclasses must implement the extract method")
 
-    @property
+    @cached_property
     def container(self) -> ContainerNode:
         """
         Get the container node for this view.
@@ -240,6 +233,7 @@ class BaseView(TransactionalBase, ABC):
         Returns:
             ContainerNode: The container node
         """
+
         if self.tx is None:
             raise ValueError("Cannot access container without a transaction")
             # TODO: Improve error message to indicate that a transaction is required for views

@@ -7,6 +7,8 @@ in the state tree that contains a primitive value.
 
 from __future__ import annotations
 
+from functools import cached_property
+
 import attrs
 
 from loomistd.kv import StorageKeyError
@@ -68,7 +70,7 @@ class PrimitiveNode(BaseNode):
         """
         return cls(backend=backend, tx=tx, path=path)
 
-    @property
+    @cached_property
     def parent_container(self) -> ContainerNode:
         """
         Get the parent container of this node.
@@ -90,7 +92,7 @@ class PrimitiveNode(BaseNode):
         )
         return parent_container
 
-    @property
+    @cached_property
     def node_type(self) -> NodeType:
         """
         Get the type of this node.

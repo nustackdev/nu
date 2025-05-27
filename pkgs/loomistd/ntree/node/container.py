@@ -18,8 +18,12 @@ Every node is bound to a transaction with a stable hashing. This creates unique
 hash values for each node-transaction pair, enabling safe method caching.
 Nodes from different transactions get separate cache entries even with identical data,
 preventing cross-transaction cache contamination without complex invalidation logic.
-lru_cache cant be used directly due to the frozen nature, therefore
-a separate self-cleaning cache is used.
+@lru_cache can't be used directly to avoid the need of manual cache invalidation due to
+strong references to the cached arguments, including `self`, which prevents
+the instance from being garbage collected.
+So:
+- We use @cached_property to cache non-argument methods (like validation checks).
+- TODO: A separate cache service to be added for more complex operations that have arguments.
 
 **Operation Tracking & Conflict Detection**
 The transaction system records all read operations through "get_for_update" tracking.
@@ -43,6 +47,7 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum, auto
+from functools import cached_property
 from typing import Generator
 
 import attrs
@@ -162,7 +167,7 @@ class ContainerNode(BaseNode):
 
     info: ContainerInfo = attrs.field(kw_only=True, eq=False, hash=False)
 
-    @property
+    @cached_property
     def node_type(self) -> NodeType:
         """Get the type of this node.
 
@@ -393,6 +398,7 @@ class ContainerNode(BaseNode):
     # VALIDATION LAYER - Validates Conditions and Raises Errors
     # ------------------------------------------------------------------------
 
+    @cached_property
     def validate_exists(self) -> None:
         """Validate that the container exists in storage.
 
@@ -407,6 +413,7 @@ class ContainerNode(BaseNode):
         if not self.info.exists:
             raise PathNotFoundError(f"Container at {self.path} does not exist")
 
+    @cached_property
     def validate_not_exists(self) -> None:
         """Validate that the container does not exist in storage.
 
@@ -423,6 +430,7 @@ class ContainerNode(BaseNode):
         if self.info.exists:
             raise PathExistsError(f"Container at {self.path} already exists")
 
+    @cached_property
     def validate_compatible(self) -> None:
         """Validate that the container type is compatible with expected structure/protocol.
 
@@ -440,7 +448,7 @@ class ContainerNode(BaseNode):
             container.validate_compatible()  # Raises if incompatible
             ```
         """
-        self.validate_exists()
+        self.validate_exists
 
         if self.info.stored_structure is None or self.info.stored_protocol is None:
             raise PathTypeError(
@@ -462,6 +470,7 @@ class ContainerNode(BaseNode):
                 f"expected {self.protocol}, got {self.info.stored_protocol}"
             )
 
+    @cached_property
     def validate_parents_exist(self) -> None:
         """Validate that all parent containers exist in storage.
 
@@ -476,6 +485,7 @@ class ContainerNode(BaseNode):
         if self.info.missing_parent_paths:
             raise PathNotFoundError(f"Missing parent containers: {self.info.missing_parent_paths}")
 
+    @cached_property
     def validate_parents_healthy(self) -> None:
         """Validate that all parent containers have well-formed type data.
 
@@ -494,6 +504,7 @@ class ContainerNode(BaseNode):
         if self.info.malformed_parent_paths:
             raise PathTypeError(f"Malformed parent containers: {self.info.malformed_parent_paths}")
 
+    @cached_property
     def validate_parents_chain(self) -> None:
         """Validate that the entire parent chain is valid and complete.
 
@@ -510,9 +521,10 @@ class ContainerNode(BaseNode):
             container.validate_parents_chain()  # Full parent validation
             ```
         """
-        self.validate_parents_exist()
-        self.validate_parents_healthy()
+        self.validate_parents_exist
+        self.validate_parents_healthy
 
+    @cached_property
     def validate_mutable(self) -> None:
         """Validate that the container supports mutation operations.
 
@@ -530,7 +542,7 @@ class ContainerNode(BaseNode):
             container.validate_mutable()  # Raises if cannot mutate
             ```
         """
-        self.validate_compatible()
+        self.validate_compatible
 
         if self.protocol is None:
             raise PathTypeError(
@@ -569,14 +581,15 @@ class ContainerNode(BaseNode):
 
         if parents:
             # With parent creation, only malformed parents block creation
-            self.validate_parents_healthy()
+            self.validate_parents_healthy
         else:
             # Without parent creation, need complete valid chain
-            self.validate_parents_chain()
+            self.validate_parents_chain
 
         # Validate parent is mutable
-        self.validate_parent_mutable()
+        self.validate_parent_mutable
 
+    @cached_property
     def validate_parents_createable(self) -> None:
         """Validate that missing parent containers can be created.
 
@@ -593,8 +606,9 @@ class ContainerNode(BaseNode):
             ```
         """
         # Only malformed parents prevent creation
-        self.validate_parents_healthy()
+        self.validate_parents_healthy
 
+    @cached_property
     def validate_parent_mutable(self) -> None:
         """Validate that the immediate parent container is mutable.
 
@@ -665,6 +679,7 @@ class ContainerNode(BaseNode):
         except (PathExistsError, PathTypeError, ContainerProtocolError):
             return False
 
+    @cached_property
     def supports_mutation(self) -> bool:
         """Check if container mutation is feasible without raising exceptions.
 
@@ -683,11 +698,12 @@ class ContainerNode(BaseNode):
             ```
         """
         try:
-            self.validate_mutable()
+            self.validate_mutable
             return True
         except (PathNotFoundError, PathTypeError, ContainerProtocolError):
             return False
 
+    @cached_property
     def supports_compatibility(self) -> bool:
         """Check if container is compatible with expected type without raising exceptions.
 
@@ -707,7 +723,7 @@ class ContainerNode(BaseNode):
             ```
         """
         try:
-            self.validate_compatible()
+            self.validate_compatible
             return True
         except (PathNotFoundError, PathTypeError, ContainerProtocolError):
             return False
@@ -751,11 +767,11 @@ class ContainerNode(BaseNode):
         """
         # Handle already exists case
         if self.info.exists:
-            if self.supports_compatibility():
+            if self.supports_compatibility:
                 return False  # Already exists with compatible type
             else:
                 # Exists but incompatible - validate will raise appropriate error
-                self.validate_compatible()
+                self.validate_compatible
 
         # Validate we can create
         self.validate_createable(parents=parents)
@@ -795,7 +811,7 @@ class ContainerNode(BaseNode):
             Created parents use MAPPING_CONTAINER|DICT which provides
             maximum compatibility for child container creation.
         """
-        self.validate_parents_createable()
+        self.validate_parents_createable
 
         if not self.info.missing_parent_paths:
             return []
@@ -844,7 +860,7 @@ class ContainerNode(BaseNode):
             ```
         """
         if self.info.exists:
-            self.validate_compatible()
+            self.validate_compatible
             return False
         else:
             return self.try_create(parents=parents)
@@ -871,7 +887,7 @@ class ContainerNode(BaseNode):
             ```
         """
         if not self.info.missing_parent_paths:
-            self.validate_parents_healthy()  # Ensure existing parents are healthy
+            self.validate_parents_healthy  # Ensure existing parents are healthy
             return []
 
         return self.try_create_parents()
@@ -1162,7 +1178,7 @@ class ContainerNode(BaseNode):
             ```
         """
         # Validate container is mutable
-        self.validate_mutable()
+        self.validate_mutable
 
         child_path = self.path.join(key)
 
@@ -1215,7 +1231,7 @@ class ContainerNode(BaseNode):
             ```
         """
         # Validate container is mutable
-        self.validate_mutable()
+        self.validate_mutable
 
         removed_count = 0
 
@@ -1316,7 +1332,7 @@ class ContainerNode(BaseNode):
             ```
         """
         # Validate container is mutable
-        self.validate_mutable()
+        self.validate_mutable
 
         # Get child info
         child_info = child_info or self.get_child_info(key, skip_primitive_check=True)
@@ -1452,7 +1468,7 @@ class ContainerNode(BaseNode):
             ```
         """
         # Validate container is mutable
-        self.validate_mutable()
+        self.validate_mutable
 
         metadata_path = self.path.meta_path.join(key)
         self.tx.set(metadata_path.to_tuple(), value)
@@ -1497,7 +1513,7 @@ class ContainerNode(BaseNode):
             ```
         """
         # Validate container is mutable
-        self.validate_mutable()
+        self.validate_mutable
 
         metadata_path = self.path.meta_path.join(key)
         try:
