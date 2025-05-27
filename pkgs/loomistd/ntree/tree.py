@@ -18,7 +18,7 @@ from .backend import SubscriptionProtocol, TransactionProtocol
 from .path import Path
 from .transaction import TransactionalBase
 from .types import CallbackFn, PathComponent
-from .view import DictView, ListView, SetView, create_view_context_manager
+from .view import DictView, ListView, create_view_context_manager
 
 __all__ = [
     "Tree",
@@ -211,39 +211,6 @@ class Tree(TransactionalBase):
             ListView, backend=self.backend, path=self.path, tx=self.tx
         )
 
-    def with_set_view(self) -> AbstractContextManager[SetView]:
-        """
-        Access container as set view with automatic transaction management.
-
-        Returns a context manager that yields a SetView with transaction context.
-        If path doesn't exist, creates a new set container.
-
-        Returns:
-            Context manager yielding SetView with transaction
-
-        Example:
-            ```python
-            # Automatic transaction - recommended for mutations
-            with tree.at("tags").with_set_view() as tags:
-                tags.add("important")
-                tags.add("urgent")
-                tags.add("important")  # Duplicate ignored
-            # Transaction automatically committed on success
-
-            # Working with complex values in sets
-            with tree.at("categories").with_set_view() as categories:
-                categories.add({"type": "work", "priority": "high"})
-                categories.add({"type": "personal", "priority": "low"})
-
-                # Access nested dict in set
-                work_dict = categories.dict_view({"type": "work", "priority": "high"})
-                work_dict.set("deadline", "2024-01-01")
-            ```
-        """
-        return create_view_context_manager(
-            SetView, backend=self.backend, path=self.path, tx=self.tx
-        )
-
     # =========================================================================
     # Direct Access Methods (Manual Transaction Management)
     # =========================================================================
@@ -325,46 +292,6 @@ class Tree(TransactionalBase):
             ```
         """
         return ListView(backend=self.backend, path=self.path, tx=tx or self.tx)
-
-    def set_view(self, *, tx: Optional[TransactionProtocol] = None) -> SetView:
-        """
-        Access container as set view with manual transaction management.
-
-        Returns a SetView object directly. No automatic transaction handling.
-        If path doesn't exist, creates a new set container when accessed.
-
-        Args:
-            tx: Optional transaction (defaults to current transaction)
-
-        Returns:
-            SetView: Set view for the container
-
-        Example:
-            ```python
-            # Direct usage - good for reads
-            tags = tree.at("tags").set_view()
-            tag_count = tags.size()
-            tags_set = tags.to_set()
-
-            # Manual transaction management
-            tx = tree.begin_transaction()
-            try:
-                tags = tree.at("tags").set_view(tx=tx)
-                tags.add("important")
-                tx.commit()
-            except Exception:
-                tx.rollback()
-                raise
-
-            # Working with complex values
-            categories = tree.at("categories").set_view()
-            work_category = {"type": "work", "priority": "high"}
-            if categories.contains(work_category):
-                work_dict = categories.dict_view(work_category)
-                work_dict.set("updated", True)
-            ```
-        """
-        return SetView(backend=self.backend, path=self.path, tx=tx or self.tx)
 
     # =========================================================================
     # Transaction and Subscription Methods

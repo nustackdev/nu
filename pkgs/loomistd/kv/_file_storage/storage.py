@@ -354,8 +354,14 @@ class FileStorageTransaction:
 
         # Apply transaction operations
         for op in self._operations:
-            encoded_key = self._storage.codec.encode_key(op.key)
-            if encoded_key.startswith(encoded_prefix):
+            if len(op.key) < len(prefix):
+                continue
+
+            if prefix != op.key[: len(prefix)]:
+                continue
+
+            if depth == -1 or len(op.key) - len(prefix) == depth:
+                encoded_key = self._storage.codec.encode_key(op.key)
                 if op.op_type == "set":
                     base_keys.add(encoded_key)
                 elif op.op_type == "delete":

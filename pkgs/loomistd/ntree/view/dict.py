@@ -7,18 +7,16 @@ interface for containers implementing the MAPPING structure.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Generator, cast
 
 import attrs
 
 from ..exceptions import ContainerProtocolError
-from ..transaction import with_transaction
-from ..types import ContainerProtocol, ContainerStructure, PathComponent, Value
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, Value
 from .base import BaseView
 
 if TYPE_CHECKING:
     from .list import ListView
-    from .set import SetView
 
 __all__ = [
     "DictView",
@@ -65,9 +63,44 @@ class DictView(BaseView):
         default=ContainerStructure.MAPPING_CONTAINER, init=False
     )
 
-    protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.DICT, init=False)
+    protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
-    def get(self, key: PathComponent, default: Value = None) -> Value:
+    def extract(self):
+        """
+        Extract the value at the current path.
+
+        Returns:
+            Any: The value at the current path, which can be a primitive,
+            a dict, a list, or a set depending on the container type.
+
+        Raises:
+            KeyError: If the key does not exist in the container.
+            ContainerProtocolError: If the container is not a mapping container.
+        """
+
+        return {k: v for k, v in self.items()}
+
+    def store(self, value: dict[PathComponent, Value], /) -> None:
+        """
+        Store a value at the specified key.
+
+        Args:
+            key: Key to store the value at.
+            value: Value to store, which can be a primitive, dict, list, or set.
+
+        Raises:
+            ContainerProtocolError: If the container is not a mapping container.
+        """
+        if not hasattr(value, "items"):
+            raise ValueError(
+                f"Expected a dict-like value, got {type(value).__name__}. "
+                "Use `set` for single values or `store` for dict-like structures."
+            )
+
+        for k, v in value.items():
+            self.set(k, v)
+
+    def get(self, key: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
         """
         Get value at key.
 
@@ -94,32 +127,22 @@ class DictView(BaseView):
             ```
         """
 
-        with with_transaction(self.container) as container:
-            result = {}
+        child_info = self.container.get_child_info(key)
+        if self.container.is_child_primitive(key, child_info=child_info):
+            primitive = self.container.get_primitive_value(
+                key, default=default, child_info=child_info
+            )
+            return primitive
+        elif self.container.is_child_container(key, child_info=child_info):
+            # Recursively convert nested containers
+            child_structure = child_info.stored_structure
+            child_protocol = child_info.stored_protocol
 
-            if not container.exists():
-                return result
+            if child_structure is None or child_protocol is None:
+                raise ContainerProtocolError(f"Child '{key}' has no stored structure or protocol.")
 
-            for key in self.keys():
-                if container.is_child_primitive(key):
-                    result[key] = container.get_primitive_value(key)
-                elif container.is_child_container(key):
-                    # Recursively convert nested containers
-                    try:
-                        child_view = self._get_child_view(key)
-                        if hasattr(child_view, "to_dict"):
-                            result[key] = child_view.to_dict()
-                        elif hasattr(child_view, "to_list"):
-                            result[key] = child_view.to_list()
-                        elif hasattr(child_view, "to_set"):
-                            result[key] = child_view.to_set()
-                        else:
-                            result[key] = None  # Fallback
-                    except (KeyError, ContainerProtocolError):
-                        # If we can't create a view, skip this key
-                        continue
-
-            return result
+            view = self.get_view_for_container(key, child_structure, child_protocol)
+            return view.extract()
 
     def set(self, key: PathComponent, value: Value) -> None:
         """
@@ -150,8 +173,27 @@ class DictView(BaseView):
             users.set("alice_tags", {"important", "user"})
             ```
         """
-        with with_transaction(self.container) as container:
-            self._set_value_with_type_detection(container, key, value)
+        child_info = self.container.get_child_info(key)
+
+        if self.container.has_child(key, child_info=child_info):
+            # Child exists, check its type and handle accordingly
+            if self.container.is_child_container(key, child_info=child_info):
+                raise ValueError(
+                    f"Key '{key}' already exists as a container. Access it using the appropriate view to manipulate it."
+                )
+            elif self.container.is_child_primitive(key, child_info=child_info):
+                # If the key is a primitive, we can set it directly
+                self.container.set_primitive_value(key, value)
+                return
+        else:
+            # If the key does not exist, store the value based on its type
+            if self.is_value_primitive(value):
+                # Store primitive value directly
+                self.container.set_primitive_value(key, value)
+                return
+            else:
+                child_view = self.get_view_for_value(key, value)
+                child_view.store(value)
 
     def has(self, key: PathComponent) -> bool:
         """
@@ -169,26 +211,21 @@ class DictView(BaseView):
                 print("Alice exists")
             ```
         """
-        with with_transaction(self.container) as container:
-            return container.has_child(key)
+        return self.container.has_child(key)
 
-    def delete(self, key: PathComponent) -> None:
+    def remove(self, key: PathComponent) -> None:
         """
-        Delete key from the container.
+        Remove key from the container.
 
         Args:
-            key: Key to delete
-
-        Raises:
-            KeyError: If key doesn't exist
+            key: Key to remove
 
         Example:
             ```python
-            users.delete("alice")
+            users.remove("alice")
             ```
         """
-        with with_transaction(self.container) as container:
-            container.delete_child(key)
+        self.container.remove_child(key)
 
     def clear(self) -> None:
         """
@@ -199,10 +236,9 @@ class DictView(BaseView):
             users.clear()
             ```
         """
-        with with_transaction(self.container) as container:
-            container.clear()
+        self.container.clear()
 
-    def keys(self) -> List[PathComponent]:
+    def keys(self) -> Generator[PathComponent, None, None]:
         """
         Get all keys in the container.
 
@@ -215,13 +251,9 @@ class DictView(BaseView):
                 print(f"User: {key}")
             ```
         """
-        with with_transaction(self.container) as container:
-            if not container.exists():
-                return []
+        yield from self.container.keys()
 
-            return list(container.keys())
-
-    def values(self) -> List[Value]:
+    def values(self) -> Generator[Value, None, None]:
         """
         Get all values in the container.
 
@@ -234,9 +266,10 @@ class DictView(BaseView):
                 print(f"Value: {value}")
             ```
         """
-        return [self.get(key) for key in self.keys()]
+        for key in self.keys():
+            yield cast(Value, self.get(key))
 
-    def items(self) -> List[Tuple[PathComponent, Value]]:
+    def items(self) -> Generator[tuple[PathComponent, Value]]:
         """
         Get all key-value pairs in the container.
 
@@ -249,25 +282,9 @@ class DictView(BaseView):
                 print(f"{key}: {value}")
             ```
         """
-        return [(key, self.get(key)) for key in self.keys()]
-
-    def update(self, other: Dict[PathComponent, Value]) -> None:
-        """
-        Update container with key-value pairs from another dict.
-
-        Args:
-            other: Dictionary to update from
-
-        Example:
-            ```python
-            users.update({
-                "alice": {"email": "alice@example.com"},
-                "bob": {"email": "bob@example.com"}
-            })
-            ```
-        """
-        for key, value in other.items():
-            self.set(key, value)
+        for key in self.keys():
+            value = cast(Value, self.get(key))
+            yield (key, value)
 
     def dict_view(self, key: PathComponent) -> DictView:
         """
@@ -289,11 +306,7 @@ class DictView(BaseView):
             alice_profile.set("location", "San Francisco")
             ```
         """
-        return DictView(
-            backend=self.backend,
-            path=self.path.join(key),
-            tx=self.tx,
-        )
+        return DictView(backend=self.backend, path=self.path.join(key), tx=self.tx)
 
     def list_view(self, key: PathComponent) -> ListView:
         """
@@ -317,161 +330,4 @@ class DictView(BaseView):
         """
         from .list import ListView
 
-        return ListView(
-            backend=self.backend,
-            path=self.path.join(key),
-            tx=self.tx,
-        )
-
-    def set_view(self, key: PathComponent) -> SetView:
-        """
-        Get a set view for a nested container.
-
-        Args:
-            key: Key of the nested container
-
-        Returns:
-            SetView: Set view for the nested container
-
-        Raises:
-            KeyError: If key doesn't exist
-            ContainerProtocolError: If child is not a set container
-
-        Example:
-            ```python
-            alice_tags = users.set_view("alice_tags")
-            alice_tags.add("important")
-            ```
-        """
-        from .set import SetView
-
-        return SetView(
-            backend=self.backend,
-            path=self.path.join(key),
-            tx=self.tx,
-        )
-
-    def to_dict(self) -> Dict[PathComponent, Any]:
-        """
-        Convert container to a regular Python dictionary.
-
-        Recursively converts nested containers to their Python equivalents:
-        - Mapping containers become dicts
-        - Sequence containers become lists
-        - Set containers become sets
-        - Primitive values remain as-is
-
-        Returns:
-            Dict[PathComponent, Any]: Python dictionary representation
-
-        Example:
-            ```python
-            users_dict = users.to_dict()
-            print(users_dict)
-            # {'alice': {'email': 'alice@example.com', 'tasks': [...], 'tags': {...}}}
-            ```
-        """
-        with with_transaction(self.container) as container:
-            result = {}
-
-            if not container.exists():
-                return result
-
-            for key in self.keys():
-                if container.is_child_primitive(key):
-                    result[key] = container.get_primitive_value(key)
-                elif container.is_child_container(key):
-                    # Recursively convert nested containers
-                    try:
-                        child_view = self._get_child_view(key)
-                        if hasattr(child_view, "to_dict"):
-                            result[key] = child_view.to_dict()
-                        elif hasattr(child_view, "to_list"):
-                            result[key] = child_view.to_list()
-                        elif hasattr(child_view, "to_set"):
-                            result[key] = child_view.to_set()
-                        else:
-                            result[key] = None  # Fallback
-                    except (KeyError, ContainerProtocolError):
-                        # If we can't create a view, skip this key
-                        continue
-
-            return result
-
-    # Helper methods
-    def _set_value_with_type_detection(self, container, key: str, value: Value) -> None:
-        """Set value with automatic type detection and container creation."""
-        if isinstance(value, dict):
-            # Create nested mapping container
-            child_view = DictView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=container.tx,
-            )
-            for k, v in value.items():
-                child_view.set(k, v)
-        elif isinstance(value, list):
-            # Create nested sequence container
-            from .list import ListView
-
-            child_view = ListView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=container.tx,
-            )
-            for item in value:
-                child_view.append(item)
-        elif isinstance(value, set):
-            # Create nested set container
-            from .set import SetView
-
-            child_view = SetView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=container.tx,
-            )
-            for item in value:
-                child_view.add(item)
-        else:
-            # Store primitive value directly
-            container.set_primitive_value(key, value)
-
-    def _get_child_view(self, key: str):
-        """Get appropriate view for child container based on its structure."""
-        with with_transaction(self.container) as container:
-            # Get container structure from metadata
-            child_path = self.path.join(key)
-            child_container = container.__class__(
-                backend=self.backend,
-                path=child_path,
-                structure=ContainerStructure.CONTAINER,  # Will be validated
-                protocol=ContainerProtocol.DICT,  # Will be validated
-                tx=container.tx,
-            )
-
-            try:
-                # Try to determine structure from stored metadata
-                from ..path import StructPath
-
-                struct_path = StructPath(*child_path.components[1:])
-                type_info = container.tx.get(struct_path.to_tuple())
-
-                if isinstance(type_info, (list, tuple)) and len(type_info) == 2:
-                    stored_structure = ContainerStructure(type_info[0])
-
-                    if stored_structure & ContainerStructure.MAPPING_CONTAINER:
-                        return DictView(backend=self.backend, path=child_path, tx=self.tx)
-                    elif stored_structure & ContainerStructure.SEQUENCE_CONTAINER:
-                        from .list import ListView
-
-                        return ListView(backend=self.backend, path=child_path, tx=self.tx)
-                    elif stored_structure & ContainerStructure.SET_CONTAINER:
-                        from .set import SetView
-
-                        return SetView(backend=self.backend, path=child_path, tx=self.tx)
-
-            except Exception:
-                pass
-
-            # Fallback to dict view
-            return DictView(backend=self.backend, path=child_path, tx=self.tx)
+        return ListView(backend=self.backend, path=self.path.join(key), tx=self.tx)

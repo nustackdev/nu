@@ -50,6 +50,7 @@ class PrimitiveNode(BaseNode):
     @classmethod
     def create(
         cls,
+        *,
         backend: BackendProtocol,
         tx: TransactionProtocol,
         path: Path,
@@ -85,6 +86,7 @@ class PrimitiveNode(BaseNode):
             path=parent_path,
             structure=ContainerStructure.DEFAULT_CONTAINER,
             protocol=ContainerProtocol.DEFAULT_PROTOCOL,
+            ensure_exists=True,
         )
         return parent_container
 

@@ -90,6 +90,8 @@ class ChildInfo:
     exists: bool
     child_type: ChildType
     value: Value | Empty = EMPTY  # For primitives
+    stored_structure: ContainerStructure | None = None  # For containers
+    stored_protocol: ContainerProtocol | None = None  # For containers
 
 
 @dataclasses.dataclass(frozen=True)
@@ -180,11 +182,13 @@ class ContainerNode(BaseNode):
     @classmethod
     def create(
         cls,
+        *,
         backend: BackendProtocol,
         tx: TransactionProtocol,
         structure: ContainerStructure,
         protocol: ContainerProtocol,
         path: Path,
+        ensure_exists: bool = True,
     ) -> ContainerNode:
         """
         Create a new ContainerNode instance with the given parameters.
@@ -204,8 +208,20 @@ class ContainerNode(BaseNode):
         Returns:
             ContainerNode: A new instance of ContainerNode initialized with the provided parameters.
         """
-        info = cls.get_info(path, tx)
+        if ensure_exists:
+            info = cls.get_info(path, tx)
+            if not info.exists:
+                container = cls(
+                    backend=backend,
+                    tx=tx,
+                    path=path,
+                    structure=structure,
+                    protocol=protocol,
+                    info=info,
+                )
+                container.ensure_exists()
 
+        info = cls.get_info(path, tx)
         return cls(
             backend=backend,
             tx=tx,
@@ -332,13 +348,10 @@ class ContainerNode(BaseNode):
             raw_data = tx.get(struct_path.to_tuple())
 
             # Try to parse structure/protocol
-            structure, protocol = None, None
-            if isinstance(raw_data, (list, tuple)) and len(raw_data) == 2:
-                try:
-                    structure = ContainerStructure(raw_data[0])
-                    protocol = ContainerProtocol(raw_data[1])
-                except ValueError:
-                    pass  # Keep as None - indicates malformed data
+            try:
+                structure, protocol = cls._extract_type_info(raw_data)
+            except ValueError:
+                pass  # Keep as None - indicates malformed data
 
             return ParentInfo(
                 path=path,
@@ -350,6 +363,31 @@ class ContainerNode(BaseNode):
 
         except StorageKeyError:
             return ParentInfo(path=path, exists=False)
+
+    @staticmethod
+    def _extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol]:
+        """Extract structure and protocol from raw type data.
+
+        Args:
+            type_data: Raw type data from storage, expected to be a list or tuple
+                with two elements: [structure_value, protocol_value].
+
+        Returns:
+            tuple[ContainerStructure, ContainerProtocol]: Parsed structure and protocol enums.
+
+        Raises:
+            ValueError: If type_data is malformed or cannot be parsed.
+        """
+        if not isinstance(type_data, (list, tuple)) or len(type_data) != 2:
+            raise ValueError(f"Malformed type data: {type_data}")
+
+        try:
+            structure = ContainerStructure(type_data[0])
+            protocol = ContainerProtocol(type_data[1])
+        except ValueError as e:
+            raise ValueError(f"Invalid type data values: {type_data}") from e
+
+        return structure, protocol
 
     # ------------------------------------------------------------------------
     # VALIDATION LAYER - Validates Conditions and Raises Errors
@@ -494,12 +532,12 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible()
 
-        if self.info.stored_protocol is None:
+        if self.protocol is None:
             raise PathTypeError(
                 f"Container at {self.path} has malformed protocol data. Can not check mutability."
             )
 
-        if ~(self.info.stored_protocol & ContainerProtocol.MUTABLE):
+        if not (self.protocol & ContainerProtocol.MUTABLE):
             raise ContainerProtocolError(f"Container at {self.path} is not mutable")
 
     def validate_createable(self, *, parents: bool = True) -> None:
@@ -847,12 +885,18 @@ class ContainerNode(BaseNode):
     # ------------------------------------------------------------------------
 
     def get_child_info(
-        self, key: PathComponent, /, only_primitive_check: bool = False
+        self,
+        key: PathComponent,
+        /,
+        only_primitive_check: bool = False,
+        skip_primitive_check: bool = False,
     ) -> ChildInfo:
         """Get basic information about a child.
 
         Args:
             key: Child key to inspect.
+            only_primitive_check: If True, only checks if child is a primitive.
+            skip_primitive_check: If True, skips primitive check and only checks for container.
 
         Returns:
             ChildInfo: Basic child information (exists, type, value).
@@ -861,22 +905,28 @@ class ContainerNode(BaseNode):
             Does NOT validate container health - pure data gathering.
             Use other methods for operations that require validation.
         """
+        if only_primitive_check and skip_primitive_check:
+            raise ValueError(
+                "Cannot use both only_primitive_check and skip_primitive_check at the same time"
+            )
+
         child_path = self.path.join(key)
         child_struct_path = child_path.struct_path
 
         # Check if it's a primitive
         # Note: First checking primitive to avoid unnecessary container checks,
-        # as primitives are more common and faster to access.
-        try:
-            primitive_data = self.tx.get(child_path.to_tuple())
-            return ChildInfo(
-                key=key,
-                exists=True,
-                child_type=ChildType.PRIMITIVE,
-                value=primitive_data,
-            )
-        except StorageKeyError:
-            pass
+        # as primitives are more common.
+        if not skip_primitive_check:
+            try:
+                primitive_data = self.tx.get(child_path.to_tuple())
+                return ChildInfo(
+                    key=key,
+                    exists=True,
+                    child_type=ChildType.PRIMITIVE,
+                    value=primitive_data,
+                )
+            except StorageKeyError:
+                pass
 
         # If only primitive check is requested, return early
         if only_primitive_check:
@@ -884,8 +934,16 @@ class ContainerNode(BaseNode):
 
         # Check if it's a container
         try:
-            self.tx.get(child_struct_path.to_tuple())
-            return ChildInfo(key=key, exists=True, child_type=ChildType.CONTAINER)
+            child_type_info = self.tx.get(child_struct_path.to_tuple())
+            child_structure, child_protocol = self._extract_type_info(child_type_info)
+
+            return ChildInfo(
+                key=key,
+                exists=True,
+                child_type=ChildType.CONTAINER,
+                stored_structure=child_structure,
+                stored_protocol=child_protocol,
+            )
         except StorageKeyError:
             pass
 
@@ -1030,6 +1088,56 @@ class ContainerNode(BaseNode):
         child_info = child_info or self.get_child_info(key)
         return child_info.child_type
 
+    def is_child_primitive(
+        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
+    ) -> bool:
+        """Check if child is primitive type with container health validation.
+
+        Args:
+            key: Child key to check.
+            child_info: Optional child info from get_child_info().
+
+        Returns:
+            bool: True if child is primitive, False if container or doesn't exist.
+
+        Raises:
+            PathNotFoundError: If container doesn't exist.
+            PathTypeError: If container incompatible.
+
+        Example:
+            ```python
+            if container.is_child_primitive("key"):
+                print("Child is a primitive value")
+            ```
+        """
+        child_info = child_info or self.get_child_info(key, only_primitive_check=True)
+        return child_info.child_type == ChildType.PRIMITIVE
+
+    def is_child_container(
+        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
+    ) -> bool:
+        """Check if child is container type with container health validation.
+
+        Args:
+            key: Child key to check.
+            child_info: Optional child info from get_child_info().
+
+        Returns:
+            bool: True if child is a container, False if primitive or doesn't exist.
+
+        Raises:
+            PathNotFoundError: If container doesn't exist.
+            PathTypeError: If container incompatible.
+
+        Example:
+            ```python
+            if container.is_child_container("key"):
+                print("Child is a container")
+            ```
+        """
+        child_info = child_info or self.get_child_info(key, skip_primitive_check=True)
+        return child_info.child_type == ChildType.CONTAINER
+
     def remove_child(self, key: PathComponent, /) -> bool:
         """Remove child (primitive or container) with mutability validation.
 
@@ -1155,7 +1263,7 @@ class ContainerNode(BaseNode):
             default: Default value if child doesn't exist.
 
         Returns:
-            Value | Empty: Primitive value or default.
+            Value or Empty: Primitive value or default.
 
         Raises:
             PathNotFoundError: If container doesn't exist.
@@ -1211,7 +1319,7 @@ class ContainerNode(BaseNode):
         self.validate_mutable()
 
         # Get child info
-        child_info = child_info or self.get_child_info(key, only_primitive_check=True)
+        child_info = child_info or self.get_child_info(key, skip_primitive_check=True)
 
         # Validate operation
         if child_info.exists:
@@ -1319,7 +1427,7 @@ class ContainerNode(BaseNode):
             length = container.get_metadata("__length__", 0)
             ```
         """
-        metadata_path = self.path.struct_path.join(key)
+        metadata_path = self.path.meta_path.join(key)
         try:
             return self.tx.get(metadata_path.to_tuple())
         except StorageKeyError:
@@ -1346,7 +1454,7 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable()
 
-        metadata_path = self.path.struct_path.join(key)
+        metadata_path = self.path.meta_path.join(key)
         self.tx.set(metadata_path.to_tuple(), value)
 
     def has_metadata(self, key: PathComponent) -> bool:
@@ -1365,7 +1473,7 @@ class ContainerNode(BaseNode):
                 print("Container has length metadata")
             ```
         """
-        metadata_path = self.path.struct_path.join(key)
+        metadata_path = self.path.meta_path.join(key)
         return self.tx.exists(metadata_path.to_tuple())
 
     def delete_metadata(self, key: PathComponent) -> bool:
@@ -1391,7 +1499,7 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable()
 
-        metadata_path = self.path.struct_path.join(key)
+        metadata_path = self.path.meta_path.join(key)
         try:
             self.tx.delete(metadata_path.to_tuple())
             return True

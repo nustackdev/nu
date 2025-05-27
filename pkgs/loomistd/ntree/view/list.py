@@ -7,17 +7,15 @@ interface for containers implementing the SEQUENCE structure.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Generator, cast
 
 import attrs
 
-from ..transaction import with_transaction
-from ..types import ContainerProtocol, ContainerStructure, Value
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, Value
 from .base import BaseView
 
 if TYPE_CHECKING:
     from .dict import DictView
-    from .set import SetView
 
 __all__ = [
     "ListView",
@@ -30,33 +28,40 @@ class ListView(BaseView):
     List view for containers implementing the SEQUENCE structure.
 
     ListView provides a list-like interface for interacting with
-    containers, allowing index-based access and modification of child nodes.
-    It supports standard list operations like get, set, append, insert, as well
+    containers, allowing index-based access and modification of elements.
+    It supports standard list operations like append, insert, pop, as well
     as nested container access through other views.
+
+    The ListView maintains a length metadata to track the current size
+    of the list and uses integer indices for element access.
 
     Example:
         ```python
         # Create a list view
         tasks = tree.at("tasks").list_view()
 
-        # Add values
-        tasks.append("Setup project")
-        tasks.append("Write documentation")
+        # Append values
+        tasks.append("Complete project")
+        tasks.append("Review code")
 
         # Get values by index
         first_task = tasks.get(0)
 
-        # Set values by index
-        tasks.set(1, "Update documentation")
-
         # Insert at specific position
-        tasks.insert(1, "Create tests")
+        tasks.insert(1, "Write tests")
+
+        # Check length
+        print(f"Tasks count: {len(tasks)}")
+
+        # Iterate over items
+        for i, task in enumerate(tasks):
+            print(f"{i}: {task}")
 
         # Convert to regular list
         tasks_list = tasks.to_list()
 
         # Access nested containers
-        task_details = tasks.dict_view(0)  # First task as dict
+        task_details = tasks.dict_view(0)  # If first item is a dict
         task_details.set("priority", "high")
         ```
     """
@@ -65,9 +70,201 @@ class ListView(BaseView):
         default=ContainerStructure.SEQUENCE_CONTAINER, init=False
     )
 
-    protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.LIST, init=False)
+    protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
-    def get(self, index: int, default: Value = None) -> Value:
+    # ========================================================================
+    # Validation and Normalization Methods
+    # ========================================================================
+
+    def _normalize_index(self, index: int, *, allow_append: bool = False) -> int:
+        """
+        Normalize negative indices to positive ones.
+
+        Args:
+            index: Index to normalize (can be negative)
+            allow_append: If True, allows index == length (for insert operations)
+
+        Returns:
+            int: Normalized positive index
+        """
+        length = self.length()
+
+        if index < 0:
+            index = length + index
+            if allow_append and index < 0:
+                index = 0
+        elif allow_append:
+            index = min(index, length)
+
+        return index
+
+    def _validate_index_bounds(self, index: int, *, allow_append: bool = False) -> None:
+        """
+        Validate that index is within bounds.
+
+        Args:
+            index: Normalized index to validate
+            allow_append: If True, allows index == length
+
+        Raises:
+            IndexError: If index is out of bounds
+        """
+        length = self.length()
+        max_index = length if allow_append else length - 1
+
+        if length == 0 and not allow_append:
+            raise IndexError("list index out of range (empty list)")
+        if index < 0 or index > max_index:
+            raise IndexError(f"list index {index} out of range (length: {length})")
+
+    def _normalize_and_validate_index(self, index: int, *, allow_append: bool = False) -> int:
+        """
+        Normalize and validate index in one step.
+
+        Args:
+            index: Index to process
+            allow_append: If True, allows index == length
+
+        Returns:
+            int: Normalized and validated index
+
+        Raises:
+            IndexError: If index is out of bounds
+        """
+        normalized = self._normalize_index(index, allow_append=allow_append)
+        self._validate_index_bounds(normalized, allow_append=allow_append)
+        return normalized
+
+    # ========================================================================
+    # Helper Methods
+    # ========================================================================
+
+    def _store_value_at_key(self, key: str, value: Value) -> None:
+        """
+        Store a value at the given key, handling both primitives and containers.
+
+        Args:
+            key: String key to store at
+            value: Value to store
+        """
+        if self.is_value_primitive(value):
+            self.container.set_primitive_value(key, value)
+        else:
+            child_view = self.get_view_for_value(key, value)
+            child_view.store(value)
+
+    def _move_element(self, from_index: int, to_index: int) -> None:
+        """
+        Move an element from one index to another.
+
+        Args:
+            from_index: Source index
+            to_index: Destination index
+        """
+        from_key = str(from_index)
+        to_key = str(to_index)
+
+        if not self.container.has_child(from_key):
+            return
+
+        if self.container.is_child_primitive(from_key):
+            # Move primitive value
+            value = cast(Value, self.container.get_primitive_value(from_key))
+            self.container.set_primitive_value(to_key, value)
+        else:
+            # Move container by extracting and re-storing
+            child_info = self.container.get_child_info(from_key)
+            if child_info.stored_structure and child_info.stored_protocol:
+                old_view = self.get_view_for_container(
+                    from_key, child_info.stored_structure, child_info.stored_protocol
+                )
+                value = cast(Value, old_view.extract())
+                self._store_value_at_key(to_key, value)
+
+        # Remove the old element
+        self.container.remove_child(from_key)
+
+    def _shift_elements_right(self, start_index: int, end_index: int) -> None:
+        """
+        Shift elements to the right by one position.
+
+        Args:
+            start_index: Starting index (inclusive)
+            end_index: Ending index (exclusive)
+        """
+        for i in range(end_index - 1, start_index - 1, -1):
+            self._move_element(i, i + 1)
+
+    def _shift_elements_left(self, start_index: int, end_index: int) -> None:
+        """
+        Shift elements to the left by one position.
+
+        Args:
+            start_index: Starting index (inclusive)
+            end_index: Ending index (exclusive)
+        """
+        for i in range(start_index, end_index):
+            self._move_element(i, i - 1)
+
+    # ========================================================================
+    # CORE INTERFACE METHODS
+    # ========================================================================
+
+    def extract(self):
+        """
+        Extract the value at the current path.
+
+        Returns:
+            List: The list representation of the container contents.
+
+        Raises:
+            KeyError: If the container does not exist.
+            ContainerProtocolError: If the container is not a sequence container.
+        """
+        return [v for v in self.values()]
+
+    def store(self, value: list[Value], /) -> None:
+        """
+        Store a list value in the container.
+
+        Args:
+            value: List value to store, which can contain primitives, dicts, lists, or sets.
+
+        Raises:
+            ContainerProtocolError: If the container is not a sequence container.
+            TypeError: If value is not a list or iterable.
+        """
+        if not hasattr(value, "__iter__") or isinstance(value, (str, bytes, dict)):
+            raise TypeError(f"Expected iterable (excluding str/bytes/dict), got {type(value)}")
+
+        # Clear existing content
+        self.clear()
+
+        # Add each item
+        for item in value:
+            self.append(item)
+
+    def length(self) -> int:
+        """
+        Get the length of the list.
+
+        Returns:
+            int: Number of items in the list
+
+        Example:
+            ```python
+            count = tasks.length()
+            # or use len() builtin
+            count = len(tasks)
+            ```
+        """
+        return cast(int, self.container.get_metadata("__length__", 0))
+
+    # ========================================================================
+    # LIST ACCESS METHODS
+    # ========================================================================
+
+    def get(self, index: int, default: Value | Empty = EMPTY) -> Value | Empty:
         """
         Get value at index.
 
@@ -75,95 +272,102 @@ class ListView(BaseView):
         For container values, returns the converted Python object (dict/list/set).
 
         Args:
-            index: Index to retrieve
-            default: Default value if index doesn't exist
+            index: Index to retrieve (supports negative indexing)
+            default: Default value if index doesn't exist or is out of bounds
 
         Returns:
             Any: Value at index, Python object for containers, or default
 
         Example:
             ```python
-            # Get primitive value
-            first_task = tasks.get(0)
+            # Get by positive index
+            first_item = tasks.get(0)
 
-            # Get nested dict (returns actual dict, not view)
-            task_data = tasks.get(1, {})  # Returns dict if container, default if not found
+            # Get by negative index
+            last_item = tasks.get(-1)
 
             # Get with default
-            task = tasks.get(10, "No task")
+            item = tasks.get(10, "not found")
             ```
         """
-        with with_transaction(self.container) as container:
-            if not container.exists():
+        # Handle empty list or out of bounds gracefully
+        length = self.length()
+        if length == 0:
+            return default
+
+        normalized_index = self._normalize_index(index)
+        if normalized_index < 0 or normalized_index >= length:
+            return default
+
+        key = str(normalized_index)
+        child_info = self.container.get_child_info(key)
+
+        if self.container.is_child_primitive(key, child_info=child_info):
+            return self.container.get_primitive_value(key, default=default, child_info=child_info)
+        elif self.container.is_child_container(key, child_info=child_info):
+            # Recursively convert nested containers
+            child_structure = child_info.stored_structure
+            child_protocol = child_info.stored_protocol
+
+            if child_structure is None or child_protocol is None:
                 return default
 
-            # Check if index is valid
-            length = self.length()
-            if index < 0:
-                index = length + index  # Handle negative indexing
+            view = self.get_view_for_container(key, child_structure, child_protocol)
+            return view.extract()
 
-            if index < 0 or index >= length:
-                return default
-
-            key = str(index)
-
-            if container.is_child_primitive(key):
-                return container.get_primitive_value(key)
-            elif container.is_child_container(key):
-                # Convert container to appropriate Python object
-                child_view = self._get_child_view(key)
-                if hasattr(child_view, "to_dict"):
-                    return child_view.to_dict()
-                elif hasattr(child_view, "to_list"):
-                    return child_view.to_list()
-                elif hasattr(child_view, "to_set"):
-                    return child_view.to_set()
-                else:
-                    return default
-            else:
-                return default
+        return default
 
     def set(self, index: int, value: Value) -> None:
         """
         Set value at index.
 
         Creates appropriate node type based on the value.
-        Primitive values are stored directly.
-        Dict values create nested mapping containers.
-        List values create nested sequence containers.
-        Set values create nested set containers.
+        Index must be within current bounds (0 <= index < length).
 
         Args:
-            index: Index to set
+            index: Index to set (supports negative indexing)
             value: Value to store
 
         Raises:
-            IndexError: If index is out of range
+            IndexError: If index is out of bounds
 
         Example:
             ```python
-            # Set primitive value
-            tasks.set(0, "Updated task")
+            # Set by positive index
+            tasks.set(0, "Updated first task")
+
+            # Set by negative index
+            tasks.set(-1, "Updated last task")
 
             # Set nested structure
-            tasks.set(1, {"name": "Complex task", "priority": "high"})
+            tasks.set(1, {"title": "Complex task", "priority": "high"})
             ```
         """
-        with with_transaction(self.container) as container:
-            # Validate index
-            length = self.length()
-            if index < 0:
-                index = length + index  # Handle negative indexing
+        normalized_index = self._normalize_and_validate_index(index)
+        key = str(normalized_index)
+        child_info = self.container.get_child_info(key)
 
-            if index < 0 or index >= length:
-                raise IndexError(f"Index {index} out of range for list of length {length}")
+        if self.container.has_child(key, child_info=child_info):
+            # Child exists, check its type and handle accordingly
+            if self.container.is_child_container(key, child_info=child_info):
+                raise ValueError(
+                    f"Index {index} already contains a container. Access it using the appropriate view to manipulate it."
+                )
+            elif self.container.is_child_primitive(key, child_info=child_info):
+                # If the index contains a primitive, we can set it directly
+                self.container.set_primitive_value(key, value)
+                return
 
-            key = str(index)
-            self._set_value_with_type_detection(container, key, value)
+        # Store value based on its type
+        self._store_value_at_key(key, value)
+
+    # ========================================================================
+    # LIST MUTATION METHODS
+    # ========================================================================
 
     def append(self, value: Value) -> None:
         """
-        Add value to the end of the list.
+        Append value to the end of the list.
 
         Args:
             value: Value to append
@@ -171,101 +375,113 @@ class ListView(BaseView):
         Example:
             ```python
             tasks.append("New task")
-            tasks.append({"name": "Complex task", "due": "2024-01-01"})
+            tasks.append({"title": "Complex task", "done": False})
             ```
         """
-        with with_transaction(self.container) as container:
-            length = self.length()
-            key = str(length)
-            self._set_value_with_type_detection(container, key, value)
+        length = self.length()
+        key = str(length)
 
-            # Update length metadata
-            container.set_metadata("__length__", length + 1)
+        # Store value and update length
+        self._store_value_at_key(key, value)
+        self.container.set_metadata("__length__", length + 1)
 
     def insert(self, index: int, value: Value) -> None:
         """
-        Insert value at specific index, shifting existing items.
+        Insert value at the specified index.
+
+        All elements at and after the index are shifted to the right.
 
         Args:
-            index: Index to insert at
+            index: Index to insert at (supports negative indexing)
             value: Value to insert
 
         Example:
             ```python
-            tasks.insert(1, "Priority task")
+            # Insert at beginning
+            tasks.insert(0, "Urgent task")
+
+            # Insert at end (equivalent to append)
+            tasks.insert(len(tasks), "Last task")
+
+            # Insert in middle
+            tasks.insert(2, "Middle task")
             ```
         """
-        with with_transaction(self.container) as container:
-            length = self.length()
+        length = self.length()
+        normalized_index = self._normalize_and_validate_index(index, allow_append=True)
 
-            # Handle negative indexing and bounds
-            if index < 0:
-                index = max(0, length + index + 1)
-            else:
-                index = min(index, length)
+        # Shift existing elements to the right
+        self._shift_elements_right(normalized_index, length)
 
-            # Shift existing items
-            for i in range(length - 1, index - 1, -1):
-                old_key = str(i)
-                new_key = str(i + 1)
+        # Insert the new value
+        key = str(normalized_index)
+        self._store_value_at_key(key, value)
 
-                if container.is_child_primitive(old_key):
-                    value_to_move = container.get_primitive_value(old_key)
-                    container.set_primitive_value(new_key, value_to_move)
-                    container.delete_child(old_key)
-                elif container.is_child_container(old_key):
-                    # Move container by recreating - this is expensive but correct
-                    # In a real implementation, you'd want to optimize this
-                    self._move_container(container, old_key, new_key)
+        # Update length
+        self.container.set_metadata("__length__", length + 1)
 
-            # Insert new value
-            key = str(index)
-            self._set_value_with_type_detection(container, key, value)
-
-            # Update length metadata
-            container.set_metadata("__length__", length + 1)
-
-    def remove(self, index: int) -> None:
+    def pop(self, index: int = -1) -> Value:
         """
-        Remove value at index, shifting remaining items.
+        Remove and return item at index.
 
         Args:
-            index: Index to remove
+            index: Index to remove (defaults to -1 for last item)
+
+        Returns:
+            Value: The removed value
 
         Raises:
-            IndexError: If index is out of range
+            IndexError: If list is empty or index is out of bounds
 
         Example:
             ```python
-            tasks.remove(0)  # Remove first task
+            # Pop last item
+            last_task = tasks.pop()
+
+            # Pop first item
+            first_task = tasks.pop(0)
+
+            # Pop specific index
+            middle_task = tasks.pop(2)
             ```
         """
-        with with_transaction(self.container) as container:
-            length = self.length()
-            if index < 0:
-                index = length + index  # Handle negative indexing
+        length = self.length()
+        if length == 0:
+            raise IndexError("pop from empty list")
 
-            if index < 0 or index >= length:
-                raise IndexError(f"Index {index} out of range for list of length {length}")
+        normalized_index = self._normalize_and_validate_index(index)
 
-            # Remove the item
-            key = str(index)
-            container.delete_child(key)
+        # Get the value before removing
+        value = self.get(normalized_index)
+        if value is EMPTY:
+            raise IndexError(f"No value at index {normalized_index}")
 
-            # Shift remaining items
-            for i in range(index + 1, length):
-                old_key = str(i)
-                new_key = str(i - 1)
+        # Remove the item
+        key = str(normalized_index)
+        self.container.remove_child(key)
 
-                if container.is_child_primitive(old_key):
-                    value_to_move = container.get_primitive_value(old_key)
-                    container.set_primitive_value(new_key, value_to_move)
-                    container.delete_child(old_key)
-                elif container.is_child_container(old_key):
-                    self._move_container(container, old_key, new_key)
+        # Shift remaining elements to the left
+        self._shift_elements_left(normalized_index + 1, length)
 
-            # Update length metadata
-            container.set_metadata("__length__", length - 1)
+        # Update length
+        self.container.set_metadata("__length__", length - 1)
+
+        return cast(Value, value)
+
+    def extend(self, iterable) -> None:
+        """
+        Extend list by appending elements from iterable.
+
+        Args:
+            iterable: Iterable of values to append
+
+        Example:
+            ```python
+            tasks.extend(["Task 1", "Task 2", "Task 3"])
+            ```
+        """
+        for item in iterable:
+            self.append(item)
 
     def clear(self) -> None:
         """
@@ -276,73 +492,33 @@ class ListView(BaseView):
             tasks.clear()
             ```
         """
-        with with_transaction(self.container) as container:
-            container.clear()
-            container.set_metadata("__length__", 0)
+        self.container.clear()
+        self.container.set_metadata("__length__", 0)
 
-    def length(self) -> int:
+    # ========================================================================
+    # ITERATION AND CONVERSION METHODS
+    # ========================================================================
+
+    def values(self) -> Generator[Value, None, None]:
         """
-        Get the number of items in the list.
+        Get all values in the list.
 
         Returns:
-            int: Number of items
+            Generator[Value]: Generator of values in order
 
         Example:
             ```python
-            count = tasks.length()
+            for value in tasks.values():
+                print(f"Task: {value}")
             ```
         """
-        with with_transaction(self.container) as container:
-            if not container.exists():
-                return 0
-            return container.get_metadata("__length__", 0)
+        for i in range(self.length()):
+            yield cast(Value, self.get(i))
 
-    def to_list(self) -> List[Any]:
-        """
-        Convert container to a regular Python list.
+    # ========================================================================
+    # NESTED VIEW ACCESS METHODS
+    # ========================================================================
 
-        Recursively converts nested containers to their Python equivalents:
-        - Mapping containers become dicts
-        - Sequence containers become lists
-        - Set containers become sets
-        - Primitive values remain as-is
-
-        Returns:
-            List[Any]: Python list representation
-
-        Example:
-            ```python
-            tasks_list = tasks.to_list()
-            print(tasks_list)
-            # ['Setup project', {'name': 'Complex task'}, ...]
-            ```
-        """
-        with with_transaction(self.container) as container:
-            if not container.exists():
-                return []
-
-            result = []
-            length = self.length()
-
-            for i in range(length):
-                key = str(i)
-                if container.is_child_primitive(key):
-                    result.append(container.get_primitive_value(key))
-                elif container.is_child_container(key):
-                    # Recursively convert nested containers
-                    child_view = self._get_child_view(key)
-                    if hasattr(child_view, "to_dict"):
-                        result.append(child_view.to_dict())
-                    elif hasattr(child_view, "to_list"):
-                        result.append(child_view.to_list())
-                    elif hasattr(child_view, "to_set"):
-                        result.append(child_view.to_set())
-                    else:
-                        result.append(None)  # Fallback
-
-            return result
-
-    # Cross-cutting view methods
     def dict_view(self, index: int) -> DictView:
         """
         Get a dictionary view for a nested container at index.
@@ -354,8 +530,8 @@ class ListView(BaseView):
             DictView: Dictionary view for the nested container
 
         Raises:
-            IndexError: If index is out of range
-            ContainerProtocolError: If child is not a mapping container
+            IndexError: If index is out of bounds
+            ContainerProtocolError: If item is not a mapping container
 
         Example:
             ```python
@@ -363,19 +539,12 @@ class ListView(BaseView):
             task_details.set("priority", "high")
             ```
         """
-        length = self.length()
-        if index < 0:
-            index = length + index
-
-        if index < 0 or index >= length:
-            raise IndexError(f"Index {index} out of range for list of length {length}")
+        normalized_index = self._normalize_and_validate_index(index)
 
         from .dict import DictView
 
         return DictView(
-            backend=self.backend,
-            path=self.path.join(str(index)),
-            tx=self.tx,
+            backend=self.backend, path=self.path.join(str(normalized_index)), tx=self.tx
         )
 
     def list_view(self, index: int) -> ListView:
@@ -388,163 +557,18 @@ class ListView(BaseView):
         Returns:
             ListView: List view for the nested container
 
+        Raises:
+            IndexError: If index is out of bounds
+            ContainerProtocolError: If item is not a sequence container
+
         Example:
             ```python
             subtasks = tasks.list_view(0)
             subtasks.append("Subtask 1")
             ```
         """
-        length = self.length()
-        if index < 0:
-            index = length + index
-
-        if index < 0 or index >= length:
-            raise IndexError(f"Index {index} out of range for list of length {length}")
+        normalized_index = self._normalize_and_validate_index(index)
 
         return ListView(
-            backend=self.backend,
-            path=self.path.join(str(index)),
-            tx=self.tx,
+            backend=self.backend, path=self.path.join(str(normalized_index)), tx=self.tx
         )
-
-    def set_view(self, index: int) -> SetView:
-        """
-        Get a set view for a nested container at index.
-
-        Args:
-            index: Index of the nested container
-
-        Returns:
-            SetView: Set view for the nested container
-
-        Example:
-            ```python
-            tags = tasks.set_view(0)
-            tags.add("important")
-        """
-        length = self.length()
-        if index < 0:
-            index = length + index
-
-        if index < 0 or index >= length:
-            raise IndexError(f"Index {index} out of range for list of length {length}")
-
-        from .set import SetView
-
-        return SetView(
-            backend=self.backend,
-            path=self.path.join(str(index)),
-            tx=self.tx,
-        )
-
-    # Helper methods
-    def _set_value_with_type_detection(self, container, key: str, value: Value) -> None:
-        """Set value with automatic type detection and container creation."""
-        if isinstance(value, dict):
-            # Create nested mapping container
-            from .dict import DictView
-
-            child_view = DictView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=container.tx,
-            )
-            for k, v in value.items():
-                child_view.set(k, v)
-        elif isinstance(value, list):
-            # Create nested sequence container
-            child_view = ListView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=container.tx,
-            )
-            for item in value:
-                child_view.append(item)
-        elif isinstance(value, set):
-            # Create nested set container
-            from .set import SetView
-
-            child_view = SetView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=container.tx,
-            )
-            for item in value:
-                child_view.add(item)
-        else:
-            # Store primitive value directly
-            container.set_primitive_value(key, value)
-
-    def _get_child_view(self, key: str):
-        """Get appropriate view for child container based on its structure."""
-        with with_transaction(self.container) as container:
-            # Get container structure from metadata
-            child_path = self.path.join(key)
-            child_container = container.__class__(
-                backend=self.backend,
-                path=child_path,
-                structure=ContainerStructure.CONTAINER,  # Will be validated
-                protocol=ContainerProtocol.DICT,  # Will be validated
-                tx=container.tx,
-            )
-
-            try:
-                # Try to determine structure from stored metadata
-                from ..path import StructPath
-
-                struct_path = StructPath(*child_path.components[1:])
-                type_info = container.tx.get(struct_path.to_tuple())
-
-                if isinstance(type_info, (list, tuple)) and len(type_info) == 2:
-                    stored_structure = ContainerStructure(type_info[0])
-
-                    if stored_structure & ContainerStructure.MAPPING_CONTAINER:
-                        from .dict import DictView
-
-                        return DictView(backend=self.backend, path=child_path, tx=self.tx)
-                    elif stored_structure & ContainerStructure.SEQUENCE_CONTAINER:
-                        return ListView(backend=self.backend, path=child_path, tx=self.tx)
-                    elif stored_structure & ContainerStructure.SET_CONTAINER:
-                        from .set import SetView
-
-                        return SetView(backend=self.backend, path=child_path, tx=self.tx)
-
-            except Exception:
-                pass
-
-            # Fallback to dict view
-            from .dict import DictView
-
-            return DictView(backend=self.backend, path=child_path, tx=self.tx)
-
-    def _move_container(self, container, old_key: str, new_key: str) -> None:
-        """Move a container from old_key to new_key (expensive operation)."""
-        # This is a simplified implementation - in practice you'd want to optimize this
-        # by moving the container data at the storage level
-        self.path.join(old_key)
-        new_path = self.path.join(new_key)
-
-        # Get the container view and convert to data
-        child_view = self._get_child_view(old_key)
-        if hasattr(child_view, "to_dict"):
-            data = child_view.to_dict()
-            # Recreate at new location
-            from .dict import DictView
-
-            new_view = DictView(backend=self.backend, path=new_path, tx=self.tx)
-            new_view.update(data)
-        elif hasattr(child_view, "to_list"):
-            data = child_view.to_list()
-            new_view = ListView(backend=self.backend, path=new_path, tx=self.tx)
-            for item in data:
-                new_view.append(item)
-        elif hasattr(child_view, "to_set"):
-            data = child_view.to_set()
-            from .set import SetView
-
-            new_view = SetView(backend=self.backend, path=new_path, tx=self.tx)
-            for item in data:
-                new_view.add(item)
-
-        # Delete old container
-        container.delete_child(old_key)
