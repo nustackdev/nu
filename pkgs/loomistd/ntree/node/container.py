@@ -992,7 +992,6 @@ class ContainerNode(BaseNode):
             Does NOT validate container health - pure data gathering.
             Use other methods for operations that require validation.
         """
-
         child_path = self.path.join(key)
         child_struct_path = child_path.struct_path
 
@@ -1032,16 +1031,11 @@ class ContainerNode(BaseNode):
     # INSPECTION LAYER - Child Existance and Type Checks
     # ------------------------------------------------------------------------
 
-    def has_primitive_child(
-        self,
-        key: PathComponent,
-        /,
-    ) -> bool:
+    def has_primitive_child(self, key: PathComponent, /) -> bool:
         """Check if primitive child exists with container health validation.
 
         Args:
             key: Child key to check.
-            child_info: Optional child info from get_child_info().
 
         Returns:
             bool: True if primitive child exists.
@@ -1061,16 +1055,11 @@ class ContainerNode(BaseNode):
         # Otherwise, check existance of primitive child
         return self.tx.exists(self.path.join(key).to_tuple())
 
-    def has_container_child(
-        self,
-        key: PathComponent,
-        /,
-    ) -> bool:
+    def has_container_child(self, key: PathComponent, /) -> bool:
         """Check if container child exists with container health validation.
 
         Args:
             key: Child key to check.
-            child_info: Optional child info from get_child_info().
 
         Returns:
             bool: True if container child exists.
@@ -1380,7 +1369,7 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        yield from self._get_keys_impl()
+        yield from self._get_keys_impl(primitives_only=primitives_only)
 
     def children(self, *, primitives_only: bool = False) -> Generator[ChildInfo, None, None]:
         """Get child information with container health validation.
@@ -1403,7 +1392,7 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        for key in self._get_keys_impl():
+        for key in self._get_keys_impl(primitives_only=primitives_only):
             yield self.get_child_info(key)
 
     def _get_keys_impl(self, primitives_only: bool = False) -> Generator[str, None, None]:
