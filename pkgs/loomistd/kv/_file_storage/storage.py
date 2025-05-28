@@ -306,7 +306,8 @@ class FileStorageTransaction:
             if self._storage.codec.encode_key(op.key) == encoded_key:
                 if op.op_type == "delete":
                     raise StorageKeyError(f"Key {key} was deleted in this transaction")
-                return op.value
+                elif op.op_type == "set":
+                    return op.value
 
         # Get from storage
         value = self._storage.get(key)
@@ -324,6 +325,30 @@ class FileStorageTransaction:
         """Delete key within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
+
+        # Raise error if key does not exist in neither storage nor transaction
+        key_exists = False
+
+        # 1. Check transaction operations first.
+        # Loop over operations in reverse order to find the last operation
+        for op in reversed(self._operations):
+            if self._storage.codec.encode_key(op.key) == encoded_key:
+                if op.op_type == "delete":
+                    # If last operation is a delete, we should raise an error
+                    raise StorageKeyError(f"Key {key} was already deleted in this transaction")
+                elif op.op_type == "set":
+                    # If last operation is a set, we can can remove it
+                    key_exists = True
+                    break
+
+        # 2. Check storage if key does not exist in transaction
+        if not key_exists:
+            if self._storage.exists(key):
+                key_exists = True
+
+        if not key_exists:
+            raise StorageKeyError(f"Key {key} does not exist")
+
         self._write_set.add(encoded_key)
         self._operations.append(TransactionOperation("delete", key))
 

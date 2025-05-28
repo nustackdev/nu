@@ -11,8 +11,6 @@ from functools import cached_property
 
 import attrs
 
-from loomistd.kv import StorageKeyError
-
 from ..backend import BackendProtocol, TransactionProtocol
 from ..path import Path
 from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, NodeType, Value
@@ -115,9 +113,12 @@ class PrimitiveNode(BaseNode):
         key = self.path.last()
         if key is None:
             raise ValueError("Cannot get value from a node without a key")
-        return self.parent_container.get_primitive_value(key, default=default)
 
-    def set_value(self, value: Value, /) -> bool:
+        value = self.parent_container.get_primitive_child(key)
+
+        return default if value is EMPTY else value
+
+    def set_value(self, value: Value, /) -> None:
         """
         Set the primitive value.
 
@@ -128,7 +129,7 @@ class PrimitiveNode(BaseNode):
         key = self.path.last()
         if key is None:
             raise ValueError("Cannot get value from a node without a key")
-        return self.parent_container.set_primitive_value(key, value)
+        self.parent_container.set_primitive_child(key, value)
 
     def remove_value(self) -> bool:
         """
@@ -144,11 +145,4 @@ class PrimitiveNode(BaseNode):
         if key is None:
             raise ValueError("Cannot delete value from a node without a key")
 
-        child_info = self.parent_container.get_child_info(key, only_primitive_check=True)
-        if child_info.child_type != NodeType.PRIMITIVE:
-            return False
-
-        try:
-            return self.parent_container.remove_child(key)
-        except StorageKeyError:
-            return False
+        return self.parent_container.remove_primitive_child(key)

@@ -124,9 +124,10 @@ class LMDBStorage(
             encoded_key = self.codec.encode_key(key)
 
             with self._env.begin() as txn:
-                encoded_value = txn.get(encoded_key, None)
-
-                if encoded_value is None:
+                cursor = txn.cursor()
+                if cursor.set_key(encoded_key):
+                    encoded_value = cursor.value()
+                else:
                     raise StorageKeyError(f"Key {key} not found")
 
                 if not isinstance(encoded_value, bytes):
@@ -161,7 +162,8 @@ class LMDBStorage(
                 # Delete the key
                 if not txn.delete(encoded_key):
                     raise StorageKeyError(f"Key {key} not found")
-
+        except StorageKeyError:
+            raise
         except Exception as e:
             raise StorageOperationError(f"Failed to delete key {key}: {e}")
 
@@ -171,7 +173,8 @@ class LMDBStorage(
 
         try:
             with self._env.begin() as txn:
-                return txn.get(encoded_key) is not None
+                cursor = txn.cursor()
+                return cursor.set_key(encoded_key)
 
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
@@ -255,9 +258,11 @@ class LMDBStorageTransaction:
         self._check_valid()
         try:
             encoded_key = self._storage.codec.encode_key(key)
-            encoded_value = self._lmdb_txn.get(encoded_key, None)
 
-            if encoded_value is None:
+            cursor = self._lmdb_txn.cursor()
+            if cursor.set_key(encoded_key):
+                encoded_value = cursor.value()
+            else:
                 raise StorageKeyError(f"Key {key} not found")
 
             if not isinstance(encoded_value, bytes):
@@ -290,7 +295,10 @@ class LMDBStorageTransaction:
         encoded_key = self._storage.codec.encode_key(key)
 
         try:
-            self._lmdb_txn.delete(encoded_key)
+            if not self._lmdb_txn.delete(encoded_key):
+                raise StorageKeyError(f"Key {key} not found")
+        except StorageKeyError:
+            raise
         except Exception as e:
             raise StorageOperationError(f"Failed to delete key {key}: {e}")
 
@@ -301,7 +309,9 @@ class LMDBStorageTransaction:
         encoded_key = self._storage.codec.encode_key(key)
 
         try:
-            return self._lmdb_txn.get(encoded_key) is not None
+            cursor = self._lmdb_txn.cursor()
+            return cursor.set_key(encoded_key)
+
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}")
 

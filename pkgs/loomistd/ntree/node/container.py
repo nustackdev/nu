@@ -177,11 +177,11 @@ class ContainerNode(BaseNode):
         return NodeType.CONTAINER
 
     # ========================================================================
-    # MAIN CONTAINER OPERATIONS
+    # CONTAINER OPERATIONS
     # ========================================================================
 
     # ------------------------------------------------------------------------
-    # INFORMATION LAYER - Pure Data Gathering (No Validation Logic)
+    # HIGH-LEVEL CONTAINER OPERATIONS
     # ------------------------------------------------------------------------
 
     @classmethod
@@ -235,6 +235,55 @@ class ContainerNode(BaseNode):
             protocol=protocol,
             info=info,
         )
+
+    @classmethod
+    def copy_to(
+        cls,
+        *,
+        backend: BackendProtocol,
+        tx: TransactionProtocol,
+        from_path: Path,
+        to_path: Path,
+        source_node_info: ContainerInfo | None = None,
+        target_node_info: ContainerInfo | None = None,
+    ) -> None:
+        """
+        Copy a container from one path to another.
+
+        """
+        # source_node_info = source_node_info or cls.get_info(from_path, tx)
+        # if source_node_info.exists is False:
+        #     raise PathNotFoundError(f"Source container at {from_path} does not exist")
+
+        # target_node_info = target_node_info or cls.get_info(to_path, tx)
+        # if target_node_info.exists:
+        #     raise PathExistsError(
+        #         f"Target container at {to_path} already exists. Copy does not support overwriting existing containers."
+        #     )
+
+        # Directly copy the subtree from source to target
+        raise NotImplementedError("Copy operation is not implemented for ContainerNode")
+
+    @classmethod
+    def move_to(
+        cls,
+        *,
+        backend: BackendProtocol,
+        tx: TransactionProtocol,
+        from_path: Path,
+        to_path: Path,
+        source_node_info: ContainerInfo | None = None,
+        target_node_info: ContainerInfo | None = None,
+    ) -> None:
+        """
+        Move a container from one path to another.
+
+        """
+        raise NotImplementedError("Move operation is not implemented for ContainerNode")
+
+    # ------------------------------------------------------------------------
+    # INFORMATION LAYER - Pure Data Gathering (No Validation Logic)
+    # ------------------------------------------------------------------------
 
     @classmethod
     def get_info(cls, path: Path, tx: TransactionProtocol, /) -> ContainerInfo:
@@ -525,88 +574,29 @@ class ContainerNode(BaseNode):
         self.validate_parents_healthy
 
     @cached_property
-    def validate_mutable(self) -> None:
-        """Validate that the container supports mutation operations.
+    def validate_no_collision(self) -> None:
+        """Validate that no primitive path collides with container path.
 
-        Checks that the container exists, is compatible with expected type,
-        and has the MUTABLE protocol flag set. Required before any mutation
-        operations like adding or removing children.
+        This is important to avoid collisions where
+        a container's path matches an existing primitive value.
 
         Raises:
-            PathNotFoundError: If container does not exist.
-            PathTypeError: If container is incompatible or has malformed data.
-            ContainerProtocolError: If container is not mutable.
+            PathTypeError: If a collision is detected.
 
         Example:
             ```python
-            container.validate_mutable()  # Raises if cannot mutate
+            container.validate_no_collision()  # Raises if path collides with primitive
             ```
         """
-        self.validate_compatible
+        if not self.info.parents:
+            # No parents - root level, no collisions possible
+            return
 
-        if self.protocol is None:
+        # Check if the last path component collides with any primitive child
+        if self.tx.exists(self.path.to_tuple()):
             raise PathTypeError(
-                f"Container at {self.path} has malformed protocol data. Can not check mutability."
+                f"Path collision detected: {self.path} collides with an existing primitive value"
             )
-
-        if not (self.protocol & ContainerProtocol.MUTABLE):
-            raise ContainerProtocolError(f"Container at {self.path} is not mutable")
-
-    def validate_createable(self, *, parents: bool = True) -> None:
-        """Validate that container creation is possible.
-
-        Checks conditions required for successful container creation, including
-        non-existence of the target and parent chain requirements based on
-        whether parent creation is allowed.
-        Validates parent mutability when creating in existing parent.
-
-        Args:
-            parents: Whether parent creation is allowed. If True, only malformed
-                parents block creation. If False, complete parent chain required.
-
-        Raises:
-            PathExistsError: If container already exists.
-            PathTypeError: If malformed parents prevent creation.
-            PathNotFoundError: If parents=False and parents are missing.
-            ContainerProtocolError: If parent is not mutable.
-
-        Example:
-            ```python
-            container.validate_createable(parents=True)  # Allow parent creation
-            container.validate_createable(parents=False)  # Require existing parents
-            ```
-        """
-        if self.info.exists:
-            raise PathExistsError(f"Container at {self.path} already exists")
-
-        if parents:
-            # With parent creation, only malformed parents block creation
-            self.validate_parents_healthy
-        else:
-            # Without parent creation, need complete valid chain
-            self.validate_parents_chain
-
-        # Validate parent is mutable
-        self.validate_parent_mutable
-
-    @cached_property
-    def validate_parents_createable(self) -> None:
-        """Validate that missing parent containers can be created.
-
-        Checks that there are no malformed parents that would prevent creation
-        of missing parents. Malformed parents cannot be automatically fixed
-        and must be resolved manually.
-
-        Raises:
-            PathTypeError: If malformed parents prevent creation.
-
-        Example:
-            ```python
-            container.validate_parents_createable()  # Check if can create parents
-            ```
-        """
-        # Only malformed parents prevent creation
-        self.validate_parents_healthy
 
     @cached_property
     def validate_parent_mutable(self) -> None:
@@ -647,6 +637,93 @@ class ContainerNode(BaseNode):
 
         if not first_existing_parent_mutable:
             raise ContainerProtocolError(f"Parent container at {parent_info.path} is not mutable")
+
+    def validate_createable(self, *, parents: bool = True) -> None:
+        """Validate that container creation is possible.
+
+        Checks conditions required for successful container creation, including
+        non-existence of the target and parent chain requirements based on
+        whether parent creation is allowed.
+        Validates parent mutability when creating in existing parent.
+
+        Args:
+            parents: Whether parent creation is allowed. If True, only malformed
+                parents block creation. If False, complete parent chain required.
+
+        Raises:
+            PathExistsError: If container already exists.
+            PathTypeError: If malformed parents prevent creation.
+            PathNotFoundError: If parents=False and parents are missing.
+            ContainerProtocolError: If parent is not mutable.
+
+        Example:
+            ```python
+            container.validate_createable(parents=True)  # Allow parent creation
+            container.validate_createable(parents=False)  # Require existing parents
+            ```
+        """
+        if self.info.exists:
+            raise PathExistsError(f"Container at {self.path} already exists")
+
+        # Validate that no primitive path collides with container path
+        self.validate_no_collision
+
+        if parents:
+            # With parent creation, only malformed parents block creation
+            self.validate_parents_healthy
+        else:
+            # Without parent creation, need complete valid chain
+            self.validate_parents_chain
+
+        # Validate parent is mutable
+        self.validate_parent_mutable
+
+    @cached_property
+    def validate_parents_createable(self) -> None:
+        """Validate that missing parent containers can be created.
+
+        Checks that there are no malformed parents that would prevent creation
+        of missing parents. Malformed parents cannot be automatically fixed
+        and must be resolved manually.
+
+        Raises:
+            PathTypeError: If malformed parents prevent creation.
+
+        Example:
+            ```python
+            container.validate_parents_createable()  # Check if can create parents
+            ```
+        """
+        # Only malformed parents prevent creation
+        self.validate_parents_healthy
+
+    @cached_property
+    def validate_mutable(self) -> None:
+        """Validate that the container supports mutation operations.
+
+        Checks that the container exists, is compatible with expected type,
+        and has the MUTABLE protocol flag set. Required before any mutation
+        operations like adding or removing children.
+
+        Raises:
+            PathNotFoundError: If container does not exist.
+            PathTypeError: If container is incompatible or has malformed data.
+            ContainerProtocolError: If container is not mutable.
+
+        Example:
+            ```python
+            container.validate_mutable()  # Raises if cannot mutate
+            ```
+        """
+        self.validate_compatible
+
+        if self.protocol is None:
+            raise PathTypeError(
+                f"Container at {self.path} has malformed protocol data. Can not check mutability."
+            )
+
+        if not (self.protocol & ContainerProtocol.MUTABLE):
+            raise ContainerProtocolError(f"Container at {self.path} is not mutable")
 
     # ------------------------------------------------------------------------
     # SUPPORT LAYER - Boolean Feasibility Checks
@@ -900,13 +977,7 @@ class ContainerNode(BaseNode):
     # INFORMATION LAYER - Simple Child Data Gathering
     # ------------------------------------------------------------------------
 
-    def get_child_info(
-        self,
-        key: PathComponent,
-        /,
-        only_primitive_check: bool = False,
-        skip_primitive_check: bool = False,
-    ) -> ChildInfo:
+    def get_child_info(self, key: PathComponent, /) -> ChildInfo:
         """Get basic information about a child.
 
         Args:
@@ -921,10 +992,6 @@ class ContainerNode(BaseNode):
             Does NOT validate container health - pure data gathering.
             Use other methods for operations that require validation.
         """
-        if only_primitive_check and skip_primitive_check:
-            raise ValueError(
-                "Cannot use both only_primitive_check and skip_primitive_check at the same time"
-            )
 
         child_path = self.path.join(key)
         child_struct_path = child_path.struct_path
@@ -932,21 +999,16 @@ class ContainerNode(BaseNode):
         # Check if it's a primitive
         # Note: First checking primitive to avoid unnecessary container checks,
         # as primitives are more common.
-        if not skip_primitive_check:
-            try:
-                primitive_data = self.tx.get(child_path.to_tuple())
-                return ChildInfo(
-                    key=key,
-                    exists=True,
-                    child_type=ChildType.PRIMITIVE,
-                    value=primitive_data,
-                )
-            except StorageKeyError:
-                pass
-
-        # If only primitive check is requested, return early
-        if only_primitive_check:
-            return ChildInfo(key=key, exists=False, child_type=ChildType.NOT_FOUND)
+        try:
+            primitive_data = self.tx.get(child_path.to_tuple())
+            return ChildInfo(
+                key=key,
+                exists=True,
+                child_type=ChildType.PRIMITIVE,
+                value=primitive_data,
+            )
+        except StorageKeyError:
+            pass
 
         # Check if it's a container
         try:
@@ -967,103 +1029,22 @@ class ContainerNode(BaseNode):
         return ChildInfo(key=key, exists=False, child_type=ChildType.NOT_FOUND)
 
     # ------------------------------------------------------------------------
-    # VALIDATION LAYER - Child-Specific Validations
+    # INSPECTION LAYER - Child Existance and Type Checks
     # ------------------------------------------------------------------------
 
-    def validate_child_key_available(
-        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
-    ) -> None:
-        """Validate that key is available for new primitive child.
-
-        Args:
-            key: Child key to check.
-            child_info: Child info from get_child_info().
-
-        Raises:
-            PathExistsError: If child already exists (primitive or container).
-
-        Note:
-            This prevents creating primitive over existing container or vice versa.
-        """
-        child_info = child_info or self.get_child_info(key)
-        if child_info.exists:
-            raise PathExistsError(
-                f"Child '{key}' already exists as {child_info.child_type.name.lower()}"
-            )
-
-    def validate_child_exists(
-        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
-    ) -> None:
-        """Validate that child exists.
-
-        Args:
-            key: Child key.
-            child_info: Child info from get_child_info().
-
-        Raises:
-            PathNotFoundError: If child does not exist.
-        """
-        child_info = child_info or self.get_child_info(key)
-        if not child_info.exists:
-            raise PathNotFoundError(f"Child '{key}' does not exist")
-
-    def validate_child_primitive(
-        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
-    ) -> None:
-        """Validate that child is primitive type.
-
-        Args:
-            key: Child key.
-            child_info: Child info from get_child_info().
-
-        Raises:
-            PathNotFoundError: If child does not exist.
-            PathTypeError: If child exists but is container.
-        """
-        child_info = child_info or self.get_child_info(key)
-
-        self.validate_child_exists(key, child_info=child_info)
-
-        if child_info.child_type != ChildType.PRIMITIVE:
-            raise PathTypeError(
-                f"Child '{key}' is {child_info.child_type.name.lower()}, not primitive"
-            )
-
-    def validate_child_container(
-        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
-    ) -> None:
-        """Validate that child is container type.
-
-        Args:
-            key: Child key.
-            child_info: Child info from get_child_info().
-
-        Raises:
-            PathNotFoundError: If child does not exist.
-            PathTypeError: If child exists but is primitive.
-        """
-        child_info = child_info or self.get_child_info(key)
-
-        self.validate_child_exists(key, child_info=child_info)
-
-        if child_info.child_type != ChildType.CONTAINER:
-            raise PathTypeError(
-                f"Child '{key}' is {child_info.child_type.name.lower()}, not container"
-            )
-
-    # ------------------------------------------------------------------------
-    # EXECUTION LAYER - Operations with Health Checks
-    # ------------------------------------------------------------------------
-
-    def has_child(self, key: PathComponent, /, *, child_info: ChildInfo | None = None) -> bool:
-        """Check if child exists with container health validation.
+    def has_primitive_child(
+        self,
+        key: PathComponent,
+        /,
+    ) -> bool:
+        """Check if primitive child exists with container health validation.
 
         Args:
             key: Child key to check.
             child_info: Optional child info from get_child_info().
 
         Returns:
-            bool: True if child exists (primitive or container).
+            bool: True if primitive child exists.
 
         Raises:
             PathNotFoundError: If container doesn't exist.
@@ -1071,21 +1052,49 @@ class ContainerNode(BaseNode):
 
         Example:
             ```python
-            if container.has_child("key"):
-                print("Child exists")
+            if container.has_primitive_child("key"):
+                print("Primitive child exists")
             ```
         """
-        child_info = child_info or self.get_child_info(key)
-        return child_info.exists
+        self.validate_compatible
 
-    def get_child_type(
-        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
-    ) -> ChildType:
-        """Get child type with container health validation.
+        # Otherwise, check existance of primitive child
+        return self.tx.exists(self.path.join(key).to_tuple())
+
+    def has_container_child(
+        self,
+        key: PathComponent,
+        /,
+    ) -> bool:
+        """Check if container child exists with container health validation.
 
         Args:
             key: Child key to check.
             child_info: Optional child info from get_child_info().
+
+        Returns:
+            bool: True if container child exists.
+
+        Raises:
+            PathNotFoundError: If container doesn't exist.
+            PathTypeError: If container incompatible.
+
+        Example:
+            ```python
+            if container.has_container_child("key"):
+                print("Container child exists")
+            ```
+        """
+        self.validate_compatible
+
+        # Otherwise, check existance of container child
+        return self.tx.exists(self.path.join(key).struct_path.to_tuple())
+
+    def has_child(self, key: PathComponent, /) -> ChildType:
+        """Check if child exists with container health validation.
+
+        Args:
+            key: Child key to check.
 
         Returns:
             ChildType: Type of child (PRIMITIVE, CONTAINER, NOT_FOUND).
@@ -1096,70 +1105,132 @@ class ContainerNode(BaseNode):
 
         Example:
             ```python
-            child_type = container.get_child_type("key")
+            child_type = container.has_child("key")
             if child_type == ChildType.PRIMITIVE:
                 print("It's a primitive value")
+            elif child_type == ChildType.CONTAINER:
+                print("It's a container")
+            else:
+                print("Child does not exist")
             ```
         """
-        child_info = child_info or self.get_child_info(key)
-        return child_info.child_type
+        self.validate_compatible
 
-    def is_child_primitive(
-        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
-    ) -> bool:
-        """Check if child is primitive type with container health validation.
+        if self.has_primitive_child(key):
+            return ChildType.PRIMITIVE
+        elif self.has_container_child(key):
+            return ChildType.CONTAINER
+
+        return ChildType.NOT_FOUND
+
+    # ------------------------------------------------------------------------
+    # MANIPULATION LAYER - Add/Remove Children
+    # ------------------------------------------------------------------------
+
+    def set_primitive_child(self, key: PathComponent, value: Value, /) -> None:
+        """Set primitive child value with mutability validation.
 
         Args:
-            key: Child key to check.
-            child_info: Optional child info from get_child_info().
+            key: Child key to set.
+            value: Primitive value to store.
 
         Returns:
-            bool: True if child is primitive, False if container or doesn't exist.
+            bool: True if value was set, False if already existed with same value.
 
         Raises:
             PathNotFoundError: If container doesn't exist.
             PathTypeError: If container incompatible.
+            ContainerProtocolError: If container not mutable.
+            PathExistsError: If child exists as container.
 
         Example:
             ```python
-            if container.is_child_primitive("key"):
-                print("Child is a primitive value")
+            if container.set_primitive_child("key", "value"):
+                print("Value set")
+            else:
+                print("Value was already correct")
             ```
         """
-        child_info = child_info or self.get_child_info(key, only_primitive_check=True)
-        return child_info.child_type == ChildType.PRIMITIVE
+        # Validate container is mutable
+        self.validate_mutable
 
-    def is_child_container(
-        self, key: PathComponent, /, *, child_info: ChildInfo | None = None
-    ) -> bool:
-        """Check if child is container type with container health validation.
+        # Validate primitive key is available (not a container)
+        if self.has_container_child(key):
+            raise PathExistsError(
+                f"Child '{key}' already exists as a container. Cannot set primitive value."
+            )
+
+        self.tx.set(self.path.join(key).to_tuple(), value)
+
+    def remove_primitive_child(self, key: PathComponent, /) -> bool:
+        """Remove primitive child with mutability validation.
 
         Args:
-            key: Child key to check.
-            child_info: Optional child info from get_child_info().
+            key: Child key to remove.
 
         Returns:
-            bool: True if child is a container, False if primitive or doesn't exist.
+            bool: True if removed, False if didn't exist.
 
         Raises:
             PathNotFoundError: If container doesn't exist.
             PathTypeError: If container incompatible.
+            ContainerProtocolError: If container not mutable.
 
         Example:
             ```python
-            if container.is_child_container("key"):
-                print("Child is a container")
+            if container.remove_primitive_child("key"):
+                print("Primitive child removed")
+            else:
+                print("Primitive child didn't exist")
             ```
         """
-        child_info = child_info or self.get_child_info(key, skip_primitive_check=True)
-        return child_info.child_type == ChildType.CONTAINER
+        # Validate container is mutable
+        self.validate_mutable
+
+        # Try to delete primitive child
+        try:
+            self.tx.delete(self.path.join(key).to_tuple())
+            return True
+        except StorageKeyError:
+            return False
+
+    def remove_container_child(self, key: PathComponent, /) -> bool:
+        """Remove container child with mutability validation.
+
+        Args:
+            key: Child key to remove.
+
+        Returns:
+            bool: True if removed, False if didn't exist.
+
+        Raises:
+            PathNotFoundError: If container doesn't exist.
+            PathTypeError: If container incompatible.
+            ContainerProtocolError: If container not mutable.
+
+        Example:
+            ```python
+            if container.remove_container_child("key"):
+                print("Container child removed")
+            else:
+                print("Container child didn't exist")
+            ```
+        """
+        # Validate container is mutable
+        self.validate_mutable
+
+        if not self.has_container_child(key):
+            # If child doesn't exist, nothing to remove
+            return False
+
+        # Try to delete container child
+        return self._delete_subtree(self.path.join(key))
 
     def remove_child(self, key: PathComponent, /) -> bool:
         """Remove child (primitive or container) with mutability validation.
 
         Args:
             key: Child key to remove.
-            child_info: Optional child info from get_child_info().
 
         Returns:
             bool: True if removed, False if didn't exist.
@@ -1180,40 +1251,15 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable
 
-        child_path = self.path.join(key)
-
-        # Try to delete primitive child first
-        try:
-            self.tx.delete(self.path.join(key).to_tuple())
+        if self.remove_primitive_child(key):
             return True
-        except StorageKeyError:
-            # Primitive key doesn't exist, try container
-            pass
 
-        return self._delete_subtree(child_path)
+        if self.remove_container_child(key):
+            return True
 
-    def keys(self, *, primitives_only: bool = False) -> Generator[PathComponent, None, None]:
-        """Get child keys with container health validation.
+        return False
 
-        Args:
-            primitives_only: If True, only return primitive child keys.
-
-        Yields:
-            PathComponent: Child keys.
-
-        Raises:
-            PathNotFoundError: If container doesn't exist.
-            PathTypeError: If container incompatible.
-
-        Example:
-            ```python
-            for key in container.keys():
-                print(f"Child: {key}")
-            ```
-        """
-        yield from self._get_keys_impl(primitives_only=primitives_only)
-
-    def clear(self) -> int:
+    def clear_children(self) -> int:
         """Remove all children with mutability validation.
 
         Returns:
@@ -1235,11 +1281,106 @@ class ContainerNode(BaseNode):
 
         removed_count = 0
 
-        for key in self.keys():
-            if self.remove_child(key):
+        for key in self.keys(primitives_only=True):
+            if self.remove_primitive_child(key):
+                removed_count += 1
+
+        for key in self.keys(primitives_only=True):
+            if self.remove_container_child(key):
                 removed_count += 1
 
         return removed_count
+
+    # ------------------------------------------------------------------------
+    # ACCESS LAYER - Child Retrieval
+    # ------------------------------------------------------------------------
+
+    def get_child(
+        self,
+        key: PathComponent,
+        /,
+    ) -> ChildInfo:
+        """
+        Get child information.
+
+        This method retrieves child value and type.
+
+        Args:
+            key: Child key to retrieve.
+
+        Returns:
+            ChildInfo: Information about the child (exists, type, value).
+
+        Raises:
+            PathNotFoundError: If container doesn't exist.
+            PathTypeError: If container incompatible.
+            ContainerProtocolError: If container malformed.
+
+        Example:
+            ```python
+            child_info = container.get_child("key")
+            print(f"Child {child_info.key}: {child_info.child_type}, Value: {child_info.value}")
+        """
+        self.validate_compatible
+
+        return self.get_child_info(key)
+
+    def get_primitive_child(
+        self,
+        key: PathComponent,
+        /,
+    ) -> Value | Empty:
+        """Get primitive child value.
+
+        Args:
+            key: Child key to retrieve.
+
+        Returns:
+            Value | Empty: Primitive value if exists, EMPTY if not found.
+
+        Raises:
+            PathNotFoundError: If container doesn't exist.
+            PathTypeError: If container incompatible.
+            ContainerProtocolError: If container malformed.
+
+        Example:
+            ```python
+            value = container.get_primitive_child("key")
+            if value is not EMPTY:
+                print(f"Primitive value: {value}")
+            else:
+                print("Primitive child does not exist")
+            ```
+        """
+        self.validate_compatible
+
+        try:
+            return self.tx.get(self.path.join(key).to_tuple())
+        except StorageKeyError:
+            return EMPTY
+
+    def keys(self, *, primitives_only: bool = False) -> Generator[PathComponent, None, None]:
+        """Get child keys with container health validation.
+
+        Args:
+            primitives_only: If True, only return primitive child keys.
+
+        Yields:
+            PathComponent: Child keys.
+
+        Raises:
+            PathNotFoundError: If container doesn't exist.
+            PathTypeError: If container incompatible.
+
+        Example:
+            ```python
+            for key in container.keys():
+                print(f"Child: {key}")
+            ```
+        """
+        self.validate_compatible
+
+        yield from self._get_keys_impl()
 
     def children(self, *, primitives_only: bool = False) -> Generator[ChildInfo, None, None]:
         """Get child information with container health validation.
@@ -1260,101 +1401,10 @@ class ContainerNode(BaseNode):
                 print(f"Child {child.key}: {child.child_type}")
             ```
         """
-        for key in self._get_keys_impl(primitives_only=primitives_only):
+        self.validate_compatible
+
+        for key in self._get_keys_impl():
             yield self.get_child_info(key)
-
-    def get_primitive_value(
-        self,
-        key: PathComponent,
-        /,
-        *,
-        child_info: ChildInfo | None = None,
-        default: Value | Empty = EMPTY,
-    ) -> Value | Empty:
-        """Get primitive child value with full health checking.
-
-        Args:
-            key: Child key.
-            child_info: Optional child info from get_child_info().
-            default: Default value if child doesn't exist.
-
-        Returns:
-            Value or Empty: Primitive value or default.
-
-        Raises:
-            PathNotFoundError: If container doesn't exist.
-            PathTypeError: If container incompatible or child is container.
-            ContainerProtocolError: If container malformed.
-
-        Example:
-            ```python
-            value = container.get_primitive_value("key", default="not found")
-            print(f"Value: {value}")
-            ```
-        """
-        child_info = child_info or self.get_child_info(key, only_primitive_check=True)
-
-        # Handle non-existent child
-        if not child_info.exists:
-            return default
-
-        # Validate child type
-        self.validate_child_primitive(key, child_info=child_info)
-
-        # Return value
-        return child_info.value
-
-    def set_primitive_value(
-        self, key: PathComponent, value: Value, /, *, child_info: ChildInfo | None = None
-    ) -> bool:
-        """Set primitive child value with mutability validation.
-
-        Args:
-            key: Child key.
-            value: Primitive value to set.
-            child_info: Optional child info from get_child_info().
-
-        Returns:
-            bool: True if value was set, False if already existed with same value.
-
-        Raises:
-            PathNotFoundError: If container doesn't exist.
-            PathTypeError: If container incompatible.
-            ContainerProtocolError: If container not mutable.
-            PathExistsError: If child exists as container.
-
-        Example:
-            ```python
-            if container.set_primitive_value("key", "value"):
-                print("Value set")
-            else:
-                print("Value was already correct")
-            ```
-        """
-        # Validate container is mutable
-        self.validate_mutable
-
-        # Get child info
-        child_info = child_info or self.get_child_info(key, skip_primitive_check=True)
-
-        # Validate operation
-        if child_info.exists:
-            self.validate_child_primitive(key, child_info=child_info)
-            # Check if value already correct
-            if child_info.value == value:
-                return False
-        else:
-            self.validate_child_key_available(key, child_info=child_info)
-
-        # Set value
-        child_path = self.path.join(key)
-        self.tx.set(child_path.to_tuple(), value)
-
-        return True
-
-    # ------------------------------------------------------------------------
-    # IMPLEMENTATION HELPERS
-    # ------------------------------------------------------------------------
 
     def _get_keys_impl(self, primitives_only: bool = False) -> Generator[str, None, None]:
         """Implementation for key listing.

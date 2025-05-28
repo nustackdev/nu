@@ -31,13 +31,19 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import attrs
 
-from ..node import ContainerNode
+from ..exceptions import ContainerProtocolError
+from ..node import ChildType, ContainerNode
 from ..path import Path
 from ..transaction import TransactionalBase
-from ..types import ContainerProtocol, ContainerStructure, Empty, PathComponent, Value
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, Value
+
+if TYPE_CHECKING:
+    from .dict import DictView
+    from .list import ListView
 
 __all__ = [
     "BaseView",
@@ -93,135 +99,6 @@ class BaseView(TransactionalBase, ABC):
     # Container protocol type
     protocol: ContainerProtocol = attrs.field()
 
-    def get_view_for_container(
-        self,
-        key: PathComponent,
-        structure: ContainerStructure,
-        protocol: ContainerProtocol,
-        /,
-    ) -> BaseView:
-        """
-        Get the appropriate view class for the given container.
-
-        Args:
-            container (ContainerNode): The container node to get the view for.
-            tx (TransactionalBase | None): Optional transaction context.
-
-        Returns:
-            BaseView: An instance of the appropriate view class.
-        """
-        from .dict import DictView
-        from .list import ListView
-
-        if self.satisfies_dict_view(structure, protocol):
-            view = DictView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=self.tx,
-            )
-        elif self.satisfies_list_view(structure, protocol):
-            view = ListView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=self.tx,
-            )
-        else:
-            raise ValueError(
-                f"Unsupported structure `{structure}` and protocol `{protocol}` for view creation"
-            )
-
-        return view
-
-    def get_view_for_value(self, key: PathComponent, value: Value, /) -> BaseView:
-        """
-        Get the appropriate view for a given key and value.
-
-        Args:
-            key (PathComponent): The key for the value.
-            value (Value): The value to create a view for.
-        Returns:
-            BaseView: An instance of the appropriate view class for the value type.
-        Raises:
-            ValueError: If the value type is unsupported.
-        """
-        from .dict import DictView
-        from .list import ListView
-
-        child_key = self.path.join(key)
-        if isinstance(value, dict):
-            # Create nested mapping container
-            child_view = DictView(
-                backend=self.backend,
-                path=child_key,
-                tx=self.tx,
-            )
-        elif isinstance(value, list):
-            child_view = ListView(
-                backend=self.backend,
-                path=child_key,
-                tx=self.tx,
-            )
-        else:
-            raise ValueError(f"Unsupported value type `{type(value)}` for view creation")
-        return child_view
-
-    def is_value_primitive(self, value: Value, /) -> bool:
-        """
-        Check if the value is a primitive type.
-        Args:
-            value (Value): The value to check.
-        Returns:
-            bool: True if the value is a primitive type, False otherwise.
-        """
-        return not isinstance(value, (dict, list, set, tuple))
-
-    @staticmethod
-    def satisfies_dict_view(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
-        """
-        Check if the current view satisfies the dictionary view requirements.
-
-        Returns:
-            bool: True if the view can be treated as a dictionary, False otherwise.
-        """
-        return structure == ContainerStructure.MAPPING_CONTAINER
-
-    @staticmethod
-    def satisfies_list_view(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
-        """
-        Check if the current view satisfies the list view requirements.
-
-        Returns:
-            bool: True if the view can be treated as a list, False otherwise.
-        """
-        return structure == ContainerStructure.SEQUENCE_CONTAINER
-
-    @abstractmethod
-    def store(self, value: Value, /) -> None:
-        """
-        Store the value in the view.
-
-        This method should be implemented by subclasses to persist
-        the value in the underlying storage.
-
-        Raises:
-            NotImplementedError: If not implemented by subclass
-        """
-
-        raise NotImplementedError("Subclasses must implement the store method")
-
-    @abstractmethod
-    def extract(self) -> Value | Empty:
-        """
-        Extract the value from the view.
-
-        This method should be implemented by subclasses to return
-        the value stored in the view.
-
-        Returns:
-            Value: The value extracted from the view
-        """
-        raise NotImplementedError("Subclasses must implement the extract method")
-
     @cached_property
     def container(self) -> ContainerNode:
         """
@@ -248,3 +125,230 @@ class BaseView(TransactionalBase, ABC):
         )
 
         return container
+
+    # =========================================================================
+    # COMMON CHILD MANAGEMENT OPERATIONS
+    # =========================================================================
+
+    def _get_child_value(
+        self, key: PathComponent, /, *, default: Value | Empty = EMPTY
+    ) -> Value | Empty:
+        """
+        Common logic for getting child values (primitive or extracted container).
+
+        Args:
+            key: Child key to retrieve
+            default: Default value if child doesn't exist
+
+        Returns:
+            Value or default - primitives returned directly, containers extracted
+        """
+        # First check if child is a primitive, as this is the most common case
+        child_info = self.container.get_child_info(key)
+
+        if child_info.child_type == ChildType.NOT_FOUND:
+            # Child does not exist, return default value
+            return default
+
+        # Check if child is a primitive value
+        if child_info.child_type == ChildType.PRIMITIVE:
+            # Child is a primitive, return its value directly
+            return child_info.value
+
+        # Child is not a primitive, check if it is a container
+        if child_info.child_type == ChildType.CONTAINER:
+            # Child is a container, extract its structure and protocol
+            child_structure = child_info.stored_structure
+            child_protocol = child_info.stored_protocol
+
+            if child_structure is None or child_protocol is None:
+                raise ContainerProtocolError(f"Container '{key}' has malformed structure/protocol")
+
+            # Get the appropriate view for the existing container
+            view = self._get_view_for_container(key, child_structure, child_protocol)
+            # Extract the container value using the view
+            return view.extract()
+
+        raise ValueError(
+            f"Unexpected child type '{child_info.child_type}' for key '{key}'. "
+            "Expected primitive or container."
+        )
+
+    def _set_child_value(self, key: PathComponent, value: Value, /) -> None:
+        """
+        Common logic for setting child values (primitive or nested container).
+
+        Args:
+            key: Child key to set
+            value: Value to store
+
+        Raises:
+            ValueError: If trying to overwrite container with primitive
+        """
+        if self._is_value_primitive(value):
+            # Store the primitive value
+            # If container has a container with the same key, it will raise an error
+            self.container.set_primitive_child(key, value)
+        else:
+            # Value is a container (dict, list, etc.)
+
+            # Check if a primitive with the same key does not exist
+            if self.container.has_primitive_child(key):
+                # If a primitive exists, we cannot overwrite it with a container
+                raise ValueError(
+                    f"Cannot overwrite primitive value with container at key '{key}'. "
+                    "Use a different key for the container."
+                )
+
+            child_view = self._get_view_for_value(key, value)
+            child_view.store(value)
+
+    # =========================================================================
+    # NESTED VIEW CREATION
+    # =========================================================================
+
+    def _dict_view(self, key: PathComponent, /) -> "DictView":
+        """Create nested dictionary view."""
+        from .dict import DictView
+
+        return DictView(backend=self.backend, path=self.path.join(key), tx=self.tx)
+
+    def _list_view(self, key: PathComponent, /) -> "ListView":
+        """Create nested list view."""
+        from .list import ListView
+
+        return ListView(backend=self.backend, path=self.path.join(key), tx=self.tx)
+
+    # =========================================================================
+    # UTILITY METHODS
+    # =========================================================================
+
+    def _get_view_for_container(
+        self,
+        key: PathComponent,
+        structure: ContainerStructure,
+        protocol: ContainerProtocol,
+        /,
+    ) -> BaseView:
+        """
+        Get appropriate view for existing container.
+
+        Args:
+            key: Child key to retrieve
+            structure: Container structure type
+            protocol: Container protocol type
+
+        Returns:
+            BaseView: The view for the specified container type
+
+        Raises:
+            ValueError: If structure/protocol combination is unsupported
+        """
+        from .dict import DictView
+        from .list import ListView
+
+        if self._satisfies_dict_view(structure, protocol):
+            return DictView(
+                backend=self.backend,
+                path=self.path.join(key),
+                tx=self.tx,
+            )
+        elif self._satisfies_list_view(structure, protocol):
+            return ListView(
+                backend=self.backend,
+                path=self.path.join(key),
+                tx=self.tx,
+            )
+        else:
+            raise ValueError(
+                f"Unsupported structure `{structure}` and protocol `{protocol}` for view creation"
+            )
+
+    def _get_view_for_value(self, key: PathComponent, value: Value, /) -> BaseView:
+        """
+        Get appropriate view for a value being stored.
+
+        Args:
+            key: Child key to retrieve
+            value: Value to store (can be primitive or container)
+
+        Returns:
+            BaseView: The view for the specified value type
+
+        Raises:
+            ValueError: If value type is unsupported for view creation
+        """
+        from .dict import DictView
+        from .list import ListView
+
+        child_path = self.path.join(key)
+        if isinstance(value, dict):
+            return DictView(backend=self.backend, path=child_path, tx=self.tx)
+        elif isinstance(value, list):
+            return ListView(backend=self.backend, path=child_path, tx=self.tx)
+        else:
+            raise ValueError(f"Unsupported value type `{type(value)}` for view creation")
+
+    def _is_value_primitive(self, value: Value, /) -> bool:
+        """
+        Check if value should be stored as primitive.
+
+        Args:
+            value: Value to check
+
+        Returns:
+            bool: True if value is primitive (not a container), False otherwise
+        """
+        return not isinstance(value, (dict, list, set, tuple))
+
+    @staticmethod
+    def _satisfies_dict_view(structure: ContainerStructure, protocol: ContainerProtocol, /) -> bool:
+        """
+        Check if structure/protocol supports dictionary view.
+
+        Args:
+            structure: Container structure type
+            protocol: Container protocol type
+
+        Returns:
+            bool: True if structure/protocol supports dictionary view
+        """
+        return structure == ContainerStructure.MAPPING_CONTAINER
+
+    @staticmethod
+    def _satisfies_list_view(structure: ContainerStructure, protocol: ContainerProtocol, /) -> bool:
+        """
+        Check if structure/protocol supports list view.
+
+        Args:
+            structure: Container structure type
+            protocol: Container protocol type
+
+        Returns:
+            bool: True if structure/protocol supports list view
+        """
+        return structure == ContainerStructure.SEQUENCE_CONTAINER
+
+    # =========================================================================
+    # ABSTRACT INTERFACE
+    # =========================================================================
+
+    @abstractmethod
+    def store(self, value: Value, /) -> None:
+        """
+        Store value in the view. Implemented by subclasses.
+
+        Args:
+            value: Value to store in the view
+        """
+        raise NotImplementedError("Subclasses must implement store()")
+
+    @abstractmethod
+    def extract(self) -> Value | Empty:
+        """
+        Extract value from the view. Implemented by subclasses.
+
+        Returns:
+            Value or Empty: Extracted value from the view, or EMPTY if not found
+        """
+        raise NotImplementedError("Subclasses must implement extract()")

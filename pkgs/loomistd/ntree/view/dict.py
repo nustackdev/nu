@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Generator, cast
 
 import attrs
 
-from ..exceptions import ContainerProtocolError
+from ..node import ChildType
 from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, Value
 from .base import BaseView
 
@@ -127,22 +127,10 @@ class DictView(BaseView):
             ```
         """
 
-        child_info = self.container.get_child_info(key)
-        if self.container.is_child_primitive(key, child_info=child_info):
-            primitive = self.container.get_primitive_value(
-                key, default=default, child_info=child_info
-            )
-            return primitive
-        elif self.container.is_child_container(key, child_info=child_info):
-            # Recursively convert nested containers
-            child_structure = child_info.stored_structure
-            child_protocol = child_info.stored_protocol
-
-            if child_structure is None or child_protocol is None:
-                raise ContainerProtocolError(f"Child '{key}' has no stored structure or protocol.")
-
-            view = self.get_view_for_container(key, child_structure, child_protocol)
-            return view.extract()
+        return self._get_child_value(
+            key,
+            default=default,
+        )
 
     def set(self, key: PathComponent, value: Value) -> None:
         """
@@ -173,27 +161,7 @@ class DictView(BaseView):
             users.set("alice_tags", {"important", "user"})
             ```
         """
-        child_info = self.container.get_child_info(key)
-
-        if self.container.has_child(key, child_info=child_info):
-            # Child exists, check its type and handle accordingly
-            if self.container.is_child_container(key, child_info=child_info):
-                raise ValueError(
-                    f"Key '{key}' already exists as a container. Access it using the appropriate view to manipulate it."
-                )
-            elif self.container.is_child_primitive(key, child_info=child_info):
-                # If the key is a primitive, we can set it directly
-                self.container.set_primitive_value(key, value)
-                return
-        else:
-            # If the key does not exist, store the value based on its type
-            if self.is_value_primitive(value):
-                # Store primitive value directly
-                self.container.set_primitive_value(key, value)
-                return
-            else:
-                child_view = self.get_view_for_value(key, value)
-                child_view.store(value)
+        self._set_child_value(key, value)
 
     def has(self, key: PathComponent) -> bool:
         """
@@ -211,32 +179,38 @@ class DictView(BaseView):
                 print("Alice exists")
             ```
         """
-        return self.container.has_child(key)
+        return self.container.has_child(key) != ChildType.NOT_FOUND
 
-    def remove(self, key: PathComponent) -> None:
+    def remove(self, key: PathComponent) -> bool:
         """
         Remove key from the container.
 
         Args:
             key: Key to remove
 
+        Returns:
+            bool: True if key was removed, False if it didn't exist
+
         Example:
             ```python
             users.remove("alice")
             ```
         """
-        self.container.remove_child(key)
+        return self.container.remove_child(key)
 
-    def clear(self) -> None:
+    def clear(self) -> int:
         """
         Remove all items from the container.
+
+        Returns:
+            int: Number of items removed
 
         Example:
             ```python
             users.clear()
             ```
         """
-        self.container.clear()
+        return self.container.clear_children()
 
     def keys(self) -> Generator[PathComponent, None, None]:
         """
@@ -306,7 +280,7 @@ class DictView(BaseView):
             alice_profile.set("location", "San Francisco")
             ```
         """
-        return DictView(backend=self.backend, path=self.path.join(key), tx=self.tx)
+        return self._dict_view(key)
 
     def list_view(self, key: PathComponent) -> ListView:
         """
@@ -328,6 +302,4 @@ class DictView(BaseView):
             alice_tasks.append("new task")
             ```
         """
-        from .list import ListView
-
-        return ListView(backend=self.backend, path=self.path.join(key), tx=self.tx)
+        return self._list_view(key)

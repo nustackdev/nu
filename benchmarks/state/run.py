@@ -19,7 +19,7 @@ from loomistd.ntree._state import State, StateSpec
 from loomistd.specs import LMDBStorageSpec
 
 # Constants
-NUM_ENTRIES = 10000
+NUM_ENTRIES = 100_000
 NUM_READS = 1000
 NUM_UPDATES = 1000
 BATCH_SIZE = 500  # Process in batches for better performance
@@ -259,8 +259,6 @@ class StateV3Benchmark:
                             data.remove(key)
                         elif hasattr(data, "delete"):
                             data.delete(key)
-                        elif hasattr(data, "pop"):
-                            data.pop(key, None)
                         else:
                             # Fallback: set to None or empty value
                             data.set(key, None)
