@@ -67,7 +67,7 @@ class ListView(BaseView):
     """
 
     structure: ContainerStructure = attrs.field(
-        default=ContainerStructure.SEQUENCE_CONTAINER, init=False
+        default=ContainerStructure.INDEXED_CONTAINER, init=False
     )
 
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)

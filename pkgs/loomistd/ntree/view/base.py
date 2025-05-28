@@ -327,7 +327,7 @@ class BaseView(TransactionalBase, ABC):
         Returns:
             bool: True if structure/protocol supports list view
         """
-        return structure == ContainerStructure.SEQUENCE_CONTAINER
+        return structure == ContainerStructure.INDEXED_CONTAINER
 
     # =========================================================================
     # ABSTRACT INTERFACE

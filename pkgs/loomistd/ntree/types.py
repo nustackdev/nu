@@ -85,9 +85,9 @@ class ContainerStructure(Flag):
 
     # Core container types
     MAPPING_CONTAINER = 2 | CONTAINER  # Key-based access (dict-like)
-    SEQUENCE_CONTAINER = 2 << 1 | CONTAINER  # Index-based ordered access (list-like)
-    SET_CONTAINER = 2 << 2 | CONTAINER  # Collection of unique values (set-like)
-    SERIES_CONTAINER = 2 << 3 | CONTAINER  # Series (timeseries-like)
+    INDEXED_CONTAINER = 2 << 1 | CONTAINER  # Index-based ordered access (list-like)
+    LINKED_CONTAINER = 2 << 2 | CONTAINER  # Collection of linked values (linked-list-like)
+    HASHED_CONTAINER = 2 << 3 | CONTAINER  # Hashed values (set-like)
 
     DEFAULT_CONTAINER = MAPPING_CONTAINER
 
@@ -99,11 +99,11 @@ class ContainerStructure(Flag):
             parts.append("CONTAINER")
         if self & self.MAPPING_CONTAINER == self.MAPPING_CONTAINER:
             parts.append("MAPPING")
-        elif self & self.SEQUENCE_CONTAINER == self.SEQUENCE_CONTAINER:
+        elif self & self.INDEXED_CONTAINER == self.INDEXED_CONTAINER:
             parts.append("SEQUENCE")
-        elif self & self.SET_CONTAINER == self.SET_CONTAINER:
+        elif self & self.LINKED_CONTAINER == self.LINKED_CONTAINER:
             parts.append("SET")
-        elif self & self.SERIES_CONTAINER == self.SERIES_CONTAINER:
+        elif self & self.HASHED_CONTAINER == self.HASHED_CONTAINER:
             parts.append("SERIES")
 
         return " | ".join(parts)
@@ -118,9 +118,7 @@ class ContainerProtocol(Flag):
     # Container protocols
 
     MUTABLE = 1  # Can be modified after creation
-
-    FLAT = 2 << 1  # Can contain only primitives (no nested containers)
-    # Note: Not implemented yet, but reserved for future use
+    # Add more protocols as needed
 
     DEFAULT_PROTOCOL = MUTABLE
 
@@ -129,8 +127,6 @@ class ContainerProtocol(Flag):
 
         if self & self.MUTABLE:
             parts.append("MUTABLE")
-        if self & self.FLAT:
-            parts.append("FLAT")
 
         return "|".join(parts)
 
