@@ -127,10 +127,7 @@ class DictView(BaseView):
             ```
         """
 
-        return self._get_child_value(
-            key,
-            default=default,
-        )
+        return self._get_child_value(key, default=default)
 
     def set(self, key: PathComponent, value: Value) -> None:
         """

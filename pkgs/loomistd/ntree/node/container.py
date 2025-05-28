@@ -236,51 +236,6 @@ class ContainerNode(BaseNode):
             info=info,
         )
 
-    @classmethod
-    def copy_to(
-        cls,
-        *,
-        backend: BackendProtocol,
-        tx: TransactionProtocol,
-        from_path: Path,
-        to_path: Path,
-        source_node_info: ContainerInfo | None = None,
-        target_node_info: ContainerInfo | None = None,
-    ) -> None:
-        """
-        Copy a container from one path to another.
-
-        """
-        # source_node_info = source_node_info or cls.get_info(from_path, tx)
-        # if source_node_info.exists is False:
-        #     raise PathNotFoundError(f"Source container at {from_path} does not exist")
-
-        # target_node_info = target_node_info or cls.get_info(to_path, tx)
-        # if target_node_info.exists:
-        #     raise PathExistsError(
-        #         f"Target container at {to_path} already exists. Copy does not support overwriting existing containers."
-        #     )
-
-        # Directly copy the subtree from source to target
-        raise NotImplementedError("Copy operation is not implemented for ContainerNode")
-
-    @classmethod
-    def move_to(
-        cls,
-        *,
-        backend: BackendProtocol,
-        tx: TransactionProtocol,
-        from_path: Path,
-        to_path: Path,
-        source_node_info: ContainerInfo | None = None,
-        target_node_info: ContainerInfo | None = None,
-    ) -> None:
-        """
-        Move a container from one path to another.
-
-        """
-        raise NotImplementedError("Move operation is not implemented for ContainerNode")
-
     # ------------------------------------------------------------------------
     # INFORMATION LAYER - Pure Data Gathering (No Validation Logic)
     # ------------------------------------------------------------------------
@@ -1461,7 +1416,7 @@ class ContainerNode(BaseNode):
         return path_deleted
 
     # =========================================================================
-    # Metadata Operations
+    # METADATA MANAGEMENT
     # =========================================================================
 
     def get_metadata(self, key: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:

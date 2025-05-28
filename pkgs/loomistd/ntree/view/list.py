@@ -7,7 +7,7 @@ interface for containers implementing the SEQUENCE structure.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator, cast
+from typing import TYPE_CHECKING, ClassVar, Generator, cast
 
 import attrs
 
@@ -72,143 +72,48 @@ class ListView(BaseView):
 
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
-    # ========================================================================
-    # Validation and Normalization Methods
-    # ========================================================================
+    LENGTH_MARKER: ClassVar[str] = "L"
 
-    def _normalize_index(self, index: int, *, allow_append: bool = False) -> int:
+    def _validate_index_with_length(self, index: int) -> tuple[int, int]:
         """
-        Normalize negative indices to positive ones.
+        Validate and normalize index for regular list operations, returning both index and length.
+
+        Optimized to read length only once from storage and return it for reuse.
+        Follows Python semantics: valid range is 0 <= index < len(list)
 
         Args:
-            index: Index to normalize (can be negative)
-            allow_append: If True, allows index == length (for insert operations)
+            index: Index to validate (can be negative)
 
         Returns:
-            int: Normalized positive index
+            tuple[int, int]: (validated_index, length)
+
+        Raises:
+            IndexError: If index is out of bounds
+
+        Examples:
+            For list of length 3: [a, b, c]
+            - _validate_index_with_length(0) → (0, 3)
+            - _validate_index_with_length(-1) → (2, 3)
+            - _validate_index_with_length(3) → IndexError
+            - _validate_index_with_length(-4) → IndexError
         """
         length = self.length()
 
+        # Handle empty list
+        if length == 0:
+            raise IndexError("list index out of range")
+
+        # Normalize negative indices
         if index < 0:
-            index = length + index
-            if allow_append and index < 0:
-                index = 0
-        elif allow_append:
-            index = min(index, length)
-
-        return index
-
-    def _validate_index_bounds(self, index: int, *, allow_append: bool = False) -> None:
-        """
-        Validate that index is within bounds.
-
-        Args:
-            index: Normalized index to validate
-            allow_append: If True, allows index == length
-
-        Raises:
-            IndexError: If index is out of bounds
-        """
-        length = self.length()
-        max_index = length if allow_append else length - 1
-
-        if length == 0 and not allow_append:
-            raise IndexError("list index out of range (empty list)")
-        if index < 0 or index > max_index:
-            raise IndexError(f"list index {index} out of range (length: {length})")
-
-    def _normalize_and_validate_index(self, index: int, *, allow_append: bool = False) -> int:
-        """
-        Normalize and validate index in one step.
-
-        Args:
-            index: Index to process
-            allow_append: If True, allows index == length
-
-        Returns:
-            int: Normalized and validated index
-
-        Raises:
-            IndexError: If index is out of bounds
-        """
-        normalized = self._normalize_index(index, allow_append=allow_append)
-        self._validate_index_bounds(normalized, allow_append=allow_append)
-        return normalized
-
-    # ========================================================================
-    # Helper Methods
-    # ========================================================================
-
-    def _store_value_at_key(self, key: str, value: Value) -> None:
-        """
-        Store a value at the given key, handling both primitives and containers.
-
-        Args:
-            key: String key to store at
-            value: Value to store
-        """
-        if self.is_value_primitive(value):
-            self.container.set_primitive_value(key, value)
+            normalized_index = length + index
         else:
-            child_view = self.get_view_for_value(key, value)
-            child_view.store(value)
+            normalized_index = index
 
-    def _move_element(self, from_index: int, to_index: int) -> None:
-        """
-        Move an element from one index to another.
+        # Validate bounds (Python allows 0 to length-1)
+        if normalized_index < 0 or normalized_index >= length:
+            raise IndexError("list index out of range")
 
-        Args:
-            from_index: Source index
-            to_index: Destination index
-        """
-        from_key = str(from_index)
-        to_key = str(to_index)
-
-        if not self.container.has_child(from_key):
-            return
-
-        if self.container.is_child_primitive(from_key):
-            # Move primitive value
-            value = cast(Value, self.container.get_primitive_value(from_key))
-            self.container.set_primitive_value(to_key, value)
-        else:
-            # Move container by extracting and re-storing
-            child_info = self.container.get_child_info(from_key)
-            if child_info.stored_structure and child_info.stored_protocol:
-                old_view = self.get_view_for_container(
-                    from_key, child_info.stored_structure, child_info.stored_protocol
-                )
-                value = cast(Value, old_view.extract())
-                self._store_value_at_key(to_key, value)
-
-        # Remove the old element
-        self.container.remove_child(from_key)
-
-    def _shift_elements_right(self, start_index: int, end_index: int) -> None:
-        """
-        Shift elements to the right by one position.
-
-        Args:
-            start_index: Starting index (inclusive)
-            end_index: Ending index (exclusive)
-        """
-        for i in range(end_index - 1, start_index - 1, -1):
-            self._move_element(i, i + 1)
-
-    def _shift_elements_left(self, start_index: int, end_index: int) -> None:
-        """
-        Shift elements to the left by one position.
-
-        Args:
-            start_index: Starting index (inclusive)
-            end_index: Ending index (exclusive)
-        """
-        for i in range(start_index, end_index):
-            self._move_element(i, i - 1)
-
-    # ========================================================================
-    # CORE INTERFACE METHODS
-    # ========================================================================
+        return normalized_index, length
 
     def extract(self):
         """
@@ -237,9 +142,6 @@ class ListView(BaseView):
         if not hasattr(value, "__iter__") or isinstance(value, (str, bytes, dict)):
             raise TypeError(f"Expected iterable (excluding str/bytes/dict), got {type(value)}")
 
-        # Clear existing content
-        self.clear()
-
         # Add each item
         for item in value:
             self.append(item)
@@ -258,11 +160,7 @@ class ListView(BaseView):
             count = len(tasks)
             ```
         """
-        return cast(int, self.container.get_metadata("__length__", 0))
-
-    # ========================================================================
-    # LIST ACCESS METHODS
-    # ========================================================================
+        return cast(int, self.container.get_metadata(self.LENGTH_MARKER, 0))
 
     def get(self, index: int, default: Value | Empty = EMPTY) -> Value | Empty:
         """
@@ -291,79 +189,11 @@ class ListView(BaseView):
             ```
         """
         # Handle empty list or out of bounds gracefully
-        length = self.length()
-        if length == 0:
-            return default
+        index, length = self._validate_index_with_length(index)
 
-        normalized_index = self._normalize_index(index)
-        if normalized_index < 0 or normalized_index >= length:
-            return default
+        key = str(index)
 
-        key = str(normalized_index)
-        child_info = self.container.get_child_info(key)
-
-        if self.container.is_child_primitive(key, child_info=child_info):
-            return self.container.get_primitive_value(key, default=default, child_info=child_info)
-        elif self.container.is_child_container(key, child_info=child_info):
-            # Recursively convert nested containers
-            child_structure = child_info.stored_structure
-            child_protocol = child_info.stored_protocol
-
-            if child_structure is None or child_protocol is None:
-                return default
-
-            view = self.get_view_for_container(key, child_structure, child_protocol)
-            return view.extract()
-
-        return default
-
-    def set(self, index: int, value: Value) -> None:
-        """
-        Set value at index.
-
-        Creates appropriate node type based on the value.
-        Index must be within current bounds (0 <= index < length).
-
-        Args:
-            index: Index to set (supports negative indexing)
-            value: Value to store
-
-        Raises:
-            IndexError: If index is out of bounds
-
-        Example:
-            ```python
-            # Set by positive index
-            tasks.set(0, "Updated first task")
-
-            # Set by negative index
-            tasks.set(-1, "Updated last task")
-
-            # Set nested structure
-            tasks.set(1, {"title": "Complex task", "priority": "high"})
-            ```
-        """
-        normalized_index = self._normalize_and_validate_index(index)
-        key = str(normalized_index)
-        child_info = self.container.get_child_info(key)
-
-        if self.container.has_child(key, child_info=child_info):
-            # Child exists, check its type and handle accordingly
-            if self.container.is_child_container(key, child_info=child_info):
-                raise ValueError(
-                    f"Index {index} already contains a container. Access it using the appropriate view to manipulate it."
-                )
-            elif self.container.is_child_primitive(key, child_info=child_info):
-                # If the index contains a primitive, we can set it directly
-                self.container.set_primitive_value(key, value)
-                return
-
-        # Store value based on its type
-        self._store_value_at_key(key, value)
-
-    # ========================================================================
-    # LIST MUTATION METHODS
-    # ========================================================================
+        return self._get_child_value(key, default=default)
 
     def append(self, value: Value) -> None:
         """
@@ -381,92 +211,40 @@ class ListView(BaseView):
         length = self.length()
         key = str(length)
 
-        # Store value and update length
-        self._store_value_at_key(key, value)
-        self.container.set_metadata("__length__", length + 1)
+        self._set_child_value(key, value)
+        self.container.set_metadata(self.LENGTH_MARKER, length + 1)
 
-    def insert(self, index: int, value: Value) -> None:
+    def pop(self) -> Value:
         """
-        Insert value at the specified index.
-
-        All elements at and after the index are shifted to the right.
-
-        Args:
-            index: Index to insert at (supports negative indexing)
-            value: Value to insert
-
-        Example:
-            ```python
-            # Insert at beginning
-            tasks.insert(0, "Urgent task")
-
-            # Insert at end (equivalent to append)
-            tasks.insert(len(tasks), "Last task")
-
-            # Insert in middle
-            tasks.insert(2, "Middle task")
-            ```
-        """
-        length = self.length()
-        normalized_index = self._normalize_and_validate_index(index, allow_append=True)
-
-        # Shift existing elements to the right
-        self._shift_elements_right(normalized_index, length)
-
-        # Insert the new value
-        key = str(normalized_index)
-        self._store_value_at_key(key, value)
-
-        # Update length
-        self.container.set_metadata("__length__", length + 1)
-
-    def pop(self, index: int = -1) -> Value:
-        """
-        Remove and return item at index.
-
-        Args:
-            index: Index to remove (defaults to -1 for last item)
+        Remove and return the last item.
 
         Returns:
             Value: The removed value
 
         Raises:
-            IndexError: If list is empty or index is out of bounds
+            IndexError: If list is empty
 
         Example:
             ```python
             # Pop last item
             last_task = tasks.pop()
-
-            # Pop first item
-            first_task = tasks.pop(0)
-
-            # Pop specific index
-            middle_task = tasks.pop(2)
             ```
         """
         length = self.length()
         if length == 0:
-            raise IndexError("pop from empty list")
+            raise IndexError("Pop from empty list")
 
-        normalized_index = self._normalize_and_validate_index(index)
+        index = length - 1
+        key = str(index)
 
-        # Get the value before removing
-        value = self.get(normalized_index)
-        if value is EMPTY:
-            raise IndexError(f"No value at index {normalized_index}")
+        last_item = self.get(index)
 
-        # Remove the item
-        key = str(normalized_index)
         self.container.remove_child(key)
 
-        # Shift remaining elements to the left
-        self._shift_elements_left(normalized_index + 1, length)
-
         # Update length
-        self.container.set_metadata("__length__", length - 1)
+        self.container.set_metadata(self.LENGTH_MARKER, length - 1)
 
-        return cast(Value, value)
+        return cast(Value, last_item)
 
     def extend(self, iterable) -> None:
         """
@@ -492,12 +270,8 @@ class ListView(BaseView):
             tasks.clear()
             ```
         """
-        self.container.clear()
-        self.container.set_metadata("__length__", 0)
-
-    # ========================================================================
-    # ITERATION AND CONVERSION METHODS
-    # ========================================================================
+        self.container.clear_children()
+        self.container.delete_metadata(self.LENGTH_MARKER)
 
     def values(self) -> Generator[Value, None, None]:
         """
@@ -514,10 +288,6 @@ class ListView(BaseView):
         """
         for i in range(self.length()):
             yield cast(Value, self.get(i))
-
-    # ========================================================================
-    # NESTED VIEW ACCESS METHODS
-    # ========================================================================
 
     def dict_view(self, index: int) -> DictView:
         """
@@ -539,13 +309,9 @@ class ListView(BaseView):
             task_details.set("priority", "high")
             ```
         """
-        normalized_index = self._normalize_and_validate_index(index)
+        normalized_index, _ = self._validate_index_with_length(index)
 
-        from .dict import DictView
-
-        return DictView(
-            backend=self.backend, path=self.path.join(str(normalized_index)), tx=self.tx
-        )
+        return self._dict_view(str(normalized_index))
 
     def list_view(self, index: int) -> ListView:
         """
@@ -567,8 +333,7 @@ class ListView(BaseView):
             subtasks.append("Subtask 1")
             ```
         """
-        normalized_index = self._normalize_and_validate_index(index)
 
-        return ListView(
-            backend=self.backend, path=self.path.join(str(normalized_index)), tx=self.tx
-        )
+        normalized_index, _ = self._validate_index_with_length(index)
+
+        return self._list_view(str(normalized_index))
