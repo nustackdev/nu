@@ -103,7 +103,7 @@ class AsyncStorageProtocol(Protocol[StorageValueT]):
         if False:  # This will never execute but helps type checkers
             yield prefix  # Dummy yield to make it a true async generator
 
-    async def begin_transaction(self) -> AsyncTransactionProtocol:
+    async def begin_transaction(self) -> AsyncTransactionProtocol[StorageValueT]:
         """
         Begin transaction.
 
@@ -115,7 +115,7 @@ class AsyncStorageProtocol(Protocol[StorageValueT]):
         """
         ...
 
-    async def transaction(self) -> AsyncTransactionContextManagerProtocol:
+    async def transaction(self) -> AsyncTransactionContextManagerProtocol[StorageValueT]:
         """
         Get transaction context manager.
 
@@ -428,7 +428,7 @@ class SyncStorageProtocol(Protocol[StorageValueT]):
         """
         ...
 
-    def begin_transaction(self) -> SyncTransactionProtocol:
+    def begin_transaction(self) -> SyncTransactionProtocol[StorageValueT]:
         """
         Begin transaction.
 
@@ -440,7 +440,7 @@ class SyncStorageProtocol(Protocol[StorageValueT]):
         """
         ...
 
-    def transaction(self) -> SyncTransactionContextManagerProtocol:
+    def transaction(self) -> SyncTransactionContextManagerProtocol[StorageValueT]:
         """
         Get transaction context manager.
 

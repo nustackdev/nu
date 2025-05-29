@@ -14,7 +14,7 @@ from typing import Optional, Self
 
 import attrs
 
-from .backend import SubscriptionProtocol, TransactionProtocol
+from .backend import SubscriptionProtocol, TransactionContextManagerProtocol, TransactionProtocol
 from .path import Path
 from .transaction import TransactionalBase
 from .types import CallbackFn, PathComponent
@@ -294,7 +294,7 @@ class Tree(TransactionalBase):
         return ListView(backend=self.backend, path=self.path, tx=tx or self.tx)
 
     # =========================================================================
-    # Transaction and Subscription Methods
+    # Transaction Methods
     # =========================================================================
 
     def begin_transaction(self) -> TransactionProtocol:
@@ -331,6 +331,28 @@ class Tree(TransactionalBase):
         """
         return self.backend.begin_transaction()
 
+    def transaction(self) -> TransactionContextManagerProtocol:
+        """
+        Get transaction context manager for combined storage and notification handling.
+
+        Returns:
+            Transaction context manager for use in with statements
+
+        Example:
+            ```python
+            with kv.transaction() as txn:
+                txn.set(key1, value1)
+                txn.set(key2, value2)
+                # Auto-commits and notifies on success
+                # Auto-rollbacks with no notifications on failure
+            ```
+        """
+        return self.backend.transaction()
+
+    # =========================================================================
+    # Subscription Methods
+    # =========================================================================
+
     def subscribe(self, callback: CallbackFn, depth: int = 0) -> SubscriptionProtocol:
         """
         Subscribe to changes at the current path.
@@ -365,3 +387,15 @@ class Tree(TransactionalBase):
             ```
         """
         return self.backend.subscribe(self.path.to_tuple(), callback, depth)
+
+    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
+        """
+        Unsubscribe from changes under key prefix.
+
+        Args:
+            subscription: Subscription to cancel
+
+        Raises:
+            ObserverError: If unsubscribe fails
+        """
+        self.backend.unsubscribe(subscription)
