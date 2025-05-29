@@ -1229,7 +1229,7 @@ class ContainerNode(BaseNode):
             if self.remove_primitive_child(key):
                 removed_count += 1
 
-        for key in self.keys(primitives_only=True):
+        for key in self.keys(skip_primitives=True):
             if self.remove_container_child(key):
                 removed_count += 1
 
@@ -1303,11 +1303,14 @@ class ContainerNode(BaseNode):
         except StorageKeyError:
             return EMPTY
 
-    def keys(self, *, primitives_only: bool = False) -> Generator[PathComponent, None, None]:
+    def keys(
+        self, *, primitives_only: bool = False, skip_primitives: bool = False
+    ) -> Generator[PathComponent, None, None]:
         """Get child keys with container health validation.
 
         Args:
             primitives_only: If True, only return primitive child keys.
+            skip_primitives: If True, skip primitive keys and only return container keys.
 
         Yields:
             PathComponent: Child keys.
@@ -1324,13 +1327,18 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        yield from self._get_keys_impl(primitives_only=primitives_only)
+        yield from self._get_keys_impl(
+            primitives_only=primitives_only, skip_primitives=skip_primitives
+        )
 
-    def children(self, *, primitives_only: bool = False) -> Generator[ChildInfo, None, None]:
+    def children(
+        self, *, primitives_only: bool = False, skip_primitives: bool = False
+    ) -> Generator[ChildInfo, None, None]:
         """Get child information with container health validation.
 
         Args:
             primitives_only: If True, only return primitive children.
+            skip_primitives: If True, skip primitive children and only return container children.
 
         Yields:
             ChildInfo: Information about each child (exists, type, value).
@@ -1347,24 +1355,30 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        for key in self._get_keys_impl(primitives_only=primitives_only):
+        for key in self._get_keys_impl(
+            primitives_only=primitives_only, skip_primitives=skip_primitives
+        ):
             yield self.get_child_info(key)
 
-    def _get_keys_impl(self, primitives_only: bool = False) -> Generator[str, None, None]:
+    def _get_keys_impl(
+        self, primitives_only: bool = False, skip_primitives: bool = False
+    ) -> Generator[str, None, None]:
         """Implementation for key listing.
 
         Args:
             primitives_only: If True, only yield primitive keys.
+            skip_primitives: If True, skip primitive keys and only yield container keys.
 
         Yields:
             str: Child keys.
         """
         # Get primitive keys
-        try:
-            for path_tuple in self.tx.list_keys(self.path.to_tuple(), depth=1):
-                yield path_tuple[-1]  # Get last component (key)
-        except StorageKeyError:
-            pass  # Container might be empty
+        if not skip_primitives:
+            try:
+                for path_tuple in self.tx.list_keys(self.path.to_tuple(), depth=1):
+                    yield path_tuple[-1]  # Get last component (key)
+            except StorageKeyError:
+                pass  # Container might be empty
 
         # Get container keys if requested
         if not primitives_only:

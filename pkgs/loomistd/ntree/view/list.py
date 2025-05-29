@@ -128,12 +128,13 @@ class ListView(BaseView):
         """
         return [v for v in self.values()]
 
-    def store(self, value: list[Value], /) -> None:
+    def store(self, value: list[Value], /, *, replace: bool = False) -> None:
         """
         Store a list value in the container.
 
         Args:
             value: List value to store, which can contain primitives, dicts, lists, or sets.
+            replace: If True, replaces existing value at the path. Otherwise appends to existing list. Default is False.
 
         Raises:
             ContainerProtocolError: If the container is not a sequence container.
@@ -141,6 +142,10 @@ class ListView(BaseView):
         """
         if not hasattr(value, "__iter__") or isinstance(value, (str, bytes, dict)):
             raise TypeError(f"Expected iterable (excluding str/bytes/dict), got {type(value)}")
+
+        # If replacing, clear existing items
+        if replace:
+            self.clear()
 
         # Add each item
         for item in value:

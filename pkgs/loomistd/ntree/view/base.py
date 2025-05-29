@@ -334,12 +334,13 @@ class BaseView(TransactionalBase, ABC):
     # =========================================================================
 
     @abstractmethod
-    def store(self, value: Value, /) -> None:
+    def store(self, value: Value, /, *, replace: bool = False) -> None:
         """
         Store value in the view. Implemented by subclasses.
 
         Args:
             value: Value to store in the view
+            replace: If True, replaces existing value at the path. Otherwise appends to existing list. Default is False.
         """
         raise NotImplementedError("Subclasses must implement store()")
 

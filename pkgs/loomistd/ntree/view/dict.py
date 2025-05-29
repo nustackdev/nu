@@ -80,13 +80,13 @@ class DictView(BaseView):
 
         return {k: v for k, v in self.items()}
 
-    def store(self, value: dict[PathComponent, Value], /) -> None:
+    def store(self, value: dict[PathComponent, Value], /, *, replace: bool = False) -> None:
         """
         Store a value at the specified key.
 
         Args:
-            key: Key to store the value at.
             value: Value to store, which can be a primitive, dict, list, or set.
+            replace: If True, replaces existing value at the path. Otherwise appends to existing list. Default is False.
 
         Raises:
             ContainerProtocolError: If the container is not a mapping container.
@@ -96,6 +96,10 @@ class DictView(BaseView):
                 f"Expected a dict-like value, got {type(value).__name__}. "
                 "Use `set` for single values or `store` for dict-like structures."
             )
+
+        # If replacing, clear existing items
+        if replace:
+            self.clear()
 
         for k, v in value.items():
             self.set(k, v)
