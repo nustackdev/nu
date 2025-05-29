@@ -201,7 +201,7 @@ class BaseView(TransactionalBase, ABC):
                 )
 
             child_view = self._get_view_for_value(key, value)
-            child_view.store(value)
+            child_view.store(value, replace=False)
 
     # =========================================================================
     # NESTED VIEW CREATION
