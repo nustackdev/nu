@@ -8,8 +8,9 @@ from typing import Any
 
 from loomi import Spec, SpecField, SyncService, UseService
 from loomistd.kv import StorageServiceProtocol
+from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.observer import ObserverServiceProtocol
-from loomistd.specs import InMemoryObserverSpec, SyncFileStorageSpec
+from loomistd.observer.in_memory import InMemoryObserverSpec
 from loomistd.tree.backend.observable_kv import ObservableKVBackend
 from loomistd.tree.types import PathTuple, Value
 
@@ -63,5 +64,5 @@ class StateService(SyncService):
 class StateSpec(Spec):
     name: str = SpecField(default="state")
     factory: type = SpecField(default=StateService)
-    storage: Spec = SpecField(default_factory=SyncFileStorageSpec)
+    storage: Spec = SpecField(default_factory=FileStorageSpec)
     observer: Spec = SpecField(default_factory=InMemoryObserverSpec)

@@ -14,8 +14,8 @@ import statistics
 import time
 from pathlib import Path
 
-from loomistd.ntree._state import State, StateSpec
-from loomistd.specs import LMDBStorageSpec
+from loomistd.specs import LMDBStorageSpec, SyncStateSpec
+from loomistd.state import StateService
 
 # Constants
 NUM_ENTRIES = 50_000  # Reduced from dict benchmark since lists have more overhead
@@ -25,7 +25,7 @@ BATCH_SIZE = 250  # Smaller batches for list operations
 GET_PATTERNS = ["sequential", "random", "repeated"]  # Different get patterns to benchmark
 
 # Storage configuration
-STORAGE_CONFIG = StateSpec(storage=LMDBStorageSpec()).with_value_at(
+STORAGE_CONFIG = SyncStateSpec(storage=LMDBStorageSpec()).with_value_at(
     "storage", "path", value=".benchmark_listview_lmdb"
 )
 
@@ -49,7 +49,7 @@ class ListViewBenchmark:
                 "error_count": 0,
             }
 
-    def create_state_spec(self) -> StateSpec:
+    def create_state_spec(self) -> SyncStateSpec:
         """Create state specification for LMDB storage."""
         return STORAGE_CONFIG
 
@@ -377,7 +377,7 @@ class ListViewBenchmark:
         try:
             state_spec = self.create_state_spec()
 
-            with State(state_spec) as state_service:
+            with StateService(state_spec) as state_service:
                 state = state_service.state
 
                 # Phase 1: Append

@@ -15,8 +15,8 @@ import statistics
 import time
 from pathlib import Path
 
-from loomistd.ntree._state import State, StateSpec
-from loomistd.specs import LMDBStorageSpec
+from loomistd.specs import LMDBStorageSpec, SyncStateSpec
+from loomistd.state import StateService
 
 # Constants
 NUM_ENTRIES = 100_000
@@ -28,7 +28,7 @@ READ_PATTERNS = ["sequential", "random", "repeated"]  # Different read patterns 
 # Storage configurations to test
 STORAGE_CONFIGS = {
     # "InMemory": lambda: StateSpec(storage=InMemoryStorageSpec()),
-    "LMDB": lambda: StateSpec(storage=LMDBStorageSpec()).with_value_at(
+    "LMDB": lambda: SyncStateSpec(storage=LMDBStorageSpec()).with_value_at(
         "storage", "path", value=".benchmark_lmdb"
     ),
     # "SyncFile": lambda: StateSpec(storage=SyncFileStorageSpec()).with_value_at(
@@ -57,7 +57,7 @@ class StateV3Benchmark:
                 "miss_rate": 0,
             }
 
-    def create_state_spec(self) -> StateSpec:
+    def create_state_spec(self) -> SyncStateSpec:
         """Create state specification based on storage type."""
         return STORAGE_CONFIGS[self.storage_name]()
 
@@ -425,7 +425,7 @@ class StateV3Benchmark:
         try:
             state_spec = self.create_state_spec()
 
-            with State(state_spec) as state_service:
+            with StateService(state_spec) as state_service:
                 state = state_service.state
 
                 # Phase 1: Populate
