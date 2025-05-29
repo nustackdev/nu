@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Generator, cast
 import attrs
 
 from ..node import ChildType
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, Value
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, TreeT, Value
 from .base import BaseView
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class DictView(BaseView):
+class DictView(BaseView[TreeT]):
     """
     Dictionary view for containers implementing the MAPPING structure.
 

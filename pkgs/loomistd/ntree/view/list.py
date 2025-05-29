@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, ClassVar, Generator, cast
 
 import attrs
 
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, Value
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, TreeT, Value
 from .base import BaseView
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class ListView(BaseView):
+class ListView(BaseView[TreeT]):
     """
     List view for containers implementing the SEQUENCE structure.
 

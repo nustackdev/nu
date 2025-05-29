@@ -21,23 +21,32 @@ __all__ = [
 ]
 
 
-class State(SyncService):
+class State(Tree):
+    """
+    Example state class that extends the Tree class.
+    This is a placeholder for the actual implementation.
+    """
+
+    pass
+
+
+class StateService(SyncService):
     """
     StateService implementation.
     """
 
-    _backend: ObservableKVBackend
-    _tree: Tree
+    _tree: State
 
     storage: StorageServiceProtocol[PathTuple, Value, Any, Any] = UseService()
     observer: ObserverServiceProtocol[PathTuple, Any] = UseService()
 
     def setup(self):
-        self._backend = ObservableKVBackend(
-            storage=self.storage,
-            observer=self.observer,
+        self._tree = State(
+            backend=ObservableKVBackend(
+                storage=self.storage,
+                observer=self.observer,
+            )
         )
-        self._tree = Tree(backend=self._backend)
 
     @property
     def is_sync(self) -> bool:
@@ -50,7 +59,7 @@ class State(SyncService):
         return True
 
     @property
-    def state(self) -> Tree:
+    def state(self) -> State:
         """
         Get the state object.
 
@@ -62,6 +71,6 @@ class State(SyncService):
 
 class StateSpec(Spec):
     name: str = SpecField(default="state")
-    factory: type = SpecField(default=State)
+    factory: type = SpecField(default=StateService)
     storage: Spec = SpecField(default_factory=SyncFileStorageSpec)
     observer: Spec = SpecField(default_factory=InMemoryObserverSpec)

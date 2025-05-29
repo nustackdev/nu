@@ -226,6 +226,15 @@ class Path:
 
         return self._components[-1]
 
+    def root(self) -> Self:
+        """
+        Get the root path.
+
+        Returns:
+            Path: Root path (only root component)
+        """
+        return self.__class__()
+
     def is_root(self) -> bool:
         """
         Check if this is the root path.

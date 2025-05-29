@@ -74,6 +74,10 @@ class Tree(TransactionalBase):
 
     path: Path = attrs.field(factory=Path, eq=False, hash=False, alias=None)
 
+    # =========================================================================
+    # TREE NAVIGATION METHODS
+    # =========================================================================
+
     def at(self, *paths: PathComponent, tx: Optional[TransactionProtocol] = None) -> Self:
         """
         Navigate to a path (relative to current path).
@@ -140,10 +144,10 @@ class Tree(TransactionalBase):
         return attrs.evolve(self, path=Path(), tx=tx or self.tx)
 
     # =========================================================================
-    # Context Manager Methods (Automatic Transaction Management)
+    # CONTEXT MANAGERS FOR VIEWS (automatic transaction management)
     # =========================================================================
 
-    def with_dict_view(self) -> AbstractContextManager[DictView]:
+    def with_dict_view(self) -> AbstractContextManager[DictView[Self]]:
         """
         Access container as dictionary view with automatic transaction management.
 
@@ -176,10 +180,10 @@ class Tree(TransactionalBase):
             ```
         """
         return create_view_context_manager(
-            DictView, backend=self.backend, path=self.path, tx=self.tx
+            DictView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
         )
 
-    def with_list_view(self) -> AbstractContextManager[ListView]:
+    def with_list_view(self) -> AbstractContextManager[ListView[Self]]:
         """
         Access container as list view with automatic transaction management.
 
@@ -208,14 +212,14 @@ class Tree(TransactionalBase):
             ```
         """
         return create_view_context_manager(
-            ListView, backend=self.backend, path=self.path, tx=self.tx
+            ListView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
         )
 
     # =========================================================================
-    # Direct Access Methods (Manual Transaction Management)
+    # DIRECT VIEW ACCESS (manual transaction management)
     # =========================================================================
 
-    def dict_view(self, *, tx: Optional[TransactionProtocol] = None) -> DictView:
+    def dict_view(self, *, tx: Optional[TransactionProtocol] = None) -> DictView[Self]:
         """
         Access container as dictionary view with manual transaction management.
 
@@ -252,9 +256,9 @@ class Tree(TransactionalBase):
                 users.set("bob", {"email": "bob@example.com"})
             ```
         """
-        return DictView(backend=self.backend, path=self.path, tx=tx or self.tx)
+        return DictView(backend=self.backend, path=self.path, tx=tx or self.tx, tree=self.__class__)
 
-    def list_view(self, *, tx: Optional[TransactionProtocol] = None) -> ListView:
+    def list_view(self, *, tx: Optional[TransactionProtocol] = None) -> ListView[Self]:
         """
         Access container as list view with manual transaction management.
 
@@ -291,10 +295,10 @@ class Tree(TransactionalBase):
                 first_task_dict.set("completed", True)
             ```
         """
-        return ListView(backend=self.backend, path=self.path, tx=tx or self.tx)
+        return ListView(backend=self.backend, path=self.path, tx=tx or self.tx, tree=self.__class__)
 
     # =========================================================================
-    # Transaction Methods
+    # TRANSACTION METHODS
     # =========================================================================
 
     def begin_transaction(self) -> TransactionProtocol:
@@ -350,7 +354,7 @@ class Tree(TransactionalBase):
         return self.backend.transaction()
 
     # =========================================================================
-    # Subscription Methods
+    # OBSERVATION METHODS
     # =========================================================================
 
     def subscribe(self, callback: CallbackFn, depth: int = 0) -> SubscriptionProtocol:

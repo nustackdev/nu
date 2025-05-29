@@ -31,15 +31,16 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, Optional
 
 import attrs
 
+from ..backend import TransactionProtocol
 from ..exceptions import ContainerProtocolError
 from ..node import ChildType, ContainerNode
 from ..path import Path
 from ..transaction import TransactionalBase
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, Value
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, TreeT, Value
 
 if TYPE_CHECKING:
     from .dict import DictView
@@ -51,7 +52,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class BaseView(TransactionalBase, ABC):
+class BaseView(Generic[TreeT], TransactionalBase, ABC):
     """
     Base class for all container views.
 
@@ -99,6 +100,13 @@ class BaseView(TransactionalBase, ABC):
     # Container protocol type
     protocol: ContainerProtocol = attrs.field()
 
+    # Tree class this view operates on
+    tree: type[TreeT] = attrs.field()
+
+    # =========================================================================
+    # CONTAINER NODE ACCESS
+    # =========================================================================
+
     @cached_property
     def container(self) -> ContainerNode:
         """
@@ -125,6 +133,100 @@ class BaseView(TransactionalBase, ABC):
         )
 
         return container
+
+    # =========================================================================
+    # TREE NAVIGATION METHODS (return new Tree instances)
+    # =========================================================================
+
+    def at(self, *paths: PathComponent, tx: Optional[TransactionProtocol] = None) -> TreeT:
+        """
+        Navigate to a path (relative to current path).
+
+        This creates a new State instance pointing to the specified path.
+
+        Args:
+            *paths: Path components to navigate to
+            tx: Optional transaction (defaults to current transaction)
+
+        Returns:
+            State: New State for the specified path
+
+        Example:
+            ```python
+            # Basic navigation
+            user = tree.at("users", "alice")
+            email = tree.at("users", "alice", "email")
+
+            # Navigation with context manager
+            with tree.at("users").with_dict_view() as users:
+                # Operations with transaction
+                users.set("alice", {"name": "Alice"})
+
+            # Navigation with direct access
+            users = tree.at("users").dict_view()
+            alice_data = users.get("alice")
+            ```
+        """
+        new_path = self.path.join(*paths)
+        return self.tree(backend=self.backend, path=new_path, tx=tx or self.tx)
+
+    def parent(self, *, tx: Optional[TransactionProtocol] = None) -> TreeT:
+        """
+        Navigate to parent path.
+
+        Returns:
+            State: State for the parent path, or self if already at root
+
+        Example:
+            ```python
+            user = tree.at("users", "alice")
+            users = user.parent()
+            ```
+        """
+        parent_path = self.path.parent()
+        if parent_path is None:
+            # Already at root
+            parent_path = self.path
+        return self.tree(backend=self.backend, path=parent_path, tx=tx or self.tx)
+
+    def root(self, *, tx: Optional[TransactionProtocol] = None) -> TreeT:
+        """
+        Navigate to root path.
+
+        Returns:
+            State: State for the root path
+
+        Example:
+            ```python
+            root = tree.at("deeply", "nested", "path").root()
+            ```
+        """
+        return self.tree(backend=self.backend, path=self.path.root(), tx=tx or self.tx)
+
+    # =========================================================================
+    # ABSTRACT INTERFACE (to be implemented by subclasses)
+    # =========================================================================
+
+    @abstractmethod
+    def store(self, value: Value, /, *, replace: bool = False) -> None:
+        """
+        Store value in the view. Implemented by subclasses.
+
+        Args:
+            value: Value to store in the view
+            replace: If True, replaces existing value at the path. Otherwise appends to existing list. Default is False.
+        """
+        raise NotImplementedError("Subclasses must implement store()")
+
+    @abstractmethod
+    def extract(self) -> Value | Empty:
+        """
+        Extract value from the view. Implemented by subclasses.
+
+        Returns:
+            Value or Empty: Extracted value from the view, or EMPTY if not found
+        """
+        raise NotImplementedError("Subclasses must implement extract()")
 
     # =========================================================================
     # COMMON CHILD MANAGEMENT OPERATIONS
@@ -211,13 +313,13 @@ class BaseView(TransactionalBase, ABC):
         """Create nested dictionary view."""
         from .dict import DictView
 
-        return DictView(backend=self.backend, path=self.path.join(key), tx=self.tx)
+        return DictView(backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree)
 
     def _list_view(self, key: PathComponent, /) -> "ListView":
         """Create nested list view."""
         from .list import ListView
 
-        return ListView(backend=self.backend, path=self.path.join(key), tx=self.tx)
+        return ListView(backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree)
 
     # =========================================================================
     # UTILITY METHODS
@@ -249,15 +351,11 @@ class BaseView(TransactionalBase, ABC):
 
         if self._satisfies_dict_view(structure, protocol):
             return DictView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=self.tx,
+                backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree
             )
         elif self._satisfies_list_view(structure, protocol):
             return ListView(
-                backend=self.backend,
-                path=self.path.join(key),
-                tx=self.tx,
+                backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree
             )
         else:
             raise ValueError(
@@ -283,9 +381,9 @@ class BaseView(TransactionalBase, ABC):
 
         child_path = self.path.join(key)
         if isinstance(value, dict):
-            return DictView(backend=self.backend, path=child_path, tx=self.tx)
+            return DictView(backend=self.backend, path=child_path, tx=self.tx, tree=self.tree)
         elif isinstance(value, list):
-            return ListView(backend=self.backend, path=child_path, tx=self.tx)
+            return ListView(backend=self.backend, path=child_path, tx=self.tx, tree=self.tree)
         else:
             raise ValueError(f"Unsupported value type `{type(value)}` for view creation")
 
@@ -328,28 +426,3 @@ class BaseView(TransactionalBase, ABC):
             bool: True if structure/protocol supports list view
         """
         return structure == ContainerStructure.INDEXED_CONTAINER
-
-    # =========================================================================
-    # ABSTRACT INTERFACE
-    # =========================================================================
-
-    @abstractmethod
-    def store(self, value: Value, /, *, replace: bool = False) -> None:
-        """
-        Store value in the view. Implemented by subclasses.
-
-        Args:
-            value: Value to store in the view
-            replace: If True, replaces existing value at the path. Otherwise appends to existing list. Default is False.
-        """
-        raise NotImplementedError("Subclasses must implement store()")
-
-    @abstractmethod
-    def extract(self) -> Value | Empty:
-        """
-        Extract value from the view. Implemented by subclasses.
-
-        Returns:
-            Value or Empty: Extracted value from the view, or EMPTY if not found
-        """
-        raise NotImplementedError("Subclasses must implement extract()")
