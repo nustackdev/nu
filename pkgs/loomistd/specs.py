@@ -22,7 +22,6 @@ from .codec.json import JSONCodecSpec
 
 # Async package imports
 from .akv.file_storage import FileStorageSpec as AsyncFileStorageSpec
-from .astate import StateSpec as AsyncStateSpec
 
 # Sync package imports
 from .kv.file_storage import FileStorageSpec as SyncFileStorageSpec
@@ -52,7 +51,6 @@ __all__ = [
     "InMemoryStorageSpec",
     "LMDBStorageSpec",
     "InMemoryObserverSpec",
-    "AsyncStateSpec",
     "SyncStateSpec",
     # Executor package imports
     "AsyncExecutorSpec",
