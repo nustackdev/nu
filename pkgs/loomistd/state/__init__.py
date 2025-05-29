@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from ._exceptions import StateError
-from ._state import State, StateSpec
-from ._types import StateCallbackFn, StateKey, StateValue
+from ._service import StateService, StateSpec
+from ._state import State
 
 __all__ = [
     "State",
+    "StateService",
     "StateSpec",
-    "StateError",
-    "StateKey",
-    "StateValue",
-    "StateCallbackFn",
 ]
