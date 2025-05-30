@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any
 
-from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
-from loomi.interfaces.state.type_vars import StateDictT, StateT
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.type_vars import StateT
 
 from ..context import Context
 from ..operations import Branch, Loop, Parallel, Sequence
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ..operations import Operation
 
 
-class FlowEngine(EngineBase[StateT, StateDictT]):
+class FlowEngine(EngineBase[StateT]):
     """
     Engine mixin for executing flow control operations.
 
@@ -33,9 +33,7 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
     child operations.
     """
 
-    async def exec_sequence(
-        self, operation: Sequence[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_sequence(self, operation: Sequence[StateT], context: Context[StateT]) -> None:
         """
         Execute a Sequence operation.
 
@@ -62,9 +60,7 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
             # Execute the child operation
             await self.exec_operation(child_context)
 
-    async def exec_parallel(
-        self, operation: Parallel[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_parallel(self, operation: Parallel[StateT], context: Context[StateT]) -> None:
         """
         Execute a Parallel operation.
 
@@ -112,9 +108,7 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
         # Create semaphore for concurrency control if needed
         semaphore = asyncio.Semaphore(max_concurrency) if max_concurrency > 0 else None
 
-        async def execute_with_semaphore(
-            op: Operation[StateDictT], ctx: Context[StateDictT]
-        ) -> None:
+        async def execute_with_semaphore(op: Operation[StateT], ctx: Context[StateT]) -> None:
             """Execute an operation with semaphore control if enabled."""
             if semaphore:
                 async with semaphore:
@@ -159,9 +153,7 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
             for error in errors:
                 self.logger.error(f"Error in parallel operation: {error}", exc_info=error)
 
-    async def exec_branch(
-        self, operation: Branch[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_branch(self, operation: Branch[StateT], context: Context[StateT]) -> None:
         """
         Execute a Branch operation.
 
@@ -208,7 +200,7 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
         # Execute the selected operation
         await self.exec_operation(branch_context)
 
-    async def exec_loop(self, operation: Loop[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_loop(self, operation: Loop[StateT], context: Context[StateT]) -> None:
         """
         Execute a Loop operation.
 
@@ -274,8 +266,8 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
             await self.exec_operation(finish_context)
 
     async def _evaluate_branch_condition(
-        self, operation: Branch[StateDictT], context: Context[StateDictT]
-    ) -> Union[str, bool, int, float, None]:
+        self, operation: Branch[StateT], context: Context[StateT]
+    ) -> Any:
         """
         Evaluate the condition for a Branch operation.
 
@@ -316,20 +308,17 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
 
             # Get value from state
             try:
-                if isinstance(context.scope, AsyncTreeDictProtocol):
+                if isinstance(context.scope, AsyncStateProtocol):
                     value = await context.scope.get(*condition_path)
-                elif isinstance(context.scope, SyncTreeDictProtocol):
-                    value = context.scope.get(*condition_path)
+                elif isinstance(context.scope, SyncStateProtocol):
+                    value = context.scope.get_primitive(*condition_path)
                 else:
                     raise StateAccessError(
                         f"Unsupported dict type: {type(context.scope)}",
                         operation=operation,
                     )
 
-                if value is context.scope.EMPTY:
-                    value = None
-
-                return value  # type: ignore
+                return value
             except Exception as e:
                 raise OperationExecutionError(
                     f"Error accessing branch condition path {condition_path}: {e}",
@@ -346,7 +335,7 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
         )
 
     async def _evaluate_loop_condition(
-        self, operation: Loop[StateDictT], context: Context[StateDictT]
+        self, operation: Loop[StateT], context: Context[StateT]
     ) -> bool:
         """
         Evaluate the condition for a Loop operation.
@@ -388,18 +377,15 @@ class FlowEngine(EngineBase[StateT, StateDictT]):
 
             # Get value from state
             try:
-                if isinstance(context.scope, AsyncTreeDictProtocol):
+                if isinstance(context.scope, AsyncStateProtocol):
                     value = await context.scope.get(*condition_path)
-                elif isinstance(context.scope, SyncTreeDictProtocol):
-                    value = context.scope.get(*condition_path)
+                elif isinstance(context.scope, SyncStateProtocol):
+                    value = context.scope.get_primitive(*condition_path)
                 else:
                     raise StateAccessError(
                         f"Unsupported dict type: {type(context.scope)}",
                         operation=operation,
                     )
-
-                if value is context.scope.EMPTY:
-                    value = None
 
                 return bool(value)
             except Exception as e:

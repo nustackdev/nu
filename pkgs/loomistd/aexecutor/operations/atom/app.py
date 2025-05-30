@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple, Union, cast
 from loomi._app import AsyncApp, SyncApp
 from loomi.interfaces.executor.operations import AppOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 from ..metadata import OperationMetadata
@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 
-class App(Operation[StateDictT]):
+class App(Operation[StateT]):
     """
     Executes a Loomi app as an operation.
 
@@ -51,7 +51,7 @@ class App(Operation[StateDictT]):
         *,
         state_path: Optional[Union[Tuple[str, ...], str]] = None,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the App operation.
@@ -76,7 +76,7 @@ class App(Operation[StateDictT]):
         elif isinstance(state_path, tuple):
             self._state_path = state_path
 
-        app_operation = cast(Operation[StateDictT], self._app.define())
+        app_operation = cast(Operation[StateT], self._app.define())
 
         self.children = (app_operation,)
 

@@ -16,4 +16,12 @@ class State(Tree):
     State class that extends the Tree class for synchronous state management.
     """
 
-    pass
+    @property
+    def is_sync(self) -> bool:
+        """
+        Check if the class is synchronous.
+
+        Returns:
+            Always returns True, as this class is designed for synchronous operations.
+        """
+        return True

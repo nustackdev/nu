@@ -9,10 +9,9 @@ the fundamental building blocks that don't contain child operations.
 from __future__ import annotations
 
 import inspect
-from typing import cast
 
-from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
-from loomi.interfaces.state.type_vars import StateDictT, StateT
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.type_vars import StateT
 
 from ..context.context import Context
 from ..operations import App, Function
@@ -20,7 +19,7 @@ from .base import EngineBase
 from .exceptions import StateAccessError
 
 
-class AtomEngine(EngineBase[StateT, StateDictT]):
+class AtomEngine(EngineBase[StateT]):
     """
     Engine mixin for executing atomic operations.
 
@@ -29,9 +28,7 @@ class AtomEngine(EngineBase[StateT, StateDictT]):
     the fundamental building blocks of workflows.
     """
 
-    async def exec_function(
-        self, operation: Function[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_function(self, operation: Function[StateT], context: Context[StateT]) -> None:
         """
         Execute a Function operation.
 
@@ -52,7 +49,7 @@ class AtomEngine(EngineBase[StateT, StateDictT]):
         # Execute the function through the task executor service
         await self.execute_task(operation._func, context)
 
-    async def exec_app(self, operation: App[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_app(self, operation: App[StateT], context: Context[StateT]) -> None:
         """
         Execute an App operation.
 
@@ -79,10 +76,10 @@ class AtomEngine(EngineBase[StateT, StateDictT]):
 
             try:
                 # Get the dictionary object
-                if isinstance(context.scope, AsyncTreeDictProtocol):
-                    app_scope = cast(StateDictT, await context.scope.dict(*state_path))
-                elif isinstance(context.scope, SyncTreeDictProtocol):
-                    app_scope = cast(StateDictT, context.scope.dict(*state_path))
+                if isinstance(context.scope, AsyncStateProtocol):
+                    app_scope = await context.scope.at(*state_path)
+                elif isinstance(context.scope, SyncStateProtocol):
+                    app_scope = context.scope.at(*state_path)
                 else:
                     raise StateAccessError(
                         f"Unsupported dict type: {type(context.scope)}",

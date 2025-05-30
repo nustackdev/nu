@@ -12,8 +12,8 @@ import inspect
 import uuid
 from typing import Any, Dict, Tuple
 
-from loomi.interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
-from loomi.interfaces.state.type_vars import StateDictT, StateT
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.type_vars import StateT
 
 from ..context import Context
 from ..operations import Operation, Subscribe
@@ -21,7 +21,7 @@ from .base import EngineBase
 from .exceptions import OperationExecutionError, StateAccessError
 
 
-class ReactiveEngine(EngineBase[StateT, StateDictT]):
+class ReactiveEngine(EngineBase[StateT]):
     """
     Engine mixin for executing reactive operations.
 
@@ -52,9 +52,7 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
         # Clear change events
         self._change_events.clear()
 
-    async def exec_subscribe(
-        self, operation: Subscribe[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_subscribe(self, operation: Subscribe[StateT], context: Context[StateT]) -> None:
         """
         Execute a Subscribe operation.
 
@@ -119,7 +117,8 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
             # Create the subscription
 
             if isinstance(self.state, AsyncStateProtocol):
-                subscription = await self.state.subscribe(watch_path, on_change, depth=depth)
+                state = await self.state.at(*watch_path)
+                subscription = await state.subscribe(on_change, depth=depth)
             elif isinstance(self.state, SyncStateProtocol):
                 if inspect.iscoroutinefunction(on_change):
                     # Wrap the callback in a coroutine if needed
@@ -127,7 +126,7 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
                         "on_change callback cannot be a coroutine function when state.subscribe is not async"
                     )
                 else:
-                    subscription = self.state.subscribe(watch_path, on_change, depth=depth)  # type: ignore
+                    subscription = self.state.at(*watch_path).subscribe(on_change, depth=depth)
             else:
                 raise StateAccessError(
                     f"Unsupported state type: {type(self.state)}",
@@ -157,9 +156,9 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
     async def _handle_subscribe_change(
         self,
         subscription_id: str,
-        operation: Subscribe[StateDictT],
-        parent_context: Context[StateDictT],
-        subscribe_op: Operation[StateDictT],
+        operation: Subscribe[StateT],
+        parent_context: Context[StateT],
+        subscribe_op: Operation[StateT],
         change_path: Tuple[str, ...],
     ) -> None:
         """
@@ -198,7 +197,7 @@ class ReactiveEngine(EngineBase[StateT, StateDictT]):
         self,
         subscription_id: str,
         subscription: Any,
-        operation: Subscribe[StateDictT],
+        operation: Subscribe[StateT],
     ) -> None:
         """
         Manage the lifecycle of a subscription.

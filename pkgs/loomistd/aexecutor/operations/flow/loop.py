@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Tuple
 
 from loomi.interfaces.executor.operations import LoopOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from ...context import Context
 
 
-class Loop(Operation[StateDictT]):
+class Loop(Operation[StateT]):
     """
     Repeatedly executes an operation while a condition is true.
 
@@ -56,15 +56,15 @@ class Loop(Operation[StateDictT]):
 
     def __init__(
         self,
-        op: Operation[StateDictT],
+        op: Operation[StateT],
         /,
         *,
-        condition: Optional[Callable[[Context[StateDictT]], Awaitable[bool] | bool]] = None,
+        condition: Optional[Callable[[Context[StateT]], Awaitable[bool] | bool]] = None,
         condition_path: Optional[Tuple[str, ...] | str] = None,
         max_iterations: Optional[int] = None,
-        on_finish: Optional[Operation[StateDictT]] = None,
+        on_finish: Optional[Operation[StateT]] = None,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Loop operation.
@@ -110,7 +110,7 @@ class Loop(Operation[StateDictT]):
         self.children = tuple(children)
 
     @property
-    def loop_op(self) -> Operation[StateDictT]:
+    def loop_op(self) -> Operation[StateT]:
         """
         Get the operation to execute in the loop.
 
@@ -120,7 +120,7 @@ class Loop(Operation[StateDictT]):
         return self._op
 
     @property
-    def condition(self) -> Optional[Callable[[Context[StateDictT]], Awaitable[bool] | bool]]:
+    def condition(self) -> Optional[Callable[[Context[StateT]], Awaitable[bool] | bool]]:
         """
         Get the condition function.
 
@@ -150,7 +150,7 @@ class Loop(Operation[StateDictT]):
         return self._max_iterations
 
     @property
-    def on_finish(self) -> Optional[Operation[StateDictT]]:
+    def on_finish(self) -> Optional[Operation[StateT]]:
         """
         Get the operation to execute after all iterations are complete.
 

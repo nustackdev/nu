@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from .type_vars import OperationT_co, StateDictT_co
+from .type_vars import OperationT_co, StateT_co
 
 __all__ = [
     "ContextProtocol",
 ]
 
 
-class ContextProtocol(Protocol[OperationT_co, StateDictT_co]):
+class ContextProtocol(Protocol[OperationT_co, StateT_co]):
     """
     Protocol defining the interface for a context.
     Contexts provide access to state and services during operation execution.
@@ -18,7 +18,7 @@ class ContextProtocol(Protocol[OperationT_co, StateDictT_co]):
     # --- Properties access methods --- #
 
     @property
-    def scope(self) -> "StateDictT_co":
+    def scope(self) -> "StateT_co":
         """
         Get the scoped state access.
 

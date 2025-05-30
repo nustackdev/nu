@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
+    from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
 
     from .context.context import Context
     from .operations import Function, Sequence
@@ -22,7 +22,7 @@ __all__ = [
     "SequenceOperationT_contra",
 ]
 
-ContextT = TypeVar("ContextT", bound="Context[AsyncTreeDictProtocol | SyncTreeDictProtocol]")
+ContextT = TypeVar("ContextT", bound="Context[AsyncStateProtocol | SyncStateProtocol]")
 OperationT = TypeVar("OperationT", bound="Operation")
 OperationT_co = TypeVar("OperationT_co", bound="Operation", covariant=True)
 OperationT_contra = TypeVar("OperationT_contra", bound="Operation", contravariant=True)

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, List, Optional, Type
 
 from loomi.interfaces.executor.operations import RetryOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ...context import Context
 
 
-class Retry(Operation[StateDictT]):
+class Retry(Operation[StateT]):
     """
     Retries an operation with configurable backoff.
 
@@ -50,7 +50,7 @@ class Retry(Operation[StateDictT]):
 
     def __init__(
         self,
-        op: Operation[StateDictT],
+        op: Operation[StateT],
         /,
         *,
         max_attempts: int = 3,
@@ -59,7 +59,7 @@ class Retry(Operation[StateDictT]):
         max_delay: float = 30.0,
         retry_on: Optional[List[Type[Exception]]] = None,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Retry operation.
@@ -99,7 +99,7 @@ class Retry(Operation[StateDictT]):
         self.children = (op,)
 
     @property
-    def retry_op(self) -> Operation[StateDictT]:
+    def retry_op(self) -> Operation[StateT]:
         """
         Get the operation to retry.
 

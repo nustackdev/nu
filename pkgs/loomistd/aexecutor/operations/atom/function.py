@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 from loomi.interfaces.executor.operations import FunctionOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 from ..metadata import OperationMetadata
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-class Function(Operation[StateDictT]):
+class Function(Operation[StateT]):
     """
     Executes a callable function or method.
 
@@ -45,11 +45,11 @@ class Function(Operation[StateDictT]):
 
     def __init__(
         self,
-        func: Callable[[Context[StateDictT]], Awaitable[None] | None],
+        func: Callable[[Context[StateT]], Awaitable[None] | None],
         /,
         *,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Function operation.

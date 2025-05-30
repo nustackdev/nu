@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import cast, final
+from typing import final
 
 from ..base import AppABC, AsyncAppABC, SyncAppABC
 from ..exceptions import StateError
@@ -50,12 +50,12 @@ class AsyncCommonAppStateHandler(
         if "EXECUTOR" not in self._services:
             raise StateError("No state adapter configured")
 
-        state = cast(StateT, self.get_service_dependency("STATE"))
+        state = self.get_service_dependency("STATE")
 
         if not state:
             raise StateError("State not initialized")
 
-        return state
+        return getattr(state, "state")
 
     @final
     @property
@@ -74,12 +74,12 @@ class SyncCommonAppStateHandler(
         if "EXECUTOR" not in self._services:
             raise StateError("No state adapter configured")
 
-        state = cast(SyncStateT, self.get_service_dependency("STATE"))
+        state = self.get_service_dependency("STATE")
 
         if not state:
             raise StateError("State not initialized")
 
-        return state
+        return getattr(state, "state")
 
     @final
     @property

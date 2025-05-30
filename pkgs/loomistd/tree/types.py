@@ -12,7 +12,7 @@ from __future__ import annotations
 from enum import Enum, Flag, auto
 from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 
-from loomi.interfaces.state.state import SyncCallbackFn
+from loomi.interfaces.state.observer import SyncCallbackFn
 
 if TYPE_CHECKING:
     from .node import BaseNode

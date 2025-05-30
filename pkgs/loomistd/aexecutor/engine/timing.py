@@ -10,8 +10,8 @@ from __future__ import annotations
 import asyncio
 import inspect
 
-from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
-from loomi.interfaces.state.type_vars import StateDictT, StateT
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.type_vars import StateT
 
 from ..context import Context
 from ..operations import Delay, Retry, Timeout
@@ -19,7 +19,7 @@ from .base import EngineBase
 from .exceptions import OperationExecutionError, OperationTimeoutError, StateAccessError
 
 
-class TimingEngine(EngineBase[StateT, StateDictT]):
+class TimingEngine(EngineBase[StateT]):
     """
     Engine mixin for executing timing operations.
 
@@ -27,7 +27,7 @@ class TimingEngine(EngineBase[StateT, StateDictT]):
     and Retry that control the timing aspects of operation execution.
     """
 
-    async def exec_delay(self, operation: Delay[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_delay(self, operation: Delay[StateT], context: Context[StateT]) -> None:
         """
         Execute a Delay operation.
 
@@ -52,9 +52,7 @@ class TimingEngine(EngineBase[StateT, StateDictT]):
 
         self.logger.debug("Delay operation completed")
 
-    async def exec_timeout(
-        self, operation: Timeout[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_timeout(self, operation: Timeout[StateT], context: Context[StateT]) -> None:
         """
         Execute a Timeout operation.
 
@@ -113,7 +111,7 @@ class TimingEngine(EngineBase[StateT, StateDictT]):
                     context=context,
                 )
 
-    async def exec_retry(self, operation: Retry[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_retry(self, operation: Retry[StateT], context: Context[StateT]) -> None:
         """
         Execute a Retry operation.
 
@@ -197,7 +195,7 @@ class TimingEngine(EngineBase[StateT, StateDictT]):
             raise last_exception
 
     async def _get_delay_duration(
-        self, operation: Delay[StateDictT], context: Context[StateDictT]
+        self, operation: Delay[StateT], context: Context[StateT]
     ) -> float:
         """
         Determine the delay duration from the operation configuration.
@@ -255,10 +253,10 @@ class TimingEngine(EngineBase[StateT, StateDictT]):
 
             # Get value from state
             try:
-                if isinstance(context.scope, AsyncTreeDictProtocol):
-                    value = await context.scope.get(*delay_path)
-                elif isinstance(context.scope, SyncTreeDictProtocol):
-                    value = context.scope.get(*delay_path)
+                if isinstance(context.scope, AsyncStateProtocol):
+                    value = await context.scope.get(*delay_path, default=None)
+                elif isinstance(context.scope, SyncStateProtocol):
+                    value = context.scope.get_primitive(*delay_path, default=None)
                 else:
                     raise StateAccessError(
                         f"Unsupported dict type: {type(context.scope)}",

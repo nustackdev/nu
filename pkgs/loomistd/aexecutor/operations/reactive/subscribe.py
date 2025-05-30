@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from loomi.interfaces.executor.operations import SubscribeOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 from ..metadata import OperationMetadata
@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-class Subscribe(Operation[StateDictT]):
+class Subscribe(Operation[StateT]):
     """
     Executes an operation when state changes occur.
 
@@ -58,7 +58,7 @@ class Subscribe(Operation[StateDictT]):
 
     def __init__(
         self,
-        op: Operation[StateDictT],
+        op: Operation[StateT],
         /,
         *,
         watch_path: Union[Tuple[str, ...], str],
@@ -66,7 +66,7 @@ class Subscribe(Operation[StateDictT]):
         once: bool = False,
         max_concurrency: int = 1,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Subscribe operation.
@@ -107,7 +107,7 @@ class Subscribe(Operation[StateDictT]):
         self.children = (op,)
 
     @property
-    def subscribe_op(self) -> Operation[StateDictT]:
+    def subscribe_op(self) -> Operation[StateT]:
         """
         Get the operation to execute when changes occur.
 

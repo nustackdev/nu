@@ -1,6 +1,9 @@
 import asyncio
 
 from loomi import AsyncApp, Context, Operation
+from loomix.logging import setup_logging
+
+setup_logging(".logs", 10)
 
 
 class HelloWorldApp(AsyncApp):
@@ -26,13 +29,14 @@ class HelloWorldApp(AsyncApp):
         }
 
         # Store the greetings in state
-        context.scope.dict("greetings").store(greetings)
+        with context.scope.at("greetings").with_dict_view() as view:
+            view.store(greetings)
 
     async def say_greeting(self, context: Context):
         """Say a single greeting."""
         # Map operation provides the current key in the context
         language = context["map_key"]
-        greeting = context.scope.dict("greetings").get(language)
+        greeting = context.scope.get_primitive("greetings", language)
         print(f"{language.capitalize()}: {greeting}")
 
     def define(self) -> Operation:
@@ -46,7 +50,7 @@ class HelloWorldApp(AsyncApp):
                     self.ex.Function(self.say_greeting),
                     self.ex.Delay(0.75),  # Add delay between greetings
                 ),
-                items_path=("_", "greetings"),
+                items_path=("greetings"),
                 max_concurrency=2,  # Process 2 greetings concurrently
             ),
         )
@@ -57,9 +61,10 @@ async def main():
     from loomistd.specs import AsyncExecutorSpec, SyncStateSpec
 
     state_spec = SyncStateSpec().with_value_at("storage", "path", value=".db")
-    executor_spec = AsyncExecutorSpec(state=state_spec).with_value_at(
-        "tracing", "state", "storage", "path", value=".tracing"
-    )
+    executor_spec = AsyncExecutorSpec(state_service=state_spec)
+    # .with_value_at(
+    #     "tracing", "state", "storage", "path", value=".tracing"
+    # )
     # Create and run the application
     async with HelloWorldApp(state_spec=state_spec, executor_spec=executor_spec) as app:
         await app.start()

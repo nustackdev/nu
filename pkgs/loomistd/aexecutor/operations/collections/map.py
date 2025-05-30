@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from loomi.interfaces.executor.operations import MapOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 from ..metadata import OperationMetadata
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from ...context import Context
 
 
-class Map(Operation[StateDictT]):
+class Map(Operation[StateT]):
     """
     Executes an operation for each item in a collection.
 
@@ -58,13 +58,13 @@ class Map(Operation[StateDictT]):
 
     def __init__(
         self,
-        op: Operation[StateDictT],
+        op: Operation[StateT],
         /,
         *,
         items_path: Union[Tuple[str, ...], str],
         max_concurrency: int = 1,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Map operation.
@@ -104,7 +104,7 @@ class Map(Operation[StateDictT]):
         self.children = (op,)
 
     @property
-    def map_op(self) -> Operation[StateDictT]:
+    def map_op(self) -> Operation[StateT]:
         """
         Get the operation to execute for each item.
 

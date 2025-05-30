@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from loomi.interfaces.executor.operations import ParallelOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ...context import Context
 
 
-class Parallel(Operation[StateDictT]):
+class Parallel(Operation[StateT]):
     """
     Executes operations concurrently.
 
@@ -46,12 +46,12 @@ class Parallel(Operation[StateDictT]):
 
     def __init__(
         self,
-        op: Operation[StateDictT],
+        op: Operation[StateT],
         /,
-        *ops: Operation[StateDictT],
+        *ops: Operation[StateT],
         max_concurrency: int = -1,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Operation[StateDictT] | None = None,
+        on_fail: Operation[StateT] | None = None,
     ):
         """
         Initialize the Parallel operation.

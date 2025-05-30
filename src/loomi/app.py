@@ -20,9 +20,7 @@ from .interfaces.executor.operations import (
     SubscribeOperationProtocol,
     TimeoutOperationProtocol,
 )
-from .interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
-from .interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
-from .interfaces.state.types import StateValue
+from .interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
 
 __all__ = [
     "app_type_factory",
@@ -38,10 +36,10 @@ __all__ = [
 
 # --- Type aliases --- #
 
-ContextAsyncState = ContextProtocol["OperationAsyncState", AsyncTreeDictProtocol[StateValue]]
+ContextAsyncState = ContextProtocol["OperationAsyncState", AsyncStateProtocol]
 OperationAsyncState = OperationProtocol["OperationAsyncState", "ContextAsyncState"]
 
-Context = ContextProtocol["Operation", SyncTreeDictProtocol[StateValue]]
+Context = ContextProtocol["Operation", SyncStateProtocol]
 Operation = OperationProtocol["Operation", "Context"]
 
 # --- Construct executor types --- #
@@ -98,7 +96,7 @@ AsyncExecutorAsyncState = AsyncExecutorProtocol[
 # --- Construct app types --- #
 
 
-class AsyncApp(AsyncAppGeneric[SyncStateProtocol[StateValue], AsyncExecutorSyncState]):
+class AsyncApp(AsyncAppGeneric[SyncStateProtocol, AsyncExecutorSyncState]):
     """
     App that implements:
         - async app protocol,
@@ -109,7 +107,7 @@ class AsyncApp(AsyncAppGeneric[SyncStateProtocol[StateValue], AsyncExecutorSyncS
     """
 
 
-class SyncApp(SyncAppGeneric[SyncStateProtocol[StateValue], SyncExecutorSyncState]):
+class SyncApp(SyncAppGeneric[SyncStateProtocol, SyncExecutorSyncState]):
     """
     App that implements:
         - sync app protocol,
@@ -120,7 +118,7 @@ class SyncApp(SyncAppGeneric[SyncStateProtocol[StateValue], SyncExecutorSyncStat
     """
 
 
-class AsyncAppAsyncState(AsyncAppGeneric[AsyncStateProtocol[StateValue], AsyncExecutorAsyncState]):
+class AsyncAppAsyncState(AsyncAppGeneric[AsyncStateProtocol, AsyncExecutorAsyncState]):
     """
     App that implements:
         - async app protocol,

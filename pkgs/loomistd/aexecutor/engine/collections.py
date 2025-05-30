@@ -10,8 +10,8 @@ from __future__ import annotations
 import asyncio
 from typing import List, Tuple
 
-from loomi.interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
-from loomi.interfaces.state.type_vars import StateDictT, StateT
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.type_vars import StateT
 
 from ..context import Context
 from ..operations import Map
@@ -19,7 +19,7 @@ from .base import EngineBase
 from .exceptions import OperationExecutionError, StateAccessError
 
 
-class CollectionEngine(EngineBase[StateT, StateDictT]):
+class CollectionEngine(EngineBase[StateT]):
     """
     Engine mixin for executing collection operations.
 
@@ -27,7 +27,7 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
     iterate over collections and apply operations to each item.
     """
 
-    async def exec_map(self, operation: Map[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_map(self, operation: Map[StateT], context: Context[StateT]) -> None:
         """
         Execute a Map operation.
 
@@ -53,28 +53,9 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
 
         # Get the dictionary object
         if isinstance(self.state, AsyncStateProtocol):
-            path_exists = await self.state.exists(*items_path)
+            is_dict = await self.state.is_mapping(*items_path)
         elif isinstance(self.state, SyncStateProtocol):
-            path_exists = self.state.exists(*items_path)
-        else:
-            raise StateAccessError(
-                f"Unsupported state type: {type(self.state)}",
-                operation=operation,
-            )
-
-        if not path_exists:
-            raise StateAccessError(
-                f"Items path {items_path} does not exist",
-                operation=operation,
-                context=context,
-                state_path=items_path,
-            )
-
-        # Get the dictionary object
-        if isinstance(self.state, AsyncStateProtocol):
-            is_dict = await self.state.is_dict(*items_path)
-        elif isinstance(self.state, SyncStateProtocol):
-            is_dict = self.state.is_dict(*items_path)
+            is_dict = self.state.is_mapping(*items_path)
         else:
             raise StateAccessError(
                 f"Unsupported state type: {type(self.state)}",
@@ -83,24 +64,20 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
 
         if not is_dict:
             raise StateAccessError(
-                f"Items path {items_path} is not a dictionary",
+                f"Items path {items_path} is not a mapping",
                 operation=operation,
                 context=context,
                 state_path=items_path,
             )
 
-        # Get the dictionary object
         if isinstance(self.state, AsyncStateProtocol):
-            dict_obj = await self.state.dict(*items_path)
-            keys = await dict_obj.keys()
+            container = await self.state.at(*items_path)
+            async with await container.with_dict_view() as items:
+                keys = list(await items.keys())  # type: ignore
         elif isinstance(self.state, SyncStateProtocol):
-            dict_obj = self.state.dict(*items_path)
-            keys = dict_obj.keys()
-        else:
-            raise StateAccessError(
-                f"Unsupported state type: {type(self.state)}",
-                operation=operation,
-            )
+            container = self.state.at(*items_path)
+            with container.with_dict_view() as items:
+                keys = list(items.keys())
 
         item_count = len(keys)
         self.logger.info(f"Retrieved {item_count} items to process")
@@ -121,8 +98,8 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
 
     async def _exec_map_sequential(
         self,
-        operation: Map[StateDictT],
-        context: Context[StateDictT],
+        operation: Map[StateT],
+        context: Context[StateT],
         items_path: Tuple[str, ...],
         keys: List[str],
     ) -> None:
@@ -170,8 +147,8 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
 
     async def _exec_map_concurrent(
         self,
-        operation: Map[StateDictT],
-        context: Context[StateDictT],
+        operation: Map[StateT],
+        context: Context[StateT],
         items_path: Tuple[str, ...],
         keys: List[str],
         max_concurrency: int,
@@ -248,8 +225,8 @@ class CollectionEngine(EngineBase[StateT, StateDictT]):
 
     async def _process_map_item(
         self,
-        operation: Map[StateDictT],
-        context: Context[StateDictT],
+        operation: Map[StateT],
+        context: Context[StateT],
         items_path: Tuple[str, ...],
         key: str,
         index: int,

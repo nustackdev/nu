@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Generic
 
 from loomi.interfaces.executor.operations import OperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from .metadata import OperationMetadata
 from .node import DAGNodeMixin
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from ..context.context import Context
 
 
-class Operation(ABC, DAGNodeMixin["Operation"], Generic[StateDictT]):
+class Operation(ABC, DAGNodeMixin["Operation"], Generic[StateT]):
     """
     Base class for all operations.
 

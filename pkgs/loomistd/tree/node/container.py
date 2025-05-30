@@ -181,6 +181,95 @@ class ContainerNode(BaseNode):
     # ========================================================================
 
     # ------------------------------------------------------------------------
+    # HELPER STATIC METHODS (typically used internally)
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol]:
+        """Extract structure and protocol from raw type data.
+
+        Args:
+            type_data: Raw type data from storage, expected to be a list or tuple
+                with two elements: [structure_value, protocol_value].
+
+        Returns:
+            tuple[ContainerStructure, ContainerProtocol]: Parsed structure and protocol enums.
+
+        Raises:
+            ValueError: If type_data is malformed or cannot be parsed.
+        """
+        if not isinstance(type_data, (list, tuple)) or len(type_data) != 2:
+            raise ValueError(f"Malformed type data: {type_data}")
+
+        try:
+            structure = ContainerStructure(type_data[0])
+            protocol = ContainerProtocol(type_data[1])
+        except ValueError as e:
+            raise ValueError(f"Invalid type data values: {type_data}") from e
+
+        return structure, protocol
+
+    @staticmethod
+    def is_mapping_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
+        """Check if the container is a mapping container.
+
+        Args:
+            structure: The structure of the container.
+            protocol: The protocol flags of the container.
+
+        Returns:
+            bool: True if the container is a mapping container, False otherwise.
+        """
+        return (
+            structure & ContainerStructure.MAPPING_CONTAINER == ContainerStructure.MAPPING_CONTAINER
+        )
+
+    @staticmethod
+    def is_indexed_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
+        """Check if the container is an indexed container.
+
+        Args:
+            structure: The structure of the container.
+            protocol: The protocol flags of the container.
+
+        Returns:
+            bool: True if the container is an indexed container, False otherwise.
+        """
+        return (
+            structure & ContainerStructure.INDEXED_CONTAINER == ContainerStructure.INDEXED_CONTAINER
+        )
+
+    @staticmethod
+    def is_linked_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
+        """Check if the container is a linked container.
+
+        Args:
+            structure: The structure of the container.
+            protocol: The protocol flags of the container.
+
+        Returns:
+            bool: True if the container is a linked container, False otherwise.
+        """
+        return (
+            structure & ContainerStructure.LINKED_CONTAINER == ContainerStructure.LINKED_CONTAINER
+        )
+
+    @staticmethod
+    def is_hashed_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
+        """Check if the container is a hashed container.
+
+        Args:
+            structure: The structure of the container.
+            protocol: The protocol flags of the container.
+
+        Returns:
+            bool: True if the container is a hashed container, False otherwise.
+        """
+        return (
+            structure & ContainerStructure.HASHED_CONTAINER == ContainerStructure.HASHED_CONTAINER
+        )
+
+    # ------------------------------------------------------------------------
     # HIGH-LEVEL CONTAINER OPERATIONS
     # ------------------------------------------------------------------------
 
@@ -358,7 +447,7 @@ class ContainerNode(BaseNode):
 
             # Try to parse structure/protocol
             try:
-                structure, protocol = cls._extract_type_info(raw_data)
+                structure, protocol = cls.extract_type_info(raw_data)
             except ValueError:
                 pass  # Keep as None - indicates malformed data
 
@@ -372,31 +461,6 @@ class ContainerNode(BaseNode):
 
         except StorageKeyError:
             return ParentInfo(path=path, exists=False)
-
-    @staticmethod
-    def _extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol]:
-        """Extract structure and protocol from raw type data.
-
-        Args:
-            type_data: Raw type data from storage, expected to be a list or tuple
-                with two elements: [structure_value, protocol_value].
-
-        Returns:
-            tuple[ContainerStructure, ContainerProtocol]: Parsed structure and protocol enums.
-
-        Raises:
-            ValueError: If type_data is malformed or cannot be parsed.
-        """
-        if not isinstance(type_data, (list, tuple)) or len(type_data) != 2:
-            raise ValueError(f"Malformed type data: {type_data}")
-
-        try:
-            structure = ContainerStructure(type_data[0])
-            protocol = ContainerProtocol(type_data[1])
-        except ValueError as e:
-            raise ValueError(f"Invalid type data values: {type_data}") from e
-
-        return structure, protocol
 
     # ------------------------------------------------------------------------
     # VALIDATION LAYER - Validates Conditions and Raises Errors
@@ -967,7 +1031,7 @@ class ContainerNode(BaseNode):
         # Check if it's a container
         try:
             child_type_info = self.tx.get(child_struct_path.to_tuple())
-            child_structure, child_protocol = self._extract_type_info(child_type_info)
+            child_structure, child_protocol = self.extract_type_info(child_type_info)
 
             return ChildInfo(
                 key=key,

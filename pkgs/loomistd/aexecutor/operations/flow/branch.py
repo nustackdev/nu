@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, Optional, Tupl
 
 from loomi.interfaces.executor.operations import BranchOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 BranchConditionValue = str | bool | int | float | None
 
 
-class Branch(Operation[StateDictT]):
+class Branch(Operation[StateT]):
     """
     Conditionally executes operations based on a condition.
 
@@ -50,13 +50,13 @@ class Branch(Operation[StateDictT]):
 
     def __init__(
         self,
-        ops: Dict[BranchConditionValue, Operation[StateDictT]],
+        ops: Dict[BranchConditionValue, Operation[StateT]],
         /,
         *,
-        condition: Optional[Callable[[Context[StateDictT]], Awaitable[Any] | Any]] = None,
+        condition: Optional[Callable[[Context[StateT]], Awaitable[Any] | Any]] = None,
         condition_path: Optional[Tuple[str, ...] | str] = None,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Branch operation.
@@ -92,7 +92,7 @@ class Branch(Operation[StateDictT]):
         self.children = tuple(ops.values())
 
     @property
-    def branch_ops(self) -> Dict[BranchConditionValue, Operation[StateDictT]]:
+    def branch_ops(self) -> Dict[BranchConditionValue, Operation[StateT]]:
         """
         Get the branch operations dictionary.
 
@@ -102,7 +102,7 @@ class Branch(Operation[StateDictT]):
         return self._ops
 
     @property
-    def condition(self) -> Optional[Callable[[Context[StateDictT]], Awaitable[Any] | Any]]:
+    def condition(self) -> Optional[Callable[[Context[StateT]], Awaitable[Any] | Any]]:
         """
         Get the condition function.
 

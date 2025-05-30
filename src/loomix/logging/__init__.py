@@ -7,7 +7,8 @@ from rich.logging import RichHandler
 from rich.traceback import install
 
 
-def setup_logging(log_dir_path: Path, log_level: int = logging.DEBUG):
+def setup_logging(log_dir_path: Path | str, log_level: int = logging.DEBUG):
+    log_dir_path = Path(log_dir_path) if isinstance(log_dir_path, str) else log_dir_path
     # Define log format
     console_formatter = logging.Formatter("[cyan]%(name)s[/cyan] - %(message)s")
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")

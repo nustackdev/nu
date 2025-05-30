@@ -12,8 +12,9 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Awaitable, Callable, Generic, Optional, cast
 
-from loomi.interfaces.state.state import AsyncStateProtocol, SyncStateProtocol
-from loomi.interfaces.state.type_vars import StateDictT, StateT
+from loomi.interfaces.state.state import AsyncStateServiceProtocol, SyncStateServiceProtocol
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.type_vars import StateT
 
 from ..context import Context
 from ..operations import (
@@ -36,7 +37,7 @@ from ..services.tracing import TracingService
 from .exceptions import OperationConfigError, StateAccessError, wrap_error
 
 
-class EngineBase(ABC, Generic[StateT, StateDictT]):
+class EngineBase(ABC, Generic[StateT]):
     """
     Base class for all operation execution engines.
 
@@ -52,15 +53,25 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
     """
 
     # Services
-    state: StateT
+    state_service: AsyncStateServiceProtocol | SyncStateServiceProtocol
     executor: TaskExecutionService
     tracing: TracingService
     logger: LoggingService
 
+    @property
+    def state(self) -> AsyncStateProtocol | SyncStateProtocol:
+        """
+        Get the state service.
+
+        This property should be overridden by subclasses to provide the actual
+        state service instance.
+        """
+        return self.state_service.state
+
     async def execute(
         self,
-        operation: Operation[StateDictT],
-        parent_context: Optional[Context[StateDictT]] = None,
+        operation: Operation[StateT],
+        parent_context: Optional[Context[StateT]] = None,
     ) -> None:
         """
         Execute an operation.
@@ -82,15 +93,15 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
         # Determine state path based on context
         if parent_context is None:
-            state_path = ("_",)  # Default root path
+            state_path = tuple()  # Default root path
         else:
-            state_path = parent_context.scope.path
+            state_path = parent_context.scope.path.to_tuple()
 
         # Get the dictionary object
         if isinstance(self.state, AsyncStateProtocol):
-            scope = await self.state.dict(*state_path)
+            scope = await self.state.at(*state_path)
         elif isinstance(self.state, SyncStateProtocol):
-            scope = self.state.dict(*state_path)
+            scope = self.state.at(*state_path)
         else:
             raise StateAccessError(
                 f"Unsupported state type: {type(self.state)}",
@@ -98,22 +109,23 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             )
 
         # Create root context for the operation
-        context = Context[StateDictT](
+        context = Context[StateT](
             operation,
-            cast(StateDictT, scope),
+            cast(StateT, scope),
             {},  # Empty attributes dict
         )
 
-        await self.tracing.start_execution(operation)
+        # await self.tracing.start_execution(operation)
 
         try:
             # Execute the operation with its context
             await self.exec_operation(context)
         finally:
             # Finalize tracing
-            await self.tracing.end_execution()
+            # await self.tracing.end_execution()
+            pass
 
-    async def exec_operation(self, context: Context[StateDictT]) -> None:
+    async def exec_operation(self, context: Context[StateT]) -> None:
         """
         Execute an operation with its context.
 
@@ -133,7 +145,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         self.logger.log_operation_start(operation.metadata.name)
 
         # Initialize tracing if enabled
-        await self.tracing.start_span(operation, context)
+        # await self.tracing.start_span(operation, context)
 
         try:
             # Dispatch to the appropriate execution method based on operation type
@@ -141,27 +153,27 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             operation_type = type(operation)
 
             if operation_type is Function:
-                await self.exec_function(cast(Function[StateDictT], operation), context)
+                await self.exec_function(cast(Function[StateT], operation), context)
             elif operation_type is App:
-                await self.exec_app(cast(App[StateDictT], operation), context)
+                await self.exec_app(cast(App[StateT], operation), context)
             elif operation_type is Sequence:
-                await self.exec_sequence(cast(Sequence[StateDictT], operation), context)
+                await self.exec_sequence(cast(Sequence[StateT], operation), context)
             elif operation_type is Parallel:
-                await self.exec_parallel(cast(Parallel[StateDictT], operation), context)
+                await self.exec_parallel(cast(Parallel[StateT], operation), context)
             elif operation_type is Branch:
-                await self.exec_branch(cast(Branch[StateDictT], operation), context)
+                await self.exec_branch(cast(Branch[StateT], operation), context)
             elif operation_type is Loop:
-                await self.exec_loop(cast(Loop[StateDictT], operation), context)
+                await self.exec_loop(cast(Loop[StateT], operation), context)
             elif operation_type is Delay:
-                await self.exec_delay(cast(Delay[StateDictT], operation), context)
+                await self.exec_delay(cast(Delay[StateT], operation), context)
             elif operation_type is Retry:
-                await self.exec_retry(cast(Retry[StateDictT], operation), context)
+                await self.exec_retry(cast(Retry[StateT], operation), context)
             elif operation_type is Timeout:
-                await self.exec_timeout(cast(Timeout[StateDictT], operation), context)
+                await self.exec_timeout(cast(Timeout[StateT], operation), context)
             elif operation_type is Map:
-                await self.exec_map(cast(Map[StateDictT], operation), context)
+                await self.exec_map(cast(Map[StateT], operation), context)
             elif operation_type is Subscribe:
-                await self.exec_subscribe(cast(Subscribe[StateDictT], operation), context)
+                await self.exec_subscribe(cast(Subscribe[StateT], operation), context)
             else:
                 await self._exec_unknown(operation, context)
 
@@ -169,14 +181,14 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             self.logger.log_operation_end(operation.metadata.name)
 
             # Finalize tracing
-            await self.tracing.end_span(operation, context)
+            # await self.tracing.end_span(operation, context)
 
         except Exception as e:
             # Log the error
             self.logger.log_operation_error(operation.metadata.name, e)
 
             # Record error in tracing
-            await self.tracing.record_exception(operation, context, e)
+            # await self.tracing.record_exception(operation, context, e)
 
             # Handle on_fail operation if specified
             if operation._on_fail:
@@ -194,8 +206,8 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
 
     async def execute_task(
         self,
-        func: Callable[[Context[StateDictT]], Awaitable[None] | None],
-        context: Context[StateDictT],
+        func: Callable[[Context[StateT]], Awaitable[None] | None],
+        context: Context[StateT],
         timeout: Optional[float] = None,
     ) -> None:
         """
@@ -223,9 +235,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
             func(context)
 
     @abstractmethod
-    async def exec_function(
-        self, operation: Function[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_function(self, operation: Function[StateT], context: Context[StateT]) -> None:
         """
         Execute a Function operation.
 
@@ -238,7 +248,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_app(self, operation: App[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_app(self, operation: App[StateT], context: Context[StateT]) -> None:
         """
         Execute a App operation.
 
@@ -251,9 +261,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_sequence(
-        self, operation: Sequence[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_sequence(self, operation: Sequence[StateT], context: Context[StateT]) -> None:
         """
         Execute a Sequence operation.
 
@@ -266,9 +274,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_parallel(
-        self, operation: Parallel[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_parallel(self, operation: Parallel[StateT], context: Context[StateT]) -> None:
         """
         Execute a Parallel operation.
 
@@ -281,9 +287,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_branch(
-        self, operation: Branch[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_branch(self, operation: Branch[StateT], context: Context[StateT]) -> None:
         """
         Execute a Branch operation.
 
@@ -296,7 +300,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_loop(self, operation: Loop[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_loop(self, operation: Loop[StateT], context: Context[StateT]) -> None:
         """
         Execute a Loop operation.
 
@@ -309,7 +313,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_delay(self, operation: Delay[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_delay(self, operation: Delay[StateT], context: Context[StateT]) -> None:
         """
         Execute a Delay operation.
 
@@ -322,7 +326,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_retry(self, operation: Retry[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_retry(self, operation: Retry[StateT], context: Context[StateT]) -> None:
         """
         Execute a Retry operation.
 
@@ -335,9 +339,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_timeout(
-        self, operation: Timeout[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_timeout(self, operation: Timeout[StateT], context: Context[StateT]) -> None:
         """
         Execute a Timeout operation.
 
@@ -350,7 +352,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_map(self, operation: Map[StateDictT], context: Context[StateDictT]) -> None:
+    async def exec_map(self, operation: Map[StateT], context: Context[StateT]) -> None:
         """
         Execute a Map operation.
 
@@ -363,9 +365,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         pass
 
     @abstractmethod
-    async def exec_subscribe(
-        self, operation: Subscribe[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def exec_subscribe(self, operation: Subscribe[StateT], context: Context[StateT]) -> None:
         """
         Execute a Subscribe operation.
 
@@ -377,9 +377,7 @@ class EngineBase(ABC, Generic[StateT, StateDictT]):
         """
         pass
 
-    async def _exec_unknown(
-        self, operation: Operation[StateDictT], context: Context[StateDictT]
-    ) -> None:
+    async def _exec_unknown(self, operation: Operation[StateT], context: Context[StateT]) -> None:
         """
         Handle unknown operation types.
 

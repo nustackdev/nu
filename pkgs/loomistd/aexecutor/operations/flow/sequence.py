@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Optional
 
 from loomi.interfaces.executor.operations import SequenceOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ...context import Context
 
 
-class Sequence(Operation[StateDictT]):
+class Sequence(Operation[StateT]):
     """
     Executes operations in sequential order.
 
@@ -41,11 +41,11 @@ class Sequence(Operation[StateDictT]):
 
     def __init__(
         self,
-        op: Operation[StateDictT],
+        op: Operation[StateT],
         /,
-        *ops: Operation[StateDictT],
+        *ops: Operation[StateT],
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Sequence operation.

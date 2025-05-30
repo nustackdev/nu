@@ -30,25 +30,13 @@ class StateService(SyncService):
     storage: StorageServiceProtocol[PathTuple, Value, Any, Any] = UseService()
     observer: ObserverServiceProtocol[PathTuple, Any] = UseService()
 
-    _adapter: State
-
     def setup(self):
-        self._adapter = State(
+        self._state = State(
             backend=ObservableKVBackend(
                 storage=self.storage,
                 observer=self.observer,
             )
         )
-
-    @property
-    def is_sync(self) -> bool:
-        """
-        Check if the state is synchronous.
-
-        Returns:
-            True if the state is synchronous, False otherwise
-        """
-        return True
 
     @property
     def state(self) -> State:
@@ -58,7 +46,7 @@ class StateService(SyncService):
         Returns:
             The state object
         """
-        return self._adapter
+        return self._state
 
 
 class StateSpec(Spec):

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Callable, Concatenate, ParamSpec
 
 from loomi.attr import UseService
 from loomi.interfaces.executor.executor import AsyncExecutorProtocol
-from loomi.interfaces.state.type_vars import StateDictT, StateT
+from loomi.interfaces.state.type_vars import StateT
 from loomi.service import AsyncService
 from loomi.spec import Spec, SpecField
 from loomistd.state import StateSpec
@@ -34,7 +34,6 @@ from ..operations import (
 )
 from ..services.logging import LoggingService, LoggingServiceSpec
 from ..services.task_execution import TaskExecutionService, TaskExecutionServiceSpec
-from ..services.tracing import TracingService, TracingServiceSpec
 from .atom import AtomEngine
 from .base import Operation
 from .collections import CollectionEngine
@@ -47,11 +46,11 @@ P = ParamSpec("P")
 
 class Executor(
     AsyncService,
-    AtomEngine[StateT, StateDictT],
-    FlowEngine[StateT, StateDictT],
-    TimingEngine[StateT, StateDictT],
-    CollectionEngine[StateT, StateDictT],
-    ReactiveEngine[StateT, StateDictT],
+    AtomEngine[StateT],
+    FlowEngine[StateT],
+    TimingEngine[StateT],
+    CollectionEngine[StateT],
+    ReactiveEngine[StateT],
 ):
     """
     Central orchestrator for operation execution.
@@ -72,24 +71,24 @@ class Executor(
 
     # --- Service specifications --- #
 
-    state: StateT = UseService()
+    state_service: StateT = UseService()
     executor: TaskExecutionService = UseService()
-    tracing: TracingService = UseService()
     logger: LoggingService = UseService()
+    # tracing: TracingService = UseService()
 
     # --- Operations --- #
 
-    App: type[App[StateDictT]] = App
-    Branch: type[Branch[StateDictT]] = Branch
-    Delay: type[Delay[StateDictT]] = Delay
-    Function: type[Function[StateDictT]] = Function
-    Loop: type[Loop[StateDictT]] = Loop
-    Map: type[Map[StateDictT]] = Map
-    Parallel: type[Parallel[StateDictT]] = Parallel
-    Retry: type[Retry[StateDictT]] = Retry
-    Sequence: type[Sequence[StateDictT]] = Sequence
-    Subscribe: type[Subscribe[StateDictT]] = Subscribe
-    Timeout: type[Timeout[StateDictT]] = Timeout
+    App: type[App[StateT]] = App
+    Branch: type[Branch[StateT]] = Branch
+    Delay: type[Delay[StateT]] = Delay
+    Function: type[Function[StateT]] = Function
+    Loop: type[Loop[StateT]] = Loop
+    Map: type[Map[StateT]] = Map
+    Parallel: type[Parallel[StateT]] = Parallel
+    Retry: type[Retry[StateT]] = Retry
+    Sequence: type[Sequence[StateT]] = Sequence
+    Subscribe: type[Subscribe[StateT]] = Subscribe
+    Timeout: type[Timeout[StateT]] = Timeout
 
     def Compound(
         self,
@@ -144,7 +143,7 @@ class Executor(
 
     # --- Execution methods --- #
 
-    async def exec_operation(self, context: Context[StateDictT]) -> None:
+    async def exec_operation(self, context: Context[StateT]) -> None:
         """
         Execute an operation with its context.
 
@@ -173,12 +172,12 @@ class ExecutorSpec(Spec):
 
     name: str = SpecField(default="execution_engine")
     factory: type = SpecField(default=Executor)
-    state: Spec = SpecField(default_factory=StateSpec)
+    state_service: Spec = SpecField(default_factory=StateSpec)
     executor: Spec = SpecField(default_factory=TaskExecutionServiceSpec)
     logger: Spec = SpecField(default_factory=LoggingServiceSpec)
-    tracing: Spec = SpecField(
-        default=TracingServiceSpec().with_value_at("state", "storage", "path", value=".tracing")
-    )
+    # tracing: Spec = SpecField(
+    #     default=TracingServiceSpec().with_value_at("state", "storage", "path", value=".tracing")
+    # )
 
 
 if TYPE_CHECKING:

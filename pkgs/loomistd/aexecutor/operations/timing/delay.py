@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Tuple, Union
 
 from loomi.interfaces.executor.operations import DelayOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ...context import Context
 
 
-class Delay(Operation[StateDictT]):
+class Delay(Operation[StateT]):
     """
     Introduces a delay in the execution flow.
 
@@ -45,13 +45,11 @@ class Delay(Operation[StateDictT]):
 
     def __init__(
         self,
-        delay: Optional[
-            Union[float, Callable[[Context[StateDictT]], Awaitable[float] | float]]
-        ] = None,
+        delay: Optional[Union[float, Callable[[Context[StateT]], Awaitable[float] | float]]] = None,
         *,
         delay_path: Optional[Union[Tuple[str, ...], str]] = None,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Delay operation.
@@ -84,7 +82,7 @@ class Delay(Operation[StateDictT]):
     @property
     def delay(
         self,
-    ) -> Optional[Union[float, Callable[[Context[StateDictT]], Awaitable[float] | float]]]:
+    ) -> Optional[Union[float, Callable[[Context[StateT]], Awaitable[float] | float]]]:
         """
         Get the delay value or function.
 

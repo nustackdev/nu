@@ -14,10 +14,13 @@ from typing import Optional, Self
 
 import attrs
 
+from loomistd.kv import StorageKeyError
+
 from .backend import SubscriptionProtocol, TransactionContextManagerProtocol, TransactionProtocol
+from .node import ContainerNode
 from .path import Path
 from .transaction import TransactionalBase
-from .types import CallbackFn, PathComponent
+from .types import EMPTY, CallbackFn, Empty, PathComponent, Value
 from .view import DictView, ListView, create_view_context_manager
 
 __all__ = [
@@ -403,3 +406,205 @@ class Tree(TransactionalBase):
             ObserverError: If unsubscribe fails
         """
         self.backend.unsubscribe(subscription)
+
+    # =========================================================================
+    # SHORTCUTS FOR COMMON OPERATIONS
+    # =========================================================================
+
+    def has_primitive(self, *paths: PathComponent) -> bool:
+        """
+        Check if a path exists.
+
+        Args:
+            *paths: Path components to check
+
+        Returns:
+            bool: True if path exists, False otherwise
+
+        Example:
+            ```python
+            if tree.at("users").has("alice"):
+                print("Alice exists")
+            else:
+                print("Alice does not exist")
+            ```
+        """
+        return self.backend.exists(self.path.join(*paths).to_tuple())
+
+    def get_primitive(self, *paths: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
+        """
+        Get value at a path.
+
+        Args:
+            *paths: Path components to get
+            default: Default value if path does not exist
+
+        Returns:
+            Value at the path, or default if not found
+
+        Example:
+            ```python
+            email = tree.at("users", "alice").get("email", default="not found")
+            if email is None:
+                print("Alice's email not found")
+            else:
+                print(f"Alice's email: {email}")
+            ```
+        """
+        try:
+            return self.backend.get(self.path.join(*paths).to_tuple())
+        except StorageKeyError:
+            return default
+
+    # IMPORTANT:
+    # - Set and remove operations are not implemented, as they are handled by specific Views.
+    #   Views might implement specific logic for setting and removing values (e.g. indexed Views keeping aggregated data),
+    #   so we don't want to bypass them here.
+    #   Instead, users should use corresponding Views to perform these operations in a consistent manner.
+    # - Hypothetically, has and read operations might also have specific logic in Views, but until we have a use case for that,
+    #   we keep shortcut methods here for simplicity.
+
+    def is_primitive(self, *paths: PathComponent) -> bool:
+        """
+        Check if a path is a primitive (non-container).
+
+        Args:
+            *paths: Path components to check
+
+        Returns:
+            bool: True if path is a primitive, False otherwise
+
+        Example:
+            ```python
+            if tree.at("users").is_primitive("alice", "email"):
+                print("Alice's email is a primitive value")
+            else:
+                print("Alice's email is not a primitive value")
+            ```
+        """
+        return self.backend.exists(self.path.join(*paths).to_tuple())
+
+    def is_container(self, *paths: PathComponent) -> bool:
+        """
+        Check if a path is a container (mapping, indexed, linked, or hashed).
+
+        Args:
+            *paths: Path components to check
+
+        Returns:
+            bool: True if path is a container, False otherwise
+
+        Example:
+            ```python
+            if tree.at("users").is_container("alice"):
+                print("Alice's profile is a container")
+            else:
+                print("Alice's profile is not a container")
+            ```
+        """
+        return self.backend.exists(self.path.join(*paths).struct_path.to_tuple())
+
+    def is_mapping(self, *paths: PathComponent) -> bool:
+        """
+        Check if a path is a mapping (dictionary-like).
+
+        Args:
+            *paths: Path components to check
+
+        Returns:
+            bool: True if path is a mapping, False otherwise
+
+        Example:
+            ```python
+            if tree.at("users").is_mapping("alice"):
+                print("Alice's profile is a mapping")
+            else:
+                print("Alice's profile is not a mapping")
+            ```
+        """
+        print(self.path.join(*paths))
+        try:
+            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
+            structure, protocol = ContainerNode.extract_type_info(container_type_info)
+            return ContainerNode.is_mapping_container(structure, protocol)
+        except StorageKeyError:
+            # Container does not exist
+            return False
+
+    def is_indexed(self, *paths: PathComponent) -> bool:
+        """
+        Check if a path is an indexed container (list-like).
+
+        Args:
+            *paths: Path components to check
+
+        Returns:
+            bool: True if path is an indexed container, False otherwise
+
+        Example:
+            ```python
+            if tree.at("tasks").is_indexed():
+                print("Tasks is an indexed container")
+            else:
+                print("Tasks is not an indexed container")
+            ```
+        """
+        try:
+            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
+            structure, protocol = ContainerNode.extract_type_info(container_type_info)
+            return ContainerNode.is_indexed_container(structure, protocol)
+        except StorageKeyError:
+            # Container does not exist
+            return False
+
+    def is_linked(self, *paths: PathComponent) -> bool:
+        """
+        Check if a path is a linked container (set-like).
+
+        Args:
+            *paths: Path components to check
+
+        Returns:
+            bool: True if path is a linked container, False otherwise
+
+        Example:
+            ```python
+            if tree.at("tags").is_linked():
+                print("Tags is a linked container")
+            else:
+                print("Tags is not a linked container")
+            ```
+        """
+        try:
+            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
+            structure, protocol = ContainerNode.extract_type_info(container_type_info)
+            return ContainerNode.is_linked_container(structure, protocol)
+        except StorageKeyError:
+            # Container does not exist
+            return False
+
+    def is_hashed(self, *paths: PathComponent) -> bool:
+        """
+        Check if a path is a hashed container (hash-like).
+
+        Args:
+            *paths: Path components to check
+
+        Returns:
+            bool: True if path is a hashed container, False otherwise
+
+        Example:
+            ```python
+            if tree.at("users").is_hashed():
+                print("Users is a hashed container")
+            else:
+                print("Users is not a hashed container")
+            ```
+        """
+        try:
+            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
+            structure, protocol = ContainerNode.extract_type_info(container_type_info)
+            return ContainerNode.is_hashed_container(structure, protocol)
+        except StorageKeyError:
+            # Container does not exist
+            return False

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Optional
 
 from loomi.interfaces.executor.operations import TimeoutOperationProtocol
 from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.type_vars import StateT
 
 from ..base import Operation
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ...context import Context
 
 
-class Timeout(Operation[StateDictT]):
+class Timeout(Operation[StateT]):
     """
     Adds a timeout constraint to an operation.
 
@@ -45,13 +45,13 @@ class Timeout(Operation[StateDictT]):
 
     def __init__(
         self,
-        op: Operation[StateDictT],
+        op: Operation[StateT],
         /,
         *,
         timeout: float = 30.0,
-        on_timeout: Optional[Operation[StateDictT]] = None,
+        on_timeout: Optional[Operation[StateT]] = None,
         error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Operation[StateDictT]] = None,
+        on_fail: Optional[Operation[StateT]] = None,
     ):
         """
         Initialize the Timeout operation.
@@ -82,7 +82,7 @@ class Timeout(Operation[StateDictT]):
         self.children = tuple(children)
 
     @property
-    def timeout_op(self) -> Operation[StateDictT]:
+    def timeout_op(self) -> Operation[StateT]:
         """
         Get the operation to execute with a timeout.
 
@@ -102,7 +102,7 @@ class Timeout(Operation[StateDictT]):
         return self._timeout
 
     @property
-    def on_timeout(self) -> Optional[Operation[StateDictT]]:
+    def on_timeout(self) -> Optional[Operation[StateT]]:
         """
         Get the operation to execute if the timeout is reached.
 

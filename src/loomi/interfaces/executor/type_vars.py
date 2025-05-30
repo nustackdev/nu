@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeAlias, TypeVar
 
 if TYPE_CHECKING:
-    from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
+    from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
 
     from .context import ContextProtocol
     from .executor import AsyncExecutorProtocol, SyncExecutorProtocol
@@ -30,7 +30,7 @@ __all__ = [
     "SyncContextT",
     "SyncContextT_co",
     "SyncContextT_contra",
-    "StateDictT_co",
+    "StateT_co",
     # Base operation types
     "OperationT",
     "OperationT_co",
@@ -77,10 +77,8 @@ __all__ = [
 
 # --- Context types --- #
 
-_Context: TypeAlias = (
-    "ContextProtocol[OperationProtocol, AsyncTreeDictProtocol | SyncTreeDictProtocol]"
-)
-_SyncContext: TypeAlias = "ContextProtocol[OperationProtocol, SyncTreeDictProtocol]"
+_Context: TypeAlias = "ContextProtocol[OperationProtocol, AsyncStateProtocol | SyncStateProtocol]"
+_SyncContext: TypeAlias = "ContextProtocol[OperationProtocol, SyncStateProtocol]"
 
 ContextT = TypeVar("ContextT", bound="_Context")
 ContextT_co = TypeVar("ContextT_co", bound="_Context", covariant=True)
@@ -90,9 +88,7 @@ SyncContextT = TypeVar("SyncContextT", bound="_SyncContext")
 SyncContextT_co = TypeVar("SyncContextT_co", bound="_SyncContext", covariant=True)
 SyncContextT_contra = TypeVar("SyncContextT_contra", bound="_SyncContext", contravariant=True)
 
-StateDictT_co = TypeVar(
-    "StateDictT_co", bound="AsyncTreeDictProtocol | SyncTreeDictProtocol", covariant=True
-)
+StateT_co = TypeVar("StateT_co", bound="AsyncStateProtocol | SyncStateProtocol", covariant=True)
 
 # --- Operation types --- #
 

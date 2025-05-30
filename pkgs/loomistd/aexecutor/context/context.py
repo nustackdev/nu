@@ -12,15 +12,15 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic
 
 from loomi.interfaces.executor.context import ContextProtocol
-from loomi.interfaces.state.tree import AsyncTreeDictProtocol, SyncTreeDictProtocol
-from loomi.interfaces.state.type_vars import StateDictT
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.type_vars import StateT
 
 if TYPE_CHECKING:
     from ..operations.base import Operation
 
 
 @dataclass
-class Context(Generic[StateDictT]):
+class Context(Generic[StateT]):
     """
     Execution context for operations.
 
@@ -30,7 +30,7 @@ class Context(Generic[StateDictT]):
     """
 
     _operation: "Operation"  # The operation this context is associated with
-    _scope: StateDictT  # The scoped state access
+    _scope: StateT  # The scoped state access
     _attributes: dict[str, Any] = field(default_factory=dict)  # Context attributes storage
 
     # --- Properties access methods --- #
@@ -45,7 +45,7 @@ class Context(Generic[StateDictT]):
         return self._operation
 
     @property
-    def scope(self) -> StateDictT:
+    def scope(self) -> StateT:
         """
         Get the scoped state access.
 
@@ -104,7 +104,7 @@ class Context(Generic[StateDictT]):
     def derive(
         self,
         operation: Operation | None = None,
-        scope: "AsyncTreeDictProtocol | SyncTreeDictProtocol | None" = None,
+        scope: "AsyncStateProtocol | SyncStateProtocol | None" = None,
     ) -> Context:
         """
         Create a new context derived from this one.
