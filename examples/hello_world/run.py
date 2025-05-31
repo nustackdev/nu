@@ -9,6 +9,22 @@ setup_logging(".logs", 10)
 class HelloWorldApp(AsyncApp):
     """A simple hello world app with multiple languages."""
 
+    def define(self) -> Operation:
+        """Define the workflow for this app."""
+        return self.ex.Sequence(
+            # 1. Initialize the greetings in state
+            self.ex.Function(self.initialize_greetings),
+            # 2. Process each greeting using Map with a delay
+            self.ex.Map(
+                self.ex.Sequence(
+                    self.ex.Function(self.say_greeting),
+                    self.ex.Delay(0.75),  # Add delay between greetings
+                ),
+                items_path=("greetings"),
+                max_concurrency=2,  # Process 2 greetings concurrently
+            ),
+        )
+
     async def initialize_greetings(self, context: Context):
         """Store greetings in different languages in state."""
         greetings = {
@@ -39,22 +55,6 @@ class HelloWorldApp(AsyncApp):
         greeting = context.scope.get_primitive("greetings", language)
         print(f"{language.capitalize()}: {greeting}")
 
-    def define(self) -> Operation:
-        """Define the workflow for this app."""
-        return self.ex.Sequence(
-            # 1. Initialize the greetings in state
-            self.ex.Function(self.initialize_greetings),
-            # 2. Process each greeting using Map with a delay
-            self.ex.Map(
-                self.ex.Sequence(
-                    self.ex.Function(self.say_greeting),
-                    self.ex.Delay(0.75),  # Add delay between greetings
-                ),
-                items_path=("greetings"),
-                max_concurrency=2,  # Process 2 greetings concurrently
-            ),
-        )
-
 
 async def main():
     # Basic configuration
@@ -62,9 +62,7 @@ async def main():
 
     state_spec = SyncStateSpec().with_value_at("storage", "path", value=".db")
     executor_spec = AsyncExecutorSpec(state_service=state_spec)
-    # .with_value_at(
-    #     "tracing", "state", "storage", "path", value=".tracing"
-    # )
+
     # Create and run the application
     async with HelloWorldApp(state_spec=state_spec, executor_spec=executor_spec) as app:
         await app.start()
