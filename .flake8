@@ -13,7 +13,8 @@ exclude =
     .pytest_cache,
     .vscode,
     .github,
-    *.pyi
+    *.pyi,
+    benchmarks/**
 max-line-length = 100
 extend-ignore =
     E266,
