@@ -11,7 +11,6 @@ from ._exceptions import (
 from ._protocols import TaskProtocol, WorkerPoolProtocol
 from ._types import (
     TaskStatus,
-    TaskT,
     WorkerCleanupFunction,
     WorkerFunction,
     WorkerInitFunction,
@@ -30,7 +29,6 @@ __all__ = [
     "WorkerPoolError",
     "WorkerPoolOperationError",
     "TaskStatus",
-    "TaskT",
     "WorkerFunction",
     "WorkerInitFunction",
     "WorkerCleanupFunction",
