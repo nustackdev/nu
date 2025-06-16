@@ -110,6 +110,9 @@ class Spec(BaseModel, Hashable):
     def _serialize_value(self, value: Any) -> Any:
         if value is None:
             return None
+        elif callable(value) and hasattr(value, "__module__") and hasattr(value, "__name__"):
+            # Handle function serialization
+            return f"{value.__module__}.{value.__name__}"
         elif isinstance(value, Spec):
             return value._dump()
         elif isinstance(value, Path):

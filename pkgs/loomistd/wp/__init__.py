@@ -9,7 +9,15 @@ from ._exceptions import (
     WorkerPoolOperationError,
 )
 from ._protocols import TaskProtocol, WorkerPoolProtocol
-from ._types import TaskStatus, TaskT, WorkerFunction, WorkerPoolMode
+from ._types import (
+    TaskStatus,
+    TaskT,
+    WorkerCleanupFunction,
+    WorkerFunction,
+    WorkerInitFunction,
+    WorkerPoolMode,
+)
+from ._worker_init import create_worker_initializer, create_worker_wrapper
 
 __all__ = [
     "BaseTask",
@@ -24,5 +32,9 @@ __all__ = [
     "TaskStatus",
     "TaskT",
     "WorkerFunction",
+    "WorkerInitFunction",
+    "WorkerCleanupFunction",
     "WorkerPoolMode",
+    "create_worker_initializer",
+    "create_worker_wrapper",
 ]

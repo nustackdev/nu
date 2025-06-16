@@ -5,6 +5,8 @@ from typing import Any, Callable, Literal, TypeVar
 
 __all__ = [
     "WorkerFunction",
+    "WorkerInitFunction",
+    "WorkerCleanupFunction",
     "TaskStatus",
     "WorkerPoolMode",
     "TaskT",
@@ -15,6 +17,8 @@ TaskT = TypeVar("TaskT")
 
 # Core types
 WorkerFunction = Callable[..., Any]
+WorkerInitFunction = Callable[..., Any]
+WorkerCleanupFunction = Callable[..., Any]
 WorkerPoolMode = Literal["active", "inactive"]
 
 

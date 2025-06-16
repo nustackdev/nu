@@ -12,7 +12,8 @@ from loomi.spec import Spec, SpecField
 from .._base import BaseTask, BaseWorkerPool
 from .._exceptions import TaskCancellationError, WorkerPoolOperationError
 from .._protocols import TaskProtocol
-from .._types import TaskStatus, WorkerFunction
+from .._types import TaskStatus, WorkerCleanupFunction, WorkerFunction, WorkerInitFunction
+from .._worker_init import create_worker_initializer
 from .logger import logger
 
 __all__ = [
@@ -110,14 +111,29 @@ class MultiprocessingWorkerPool(BaseWorkerPool, SyncService):
     def _connect_impl(self) -> None:
         """Initialize the process pool."""
         try:
+            # Create worker initializer if needed
+            initializer = create_worker_initializer(
+                init_func=self.spec.worker_init_func,
+                init_args=self.spec.worker_init_args,
+                init_kwargs=self.spec.worker_init_kwargs,
+                cleanup_func=self.spec.worker_cleanup_func,
+                cleanup_args=self.spec.worker_cleanup_args,
+                cleanup_kwargs=self.spec.worker_cleanup_kwargs,
+            )
+
             # Set start method if specified
             if self.spec.start_method:
                 ctx = mp.get_context(self.spec.start_method)
                 self._executor = ProcessPoolExecutor(
-                    max_workers=self.spec.max_workers, mp_context=ctx
+                    max_workers=self.spec.max_workers,
+                    mp_context=ctx,
+                    initializer=initializer,
                 )
             else:
-                self._executor = ProcessPoolExecutor(max_workers=self.spec.max_workers)
+                self._executor = ProcessPoolExecutor(
+                    max_workers=self.spec.max_workers,
+                    initializer=initializer,
+                )
 
             logger.debug(f"Connected multiprocessing pool with {self.max_workers} workers")
 
@@ -178,6 +194,14 @@ class MultiprocessingWorkerPoolSpec(Spec):
     factory: type = SpecField(default=MultiprocessingWorkerPool)
     max_workers: int = SpecField(default_factory=lambda: mp.cpu_count())
     start_method: str | None = SpecField(default=None)  # None, 'fork', 'spawn', 'forkserver'
+
+    # Worker initialization parameters
+    worker_init_func: WorkerInitFunction | None = SpecField(default=None)
+    worker_init_args: tuple[Any, ...] | None = SpecField(default=None)
+    worker_init_kwargs: dict[str, Any] | None = SpecField(default=None)
+    worker_cleanup_func: WorkerCleanupFunction | None = SpecField(default=None)
+    worker_cleanup_args: tuple[Any, ...] | None = SpecField(default=None)
+    worker_cleanup_kwargs: dict[str, Any] | None = SpecField(default=None)
 
 
 if TYPE_CHECKING:
