@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 App = TypeVar("App", bound="AsyncApp | SyncApp")
-Service = TypeVar("App", bound="AsyncService | SyncService")
+Service = TypeVar("Service", bound="AsyncService | SyncService")
 
 
 def UseApp(app: type[App], spec: "Spec | None" = None) -> App:
@@ -18,7 +18,7 @@ def UseApp(app: type[App], spec: "Spec | None" = None) -> App:
     return cast(App, ResourceDescriptor[App](spec))
 
 
-def UseService(spec: "Spec | None" = None) -> Service:
+def UseService(spec: "Spec | None" = None) -> Service:  # type: ignore
     """Create a service specification."""
     return cast(Service, ResourceDescriptor[Service](spec))
 
