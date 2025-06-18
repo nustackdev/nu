@@ -45,7 +45,7 @@ class HelloWorldApp(AsyncApp):
         }
 
         # Store the greetings in state
-        with context.scope.at("greetings").with_dict_view() as view:
+        with self.state.at("greetings").with_dict_view() as view:
             view.store(greetings)
 
     async def say_greeting(self, context: Context):
