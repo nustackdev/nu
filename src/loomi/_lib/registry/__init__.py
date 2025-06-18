@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from .exceptions import RegistryError, RegistryKeyError, RegistryStateError
-from .registry import ServiceRegistry
+from .registry import ResourceRegistry
 
 __all__ = [
-    "ServiceRegistry",
+    "ResourceRegistry",
     "RegistryError",
     "RegistryStateError",
     "RegistryKeyError",

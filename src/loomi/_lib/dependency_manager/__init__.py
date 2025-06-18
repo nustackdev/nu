@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from .context import ServiceContext
+from .context import ResourceContext
 from .exceptions import CircularDependencyError, DependencyError, DependencyNotFoundError
 from .manager import DependencyManager
 from .node import DependencyNode
-from .types import ServiceRole
+from .types import ResourceRole
 
 __all__ = [
-    "ServiceContext",
+    "ResourceContext",
     "DependencyManager",
     "DependencyNode",
-    "ServiceRole",
+    "ResourceRole",
     "CircularDependencyError",
     "DependencyError",
     "DependencyNotFoundError",

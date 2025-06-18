@@ -2,110 +2,112 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
-from .context import ServiceContext
-from .types import ServiceRole
+from .context import ResourceContext
+from .types import ResourceRole
 
 if TYPE_CHECKING:
-    from loomi._service import Service, ServiceABC
+    from ..resource import Resource, ResourceABC
 
 __all__ = [
     "DependencyNode",
 ]
 
-ServiceT = TypeVar("ServiceT", bound="ServiceABC")
+ResourceT = TypeVar("ResourceT", bound="ResourceABC")
 
 
-class DependencyNode(Generic[ServiceT]):
+class DependencyNode(Generic[ResourceT]):
     """
     Node in dependency graph tracking relationships and usage contexts.
 
-    This class represents a service in the dependency graph, tracking both
-    its relationships with other services and its usage context. It maintains
+    This class represents a resource in the dependency graph, tracking both
+    its relationships with other resources and its usage context. It maintains
     bidirectional relationship information to support proper cleanup decisions.
 
     Attributes:
-        service: The service this node represents
-        context: Tracks service roles and usage
-        dependencies: Named dependencies this service requires
-        dependents: Services that depend on this service
-        initiators: Keys of services that initiated relationships
+        resource: The resource this node represents
+        context: Tracks resource roles and usage
+        dependencies: Named dependencies this resource requires
+        dependents: Resources that depend on this resource
+        initiators: Keys of resources that initiated relationships
 
     The distinction between dependents and initiators is important:
     - dependents tracks current relationships
     - initiators tracks historical relationship creation for cleanup
     """
 
-    def __init__(self, service: ServiceT, is_dependency: bool) -> None:
-        # The service this node represents
-        self.service = service
+    def __init__(self, resource: ResourceT, is_dependency: bool) -> None:
+        # The resource this node represents
+        self.resource = resource
 
-        # Track service usage context
-        self.context = ServiceContext(ServiceRole.DEPENDENCY if is_dependency else ServiceRole.ROOT)
+        # Track resource usage context
+        self.context = ResourceContext(
+            ResourceRole.DEPENDENCY if is_dependency else ResourceRole.ROOT
+        )
 
-        # Map of dependency name to service instance
-        self.dependencies: dict[str, ServiceT] = {}
+        # Map of dependency name to resource instance
+        self.dependencies: dict[str, ResourceT] = {}
 
-        # Set of services that depend on this one
-        self.dependents: set[ServiceT] = set()
+        # Set of resources that depend on this one
+        self.dependents: set[ResourceT] = set()
 
-        # Track which services initiated relationships (for cleanup)
+        # Track which resources initiated relationships (for cleanup)
         self.initiators: set[str] = set()
 
-        # Track references of services (or root variables) that no longer use this service
-        # This is used to determine if a service is orphaned and can be cleaned up
+        # Track references of resources (or root variables) that no longer use this resource
+        # This is used to determine if a resource is orphaned and can be cleaned up
         self.detached_dependents: set[str] = set()
 
     def register_root(self) -> None:
         """
-        Register a new root usage of this service.
+        Register a new root usage of this resource.
         """
-        self.context.add_role(ServiceRole.ROOT)
+        self.context.add_role(ResourceRole.ROOT)
 
     def unregister_root(self) -> None:
         """
-        Unregister a root usage of this service.
+        Unregister a root usage of this resource.
         """
-        self.context.remove_role(ServiceRole.ROOT)
+        self.context.remove_role(ResourceRole.ROOT)
 
-    def add_dependent(self, dependent: ServiceT) -> None:
+    def add_dependent(self, dependent: ResourceT) -> None:
         """
-        Add a dependent service and update context.
+        Add a dependent resource and update context.
 
-        Updates both the relationship tracking and service context
+        Updates both the relationship tracking and resource context
         to reflect new dependency usage.
 
         Args:
-            dependent: Service that depends on this one
+            dependent: Resource that depends on this one
         """
         self.dependents.add(dependent)
         self.initiators.add(dependent.key)
-        self.context.add_role(ServiceRole.DEPENDENCY)
+        self.context.add_role(ResourceRole.DEPENDENCY)
 
-    def remove_dependent(self, dependent: ServiceT) -> None:
+    def remove_dependent(self, dependent: ResourceT) -> None:
         """
-        Remove a dependent service and update context.
+        Remove a dependent resource and update context.
 
-        Updates both relationship tracking and service context
+        Updates both relationship tracking and resource context
         when a dependency relationship ends.
 
         Args:
-            dependent: Service to remove
+            dependent: Resource to remove
         """
         self.dependents.discard(dependent)
         self.initiators.discard(dependent.key)
-        self.context.remove_role(ServiceRole.DEPENDENCY)
+        self.context.remove_role(ResourceRole.DEPENDENCY)
 
-    def add_dependency(self, name: str, dependency: ServiceT) -> None:
+    def add_dependency(self, name: str, dependency: ResourceT) -> None:
         """
         Record a named dependency relationship.
 
         Args:
-            name: Name of dependency in parent service
-            dependency: The dependent service
+            name: Name of dependency in parent resource
+            dependency: The dependent resource
         """
         self.dependencies[name] = dependency
 
-    def get_dependency(self, name: str) -> "Service | None":
+    def get_dependency(self, name: str) -> "Resource | None":
         """
         Get named dependency if it exists.
 
@@ -113,11 +115,11 @@ class DependencyNode(Generic[ServiceT]):
             name: Dependency name to look up
 
         Returns:
-            Dependency service or None if not found
+            Dependency resource or None if not found
         """
-        return cast("Service", self.dependencies.get(name))
+        return cast("Resource", self.dependencies.get(name))
 
-    def remove_dependency(self, name: str) -> "Service | None":
+    def remove_dependency(self, name: str) -> "Resource | None":
         """
         Remove and return named dependency if it exists.
 
@@ -125,25 +127,25 @@ class DependencyNode(Generic[ServiceT]):
             name: Name of dependency to remove
 
         Returns:
-            Removed service or None if not found
+            Removed resource or None if not found
         """
-        return cast("Service", self.dependencies.pop(name, None))
+        return cast("Resource", self.dependencies.pop(name, None))
 
-    def detach_dependent(self, service: str) -> None:
+    def detach_dependent(self, resource: str) -> None:
         """
-        Detach a reference to this service.
+        Detach a reference to this resource.
 
         Args:
-            service: Service key or root variable to detach
+            resource: Resource key or root variable to detach
         """
-        self.detached_dependents.add(service)
+        self.detached_dependents.add(resource)
 
     def __repr__(self) -> str:
         return (
             "<DependencyNode: "
-            f"\nservice={self.service.readable_name}, "
-            f"\nservice_state={self.service._service_state}, "
-            f"\nservice_key={self.service.key}, "
+            f"\nresource={self.resource.readable_name}, "
+            f"\nresource_state={self.resource._resource_state}, "
+            f"\nresource_key={self.resource.key}, "
             f"\ndependencies_count={len(self.dependencies)}, "
             f"\ndependents_count={len(self.dependents)}, "
             f"\ndetached_dependents={len(self.detached_dependents)}, "

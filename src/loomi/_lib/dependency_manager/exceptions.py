@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi._service import ServiceError
+from ..resource import ResourceError
 
 __all__ = [
     "CircularDependencyError",
@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 
-class DependencyError(ServiceError):
+class DependencyError(ResourceError):
     """Base exception for dependency-related errors."""
 
     pass

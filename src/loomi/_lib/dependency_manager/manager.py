@@ -1,13 +1,13 @@
 """
-Service dependency management system.
+Resource dependency management system.
 
 This module implements a dependency management system that handles
-service lifecycle, relationships, and cleanup. The system is designed to properly
-handle services that can transition between being root services and dependencies
+resource lifecycle, relationships, and cleanup. The system is designed to properly
+handle resources that can transition between being root resources and dependencies
 while maintaining proper lifecycle tracking.
 
 Key Features:
-- Context-aware service lifecycle management
+- Context-aware resource lifecycle management
 - Role transition support (root <-> dependency)
 - Smart cleanup based on both creation context and current relationships
 - Thread-safe composite operations (to implement)
@@ -25,96 +25,95 @@ from .logger import logger
 from .node import DependencyNode
 
 if TYPE_CHECKING:
-    from loomi._lib.service_registry import ServiceRegistry
-    from loomi._service import Service, ServiceABC
-    from loomi._spec import Spec
+    from ..registry import ResourceRegistry
+    from ..resource import Resource, ResourceABC, Spec
 
 __all__ = [
     "DependencyManager",
 ]
-ServiceT = TypeVar("ServiceT", bound="ServiceABC")
+ResourceT = TypeVar("ResourceT", bound="ResourceABC")
 
 
-class DependencyManager(Generic[ServiceT]):
+class DependencyManager(Generic[ResourceT]):
     """
-    Manages service dependency relationships and lifecycle decisions.
+    Manages resource dependency relationships and lifecycle decisions.
 
     This class is the core of the dependency management system. It handles:
-    - Service registration and role tracking
+    - Resource registration and role tracking
     - Dependency resolution and relationship management
     - Cleanup decision making based on context and relationships
     - Thread-safe operations for concurrent access
 
-    The manager uses a graph structure where services are nodes and
+    The manager uses a graph structure where resources are nodes and
     dependencies are edges. Each node tracks both its relationships and
     usage context to enable smart cleanup decisions.
 
     Key Features:
-    - Context-aware service management
+    - Context-aware resource management
     - Role transition support
     - Smart cleanup based on both history and current state
     - Thread-safe operations
     - Circular dependency detection
     """
 
-    def __init__(self, registry: "ServiceRegistry[ServiceT]") -> None:
+    def __init__(self, registry: "ResourceRegistry[ResourceT]") -> None:
         """
         Initialize dependency manager.
 
         Args:
-            registry: Service registry to coordinate with
+            registry: Resource registry to coordinate with
         """
         self._registry = registry
         self._nodes: dict[str, DependencyNode] = {}
         self._lock = Lock()
         logger.debug("Initialized dependency manager")
 
-    def register_service(self, service: ServiceT, is_dependency: bool = False) -> None:
+    def register_resource(self, resource: ResourceT, is_dependency: bool = False) -> None:
         """
-        Register service with proper context tracking.
+        Register resource with proper context tracking.
 
-        If service already exists, updates its context for the new role.
-        New services get a fresh context based on their creation role.
+        If resource already exists, updates its context for the new role.
+        New resources get a fresh context based on their creation role.
 
         Args:
-            service: Service to register
+            resource: Resource to register
             is_dependency: Whether registering as dependency
         """
-        if not self._node_exists(service):
-            self._create_node(service, is_dependency)
+        if not self._node_exists(resource):
+            self._create_node(resource, is_dependency)
 
         # If not a dependency, register as new root
         if not is_dependency:
-            self._get_node(service).register_root()
+            self._get_node(resource).register_root()
 
     def resolve_dependency(
         self,
-        parent: ServiceT,
+        parent: ResourceT,
         name: str,
         spec: Spec,
-    ) -> "Service":
+    ) -> "Resource":
         """
-        Resolve dependency relationship, creating service if needed.
+        Resolve dependency relationship, creating resource if needed.
 
         This method handles the complete dependency resolution process:
-        1. Creates/gets dependency service instance
+        1. Creates/gets dependency resource instance
         2. Validates no cycles would be created
         3. Establishes relationship tracking
 
         Args:
-            parent: Service requesting dependency
+            parent: Resource requesting dependency
             name: Dependency name in parent
             spec: Dependency specification
 
         Returns:
-            Resolved dependency service
+            Resolved dependency resource
 
         Raises:
             DependencyError: Invalid spec or circular dependency
         """
         if not self._node_exists(parent):
             raise DependencyError(
-                f"Parent service not found: '{parent.readable_name}'. Register first."
+                f"Parent resource not found: '{parent.readable_name}'. Register first."
             )
 
         factory = spec.factory
@@ -136,20 +135,20 @@ class DependencyManager(Generic[ServiceT]):
 
     def add_relationship(
         self,
-        parent: ServiceT,
+        parent: ResourceT,
         name: str,
-        child: ServiceT,
+        child: ResourceT,
     ) -> None:
         """
         Record new dependency relationship.
 
         Establishes bidirectional relationship tracking and updates
-        contexts for both services appropriately.
+        contexts for both resources appropriately.
 
         Args:
-            parent: Parent service
+            parent: Parent resource
             name: Dependency name in parent
-            child: Child (dependency) service
+            child: Child (dependency) resource
         """
         parent_node = self._get_node(parent)
         child_node = self._get_node(child)
@@ -161,62 +160,62 @@ class DependencyManager(Generic[ServiceT]):
             f"Added relationship: '{parent.readable_name}.{name}' -> '{child.readable_name}'"
         )
 
-    def get_dependencies(self, service: ServiceT) -> dict[str, "Service"]:
+    def get_dependencies(self, resource: ResourceT) -> dict[str, "Resource"]:
         """
-        Get all dependencies of a service.
+        Get all dependencies of a resource.
 
         Args:
-            service: Service to get dependencies for
+            resource: Resource to get dependencies for
 
         Returns:
-            Dict mapping dependency names to services
+            Dict mapping dependency names to resources
 
         Raises:
-            DependencyError: If service not found
+            DependencyError: If resource not found
         """
-        return dict(self._get_node(service).dependencies)
+        return dict(self._get_node(resource).dependencies)
 
-    def get_dependents(self, service: ServiceT) -> set["Service"]:
+    def get_dependents(self, resource: ResourceT) -> set["Resource"]:
         """
-        Get all services depending on given service.
+        Get all resources depending on given resource.
 
         Args:
-            service: Service to get dependents for
+            resource: Resource to get dependents for
 
         Returns:
-            Set of dependent services
+            Set of dependent resources
 
         Raises:
-            DependencyError: If service not found
+            DependencyError: If resource not found
         """
-        return set(self._get_node(service).dependents)
+        return set(self._get_node(resource).dependents)
 
-    def detach_relationship(self, parent: ServiceT, child: ServiceT) -> None:
+    def detach_relationship(self, parent: ResourceT, child: ResourceT) -> None:
         """
-        Register a dateched parent (dependent) service.
+        Register a dateched parent (dependent) resource.
 
         Args:
-            parent: Parent (dependent) service
-            child: Child  service
+            parent: Parent (dependent) resource
+            child: Child  resource
         """
         child_node = self._get_node(child)
         child_node.detach_dependent(parent.key)
 
-    def can_auto_shutdown(self, service: ServiceT) -> bool:
+    def can_auto_shutdown(self, resource: ResourceT) -> bool:
         """
-        Determine if service can be auto shut down (cascade shutdown triggered from dependent).
+        Determine if resource can be auto shut down (cascade shutdown triggered from dependent).
 
-        A service can be auto shut down if all these conditions are met:
+        A resource can be auto shut down if all these conditions are met:
         1. Has no registered direct (root) usage
         2. All dependents are detached
 
         Args:
-            service: Service to check
+            resource: Resource to check
 
         Returns:
-            True if service can be shutdown
+            True if resource can be shutdown
         """
-        node = self._get_node(service)
+        node = self._get_node(resource)
 
         # Check if no direct usage
         if node.context.root_usage_count > 0:
@@ -231,7 +230,7 @@ class DependencyManager(Generic[ServiceT]):
 
         return True
 
-    def _validate_no_cycles(self, parent: ServiceT, child: ServiceT) -> None:
+    def _validate_no_cycles(self, parent: ResourceT, child: ResourceT) -> None:
         """
         Ensure no dependency cycles would be created.
 
@@ -241,76 +240,76 @@ class DependencyManager(Generic[ServiceT]):
         visited: set[str] = {parent.key}
         self._check_cycles(child, visited)
 
-    def _check_cycles(self, current: ServiceT, visited: set[str]) -> None:
+    def _check_cycles(self, current: ResourceT, visited: set[str]) -> None:
         """Recursively check for dependency cycles."""
         if current.key in visited:
-            path = " -> ".join(self._nodes[key].service.readable_name for key in visited)
+            path = " -> ".join(self._nodes[key].resource.readable_name for key in visited)
             raise CircularDependencyError(
                 f"Circular dependency detected: {path} -> {current.readable_name}"
             )
 
         visited.add(current.key)
         for dep in self.get_dependencies(current).values():
-            self._check_cycles(cast(ServiceT, dep), visited)
+            self._check_cycles(cast(ResourceT, dep), visited)
         visited.remove(current.key)
 
-    def _node_exists(self, service: ServiceT) -> bool:
+    def _node_exists(self, resource: ResourceT) -> bool:
         """
-        Check if node exists for service.
+        Check if node exists for resource.
 
         Args:
-            service: Service to check
+            resource: Resource to check
 
         Returns:
             True if node exists
         """
-        return service.key in self._nodes
+        return resource.key in self._nodes
 
-    def _get_node(self, service: ServiceT) -> DependencyNode:
+    def _get_node(self, resource: ResourceT) -> DependencyNode:
         """
         Get existing node.
 
         Args:
-            service: Service needing a node
+            resource: Resource needing a node
 
         Returns:
-            Service node
+            Resource node
 
         Raises:
             DependencyError: If node not found
         """
-        node = self._nodes.get(service.key, None)
+        node = self._nodes.get(resource.key, None)
         if node is None:
-            raise DependencyError(f"Node not found for {service.readable_name}")
+            raise DependencyError(f"Node not found for {resource.readable_name}")
         return node
 
-    def _create_node(self, service: ServiceT, is_dependency: bool = False) -> None:
+    def _create_node(self, resource: ResourceT, is_dependency: bool = False) -> None:
         """
-        Create a new service node with proper context.
+        Create a new resource node with proper context.
 
         Args:
-            service: Service needing a node
+            resource: Resource needing a node
             is_dependency: Whether creating for dependency
 
         Raises:
             DependencyError: If node already exists
         """
-        node = self._nodes.get(service.key, None)
+        node = self._nodes.get(resource.key, None)
         if not node:
-            node = DependencyNode(service, is_dependency)
-            self._nodes[service.key] = node
+            node = DependencyNode(resource, is_dependency)
+            self._nodes[resource.key] = node
         else:
-            raise DependencyError(f"Node already exists for {service.readable_name}")
+            raise DependencyError(f"Node already exists for {resource.readable_name}")
 
-    def _narrow_to_service(self, service: ServiceT) -> "Service":
+    def _narrow_to_resource(self, resource: ResourceT) -> "Resource":
         """
-        Narrow the type of the internal service from its specific type (bound to ServiceABC)
-        to the base Service type for API compatibility.
+        Narrow the type of the internal resource from its specific type (bound to ResourceABC)
+        to the base Resource type for API compatibility.
 
         This method is used to ensure the public interface returns the more general type
         while the implementation can work with the more specific type internally.
         """
-        return cast("Service", service)
+        return cast("Resource", resource)
 
     def __repr__(self) -> str:
         """
@@ -329,9 +328,9 @@ class DependencyManager(Generic[ServiceT]):
         # Generate chain reprs
         chains = []
         for node in self._nodes.values():
-            service_name = node.service.readable_name
+            resource_name = node.resource.readable_name
             dependencies = ", ".join(dep.readable_name for dep in node.dependencies.values())
-            chains.append(f"{service_name} -> [{dependencies}]")
+            chains.append(f"{resource_name} -> [{dependencies}]")
         chains = "\n * ".join(chains)
 
         return (

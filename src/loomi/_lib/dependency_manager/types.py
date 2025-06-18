@@ -7,21 +7,21 @@ if TYPE_CHECKING:
     pass
 
 __all__ = [
-    "ServiceRole",
+    "ResourceRole",
 ]
 
 
-class ServiceRole(Enum):
+class ResourceRole(Enum):
     """
-    Defines valid roles a service can have in the system.
+    Defines valid roles a resource can have in the system.
 
-    A service can transition between roles during its lifecycle:
-    - ROOT: Service created directly by application code
-    - DEPENDENCY: Service created to fulfill another service's dependency
+    A resource can transition between roles during its lifecycle:
+    - ROOT: Resource created directly by application code
+    - DEPENDENCY: Resource created to fulfill another resource's dependency
 
-    Services can hold multiple roles simultaneously when they're used
+    Resources can hold multiple roles simultaneously when they're used
     both directly and as dependencies.
     """
 
-    ROOT = auto()  # Service was created directly
-    DEPENDENCY = auto()  # Service was created as a dependency
+    ROOT = auto()  # Resource was created directly
+    DEPENDENCY = auto()  # Resource was created as a dependency

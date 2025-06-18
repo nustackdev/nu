@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi._service import ServiceError
+from ..resource import ResourceError
 
 __all__ = [
     "RegistryError",
@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 
-class RegistryError(ServiceError):
+class RegistryError(ResourceError):
     """Base exception for registry-related errors."""
 
     pass
@@ -22,6 +22,6 @@ class RegistryStateError(RegistryError):
 
 
 class RegistryKeyError(RegistryError):
-    """Raised when service key is invalid or not found."""
+    """Raised when resource key is invalid or not found."""
 
     pass
