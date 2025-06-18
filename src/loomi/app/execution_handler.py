@@ -7,17 +7,15 @@ from loomi.interfaces.executor.context import ContextProtocol
 from loomi.interfaces.executor.executor import SyncExecutorProtocol
 from loomi.interfaces.executor.operations import OperationProtocol
 
-from ..base import AppABC, AsyncAppABC, SyncAppABC
-from ..exceptions import ExecutionError
-from ..types import ExecutorT, StateT, SyncExecutorT, SyncStateT
+from .base import AppABC, AsyncAppABC, SyncAppABC
+from .exceptions import ExecutionError
+from .types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 
 
 class CommonAppExecutionHandler(AppABC[StateT, ExecutorT]):
     """
     Base class for app tasks execution.
     """
-
-    pass
 
 
 class AsyncAppExecutionHandler(
@@ -31,10 +29,10 @@ class AsyncAppExecutionHandler(
     @property
     def executor(self) -> ExecutorT:
         """Check and return app's state service."""
-        if "EXECUTOR" not in self._services:
+        if "EXECUTOR" not in self._get_dependencies():
             raise ExecutionError("No execution engine adapter configured")
 
-        executor = cast(ExecutorT, self.get_service_dependency("EXECUTOR"))
+        executor = cast(ExecutorT, self._get_dependency("EXECUTOR"))
 
         if not executor:
             raise ExecutionError("Execution engine not initialized")
@@ -82,10 +80,10 @@ class SyncAppExecutionHandler(
     @property
     def executor(self) -> SyncExecutorT:
         """Check and return app's state service."""
-        if "EXECUTOR" not in self._services:
+        if "EXECUTOR" not in self._get_dependencies():
             raise ExecutionError("No execution engine adapter configured")
 
-        executor = cast(SyncExecutorT, self.get_service_dependency("EXECUTOR"))
+        executor = cast(SyncExecutorT, self._get_dependency("EXECUTOR"))
 
         if not executor:
             raise ExecutionError("Execution engine not initialized")

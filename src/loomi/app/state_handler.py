@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import final
 
-from ..base import AppABC, AsyncAppABC, SyncAppABC
-from ..exceptions import StateError
-from ..types import ExecutorT, StateT, SyncExecutorT, SyncStateT
+from .base import AppABC, AsyncAppABC, SyncAppABC
+from .exceptions import StateError
+from .types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 
 __all__ = [
     "CommonAppStateHandler",
-    "AsyncCommonAppStateHandler",
-    "SyncCommonAppStateHandler",
+    "AsyncAppStateHandler",
+    "SyncAppStateHandler",
 ]
 
 
@@ -21,7 +21,7 @@ class CommonAppStateHandler(AppABC[StateT, ExecutorT]):
     pass
 
 
-class AsyncCommonAppStateHandler(
+class AsyncAppStateHandler(
     CommonAppStateHandler[StateT, ExecutorT], AsyncAppABC[StateT, ExecutorT]
 ):
     """
@@ -47,10 +47,10 @@ class AsyncCommonAppStateHandler(
     @property
     def state(self) -> StateT:
         """Check and return app's state service."""
-        if "EXECUTOR" not in self._services:
+        if "EXECUTOR" not in self._get_dependencies():
             raise StateError("No state adapter configured")
 
-        state = self.get_service_dependency("STATE")
+        state = self._get_dependency("STATE")
 
         if not state:
             raise StateError("State not initialized")
@@ -64,17 +64,17 @@ class AsyncCommonAppStateHandler(
         return self.state
 
 
-class SyncCommonAppStateHandler(
+class SyncAppStateHandler(
     CommonAppStateHandler[SyncStateT, SyncExecutorT], SyncAppABC[SyncStateT, SyncExecutorT]
 ):
     @final
     @property
     def state(self) -> SyncStateT:
         """Check and return app's state service."""
-        if "EXECUTOR" not in self._services:
+        if "EXECUTOR" not in self._get_dependencies():
             raise StateError("No state adapter configured")
 
-        state = self.get_service_dependency("STATE")
+        state = self._get_dependency("STATE")
 
         if not state:
             raise StateError("State not initialized")

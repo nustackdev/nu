@@ -11,46 +11,17 @@ This module provides custom exceptions for the app module, including
 
 from __future__ import annotations
 
-from typing import Any, Type
+from typing import Any
 
 __all__ = [
     "AppError",
-    "DependencyError",
-    "ServiceDependencyError",
     "StateError",
+    "ExecutionError",
 ]
 
 
 class AppError(Exception):
     """Base class all app-related exceptions."""
-
-    pass
-
-
-class DependencyError(AppError):
-    """
-    Raised for dependency-related errors.
-
-    Examples:
-    - Missing dependency
-    - Circular dependency
-    - Initialization failure
-    """
-
-    def __init__(self, message: str, dependency_type: Type | None = None, **context: Any) -> None:
-        self.dependency_type = dependency_type
-        self.context = context
-        super().__init__(message)
-
-
-class ServiceDependencyError(AppError):
-    """
-    Raised for service-related errors.
-
-    Examples:
-    - Serivce dependency errors
-    - Service lifecycle errors
-    """
 
     pass
 

@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import overload
 
-from ._app import AsyncApp as AsyncAppGeneric
-from ._app import SyncApp as SyncAppGeneric
-from .interfaces.executor.context import ContextProtocol
-from .interfaces.executor.executor import AsyncExecutorProtocol, SyncExecutorProtocol
-from .interfaces.executor.operations import (
+from loomi.interfaces.executor.context import ContextProtocol
+from loomi.interfaces.executor.executor import AsyncExecutorProtocol, SyncExecutorProtocol
+from loomi.interfaces.executor.operations import (
     AppOperationProtocol,
     BranchOperationProtocol,
     DelayOperationProtocol,
@@ -20,7 +18,10 @@ from .interfaces.executor.operations import (
     SubscribeOperationProtocol,
     TimeoutOperationProtocol,
 )
-from .interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+
+from .app import AsyncApp as AsyncAppGeneric
+from .app import SyncApp as SyncAppGeneric
 
 __all__ = [
     "app_type_factory",

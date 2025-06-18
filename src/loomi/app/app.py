@@ -21,11 +21,8 @@ The `SyncApp` class inherits from:
 
 from __future__ import annotations
 
-from .composer import AsyncAppComposer, SyncAppComposer
-from .handlers.execution_handler import AsyncAppExecutionHandler, SyncAppExecutionHandler
-from .handlers.service_handler import AsyncAppServicesHandler, SyncAppServicesHandler
-from .handlers.state_handler import AsyncCommonAppStateHandler, SyncCommonAppStateHandler
-from .initializer import AsyncAppInitializer, SyncAppInitializer
+from .execution_handler import AsyncAppExecutionHandler, SyncAppExecutionHandler
+from .state_handler import AsyncAppStateHandler, SyncAppStateHandler
 from .types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 
 __all__ = [
@@ -35,20 +32,14 @@ __all__ = [
 
 
 class AsyncApp(
-    AsyncAppInitializer[StateT, ExecutorT],
-    AsyncCommonAppStateHandler[StateT, ExecutorT],
+    AsyncAppStateHandler[StateT, ExecutorT],
     AsyncAppExecutionHandler[StateT, ExecutorT],
-    AsyncAppServicesHandler[StateT, ExecutorT],
-    AsyncAppComposer[StateT, ExecutorT],
 ):
     pass
 
 
 class SyncApp(
-    SyncAppInitializer[SyncStateT, SyncExecutorT],
-    SyncCommonAppStateHandler[SyncStateT, SyncExecutorT],
+    SyncAppStateHandler[SyncStateT, SyncExecutorT],
     SyncAppExecutionHandler[SyncStateT, SyncExecutorT],
-    SyncAppServicesHandler[SyncStateT, SyncExecutorT],
-    SyncAppComposer[SyncStateT, SyncExecutorT],
 ):
     pass

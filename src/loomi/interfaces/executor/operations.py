@@ -26,7 +26,7 @@ from .type_vars import ContextT_co, OperationT
 from .types import ErrorBehavior
 
 if TYPE_CHECKING:
-    from loomi._app import AsyncApp, SyncApp
+    from loomi.app import AsyncApp, SyncApp
 
 
 @runtime_checkable
