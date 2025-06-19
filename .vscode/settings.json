@@ -13,9 +13,16 @@
     ],
     "python.analysis.diagnosticMode": "workspace",
     "python.languageServer": "Pylance",
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/src",
-        "${workspaceFolder}/pkgs",
-        "${workspaceFolder}/stubs"
-    ]
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.next": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.next": true
+    }
 }
