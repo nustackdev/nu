@@ -1,658 +1,445 @@
 #!/usr/bin/env python3
 """
-Ray vs Multiprocessing Communication Benchmark
+Execution Backend Benchmark: Multiprocessing vs Ray
 
-Focuses on sequential get/set operations with 200-char strings.
-Tests Ray actor coordination pattern vs multiprocessing.Queue.
-
-Requirements: pip install ray psutil
+Benchmarks task dispatch and execution performance for different computational loads.
 """
 
-import multiprocessing
-import os
-import platform
-import queue
-import random
+import math
+import multiprocessing as mp
 import statistics
-import string
-import sys
 import time
-from typing import Any, Dict, List, Tuple
-
-try:
-    import psutil
-    import ray
-
-    RAY_AVAILABLE = True
-except ImportError:
-    RAY_AVAILABLE = False
+from concurrent.futures import ProcessPoolExecutor
+from typing import Dict, List
 
 
+# Color codes for terminal output
 class Colors:
-    """ANSI color codes for terminal output"""
-
-    RED = "\033[91m"
+    BLUE = "\033[94m"
     GREEN = "\033[92m"
     YELLOW = "\033[93m"
-    BLUE = "\033[94m"
-    MAGENTA = "\033[95m"
+    RED = "\033[91m"
+    PURPLE = "\033[95m"
     CYAN = "\033[96m"
     WHITE = "\033[97m"
     BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
     END = "\033[0m"
 
 
-class StateCoordinator:
-    """Simple in-memory state coordinator for Ray actors"""
-
-    def __init__(self):
-        self.state = {}
-
-    def get(self, key: str) -> str:
-        return self.state.get(key)
-
-    def set(self, key: str, value: str) -> bool:
-        self.state[key] = value
-        return True
-
-    def batch_get(self, keys: List[str]) -> List[str]:
-        return [self.state.get(key) for key in keys]
-
-    def batch_set(self, items: List[Tuple[str, str]]) -> bool:
-        for key, value in items:
-            self.state[key] = value
-        return True
+def print_header(text: str):
+    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.END}")
+    print(f"{Colors.BOLD}{Colors.BLUE}{text.center(60)}{Colors.END}")
+    print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.END}")
 
 
-@ray.remote
-class RayStateCoordinator:
-    """Ray actor version of state coordinator"""
-
-    def __init__(self):
-        self.state = {}
-
-    def get(self, key: str) -> str:
-        return self.state.get(key)
-
-    def set(self, key: str, value: str) -> bool:
-        self.state[key] = value
-        return True
-
-    def batch_get(self, keys: List[str]) -> List[str]:
-        return [self.state.get(key) for key in keys]
-
-    def batch_set(self, items: List[Tuple[str, str]]) -> bool:
-        for key, value in items:
-            self.state[key] = value
-        return True
-
-    def get_stats(self) -> Dict:
-        return {"num_keys": len(self.state)}
+def print_section(text: str):
+    print(f"\n{Colors.BOLD}{Colors.CYAN}{text}{Colors.END}")
+    print(f"{Colors.CYAN}{'-'*len(text)}{Colors.END}")
 
 
-@ray.remote
-class RayWorker:
-    """Ray worker that performs get/set operations"""
-
-    def __init__(self, coordinator_ref):
-        self.coordinator = coordinator_ref
-
-    def sequential_ops(self, operations: List[Tuple[str, str, str]]) -> Dict[str, float]:
-        """Perform sequential get/set operations
-        operations: List of (op_type, key, value) tuples
-        """
-        times = []
-
-        for op_type, key, value in operations:
-            start_time = time.perf_counter()
-
-            if op_type == "set":
-                ray.get(self.coordinator.set.remote(key, value))
-            elif op_type == "get":
-                ray.get(self.coordinator.get.remote(key))
-
-            end_time = time.perf_counter()
-            times.append(end_time - start_time)
-
-        return {
-            "total_time": sum(times),
-            "mean_time": statistics.mean(times),
-            "individual_times": times,
-        }
-
-    def batch_ops(
-        self, batch_sets: List[List[Tuple[str, str]]], batch_gets: List[List[str]]
-    ) -> Dict[str, float]:
-        """Perform batch operations"""
-        set_times = []
-        get_times = []
-
-        # Batch sets
-        for batch in batch_sets:
-            start_time = time.perf_counter()
-            ray.get(self.coordinator.batch_set.remote(batch))
-            end_time = time.perf_counter()
-            set_times.append(end_time - start_time)
-
-        # Batch gets
-        for batch in batch_gets:
-            start_time = time.perf_counter()
-            ray.get(self.coordinator.batch_get.remote(batch))
-            end_time = time.perf_counter()
-            get_times.append(end_time - start_time)
-
-        return {
-            "set_times": set_times,
-            "get_times": get_times,
-            "total_set_time": sum(set_times),
-            "total_get_time": sum(get_times),
-        }
+def print_result(label: str, value: str, color: str = Colors.WHITE):
+    print(f"{Colors.BOLD}{label:<30}{Colors.END} {color}{value}{Colors.END}")
 
 
-class MultiprocessingBenchmark:
-    """Benchmark using multiprocessing.Queue"""
-
-    def __init__(self, num_workers: int = 4):
-        self.num_workers = num_workers
-        self.request_queue = multiprocessing.Queue()
-        self.response_queue = multiprocessing.Queue()
-        self.coordinator_process = None
-        self.state = {}
-
-    def coordinator_worker(self):
-        """Coordinator process that manages state"""
-        while True:
-            try:
-                request = self.request_queue.get(timeout=1)
-                if request is None:  # Shutdown signal
-                    break
-
-                request_id, op_type, key, value = request
-
-                if op_type == "set":
-                    self.state[key] = value
-                    self.response_queue.put((request_id, True))
-                elif op_type == "get":
-                    result = self.state.get(key)
-                    self.response_queue.put((request_id, result))
-                elif op_type == "batch_set":
-                    for k, v in value:  # value contains the batch items
-                        self.state[k] = v
-                    self.response_queue.put((request_id, True))
-                elif op_type == "batch_get":
-                    results = [self.state.get(k) for k in value]  # value contains keys
-                    self.response_queue.put((request_id, results))
-
-            except queue.Empty:
-                continue
-            except Exception as e:
-                print(f"Coordinator error: {e}")
-                break
-
-    def start(self):
-        """Start the coordinator process"""
-        self.coordinator_process = multiprocessing.Process(target=self.coordinator_worker)
-        self.coordinator_process.start()
-
-    def stop(self):
-        """Stop the coordinator process"""
-        if self.coordinator_process:
-            self.request_queue.put(None)  # Shutdown signal
-            self.coordinator_process.join(timeout=5)
-            if self.coordinator_process.is_alive():
-                self.coordinator_process.terminate()
-
-    def sequential_ops(self, operations: List[Tuple[str, str, str]]) -> Dict[str, float]:
-        """Perform sequential operations"""
-        times = []
-        request_id = 0
-
-        for op_type, key, value in operations:
-            request_id += 1
-
-            start_time = time.perf_counter()
-            self.request_queue.put((request_id, op_type, key, value))
-
-            # Wait for response
-            while True:
-                resp_id, result = self.response_queue.get()
-                if resp_id == request_id:
-                    break
-                # If we get a different response, put it back (shouldn't happen in sequential)
-
-            end_time = time.perf_counter()
-            times.append(end_time - start_time)
-
-        return {
-            "total_time": sum(times),
-            "mean_time": statistics.mean(times),
-            "individual_times": times,
-        }
-
-    def batch_ops(
-        self, batch_sets: List[List[Tuple[str, str]]], batch_gets: List[List[str]]
-    ) -> Dict[str, float]:
-        """Perform batch operations"""
-        set_times = []
-        get_times = []
-        request_id = 0
-
-        # Batch sets
-        for batch in batch_sets:
-            request_id += 1
-            start_time = time.perf_counter()
-            self.request_queue.put((request_id, "batch_set", None, batch))
-
-            # Wait for response
-            while True:
-                resp_id, result = self.response_queue.get()
-                if resp_id == request_id:
-                    break
-
-            end_time = time.perf_counter()
-            set_times.append(end_time - start_time)
-
-        # Batch gets
-        for batch in batch_gets:
-            request_id += 1
-            start_time = time.perf_counter()
-            self.request_queue.put((request_id, "batch_get", None, batch))
-
-            # Wait for response
-            while True:
-                resp_id, result = self.response_queue.get()
-                if resp_id == request_id:
-                    break
-
-            end_time = time.perf_counter()
-            get_times.append(end_time - start_time)
-
-        return {
-            "set_times": set_times,
-            "get_times": get_times,
-            "total_set_time": sum(set_times),
-            "total_get_time": sum(get_times),
-        }
+def print_warning(text: str):
+    print(f"{Colors.YELLOW}⚠️  {text}{Colors.END}")
 
 
-class BenchmarkRunner:
-    def __init__(self):
-        self.system_info = self._get_system_info()
+def print_success(text: str):
+    print(f"{Colors.GREEN}✅ {text}{Colors.END}")
 
-    def _get_system_info(self) -> Dict:
-        """Collect system information"""
+
+def print_error(text: str):
+    print(f"{Colors.RED}❌ {text}{Colors.END}")
+
+
+# Computational tasks of varying intensity
+def light_task(task_id: int) -> float:
+    """Light computational task: 100 iterations"""
+    result = 0.0
+    for i in range(100):
+        result += math.sin(i) * math.cos(i) + math.sqrt(abs(i + 1))
+    return result
+
+
+def medium_task(task_id: int) -> float:
+    """Medium computational task: 10,000 iterations"""
+    result = 0.0
+    for i in range(10_000):
+        result += math.sin(i) * math.cos(i) + math.sqrt(abs(i + 1))
+    return result
+
+
+def heavy_task(task_id: int) -> float:
+    """Heavy computational task: 1,000,000 iterations"""
+    result = 0.0
+    for i in range(1_000_000):
+        result += math.sin(i) * math.cos(i) + math.sqrt(abs(i + 1))
+    return result
+
+
+# Ray versions of tasks
+try:
+    import ray
+
+    @ray.remote
+    def ray_light_task(task_id: int) -> float:
+        return light_task(task_id)
+
+    @ray.remote
+    def ray_medium_task(task_id: int) -> float:
+        return medium_task(task_id)
+
+    @ray.remote
+    def ray_heavy_task(task_id: int) -> float:
+        return heavy_task(task_id)
+
+    RAY_AVAILABLE = True
+except ImportError:
+    print_warning("Ray not available. Install with: pip install ray")
+    RAY_AVAILABLE = False
+
+
+class BenchmarkStats:
+    def __init__(self, times: List[float]):
+        self.times = times
+        self.mean = statistics.mean(times)
+        self.median = statistics.median(times)
+        self.stdev = statistics.stdev(times) if len(times) > 1 else 0
+        self.min = min(times)
+        self.max = max(times)
+        self.p95 = self._percentile(times, 0.95)
+        self.p99 = self._percentile(times, 0.99)
+
+    @staticmethod
+    def _percentile(data: List[float], percentile: float) -> float:
+        sorted_data = sorted(data)
+        index = int(len(sorted_data) * percentile)
+        return sorted_data[min(index, len(sorted_data) - 1)]
+
+
+def format_time(seconds: float) -> str:
+    """Format time with appropriate units"""
+    if seconds < 1e-6:
+        return f"{seconds * 1e9:.1f}ns"
+    elif seconds < 1e-3:
+        return f"{seconds * 1e6:.1f}μs"
+    elif seconds < 1:
+        return f"{seconds * 1e3:.1f}ms"
+    else:
+        return f"{seconds:.3f}s"
+
+
+def format_throughput(ops_per_sec: float) -> str:
+    """Format throughput with appropriate units"""
+    if ops_per_sec > 1000:
+        return f"{ops_per_sec/1000:.1f}K ops/sec"
+    else:
+        return f"{ops_per_sec:.1f} ops/sec"
+
+
+def print_stats(stats: BenchmarkStats, label: str):
+    """Print detailed statistics"""
+    print_result(f"{label} Mean:", format_time(stats.mean), Colors.GREEN)
+    print_result(f"{label} Median:", format_time(stats.median), Colors.WHITE)
+    print_result(f"{label} P95:", format_time(stats.p95), Colors.YELLOW)
+    print_result(f"{label} P99:", format_time(stats.p99), Colors.RED)
+    print_result(f"{label} Std Dev:", format_time(stats.stdev), Colors.PURPLE)
+    print_result(
+        f"{label} Range:", f"{format_time(stats.min)} - {format_time(stats.max)}", Colors.CYAN
+    )
+
+
+def benchmark_multiprocessing_latency(task_func, num_tasks: int = 100) -> Dict[str, BenchmarkStats]:
+    """Benchmark multiprocessing with breakdown of dispatch vs execution vs retrieval"""
+    dispatch_times = []
+    total_times = []
+
+    with ProcessPoolExecutor(max_workers=mp.cpu_count()) as executor:
+        # Warm up
+        list(executor.map(task_func, range(10)))
+
+        # Benchmark with timing breakdown
+        for i in range(num_tasks):
+            # Measure dispatch time (submit until future is created)
+            dispatch_start = time.perf_counter()
+            future = executor.submit(task_func, i)
+            dispatch_end = time.perf_counter()
+            dispatch_times.append(dispatch_end - dispatch_start)
+
+            # Measure total time (submit until result retrieved)
+            total_start = dispatch_start
+            future.result()
+            total_end = time.perf_counter()
+            total_times.append(total_end - total_start)
+
+    return {"dispatch": BenchmarkStats(dispatch_times), "total": BenchmarkStats(total_times)}
+
+
+def benchmark_multiprocessing_throughput(task_func, num_tasks: int = 1000) -> float:
+    """Benchmark throughput with multiprocessing"""
+    with ProcessPoolExecutor(max_workers=mp.cpu_count()) as executor:
+        # Warm up
+        list(executor.map(task_func, range(10)))
+
+        # Benchmark throughput
+        start_time = time.perf_counter()
+        list(executor.map(task_func, range(num_tasks)))
+        end_time = time.perf_counter()
+
+        total_time = end_time - start_time
+        return num_tasks / total_time
+
+
+def benchmark_ray_latency(task_func, num_tasks: int = 100) -> Dict[str, BenchmarkStats]:
+    """Benchmark Ray with breakdown of dispatch vs execution vs retrieval"""
+    dispatch_times = []
+    total_times = []
+
+    # Warm up
+    warmup_futures = [task_func.remote(i) for i in range(10)]
+    ray.get(warmup_futures)
+
+    # Benchmark with timing breakdown
+    for i in range(num_tasks):
+        # Measure dispatch time (remote call until ObjectRef created)
+        dispatch_start = time.perf_counter()
+        future = task_func.remote(i)
+        dispatch_end = time.perf_counter()
+        dispatch_times.append(dispatch_end - dispatch_start)
+
+        # Measure total time (remote call until result retrieved)
+        total_start = dispatch_start
+        ray.get(future)
+        total_end = time.perf_counter()
+        total_times.append(total_end - total_start)
+
+    return {"dispatch": BenchmarkStats(dispatch_times), "total": BenchmarkStats(total_times)}
+
+
+def benchmark_ray_throughput(task_func, num_tasks: int = 1000) -> float:
+    """Benchmark throughput with Ray"""
+    # Warm up
+    warmup_futures = [task_func.remote(i) for i in range(10)]
+    ray.get(warmup_futures)
+
+    # Benchmark throughput
+    start_time = time.perf_counter()
+    futures = [task_func.remote(i) for i in range(num_tasks)]
+    ray.get(futures)
+    end_time = time.perf_counter()
+
+    total_time = end_time - start_time
+    return num_tasks / total_time
+
+
+def run_benchmark_suite():
+    """Run the complete benchmark suite"""
+    print_header("EXECUTION BACKEND BENCHMARK")
+    print_result("CPU Count:", str(mp.cpu_count()), Colors.CYAN)
+    print_result(
+        "Ray Available:", str(RAY_AVAILABLE), Colors.GREEN if RAY_AVAILABLE else Colors.RED
+    )
+
+    if RAY_AVAILABLE:
+        print_section("Initializing Ray")
+        ray.init(ignore_reinit_error=True, log_to_driver=False)
+        print_success("Ray initialized")
+
+    # Task configurations
+    configs = [
+        (
+            "Light Task (100 iterations)",
+            light_task,
+            ray_light_task if RAY_AVAILABLE else None,
+            100,
+            1000,
+        ),
+        (
+            "Medium Task (10K iterations)",
+            medium_task,
+            ray_medium_task if RAY_AVAILABLE else None,
+            50,
+            500,
+        ),
+        (
+            "Heavy Task (1M iterations)",
+            heavy_task,
+            ray_heavy_task if RAY_AVAILABLE else None,
+            20,
+            100,
+        ),
+    ]
+
+    results = {}
+
+    for task_name, mp_task, ray_task, latency_samples, throughput_samples in configs:
+        print_section(f"Benchmarking {task_name}")
+
+        # Multiprocessing benchmarks
+        print(f"\n{Colors.BOLD}Multiprocessing Results:{Colors.END}")
         try:
-            info = {
-                "python_version": sys.version.split()[0],
-                "platform": platform.system(),
-                "cpu_count": os.cpu_count(),
-                "memory_gb": round(psutil.virtual_memory().total / (1024**3), 1),
-                "ray_available": RAY_AVAILABLE,
+            mp_latency_results = benchmark_multiprocessing_latency(mp_task, latency_samples)
+            mp_throughput = benchmark_multiprocessing_throughput(mp_task, throughput_samples)
+
+            print_stats(mp_latency_results["dispatch"], "Dispatch")
+            print_stats(mp_latency_results["total"], "Total (End-to-End)")
+
+            # Calculate execution time (total - dispatch)
+            execution_times = [
+                total - dispatch
+                for total, dispatch in zip(
+                    mp_latency_results["total"].times, mp_latency_results["dispatch"].times
+                )
+            ]
+            execution_stats = BenchmarkStats(execution_times)
+            print_stats(execution_stats, "Execution (Computed)")
+
+            print_result("Throughput:", format_throughput(mp_throughput), Colors.GREEN)
+
+            results[f"{task_name}_mp"] = {
+                "dispatch_mean": mp_latency_results["dispatch"].mean,
+                "execution_mean": execution_stats.mean,
+                "total_mean": mp_latency_results["total"].mean,
+                "throughput": mp_throughput,
             }
-            if RAY_AVAILABLE:
-                info["ray_version"] = ray.__version__
-            return info
         except Exception as e:
-            return {"error": f"Could not collect system info: {e}"}
+            print_error(f"Multiprocessing benchmark failed: {e}")
+            continue
 
-    def generate_test_data(
-        self, num_operations: int
-    ) -> Tuple[List[str], List[Tuple[str, str, str]]]:
-        """Generate test data: 200-char strings"""
-        random.seed(42)  # Reproducible results
+        # Ray benchmarks
+        if RAY_AVAILABLE and ray_task:
+            print(f"\n{Colors.BOLD}Ray Results:{Colors.END}")
+            try:
+                ray_latency_results = benchmark_ray_latency(ray_task, latency_samples)
+                ray_throughput = benchmark_ray_throughput(ray_task, throughput_samples)
 
-        # Generate keys and values
-        keys = [f"key_{i:06d}" for i in range(num_operations)]
-        values = []
+                print_stats(ray_latency_results["dispatch"], "Dispatch")
+                print_stats(ray_latency_results["total"], "Total (End-to-End)")
 
-        for _ in range(num_operations):
-            value = "".join(random.choices(string.ascii_letters + string.digits, k=200))
-            values.append(value)
+                # Calculate execution time (total - dispatch)
+                execution_times = [
+                    total - dispatch
+                    for total, dispatch in zip(
+                        ray_latency_results["total"].times, ray_latency_results["dispatch"].times
+                    )
+                ]
+                execution_stats = BenchmarkStats(execution_times)
+                print_stats(execution_stats, "Execution (Computed)")
 
-        # Create operations: alternating sets and gets
-        operations = []
-        for i in range(num_operations):
-            if i % 2 == 0:  # Set operation
-                operations.append(("set", keys[i], values[i]))
-            else:  # Get operation (get previously set key)
-                get_key = keys[i // 2] if i // 2 < len(keys) else keys[0]
-                operations.append(("get", get_key, None))
+                print_result("Throughput:", format_throughput(ray_throughput), Colors.GREEN)
 
-        return keys, operations
+                results[f"{task_name}_ray"] = {
+                    "dispatch_mean": ray_latency_results["dispatch"].mean,
+                    "execution_mean": execution_stats.mean,
+                    "total_mean": ray_latency_results["total"].mean,
+                    "throughput": ray_throughput,
+                }
 
-    def _format_time(self, seconds: float) -> str:
-        """Format time with appropriate units"""
-        if seconds < 1e-6:
-            return f"{seconds * 1e9:.1f}ns"
-        elif seconds < 1e-3:
-            return f"{seconds * 1e6:.1f}μs"
-        elif seconds < 1:
-            return f"{seconds * 1e3:.1f}ms"
-        else:
-            return f"{seconds:.2f}s"
+                # Detailed comparison
+                print(f"\n{Colors.BOLD}Component Breakdown Comparison:{Colors.END}")
 
-    def _format_ops_per_second(self, seconds: float, ops: int) -> str:
-        """Format operations per second"""
-        if seconds <= 0:
-            return "∞"
-        ops_per_sec = ops / seconds
-        if ops_per_sec >= 1e6:
-            return f"{ops_per_sec / 1e6:.2f}M"
-        elif ops_per_sec >= 1e3:
-            return f"{ops_per_sec / 1e3:.1f}K"
-        else:
-            return f"{ops_per_sec:.0f}"
+                mp_data = results[f"{task_name}_mp"]
+                ray_data = results[f"{task_name}_ray"]
 
-    def benchmark_ray(
-        self, operations: List[Tuple[str, str, str]], num_workers: int = 4
-    ) -> Dict[str, Any]:
-        """Benchmark Ray communication"""
-        if not RAY_AVAILABLE:
-            return {"error": "Ray not available"}
+                dispatch_ratio = mp_data["dispatch_mean"] / ray_data["dispatch_mean"]
+                execution_ratio = mp_data["execution_mean"] / ray_data["execution_mean"]
+                total_ratio = mp_data["total_mean"] / ray_data["total_mean"]
+                throughput_ratio = ray_data["throughput"] / mp_data["throughput"]
 
-        try:
-            # Initialize Ray
-            if not ray.is_initialized():
-                ray.init(num_cpus=num_workers + 1, ignore_reinit_error=True)
+                print_result(
+                    "Dispatch Overhead (MP/Ray):",
+                    f"{dispatch_ratio:.2f}x",
+                    Colors.GREEN if dispatch_ratio < 1 else Colors.RED,
+                )
+                print_result(
+                    "Execution Time (MP/Ray):",
+                    f"{execution_ratio:.2f}x",
+                    Colors.GREEN if abs(execution_ratio - 1.0) < 0.1 else Colors.YELLOW,
+                )
+                print_result(
+                    "Total Latency (MP/Ray):",
+                    f"{total_ratio:.2f}x",
+                    Colors.GREEN if total_ratio < 1 else Colors.RED,
+                )
+                print_result(
+                    "Throughput Ratio (Ray/MP):",
+                    f"{throughput_ratio:.2f}x",
+                    Colors.GREEN if throughput_ratio > 1 else Colors.RED,
+                )
 
-            # Create coordinator and workers
-            coordinator = RayStateCoordinator.remote()
-            workers = [RayWorker.remote(coordinator) for _ in range(num_workers)]
-
-            # Warmup
-            warmup_ops = operations[: min(10, len(operations))]
-            ray.get(workers[0].sequential_ops.remote(warmup_ops))
-
-            # Sequential operations benchmark
-            start_time = time.perf_counter()
-            result = ray.get(workers[0].sequential_ops.remote(operations))
-            end_time = time.perf_counter()
-
-            result["wall_clock_time"] = end_time - start_time
-            result["ops_per_second"] = len(operations) / result["wall_clock_time"]
-
-            # Batch operations test
-            batch_size = 50
-            batch_sets = []
-            batch_gets = []
-
-            set_items = [(op[1], op[2]) for op in operations if op[0] == "set"]
-            get_keys = [op[1] for op in operations if op[0] == "get"]
-
-            # Create batches
-            for i in range(0, len(set_items), batch_size):
-                batch_sets.append(set_items[i : i + batch_size])
-
-            for i in range(0, len(get_keys), batch_size):
-                batch_gets.append(get_keys[i : i + batch_size])
-
-            batch_result = ray.get(workers[0].batch_ops.remote(batch_sets, batch_gets))
-            result["batch_results"] = batch_result
-
-            return result
-
-        except Exception as e:
-            return {"error": f"Ray benchmark failed: {e}"}
-        finally:
-            if ray.is_initialized():
-                ray.shutdown()
-
-    def benchmark_multiprocessing(
-        self, operations: List[Tuple[str, str, str]], num_workers: int = 4
-    ) -> Dict[str, Any]:
-        """Benchmark multiprocessing.Queue communication"""
-        try:
-            mp_benchmark = MultiprocessingBenchmark(num_workers)
-            mp_benchmark.start()
-
-            # Warmup
-            warmup_ops = operations[: min(10, len(operations))]
-            mp_benchmark.sequential_ops(warmup_ops)
-
-            # Sequential operations benchmark
-            start_time = time.perf_counter()
-            result = mp_benchmark.sequential_ops(operations)
-            end_time = time.perf_counter()
-
-            result["wall_clock_time"] = end_time - start_time
-            result["ops_per_second"] = len(operations) / result["wall_clock_time"]
-
-            # Batch operations test
-            batch_size = 50
-            batch_sets = []
-            batch_gets = []
-
-            set_items = [(op[1], op[2]) for op in operations if op[0] == "set"]
-            get_keys = [op[1] for op in operations if op[0] == "get"]
-
-            # Create batches
-            for i in range(0, len(set_items), batch_size):
-                batch_sets.append(set_items[i : i + batch_size])
-
-            for i in range(0, len(get_keys), batch_size):
-                batch_gets.append(get_keys[i : i + batch_size])
-
-            batch_result = mp_benchmark.batch_ops(batch_sets, batch_gets)
-            result["batch_results"] = batch_result
-
-            return result
-
-        except Exception as e:
-            return {"error": f"Multiprocessing benchmark failed: {e}"}
-        finally:
-            mp_benchmark.stop()
-
-    def generate_report(self, ray_results: Dict, mp_results: Dict, num_operations: int) -> str:
-        """Generate comparison report"""
-        report = []
-
-        # Header
-        report.append(f"{Colors.BOLD}{Colors.CYAN}{'=' * 80}{Colors.END}")
-        report.append(
-            f"{Colors.BOLD}{Colors.CYAN}RAY vs MULTIPROCESSING COMMUNICATION BENCHMARK{Colors.END}"
-        )
-        report.append(f"{Colors.BOLD}{Colors.CYAN}{'=' * 80}{Colors.END}")
-
-        # System info
-        report.append(f"\n{Colors.YELLOW}{Colors.BOLD}SYSTEM INFO:{Colors.END}")
-        info = self.system_info
-        report.append(
-            f"Python {info.get('python_version', 'Unknown')} | "
-            f"{info.get('cpu_count', 'Unknown')} CPUs | "
-            f"{info.get('memory_gb', 'Unknown')}GB RAM"
-        )
-
-        if info.get("ray_available"):
-            report.append(f"Ray Version: {info.get('ray_version', 'Unknown')}")
-
-        # Test configuration
-        report.append(f"\n{Colors.YELLOW}{Colors.BOLD}TEST CONFIGURATION:{Colors.END}")
-        report.append(f"• Operations: {num_operations:,} (sequential get/set)")
-        report.append(f"• Data size: 200-character strings")
-        report.append(f"• Pattern: Alternating set/get operations")
-        report.append(f"• Workers: 4 processes")
-
-        # Results comparison
-        report.append(f"\n{Colors.BOLD}{Colors.WHITE}PERFORMANCE RESULTS:{Colors.END}")
-        report.append(f"{Colors.WHITE}{'-' * 90}{Colors.END}")
-
-        header = f"{'Metric':<25} {'Ray':<20} {'Multiprocessing':<20} {'Winner':<25}"
-        report.append(f"{Colors.BOLD}{header}{Colors.END}")
-        report.append(f"{Colors.WHITE}{'-' * 90}{Colors.END}")
-
-        # Helper function to compare and format results
-        def compare_metric(
-            metric_name: str, ray_val: float, mp_val: float, lower_is_better: bool = True
-        ):
-            ray_str = (
-                self._format_time(ray_val) if metric_name.endswith("Time") else f"{ray_val:.1f}"
-            )
-            mp_str = self._format_time(mp_val) if metric_name.endswith("Time") else f"{mp_val:.1f}"
-
-            if lower_is_better:
-                if ray_val < mp_val:
-                    winner = f"{Colors.GREEN}Ray ({mp_val/ray_val:.1f}x faster){Colors.END}"
+                # Analysis
+                print(f"\n{Colors.BOLD}Analysis:{Colors.END}")
+                if abs(execution_ratio - 1.0) > 0.2:
+                    print_warning(
+                        f"Execution times differ by {abs(execution_ratio-1)*100:.1f}% - possible measurement error"
+                    )
                 else:
-                    winner = f"{Colors.BLUE}MP ({ray_val/mp_val:.1f}x faster){Colors.END}"
-            else:  # Higher is better
-                if ray_val > mp_val:
-                    winner = f"{Colors.GREEN}Ray ({ray_val/mp_val:.1f}x faster){Colors.END}"
+                    print_success("Execution times are similar - measurement looks valid")
+
+                if dispatch_ratio < 0.5:
+                    print_success("Multiprocessing has significantly lower dispatch overhead")
+                elif dispatch_ratio < 1.0:
+                    print(f"{Colors.YELLOW}Multiprocessing has lower dispatch overhead{Colors.END}")
                 else:
-                    winner = f"{Colors.BLUE}MP ({mp_val/ray_val:.1f}x faster){Colors.END}"
+                    print(f"{Colors.RED}Ray has lower dispatch overhead{Colors.END}")
 
-            return f"{metric_name:<25} {ray_str:<20} {mp_str:<20} {winner:<40}"
+            except Exception as e:
+                print_error(f"Ray benchmark failed: {e}")
 
-        if "error" not in ray_results and "error" not in mp_results:
-            # Sequential operations
-            report.append(
-                compare_metric(
-                    "Mean Op Time", ray_results["mean_time"], mp_results["mean_time"], True
+    # Summary
+    print_header("BENCHMARK SUMMARY")
+
+    if RAY_AVAILABLE:
+        print_section("Performance Comparison")
+
+        for task_name, _, _, _, _ in configs:
+            mp_key = f"{task_name}_mp"
+            ray_key = f"{task_name}_ray"
+
+            if mp_key in results and ray_key in results:
+                mp_data = results[mp_key]
+                ray_data = results[ray_key]
+
+                print(f"\n{Colors.BOLD}{task_name}:{Colors.END}")
+                print_result("  MP Dispatch:", format_time(mp_data["dispatch_mean"]))
+                print_result("  Ray Dispatch:", format_time(ray_data["dispatch_mean"]))
+                print_result("  MP Execution:", format_time(mp_data["execution_mean"]))
+                print_result("  Ray Execution:", format_time(ray_data["execution_mean"]))
+                print_result("  MP Total:", format_time(mp_data["total_mean"]))
+                print_result("  Ray Total:", format_time(ray_data["total_mean"]))
+                print_result("  MP Throughput:", format_throughput(mp_data["throughput"]))
+                print_result("  Ray Throughput:", format_throughput(ray_data["throughput"]))
+
+                # Winners by category
+                dispatch_winner = (
+                    "MP" if mp_data["dispatch_mean"] < ray_data["dispatch_mean"] else "Ray"
                 )
-            )
-            report.append(
-                compare_metric(
-                    "Total Time", ray_results["total_time"], mp_results["total_time"], True
-                )
-            )
-            report.append(
-                compare_metric(
-                    "Ops/Second", ray_results["ops_per_second"], mp_results["ops_per_second"], False
-                )
-            )
-
-            # Batch operations if available
-            if "batch_results" in ray_results and "batch_results" in mp_results:
-                ray_batch = ray_results["batch_results"]
-                mp_batch = mp_results["batch_results"]
-
-                if ray_batch.get("total_set_time") and mp_batch.get("total_set_time"):
-                    report.append(
-                        compare_metric(
-                            "Batch Set Time",
-                            ray_batch["total_set_time"],
-                            mp_batch["total_set_time"],
-                            True,
-                        )
-                    )
-
-                if ray_batch.get("total_get_time") and mp_batch.get("total_get_time"):
-                    report.append(
-                        compare_metric(
-                            "Batch Get Time",
-                            ray_batch["total_get_time"],
-                            mp_batch["total_get_time"],
-                            True,
-                        )
-                    )
-
-        # Error handling
-        if "error" in ray_results:
-            report.append(f"{Colors.RED}Ray Error: {ray_results['error']}{Colors.END}")
-
-        if "error" in mp_results:
-            report.append(f"{Colors.RED}Multiprocessing Error: {mp_results['error']}{Colors.END}")
-
-        # Latency distribution analysis
-        if (
-            "error" not in ray_results
-            and "error" not in mp_results
-            and "individual_times" in ray_results
-            and "individual_times" in mp_results
-        ):
-
-            report.append(f"\n{Colors.YELLOW}{Colors.BOLD}LATENCY DISTRIBUTION:{Colors.END}")
-
-            ray_times = ray_results["individual_times"]
-            mp_times = mp_results["individual_times"]
-
-            ray_percentiles = (
-                [statistics.quantiles(ray_times, n=100)[i - 1] for i in [50, 95, 99]]
-                if len(ray_times) > 10
-                else [0, 0, 0]
-            )
-            mp_percentiles = (
-                [statistics.quantiles(mp_times, n=100)[i - 1] for i in [50, 95, 99]]
-                if len(mp_times) > 10
-                else [0, 0, 0]
-            )
-
-            for i, percentile in enumerate([50, 95, 99]):
-                report.append(
-                    compare_metric(
-                        f"P{percentile} Latency", ray_percentiles[i], mp_percentiles[i], True
-                    )
+                total_winner = "MP" if mp_data["total_mean"] < ray_data["total_mean"] else "Ray"
+                throughput_winner = (
+                    "MP" if mp_data["throughput"] > ray_data["throughput"] else "Ray"
                 )
 
-        # Conclusions
-        report.append(f"\n{Colors.BOLD}{Colors.CYAN}KEY FINDINGS:{Colors.END}")
+                print_result("  Dispatch Winner:", dispatch_winner, Colors.GREEN)
+                print_result("  Total Latency Winner:", total_winner, Colors.GREEN)
+                print_result("  Throughput Winner:", throughput_winner, Colors.GREEN)
 
-        if "error" not in ray_results and "error" not in mp_results:
-            mp_faster = mp_results["mean_time"] < ray_results["mean_time"]
-            speedup = (
-                ray_results["mean_time"] / mp_results["mean_time"]
-                if mp_faster
-                else mp_results["mean_time"] / ray_results["mean_time"]
-            )
+    print_section("Key Insights")
+    print("• Dispatch Overhead: How long to submit a task")
+    print("• Execution Time: How long the actual computation takes (should be ~identical)")
+    print("• Total Latency: End-to-end time from submit to result")
+    print("• If execution times differ significantly, there may be measurement issues")
+    print("")
+    print_section("Recommendations")
+    print("• For minimal dispatch overhead: Use multiprocessing")
+    print("• For distributed workloads: Use Ray despite overhead")
+    print("• For light tasks: Dispatch overhead dominates, choose accordingly")
+    print("• For heavy tasks: Execution time dominates, overhead becomes negligible")
 
-            if mp_faster:
-                report.append(
-                    f"{Colors.GREEN}• Multiprocessing.Queue is {speedup:.1f}x faster for sequential ops{Colors.END}"
-                )
-                report.append(
-                    f"{Colors.BLUE}• Ray adds ~{(ray_results['mean_time'] - mp_results['mean_time']) * 1000:.1f}ms overhead per operation{Colors.END}"
-                )
-            else:
-                report.append(
-                    f"{Colors.GREEN}• Ray is {speedup:.1f}x faster for sequential ops{Colors.END}"
-                )
-
-        return "\n".join(report)
-
-    def run_benchmark_suite(self):
-        """Run the complete benchmark suite"""
-        test_sizes = [20000]  # Start with smaller sizes for initial testing
-
-        print(
-            f"{Colors.BOLD}{Colors.CYAN}Ray vs Multiprocessing Communication Benchmark{Colors.END}"
-        )
-        print(f"{Colors.CYAN}{'=' * 55}{Colors.END}")
-        print(
-            f"{Colors.YELLOW}Testing sequential get/set operations with 200-char strings{Colors.END}"
-        )
-
-        for i, size in enumerate(test_sizes, 1):
-            print(
-                f"\n{Colors.BOLD}[{i}/{len(test_sizes)}] Testing {size:,} operations...{Colors.END}"
-            )
-
-            # Generate test data
-            print(f"  {Colors.WHITE}→ Generating test data...{Colors.END}")
-            keys, operations = self.generate_test_data(size)
-
-            # Run benchmarks
-            print(f"  {Colors.GREEN}→ Benchmarking Ray...{Colors.END}")
-            ray_results = self.benchmark_ray(operations)
-
-            print(f"  {Colors.BLUE}→ Benchmarking Multiprocessing...{Colors.END}")
-            mp_results = self.benchmark_multiprocessing(operations)
-
-            # Generate report
-            print(f"  {Colors.BOLD}{Colors.GREEN}✓ Completed{Colors.END}")
-            report = self.generate_report(ray_results, mp_results, size)
-            print("\n" + report)
+    if RAY_AVAILABLE:
+        ray.shutdown()
 
 
 if __name__ == "__main__":
-    if not RAY_AVAILABLE:
-        print(f"{Colors.RED}Error: Ray not available. Please run:{Colors.END}")
-        print(f"{Colors.YELLOW}pip install ray psutil{Colors.END}")
-        exit(1)
-
-    try:
-        # Set multiprocessing start method to avoid issues on macOS
-        multiprocessing.set_start_method("spawn", force=True)
-    except RuntimeError:
-        pass  # Already set
-
-    benchmark = BenchmarkRunner()
-    benchmark.run_benchmark_suite()
+    run_benchmark_suite()
