@@ -18,7 +18,7 @@ from .metadata import ExpressionMetadata
 from .node import DAGNodeMixin
 
 if TYPE_CHECKING:
-    from ..context.context import Context
+    from ..context import Context
 
 
 class Expression(ABC, DAGNodeMixin["Expression"], Generic[StateT]):

@@ -16,7 +16,7 @@ from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
 from loomi.interfaces.state.type_vars import StateT
 
 if TYPE_CHECKING:
-    from ..expressions.base import Expression
+    from .expressions.base import Expression
 
 
 @dataclass
