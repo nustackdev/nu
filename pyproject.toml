@@ -42,6 +42,7 @@ networkx = "^3.4.2"
 rich-click = "^1.8.8"
 rpyc = "^6.0.2"
 msgpack = "^1.1.1"
+wrapt = "^1.17.2"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "*"
