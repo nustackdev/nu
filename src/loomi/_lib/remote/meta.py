@@ -8,9 +8,8 @@ completely transparent to application code.
 
 from loomi._lib.resource.meta import ResourceMeta
 
-from .spec import RemoteSpec
-from .utils import serialize_spec
-from .wrapper import wrap_remote_resource
+from .logger import logger
+from .spec import RemoteSpec, serialize_spec
 
 __all__ = [
     "RemoteResourceMeta",
@@ -56,32 +55,25 @@ class RemoteResourceMeta(ResourceMeta):
         Returns:
             Remote resource proxy wrapped for autocomplete
         """
+        logger.debug(
+            f"Creating remote resource: {cls.__name__} with spec: {spec} and local spec: {spec.local_spec}"
+        )
         try:
             # Create connection to remote server
             connection = spec.remote_config.connection_factory()
 
-            # Determine resource name
-            resource_name = spec.remote_config.resource_name
-            if not resource_name:
-                resource_name = cls.__name__
+            # Use the clean local spec for the server
+            local_spec = spec.local_spec
 
-            # Create a clean spec without remote config for the server
-            server_spec = spec.model_copy()
-            server_spec.remote_config = None
+            # Serialize the local spec for transmission
+            spec_data = serialize_spec(local_spec)
 
-            # Serialize spec for transmission
-            spec_data = serialize_spec(server_spec)
-
-            # Create remote resource via factory
-            if hasattr(connection.root, "create_named_resource"):
-                # Try named resource first (for reuse)
-                remote_proxy = connection.root.create_named_resource(resource_name, spec_data)
-            else:
-                # Fallback to anonymous resource
-                remote_proxy = connection.root.create_resource(spec_data)
+            # Create the remote resource
+            remote_proxy = connection.root.create_resource(spec_data)
 
             # Wrap proxy for IDE autocomplete support
-            return wrap_remote_resource(cls, remote_proxy)
+            return remote_proxy
+            # return wrap_remote_resource(cls, remote_proxy)
 
         except Exception as e:
             raise RuntimeError(f"Failed to create remote resource {cls.__name__}: {e}") from e

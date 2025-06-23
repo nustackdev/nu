@@ -29,14 +29,6 @@ class RemoteResourceService(rpyc.Service):
         """Create a resource from serialized spec."""
         return self.factory.create_resource(spec_data)
 
-    def exposed_create_named_resource(self, name: str, spec_data: bytes):
-        """Create a named resource."""
-        return self.factory.create_named_resource(name, spec_data)
-
-    def exposed_get_resource(self, name: str):
-        """Get a named resource."""
-        return self.factory.get_resource(name)
-
     def exposed_list_resources(self):
         """List all resource names."""
         return self.factory.list_resources()

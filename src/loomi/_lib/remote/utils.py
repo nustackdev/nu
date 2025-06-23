@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pickle
 from typing import Any, Generic, Optional, Type, TypeVar
 
 from loomi._lib.resource import Spec
@@ -10,38 +9,10 @@ from .client.client import create_remote_resource
 ResourceT = TypeVar("ResourceT")
 
 __all__ = [
-    "serialize_spec",
-    "deserialize_spec",
     "remote_tcp",
     "remote_unix",
     "remote_resource",
 ]
-
-
-def serialize_spec(spec: Spec) -> bytes:
-    """
-    Serialize a spec for transmission over the network.
-
-    Args:
-        spec: Spec to serialize
-
-    Returns:
-        Serialized spec data
-    """
-    return pickle.dumps(spec)
-
-
-def deserialize_spec(data: bytes) -> Spec:
-    """
-    Deserialize a spec from network data.
-
-    Args:
-        data: Serialized spec data
-
-    Returns:
-        Reconstructed spec
-    """
-    return pickle.loads(data)
 
 
 def remote_tcp(

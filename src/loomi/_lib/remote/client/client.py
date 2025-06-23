@@ -12,7 +12,7 @@ from rpyc.core.stream import SocketStream
 
 from loomi._lib.resource.spec import Spec
 
-from ..utils import serialize_spec
+from ..spec import serialize_spec
 from ..wrapper import wrap_remote_resource
 
 __all__ = [
@@ -85,34 +85,12 @@ class RemoteResourceClient:
         conn = self.connect()
         spec_data = serialize_spec(spec)
 
+        print(f"Creating remote resource with spec: {spec}")
+
         # Create remote resource
         remote_proxy = conn.root.create_resource(spec_data)
 
         # Optionally wrap for autocomplete
-        if resource_type:
-            return wrap_remote_resource(resource_type, remote_proxy)
-
-        return remote_proxy
-
-    def create_named_resource(
-        self, name: str, spec: Spec, resource_type: Optional[Type[ResourceT]] = None
-    ) -> Any:
-        """
-        Create a named remote resource.
-
-        Args:
-            name: Name to store resource under
-            spec: Resource specification
-            resource_type: Optional type for wrapper
-
-        Returns:
-            Remote resource proxy
-        """
-        conn = self.connect()
-        spec_data = serialize_spec(spec)
-
-        remote_proxy = conn.root.create_named_resource(name, spec_data)
-
         if resource_type:
             return wrap_remote_resource(resource_type, remote_proxy)
 
