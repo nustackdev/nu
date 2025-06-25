@@ -139,7 +139,7 @@ class BaseRPyCConnection(ABC):
     def _get_rpyc_config(self) -> RPyCConfig:
         """Get RPyC configuration with sensible defaults."""
         default_config: RPyCConfig = {
-            "allow_public_attrs": True,
+            "allow_all_attrs": True,
             "sync_request_timeout": 30,
         }
         default_config.update(self.spec.config)
