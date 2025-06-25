@@ -147,15 +147,20 @@ class RPyCTCPServer(BaseRPyCServer, SyncService):
         """Set up TCP-based server."""
         logger.debug(f"Configuring TCP server on {self.spec.bind_address}:{self.spec.bind_port}")
 
+        config = {
+            "allow_all_attrs": True,
+            "sync_request_timeout": 30,
+        }
+        config.update(self.spec.config)
+
+        logger.debug(f"RPyC server config: {config}")
+
         self._server = ThreadedServer(
             service=self.factory_cls,
             hostname=self.spec.bind_address,
             port=self.spec.bind_port,
             auto_register=self.spec.auto_register,
-            protocol_config={
-                "allow_all_attrs": True,
-                "sync_request_timeout": 30,
-            }.update(self.spec.config),
+            protocol_config=config,
         )
 
     @property
@@ -189,16 +194,21 @@ class RPyCUnixServer(BaseRPyCServer, SyncService):
                 "Please remove it before starting the server."
             )
 
+        config = {
+            "allow_all_attrs": True,
+            "sync_request_timeout": 30,
+        }
+        config.update(self.spec.config)
+
+        logger.debug(f"RPyC server config: {config}")
+
         # Create Unix socket manually and pass to ThreadedServer
         try:
             self._server = ThreadedServer(
                 service=self.factory_cls,
-                socket_path=socket_file.resolve(),
+                socket_path=str(socket_file.resolve()),
                 auto_register=self.spec.auto_register,
-                protocol_config={
-                    "allow_all_attrs": True,
-                    "sync_request_timeout": 30,
-                }.update(self.spec.config),
+                protocol_config=config,
             )
         except Exception as e:
             raise RPyCServerError(f"Failed to create Unix socket server: {e}") from e

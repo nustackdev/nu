@@ -75,7 +75,7 @@ class RPyCTCPConnection(BaseRPyCConnection, SyncService):
 
 
 class RPyCTCPConnectionSpec(BaseRPyCConnectionSpec):
-    factory: type = RPyCTCPConnection
+    factory: type = SpecField(default=RPyCTCPConnection)
     name: str = SpecField(default="rpyc_tcp_connection")
-    host: str = SpecField()
-    port: int = SpecField()
+    host: str = SpecField(default="localhost")
+    port: int = SpecField(default=18812)

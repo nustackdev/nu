@@ -143,6 +143,9 @@ class BaseRPyCConnection(ABC):
             "sync_request_timeout": 30,
         }
         default_config.update(self.spec.config)
+
+        logger.debug(f"RPyC connection config: {default_config}")
+
         return default_config
 
     @final
@@ -185,4 +188,4 @@ class BaseRPyCConnection(ABC):
 
 
 class BaseRPyCConnectionSpec(Spec):
-    config: RPyCConfig = SpecField(default_factory=RPyCConfig)
+    config: dict = SpecField(default_factory=RPyCConfig)

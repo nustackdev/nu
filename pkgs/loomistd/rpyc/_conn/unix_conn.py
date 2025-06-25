@@ -75,7 +75,7 @@ class RPyCUnixConnection(BaseRPyCConnection, SyncService):
 
         logger.debug(f"Connecting to RPyC server at {self.spec.socket_path}")
 
-        stream = SocketStream.unix_connect(socket_file)
+        stream = SocketStream.unix_connect(str(socket_file.resolve()))
 
         conn = rpyc.connect_stream(
             stream,
@@ -91,6 +91,6 @@ class RPyCUnixConnection(BaseRPyCConnection, SyncService):
 
 
 class RPyCUnixConnectionSpec(BaseRPyCConnectionSpec):
-    factory: type[RPyCUnixConnection] = RPyCUnixConnection
+    factory: type = SpecField(default=RPyCUnixConnection)
     name: str = SpecField(default="rpyc_unix_connection")
-    socket_path: str = SpecField()
+    socket_path: str = SpecField(default="/tmp/loomi_rpyc.sock")

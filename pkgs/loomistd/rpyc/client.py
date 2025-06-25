@@ -9,6 +9,7 @@ the connection abstractions to communicate with remote RPyC servers.
 
 from __future__ import annotations
 
+import pickle
 from typing import Any, cast
 
 from loomi.attr import UseService
@@ -85,7 +86,7 @@ class RPyCClient(SyncService):
             raise RPyCConnectionError("RPyC client is not connected")
 
         try:
-            remote_resource = self.root.exposed_get_resource(spec)
+            remote_resource = self.root.exposed_get_resource(self._serialize_spec(spec))
             logger.debug(f"Retrieved remote resource: {spec.factory.__name__}")
             return remote_resource
 
@@ -133,7 +134,7 @@ class RPyCClient(SyncService):
             raise RPyCConnectionError("RPyC client is not connected")
 
         try:
-            return self.root.exposed_remove_resource(spec)
+            return self.root.exposed_remove_resource(self._serialize_spec(spec))
         except Exception as e:
             logger.error(f"Failed to remove remote resource {spec.factory.__name__}: {e}")
             raise RPyCOperationError(
@@ -176,6 +177,19 @@ class RPyCClient(SyncService):
         except Exception as e:
             logger.error(f"Failed to get server info: {e}")
             raise RPyCOperationError("Failed to get server info") from e
+
+    @staticmethod
+    def _serialize_spec(spec: Spec) -> bytes:
+        """
+        Serialize a Spec instance to bytes for remote transmission.
+
+        Args:
+            spec: The Spec instance to serialize
+
+        Returns:
+            Serialized bytes representation of the spec
+        """
+        return pickle.dumps(spec)
 
 
 class RPyCTCPClientSpec(Spec):

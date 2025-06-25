@@ -9,6 +9,7 @@ handles resource lifecycle, deduplication, and registry management.
 
 from __future__ import annotations
 
+import pickle
 from typing import Any, Dict, cast
 
 from rpyc import Service
@@ -42,7 +43,7 @@ class ResourceFactory(Service):
         self._resources: Dict[Spec, Any] = {}
         logger.debug("LoomiResourceFactory initialized")
 
-    def exposed_get_resource(self, spec: Spec) -> Any:
+    def exposed_get_resource(self, spec_data: bytes) -> Any:
         """
         Get or create a resource based on its specification.
 
@@ -59,6 +60,8 @@ class ResourceFactory(Service):
         Raises:
             RPyCServerError: If resource creation fails
         """
+        spec: Spec = self._deserialize_spec(spec_data)
+
         # Check if resource already exists
         if spec in self._resources:
             logger.debug(f"Returning existing resource: {spec.factory.__name__}")
@@ -94,7 +97,7 @@ class ResourceFactory(Service):
         """
         return {spec.key: spec.factory.__name__ for spec in self._resources.keys()}
 
-    def exposed_remove_resource(self, spec: Spec) -> bool:
+    def exposed_remove_resource(self, spec_data: bytes) -> bool:
         """
         Remove a resource from the factory.
 
@@ -107,6 +110,22 @@ class ResourceFactory(Service):
         Returns:
             True if resource was removed, False if not found
         """
+        spec: Spec = self._deserialize_spec(spec_data)
+        return self.remove_resource(spec)
+
+    def remove_resource(self, spec: Spec) -> bool:
+        """
+        Remove a resource from the factory registry.
+        This method is called when a resource is removed, either through
+        exposed_remove_resource or during shutdown.
+
+        Args:
+            spec: Specification of the resource to remove
+
+        Returns:
+            True if the resource was successfully removed, False if it was not found
+        """
+
         if spec not in self._resources:
             logger.warning(f"Attempt to remove non-existent resource: {spec.factory.__name__}")
             return False
@@ -139,7 +158,7 @@ class ResourceFactory(Service):
 
         for spec in list(self._resources.keys()):
             try:
-                self.exposed_remove_resource(spec)
+                self.remove_resource(spec)
             except Exception as e:
                 logger.error(f"Error shutting down resource {spec.factory.__name__}: {e}")
 
@@ -175,3 +194,17 @@ class ResourceFactory(Service):
             "active_resources": [spec.key for spec in self._resources.keys()],
             "factory_status": "operational",
         }
+
+    @staticmethod
+    def _deserialize_spec(serialized_spec: bytes) -> Spec:
+        """
+        Deserialize a resource spec from its serialized form.
+
+        Args:
+            serialized_spec: Serialized representation of the spec
+
+        Returns:
+            Deserialized Spec object
+        """
+        # Assuming Spec has a from_dict method for deserialization
+        return pickle.loads(serialized_spec)
