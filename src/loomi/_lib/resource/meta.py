@@ -11,6 +11,7 @@ Key Features:
 - Context-aware instantiation
 - Thread-safe resource creation
 - Proper dependency and registry coordination
+- Remote resource support
 """
 
 from __future__ import annotations
@@ -166,38 +167,42 @@ class ResourceMeta(ABCMeta, Generic[ResourceT]):
             resource = MyResource(spec, __is_dependency__=True)
         """
         try:
-            with cls._creation_lock:  # type: ignore
-                # Use empty spec if none provided
-                if spec is None:
-                    spec = Spec(factory=cls)
+            # with cls._creation_lock:  # type: ignore
+            # Use empty spec if none provided
+            if spec is None:
+                spec = Spec(factory=cls)
 
-                if spec.factory is None:
-                    spec.factory = cls
+            if spec.factory is None:
+                spec.factory = cls
 
-                # Extract creation context
-                is_dependency = kwargs.pop("__is_dependency__", False)
+            # Extract creation context
+            is_dependency = kwargs.pop("__is_dependency__", False)
 
-                # Try get existing instance
-                instance = cls._registry.get_resource(spec)
-                if instance is not None:
-                    logger.info(f"Reusing existing resource instance: '{instance.readable_name}'")
-                    # Update dependency tracking
-                    cls._dep_manager.register_resource(instance, is_dependency=is_dependency)
-                    return cast(ResourceT, instance)
+            # Check if this is a remote resource request
+            if spec.is_remote():
+                return cls._get_or_create_remote_resource(spec, is_dependency)
 
-                logger.debug(f"Creating new resource instance: '{cls.factory_name()}'")
-                try:
-                    # Create new instance
-                    instance = super().__call__(spec, *args, **kwargs)
-                except Exception as e:
-                    raise CreationError(f"Failed to instantiate '{cls.factory_name()}'") from e
-
-                # Register with proper context
-                cls._registry.add_resource(instance)
+            # Try get existing instance
+            instance = cls._registry.get_resource(spec)
+            if instance is not None:
+                logger.info(f"Reusing existing resource instance: '{instance.readable_name}'")
+                # Update dependency tracking
                 cls._dep_manager.register_resource(instance, is_dependency=is_dependency)
-
-                logger.info(f"Created resource instance: '{instance.readable_name}'")
                 return cast(ResourceT, instance)
+
+            logger.debug(f"Creating new resource instance: '{cls.factory_name()}'")
+            try:
+                # Create new instance
+                instance = super().__call__(spec, *args, **kwargs)
+            except Exception as e:
+                raise CreationError(f"Failed to instantiate '{cls.factory_name()}'") from e
+
+            # Register with proper context
+            cls._registry.add_resource(instance)
+            cls._dep_manager.register_resource(instance, is_dependency=is_dependency)
+
+            logger.info(f"Created resource instance: '{instance.readable_name}'")
+            return cast(ResourceT, instance)
 
         except (CreationError, ResourceError):
             raise
@@ -224,3 +229,21 @@ class ResourceMeta(ABCMeta, Generic[ResourceT]):
             Shared dependency manager
         """
         return cls._dep_manager
+
+    @classmethod
+    def _get_or_create_remote_resource(cls, spec: Spec, is_dependency: bool) -> Any:
+        """
+        Create a remote resource using RemoteResourceProxy.
+
+        Args:
+            spec: Remote resource specification
+            is_dependency: Whether resource is being created as dependency
+
+        Returns:
+            RemoteResourceProxy instance
+        """
+        from .proxy import create_remote_resource_proxy
+
+        proxy = create_remote_resource_proxy(spec)
+
+        return proxy

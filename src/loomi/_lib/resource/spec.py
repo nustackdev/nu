@@ -11,7 +11,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Hashable, Self, final
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from .exceptions import SpecError
 
@@ -40,6 +40,9 @@ class Spec(BaseModel, Hashable):
 
     name: str = Field(default="")
     factory: type
+
+    _is_remote: bool = PrivateAttr(default=False)
+    _remote_client_spec: Spec | None = PrivateAttr(default=None)
 
     def with_value_at(self, path: str, /, *paths: str, value: Any) -> Self:
         """
@@ -160,3 +163,41 @@ class Spec(BaseModel, Hashable):
         if not isinstance(other, Spec):
             return False
         return self.key == other.key
+
+    def is_remote(self) -> bool:
+        """
+        Check if the spec is a remote spec.
+        """
+        return self._is_remote
+
+    def as_remote(self, client_spec: Spec) -> Self:
+        """
+        Convert the spec to a remote spec.
+        """
+        if not isinstance(client_spec, Spec):
+            raise SpecError("Client spec must be an instance of Spec")
+
+        # Create a new spec with the same properties but for remote use
+        self._is_remote = True
+        self._remote_client_spec = client_spec
+
+        return self
+
+    def get_local_spec(self) -> Self:
+        """
+        Get the local spec without remote properties.
+        """
+        if self._is_remote:
+            # Create a copy without remote properties
+            local_spec = self.model_dump(exclude={"_is_remote", "_remote_client_spec"})
+            return self.__class__(**local_spec)
+        return self
+
+    def get_remote_spec(self) -> Spec:
+        """
+        Get the remote spec with client properties.
+        """
+        if not self._is_remote or self._remote_client_spec is None:
+            raise SpecError("This spec is not a remote spec")
+
+        return self._remote_client_spec

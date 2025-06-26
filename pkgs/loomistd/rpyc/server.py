@@ -251,7 +251,7 @@ class RPyCUnixServerSpec(Spec):
     factory: type = SpecField(default=RPyCUnixServer)
 
     # Server configuration
-    socket_path: str = SpecField()
+    socket_path: str = SpecField(default="/tmp/loomi_rpyc.sock")
     auto_register: bool = SpecField(default=False)
 
     # Connection configuration

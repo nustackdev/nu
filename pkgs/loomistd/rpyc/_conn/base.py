@@ -188,4 +188,4 @@ class BaseRPyCConnection(ABC):
 
 
 class BaseRPyCConnectionSpec(Spec):
-    config: dict = SpecField(default_factory=RPyCConfig)
+    config: dict = SpecField(default_factory=dict)

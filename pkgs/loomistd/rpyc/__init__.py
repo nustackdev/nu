@@ -96,7 +96,7 @@ def rpyc_server_tcp(
 
 
 def rpyc_server_unix(
-    socket_path: str, auto_register: bool = False, **config: dict
+    socket_path: str = "/tmp/loomi_rpyc.sock", auto_register: bool = False, **config: dict
 ) -> RPyCUnixServer:
     """
     Create a Unix socket-based RPyC server service.
@@ -157,7 +157,9 @@ def rpyc_client_tcp(
     return RPyCClient(client_spec)
 
 
-def rpyc_client_unix(socket_path: str, auto_connect: bool = True, **config: dict) -> RPyCClient:
+def rpyc_client_unix(
+    socket_path: str = "/tmp/loomi_rpyc.sock", auto_connect: bool = True, **config: dict
+) -> RPyCClient:
     """
     Create a Unix socket-based RPyC client service.
 
