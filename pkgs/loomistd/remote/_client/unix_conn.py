@@ -19,7 +19,7 @@ from loomi.service import SyncService
 from loomi.spec import SpecField
 
 from ..exceptions import RPyCConnectionError
-from .base import BaseRPyCConnection, BaseRPyCConnectionSpec
+from .base_conn import BaseRPyCConnection, BaseRPyCConnectionSpec
 from .logger import logger
 
 __all__ = [

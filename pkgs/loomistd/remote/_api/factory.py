@@ -17,9 +17,9 @@ from rpyc import Service
 from loomi.resource import SyncResource
 from loomi.spec import Spec
 
-from .exceptions import RPyCServerError
+from ..exceptions import RPyCServerError
+from ..types import ResourceRegistry
 from .logger import logger
-from .types import ResourceRegistry
 
 __all__ = [
     "ResourceFactory",

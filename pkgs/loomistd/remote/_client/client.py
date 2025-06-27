@@ -16,13 +16,13 @@ from loomi.attr import UseService
 from loomi.service import SyncService
 from loomi.spec import Spec, SpecField
 
-from ._conn.base import BaseRPyCConnection
-from ._conn.tcp_conn import RPyCTCPConnectionSpec
-from ._conn.unix_conn import RPyCUnixConnectionSpec
-from .exceptions import RPyCConnectionError, RPyCOperationError
-from .factory import ResourceFactory
+from .._api import ResourceFactory
+from ..exceptions import RPyCConnectionError, RPyCOperationError
+from ..types import ResourceRegistry
+from .base_conn import BaseRPyCConnection
 from .logger import logger
-from .types import ResourceRegistry
+from .tcp_conn import RPyCTCPConnectionSpec
+from .unix_conn import RPyCUnixConnectionSpec
 
 __all__ = [
     "RPyCClient",
