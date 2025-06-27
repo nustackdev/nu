@@ -7,36 +7,18 @@ using existing Loomi patterns (UseService) and proven proxying (wrapt).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
-
 import wrapt
 
 from loomi.attr import UseService
+from loomi.interfaces.remote.client import RemoteClientProtocol
 from loomi.spec import Spec, SpecField
 
 from .resource import SyncResource
 
-if TYPE_CHECKING:
-    pass
-
 __all__ = [
-    "RemoteClientProtocol",
     "RemoteResourceManager",
     "RemoteResourceProxy",
 ]
-
-
-@runtime_checkable
-class RemoteClientProtocol(Protocol):
-    """Protocol that remote clients must implement."""
-
-    def get_remote_resource(self, spec: Spec) -> Any:
-        """Get a remote resource using the provided spec."""
-        ...
-
-    def is_connected(self) -> bool:
-        """Check if client is connected and ready."""
-        ...
 
 
 class RemoteResourceManager(SyncResource):
