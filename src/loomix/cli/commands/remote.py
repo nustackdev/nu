@@ -83,16 +83,16 @@ def remote(  # noqa: C901
 
     Examples:
         # Start TCP server on default port
-        loomix rpyc-server
+        loomix remote
 
         # Start TCP server on specific host/port
-        loomix rpyc-server --host 0.0.0.0 --port 8080
+        loomix remote --host 0.0.0.0 --port 8080
 
         # Start Unix socket server
-        loomix rpyc-server --type unix --socket-path /tmp/my_app.sock
+        loomix remote --type unix --socket-path /tmp/my_app.sock
 
         # Start with verbose logging
-        loomix rpyc-server --verbose --log-level 10
+        loomix remote --verbose --log-level 10
     """
 
     # Setup logging
