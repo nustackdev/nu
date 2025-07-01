@@ -72,12 +72,16 @@ class RemoteResourceProxy(wrapt.ObjectProxy):
         super().__init__(remote_resource)
 
         # Store manager for lifecycle
-        self.__self_manager__ = manager
+        self.__self_manager__: RemoteResourceManager = manager
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__self_manager__.shutdown()
+
+    def shutdown(self):
+        """Shutdown the remote resource via manager."""
         self.__self_manager__.shutdown()
 
 
