@@ -16,11 +16,18 @@ class BaseWorkerPool(ABC):
     def setup(self) -> None:
         """Initialize the worker pool."""
         self._connected = False
+        self._workers = []
         self.connect()
 
     def cleanup(self) -> None:
         """Clean up the worker pool."""
         self.disconnect()
+
+    @property
+    def workers(self) -> list:
+        """List of workers in the pool."""
+        self._ensure_connected()
+        return self._workers
 
     @property
     def is_connected(self) -> bool:

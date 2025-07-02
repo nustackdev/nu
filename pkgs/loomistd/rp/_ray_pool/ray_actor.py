@@ -43,7 +43,17 @@ class RayWorkerActor:
             if self.server is None:
                 raise RuntimeError("Server not initialized")
 
-            self.server.start()
+            # Start server in a separate thread so this method can return
+            import threading
+
+            self.server_thread = threading.Thread(target=self.server.start)
+            self.server_thread.daemon = True
+            self.server_thread.start()
+
+            # Give it a moment to start up
+            import time
+
+            time.sleep(0.1)  # implement a proper readiness check
 
             # Connect/start the server
             logger.info(f"Worker {self.worker_index} server started")

@@ -5,15 +5,16 @@ from typing import Any, Dict, List
 import ray
 
 from loomi.service import SyncService
+from loomi.spec import Spec, SpecField
 
 from .._base import BaseWorkerPool
 from ..exceptions import WorkerPoolOperationError
 from .logger import logger
 from .ray_actor import RayWorkerActor
-from .specs import RayWorkerPoolSpec
 
 __all__ = [
     "RayWorkerPool",
+    "RayWorkerPoolSpec",
 ]
 
 
@@ -145,3 +146,20 @@ class RayWorkerPool(BaseWorkerPool, SyncService):
         except Exception as e:
             logger.error(f"Failed to restart worker {worker_index}: {e}")
             return False
+
+
+class RayWorkerPoolSpec(Spec):
+    """Specification for Ray worker pool."""
+
+    name: str = SpecField(default="ray_worker_pool")
+    factory: type = SpecField(default=RayWorkerPool)
+
+    # Ray configuration
+    max_workers: int = SpecField(default=4)
+    ray_address: str | None = SpecField(default=None)  # None for local cluster
+    ray_init_kwargs: dict[str, Any] = SpecField(default_factory=dict)
+    shutdown_ray_on_disconnect: bool = SpecField(default=False)
+
+    # Connection configuration
+    worker_server_specs: list[Spec] = SpecField()
+    worker_client_specs: list[Spec] = SpecField()
