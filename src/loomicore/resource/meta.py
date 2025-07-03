@@ -242,7 +242,7 @@ class ResourceMeta(ABCMeta, Generic[ResourceT]):
         Returns:
             RemoteResourceProxy instance
         """
-        from .proxy import create_remote_resource_proxy
+        from ..coordinators.remote import create_remote_resource_proxy
 
         proxy = create_remote_resource_proxy(spec)
 

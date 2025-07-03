@@ -12,16 +12,16 @@ import wrapt
 from loomi.interfaces.remote.client import RemoteClientProtocol
 
 from ..descriptors import Attach
+from ..resource import SyncResource
 from ..spec import Spec, SpecField
-from .resource import SyncResource
 
 __all__ = [
-    "RemoteResourceManager",
+    "RemoteResourceCoordinator",
     "RemoteResourceProxy",
 ]
 
 
-class RemoteResourceManager(SyncResource):
+class RemoteResourceCoordinator(SyncResource):
     """
     Manages remote resource lifecycle and client dependencies.
 
@@ -33,7 +33,7 @@ class RemoteResourceManager(SyncResource):
 
     client: RemoteClientProtocol = Attach()
 
-    spec: RemoteResourceManagerSpec
+    spec: RemoteResourceCoordinatorSpec
 
     def setup(self) -> None:
         """Get and initialize remote resource."""
@@ -53,41 +53,41 @@ class RemoteResourceManager(SyncResource):
 
 class RemoteResourceProxy(wrapt.ObjectProxy):
     """
-    Minimal proxy that forwards to remote resource via manager.
+    Minimal proxy that forwards to remote resource via coordinator.
 
-    Uses slots to only store manager, inherits all proxy behavior from wrapt.
+    Uses slots to only store coordinator, inherits all proxy behavior from wrapt.
     """
 
     __slots__ = (
         "__wrapped__",
-        "__self_manager__",
+        "__self_coordinator__",
     )
 
-    def __init__(self, manager: RemoteResourceManager):
-        # Initialize manager and get remote resource
-        manager.initialize()
-        remote_resource = manager.remote_resource
+    def __init__(self, coordinator: RemoteResourceCoordinator):
+        # Initialize coordinator and get remote resource
+        coordinator.initialize()
+        remote_resource = coordinator.remote_resource
 
         # Initialize wrapt with the remote resource
         super().__init__(remote_resource)
 
-        # Store manager for lifecycle
-        self.__self_manager__: RemoteResourceManager = manager
+        # Store coordinator for lifecycle
+        self.__self_coordinator__: RemoteResourceCoordinator = coordinator
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__self_manager__.shutdown()
+        self.__self_coordinator__.shutdown()
 
     def shutdown(self):
-        """Shutdown the remote resource via manager."""
-        self.__self_manager__.shutdown()
+        """Shutdown the remote resource via coordinator."""
+        self.__self_coordinator__.shutdown()
 
 
-# Simple spec for manager
-class RemoteResourceManagerSpec(Spec):
-    factory: type = SpecField(default=RemoteResourceManager)
+# Simple spec for coordinator
+class RemoteResourceCoordinatorSpec(Spec):
+    factory: type = SpecField(default=RemoteResourceCoordinator)
     resource_spec: Spec = SpecField()
     client: Spec = SpecField()
 
@@ -100,6 +100,8 @@ def create_remote_resource_proxy(spec: Spec) -> RemoteResourceProxy:
     client_spec = spec.get_remote_spec()
     resource_spec = spec.get_local_spec()
 
-    manager_spec = RemoteResourceManagerSpec(resource_spec=resource_spec, client=client_spec)
-    manager = RemoteResourceManager(manager_spec)
-    return RemoteResourceProxy(manager)
+    coordinator_spec = RemoteResourceCoordinatorSpec(
+        resource_spec=resource_spec, client=client_spec
+    )
+    coordinator = RemoteResourceCoordinator(coordinator_spec)
+    return RemoteResourceProxy(coordinator)
