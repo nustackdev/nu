@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import ray
 
 from loomi.spec import Spec
@@ -51,9 +53,7 @@ class RayWorkerActor:
             self.server_thread.start()
 
             # Give it a moment to start up
-            import time
-
-            time.sleep(0.1)  # implement a proper readiness check
+            time.sleep(0.1)  # TODO: implement a proper readiness check
 
             # Connect/start the server
             logger.info(f"Worker {self.worker_index} server started")

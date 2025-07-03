@@ -28,6 +28,7 @@ class RayWorkerPool(BaseWorkerPool, SyncService):
 
     def setup(self) -> None:
         self._workers: List[ray.ObjectRef] = []
+        self._resources: list
         super().setup()
 
     @property
@@ -64,6 +65,11 @@ class RayWorkerPool(BaseWorkerPool, SyncService):
             # Start all servers
             start_futures = [worker.start_server.remote() for worker in self._workers]
             results = ray.get(start_futures)
+
+            for idx, spec in enumerate(self.spec.worker_client_specs):
+                # Initialize client connections for each worker
+                resource = spec.factory(spec)
+                self._resources.append(resource)
 
             logger.info(f"Started Ray worker pool with {len(self._workers)} workers")
             logger.debug(f"Worker start results: {results}")
