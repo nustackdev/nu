@@ -17,7 +17,7 @@ discovery:
   exclude_modules:
     - "loomi._utils"
     - "loomi._lib"
-    - "loomi._logging"
+    - "loomicore.logging"
   
   # Patterns to exclude modules matching these regex patterns
   exclude_patterns:

@@ -10,6 +10,7 @@ authors = ["Gor Arakelyan <gorarkln@gmail.com>"]
 readme = "README.md"
 packages = [
     { include = "loomi", from = "src" },
+    { include = "loomicore", from = "src" },
     { include = "loomistd", from = "pkgs" },
     { include = "loomiverse", from = "pkgs" },
 ]
@@ -17,6 +18,9 @@ include = [
     "src/loomi/py.typed",
     "src/loomi/**/*.yaml",
     "src/loomi/**/*.json",
+    "pkgs/loomicore/py.typed",
+    "pkgs/loomicore/**/*.yaml",
+    "pkgs/loomicore/**/*.json",
     "pkgs/loomistd/py.typed",
     "pkgs/loomistd/**/*.yaml",
     "pkgs/loomistd/**/*.json",
@@ -89,7 +93,7 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 100
-known_first_party = ["loomi", "loomistd", "loomiverse"]
+known_first_party = ["loomi", "loomicore", "loomistd", "loomiverse"]
 
 [tool.autoflake]
 check = false
