@@ -14,8 +14,8 @@ from typing import Any, Dict, cast
 
 from rpyc import Service
 
-from loomi.resource import SyncResource
 from loomi.spec import Spec
+from loomicore import SyncResource
 
 from ..exceptions import RPyCServerError
 from ..types import ResourceRegistry

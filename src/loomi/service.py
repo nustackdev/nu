@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi._lib.resource import AsyncResource, SyncResource
+from loomicore import AsyncResource, SyncResource
 
 __all__ = [
     "AsyncService",

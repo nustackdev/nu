@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Generic
 
-from loomi._lib.resource import AsyncResource, ResourceABC, Spec, SyncResource
+from loomicore import AsyncResource, ResourceABC, Spec, SyncResource
 
 from .types import ExecutorT, StateT, SyncExecutorT, SyncStateT
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, cast
 
-from ._lib.resource import ResourceDescriptor, Spec
+from loomicore import ResourceDescriptor, Spec
 
 if TYPE_CHECKING:
     from loomi.app import AsyncApp, SyncApp
