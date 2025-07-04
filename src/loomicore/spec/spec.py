@@ -11,12 +11,9 @@ This implements a high-performance, type-safe spec system for Loomi with:
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Dict, Generic, List, Self, Type, TypeVar
+from typing import Any, Dict, Generic, Self, Type, TypeVar
 
-try:
-    import attrs
-except ImportError:
-    raise ImportError("attrs is required. Install with: pip install attrs")
+import attrs
 
 __all__ = [
     # Core
@@ -26,11 +23,8 @@ __all__ = [
     "WrapperSpec",
     "RemoteSpec",
     "PoolSpec",
-    # Utilities
-    "get_inner_spec",
-    "get_wrapper_chain",
-    "has_wrapper_type",
 ]
+
 
 # Type variables
 T = TypeVar("T")
@@ -258,31 +252,3 @@ class PoolSpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
 
     inner_spec: WrappedSpecT
     pool_spec: WrapperConfigT
-
-
-# ============================================================================
-# UTILITY FUNCTIONS
-# ============================================================================
-
-
-def get_inner_spec(spec: BaseSpec) -> BaseSpec:
-    """Get the innermost spec from a potentially wrapped spec."""
-    current = spec
-    while isinstance(current, WrapperSpec):
-        current = current.inner_spec
-    return current
-
-
-def get_wrapper_chain(spec: BaseSpec) -> List[WrapperSpec]:
-    """Get all wrapper specs from outer to inner."""
-    chain = []
-    current = spec
-    while isinstance(current, WrapperSpec):
-        chain.append(current)
-        current = current.inner_spec
-    return chain
-
-
-def has_wrapper_type(spec: BaseSpec, wrapper_type: Type[WrapperSpec]) -> bool:
-    """Check if spec has a specific wrapper type in its chain."""
-    return any(isinstance(w, wrapper_type) for w in get_wrapper_chain(spec))
