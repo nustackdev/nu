@@ -1,206 +1,288 @@
 """
-Specification system for defining resource/app properties and identity.
-Note: temporary solution until we have a more robust system in place.
+Resource Spec Module
+
+This implements a high-performance, type-safe spec system for Loomi with:
+- attrs for frozen structs
+- SHA-256 content-based hashing for deterministic keys
+- Cached computations for performance
+- Fluent transformation API
 """
 
 from __future__ import annotations
 
-import json
-from base64 import b64encode
-from functools import cached_property
-from pathlib import Path
-from typing import Any, Dict, Hashable, Self, final
+import hashlib
+from typing import Any, Dict, Generic, List, Self, Type, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+try:
+    import attrs
+except ImportError:
+    raise ImportError("attrs is required. Install with: pip install attrs")
 
-from ..exceptions import SpecError
+__all__ = [
+    # Core
+    "BaseSpec",
+    "Spec",
+    # Wrapper specs
+    "WrapperSpec",
+    "RemoteSpec",
+    "PoolSpec",
+    # Utilities
+    "get_inner_spec",
+    "get_wrapper_chain",
+    "has_wrapper_type",
+]
 
-__all__ = ["Spec", "SpecField"]
+# Type variables
+T = TypeVar("T")
+SpecT = TypeVar("SpecT", bound="Spec")
 
-SpecField = Field
+# More reasonable type variable names
+WrappedSpecT = TypeVar("WrappedSpecT", bound="BaseSpec")
+WrapperConfigT = TypeVar("WrapperConfigT", bound="BaseSpec")
+
+# ============================================================================
+# BASE SPEC SYSTEM
+# ============================================================================
 
 
-class Spec(BaseModel, Hashable):
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class BaseSpec:
     """
-    Temporary specification class for defining resource/app properties and identity.
-    Should be replaced with a more ergonomic and robust system in the future.
+    Base immutable specification with high-performance hashing.
 
-    This class is used to define the properties of a resource or app, including its name,
-    factory, and any additional fields.
+    Features:
+    - Frozen attrs structs for immutability
+    - Content-based SHA-256 hashing for deterministic keys
+    - Cached properties for performance
+    - Fluent transformation API
+    - Rich comparison support
     """
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        extra="allow",
-        from_attributes=True,
-        frozen=False,
-        validate_assignment=True,
-        validate_default=True,
-    )
+    @property
+    def key(self) -> str:
+        """
+        Generate deterministic key using SHA-256 hashing.
 
-    name: str = Field(default="")
-    factory: type
+        This is cached for performance since specs are immutable.
+        """
+        # Use JSON for consistent string encoding
+        import json
 
-    # Remote configuration as regular fields
-    is_remote_spec: bool = Field(default=False)
-    remote_client_spec: "Spec | None" = Field(default=None)
+        data = self._get_key_data()
+        json_str = json.dumps(data, sort_keys=True, separators=(",", ":"))
+
+        # SHA-256 for deterministic, collision-resistant keys
+        hasher = hashlib.sha256()
+        hasher.update(json_str.encode("utf-8"))
+
+        # Add optional prefix for namespacing
+        return f"{hasher.hexdigest()}"
+
+    def _get_key_data(self) -> Dict[str, Any]:
+        """Get data for key generation, excluding specified fields."""
+        data: Dict[str, Any] = {}
+
+        for field in attrs.fields(self.__class__):
+            value = getattr(self, field.name)
+            data[field.name] = self._serialize_value(value)
+
+        return data
+
+    def _serialize_value(self, value: Any) -> Any:
+        """Serialize a value for consistent hashing."""
+        if value is None:
+            return None
+        elif isinstance(value, BaseSpec):
+            # Recursive spec serialization
+            return {"__spec__": value.key}
+        elif isinstance(value, type):
+            return self._serialize_type(value)
+        elif callable(value) and hasattr(value, "__module__") and hasattr(value, "__qualname__"):
+            # Serialize callables by module + qualname
+            return f"{value.__module__}:{value.__qualname__}"
+        elif isinstance(value, (list, tuple)):
+            return [self._serialize_value(item) for item in value]
+        elif isinstance(value, dict):
+            return {str(k): self._serialize_value(v) for k, v in sorted(value.items())}
+        else:
+            # Return primitive types as-is for JSON serialization
+            return value
+
+    def _serialize_type(self, typ: Type) -> str:
+        """Serialize a type reference consistently."""
+        if hasattr(typ, "__module__") and hasattr(typ, "__qualname__"):
+            return f"{typ.__module__}:{typ.__qualname__}"
+        return typ.__name__
+
+    def __hash__(self) -> int:
+        """Use the cached key for hashing."""
+        return hash(self.key)
+
+    def __eq__(self, other: Any) -> bool:
+        """Specs are equal if they have the same key."""
+        if not isinstance(other, BaseSpec):
+            return False
+        return self.key == other.key
+
+    # Transformation API
+
+    def as_remote(self, client_spec: WrapperConfigT) -> RemoteSpec[Self, WrapperConfigT]:
+        """Transform to remote spec."""
+        return RemoteSpec[Self, WrapperConfigT](inner_spec=self, client_spec=client_spec)
+
+    def as_pool(self, pool_spec: WrapperConfigT) -> PoolSpec[Self, WrapperConfigT]:
+        """Transform to pool spec with load balancing."""
+        return PoolSpec[Self, WrapperConfigT](inner_spec=self, pool_spec=pool_spec)
+
+    # Manipulation API
 
     def with_value_at(self, path: str, /, *paths: str, value: Any) -> Self:
         """
-        Update the value at the specified path directly.
+        Update the value at the specified path, creating a new spec instance.
 
-        Traverses the existing spec structure and modifies values in place.
+        Traverses the existing spec structure and creates a new spec with the
+        modified value at the specified path.
 
         Args:
             path: First path segment
-            *paths: Additional path segment
+            *paths: Additional path segments
             value: The new value to set at the specified path
 
         Returns:
-            Self for method chaining
-        """
-        # Use a helper method to keep the code clean
-        self._set_nested_value(self, (path,) + paths, value)
-        return self
+            New spec instance with the updated value
 
-    def _set_nested_value(self, obj: Spec, path_parts: tuple[str, ...], value: Any) -> None:
+        Raises:
+            ValueError: If the path cannot be navigated or the target is not a spec
         """
-        Helper method to set a value at a nested path.
+        path_parts = (path,) + paths
+
+        if len(path_parts) == 1:
+            # Simple case - direct field update
+            field_name = path_parts[0]
+            if not any(field.name == field_name for field in attrs.fields(self.__class__)):
+                raise ValueError(f"Field '{field_name}' not found in {self.__class__.__name__}")
+            return attrs.evolve(self, **{field_name: value})
+
+        # Complex case - nested path
+        return self._evolve_nested_path(path_parts, value)
+
+    def _evolve_nested_path(self, path_parts: tuple[str, ...], value: Any) -> Self:
+        """
+        Helper method to evolve a spec with a nested path update.
 
         Args:
-            obj: Current object being traversed
-            path_parts: Remaining path segments
+            path_parts: Path segments to traverse
             value: Value to set at the final path segment
+
+        Returns:
+            New spec instance with the updated nested value
+
+        Raises:
+            ValueError: If the path cannot be navigated
         """
-        if len(path_parts) == 1:
-            # We're at the final level - set the attribute directly
-            final_key = path_parts[0]
-
-            # Set the attribute - Pydantic will validate the type
-            setattr(obj, final_key, value)
-
-            return
-
-        # We need to navigate deeper
         current_key = path_parts[0]
         remaining_path = path_parts[1:]
 
         # Check if the current key exists
-        if not hasattr(obj, current_key):
+        if not any(field.name == current_key for field in attrs.fields(self.__class__)):
             raise ValueError(
-                f"Cannot navigate path: '{current_key}' not found in {obj.__class__.__name__}"
+                f"Cannot navigate path: '{current_key}' not found in {self.__class__.__name__}"
             )
 
         # Get the value at this level
-        next_obj = getattr(obj, current_key)
+        next_obj = getattr(self, current_key)
 
         # If None and we need to go deeper, that's an error
         if next_obj is None:
             raise ValueError(
-                f"Cannot navigate path: '{current_key}' is None in {obj.__class__.__name__} "
+                f"Cannot navigate path: '{current_key}' is None in {self.__class__.__name__} "
                 f"but further path segments {remaining_path} require an object"
             )
 
-        # If this isn't a Spec object but we need to go deeper, that's an error
-        if not isinstance(next_obj, Spec):
+        # If this isn't a BaseSpec object but we need to go deeper, that's an error
+        if not isinstance(next_obj, BaseSpec):
             raise ValueError(
-                f"Cannot navigate path: '{current_key}' in {obj.__class__.__name__} "
+                f"Cannot navigate path: '{current_key}' in {self.__class__.__name__} "
                 f"is {type(next_obj).__name__} which doesn't support nested paths"
             )
 
-        # Continue traversing
-        self._set_nested_value(next_obj, remaining_path, value)
+        # Recursively update the nested object
+        updated_nested = next_obj.with_value_at(*remaining_path, value=value)
 
-    def _serialize_value(self, value: Any) -> Any:
-        if value is None:
-            return None
-        elif callable(value) and hasattr(value, "__module__") and hasattr(value, "__name__"):
-            # Handle function serialization
-            return f"{value.__module__}.{value.__name__}"
-        elif isinstance(value, Spec):
-            return value._dump()
-        elif isinstance(value, Path):
-            return str(value)
-        elif isinstance(value, type):
-            return value.factory_name() if hasattr(value, "factory_name") else value.__name__
-        elif isinstance(value, list):
-            return [self._serialize_value(item) for item in value]
-        elif isinstance(value, dict):
-            return {str(k): self._serialize_value(v) for k, v in value.items()}
-        else:
-            return value
+        # Return evolved instance with the updated nested object
+        return attrs.evolve(self, **{current_key: updated_nested})
 
-    def _dump(self) -> Dict[str, Any]:
-        result = {}
 
-        # Process model fields
-        for field_name in self.model_fields:
-            if hasattr(self, field_name):
-                result[field_name] = self._serialize_value(getattr(self, field_name))
+# ============================================================================
+# SPECS
+# ============================================================================
 
-        # Process extra fields
-        for field_name, value in self.__dict__.items():
-            if field_name not in result and not field_name.startswith("_"):
-                result[field_name] = self._serialize_value(value)
 
-        return result
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class Spec(BaseSpec):
+    """
+    Base specification class for all Loomi specs.
 
-    @final
-    @cached_property
-    def key(self) -> str:
-        if self.factory is None:
-            raise SpecError("Factory is not defined")
+    Provides:
+    - Immutable, hashable structs
+    - Content-based key generation
+    - Transformation methods for distributed patterns
+    """
 
-        identity_dict = self._dump()
-        sorted_items = json.dumps(identity_dict, sort_keys=True)
-        key = b64encode(sorted_items.encode()).decode()
+    factory: Type[Any]
+    name: str = ""
 
-        return str(key)
 
-    def __hash__(self) -> int:
-        return hash(self.key)
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class WrapperSpec(BaseSpec):
+    """
+    Base class for specs that wrap other specs.
 
-    def __eq__(self, other):
-        if not isinstance(other, Spec):
-            return False
-        return self.key == other.key
+    Provides coordinator patterns for distributed resources.
+    """
 
-    def is_remote(self) -> bool:
-        """
-        Check if the spec is a remote spec.
-        """
-        return self.is_remote_spec
+    inner_spec: BaseSpec
 
-    def as_remote(self, client_spec: Spec) -> Self:
-        """
-        Convert the spec to a remote spec.
-        """
-        if not isinstance(client_spec, Spec):
-            raise SpecError("Client spec must be an instance of Spec")
 
-        # Create a new spec with the same properties but for remote use
-        self.is_remote_spec = True
-        self.remote_client_spec = client_spec
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class RemoteSpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
+    """Remote resource access specification."""
 
-        return self
+    inner_spec: WrappedSpecT
+    client_spec: WrapperConfigT
 
-    def get_local_spec(self) -> Self:
-        """
-        Get the local spec without remote properties.
-        """
-        if self.is_remote_spec:
-            # Create a copy without remote properties
-            local_copy = self.model_copy(deep=True)
-            local_copy.is_remote_spec = False
-            local_copy.remote_client_spec = None
-            return local_copy
-        return self
 
-    def get_remote_spec(self) -> Spec:
-        """
-        Get the remote spec with client properties.
-        """
-        if not self.is_remote_spec or self.remote_client_spec is None:
-            raise SpecError("This spec is not a remote spec")
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class PoolSpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
+    """Fixed-size resource pool specification."""
 
-        return self.remote_client_spec
+    inner_spec: WrappedSpecT
+    pool_spec: WrapperConfigT
+
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
+
+def get_inner_spec(spec: BaseSpec) -> BaseSpec:
+    """Get the innermost spec from a potentially wrapped spec."""
+    current = spec
+    while isinstance(current, WrapperSpec):
+        current = current.inner_spec
+    return current
+
+
+def get_wrapper_chain(spec: BaseSpec) -> List[WrapperSpec]:
+    """Get all wrapper specs from outer to inner."""
+    chain = []
+    current = spec
+    while isinstance(current, WrapperSpec):
+        chain.append(current)
+        current = current.inner_spec
+    return chain
+
+
+def has_wrapper_type(spec: BaseSpec, wrapper_type: Type[WrapperSpec]) -> bool:
+    """Check if spec has a specific wrapper type in its chain."""
+    return any(isinstance(w, wrapper_type) for w in get_wrapper_chain(spec))

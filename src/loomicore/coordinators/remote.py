@@ -7,13 +7,14 @@ using existing Loomi patterns (UseService) and proven proxying (wrapt).
 
 from __future__ import annotations
 
+import attrs
 import wrapt
 
 from loomi.interfaces.remote.client import RemoteClientProtocol
 
 from ..descriptors import Attach
 from ..resource import SyncResource
-from ..spec import Spec, SpecField
+from ..spec import RemoteSpec, Spec
 
 __all__ = [
     "RemoteResourceCoordinator",
@@ -86,19 +87,20 @@ class RemoteResourceProxy(wrapt.ObjectProxy):
 
 
 # Simple spec for coordinator
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RemoteResourceCoordinatorSpec(Spec):
-    factory: type = SpecField(default=RemoteResourceCoordinator)
-    resource_spec: Spec = SpecField()
-    client: Spec = SpecField()
+    resource_spec: Spec
+    client: Spec
+    factory: type = RemoteResourceCoordinator
 
 
 # Simple factory function
-def create_remote_resource_proxy(spec: Spec) -> RemoteResourceProxy:
+def create_remote_resource_proxy(spec: RemoteSpec) -> RemoteResourceProxy:
     """Create remote resource proxy."""
 
     # Create proxy specification
-    client_spec = spec.get_remote_spec()
-    resource_spec = spec.get_local_spec()
+    client_spec = spec.client_spec
+    resource_spec = spec.inner_spec
 
     coordinator_spec = RemoteResourceCoordinatorSpec(
         resource_spec=resource_spec, client=client_spec

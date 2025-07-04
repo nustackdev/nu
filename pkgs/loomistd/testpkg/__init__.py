@@ -3,7 +3,7 @@ import random
 import string
 
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 
 class TestSrv(SyncService):

@@ -11,11 +11,13 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, Concatenate, ParamSpec
 
+import attrs
+
 from loomi.attr import UseService
 from loomi.interfaces.executor.executor import AsyncExecutorProtocol
 from loomi.interfaces.state.type_vars import StateT
 from loomi.service import AsyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 from loomistd.state import StateSpec
 
 from ..context import Context
@@ -162,6 +164,7 @@ class Executor(
         await super().exec_operation(context)
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class ExecutorSpec(Spec):
     """
     Specification for the ExecutionEngine.
@@ -170,11 +173,11 @@ class ExecutorSpec(Spec):
     ExecutionEngine.
     """
 
-    name: str = SpecField(default="execution_engine")
-    factory: type = SpecField(default=Executor)
-    state_service: Spec = SpecField(default_factory=StateSpec)
-    executor: Spec = SpecField(default_factory=TaskExecutionServiceSpec)
-    logger: Spec = SpecField(default_factory=LoggingServiceSpec)
+    name: str = "execution_engine"
+    factory: type = Executor
+    state_service: Spec = attrs.field(factory=lambda: StateSpec())
+    executor: Spec = attrs.field(factory=lambda: TaskExecutionServiceSpec())
+    logger: Spec = attrs.field(factory=lambda: LoggingServiceSpec())
     # tracing: Spec = SpecField(
     #     default=TracingServiceSpec().with_value_at("state", "storage", "path", value=".tracing")
     # )

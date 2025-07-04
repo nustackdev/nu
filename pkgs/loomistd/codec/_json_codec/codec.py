@@ -4,8 +4,10 @@ import base64
 import json
 from typing import Any
 
+import attrs
+
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import PATH_SEPARATOR
@@ -186,6 +188,7 @@ class JSONCodec(SyncService):
             return value
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class JSONCodecSpec(Spec):
-    name: str = SpecField(default="json_codec")
-    factory: type = SpecField(default=JSONCodec)
+    name: str = "json_codec"
+    factory: type = JSONCodec

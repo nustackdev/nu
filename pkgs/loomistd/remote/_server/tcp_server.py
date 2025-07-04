@@ -9,10 +9,11 @@ uses the ResourceFactory and provides TCP and Unix socket variants.
 
 from __future__ import annotations
 
+import attrs
 from rpyc.utils.server import ThreadedServer
 
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from .base import BaseRPyCServer
 from .logger import logger
@@ -59,16 +60,17 @@ class RPyCTCPServer(BaseRPyCServer, SyncService):
         return f"{self.spec.bind_address}:{self.spec.bind_port}"
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RPyCTCPServerSpec(Spec):
     """Specification for TCP-based RPyC server."""
 
-    name: str = SpecField(default="rpyc_tcp_server")
-    factory: type = SpecField(default=RPyCTCPServer)
+    name: str = "rpyc_tcp_server"
+    factory: type = RPyCTCPServer
 
     # Server configuration
-    bind_address: str = SpecField(default="localhost")
-    bind_port: int = SpecField(default=18812)
-    auto_register: bool = SpecField(default=False)
+    bind_address: str = "localhost"
+    bind_port: int = 18812
+    auto_register: bool = False
 
     # Connection configuration
-    config: dict = SpecField(default_factory=dict)
+    config: dict = attrs.field(factory=dict)

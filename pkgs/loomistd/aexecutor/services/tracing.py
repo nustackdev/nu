@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from loomi import AsyncService, Spec, SpecField, UseService
+import attrs
+
+from loomi import AsyncService, Spec, UseService
 from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
 from loomistd.state import StateSpec
 
@@ -487,6 +489,7 @@ class TracingService(AsyncService):
     #     }
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class TracingServiceSpec(Spec):
     """
     Specification for the TracingService.
@@ -495,7 +498,9 @@ class TracingServiceSpec(Spec):
     TracingService.
     """
 
-    name: str = SpecField(default="tracing_service")
-    factory: type = SpecField(default=TracingService)
-    state: Spec = SpecField(default=StateSpec().with_value_at("storage", "path", value=".tracing"))
-    state_root_path: tuple[str, ...] = SpecField(default=("_", "tracing"))
+    name: str = "tracing_service"
+    factory: type = TracingService
+    state: Spec = attrs.field(
+        factory=lambda: StateSpec().with_value_at("storage", "path", value=".tracing")
+    )
+    state_root_path: tuple[str, ...] = ("_", "tracing")

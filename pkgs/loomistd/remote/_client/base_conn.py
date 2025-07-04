@@ -18,9 +18,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import final
 
+import attrs
 from rpyc.core import Connection as RPyCConnection
 
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from ..exceptions import RPyCConnectionError
 from ..types import RPyCConfig
@@ -187,5 +188,6 @@ class BaseRPyCConnection(ABC):
                 self._connected = False
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class BaseRPyCConnectionSpec(Spec):
-    config: dict = SpecField(default_factory=dict)
+    config: dict = attrs.field(factory=dict)

@@ -18,7 +18,7 @@
 #     SyncTreeDictProtocol,
 # )
 # from loomi.service import AsyncService
-# from loomi.spec import Spec, SpecField
+# from loomi.spec import Spec
 # from loomistd.state import StateSpec
 
 # from .dashboard.graph import GraphRenderer
@@ -301,7 +301,7 @@
 
 #     name: str = SpecField(default="visualization_service")
 #     factory: type = SpecField(default=VisualizationService)
-#     state: Spec = SpecField(default_factory=StateSpec)
+#     state: Spec = SpecField(factory=StateSpec)
 #     tracing_path: tuple[str, ...] = SpecField(default=("_", "tracing"))
 #     theme: Literal["default"] = SpecField(default="default")
 #     streamlit_title: str = SpecField(default="Loomi Dashboard")

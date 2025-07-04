@@ -11,10 +11,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import attrs
 from rpyc.utils.server import ThreadedServer
 
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from ..exceptions import RPyCServerError
 from .base import BaseRPyCServer
@@ -86,15 +87,16 @@ class RPyCUnixServer(BaseRPyCServer, SyncService):
         return self.spec.socket_path
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RPyCUnixServerSpec(Spec):
     """Specification for Unix socket-based RPyC server."""
 
-    name: str = SpecField(default="rpyc_unix_server")
-    factory: type = SpecField(default=RPyCUnixServer)
+    name: str = "rpyc_unix_server"
+    factory: type = RPyCUnixServer
 
     # Server configuration
-    socket_path: str = SpecField(default="/tmp/loomi_rpyc.sock")
-    auto_register: bool = SpecField(default=False)
+    socket_path: str = "/tmp/loomi_rpyc.sock"
+    auto_register: bool = False
 
     # Connection configuration
-    config: dict = SpecField(default_factory=dict)
+    config: dict = attrs.field(factory=dict)

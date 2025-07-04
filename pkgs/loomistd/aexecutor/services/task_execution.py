@@ -10,8 +10,10 @@ import inspect
 import uuid
 from typing import Any, Awaitable, Callable, TypeVar
 
+import attrs
+
 from loomi.service import AsyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from ..context.context import Context
 from .exceptions import TaskExecutionCancelledError, TaskExecutionTimeoutError
@@ -178,8 +180,9 @@ class TaskExecutionService(AsyncService):
         return self._results.get(task_id)
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class TaskExecutionServiceSpec(Spec):
-    name: str = SpecField(default="task_execution_service")
-    factory: type = SpecField(default=TaskExecutionService)
-    max_concurrency: int = SpecField(default=100)
-    default_timeout: float = SpecField(default=300.0)
+    name: str = "task_execution_service"
+    factory: type = TaskExecutionService
+    max_concurrency: int = 100
+    default_timeout: float = 300.0

@@ -6,7 +6,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from loomi import Spec, SpecField, SyncService, UseService
+import attrs
+
+from loomi import Spec, SyncService, UseService
 from loomistd.kv import StorageServiceProtocol
 from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.observer import ObserverServiceProtocol
@@ -49,8 +51,9 @@ class StateService(SyncService):
         return self._state
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class StateSpec(Spec):
-    name: str = SpecField(default="state")
-    factory: type = SpecField(default=StateService)
-    storage: Spec = SpecField(default_factory=FileStorageSpec)
-    observer: Spec = SpecField(default_factory=InMemoryObserverSpec)
+    name: str = "state"
+    factory: type = StateService
+    storage: Spec = attrs.field(factory=lambda: FileStorageSpec())
+    observer: Spec = attrs.field(factory=lambda: InMemoryObserverSpec())

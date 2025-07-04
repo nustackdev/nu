@@ -9,11 +9,11 @@ network-based remote resource connections.
 
 from __future__ import annotations
 
+import attrs
 import rpyc
 from rpyc.core import Connection as RPyCConnection
 
 from loomi.service import SyncService
-from loomi.spec import SpecField
 
 from .base_conn import BaseRPyCConnection, BaseRPyCConnectionSpec
 from .logger import logger
@@ -74,8 +74,9 @@ class RPyCTCPConnection(BaseRPyCConnection, SyncService):
         return f"{self.spec.host}:{self.spec.port}"
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RPyCTCPConnectionSpec(BaseRPyCConnectionSpec):
-    factory: type = SpecField(default=RPyCTCPConnection)
-    name: str = SpecField(default="rpyc_tcp_connection")
-    host: str = SpecField(default="localhost")
-    port: int = SpecField(default=18812)
+    factory: type = RPyCTCPConnection
+    name: str = "rpyc_tcp_connection"
+    host: str = "localhost"
+    port: int = 18812

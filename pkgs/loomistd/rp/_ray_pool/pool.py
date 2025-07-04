@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+import attrs
 import ray
 
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from .._base import BaseWorkerPool
 from ..exceptions import WorkerPoolOperationError
@@ -154,18 +155,19 @@ class RayWorkerPool(BaseWorkerPool, SyncService):
             return False
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RayWorkerPoolSpec(Spec):
     """Specification for Ray worker pool."""
 
-    name: str = SpecField(default="ray_worker_pool")
-    factory: type = SpecField(default=RayWorkerPool)
+    name: str = "ray_worker_pool"
+    factory: type = RayWorkerPool
 
     # Ray configuration
-    max_workers: int = SpecField(default=4)
-    ray_address: str | None = SpecField(default=None)  # None for local cluster
-    ray_init_kwargs: dict[str, Any] = SpecField(default_factory=dict)
-    shutdown_ray_on_disconnect: bool = SpecField(default=False)
+    max_workers: int = 4
+    ray_address: str | None = None  # None for local cluster
+    ray_init_kwargs: dict[str, Any] = attrs.field(factory=dict)
+    shutdown_ray_on_disconnect: bool = False
 
     # Connection configuration
-    worker_server_specs: list[Spec] = SpecField()
-    worker_client_specs: list[Spec] = SpecField()
+    worker_server_specs: list[Spec]
+    worker_client_specs: list[Spec]

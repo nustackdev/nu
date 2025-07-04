@@ -10,7 +10,7 @@ from .resource import (
     SyncResource,
     SyncResourceABC,
 )
-from .spec import Spec, SpecField
+from .spec import Spec
 
 __all__ = [
     "ResourceMeta",
@@ -23,5 +23,4 @@ __all__ = [
     "Attach",
     "ResourceDescriptor",
     "Spec",
-    "SpecField",
 ]

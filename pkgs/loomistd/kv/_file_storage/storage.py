@@ -7,12 +7,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator
 from uuid import uuid4
 
+import attrs
 import filelock
 
 from loomi.attr import UseService
 from loomi.interfaces.state.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 from loomistd.codec import CodecProtocol
 from loomistd.codec.json import JSONCodecSpec
 
@@ -419,12 +420,13 @@ class FileStorageTransaction:
         return isinstance(other, type(self)) and self._uuid == other._uuid
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class FileStorageSpec(Spec):
-    name: str = SpecField(default="file_storage")
-    factory: type = SpecField(default=FileStorage)
-    mode: str = SpecField(default="write")
-    path: Path | str = SpecField(default=Path(".db"))
-    codec: Spec = SpecField(default_factory=JSONCodecSpec)
+    name: str = "file_storage"
+    factory: type = FileStorage
+    mode: str = "write"
+    path: Path | str = Path(".db")
+    codec: Spec = attrs.field(factory=lambda: JSONCodecSpec())
 
 
 if TYPE_CHECKING:

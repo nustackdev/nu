@@ -6,8 +6,10 @@ from concurrent.futures import Future, ProcessPoolExecutor
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
+import attrs
+
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from .._base import BaseTask, BaseWorkerPool
 from .._exceptions import TaskCancellationError, WorkerPoolOperationError
@@ -187,21 +189,22 @@ class MultiprocessingWorkerPool(BaseWorkerPool, SyncService):
             raise WorkerPoolOperationError(f"Failed to submit task: {e}")
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class MultiprocessingWorkerPoolSpec(Spec):
     """Specification for multiprocessing worker pool."""
 
-    name: str = SpecField(default="multiprocessing_worker_pool")
-    factory: type = SpecField(default=MultiprocessingWorkerPool)
-    max_workers: int = SpecField(default_factory=lambda: mp.cpu_count())
-    start_method: str | None = SpecField(default=None)  # None, 'fork', 'spawn', 'forkserver'
+    name: str = "multiprocessing_worker_pool"
+    factory: type = MultiprocessingWorkerPool
+    max_workers: int = attrs.field(factory=lambda: mp.cpu_count())
+    start_method: str | None = None  # None, 'fork', 'spawn', 'forkserver'
 
     # Worker initialization parameters
-    worker_init_func: WorkerInitFunction | None = SpecField(default=None)
-    worker_init_args: tuple[Any, ...] | None = SpecField(default=None)
-    worker_init_kwargs: dict[str, Any] | None = SpecField(default=None)
-    worker_cleanup_func: WorkerCleanupFunction | None = SpecField(default=None)
-    worker_cleanup_args: tuple[Any, ...] | None = SpecField(default=None)
-    worker_cleanup_kwargs: dict[str, Any] | None = SpecField(default=None)
+    worker_init_func: WorkerInitFunction | None = None
+    worker_init_args: tuple[Any, ...] | None = None
+    worker_init_kwargs: dict[str, Any] | None = None
+    worker_cleanup_func: WorkerCleanupFunction | None = None
+    worker_cleanup_args: tuple[Any, ...] | None = None
+    worker_cleanup_kwargs: dict[str, Any] | None = None
 
 
 if TYPE_CHECKING:

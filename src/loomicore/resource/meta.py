@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 from ..dependency_manager import DependencyManager
 from ..exceptions import CreationError, ResourceError
 from ..registry import ResourceRegistry
-from ..spec import Spec
+from ..spec import RemoteSpec, Spec
 from .logger import logger
 
 if TYPE_CHECKING:
@@ -179,7 +179,7 @@ class ResourceMeta(ABCMeta, Generic[ResourceT]):
             is_dependency = kwargs.pop("__is_dependency__", False)
 
             # Check if this is a remote resource request
-            if spec.is_remote():
+            if isinstance(spec, RemoteSpec):
                 return cls._get_or_create_remote_resource(spec, is_dependency)
 
             # Try get existing instance
@@ -231,7 +231,7 @@ class ResourceMeta(ABCMeta, Generic[ResourceT]):
         return cls._dep_manager
 
     @classmethod
-    def _get_or_create_remote_resource(cls, spec: Spec, is_dependency: bool) -> Any:
+    def _get_or_create_remote_resource(cls, spec: RemoteSpec, is_dependency: bool) -> Any:
         """
         Create a remote resource using RemoteResourceProxy.
 

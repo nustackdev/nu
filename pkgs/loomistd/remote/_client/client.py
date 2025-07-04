@@ -12,9 +12,11 @@ from __future__ import annotations
 import pickle
 from typing import Any, cast
 
+import attrs
+
 from loomi.attr import UseService
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 
 from .._api import ResourceFactory
 from ..exceptions import RPyCConnectionError, RPyCOperationError
@@ -192,21 +194,23 @@ class RPyCClient(SyncService):
         return pickle.dumps(spec)
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RPyCTCPClientSpec(Spec):
     """Specification for TCP-based RPyC client."""
 
-    name: str = SpecField(default="rpyc_tcp_client")
-    factory: type = SpecField(default=RPyCClient)
+    name: str = "rpyc_tcp_client"
+    factory: type = RPyCClient
 
     # Connection service configuration
-    connection: Spec = SpecField(default_factory=RPyCTCPConnectionSpec)
+    connection: Spec = attrs.field(factory=lambda: RPyCTCPConnectionSpec())
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RPyCUnixClientSpec(Spec):
     """Specification for Unix socket-based RPyC client."""
 
-    name: str = SpecField(default="rpyc_unix_client")
-    factory: type = SpecField(default=RPyCClient)
+    name: str = "rpyc_unix_client"
+    factory: type = RPyCClient
 
     # Connection service configuration
-    connection: Spec = SpecField(default_factory=RPyCUnixConnectionSpec)
+    connection: Spec = attrs.field(factory=lambda: RPyCUnixConnectionSpec())

@@ -4,10 +4,12 @@ import threading
 from typing import TYPE_CHECKING, Any, Generator
 from uuid import uuid4
 
+import attrs
+
 from loomi.attr import UseService
 from loomi.interfaces.state.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomi.service import SyncService
-from loomi.spec import Spec, SpecField
+from loomi.spec import Spec
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 
@@ -347,11 +349,12 @@ class InMemoryStorageTransaction:
         return isinstance(other, type(self)) and self._uuid == other._uuid
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class InMemoryStorageSpec(Spec):
-    name: str = SpecField(default="in_memory_storage")
-    factory: type = SpecField(default=InMemoryStorage)
-    mode: str = SpecField(default="write")
-    codec: Spec = SpecField(default_factory=PassthroughCodecSpec)
+    name: str = "in_memory_storage"
+    factory: type = InMemoryStorage
+    mode: str = "write"
+    codec: Spec = attrs.field(factory=lambda: PassthroughCodecSpec())
 
 
 if TYPE_CHECKING:

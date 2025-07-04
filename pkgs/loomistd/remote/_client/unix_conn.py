@@ -11,12 +11,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import attrs
 import rpyc
 from rpyc.core import Connection as RPyCConnection
 from rpyc.core.stream import SocketStream
 
 from loomi.service import SyncService
-from loomi.spec import SpecField
 
 from ..exceptions import RPyCConnectionError
 from .base_conn import BaseRPyCConnection, BaseRPyCConnectionSpec
@@ -90,7 +90,8 @@ class RPyCUnixConnection(BaseRPyCConnection, SyncService):
         return self.spec.socket_path
 
 
+@attrs.define(frozen=True, slots=True, kw_only=True)
 class RPyCUnixConnectionSpec(BaseRPyCConnectionSpec):
-    factory: type = SpecField(default=RPyCUnixConnection)
-    name: str = SpecField(default="rpyc_unix_connection")
-    socket_path: str = SpecField(default="/tmp/loomi_rpyc.sock")
+    factory: type = RPyCUnixConnection
+    name: str = "rpyc_unix_connection"
+    socket_path: str = "/tmp/loomi_rpyc.sock"
