@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
-from loomicore.utils.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
+from loomicore.common.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
 
 if TYPE_CHECKING:
-    from ..resource import Resource
-    from ..spec import Spec
+    from ...resource import Resource
+    from ...spec import Spec
 
 
 __all__ = [

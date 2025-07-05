@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from .descriptors import Attach, ResourceDescriptor
 from .resource import (
     AsyncResource,
     AsyncResourceABC,
@@ -20,7 +19,5 @@ __all__ = [
     "Resource",
     "SyncResource",
     "AsyncResource",
-    "Attach",
-    "ResourceDescriptor",
     "Spec",
 ]
