@@ -1,8 +1,8 @@
 """
-Resolution Service - Centralized resource resolution and composition.
+Resource Runtime - Centralized runtime system for resource management.
 
-This module provides the core resolution service that orchestrates all resource
-creation, dependency management, and lifecycle coordination.
+This module provides the core resource runtime that orchestrates all live resource
+operations, dependency coordination, and lifecycle management during program execution.
 """
 
 from __future__ import annotations
@@ -19,28 +19,28 @@ if TYPE_CHECKING:
     from loomicore.resource import Resource
 
 __all__ = [
-    "ResolutionManager",
+    "ResourceRuntime",
 ]
 
 ResourceT = TypeVar("ResourceT", bound="Resource")
 
 
-class ResolutionManager(Generic[ResourceT]):
+class ResourceRuntime(Generic[ResourceT]):
     """
-    Centralized service for resource resolution and composition.
+    Centralized runtime system for live resource management.
 
-    This service orchestrates:
-    - Resource creation and deduplication via registry
-    - Dependency resolution and relationship management
-    - Resource composition with attach descriptors
-    - Thread-safe resource operations
+    This runtime orchestrates:
+    - Live resource creation and deduplication during execution
+    - Active dependency coordination and relationship management
+    - Dynamic resource composition with attach descriptors
+    - Thread-safe runtime operations
 
-    The service acts as the single point of coordination for all resource
+    The runtime acts as the executing system that manages all live resource
     operations, allowing user-facing classes to remain thin and focused.
     """
 
     def __init__(self) -> None:
-        """Initialize the resolution service with its components."""
+        """Initialize the resource runtime with its operational components."""
         self._resource_registry: ResourceRegistry[ResourceT] = ResourceRegistry()
         self._dependency_manager: DependencyManager[ResourceT] = DependencyManager(
             self._resource_registry
@@ -55,20 +55,20 @@ class ResolutionManager(Generic[ResourceT]):
 
     @property
     def resource_registry(self) -> "ResourceRegistry[ResourceT]":
-        """Get the resource registry."""
+        """Get the resource registry for live instance tracking."""
         return self._resource_registry
 
     @property
     def dependency_manager(self) -> "DependencyManager[ResourceT]":
-        """Get the dependency manager."""
+        """Get the dependency manager for active relationship coordination."""
         return self._dependency_manager
 
     @property
     def resource_factory(self) -> "ResourceFactory[ResourceT]":
-        """Get the resource factory."""
+        """Get the resource factory for runtime instance creation."""
         return self._resource_factory
 
     @property
     def composition_engine(self) -> "CompositionEngine[ResourceT]":
-        """Get the composition engine."""
+        """Get the composition engine for dynamic resource assembly."""
         return self._composition_engine
