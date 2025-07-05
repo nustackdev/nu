@@ -11,6 +11,7 @@ import threading
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from .dependency_manager import DependencyManager
+from .resource_factory import ResourceFactory
 from .resource_registry import ResourceRegistry
 
 if TYPE_CHECKING:
@@ -39,16 +40,26 @@ class ResolutionManager(Generic[ResourceT]):
 
     def __init__(self) -> None:
         """Initialize the resolution service with its components."""
-        self._registry: ResourceRegistry[ResourceT] = ResourceRegistry()
-        self._dependency_manager: DependencyManager[ResourceT] = DependencyManager(self._registry)
+        self._resource_registry: ResourceRegistry[ResourceT] = ResourceRegistry()
+        self._dependency_manager: DependencyManager[ResourceT] = DependencyManager(
+            self._resource_registry
+        )
+        self._resource_factory: ResourceFactory[ResourceT] = ResourceFactory(
+            self._resource_registry, self._dependency_manager
+        )
         self._lock = threading.Lock()
 
     @property
-    def registry(self) -> "ResourceRegistry[ResourceT]":
+    def resource_registry(self) -> "ResourceRegistry[ResourceT]":
         """Get the resource registry."""
-        return self._registry
+        return self._resource_registry
 
     @property
     def dependency_manager(self) -> "DependencyManager[ResourceT]":
         """Get the dependency manager."""
         return self._dependency_manager
+
+    @property
+    def resource_factory(self) -> "ResourceFactory[ResourceT]":
+        """Get the resource factory."""
+        return self._resource_factory
