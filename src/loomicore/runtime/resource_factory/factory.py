@@ -145,82 +145,6 @@ class ResourceFactory:
             logger.error(f"Unexpected error creating resource: {str(e)}")
             raise ResourceError(f"Failed to create resource '{cls.factory_name()}'") from e
 
-    def remove_resource(self, resource: "Resource") -> None:
-        """
-        Remove a resource from all tracking systems.
-
-        This method removes a resource from all runtime components:
-        - ResourceRegistry (instance tracking)
-        - LifecycleManager (state tracking)
-        - DependencyManager (if needed)
-
-        Args:
-            resource: Resource to remove
-
-        Notes:
-            - Should only be called after resource is properly shut down
-            - Handles cleanup across all runtime components
-            - Logs removal for debugging
-        """
-        try:
-            logger.debug(f"Removing resource from factory tracking: '{resource.readable_name}'")
-
-            # Remove from registry
-            self._registry.remove_resource(resource)
-
-            # Remove from lifecycle manager
-            self._lifecycle_manager.unregister_resource(resource)
-
-            logger.info(f"Removed resource from factory tracking: '{resource.readable_name}'")
-
-        except Exception as e:
-            logger.error(f"Error removing resource '{resource.readable_name}': {str(e)}")
-            # Don't re-raise - this is cleanup, best effort
-
-    def get_existing_resource(self, spec: "Spec") -> "Resource | None":
-        """
-        Get existing resource instance if it exists.
-
-        Args:
-            spec: Resource specification to look up
-
-        Returns:
-            Existing resource instance or None
-        """
-        return self._registry.get_resource(spec)
-
-    def list_resources(self) -> list["Resource"]:
-        """
-        List all resources currently tracked by the factory.
-
-        Returns:
-            List of all resource instances currently tracked
-
-        Notes:
-            - Returns resources from registry (instance tracking)
-            - Useful for debugging and monitoring
-            - Order not guaranteed
-        """
-        # This would require adding a method to ResourceRegistry to list all resources
-        # For now, this is a placeholder
-        logger.debug("Listing all tracked resources")
-        return []
-
-    def get_resource_count(self) -> int:
-        """
-        Get the total number of resources currently tracked.
-
-        Returns:
-            Number of resource instances currently tracked
-
-        Notes:
-            - Useful for monitoring and debugging
-            - Includes resources in all states
-        """
-        # This would require adding a method to ResourceRegistry for counting
-        # For now, this is a placeholder
-        return 0
-
     # === Private Implementation ===
 
     def _create_new_instance(
@@ -248,7 +172,7 @@ class ResourceFactory:
         try:
             # Call the original class constructor directly
             # This bypasses the metaclass __call__ to avoid recursion
-            instance = super(type(cls), cls).__call__(spec, *args, **kwargs)
+            instance = super(type(cls), cls).__call__(spec, *args, **kwargs)  # type: ignore
             return instance
         except Exception as e:
             raise CreationError(f"Failed to instantiate '{cls.factory_name()}'") from e
@@ -285,39 +209,3 @@ class ResourceFactory:
         self._dependency_manager.register_resource(proxy_resource, is_dependency=is_dependency)
 
         return cast("Resource", proxy)
-
-    def _validate_resource_creation(self, cls: "type[Resource]", spec: "Spec") -> None:
-        """
-        Validate resource creation parameters.
-
-        Args:
-            cls: Resource class to validate
-            spec: Resource specification to validate
-
-        Raises:
-            CreationError: If validation fails
-
-        Notes:
-            - Checks that class and spec are compatible
-            - Validates spec completeness
-            - Can be extended for additional validation rules
-        """
-        if not spec:
-            raise CreationError(f"Invalid spec provided for {cls.factory_name()}")
-
-        if spec.factory and spec.factory != cls:
-            raise CreationError(f"Spec factory mismatch: spec.factory={spec.factory}, cls={cls}")
-
-    def __repr__(self) -> str:
-        """
-        String representation of the factory for debugging.
-
-        Returns:
-            String representation showing component dependencies
-        """
-        return (
-            f"<ResourceFactory: "
-            f"registry={self._registry}, "
-            f"dependency_manager={self._dependency_manager}, "
-            f"lifecycle_manager={self._lifecycle_manager}>"
-        )

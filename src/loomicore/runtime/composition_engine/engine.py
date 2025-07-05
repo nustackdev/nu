@@ -44,15 +44,8 @@ class CompositionEngine:
     Key Features:
         - Automatic descriptor discovery via class introspection
         - Support for different descriptor types (Attach, AttachMany, etc.)
-        - Proper error handling with detailed context
         - Integration with dependency manager for relationships
         - Comprehensive logging for debugging
-
-    Design Notes:
-        - Scans entire class hierarchy to find inherited descriptors
-        - Handles missing specs with clear error messages
-        - Sets resolved values directly on resource instances
-        - Coordinates with dependency manager for relationship tracking
     """
 
     def __init__(self, dependency_manager: "DependencyManager") -> None:
@@ -241,10 +234,18 @@ class CompositionEngine:
         )
 
     def _resolve_resource_descriptor(
-        self, resource_instance: "Resource", descriptor_name: str, descriptor: "ResourceDescriptor"
+        self,
+        resource_instance: "Resource",
+        descriptor_name: str,
+        descriptor: "ResourceDescriptor",
     ) -> "Resource":
         """
         Resolve a ResourceDescriptor (created by Attach() calls).
+
+        Uses priority-based spec resolution:
+        1. Spec from parent resource's spec (if attribute exists)
+        2. Spec from descriptor itself
+        3. Error if no spec found
 
         Args:
             resource_instance: Parent resource
@@ -257,14 +258,31 @@ class CompositionEngine:
         Raises:
             DependencyError: If resolution fails or spec is missing
         """
-        # Validate descriptor has a spec
-        if descriptor.spec is None:
-            raise DependencyError(
-                f"Descriptor '{descriptor_name}' in '{resource_instance.readable_name}' "
-                "has no spec. Use Attach(spec) to provide a resource specification."
+        # Get resource spec by priority
+        spec = None
+
+        # 1. First priority: Spec from parent resource's spec
+        if hasattr(resource_instance.spec, descriptor_name):
+            spec = getattr(resource_instance.spec, descriptor_name)
+            logger.debug(
+                f"Using spec from parent resource spec for '{descriptor_name}' "
+                f"in '{resource_instance.readable_name}'"
             )
 
-        spec = descriptor.spec
+        # 2. Second priority: Spec from descriptor
+        elif descriptor.spec is not None:
+            spec = descriptor.spec
+            logger.debug(
+                f"Using spec from descriptor for '{descriptor_name}' "
+                f"in '{resource_instance.readable_name}'"
+            )
+
+        # 3. No spec found - raise error
+        else:
+            raise DependencyError(
+                f"No spec found for descriptor '{descriptor_name}' in '{resource_instance.readable_name}'. "
+                "Either add the spec to the parent resource spec or use Attach(spec) to provide a specification."
+            )
 
         # Validate spec has a factory
         if spec.factory is None:

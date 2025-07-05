@@ -113,9 +113,9 @@ class SyncResource(BaseResource, metaclass=ResourceMeta):
             - Thread-safe through runtime coordination
             - Automatic dependency ordering prevents circular dependencies
         """
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_lifecycle_manager
 
-        get_resource_runtime().initialize_resource(self)
+        get_lifecycle_manager().initialize_resource(self)
 
     def shutdown(self) -> None:
         """
@@ -141,9 +141,9 @@ class SyncResource(BaseResource, metaclass=ResourceMeta):
             - Thread-safe through runtime coordination
             - Smart dependency cleanup prevents resource leaks
         """
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_lifecycle_manager
 
-        get_resource_runtime().shutdown_resource(self)
+        get_lifecycle_manager().shutdown_resource(self)
 
     # === User-Overridable Hooks ===
 

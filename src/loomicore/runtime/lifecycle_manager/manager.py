@@ -4,10 +4,6 @@ Lifecycle Manager - Centralized resource lifecycle and state management.
 This module provides the LifecycleManager which handles all resource lifecycle
 operations including state transitions, hook execution, and dependency coordination.
 It serves as the central authority for resource state management in the runtime system.
-
-Note: This implementation is NOT thread-safe. Concurrent access protection will be
-added in a future version. Currently suitable for single-threaded use or when
-external synchronization is provided.
 """
 
 from __future__ import annotations
@@ -44,17 +40,6 @@ class LifecycleManager:
 
     The manager serves as the single source of truth for resource lifecycle
     state and ensures consistent operations across the system.
-
-    Design Features:
-        - Owns resource state storage (moved from ResourceRegistry)
-        - Validates state transitions before operations
-        - Handles both sync and async resources seamlessly
-        - Comprehensive error handling with proper state updates
-        - Extensive logging for debugging and monitoring
-
-    Note:
-        This implementation is NOT thread-safe. Concurrent access protection
-        will be added in a future version.
     """
 
     def __init__(
@@ -198,7 +183,6 @@ class LifecycleManager:
         Notes:
             - Idempotent - safe to call on already initialized resource
             - Sets ERROR state on any failure
-            - Comprehensive logging for debugging
         """
         if self.is_resource_initialized(resource):
             logger.debug(f"Resource '{resource.readable_name}' already initialized, skipping")

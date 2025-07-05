@@ -86,4 +86,4 @@ class ResourceMeta(type):
 
         # Delegate all creation logic to runtime factory
         # This maintains clean separation between interface and implementation
-        return get_resource_runtime().resource_factory.create_resource(cls, spec, *args, **kwargs)
+        return get_resource_runtime().resource_factory.create_resource(cls, spec, *args, **kwargs)  # type: ignore

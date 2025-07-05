@@ -2,8 +2,7 @@
 Resource Registry - Manages resource instances and deduplication.
 
 This module provides the ResourceRegistry which handles resource instance tracking
-and deduplication. State management has been moved to LifecycleManager for better
-separation of concerns.
+and deduplication.
 """
 
 from __future__ import annotations
@@ -27,19 +26,12 @@ class ResourceRegistry:
     Registry managing resource instances and deduplication.
 
     Primary responsibilities:
-    - Maintain unique resource instances based on factory and spec
-    - Provide fast instance lookup for deduplication
+    - Maintain unique resource instances based on resource spec
+    - Provide instance lookup for deduplication
     - Track resource existence (not state - that's in LifecycleManager)
 
     This registry acts as the source of truth for resource existence and
-    provides the deduplication mechanism. State management is handled by
-    the LifecycleManager.
-
-    Updated Design:
-        - Focused solely on instance tracking and deduplication
-        - No state management (moved to LifecycleManager)
-        - Simplified interface and responsibilities
-        - Better separation of concerns
+    provides the deduplication mechanism.
     """
 
     def __init__(self) -> None:
@@ -65,11 +57,6 @@ class ResourceRegistry:
 
         Returns:
             Existing resource instance or None if not found
-
-        Notes:
-            - Core deduplication functionality
-            - Fast O(1) lookup by spec key
-            - Returns None if resource doesn't exist (not an error)
         """
         key = spec.key
         resource = self._instances.get(key, None)
@@ -150,22 +137,6 @@ class ResourceRegistry:
         """
         return spec.key in self._instances
 
-    def has_resource_by_key(self, key: str) -> bool:
-        """
-        Check if resource exists for given key.
-
-        Args:
-            key: Resource key to check
-
-        Returns:
-            True if resource exists in registry
-
-        Notes:
-            - Direct key lookup without spec creation
-            - Useful for internal runtime operations
-        """
-        return key in self._instances
-
     def get_all_resources(self) -> list["Resource"]:
         """
         Get all resources currently in the registry.
@@ -205,30 +176,6 @@ class ResourceRegistry:
         count = len(self._instances)
         self._instances.clear()
         logger.debug(f"Cleared all {count} resources from registry")
-
-    def get_resources_by_factory(self, factory_type: type) -> list["Resource"]:
-        """
-        Get all resources of a specific factory type.
-
-        Args:
-            factory_type: Resource class/factory to filter by
-
-        Returns:
-            List of resources matching the factory type
-
-        Notes:
-            - Useful for debugging and monitoring
-            - O(n) operation - scans all resources
-            - Returns snapshot at time of call
-        """
-        matching_resources = []
-        for resource in self._instances.values():
-            # Check if resource is instance of factory_type
-            if isinstance(resource, factory_type):
-                matching_resources.append(resource)
-
-        logger.debug(f"Found {len(matching_resources)} resources of type {factory_type.__name__}")
-        return matching_resources
 
     # === Private Implementation ===
 

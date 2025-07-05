@@ -48,4 +48,4 @@ class ResourceDescriptor(BaseResourceDescriptor):
 
 def Attach(spec: "Spec | None" = None) -> "ResourceType":  # type: ignore[return]
     """Create a service specification."""
-    return cast("ResourceType", ResourceDescriptor["ResourceType"](spec))
+    return cast("ResourceType", ResourceDescriptor(spec))

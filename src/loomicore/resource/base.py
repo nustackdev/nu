@@ -220,9 +220,9 @@ class BaseResource:
             - Thread-safe through runtime coordination
         """
         # Import at call site to avoid circular imports
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_lifecycle_manager
 
-        return get_resource_runtime().is_resource_initialized(self)
+        return get_lifecycle_manager().is_resource_initialized(self)  # type: ignore[return-value]
 
     @property
     def resource_state(self) -> ResourceState:
@@ -250,9 +250,9 @@ class BaseResource:
             - Useful for debugging and monitoring resource lifecycle
         """
         # Import at call site to avoid circular imports
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_lifecycle_manager
 
-        return get_resource_runtime().get_resource_state(self)
+        return get_lifecycle_manager().get_resource_state(self)  # type: ignore[return-value]
 
     # === Dependency Introspection ===
 
@@ -288,9 +288,9 @@ class BaseResource:
             - Thread-safe through runtime delegation
             - Useful for debugging and introspection
         """
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_dependency_manager
 
-        return get_resource_runtime().get_resource_dependencies(self)
+        return get_dependency_manager().get_dependencies(self)  # type: ignore[return-value]
 
     def get_dependents(self) -> set["BaseResource"]:
         """
@@ -321,6 +321,6 @@ class BaseResource:
             - Thread-safe through runtime delegation
             - Useful for understanding impact of shutting down this resource
         """
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_dependency_manager
 
-        return get_resource_runtime().get_resource_dependents(self)
+        return get_dependency_manager().get_dependents(self)  # type: ignore[return-value]

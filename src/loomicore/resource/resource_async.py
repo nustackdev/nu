@@ -115,9 +115,9 @@ class AsyncResource(BaseResource, metaclass=ResourceMeta):
             - Automatic dependency ordering prevents circular dependencies
             - Handles mixed sync/async dependencies appropriately
         """
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_lifecycle_manager
 
-        await get_resource_runtime().initialize_resource_async(self)
+        await get_lifecycle_manager().initialize_resource_async(self)
 
     async def shutdown(self) -> None:
         """
@@ -144,9 +144,9 @@ class AsyncResource(BaseResource, metaclass=ResourceMeta):
             - Smart dependency cleanup prevents resource leaks
             - Handles mixed sync/async dependencies appropriately
         """
-        from loomicore.runtime import get_resource_runtime
+        from loomicore.runtime import get_lifecycle_manager
 
-        await get_resource_runtime().shutdown_resource_async(self)
+        await get_lifecycle_manager().shutdown_resource_async(self)
 
     # === User-Overridable Async Hooks ===
 
