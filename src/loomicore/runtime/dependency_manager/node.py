@@ -6,13 +6,13 @@ from .context import ResourceContext
 from .types import ResourceRole
 
 if TYPE_CHECKING:
-    from loomicore.resource import Resource, ResourceABC
+    from loomicore.resource import Resource
 
 __all__ = [
     "DependencyNode",
 ]
 
-ResourceT = TypeVar("ResourceT", bound="ResourceABC")
+ResourceT = TypeVar("ResourceT", bound="Resource")
 
 
 class DependencyNode(Generic[ResourceT]):
@@ -144,7 +144,6 @@ class DependencyNode(Generic[ResourceT]):
         return (
             "<DependencyNode: "
             f"\nresource={self.resource.readable_name}, "
-            f"\nresource_state={self.resource._resource_state}, "
             f"\nresource_key={self.resource.key}, "
             f"\ndependencies_count={len(self.dependencies)}, "
             f"\ndependents_count={len(self.dependents)}, "

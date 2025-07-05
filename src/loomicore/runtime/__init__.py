@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .composition_engine import CompositionEngine
     from .dependency_manager import DependencyManager
+    from .lifecycle_manager import LifecycleManager
     from .resource_factory import ResourceFactory
     from .resource_registry import ResourceRegistry
     from .runtime import ResourceRuntime
@@ -15,6 +16,7 @@ __all__ = [
     "get_dependency_manager",
     "get_resource_factory",
     "get_composition_engine",
+    "get_lifecycle_manager",
 ]
 
 # Global runtime instance
@@ -75,3 +77,13 @@ def get_composition_engine() -> "CompositionEngine":
         CompositionEngine from the global resource runtime
     """
     return get_resource_runtime().composition_engine
+
+
+def get_lifecycle_manager() -> "LifecycleManager":
+    """
+    Get the global lifecycle manager for state and lifecycle operations.
+
+    Returns:
+        LifecycleManager from the global resource runtime
+    """
+    return get_resource_runtime().lifecycle_manager

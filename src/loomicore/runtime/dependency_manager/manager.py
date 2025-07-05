@@ -25,7 +25,7 @@ from .logger import logger
 from .node import DependencyNode
 
 if TYPE_CHECKING:
-    from loomicore.resource import Resource, ResourceABC
+    from loomicore.resource import Resource
     from loomicore.spec import Spec
 
     from ..resource_registry import ResourceRegistry
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 __all__ = [
     "DependencyManager",
 ]
-ResourceT = TypeVar("ResourceT", bound="ResourceABC")
+ResourceT = TypeVar("ResourceT", bound="Resource")
 
 
 class DependencyManager(Generic[ResourceT]):
