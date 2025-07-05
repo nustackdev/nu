@@ -1,249 +1,89 @@
 """
-Resource metaclass implementation.
+ResourceMeta metaclass - pure delegation to runtime system.
 
-This module provides the ResourceMeta metaclass which handles resource instantiation,
-feature registration, and lifecycle management. The metaclass coordinates with
-the dependency and registry systems to ensure proper resource creation and tracking.
+This module provides the ResourceMeta metaclass that handles resource
+instantiation by delegating all creation logic to the runtime system.
+This maintains the clean separation between the user interface (Resource classes)
+and the implementation (Runtime system).
 
-Key Features:
-- Resource instance management and deduplication
-- Feature registration via declarative properties
-- Context-aware instantiation
-- Thread-safe resource creation
-- Proper dependency and registry coordination
-- Remote resource support
+The metaclass intercepts resource creation and delegates to the runtime's
+ResourceFactory, which handles:
+- Resource deduplication based on specifications
+- Dependency resolution and composition
+- Lifecycle state management
+- Thread-safe creation and registration
+
+Design Philosophy:
+    - Ultra-thin delegation layer
+    - No operational logic in metaclass
+    - All complexity handled by runtime
+    - Clean separation of concerns
 """
 
 from __future__ import annotations
 
-from abc import ABCMeta
-from threading import Lock
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
+from typing import Any
 
-from ..dependency_manager import DependencyManager
-from ..exceptions import CreationError, ResourceError
-from ..registry import ResourceRegistry
-from ..spec import RemoteSpec, Spec
-from .logger import logger
-
-if TYPE_CHECKING:
-    from .resource import AsyncResource, SyncResource
+from loomicore.spec import Spec
 
 __all__ = [
     "ResourceMeta",
 ]
 
-# Type variables for generic resource and feature types
-ResourceT = TypeVar("ResourceT", bound="AsyncResource | SyncResource")
-FeatureT = TypeVar("FeatureT")
 
-
-class ResourceMeta(ABCMeta, Generic[ResourceT]):
+class ResourceMeta(type):
     """
-    Metaclass for resource classes.
+    Metaclass for resource classes providing pure delegation to runtime.
 
-    This metaclass handles:
-    - Resource instance creation and deduplication
-    - Feature registration and property creation
-    - Integration with dependency and registry systems
-    - Context-aware resource instantiation
+    This metaclass intercepts resource class instantiation and delegates
+    all creation logic to the runtime system. It maintains the clean
+    separation between user interface and implementation by ensuring
+    resources are created through the proper runtime channels.
 
-    The metaclass ensures resources are properly registered and tracked
-    throughout their lifecycle, whether created directly or as dependencies.
+    The metaclass handles:
+    - Intercepting __call__ during resource instantiation
+    - Delegating to runtime ResourceFactory for actual creation
+    - Maintaining factory name identification for runtime
 
-    Features:
-    - Declarative feature registration via class properties
-    - Context-preserving resource instantiation
-    - Thread-safe instance management
-    - Integration with dependency tracking system
+    All operational logic (deduplication, dependency resolution, state
+    management) is handled by the runtime system, keeping this metaclass
+    minimal and focused.
 
-    Example:
-        class MyResource(BaseResource, metaclass=ResourceMeta):
-            # Features automatically become properties
-            cache = CacheFeature()
-            storage = StorageFeature()
+    Design Notes:
+        - Imports runtime at call-time to avoid circular imports
+        - Pure delegation pattern - no local logic
+        - Preserves all arguments for runtime factory
+        - Provides factory identification for runtime
     """
 
-    # Shared managers as class variables
-    _registry: ClassVar[ResourceRegistry] = ResourceRegistry()
-    _dep_manager: ClassVar[DependencyManager] = DependencyManager(_registry)
-
-    # Lock for thread-safe instance creation
-    _creation_lock: ClassVar[Lock] = Lock()
-
-    def __new__(
-        mcs,
-        name: str,
-        bases: tuple[type, ...],
-        namespace: dict[str, Any],
-    ) -> type[ResourceT]:
+    def __call__(cls, spec: Spec | None = None, /, *args: Any, **kwargs: Any) -> Any:
         """
-        Create new resource class with registered features.
+        Intercept resource instantiation and delegate to runtime factory.
 
-        This method handles:
-        - Feature registration and property creation
-        - Manager references injection
-        - Class creation and initialization
+        This method is called whenever a resource class is instantiated
+        (e.g., MyResource(spec)). Instead of creating the instance directly,
+        it delegates to the runtime system which handles all the complexity
+        of resource creation, deduplication, and lifecycle management.
 
         Args:
-            name: Class name
-            bases: Base classes
-            namespace: Class namespace
-            **features: Resource features to register
+            spec: Resource specification defining instance properties.
+                 If None, runtime will create default spec.
+            *args: Additional positional arguments passed to runtime
+            **kwargs: Additional keyword arguments passed to runtime
 
         Returns:
-            Created resource class with registered features
+            Resource instance created and managed by runtime system
 
-        Example:
-            class MyResource(BaseResource, metaclass=ResourceMeta,
-                          cache=CacheFeature()):
-                pass
-            # Creates resource class with cache property
+        Notes:
+            - Import at call-time prevents circular import issues
+            - All arguments passed through to runtime factory
+            - Runtime handles deduplication, dependency resolution, etc.
+            - Resource may be existing instance if spec matches existing resource
         """
-        # Register feature properties
-        # for feature_name, feature in features.items():
-        #     # Create private storage name
-        #     storage_name = f"_{feature_name}_"
+        # Import at call site to avoid circular imports
+        # Resource module cannot import runtime at module level
+        from loomicore.runtime import get_resource_runtime
 
-        #     # Create property accessor with proper closure
-        #     def make_getter(name: str) -> property:
-        #         """Create getter for feature property."""
-
-        #         def getter(self: Any) -> Any:
-        #             return getattr(self, name, None)
-
-        #         return property(getter)
-
-        #     # Add to namespace
-        #     namespace[storage_name] = feature
-        #     namespace[feature_name] = make_getter(storage_name)
-
-        # Store manager references
-        namespace["_registry"] = mcs._registry
-        namespace["_dep_manager"] = mcs._dep_manager
-
-        logger.info(f"Created resource class: '{name}'")
-
-        # Create class with features
-        cls = cast(type[ResourceT], super().__new__(mcs, name, bases, namespace))
-        return cls
-
-    def __call__(
-        cls: type[ResourceT],  # type: ignore
-        spec: Spec | None = None,
-        /,
-        *args: Any,
-        **kwargs: Any,
-    ) -> ResourceT:
-        """
-        Create or get existing resource instance.
-
-        This method handles:
-        - Resource deduplication via registry
-        - Context-aware instance creation
-        - Proper dependency registration
-        - Thread-safe resource instantiation
-
-        The method preserves the creation context (root vs dependency)
-        throughout the resource's lifecycle for proper cleanup handling.
-
-        Args:
-            spec: Resource specification (optional)
-            *args: Additional constructor arguments
-            **kwargs: Additional constructor keywords
-
-        Returns:
-            New or existing resource instance
-
-        Raises:
-            CreationError: If resource creation fails
-            ResourceError: For other resource-related errors
-
-        Example:
-            # Create root resource
-            resource = MyResource(spec)
-
-            # Create as dependency
-            resource = MyResource(spec, __is_dependency__=True)
-        """
-        try:
-            # with cls._creation_lock:  # type: ignore
-            # Use empty spec if none provided
-            if spec is None:
-                spec = Spec(factory=cls)
-
-            if spec.factory is None:
-                spec.factory = cls
-
-            # Extract creation context
-            is_dependency = kwargs.pop("__is_dependency__", False)
-
-            # Check if this is a remote resource request
-            if isinstance(spec, RemoteSpec):
-                return cls._get_or_create_remote_resource(spec, is_dependency)
-
-            # Try get existing instance
-            instance = cls._registry.get_resource(spec)
-            if instance is not None:
-                logger.info(f"Reusing existing resource instance: '{instance.readable_name}'")
-                # Update dependency tracking
-                cls._dep_manager.register_resource(instance, is_dependency=is_dependency)
-                return cast(ResourceT, instance)
-
-            logger.debug(f"Creating new resource instance: '{cls.factory_name()}'")
-            try:
-                # Create new instance
-                instance = super().__call__(spec, *args, **kwargs)
-            except Exception as e:
-                raise CreationError(f"Failed to instantiate '{cls.factory_name()}'") from e
-
-            # Register with proper context
-            cls._registry.add_resource(instance)
-            cls._dep_manager.register_resource(instance, is_dependency=is_dependency)
-
-            logger.info(f"Created resource instance: '{instance.readable_name}'")
-            return cast(ResourceT, instance)
-
-        except (CreationError, ResourceError):
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error creating resource: {str(e)}")
-            raise ResourceError(f"Failed to create resource '{cls.factory_name()}'") from e
-
-    @property
-    def registry(cls) -> ResourceRegistry:
-        """
-        Get resource registry instance.
-
-        Returns:
-            Shared resource registry
-        """
-        return cls._registry
-
-    @property
-    def dep_manager(cls) -> DependencyManager:
-        """
-        Get dependency manager instance.
-
-        Returns:
-            Shared dependency manager
-        """
-        return cls._dep_manager
-
-    @classmethod
-    def _get_or_create_remote_resource(cls, spec: RemoteSpec, is_dependency: bool) -> Any:
-        """
-        Create a remote resource using RemoteResourceProxy.
-
-        Args:
-            spec: Remote resource specification
-            is_dependency: Whether resource is being created as dependency
-
-        Returns:
-            RemoteResourceProxy instance
-        """
-        from ..patterns.proxy.remote import create_remote_resource_proxy
-
-        proxy = create_remote_resource_proxy(spec)
-
-        return proxy
+        # Delegate all creation logic to runtime factory
+        # This maintains clean separation between interface and implementation
+        return get_resource_runtime().resource_factory.create_resource(cls, spec, *args, **kwargs)

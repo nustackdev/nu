@@ -1,124 +1,135 @@
 """
-Base resource functionality shared between async and sync resources.
+BaseResource - common functionality shared by all resource types.
 
-This module provides the common foundation for all resource types through
-the ResourceCommonBase class. It implements core resource features including:
+This module provides the BaseResource class that implements core resource
+functionality without any runtime dependencies. This avoids circular imports
+while providing essential resource identity and behavior.
+
+The BaseResource class handles:
 - Resource specification management
-- Identity and equality handling
-- Name and key generation
-- Registry and dependency manager integration
+- Identity properties (key, name, readable_name)
+- Equality and hashing based on resource key
+- String representation for debugging
 
-The functionality here is inherited by both async and sync resource base classes
-to ensure consistent behavior across all resource types.
+All operational logic (lifecycle, dependencies, state management) is
+deliberately excluded to avoid runtime dependencies and circular imports.
+That functionality is provided by concrete resource classes through delegation.
 """
 
 from __future__ import annotations
 
-from abc import ABC
-from types import TracebackType
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import Any
 
-from ..exceptions import SpecError
-from ..spec import Spec
-from .logger import logger
-
-if TYPE_CHECKING:
-    from ..dependency_manager import DependencyManager
-    from ..registry import ResourceRegistry
-    from ..types import ResourceState
-    from .resource import Resource
-
+from loomicore.spec import Spec
+from loomicore.types import ResourceState
 
 __all__ = [
-    "ResourceABC",
-    "AsyncResourceABC",
-    "SyncResourceABC",
+    "BaseResource",
 ]
 
 
-class ResourceABC(ABC):
+class BaseResource:
     """
-    Base class providing common functionality for all resource types.
+    Base resource class providing core identity and behavior.
 
-    This class implements the core features needed by all resources, whether
-    async or sync. It handles resource specifications, identity management,
-    registry integration, and basic resource properties.
+    This class provides the fundamental properties and behavior shared by all
+    resource types without any dependencies on the runtime system. It handles
+    resource identity, equality, and representation while leaving operational
+    concerns to concrete implementations.
 
-    Class Attributes:
-        _registry (ResourceRegistry): Shared resource registry for instance tracking
-        _dep_manager (DependencyManager): Shared dependency manager for resource relationships
+    The class is designed to be inherited by SyncResource and AsyncResource,
+    which add lifecycle management through delegation to the runtime system.
 
     Attributes:
-        _spec (Spec): Resource specification defining the instance's properties
+        _spec: Resource specification defining the instance's properties
 
     Properties:
-        spec (Spec): Access to the resource specification
-        name (str): Resource instance name
-        readable_name (str): Human-readable resource identifier
-        key (ResourceKey): Unique resource instance identifier
+        spec: Access to the resource specification
+        key: Unique resource identifier derived from spec
+        name: Human-readable resource name from spec
+        readable_name: Combined name and class for display purposes
+
+    Design Notes:
+        - No runtime imports to avoid circular dependencies
+        - Pure identity and behavior, no operational logic
+        - Immutable identity based on specification
+        - Thread-safe through immutability
     """
 
-    _registry: ClassVar["ResourceRegistry"]
-    _dep_manager: ClassVar["DependencyManager"]
+    def __init__(self, spec: Spec | None = None) -> None:
+        """
+        Initialize base resource with specification.
+
+        Creates a resource instance with the given specification. If no spec
+        is provided, creates a default spec using the class as factory.
+
+        Args:
+            spec: Resource specification defining instance properties.
+                 If None, creates default spec with class as factory.
+
+        Notes:
+            The specification becomes the immutable identity of the resource.
+            All resource behavior and properties derive from this spec.
+        """
+        if spec is None:
+            spec = Spec(factory=self.__class__, name="")
+        self._spec = spec
+
+    # === Identity Properties ===
 
     @classmethod
     def factory_name(cls) -> str:
         """
         Get the fully qualified name of the resource class.
 
+        Provides a unique identifier for the resource class that can be
+        used by the runtime system for registration, logging, and debugging.
+
         Returns:
-            str: String in format "module.ClassName"
+            String in format "module.ClassName" for unique identification
+
+        Example:
+            "myapp.services.DatabaseService"
         """
         return f"{cls.__module__}.{cls.__name__}"
-
-    def __init__(self, spec: Spec | None = None) -> None:
-        """
-        Initialize a new resource instance.
-
-        Args:
-            spec: Resource specification defining instance properties. If None,
-                 a default spec will be created using the class as factory.
-
-        Raises:
-            SpecError: If spec is invalid (wrong type or wrong factory)
-
-        Notes:
-            - Validates spec type and factory if provided
-            - Creates default spec if none provided
-            - Logs initialization details at appropriate levels
-        """
-        if spec is not None and not isinstance(spec, Spec):
-            logger.error(f"Expected type matching SpecProtocol, got '{type(spec)}'")
-            raise SpecError(f"Expected type matching SpecProtocol, got '{type(spec)}'")
-
-        if spec is not None and spec.factory is not self.__class__:
-            logger.error(f"Expected spec factory '{self.factory_name()}', got {spec.factory}")
-            raise SpecError(f"Expected spec factory '{self.factory_name()}', got {spec.factory}")
-
-        if spec is None:
-            spec = Spec(factory=self.__class__, name="")
-            logger.warning(f"Initializing '{self.factory_name()}' with base spec: {spec}")
-
-        self._spec = spec
-        logger.debug(f"Initialized resource '{self.readable_name}' with spec {spec}")
 
     @property
     def spec(self) -> Spec:
         """
         Get the resource's specification.
 
+        The specification defines all properties and behavior of the resource
+        instance. It serves as the immutable identity and configuration.
+
         Returns:
-            Spec: The specification defining this resource instance
+            The specification used to create this resource instance
         """
         return self._spec
+
+    @property
+    def key(self) -> str:
+        """
+        Get the unique resource identifier.
+
+        The key is derived from the resource specification and uniquely
+        identifies this resource instance. Resources with identical specs
+        will have identical keys, enabling deduplication.
+
+        Returns:
+            Unique string identifier for this resource instance
+        """
+        return self.spec.key
 
     @property
     def name(self) -> str:
         """
         Get the resource instance name.
 
+        Returns the human-readable name defined in the resource specification.
+        This name is typically used for logging and debugging purposes.
+
         Returns:
-            str: Name defined in the resource specification
+            Resource name from specification, may be empty string
         """
         return self.spec.name
 
@@ -127,27 +138,32 @@ class ResourceABC(ABC):
         """
         Get a human-readable identifier for the resource.
 
-        Returns:
-            str: String combining name (if present) and class name
-        """
-        return ((self.spec.name + ":") if self.spec.name else "") + f"{self.__class__.__name__}"
-
-    @property
-    def key(self) -> str:
-        """
-        Get the unique resource instance identifier.
+        Combines the resource name (if present) with the class name to create
+        a clear identifier for logging, debugging, and user display.
 
         Returns:
-            ResourceKey: Unique key generated from the specification
+            String in format "name:ClassName" or just "ClassName" if no name
+
+        Examples:
+            - Resource with name "db": "db:DatabaseService"
+            - Resource without name: "DatabaseService"
         """
-        return self.spec.key
+        if self.name:
+            return f"{self.name}:{self.__class__.__name__}"
+        return self.__class__.__name__
+
+    # === Equality and Hashing ===
 
     def __hash__(self) -> int:
         """
         Generate hash based on resource key.
 
+        Resources are hashed by their unique key, allowing them to be used
+        in sets and as dictionary keys. Resources with identical specs will
+        have identical hashes.
+
         Returns:
-            int: Hash value for the resource instance
+            Hash value derived from resource key
         """
         return hash(self.key)
 
@@ -155,11 +171,14 @@ class ResourceABC(ABC):
         """
         Compare resource instances based on their keys.
 
+        Two resources are considered equal if they are the same type and
+        have the same key (derived from identical specifications).
+
         Args:
-            other: Object to compare with
+            other: Object to compare with this resource
 
         Returns:
-            bool: True if other is same resource type with matching key
+            True if other is same resource type with matching key
         """
         if other is None:
             return False
@@ -169,300 +188,139 @@ class ResourceABC(ABC):
         """
         Generate string representation of the resource.
 
+        Creates a debug-friendly string showing the resource type and
+        readable name for easy identification in logs and debugging.
+
         Returns:
-            str: Human-readable string showing resource name and spec
+            String representation in format "<ClassName 'readable_name'>"
+
+        Example:
+            "<DatabaseService 'db:DatabaseService'>"
         """
-        return f"<Resource '{self.readable_name}': spec=({self.spec})>"
+        return f"<{self.__class__.__name__} '{self.readable_name}'>"
 
-    """
-    Resource lifecycle management methods.
-
-    These methods are used to manage the lifecycle of the resource,
-    including initialization and shutdown.
-    They are not intended to be used directly by resource users.
-    """
+    # === State Properties ===
 
     @property
-    def _is_initialized(self) -> bool:
-        """Check if resource is fully initialized."""
-        ...
+    def is_initialized(self) -> bool:
+        """
+        Check if resource is fully initialized and ready for use.
+
+        A resource is considered initialized when:
+        - All dependencies have been resolved and initialized
+        - The setup() method has completed successfully
+        - Resource state is tracked as INITIALIZED in runtime
+
+        Returns:
+            True if resource is fully initialized and operational
+
+        Notes:
+            - Safe to call before initialization (returns False)
+            - Delegates to runtime for accurate state tracking
+            - Thread-safe through runtime coordination
+        """
+        # Import at call site to avoid circular imports
+        from loomicore.runtime import get_resource_runtime
+
+        return get_resource_runtime().is_resource_initialized(self)
 
     @property
-    def _resource_state(self) -> ResourceState:
+    def resource_state(self) -> ResourceState:
         """
         Get the current lifecycle state of the resource.
 
-        Returns:
-            str: Current state of the resource
-        """
-        ...
+        Returns the current state from the runtime system, which tracks
+        the resource through its complete lifecycle from creation to shutdown.
 
-    """
-    Dependency management methods.
-    These methods are used to manage resource dependencies and relationships.
-    They are not intended to be used directly by resource users.
-    """
-
-    def _add_dependency(
-        self,
-        name: str,
-        spec: "Spec",
-    ) -> "Resource":
-        """
-        Add resource dependency.
-
-        Args:
-            name: Dependency name
-            resource: Dependency resource instance
-
-        Raises:
-            DependencyError: If dependency invalid or creates cycle
-        """
-        ...
-
-    def _get_dependency(self, name: str) -> "Resource":
-        """
-        Get named dependency if it exists.
-
-        Args:
-            name: Dependency name to retrieve
+        Possible states:
+            - CREATED: Initial state after instance creation
+            - INITIALIZING: Resource is starting up
+            - INITIALIZED: Resource is ready for operation
+            - SHUTTING_DOWN: Resource is in the process of shutting down
+            - SHUTDOWN: Resource has completed shutdown
+            - ERROR: Resource encountered an error
 
         Returns:
-            Dependency resource
-        """
-        ...
+            Current ResourceState enum value
 
-    def _get_dependencies(self) -> dict[str, "Resource"]:
+        Notes:
+            - Delegates to runtime for accurate state tracking
+            - Thread-safe through runtime coordination
+            - Returns ERROR state if runtime tracking fails
+            - Useful for debugging and monitoring resource lifecycle
         """
-        Get all resource dependencies.
+        # Import at call site to avoid circular imports
+        from loomicore.runtime import get_resource_runtime
+
+        return get_resource_runtime().get_resource_state(self)
+
+    # === Dependency Introspection ===
+
+    def get_dependencies(self) -> dict[str, "BaseResource"]:
+        """
+        Get all dependencies of this resource.
+
+        Returns a mapping of dependency names to their resolved resource instances.
+        These are the resources that this resource depends on, typically defined
+        via Attach descriptors on the resource class.
 
         Returns:
-            Dict mapping dependency names to resources
-        """
-        ...
+            Dictionary mapping dependency names to resource instances
 
-    def _get_dependents(self) -> set["Resource"]:
+        Example:
+            ```python
+            class MyService(SyncResource):
+                database = Attach(DatabaseSpec())
+                cache = Attach(CacheSpec())
+
+            service = MyService(spec)
+            deps = service.get_dependencies()
+            # deps = {'database': <DatabaseService>, 'cache': <CacheService>}
+
+            # Access specific dependency
+            if 'database' in deps:
+                deps['database'].query("SELECT 1")
+            ```
+
+        Notes:
+            - Only returns resolved dependencies (after composition)
+            - Empty dict if no dependencies or before composition
+            - Thread-safe through runtime delegation
+            - Useful for debugging and introspection
         """
-        Get all dependent resources.
+        from loomicore.runtime import get_resource_runtime
+
+        return get_resource_runtime().get_resource_dependencies(self)
+
+    def get_dependents(self) -> set["BaseResource"]:
+        """
+        Get all resources that depend on this resource.
+
+        Returns a set of resource instances that have this resource as
+        a dependency. These are resources that would be affected if this
+        resource were to be shut down.
 
         Returns:
-            Set of resources depending on this one
+            Set of resource instances that depend on this resource
+
+        Example:
+            ```python
+            # If ServiceA and ServiceB both depend on DatabaseService
+            db = DatabaseService(spec)
+            dependents = db.get_dependents()
+            # dependents = {<ServiceA>, <ServiceB>}
+
+            # Check impact before shutdown
+            if dependents:
+                print(f"Shutting down database will affect {len(dependents)} services")
+            ```
+
+        Notes:
+            - Empty set if no resources depend on this one
+            - Updated dynamically as dependencies are created/destroyed
+            - Thread-safe through runtime delegation
+            - Useful for understanding impact of shutting down this resource
         """
-        ...
+        from loomicore.runtime import get_resource_runtime
 
-    def _detach_dependent(self, dependent: "Resource") -> None:
-        """
-        Remove a dependent resource.
-
-        Args:
-            dependent: Dependent resource to remove
-        """
-        ...
-
-    def _initialize_attach_descriptors(self) -> None:
-        """
-        Initialize resource dependency descriptors.
-        """
-        ...
-
-
-class SyncResourceABC(ResourceABC):
-    """
-    Synchronous resource initializer protocol.
-
-    This protocol defines the interface for resources initialization.
-    """
-
-    def initialize(self) -> None:
-        """
-        Initialize resource and its dependencies synchronously.
-        """
-        ...
-
-    def shutdown(self) -> None:
-        """
-        Shutdown resource and cleanup dependencies synchronously.
-        """
-        ...
-
-    def __enter__(self) -> Self:
-        """
-        Enter context, initializing resource.
-
-        Returns:
-            Self for context usage
-        """
-        ...
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        """Exit context, shutting down resource."""
-        ...
-
-    def setup(self) -> None:
-        """
-        Resource-specific setup.
-
-        This method should be implemented by concrete resources to
-        perform their specific setup requirements
-        (opening connections, configuring resource, etc).
-        """
-        ...
-
-    def cleanup(self) -> None:
-        """
-        Resource-specific cleanup.
-
-        This method should be implemented by concrete resources to
-        perform their specific cleanup requirements.
-        """
-        ...
-
-    def pre_initialize(self) -> None:
-        """
-        Pre-initialization hook.
-
-        This method is called before resource initialization.
-
-        Raises:
-            InitializationError: If pre-initialization fails
-        """
-        ...
-
-    def post_initialize(self) -> None:
-        """
-        Post-initialization hook.
-
-        This method is called after resource initialization.
-
-        Raises:
-            InitializationError: If post-initialization fails
-        """
-        ...
-
-    def pre_shutdown(self) -> None:
-        """
-        Pre-shutdown hook.
-
-        This method is called before resource shutdown.
-
-        Raises:
-            ShutdownError: If pre-shutdown fails
-        """
-        ...
-
-    def post_shutdown(self) -> None:
-        """
-        Post-shutdown hook.
-
-        This method is called after resource shutdown.
-
-        Raises:
-            ShutdownError: If post-shutdown fails
-        """
-        ...
-
-
-class AsyncResourceABC(ResourceABC):
-    """
-    Async resource initializer protocol.
-
-    This protocol defines the interface for resources initialization.
-    """
-
-    async def initialize(self) -> None:
-        """
-        Initialize resource and its dependencies asynchronously.
-        """
-        ...
-
-    async def shutdown(self) -> None:
-        """
-        Shutdown resource and cleanup dependencies asynchronously.
-        """
-        ...
-
-    async def __aenter__(self) -> Self:
-        """
-        Enter async context, initializing resource.
-
-        Returns:
-            Self for context usage
-        """
-        ...
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        """Exit async context, shutting down resource."""
-        ...
-
-    async def setup(self) -> None:
-        """
-        Resource-specific setup.
-
-        This method should be implemented by concrete resources to
-        perform their specific setup requirements
-        (opening connections, configuring resource, etc).
-        """
-        ...
-
-    async def cleanup(self) -> None:
-        """
-        Resource-specific cleanup.
-
-        This method should be implemented by concrete resources to
-        perform their specific cleanup requirements.
-        """
-        ...
-
-    async def pre_initialize(self) -> None:
-        """
-        Pre-initialization hook.
-
-        This method is called before resource initialization.
-
-        Raises:
-            InitializationError: If pre-initialization fails
-        """
-        ...
-
-    async def post_initialize(self) -> None:
-        """
-        Post-initialization hook.
-
-        This method is called after resource initialization.
-
-        Raises:
-            InitializationError: If post-initialization fails
-        """
-        ...
-
-    async def pre_shutdown(self) -> None:
-        """
-        Pre-shutdown hook.
-
-        This method is called before resource shutdown.
-
-        Raises:
-            ShutdownError: If pre-shutdown fails
-        """
-        ...
-
-    async def post_shutdown(self) -> None:
-        """
-        Post-shutdown hook.
-
-        This method is called after resource shutdown.
-
-        Raises:
-            ShutdownError: If post-shutdown fails
-        """
-        ...
+        return get_resource_runtime().get_resource_dependents(self)
