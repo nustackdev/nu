@@ -15,10 +15,9 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING
 
-from loomicore.exceptions import InitializationError, ShutdownError
 from loomicore.types import ResourceState
 
-from .exceptions import LifecycleError, StateTransitionError
+from .exceptions import InitializationError, LifecycleError, ShutdownError, StateTransitionError
 from .logger import logger
 
 if TYPE_CHECKING:

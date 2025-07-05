@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-from loomicore.exceptions import CreationError, ResourceError
 from loomicore.spec import RemoteSpec, Spec
 
+from .exceptions import CreationError, ResourceError
 from .logger import logger
 
 if TYPE_CHECKING:

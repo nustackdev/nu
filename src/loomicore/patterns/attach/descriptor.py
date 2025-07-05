@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
-from loomicore.common.descriptor import BaseDescriptor, StorageStrategy, ValidationStrategy
+from loomicore.common.descriptor import StorageStrategy, ValidationStrategy
+from loomicore.runtime.composition_engine.descriptor import BaseResourceDescriptor
 
 if TYPE_CHECKING:
-    from ...resource import Resource
-    from ...spec import Spec
+    from loomicore.resource import Resource
+    from loomicore.spec import Spec
 
 
 __all__ = [
@@ -18,7 +19,7 @@ __all__ = [
 ResourceType = TypeVar("ResourceType", bound="Resource")
 
 
-class ResourceDescriptor(BaseDescriptor[ResourceType]):
+class ResourceDescriptor(BaseResourceDescriptor):
     """Descriptor for service dependencies with protocol validation."""
 
     def __init__(

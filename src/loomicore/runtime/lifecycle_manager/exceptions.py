@@ -12,6 +12,8 @@ from loomicore.exceptions import ResourceError
 
 __all__ = [
     "LifecycleError",
+    "InitializationError",
+    "ShutdownError",
     "StateTransitionError",
 ]
 
@@ -23,6 +25,42 @@ class LifecycleError(ResourceError):
     This exception indicates failures during lifecycle operations that are
     not covered by more specific error types. It serves as the base for
     lifecycle-specific exceptions.
+    """
+
+    pass
+
+
+class InitializationError(LifecycleError):
+    """
+    Exception raised when resource initialization fails.
+
+    This exception indicates that a resource could not be initialized due to
+    various reasons, such as:
+    - Invalid configuration
+    - Resource allocation failures
+    - Dependency resolution failures
+
+    Example:
+        Attempting to initialize a resource with invalid parameters would raise
+        this exception.
+    """
+
+    pass
+
+
+class ShutdownError(LifecycleError):
+    """
+    Exception raised when resource shutdown fails.
+
+    This exception indicates that a resource could not be shut down properly,
+    which can occur due to:
+    - Resource still being in use
+    - Errors during cleanup operations
+    - Dependency issues
+
+    Example:
+        Attempting to shut down a resource that is still processing requests
+        would raise this exception.
     """
 
     pass
