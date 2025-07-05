@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, cast
 
 from .context import ResourceContext
 from .types import ResourceRole
@@ -12,10 +12,8 @@ __all__ = [
     "DependencyNode",
 ]
 
-ResourceT = TypeVar("ResourceT", bound="Resource")
 
-
-class DependencyNode(Generic[ResourceT]):
+class DependencyNode:
     """
     Node in dependency graph tracking relationships and usage contexts.
 
@@ -35,7 +33,7 @@ class DependencyNode(Generic[ResourceT]):
     - initiators tracks historical relationship creation for cleanup
     """
 
-    def __init__(self, resource: ResourceT, is_dependency: bool) -> None:
+    def __init__(self, resource: "Resource", is_dependency: bool) -> None:
         # The resource this node represents
         self.resource = resource
 
@@ -45,10 +43,10 @@ class DependencyNode(Generic[ResourceT]):
         )
 
         # Map of dependency name to resource instance
-        self.dependencies: dict[str, ResourceT] = {}
+        self.dependencies: dict[str, "Resource"] = {}
 
         # Set of resources that depend on this one
-        self.dependents: set[ResourceT] = set()
+        self.dependents: set["Resource"] = set()
 
         # Track which resources initiated relationships (for cleanup)
         self.initiators: set[str] = set()
@@ -69,7 +67,7 @@ class DependencyNode(Generic[ResourceT]):
         """
         self.context.remove_role(ResourceRole.ROOT)
 
-    def add_dependent(self, dependent: ResourceT) -> None:
+    def add_dependent(self, dependent: "Resource") -> None:
         """
         Add a dependent resource and update context.
 
@@ -83,7 +81,7 @@ class DependencyNode(Generic[ResourceT]):
         self.initiators.add(dependent.key)
         self.context.add_role(ResourceRole.DEPENDENCY)
 
-    def remove_dependent(self, dependent: ResourceT) -> None:
+    def remove_dependent(self, dependent: "Resource") -> None:
         """
         Remove a dependent resource and update context.
 
@@ -97,7 +95,7 @@ class DependencyNode(Generic[ResourceT]):
         self.initiators.discard(dependent.key)
         self.context.remove_role(ResourceRole.DEPENDENCY)
 
-    def add_dependency(self, name: str, dependency: ResourceT) -> None:
+    def add_dependency(self, name: str, dependency: "Resource") -> None:
         """
         Record a named dependency relationship.
 

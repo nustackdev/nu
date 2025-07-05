@@ -7,7 +7,7 @@ discovery and resolution of attach descriptors, resource assembly, and compositi
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from loomicore.resource import Resource
@@ -18,10 +18,8 @@ __all__ = [
     "CompositionEngine",
 ]
 
-ResourceT = TypeVar("ResourceT", bound="Resource")
 
-
-class CompositionEngine(Generic[ResourceT]):
+class CompositionEngine:
     """
     Engine for composing resources with their attach descriptors.
 
@@ -35,7 +33,7 @@ class CompositionEngine(Generic[ResourceT]):
     resources with their declared dependencies and patterns.
     """
 
-    def __init__(self, dependency_manager: "DependencyManager[ResourceT]") -> None:
+    def __init__(self, dependency_manager: "DependencyManager") -> None:
         """
         Initialize the composition engine.
 
@@ -44,7 +42,7 @@ class CompositionEngine(Generic[ResourceT]):
         """
         self._dependency_manager = dependency_manager
 
-    def compose_resource(self, resource_instance: ResourceT) -> None:
+    def compose_resource(self, resource_instance: "Resource") -> None:
         """
         Compose all attach descriptors for a resource instance.
 
@@ -57,7 +55,7 @@ class CompositionEngine(Generic[ResourceT]):
         # TODO: Implement composition logic
         # Will discover descriptors and resolve their values
 
-    def discover_descriptors(self, resource_instance: ResourceT) -> list[tuple[str, Any]]:
+    def discover_descriptors(self, resource_instance: "Resource") -> list[tuple[str, Any]]:
         """
         Discover all attach descriptors on a resource instance.
 
@@ -72,7 +70,7 @@ class CompositionEngine(Generic[ResourceT]):
         return []
 
     def resolve_descriptor(
-        self, resource_instance: ResourceT, descriptor_name: str, descriptor: Any
+        self, resource_instance: "Resource", descriptor_name: str, descriptor: Any
     ) -> Any:
         """
         Resolve a single attach descriptor to its value.

@@ -8,7 +8,7 @@ instantiation, deduplication, context tracking, and error handling.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from loomicore.exceptions import CreationError, ResourceError
 from loomicore.spec import RemoteSpec, Spec
@@ -26,10 +26,8 @@ __all__ = [
     "ResourceFactory",
 ]
 
-ResourceT = TypeVar("ResourceT", bound="Resource")
 
-
-class ResourceFactory(Generic[ResourceT]):
+class ResourceFactory:
     """
     Factory for creating and managing resource instances.
 
@@ -51,9 +49,9 @@ class ResourceFactory(Generic[ResourceT]):
 
     def __init__(
         self,
-        registry: "ResourceRegistry[ResourceT]",
-        dependency_manager: "DependencyManager[ResourceT]",
-        lifecycle_manager: "LifecycleManager[ResourceT]",
+        registry: "ResourceRegistry",
+        dependency_manager: "DependencyManager",
+        lifecycle_manager: "LifecycleManager",
     ) -> None:
         """
         Initialize the resource factory.
@@ -69,7 +67,7 @@ class ResourceFactory(Generic[ResourceT]):
 
     def create_resource(
         self,
-        cls: type[ResourceT],
+        cls: "type[Resource]",
         spec: "Spec | None" = None,
         *args: Any,
         **kwargs: Any,
@@ -147,7 +145,7 @@ class ResourceFactory(Generic[ResourceT]):
             logger.error(f"Unexpected error creating resource: {str(e)}")
             raise ResourceError(f"Failed to create resource '{cls.factory_name()}'") from e
 
-    def remove_resource(self, resource: ResourceT) -> None:
+    def remove_resource(self, resource: "Resource") -> None:
         """
         Remove a resource from all tracking systems.
 
@@ -227,11 +225,11 @@ class ResourceFactory(Generic[ResourceT]):
 
     def _create_new_instance(
         self,
-        cls: type[ResourceT],
+        cls: "type[Resource]",
         spec: "Spec",
         *args: Any,
         **kwargs: Any,
-    ) -> ResourceT:
+    ) -> "Resource":
         """
         Create a new resource instance.
 
@@ -278,7 +276,7 @@ class ResourceFactory(Generic[ResourceT]):
         proxy = create_remote_resource_proxy(spec)
 
         # Remote resources still need to be tracked locally
-        proxy_resource = cast(ResourceT, proxy)
+        proxy_resource = cast(Resource, proxy)
 
         # Register with LifecycleManager for state tracking
         self._lifecycle_manager.register_resource(proxy_resource)
@@ -288,7 +286,7 @@ class ResourceFactory(Generic[ResourceT]):
 
         return cast("Resource", proxy)
 
-    def _validate_resource_creation(self, cls: type[ResourceT], spec: "Spec") -> None:
+    def _validate_resource_creation(self, cls: "type[Resource]", spec: "Spec") -> None:
         """
         Validate resource creation parameters.
 

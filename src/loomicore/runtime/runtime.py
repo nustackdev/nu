@@ -7,25 +7,18 @@ operations, dependency coordination, and lifecycle management during program exe
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
-
 from .composition_engine import CompositionEngine
 from .dependency_manager import DependencyManager
 from .lifecycle_manager import LifecycleManager
 from .resource_factory import ResourceFactory
 from .resource_registry import ResourceRegistry
 
-if TYPE_CHECKING:
-    from loomicore.resource import Resource
-
 __all__ = [
     "ResourceRuntime",
 ]
 
-ResourceT = TypeVar("ResourceT", bound="Resource")
 
-
-class ResourceRuntime(Generic[ResourceT]):
+class ResourceRuntime:
     """
     Centralized runtime system for live resource management.
 
@@ -50,51 +43,47 @@ class ResourceRuntime(Generic[ResourceT]):
     def __init__(self) -> None:
         """Initialize the resource runtime with its operational components."""
         # Core instance tracking
-        self._resource_registry: ResourceRegistry[ResourceT] = ResourceRegistry()
+        self._resource_registry: ResourceRegistry = ResourceRegistry()
 
         # Relationship management
-        self._dependency_manager: DependencyManager[ResourceT] = DependencyManager(
-            self._resource_registry
-        )
+        self._dependency_manager: DependencyManager = DependencyManager(self._resource_registry)
 
         # Attach descriptor resolution
-        self._composition_engine: CompositionEngine[ResourceT] = CompositionEngine(
-            self._dependency_manager
-        )
+        self._composition_engine: CompositionEngine = CompositionEngine(self._dependency_manager)
 
         # Centralized lifecycle and state management
-        self._lifecycle_manager: LifecycleManager[ResourceT] = LifecycleManager(
+        self._lifecycle_manager: LifecycleManager = LifecycleManager(
             self._dependency_manager, self._composition_engine
         )
 
         # Instance creation
-        self._resource_factory: ResourceFactory[ResourceT] = ResourceFactory(
+        self._resource_factory: ResourceFactory = ResourceFactory(
             self._resource_registry, self._dependency_manager, self._lifecycle_manager
         )
 
     # === Component Access ===
 
     @property
-    def resource_registry(self) -> "ResourceRegistry[ResourceT]":
+    def resource_registry(self) -> "ResourceRegistry":
         """Get the resource registry for live instance tracking."""
         return self._resource_registry
 
     @property
-    def dependency_manager(self) -> "DependencyManager[ResourceT]":
+    def dependency_manager(self) -> "DependencyManager":
         """Get the dependency manager for active relationship coordination."""
         return self._dependency_manager
 
     @property
-    def resource_factory(self) -> "ResourceFactory[ResourceT]":
+    def resource_factory(self) -> "ResourceFactory":
         """Get the resource factory for runtime instance creation."""
         return self._resource_factory
 
     @property
-    def composition_engine(self) -> "CompositionEngine[ResourceT]":
+    def composition_engine(self) -> "CompositionEngine":
         """Get the composition engine for dynamic resource assembly."""
         return self._composition_engine
 
     @property
-    def lifecycle_manager(self) -> "LifecycleManager[ResourceT]":
+    def lifecycle_manager(self) -> "LifecycleManager":
         """Get the lifecycle manager for state and lifecycle operations."""
         return self._lifecycle_manager

@@ -12,13 +12,12 @@ Key Features:
 - Smart cleanup based on both creation context and current relationships
 - Thread-safe composite operations (to implement)
 - Circular dependency detection
-
 """
 
 from __future__ import annotations
 
 from threading import Lock
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, cast
 
 from .exceptions import CircularDependencyError, DependencyError, DependencyNotFoundError
 from .logger import logger
@@ -33,10 +32,9 @@ if TYPE_CHECKING:
 __all__ = [
     "DependencyManager",
 ]
-ResourceT = TypeVar("ResourceT", bound="Resource")
 
 
-class DependencyManager(Generic[ResourceT]):
+class DependencyManager:
     """
     Manages resource dependency relationships and lifecycle decisions.
 
@@ -58,7 +56,7 @@ class DependencyManager(Generic[ResourceT]):
     - Circular dependency detection
     """
 
-    def __init__(self, registry: "ResourceRegistry[ResourceT]") -> None:
+    def __init__(self, registry: "ResourceRegistry") -> None:
         """
         Initialize dependency manager.
 
@@ -70,7 +68,7 @@ class DependencyManager(Generic[ResourceT]):
         self._lock = Lock()
         logger.debug("Initialized dependency manager")
 
-    def register_resource(self, resource: ResourceT, is_dependency: bool = False) -> None:
+    def register_resource(self, resource: "Resource", is_dependency: bool = False) -> None:
         """
         Register resource with proper context tracking.
 
@@ -90,7 +88,7 @@ class DependencyManager(Generic[ResourceT]):
 
     def resolve_dependency(
         self,
-        parent: ResourceT,
+        parent: "Resource",
         name: str,
         spec: Spec,
     ) -> "Resource":
@@ -137,9 +135,9 @@ class DependencyManager(Generic[ResourceT]):
 
     def add_relationship(
         self,
-        parent: ResourceT,
+        parent: "Resource",
         name: str,
-        child: ResourceT,
+        child: "Resource",
     ) -> None:
         """
         Record new dependency relationship.
@@ -162,7 +160,7 @@ class DependencyManager(Generic[ResourceT]):
             f"Added relationship: '{parent.readable_name}.{name}' -> '{child.readable_name}'"
         )
 
-    def get_dependencies(self, resource: ResourceT) -> dict[str, "Resource"]:
+    def get_dependencies(self, resource: "Resource") -> dict[str, "Resource"]:
         """
         Get all dependencies of a resource.
 
@@ -177,7 +175,7 @@ class DependencyManager(Generic[ResourceT]):
         """
         return dict(self._get_node(resource).dependencies)
 
-    def get_dependents(self, resource: ResourceT) -> set["Resource"]:
+    def get_dependents(self, resource: "Resource") -> set["Resource"]:
         """
         Get all resources depending on given resource.
 
@@ -192,7 +190,7 @@ class DependencyManager(Generic[ResourceT]):
         """
         return set(self._get_node(resource).dependents)
 
-    def detach_relationship(self, parent: ResourceT, child: ResourceT) -> None:
+    def detach_relationship(self, parent: "Resource", child: "Resource") -> None:
         """
         Register a dateched parent (dependent) resource.
 
@@ -203,7 +201,7 @@ class DependencyManager(Generic[ResourceT]):
         child_node = self._get_node(child)
         child_node.detach_dependent(parent.key)
 
-    def can_auto_shutdown(self, resource: ResourceT) -> bool:
+    def can_auto_shutdown(self, resource: "Resource") -> bool:
         """
         Determine if resource can be auto shut down (cascade shutdown triggered from dependent).
 
@@ -232,7 +230,7 @@ class DependencyManager(Generic[ResourceT]):
 
         return True
 
-    def _validate_no_cycles(self, parent: ResourceT, child: ResourceT) -> None:
+    def _validate_no_cycles(self, parent: "Resource", child: "Resource") -> None:
         """
         Ensure no dependency cycles would be created.
 
@@ -242,7 +240,7 @@ class DependencyManager(Generic[ResourceT]):
         visited: set[str] = {parent.key}
         self._check_cycles(child, visited)
 
-    def _check_cycles(self, current: ResourceT, visited: set[str]) -> None:
+    def _check_cycles(self, current: "Resource", visited: set[str]) -> None:
         """Recursively check for dependency cycles."""
         if current.key in visited:
             path = " -> ".join(self._nodes[key].resource.readable_name for key in visited)
@@ -252,10 +250,10 @@ class DependencyManager(Generic[ResourceT]):
 
         visited.add(current.key)
         for dep in self.get_dependencies(current).values():
-            self._check_cycles(cast(ResourceT, dep), visited)
+            self._check_cycles(cast("Resource", dep), visited)
         visited.remove(current.key)
 
-    def _node_exists(self, resource: ResourceT) -> bool:
+    def _node_exists(self, resource: "Resource") -> bool:
         """
         Check if node exists for resource.
 
@@ -267,7 +265,7 @@ class DependencyManager(Generic[ResourceT]):
         """
         return resource.key in self._nodes
 
-    def _get_node(self, resource: ResourceT) -> DependencyNode:
+    def _get_node(self, resource: "Resource") -> DependencyNode:
         """
         Get existing node.
 
@@ -285,7 +283,7 @@ class DependencyManager(Generic[ResourceT]):
             raise DependencyError(f"Node not found for {resource.readable_name}")
         return node
 
-    def _create_node(self, resource: ResourceT, is_dependency: bool = False) -> None:
+    def _create_node(self, resource: "Resource", is_dependency: bool = False) -> None:
         """
         Create a new resource node with proper context.
 
@@ -302,16 +300,6 @@ class DependencyManager(Generic[ResourceT]):
             self._nodes[resource.key] = node
         else:
             raise DependencyError(f"Node already exists for {resource.readable_name}")
-
-    def _narrow_to_resource(self, resource: ResourceT) -> "Resource":
-        """
-        Narrow the type of the internal resource from its specific type (bound to ResourceABC)
-        to the base Resource type for API compatibility.
-
-        This method is used to ensure the public interface returns the more general type
-        while the implementation can work with the more specific type internally.
-        """
-        return cast("Resource", resource)
 
     def __repr__(self) -> str:
         """

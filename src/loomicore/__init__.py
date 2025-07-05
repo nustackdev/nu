@@ -1,21 +1,9 @@
 from __future__ import annotations
 
-from .resource import (
-    AsyncResource,
-    AsyncResourceABC,
-    Resource,
-    ResourceABC,
-    ResourceMeta,
-    SyncResource,
-    SyncResourceABC,
-)
+from .resource import AsyncResource, Resource, SyncResource
 from .spec import Spec
 
 __all__ = [
-    "ResourceMeta",
-    "ResourceABC",
-    "SyncResourceABC",
-    "AsyncResourceABC",
     "Resource",
     "SyncResource",
     "AsyncResource",

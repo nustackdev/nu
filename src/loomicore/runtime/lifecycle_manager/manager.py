@@ -13,7 +13,7 @@ external synchronization is provided.
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 from loomicore.exceptions import InitializationError, ShutdownError
 from loomicore.types import ResourceState
@@ -31,10 +31,8 @@ __all__ = [
     "LifecycleManager",
 ]
 
-ResourceT = TypeVar("ResourceT", bound="Resource")
 
-
-class LifecycleManager(Generic[ResourceT]):
+class LifecycleManager:
     """
     Centralized manager for resource lifecycle operations and state management.
 
@@ -62,8 +60,8 @@ class LifecycleManager(Generic[ResourceT]):
 
     def __init__(
         self,
-        dependency_manager: "DependencyManager[ResourceT]",
-        composition_engine: "CompositionEngine[ResourceT]",
+        dependency_manager: "DependencyManager",
+        composition_engine: "CompositionEngine",
     ) -> None:
         """
         Initialize the lifecycle manager.
@@ -82,7 +80,7 @@ class LifecycleManager(Generic[ResourceT]):
 
     # === State Management ===
 
-    def get_resource_state(self, resource: ResourceT) -> ResourceState:
+    def get_resource_state(self, resource: "Resource") -> ResourceState:
         """
         Get current lifecycle state of resource.
 
@@ -98,7 +96,7 @@ class LifecycleManager(Generic[ResourceT]):
         """
         return self._states.get(resource.key, ResourceState.CREATED)
 
-    def set_resource_state(self, resource: ResourceT, state: ResourceState) -> None:
+    def set_resource_state(self, resource: "Resource", state: ResourceState) -> None:
         """
         Update resource lifecycle state with validation.
 
@@ -131,7 +129,7 @@ class LifecycleManager(Generic[ResourceT]):
             f"State transition for '{resource.readable_name}': '{current_state}' -> '{state}'"
         )
 
-    def is_resource_initialized(self, resource: ResourceT) -> bool:
+    def is_resource_initialized(self, resource: "Resource") -> bool:
         """
         Check if resource is fully initialized and ready for use.
 
@@ -146,7 +144,7 @@ class LifecycleManager(Generic[ResourceT]):
         """
         return self.get_resource_state(resource) == ResourceState.INITIALIZED
 
-    def register_resource(self, resource: ResourceT) -> None:
+    def register_resource(self, resource: "Resource") -> None:
         """
         Register a new resource for state tracking.
 
@@ -162,7 +160,7 @@ class LifecycleManager(Generic[ResourceT]):
             self._states[key] = ResourceState.CREATED
             logger.debug(f"Registered resource for lifecycle tracking: '{resource.readable_name}'")
 
-    def unregister_resource(self, resource: ResourceT) -> None:
+    def unregister_resource(self, resource: "Resource") -> None:
         """
         Unregister resource from state tracking.
 
@@ -178,7 +176,7 @@ class LifecycleManager(Generic[ResourceT]):
 
     # === Lifecycle Operations ===
 
-    def initialize_resource(self, resource: ResourceT) -> None:
+    def initialize_resource(self, resource: "Resource") -> None:
         """
         Initialize synchronous resource and all its dependencies.
 
@@ -247,7 +245,7 @@ class LifecycleManager(Generic[ResourceT]):
                 f"Failed to initialize resource '{resource.readable_name}'"
             ) from e
 
-    async def initialize_resource_async(self, resource: ResourceT) -> None:
+    async def initialize_resource_async(self, resource: "Resource") -> None:
         """
         Initialize asynchronous resource and all its dependencies.
 
@@ -318,7 +316,7 @@ class LifecycleManager(Generic[ResourceT]):
                 f"Failed to initialize async resource '{resource.readable_name}'"
             ) from e
 
-    def shutdown_resource(self, resource: ResourceT) -> None:
+    def shutdown_resource(self, resource: "Resource") -> None:
         """
         Shutdown synchronous resource and cleanup dependencies.
 
@@ -380,7 +378,7 @@ class LifecycleManager(Generic[ResourceT]):
             logger.error(f"Failed to shutdown resource '{resource.readable_name}': {str(e)}")
             raise ShutdownError(f"Failed to shutdown resource '{resource.readable_name}'") from e
 
-    async def shutdown_resource_async(self, resource: ResourceT) -> None:
+    async def shutdown_resource_async(self, resource: "Resource") -> None:
         """
         Shutdown asynchronous resource and cleanup dependencies.
 
@@ -472,7 +470,7 @@ class LifecycleManager(Generic[ResourceT]):
         }
         return new in transitions.get(current, set())
 
-    def _execute_hook(self, resource: ResourceT, hook_name: str, description: str) -> None:
+    def _execute_hook(self, resource: "Resource", hook_name: str, description: str) -> None:
         """
         Execute synchronous lifecycle hook safely.
 
@@ -502,7 +500,7 @@ class LifecycleManager(Generic[ResourceT]):
             raise
 
     async def _execute_hook_async(
-        self, resource: ResourceT, hook_name: str, description: str
+        self, resource: "Resource", hook_name: str, description: str
     ) -> None:
         """
         Execute asynchronous lifecycle hook safely.
@@ -538,7 +536,7 @@ class LifecycleManager(Generic[ResourceT]):
             )
             raise
 
-    def _initialize_dependencies_sync(self, resource: ResourceT) -> None:
+    def _initialize_dependencies_sync(self, resource: "Resource") -> None:
         """
         Initialize all dependencies of a resource synchronously.
 
@@ -581,7 +579,7 @@ class LifecycleManager(Generic[ResourceT]):
                 )
                 raise InitializationError(f"Failed to initialize dependency '{name}'") from e
 
-    async def _initialize_dependencies_async(self, resource: ResourceT) -> None:
+    async def _initialize_dependencies_async(self, resource: "Resource") -> None:
         """
         Initialize all dependencies of a resource asynchronously.
 
@@ -624,7 +622,7 @@ class LifecycleManager(Generic[ResourceT]):
                 )
                 raise InitializationError(f"Failed to initialize dependency '{name}'") from e
 
-    def _shutdown_dependencies_sync(self, resource: ResourceT) -> None:
+    def _shutdown_dependencies_sync(self, resource: "Resource") -> None:
         """
         Shutdown orphaned dependencies synchronously.
 
@@ -664,7 +662,7 @@ class LifecycleManager(Generic[ResourceT]):
                 logger.error(f"Failed to shutdown orphaned dependency '{name}': {str(e)}")
                 # Continue with other dependencies, don't fail the main shutdown
 
-    async def _shutdown_dependencies_async(self, resource: ResourceT) -> None:
+    async def _shutdown_dependencies_async(self, resource: "Resource") -> None:
         """
         Shutdown orphaned dependencies asynchronously.
 

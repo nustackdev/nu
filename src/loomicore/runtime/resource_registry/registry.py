@@ -8,7 +8,7 @@ separation of concerns.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING
 
 from .exceptions import RegistryError, RegistryKeyError
 from .logger import logger
@@ -21,10 +21,8 @@ __all__ = [
     "ResourceRegistry",
 ]
 
-ResourceT = TypeVar("ResourceT", bound="Resource")
 
-
-class ResourceRegistry(Generic[ResourceT]):
+class ResourceRegistry:
     """
     Registry managing resource instances and deduplication.
 
@@ -51,7 +49,7 @@ class ResourceRegistry(Generic[ResourceT]):
         Sets up internal storage for resource instance tracking.
         """
         # Map of resource key to resource instance
-        self._instances: dict[str, ResourceT] = {}
+        self._instances: dict[str, "Resource"] = {}
 
         logger.debug("Initialized resource registry")
 
@@ -78,12 +76,12 @@ class ResourceRegistry(Generic[ResourceT]):
 
         if resource is not None:
             logger.debug(f"Found existing resource for spec key: {key}")
-            return self._narrow_to_resource(resource)
+            return resource
 
         logger.debug(f"No existing resource found for spec key: {key}")
         return None
 
-    def add_resource(self, resource: ResourceT) -> None:
+    def add_resource(self, resource: "Resource") -> None:
         """
         Register new resource instance for tracking and deduplication.
 
@@ -110,7 +108,7 @@ class ResourceRegistry(Generic[ResourceT]):
             f"Registered resource for deduplication: '{resource.readable_name}' (key: {key})"
         )
 
-    def remove_resource(self, resource: ResourceT) -> None:
+    def remove_resource(self, resource: "Resource") -> None:
         """
         Remove resource from registry.
 
@@ -180,7 +178,7 @@ class ResourceRegistry(Generic[ResourceT]):
             - Returns snapshot at time of call
             - Order not guaranteed
         """
-        return [self._narrow_to_resource(resource) for resource in self._instances.values()]
+        return [resource for resource in self._instances.values()]
 
     def get_resource_count(self) -> int:
         """
@@ -227,28 +225,12 @@ class ResourceRegistry(Generic[ResourceT]):
         for resource in self._instances.values():
             # Check if resource is instance of factory_type
             if isinstance(resource, factory_type):
-                matching_resources.append(self._narrow_to_resource(resource))
+                matching_resources.append(resource)
 
         logger.debug(f"Found {len(matching_resources)} resources of type {factory_type.__name__}")
         return matching_resources
 
     # === Private Implementation ===
-
-    def _narrow_to_resource(self, resource: ResourceT) -> "Resource":
-        """
-        Narrow the type of the internal resource from its specific type (bound to ResourceABC)
-        to the base Resource type for API compatibility.
-
-        This method is used to ensure the public interface returns the more general type
-        while the implementation can work with the more specific type internally.
-
-        Args:
-            resource: Internal resource instance
-
-        Returns:
-            Resource narrowed to base Resource type
-        """
-        return cast("Resource", resource)
 
     def __len__(self) -> int:
         """
