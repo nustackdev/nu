@@ -10,6 +10,7 @@ from __future__ import annotations
 import threading
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from .composition_engine import CompositionEngine
 from .dependency_manager import DependencyManager
 from .resource_factory import ResourceFactory
 from .resource_registry import ResourceRegistry
@@ -47,6 +48,9 @@ class ResolutionManager(Generic[ResourceT]):
         self._resource_factory: ResourceFactory[ResourceT] = ResourceFactory(
             self._resource_registry, self._dependency_manager
         )
+        self._composition_engine: CompositionEngine[ResourceT] = CompositionEngine(
+            self._dependency_manager
+        )
         self._lock = threading.Lock()
 
     @property
@@ -63,3 +67,8 @@ class ResolutionManager(Generic[ResourceT]):
     def resource_factory(self) -> "ResourceFactory[ResourceT]":
         """Get the resource factory."""
         return self._resource_factory
+
+    @property
+    def composition_engine(self) -> "CompositionEngine[ResourceT]":
+        """Get the composition engine."""
+        return self._composition_engine

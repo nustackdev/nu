@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .composition_engine import CompositionEngine
     from .dependency_manager import DependencyManager
     from .manager import ResolutionManager
     from .resource_factory import ResourceFactory
@@ -13,6 +14,7 @@ __all__ = [
     "get_resource_registry",
     "get_dependency_manager",
     "get_resource_factory",
+    "get_composition_engine",
 ]
 
 # Global service instance
@@ -63,3 +65,13 @@ def get_resource_factory() -> "ResourceFactory":
         ResourceFactory from the global resolution manager
     """
     return get_resolution_manager().resource_factory
+
+
+def get_composition_engine() -> "CompositionEngine":
+    """
+    Get the global composition engine.
+
+    Returns:
+        CompositionEngine from the global resolution manager
+    """
+    return get_resolution_manager().composition_engine
