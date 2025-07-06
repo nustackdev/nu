@@ -8,7 +8,7 @@ one descriptor resolves to exactly one resource instance.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from loomicore.common.descriptor import StorageStrategy, ValidationStrategy
 
@@ -147,7 +147,7 @@ class ResourceDescriptor(BaseResourceDescriptor):
         )
 
 
-def Attach(spec: "Spec | None" = None, /, *, alias: str | None = None) -> "Resource":
+def Attach(spec: "Spec | None" = None, /, *, alias: str | None = None) -> Any:
     """
     Create a single resource attachment descriptor.
 
@@ -188,4 +188,4 @@ def Attach(spec: "Spec | None" = None, /, *, alias: str | None = None) -> "Resou
         - Resolution happens during resource composition
         - Supports priority-based spec resolution
     """
-    return cast("Resource", ResourceDescriptor(spec, alias=alias))
+    return ResourceDescriptor(spec, alias=alias)
