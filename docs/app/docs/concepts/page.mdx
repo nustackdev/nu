@@ -149,8 +149,8 @@ This trinity of concepts provides a comprehensive foundation for building applic
 ```python
 class UserService(AsyncApp):
     # Services needed are right here at the top - no surprises
-    database = UseService(DatabaseSpec(url="postgres://localhost/users"))
-    email = UseService(EmailSpec(sender="noreply@example.com"))
+    database = Attach(DatabaseSpec(url="postgres://localhost/users"))
+    email = Attach(EmailSpec(sender="noreply@example.com"))
     
     # Need authentication? Just nest the auth app
     auth = UseApp(AuthApp)

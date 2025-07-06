@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Any
 
 import attrs
 
-from loomi.attr import UseService
-from loomi.interfaces.state.observer import SyncObservableProtocol, SyncSubscriptionProtocol
+from loomi.attach import Attach
 from loomi.service import SyncService
 from loomi.spec import Spec
+from loomi.state.interface.observer import SyncObservableProtocol, SyncSubscriptionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 
@@ -31,7 +31,7 @@ class InMemoryObserver(
 ):
     """In-memory observer with thread-safe subscription management."""
 
-    codec: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = UseService()
+    codec: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = Attach()
 
     def _connect_impl(self) -> None:
         if not hasattr(self, "_data_lock"):

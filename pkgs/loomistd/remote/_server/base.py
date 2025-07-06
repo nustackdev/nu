@@ -3,7 +3,7 @@
 RPyC server service for hosting Loomi resources remotely.
 
 This module provides thin server services that leverage Loomi's resource system
-with UseService to automatically attach connection services. The server directly
+with Attach to automatically attach connection services. The server directly
 uses the ResourceFactory and provides TCP and Unix socket variants.
 """
 

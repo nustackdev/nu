@@ -11,10 +11,10 @@ import aiofile
 import attrs
 import filelock
 
-from loomi.attr import UseService
-from loomi.interfaces.state.kv import AsyncStorageProtocol, AsyncTransactionProtocol
+from loomi.attach import Attach
 from loomi.service import AsyncService
 from loomi.spec import Spec
+from loomi.state.interface.kv import AsyncStorageProtocol, AsyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.json import JSONCodecSpec
 
@@ -58,7 +58,7 @@ class FileStorage(
 
     codec: CodecProtocol[
         FileStorageKey, FileStorageValue, FileStorageEncodedKey, FileStorageEncodedValue
-    ] = UseService()
+    ] = Attach()
 
     spec: FileStorageSpec
 

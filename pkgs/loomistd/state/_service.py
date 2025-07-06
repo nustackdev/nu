@@ -8,7 +8,7 @@ from typing import Any
 
 import attrs
 
-from loomi import Spec, SyncService, UseService
+from loomi import Attach, Spec, SyncService
 from loomistd.kv import StorageServiceProtocol
 from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.observer import ObserverServiceProtocol
@@ -29,8 +29,8 @@ class StateService(SyncService):
     StateService implementation.
     """
 
-    storage: StorageServiceProtocol[PathTuple, Value, Any, Any] = UseService()
-    observer: ObserverServiceProtocol[PathTuple, Any] = UseService()
+    storage: StorageServiceProtocol[PathTuple, Value, Any, Any] = Attach()
+    observer: ObserverServiceProtocol[PathTuple, Any] = Attach()
 
     def setup(self):
         self._state = State(

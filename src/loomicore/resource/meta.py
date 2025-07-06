@@ -22,6 +22,7 @@ Design Philosophy:
 
 from __future__ import annotations
 
+from abc import ABCMeta
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from loomicore.runtime import get_resource_runtime
@@ -37,7 +38,7 @@ __all__ = [
 ResourceT = TypeVar("ResourceT", bound="Resource")
 
 
-class ResourceMeta(type):
+class ResourceMeta(ABCMeta):
     """
     Metaclass for resource classes providing pure delegation to runtime.
 

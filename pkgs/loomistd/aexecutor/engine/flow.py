@@ -12,8 +12,8 @@ import asyncio
 import inspect
 from typing import TYPE_CHECKING, Any
 
-from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
-from loomi.interfaces.state.type_vars import StateT
+from loomi.state.interface.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.state.interface.type_vars import StateT
 
 from ..context import Context
 from ..operations import Branch, Loop, Parallel, Sequence

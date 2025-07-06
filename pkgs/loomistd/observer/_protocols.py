@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from loomi.interfaces.state.observer import SyncObservableProtocol
+from loomi.state.interface.observer import SyncObservableProtocol
 from loomistd.codec import CodecProtocol
 
 from ._types import ObserverEncodedKeyT, ObserverKeyT

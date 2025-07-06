@@ -18,7 +18,7 @@ The `App` class is your app's command center, providing:
 Services in Loomi are self-managing components that:
 
 - **Initialize Automatically**: Dependencies resolve themselves in the correct order
-- **Connect Effortlessly**: The `UseService` decorator handles all the wiring
+- **Connect Effortlessly**: The `Attach` decorator handles all the wiring
 - **Handle Lifecycle Events**: Setup and cleanup happen at the right time
 - **Stay Type-Safe**: Catch interface mismatches at development time
 - **Embrace Async**: Built for modern async/await patterns

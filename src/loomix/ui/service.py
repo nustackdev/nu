@@ -10,8 +10,8 @@
 # from datetime import datetime
 # from typing import Any, Dict, Literal, Optional
 
-# from loomi.attr import UseService
-# from loomi.interfaces.state.state import (
+# from loomi.attach import Attach
+# from loomi.state.interface.state import (
 #     AsyncStateProtocol,
 #     AsyncTreeDictProtocol,
 #     SyncStateProtocol,
@@ -38,7 +38,7 @@
 #         tracing_path: Path in state where tracing data is stored
 #     """
 
-#     state: AsyncStateProtocol | SyncStateProtocol = UseService()
+#     state: AsyncStateProtocol | SyncStateProtocol = Attach()
 
 #     spec: VisualizationServiceSpec
 

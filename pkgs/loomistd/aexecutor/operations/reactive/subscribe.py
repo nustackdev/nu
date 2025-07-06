@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
-from loomi.interfaces.executor.operations import SubscribeOperationProtocol
-from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateT
+from loomi.evaluator.interface.operations import SubscribeOperationProtocol
+from loomi.evaluator.interface.types import ErrorBehavior
+from loomi.state.interface.type_vars import StateT
 
 from ..base import Operation
 from ..metadata import OperationMetadata

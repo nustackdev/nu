@@ -3,7 +3,7 @@
 RPyC client service for connecting to remote Loomi resources.
 
 This module provides client services that leverage Loomi's resource system
-with UseService to automatically attach connection services. The client uses
+with Attach to automatically attach connection services. The client uses
 the connection abstractions to communicate with remote RPyC servers.
 """
 
@@ -14,7 +14,7 @@ from typing import Any, cast
 
 import attrs
 
-from loomi.attr import UseService
+from loomi.attach import Attach
 from loomi.service import SyncService
 from loomi.spec import Spec
 
@@ -40,7 +40,7 @@ class RPyCClient(SyncService):
     This class provides common client functionality.
     """
 
-    connection: BaseRPyCConnection = UseService()
+    connection: BaseRPyCConnection = Attach()
 
     @property
     def is_connected(self) -> bool:

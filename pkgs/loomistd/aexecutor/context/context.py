@@ -11,9 +11,9 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic
 
-from loomi.interfaces.executor.context import ContextProtocol
-from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
-from loomi.interfaces.state.type_vars import StateT
+from loomi.evaluator.interface.context import ContextProtocol
+from loomi.state.interface.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.state.interface.type_vars import StateT
 
 if TYPE_CHECKING:
     from ..operations.base import Operation

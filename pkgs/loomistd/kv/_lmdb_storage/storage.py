@@ -9,10 +9,10 @@ from uuid import uuid4
 import attrs
 import lmdb
 
-from loomi.attr import UseService
-from loomi.interfaces.state.kv import SyncStorageProtocol, SyncTransactionProtocol
+from loomi.attach import Attach
 from loomi.service import SyncService
 from loomi.spec import Spec
+from loomi.state.interface.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
 
@@ -51,7 +51,7 @@ class LMDBStorage(
 
     codec: CodecProtocol[
         LMDBStorageKey, LMDBStorageValue, LMDBStorageEncodedKey, LMDBStorageEncodedValue
-    ] = UseService()
+    ] = Attach()
 
     spec: LMDBStorageSpec
 

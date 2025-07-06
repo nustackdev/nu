@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from loomi.interfaces.executor.operations import TimeoutOperationProtocol
-from loomi.interfaces.executor.types import ErrorBehavior
-from loomi.interfaces.state.type_vars import StateT
+from loomi.evaluator.interface.operations import TimeoutOperationProtocol
+from loomi.evaluator.interface.types import ErrorBehavior
+from loomi.state.interface.type_vars import StateT
 
 from ..base import Expression
 

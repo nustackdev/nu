@@ -2,7 +2,7 @@
 Complete RemoteResourceProxy implementation using SyncResource + wrapt.ObjectProxy.
 
 This provides transparent remote resource access with proper lifecycle management
-using existing Loomi patterns (UseService) and proven proxying (wrapt).
+using existing Loomi patterns (Attach) and proven proxying (wrapt).
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ class RemoteResourceCoordinator(SyncResource):
     Manages remote resource lifecycle and client dependencies.
 
     Simple SyncResource that:
-    - Has client as UseService dependency
+    - Has client as Attach dependency
     - Gets remote resource in setup()
     - Cleans up remote resource in cleanup()
     """

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+    from loomi.state.interface.tree import AsyncStateProtocol, SyncStateProtocol
 
     from .context.context import Context
     from .operations import Function, Sequence

@@ -67,7 +67,7 @@ class ServiceBase(Generic[LoggerT]):
     """
 
     # Attach descriptor - resolved by LoomiCore dependency injection
-    logger: LoggerT = Attach()
+    logger: LoggerT  # = Attach()
 
     # Convenience alias for shorter syntax
     @property

@@ -13,11 +13,11 @@ from typing import TYPE_CHECKING, Any, Callable, Concatenate, ParamSpec
 
 import attrs
 
-from loomi.attr import UseService
-from loomi.interfaces.executor.executor import AsyncExecutorProtocol
-from loomi.interfaces.state.type_vars import StateT
+from loomi.attach import Attach
+from loomi.evaluator.interface.evaluator import AsyncEvaluatorProtocol
 from loomi.service import AsyncService
 from loomi.spec import Spec
+from loomi.state.interface.type_vars import StateT
 from loomistd.state import StateSpec
 
 from ..context import Context
@@ -73,10 +73,10 @@ class Executor(
 
     # --- Service specifications --- #
 
-    state_service: StateT = UseService()
-    executor: TaskExecutionService = UseService()
-    logger: LoggingService = UseService()
-    # tracing: TracingService = UseService()
+    state_service: StateT = Attach()
+    executor: TaskExecutionService = Attach()
+    logger: LoggingService = Attach()
+    # tracing: TracingService = Attach()
 
     # --- Operations --- #
 
@@ -185,7 +185,7 @@ class ExecutorSpec(Spec):
 
 if TYPE_CHECKING:
     _: type[
-        AsyncExecutorProtocol[
+        AsyncEvaluatorProtocol[
             Executor,
             Context,
             Operation,

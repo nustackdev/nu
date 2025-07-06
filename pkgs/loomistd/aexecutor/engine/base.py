@@ -12,9 +12,9 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Awaitable, Callable, Generic, Optional, cast
 
-from loomi.interfaces.state.state import AsyncStateServiceProtocol, SyncStateServiceProtocol
-from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
-from loomi.interfaces.state.type_vars import StateT
+from loomi.state.interface.state import AsyncStateServiceProtocol, SyncStateServiceProtocol
+from loomi.state.interface.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi.state.interface.type_vars import StateT
 
 from ..context import Context
 from ..operations import (

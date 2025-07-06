@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi.interfaces.state.kv import (
+from loomi.state.interface.kv import (
     SyncTransactionalHandlerProtocol,
     SyncTransactionContextManagerProtocol,
     SyncTransactionProtocol,

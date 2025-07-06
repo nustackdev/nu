@@ -9,10 +9,10 @@ This module provides the ReactiveMap function, which creates a compound operatio
 
 from __future__ import annotations
 
-from loomi.interfaces.executor.executor import AsyncExecutorProtocol, SyncExecutorProtocol
-from loomi.interfaces.executor.type_vars import (
+from loomi.evaluator.interface.evaluator import AsyncEvaluatorProtocol, SyncEvaluatorProtocol
+from loomi.evaluator.interface.type_vars import (
     AppOperationT,
-    AsyncExecutorT_co,
+    AsyncEvaluatorT_co,
     BranchOperationT,
     ContextT_contra,
     DelayOperationT,
@@ -25,10 +25,10 @@ from loomi.interfaces.executor.type_vars import (
     SequenceOperationT,
     SubscribeOperationT,
     SyncContextT_contra,
-    SyncExecutorT_co,
+    SyncEvaluatorT_co,
     TimeoutOperationT,
 )
-from loomi.interfaces.executor.types import ErrorBehavior
+from loomi.evaluator.interface.types import ErrorBehavior
 
 __all__ = [
     "ReactiveMap",
@@ -37,8 +37,8 @@ __all__ = [
 
 def ReactiveMap(
     executor: (
-        AsyncExecutorProtocol[
-            AsyncExecutorT_co,
+        AsyncEvaluatorProtocol[
+            AsyncEvaluatorT_co,
             ContextT_contra,
             OperationT_contra,
             AppOperationT,
@@ -53,8 +53,8 @@ def ReactiveMap(
             SubscribeOperationT,
             TimeoutOperationT,
         ]
-        | SyncExecutorProtocol[
-            SyncExecutorT_co,
+        | SyncEvaluatorProtocol[
+            SyncEvaluatorT_co,
             SyncContextT_contra,
             OperationT_contra,
             AppOperationT,

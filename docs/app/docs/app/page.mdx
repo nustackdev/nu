@@ -125,15 +125,15 @@ The beauty is how clean this looks—no passing state around or importing global
 
 ### Accessing Services
 
-Services in apps are declared with `UseService` and accessed as attributes:
+Services in apps are declared with `Attach` and accessed as attributes:
 
 ```python
-from loomi import AsyncApp, UseService
+from loomi import AsyncApp, Attach
 from services import DatabaseService, CacheService
 
 class UserApp(AsyncApp):
-    db = UseService(DatabaseService)
-    cache = UseService(CacheService)
+    db = Attach(DatabaseService)
+    cache = Attach(CacheService)
     
     async def load_user(self, context: AsyncContext):
         user_id = context["user_id"]

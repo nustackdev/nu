@@ -494,9 +494,9 @@ class ExecutionEngine(AsyncService):
     but delegates to services.
     """
 
-    state: AsyncStateProtocol = UseService()
-    executor = UseService(ExecutionService)
-    tracing = UseService(TracingService)
+    state: AsyncStateProtocol = Attach()
+    executor = Attach(ExecutionService)
+    tracing = Attach(TracingService)
 ```
 
 ### Example method: execute
@@ -518,10 +518,10 @@ class ExecutionEngine(AsyncService, Generic[StateT, StateDictT]):
     """
 
     # Services
-    state: StateT = UseService()
-    executor = UseService(TaskExecutionService)
-    tracing = UseService(TracingService)
-    logger = UseService(LoggingService)
+    state: StateT = Attach()
+    executor = Attach(TaskExecutionService)
+    tracing = Attach(TracingService)
+    logger = Attach(LoggingService)
 
     async def execute(
         self,

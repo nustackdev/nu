@@ -11,8 +11,8 @@ from typing import Any
 
 import attrs
 
-from loomi import AsyncService, Spec, UseService
-from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+from loomi import AsyncService, Attach, Spec
+from loomi.state.interface.tree import AsyncStateProtocol, SyncStateProtocol
 from loomistd.state import StateSpec
 
 
@@ -24,7 +24,7 @@ class TracingService(AsyncService):
     Supports both synchronous and asynchronous state implementations.
     """
 
-    state: AsyncStateProtocol | SyncStateProtocol = UseService()
+    state: AsyncStateProtocol | SyncStateProtocol = Attach()
 
     spec: TracingServiceSpec
 
