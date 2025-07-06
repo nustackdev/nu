@@ -18,8 +18,9 @@ That functionality is provided by concrete resource classes through delegation.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, final
 
+from loomicore.runtime import get_dependency_manager, get_lifecycle_manager
 from loomicore.spec import Spec
 from loomicore.types import ResourceState
 
@@ -56,7 +57,8 @@ class BaseResource:
         - Thread-safe through immutability
     """
 
-    def __init__(self, spec: Spec | None = None) -> None:
+    @final
+    def __init__(self, spec: Spec | None = None, /) -> None:
         """
         Initialize base resource with specification.
 
@@ -219,9 +221,6 @@ class BaseResource:
             - Delegates to runtime for accurate state tracking
             - Thread-safe through runtime coordination
         """
-        # Import at call site to avoid circular imports
-        from loomicore.runtime import get_lifecycle_manager
-
         return get_lifecycle_manager().is_resource_initialized(self)  # type: ignore[return-value]
 
     @property
@@ -249,9 +248,6 @@ class BaseResource:
             - Returns ERROR state if runtime tracking fails
             - Useful for debugging and monitoring resource lifecycle
         """
-        # Import at call site to avoid circular imports
-        from loomicore.runtime import get_lifecycle_manager
-
         return get_lifecycle_manager().get_resource_state(self)  # type: ignore[return-value]
 
     # === Dependency Introspection ===
@@ -288,8 +284,6 @@ class BaseResource:
             - Thread-safe through runtime delegation
             - Useful for debugging and introspection
         """
-        from loomicore.runtime import get_dependency_manager
-
         return get_dependency_manager().get_dependencies(self)  # type: ignore[return-value]
 
     def get_dependents(self) -> set["BaseResource"]:
@@ -321,6 +315,4 @@ class BaseResource:
             - Thread-safe through runtime delegation
             - Useful for understanding impact of shutting down this resource
         """
-        from loomicore.runtime import get_dependency_manager
-
         return get_dependency_manager().get_dependents(self)  # type: ignore[return-value]

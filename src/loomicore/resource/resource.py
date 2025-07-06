@@ -21,7 +21,9 @@ all complex operations.
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Self
+from typing import Self, final
+
+from loomicore.runtime import get_lifecycle_manager
 
 from .base import BaseResource
 from .meta import ResourceMeta
@@ -88,6 +90,7 @@ class SyncResource(BaseResource, metaclass=ResourceMeta):
 
     # === Lifecycle Methods ===
 
+    @final
     def initialize(self) -> None:
         """
         Initialize the resource and all its dependencies.
@@ -113,10 +116,9 @@ class SyncResource(BaseResource, metaclass=ResourceMeta):
             - Thread-safe through runtime coordination
             - Automatic dependency ordering prevents circular dependencies
         """
-        from loomicore.runtime import get_lifecycle_manager
-
         get_lifecycle_manager().initialize_resource(self)
 
+    @final
     def shutdown(self) -> None:
         """
         Shutdown the resource and clean up all dependencies.
@@ -141,8 +143,6 @@ class SyncResource(BaseResource, metaclass=ResourceMeta):
             - Thread-safe through runtime coordination
             - Smart dependency cleanup prevents resource leaks
         """
-        from loomicore.runtime import get_lifecycle_manager
-
         get_lifecycle_manager().shutdown_resource(self)
 
     # === User-Overridable Hooks ===

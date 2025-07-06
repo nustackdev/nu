@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from loomicore.runtime import get_resource_runtime
 from loomicore.spec import Spec
 
 __all__ = [
@@ -48,12 +49,6 @@ class ResourceMeta(type):
     All operational logic (deduplication, dependency resolution, state
     management) is handled by the runtime system, keeping this metaclass
     minimal and focused.
-
-    Design Notes:
-        - Imports runtime at call-time to avoid circular imports
-        - Pure delegation pattern - no local logic
-        - Preserves all arguments for runtime factory
-        - Provides factory identification for runtime
     """
 
     def __call__(cls, spec: Spec | None = None, /, *args: Any, **kwargs: Any) -> Any:
@@ -80,10 +75,4 @@ class ResourceMeta(type):
             - Runtime handles deduplication, dependency resolution, etc.
             - Resource may be existing instance if spec matches existing resource
         """
-        # Import at call site to avoid circular imports
-        # Resource module cannot import runtime at module level
-        from loomicore.runtime import get_resource_runtime
-
-        # Delegate all creation logic to runtime factory
-        # This maintains clean separation between interface and implementation
         return get_resource_runtime().resource_factory.create_resource(cls, spec, *args, **kwargs)  # type: ignore

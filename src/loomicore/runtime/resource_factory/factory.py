@@ -125,7 +125,7 @@ class ResourceFactory:
 
             # Create new instance
             logger.debug(f"Creating new resource instance: '{cls.factory_name()}'")
-            instance = self._create_new_instance(cls, spec, *args, **kwargs)
+            instance = self._create_new_instance(cls, spec)
 
             # Register with registry for deduplication
             self._registry.add_resource(instance)

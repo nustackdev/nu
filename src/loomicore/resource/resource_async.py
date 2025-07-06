@@ -21,7 +21,9 @@ all complex operations.
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Self
+from typing import Self, final
+
+from loomicore.runtime import get_lifecycle_manager
 
 from .base import BaseResource
 from .meta import ResourceMeta
@@ -89,6 +91,7 @@ class AsyncResource(BaseResource, metaclass=ResourceMeta):
 
     # === Async Lifecycle Methods ===
 
+    @final
     async def initialize(self) -> None:
         """
         Asynchronously initialize the resource and all its dependencies.
@@ -115,10 +118,9 @@ class AsyncResource(BaseResource, metaclass=ResourceMeta):
             - Automatic dependency ordering prevents circular dependencies
             - Handles mixed sync/async dependencies appropriately
         """
-        from loomicore.runtime import get_lifecycle_manager
-
         await get_lifecycle_manager().initialize_resource_async(self)
 
+    @final
     async def shutdown(self) -> None:
         """
         Asynchronously shutdown the resource and clean up all dependencies.
@@ -144,8 +146,6 @@ class AsyncResource(BaseResource, metaclass=ResourceMeta):
             - Smart dependency cleanup prevents resource leaks
             - Handles mixed sync/async dependencies appropriately
         """
-        from loomicore.runtime import get_lifecycle_manager
-
         await get_lifecycle_manager().shutdown_resource_async(self)
 
     # === User-Overridable Async Hooks ===
