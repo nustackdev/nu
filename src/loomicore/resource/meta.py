@@ -22,14 +22,19 @@ Design Philosophy:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from loomicore.runtime import get_resource_runtime
 from loomicore.spec import Spec
 
+if TYPE_CHECKING:
+    from loomicore.resource import Resource
+
 __all__ = [
     "ResourceMeta",
 ]
+
+ResourceT = TypeVar("ResourceT", bound="Resource")
 
 
 class ResourceMeta(type):
@@ -51,7 +56,13 @@ class ResourceMeta(type):
     minimal and focused.
     """
 
-    def __call__(cls, spec: Spec | None = None, /, *args: Any, **kwargs: Any) -> Any:
+    def __call__(
+        cls: type[ResourceT],  # type: ignore
+        spec: Spec | None = None,
+        /,
+        *args: Any,
+        **kwargs: Any,
+    ) -> ResourceT:
         """
         Intercept resource instantiation and delegate to runtime factory.
 
