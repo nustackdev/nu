@@ -22,7 +22,6 @@ __all__ = [
     # Wrapper specs
     "WrapperSpec",
     "RemoteSpec",
-    "PoolSpec",
 ]
 
 
@@ -123,10 +122,6 @@ class BaseSpec:
     def as_remote(self, client_spec: WrapperConfigT) -> RemoteSpec[Self, WrapperConfigT]:
         """Transform to remote spec."""
         return RemoteSpec[Self, WrapperConfigT](inner_spec=self, client_spec=client_spec)
-
-    def as_pool(self, pool_spec: WrapperConfigT) -> PoolSpec[Self, WrapperConfigT]:
-        """Transform to pool spec with load balancing."""
-        return PoolSpec[Self, WrapperConfigT](inner_spec=self, pool_spec=pool_spec)
 
     # Manipulation API
 
@@ -244,11 +239,3 @@ class RemoteSpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
 
     inner_spec: WrappedSpecT
     client_spec: WrapperConfigT
-
-
-@attrs.define(frozen=True, slots=True, kw_only=True)
-class PoolSpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
-    """Fixed-size resource pool specification."""
-
-    inner_spec: WrappedSpecT
-    pool_spec: WrapperConfigT

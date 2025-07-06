@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeAlias, TypeVar
 
 if TYPE_CHECKING:
-    from loomi.interfaces.state.tree import AsyncStateProtocol, SyncStateProtocol
+    from loomi.state.interface.tree import AsyncStateProtocol, SyncStateProtocol
 
     from .context import ContextProtocol
-    from .executor import AsyncExecutorProtocol, SyncExecutorProtocol
+    from .evaluator import AsyncEvaluatorProtocol, SyncEvaluatorProtocol
     from .operations import (
         AppOperationProtocol,
         BranchOperationProtocol,
@@ -62,16 +62,16 @@ __all__ = [
     # Reactive operations
     "SubscribeOperationT",
     "SubscribeOperationT_contra",
-    # Executor types
-    "ExecutorT",
-    "ExecutorT_co",
-    "ExecutorT_contra",
-    "SyncExecutorT",
-    "SyncExecutorT_co",
-    "SyncExecutorT_contra",
-    "AsyncExecutorT",
-    "AsyncExecutorT_co",
-    "AsyncExecutorT_contra",
+    # Evaluator types
+    "EvaluatorT",
+    "EvaluatorT_co",
+    "EvaluatorT_contra",
+    "SyncEvaluatorT",
+    "SyncEvaluatorT_co",
+    "SyncEvaluatorT_contra",
+    "AsyncEvaluatorT",
+    "AsyncEvaluatorT_co",
+    "AsyncEvaluatorT_contra",
 ]
 
 
@@ -239,47 +239,47 @@ SubscribeOperationT_contra = TypeVar(
     contravariant=True,
 )
 
-# --- Executor --- #
+# --- Evaluator --- #
 
-ExecutorT = TypeVar(
-    "ExecutorT",
-    bound="AsyncExecutorProtocol | SyncExecutorProtocol",
+EvaluatorT = TypeVar(
+    "EvaluatorT",
+    bound="AsyncEvaluatorProtocol | SyncEvaluatorProtocol",
 )
-ExecutorT_co = TypeVar(
-    "ExecutorT_co",
-    bound="AsyncExecutorProtocol | SyncExecutorProtocol",
+EvaluatorT_co = TypeVar(
+    "EvaluatorT_co",
+    bound="AsyncEvaluatorProtocol | SyncEvaluatorProtocol",
     covariant=True,
 )
-ExecutorT_contra = TypeVar(
-    "ExecutorT_contra",
-    bound="AsyncExecutorProtocol | SyncExecutorProtocol",
+EvaluatorT_contra = TypeVar(
+    "EvaluatorT_contra",
+    bound="AsyncEvaluatorProtocol | SyncEvaluatorProtocol",
     contravariant=True,
 )
-AsyncExecutorT = TypeVar(
-    "AsyncExecutorT",
-    bound="AsyncExecutorProtocol",
+AsyncEvaluatorT = TypeVar(
+    "AsyncEvaluatorT",
+    bound="AsyncEvaluatorProtocol",
 )
-AsyncExecutorT_co = TypeVar(
-    "AsyncExecutorT_co",
-    bound="AsyncExecutorProtocol",
+AsyncEvaluatorT_co = TypeVar(
+    "AsyncEvaluatorT_co",
+    bound="AsyncEvaluatorProtocol",
     covariant=True,
 )
-AsyncExecutorT_contra = TypeVar(
-    "AsyncExecutorT_contra",
-    bound="AsyncExecutorProtocol",
+AsyncEvaluatorT_contra = TypeVar(
+    "AsyncEvaluatorT_contra",
+    bound="AsyncEvaluatorProtocol",
     contravariant=True,
 )
-SyncExecutorT = TypeVar(
-    "SyncExecutorT",
-    bound="SyncExecutorProtocol",
+SyncEvaluatorT = TypeVar(
+    "SyncEvaluatorT",
+    bound="SyncEvaluatorProtocol",
 )
-SyncExecutorT_co = TypeVar(
-    "SyncExecutorT_co",
-    bound="SyncExecutorProtocol",
+SyncEvaluatorT_co = TypeVar(
+    "SyncEvaluatorT_co",
+    bound="SyncEvaluatorProtocol",
     covariant=True,
 )
-SyncExecutorT_contra = TypeVar(
-    "SyncExecutorT_contra",
-    bound="SyncExecutorProtocol",
+SyncEvaluatorT_contra = TypeVar(
+    "SyncEvaluatorT_contra",
+    bound="SyncEvaluatorProtocol",
     contravariant=True,
 )

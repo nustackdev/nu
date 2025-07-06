@@ -4,7 +4,7 @@ from typing import Callable, Concatenate, ParamSpec, Protocol, runtime_checkable
 
 from .type_vars import (
     AppOperationT,
-    AsyncExecutorT_co,
+    AsyncEvaluatorT_co,
     BranchOperationT,
     ContextT_contra,
     DelayOperationT,
@@ -17,7 +17,7 @@ from .type_vars import (
     SequenceOperationT,
     SubscribeOperationT,
     SyncContextT_contra,
-    SyncExecutorT_co,
+    SyncEvaluatorT_co,
     TimeoutOperationT,
 )
 
@@ -25,9 +25,9 @@ P = ParamSpec("P")
 
 
 @runtime_checkable
-class AsyncExecutorProtocol(
+class AsyncEvaluatorProtocol(
     Protocol[
-        AsyncExecutorT_co,
+        AsyncEvaluatorT_co,
         ContextT_contra,
         OperationT,
         AppOperationT,
@@ -66,7 +66,7 @@ class AsyncExecutorProtocol(
 
     def Compound(
         self,
-        op: Callable[Concatenate[AsyncExecutorT_co, P], OperationT],
+        op: Callable[Concatenate[AsyncEvaluatorT_co, P], OperationT],
     ) -> Callable[P, OperationT]: ...
 
     # --- Methods --- #
@@ -155,9 +155,9 @@ class AsyncExecutorProtocol(
 
 
 @runtime_checkable
-class SyncExecutorProtocol(
+class SyncEvaluatorProtocol(
     Protocol[
-        SyncExecutorT_co,
+        SyncEvaluatorT_co,
         SyncContextT_contra,
         OperationT,
         AppOperationT,
@@ -196,7 +196,7 @@ class SyncExecutorProtocol(
 
     def Compound(
         self,
-        compound_op: Callable[Concatenate[SyncExecutorT_co, P], OperationT],
+        compound_op: Callable[Concatenate[SyncEvaluatorT_co, P], OperationT],
     ) -> Callable[P, OperationT]: ...
 
     # --- Methods --- #
