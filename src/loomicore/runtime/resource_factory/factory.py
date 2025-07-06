@@ -194,7 +194,7 @@ class ResourceFactory:
             - Proxy handles remote lifecycle operations
         """
         # Import here to avoid circular dependencies
-        from loomicore.patterns.proxy import create_remote_resource_proxy
+        from loomicore.attach.proxy import create_remote_resource_proxy
 
         logger.debug(f"Creating remote resource proxy for spec: {spec}")
         proxy = create_remote_resource_proxy(spec)

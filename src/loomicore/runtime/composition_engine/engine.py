@@ -16,7 +16,6 @@ from .exceptions import DependencyError
 from .logger import logger
 
 if TYPE_CHECKING:
-    from loomicore.patterns.attach.descriptor import ResourceDescriptor
     from loomicore.resource import Resource
 
     from ..dependency_manager import DependencyManager
@@ -32,18 +31,18 @@ class CompositionEngine:
 
     This engine handles:
     - Discovery of attach descriptors on resource classes
-    - Resolution of descriptor values through dependency manager
+    - Resolution of descriptor values through self-resolution
     - Assembly of complete resource instances with dependencies
     - Coordination with dependency manager for relationship tracking
 
     The engine encapsulates all composition logic that ties together
     resources with their declared dependencies and patterns. It scans
-    resource classes for descriptors and resolves them to actual resource
-    instances, setting up the complete dependency graph.
+    resource classes for descriptors and resolves them using each
+    descriptor's own resolution logic.
 
     Key Features:
         - Automatic descriptor discovery via class introspection
-        - Support for different descriptor types (Attach, AttachMany, etc.)
+        - Self-resolving descriptors (no pattern-specific logic needed)
         - Integration with dependency manager for relationships
         - Comprehensive logging for debugging
     """
@@ -68,7 +67,7 @@ class CompositionEngine:
 
         Process:
         1. Discover all descriptors on the resource class
-        2. Resolve each descriptor to an actual resource instance
+        2. Resolve each descriptor using its own resolution logic
         3. Set the resolved value on the resource instance
         4. Handle any composition errors with proper context
 
@@ -80,7 +79,7 @@ class CompositionEngine:
 
         Notes:
             - Called during resource initialization
-            - Handles both simple and complex descriptor types
+            - Handles all descriptor types through self-resolution
             - Sets up bidirectional dependency relationships
             - Comprehensive error handling and logging
         """
@@ -138,7 +137,7 @@ class CompositionEngine:
 
         This method scans the resource's class hierarchy to find all descriptor
         instances that represent dependencies. It looks for instances of
-        BaseDescriptor in the class attributes.
+        BaseResourceDescriptor in the class attributes.
 
         Args:
             resource_instance: Resource to inspect
@@ -180,13 +179,13 @@ class CompositionEngine:
         resource_instance: "Resource",
         descriptor_name: str,
         descriptor: BaseResourceDescriptor,
-    ) -> Resource:
+    ) -> Any:
         """
-        Resolve a single attach descriptor to its value.
+        Resolve a single attach descriptor to its value using self-resolution.
 
-        This method takes a descriptor instance and resolves it to the actual
-        resource or value it represents. It handles different descriptor types
-        and coordinates with the dependency manager for relationship tracking.
+        This method delegates to the descriptor's own resolve() method, allowing
+        each descriptor type to handle its own resolution logic. This eliminates
+        the need for pattern-specific conditional logic in the composition engine.
 
         Args:
             resource_instance: Parent resource containing the descriptor
@@ -194,21 +193,20 @@ class CompositionEngine:
             descriptor: The descriptor instance to resolve
 
         Returns:
-            Resolved value for the descriptor
+            Resolved value for the descriptor (Resource, Coordinator, etc.)
 
         Raises:
             DependencyError: If descriptor resolution fails
 
         Notes:
-            - Handles different descriptor types (Attach, AttachMany, etc.)
-            - Validates descriptor configuration before resolution
-            - Uses dependency manager for actual resource creation
-            - Supports future extension for new descriptor types
+            - Uses descriptor's self-resolution capability
+            - No pattern-specific logic needed here
+            - Supports any descriptor type that implements resolve()
+            - Clean separation of concerns
         """
-        from loomicore.patterns.attach.descriptor import ResourceDescriptor
-
         logger.debug(
-            f"Resolving descriptor '{descriptor_name}' of type {type(descriptor).__name__} for '{resource_instance.readable_name}'"
+            f"Resolving descriptor '{descriptor_name}' of type {type(descriptor).__name__} "
+            f"for '{resource_instance.readable_name}'"
         )
 
         if not isinstance(descriptor, BaseResourceDescriptor):
@@ -217,103 +215,23 @@ class CompositionEngine:
                 f"is not a valid descriptor type: {type(descriptor).__name__}"
             )
 
-        # Handle ResourceDescriptor (from Attach() calls)
-        if isinstance(descriptor, ResourceDescriptor):
-            return self._resolve_resource_descriptor(resource_instance, descriptor_name, descriptor)
-
-        # Handle future descriptor types here
-        # elif isinstance(descriptor, AttachManyDescriptor):
-        #     return self._resolve_attach_many_descriptor(...)
-        # elif isinstance(descriptor, AttachPoolDescriptor):
-        #     return self._resolve_attach_pool_descriptor(...)
-
-        # Unknown descriptor type
-        raise DependencyError(
-            f"Unknown descriptor type '{type(descriptor).__name__}' for '{descriptor_name}' "
-            f"in '{resource_instance.readable_name}'"
-        )
-
-    def _resolve_resource_descriptor(
-        self,
-        resource_instance: "Resource",
-        descriptor_name: str,
-        descriptor: "ResourceDescriptor",
-    ) -> "Resource":
-        """
-        Resolve a ResourceDescriptor (created by Attach() calls).
-
-        Uses priority-based spec resolution:
-        1. Spec from parent resource's spec (if attribute exists)
-        2. Spec from descriptor itself
-        3. Error if no spec found
-
-        Args:
-            resource_instance: Parent resource
-            descriptor_name: Name of the descriptor attribute
-            descriptor: The ResourceDescriptor to resolve
-
-        Returns:
-            Resolved resource instance
-
-        Raises:
-            DependencyError: If resolution fails or spec is missing
-        """
-        # Get resource spec by priority
-        spec = None
-
-        # 1. First priority: Spec from parent resource's spec
-        if hasattr(resource_instance.spec, descriptor_name):
-            spec = getattr(resource_instance.spec, descriptor_name)
-            logger.debug(
-                f"Using spec from parent resource spec for '{descriptor_name}' "
-                f"in '{resource_instance.readable_name}'"
-            )
-
-        # 2. Second priority: Spec from descriptor
-        elif descriptor.spec is not None:
-            spec = descriptor.spec
-            logger.debug(
-                f"Using spec from descriptor for '{descriptor_name}' "
-                f"in '{resource_instance.readable_name}'"
-            )
-
-        # 3. No spec found - raise error
-        else:
-            raise DependencyError(
-                f"No spec found for descriptor '{descriptor_name}' in '{resource_instance.readable_name}'. "
-                "Either add the spec to the parent resource spec or use Attach(spec) to provide a specification."
-            )
-
-        # Validate spec has a factory
-        if spec.factory is None:
-            raise DependencyError(
-                f"Spec for descriptor '{descriptor_name}' in '{resource_instance.readable_name}' "
-                "has no factory. Ensure spec.factory is set to a resource class."
-            )
-
-        logger.debug(
-            f"Resolving ResourceDescriptor '{descriptor_name}' with factory '{spec.factory.__name__}' "
-            f"for '{resource_instance.readable_name}'"
-        )
-
         try:
-            # Use dependency manager to resolve the dependency
-            # This handles resource creation, deduplication, and relationship tracking
-            resolved_resource = self._dependency_manager.resolve_dependency(
-                resource_instance, descriptor_name, spec
+            # Delegate to descriptor's self-resolution method
+            resolved_value = descriptor.resolve(
+                resource_instance, descriptor_name, self._dependency_manager
             )
 
             logger.debug(
-                f"Successfully resolved ResourceDescriptor '{descriptor_name}' "
-                f"to '{resolved_resource.readable_name}' for '{resource_instance.readable_name}'"
+                f"Successfully resolved descriptor '{descriptor_name}' "
+                f"to {type(resolved_value).__name__} for '{resource_instance.readable_name}'"
             )
 
-            return resolved_resource
+            return resolved_value
 
         except Exception as e:
             error_msg = (
-                f"Failed to resolve ResourceDescriptor '{descriptor_name}' "
-                f"with factory '{spec.factory.__name__}' for '{resource_instance.readable_name}': {str(e)}"
+                f"Failed to resolve descriptor '{descriptor_name}' of type {type(descriptor).__name__} "
+                f"for '{resource_instance.readable_name}': {str(e)}"
             )
             logger.error(error_msg)
             raise DependencyError(error_msg) from e
