@@ -11,10 +11,9 @@ import attrs
 import wrapt
 
 from loomi.interfaces.remote.client import RemoteClientProtocol
+from loomicore.attach import Attach
 from loomicore.resource import SyncResource
 from loomicore.spec import RemoteSpec, Spec
-
-from ..attach.descriptor import Attach
 
 __all__ = [
     "RemoteResourceCoordinator",

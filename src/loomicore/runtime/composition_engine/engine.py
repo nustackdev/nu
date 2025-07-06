@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from .descriptor import BaseResourceDescriptor
+from loomicore.attach import BaseResourceDescriptor
+
 from .exceptions import DependencyError
 from .logger import logger
 
