@@ -14,21 +14,7 @@ packages = [
     { include = "loomistd", from = "pkgs" },
     { include = "loomiverse", from = "pkgs" },
 ]
-include = [
-    "src/loomi/py.typed",
-    "src/loomi/**/*.yaml",
-    "src/loomi/**/*.json",
-    "pkgs/loomicore/py.typed",
-    "pkgs/loomicore/**/*.yaml",
-    "pkgs/loomicore/**/*.json",
-    "pkgs/loomistd/py.typed",
-    "pkgs/loomistd/**/*.yaml",
-    "pkgs/loomistd/**/*.json",
-    "pkgs/loomiverse/py.typed",
-    "pkgs/loomiverse/**/*.yaml",
-    "pkgs/loomiverse/**/*.json",
-    "stubs/**/*.pyi"
-]
+include = []
 
 [tool.poetry.scripts]
 loomix = "loomix.cli.entrypoint:loomix"
@@ -37,7 +23,6 @@ loomix = "loomix.cli.entrypoint:loomix"
 python = "^3.12"
 rich = "^13.9.4"
 aiofile = "^3.9.0"
-pydantic = "^2.10.6"
 lmdb = "^1.6.2"
 aiohttp = "^3.11.13"
 requests = "^2.32.3"
@@ -47,14 +32,6 @@ rich-click = "^1.8.8"
 rpyc = "^6.0.2"
 msgpack = "^1.1.1"
 wrapt = "^1.17.2"
-
-[tool.poetry.group.dev.dependencies]
-autoflake = "*"
-black = "*"
-flake8 = "*"
-isort = "*"
-mypy = "*"
-pre-commit = "*"
 pyinstrument = "^5.0.1"
 matplotlib = "^3.10.1"
 scipy = "^1.15.2"
@@ -65,8 +42,15 @@ graphviz = "^0.20.3"
 py-spy = "^0.4.0"
 psutil = "^7.0.0"
 ray = "^2.46.0"
-msgspec = "^0.19.0"
 
+
+[tool.poetry.group.dev.dependencies]
+autoflake = "*"
+black = "*"
+flake8 = "*"
+isort = "*"
+mypy = "*"
+pre-commit = "*"
 [tool.black]
 line-length = 100
 target-version = ['py312']

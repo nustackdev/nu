@@ -1,16 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .composition_engine import CompositionEngine
-    from .dependency_manager import DependencyManager
-    from .lifecycle_manager import LifecycleManager
-    from .resource_factory import ResourceFactory
-    from .resource_registry import ResourceRegistry
-    from .runtime import ResourceRuntime
+from .composition_engine import CompositionEngine
+from .dependency_manager import DependencyManager
+from .lifecycle_manager import LifecycleManager
+from .resource_factory import ResourceFactory
+from .resource_registry import ResourceRegistry
+from .runtime import ResourceRuntime
 
 __all__ = [
+    # Core runtime components
+    "ResourceRuntime",
+    "ResourceRegistry",
+    "DependencyManager",
+    "ResourceFactory",
+    "CompositionEngine",
+    "LifecycleManager",
+    # Runtime accessors
     "get_resource_runtime",
     "get_resource_registry",
     "get_dependency_manager",
@@ -31,8 +36,6 @@ def get_resource_runtime() -> "ResourceRuntime":
     It ensures that there is a single runtime instance throughout the application
     lifecycle for managing all live resource operations.
     """
-    from .runtime import ResourceRuntime
-
     global _resource_runtime
     if _resource_runtime is None:
         _resource_runtime = ResourceRuntime()

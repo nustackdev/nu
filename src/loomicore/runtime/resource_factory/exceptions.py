@@ -7,6 +7,17 @@ __all__ = [
 ]
 
 
+class FactoryError(ResourceError):
+    """
+    Base exception for resource factory-related errors.
+
+    This exception is raised when the resource factory encounters issues
+    that prevent it from creating or managing resources properly.
+    """
+
+    pass
+
+
 class CreationError(ResourceError):
     """
     Exception raised when resource creation fails.
@@ -17,10 +28,6 @@ class CreationError(ResourceError):
     - Resource allocation failures
     - Dependency resolution failures
     - Initialization errors
-
-    Note:
-        This exception does not inherit from ResourceError since it may occur
-        before the resource is fully constructed.
     """
 
     pass

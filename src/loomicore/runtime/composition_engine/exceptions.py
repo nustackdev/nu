@@ -3,11 +3,11 @@ from __future__ import annotations
 from loomicore.exceptions import ResourceError
 
 __all__ = [
-    "DependencyError",
+    "CompositionError",
 ]
 
 
-class DependencyError(ResourceError):
-    """Base exception for dependency-related errors."""
+class CompositionError(ResourceError):
+    """Base exception for composition-related errors."""
 
     pass

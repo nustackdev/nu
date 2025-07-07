@@ -18,6 +18,7 @@ from __future__ import annotations
 
 # Core components
 from .base_descriptor import BaseResourceDescriptor
+from .exceptions import AttachError
 
 # Resource attachment patterns
 from .many import AttachMany, ListCoordinator
@@ -26,6 +27,7 @@ from .single import Attach
 __all__ = [
     # Core
     "BaseResourceDescriptor",
+    "AttachError",
     # Single resource attachment
     "Attach",
     # Many patterns

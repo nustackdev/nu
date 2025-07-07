@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 from loomicore.attach import BaseResourceDescriptor
 
-from .exceptions import DependencyError
+from .exceptions import CompositionError
 from .logger import logger
 
 if TYPE_CHECKING:
@@ -76,7 +76,7 @@ class CompositionEngine:
             resource_instance: Resource to compose
 
         Raises:
-            DependencyError: If composition fails for any descriptor
+            CompositionError: If composition fails for any descriptor
 
         Notes:
             - Called during resource initialization
@@ -118,7 +118,7 @@ class CompositionEngine:
                 except Exception as e:
                     error_msg = f"Failed to resolve descriptor '{name}' for '{resource_instance.readable_name}': {str(e)}"
                     logger.error(error_msg)
-                    raise DependencyError(error_msg) from e
+                    raise CompositionError(error_msg) from e
 
             logger.info(
                 f"Successfully composed resource '{resource_instance.readable_name}' "
@@ -126,11 +126,11 @@ class CompositionEngine:
             )
 
         except Exception as e:
-            if isinstance(e, DependencyError):
+            if isinstance(e, CompositionError):
                 raise
             error_msg = f"Failed to compose resource '{resource_instance.readable_name}': {str(e)}"
             logger.error(error_msg)
-            raise DependencyError(error_msg) from e
+            raise CompositionError(error_msg) from e
 
     def discover_descriptors(self, resource_instance: "Resource") -> list[tuple[str, Any]]:
         """
@@ -197,7 +197,7 @@ class CompositionEngine:
             Resolved value for the descriptor (Resource, Coordinator, etc.)
 
         Raises:
-            DependencyError: If descriptor resolution fails
+            CompositionError: If descriptor resolution fails
 
         Notes:
             - Uses descriptor's self-resolution capability
@@ -211,7 +211,7 @@ class CompositionEngine:
         )
 
         if not isinstance(descriptor, BaseResourceDescriptor):
-            raise DependencyError(
+            raise CompositionError(
                 f"Descriptor '{descriptor_name}' in '{resource_instance.readable_name}' "
                 f"is not a valid descriptor type: {type(descriptor).__name__}"
             )
@@ -235,7 +235,7 @@ class CompositionEngine:
                 f"for '{resource_instance.readable_name}': {str(e)}"
             )
             logger.error(error_msg)
-            raise DependencyError(error_msg) from e
+            raise CompositionError(error_msg) from e
 
     def __repr__(self) -> str:
         """
