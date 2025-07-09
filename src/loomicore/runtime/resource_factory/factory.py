@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-from loomicore.spec import RemoteSpec, Spec
+from loomicore.spec import ProxySpec, Spec
 
 from .exceptions import CreationError, ResourceError
 from .logger import logger
@@ -100,44 +100,39 @@ class ResourceFactory:
             if spec is None:
                 spec = Spec(factory=cls)
 
-            if spec.factory is None:
-                spec.factory = cls
-
             # Extract creation context
             is_dependency = kwargs.pop("__is_dependency__", False)
 
-            # Check if this is a remote resource request
-            if isinstance(spec, RemoteSpec):
-                return self._create_remote_resource(spec, is_dependency)
+            # Check if this is a proxy resource request
+            if isinstance(spec, ProxySpec):
+                return self._create_proxy_resource(spec, is_dependency=is_dependency)
 
             # Try get existing instance
             instance = self._registry.get_resource(spec)
             if instance is not None:
                 logger.info(f"Reusing existing resource instance: '{instance.readable_name}'")
 
-                # Register with LifecycleManager for state tracking
-                self._lifecycle_manager.register_resource(instance)
-
                 # Update dependency tracking
                 self._dependency_manager.register_resource(instance, is_dependency=is_dependency)
 
                 return cast("Resource", instance)
+            else:
+                # Create new instance
+                logger.debug(f"Creating new resource instance: '{cls.factory_name()}'")
 
-            # Create new instance
-            logger.debug(f"Creating new resource instance: '{cls.factory_name()}'")
-            instance = self._create_new_instance(cls, spec)
+                instance = self._create_new_instance(cls, spec)
 
-            # Register with registry for deduplication
-            self._registry.add_resource(instance)
+                # Register with registry for deduplication
+                self._registry.add_resource(instance)
 
-            # Register with LifecycleManager for state tracking
-            self._lifecycle_manager.register_resource(instance)
+                # Register with LifecycleManager for state tracking
+                self._lifecycle_manager.register_resource(instance)
 
-            # Register with dependency manager for relationship tracking
-            self._dependency_manager.register_resource(instance, is_dependency=is_dependency)
+                # Register with dependency manager for relationship tracking
+                self._dependency_manager.register_resource(instance, is_dependency=is_dependency)
 
-            logger.info(f"Created resource instance: '{instance.readable_name}'")
-            return cast("Resource", instance)
+                logger.info(f"Created resource instance: '{instance.readable_name}'")
+                return cast("Resource", instance)
 
         except (CreationError, ResourceError):
             raise
@@ -177,9 +172,9 @@ class ResourceFactory:
         except Exception as e:
             raise CreationError(f"Failed to instantiate '{cls.factory_name()}'") from e
 
-    def _create_remote_resource(self, spec: RemoteSpec, is_dependency: bool) -> "Resource":
+    def _create_proxy_resource(self, spec: ProxySpec, is_dependency: bool = False) -> "Resource":
         """
-        Create a remote resource using RemoteResourceProxy.
+        Create a proxy resource using RemoteResourceProxy.
 
         Args:
             spec: Remote resource specification
@@ -189,23 +184,51 @@ class ResourceFactory:
             RemoteResourceProxy instance
 
         Notes:
-            - Delegates to loomistd remote resource infrastructure
+            - Delegates to loomistd proxy resource infrastructure
             - Remote resources get registered with all runtime components
-            - Proxy handles remote lifecycle operations
+            - Proxy handles proxy lifecycle operations
         """
         # Import here to avoid circular dependencies
-        from loomicore.proxy import create_remote_resource_proxy
+        from loomicore.proxy import (
+            ProxyConfigurationError,
+            ProxyCoordinator,
+            ProxyCoordinatorSpec,
+            ResourceProxy,
+        )
 
-        logger.debug(f"Creating remote resource proxy for spec: {spec}")
-        proxy = create_remote_resource_proxy(spec)
+        logger.debug(f"Creating proxy resource for spec: {spec}")
 
-        # Remote resources still need to be tracked locally
-        proxy_resource = cast(Resource, proxy)
+        # Validate required fields
+        if spec.inner_spec is None:
+            raise ProxyConfigurationError("ProxySpec.inner_spec is required")
 
-        # Register with LifecycleManager for state tracking
-        self._lifecycle_manager.register_resource(proxy_resource)
+        if spec.client_spec is None:
+            raise ProxyConfigurationError("ProxySpec.client_spec is required")
 
-        # Register with dependency manager for relationship tracking
-        self._dependency_manager.register_resource(proxy_resource, is_dependency=is_dependency)
+        # Validate client spec has factory
+        if spec.client_spec.factory is None:
+            raise ProxyConfigurationError("ProxySpec.client_spec must have a factory")
 
-        return cast("Resource", proxy)
+        # Validate server spec if provided
+        if spec.server_spec is not None and spec.server_spec.factory is None:
+            raise ProxyConfigurationError("ProxySpec.server_spec must have a factory when provided")
+
+        logger.debug(f"Creating ProxyCoordinator for spec: {spec}")
+
+        try:
+            proxy_coordinator_spec = ProxyCoordinatorSpec(
+                resource_spec=spec.inner_spec,
+                client=spec.client_spec,
+            )
+            coordinator = ProxyCoordinator(
+                proxy_coordinator_spec,
+                is_dependency=is_dependency,  # type: ignore[call-arg]
+            )
+            proxy = ResourceProxy(coordinator)
+            logger.debug(f"Successfully created ProxyCoordinator: {coordinator.readable_name}")
+            return proxy
+        except Exception as e:
+            logger.error(f"Failed to create ProxyCoordinator for spec {spec}: {e}")
+            if isinstance(e, ProxyConfigurationError):
+                raise
+            raise ProxyConfigurationError(f"Failed to create ProxyCoordinator: {e}") from e

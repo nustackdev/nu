@@ -121,7 +121,7 @@ class DependencyManager:
             raise DependencyError(f"Missing factory for dependency '{name}'")
 
         # Create with dependency context
-        dependency = factory(spec, __is_dependency__=True)  # type: ignore
+        dependency = factory(spec, __is_dependency__=True)
         if not dependency:
             raise DependencyNotFoundError(
                 f"Failed to resolve dependency '{name}' for '{parent.readable_name}'"

@@ -67,7 +67,7 @@ class RPyCClient(SyncService):
             raise RPyCConnectionError("RPyC client is not connected")
         return cast(ResourceFactory, self.connection.get_connection.root)
 
-    def get_remote_resource(self, spec: Spec) -> Any:
+    def get_proxy(self, spec: Spec) -> Any:
         """
         Get a remote resource instance via RPyC.
 

@@ -1,4 +1,3 @@
-# loomistd/rpyc/tcp.py
 """
 TCP-based RPyC connection implementation.
 

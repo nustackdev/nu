@@ -4,9 +4,9 @@ Aliases for resource specifications.
 
 from __future__ import annotations
 
-from loomicore.spec import RemoteSpec, Spec
+from loomicore.spec import ProxySpec, Spec
 
 __all__ = [
     "Spec",
-    "RemoteSpec",
+    "ProxySpec",
 ]

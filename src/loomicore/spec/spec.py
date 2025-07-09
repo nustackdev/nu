@@ -11,17 +11,16 @@ This implements a high-performance, type-safe spec system for Loomi with:
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Dict, Generic, Self, Type, TypeVar
+import json
+from pathlib import Path
+from typing import Any, Dict, Self, Type, TypeVar
 
 import attrs
 
 __all__ = [
-    # Core
     "BaseSpec",
     "Spec",
-    # Wrapper specs
     "WrapperSpec",
-    "RemoteSpec",
 ]
 
 
@@ -59,8 +58,6 @@ class BaseSpec:
         This is cached for performance since specs are immutable.
         """
         # Use JSON for consistent string encoding
-        import json
-
         data = self._get_key_data()
         json_str = json.dumps(data, sort_keys=True, separators=(",", ":"))
 
@@ -98,7 +95,10 @@ class BaseSpec:
         elif isinstance(value, dict):
             return {str(k): self._serialize_value(v) for k, v in sorted(value.items())}
         else:
-            # Return primitive types as-is for JSON serialization
+            # FIXME: Generic object serialization
+            # Currently supports basic common types and returns value directly if not recognized
+            if isinstance(value, Path):
+                return str(value)
             return value
 
     def _serialize_type(self, typ: Type) -> str:
@@ -116,12 +116,6 @@ class BaseSpec:
         if not isinstance(other, BaseSpec):
             return False
         return self.key == other.key
-
-    # Transformation API
-
-    def as_remote(self, client_spec: WrapperConfigT) -> RemoteSpec[Self, WrapperConfigT]:
-        """Transform to remote spec."""
-        return RemoteSpec[Self, WrapperConfigT](inner_spec=self, client_spec=client_spec)
 
     # Manipulation API
 
@@ -231,11 +225,3 @@ class WrapperSpec(BaseSpec):
     """
 
     inner_spec: BaseSpec
-
-
-@attrs.define(frozen=True, slots=True, kw_only=True)
-class RemoteSpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
-    """Remote resource access specification."""
-
-    inner_spec: WrappedSpecT
-    client_spec: WrapperConfigT
