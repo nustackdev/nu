@@ -73,6 +73,8 @@ class ProxyCoordinator(SyncResource):
 
     spec: ProxyCoordinatorSpec
 
+    launcher: Any = Attach(optional=True)
+
     client: TransportClientProtocol = Attach()
 
     def setup(self) -> None:
@@ -245,4 +247,5 @@ class ProxyCoordinatorSpec(Spec):
     name: str = "proxy_coordinator"
 
     resource_spec: Spec
+    launcher: Spec | None = None
     client: Spec

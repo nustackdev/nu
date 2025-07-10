@@ -4,8 +4,12 @@ from pathlib import Path
 from typing import Optional
 
 import rich_click as click
-
-from loomistd.remote import RPyCTCPServer, RPyCTCPServerSpec, RPyCUnixServer, RPyCUnixServerSpec
+from loomidistributed.rpc.rpyc import (
+    RPyCTCPServer,
+    RPyCTCPServerSpec,
+    RPyCUnixServer,
+    RPyCUnixServerSpec,
+)
 
 
 @click.command(name="remote")

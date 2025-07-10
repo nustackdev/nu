@@ -91,11 +91,12 @@ class BaseRPyCServer(ABC):
 
         self._server.start()
 
-        logger.info(f"RPyC server started on {self.endpoint}")
+        logger.info(f"RPyC server stopped {self.endpoint}")
 
     def stop(self) -> None:
         """Stop the server and clean up resources."""
         if self._server:
+
             logger.info("Stopping RPyC server...")
             try:
                 # Shutdown all resources first

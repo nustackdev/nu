@@ -209,16 +209,13 @@ class ResourceFactory:
         if spec.client_spec.factory is None:
             raise ProxyConfigurationError("ProxySpec.client_spec must have a factory")
 
-        # Validate server spec if provided
-        if spec.server_spec is not None and spec.server_spec.factory is None:
-            raise ProxyConfigurationError("ProxySpec.server_spec must have a factory when provided")
-
         logger.debug(f"Creating ProxyCoordinator for spec: {spec}")
 
         try:
             proxy_coordinator_spec = ProxyCoordinatorSpec(
                 resource_spec=spec.inner_spec,
                 client=spec.client_spec,
+                launcher=spec.launcher_spec,
             )
             coordinator = ProxyCoordinator(
                 proxy_coordinator_spec,

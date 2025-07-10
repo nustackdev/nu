@@ -51,7 +51,9 @@ class ResourceDescriptor(BaseResourceDescriptor):
         ```
     """
 
-    def __init__(self, spec: "Spec | None" = None, /, *, alias: str | None = None) -> None:
+    def __init__(
+        self, spec: "Spec | None" = None, /, *, alias: str | None = None, optional: bool = False
+    ) -> None:
         """
         Initialize resource descriptor.
 
@@ -66,6 +68,7 @@ class ResourceDescriptor(BaseResourceDescriptor):
         )
         self.spec = spec
         self.alias = alias
+        self.optional = optional
 
     def _validate_type(self, value: Any) -> bool:
         """Validate that value is a resource (or None)."""
@@ -79,7 +82,7 @@ class ResourceDescriptor(BaseResourceDescriptor):
 
     def resolve(
         self, parent: "Resource", name: str, dependency_manager: "DependencyManager"
-    ) -> "Resource":
+    ) -> "Resource | None":
         """
         Resolve single resource using priority-based spec resolution.
 
@@ -101,6 +104,10 @@ class ResourceDescriptor(BaseResourceDescriptor):
         # Get spec using priority system
         spec = self._get_spec(parent, name)
 
+        if spec is None:
+            # Optional descriptor - return None if no spec found
+            return None
+
         # Validate spec has factory
         if spec.factory is None:
             raise AttachError(
@@ -117,7 +124,7 @@ class ResourceDescriptor(BaseResourceDescriptor):
                 f"for '{parent.readable_name}': {str(e)}"
             ) from e
 
-    def _get_spec(self, parent: "Resource", name: str) -> "Spec":
+    def _get_spec(self, parent: "Resource", name: str) -> "Spec | None":
         """
         Get spec using priority: parent spec > descriptor spec.
 
@@ -139,7 +146,10 @@ class ResourceDescriptor(BaseResourceDescriptor):
         if self.spec is not None:
             return self.spec
 
-        # No spec found - error
+        # No spec found for mandatory descriptor - error
+        if self.optional is True:
+            return None
+
         raise AttachError(
             f"No spec found for descriptor '{name}' in '{parent.readable_name}'. "
             "Either add the spec to the parent resource spec or use Attach(spec) "
@@ -147,7 +157,9 @@ class ResourceDescriptor(BaseResourceDescriptor):
         )
 
 
-def Attach(spec: "Spec | None" = None, /, *, alias: str | None = None) -> Any:
+def Attach(
+    spec: "Spec | None" = None, /, *, alias: str | None = None, optional: bool = False
+) -> Any:
     """
     Create a single resource attachment descriptor.
 
@@ -188,4 +200,4 @@ def Attach(spec: "Spec | None" = None, /, *, alias: str | None = None) -> Any:
         - Resolution happens during resource composition
         - Supports priority-based spec resolution
     """
-    return ResourceDescriptor(spec, alias=alias)
+    return ResourceDescriptor(spec, alias=alias, optional=optional)

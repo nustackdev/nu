@@ -111,10 +111,6 @@ class CompositionEngine:
                     # Set the resolved value on the resource instance
                     setattr(resource_instance, name, resolved_value)
 
-                    logger.debug(
-                        f"Successfully resolved descriptor '{name}' for '{resource_instance.readable_name}'"
-                    )
-
                 except Exception as e:
                     error_msg = f"Failed to resolve descriptor '{name}' for '{resource_instance.readable_name}': {str(e)}"
                     logger.error(error_msg)
@@ -222,11 +218,16 @@ class CompositionEngine:
                 resource_instance, descriptor_name, self._dependency_manager
             )
 
+            if resolved_value is None:
+                logger.debug(
+                    f"Descriptor '{descriptor_name}' resolved to None for '{resource_instance.readable_name}'"
+                )
+                return None
+
             logger.debug(
                 f"Successfully resolved descriptor '{descriptor_name}' "
                 f"to {type(resolved_value).__name__} for '{resource_instance.readable_name}'"
             )
-
             return resolved_value
 
         except Exception as e:

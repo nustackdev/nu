@@ -4,7 +4,7 @@ ProxySpec: Specification for Proxy Resource Access
 
 from __future__ import annotations
 
-from typing import Generic, Optional
+from typing import Generic
 
 import attrs
 
@@ -65,58 +65,5 @@ class ProxySpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
     # Transport client configuration (required)
     client_spec: WrapperConfigT
 
-    # Transport server configuration (optional - auto-spawn if provided)
-    server_spec: Spec | None = None
-
-    def as_proxy(
-        self, client_spec: "WrapperConfigT", server_spec: Optional[Spec] = None
-    ) -> "ProxySpec[ProxySpec[WrappedSpecT, WrapperConfigT], WrapperConfigT]":
-        """
-        Create a new ProxySpec that wraps this specification.
-
-        This method enables multi-level proxy wrapping where resources can be
-        accessed through multiple transport layers. Each level adds its own
-        transport client/server configuration while preserving the chain.
-
-        Args:
-            client_spec: Transport client configuration for the new proxy level
-            server_spec: Optional transport server configuration for auto-spawning
-
-        Returns:
-            New ProxySpec that wraps this specification
-
-        Examples:
-            Single level wrapping:
-            >>> base_spec = ComputeServiceSpec()
-            >>> proxy_spec = base_spec.as_proxy(
-            ...     client_spec=RPyCClientSpec(host="worker1")
-            ... )
-
-            Multi-level wrapping:
-            >>> base_spec = ComputeServiceSpec()
-            >>> level1 = base_spec.as_proxy(
-            ...     client_spec=RPyCClientSpec(host="worker2")
-            ... )
-            >>> level2 = level1.as_proxy(
-            ...     client_spec=RPyCClientSpec(host="worker1")
-            ... )
-            # Creates: client -> worker1 -> worker2 -> resource
-
-            Chaining syntax:
-            >>> multi_proxy = ComputeServiceSpec().as_proxy(
-            ...     client_spec=RPyCClientSpec(host="worker2")
-            ... ).as_proxy(
-            ...     client_spec=RPyCClientSpec(host="worker1")
-            ... )
-
-        Notes:
-            - Each as_proxy() call creates a new layer in the proxy chain
-            - Transport protocols handle forwarding through each layer
-            - Resource deduplication works based on complete spec chain
-            - Method calls flow through all layers transparently
-        """
-        return ProxySpec(
-            inner_spec=self,  # Wrap the current spec (self)
-            client_spec=client_spec,
-            server_spec=server_spec,
-        )
+    # Launcher configuration for auto-spawning server/host (optional)
+    launcher_spec: Spec | None = None

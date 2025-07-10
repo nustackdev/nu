@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from _multiprocessing.exceptions import (
+from ._multiprocessing import (
     HostStartupError,
-    IPCError,
     MultiprocessingLauncher,
     MultiprocessingLauncherError,
     MultiprocessingLauncherSpec,
@@ -23,5 +22,4 @@ __all__ = [
     "ProcessTimeoutError",
     "ProcessTerminationError",
     "HostStartupError",
-    "IPCError",
 ]
