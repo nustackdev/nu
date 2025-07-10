@@ -259,11 +259,8 @@ class ResourceProxy(wrapt.ObjectProxy):
         Returns:
             String showing proxy state and coordinator information
         """
-        try:
-            coordinator_name = self.__self_coordinator__.readable_name
-            return f"<ResourceProxy '{coordinator_name}'>"
-        except Exception:
-            return "<ResourceProxy (error getting status)>"
+        coordinator_name = self.__self_coordinator__.readable_name
+        return f"<ResourceProxy '{coordinator_name}'>"
 
     # === Special Method Handling ===
 

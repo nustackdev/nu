@@ -74,7 +74,6 @@ class ProxyCoordinator(SyncResource):
     spec: ProxyCoordinatorSpec
 
     client: TransportClientProtocol = Attach()
-    # TODO: server: TransportServerProtocol = Attach()  # Optional - only if server_spec provided
 
     def setup(self) -> None:
         """

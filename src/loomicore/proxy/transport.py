@@ -19,7 +19,6 @@ from loomicore.spec import Spec
 
 __all__ = [
     "TransportClientProtocol",
-    "TransportServerProtocol",
 ]
 
 
@@ -67,62 +66,5 @@ class TransportClientProtocol(Protocol):
             - Proxy object lifetime is managed by the coordinator
             - Implementation should handle resource caching/deduplication on server side
             - Proxy should support transparent method calls and attribute access
-        """
-        ...
-
-
-@runtime_checkable
-class TransportServerProtocol(Protocol):
-    """
-    Minimal protocol interface for transport servers.
-
-    Transport servers are responsible for hosting resources and serving
-    proxy requests from clients. This protocol defines only the essential
-    lifecycle methods, leaving transport-specific hosting details to
-    implementations.
-
-    Transport servers typically host a resource factory or registry that
-    manages resource instances and serves them to connected clients.
-    """
-
-    def start(self) -> None:
-        """
-        Start the transport server and begin accepting connections.
-
-        This method should handle all server startup logic, including:
-        - Binding to network interfaces or creating IPC endpoints
-        - Starting background threads or event loops
-        - Initializing resource factories or registries
-        - Setting up any required middleware or handlers
-
-        The method should block until the server is fully ready to accept
-        connections, or start the server in background threads and return
-        when startup is complete.
-
-        Raises:
-            ServerError: If server cannot be started
-            ConfigurationError: If server configuration is invalid
-            PortInUseError: If network resources are unavailable
-        """
-        ...
-
-    def stop(self) -> None:
-        """
-        Stop the transport server and clean up all resources.
-
-        This method should handle graceful server shutdown, including:
-        - Stopping acceptance of new connections
-        - Completing or terminating active requests
-        - Shutting down background threads or event loops
-        - Cleaning up hosted resources
-        - Releasing network interfaces or IPC endpoints
-
-        The method should be safe to call multiple times and should handle
-        cleanup gracefully even if the server encountered errors.
-
-        Notes:
-            - Should be safe to call even if server is not running
-            - Should complete hosted resource cleanup before returning
-            - May be called automatically during resource cleanup
         """
         ...

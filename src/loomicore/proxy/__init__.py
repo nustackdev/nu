@@ -86,7 +86,7 @@ from .exceptions import (
 )
 
 # Protocols for transport implementations
-from .transport import TransportClientProtocol, TransportServerProtocol
+from .transport import TransportClientProtocol
 
 __all__ = [
     # Core components
@@ -94,7 +94,6 @@ __all__ = [
     "ResourceProxy",
     # Transport protocols
     "TransportClientProtocol",
-    "TransportServerProtocol",
     # Exceptions
     "ProxyError",
     "ProxyConfigurationError",
