@@ -14,6 +14,7 @@ from multiprocessing.synchronize import Event as mpEventType
 from typing import Optional
 
 import attrs
+from frozendict import frozendict
 
 from loomicore.spec import Spec
 
@@ -25,7 +26,7 @@ from .exceptions import (
     ProcessTimeoutError,
 )
 from .logger import logger
-from .types import ConnectionInfo, ProcessConfig, StartupResult, StartupStatus
+from .types import StartupResult, StartupStatus
 from .worker import subprocess_worker_main
 
 __all__ = [
@@ -92,7 +93,7 @@ class MultiprocessingLauncher(BaseLauncher):
         self._shutdown_event: mpEventType | None = None
 
         # Connection information for clients
-        self._connection_info: ConnectionInfo | None = None
+        self._connection_info: dict | None = None
 
         logger.debug(f"Initialized with host: {spec.host.name}")
 
@@ -271,7 +272,7 @@ class MultiprocessingLauncher(BaseLauncher):
 
             logger.info("Infrastructure cleanup completed")
 
-    def get_connection_info(self) -> ConnectionInfo:
+    def get_connection_info(self) -> dict:
         """
         Get connection information for proxy clients.
 
@@ -379,5 +380,5 @@ class MultiprocessingLauncherSpec(Spec):
     """Maximum time (seconds) to wait for process lifecycle operations."""
 
     # Process configuration
-    config: ProcessConfig = attrs.field(factory=dict)
+    config: frozendict = attrs.field(factory=frozendict)
     """Additional configuration options for subprocess creation and management."""

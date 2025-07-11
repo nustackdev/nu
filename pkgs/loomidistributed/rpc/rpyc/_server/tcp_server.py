@@ -10,6 +10,7 @@ uses the ResourceFactory and provides TCP and Unix socket variants.
 from __future__ import annotations
 
 import attrs
+from frozendict import frozendict
 from rpyc.utils.server import ThreadedServer
 
 from loomi.service import SyncService
@@ -73,4 +74,4 @@ class RPyCTCPServerSpec(Spec):
     auto_register: bool = False
 
     # Connection configuration
-    config: dict = attrs.field(factory=dict)
+    config: frozendict = attrs.field(factory=frozendict)

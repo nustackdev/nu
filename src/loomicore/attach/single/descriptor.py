@@ -108,13 +108,6 @@ class ResourceDescriptor(BaseResourceDescriptor):
             # Optional descriptor - return None if no spec found
             return None
 
-        # Validate spec has factory
-        if spec.factory is None:
-            raise AttachError(
-                f"Spec for descriptor '{name}' in '{parent.readable_name}' "
-                "has no factory. Ensure spec.factory is set to a resource class."
-            )
-
         # Delegate to dependency manager for resource creation
         try:
             return dependency_manager.resolve_dependency(parent, name, spec)

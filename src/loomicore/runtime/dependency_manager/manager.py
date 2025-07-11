@@ -19,13 +19,14 @@ from __future__ import annotations
 from threading import Lock
 from typing import TYPE_CHECKING, cast
 
+from loomicore.spec import ProxySpec, Spec
+
 from .exceptions import CircularDependencyError, DependencyError, DependencyNotFoundError
 from .logger import logger
 from .node import DependencyNode
 
 if TYPE_CHECKING:
     from loomicore.resource import Resource
-    from loomicore.spec import Spec
 
     from ..resource_registry import ResourceRegistry
 
@@ -111,17 +112,27 @@ class DependencyManager:
         Raises:
             DependencyError: Invalid spec or circular dependency
         """
+        # FIXME: Refactor to use ResourceFactory for creation
+
+        from .. import get_resource_factory
+
         if not self._node_exists(parent):
             raise DependencyError(
                 f"Parent resource not found: '{parent.readable_name}'. Register first."
             )
 
-        factory = spec.factory
-        if factory is None:
-            raise DependencyError(f"Missing factory for dependency '{name}'")
+        if isinstance(spec, ProxySpec):
+            resource = get_resource_factory()._create_proxy_resource(spec, is_dependency=True)
+            dependency = resource.coordinator  # type: ignore[assignment]
+        else:
+            factory = spec.factory
+            if factory is None:
+                raise DependencyError(f"Missing factory for dependency '{name}'")
 
-        # Create with dependency context
-        dependency = factory(spec, __is_dependency__=True)
+            # Create with dependency context
+            resource = factory(spec, __is_dependency__=True)
+            dependency = resource
+
         if not dependency:
             raise DependencyNotFoundError(
                 f"Failed to resolve dependency '{name}' for '{parent.readable_name}'"
@@ -131,7 +142,7 @@ class DependencyManager:
 
         self.add_relationship(parent, name, dependency)
 
-        return dependency
+        return resource
 
     def add_relationship(
         self,

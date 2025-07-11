@@ -219,7 +219,7 @@ class ResourceFactory:
             )
             coordinator = ProxyCoordinator(
                 proxy_coordinator_spec,
-                is_dependency=is_dependency,  # type: ignore[call-arg]
+                __is_dependency__=is_dependency,  # type: ignore[call-arg]
             )
             proxy = ResourceProxy(coordinator)
             logger.debug(f"Successfully created ProxyCoordinator: {coordinator.readable_name}")

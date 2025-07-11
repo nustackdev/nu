@@ -19,6 +19,7 @@ from abc import ABC, abstractmethod
 from typing import final
 
 import attrs
+from frozendict import frozendict
 from rpyc.core import Connection as RPyCConnection
 
 from loomi.spec import Spec
@@ -190,4 +191,4 @@ class BaseRPyCConnection(ABC):
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class BaseRPyCConnectionSpec(Spec):
-    config: dict = attrs.field(factory=dict)
+    config: frozendict = attrs.field(factory=frozendict)

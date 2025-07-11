@@ -120,7 +120,6 @@ class CompositionEngine:
                 f"Successfully composed resource '{resource_instance.readable_name}' "
                 f"with {len(descriptors)} dependencies"
             )
-
         except Exception as e:
             if isinstance(e, CompositionError):
                 raise
@@ -229,7 +228,6 @@ class CompositionEngine:
                 f"to {type(resolved_value).__name__} for '{resource_instance.readable_name}'"
             )
             return resolved_value
-
         except Exception as e:
             error_msg = (
                 f"Failed to resolve descriptor '{descriptor_name}' of type {type(descriptor).__name__} "

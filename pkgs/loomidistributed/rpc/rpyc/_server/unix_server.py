@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import attrs
+from frozendict import frozendict
 from rpyc.utils.server import ThreadedServer
 
 from loomi.service import SyncService
@@ -99,4 +100,4 @@ class RPyCUnixServerSpec(Spec):
     auto_register: bool = False
 
     # Connection configuration
-    config: dict = attrs.field(factory=dict)
+    config: frozendict = attrs.field(factory=frozendict)

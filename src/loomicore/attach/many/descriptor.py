@@ -54,7 +54,9 @@ class ManyListDescriptor(BaseResourceDescriptor):
         ```
     """
 
-    def __init__(self, specs: list["Spec"] | None = None, /, *, alias: str | None = None) -> None:
+    def __init__(
+        self, specs: tuple["Spec", ...] | None = None, /, *, alias: str | None = None
+    ) -> None:
         """
         Initialize many list descriptor.
 
@@ -67,7 +69,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
             validation_strategy=ValidationStrategy.STRICT,
             allow_none=True,
         )
-        self.specs = specs or []
+        self.specs: tuple["Spec", ...] = specs or tuple()
         self.alias = alias
 
     def _validate_type(self, value: Any) -> bool:
@@ -108,14 +110,6 @@ class ManyListDescriptor(BaseResourceDescriptor):
                 "Either provide specs to AttachMany() or add a list of specs to the parent resource spec."
             )
 
-        # Validate all specs have factories
-        for i, spec in enumerate(specs):
-            if spec.factory is None:
-                raise AttachError(
-                    f"Spec at index {i} for descriptor '{name}' in '{parent.readable_name}' "
-                    "has no factory. Ensure spec.factory is set to a resource class."
-                )
-
         # Create resources for each spec
         resources: list["Resource"] = []
         for i, spec in enumerate(specs):
@@ -138,7 +132,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
                 f"in '{parent.readable_name}': {str(e)}"
             ) from e
 
-    def _get_specs(self, parent: "Resource", name: str) -> list["Spec"]:
+    def _get_specs(self, parent: "Resource", name: str) -> tuple["Spec", ...]:
         """
         Get specs using priority: parent spec > descriptor specs.
 
@@ -155,12 +149,12 @@ class ManyListDescriptor(BaseResourceDescriptor):
         # Priority 1: Specs from parent resource's spec
         if hasattr(parent.spec, name):
             parent_specs = getattr(parent.spec, name)
-            if isinstance(parent_specs, list):
+            if isinstance(parent_specs, tuple):
                 return parent_specs
             else:
                 raise AttachError(
                     f"AttachMany descriptor '{name}' in '{parent.readable_name}' "
-                    f"expects a list of specs from parent, but got {type(parent_specs).__name__}"
+                    f"expects a tuple of specs from parent, but got {type(parent_specs).__name__}"
                 )
 
         # Priority 2: Specs from descriptor
@@ -175,7 +169,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
         )
 
 
-def AttachMany(specs: list["Spec"] | None = None, /, *, alias: str | None = None) -> Any:
+def AttachMany(specs: tuple["Spec", ...] | None = None, /, *, alias: str | None = None) -> Any:
     """
     Create a multiple resource attachment descriptor.
 

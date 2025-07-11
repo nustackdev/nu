@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import attrs
 import lmdb
+from frozendict import frozendict
 
 from loomi.attach import Attach
 from loomi.service import SyncService
@@ -386,7 +387,7 @@ class LMDBStorageSpec(Spec):
     codec: Spec = attrs.field(factory=lambda: BinaryCodecSpec())
     map_size: int = 10 * 1024 * 1024 * 1024  # 10GB default
     max_dbs: int = 0
-    lmdb_kwargs: dict = attrs.field(factory=dict)
+    lmdb_kwargs: frozendict = attrs.field(factory=frozendict)
 
 
 if TYPE_CHECKING:
