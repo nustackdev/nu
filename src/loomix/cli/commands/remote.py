@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import rich_click as click
+from frozendict import frozendict
 from loomidistributed.rpc.rpyc import (
     RPyCTCPServer,
     RPyCTCPServerSpec,
@@ -120,10 +121,12 @@ def remote(  # noqa: C901
             bind_address=host,
             bind_port=port,
             auto_register=auto_register,
-            config={
-                "allow_all_attrs": True,
-                "sync_request_timeout": timeout,
-            },
+            config=frozendict(
+                {
+                    "allow_all_attrs": True,
+                    "sync_request_timeout": timeout,
+                }
+            ),
         )
         server_cls = RPyCTCPServer
         endpoint_info = f"{host}:{port}"
@@ -139,10 +142,12 @@ def remote(  # noqa: C901
         server_spec = RPyCUnixServerSpec(
             socket_path=socket_path,
             auto_register=auto_register,
-            config={
-                "allow_all_attrs": True,
-                "sync_request_timeout": timeout,
-            },
+            config=frozendict(
+                {
+                    "allow_all_attrs": True,
+                    "sync_request_timeout": timeout,
+                }
+            ),
         )
         server_cls = RPyCUnixServer
         endpoint_info = socket_path
