@@ -64,15 +64,17 @@ class ResourceFactory(Service):
 
         # Check if resource already exists
         if spec in self._resources:
-            logger.debug(f"Returning existing resource: {spec.factory.__name__}")
+            logger.debug(f"Returning existing resource: {spec}")
             return self._resources[spec]
 
         # Create new resource
         try:
-            logger.debug(f"Creating new resource: {spec.factory.__name__}")
+            logger.debug(f"Creating new resource: {spec}")
 
             # Create the resource using its factory
-            resource = cast(SyncResource, spec.factory(spec))
+            resource = cast(
+                SyncResource, spec.factory(spec)  # type: ignore
+            )  # FIXME: Proper instance creation via runtime factory
 
             # Initialize the resource if it supports initialization
             if resource and not resource.is_initialized:
@@ -81,12 +83,12 @@ class ResourceFactory(Service):
             # Store in registry
             self._resources[spec] = resource
 
-            logger.info(f"Resource created and registered: {spec.factory.__name__}")
+            logger.info(f"Resource created and registered: {spec}")
             return resource
 
         except Exception as e:
-            logger.error(f"Failed to create resource {spec.factory.__name__}: {e}")
-            raise RPyCServerError(f"Failed to create resource {spec.factory.__name__}") from e
+            logger.error(f"Failed to create resource {spec}: {e}")
+            raise RPyCServerError(f"Failed to create resource {spec}") from e
 
     def exposed_list_resources(self) -> ResourceRegistry:
         """
@@ -95,7 +97,7 @@ class ResourceFactory(Service):
         Returns:
             Dict mapping resource keys to factory names
         """
-        return {spec.key: spec.factory.__name__ for spec in self._resources.keys()}
+        return {spec.key: spec.key for spec in self._resources.keys()}
 
     def exposed_remove_resource(self, spec_data: bytes) -> bool:
         """
@@ -127,7 +129,7 @@ class ResourceFactory(Service):
         """
 
         if spec not in self._resources:
-            logger.warning(f"Attempt to remove non-existent resource: {spec.factory.__name__}")
+            logger.warning(f"Attempt to remove non-existent resource: {spec}")
             return False
 
         try:
@@ -140,11 +142,11 @@ class ResourceFactory(Service):
             # Remove from registry
             del self._resources[spec]
 
-            logger.info(f"Resource removed: {spec.factory.__name__}")
+            logger.info(f"Resource removed: {spec}")
             return True
 
         except Exception as e:
-            logger.error(f"Error removing resource {spec.factory.__name__}: {e}")
+            logger.error(f"Error removing resource {spec}: {e}")
             return False
 
     def exposed_shutdown_all_resources(self) -> None:
@@ -160,7 +162,7 @@ class ResourceFactory(Service):
             try:
                 self.remove_resource(spec)
             except Exception as e:
-                logger.error(f"Error shutting down resource {spec.factory.__name__}: {e}")
+                logger.error(f"Error shutting down resource {spec}: {e}")
 
         logger.info("All resources shutdown complete")
 

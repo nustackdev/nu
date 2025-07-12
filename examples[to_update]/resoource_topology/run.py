@@ -15,12 +15,12 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import attrs
-from loomidistributed.launcher._multiprocessing import MultiprocessingLauncherSpec
-from loomidistributed.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
 
 from loomicore.attach import Attach, AttachMany, ListCoordinator
 from loomicore.resource import SyncResource
-from loomicore.spec import ProxySpec, Spec
+from loomicore.spec import ProxySpec, ResourceSpec, Spec
+from loomidistributed.launcher._multiprocessing import MultiprocessingLauncherSpec
+from loomidistributed.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
 from loomistd.kv.lmdb import LMDBStorageSpec
 from loomistd.state import StateService, StateSpec
 from loomix.logging import setup_logging
@@ -30,8 +30,9 @@ setup_logging(".logs", log_level=20)
 
 # 1. StateWorker - performs rapid state updates
 class StateWorker(SyncResource):
-    spec: StateWorkerSpec
     state_service: StateService = Attach()
+
+    spec: StateWorkerSpec
 
     def run_updates(self):
         start_time = time.time()
@@ -51,10 +52,9 @@ class StateWorker(SyncResource):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class StateWorkerSpec(Spec):
+class StateWorkerSpec(ResourceSpec):
     name: str = "state_worker"
     factory: type = StateWorker
-    state_spec: ProxySpec
     worker_id: str
     update_count: int = 1000
     state_service: Spec
@@ -62,8 +62,9 @@ class StateWorkerSpec(Spec):
 
 # 2. MainCoordinator - orchestrates multiple workers
 class MainCoordinator(SyncResource):
-    spec: MainCoordinatorSpec
     workers: ListCoordinator[StateWorker] = AttachMany()
+
+    spec: MainCoordinatorSpec
 
     def execute_concurrent_updates(self):
         def run_worker(worker):
@@ -85,10 +86,10 @@ class MainCoordinator(SyncResource):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class MainCoordinatorSpec(Spec):
+class MainCoordinatorSpec(ResourceSpec):
     name: str = "main_coordinator"
     factory: type = MainCoordinator
-    workers: tuple[ProxySpec]
+    workers: tuple[Spec, ...]
 
 
 def main():
@@ -121,7 +122,6 @@ def main():
     # Worker1 specification with dedicated socket
     worker1_spec = ProxySpec(
         inner_spec=StateWorkerSpec(
-            state_spec=shared_state_spec,
             worker_id="worker1",
             state_service=shared_state_spec,
         ),
@@ -136,7 +136,6 @@ def main():
     # Worker2 specification with dedicated socket
     worker2_spec = ProxySpec(
         inner_spec=StateWorkerSpec(
-            state_spec=shared_state_spec,
             worker_id="worker2",
             state_service=shared_state_spec_no_launcher,
         ),

@@ -11,7 +11,9 @@ from typing import Any
 
 import attrs
 
-from loomi import AsyncService, Attach, Spec
+from loomi.attach import Attach
+from loomi.service import AsyncService
+from loomi.spec import ResourceSpec, Spec
 from loomi.state.interface.tree import AsyncStateProtocol, SyncStateProtocol
 from loomistd.state import StateSpec
 
@@ -490,7 +492,7 @@ class TracingService(AsyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class TracingServiceSpec(Spec):
+class TracingServiceSpec(ResourceSpec):
     """
     Specification for the TracingService.
 

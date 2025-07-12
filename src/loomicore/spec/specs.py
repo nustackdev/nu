@@ -1,18 +1,59 @@
 """
-ProxySpec: Specification for Proxy Resource Access
+Resource Spec Module
+
+This implements a high-performance, type-safe spec system for Loomi with:
+- attrs for frozen structs
+- SHA-256 content-based hashing for deterministic keys
+- Cached computations for performance
+- Fluent transformation API
 """
 
 from __future__ import annotations
 
-from typing import Generic
+from typing import Any, Generic, Type, TypeVar
 
 import attrs
 
-from .spec import Spec, WrappedSpecT, WrapperConfigT, WrapperSpec
+from .base import BaseSpec
 
 __all__ = [
-    "ProxySpec",
+    "Spec",
+    "WrapperSpec",
 ]
+
+
+WrappedSpecT = TypeVar("WrappedSpecT", bound="Spec")
+WrapperConfigT = TypeVar("WrapperConfigT", bound="Spec")
+
+
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class Spec(BaseSpec):
+    """
+    Specification class for all Loomi specs.
+    """
+
+    pass
+
+
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class ResourceSpec(Spec):
+    """
+    Specification class for all Loomi specs.
+    """
+
+    factory: Type[Any]
+    name: str = ""
+
+
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class WrapperSpec(Spec):
+    """
+    Base class for specs that wrap other specs.
+
+    Provides coordinator patterns for distributed resources.
+    """
+
+    inner_spec: ResourceSpec
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
@@ -25,7 +66,7 @@ class ProxySpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
     It supports optional server auto-spawning and multi-level proxy wrapping.
 
     Attributes:
-        inner_spec: Specification of the resource to be accessed via proxy
+        inner_spec: ResourceSpecification of the resource to be accessed via proxy
         client_spec: Transport client configuration (required)
         server_spec: Optional transport server configuration for auto-spawning
 
@@ -66,4 +107,4 @@ class ProxySpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
     client_spec: WrapperConfigT
 
     # Launcher configuration for auto-spawning server/host (optional)
-    launcher_spec: Spec | None = None
+    launcher_spec: ResourceSpec | None = None

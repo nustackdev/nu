@@ -12,7 +12,7 @@ from frozendict import frozendict
 
 from loomi.attach import Attach
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec, Spec
 from loomi.state.interface.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
@@ -379,7 +379,7 @@ class LMDBStorageTransaction:
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class LMDBStorageSpec(Spec):
+class LMDBStorageSpec(ResourceSpec):
     name: str = "lmdb_storage"
     factory: type = LMDBStorage
     mode: str = "write"

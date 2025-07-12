@@ -7,7 +7,7 @@ import attrs
 
 from loomi.attach import Attach
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec, Spec
 from loomi.state.interface.observer import SyncObservableProtocol, SyncSubscriptionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
@@ -94,7 +94,7 @@ class InMemoryObserver(
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class InMemoryObserverSpec(Spec):
+class InMemoryObserverSpec(ResourceSpec):
     name: str = "in_memory_observer"
     factory: type = InMemoryObserver
     codec: Spec = attrs.field(factory=lambda: PassthroughCodecSpec())

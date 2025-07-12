@@ -12,7 +12,7 @@ import filelock
 
 from loomi.attach import Attach
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec, Spec
 from loomi.state.interface.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.json import JSONCodecSpec
@@ -421,7 +421,7 @@ class FileStorageTransaction:
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class FileStorageSpec(Spec):
+class FileStorageSpec(ResourceSpec):
     name: str = "file_storage"
     factory: type = FileStorage
     mode: str = "write"

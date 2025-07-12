@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import Any, final
 
 from loomicore.runtime import get_dependency_manager, get_lifecycle_manager
-from loomicore.spec import Spec
+from loomicore.spec import ResourceSpec
 from loomicore.types import ResourceState
 
 __all__ = [
@@ -58,7 +58,7 @@ class BaseResource:
     """
 
     @final
-    def __init__(self, spec: Spec | None = None, /) -> None:
+    def __init__(self, spec: ResourceSpec | None = None, /) -> None:
         """
         Initialize base resource with specification.
 
@@ -74,7 +74,7 @@ class BaseResource:
             All resource behavior and properties derive from this spec.
         """
         if spec is None:
-            spec = Spec(factory=self.__class__, name="")
+            spec = ResourceSpec(factory=self.__class__, name="")
         self._spec = spec
 
     # === Identity Properties ===
@@ -96,7 +96,7 @@ class BaseResource:
         return f"{cls.__module__}.{cls.__name__}"
 
     @property
-    def spec(self) -> Spec:
+    def spec(self) -> ResourceSpec:
         """
         Get the resource's specification.
 

@@ -52,7 +52,7 @@ class TransportClientProtocol(Protocol):
         that will be forwarded to the remote resource.
 
         Args:
-            resource_spec: Specification of the resource to proxy
+            resource_spec: ResourceSpecification of the resource to proxy
 
         Returns:
             Transport-specific proxy object that supports method forwarding

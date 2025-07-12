@@ -22,7 +22,7 @@ import attrs
 from frozendict import frozendict
 from rpyc.core import Connection as RPyCConnection
 
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from ..exceptions import RPyCConnectionError
 from ..types import RPyCConfig
@@ -190,5 +190,5 @@ class BaseRPyCConnection(ABC):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class BaseRPyCConnectionSpec(Spec):
+class BaseRPyCConnectionSpec(ResourceSpec):
     config: frozendict = attrs.field(factory=frozendict)

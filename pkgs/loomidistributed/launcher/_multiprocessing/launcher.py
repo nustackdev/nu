@@ -16,7 +16,7 @@ from typing import Optional
 import attrs
 from frozendict import frozendict
 
-from loomicore.spec import Spec
+from loomicore.spec import ResourceSpec, Spec
 
 from ..base import BaseLauncher
 from .exceptions import (
@@ -95,7 +95,7 @@ class MultiprocessingLauncher(BaseLauncher):
         # Connection information for clients
         self._connection_info: dict | None = None
 
-        logger.debug(f"Initialized with host: {spec.host.name}")
+        logger.debug(f"Initialized with host: {spec.host}")
 
     def _provision_infrastructure(self) -> None:
         """
@@ -323,7 +323,7 @@ class MultiprocessingLauncher(BaseLauncher):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class MultiprocessingLauncherSpec(Spec):
+class MultiprocessingLauncherSpec(ResourceSpec):
     """
     Specification for multiprocessing launcher configuration.
 

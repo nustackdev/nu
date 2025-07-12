@@ -13,7 +13,7 @@ from typing import Any, Awaitable, Callable, TypeVar
 import attrs
 
 from loomi.service import AsyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from ..context.context import Context
 from .exceptions import TaskExecutionCancelledError, TaskExecutionTimeoutError
@@ -181,7 +181,7 @@ class TaskExecutionService(AsyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class TaskExecutionServiceSpec(Spec):
+class TaskExecutionServiceSpec(ResourceSpec):
     name: str = "task_execution_service"
     factory: type = TaskExecutionService
     max_concurrency: int = 100

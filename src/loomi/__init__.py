@@ -12,7 +12,7 @@ from .logger.interface.logger import AsyncLoggerProtocol, SyncLoggerProtocol
 from .state.interface.state import AsyncStateProtocol, SyncStateProtocol
 
 # Specifications and Attachments
-from .spec import Spec, ProxySpec
+from .spec import Spec, ProxySpec, ResourceSpec
 from .attach import Attach, AttachMany, ListCoordinator
 
 __all__ = [
@@ -28,6 +28,7 @@ __all__ = [
     "SyncStateProtocol",
     "Spec",
     "ProxySpec",
+    "ResourceSpec",
     "Attach",
     "AttachMany",
     "ListCoordinator",

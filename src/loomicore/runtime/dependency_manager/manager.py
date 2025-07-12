@@ -19,7 +19,7 @@ from __future__ import annotations
 from threading import Lock
 from typing import TYPE_CHECKING, cast
 
-from loomicore.spec import ProxySpec, Spec
+from loomicore.spec import ProxySpec, ResourceSpec, Spec
 
 from .exceptions import CircularDependencyError, DependencyError, DependencyNotFoundError
 from .logger import logger
@@ -124,7 +124,7 @@ class DependencyManager:
         if isinstance(spec, ProxySpec):
             resource = get_resource_factory()._create_proxy_resource(spec, is_dependency=True)
             dependency = resource.coordinator  # type: ignore[assignment]
-        else:
+        elif isinstance(spec, ResourceSpec):
             factory = spec.factory
             if factory is None:
                 raise DependencyError(f"Missing factory for dependency '{name}'")
@@ -132,6 +132,8 @@ class DependencyManager:
             # Create with dependency context
             resource = factory(spec, __is_dependency__=True)
             dependency = resource
+        else:
+            raise DependencyError(f"Invalid spec type for dependency '{name}': {type(spec)}")
 
         if not dependency:
             raise DependencyNotFoundError(

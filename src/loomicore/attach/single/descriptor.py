@@ -113,8 +113,7 @@ class ResourceDescriptor(BaseResourceDescriptor):
             return dependency_manager.resolve_dependency(parent, name, spec)
         except Exception as e:
             raise AttachError(
-                f"Failed to resolve resource '{name}' with factory '{spec.factory.__name__}' "
-                f"for '{parent.readable_name}': {str(e)}"
+                f"Failed to resolve resource '{name}' with '{spec}' for '{parent.readable_name}': {str(e)}"
             ) from e
 
     def _get_spec(self, parent: "Resource", name: str) -> "Spec | None":
@@ -131,11 +130,11 @@ class ResourceDescriptor(BaseResourceDescriptor):
         Raises:
             AttachError: If no spec found
         """
-        # Priority 1: Spec from parent resource's spec
+        # Priority 1: ResourceSpec from parent resource's spec
         if hasattr(parent.spec, name):
             return getattr(parent.spec, name)
 
-        # Priority 2: Spec from descriptor
+        # Priority 2: ResourceSpec from descriptor
         if self.spec is not None:
             return self.spec
 

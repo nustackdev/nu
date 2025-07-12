@@ -16,7 +16,7 @@ import attrs
 
 from loomi.attach import Attach
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec, Spec
 
 from .._api import ResourceFactory
 from ..exceptions import RPyCConnectionError, RPyCOperationError
@@ -89,14 +89,12 @@ class RPyCClient(SyncService):
 
         try:
             remote_resource = self.root.exposed_get_resource(self._serialize_spec(spec))
-            logger.debug(f"Retrieved remote resource: {spec.factory.__name__}")
+            logger.debug(f"Retrieved remote resource: {spec}")
             return remote_resource
 
         except Exception as e:
-            logger.error(f"Failed to get remote resource {spec.factory.__name__}: {e}")
-            raise RPyCOperationError(
-                f"Failed to get remote resource {spec.factory.__name__}"
-            ) from e
+            logger.error(f"Failed to get remote resource {spec}: {e}")
+            raise RPyCOperationError(f"Failed to get remote resource {spec}") from e
 
     def list_remote_resources(self) -> ResourceRegistry:
         """
@@ -138,10 +136,8 @@ class RPyCClient(SyncService):
         try:
             return self.root.exposed_remove_resource(self._serialize_spec(spec))
         except Exception as e:
-            logger.error(f"Failed to remove remote resource {spec.factory.__name__}: {e}")
-            raise RPyCOperationError(
-                f"Failed to remove remote resource {spec.factory.__name__}"
-            ) from e
+            logger.error(f"Failed to remove remote resource {spec}: {e}")
+            raise RPyCOperationError(f"Failed to remove remote resource {spec}") from e
 
     def ping(self) -> bool:
         """
@@ -195,7 +191,7 @@ class RPyCClient(SyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class RPyCTCPClientSpec(Spec):
+class RPyCTCPClientSpec(ResourceSpec):
     """Specification for TCP-based RPyC client."""
 
     name: str = "rpyc_tcp_client"
@@ -206,7 +202,7 @@ class RPyCTCPClientSpec(Spec):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class RPyCUnixClientSpec(Spec):
+class RPyCUnixClientSpec(ResourceSpec):
     """Specification for Unix socket-based RPyC client."""
 
     name: str = "rpyc_unix_client"

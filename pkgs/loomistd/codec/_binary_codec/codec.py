@@ -6,7 +6,7 @@ from typing import Any
 import attrs
 
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import (
@@ -357,6 +357,6 @@ class BinaryCodec(SyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class BinaryCodecSpec(Spec):
+class BinaryCodecSpec(ResourceSpec):
     name: str = "binary_codec"
     factory: type = BinaryCodec

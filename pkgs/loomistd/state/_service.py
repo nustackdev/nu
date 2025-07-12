@@ -8,7 +8,7 @@ from typing import Any
 
 import attrs
 
-from loomi import Attach, Spec, SyncService
+from loomi import Attach, ResourceSpec, Spec, SyncService
 from loomistd.kv import StorageServiceProtocol
 from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.observer import ObserverServiceProtocol
@@ -52,7 +52,7 @@ class StateService(SyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class StateSpec(Spec):
+class StateSpec(ResourceSpec):
     name: str = "state"
     factory: type = StateService
     storage: Spec = attrs.field(factory=lambda: FileStorageSpec())

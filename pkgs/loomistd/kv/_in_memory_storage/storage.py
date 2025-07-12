@@ -8,7 +8,7 @@ import attrs
 
 from loomi.attach import Attach
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec, Spec
 from loomi.state.interface.kv import SyncStorageProtocol, SyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
@@ -350,7 +350,7 @@ class InMemoryStorageTransaction:
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class InMemoryStorageSpec(Spec):
+class InMemoryStorageSpec(ResourceSpec):
     name: str = "in_memory_storage"
     factory: type = InMemoryStorage
     mode: str = "write"

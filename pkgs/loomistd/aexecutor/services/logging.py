@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 import attrs
 
 from loomi.service import AsyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from .logger import logger
 
@@ -158,6 +158,6 @@ class LoggingService(AsyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class LoggingServiceSpec(Spec):
+class LoggingServiceSpec(ResourceSpec):
     name: str = "logging_service"
     factory: type = LoggingService

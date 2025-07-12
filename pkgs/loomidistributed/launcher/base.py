@@ -14,7 +14,7 @@ from typing import final
 import attrs
 
 from loomicore.resource import SyncResource
-from loomicore.spec import Spec
+from loomicore.spec import ResourceSpec, Spec
 
 from .logger import logger
 
@@ -276,7 +276,7 @@ class BaseLauncher(SyncResource, ABC):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class BaseLauncherSpec(Spec):
+class BaseLauncherSpec(ResourceSpec):
     """
     Base specification for launcher configuration.
 

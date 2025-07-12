@@ -7,7 +7,7 @@ from typing import Any
 import attrs
 
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import PATH_SEPARATOR
@@ -189,6 +189,6 @@ class JSONCodec(SyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class JSONCodecSpec(Spec):
+class JSONCodecSpec(ResourceSpec):
     name: str = "json_codec"
     factory: type = JSONCodec

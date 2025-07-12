@@ -3,7 +3,7 @@ from __future__ import annotations
 import attrs
 
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from .._exceptions import DecodeError, EncodeError
 from .constans import PATH_SEPARATOR
@@ -92,6 +92,6 @@ class PassthroughCodec(SyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class PassthroughCodecSpec(Spec):
+class PassthroughCodecSpec(ResourceSpec):
     name: str = "passthrough_codec"
     factory: type = PassthroughCodec

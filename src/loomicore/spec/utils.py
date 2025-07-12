@@ -10,7 +10,8 @@ This implements a high-performance, type-safe spec system for Loomi with:
 
 from __future__ import annotations
 
-from .spec import BaseSpec, WrapperSpec
+from .base import BaseSpec
+from .specs import WrapperSpec
 
 __all__ = [
     "get_inner_spec",

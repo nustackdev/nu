@@ -14,9 +14,9 @@ import threading
 import time
 import traceback
 from multiprocessing.synchronize import Event as mpEventType
-from typing import Any
+from typing import Any, cast
 
-from loomicore.spec import Spec
+from loomicore.spec import ProxySpec, ResourceSpec, Spec
 
 from .exceptions import MultiprocessingLauncherError
 from .logger import logger
@@ -58,12 +58,22 @@ def subprocess_worker_main(
     worker_name = worker_id or f"worker-{pid}"
 
     logger.info(f"[{worker_name}] Starting subprocess worker (PID: {pid})")
-    logger.debug(f"[{worker_name}] Host spec: {host_spec.name}")
+    logger.debug(f"[{worker_name}] Host spec: {host_spec}")
 
     # Set up signal handling for emergency shutdown
     _setup_signal_handling(worker_name)
 
     startup_signaled = False
+
+    if isinstance(host_spec, ProxySpec):
+        error_msg = "ProxySpec is not supported in subprocess workers"
+        logger.error(f"[{worker_name}] {error_msg}")
+        _signal_startup_error(ready_queue, worker_name, pid, error_msg)
+        return
+
+    # FIXME: Add proxyspec support, once resource factory runtime module is fixed
+
+    host_spec = cast(ResourceSpec, host_spec)
 
     try:
         logger.info(f"[{worker_name}] Creating server from spec: {host_spec.name}")

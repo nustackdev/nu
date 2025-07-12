@@ -287,7 +287,7 @@
 #         return self.last_refresh
 
 
-# class VisualizationServiceSpec(Spec):
+# class VisualizationServiceSpec(ResourceSpec):
 #     """
 #     Specification for the Loomi visualization service.
 
@@ -301,7 +301,7 @@
 
 #     name: str = SpecField(default="visualization_service")
 #     factory: type = SpecField(default=VisualizationService)
-#     state: Spec = SpecField(factory=StateSpec)
+#     state: ResourceSpec = SpecField(factory=StateSpec)
 #     tracing_path: tuple[str, ...] = SpecField(default=("_", "tracing"))
 #     theme: Literal["default"] = SpecField(default="default")
 #     streamlit_title: str = SpecField(default="Loomi Dashboard")

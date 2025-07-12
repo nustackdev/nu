@@ -13,28 +13,13 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, Self, Type, TypeVar
+from typing import Any, Dict, Self, Type
 
 import attrs
 
 __all__ = [
     "BaseSpec",
-    "Spec",
-    "WrapperSpec",
 ]
-
-
-# Type variables
-T = TypeVar("T")
-SpecT = TypeVar("SpecT", bound="Spec")
-
-# More reasonable type variable names
-WrappedSpecT = TypeVar("WrappedSpecT", bound="BaseSpec")
-WrapperConfigT = TypeVar("WrapperConfigT", bound="BaseSpec")
-
-# ============================================================================
-# BASE SPEC SYSTEM
-# ============================================================================
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
@@ -194,34 +179,3 @@ class BaseSpec:
 
         # Return evolved instance with the updated nested object
         return attrs.evolve(self, **{current_key: updated_nested})
-
-
-# ============================================================================
-# SPECS
-# ============================================================================
-
-
-@attrs.define(frozen=True, slots=True, kw_only=True)
-class Spec(BaseSpec):
-    """
-    Base specification class for all Loomi specs.
-
-    Provides:
-    - Immutable, hashable structs
-    - Content-based key generation
-    - Transformation methods for distributed patterns
-    """
-
-    factory: Type[Any]
-    name: str = ""
-
-
-@attrs.define(frozen=True, slots=True, kw_only=True)
-class WrapperSpec(BaseSpec):
-    """
-    Base class for specs that wrap other specs.
-
-    Provides coordinator patterns for distributed resources.
-    """
-
-    inner_spec: BaseSpec

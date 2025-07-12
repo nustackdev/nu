@@ -118,8 +118,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
                 resources.append(resource)
             except Exception as e:
                 raise AttachError(
-                    f"Failed to resolve resource at index {i} for AttachMany '{name}' "
-                    f"with factory '{spec.factory.__name__}' in '{parent.readable_name}': {str(e)}"
+                    f"Failed to resolve resource at index {i} for AttachMany '{name}' with spec '{spec}' in '{parent.readable_name}': {str(e)}"
                 ) from e
 
         # Create and return coordinator
@@ -146,7 +145,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
         Raises:
             AttachError: If no specs found or invalid spec type
         """
-        # Priority 1: Specs from parent resource's spec
+        # Priority 1: ResourceSpecs from parent resource's spec
         if hasattr(parent.spec, name):
             parent_specs = getattr(parent.spec, name)
             if isinstance(parent_specs, tuple):
@@ -157,7 +156,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
                     f"expects a tuple of specs from parent, but got {type(parent_specs).__name__}"
                 )
 
-        # Priority 2: Specs from descriptor
+        # Priority 2: ResourceSpecs from descriptor
         if self.specs:
             return self.specs
 

@@ -19,7 +19,7 @@ import attrs
 
 from loomicore.attach import Attach
 from loomicore.resource import SyncResource
-from loomicore.spec import Spec
+from loomicore.spec import ResourceSpec, Spec
 
 from .exceptions import ProxyLifecycleError
 from .logger import logger
@@ -235,7 +235,7 @@ class ProxyCoordinator(SyncResource):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class ProxyCoordinatorSpec(Spec):
+class ProxyCoordinatorSpec(ResourceSpec):
     """
     Specification for ProxyCoordinator.
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-from loomicore.spec import ProxySpec, Spec
+from loomicore.spec import ProxySpec, ResourceSpec, Spec
 
 from .exceptions import CreationError, ResourceError
 from .logger import logger
@@ -98,7 +98,7 @@ class ResourceFactory:
         try:
             # Use empty spec if none provided
             if spec is None:
-                spec = Spec(factory=cls)
+                spec = ResourceSpec(factory=cls)
 
             # Extract creation context
             is_dependency = kwargs.pop("__is_dependency__", False)
