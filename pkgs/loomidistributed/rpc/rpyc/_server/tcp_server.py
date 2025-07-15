@@ -14,7 +14,7 @@ from frozendict import frozendict
 from rpyc.utils.server import ThreadedServer
 
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from .base import BaseRPyCServer
 from .logger import logger
@@ -62,7 +62,7 @@ class RPyCTCPServer(BaseRPyCServer, SyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class RPyCTCPServerSpec(Spec):
+class RPyCTCPServerSpec(ResourceSpec):
     """Specification for TCP-based RPyC server."""
 
     name: str = "rpyc_tcp_server"

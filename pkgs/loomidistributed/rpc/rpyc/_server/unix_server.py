@@ -16,7 +16,7 @@ from frozendict import frozendict
 from rpyc.utils.server import ThreadedServer
 
 from loomi.service import SyncService
-from loomi.spec import Spec
+from loomi.spec import ResourceSpec
 
 from ..exceptions import RPyCServerError
 from .base import BaseRPyCServer
@@ -89,7 +89,7 @@ class RPyCUnixServer(BaseRPyCServer, SyncService):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class RPyCUnixServerSpec(Spec):
+class RPyCUnixServerSpec(ResourceSpec):
     """Specification for Unix socket-based RPyC server."""
 
     name: str = "rpyc_unix_server"
