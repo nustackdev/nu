@@ -98,8 +98,8 @@ def main():
     # Shared state specification
     lmdb_state_spec = StateSpec(
         storage=LMDBStorageSpec(),
-    ).with_value_at("storage", "path", value=".tplgl")
-    file_state_spec = StateSpec().with_value_at("storage", "path", value=".tplgf")
+    ).with_value_at("storage", "path", value=".db")
+    file_state_spec = StateSpec().with_value_at("storage", "path", value=".db")
 
     state_spec = lmdb_state_spec
 
