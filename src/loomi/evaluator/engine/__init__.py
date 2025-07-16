@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from .context import Context
 from .engine import Evaluator, EvaluatorSpec
 
 __all__ = [
-    "Context",
     "Evaluator",
     "EvaluatorSpec",
 ]

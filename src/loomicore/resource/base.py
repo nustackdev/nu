@@ -18,10 +18,10 @@ That functionality is provided by concrete resource classes through delegation.
 
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, cast, final
 
 from loomicore.runtime import get_dependency_manager, get_lifecycle_manager
-from loomicore.spec import ResourceSpec
+from loomicore.spec import ResourceSpec, Spec
 from loomicore.types import ResourceState
 
 __all__ = [
@@ -58,7 +58,7 @@ class BaseResource:
     """
 
     @final
-    def __init__(self, spec: ResourceSpec | None = None, /) -> None:
+    def __init__(self, spec: Spec | None = None, /) -> None:
         """
         Initialize base resource with specification.
 
@@ -75,7 +75,10 @@ class BaseResource:
         """
         if spec is None:
             spec = ResourceSpec(factory=self.__class__, name="")
-        self._spec = spec
+
+        # spec is ensured to be a ResourceSpec, as metaclass transforms any spec to ResourceSpec
+        # before passing it to the resource
+        self._spec = cast(ResourceSpec, spec)
 
     # === Identity Properties ===
 
