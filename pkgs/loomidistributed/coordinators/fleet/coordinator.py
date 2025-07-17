@@ -283,19 +283,13 @@ class FleetCoordinator(ListCoordinator, Generic[ResourceType]):
 
         def execute():
             try:
-                # Handle both bound and unbound methods
-                if inspect.ismethod(method):
-                    # Bound method - call directly
-                    return method(*args, **kwargs)
-                else:
-                    # Unbound method or callable - call on resource
-                    if hasattr(method, "__name__"):
-                        # Unbound method - get it from resource
-                        bound_method = getattr(resource, method.__name__)
-                        return bound_method(*args, **kwargs)
-                    else:
-                        # Generic callable - call with resource as first arg
-                        return method(resource, *args, **kwargs)
+                if not inspect.ismethod(method):
+                    raise TypeError(
+                        f"{method} is not a method, must be a bound method to a loomi resource"
+                    )
+
+                remote_method = getattr(resource, method.__name__)
+                return remote_method(*args, **kwargs)
             except Exception as e:
                 # In production, might want more sophisticated error handling
                 raise e

@@ -171,10 +171,10 @@ class Parallel(Expression):
         self.children = (expr,) + exprs
 
     def evaluate(self, runtime: "Runtime", context: "Context") -> None:
-        from concurrent.futures import ThreadPoolExecutor
+        from concurrent.futures import ThreadPoolExecutor, wait
 
-        max_workers = self._max_concurrency if self._max_concurrency > 0 else None
+        max_workers = self._max_concurrency if self._max_concurrency > 0 else len(self.children)
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(child.evaluate, runtime, context) for child in self.children]
-            [future.result() for future in futures]
+            wait(futures)
