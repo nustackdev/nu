@@ -175,8 +175,11 @@ class FleetCoordinator(ListCoordinator, Generic[ResourceType]):
         return futures
 
     def distribute(
-        self, method: Callable, jobs: list[tuple[Any, ...]], kwargs_list: list[dict] | None = None
-    ) -> list[Future]:
+        self,
+        method: Callable,
+        args_list: list[tuple[Any, ...]] | None = None,
+        kwargs_list: list[dict[str, Any]] | None = None,
+    ) -> list[Future[Any]]:
         """
         Distribute N jobs across available workers (N can be != fleet size).
 
@@ -186,7 +189,7 @@ class FleetCoordinator(ListCoordinator, Generic[ResourceType]):
 
         Args:
             method: Method to execute on each job
-            jobs: List of argument tuples for each job
+            args_list: List of argument tuples for each job
             kwargs_list: Optional list of keyword arguments for each job
 
         Returns:
@@ -195,41 +198,46 @@ class FleetCoordinator(ListCoordinator, Generic[ResourceType]):
         Examples:
             ```python
             # 5 workers, 3 jobs - some workers idle
-            jobs = [("data1",), ("data2",), ("data3",)]
-            futures = fleet.distribute(Worker.process, jobs)
+            args_list = [("data1",), ("data2",), ("data3",)]
+            futures = fleet.distribute(Worker.process, args_list)
 
-            # 3 workers, 7 jobs - workers get multiple jobs
-            jobs = [("data1",), ("data2",), ("data3",), ("data4",), ("data5",), ("data6",), ("data7",)]
-            futures = fleet.distribute(Worker.process, jobs)
+            # 3 workers, 7 jobs - workers get multiple args_list
+            args_list = [("data1",), ("data2",), ("data3",), ("data4",), ("data5",), ("data6",), ("data7",)]
+            futures = fleet.distribute(Worker.process, args_list)
             results = [f.result() for f in futures]
 
             # With kwargs
-            jobs = [("data1",), ("data2",), ("data3",)]
+            args_list = [("data1",), ("data2",), ("data3",)]
             kwargs = [{"timeout": 10}, {"timeout": 20}, {"timeout": 30}]
-            futures = fleet.distribute(Worker.process, jobs, kwargs)
+            futures = fleet.distribute(Worker.process, args_list, kwargs)
             ```
         """
-        if not jobs:
+        if args_list is None and kwargs_list is None:
             return []
 
-        if kwargs_list is not None and len(kwargs_list) != len(jobs):
+        if args_list is not None and kwargs_list is not None and len(kwargs_list) != len(args_list):
             raise ValueError(
-                f"kwargs_list length ({len(kwargs_list)}) must match jobs length ({len(jobs)})"
+                f"kwargs_list length ({len(kwargs_list)}) must match args_list length ({len(args_list)})"
             )
 
         futures: list[Future] = []
 
+        jobs_args = args_list if args_list is not None else [()] * len(self._resources)
+        jobs_kwargs = kwargs_list if kwargs_list is not None else [{}] * len(self._resources)
+        jobs_params = zip(jobs_args, jobs_kwargs)
+
         # Distribute jobs across workers using round-robin
-        for i, job_args in enumerate(jobs):
+        for i, job_params in enumerate(jobs_params):
             # Select worker using round-robin
             worker_index = i % len(self._resources)
             resource = self._resources[worker_index]
 
-            # Get args and kwargs for this job
-            args = job_args if isinstance(job_args, (tuple, list)) else (job_args,)
-            kwargs = kwargs_list[i] if kwargs_list else {}
-
-            future = self._submit_to_resource(resource, method, *args, **kwargs)
+            future = self._submit_to_resource(
+                resource,
+                method,
+                *job_params[0],
+                **job_params[1],
+            )
             futures.append(future)
 
         return futures

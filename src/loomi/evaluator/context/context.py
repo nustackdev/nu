@@ -14,7 +14,7 @@ import attrs
 from frozendict import frozendict
 
 if TYPE_CHECKING:
-    from ..expressions import Expression
+    from loomi.app.expressions import Expression
 
 
 @attrs.define(frozen=True, slots=True)
@@ -24,7 +24,6 @@ class Context:
 
     Provides expressions with access to state, execution service, and structured path data.
     This is the primary interface through which expressions interact with their environment.
-
     """
 
     expression: "Expression"  # The expression this context is associated with

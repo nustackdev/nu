@@ -7,16 +7,16 @@ should inherit from to ensure consistent behavior.
 
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-
-from loomi.evaluator.interface.types import ErrorBehavior
 
 from .metadata import ExpressionMetadata
 from .node import DAGNodeMixin
+from .types import ErrorBehavior
 
 if TYPE_CHECKING:
-    pass
+    from loomi.evaluator.context import Context
+    from loomi.evaluator.runtime import Runtime
 
 
 class Expression(ABC, DAGNodeMixin["Expression"]):
@@ -77,3 +77,17 @@ class Expression(ABC, DAGNodeMixin["Expression"]):
             f"error_behavior={self._error_behavior}, "
             f"on_fail={self._on_fail})"
         )
+
+    @abstractmethod
+    def evaluate(self, runtime: "Runtime", context: "Context") -> None:
+        """
+        Evaluate the expression.
+
+        This method should be implemented by subclasses to perform the
+        actual evaluation logic.
+
+        Args:
+            runtime: The runtime environment in which the expression is evaluated
+            context: The execution context
+        """
+        pass
