@@ -87,6 +87,40 @@ class DependencyManager:
         if not is_dependency:
             self._get_node(resource).register_root()
 
+    def unregister_root_role(self, resource: "Resource") -> None:
+        """
+        Unregister root resource, removing it from active usage.
+
+        This method decrements the root usage count and removes the resource
+        from the dependency graph if no longer used in any role.
+
+        Args:
+            resource: Resource to unregister as root
+        """
+        if not self._node_exists(resource):
+            logger.warning(f"Resource '{resource.readable_name}' not registered, skipping")
+            return
+        node = self._get_node(resource)
+        node.unregister_root()
+
+    def can_shutdown(self, resource: "Resource") -> bool:
+        """
+        Determine if resource can be shut down.
+
+        A resource can be shut down if:
+        1. It has no active root usage
+        2. All dependents are detached (no active relationships)
+
+        Args:
+            resource: Resource to check
+
+        Returns:
+            True if resource can be shut down
+        """
+        node = self._get_node(resource)
+
+        return not node.context.is_active
+
     def resolve_dependency(
         self,
         parent: "Resource",

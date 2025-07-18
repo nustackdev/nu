@@ -125,6 +125,10 @@ class AsyncResource(BaseResource, metaclass=ResourceMeta):
         """
         Asynchronously shutdown the resource and clean up all dependencies.
 
+        Note: This method unregisters the ROOT role for this resource
+        before proceeding with shutdown. Validates resource state
+        and prerequisites before proceeding with shutdown.
+
         This method handles the complete async shutdown process:
         1. Validates resource state and shutdown prerequisites
         2. Calls user-defined async cleanup() method
@@ -147,6 +151,38 @@ class AsyncResource(BaseResource, metaclass=ResourceMeta):
             - Handles mixed sync/async dependencies appropriately
         """
         await get_lifecycle_manager().shutdown_resource_async(self)
+
+    @final
+    async def shutdown_as_dependency(self) -> None:
+        """
+        Asynchronously shutdown the resource and clean up all dependencies.
+
+        Note: This method does not unregister the ROOT role for this resource.
+        It is intended to be called when the resource is being shut down
+        as part of a dependency chain, not as a root resource.
+
+        This method handles the complete async shutdown process:
+        1. Validates resource state and shutdown prerequisites
+        2. Calls user-defined async cleanup() method
+        3. Shuts down dependencies in reverse initialization order
+        4. Performs final cleanup and state updates
+        5. Updates resource state to SHUTDOWN
+
+        The method handles orphaned dependency cleanup automatically,
+        shutting down dependencies that are no longer needed by other resources.
+
+        Raises:
+            ShutdownError: If shutdown fails at any step
+            StateError: If resource is in invalid state for shutdown
+
+        Notes:
+            - All complexity handled by runtime system
+            - User logic should go in async cleanup() method, not here
+            - Concurrent-safe through runtime coordination
+            - Smart dependency cleanup prevents resource leaks
+            - Handles mixed sync/async dependencies appropriately
+        """
+        await get_lifecycle_manager().shutdown_resource_as_dependency_async(self)
 
     # === User-Overridable Async Hooks ===
 

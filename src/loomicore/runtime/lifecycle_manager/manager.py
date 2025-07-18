@@ -185,7 +185,7 @@ class LifecycleManager:
             - Sets ERROR state on any failure
         """
         if self.is_resource_initialized(resource):
-            logger.debug(f"Resource '{resource.readable_name}' already initialized, skipping")
+            logger.warning(f"Resource '{resource.readable_name}' already initialized, skipping")
             return
 
         current_state = self.get_resource_state(resource)
@@ -254,7 +254,7 @@ class LifecycleManager:
             - Handles mixed sync/async dependencies appropriately
         """
         if self.is_resource_initialized(resource):
-            logger.debug(f"Resource '{resource.readable_name}' already initialized, skipping")
+            logger.warning(f"Resource '{resource.readable_name}' already initialized, skipping")
             return
 
         current_state = self.get_resource_state(resource)
@@ -301,6 +301,27 @@ class LifecycleManager:
 
     def shutdown_resource(self, resource: "Resource") -> None:
         """
+        Shutdown resource and cleanup dependencies.
+        This method unregisters the ROOT role for this resource before proceeding with shutdown.
+        """
+        self._dependency_manager.unregister_root_role(resource)
+        if not self._dependency_manager.can_shutdown(resource):
+            logger.warning(
+                f"Cannot shutdown resource '{resource.readable_name}' - dependencies present"
+            )
+            return
+        self._shutdown_resource_impl(resource)
+
+    def shutdown_resource_as_dependency(self, resource: "Resource") -> None:
+        """
+        Shutdown resource and cleanup dependencies.
+        This method does not unregister the ROOT role for this resource and is intended to be called
+        when the resource is being shut down as part of a dependency chain, not as a root resource.
+        """
+        self._shutdown_resource_impl(resource)
+
+    def _shutdown_resource_impl(self, resource: "Resource") -> None:
+        """
         Shutdown synchronous resource and cleanup dependencies.
 
         This method handles the complete shutdown process:
@@ -325,7 +346,7 @@ class LifecycleManager:
         """
         current_state = self.get_resource_state(resource)
         if current_state == ResourceState.SHUTDOWN:
-            logger.debug(f"Resource '{resource.readable_name}' already shut down, skipping")
+            logger.warning(f"Resource '{resource.readable_name}' already shut down, skipping")
             return
 
         if not self._is_valid_state_transition(current_state, ResourceState.SHUTTING_DOWN):
@@ -364,6 +385,29 @@ class LifecycleManager:
     async def shutdown_resource_async(self, resource: "Resource") -> None:
         """
         Shutdown asynchronous resource and cleanup dependencies.
+        This method unregisters the ROOT role for this resource before proceeding with shutdown.
+        """
+
+        self._dependency_manager.unregister_root_role(resource)
+        if not self._dependency_manager.can_shutdown(resource):
+            logger.warning(
+                f"Cannot shutdown resource '{resource.readable_name}' - dependencies present"
+            )
+            return
+        await self._shutdown_resource_impl_async(resource)
+
+    async def shutdown_resource_as_dependency_async(self, resource: "Resource") -> None:
+        """
+        Shutdown asynchronous resource and cleanup dependencies.
+        This method does not unregister the ROOT role for this resource and is intended to be called
+        when the resource is being shut down as part of a dependency chain, not as a root resource.
+        """
+
+        await self._shutdown_resource_impl_async(resource)
+
+    async def _shutdown_resource_impl_async(self, resource: "Resource") -> None:
+        """
+        Shutdown asynchronous resource and cleanup dependencies.
 
         This method handles the complete async shutdown process:
         1. Validates current state allows shutdown
@@ -387,7 +431,7 @@ class LifecycleManager:
         """
         current_state = self.get_resource_state(resource)
         if current_state == ResourceState.SHUTDOWN:
-            logger.debug(f"Resource '{resource.readable_name}' already shut down, skipping")
+            logger.warning(f"Resource '{resource.readable_name}' already shut down, skipping")
             return
 
         if not self._is_valid_state_transition(current_state, ResourceState.SHUTTING_DOWN):
@@ -634,12 +678,12 @@ class LifecycleManager:
 
             try:
                 logger.debug(f"Auto-shutting down orphaned dependency '{name}'")
-                if inspect.iscoroutinefunction(dep.initialize):
+                if inspect.iscoroutinefunction(dep.shutdown_as_dependency):
                     raise ShutdownError(
                         f"Dependency '{name}' of '{resource.readable_name}' is async, cannot shutdown synchronously"
                     )
 
-                dep.shutdown()
+                dep.shutdown_as_dependency()
                 logger.debug(f"Auto-shut down orphaned dependency '{name}'")
             except Exception as e:
                 logger.error(f"Failed to shutdown orphaned dependency '{name}': {str(e)}")
@@ -674,10 +718,10 @@ class LifecycleManager:
 
             try:
                 logger.debug(f"Auto-shutting down orphaned async dependency '{name}'")
-                if inspect.iscoroutinefunction(dep.shutdown):
-                    await dep.shutdown()
+                if inspect.iscoroutinefunction(dep.shutdown_as_dependency):
+                    await dep.shutdown_as_dependency()
                 else:
-                    dep.shutdown()
+                    dep.shutdown_as_dependency()
                 logger.debug(f"Auto-shut down orphaned async dependency '{name}'")
             except Exception as e:
                 logger.error(f"Failed to shutdown orphaned async dependency '{name}': {str(e)}")
