@@ -44,6 +44,7 @@ py-spy = "^0.4.0"
 psutil = "^7.0.0"
 ray = "^2.46.0"
 frozendict = "^2.4.6"
+dash = "^3.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
