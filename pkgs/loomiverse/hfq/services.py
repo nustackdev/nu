@@ -1,5 +1,5 @@
-import datetime
 import random
+import time
 
 import attrs
 
@@ -17,7 +17,7 @@ class DataStream(SyncService):
 
     def get_candle(self):
         # Generate random candle data
-        timestamp = datetime.datetime.now()
+        timestamp = time.time()
         open_price = round(random.uniform(100, 200), 2)
         high_price = round(open_price * random.uniform(1, 1.05), 2)
         low_price = round(open_price * random.uniform(0.95, 1), 2)

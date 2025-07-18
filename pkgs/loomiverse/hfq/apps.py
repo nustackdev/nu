@@ -28,7 +28,9 @@ class HFQApp(SyncApp):
         Ingest data from the stream.
         This method is called to ingest data from the stream.
         """
-        while True:
+        i = 0
+        while i < 100:
+            i += 1
             candle = self.data_stram.get_candle()
             with self.state.state.at("canldes").with_list_view() as candles:
                 candles.append(candle)
@@ -39,7 +41,9 @@ class HFQApp(SyncApp):
         Perform a trade operation.
         This method is called to perform a trade operation.
         """
-        while True:
+        i = 0
+        while i < 100:
+            i += 1
             with self.state.state.at("trades").with_list_view() as trades:
                 trades.append(
                     {

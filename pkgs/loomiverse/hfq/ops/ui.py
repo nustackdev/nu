@@ -4,7 +4,7 @@ import multiprocessing
 from typing import Optional
 
 import dash
-from dash import Input, Output, callback, html
+from dash import Input, Output, callback, dcc, html
 
 from loomistd.state import StateService
 from loomiverse.hfq.specs import proxy_state_spec
@@ -33,11 +33,13 @@ def get_state_service():
 # Initialize Dash app
 app = dash.Dash(__name__)
 
-# Simple layout with refresh button
+# Layout with auto-refresh
 app.layout = html.Div(
     [
         html.H1("State Viewer"),
-        html.Button("Refresh", id="refresh-btn", n_clicks=0),
+        dcc.Interval(
+            id="interval-component", interval=2000, n_intervals=0  # 0.1 seconds in milliseconds
+        ),
         html.Div(id="status"),
         html.Pre(
             id="state-display",
@@ -57,11 +59,10 @@ app.layout = html.Div(
 
 @callback(
     [Output("state-display", "children"), Output("status", "children")],
-    Input("refresh-btn", "n_clicks"),
+    Input("interval-component", "n_intervals"),
 )
-def update_display(n_clicks):
-    """Update display when refresh button is clicked."""
-    print(f"Refresh clicked: {n_clicks}")
+def update_display(n_intervals):
+    """Update display automatically every 0.1 seconds."""
 
     # Get state service
     state_service = get_state_service()
@@ -69,17 +70,32 @@ def update_display(n_clicks):
     # Get state
     state = state_service.state
 
-    # Try different ways to access data
+    data = {}
+
     with state.with_dict_view() as view:
-        data = view.extract()
+        # Get candles
+        with view.at("canldes").with_list_view() as candles:
+            lengeth = candles.length()
+            if lengeth > 0:
+                data["candles"] = [
+                    candles.get(canlde_index) for canlde_index in range(lengeth - 10, lengeth)
+                ]
+
+        # Get trades
+        with view.at("trades").with_list_view() as trades:
+            length = trades.length()
+            if length > 0:
+                data["trades"] = [
+                    trades.get(trade_index) for trade_index in range(length - 10, length)
+                ]
 
     # Format for display
     if data:
         display_text = json.dumps(data, indent=2, default=str)
-        status_text = f"✅ Connected - Data retrieved (refresh #{n_clicks})"
+        status_text = f"✅ Connected - Updates: {n_intervals}"
     else:
         display_text = "Connected but no data found"
-        status_text = f"⚠️ Connected but empty (refresh #{n_clicks})"
+        status_text = f"⚠️ Connected but empty - Updates: {n_intervals}"
 
     return display_text, status_text
 
