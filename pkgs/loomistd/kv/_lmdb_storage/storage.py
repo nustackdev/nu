@@ -206,7 +206,10 @@ class LMDBStorage(
 
                         decoded_key = self.codec.decode_key(encoded_key)
                         if depth != -1 and len(decoded_key) - len(prefix) != depth:
-                            break
+                            # Skip this key but continue iteration
+                            if not cursor.next():
+                                break
+                            continue
 
                         yield decoded_key
 
@@ -336,7 +339,10 @@ class LMDBStorageTransaction:
 
                     decoded_key = self._storage.codec.decode_key(encoded_key)
                     if depth != -1 and len(decoded_key) - len(prefix) != depth:
-                        break
+                        # Skip this key but continue iteration
+                        if not cursor.next():
+                            break
+                        continue
 
                     yield decoded_key
 
