@@ -14,7 +14,8 @@ exclude =
     .vscode,
     .github,
     *.pyi,
-    benchmarks/**
+    benchmarks/**,
+    pkgs/loomiverse/**
 max-line-length = 100
 extend-ignore =
     E266,

@@ -11,7 +11,8 @@
   "ignore": [
     "**/__pycache__",
     "**/.venv",
-    "**/scripts"
+    "**/scripts",
+    "pkgs/loomiverse/**"
   ],
   "extraPaths": [
     "./src",
