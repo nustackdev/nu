@@ -28,8 +28,16 @@ __all__ = [
 # --- Values --- #
 
 StorageValueT = TypeVar("StorageValueT", bound="Value")
+StorageValueT_co = TypeVar("StorageValueT_co", bound="Value", covariant=True)
+StorageValueT_contra = TypeVar("StorageValueT_contra", bound="Value", contravariant=True)
+
 TreeValueT = TypeVar("TreeValueT", bound="Value")
+TreeValueT_co = TypeVar("TreeValueT_co", bound="Value", covariant=True)
+TreeValueT_contra = TypeVar("TreeValueT_contra", bound="Value", contravariant=True)
+
 StateValueT = TypeVar("StateValueT", bound="Value")
+StateValueT_co = TypeVar("StateValueT_co", bound="Value", covariant=True)
+StateValueT_contra = TypeVar("StateValueT_contra", bound="Value", contravariant=True)
 
 
 # --- State Service --- #

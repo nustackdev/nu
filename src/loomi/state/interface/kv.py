@@ -4,7 +4,7 @@ from types import TracebackType
 from typing import Any, AsyncGenerator, Generator, Protocol, runtime_checkable
 
 from .observer import AsyncObservableProtocol, SyncObservableProtocol
-from .type_vars import StorageValueT
+from .type_vars import StateServiceT_co, StorageValueT
 from .types import StorageKey
 
 __all__ = [
@@ -374,10 +374,10 @@ class AsyncTransactionalHandlerProtocol(Protocol[StorageValueT]):
 
 
 @runtime_checkable
-class AsyncSnapshotProtocol(Protocol[StorageValueT]):
+class AsyncSnapshotProtocol(Protocol[StateServiceT_co]):
     """Protocol defining the interface for asynchronous read-only snapshots."""
 
-    async def get(self, key: StorageKey) -> StorageValueT:
+    async def get(self, key: StorageKey) -> StateServiceT_co:
         """
         Get value within snapshot context.
 
@@ -459,10 +459,10 @@ class AsyncSnapshotProtocol(Protocol[StorageValueT]):
         ...
 
 
-class AsyncSnapshotContextManagerProtocol(Protocol[StorageValueT]):
+class AsyncSnapshotContextManagerProtocol(Protocol[StateServiceT_co]):
     """Async context manager for storage snapshots."""
 
-    async def __aenter__(self) -> AsyncSnapshotProtocol[StorageValueT]:
+    async def __aenter__(self) -> AsyncSnapshotProtocol[StateServiceT_co]:
         """
         Create a new snapshot.
 
@@ -491,14 +491,14 @@ class AsyncSnapshotContextManagerProtocol(Protocol[StorageValueT]):
         ...
 
 
-class AsyncSnapshotHandlerProtocol(Protocol[StorageValueT]):
+class AsyncSnapshotHandlerProtocol(Protocol[StateServiceT_co]):
     """Protocol defining the interface for asynchronous snapshot-capable storage."""
 
-    async def begin_snapshot(self) -> AsyncSnapshotProtocol[StorageValueT]:
+    async def begin_snapshot(self) -> AsyncSnapshotProtocol[StateServiceT_co]:
         """Begin a new read-only snapshot."""
         ...
 
-    async def snapshot(self) -> AsyncSnapshotContextManagerProtocol[StorageValueT]:
+    async def snapshot(self) -> AsyncSnapshotContextManagerProtocol[StateServiceT_co]:
         """Get a typed snapshot context manager."""
         ...
 
@@ -832,10 +832,10 @@ class SyncTransactionalHandlerProtocol(Protocol[StorageValueT]):
 
 
 @runtime_checkable
-class SyncSnapshotProtocol(Protocol[StorageValueT]):
+class SyncSnapshotProtocol(Protocol[StateServiceT_co]):
     """Protocol defining the interface for synchronous read-only snapshots."""
 
-    def get(self, key: StorageKey) -> StorageValueT:
+    def get(self, key: StorageKey) -> StateServiceT_co:
         """
         Get value within snapshot context.
 
@@ -918,10 +918,10 @@ class SyncSnapshotProtocol(Protocol[StorageValueT]):
         ...
 
 
-class SyncSnapshotContextManagerProtocol(Protocol[StorageValueT]):
+class SyncSnapshotContextManagerProtocol(Protocol[StateServiceT_co]):
     """Synchronous context manager for storage snapshots."""
 
-    def __enter__(self) -> SyncSnapshotProtocol[StorageValueT]:
+    def __enter__(self) -> SyncSnapshotProtocol[StateServiceT_co]:
         """
         Create a new snapshot.
 
@@ -950,13 +950,13 @@ class SyncSnapshotContextManagerProtocol(Protocol[StorageValueT]):
         ...
 
 
-class SyncSnapshotHandlerProtocol(Protocol[StorageValueT]):
+class SyncSnapshotHandlerProtocol(Protocol[StateServiceT_co]):
     """Protocol defining the interface for synchronous snapshot-capable storage."""
 
-    def begin_snapshot(self) -> SyncSnapshotProtocol[StorageValueT]:
+    def begin_snapshot(self) -> SyncSnapshotProtocol[StateServiceT_co]:
         """Begin a new read-only snapshot."""
         ...
 
-    def snapshot(self) -> SyncSnapshotContextManagerProtocol[StorageValueT]:
+    def snapshot(self) -> SyncSnapshotContextManagerProtocol[StateServiceT_co]:
         """Get a typed snapshot context manager."""
         ...
