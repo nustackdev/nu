@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import math
+import random
 import time
 
 import attrs
+from loomiverse.hfq.services import DataStream
 
 from loomi.app.app import SyncApp
 from loomi.app.expressions import Expression, Function, Parallel, Sequence
 from loomi.attach import Attach
 from loomi.evaluator.context import Context
 from loomi.spec import ResourceSpec, Spec
-from loomiverse.hfq.services import DataStream
 
 
 class HFQApp(SyncApp):
@@ -34,7 +34,7 @@ class HFQApp(SyncApp):
             candle = self.data_stram.get_candle()
             with self.state.state.at("canldes").with_list_view() as candles:
                 candles.append(candle)
-            time.sleep(0.1)
+        print(f"Candles ingested: {i}")
 
     def execute_trade(self, context: Context):
         """
@@ -45,14 +45,13 @@ class HFQApp(SyncApp):
         while i < 100:
             i += 1
             with self.state.state.at("trades").with_list_view() as trades:
-                trades.append(
-                    {
-                        "timestamp": time.time(),
-                        "price": round(100 + math.sin(time.time()) * 10, 2),
-                        "volume": round(1 + math.cos(time.time()) * 0.5, 2),
-                    }
-                )
-            time.sleep(0.1)
+                trade = {
+                    "timestamp": time.time(),
+                    "price": round(100 + random.random() * 10, 2),
+                    "volume": round(1 + random.random() * 0.5, 2),
+                }
+                trades.append(trade)
+        print(f"Trades executed: {i}")
 
     def finish(self, context: Context):
         """
@@ -65,8 +64,8 @@ class HFQApp(SyncApp):
         return Sequence(
             Function(self.start),
             Parallel(
-                Function(self.ingest_stream),
                 Function(self.execute_trade),
+                Function(self.ingest_stream),
             ),
             Function(self.finish),
         )

@@ -7,9 +7,9 @@ import dash
 import pandas as pd
 import plotly.graph_objs as go
 from dash import Input, Output, dash_table, dcc, html
+from loomiverse.hfq.specs import proxy_state_spec
 
 from loomistd.state import StateService
-from loomiverse.hfq.specs import proxy_state_spec
 from loomix.logging import setup_logging
 
 # Global state service
@@ -393,7 +393,7 @@ def update_hfq_dashboard(n_intervals):
         trades_total = 0
 
         # Extract data from state
-        with state.with_dict_view() as view:
+        with state.with_dict_view(snapshot=True) as view:
             # Get candles data
             with view.at("canldes").with_list_view() as candles:
                 candles_total = candles.length()

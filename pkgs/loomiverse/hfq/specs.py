@@ -1,18 +1,20 @@
+from loomiverse.hfq.apps import HFQAppSpec
+from loomiverse.hfq.services import DataStreamSpec
+
 from loomicore.spec import ProxySpec
 from loomidistributed.launcher.multiprocessing import MultiprocessingLauncherSpec
 from loomidistributed.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
 from loomidistributed.runtime import RuntimeSpec
+from loomistd.codec.msgpack import MsgpackCodecSpec
 from loomistd.kv.lmdb import LMDBStorageSpec
 from loomistd.state import StateSpec
-from loomiverse.hfq.apps import HFQAppSpec
-from loomiverse.hfq.services import DataStreamSpec
 
 # ======================= #
 # === Configure state === #
 # ======================= #
 
 state_spec = StateSpec(
-    storage=LMDBStorageSpec(),
+    storage=LMDBStorageSpec(codec=MsgpackCodecSpec()),
 ).with_value_at("storage", "path", value=".db")
 
 proxy_client_state_spec = RPyCUnixClientSpec(
@@ -38,7 +40,7 @@ proxy_launchable_state_spec = ProxySpec(
 # ========================= #
 
 # Create fleet of workers - each with their own launcher
-num_workers = 2
+num_workers = 4
 fleet_worker_specs = []
 for i in range(1, num_workers + 1):
     fleet_worker_specs.append(
@@ -67,6 +69,6 @@ runtime_spec = RuntimeSpec(
 
 app_spec = HFQAppSpec(
     state=proxy_state_spec,
-    name=f"worker_{i}",
+    name=f"app",
     data_stram=DataStreamSpec(),
 )
