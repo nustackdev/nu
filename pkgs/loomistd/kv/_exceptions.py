@@ -42,6 +42,12 @@ class StorageValidationError(StorageOperationError):
     pass
 
 
+class SnapshotError(StorageError):
+    """Raised when snapshot operation fails."""
+
+    pass
+
+
 class TransactionError(StorageError):
     """Raised when transaction fails."""
 

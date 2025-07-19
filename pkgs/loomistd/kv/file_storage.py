@@ -6,6 +6,7 @@ from ._file_storage import (
     FileStorageEncodedValue,
     FileStorageKey,
     FileStorageProtocol,
+    FileStorageSnapshot,
     FileStorageSpec,
     FileStorageTransaction,
     FileStorageValue,
@@ -13,8 +14,8 @@ from ._file_storage import (
 
 __all__ = [
     "FileStorage",
-    "FileStorageSpec",
     "FileStorageProtocol",
+    "FileStorageSnapshot",
     "FileStorageSpec",
     "FileStorageTransaction",
     "FileStorageKey",

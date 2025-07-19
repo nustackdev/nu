@@ -13,12 +13,17 @@ from frozendict import frozendict
 from loomi.attach import Attach
 from loomi.service import SyncService
 from loomi.spec import ResourceSpec, Spec
-from loomi.state.interface.kv import SyncStorageProtocol, SyncTransactionProtocol
+from loomi.state.interface.kv import (
+    SyncSnapshotProtocol,
+    SyncStorageProtocol,
+    SyncTransactionProtocol,
+)
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
 
 from .._base import BaseStorage
 from .._exceptions import (
+    SnapshotError,
     StorageError,
     StorageKeyError,
     StorageOperationError,
@@ -31,6 +36,7 @@ from .types import LMDBStorageEncodedKey, LMDBStorageEncodedValue, LMDBStorageKe
 __all__ = [
     "LMDBStorage",
     "LMDBStorageSpec",
+    "LMDBStorageSnapshot",
     "LMDBStorageTransaction",
 ]
 
@@ -239,6 +245,22 @@ class LMDBStorage(
         except Exception as e:
             raise StorageError(f"Failed to begin transaction: {e}")
 
+    def _begin_snapshot_impl(
+        self,
+    ) -> LMDBStorageSnapshot:
+        """Begin a new read-only snapshot."""
+        try:
+            # Start read-only LMDB transaction
+            lmdb_txn = self._env.begin(write=False)
+
+            # Create snapshot wrapper
+            snapshot = LMDBStorageSnapshot(self, lmdb_txn)
+
+            return snapshot
+
+        except Exception as e:
+            raise StorageError(f"Failed to begin snapshot: {e}")
+
 
 class LMDBStorageTransaction:
     """LMDB transaction implementation with proper resource management."""
@@ -384,6 +406,107 @@ class LMDBStorageTransaction:
         return isinstance(other, type(self)) and self._uuid == other._uuid
 
 
+class LMDBStorageSnapshot:
+    """LMDB read-only snapshot implementation."""
+
+    def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction):
+        """Initialize snapshot with read-only LMDB txn."""
+        self._storage = storage
+        self._lmdb_txn = txn
+        self._closed = False
+        self._uuid = uuid4()
+
+    def _check_valid(self) -> None:
+        """Check if snapshot is still valid."""
+        if self._closed:
+            raise SnapshotError("Snapshot already closed")
+
+    def get(self, key: LMDBStorageKey) -> LMDBStorageValue:
+        """Get value within snapshot context."""
+        self._check_valid()
+        try:
+            encoded_key = self._storage.codec.encode_key(key)
+
+            cursor = self._lmdb_txn.cursor()
+            if cursor.set_key(encoded_key):
+                encoded_value = cursor.value()
+            else:
+                raise StorageKeyError(f"Key {key} not found")
+
+            if not isinstance(encoded_value, bytes):
+                raise StorageError(f"LMDB returned non-bytes value: {type(encoded_value)}")
+
+            return self._storage.codec.decode_value(encoded_value)
+
+        except StorageKeyError:
+            raise
+        except Exception as e:
+            raise StorageOperationError(f"Failed to get key {key}: {e}")
+
+    def exists(self, key: LMDBStorageKey) -> bool:
+        """Check if key exists within snapshot context."""
+        self._check_valid()
+
+        encoded_key = self._storage.codec.encode_key(key)
+
+        try:
+            cursor = self._lmdb_txn.cursor()
+            return cursor.set_key(encoded_key)
+
+        except Exception as e:
+            raise StorageOperationError(f"Failed to check key {key}: {e}")
+
+    def list_keys(
+        self, prefix: LMDBStorageKey, depth: int = 1
+    ) -> Generator[LMDBStorageKey, None, None]:
+        """List all keys under prefix within snapshot context."""
+        self._check_valid()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        try:
+            cursor = self._lmdb_txn.cursor()
+            try:
+                found = cursor.set_range(encoded_prefix)
+                if not found:
+                    return
+                while True:
+                    encoded_key = cursor.key()
+                    if not encoded_key.startswith(encoded_prefix):
+                        break
+
+                    decoded_key = self._storage.codec.decode_key(encoded_key)
+                    if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                        # Skip this key but continue iteration
+                        if not cursor.next():
+                            break
+                        continue
+
+                    yield decoded_key
+
+                    if not cursor.next():
+                        break
+            finally:
+                cursor.close()
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}")
+
+    def close(self) -> None:
+        """Close snapshot and clean up resources."""
+        if not self._closed:
+            try:
+                self._lmdb_txn.abort()  # Read-only transaction, just abort
+            finally:
+                self._closed = True
+
+    def __hash__(self) -> int:
+        return hash(str(self._uuid))
+
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return isinstance(other, type(self)) and self._uuid == other._uuid
+
+
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class LMDBStorageSpec(ResourceSpec):
     name: str = "lmdb_storage"
@@ -399,3 +522,4 @@ class LMDBStorageSpec(ResourceSpec):
 if TYPE_CHECKING:
     _: type[SyncStorageProtocol] = LMDBStorage
     __: type[SyncTransactionProtocol] = LMDBStorageTransaction
+    ___: type[SyncSnapshotProtocol] = LMDBStorageSnapshot

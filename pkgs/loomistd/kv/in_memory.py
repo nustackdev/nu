@@ -6,6 +6,7 @@ from ._in_memory_storage import (
     InMemoryStorageEncodedValue,
     InMemoryStorageKey,
     InMemoryStorageProtocol,
+    InMemoryStorageSnapshot,
     InMemoryStorageSpec,
     InMemoryStorageTransaction,
     InMemoryStorageValue,
@@ -13,11 +14,12 @@ from ._in_memory_storage import (
 
 __all__ = [
     "InMemoryStorage",
+    "InMemoryStorageProtocol",
+    "InMemoryStorageSnapshot",
     "InMemoryStorageSpec",
     "InMemoryStorageTransaction",
     "InMemoryStorageKey",
     "InMemoryStorageValue",
     "InMemoryStorageEncodedKey",
     "InMemoryStorageEncodedValue",
-    "InMemoryStorageProtocol",
 ]

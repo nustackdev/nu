@@ -3,10 +3,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generator, Generic, TypeGuard, final
 
-from loomi.state.interface.kv import SyncTransactionProtocol
+from loomi.state.interface.kv import SyncSnapshotProtocol, SyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
+from ._snapshot import SnapshotContextManager
 from ._transaction import TransactionContextManager
 from ._types import (
     StorageEncodedKeyT,
@@ -200,6 +201,36 @@ class BaseStorage(
                 # Auto-rollbacks if exception occurs
         """
         return TransactionContextManager[StorageValueT](self)
+
+    @abstractmethod
+    def _begin_snapshot_impl(self) -> SyncSnapshotProtocol[StorageValueT]:
+        """Implementation-specific snapshot creation."""
+        ...
+
+    @final
+    def begin_snapshot(self) -> SyncSnapshotProtocol[StorageValueT]:
+        """Begin a new snapshot."""
+        self._ensure_connected()
+        try:
+            return self._begin_snapshot_impl()
+        except Exception as e:
+            raise StorageOperationError(f"Failed to begin snapshot: {e}") from e
+
+    @final
+    def snapshot(self) -> SnapshotContextManager[StorageValueT]:
+        """
+        Create a snapshot context manager.
+
+        Returns:
+            Context manager for handling snapshots
+
+        Example:
+            with storage.snapshot() as snap:
+                value = snap.get(key)
+                # Read-only operations
+                # Auto-cleanup on exit
+        """
+        return SnapshotContextManager[StorageValueT](self)
 
 
 def is_valid_key(value: StorageKeyT) -> TypeGuard[StorageKeyT]:

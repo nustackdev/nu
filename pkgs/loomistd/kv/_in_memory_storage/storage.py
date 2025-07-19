@@ -9,12 +9,17 @@ import attrs
 from loomi.attach import Attach
 from loomi.service import SyncService
 from loomi.spec import ResourceSpec, Spec
-from loomi.state.interface.kv import SyncStorageProtocol, SyncTransactionProtocol
+from loomi.state.interface.kv import (
+    SyncSnapshotProtocol,
+    SyncStorageProtocol,
+    SyncTransactionProtocol,
+)
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 
 from .._base import BaseStorage
 from .._exceptions import (
+    SnapshotError,
     StorageKeyError,
     StorageOperationError,
     TransactionConflictError,
@@ -32,6 +37,7 @@ from .types import (
 
 __all__ = [
     "InMemoryStorage",
+    "InMemoryStorageSnapshot",
     "InMemoryStorageSpec",
     "InMemoryStorageTransaction",
 ]
@@ -161,6 +167,17 @@ class InMemoryStorage(
         with self._data_lock:
             self._active_transactions.add(transaction)
         return transaction
+
+    def _begin_snapshot_impl(
+        self,
+    ) -> InMemoryStorageSnapshot:
+        """Begin a new read-only snapshot."""
+        # Create snapshot with current data state
+        with self._data_lock:
+            # Create a deep copy of current data for the snapshot
+            snapshot_data = self._data.copy()
+
+        return InMemoryStorageSnapshot(self, snapshot_data)
 
     def _check_conflicts(self, transaction: InMemoryStorageTransaction) -> bool:
         """Check for conflicts with other transactions."""
@@ -349,6 +366,78 @@ class InMemoryStorageTransaction:
         return isinstance(other, type(self)) and self._uuid == other._uuid
 
 
+class InMemoryStorageSnapshot:
+    """In-memory storage read-only snapshot implementation."""
+
+    def __init__(
+        self,
+        storage: InMemoryStorage,
+        snapshot_data: dict[InMemoryStorageEncodedKey, InMemoryStorageEncodedValue],
+    ):
+        """Initialize snapshot with data copy."""
+        self._storage = storage
+        self._snapshot_data = snapshot_data
+        self._closed = False
+        self._uuid = uuid4()
+
+    def _check_valid(self) -> None:
+        """Check if snapshot is still valid."""
+        if self._closed:
+            raise SnapshotError("Snapshot already closed")
+
+    def get(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
+        """Get value within snapshot context."""
+        self._check_valid()
+        encoded_key = self._storage.codec.encode_key(key)
+
+        try:
+            if encoded_key not in self._snapshot_data:
+                raise StorageKeyError(f"Key {key} not found")
+            return self._snapshot_data[encoded_key]
+        except Exception as e:
+            if not isinstance(e, StorageKeyError):
+                raise StorageOperationError(f"Failed to get key {key}: {e}")
+            raise
+
+    def exists(self, key: InMemoryStorageKey) -> bool:
+        """Check if key exists within snapshot context."""
+        self._check_valid()
+        encoded_key = self._storage.codec.encode_key(key)
+        return encoded_key in self._snapshot_data
+
+    def list_keys(
+        self, prefix: InMemoryStorageKey, depth: int = 1
+    ) -> Generator[InMemoryStorageKey, None, None]:
+        """List all keys under prefix within snapshot context."""
+        self._check_valid()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        matching_keys = []
+        for encoded_key in self._snapshot_data.keys():
+            if encoded_key.startswith(encoded_prefix):
+                decoded_key = self._storage.codec.decode_key(encoded_key)
+                if depth == -1 or len(decoded_key) - len(prefix) == depth:
+                    matching_keys.append(decoded_key)
+
+        # Yield sorted keys for consistent ordering
+        for key in sorted(matching_keys):
+            yield key
+
+    def close(self) -> None:
+        """Close snapshot and clean up resources."""
+        if not self._closed:
+            self._snapshot_data.clear()
+            self._closed = True
+
+    def __hash__(self) -> int:
+        return hash(str(self._uuid))
+
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return isinstance(other, type(self)) and self._uuid == other._uuid
+
+
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class InMemoryStorageSpec(ResourceSpec):
     name: str = "in_memory_storage"
@@ -360,3 +449,4 @@ class InMemoryStorageSpec(ResourceSpec):
 if TYPE_CHECKING:
     _: type[SyncStorageProtocol] = InMemoryStorage
     __: type[SyncTransactionProtocol] = InMemoryStorageTransaction
+    ___: type[SyncSnapshotProtocol] = InMemoryStorageSnapshot

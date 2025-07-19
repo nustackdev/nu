@@ -6,6 +6,7 @@ from ._lmdb_storage import (
     LMDBStorageEncodedValue,
     LMDBStorageKey,
     LMDBStorageProtocol,
+    LMDBStorageSnapshot,
     LMDBStorageSpec,
     LMDBStorageTransaction,
     LMDBStorageValue,
@@ -14,6 +15,7 @@ from ._lmdb_storage import (
 __all__ = [
     "LMDBStorage",
     "LMDBStorageProtocol",
+    "LMDBStorageSnapshot",
     "LMDBStorageSpec",
     "LMDBStorageTransaction",
     "LMDBStorageKey",

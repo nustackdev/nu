@@ -12,6 +12,7 @@ from ._exceptions import (
     TransactionInvalidError,
 )
 from ._protocols import StorageServiceProtocol
+from ._snapshot import SnapshotContextManager
 from ._transaction import TransactionContextManager
 from ._types import (
     StorageEncodedKeyT,
@@ -34,6 +35,7 @@ __all__ = [
     "TransactionConflictError",
     "TransactionError",
     "TransactionInvalidError",
+    "SnapshotContextManager",
     "TransactionContextManager",
     "StorageKeyT",
     "StorageValueT",

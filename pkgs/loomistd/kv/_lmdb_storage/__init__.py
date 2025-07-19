@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .storage import LMDBStorage, LMDBStorageSpec, LMDBStorageTransaction
+from .storage import LMDBStorage, LMDBStorageSnapshot, LMDBStorageSpec, LMDBStorageTransaction
 from .types import (
     LMDBStorageEncodedKey,
     LMDBStorageEncodedValue,
@@ -13,6 +13,7 @@ __all__ = [
     "LMDBStorage",
     "LMDBStorageSpec",
     "LMDBStorageTransaction",
+    "LMDBStorageSnapshot",
     "LMDBStorageKey",
     "LMDBStorageValue",
     "LMDBStorageEncodedKey",

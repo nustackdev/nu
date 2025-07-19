@@ -21,7 +21,12 @@ from .node import ContainerNode
 from .path import Path
 from .transaction import TransactionalBase
 from .types import EMPTY, CallbackFn, Empty, PathComponent, Value
-from .view import DictView, ListView, create_view_context_manager
+from .view import (
+    DictView,
+    ListView,
+    create_snapshot_view_context_manager,
+    create_view_context_manager,
+)
 
 __all__ = [
     "Tree",
@@ -150,15 +155,18 @@ class Tree(TransactionalBase):
     # CONTEXT MANAGERS FOR VIEWS (automatic transaction management)
     # =========================================================================
 
-    def with_dict_view(self) -> AbstractContextManager[DictView[Self]]:
+    def with_dict_view(self, *, snapshot: bool = False) -> AbstractContextManager[DictView[Self]]:
         """
-        Access container as dictionary view with automatic transaction management.
+        Access container as dictionary view with automatic transaction or snapshot management.
 
-        Returns a context manager that yields a DictView with transaction context.
+        Returns a context manager that yields a DictView with transaction or snapshot context.
         If path doesn't exist, creates a new mapping container.
 
+        Args:
+            snapshot: If True, creates a read-only snapshot view instead of a transaction view
+
         Returns:
-            Context manager yielding DictView with transaction
+            Context manager yielding DictView with transaction or snapshot
 
         Example:
             ```python
@@ -172,6 +180,13 @@ class Tree(TransactionalBase):
                 alice_profile.set("location", "San Francisco")
             # Transaction automatically committed on success
 
+            # Read-only snapshot - recommended for consistent reads
+            with tree.at("users").with_dict_view(snapshot=True) as users:
+                user_count = len(users.keys())
+                users_dict = users.to_dict()
+                # Read-only operations only
+            # Snapshot automatically cleaned up
+
             # Error handling
             try:
                 with tree.at("users").with_dict_view() as users:
@@ -182,19 +197,27 @@ class Tree(TransactionalBase):
                 pass
             ```
         """
-        return create_view_context_manager(
-            DictView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
-        )
+        if snapshot:
+            return create_snapshot_view_context_manager(
+                DictView, backend=self.backend, path=self.path, snap=None, tree=self.__class__
+            )
+        else:
+            return create_view_context_manager(
+                DictView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
+            )
 
-    def with_list_view(self) -> AbstractContextManager[ListView[Self]]:
+    def with_list_view(self, *, snapshot: bool = False) -> AbstractContextManager[ListView[Self]]:
         """
-        Access container as list view with automatic transaction management.
+        Access container as list view with automatic transaction or snapshot management.
 
-        Returns a context manager that yields a ListView with transaction context.
+        Returns a context manager that yields a ListView with transaction or snapshot context.
         If path doesn't exist, creates a new sequence container.
 
+        Args:
+            snapshot: If True, creates a read-only snapshot view instead of a transaction view
+
         Returns:
-            Context manager yielding ListView with transaction
+            Context manager yielding ListView with transaction or snapshot
 
         Example:
             ```python
@@ -205,6 +228,13 @@ class Tree(TransactionalBase):
                 tasks.insert(1, "Create tests")
             # Transaction automatically committed on success
 
+            # Read-only snapshot - recommended for consistent reads
+            with tree.at("tasks").with_list_view(snapshot=True) as tasks:
+                task_count = tasks.length()
+                tasks_list = tasks.to_list()
+                # Read-only operations only
+            # Snapshot automatically cleaned up
+
             # Nested container operations
             with tree.at("projects").with_list_view() as projects:
                 projects.append({"name": "Project 1", "tasks": []})
@@ -214,9 +244,14 @@ class Tree(TransactionalBase):
                 project_dict.set("status", "active")
             ```
         """
-        return create_view_context_manager(
-            ListView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
-        )
+        if snapshot:
+            return create_snapshot_view_context_manager(
+                ListView, backend=self.backend, path=self.path, snap=None, tree=self.__class__
+            )
+        else:
+            return create_view_context_manager(
+                ListView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
+            )
 
     # =========================================================================
     # DIRECT VIEW ACCESS (manual transaction management)

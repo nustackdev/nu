@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from .protocols import (
     BackendProtocol,
+    SnapshotContextManagerProtocol,
+    SnapshotProtocol,
     SubscriptionProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,
@@ -9,7 +11,9 @@ from .protocols import (
 
 __all__ = [
     "BackendProtocol",
-    "TransactionProtocol",
-    "TransactionContextManagerProtocol",
+    "SnapshotContextManagerProtocol",
+    "SnapshotProtocol",
     "SubscriptionProtocol",
+    "TransactionContextManagerProtocol",
+    "TransactionProtocol",
 ]

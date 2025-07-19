@@ -14,12 +14,18 @@ __all__ = [
     "AsyncTransactionProtocol",
     "AsyncTransactionContextManagerProtocol",
     "AsyncTransactionalHandlerProtocol",
+    "AsyncSnapshotProtocol",
+    "AsyncSnapshotContextManagerProtocol",
+    "AsyncSnapshotHandlerProtocol",
     "SyncStorageProtocol",
     "SyncObservableProtocol",
     "SyncObservableStorageProtocol",
     "SyncTransactionProtocol",
     "SyncTransactionContextManagerProtocol",
     "SyncTransactionalHandlerProtocol",
+    "SyncSnapshotProtocol",
+    "SyncSnapshotContextManagerProtocol",
+    "SyncSnapshotHandlerProtocol",
 ]
 
 # --- Protocols for asynchronous state handling --- #
@@ -121,6 +127,27 @@ class AsyncStorageProtocol(Protocol[StorageValueT]):
 
         Returns:
             Transaction context manager
+        """
+        ...
+
+    async def begin_snapshot(self) -> AsyncSnapshotProtocol[StorageValueT]:
+        """
+        Begin snapshot.
+
+        Returns:
+            New snapshot instance
+
+        Raises:
+            StorageError: If snapshot cannot be started
+        """
+        ...
+
+    async def snapshot(self) -> AsyncSnapshotContextManagerProtocol[StorageValueT]:
+        """
+        Get snapshot context manager.
+
+        Returns:
+            Snapshot context manager
         """
         ...
 
@@ -346,6 +373,136 @@ class AsyncTransactionalHandlerProtocol(Protocol[StorageValueT]):
         ...
 
 
+@runtime_checkable
+class AsyncSnapshotProtocol(Protocol[StorageValueT]):
+    """Protocol defining the interface for asynchronous read-only snapshots."""
+
+    async def get(self, key: StorageKey) -> StorageValueT:
+        """
+        Get value within snapshot context.
+
+        Args:
+            key: Key to retrieve
+
+        Returns:
+            Value if found, None if not found
+
+        Raises:
+            StorageKeyError: If key not found
+            StorageOperationError: If get operation fails
+        """
+        ...
+
+    async def exists(self, key: StorageKey) -> bool:
+        """
+        Check if key exists within snapshot context.
+
+        Args:
+            key: Key to check
+
+        Returns:
+            True if key exists, False otherwise
+
+        Raises:
+            StorageOperationError: If exists check fails
+        """
+        ...
+
+    async def list_keys(
+        self, prefix: StorageKey, depth: int = ...
+    ) -> AsyncGenerator[StorageKey, None]:
+        """
+        List all keys under prefix within snapshot context.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
+
+        Returns:
+            AsyncGenerator of matching keys
+
+        Raises:
+            StorageOperationError: If list operation fails
+        """
+        if False:  # This will never execute but helps type checkers
+            yield prefix  # Dummy yield to make it a true async generator
+
+    async def close(self) -> None:
+        """
+        Close snapshot and clean up resources.
+
+        Raises:
+            StorageOperationError: If cleanup fails
+        """
+        ...
+
+    def __hash__(self) -> int:
+        """
+        Get hash of the snapshot.
+
+        Returns:
+            Hash value of the snapshot
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the snapshot.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
+        """
+        ...
+
+
+class AsyncSnapshotContextManagerProtocol(Protocol[StorageValueT]):
+    """Async context manager for storage snapshots."""
+
+    async def __aenter__(self) -> AsyncSnapshotProtocol[StorageValueT]:
+        """
+        Create a new snapshot.
+
+        Returns:
+            New snapshot instance
+
+        Raises:
+            StorageError: If snapshot cannot be created
+        """
+        ...
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """
+        Clean up snapshot resources.
+
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+        """
+        ...
+
+
+class AsyncSnapshotHandlerProtocol(Protocol[StorageValueT]):
+    """Protocol defining the interface for asynchronous snapshot-capable storage."""
+
+    async def begin_snapshot(self) -> AsyncSnapshotProtocol[StorageValueT]:
+        """Begin a new read-only snapshot."""
+        ...
+
+    async def snapshot(self) -> AsyncSnapshotContextManagerProtocol[StorageValueT]:
+        """Get a typed snapshot context manager."""
+        ...
+
+
 # --- Protocols for synchronous state handling --- #
 
 
@@ -446,6 +603,27 @@ class SyncStorageProtocol(Protocol[StorageValueT]):
 
         Returns:
             Transaction context manager
+        """
+        ...
+
+    def begin_snapshot(self) -> SyncSnapshotProtocol[StorageValueT]:
+        """
+        Begin snapshot.
+
+        Returns:
+            New snapshot instance
+
+        Raises:
+            StorageError: If snapshot cannot be started
+        """
+        ...
+
+    def snapshot(self) -> SyncSnapshotContextManagerProtocol[StorageValueT]:
+        """
+        Get snapshot context manager.
+
+        Returns:
+            Snapshot context manager
         """
         ...
 
@@ -650,4 +828,135 @@ class SyncTransactionalHandlerProtocol(Protocol[StorageValueT]):
 
     def transaction(self) -> SyncTransactionContextManagerProtocol[StorageValueT]:
         """Get a typed transaction context manager."""
+        ...
+
+
+@runtime_checkable
+class SyncSnapshotProtocol(Protocol[StorageValueT]):
+    """Protocol defining the interface for synchronous read-only snapshots."""
+
+    def get(self, key: StorageKey) -> StorageValueT:
+        """
+        Get value within snapshot context.
+
+        Args:
+            key: Key to retrieve
+
+        Returns:
+            Value if found, None if not found
+
+        Raises:
+            StorageKeyError: If key not found
+            StorageOperationError: If get operation fails
+        """
+        ...
+
+    def exists(self, key: StorageKey) -> bool:
+        """
+        Check if key exists within snapshot context.
+
+        Args:
+            key: Key to check
+
+        Returns:
+            True if key exists, False otherwise
+
+        Raises:
+            StorageOperationError: If exists check fails
+        """
+        ...
+
+    def list_keys(
+        self,
+        prefix: StorageKey,
+        depth: int = ...,
+    ) -> Generator[StorageKey, None, None]:
+        """
+        List all keys under prefix within snapshot context.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all keys under prefix.
+
+        Returns:
+            Generator of matching keys
+
+        Raises:
+            StorageOperationError: If list operation fails
+        """
+        ...
+
+    def close(self) -> None:
+        """
+        Close snapshot and clean up resources.
+
+        Raises:
+            StorageOperationError: If cleanup fails
+        """
+        ...
+
+    def __hash__(self) -> int:
+        """
+        Get hash of the snapshot.
+
+        Returns:
+            Hash value of the snapshot
+        """
+        ...
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check equality of the snapshot.
+
+        Args:
+            value: Value to compare with
+
+        Returns:
+            True if equal, False otherwise
+        """
+        ...
+
+
+class SyncSnapshotContextManagerProtocol(Protocol[StorageValueT]):
+    """Synchronous context manager for storage snapshots."""
+
+    def __enter__(self) -> SyncSnapshotProtocol[StorageValueT]:
+        """
+        Create a new snapshot.
+
+        Returns:
+            New snapshot instance
+
+        Raises:
+            StorageError: If snapshot cannot be created
+        """
+        ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """
+        Clean up snapshot resources.
+
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+        """
+        ...
+
+
+class SyncSnapshotHandlerProtocol(Protocol[StorageValueT]):
+    """Protocol defining the interface for synchronous snapshot-capable storage."""
+
+    def begin_snapshot(self) -> SyncSnapshotProtocol[StorageValueT]:
+        """Begin a new read-only snapshot."""
+        ...
+
+    def snapshot(self) -> SyncSnapshotContextManagerProtocol[StorageValueT]:
+        """Get a typed snapshot context manager."""
         ...

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from .storage import InMemoryStorage, InMemoryStorageSpec, InMemoryStorageTransaction
+from .storage import (
+    InMemoryStorage,
+    InMemoryStorageSnapshot,
+    InMemoryStorageSpec,
+    InMemoryStorageTransaction,
+)
 from .types import (
     InMemoryStorageEncodedKey,
     InMemoryStorageEncodedValue,
@@ -13,6 +18,7 @@ __all__ = [
     "InMemoryStorage",
     "InMemoryStorageSpec",
     "InMemoryStorageTransaction",
+    "InMemoryStorageSnapshot",
     "InMemoryStorageKey",
     "InMemoryStorageValue",
     "InMemoryStorageEncodedKey",

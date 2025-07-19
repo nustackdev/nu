@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .storage import FileStorage, FileStorageSpec, FileStorageTransaction
+from .storage import FileStorage, FileStorageSnapshot, FileStorageSpec, FileStorageTransaction
 from .types import (
     FileStorageEncodedKey,
     FileStorageEncodedValue,
@@ -14,6 +14,7 @@ __all__ = [
     "FileStorageProtocol",
     "FileStorageSpec",
     "FileStorageTransaction",
+    "FileStorageSnapshot",
     "FileStorageKey",
     "FileStorageValue",
     "FileStorageEncodedKey",

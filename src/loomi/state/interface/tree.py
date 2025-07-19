@@ -4,8 +4,12 @@ from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator, Protocol, runtime_checkable
 
 from .kv import (
+    AsyncSnapshotContextManagerProtocol,
+    AsyncSnapshotProtocol,
     AsyncTransactionContextManagerProtocol,
     AsyncTransactionProtocol,
+    SyncSnapshotContextManagerProtocol,
+    SyncSnapshotProtocol,
     SyncTransactionContextManagerProtocol,
     SyncTransactionProtocol,
 )
@@ -71,12 +75,16 @@ class SyncStateProtocol(Protocol):
         """Navigate to root path."""
         ...
 
-    def with_dict_view(self) -> AbstractContextManager["SyncDictViewProtocol"]:
-        """Access container as dictionary view with automatic transaction management."""
+    def with_dict_view(
+        self, *, snapshot: bool = False
+    ) -> AbstractContextManager["SyncDictViewProtocol"]:
+        """Access container as dictionary view with automatic transaction or snapshot management."""
         ...
 
-    def with_list_view(self) -> AbstractContextManager["SyncListViewProtocol"]:
-        """Access container as list view with automatic transaction management."""
+    def with_list_view(
+        self, *, snapshot: bool = False
+    ) -> AbstractContextManager["SyncListViewProtocol"]:
+        """Access container as list view with automatic transaction or snapshot management."""
         ...
 
     def dict_view(self, *, tx: SyncTransactionProtocol | None = None) -> "SyncDictViewProtocol":
@@ -93,6 +101,14 @@ class SyncStateProtocol(Protocol):
 
     def transaction(self) -> SyncTransactionContextManagerProtocol:
         """Get transaction context manager for combined storage and notification handling."""
+        ...
+
+    def begin_snapshot(self) -> SyncSnapshotProtocol:
+        """Start a new read-only snapshot."""
+        ...
+
+    def snapshot(self) -> SyncSnapshotContextManagerProtocol:
+        """Get snapshot context manager for read-only operations."""
         ...
 
     def subscribe(self, callback: Callable, depth: int = 0) -> SyncSubscriptionProtocol:
@@ -414,12 +430,16 @@ class AsyncStateProtocol(Protocol):
         """Navigate to root path."""
         ...
 
-    async def with_dict_view(self) -> AbstractAsyncContextManager["AsyncDictViewProtocol"]:
-        """Access container as dictionary view with automatic transaction management."""
+    async def with_dict_view(
+        self, *, snapshot: bool = False
+    ) -> AbstractAsyncContextManager["AsyncDictViewProtocol"]:
+        """Access container as dictionary view with automatic transaction or snapshot management."""
         ...
 
-    async def with_list_view(self) -> AbstractAsyncContextManager["AsyncListViewProtocol"]:
-        """Access container as list view with automatic transaction management."""
+    async def with_list_view(
+        self, *, snapshot: bool = False
+    ) -> AbstractAsyncContextManager["AsyncListViewProtocol"]:
+        """Access container as list view with automatic transaction or snapshot management."""
         ...
 
     async def dict_view(
@@ -440,6 +460,14 @@ class AsyncStateProtocol(Protocol):
 
     async def transaction(self) -> AsyncTransactionContextManagerProtocol:
         """Get transaction context manager for combined storage and notification handling."""
+        ...
+
+    async def begin_snapshot(self) -> AsyncSnapshotProtocol:
+        """Start a new read-only snapshot."""
+        ...
+
+    async def snapshot(self) -> AsyncSnapshotContextManagerProtocol:
+        """Get snapshot context manager for read-only operations."""
         ...
 
     async def subscribe(self, callback: Callable, depth: int = 0) -> AsyncSubscriptionProtocol:

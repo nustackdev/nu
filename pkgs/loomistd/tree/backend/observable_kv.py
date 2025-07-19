@@ -20,6 +20,8 @@ from loomistd.observer import ObserverServiceProtocol
 from ..types import CallbackFn, PathTuple, Value
 from .protocols import (
     BackendProtocol,
+    SnapshotContextManagerProtocol,
+    SnapshotProtocol,
     SubscriptionProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,
@@ -27,6 +29,8 @@ from .protocols import (
 
 __all__ = [
     "ObservableKVBackend",
+    "ObservableKVSnapshot",
+    "ObservableKVSnapshotContextManager",
     "ObservableKVTransaction",
     "ObservableKVTransactionContextManager",
 ]
@@ -217,6 +221,36 @@ class ObservableKVBackend:
         """
         return ObservableKVTransactionContextManager(self)
 
+    def begin_snapshot(self) -> ObservableKVSnapshot:
+        """
+        Begin a new read-only snapshot.
+
+        Returns:
+            New snapshot instance for read-only operations
+
+        Raises:
+            StorageError: If snapshot cannot be started
+        """
+        storage_snap = self.storage.begin_snapshot()
+        return ObservableKVSnapshot(storage_snap=storage_snap)
+
+    def snapshot(self) -> ObservableKVSnapshotContextManager:
+        """
+        Get snapshot context manager for read-only operations.
+
+        Returns:
+            Snapshot context manager for use in with statements
+
+        Example:
+            ```python
+            with kv.snapshot() as snap:
+                value = snap.get(key)
+                # Read-only operations only
+                # Auto-cleanup on exit
+            ```
+        """
+        return ObservableKVSnapshotContextManager(self)
+
     def __hash__(self) -> int:
         return hash((self.storage, self.observer))
 
@@ -327,6 +361,74 @@ class ObservableKVTransactionContextManager(TransactionContextManagerProtocol):
             self._transaction = None
 
 
+@attrs.define()
+class ObservableKVSnapshot:
+    """
+    Read-only snapshot implementation that provides consistent view of storage.
+    No observer functionality needed since snapshots are read-only.
+    """
+
+    storage_snap: SnapshotProtocol
+
+    def get(self, key: PathTuple) -> Value:
+        """Get value within snapshot context"""
+        return self.storage_snap.get(key)
+
+    def exists(self, key: PathTuple) -> bool:
+        """Check key existence within snapshot"""
+        return self.storage_snap.exists(key)
+
+    def list_keys(self, prefix: PathTuple, depth: int = 1) -> Generator[PathTuple, None, None]:
+        """List keys with prefix within snapshot"""
+        for key in self.storage_snap.list_keys(prefix, depth):
+            yield key
+
+    def close(self) -> None:
+        """Close snapshot and clean up resources"""
+        self.storage_snap.close()
+
+    def __hash__(self) -> int:
+        return hash(self.storage_snap)
+
+    def __eq__(self, other: Any) -> bool:
+        if other is None:
+            return False
+        return isinstance(other, type(self)) and self.storage_snap == other.storage_snap
+
+
+@dataclass
+class ObservableKVSnapshotContextManager(SnapshotContextManagerProtocol):
+    """
+    Context manager for read-only snapshots.
+    """
+
+    _observable_kv: ObservableKVBackend  # Reference to parent backend instance
+    _snapshot: ObservableKVSnapshot | None = None  # Store the active snapshot
+
+    def __enter__(self) -> ObservableKVSnapshot:
+        """Begin new snapshot for read-only operations"""
+        self._snapshot = self._observable_kv.begin_snapshot()
+        return self._snapshot
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Clean up snapshot resources"""
+        if self._snapshot is None:
+            raise RuntimeError("Snapshot not initialized")
+
+        try:
+            # Always clean up snapshot resources
+            self._snapshot.close()
+        finally:
+            # Clear the snapshot reference
+            self._snapshot = None
+
+
 if TYPE_CHECKING:
     _: type[BackendProtocol] = ObservableKVBackend
     __: type[TransactionProtocol] = ObservableKVTransaction
+    ___: type[SnapshotProtocol] = ObservableKVSnapshot
