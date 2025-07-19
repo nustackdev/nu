@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 from loomi.state.interface.observer import SyncCallbackFn
 
 if TYPE_CHECKING:
+    from .context import ContextualBase
     from .node import BaseNode
-    from .transaction import TransactionalBase
     from .tree import Tree
     from .view import BaseView
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 TreeT = TypeVar("TreeT", bound="Tree")
 ViewT = TypeVar("ViewT", bound="BaseView")
 NodeT = TypeVar("NodeT", bound="BaseNode")
-TransactionalT = TypeVar("TransactionalT", bound="TransactionalBase")
+ContextualT = TypeVar("ContextualT", bound="ContextualBase")
 
 # -------------------------------------------------------------------------
 # Primitive Types

@@ -13,7 +13,9 @@ from typing import ClassVar
 
 import attrs
 
-from ..backend import BackendProtocol, TransactionProtocol
+from ..backend import BackendProtocol
+from ..context import ContextualBase
+from ..context.protocols import ContextType
 from ..path import Path
 from ..types import EMPTY, Empty, NodeType
 
@@ -23,7 +25,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class BaseNode(ABC):
+class BaseNode(ContextualBase, ABC):
     """
     Abstract base class for all nodes in the state tree.
 
@@ -31,22 +33,14 @@ class BaseNode(ABC):
     - Container nodes: Can contain other nodes (like directories)
     - Primitive nodes: Contain a single value (like files)
 
-    Nodes can be used as context managers for transaction handling:
-
-    Example:
-        ```python
-        with node as n:
-            # Operations on node with transaction
-            value = n.some_operation()
-        # Transaction automatically committed
-        ```
+    Nodes support both transaction and snapshot contexts for unified operations:
     """
 
     # Backend instance for transaction management
     backend: BackendProtocol = attrs.field(kw_only=True)
 
     # Current transaction if any
-    tx: TransactionProtocol = attrs.field(kw_only=True)
+    ctx: ContextType = attrs.field(kw_only=True)  # type: ignore[assignment]
 
     # Path to this node in the state tree
     path: Path = attrs.field(eq=False, kw_only=True)

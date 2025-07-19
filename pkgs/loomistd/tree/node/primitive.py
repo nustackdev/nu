@@ -11,7 +11,8 @@ from functools import cached_property
 
 import attrs
 
-from ..backend import BackendProtocol, TransactionProtocol
+from ..backend import BackendProtocol
+from ..context.protocols import ContextType
 from ..path import Path
 from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, NodeType, Value
 from .base import BaseNode
@@ -52,7 +53,7 @@ class PrimitiveNode(BaseNode):
         cls,
         *,
         backend: BackendProtocol,
-        tx: TransactionProtocol,
+        ctx: ContextType,
         path: Path,
     ) -> PrimitiveNode:
         """
@@ -60,13 +61,13 @@ class PrimitiveNode(BaseNode):
 
         Args:
             backend: The backend storage interface
-            tx: The transaction to use
+            ctx: The context to use (transaction or snapshot)
             path: The path to the node in the state tree
 
         Returns:
             PrimitiveNode: A new instance of PrimitiveNode
         """
-        return cls(backend=backend, tx=tx, path=path)
+        return cls(backend=backend, ctx=ctx, path=path)
 
     @cached_property
     def parent_container(self) -> ContainerNode:
@@ -82,7 +83,7 @@ class PrimitiveNode(BaseNode):
 
         parent_container = ContainerNode.create(
             backend=self.backend,
-            tx=self.tx,
+            ctx=self.ctx,
             path=parent_path,
             structure=ContainerStructure.DEFAULT_CONTAINER,
             protocol=ContainerProtocol.DEFAULT_PROTOCOL,
@@ -124,7 +125,9 @@ class PrimitiveNode(BaseNode):
 
         Args:
             value: New value to store
-            tx: Optional transaction (defaults to current transaction)
+
+        Raises:
+            ValueError: If context is read-only (snapshot)
         """
         key = self.path.last()
         if key is None:
@@ -135,11 +138,11 @@ class PrimitiveNode(BaseNode):
         """
         Delete the primitive value.
 
-        Args:
-            tx: Optional transaction (defaults to current transaction)
-
         Returns:
             bool: True if the value was deleted, False if it did not exist or was not a primitive type
+
+        Raises:
+            ValueError: If context is read-only (snapshot)
         """
         key = self.path.last()
         if key is None:

@@ -35,11 +35,11 @@ from typing import TYPE_CHECKING, Generic, Optional
 
 import attrs
 
-from ..backend import TransactionProtocol
+from ..context import ContextualBase
+from ..context.protocols import ContextType
 from ..exceptions import ContainerProtocolError
 from ..node import ChildType, ContainerNode
 from ..path import Path
-from ..transaction import TransactionalBase
 from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, TreeT, Value
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class BaseView(Generic[TreeT], TransactionalBase, ABC):
+class BaseView(Generic[TreeT], ContextualBase, ABC):
     """
     Base class for all container views.
 
@@ -119,16 +119,16 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
             ContainerNode: The container node
         """
 
-        if self.tx is None:
-            raise ValueError("Cannot access container without a transaction")
-            # TODO: Improve error message to indicate that a transaction is required for views
+        if self.ctx is None:
+            raise ValueError("Cannot access container without a context")
+            # TODO: Improve error message to indicate that a context is required for views
 
         container = ContainerNode.create(
             backend=self.backend,
             path=self.path,
             structure=self.structure,
             protocol=self.protocol,
-            tx=self.tx,
+            ctx=self.ctx,
             ensure_exists=True,
         )
 
@@ -138,7 +138,7 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
     # TREE NAVIGATION METHODS (return new Tree instances)
     # =========================================================================
 
-    def at(self, *paths: PathComponent, tx: Optional[TransactionProtocol] = None) -> TreeT:
+    def at(self, *paths: PathComponent, ctx: Optional[ContextType] = None) -> TreeT:
         """
         Navigate to a path (relative to current path).
 
@@ -146,7 +146,7 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
 
         Args:
             *paths: Path components to navigate to
-            tx: Optional transaction (defaults to current transaction)
+            ctx: Optional context (defaults to current context)
 
         Returns:
             State: New State for the specified path
@@ -168,9 +168,9 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
             ```
         """
         new_path = self.path.join(*paths)
-        return self.tree(backend=self.backend, path=new_path, tx=tx or self.tx)
+        return self.tree(backend=self.backend, path=new_path, ctx=ctx or self.ctx)
 
-    def parent(self, *, tx: Optional[TransactionProtocol] = None) -> TreeT:
+    def parent(self, *, ctx: Optional[ContextType] = None) -> TreeT:
         """
         Navigate to parent path.
 
@@ -187,9 +187,9 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
         if parent_path is None:
             # Already at root
             parent_path = self.path
-        return self.tree(backend=self.backend, path=parent_path, tx=tx or self.tx)
+        return self.tree(backend=self.backend, path=parent_path, ctx=ctx or self.ctx)
 
-    def root(self, *, tx: Optional[TransactionProtocol] = None) -> TreeT:
+    def root(self, *, ctx: Optional[ContextType] = None) -> TreeT:
         """
         Navigate to root path.
 
@@ -201,7 +201,7 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
             root = tree.at("deeply", "nested", "path").root()
             ```
         """
-        return self.tree(backend=self.backend, path=self.path.root(), tx=tx or self.tx)
+        return self.tree(backend=self.backend, path=self.path.root(), ctx=ctx or self.ctx)
 
     # =========================================================================
     # ABSTRACT INTERFACE (to be implemented by subclasses)
@@ -313,13 +313,17 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
         """Create nested dictionary view."""
         from .dict import DictView
 
-        return DictView(backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree)
+        return DictView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
 
     def _list_view(self, key: PathComponent, /) -> "ListView":
         """Create nested list view."""
         from .list import ListView
 
-        return ListView(backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree)
+        return ListView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
 
     # =========================================================================
     # UTILITY METHODS
@@ -351,11 +355,11 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
 
         if self._satisfies_dict_view(structure, protocol):
             return DictView(
-                backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree
+                backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
             )
         elif self._satisfies_list_view(structure, protocol):
             return ListView(
-                backend=self.backend, path=self.path.join(key), tx=self.tx, tree=self.tree
+                backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
             )
         else:
             raise ValueError(
@@ -381,9 +385,9 @@ class BaseView(Generic[TreeT], TransactionalBase, ABC):
 
         child_path = self.path.join(key)
         if isinstance(value, dict):
-            return DictView(backend=self.backend, path=child_path, tx=self.tx, tree=self.tree)
+            return DictView(backend=self.backend, path=child_path, ctx=self.ctx, tree=self.tree)
         elif isinstance(value, list):
-            return ListView(backend=self.backend, path=child_path, tx=self.tx, tree=self.tree)
+            return ListView(backend=self.backend, path=child_path, ctx=self.ctx, tree=self.tree)
         else:
             raise ValueError(f"Unsupported value type `{type(value)}` for view creation")
 

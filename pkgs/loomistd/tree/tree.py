@@ -16,17 +16,19 @@ import attrs
 
 from loomistd.kv import StorageKeyError
 
-from .backend import SubscriptionProtocol, TransactionContextManagerProtocol, TransactionProtocol
+from .backend import (
+    SnapshotContextManagerProtocol,
+    SnapshotProtocol,
+    SubscriptionProtocol,
+    TransactionContextManagerProtocol,
+    TransactionProtocol,
+)
+from .context import ContextualBase, create_view_context_manager
+from .context.protocols import ContextType
 from .node import ContainerNode
 from .path import Path
-from .transaction import TransactionalBase
 from .types import EMPTY, CallbackFn, Empty, PathComponent, Value
-from .view import (
-    DictView,
-    ListView,
-    create_snapshot_view_context_manager,
-    create_view_context_manager,
-)
+from .view import DictView, ListView
 
 __all__ = [
     "Tree",
@@ -34,7 +36,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class Tree(TransactionalBase):
+class Tree(ContextualBase):
     """
     Primary interface for accessing the tree storage.
 
@@ -86,7 +88,7 @@ class Tree(TransactionalBase):
     # TREE NAVIGATION METHODS
     # =========================================================================
 
-    def at(self, *paths: PathComponent, tx: Optional[TransactionProtocol] = None) -> Self:
+    def at(self, *paths: PathComponent, ctx: Optional[ContextType] = None) -> Self:
         """
         Navigate to a path (relative to current path).
 
@@ -94,7 +96,7 @@ class Tree(TransactionalBase):
 
         Args:
             *paths: Path components to navigate to
-            tx: Optional transaction (defaults to current transaction)
+            ctx: Optional context (defaults to current context)
 
         Returns:
             State: New State for the specified path
@@ -116,9 +118,9 @@ class Tree(TransactionalBase):
             ```
         """
         new_path = self.path.join(*paths)
-        return attrs.evolve(self, path=new_path, tx=tx or self.tx)
+        return attrs.evolve(self, path=new_path, ctx=ctx or self.ctx)
 
-    def parent(self, *, tx: Optional[TransactionProtocol] = None) -> Self:
+    def parent(self, *, ctx: Optional[ContextType] = None) -> Self:
         """
         Navigate to parent path.
 
@@ -135,9 +137,9 @@ class Tree(TransactionalBase):
         if parent_path is None:
             # Already at root
             return self
-        return attrs.evolve(self, path=parent_path, tx=tx or self.tx)
+        return attrs.evolve(self, path=parent_path, ctx=ctx or self.ctx)
 
-    def root(self, *, tx: Optional[TransactionProtocol] = None) -> Self:
+    def root(self, *, ctx: Optional[ContextType] = None) -> Self:
         """
         Navigate to root path.
 
@@ -149,7 +151,7 @@ class Tree(TransactionalBase):
             root = tree.at("deeply", "nested", "path").root()
             ```
         """
-        return attrs.evolve(self, path=Path(), tx=tx or self.tx)
+        return attrs.evolve(self, path=Path(), ctx=ctx or self.ctx)
 
     # =========================================================================
     # CONTEXT MANAGERS FOR VIEWS (automatic transaction management)
@@ -197,14 +199,14 @@ class Tree(TransactionalBase):
                 pass
             ```
         """
-        if snapshot:
-            return create_snapshot_view_context_manager(
-                DictView, backend=self.backend, path=self.path, snap=None, tree=self.__class__
-            )
-        else:
-            return create_view_context_manager(
-                DictView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
-            )
+        return create_view_context_manager(
+            DictView,
+            snapshot=snapshot,
+            backend=self.backend,
+            path=self.path,
+            ctx=self.ctx,
+            tree=self.__class__,
+        )
 
     def with_list_view(self, *, snapshot: bool = False) -> AbstractContextManager[ListView[Self]]:
         """
@@ -244,20 +246,20 @@ class Tree(TransactionalBase):
                 project_dict.set("status", "active")
             ```
         """
-        if snapshot:
-            return create_snapshot_view_context_manager(
-                ListView, backend=self.backend, path=self.path, snap=None, tree=self.__class__
-            )
-        else:
-            return create_view_context_manager(
-                ListView, backend=self.backend, path=self.path, tx=self.tx, tree=self.__class__
-            )
+        return create_view_context_manager(
+            ListView,
+            snapshot=snapshot,
+            backend=self.backend,
+            path=self.path,
+            ctx=self.ctx,
+            tree=self.__class__,
+        )
 
     # =========================================================================
     # DIRECT VIEW ACCESS (manual transaction management)
     # =========================================================================
 
-    def dict_view(self, *, tx: Optional[TransactionProtocol] = None) -> DictView[Self]:
+    def dict_view(self, *, ctx: Optional[ContextType] = None) -> DictView[Self]:
         """
         Access container as dictionary view with manual transaction management.
 
@@ -294,9 +296,11 @@ class Tree(TransactionalBase):
                 users.set("bob", {"email": "bob@example.com"})
             ```
         """
-        return DictView(backend=self.backend, path=self.path, tx=tx or self.tx, tree=self.__class__)
+        return DictView(
+            backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self.__class__
+        )
 
-    def list_view(self, *, tx: Optional[TransactionProtocol] = None) -> ListView[Self]:
+    def list_view(self, *, ctx: Optional[ContextType] = None) -> ListView[Self]:
         """
         Access container as list view with manual transaction management.
 
@@ -333,7 +337,49 @@ class Tree(TransactionalBase):
                 first_task_dict.set("completed", True)
             ```
         """
-        return ListView(backend=self.backend, path=self.path, tx=tx or self.tx, tree=self.__class__)
+        return ListView(
+            backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self.__class__
+        )
+
+    # =========================================================================
+    # CONTEXT METHODS (unified transaction and snapshot support)
+    # =========================================================================
+
+    def begin_context(self, *, snapshot: bool = False) -> ContextType:
+        """
+        Start a new context (transaction or snapshot).
+
+        Args:
+            snapshot: If True, creates read-only snapshot. If False, creates transaction.
+
+        Returns:
+            Context instance (transaction or snapshot)
+
+        Example:
+            ```python
+            # Transaction context
+            ctx = tree.begin_context()
+            try:
+                view = tree.dict_view(ctx=ctx)
+                view.set("key", "value")
+                ctx.commit()
+            except Exception:
+                ctx.rollback()
+                raise
+
+            # Snapshot context
+            ctx = tree.begin_context(snapshot=True)
+            try:
+                view = tree.dict_view(ctx=ctx)
+                value = view.get("key")
+            finally:
+                ctx.close()
+            ```
+        """
+        if snapshot:
+            return self.backend.begin_snapshot()
+        else:
+            return self.backend.begin_transaction()
 
     # =========================================================================
     # TRANSACTION METHODS
@@ -373,6 +419,25 @@ class Tree(TransactionalBase):
         """
         return self.backend.begin_transaction()
 
+    def begin_snapshot(self) -> SnapshotProtocol:
+        """
+        Start a new read-only snapshot.
+
+        Returns:
+            Snapshot instance for read-only operations
+
+        Example:
+            ```python
+            snap = tree.begin_snapshot()
+            try:
+                view = tree.dict_view(ctx=snap)
+                value = view.get("key")
+            finally:
+                snap.close()
+            ```
+        """
+        return self.backend.begin_snapshot()
+
     def transaction(self) -> TransactionContextManagerProtocol:
         """
         Get transaction context manager for combined storage and notification handling.
@@ -390,6 +455,24 @@ class Tree(TransactionalBase):
             ```
         """
         return self.backend.transaction()
+
+    def snapshot(self) -> SnapshotContextManagerProtocol:
+        """
+        Get snapshot context manager for read-only operations.
+
+        Returns:
+            Snapshot context manager for use in with statements
+
+        Example:
+            ```python
+            with tree.snapshot() as snap:
+                view = tree.dict_view(ctx=snap)
+                value = view.get("key")
+                # Read-only operations only
+                # Auto-cleanup on exit
+            ```
+        """
+        return self.backend.snapshot()
 
     # =========================================================================
     # OBSERVATION METHODS
