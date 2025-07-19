@@ -15,25 +15,25 @@ import statistics
 import time
 from pathlib import Path
 
-from loomistd.specs import LMDBStorageSpec, SyncStateSpec
-from loomistd.state import StateService
+from loomistd.codec.msgpack import MsgpackCodecSpec
+from loomistd.kv.lmdb import LMDBStorageSpec
+from loomistd.state import StateService, StateSpec
+from loomistd.tree import Tree
 
 # Constants
-NUM_ENTRIES = 100_000
-NUM_READS = 1000
-NUM_UPDATES = 1000
+NUM_ENTRIES = 50_000
+NUM_READS = 5_000
+NUM_UPDATES = 5_000
 BATCH_SIZE = 500  # Process in batches for better performance
 READ_PATTERNS = ["sequential", "random", "repeated"]  # Different read patterns to benchmark
 
 # Storage configurations to test
 STORAGE_CONFIGS = {
-    # "InMemory": lambda: StateSpec(storage=InMemoryStorageSpec()),
-    "LMDB": lambda: SyncStateSpec(storage=LMDBStorageSpec()).with_value_at(
-        "storage", "path", value=".benchmark_lmdb"
-    ),
-    # "SyncFile": lambda: StateSpec(storage=SyncFileStorageSpec()).with_value_at(
-    #     "storage", "path", value=".benchmark_syncfile"
-    # ),
+    "LMDB": lambda: StateSpec(
+        storage=LMDBStorageSpec(
+            codec=MsgpackCodecSpec(),
+        ),
+    ).with_value_at("storage", "path", value=".benchmark_lmdb"),
 }
 
 
@@ -57,11 +57,11 @@ class StateV3Benchmark:
                 "miss_rate": 0,
             }
 
-    def create_state_spec(self) -> SyncStateSpec:
+    def create_state_spec(self) -> StateSpec:
         """Create state specification based on storage type."""
         return STORAGE_CONFIGS[self.storage_name]()
 
-    def populate_storage(self, state):
+    def populate_storage(self, state: Tree):
         """Populate storage with random numbers."""
         self.metrics["populate"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting population phase...")
@@ -93,7 +93,7 @@ class StateV3Benchmark:
         # count = self._count_items(state)
         # print(f"  Verified {count} items in storage")
 
-    def read_storage(self, state):  # noqa: C901
+    def read_storage(self, state: Tree):  # noqa: C901
         """Benchmark different read patterns."""
         self.metrics["read"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting read phase...")
@@ -109,7 +109,7 @@ class StateV3Benchmark:
                 for batch_idx in range(0, NUM_READS, BATCH_SIZE):
                     batch_start = time.time()
 
-                    with state.at("benchmark_data").with_dict_view() as data:
+                    with state.at("benchmark_data").with_dict_view(snapshot=True) as data:
                         for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_READS)):
                             key = f"key_{i % NUM_ENTRIES}"
                             try:
@@ -134,7 +134,7 @@ class StateV3Benchmark:
                 for batch_idx in range(0, NUM_READS, BATCH_SIZE):
                     batch_start = time.time()
 
-                    with state.at("benchmark_data").with_dict_view() as data:
+                    with state.at("benchmark_data").with_dict_view(snapshot=True) as data:
                         for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_READS)):
                             key = f"key_{random.randint(0, NUM_ENTRIES * 2)}"  # Include some out-of-range keys
                             try:
@@ -161,7 +161,7 @@ class StateV3Benchmark:
                 for batch_idx in range(0, NUM_READS, BATCH_SIZE):
                     batch_start = time.time()
 
-                    with state.at("benchmark_data").with_dict_view() as data:
+                    with state.at("benchmark_data").with_dict_view(snapshot=True) as data:
                         for i in range(batch_idx, min(batch_idx + BATCH_SIZE, NUM_READS)):
                             # 80% hot keys, 20% random keys
                             if random.random() < 0.8:
@@ -208,7 +208,7 @@ class StateV3Benchmark:
         total_time = self.metrics["read"]["end"] - self.metrics["read"]["start"]
         print(f"[{time.strftime('%H:%M:%S')}] Read phase complete in {total_time:.2f}s")
 
-    def alter_storage(self, state):
+    def alter_storage(self, state: Tree):
         """Randomly update entries."""
         self.metrics["alter"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting alteration phase...")
@@ -236,7 +236,7 @@ class StateV3Benchmark:
         total_time = self.metrics["alter"]["end"] - self.metrics["alter"]["start"]
         print(f"[{time.strftime('%H:%M:%S')}] Alteration complete in {total_time:.2f}s")
 
-    def dump_storage(self, state):
+    def dump_storage(self, state: Tree):
         """Clear all storage."""
         self.metrics["dump"]["start"] = time.time()
         print(f"\n[{time.strftime('%H:%M:%S')}] Starting dump phase...")
@@ -255,13 +255,7 @@ class StateV3Benchmark:
                     key = f"key_{i}"
                     try:
                         # Try different deletion methods
-                        if hasattr(data, "remove"):
-                            data.remove(key)
-                        elif hasattr(data, "delete"):
-                            data.delete(key)
-                        else:
-                            # Fallback: set to None or empty value
-                            data.set(key, None)
+                        data.remove(key)
                     except Exception:
                         # Key might not exist, continue
                         pass
@@ -282,25 +276,18 @@ class StateV3Benchmark:
         total_time = self.metrics["dump"]["end"] - self.metrics["dump"]["start"]
         print(f"[{time.strftime('%H:%M:%S')}] Dump complete in {total_time:.2f}s")
 
-    def _count_items(self, state) -> int:
+    def _count_items(self, state: Tree) -> int:
         """Helper to count items in storage."""
         try:
-            with state.at("benchmark_data").with_dict_view() as data:
-                # Try different ways to count items
-                if hasattr(data, "__len__"):
-                    return len(data)
-                elif hasattr(data, "keys"):
-                    return len(list(data.keys()))
-                else:
-                    # Fallback: try to count by iterating
-                    count = 0
-                    try:
-                        for _ in data:
-                            count += 1
-                    except Exception:
-                        # If iteration doesn't work, return 0
-                        pass
-                    return count
+            with state.at("benchmark_data").with_dict_view(snapshot=True) as data:
+                count = 0
+                try:
+                    for _ in data.keys():
+                        count += 1
+                except Exception:
+                    # If iteration doesn't work, return 0
+                    pass
+                return count
         except Exception:
             return 0
 
@@ -467,7 +454,7 @@ def run_all_benchmarks():
     for storage_name in STORAGE_CONFIGS.keys():
         print(f"\n\n{'*' * 20} Testing {storage_name} Storage {'*' * 20}")
 
-        benchmark = StateV3Benchmark(storage_name)
+        benchmark = StateV3Benchmark(storage_name=storage_name)
         metrics = benchmark.run_benchmark()
         all_results[storage_name] = metrics
 
