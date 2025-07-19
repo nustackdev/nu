@@ -11,8 +11,6 @@ from loomi.state.interface.kv import (
 )
 from loomi.state.interface.observer import SyncSubscriptionProtocol
 
-from ..context.protocols import SnapshotContextProtocol as BaseSnapshotContextProtocol
-from ..context.protocols import TransactionContextProtocol as BaseTransactionContextProtocol
 from ..types import Value
 
 __all__ = [
@@ -33,7 +31,7 @@ class BackendProtocol(SyncObservableStorageProtocol[Value], Protocol):
 
 
 @runtime_checkable
-class TransactionProtocol(SyncTransactionProtocol[Value], BaseTransactionContextProtocol, Protocol):
+class TransactionProtocol(SyncTransactionProtocol[Value], Protocol):
     """
     Transaction protocol for observable key-value storage.
     Implements both the KV transaction protocol and the unified context protocol.
@@ -48,7 +46,7 @@ class TransactionContextManagerProtocol(SyncTransactionContextManagerProtocol[Va
 
 
 @runtime_checkable
-class SnapshotProtocol(SyncSnapshotProtocol[Value], BaseSnapshotContextProtocol, Protocol):
+class SnapshotProtocol(SyncSnapshotProtocol[Value], Protocol):
     """
     Snapshot protocol for observable key-value storage.
     Implements both the KV snapshot protocol and the unified context protocol.
