@@ -1,21 +1,17 @@
 """
 Unified context managers for both transactions and snapshots.
-
-This module provides context management that works with both transaction
-and snapshot contexts, replacing the separate transaction and snapshot
-context manager systems.
 """
 
 from __future__ import annotations
 
 from contextlib import AbstractContextManager, contextmanager
-from typing import Generator, Optional
+from typing import Generator
 
 import attrs
 
 from ..backend import BackendProtocol
 from ..types import ContextualT
-from .protocols import ContextType, SnapshotContextProtocol, TransactionContextProtocol
+from .protocols import ContextType
 
 __all__ = [
     "create_context",
@@ -78,13 +74,10 @@ def create_view_context_manager(
     """
     Create a unified context manager for view objects.
 
-    This replaces both create_view_context_manager and create_snapshot_view_context_manager
-    with a single unified implementation that handles both transactions and snapshots.
-
     Args:
         view_factory: Function that creates a view object
         snapshot: If True, creates snapshot context. If False, creates transaction context.
-        **kwargs: Arguments to pass to view_factory (must include 'backend')
+        **kwargs: Arguments to pass to view_factory
 
     Returns:
         Context manager that yields a view with appropriate context
@@ -115,15 +108,12 @@ def create_view_context_manager(
 
     @contextmanager
     def view_context() -> Generator[ContextualT, None, None]:
-        backend = kwargs.get("backend")
-        if backend is None:
-            raise ValueError("Backend must be provided in kwargs")
+        # Step 1: Create view (potentially with None context)
+        view_obj = view_factory(**kwargs)
 
-        with create_context(backend, snapshot=snapshot) as ctx:
-            # Create view with context, ensuring ctx is properly set
-            kwargs_with_ctx = {**kwargs, "ctx": ctx}
-            view_obj = view_factory(**kwargs_with_ctx)
-            yield view_obj
+        # Step 2: Wrap view with context management
+        with with_context(view_obj, snapshot=snapshot) as context_wrapped_view:
+            yield context_wrapped_view
 
     return view_context()
 
@@ -133,14 +123,15 @@ def with_context(obj: ContextualT, *, snapshot: bool = False) -> Generator[Conte
     """
     Context manager that provides context for an object.
 
-    This replaces both with_transaction and with_snapshot with a unified approach.
-
     Args:
         obj: Object that has backend and ctx attributes
         snapshot: If True, creates snapshot context. If False, creates transaction context.
 
     Yields:
         Object with appropriate context
+
+    Raises:
+        TypeError: If object doesn't support contexts or if attrs.evolve fails
 
     Example:
         ```python
@@ -155,94 +146,68 @@ def with_context(obj: ContextualT, *, snapshot: bool = False) -> Generator[Conte
             value = snap_view.get(key)
         ```
     """
-    with create_context(obj.backend, snapshot=snapshot) as ctx:
-        yield attrs.evolve(obj, ctx=ctx)
+    # Validate object has required context attributes (same robustness as old system)
+    if not hasattr(obj, "backend"):
+        raise TypeError(
+            f"Object {type(obj).__name__} must have 'backend' attribute for context support"
+        )
 
+    if not hasattr(obj, "ctx"):
+        raise TypeError(
+            f"Object {type(obj).__name__} must have 'ctx' attribute for context support"
+        )
 
-# Backward compatibility functions
-@contextmanager
-def create_transaction_context(
-    backend: BackendProtocol,
-) -> Generator[TransactionContextProtocol, None, None]:
-    """
-    Create a transaction context manager from a backend.
+    backend = getattr(obj, "backend")
+    current_ctx = getattr(obj, "ctx")
 
-    Args:
-        backend: Backend to create transaction from
-
-    Yields:
-        Transaction instance
-
-    Note:
-        This function is provided for backward compatibility.
-        New code should use create_context(backend, snapshot=False).
-    """
-    with create_context(backend, snapshot=False) as ctx:
-        assert isinstance(ctx, TransactionContextProtocol)
-        yield ctx
-
-
-@contextmanager
-def create_snapshot_context(
-    backend: BackendProtocol, snap: Optional[SnapshotContextProtocol] = None
-) -> Generator[SnapshotContextProtocol, None, None]:
-    """
-    Create a snapshot context for the given backend and optional snapshot.
-
-    Args:
-        backend: Backend to create snapshots from
-        snap: Optional existing snapshot
-
-    Yields:
-        Snapshot context
-
-    Note:
-        This function is provided for backward compatibility.
-        New code should use create_context(backend, snapshot=True).
-    """
-    if snap is not None:
-        # Use provided snapshot (noop pattern)
-        yield snap
+    if current_ctx is not None:
+        # Noop - use existing context (like original with_transaction)
+        yield obj
     else:
-        # Create and manage new snapshot
-        with create_context(backend, snapshot=True) as ctx:
-            assert isinstance(ctx, SnapshotContextProtocol)
-            yield ctx
+        # Create new context and manage its lifecycle
+        if snapshot:
+            new_ctx = backend.begin_snapshot()
+        else:
+            new_ctx = backend.begin_transaction()
 
+        try:
+            # Attempt to create object copy with context (robust like old system)
+            obj_with_ctx = attrs.evolve(obj, ctx=new_ctx)
+        except Exception as e:
+            # If we can't create the copy, clean up the context immediately
+            try:
+                if snapshot:
+                    new_ctx.close()
+                else:
+                    new_ctx.rollback()
+            except Exception:
+                pass  # Cleanup failed, but original error is more important
 
-@contextmanager
-def with_transaction(obj: ContextualT) -> Generator[ContextualT, None, None]:
-    """
-    Context manager that provides transaction context for an object.
+            context_type = "snapshot" if snapshot else "transaction"
+            raise TypeError(
+                f"Failed to create {context_type} copy of {type(obj).__name__}: {e}"
+            ) from e
 
-    Args:
-        obj: Object that has backend and ctx attributes
+        created_ctx = True
 
-    Yields:
-        Object with transaction context
-
-    Note:
-        This function is provided for backward compatibility.
-        New code should use with_context(obj, snapshot=False).
-    """
-    with with_context(obj, snapshot=False) as tx_obj:
-        yield tx_obj
-
-
-@contextmanager
-def with_snapshot(obj: ContextualT) -> Generator[ContextualT, None, None]:
-    """
-    Context manager that provides snapshot context for an object.
-
-    Args:
-        obj: Object that has backend and ctx attributes
-
-    Yields:
-        Object with snapshot context
-
-    Note:
-        This function is provided for backward compatibility.
-        New code should use with_context(obj, snapshot=True).
-    """
-    with with_context(obj, snapshot=True) as snap_obj:
-        yield snap_obj
+        try:
+            yield obj_with_ctx
+        except Exception:
+            # Cleanup only if we created the context
+            if created_ctx:
+                try:
+                    if snapshot:
+                        new_ctx.close()
+                    else:
+                        new_ctx.rollback()
+                except Exception:
+                    # Cleanup failed, but we still want to propagate the original exception
+                    pass
+            raise
+        else:
+            # Finalize only if we created the context
+            if created_ctx:
+                if snapshot:
+                    new_ctx.close()
+                else:
+                    new_ctx.commit()
