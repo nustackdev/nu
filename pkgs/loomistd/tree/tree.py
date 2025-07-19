@@ -23,12 +23,11 @@ from .backend import (
     TransactionContextManagerProtocol,
     TransactionProtocol,
 )
-from .context import ContextualBase, create_view_context_manager
-from .context.protocols import ContextType
+from .context import ContextType, ContextualBase
 from .node import ContainerNode
 from .path import Path
 from .types import EMPTY, CallbackFn, Empty, PathComponent, Value
-from .view import DictView, ListView
+from .view import DictView, ListView, create_view_context_manager
 
 __all__ = [
     "Tree",
