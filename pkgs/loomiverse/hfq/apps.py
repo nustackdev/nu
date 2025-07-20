@@ -28,34 +28,28 @@ class HFQApp(SyncApp):
         Ingest data from the stream.
         This method is called to ingest data from the stream.
         """
-        i = 0
-        while i < 100:
-            i += 1
-            candle = self.data_stram.get_candle()
+        for j in range(10):
             with self.state.state.at("canldes").with_list_view() as candles:
-                candles.append(candle)
-            print(f"Candle added")
-            time.sleep(0.5)
-        print(f"Candles ingested: {i}")
+                for k in range(100):
+                    candle = self.data_stram.get_candle()
+                    candles.append(candle)
+            print(f"Candles ingested: {k}")
 
     def execute_trade(self, context: Context):
         """
         Perform a trade operation.
         This method is called to perform a trade operation.
         """
-        i = 0
-        while i < 100:
-            i += 1
+        for j in range(10):
             with self.state.state.at("trades").with_list_view() as trades:
-                trade = {
-                    "timestamp": time.time(),
-                    "price": round(100 + random.random() * 10, 2),
-                    "volume": round(1 + random.random() * 0.5, 2),
-                }
-                trades.append(trade)
-            print(f"Trade added")
-            time.sleep(0.5)
-        print(f"Trades executed: {i}")
+                for k in range(100):
+                    trade = {
+                        "timestamp": time.time(),
+                        "price": round(100 + random.random() * 10, 2),
+                        "volume": round(1 + random.random() * 0.5, 2),
+                    }
+                    trades.append(trade)
+            print(f"Trades executed: {k}")
 
     def finish(self, context: Context):
         """
@@ -67,9 +61,14 @@ class HFQApp(SyncApp):
     def define(self) -> Expression:
         return Sequence(
             Function(self.start),
-            Parallel(
-                Function(self.execute_trade),
-                Function(self.ingest_stream),
+            Sequence(
+                *[
+                    Parallel(
+                        Function(self.execute_trade),
+                        Function(self.ingest_stream),
+                    )
+                    for _ in range(10)
+                ]
             ),
             Function(self.finish),
         )

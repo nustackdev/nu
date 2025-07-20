@@ -7,7 +7,7 @@ import dash
 import pandas as pd
 import plotly.graph_objs as go
 from dash import Input, Output, dash_table, dcc, html
-from loomiverse.hfq.specs import proxy_state_spec
+from loomiverse.hfq.specs import read_only_state_spec
 
 from loomistd.state import StateService
 from loomix.logging import setup_logging
@@ -22,7 +22,7 @@ def get_state_service():
     if _state_service is None:
         multiprocessing.freeze_support()
         setup_logging(".logs", log_level=20)
-        _state_service = StateService(proxy_state_spec)
+        _state_service = StateService(read_only_state_spec)
         _state_service.initialize()
         atexit.register(lambda: _state_service.shutdown() if _state_service else None)
     return _state_service

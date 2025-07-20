@@ -123,7 +123,6 @@ class LMDBStorage(
                 finally:
                     del self._env
 
-            self._connected = False
             logger.debug("Disconnected from LMDB")
 
     def _get_impl(self, key: LMDBStorageKey) -> LMDBStorageValue:

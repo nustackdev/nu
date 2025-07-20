@@ -37,6 +37,11 @@ proxy_launchable_state_spec = ProxySpec(
     launcher_spec=proxy_launcher_state_spec,
 )
 
+read_only_state_spec = StateSpec(
+    storage=LMDBStorageSpec(codec=MsgpackCodecSpec(), mode="read"),
+).with_value_at("storage", "path", value=".db_msgpack")
+
+
 # ========================= #
 # === Configure runtime === #
 # ========================= #

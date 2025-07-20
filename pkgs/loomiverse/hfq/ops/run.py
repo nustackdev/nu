@@ -23,8 +23,6 @@ def main():
                 elapsed_time = time.perf_counter() - start_time
                 print(f"Total execution time: {elapsed_time:.4f} seconds")
 
-                time.sleep(20)  # Keep the UI service running for some time
-
 
 if __name__ == "__main__":
     main()
