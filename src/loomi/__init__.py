@@ -16,8 +16,8 @@ from .behaviors.evaluator import (
     Parallel,
     Sequence,
     Context,
-    Runtime,
-    RuntimeSpec,
+    Evaluator,
+    EvaluatorSpec,
 )
 
 __all__ = [
@@ -38,6 +38,6 @@ __all__ = [
     "Parallel",
     "Sequence",
     "Context",
-    "Runtime",
-    "RuntimeSpec",
+    "Evaluator",
+    "EvaluatorSpec",
 ]

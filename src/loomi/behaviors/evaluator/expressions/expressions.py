@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, wait
 from typing import TYPE_CHECKING, Awaitable, Callable, Optional
 
 from .base import Expression
@@ -7,11 +8,12 @@ from .types import ErrorBehavior
 
 if TYPE_CHECKING:
     from ..context import Context
-    from ..runtime import Runtime
+    from ..evaluator import Evaluator
 
 __all__ = [
     "Function",
     "Sequence",
+    "Parallel",
 ]
 
 
@@ -57,8 +59,8 @@ class Function(Expression):
 
         self._func = func
 
-    def evaluate(self, runtime: "Runtime", context: "Context") -> None:
-        res = runtime.execute(self._func, context)
+    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
+        res = evaluator.execute(self._func, context)
         res.result()
 
 
@@ -106,9 +108,9 @@ class Sequence(Expression):
 
         self.children = (expr,) + exprs
 
-    def evaluate(self, runtime: "Runtime", context: "Context") -> None:
+    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         for child in self.children:
-            child.evaluate(runtime, context)
+            child.evaluate(evaluator, context)
 
 
 class Parallel(Expression):
@@ -170,11 +172,11 @@ class Parallel(Expression):
         self._max_concurrency = max_concurrency
         self.children = (expr,) + exprs
 
-    def evaluate(self, runtime: "Runtime", context: "Context") -> None:
-        from concurrent.futures import ThreadPoolExecutor, wait
-
+    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         max_workers = self._max_concurrency if self._max_concurrency > 0 else len(self.children)
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(child.evaluate, runtime, context) for child in self.children]
+            futures = [
+                executor.submit(child.evaluate, evaluator, context) for child in self.children
+            ]
             wait(futures)

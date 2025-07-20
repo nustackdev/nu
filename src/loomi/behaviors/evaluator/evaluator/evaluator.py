@@ -8,11 +8,23 @@ import attrs
 from loomicore.resource import SyncResource
 from loomicore.spec import ResourceSpec, Spec
 
+from ..context import Context
+from ..expressions import Expression
 from .fleet import AttachFleet, FleetCoordinator
 
 
-class Runtime(SyncResource):
+class Evaluator(SyncResource):
     fleet: FleetCoordinator[Any] = AttachFleet()
+
+    def evaluate(
+        self,
+        expression: Expression,
+        context: Context,
+    ) -> None:
+        """
+        Evaluate an expression.
+        """
+        expression.evaluate(self, context)
 
     def execute(
         self,
@@ -21,9 +33,7 @@ class Runtime(SyncResource):
         **kwargs: Any,
     ) -> Future[Any]:
         """
-        Execute the runtime logic synchronously.
-
-        This method should be overridden by subclasses to implement specific execution logic.
+        Execute a method.
         """
         return self.fleet.submit(method, *args, **kwargs)
 
@@ -35,14 +45,12 @@ class Runtime(SyncResource):
     ) -> list[Future[Any]]:
         """
         Execute the runtime logic in a distributed manner.
-
-        This method should be overridden by subclasses to implement specific distributed execution logic.
         """
         return self.fleet.distribute(method, args_list, kwargs_list)
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class RuntimeSpec(ResourceSpec):
+class EvaluatorSpec(ResourceSpec):
     """
     Specification for the Runtime resource.
 
@@ -50,5 +58,5 @@ class RuntimeSpec(ResourceSpec):
     """
 
     name: str = "runtime"
-    factory: type[Runtime] = Runtime
+    factory: type = Evaluator
     fleet: tuple[Spec, ...]

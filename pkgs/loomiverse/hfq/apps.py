@@ -85,4 +85,5 @@ class HFQAppSpec(ResourceSpec):
     name: str = "main_app"
     factory: type = HFQApp
     state: Spec
+    evaluator: Spec | None = None
     data_stram: Spec

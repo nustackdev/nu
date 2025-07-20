@@ -3,7 +3,7 @@ import os
 from loomiverse.hfq.apps import HFQAppSpec
 from loomiverse.hfq.services import DataStreamSpec, UIServiceSpec
 
-from loomi import RuntimeSpec
+from loomi import EvaluatorSpec
 from loomicore.spec import ProxySpec
 from loomidistributed.launcher.multiprocessing import MultiprocessingLauncherSpec
 from loomidistributed.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
@@ -66,16 +66,13 @@ for i in range(1, num_workers + 1):
         )
     )
 
-runtime_spec = RuntimeSpec(
-    fleet=tuple(fleet_worker_specs),
-)
-
 # ===================== #
 # === Configure app === #
 # ===================== #
 
 app_spec = HFQAppSpec(
     state=proxy_launchable_state_spec,
+    evaluator=EvaluatorSpec(fleet=tuple(fleet_worker_specs)),
     name=f"app",
     data_stram=DataStreamSpec(),
 )

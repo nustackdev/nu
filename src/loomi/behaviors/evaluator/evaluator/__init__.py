@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from .evaluator import Evaluator, EvaluatorSpec
 from .fleet import AttachFleet, FleetCoordinator, FleetDescriptor
-from .runtime import Runtime, RuntimeSpec
 
 __all__ = [
-    "Runtime",
-    "RuntimeSpec",
+    "Evaluator",
+    "EvaluatorSpec",
     "AttachFleet",
     "FleetCoordinator",
     "FleetDescriptor",

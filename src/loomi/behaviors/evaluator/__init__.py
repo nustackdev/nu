@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from .context import Context
+from .evaluator import Evaluator, EvaluatorSpec
 from .exceptions import EvaluationError, EvaluatorError
 from .expressions import Expression, Function, Parallel, Sequence
-from .runtime import Runtime, RuntimeSpec
 
 __all__ = [
     "Context",
@@ -11,8 +11,8 @@ __all__ = [
     "Function",
     "Parallel",
     "Sequence",
-    "Runtime",
-    "RuntimeSpec",
+    "Evaluator",
+    "EvaluatorSpec",
     "EvaluationError",
     "EvaluatorError",
 ]

@@ -45,7 +45,8 @@ from loomicore.attach import Attach
 from loomicore.resource import AsyncResource, SyncResource
 
 if TYPE_CHECKING:
-    from loomi.behaviors.evaluator import Expression
+    from loomi.behaviors.evaluator import Context, Evaluator, Expression
+    from loomi.behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
 
 __all__ = [
     "AppBase",
@@ -69,7 +70,22 @@ class AppBase(ABC):
 
     # Attach descriptors - resolved by LoomiCore dependency injection
     state = Attach()
-    logger = Attach(optional=True)  # Optional logger for apps
+    evaluator: Evaluator = Attach(optional=True)
+    logger: AsyncLoggerProtocol | SyncLoggerProtocol = Attach(optional=True)
+
+    def evaluate(
+        self,
+        expression: "Expression",
+        context: "Context",
+    ) -> None:
+        """
+        Evaluate an expression in the context of this app.
+
+        Args:
+            expression: The expression to evaluate
+            context: The execution context
+        """
+        self.evaluator.evaluate(expression, context)
 
     @abstractmethod
     def define(self) -> "Expression":

@@ -16,7 +16,7 @@ from .types import ErrorBehavior
 
 if TYPE_CHECKING:
     from ..context import Context
-    from ..runtime import Runtime
+    from ..evaluator import Evaluator
 
 
 class Expression(ABC, DAGNodeMixin["Expression"]):
@@ -79,7 +79,7 @@ class Expression(ABC, DAGNodeMixin["Expression"]):
         )
 
     @abstractmethod
-    def evaluate(self, runtime: "Runtime", context: "Context") -> None:
+    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """
         Evaluate the expression.
 
@@ -87,7 +87,7 @@ class Expression(ABC, DAGNodeMixin["Expression"]):
         actual evaluation logic.
 
         Args:
-            runtime: The runtime environment in which the expression is evaluated
+            evaluator: The evaluator environment in which the expression is evaluated
             context: The execution context
         """
         pass
