@@ -38,11 +38,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from loomicore import AsyncResource, SyncResource
 from loomicore.attach import Attach
+from loomicore.resource import AsyncResource, SyncResource
 
 if TYPE_CHECKING:
-    from loomi.logger.interface.logger import AsyncLoggerProtocol, SyncLoggerProtocol
+    pass
 
 __all__ = [
     "ServiceBase",
@@ -66,8 +66,7 @@ class ServiceBase(Generic[LoggerT]):
         LoggerT: Logger protocol implementation type
     """
 
-    # Attach descriptor - resolved by LoomiCore dependency injection
-    logger: LoggerT  # = Attach()
+    logger: LoggerT = Attach(optional=True)
 
     # Convenience alias for shorter syntax
     @property

@@ -9,15 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from loomicore.attach.base_descriptor import BaseResourceDescriptor
-from loomicore.attach.exceptions import AttachError
+from loomicore.attach import AttachError, BaseResourceDescriptor
 from loomicore.common.descriptor import StorageStrategy, ValidationStrategy
 
 from .coordinator import FleetCoordinator
 
 if TYPE_CHECKING:
     from loomicore.resource import Resource
-    from loomicore.runtime.dependency_manager import DependencyManager
+    from loomicore.runtime import DependencyManager
     from loomicore.spec import Spec
 
 __all__ = [

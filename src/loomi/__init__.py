@@ -1,28 +1,19 @@
 # isort: skip_file
 from __future__ import annotations
 
-
-# Core user-facing classes
-# from .app import AsyncApp, SyncApp
-from .service import AsyncService, SyncService
-
-# Protocol interfaces for type hinting and custom implementations
-from .logger.interface.logger import AsyncLoggerProtocol, SyncLoggerProtocol
-from .state.interface.state import AsyncStateProtocol, SyncStateProtocol
+# Primitives
+from .primitives.app import AppBase, SyncApp, AsyncApp
+from .primitives.service import ServiceBase, SyncService, AsyncService
 
 # Specifications and Attachments
 from .spec import Spec, ProxySpec, ResourceSpec
 from .attach import Attach, AttachMany, ListCoordinator
 
 __all__ = [
-    # "AsyncApp",
-    # "SyncApp",
+    "AsyncApp",
+    "SyncApp",
     "AsyncService",
     "SyncService",
-    "AsyncLoggerProtocol",
-    "SyncLoggerProtocol",
-    "AsyncStateProtocol",
-    "SyncStateProtocol",
     "Spec",
     "ProxySpec",
     "ResourceSpec",

@@ -14,7 +14,7 @@ import attrs
 from frozendict import frozendict
 
 if TYPE_CHECKING:
-    from loomi.app.expressions import Expression
+    from .expressions import Expression
 
 
 @attrs.define(frozen=True, slots=True)

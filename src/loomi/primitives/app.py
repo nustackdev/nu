@@ -41,13 +41,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from loomicore import AsyncResource, SyncResource
 from loomicore.attach import Attach
+from loomicore.resource import AsyncResource, SyncResource
 
 if TYPE_CHECKING:
-    pass
-
-    from .expressions import Expression
+    from loomi.behaviors.evaluator import Expression
 
 __all__ = [
     "AppBase",
@@ -71,7 +69,7 @@ class AppBase(ABC):
 
     # Attach descriptors - resolved by LoomiCore dependency injection
     state = Attach()
-    # logger = Attach()
+    logger = Attach(optional=True)  # Optional logger for apps
 
     @abstractmethod
     def define(self) -> "Expression":

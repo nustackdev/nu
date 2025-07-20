@@ -15,8 +15,8 @@ from .node import DAGNodeMixin
 from .types import ErrorBehavior
 
 if TYPE_CHECKING:
-    from loomi.evaluator.context import Context
-    from loomi.evaluator.runtime import Runtime
+    from ..context import Context
+    from ..runtime import Runtime
 
 
 class Expression(ABC, DAGNodeMixin["Expression"]):

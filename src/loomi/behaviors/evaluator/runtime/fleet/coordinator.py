@@ -12,7 +12,7 @@ import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
-from loomicore.attach.many import ListCoordinator
+from loomicore.attach import ListCoordinator
 
 if TYPE_CHECKING:
     from loomicore.resource import Resource

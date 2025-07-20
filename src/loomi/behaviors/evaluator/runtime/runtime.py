@@ -5,10 +5,10 @@ from typing import Any, Callable
 
 import attrs
 
-from loomicore.attach import Attach
 from loomicore.resource import SyncResource
 from loomicore.spec import ResourceSpec, Spec
-from loomidistributed.coordinators.fleet import AttachFleet, FleetCoordinator
+
+from .fleet import AttachFleet, FleetCoordinator
 
 
 class Runtime(SyncResource):
