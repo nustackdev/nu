@@ -9,10 +9,11 @@ execution capabilities.
 from __future__ import annotations
 
 from concurrent.futures import Future
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import attrs
 
+from loomicore.attach import Attach
 from loomicore.resource import SyncResource
 from loomicore.spec import ResourceSpec, Spec
 
@@ -21,6 +22,13 @@ from ..exceptions import EvaluationError, FleetError
 from ..expressions import Expression
 from .fleet import AttachFleet, FleetCoordinator
 from .logger import logger
+
+if TYPE_CHECKING:
+    from loomi.behaviors.state.protocols.state import (
+        AsyncStateServiceProtocol,
+        SyncStateServiceProtocol,
+    )
+    from loomi.behaviors.state.protocols.tree import AsyncStateProtocol, SyncStateProtocol
 
 
 class Evaluator(SyncResource):
@@ -35,6 +43,11 @@ class Evaluator(SyncResource):
     """
 
     fleet: FleetCoordinator[Any] = AttachFleet()
+    state_service: "SyncStateServiceProtocol | AsyncStateServiceProtocol" = Attach()
+
+    @property
+    def state(self) -> "AsyncStateProtocol |SyncStateProtocol":
+        return self.state_service.state
 
     def evaluate(
         self,
@@ -285,3 +298,4 @@ class EvaluatorSpec(ResourceSpec):
     name: str = "runtime"
     factory: type = Evaluator
     fleet: tuple[Spec, ...]
+    state_service: Spec

@@ -72,7 +72,10 @@ for i in range(1, num_workers + 1):
 
 app_spec = HFQAppSpec(
     state=proxy_launchable_state_spec,
-    evaluator=EvaluatorSpec(fleet=tuple(fleet_worker_specs)),
+    evaluator=EvaluatorSpec(
+        fleet=tuple(fleet_worker_specs),
+        state_service=proxy_launchable_state_spec,
+    ),
     name=f"app",
     data_stram=DataStreamSpec(),
 )
