@@ -10,15 +10,12 @@ from .exceptions import (
     ExpressionError,
     FleetError,
 )
-from .expressions import Expression, Function, Parallel, Sequence
+from .expressions import Expression
 from .logger import logger
 
 __all__ = [
     "Context",
     "Expression",
-    "Function",
-    "Parallel",
-    "Sequence",
     "Evaluator",
     "EvaluatorSpec",
     "EvaluationError",

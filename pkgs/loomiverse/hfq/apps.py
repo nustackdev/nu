@@ -6,17 +6,8 @@ import time
 import attrs
 from loomiverse.hfq.services import DataStream
 
-from loomi import (
-    Attach,
-    Context,
-    Expression,
-    Function,
-    Parallel,
-    ResourceSpec,
-    Sequence,
-    Spec,
-    SyncApp,
-)
+from loomi import Attach, Context, Expression, ResourceSpec, Spec, SyncApp
+from loomistd.expressions.primitives import Function, Parallel, Sequence
 
 
 class HFQApp(SyncApp):

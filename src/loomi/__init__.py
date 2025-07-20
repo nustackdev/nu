@@ -12,9 +12,6 @@ from .attach import Attach, AttachMany, ListCoordinator
 # Evaluator Primitives
 from .behaviors.evaluator import (
     Expression,
-    Function,
-    Parallel,
-    Sequence,
     Context,
     Evaluator,
     EvaluatorSpec,
@@ -34,9 +31,6 @@ __all__ = [
     "AppBase",
     "ServiceBase",
     "Expression",
-    "Function",
-    "Parallel",
-    "Sequence",
     "Context",
     "Evaluator",
     "EvaluatorSpec",

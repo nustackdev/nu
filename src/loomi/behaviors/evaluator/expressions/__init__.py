@@ -1,10 +1,14 @@
-# from .atom.app import App
+from __future__ import annotations
+
+from ..exceptions import ContextError, ExpressionError
 from .base import Expression
-from .expressions import Function, Parallel, Sequence
+from .metadata import ExpressionMetadata
+from .types import ErrorBehavior
 
 __all__ = [
     "Expression",
-    "Function",
-    "Sequence",
-    "Parallel",
+    "ErrorBehavior",
+    "ExpressionMetadata",
+    "ExpressionError",
+    "ContextError",
 ]

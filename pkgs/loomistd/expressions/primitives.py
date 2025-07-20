@@ -3,14 +3,13 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, wait
 from typing import TYPE_CHECKING, Awaitable, Callable, Optional
 
-from ..exceptions import ExpressionError
-from .base import Expression
+from loomi.behaviors.evaluator.expressions import ErrorBehavior, Expression, ExpressionError
+
 from .logger import logger
-from .types import ErrorBehavior
 
 if TYPE_CHECKING:
-    from ..context import Context
-    from ..evaluator import Evaluator
+    from loomi.behaviors.evaluator import Evaluator
+    from loomi.behaviors.evaluator.context import Context
 
 __all__ = [
     "Function",
