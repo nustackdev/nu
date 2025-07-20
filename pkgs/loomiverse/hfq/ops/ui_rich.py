@@ -152,7 +152,7 @@ def create_stat_card(title, value, subtitle="", color="#3b82f6", icon="📊", tr
 app.layout = html.Div(
     [
         # Auto-refresh component
-        dcc.Interval(id="hfq-refresh-interval", interval=1000, n_intervals=0),  # 1 second refresh
+        dcc.Interval(id="hfq-refresh-interval", interval=2000, n_intervals=0),  # 1 second refresh
         # Header Section
         html.Div(
             [
