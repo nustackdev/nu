@@ -10,7 +10,7 @@ Classes:
 
 Example:
     ```python
-    from loomi.app import AsyncApp
+    from loomi import AsyncApp
 
     class DataProcessingApp(AsyncApp):
         def define(self):
@@ -114,7 +114,7 @@ class SyncApp(AppBase, SyncResource):
 
     Example:
         ```python
-        from loomi.app import SyncApp
+        from loomi import SyncApp
 
         class FileProcessorApp(SyncApp):
             def define(self):
@@ -162,7 +162,7 @@ class AsyncApp(AppBase, AsyncResource):
 
     Example:
         ```python
-        from loomi.app import AsyncApp
+        from loomi import AsyncApp
 
         class WebScraperApp(AsyncApp):
             def define(self):

@@ -4,8 +4,7 @@ from loomiverse.hfq.apps import HFQApp
 from loomiverse.hfq.services import UIService
 from loomiverse.hfq.specs import app_spec, runtime_spec, ui_spec
 
-from loomi.evaluator.context import Context
-from loomidistributed.runtime import Runtime
+from loomi import Context, Runtime
 from loomix.logging import setup_logging
 
 setup_logging(".logs", log_level=20)

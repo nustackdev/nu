@@ -12,7 +12,7 @@ from __future__ import annotations
 from enum import Enum, Flag, auto
 from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 
-from loomi.state.interface.observer import SyncCallbackFn
+from loomi.behaviors.state.protocols.types import SyncCallbackFn
 
 if TYPE_CHECKING:
     from .context import ContextualBase

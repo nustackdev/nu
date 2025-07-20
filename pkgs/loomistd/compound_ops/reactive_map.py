@@ -9,8 +9,8 @@
 
 # from __future__ import annotations
 
-# from loomi.evaluator.interface.evaluator import AsyncEvaluatorProtocol, SyncEvaluatorProtocol
-# from loomi.evaluator.interface.type_vars import (
+# from loomi import AsyncEvaluatorProtocol, SyncEvaluatorProtocol
+# from loomi import (
 #     AppOperationT,
 #     AsyncEvaluatorT_co,
 #     BranchOperationT,
@@ -28,7 +28,7 @@
 #     SyncEvaluatorT_co,
 #     TimeoutOperationT,
 # )
-# from loomi.evaluator.interface.types import ErrorBehavior
+# from loomi import ErrorBehavior
 
 # __all__ = [
 #     "ReactiveMap",

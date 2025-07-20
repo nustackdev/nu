@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi.state.interface.kv import (
+from loomi.behaviors.state.protocols.kv import (
     SyncSnapshotContextManagerProtocol,
     SyncSnapshotHandlerProtocol,
     SyncSnapshotProtocol,

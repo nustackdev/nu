@@ -22,7 +22,7 @@ import attrs
 from frozendict import frozendict
 from rpyc.core import Connection as RPyCConnection
 
-from loomi.spec import ResourceSpec
+from loomi import ResourceSpec
 
 from ..exceptions import RPyCConnectionError
 from ..types import RPyCConfig

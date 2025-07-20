@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING, Any
 
 import attrs
 
-from loomi.attach import Attach
-from loomi.service import SyncService
-from loomi.spec import ResourceSpec, Spec
-from loomi.state.interface.observer import SyncObservableProtocol, SyncSubscriptionProtocol
+from loomi import Attach, ResourceSpec, Spec, SyncService
+from loomi.behaviors.state.protocols.observer import (
+    SyncObservableProtocol,
+    SyncSubscriptionProtocol,
+)
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 

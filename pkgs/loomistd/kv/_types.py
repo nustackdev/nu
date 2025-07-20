@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Literal, TypeVar
 
-from loomi.state.interface.type_vars import StorageValueT
-from loomi.state.interface.types import StorageKey, StorageValue
+from loomi.behaviors.state.protocols.type_vars import StorageValueT
+from loomi.behaviors.state.protocols.types import StorageKey, StorageValue
 
 __all__ = [
     "StorageKey",

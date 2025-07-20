@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from loomi.state.interface.kv import (
+from loomi.behaviors.state.protocols.kv import (
     SyncObservableStorageProtocol,
     SyncSnapshotContextManagerProtocol,
     SyncSnapshotProtocol,
     SyncTransactionContextManagerProtocol,
     SyncTransactionProtocol,
 )
-from loomi.state.interface.observer import SyncSubscriptionProtocol
+from loomi.behaviors.state.protocols.observer import SyncSubscriptionProtocol
 
 from ..types import Value
 

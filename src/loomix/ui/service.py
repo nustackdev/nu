@@ -10,15 +10,15 @@
 # from datetime import datetime
 # from typing import Any, Dict, Literal, Optional
 
-# from loomi.attach import Attach
-# from loomi.state.interface.state import (
+# from loomi import Attach
+# from loomi import (
 #     AsyncStateProtocol,
 #     AsyncTreeDictProtocol,
 #     SyncStateProtocol,
 #     SyncTreeDictProtocol,
 # )
-# from loomi.service import AsyncService
-# from loomi.spec import Spec
+# from loomi import AsyncService
+# from loomi import Spec
 # from loomistd.state import StateSpec
 
 # from .dashboard.graph import GraphRenderer

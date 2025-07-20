@@ -5,8 +5,7 @@ from typing import Any
 
 import attrs
 
-from loomi.service import SyncService
-from loomi.spec import ResourceSpec
+from loomi import ResourceSpec, SyncService
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import (

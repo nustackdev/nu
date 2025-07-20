@@ -11,7 +11,7 @@ Classes:
 
 Example:
     ```python
-    from loomi.service import AsyncService
+    from loomi import AsyncService
 
     class DatabaseService(AsyncService):
         async def setup(self):
@@ -36,8 +36,10 @@ Example:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from abc import ABC
+from typing import TYPE_CHECKING
 
+from loomi.behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
 from loomicore.attach import Attach
 from loomicore.resource import AsyncResource, SyncResource
 
@@ -50,11 +52,8 @@ __all__ = [
     "AsyncService",
 ]
 
-# Type variable for generics
-LoggerT = TypeVar("LoggerT")
 
-
-class ServiceBase(Generic[LoggerT]):
+class ServiceBase(ABC):
     """
     Ultra-thin base for all services with logging dependency injection.
 
@@ -66,16 +65,18 @@ class ServiceBase(Generic[LoggerT]):
         LoggerT: Logger protocol implementation type
     """
 
-    logger: LoggerT = Attach(optional=True)
+    logger: AsyncLoggerProtocol | SyncLoggerProtocol = Attach(
+        optional=True
+    )  # Optional logger for services
 
     # Convenience alias for shorter syntax
     @property
-    def log(self) -> LoggerT:
+    def log(self) -> AsyncLoggerProtocol | SyncLoggerProtocol:
         """Short alias for logger."""
         return self.logger
 
 
-class SyncService(ServiceBase["SyncLoggerProtocol"], SyncResource):
+class SyncService(ServiceBase, SyncResource):
     """
     Synchronous service with logging.
 
@@ -90,7 +91,7 @@ class SyncService(ServiceBase["SyncLoggerProtocol"], SyncResource):
 
     Example:
         ```python
-        from loomi.service import SyncService
+        from loomi import SyncService
 
         class FileManagerService(SyncService):
             def setup(self):
@@ -124,7 +125,7 @@ class SyncService(ServiceBase["SyncLoggerProtocol"], SyncResource):
     pass
 
 
-class AsyncService(ServiceBase["AsyncLoggerProtocol"], AsyncResource):
+class AsyncService(ServiceBase, AsyncResource):
     """
     Asynchronous service with logging.
 
@@ -139,7 +140,7 @@ class AsyncService(ServiceBase["AsyncLoggerProtocol"], AsyncResource):
 
     Example:
         ```python
-        from loomi.service import AsyncService
+        from loomi import AsyncService
 
         class HttpClientService(AsyncService):
             async def setup(self):

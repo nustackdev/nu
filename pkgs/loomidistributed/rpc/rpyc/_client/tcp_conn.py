@@ -12,7 +12,7 @@ import attrs
 import rpyc
 from rpyc.core import Connection as RPyCConnection
 
-from loomi.service import SyncService
+from loomi import SyncService
 
 from .base_conn import BaseRPyCConnection, BaseRPyCConnectionSpec
 from .logger import logger

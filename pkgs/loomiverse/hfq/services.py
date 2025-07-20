@@ -11,8 +11,6 @@ from typing import Optional
 import attrs
 
 from loomi import ResourceSpec, SyncService
-from loomi.service import SyncService
-from loomi.spec import ResourceSpec
 
 
 class DataStream(SyncService):

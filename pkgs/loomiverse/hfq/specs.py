@@ -3,10 +3,10 @@ import os
 from loomiverse.hfq.apps import HFQAppSpec
 from loomiverse.hfq.services import DataStreamSpec, UIServiceSpec
 
+from loomi import RuntimeSpec
 from loomicore.spec import ProxySpec
 from loomidistributed.launcher.multiprocessing import MultiprocessingLauncherSpec
 from loomidistributed.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
-from loomidistributed.runtime import RuntimeSpec
 from loomistd.codec.msgpack import MsgpackCodecSpec
 from loomistd.kv.lmdb import LMDBStorageSpec
 from loomistd.state import StateSpec

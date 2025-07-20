@@ -1,6 +1,7 @@
+from loomiverse.hfq.specs import proxy_host_state_spec, state_spec
+
 from loomidistributed.rpc.rpyc import RPyCUnixServer
 from loomistd.state import StateService
-from loomiverse.hfq.specs import proxy_host_state_spec, state_spec
 from loomix.logging import setup_logging
 
 setup_logging(".logs", log_level=20)

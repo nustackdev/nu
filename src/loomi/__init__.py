@@ -9,6 +9,17 @@ from .primitives.service import ServiceBase, SyncService, AsyncService
 from .spec import Spec, ProxySpec, ResourceSpec
 from .attach import Attach, AttachMany, ListCoordinator
 
+# Evaluator Primitives
+from .behaviors.evaluator import (
+    Expression,
+    Function,
+    Parallel,
+    Sequence,
+    Context,
+    Runtime,
+    RuntimeSpec,
+)
+
 __all__ = [
     "AsyncApp",
     "SyncApp",
@@ -20,4 +31,13 @@ __all__ = [
     "Attach",
     "AttachMany",
     "ListCoordinator",
+    "AppBase",
+    "ServiceBase",
+    "Expression",
+    "Function",
+    "Parallel",
+    "Sequence",
+    "Context",
+    "Runtime",
+    "RuntimeSpec",
 ]

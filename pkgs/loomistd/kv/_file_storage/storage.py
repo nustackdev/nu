@@ -10,10 +10,8 @@ from uuid import uuid4
 import attrs
 import filelock
 
-from loomi.attach import Attach
-from loomi.service import SyncService
-from loomi.spec import ResourceSpec, Spec
-from loomi.state.interface.kv import (
+from loomi import Attach, ResourceSpec, Spec, SyncService
+from loomi.behaviors.state.protocols.kv import (
     SyncSnapshotProtocol,
     SyncStorageProtocol,
     SyncTransactionProtocol,

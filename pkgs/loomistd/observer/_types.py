@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, TypeVar
 
-from loomi.state.interface.types import ObserverKey, SyncCallbackFn
+from loomi.behaviors.state.protocols.types import ObserverKey, SyncCallbackFn
 
 __all__ = [
     "ObserverKey",
