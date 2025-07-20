@@ -10,6 +10,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from .logger import logger
 from .metadata import ExpressionMetadata
 from .node import DAGNodeMixin
 from .types import ErrorBehavior
@@ -43,14 +44,37 @@ class Expression(ABC, DAGNodeMixin["Expression"]):
         Args:
             error_behavior: How to handle errors that occur during execution
             on_fail: Expression to execute when an error occurs
+
+        Raises:
+            ValueError: If error_behavior is not "fail" or "continue"
         """
         super().__init__()
 
+        # Validate error behavior
         if error_behavior not in ("fail", "continue"):
-            raise ValueError(f"Invalid error_behavior: {error_behavior}")
+            error_msg = f"Invalid error_behavior: {error_behavior}. Must be 'fail' or 'continue'"
+            logger.error(
+                "Invalid error behavior specified for expression",
+                extra={
+                    "expression_type": self.__class__.__name__,
+                    "error_behavior": error_behavior,
+                    "valid_behaviors": ["fail", "continue"],
+                },
+            )
+            raise ValueError(error_msg)
 
         self._error_behavior = error_behavior
         self._on_fail = on_fail
+
+        logger.debug(
+            "Initialized expression",
+            extra={
+                "expression_type": self.__class__.__name__,
+                "expression_id": id(self),
+                "error_behavior": error_behavior,
+                "has_on_fail": on_fail is not None,
+            },
+        )
 
     @property
     def metadata(self) -> ExpressionMetadata:

@@ -13,6 +13,9 @@ from typing import TYPE_CHECKING, Any
 import attrs
 from frozendict import frozendict
 
+from .exceptions import ContextError
+from .logger import logger
+
 if TYPE_CHECKING:
     from .expressions import Expression
 
@@ -40,8 +43,31 @@ class Context:
 
         Returns:
             Attribute value
+
+        Raises:
+            ContextError: If the key is not found in the context attributes
         """
-        return self.attributes[key]
+        try:
+            value = self.attributes[key]
+            logger.debug(
+                "Retrieved context attribute",
+                extra={
+                    "key": key,
+                    "value_type": type(value).__name__,
+                    "context_id": id(self),
+                },
+            )
+            return value
+        except KeyError as e:
+            logger.error(
+                "Context attribute not found",
+                extra={
+                    "key": key,
+                    "available_keys": list(self.attributes.keys()),
+                    "context_id": id(self),
+                },
+            )
+            raise ContextError(f"Context attribute '{key}' not found") from e
 
     def __contains__(self, key: str) -> bool:
         """
@@ -70,22 +96,78 @@ class Context:
 
         Args:
             expression: New expression to associate with the context
-            scope: New scope to use for state access
+            attributes: New attributes to merge with existing ones
 
         Returns:
             A new context derived from this one
+
+        Raises:
+            ContextError: If context derivation fails
         """
-        values = {
-            "expression": self.expression,
-            "attributes": deepcopy(self.attributes),
-        }
+        logger.debug(
+            "Deriving new context",
+            extra={
+                "parent_context_id": id(self),
+                "parent_expression_type": type(self.expression).__name__,
+                "new_expression_type": type(expression).__name__ if expression else None,
+                "has_new_attributes": attributes is not None,
+                "parent_attributes_count": len(self.attributes),
+            },
+        )
 
-        updates: dict[str, Any] = {}
+        try:
+            # Start with current values
+            values = {
+                "expression": self.expression,
+                "attributes": deepcopy(self.attributes),
+            }
 
-        if expression is not None:
-            updates["expression"] = expression
+            updates: dict[str, Any] = {}
 
-        values.update(updates)
+            # Update expression if provided
+            if expression is not None:
+                updates["expression"] = expression
 
-        # Create new context
-        return self.__class__(**values)
+            # Merge attributes if provided
+            if attributes is not None:
+                # Merge the new attributes with existing ones
+                merged_attributes = {**values["attributes"], **attributes}
+                updates["attributes"] = frozendict(merged_attributes)
+
+                logger.debug(
+                    "Merging context attributes",
+                    extra={
+                        "existing_keys": list(values["attributes"].keys()),
+                        "new_keys": list(attributes.keys()),
+                        "merged_keys": list(merged_attributes.keys()),
+                    },
+                )
+
+            values.update(updates)
+
+            # Create new context
+            new_context = self.__class__(**values)
+
+            logger.debug(
+                "Successfully derived new context",
+                extra={
+                    "parent_context_id": id(self),
+                    "new_context_id": id(new_context),
+                    "new_expression_type": type(new_context.expression).__name__,
+                    "new_attributes_count": len(new_context.attributes),
+                },
+            )
+
+            return new_context
+
+        except Exception as e:
+            logger.error(
+                "Failed to derive context",
+                extra={
+                    "parent_context_id": id(self),
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                },
+                exc_info=True,
+            )
+            raise ContextError(f"Failed to derive context: {e}") from e
