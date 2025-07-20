@@ -1,5 +1,7 @@
+import os
+
 from loomiverse.hfq.apps import HFQAppSpec
-from loomiverse.hfq.services import DataStreamSpec
+from loomiverse.hfq.services import DataStreamSpec, UIServiceSpec
 
 from loomicore.spec import ProxySpec
 from loomidistributed.launcher.multiprocessing import MultiprocessingLauncherSpec
@@ -15,7 +17,7 @@ from loomistd.state import StateSpec
 
 state_spec = StateSpec(
     storage=LMDBStorageSpec(codec=MsgpackCodecSpec()),
-).with_value_at("storage", "path", value=".db")
+).with_value_at("storage", "path", value=".db_msgpack")
 
 proxy_client_state_spec = RPyCUnixClientSpec(
     connection=RPyCUnixConnectionSpec(socket_path="/tmp/hfq_state.sock")
@@ -68,7 +70,15 @@ runtime_spec = RuntimeSpec(
 # ===================== #
 
 app_spec = HFQAppSpec(
-    state=proxy_state_spec,
+    state=proxy_launchable_state_spec,
     name=f"app",
     data_stram=DataStreamSpec(),
+)
+
+# ==================== #
+# === Configure UI === #
+# ==================== #
+
+ui_spec = UIServiceSpec(
+    script_path=os.path.join(os.path.dirname(__file__), "ops/ui_rich.py"),
 )

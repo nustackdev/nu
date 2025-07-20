@@ -165,7 +165,7 @@ playground/
 _playground/
 
 # Data and log files
-.db/
+.db*/
 .logs/
 .tracing/
 *.db.json

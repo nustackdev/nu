@@ -142,7 +142,7 @@ class BaseRPyCConnection(ABC):
         """Get RPyC configuration with sensible defaults."""
         default_config: RPyCConfig = {
             "allow_all_attrs": True,
-            "sync_request_timeout": 30,
+            "sync_request_timeout": 300,  # TODO: hardcoded 5 minutes. move to config
         }
         default_config.update(self.spec.config)
 

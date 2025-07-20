@@ -1,7 +1,8 @@
 import time
 
 from loomiverse.hfq.apps import HFQApp
-from loomiverse.hfq.specs import app_spec, runtime_spec
+from loomiverse.hfq.services import UIService
+from loomiverse.hfq.specs import app_spec, runtime_spec, ui_spec
 
 from loomi.evaluator.context import Context
 from loomidistributed.runtime import Runtime
@@ -13,13 +14,16 @@ setup_logging(".logs", log_level=20)
 def main():
     with HFQApp(app_spec) as app:
         with Runtime(runtime_spec) as runtime:
-            start_time = time.perf_counter()
+            with UIService(ui_spec) as ui_service:
+                start_time = time.perf_counter()
 
-            expr = app.define()
-            expr.evaluate(runtime, Context(expr))
+                expr = app.define()
+                expr.evaluate(runtime, Context(expr))
 
-            elapsed_time = time.perf_counter() - start_time
-            print(f"Total execution time: {elapsed_time:.4f} seconds")
+                elapsed_time = time.perf_counter() - start_time
+                print(f"Total execution time: {elapsed_time:.4f} seconds")
+
+                time.sleep(20)  # Keep the UI service running for some time
 
 
 if __name__ == "__main__":

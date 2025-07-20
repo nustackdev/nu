@@ -55,7 +55,7 @@ class RPyCUnixServer(BaseRPyCServer, SyncService):
 
         config = {
             "allow_all_attrs": True,
-            "sync_request_timeout": 30,
+            "sync_request_timeout": 300,  # TODO: hardcoded 5 minutes. move to config
         }
         config.update(self.spec.config)
 

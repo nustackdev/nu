@@ -34,6 +34,8 @@ class HFQApp(SyncApp):
             candle = self.data_stram.get_candle()
             with self.state.state.at("canldes").with_list_view() as candles:
                 candles.append(candle)
+            print(f"Candle added")
+            time.sleep(0.5)
         print(f"Candles ingested: {i}")
 
     def execute_trade(self, context: Context):
@@ -51,6 +53,8 @@ class HFQApp(SyncApp):
                     "volume": round(1 + random.random() * 0.5, 2),
                 }
                 trades.append(trade)
+            print(f"Trade added")
+            time.sleep(0.5)
         print(f"Trades executed: {i}")
 
     def finish(self, context: Context):
