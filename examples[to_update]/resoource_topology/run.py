@@ -19,9 +19,9 @@ import attrs
 from loomicore.attach import Attach, AttachMany, ListCoordinator
 from loomicore.resource import SyncResource
 from loomicore.spec import ProxySpec, ResourceSpec, Spec
-from loomidistributed.launcher._multiprocessing import MultiprocessingLauncherSpec
-from loomidistributed.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
 from loomistd.kv.lmdb import LMDBStorageSpec
+from loomistd.launcher._multiprocessing import MultiprocessingLauncherSpec
+from loomistd.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
 from loomistd.state import StateService, StateSpec
 from loomix.logging import setup_logging
 

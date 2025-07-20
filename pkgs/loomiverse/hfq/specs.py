@@ -5,10 +5,10 @@ from loomiverse.hfq.services import DataStreamSpec, UIServiceSpec
 
 from loomi import EvaluatorSpec
 from loomicore.spec import ProxySpec
-from loomidistributed.launcher.multiprocessing import MultiprocessingLauncherSpec
-from loomidistributed.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
 from loomistd.codec.msgpack import MsgpackCodecSpec
 from loomistd.kv.lmdb import LMDBStorageSpec
+from loomistd.launcher.multiprocessing import MultiprocessingLauncherSpec
+from loomistd.rpc.rpyc import RPyCUnixClientSpec, RPyCUnixConnectionSpec, RPyCUnixServerSpec
 from loomistd.state import StateSpec
 
 # ======================= #

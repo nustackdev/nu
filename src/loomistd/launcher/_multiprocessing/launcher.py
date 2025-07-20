@@ -53,7 +53,7 @@ class MultiprocessingLauncher(BaseLauncher):
 
     Examples:
         Basic usage with Unix socket:
-        >>> from loomidistributed.rpc.rpyc import RPyCUnixServerSpec
+        >>> from loomistd.rpc.rpyc import RPyCUnixServerSpec
         >>> spec = MultiprocessingLauncherSpec(
         ...     host=RPyCUnixServerSpec(socket_path="/tmp/service.sock")
         ... )
@@ -345,14 +345,14 @@ class MultiprocessingLauncherSpec(ResourceSpec):
 
     Examples:
         Unix socket RPyC server:
-        >>> from loomidistributed.rpc.rpyc import RPyCUnixServerSpec
+        >>> from loomistd.rpc.rpyc import RPyCUnixServerSpec
         >>> spec = MultiprocessingLauncherSpec(
         ...     host=RPyCUnixServerSpec(socket_path="/tmp/service.sock"),
         ...     startup_timeout=10.0
         ... )
 
         TCP RPyC server:
-        >>> from loomidistributed.rpc.rpyc import RPyCTCPServerSpec
+        >>> from loomistd.rpc.rpyc import RPyCTCPServerSpec
         >>> spec = MultiprocessingLauncherSpec(
         ...     host=RPyCTCPServerSpec(host="localhost", port=18861),
         ...     startup_timeout=15.0,

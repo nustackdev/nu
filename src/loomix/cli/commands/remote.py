@@ -5,12 +5,8 @@ from typing import Optional
 
 import rich_click as click
 from frozendict import frozendict
-from loomidistributed.rpc.rpyc import (
-    RPyCTCPServer,
-    RPyCTCPServerSpec,
-    RPyCUnixServer,
-    RPyCUnixServerSpec,
-)
+
+from loomistd.rpc.rpyc import RPyCTCPServer, RPyCTCPServerSpec, RPyCUnixServer, RPyCUnixServerSpec
 
 
 @click.command(name="remote")
