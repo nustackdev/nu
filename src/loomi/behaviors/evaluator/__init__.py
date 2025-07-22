@@ -10,8 +10,7 @@ from .exceptions import (
     ExpressionError,
     FleetError,
 )
-from .expressions import Expression
-from .logger import logger
+from .expressions import ErrorBehavior, Expression
 
 __all__ = [
     "Context",
@@ -24,5 +23,5 @@ __all__ = [
     "ContextError",
     "FleetError",
     "ExecutionTimeoutError",
-    "logger",
+    "ErrorBehavior",
 ]

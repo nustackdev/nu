@@ -264,7 +264,7 @@ class ObservableKVBackend:
         )
 
 
-@attrs.define()
+@attrs.define(frozen=True)
 class ObservableKVTransaction:
     """
     Transaction implementation that combines storage operations and notifications.
@@ -361,7 +361,7 @@ class ObservableKVTransactionContextManager(TransactionContextManagerProtocol):
             self._transaction = None
 
 
-@attrs.define()
+@attrs.define(frozen=True)
 class ObservableKVSnapshot:
     """
     Read-only snapshot implementation that provides consistent view of storage.

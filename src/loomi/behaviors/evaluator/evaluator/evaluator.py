@@ -24,11 +24,8 @@ from .fleet import AttachFleet, FleetCoordinator
 from .logger import logger
 
 if TYPE_CHECKING:
-    from loomi.behaviors.state.protocols.state import (
-        AsyncStateServiceProtocol,
-        SyncStateServiceProtocol,
-    )
-    from loomi.behaviors.state.protocols.tree import AsyncStateProtocol, SyncStateProtocol
+    from loomi.behaviors.state.protocols.state import SyncStateServiceProtocol
+    from loomi.behaviors.state.protocols.tree import SyncStateProtocol
 
 
 class Evaluator(SyncResource):
@@ -43,10 +40,10 @@ class Evaluator(SyncResource):
     """
 
     fleet: FleetCoordinator[Any] = AttachFleet()
-    state_service: "SyncStateServiceProtocol | AsyncStateServiceProtocol" = Attach()
+    state_service: "SyncStateServiceProtocol" = Attach()
 
     @property
-    def state(self) -> "AsyncStateProtocol |SyncStateProtocol":
+    def state(self) -> "SyncStateProtocol":
         return self.state_service.state
 
     def evaluate(
@@ -106,7 +103,7 @@ class Evaluator(SyncResource):
             )
 
             # Handle error according to expression's error behavior
-            if hasattr(expression, "_error_behavior") and expression._error_behavior == "continue":
+            if hasattr(expression, "_error_behavior") and expression.error_behavior == "continue":
                 logger.warning(
                     "Continuing execution despite evaluation error",
                     extra={
@@ -116,17 +113,17 @@ class Evaluator(SyncResource):
                 )
 
                 # Execute on_fail expression if configured
-                if hasattr(expression, "_on_fail") and expression._on_fail is not None:
+                if hasattr(expression, "_on_fail") and expression.on_fail is not None:
                     try:
                         logger.info(
                             "Executing on_fail expression",
                             extra={
                                 "expression_type": expression_name,
                                 "expression_id": expression_id,
-                                "on_fail_type": expression._on_fail.__class__.__name__,
+                                "on_fail_type": expression.on_fail.__class__.__name__,
                             },
                         )
-                        expression._on_fail.evaluate(self, context)
+                        expression.on_fail.evaluate(self, context)
                     except Exception as on_fail_error:
                         logger.error(
                             "on_fail expression execution failed",

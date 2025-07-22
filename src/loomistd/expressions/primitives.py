@@ -72,16 +72,7 @@ class Function(Expression):
 
         self._func = func
 
-        logger.debug(
-            "Initialized Function expression",
-            extra={
-                "function_name": getattr(func, "__name__", "anonymous"),
-                "function_module": getattr(func, "__module__", "unknown"),
-                "expression_id": id(self),
-            },
-        )
-
-    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
+    def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """
         Evaluate the Function expression by executing the wrapped function.
 
@@ -90,15 +81,6 @@ class Function(Expression):
             context: The execution context
         """
         function_name = getattr(self._func, "__name__", "anonymous")
-
-        logger.info(
-            "Evaluating Function expression",
-            extra={
-                "function_name": function_name,
-                "expression_id": id(self),
-                "context_attributes": list(context.attributes.keys()),
-            },
-        )
 
         try:
             # Execute the function using the evaluator's fleet
@@ -190,16 +172,7 @@ class Sequence(Expression):
 
         self.children = all_exprs
 
-        logger.debug(
-            "Initialized Sequence expression",
-            extra={
-                "expression_count": len(self.children),
-                "expression_types": [type(e).__name__ for e in self.children],
-                "expression_id": id(self),
-            },
-        )
-
-    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
+    def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """
         Evaluate all child expressions in sequential order.
 
@@ -210,15 +183,6 @@ class Sequence(Expression):
             evaluator: The evaluator environment
             context: The execution context
         """
-        logger.info(
-            "Starting Sequence expression evaluation",
-            extra={
-                "expression_count": len(self.children),
-                "expression_id": id(self),
-                "expression_types": [type(e).__name__ for e in self.children],
-            },
-        )
-
         completed_count = 0
 
         try:
@@ -366,17 +330,7 @@ class Parallel(Expression):
         self._max_concurrency = max_concurrency
         self.children = all_exprs
 
-        logger.debug(
-            "Initialized Parallel expression",
-            extra={
-                "expression_count": len(self.children),
-                "max_concurrency": max_concurrency,
-                "expression_types": [type(e).__name__ for e in self.children],
-                "expression_id": id(self),
-            },
-        )
-
-    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
+    def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """
         Evaluate all child expressions in parallel with configurable concurrency.
 
