@@ -10,53 +10,51 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any, Generator, Generic
 
 import attrs
 
-from loomistd.kv import StorageServiceProtocol
-from loomistd.observer import ObserverServiceProtocol
-
-from ..types import CallbackFn, PathTuple, Value
-from .protocols import (
-    BackendProtocol,
+from .kv import (
     SnapshotContextManagerProtocol,
     SnapshotProtocol,
-    SubscriptionProtocol,
+    StorageProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,
 )
+from .observer import ObserverProtocol, SubscriptionProtocol
+from .type_vars import ValueT
+from .types import CallbackFn, Key
 
 __all__ = [
-    "ObservableKVBackend",
-    "ObservableKVSnapshot",
-    "ObservableKVSnapshotContextManager",
-    "ObservableKVTransaction",
-    "ObservableKVTransactionContextManager",
+    "ObservableStorage",
+    "ObservableStorageSnapshot",
+    "ObservableStorageSnapshotContextManager",
+    "ObservableStorageTransaction",
+    "ObservableStorageTransactionContextManager",
 ]
 
 
-class ObservableKVBackend:
-    _storage: StorageServiceProtocol[PathTuple, Value, Any, Any]
-    _observer: ObserverServiceProtocol[PathTuple, Any]
+class ObservableStorage(Generic[ValueT]):
+    _storage: StorageProtocol[ValueT]
+    _observer: ObserverProtocol
 
     def __init__(
         self,
-        storage: StorageServiceProtocol[PathTuple, Value, Any, Any],
-        observer: ObserverServiceProtocol[PathTuple, Any],
+        storage: StorageProtocol[ValueT],
+        observer: ObserverProtocol,
     ) -> None:
         """
-        Initialize ObservableKVBackend with storage and observer.
+        Initialize ObservableStorage with storage and observer.
 
         Args:
-            storage: Storage backend
+            storage: Storage ibackend
             observer: Observer backend
         """
         self._storage = storage
         self._observer = observer
 
     @property
-    def storage(self) -> StorageServiceProtocol[PathTuple, Value, Any, Any]:
+    def storage(self) -> StorageProtocol[ValueT]:
         """
         Get storage backend.
 
@@ -66,7 +64,7 @@ class ObservableKVBackend:
         return self._storage
 
     @property
-    def observer(self) -> ObserverServiceProtocol[PathTuple, Any]:
+    def observer(self) -> ObserverProtocol:
         """
         Get observer backend.
 
@@ -75,7 +73,7 @@ class ObservableKVBackend:
         """
         return self._observer
 
-    def get(self, key: PathTuple) -> Value:
+    def get(self, key: Key) -> ValueT:
         """
         Get value at key.
 
@@ -91,7 +89,7 @@ class ObservableKVBackend:
         """
         return self.storage.get(key)
 
-    def set(self, key: PathTuple, value: Value) -> None:
+    def set(self, key: Key, value: ValueT) -> None:
         """
         Set value at key and notify observers.
 
@@ -106,7 +104,7 @@ class ObservableKVBackend:
         self.storage.set(key, value)
         self.observer.notify(key)
 
-    def delete(self, key: PathTuple) -> None:
+    def delete(self, key: Key) -> None:
         """
         Delete value at key and notify observers.
 
@@ -121,7 +119,7 @@ class ObservableKVBackend:
         self.storage.delete(key)
         self.observer.notify(key)
 
-    def exists(self, key: PathTuple) -> bool:
+    def exists(self, key: Key) -> bool:
         """
         Check if key exists.
 
@@ -136,7 +134,7 @@ class ObservableKVBackend:
         """
         return self.storage.exists(key)
 
-    def list_keys(self, prefix: PathTuple, depth: int = 1) -> Generator[PathTuple, None, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
         """
         List all keys under prefix.
 
@@ -156,7 +154,7 @@ class ObservableKVBackend:
 
     def subscribe(
         self,
-        key: PathTuple,
+        key: Key,
         callback: CallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:
@@ -190,7 +188,7 @@ class ObservableKVBackend:
         """
         self.observer.unsubscribe(subscription)
 
-    def begin_transaction(self) -> ObservableKVTransaction:
+    def begin_transaction(self) -> ObservableStorageTransaction:
         """
         Begin a new transaction that handles both storage and notifications.
 
@@ -201,9 +199,9 @@ class ObservableKVBackend:
             TransactionError: If transaction cannot be started
         """
         storage_txn = self.storage.begin_transaction()
-        return ObservableKVTransaction(storage_txn=storage_txn, observer=self.observer)
+        return ObservableStorageTransaction(storage_txn=storage_txn, observer=self.observer)
 
-    def transaction(self) -> ObservableKVTransactionContextManager:
+    def transaction(self) -> ObservableStorageTransactionContextManager:
         """
         Get transaction context manager for combined storage and notification handling.
 
@@ -219,9 +217,9 @@ class ObservableKVBackend:
                 # Auto-rollbacks with no notifications on failure
             ```
         """
-        return ObservableKVTransactionContextManager(self)
+        return ObservableStorageTransactionContextManager(self)
 
-    def begin_snapshot(self) -> ObservableKVSnapshot:
+    def begin_snapshot(self) -> ObservableStorageSnapshot:
         """
         Begin a new read-only snapshot.
 
@@ -232,9 +230,9 @@ class ObservableKVBackend:
             StorageError: If snapshot cannot be started
         """
         storage_snap = self.storage.begin_snapshot()
-        return ObservableKVSnapshot(storage_snap=storage_snap)
+        return ObservableStorageSnapshot(storage_snap=storage_snap)
 
-    def snapshot(self) -> ObservableKVSnapshotContextManager:
+    def snapshot(self) -> ObservableStorageSnapshotContextManager:
         """
         Get snapshot context manager for read-only operations.
 
@@ -249,7 +247,7 @@ class ObservableKVBackend:
                 # Auto-cleanup on exit
             ```
         """
-        return ObservableKVSnapshotContextManager(self)
+        return ObservableStorageSnapshotContextManager(self)
 
     def __hash__(self) -> int:
         return hash((self.storage, self.observer))
@@ -265,36 +263,36 @@ class ObservableKVBackend:
 
 
 @attrs.define(frozen=True)
-class ObservableKVTransaction:
+class ObservableStorageTransaction(Generic[ValueT]):
     """
     Transaction implementation that combines storage operations and notifications.
     Ensures atomicity between storage changes and observer notifications.
     """
 
     storage_txn: TransactionProtocol
-    observer: ObserverServiceProtocol[PathTuple, Any]
+    observer: ObserverProtocol
     # Track modified keys for notification after commit
-    modified_keys: set[PathTuple] = attrs.field(factory=set)
+    modified_keys: set[Key] = attrs.field(factory=set)
 
-    def get(self, key: PathTuple) -> Value:
+    def get(self, key: Key) -> ValueT:
         """Get value within transaction context"""
         return self.storage_txn.get(key)
 
-    def set(self, key: PathTuple, value: Value) -> None:
+    def set(self, key: Key, value: ValueT) -> None:
         """Set value and track key for notification"""
         self.storage_txn.set(key, value)
         self.modified_keys.add(key)
 
-    def delete(self, key: PathTuple) -> None:
+    def delete(self, key: Key) -> None:
         """Delete value and track key for notification"""
         self.storage_txn.delete(key)
         self.modified_keys.add(key)
 
-    def exists(self, key: PathTuple) -> bool:
+    def exists(self, key: Key) -> bool:
         """Check key existence within transaction"""
         return self.storage_txn.exists(key)
 
-    def list_keys(self, prefix: PathTuple, depth: int = 1) -> Generator[PathTuple, None, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
         """List keys with prefix within transaction"""
         for key in self.storage_txn.list_keys(prefix, depth):
             yield key
@@ -321,15 +319,17 @@ class ObservableKVTransaction:
 
 
 @dataclass
-class ObservableKVTransactionContextManager(TransactionContextManagerProtocol):
+class ObservableStorageTransactionContextManager(
+    TransactionContextManagerProtocol, Generic[ValueT]
+):
     """
     Context manager for State transactions that handles both storage and notifications.
     """
 
-    _observable_kv: ObservableKVBackend  # Reference to parent State instance
-    _transaction: ObservableKVTransaction | None = None  # Store the active transaction
+    _observable_kv: ObservableStorage  # Reference to parent State instance
+    _transaction: ObservableStorageTransaction | None = None  # Store the active transaction
 
-    def __enter__(self) -> ObservableKVTransaction:
+    def __enter__(self) -> ObservableStorageTransaction:
         """Begin new transaction with combined storage and notification handling"""
         self._transaction = self._observable_kv.begin_transaction()
         return self._transaction
@@ -362,7 +362,7 @@ class ObservableKVTransactionContextManager(TransactionContextManagerProtocol):
 
 
 @attrs.define(frozen=True)
-class ObservableKVSnapshot:
+class ObservableStorageSnapshot(Generic[ValueT]):
     """
     Read-only snapshot implementation that provides consistent view of storage.
     No observer functionality needed since snapshots are read-only.
@@ -370,15 +370,15 @@ class ObservableKVSnapshot:
 
     storage_snap: SnapshotProtocol
 
-    def get(self, key: PathTuple) -> Value:
+    def get(self, key: Key) -> ValueT:
         """Get value within snapshot context"""
         return self.storage_snap.get(key)
 
-    def exists(self, key: PathTuple) -> bool:
+    def exists(self, key: Key) -> bool:
         """Check key existence within snapshot"""
         return self.storage_snap.exists(key)
 
-    def list_keys(self, prefix: PathTuple, depth: int = 1) -> Generator[PathTuple, None, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
         """List keys with prefix within snapshot"""
         for key in self.storage_snap.list_keys(prefix, depth):
             yield key
@@ -397,15 +397,15 @@ class ObservableKVSnapshot:
 
 
 @dataclass
-class ObservableKVSnapshotContextManager(SnapshotContextManagerProtocol):
+class ObservableStorageSnapshotContextManager(SnapshotContextManagerProtocol, Generic[ValueT]):
     """
     Context manager for read-only snapshots.
     """
 
-    _observable_kv: ObservableKVBackend  # Reference to parent backend instance
-    _snapshot: ObservableKVSnapshot | None = None  # Store the active snapshot
+    _observable_kv: ObservableStorage  # Reference to parent backend instance
+    _snapshot: ObservableStorageSnapshot | None = None  # Store the active snapshot
 
-    def __enter__(self) -> ObservableKVSnapshot:
+    def __enter__(self) -> ObservableStorageSnapshot:
         """Begin new snapshot for read-only operations"""
         self._snapshot = self._observable_kv.begin_snapshot()
         return self._snapshot
@@ -429,6 +429,5 @@ class ObservableKVSnapshotContextManager(SnapshotContextManagerProtocol):
 
 
 if TYPE_CHECKING:
-    _: type[BackendProtocol] = ObservableKVBackend
-    __: type[TransactionProtocol] = ObservableKVTransaction
-    ___: type[SnapshotProtocol] = ObservableKVSnapshot
+    __: type[TransactionProtocol] = ObservableStorageTransaction
+    ___: type[SnapshotProtocol] = ObservableStorageSnapshot

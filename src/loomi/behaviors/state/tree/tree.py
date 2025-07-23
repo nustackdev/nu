@@ -16,7 +16,7 @@ import attrs
 
 from loomistd.kv import StorageKeyError
 
-from .backend import (
+from ..backend import (
     SnapshotContextManagerProtocol,
     SnapshotProtocol,
     SubscriptionProtocol,

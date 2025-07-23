@@ -13,7 +13,7 @@ from typing import ClassVar
 
 import attrs
 
-from ..backend import BackendProtocol
+from ...backend import ObservableStorage
 from ..context import ContextualBase
 from ..context.protocols import ContextType
 from ..path import Path
@@ -37,7 +37,7 @@ class BaseNode(ContextualBase, ABC):
     """
 
     # Backend instance for transaction management
-    backend: BackendProtocol = attrs.field(kw_only=True)
+    backend: ObservableStorage = attrs.field(kw_only=True)
 
     # Current transaction if any
     ctx: ContextType = attrs.field(kw_only=True)  # type: ignore[assignment]

@@ -11,7 +11,7 @@ from functools import cached_property
 
 import attrs
 
-from ..backend import BackendProtocol
+from ...backend import ObservableStorage
 from ..context.protocols import ContextType
 from ..path import Path
 from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, NodeType, Value
@@ -52,7 +52,7 @@ class PrimitiveNode(BaseNode):
     def create(
         cls,
         *,
-        backend: BackendProtocol,
+        backend: ObservableStorage,
         ctx: ContextType,
         path: Path,
     ) -> PrimitiveNode:

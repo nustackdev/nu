@@ -11,7 +11,7 @@ from typing import Any, Optional, Self, TypeGuard
 
 import attrs
 
-from ..backend import BackendProtocol
+from ...backend import ObservableStorage
 from .protocols import ContextType, SnapshotContextProtocol, TransactionContextProtocol
 
 __all__ = ["ContextualBase", "is_contextual"]
@@ -60,7 +60,7 @@ class ContextualBase:
     """
 
     # Backend instance for context management
-    backend: BackendProtocol = attrs.field()
+    backend: ObservableStorage = attrs.field()
 
     # Current context if any (transaction or snapshot)
     ctx: Optional[ContextType] = attrs.field(default=None)

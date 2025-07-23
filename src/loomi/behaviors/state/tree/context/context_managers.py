@@ -9,7 +9,7 @@ from typing import Generator
 
 import attrs
 
-from ..backend import BackendProtocol
+from ...backend import ObservableStorage
 from ..types import ContextualT
 from .protocols import ContextType
 
@@ -21,7 +21,7 @@ __all__ = [
 
 @contextmanager
 def create_context(
-    backend: BackendProtocol, *, snapshot: bool = False
+    backend: ObservableStorage, *, snapshot: bool = False
 ) -> Generator[ContextType, None, None]:
     """
     Create a context manager for the given backend.

@@ -12,7 +12,7 @@ from __future__ import annotations
 from enum import Enum, Flag, auto
 from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 
-from loomi.behaviors.state.protocols.types import SyncCallbackFn
+from ..backend import CallbackFn
 
 if TYPE_CHECKING:
     from .context import ContextualBase
@@ -20,6 +20,24 @@ if TYPE_CHECKING:
     from .tree import Tree
     from .view import BaseView
 
+__all__ = [
+    "TreeT",
+    "ViewT",
+    "NodeT",
+    "ContextualT",
+    "PathComponent",
+    "PathTuple",
+    "PrimitiveValue",
+    "ComplexValue",
+    "Value",
+    "NodeType",
+    "ContainerStructure",
+    "ContainerProtocol",
+    "Empty",
+    "is_empty",
+    "EMPTY",
+    "CallbackFn",
+]
 
 # -------------------------------------------------------------------------
 # Type Variables
@@ -54,7 +72,7 @@ ComplexValue = (
 Value = PrimitiveValue | ComplexValue
 
 # Callback function type for changes.
-CallbackFn = SyncCallbackFn
+# CallbackFn = CallbackFn
 
 
 # -------------------------------------------------------------------------

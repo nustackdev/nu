@@ -54,7 +54,7 @@ import attrs
 
 from loomistd.kv import StorageKeyError
 
-from ..backend import BackendProtocol
+from ...backend import ObservableStorage
 from ..context.protocols import ContextType
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
 from ..path import Path
@@ -278,7 +278,7 @@ class ContainerNode(BaseNode):
     def create(
         cls,
         *,
-        backend: BackendProtocol,
+        backend: ObservableStorage,
         ctx: ContextType,
         structure: ContainerStructure,
         protocol: ContainerProtocol,

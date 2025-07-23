@@ -49,8 +49,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, TypeGuard, Union, 
 if TYPE_CHECKING:
     from loomi.behaviors.evaluator import Context, ErrorBehavior, Evaluator
 
-from loomi.behaviors.state.protocols.kv import SyncSnapshotProtocol
-from loomi.behaviors.state.protocols.tree import EmptyProtocol, SyncStateProtocol
+from loomi.behaviors.state.protocols.kv import SnapshotProtocol
+from loomi.behaviors.state.protocols.tree import EmptyProtocol, StateProtocol
 from loomi.behaviors.state.protocols.type_vars import TreeValueT
 
 from .logger import logger
@@ -58,7 +58,7 @@ from .logger import logger
 # Type definitions
 StatePathType = Union[str, Tuple[str, ...]]
 ValueOrPath = Union[TreeValueT, str, EmptyProtocol]
-StorageContext = Union["SyncSnapshotProtocol", "SyncSnapshotProtocol"]
+StorageContext = Union["SnapshotProtocol", "SnapshotProtocol"]
 
 
 class ExpressionError(Exception):
@@ -263,7 +263,7 @@ class Expression(ABC):
     def _resolve_value(
         self,
         value: ValueOrPath[TreeValueT],
-        state: "SyncStateProtocol",
+        state: "StateProtocol",
         storage_ctx: "StorageContext",
     ) -> TreeValueT:
         """
@@ -346,7 +346,7 @@ class Expression(ABC):
     def _resolve_values(
         self,
         values: Dict[str, ValueOrPath[Any]],
-        state: "SyncStateProtocol",
+        state: "StateProtocol",
         storage_ctx: "StorageContext",
     ) -> Dict[str, Any]:
         """

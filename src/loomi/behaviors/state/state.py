@@ -13,10 +13,10 @@ from loomistd.kv import StorageServiceProtocol
 from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.observer import ObserverServiceProtocol
 from loomistd.observer.in_memory import InMemoryObserverSpec
-from loomistd.tree.backend.observable_kv import ObservableKVBackend
-from loomistd.tree.types import PathTuple, Value
 
-from ._state import State
+from .backend import ObservableStorage
+from .tree import Tree
+from .tree.types import PathTuple, Value
 
 __all__ = [
     "StateService",
@@ -33,22 +33,22 @@ class StateService(SyncService):
     observer: ObserverServiceProtocol[PathTuple, Any] = Attach()
 
     def setup(self):
-        self._state = State(
-            backend=ObservableKVBackend(
+        self._tree = Tree(
+            backend=ObservableStorage(
                 storage=self.storage,
                 observer=self.observer,
             )
         )
 
     @property
-    def state(self) -> State:
+    def tree(self) -> Tree:
         """
         Get the state object.
 
         Returns:
             The state object
         """
-        return self._state
+        return self._tree
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)

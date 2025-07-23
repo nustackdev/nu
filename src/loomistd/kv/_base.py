@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generator, Generic, TypeGuard, final
 
-from loomi.behaviors.state.protocols.kv import SyncSnapshotProtocol, SyncTransactionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
