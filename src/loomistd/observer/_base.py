@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, final
 
+from loomi.behaviors.state.backend import SubscriptionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import ObserverConnectionError, ObserverValidationError
@@ -138,7 +139,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         key: ObserverKeyT,
         callback: ObserverCallbackFn,
         depth: int = 0,
-    ) -> SyncSubscriptionProtocol:
+    ) -> SubscriptionProtocol:
         """
         Subscribe to topic pattern.
 
@@ -164,12 +165,12 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         return subscription
 
     @abstractmethod
-    def _subscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
+    def _subscribe_impl(self, subscription: SubscriptionProtocol) -> None:
         """Implementation-specific subscribe logic."""
         raise NotImplementedError
 
     @final
-    def unsubscribe(self, subscription: SyncSubscriptionProtocol) -> None:
+    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
         """
         Remove subscription.
 
@@ -180,13 +181,13 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         self._unsubscribe_impl(subscription)
 
     @abstractmethod
-    def _unsubscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
+    def _unsubscribe_impl(self, subscription: SubscriptionProtocol) -> None:
         """Implementation-specific unsubscribe logic."""
         raise NotImplementedError
 
 
 @dataclass
-class Subscription(SyncSubscriptionProtocol, Generic[ObserverKeyT]):
+class Subscription(SubscriptionProtocol, Generic[ObserverKeyT]):
     """
     Represents a subscription to a topic pattern.
 

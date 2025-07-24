@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+from loomi.behaviors.state.backend import ObserverProtocol
 from loomistd.codec import CodecProtocol
 
 from ._types import ObserverEncodedKeyT, ObserverKeyT
@@ -11,7 +12,7 @@ __all__ = [
 ]
 
 
-class ObserverServiceProtocol(SyncObservableProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
+class ObserverServiceProtocol(ObserverProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
     """
     Protocol defining state change observation operations.
 

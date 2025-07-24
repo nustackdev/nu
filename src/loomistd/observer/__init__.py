@@ -8,20 +8,14 @@ from ._exceptions import (
     ObserverValidationError,
 )
 from ._protocols import ObserverServiceProtocol
-from ._types import (
-    ObserverCallbackFn,
-    ObserverEncodedKey,
-    ObserverEncodedKeyT,
-    ObserverKey,
-    ObserverKeyT,
-)
+from ._types import Key, ObserverCallbackFn, ObserverEncodedKey, ObserverEncodedKeyT, ObserverKeyT
 
 __all__ = [
     "ObserverServiceProtocol",
     "BaseObserver",
     "Subscription",
     "ObserverCallbackFn",
-    "ObserverKey",
+    "Key",
     "ObserverKeyT",
     "ObserverEncodedKey",
     "ObserverEncodedKeyT",

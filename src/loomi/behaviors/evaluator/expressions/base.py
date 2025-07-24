@@ -49,15 +49,15 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, TypeGuard, Union, 
 if TYPE_CHECKING:
     from loomi.behaviors.evaluator import Context, ErrorBehavior, Evaluator
 
-from loomi.behaviors.state.protocols.kv import SnapshotProtocol
-from loomi.behaviors.state.protocols.tree import EmptyProtocol, StateProtocol
-from loomi.behaviors.state.protocols.type_vars import TreeValueT
+from loomi.behaviors.state.backend import SnapshotProtocol
+from loomi.behaviors.state.tree import Empty, Tree
+from loomi.behaviors.state.tree.types import Value
 
 from .logger import logger
 
 # Type definitions
 StatePathType = Union[str, Tuple[str, ...]]
-ValueOrPath = Union[TreeValueT, str, EmptyProtocol]
+ValueOrPath = Union[Value, str, Empty]
 StorageContext = Union["SnapshotProtocol", "SnapshotProtocol"]
 
 
@@ -262,10 +262,10 @@ class Expression(ABC):
 
     def _resolve_value(
         self,
-        value: ValueOrPath[TreeValueT],
-        state: "StateProtocol",
+        value: ValueOrPath,
+        state: "Tree",
         storage_ctx: "StorageContext",
-    ) -> TreeValueT:
+    ) -> Value:
         """
         Resolve a value that could be either a direct value or a state path.
 
@@ -334,7 +334,7 @@ class Expression(ABC):
                         "value_type": type(value).__name__,
                     },
                 )
-                return cast(TreeValueT, value)
+                return cast(Value, value)
 
         except Exception as e:
             raise ValueResolutionError(
@@ -345,8 +345,8 @@ class Expression(ABC):
 
     def _resolve_values(
         self,
-        values: Dict[str, ValueOrPath[Any]],
-        state: "StateProtocol",
+        values: Dict[str, Value],
+        state: "Tree",
         storage_ctx: "StorageContext",
     ) -> Dict[str, Any]:
         """

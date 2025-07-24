@@ -11,11 +11,7 @@ import attrs
 import filelock
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.behaviors.state.protocols.kv import (
-    SyncSnapshotProtocol,
-    SyncStorageProtocol,
-    SyncTransactionProtocol,
-)
+from loomi.behaviors.state.backend import SnapshotProtocol, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.json import JSONCodecSpec
 
@@ -516,6 +512,6 @@ class FileStorageSpec(ResourceSpec):
 
 
 if TYPE_CHECKING:
-    _: type[SyncStorageProtocol] = FileStorage
-    __: type[SyncTransactionProtocol] = FileStorageTransaction
-    ___: type[SyncSnapshotProtocol] = FileStorageSnapshot
+    _: type[StorageProtocol] = FileStorage
+    __: type[TransactionProtocol] = FileStorageTransaction
+    ___: type[SnapshotProtocol] = FileStorageSnapshot

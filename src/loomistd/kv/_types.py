@@ -2,20 +2,19 @@ from __future__ import annotations
 
 from typing import Literal, TypeVar
 
-from loomi.behaviors.state.protocols.type_vars import StorageValueT
-from loomi.behaviors.state.protocols.types import StorageKey, StorageValue
+from loomi.behaviors.state.backend import Key, Value, ValueT
 
 __all__ = [
-    "StorageKey",
+    "Key",
+    "Value",
+    "ValueT",
     "StorageKeyT",
-    "StorageValue",
-    "StorageValueT",
     "StorageEncodedKeyT",
     "StorageEncodedValueT",
     "StorageMode",
 ]
 
-StorageKeyT = TypeVar("StorageKeyT", bound=StorageKey)
+StorageKeyT = TypeVar("StorageKeyT", bound=Key)
 StorageEncodedKeyT = TypeVar("StorageEncodedKeyT")
 StorageEncodedValueT = TypeVar("StorageEncodedValueT")
 StorageMode = Literal["read", "write"]

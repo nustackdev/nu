@@ -7,11 +7,7 @@ from uuid import uuid4
 import attrs
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.behaviors.state.protocols.kv import (
-    SyncSnapshotProtocol,
-    SyncStorageProtocol,
-    SyncTransactionProtocol,
-)
+from loomi.behaviors.state.backend import SnapshotProtocol, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 
@@ -445,6 +441,6 @@ class InMemoryStorageSpec(ResourceSpec):
 
 
 if TYPE_CHECKING:
-    _: type[SyncStorageProtocol] = InMemoryStorage
-    __: type[SyncTransactionProtocol] = InMemoryStorageTransaction
-    ___: type[SyncSnapshotProtocol] = InMemoryStorageSnapshot
+    _: type[StorageProtocol] = InMemoryStorage
+    __: type[TransactionProtocol] = InMemoryStorageTransaction
+    ___: type[SnapshotProtocol] = InMemoryStorageSnapshot

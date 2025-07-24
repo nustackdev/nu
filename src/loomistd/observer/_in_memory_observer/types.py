@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from .._protocols import ObserverServiceProtocol
-from .._types import ObserverKey
+from .._types import Key
 
 __all__ = [
     "InMemoryObserverKey",
@@ -11,7 +11,7 @@ __all__ = [
     "InMemoryObserverProtocol",
 ]
 
-InMemoryObserverKey = ObserverKey
+InMemoryObserverKey = Key
 InMemoryObserverEncodedKey = str
 
 

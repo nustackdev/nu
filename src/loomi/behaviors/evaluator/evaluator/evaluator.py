@@ -24,8 +24,8 @@ from .fleet import AttachFleet, FleetCoordinator
 from .logger import logger
 
 if TYPE_CHECKING:
-    from loomi.behaviors.state.protocols.state import StateServiceProtocol
-    from loomi.behaviors.state.protocols.tree import StateProtocol
+    from loomi.behaviors.state import StateService
+    from loomi.behaviors.state.tree import Tree
 
 
 class Evaluator(SyncResource):
@@ -40,11 +40,11 @@ class Evaluator(SyncResource):
     """
 
     fleet: FleetCoordinator[Any] = AttachFleet()
-    state_service: "StateServiceProtocol" = Attach()
+    state_service: "StateService" = Attach()
 
     @property
-    def state(self) -> "StateProtocol":
-        return self.state_service.state
+    def state(self) -> "Tree":
+        return self.state_service.tree
 
     def evaluate(
         self,

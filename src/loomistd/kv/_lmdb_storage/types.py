@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 from .._protocols import StorageServiceProtocol
-from .._types import StorageKey
+from .._types import Key
 
 __all__ = [
     "LMDBStorageKey",
@@ -13,7 +13,7 @@ __all__ = [
     "LMDBStorageProtocol",
 ]
 
-LMDBStorageKey = StorageKey
+LMDBStorageKey = Key
 LMDBStorageValue = (
     None
     | bytes

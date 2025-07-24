@@ -11,11 +11,7 @@ import lmdb
 from frozendict import frozendict
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.behaviors.state.protocols.kv import (
-    SyncSnapshotProtocol,
-    SyncStorageProtocol,
-    SyncTransactionProtocol,
-)
+from loomi.behaviors.state.backend import SnapshotProtocol, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
 
@@ -517,6 +513,6 @@ class LMDBStorageSpec(ResourceSpec):
 
 
 if TYPE_CHECKING:
-    _: type[SyncStorageProtocol] = LMDBStorage
-    __: type[SyncTransactionProtocol] = LMDBStorageTransaction
-    ___: type[SyncSnapshotProtocol] = LMDBStorageSnapshot
+    _: type[StorageProtocol] = LMDBStorage
+    __: type[TransactionProtocol] = LMDBStorageTransaction
+    ___: type[SnapshotProtocol] = LMDBStorageSnapshot

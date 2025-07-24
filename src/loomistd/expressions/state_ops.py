@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
-
 from loomi.behaviors.evaluator import Context, Evaluator, Expression
-from loomi.behaviors.evaluator.expressions.base import ValueOrPath
+from loomi.behaviors.state.backend import Value
 
 
 class Set(Expression):
@@ -38,7 +36,7 @@ class Set(Expression):
         ```
     """
 
-    def __init__(self, path: str, value: ValueOrPath[Any], **kwargs):
+    def __init__(self, path: str, value: Value, **kwargs):
         super().__init__(**kwargs)
         self.path = path
         self.value = value

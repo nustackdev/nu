@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from .._protocols import StorageServiceProtocol
-from .._types import StorageKey, StorageValue
+from .._types import Key, Value
 
 __all__ = [
     "InMemoryStorageKey",
@@ -16,10 +16,10 @@ __all__ = [
 ]
 
 
-InMemoryStorageKey = StorageKey
-InMemoryStorageValue = StorageValue
+InMemoryStorageKey = Key
+InMemoryStorageValue = Value
 InMemoryStorageEncodedKey = str
-InMemoryStorageEncodedValue = StorageValue
+InMemoryStorageEncodedValue = Value
 
 
 @dataclass

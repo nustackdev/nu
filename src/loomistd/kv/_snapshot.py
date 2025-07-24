@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from loomi.behaviors.state.protocols.kv import (
-    SyncSnapshotContextManagerProtocol,
-    SyncSnapshotHandlerProtocol,
-    SyncSnapshotProtocol,
+from loomi.behaviors.state.backend import (
+    SnapshotContextManagerProtocol,
+    SnapshotHandlerProtocol,
+    SnapshotProtocol,
 )
 
-from ._types import StorageValueT
+from ._types import ValueT
 
 __all__ = [
     "SnapshotContextManager",
 ]
 
 
-class SnapshotContextManager(SyncSnapshotContextManagerProtocol[StorageValueT]):
-    """Sync context manager for storage snapshots."""
+class SnapshotContextManager(SnapshotContextManagerProtocol[ValueT]):
+    """Context manager for storage snapshots."""
 
-    def __init__(self, handler: SyncSnapshotHandlerProtocol[StorageValueT]):
+    def __init__(self, handler: SnapshotHandlerProtocol[ValueT]):
         """
         Initialize snapshot context manager.
 
@@ -24,9 +24,9 @@ class SnapshotContextManager(SyncSnapshotContextManagerProtocol[StorageValueT]):
             handler: Storage instance to manage snapshots for
         """
         self.handler = handler
-        self.snapshot: SyncSnapshotProtocol[StorageValueT] | None = None
+        self.snapshot: SnapshotProtocol[ValueT] | None = None
 
-    def __enter__(self) -> SyncSnapshotProtocol[StorageValueT]:
+    def __enter__(self) -> SnapshotProtocol[ValueT]:
         """
         Create a new snapshot.
 

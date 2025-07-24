@@ -4,19 +4,15 @@ StateService implementation.
 
 from __future__ import annotations
 
-from typing import Any
-
 import attrs
 
-from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomistd.kv import StorageServiceProtocol
-from loomistd.kv.file_storage import FileStorageSpec
-from loomistd.observer import ObserverServiceProtocol
-from loomistd.observer.in_memory import InMemoryObserverSpec
+from loomicore.attach import Attach
+from loomicore.resource import SyncResource
+from loomicore.spec import ResourceSpec, Spec
 
-from .backend import ObservableStorage
+from .backend import ObservableStorage, ObserverProtocol, StorageProtocol
 from .tree import Tree
-from .tree.types import PathTuple, Value
+from .tree.types import Value
 
 __all__ = [
     "StateService",
@@ -24,13 +20,13 @@ __all__ = [
 ]
 
 
-class StateService(SyncService):
+class StateService(SyncResource):
     """
     StateService implementation.
     """
 
-    storage: StorageServiceProtocol[PathTuple, Value, Any, Any] = Attach()
-    observer: ObserverServiceProtocol[PathTuple, Any] = Attach()
+    storage: StorageProtocol[Value] = Attach()
+    observer: ObserverProtocol = Attach()
 
     def setup(self):
         self._tree = Tree(
@@ -55,5 +51,5 @@ class StateService(SyncService):
 class StateSpec(ResourceSpec):
     name: str = "state"
     factory: type = StateService
-    storage: Spec = attrs.field(factory=lambda: FileStorageSpec())
-    observer: Spec = attrs.field(factory=lambda: InMemoryObserverSpec())
+    storage: Spec
+    observer: Spec

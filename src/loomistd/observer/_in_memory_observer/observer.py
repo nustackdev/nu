@@ -6,10 +6,7 @@ from typing import TYPE_CHECKING, Any
 import attrs
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.behaviors.state.protocols.observer import (
-    SyncObservableProtocol,
-    SyncSubscriptionProtocol,
-)
+from loomi.behaviors.state.backend import ObserverProtocol, SubscriptionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 
@@ -38,7 +35,7 @@ class InMemoryObserver(
         if not hasattr(self, "_data_lock"):
             self._data_lock: threading.Lock = threading.Lock()
 
-        self._subscriptions: dict[InMemoryObserverKey, list[SyncSubscriptionProtocol]] = {}
+        self._subscriptions: dict[InMemoryObserverKey, list[SubscriptionProtocol]] = {}
 
     def _disconnect_impl(self) -> None:
         with self._data_lock:
@@ -76,14 +73,14 @@ class InMemoryObserver(
             except Exception as e:
                 logger.error(f"Callback failed for {topic}: {e}")
 
-    def _subscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
+    def _subscribe_impl(self, subscription: SubscriptionProtocol) -> None:
         topic_pattern = subscription.topic_pattern
         with self._data_lock:
             if topic_pattern not in self._subscriptions:
                 self._subscriptions[topic_pattern] = []
             self._subscriptions[topic_pattern].append(subscription)
 
-    def _unsubscribe_impl(self, subscription: SyncSubscriptionProtocol) -> None:
+    def _unsubscribe_impl(self, subscription: SubscriptionProtocol) -> None:
         with self._data_lock:
             if subscription.topic_pattern in self._subscriptions:
                 subs = self._subscriptions[subscription.topic_pattern]
@@ -102,4 +99,4 @@ class InMemoryObserverSpec(ResourceSpec):
 
 
 if TYPE_CHECKING:
-    _: type[SyncObservableProtocol] = InMemoryObserver
+    _: type[ObserverProtocol] = InMemoryObserver

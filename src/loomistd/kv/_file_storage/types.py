@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from .._protocols import StorageServiceProtocol
-from .._types import StorageKey
+from .._types import Key
 
 __all__ = [
     "FileStorageKey",
@@ -15,7 +15,7 @@ __all__ = [
     "TransactionOperation",
 ]
 
-FileStorageKey = StorageKey
+FileStorageKey = Key
 FileStorageValue = (
     None
     | bytes

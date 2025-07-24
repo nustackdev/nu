@@ -15,13 +15,13 @@ from ._protocols import StorageServiceProtocol
 from ._snapshot import SnapshotContextManager
 from ._transaction import TransactionContextManager
 from ._types import (
+    Key,
     StorageEncodedKeyT,
     StorageEncodedValueT,
-    StorageKey,
     StorageKeyT,
     StorageMode,
-    StorageValue,
-    StorageValueT,
+    Value,
+    ValueT,
 )
 
 __all__ = [
@@ -38,9 +38,9 @@ __all__ = [
     "SnapshotContextManager",
     "TransactionContextManager",
     "StorageKeyT",
-    "StorageValueT",
-    "StorageKey",
-    "StorageValue",
+    "ValueT",
+    "Key",
+    "Value",
     "StorageEncodedKeyT",
     "StorageEncodedValueT",
     "StorageMode",

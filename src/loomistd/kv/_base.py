@@ -3,18 +3,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generator, Generic, TypeGuard, final
 
+from loomi.behaviors.state.backend import SnapshotProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
 from ._snapshot import SnapshotContextManager
 from ._transaction import TransactionContextManager
-from ._types import (
-    StorageEncodedKeyT,
-    StorageEncodedValueT,
-    StorageKeyT,
-    StorageMode,
-    StorageValueT,
-)
+from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageMode, ValueT
 
 __all__ = [
     "BaseStorage",
@@ -22,9 +17,7 @@ __all__ = [
 ]
 
 
-class BaseStorage(
-    ABC, Generic[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
-):
+class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT]):
     """
     Base class for storage implementations.
 
@@ -32,7 +25,7 @@ class BaseStorage(
         ValueT: Type of values supported by this storage
     """
 
-    codec: CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]
+    codec: CodecProtocol[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT]
 
     @property
     def mode(self) -> StorageMode:
@@ -90,23 +83,23 @@ class BaseStorage(
 
     # Core Operations
     @abstractmethod
-    def _get_impl(self, key: StorageKeyT) -> StorageValueT:
+    def _get_impl(self, key: StorageKeyT) -> ValueT:
         """Implementation-specific get logic."""
         ...
 
     @final
-    def get(self, key: StorageKeyT) -> StorageValueT:
+    def get(self, key: StorageKeyT) -> ValueT:
         """Get value by key."""
         self._ensure_connected()
         return self._get_impl(key)
 
     @abstractmethod
-    def _set_impl(self, key: StorageKeyT, value: StorageValueT) -> None:
+    def _set_impl(self, key: StorageKeyT, value: ValueT) -> None:
         """Implementation-specific set logic."""
         ...
 
     @final
-    def set(self, key: StorageKeyT, value: StorageValueT) -> None:
+    def set(self, key: StorageKeyT, value: ValueT) -> None:
         """Set value by key."""
         if self.mode != "write":
             raise StorageOperationError("Cannot set value in read-only mode")
@@ -172,12 +165,12 @@ class BaseStorage(
             yield key
 
     @abstractmethod
-    def _begin_transaction_impl(self) -> SyncTransactionProtocol[StorageValueT]:
+    def _begin_transaction_impl(self) -> TransactionProtocol[ValueT]:
         """Implementation-specific transaction creation."""
         ...
 
     @final
-    def begin_transaction(self) -> SyncTransactionProtocol[StorageValueT]:
+    def begin_transaction(self) -> TransactionProtocol[ValueT]:
         """Begin a new transaction."""
         self._ensure_connected()
         try:
@@ -186,7 +179,7 @@ class BaseStorage(
             raise StorageOperationError(f"Failed to begin transaction: {e}") from e
 
     @final
-    def transaction(self) -> TransactionContextManager[StorageValueT]:
+    def transaction(self) -> TransactionContextManager[ValueT]:
         """
         Create a transaction context manager.
 
@@ -199,15 +192,15 @@ class BaseStorage(
                 # Auto-commits if no exception
                 # Auto-rollbacks if exception occurs
         """
-        return TransactionContextManager[StorageValueT](self)
+        return TransactionContextManager[ValueT](self)
 
     @abstractmethod
-    def _begin_snapshot_impl(self) -> SyncSnapshotProtocol[StorageValueT]:
+    def _begin_snapshot_impl(self) -> SnapshotProtocol[ValueT]:
         """Implementation-specific snapshot creation."""
         ...
 
     @final
-    def begin_snapshot(self) -> SyncSnapshotProtocol[StorageValueT]:
+    def begin_snapshot(self) -> SnapshotProtocol[ValueT]:
         """Begin a new snapshot."""
         self._ensure_connected()
         try:
@@ -216,7 +209,7 @@ class BaseStorage(
             raise StorageOperationError(f"Failed to begin snapshot: {e}") from e
 
     @final
-    def snapshot(self) -> SnapshotContextManager[StorageValueT]:
+    def snapshot(self) -> SnapshotContextManager[ValueT]:
         """
         Create a snapshot context manager.
 
@@ -229,7 +222,7 @@ class BaseStorage(
                 # Read-only operations
                 # Auto-cleanup on exit
         """
-        return SnapshotContextManager[StorageValueT](self)
+        return SnapshotContextManager[ValueT](self)
 
 
 def is_valid_key(value: StorageKeyT) -> TypeGuard[StorageKeyT]:

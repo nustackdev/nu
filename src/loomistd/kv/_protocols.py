@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Protocol
 
+from loomi.behaviors.state.backend import StorageProtocol
 from loomistd.codec import CodecProtocol
 
-from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageValueT
+from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, ValueT
 
 __all__ = [
     "StorageServiceProtocol",
@@ -12,8 +13,8 @@ __all__ = [
 
 
 class StorageServiceProtocol(
-    SyncStorageProtocol[StorageValueT],
-    Protocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT],
+    StorageProtocol[ValueT],
+    Protocol[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT],
 ):
     """
     Protocol defining state storage operations.
@@ -40,7 +41,7 @@ class StorageServiceProtocol(
     @property
     def codec(
         self,
-    ) -> CodecProtocol[StorageKeyT, StorageValueT, StorageEncodedKeyT, StorageEncodedValueT]:
+    ) -> CodecProtocol[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT]:
         """
         Get codec for encoding/decoding keys and values.
 
