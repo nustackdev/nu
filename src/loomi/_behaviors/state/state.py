@@ -1,5 +1,5 @@
 """
-StateService implementation.
+State implementation.
 """
 
 from __future__ import annotations
@@ -15,14 +15,14 @@ from .tree import Tree
 from .tree.types import Value
 
 __all__ = [
-    "StateService",
+    "State",
     "StateSpec",
 ]
 
 
-class StateService(SyncResource):
+class State(SyncResource):
     """
-    StateService implementation.
+    State implementation.
     """
 
     storage: StorageProtocol[Value] = Attach()
@@ -50,6 +50,6 @@ class StateService(SyncResource):
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class StateSpec(ResourceSpec):
     name: str = "state"
-    factory: type = StateService
+    factory: type = State
     storage: Spec
     observer: Spec

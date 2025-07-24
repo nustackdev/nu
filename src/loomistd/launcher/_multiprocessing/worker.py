@@ -16,7 +16,7 @@ import traceback
 from multiprocessing.synchronize import Event as mpEventType
 from typing import Any, cast
 
-from loomicore.spec import ProxySpec, ResourceSpec, Spec
+from loomi import ProxySpec, ResourceSpec, Spec
 
 from .exceptions import MultiprocessingLauncherError
 from .logger import logger

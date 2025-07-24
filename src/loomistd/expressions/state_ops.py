@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from loomi.behaviors.evaluator import Context, Evaluator, Expression
-from loomi.behaviors.state.backend import Value
+from loomi.evaluator import Context, Evaluator, Expression
+from loomi.state import Value
 
 
 class Set(Expression):

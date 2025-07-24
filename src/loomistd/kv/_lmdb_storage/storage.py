@@ -11,7 +11,7 @@ import lmdb
 from frozendict import frozendict
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.behaviors.state.backend import SnapshotProtocol, StorageProtocol, TransactionProtocol
+from loomi.state import SnapshotProtocol, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
 

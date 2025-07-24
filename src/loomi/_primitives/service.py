@@ -39,7 +39,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from loomi.behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
+from loomi._behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
 from loomicore.attach import Attach
 from loomicore.resource import AsyncResource, SyncResource
 

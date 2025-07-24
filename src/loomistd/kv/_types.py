@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, TypeVar
 
-from loomi.behaviors.state.backend import Key, Value, ValueT
+from loomi.state import Key, Value, ValueT
 
 __all__ = [
     "Key",

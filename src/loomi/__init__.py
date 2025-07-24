@@ -2,36 +2,36 @@
 from __future__ import annotations
 
 # Primitives
-from .primitives.app import AppBase, SyncApp, AsyncApp
-from .primitives.service import ServiceBase, SyncService, AsyncService
+from .app import SyncApp, AsyncApp
+from .service import SyncService, AsyncService
 
 # Specifications and Attachments
 from .spec import Spec, ProxySpec, ResourceSpec
-from .attach import Attach, AttachMany, ListCoordinator
+from .attach import Attach, AttachMany
 
-# Evaluator Primitives
-from .behaviors.evaluator import (
-    Expression,
-    Context,
-    Evaluator,
-    EvaluatorSpec,
-)
+# Bheaviors
+from .state import State, StateSpec, Tree
+from .evaluator import Evaluator, EvaluatorSpec, Expression, Context
+
 
 __all__ = [
-    "AsyncApp",
+    # Primitives
     "SyncApp",
-    "AsyncService",
+    "AsyncApp",
     "SyncService",
+    "AsyncService",
+    # Specifications and Attachments
     "Spec",
     "ProxySpec",
     "ResourceSpec",
     "Attach",
     "AttachMany",
-    "ListCoordinator",
-    "AppBase",
-    "ServiceBase",
-    "Expression",
-    "Context",
+    # Behaviors
+    "State",
+    "StateSpec",
+    "Tree",
     "Evaluator",
     "EvaluatorSpec",
+    "Expression",
+    "Context",
 ]

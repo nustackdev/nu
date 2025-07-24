@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 import attrs
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.behaviors.state.backend import ObserverProtocol, SubscriptionProtocol
+from loomi.state import ObserverProtocol, SubscriptionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 

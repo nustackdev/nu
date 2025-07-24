@@ -45,8 +45,8 @@ from loomicore.attach import Attach
 from loomicore.resource import AsyncResource, SyncResource
 
 if TYPE_CHECKING:
-    from loomi.behaviors.evaluator import Context, Evaluator, Expression
-    from loomi.behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
+    from loomi._behaviors.evaluator import Context, Evaluator, Expression
+    from loomi._behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
 
 __all__ = [
     "AppBase",

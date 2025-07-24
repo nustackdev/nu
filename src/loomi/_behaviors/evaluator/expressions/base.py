@@ -47,11 +47,11 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, TypeGuard, Union, cast, final
 
 if TYPE_CHECKING:
-    from loomi.behaviors.evaluator import Context, ErrorBehavior, Evaluator
+    from loomi._behaviors.evaluator import Context, ErrorBehavior, Evaluator
 
-from loomi.behaviors.state.backend import SnapshotProtocol
-from loomi.behaviors.state.tree import Empty, Tree
-from loomi.behaviors.state.tree.types import Value
+from loomi._behaviors.state.backend import SnapshotProtocol
+from loomi._behaviors.state.tree import Empty, Tree
+from loomi._behaviors.state.tree.types import Value
 
 from .logger import logger
 

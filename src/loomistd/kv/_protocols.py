@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from loomi.behaviors.state.backend import StorageProtocol
+from loomi.state import StorageProtocol
 from loomistd.codec import CodecProtocol
 
 from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, ValueT
