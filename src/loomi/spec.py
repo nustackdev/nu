@@ -155,7 +155,7 @@ class SpecBuilder:
 
         return tuple(results)
 
-    def with_value(self, *args, **kwargs) -> "SpecBuilder":
+    def with_value_at(self, *args, **kwargs) -> "SpecBuilder":
         """
         Delegate to existing Spec.with_value() method.
 

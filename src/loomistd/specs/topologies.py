@@ -21,21 +21,20 @@ from .rpc import get_rpyc_specs
 from .state import get_lmdb_state_spec
 
 __all__ = [
-    "get_enterprise_topology",
+    "get_enterprise_d_topology",
     "get_defiant_topology",
     "get_voyager_topology",
     "get_cerritos_topology",
 ]
 
 
-def get_enterprise_topology(
+def get_enterprise_d_topology(
     app_spec: AppSpec,
     *,
     worker_count: int = 4,
     storage_path: str = ".db",
     socket_base: str = "/tmp/enterprise",
     app_name: str = "enterprise_app",
-    **kwargs,
 ) -> Spec:
     """
     Create an Enterprise NCC-1701-D topology for production deployments.
@@ -91,8 +90,8 @@ def get_enterprise_topology(
 
     # 2. Create RPC specs for state service
     state_client, state_server = get_rpyc_specs(
-        "unix",
-        f"{socket_base}_state.sock",
+        rpc_type="unix",
+        address=f"{socket_base}_state.sock",
         client_name=f"{app_name}_state_client",
         server_name=f"{app_name}_state_server",
     )
@@ -101,7 +100,13 @@ def get_enterprise_topology(
     proxied_state = (
         SpecBuilder(base_state)
         .as_proxy(state_client)
-        .with_launcher(get_launcher_spec(host=state_server, name=f"{app_name}_state_launcher"))
+        .with_launcher(
+            get_launcher_spec(
+                host=state_server,
+                launcher_type="multiprocessing",
+                name=f"{app_name}_state_launcher",
+            )
+        )
         .build()
     )
 
@@ -115,8 +120,8 @@ def get_enterprise_topology(
 
     # 6. Create worker fleet with replication
     worker_client, worker_server = get_rpyc_specs(
-        "unix",
-        f"{socket_base}_worker.sock",
+        rpc_type="unix",
+        address=f"{socket_base}_worker.sock",
         client_name="worker_client",
         server_name="worker_server",
     )
@@ -124,9 +129,13 @@ def get_enterprise_topology(
     worker_fleet = (
         SpecBuilder(base_worker)
         .as_proxy(worker_client)
-        .with_launcher(get_launcher_spec(host=worker_server, name="worker_launcher"))
+        .with_launcher(
+            get_launcher_spec(
+                host=worker_server, launcher_type="multiprocessing", name="worker_launcher"
+            )
+        )
         .replicate(
-            worker_count,
+            count=worker_count,
             paths={
                 ("client_spec", "connection", "socket_path"): f"{socket_base}_worker_{{}}.sock",
                 ("launcher_spec", "host", "socket_path"): f"{socket_base}_worker_{{}}.sock",
