@@ -19,11 +19,14 @@ from .base import BaseSpec
 __all__ = [
     "Spec",
     "WrapperSpec",
+    "ResourceSpec",
+    "ProxySpec",
 ]
 
 
 WrappedSpecT = TypeVar("WrappedSpecT", bound="Spec")
 WrapperConfigT = TypeVar("WrapperConfigT", bound="Spec")
+LauncherConfigT = TypeVar("LauncherConfigT", bound="Spec | None")
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
@@ -57,7 +60,7 @@ class WrapperSpec(Spec):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class ProxySpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
+class ProxySpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT, LauncherConfigT]):
     """
     Specification for proxy resource access.
 
@@ -107,4 +110,4 @@ class ProxySpec(WrapperSpec, Generic[WrappedSpecT, WrapperConfigT]):
     client_spec: WrapperConfigT
 
     # Launcher configuration for auto-spawning server/host (optional)
-    launcher_spec: ResourceSpec | None = None
+    launcher_spec: LauncherConfigT = attrs.field(default=None)

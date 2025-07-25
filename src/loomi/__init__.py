@@ -6,7 +6,7 @@ from .app import SyncApp, AsyncApp
 from .service import SyncService, AsyncService
 
 # Specifications and Attachments
-from .spec import Spec, ProxySpec, ResourceSpec
+from .spec import Spec, ProxySpec, ResourceSpec, AppSpec, SpecBuilder
 from .attach import Attach, AttachMany
 
 # Bheaviors
@@ -24,6 +24,8 @@ __all__ = [
     "Spec",
     "ProxySpec",
     "ResourceSpec",
+    "AppSpec",
+    "SpecBuilder",
     "Attach",
     "AttachMany",
     # Behaviors
