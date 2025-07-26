@@ -43,7 +43,9 @@ class PathOperand(Operand):
         """
         self.path = path.copy()  # Defensive copy
 
-    def resolve(self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def resolve(
+        self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         """
         Resolve path to its value in the tree.
 
@@ -114,7 +116,9 @@ class LiteralOperand(Operand):
         """
         self.value = value
 
-    def resolve(self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def resolve(
+        self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         """
         Resolve to the literal value.
 
@@ -151,7 +155,9 @@ class QueryOperand(Operand):
         """
         self.query = query
 
-    def resolve(self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def resolve(
+        self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         """
         Resolve by evaluating the nested query.
 
@@ -217,7 +223,9 @@ class FunctionOperand(Operand):
             "reversed": lambda x: list(reversed(x)),
         }
 
-    def resolve(self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def resolve(
+        self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         """
         Resolve by applying function to operand value.
 

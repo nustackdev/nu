@@ -22,7 +22,7 @@ __all__ = [
 class QueryError(Exception):
     """Base exception class for all query-related errors."""
 
-    def __init__(self, message: str, query: str = None, path: list[str] = None):
+    def __init__(self, message: str, query: str | None = None, path: list[str] | None = None):
         super().__init__(message)
         self.query = query
         self.path = path
@@ -40,9 +40,9 @@ class QueryEvaluationError(QueryError):
     def __init__(
         self,
         message: str,
-        query: str = None,
-        path: list[str] = None,
-        original_error: Exception = None,
+        query: str | None = None,
+        path: list[str] | None = None,
+        original_error: Exception | None = None,
     ):
         super().__init__(message, query, path)
         self.original_error = original_error
@@ -51,7 +51,7 @@ class QueryEvaluationError(QueryError):
 class PathNotFoundError(QueryError):
     """Raised when a query path does not exist in the tree."""
 
-    def __init__(self, path: list[str], message: str = None):
+    def __init__(self, path: list[str], message: str | None = None):
         if message is None:
             path_str = ".".join(path) if path else "root"
             message = f"Path not found: {path_str}"
@@ -61,7 +61,7 @@ class PathNotFoundError(QueryError):
 class OperationNotSupportedError(QueryError):
     """Raised when an operation is not supported on the given operand types."""
 
-    def __init__(self, operation: str, left_type: type, right_type: type = None):
+    def __init__(self, operation: str, left_type: type, right_type: type | None = None):
         if right_type is None:
             message = f"Unary operation '{operation}' not supported on type {left_type.__name__}"
         else:
@@ -75,7 +75,9 @@ class OperationNotSupportedError(QueryError):
 class OperandResolutionError(QueryError):
     """Raised when an operand cannot be resolved to a value."""
 
-    def __init__(self, operand_type: str, message: str = None, original_error: Exception = None):
+    def __init__(
+        self, operand_type: str, message: str | None = None, original_error: Exception | None = None
+    ):
         if message is None:
             message = f"Failed to resolve {operand_type} operand"
         super().__init__(message)

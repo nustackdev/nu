@@ -30,7 +30,9 @@ class QueryEvaluator:
     and executing operations without any optimization.
     """
 
-    def evaluate_query(self, query: QueryProtocol, tree: Tree, ctx: Any = None) -> QueryResult:
+    def evaluate_query(
+        self, query: QueryProtocol, tree: Tree, ctx: Any | None = None
+    ) -> QueryResult:
         """
         Evaluate a query against tree data.
 
@@ -50,7 +52,7 @@ class QueryEvaluator:
         except Exception as e:
             raise QueryEvaluationError("Query evaluation failed", original_error=e) from e
 
-    def resolve_operand(self, operand: OperandProtocol, tree: Tree, ctx: Any = None) -> Any:
+    def resolve_operand(self, operand: OperandProtocol, tree: Tree, ctx: Any | None = None) -> Any:
         """
         Resolve an operand to its value.
 
@@ -74,7 +76,9 @@ class QueryEvaluator:
                 "unknown", "Operand resolution failed", original_error=e
             ) from e
 
-    def execute_operation(self, operation: OperationProtocol, left: Any, right: Any = None) -> Any:
+    def execute_operation(
+        self, operation: OperationProtocol, left: Any, right: Any | None = None
+    ) -> Any:
         """
         Execute an operation with operand values.
 
@@ -125,7 +129,9 @@ class CachingQueryEvaluator(QueryEvaluator):
             "operation_misses": 0,
         }
 
-    def evaluate_query(self, query: QueryProtocol, tree: Tree, ctx: Any = None) -> QueryResult:
+    def evaluate_query(
+        self, query: QueryProtocol, tree: Tree, ctx: Any | None = None
+    ) -> QueryResult:
         """
         Evaluate query with caching.
 
@@ -167,7 +173,7 @@ class CachingQueryEvaluator(QueryEvaluator):
             # Don't cache exceptions
             raise
 
-    def resolve_operand(self, operand: OperandProtocol, tree: Tree, ctx: Any = None) -> Any:
+    def resolve_operand(self, operand: OperandProtocol, tree: Tree, ctx: Any | None = None) -> Any:
         """
         Resolve operand with caching.
 
@@ -209,7 +215,9 @@ class CachingQueryEvaluator(QueryEvaluator):
             # Don't cache exceptions
             raise
 
-    def execute_operation(self, operation: OperationProtocol, left: Any, right: Any = None) -> Any:
+    def execute_operation(
+        self, operation: OperationProtocol, left: Any, right: Any | None = None
+    ) -> Any:
         """
         Execute operation with caching.
 

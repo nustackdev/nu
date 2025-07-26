@@ -35,7 +35,7 @@ class LazyQuery:
     All operations are captured lazily and only executed when evaluate() is called.
     """
 
-    def __init__(self, path: PathList = None):
+    def __init__(self, path: PathList | None = None):
         """
         Initialize lazy query.
 

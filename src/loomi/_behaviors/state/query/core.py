@@ -86,7 +86,9 @@ class Operation(ABC):
         return False
 
     @abstractmethod
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         """
         Execute operation with the given operand values.
 
@@ -124,7 +126,9 @@ class Operand(ABC):
     """
 
     @abstractmethod
-    def resolve(self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def resolve(
+        self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         """
         Resolve this operand to its actual value.
 
@@ -167,7 +171,10 @@ class LazyOperation(Query):
     """
 
     def __init__(
-        self, left: OperandProtocol, operation: OperationProtocol, right: OperandProtocol = None
+        self,
+        left: OperandProtocol,
+        operation: OperationProtocol,
+        right: OperandProtocol | None = None,
     ):
         """
         Initialize lazy operation.

@@ -69,7 +69,9 @@ class GreaterThanOperation(ComparisonOperation):
     def name(self) -> str:
         return "gt"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("gt", type(left))
         return self._safe_compare(left, right, operator.gt)
@@ -82,7 +84,9 @@ class LessThanOperation(ComparisonOperation):
     def name(self) -> str:
         return "lt"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("lt", type(left))
         return self._safe_compare(left, right, operator.lt)
@@ -95,7 +99,9 @@ class GreaterEqualOperation(ComparisonOperation):
     def name(self) -> str:
         return "ge"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("ge", type(left))
         return self._safe_compare(left, right, operator.ge)
@@ -108,7 +114,9 @@ class LessEqualOperation(ComparisonOperation):
     def name(self) -> str:
         return "le"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("le", type(left))
         return self._safe_compare(left, right, operator.le)
@@ -121,7 +129,9 @@ class EqualOperation(ComparisonOperation):
     def name(self) -> str:
         return "eq"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("eq", type(left))
         return left == right
@@ -134,7 +144,9 @@ class NotEqualOperation(ComparisonOperation):
     def name(self) -> str:
         return "ne"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("ne", type(left))
         return left != right
@@ -158,7 +170,9 @@ class AndOperation(LogicalOperation):
     def name(self) -> str:
         return "and"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("and", type(left))
         return bool(left) and bool(right)
@@ -171,7 +185,9 @@ class OrOperation(LogicalOperation):
     def name(self) -> str:
         return "or"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("or", type(left))
         return bool(left) or bool(right)
@@ -188,7 +204,9 @@ class NotOperation(LogicalOperation):
     def is_unary(self) -> bool:
         return True
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         return not bool(left)
 
 
@@ -215,7 +233,9 @@ class AddOperation(ArithmeticOperation):
     def name(self) -> str:
         return "add"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         if right is None:
             raise OperationNotSupportedError("add", type(left))
         return self._safe_arithmetic(left, right, operator.add)
@@ -228,7 +248,9 @@ class SubtractOperation(ArithmeticOperation):
     def name(self) -> str:
         return "sub"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         if right is None:
             raise OperationNotSupportedError("sub", type(left))
         return self._safe_arithmetic(left, right, operator.sub)
@@ -241,7 +263,9 @@ class MultiplyOperation(ArithmeticOperation):
     def name(self) -> str:
         return "mul"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         if right is None:
             raise OperationNotSupportedError("mul", type(left))
         return self._safe_arithmetic(left, right, operator.mul)
@@ -254,7 +278,9 @@ class DivideOperation(ArithmeticOperation):
     def name(self) -> str:
         return "truediv"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> Any:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
         if right is None:
             raise OperationNotSupportedError("truediv", type(left))
         if right == 0:
@@ -280,7 +306,9 @@ class ContainsOperation(StringOperation):
     def name(self) -> str:
         return "contains"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("contains", type(left))
         try:
@@ -296,7 +324,9 @@ class StartsWithOperation(StringOperation):
     def name(self) -> str:
         return "startswith"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("startswith", type(left))
         try:
@@ -312,7 +342,9 @@ class EndsWithOperation(StringOperation):
     def name(self) -> str:
         return "endswith"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         if right is None:
             raise OperationNotSupportedError("endswith", type(left))
         try:
@@ -341,7 +373,9 @@ class LengthOperation(UnaryOperation):
     def name(self) -> str:
         return "length"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> int:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> int:
         try:
             return len(left)
         except TypeError as e:
@@ -355,7 +389,9 @@ class ExistsOperation(UnaryOperation):
     def name(self) -> str:
         return "exists"
 
-    def execute(self, left: Any, right: Any = None, evaluator: EvaluatorProtocol = None) -> bool:
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> bool:
         return left is not None
 
 
