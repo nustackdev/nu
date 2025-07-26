@@ -11,7 +11,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from ..tree.types import EMPTY
 from .exceptions import OperandResolutionError, PathNotFoundError
 from .types import EvaluatorProtocol, Path, QueryProtocol
 
@@ -106,40 +105,67 @@ class PathOperand(Operand):
             OperandResolutionError: If resolution fails
         """
         try:
-            current_tree = tree
+            if not self.path:
+                raise PathNotFoundError(self.path)
 
-            # Navigate through path components
-            for component in self.path:
-                current_tree = current_tree.at(component)
+            # Phase 1: Navigate tree with leading string components
+            i = 0
+            while i < len(self.path) - 1 and isinstance(self.path[i], str):
+                i += 1
 
-            # Extract value based on tree type
-            if current_tree.is_primitive():
-                value = current_tree.get_primitive()
-                if value is EMPTY:
-                    raise PathNotFoundError(self.path)
-                return value
+            current_tree = tree.at(*self.path[:i], ctx=ctx) if i > 0 else tree  # type: ignore
+            current_view = None
 
-            elif current_tree.is_mapping():
-                dict_view = current_tree.dict_view(ctx=ctx)
-                return dict(dict_view.items())
+            # Phase 2: Navigate through views for remaining components
+            while i < len(self.path) - 1:
+                component = self.path[i]
+                next_component = self.path[i + 1]
 
-            elif current_tree.is_indexed():
-                list_view = current_tree.list_view(ctx=ctx)
-                return list(list_view.values())
+                if current_view is None:
+                    current_view = self._create_view_for_next(current_tree, next_component, ctx)
 
-            else:
-                # Path exists but no data
-                return None
+                current_view = self._navigate_view(current_view, component, next_component)
+                i += 1
+
+            # Phase 3: Extract final value
+            last_component = self.path[-1]
+            if current_view is None:
+                current_view = self._create_view_for_component(current_tree, last_component, ctx)
+
+            return current_view.get(last_component)  # type: ignore
 
         except Exception as e:
             if isinstance(e, PathNotFoundError):
                 raise
             raise OperandResolutionError(
-                "path", f"Failed to resolve path {'.'.join(self.path)}", original_error=e
+                "path",
+                f"Failed to resolve path {'.'.join(str(c) for c in self.path)}",
+                original_error=e,
             ) from e
 
+    def _create_view_for_next(self, tree: Tree, next_component: str | int, ctx: Any):
+        """Create view based on what the next component needs."""
+        if isinstance(next_component, str):
+            return tree.dict_view(ctx=ctx)
+        elif isinstance(next_component, int):
+            return tree.list_view(ctx=ctx)
+
+    def _create_view_for_component(self, tree: Tree, component: str | int, ctx: Any):
+        """Create view based on the component type."""
+        if isinstance(component, str):
+            return tree.dict_view(ctx=ctx)
+        elif isinstance(component, int):
+            return tree.list_view(ctx=ctx)
+
+    def _navigate_view(self, view, component: str | int, next_component: str | int):
+        """Navigate view to next container based on next component type."""
+        if isinstance(next_component, str):
+            return view.dict_view(component)
+        elif isinstance(next_component, int):
+            return view.list_view(component)
+
     def __repr__(self) -> str:
-        path_str = ".".join(self.path) if self.path else "root"
+        path_str = ".".join([str(p) for p in self.path]) if self.path else "root"
         return f"PathOperand({path_str})"
 
 

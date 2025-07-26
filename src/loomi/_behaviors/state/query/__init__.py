@@ -63,7 +63,6 @@ from .types import (
     OperandProtocol,
     OperationProtocol,
     Path,
-    PathComponent,
     QueryProtocol,
     QueryResult,
 )
@@ -120,7 +119,6 @@ __all__ = [
     "OperandProtocol",
     "EvaluatorProtocol",
     "QueryResult",
-    "PathComponent",
     "Path",
     # Exceptions
     "QueryError",

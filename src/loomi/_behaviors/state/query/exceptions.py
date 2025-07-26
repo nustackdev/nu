@@ -55,7 +55,7 @@ class PathNotFoundError(QueryError):
 
     def __init__(self, path: Path, message: str | None = None):
         if message is None:
-            path_str = ".".join(path) if path else "root"
+            path_str = ".".join([str(p) for p in path]) if path else "root"
             message = f"Path not found: {path_str}"
         super().__init__(message, path=path)
 

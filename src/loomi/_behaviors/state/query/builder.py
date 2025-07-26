@@ -73,12 +73,7 @@ class QueryBuilder:
         Returns:
             New QueryBuilder with extended path
         """
-        if isinstance(key, str):
-            return QueryBuilder(self._path + [key])
-        elif isinstance(key, int):
-            return QueryBuilder(self._path + [str(key)])
-        else:
-            raise TypeError(f"Query indices must be strings or integers, not {type(key).__name__}")
+        return QueryBuilder(self._path + [key])
 
     # =========================================================================
     # COMPARISON OPERATORS
@@ -289,7 +284,7 @@ class QueryBuilder:
         """String representation for debugging."""
         if not self._path:
             return "QueryBuilder(root)"
-        path_str = ".".join(self._path)
+        path_str = ".".join([str(p) for p in self._path])
         return f"QueryBuilder({path_str})"
 
     def __bool__(self) -> bool:
