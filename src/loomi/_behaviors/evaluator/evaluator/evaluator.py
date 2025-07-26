@@ -19,7 +19,7 @@ from loomicore.spec import ResourceSpec, Spec
 
 from ..context import Context
 from ..exceptions import EvaluationError, FleetError
-from ..expressions import Expression
+from ..expression import Expression
 from .fleet import AttachFleet, FleetCoordinator
 from .logger import logger
 

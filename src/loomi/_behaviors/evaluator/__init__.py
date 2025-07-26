@@ -10,7 +10,7 @@ from .exceptions import (
     ExpressionError,
     FleetError,
 )
-from .expressions import ErrorBehavior, Expression
+from .expression import ErrorBehavior, Expression
 
 __all__ = [
     "Context",

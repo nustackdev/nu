@@ -9,7 +9,7 @@ from loomi._behaviors.evaluator.exceptions import (
     ExecutionTimeoutError,
     FleetError,
 )
-from loomi._behaviors.evaluator.expressions import (
+from loomi._behaviors.evaluator.expression import (
     ErrorBehavior,
     Expression,
     ExpressionError,

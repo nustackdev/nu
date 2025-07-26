@@ -17,7 +17,7 @@ from .exceptions import ContextError
 from .logger import logger
 
 if TYPE_CHECKING:
-    from .expressions import Expression
+    from .expression import Expression
 
 
 @attrs.define(frozen=True, slots=True)
