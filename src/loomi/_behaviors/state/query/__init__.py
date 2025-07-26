@@ -20,18 +20,8 @@ Examples:
 
 from __future__ import annotations
 
-# Core interfaces and base classes
-from .core import LazyOperation, Operand, Operation, Query, ValueQuery
-
-# Concrete implementations
-from .evaluator import (
-    CachingQueryEvaluator,
-    QueryEvaluator,
-    get_default_evaluator,
-    set_default_evaluator,
-)
-
-# Exceptions
+from .builder import QueryBuilder
+from .evaluator import QueryEvaluator, get_default_evaluator, set_default_evaluator
 from .exceptions import (
     CacheError,
     InvalidOperationError,
@@ -42,9 +32,8 @@ from .exceptions import (
     QueryEvaluationError,
     QuerySyntaxError,
 )
-from .lazy import LazyQuery
-from .operands import FunctionOperand, LiteralOperand, PathOperand, QueryOperand
-from .operations import (  # Comparison operations; Logical operations; Arithmetic operations; String operations; Unary operations; Registry functions
+from .operands import FunctionOperand, LiteralOperand, Operand, PathOperand, QueryOperand
+from .operations import (
     OPERATIONS,
     AddOperation,
     AndOperation,
@@ -61,20 +50,20 @@ from .operations import (  # Comparison operations; Logical operations; Arithmet
     MultiplyOperation,
     NotEqualOperation,
     NotOperation,
+    Operation,
     OrOperation,
     StartsWithOperation,
     SubtractOperation,
     get_operation,
     register_operation,
 )
-
-# Type definitions
+from .queries import OperationQuery, PathQuery, Query
 from .types import (
     EvaluatorProtocol,
     OperandProtocol,
     OperationProtocol,
+    Path,
     PathComponent,
-    PathList,
     QueryProtocol,
     QueryResult,
 )
@@ -84,13 +73,13 @@ __all__ = [
     "Query",
     "Operation",
     "Operand",
-    "LazyOperation",
-    "ValueQuery",
+    # Query implementations
+    "PathQuery",
+    "OperationQuery",
     # Main user interface
-    "LazyQuery",
+    "QueryBuilder",
     # Evaluators
     "QueryEvaluator",
-    "CachingQueryEvaluator",
     "get_default_evaluator",
     "set_default_evaluator",
     # Operand types
@@ -132,7 +121,7 @@ __all__ = [
     "EvaluatorProtocol",
     "QueryResult",
     "PathComponent",
-    "PathList",
+    "Path",
     # Exceptions
     "QueryError",
     "QuerySyntaxError",

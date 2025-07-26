@@ -19,7 +19,7 @@ __all__ = [
     "EvaluatorProtocol",
     "QueryResult",
     "PathComponent",
-    "PathList",
+    "Path",
     "OperationT",
     "OperandT",
 ]
@@ -30,7 +30,7 @@ OperandT = TypeVar("OperandT", bound="OperandProtocol")
 
 # Basic types
 PathComponent = str
-PathList = list[PathComponent]
+Path = list[PathComponent]
 QueryResult = Any
 
 

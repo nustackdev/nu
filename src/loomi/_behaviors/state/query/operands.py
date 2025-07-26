@@ -8,12 +8,12 @@ and nested queries.
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 from ..tree.types import EMPTY
-from .core import Operand
 from .exceptions import OperandResolutionError, PathNotFoundError
-from .types import EvaluatorProtocol, PathList, QueryProtocol
+from .types import EvaluatorProtocol, Path, QueryProtocol
 
 if TYPE_CHECKING:
     from ..tree import Tree
@@ -26,6 +26,50 @@ __all__ = [
 ]
 
 
+class Operand(ABC):
+    """
+    Base class for all operand implementations.
+
+    Operands represent values that can be resolved in the context
+    of a tree and evaluation environment.
+    """
+
+    @abstractmethod
+    def resolve(
+        self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
+        """
+        Resolve this operand to its actual value.
+
+        Args:
+            tree: Tree instance to resolve against
+            ctx: Optional context (transaction/snapshot)
+            evaluator: Evaluator instance for nested resolution
+
+        Returns:
+            Resolved value
+
+        Raises:
+            OperandResolutionError: If operand cannot be resolved
+        """
+        pass
+
+    def __eq__(self, other: object) -> bool:
+        """Default equality based on class and attributes."""
+        if not isinstance(other, self.__class__):
+            return False
+        return self.__dict__ == other.__dict__
+
+    def __hash__(self) -> int:
+        """Default hash based on class and hashable attributes."""
+        hashable_attrs = tuple(
+            v
+            for v in self.__dict__.values()
+            if isinstance(v, (str, int, float, bool, tuple, type(None)))
+        )
+        return hash((self.__class__, hashable_attrs))
+
+
 class PathOperand(Operand):
     """
     Operand representing a path in the tree.
@@ -34,14 +78,14 @@ class PathOperand(Operand):
     to the value at the specified path.
     """
 
-    def __init__(self, path: PathList):
+    def __init__(self, path: Path):
         """
         Initialize path operand.
 
         Args:
             path: List of path components to navigate
         """
-        self.path = path.copy()  # Defensive copy
+        self.path = path.copy()
 
     def resolve(
         self, tree: Tree, ctx: Any = None, evaluator: EvaluatorProtocol | None = None

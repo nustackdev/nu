@@ -8,9 +8,9 @@ logical, arithmetic, and string operations that can be used in queries.
 from __future__ import annotations
 
 import operator
+from abc import ABC, abstractmethod
 from typing import Any, Callable
 
-from .core import Operation
 from .exceptions import OperationNotSupportedError
 from .types import EvaluatorProtocol
 
@@ -43,6 +43,62 @@ __all__ = [
     "get_operation",
     "register_operation",
 ]
+
+
+# =============================================================================
+# BASE OPERATION
+# =============================================================================
+
+
+class Operation(ABC):
+    """
+    Base class for all operation implementations.
+
+    Operations define how to combine operands to produce results.
+    They are stateless and can be reused across multiple queries.
+    """
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Unique name for this operation."""
+        pass
+
+    @property
+    def is_unary(self) -> bool:
+        """Whether this operation takes a single operand."""
+        return False
+
+    @abstractmethod
+    def execute(
+        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
+    ) -> Any:
+        """
+        Execute operation with the given operand values.
+
+        Args:
+            left: Left operand value
+            right: Right operand value (None for unary operations)
+            evaluator: Evaluator instance for nested operations
+
+        Returns:
+            Operation result
+
+        Raises:
+            OperationNotSupportedError: If operation not supported on operand types
+        """
+        pass
+
+    def __eq__(self, other: object) -> bool:
+        """Operations are equal if they have the same class."""
+        return isinstance(other, self.__class__)
+
+    def __hash__(self) -> int:
+        """Hash based on operation class."""
+        return hash(self.__class__)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
 
 
 # =============================================================================

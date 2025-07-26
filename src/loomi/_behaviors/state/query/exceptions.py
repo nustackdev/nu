@@ -7,6 +7,8 @@ error handling and debugging information.
 
 from __future__ import annotations
 
+from .types import Path
+
 __all__ = [
     "QueryError",
     "QuerySyntaxError",
@@ -22,7 +24,7 @@ __all__ = [
 class QueryError(Exception):
     """Base exception class for all query-related errors."""
 
-    def __init__(self, message: str, query: str | None = None, path: list[str] | None = None):
+    def __init__(self, message: str, query: str | None = None, path: Path | None = None):
         super().__init__(message)
         self.query = query
         self.path = path
@@ -41,7 +43,7 @@ class QueryEvaluationError(QueryError):
         self,
         message: str,
         query: str | None = None,
-        path: list[str] | None = None,
+        path: Path | None = None,
         original_error: Exception | None = None,
     ):
         super().__init__(message, query, path)
@@ -51,7 +53,7 @@ class QueryEvaluationError(QueryError):
 class PathNotFoundError(QueryError):
     """Raised when a query path does not exist in the tree."""
 
-    def __init__(self, path: list[str], message: str | None = None):
+    def __init__(self, path: Path, message: str | None = None):
         if message is None:
             path_str = ".".join(path) if path else "root"
             message = f"Path not found: {path_str}"
