@@ -43,7 +43,7 @@ class Set(Expression):
 
     def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """Set value at state path using unified infrastructure."""
-        path_components = self._parse_state_path(self.path)
+        path_components = self.path.split(".")
 
         with evaluator.state.at(*path_components[:-1]).with_dict_view() as view:
             view.set(path_components[-1], self.value)
@@ -88,7 +88,7 @@ class Print(Expression):
     def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """Print value using unified infrastructure."""
         # Use snapshot context for read-only operation
-        path_components = self._parse_state_path(self.path)
+        path_components = self.path.split(".")
 
         with evaluator.state.at(*path_components[:-1]).with_dict_view(snapshot=True) as view:
             # Resolve value (could be direct value or state path)

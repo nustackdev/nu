@@ -44,12 +44,13 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, TypeGuard, Union, cast, final
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, cast, final
 
 if TYPE_CHECKING:
     from loomi._behaviors.evaluator import Context, ErrorBehavior, Evaluator
 
 from loomi._behaviors.state.backend import SnapshotProtocol
+from loomi._behaviors.state.query import Query, QueryBuilder
 from loomi._behaviors.state.tree import Empty, Tree
 from loomi._behaviors.state.tree.types import Value
 
@@ -57,7 +58,7 @@ from .logger import logger
 
 # Type definitions
 StatePathType = Union[str, Tuple[str, ...]]
-ValueOrPath = Union[Value, str, Empty]
+ExpressionValue = Union[Value, Empty, QueryBuilder, Query]
 StorageContext = Union["SnapshotProtocol", "SnapshotProtocol"]
 
 
@@ -262,7 +263,7 @@ class Expression(ABC):
 
     def _resolve_value(
         self,
-        value: ValueOrPath,
+        value: ExpressionValue,
         state: "Tree",
         storage_ctx: "StorageContext",
     ) -> Value:
@@ -297,33 +298,8 @@ class Expression(ABC):
             ```
         """
         try:
-            if self._is_state_path(value):
-                # Parse and resolve state path
-                path_components = self._parse_state_path(value)
-
-                logger.debug(
-                    f"Resolving state path in {self._expression_name}",
-                    extra={
-                        "expression_id": self._expression_id,
-                        "path": value,
-                        "path_components": path_components,
-                        "storage_context_type": type(storage_ctx).__name__,
-                        "storage_context_id": getattr(storage_ctx, "id", "unknown"),
-                    },
-                )
-
-                # Access state using storage context via lower-level interface
-                resolved_value = state.at(*path_components).dict_view(ctx=storage_ctx).extract()
-
-                logger.debug(
-                    f"Successfully resolved state path in {self._expression_name}",
-                    extra={
-                        "expression_id": self._expression_id,
-                        "path": value,
-                        "resolved_type": type(resolved_value).__name__,
-                    },
-                )
-
+            if isinstance(value, (Query, QueryBuilder)):
+                resolved_value = value.evaluate(state, ctx=storage_ctx)
                 return resolved_value
             else:
                 # Direct value - return as-is
@@ -407,87 +383,6 @@ class Expression(ABC):
         )
 
         return resolved
-
-    def _is_state_path(self, value: Any) -> TypeGuard[str]:
-        """
-        Determine if a value should be treated as a state path.
-
-        Uses TypeGuard to provide type safety - when this returns True,
-        TypeScript/mypy knows the value is definitely a string.
-
-        Current heuristic:
-        - Must be a string
-        - Must contain dots (indicating path structure)
-        - Must not be a pure number string
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value should be treated as state path
-
-        Examples:
-            ```python
-            self._is_state_path("market.price")        # True
-            self._is_state_path("config.timeouts.api") # True
-            self._is_state_path("42")                  # False
-            self._is_state_path("42.5")                # False
-            self._is_state_path(42)                    # False
-            self._is_state_path("simple")              # False
-            ```
-        """
-        if not isinstance(value, str):
-            return False
-
-        # Simple string without dots is not a path
-        if "." not in value:
-            return False
-
-        # Pure numeric strings (including decimals) are not paths
-        try:
-            float(value)
-            return False
-        except ValueError:
-            pass
-
-        return True
-
-    def _parse_state_path(self, path: str) -> Tuple[str, ...]:
-        """
-        Parse a state path string into path components.
-
-        Validates the path format and returns clean components for state navigation.
-        Handles edge cases like empty components and whitespace.
-
-        Args:
-            path: Path string like "market.feeds.price"
-
-        Returns:
-            Tuple of path components
-
-        Raises:
-            ValueError: If path format is invalid
-
-        Examples:
-            ```python
-            self._parse_state_path("market.price")         # ("market", "price")
-            self._parse_state_path("users.alice.profile")  # ("users", "alice", "profile")
-            self._parse_state_path("config")               # ("config",)
-            ```
-        """
-        if not isinstance(path, str):
-            raise ValueError(f"State path must be string, got {type(path).__name__}")
-
-        if not path.strip():
-            raise ValueError("State path cannot be empty")
-
-        # Split on dots and filter empty components
-        components = tuple(component.strip() for component in path.split(".") if component.strip())
-
-        if not components:
-            raise ValueError(f"Invalid state path format: '{path}'")
-
-        return components
 
     # =========================================================================
     # LOGGING INFRASTRUCTURE
