@@ -45,7 +45,7 @@ class PathResolver:
     navigation patterns efficiently.
     """
 
-    def resolve(self, path: "Path", tree: "Tree", ctx: Any = None) -> PathResult:
+    def resolve(self, path: "Path", tree: "Tree", ctx: Any) -> PathResult:
         """
         Resolve path to its value in the tree.
 
@@ -62,10 +62,10 @@ class PathResolver:
             PathEvaluationError: If resolution fails
         """
         try:
-            if not path:
-                raise PathNotFoundError("Empty path cannot be resolved")
-
             components = path.components
+
+            if not components:
+                raise PathNotFoundError("Empty path cannot be resolved")
 
             # Phase 1: Navigate tree with leading string components
             i = 0

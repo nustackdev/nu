@@ -38,6 +38,7 @@ from .operations import (
 
 if TYPE_CHECKING:
     from ..path import Path
+    from ..tree import Tree
     from .operations import Operation
 
 __all__ = [
@@ -457,3 +458,36 @@ class Query:
             Hash value for use in sets/dicts
         """
         return hash(self.operations)
+
+    # =========================================================================
+    # EVALUATION
+    # =========================================================================
+
+    def evaluate(self, tree: "Tree", ctx: Any = None) -> Any:
+        """
+        Evaluate the query against a tree.
+
+        This resolves the operation tree and returns the final result.
+        If ctx is provided, it will be used for data access.
+
+        Args:
+            tree: Tree instance to evaluate against
+            ctx: Optional context (transaction/snapshot) for data operations
+
+        Returns:
+            Result of evaluating the query's operation tree
+
+        Raises:
+            QueryEvaluationError: If evaluation fails at any point
+
+        Example:
+            ```python
+            result = query.evaluate(tree)
+            with tree.transaction() as tx:
+                result = query.evaluate(tree, ctx=tx)
+            ```
+        """
+        from .evaluator import QueryEvaluator
+
+        evaluator = QueryEvaluator()
+        return evaluator.evaluate(self, tree, ctx=ctx)

@@ -8,12 +8,16 @@ without any query operations or logic.
 
 from __future__ import annotations
 
-from typing import Union
+from typing import TYPE_CHECKING, Any, Union
 
 import attrs
 
 from .exceptions import PathConstructionError
 from .types import PathComponent
+
+if TYPE_CHECKING:
+    from ..query import Query
+    from ..tree import Tree
 
 __all__ = [
     "Path",
@@ -249,7 +253,7 @@ class Path:
         if not self.is_descendant_of(ancestor):
             return None
 
-        relative_components = self.components[len(ancestor._components) :]
+        relative_components = self.components[len(ancestor.components) :]
         return Path(relative_components)
 
     # =========================================================================
@@ -288,20 +292,6 @@ class Path:
         """
         return f"Path({list(self.components)})"
 
-    def __eq__(self, other: object) -> bool:
-        """
-        Check equality with another path.
-
-        Args:
-            other: Object to compare with
-
-        Returns:
-            True if paths have same components and tree reference
-        """
-        if not isinstance(other, Path):
-            return False
-        return self.components == other._components
-
     def __hash__(self) -> int:
         """
         Hash value for path (enables use in sets/dicts).
@@ -311,45 +301,81 @@ class Path:
         """
         return hash((self.components))
 
-    def __bool__(self) -> bool:
+    # =========================================================================
+    # PATH RESOLUTION
+    # =========================================================================
+
+    def resolve(self, tree: "Tree", ctx: Any = None) -> Any:
         """
-        Boolean evaluation - always True.
+        Resolve path to its value in the tree.
+
+        This method uses the PathResolver to navigate through the tree
+        structure and retrieve the actual value at the specified path.
+        It serves as the bridge between the path and tree data.
+
+        Args:
+            tree: Tree instance to resolve path against
+            ctx: Optional context for path resolution
 
         Returns:
-            Always True (paths are always valid objects)
+            Value at the path location in the tree
 
-        Note:
-            Use .exists() to check if path exists in tree data
-        """
-        return self.components is not None and len(self.components) > 0
+        Raises:
+            PathNotFoundError: If path cannot be resolved
+            PathEvaluationError: If resolution fails
 
-    def __len__(self) -> int:
+        Example:
+            ```python
+            # Resolve path to actual value
+            email = path.resolve(tree)
+
+            # Resolve with transaction context
+            with tree.transaction() as tx:
+                value = path.resolve(tree, ctx=tx)
+            ```
         """
-        Get number of components in path.
+        from ..path.resolver import PathResolver
+
+        return PathResolver().resolve(self, tree, ctx)
+
+    # =========================================================================
+    # QUERY INTERFACE
+    # =========================================================================
+
+    def to_query(self) -> "Query":
+        """
+        Convert path to a Query object.
+
+        This allows using the path in query operations while maintaining
+        the pure path semantics.
 
         Returns:
-            Number of path components
+            Query object representing this path
 
         Example:
             ```python
             path = tree.P.users.alice.email
-            len(path)  # 3
+            query = path.to_query()
+            # Now can use query operations on this path
             ```
         """
-        return len(self.components)
+        from ..query import Query
 
-    def __iter__(self):
+        return Query.create(self)
+
+    def Q(self) -> "Query":
         """
-        Iterate over path components.
+        Alias for to_query() method.
 
-        Yields:
-            Path components in order
+        Provides a more concise way to convert path to Query.
+
+        Returns:
+            Query object representing this path
 
         Example:
             ```python
             path = tree.P.users.alice.email
-            for component in path:
-                print(component)  # "users", "alice", "email"
+            query = path.Q()
             ```
         """
-        return iter(self.components)
+        return self.to_query()

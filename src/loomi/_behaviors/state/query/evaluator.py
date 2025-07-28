@@ -38,7 +38,7 @@ class QueryEvaluator:
     - Provide consistent error handling and context management
     """
 
-    def evaluate(self, query: Query, tree: "Tree", ctx: Any = None) -> Any:
+    def evaluate(self, query: Query, tree: "Tree", ctx: Any) -> Any:
         """
         Evaluate a complete query against tree data.
 
@@ -77,7 +77,7 @@ class QueryEvaluator:
                 f"Failed to evaluate query: {query}", query=query, original_error=e
             ) from e
 
-    def resolve_operand(self, operand: Operation | Any, tree: "Tree", ctx: Any = None) -> Any:
+    def resolve_operand(self, operand: Operation | Any, tree: "Tree", ctx: Any) -> Any:
         """
         Resolve an operand to its actual value.
 
@@ -119,7 +119,7 @@ class QueryEvaluator:
                 f"Failed to resolve operand: {operand}", original_error=e
             ) from e
 
-    def resolve_path(self, path: Path, tree: "Tree", ctx: Any = None) -> Any:
+    def resolve_path(self, path: Path, tree: "Tree", ctx: Any) -> Any:
         """
         Resolve a path to its value in the tree.
 

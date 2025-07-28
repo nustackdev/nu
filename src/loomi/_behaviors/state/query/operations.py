@@ -71,7 +71,7 @@ class Operation(ABC):
     """
 
     @abstractmethod
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """
         Calculate and return the result of this operation.
 
@@ -96,7 +96,7 @@ class UnaryOperation(Operation, ABC):
 
     operand: Operation | Any = attrs.field()
 
-    def _resolve_operand(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def _resolve_operand(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Resolve the operand to its value."""
         return evaluator.resolve_operand(self.operand, tree, ctx)
 
@@ -112,9 +112,7 @@ class BinaryOperation(Operation, ABC):
     left: Operation | Any = attrs.field()
     right: Operation | Any = attrs.field()
 
-    def _resolve_operands(
-        self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None
-    ) -> tuple[Any, Any]:
+    def _resolve_operands(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> tuple[Any, Any]:
         """Resolve both operands to their values."""
         left_val = evaluator.resolve_operand(self.left, tree, ctx)
         right_val = evaluator.resolve_operand(self.right, tree, ctx)
@@ -134,7 +132,7 @@ class TernaryOperation(Operation, ABC):
     third: Operation | Any = attrs.field()
 
     def _resolve_operands(
-        self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None
+        self, evaluator: QueryEvaluator, tree: Tree, ctx: Any
     ) -> tuple[Any, Any, Any]:
         """Resolve all three operands to their values."""
         first_val = evaluator.resolve_operand(self.first, tree, ctx)
@@ -159,7 +157,7 @@ class ResolveVarOperation(UnaryOperation):
 
     operand: Path = attrs.field()
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """
         Resolve the path to its value in the tree.
 
@@ -186,7 +184,7 @@ class ResolveVarOperation(UnaryOperation):
 class AddOperation(BinaryOperation):
     """Addition operation: left + right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Perform addition of two operands."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -201,7 +199,7 @@ class AddOperation(BinaryOperation):
 class SubtractOperation(BinaryOperation):
     """Subtraction operation: left - right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Perform subtraction of two operands."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -216,7 +214,7 @@ class SubtractOperation(BinaryOperation):
 class MultiplyOperation(BinaryOperation):
     """Multiplication operation: left * right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Perform multiplication of two operands."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -231,7 +229,7 @@ class MultiplyOperation(BinaryOperation):
 class DivideOperation(BinaryOperation):
     """Division operation: left / right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Perform division of two operands."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -253,7 +251,7 @@ class DivideOperation(BinaryOperation):
 class GreaterThanOperation(BinaryOperation):
     """Greater than operation: left > right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform greater than comparison."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -267,7 +265,7 @@ class GreaterThanOperation(BinaryOperation):
 class LessThanOperation(BinaryOperation):
     """Less than operation: left < right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform less than comparison."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -280,7 +278,7 @@ class LessThanOperation(BinaryOperation):
 class GreaterEqualOperation(BinaryOperation):
     """Greater than or equal operation: left >= right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform greater than or equal comparison."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -293,7 +291,7 @@ class GreaterEqualOperation(BinaryOperation):
 class LessEqualOperation(BinaryOperation):
     """Less than or equal operation: left <= right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform less than or equal comparison."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -306,7 +304,7 @@ class LessEqualOperation(BinaryOperation):
 class EqualOperation(BinaryOperation):
     """Equality operation: left == right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform equality comparison."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         return left_val == right_val
@@ -316,7 +314,7 @@ class EqualOperation(BinaryOperation):
 class NotEqualOperation(BinaryOperation):
     """Not equal operation: left != right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform not equal comparison."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         return left_val != right_val
@@ -331,7 +329,7 @@ class NotEqualOperation(BinaryOperation):
 class AndOperation(BinaryOperation):
     """Logical AND operation: left and right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform logical AND with short-circuit evaluation."""
         left_val = evaluator.resolve_operand(self.left, tree, ctx)
         if not left_val:
@@ -344,7 +342,7 @@ class AndOperation(BinaryOperation):
 class OrOperation(BinaryOperation):
     """Logical OR operation: left or right"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform logical OR with short-circuit evaluation."""
         left_val = evaluator.resolve_operand(self.left, tree, ctx)
         if left_val:
@@ -357,7 +355,7 @@ class OrOperation(BinaryOperation):
 class NotOperation(UnaryOperation):
     """Logical NOT operation: not operand"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Perform logical NOT."""
         operand_val = self._resolve_operand(evaluator, tree, ctx)
         return not bool(operand_val)
@@ -372,7 +370,7 @@ class NotOperation(UnaryOperation):
 class ContainsOperation(BinaryOperation):
     """Contains operation: right in left"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Check if right operand is contained in left operand."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -385,7 +383,7 @@ class ContainsOperation(BinaryOperation):
 class StartsWithOperation(BinaryOperation):
     """String starts with operation: left.startswith(right)"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Check if left operand starts with right operand."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -398,7 +396,7 @@ class StartsWithOperation(BinaryOperation):
 class EndsWithOperation(BinaryOperation):
     """String ends with operation: left.endswith(right)"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
         """Check if left operand ends with right operand."""
         left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
@@ -416,7 +414,7 @@ class EndsWithOperation(BinaryOperation):
 class LengthOperation(UnaryOperation):
     """Length operation: len(operand)"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> int:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> int:
         """Get length of operand."""
         operand_val = self._resolve_operand(evaluator, tree, ctx)
         try:
@@ -429,7 +427,7 @@ class LengthOperation(UnaryOperation):
 class MaxOperation(UnaryOperation):
     """Maximum operation: max(operand)"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Get maximum value from operand."""
         operand_val = self._resolve_operand(evaluator, tree, ctx)
         try:
@@ -442,7 +440,7 @@ class MaxOperation(UnaryOperation):
 class MinOperation(UnaryOperation):
     """Minimum operation: min(operand)"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Get minimum value from operand."""
         operand_val = self._resolve_operand(evaluator, tree, ctx)
         try:
@@ -455,7 +453,7 @@ class MinOperation(UnaryOperation):
 class SumOperation(UnaryOperation):
     """Sum operation: sum(operand)"""
 
-    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
         """Get sum of operand values."""
         operand_val = self._resolve_operand(evaluator, tree, ctx)
         try:
