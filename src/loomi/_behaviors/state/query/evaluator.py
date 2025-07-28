@@ -1,18 +1,21 @@
 """
 Query evaluation engine.
 
-This module provides the core evaluation engine that executes
-queries against tree data, handling caching and optimization.
+This module provides the QueryEvaluator class that coordinates the evaluation
+of query operation trees against tree data. It handles operand resolution
+and delegates actual computation to the operations.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from .exceptions import OperandResolutionError, QueryEvaluationError
-from .types import OperandProtocol, OperationProtocol, QueryProtocol, QueryResult
+from .exceptions import QueryEvaluationError
+from .operations import Operation
+from .query import Query
 
 if TYPE_CHECKING:
+    from ..path import Path
     from ..tree import Tree
 
 __all__ = [
@@ -22,103 +25,133 @@ __all__ = [
 
 class QueryEvaluator:
     """
-    Basic query evaluator without caching.
+    Evaluates query operation trees against tree data.
 
-    This evaluator handles the core logic of resolving operands
-    and executing operations without any optimization.
+    The QueryEvaluator serves as the coordinator between queries and tree data.
+    It handles the evaluation of query operation trees by resolving operands
+    and delegating calculations to the operations themselves.
+
+    Key responsibilities:
+    - Evaluate complete queries by starting from the root operation
+    - Resolve operands (nested operations or literal values)
+    - Handle path resolution using PathResolver
+    - Provide consistent error handling and context management
     """
 
-    def evaluate_query(
-        self, query: QueryProtocol, tree: Tree, ctx: Any | None = None
-    ) -> QueryResult:
+    def evaluate(self, query: Query, tree: "Tree", ctx: Any = None) -> Any:
         """
-        Evaluate a query against tree data.
+        Evaluate a complete query against tree data.
+
+        This is the main entry point for query evaluation. It takes a query
+        object and evaluates its operation tree against the provided tree data.
 
         Args:
-            query: Query to evaluate
-            tree: Tree instance
-            ctx: Optional context
+            query: Query object containing the operation tree to evaluate
+            tree: Tree instance providing data access
+            ctx: Optional context (transaction/snapshot) for data operations
 
         Returns:
-            Query result
+            Result of evaluating the query's operation tree
 
         Raises:
-            QueryEvaluationError: If evaluation fails
+            QueryEvaluationError: If evaluation fails at any point
+
+        Example:
+            ```python
+            evaluator = QueryEvaluator()
+
+            # Evaluate simple query
+            result = evaluator.evaluate(age_query, tree)
+
+            # Evaluate with context
+            with tree.transaction() as tx:
+                result = evaluator.evaluate(complex_query, tree, ctx=tx)
+            ```
         """
         try:
-            return query.evaluate(tree, ctx)
+            return query.operations.calc(self, tree, ctx)
         except Exception as e:
-            raise QueryEvaluationError("Query evaluation failed", original_error=e) from e
-
-    def resolve_operand(self, operand: OperandProtocol, tree: Tree, ctx: Any | None = None) -> Any:
-        """
-        Resolve an operand to its value.
-
-        Args:
-            operand: Operand to resolve
-            tree: Tree instance
-            ctx: Optional context
-
-        Returns:
-            Resolved value
-
-        Raises:
-            OperandResolutionError: If resolution fails
-        """
-        try:
-            return operand.resolve(tree, ctx, self)
-        except Exception as e:
-            if isinstance(e, OperandResolutionError):
+            if isinstance(e, QueryEvaluationError):
                 raise
-            raise OperandResolutionError(
-                "unknown", "Operand resolution failed", original_error=e
+            raise QueryEvaluationError(
+                f"Failed to evaluate query: {query}", query=query, original_error=e
             ) from e
 
-    def execute_operation(
-        self, operation: OperationProtocol, left: Any, right: Any | None = None
-    ) -> Any:
+    def resolve_operand(self, operand: Operation | Any, tree: "Tree", ctx: Any = None) -> Any:
         """
-        Execute an operation with operand values.
+        Resolve an operand to its actual value.
+
+        Operands can be either nested operations (which need to be calculated)
+        or literal values (which are returned as-is). This method handles
+        the distinction and ensures proper evaluation.
 
         Args:
-            operation: Operation to execute
-            left: Left operand value
-            right: Right operand value (None for unary)
+            operand: Operand to resolve - either an Operation or literal value
+            tree: Tree instance for data access
+            ctx: Optional context for operations
 
         Returns:
-            Operation result
+            Resolved value of the operand
 
         Raises:
-            QueryEvaluationError: If operation execution fails
+            QueryEvaluationError: If operand resolution fails
+
+        Example:
+            ```python
+            # Resolve nested operation
+            result = evaluator.resolve_operand(add_operation, tree)
+
+            # Resolve literal value
+            result = evaluator.resolve_operand(42, tree)  # Returns 42
+            ```
         """
         try:
-            return operation.execute(left, right, self)
+            if isinstance(operand, Operation):
+                # Operand is a nested operation - calculate it
+                return operand.calc(self, tree, ctx)
+            else:
+                # Operand is a literal value - return as-is
+                return operand
         except Exception as e:
+            if isinstance(e, QueryEvaluationError):
+                raise
             raise QueryEvaluationError(
-                f"Operation {operation.name} execution failed", original_error=e
+                f"Failed to resolve operand: {operand}", original_error=e
             ) from e
 
+    def resolve_path(self, path: Path, tree: "Tree", ctx: Any = None) -> Any:
+        """
+        Resolve a path to its value in the tree.
 
-# Default global evaluator instance
-_default_evaluator = QueryEvaluator()
+        This method uses the PathResolver to navigate through the tree
+        structure and retrieve the actual value at the specified path.
+        It serves as the bridge between the query system and path resolution.
 
+        Args:
+            path: Path object to resolve
+            tree: Tree instance to resolve path against
+            ctx: Optional context for path resolution
 
-def get_default_evaluator() -> QueryEvaluator:
-    """
-    Get the default global evaluator instance.
+        Returns:
+            Value at the path location in the tree
 
-    Returns:
-        Default evaluator instance
-    """
-    return _default_evaluator
+        Raises:
+            QueryEvaluationError: If path resolution fails
 
+        Example:
+            ```python
+            # Resolve path to actual value
+            email = evaluator.resolve_path(email_path, tree)
 
-def set_default_evaluator(evaluator: QueryEvaluator) -> None:
-    """
-    Set the default global evaluator instance.
+            # Resolve with transaction context
+            with tree.transaction() as tx:
+                value = evaluator.resolve_path(config_path, tree, ctx=tx)
+            ```
+        """
+        try:
+            from ..path import PathResolver
 
-    Args:
-        evaluator: New default evaluator
-    """
-    global _default_evaluator
-    _default_evaluator = evaluator
+            resolver = PathResolver()
+            return resolver.resolve(path, tree, ctx)
+        except Exception as e:
+            raise QueryEvaluationError(f"Failed to resolve path: {path}", original_error=e) from e

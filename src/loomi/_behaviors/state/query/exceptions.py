@@ -2,102 +2,61 @@
 Exception hierarchy for the query system.
 
 This module defines query-specific exceptions that provide clear
-error handling and debugging information.
+error handling and debugging information for query operations.
 """
 
 from __future__ import annotations
 
-from .types import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .query import Query
 
 __all__ = [
     "QueryError",
-    "QuerySyntaxError",
     "QueryEvaluationError",
-    "PathNotFoundError",
-    "OperationNotSupportedError",
-    "OperandResolutionError",
-    "InvalidOperationError",
-    "CacheError",
+    "QueryOperationError",
+    "QuerySyntaxError",
 ]
 
 
 class QueryError(Exception):
     """Base exception class for all query-related errors."""
 
-    def __init__(self, message: str, query: str | None = None, path: Path | None = None):
+    def __init__(self, message: str, query: Query | None = None):
         super().__init__(message)
         self.query = query
-        self.path = path
-
-
-class QuerySyntaxError(QueryError):
-    """Raised when query syntax is invalid."""
-
-    pass
 
 
 class QueryEvaluationError(QueryError):
-    """Raised when error occurs during query evaluation."""
+    """Raised when query evaluation fails against tree data."""
+
+    def __init__(
+        self, message: str, query: Query | None = None, original_error: Exception | None = None
+    ):
+        super().__init__(message, query)
+        self.original_error = original_error
+
+
+class QueryOperationError(QueryError):
+    """Raised when a query operation fails during execution."""
 
     def __init__(
         self,
         message: str,
-        query: str | None = None,
-        path: Path | None = None,
+        operation: str | None = None,
+        operands: tuple | None = None,
         original_error: Exception | None = None,
     ):
-        super().__init__(message, query, path)
+        super().__init__(message)
+        self.operation = operation
+        self.operands = operands
         self.original_error = original_error
 
 
-class PathNotFoundError(QueryError):
-    """Raised when a query path does not exist in the tree."""
+class QuerySyntaxError(QueryError):
+    """Raised when query syntax or structure is invalid."""
 
-    def __init__(self, path: Path, message: str | None = None):
-        if message is None:
-            path_str = ".".join([str(p) for p in path]) if path else "root"
-            message = f"Path not found: {path_str}"
-        super().__init__(message, path=path)
-
-
-class OperationNotSupportedError(QueryError):
-    """Raised when an operation is not supported on the given operand types."""
-
-    def __init__(self, operation: str, left_type: type, right_type: type | None = None):
-        if right_type is None:
-            message = f"Unary operation '{operation}' not supported on type {left_type.__name__}"
-        else:
-            message = f"Binary operation '{operation}' not supported on types {left_type.__name__} and {right_type.__name__}"
-        super().__init__(message)
-        self.operation = operation
-        self.left_type = left_type
-        self.right_type = right_type
-
-
-class OperandResolutionError(QueryError):
-    """Raised when an operand cannot be resolved to a value."""
-
-    def __init__(
-        self, operand_type: str, message: str | None = None, original_error: Exception | None = None
-    ):
-        if message is None:
-            message = f"Failed to resolve {operand_type} operand"
-        super().__init__(message)
-        self.operand_type = operand_type
-        self.original_error = original_error
-
-
-class InvalidOperationError(QueryError):
-    """Raised when operation configuration is invalid."""
-
-    def __init__(self, operation: str, reason: str):
-        message = f"Invalid operation '{operation}': {reason}"
-        super().__init__(message)
-        self.operation = operation
-        self.reason = reason
-
-
-class CacheError(QueryError):
-    """Raised when cache operations fail."""
-
-    pass
+    def __init__(self, message: str, query: Query | None = None, details: str | None = None):
+        super().__init__(message, query)
+        self.details = details

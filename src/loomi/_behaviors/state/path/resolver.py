@@ -61,11 +61,11 @@ class PathResolver:
             PathNotFoundError: If path doesn't exist
             PathEvaluationError: If resolution fails
         """
-        components = path.components
-
         try:
-            if not components:
+            if not path:
                 raise PathNotFoundError("Empty path cannot be resolved")
+
+            components = path.components
 
             # Phase 1: Navigate tree with leading string components
             i = 0

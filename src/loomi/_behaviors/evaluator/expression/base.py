@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     from loomi._behaviors.evaluator import Context, ErrorBehavior, Evaluator
 
 from loomi._behaviors.state.backend import SnapshotProtocol
-from loomi._behaviors.state.query import Query, QueryBuilder
+from loomi._behaviors.state.query import Query
 from loomi._behaviors.state.tree import Empty, Tree
 from loomi._behaviors.state.tree.types import Value
 
@@ -58,7 +58,7 @@ from .logger import logger
 
 # Type definitions
 StatePathType = Union[str, Tuple[str, ...]]
-ExpressionValue = Union[Value, Empty, QueryBuilder, Query]
+ExpressionValue = Union[Value, Empty, Query]
 StorageContext = Union["SnapshotProtocol", "SnapshotProtocol"]
 
 
@@ -298,8 +298,9 @@ class Expression(ABC):
             ```
         """
         try:
-            if isinstance(value, (Query, QueryBuilder)):
-                resolved_value = value.evaluate(state, ctx=storage_ctx)
+            if isinstance(value, (Query)):
+                # resolved_value = value.evaluate(state, ctx=storage_ctx)
+                resolved_value = False
                 return resolved_value
             else:
                 # Direct value - return as-is

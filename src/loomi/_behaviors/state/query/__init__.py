@@ -1,91 +1,87 @@
 """
-Query system for declarative tree access.
+Query module for chainable operations on paths.
 
-This package provides a JMESPath-like interface for querying tree data
-using natural Python syntax. It supports lazy evaluation, operator overloading,
-and complex query composition.
+This module provides an immutable query system that enables fluent, chainable
+operations on path objects through operator overloading. Queries build operation
+trees that can be evaluated lazily against tree data.
 
-Examples:
-    Basic path access:
-        query = tree.query()
-        email = query.users.alice.email.value()
+Core Components:
+- Query: Main class for chainable operations with operator overloading
+- Operations: Immutable operation hierarchy with calc() methods
+- QueryEvaluator: Coordinates evaluation of operation trees against tree data
+- Query types and protocols: Type safety and clear interfaces
 
-    Comparisons:
-        is_adult = (tree.query().users.alice.age > 18).evaluate(tree)
+Architecture:
+- Query objects are immutable and always return new Query objects
+- Operations contain their operands and handle their own computation
+- Everything is an operation (including path resolution) for consistency
+- Evaluation is separate from construction for lazy execution
 
-    Complex queries:
-        adults = tree.filter(lambda u: u.age > 18)
-        emails = [u.email.value() for u in adults if u.email.exists().evaluate(tree)]
+Example Usage:
+    ```python
+    # Create query from path
+    query = tree.P.users.alice.age.Q()
+
+    # Chain operations using operators
+    result = (query + 10 + 5 > 18 and
+             tree.P.users.alice.status.Q() == "active")
+
+    # Evaluate against tree
+    is_valid = result.evaluate(tree)
+
+    # Complex expressions
+    adults = tree.P.users.Q().filter(lambda u: u.age.Q() > 18)
+    ```
 """
 
-from __future__ import annotations
-
-from .builder import QueryBuilder
-from .evaluator import QueryEvaluator, get_default_evaluator, set_default_evaluator
-from .exceptions import (
-    CacheError,
-    InvalidOperationError,
-    OperandResolutionError,
-    OperationNotSupportedError,
-    PathNotFoundError,
-    QueryError,
-    QueryEvaluationError,
-    QuerySyntaxError,
-)
-from .operands import FunctionOperand, LiteralOperand, Operand, PathOperand, QueryOperand
-from .operations import (
-    OPERATIONS,
+from .evaluator import QueryEvaluator
+from .exceptions import QueryError, QueryEvaluationError, QueryOperationError, QuerySyntaxError
+from .operations import (  # Base classes; Path resolution; Arithmetic operations; Comparison operations; Logical operations; String operations; Function operations
     AddOperation,
     AndOperation,
+    BinaryOperation,
     ContainsOperation,
     DivideOperation,
     EndsWithOperation,
     EqualOperation,
-    ExistsOperation,
     GreaterEqualOperation,
     GreaterThanOperation,
     LengthOperation,
     LessEqualOperation,
     LessThanOperation,
+    MaxOperation,
+    MinOperation,
     MultiplyOperation,
     NotEqualOperation,
     NotOperation,
     Operation,
     OrOperation,
+    ResolveVarOperation,
     StartsWithOperation,
     SubtractOperation,
-    get_operation,
-    register_operation,
+    SumOperation,
+    TernaryOperation,
+    UnaryOperation,
 )
-from .queries import OperationQuery, PathQuery, Query
-from .types import (
-    EvaluatorProtocol,
-    OperandProtocol,
-    OperationProtocol,
-    Path,
-    QueryProtocol,
-    QueryResult,
-)
+from .query import Query
+from .types import QueryResult
 
 __all__ = [
-    # Core interfaces
+    # Core classes
     "Query",
-    "Operation",
-    "Operand",
-    # Query implementations
-    "PathQuery",
-    "OperationQuery",
-    # Main user interface
-    "QueryBuilder",
-    # Evaluators
     "QueryEvaluator",
-    "get_default_evaluator",
-    "set_default_evaluator",
-    # Operand types
-    "PathOperand",
-    "LiteralOperand",
-    "QueryOperand",
-    "FunctionOperand",
+    # Base operation classes
+    "Operation",
+    "UnaryOperation",
+    "BinaryOperation",
+    "TernaryOperation",
+    # Path resolution
+    "ResolveVarOperation",
+    # Arithmetic operations
+    "AddOperation",
+    "SubtractOperation",
+    "MultiplyOperation",
+    "DivideOperation",
     # Comparison operations
     "GreaterThanOperation",
     "LessThanOperation",
@@ -97,36 +93,20 @@ __all__ = [
     "AndOperation",
     "OrOperation",
     "NotOperation",
-    # Arithmetic operations
-    "AddOperation",
-    "SubtractOperation",
-    "MultiplyOperation",
-    "DivideOperation",
     # String operations
     "ContainsOperation",
     "StartsWithOperation",
     "EndsWithOperation",
-    # Unary operations
+    # Function operations
     "LengthOperation",
-    "ExistsOperation",
-    # Operation registry
-    "OPERATIONS",
-    "get_operation",
-    "register_operation",
-    # Type protocols
-    "QueryProtocol",
-    "OperationProtocol",
-    "OperandProtocol",
-    "EvaluatorProtocol",
+    "MaxOperation",
+    "MinOperation",
+    "SumOperation",
+    # Types and protocols
     "QueryResult",
-    "Path",
     # Exceptions
     "QueryError",
-    "QuerySyntaxError",
     "QueryEvaluationError",
-    "PathNotFoundError",
-    "OperationNotSupportedError",
-    "OperandResolutionError",
-    "InvalidOperationError",
-    "CacheError",
+    "QueryOperationError",
+    "QuerySyntaxError",
 ]

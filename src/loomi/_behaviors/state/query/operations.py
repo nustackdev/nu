@@ -1,20 +1,37 @@
 """
 Operation implementations for the query system.
 
-This module provides various operation types including comparison,
-logical, arithmetic, and string operations that can be used in queries.
+This module provides the operation hierarchy with base classes and concrete
+implementations. Operations are immutable and contain their operands, with
+a single calc() method that performs the computation.
 """
 
 from __future__ import annotations
 
 import operator
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
-from .exceptions import OperationNotSupportedError
-from .types import EvaluatorProtocol
+import attrs
+
+if TYPE_CHECKING:
+    from ..path import Path
+    from ..tree import Tree
+    from .evaluator import QueryEvaluator
 
 __all__ = [
+    # Base classes
+    "Operation",
+    "UnaryOperation",
+    "BinaryOperation",
+    "TernaryOperation",
+    # Path resolution
+    "ResolveVarOperation",
+    # Arithmetic operations
+    "AddOperation",
+    "SubtractOperation",
+    "MultiplyOperation",
+    "DivideOperation",
     # Comparison operations
     "GreaterThanOperation",
     "LessThanOperation",
@@ -26,244 +43,138 @@ __all__ = [
     "AndOperation",
     "OrOperation",
     "NotOperation",
-    # Arithmetic operations
-    "AddOperation",
-    "SubtractOperation",
-    "MultiplyOperation",
-    "DivideOperation",
     # String operations
     "ContainsOperation",
     "StartsWithOperation",
     "EndsWithOperation",
-    # Unary operations
+    # Function operations
     "LengthOperation",
-    "ExistsOperation",
-    # Operation registry
-    "OPERATIONS",
-    "get_operation",
-    "register_operation",
+    "MaxOperation",
+    "MinOperation",
+    "SumOperation",
 ]
 
 
 # =============================================================================
-# BASE OPERATION
+# BASE OPERATION CLASSES
 # =============================================================================
 
 
+@attrs.define(frozen=True)
 class Operation(ABC):
     """
-    Base class for all operation implementations.
+    Base class for all operations.
 
-    Operations define how to combine operands to produce results.
-    They are stateless and can be reused across multiple queries.
+    Operations are immutable objects that contain their operands and provide
+    a single calc() method to perform the computation. They form the nodes
+    of the operation tree that represents a query.
     """
 
-    @property
     @abstractmethod
-    def name(self) -> str:
-        """Unique name for this operation."""
-        pass
-
-    @property
-    def is_unary(self) -> bool:
-        """Whether this operation takes a single operand."""
-        return False
-
-    @abstractmethod
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> Any:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
         """
-        Execute operation with the given operand values.
+        Calculate and return the result of this operation.
 
         Args:
-            left: Left operand value
-            right: Right operand value (None for unary operations)
-            evaluator: Evaluator instance for nested operations
+            evaluator: QueryEvaluator for resolving nested operations
+            tree: Tree instance for data access
+            ctx: Optional context (transaction/snapshot)
 
         Returns:
-            Operation result
-
-        Raises:
-            OperationNotSupportedError: If operation not supported on operand types
+            Result of the operation
         """
         pass
 
-    def __eq__(self, other: object) -> bool:
-        """Operations are equal if they have the same class."""
-        return isinstance(other, self.__class__)
 
-    def __hash__(self) -> int:
-        """Hash based on operation class."""
-        return hash(self.__class__)
+@attrs.define(frozen=True)
+class UnaryOperation(Operation, ABC):
+    """
+    Base class for operations with a single operand.
+
+    Unary operations operate on a single value, such as length(), max(), min(), etc.
+    """
+
+    operand: Operation | Any = attrs.field()
+
+    def _resolve_operand(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Resolve the operand to its value."""
+        return evaluator.resolve_operand(self.operand, tree, ctx)
+
+
+@attrs.define(frozen=True)
+class BinaryOperation(Operation, ABC):
+    """
+    Base class for operations with two operands.
+
+    Binary operations operate on two values, such as addition, comparison, etc.
+    """
+
+    left: Operation | Any = attrs.field()
+    right: Operation | Any = attrs.field()
+
+    def _resolve_operands(
+        self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None
+    ) -> tuple[Any, Any]:
+        """Resolve both operands to their values."""
+        left_val = evaluator.resolve_operand(self.left, tree, ctx)
+        right_val = evaluator.resolve_operand(self.right, tree, ctx)
+        return left_val, right_val
+
+
+@attrs.define(frozen=True)
+class TernaryOperation(Operation, ABC):
+    """
+    Base class for operations with three operands.
+
+    Ternary operations operate on three values, such as conditional expressions.
+    """
+
+    first: Operation | Any = attrs.field()
+    second: Operation | Any = attrs.field()
+    third: Operation | Any = attrs.field()
+
+    def _resolve_operands(
+        self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None
+    ) -> tuple[Any, Any, Any]:
+        """Resolve all three operands to their values."""
+        first_val = evaluator.resolve_operand(self.first, tree, ctx)
+        second_val = evaluator.resolve_operand(self.second, tree, ctx)
+        third_val = evaluator.resolve_operand(self.third, tree, ctx)
+        return first_val, second_val, third_val
+
+
+# =============================================================================
+# PATH RESOLUTION OPERATION
+# =============================================================================
+
+
+@attrs.define(frozen=True)
+class ResolveVarOperation(UnaryOperation):
+    """
+    Operation that resolves a path to its value in the tree.
+
+    This operation wraps path resolution for consistency - everything in the
+    query system is an operation. It uses PathResolver to get the actual value.
+    """
+
+    operand: Path = attrs.field()
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """
+        Resolve the path to its value in the tree.
+
+        Args:
+            evaluator: QueryEvaluator instance
+            tree: Tree to resolve path against
+            ctx: Optional context
+
+        Returns:
+            Value at the path location
+        """
+        return evaluator.resolve_path(self.operand, tree, ctx)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
-
-
-# =============================================================================
-# COMPARISON OPERATIONS
-# =============================================================================
-
-
-class ComparisonOperation(Operation):
-    """Base class for comparison operations."""
-
-    def _safe_compare(self, left: Any, right: Any, op: Callable[[Any, Any], bool]) -> bool:
-        """Safely perform comparison with type checking."""
-        try:
-            return op(left, right)
-        except TypeError:
-            # Handle incompatible types gracefully
-            return False
-
-
-class GreaterThanOperation(ComparisonOperation):
-    """Greater than comparison: left > right"""
-
-    @property
-    def name(self) -> str:
-        return "gt"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("gt", type(left))
-        return self._safe_compare(left, right, operator.gt)
-
-
-class LessThanOperation(ComparisonOperation):
-    """Less than comparison: left < right"""
-
-    @property
-    def name(self) -> str:
-        return "lt"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("lt", type(left))
-        return self._safe_compare(left, right, operator.lt)
-
-
-class GreaterEqualOperation(ComparisonOperation):
-    """Greater than or equal comparison: left >= right"""
-
-    @property
-    def name(self) -> str:
-        return "ge"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("ge", type(left))
-        return self._safe_compare(left, right, operator.ge)
-
-
-class LessEqualOperation(ComparisonOperation):
-    """Less than or equal comparison: left <= right"""
-
-    @property
-    def name(self) -> str:
-        return "le"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("le", type(left))
-        return self._safe_compare(left, right, operator.le)
-
-
-class EqualOperation(ComparisonOperation):
-    """Equality comparison: left == right"""
-
-    @property
-    def name(self) -> str:
-        return "eq"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("eq", type(left))
-        return left == right
-
-
-class NotEqualOperation(ComparisonOperation):
-    """Not equal comparison: left != right"""
-
-    @property
-    def name(self) -> str:
-        return "ne"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("ne", type(left))
-        return left != right
-
-
-# =============================================================================
-# LOGICAL OPERATIONS
-# =============================================================================
-
-
-class LogicalOperation(Operation):
-    """Base class for logical operations."""
-
-    pass
-
-
-class AndOperation(LogicalOperation):
-    """Logical AND: left and right"""
-
-    @property
-    def name(self) -> str:
-        return "and"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("and", type(left))
-        return bool(left) and bool(right)
-
-
-class OrOperation(LogicalOperation):
-    """Logical OR: left or right"""
-
-    @property
-    def name(self) -> str:
-        return "or"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("or", type(left))
-        return bool(left) or bool(right)
-
-
-class NotOperation(LogicalOperation):
-    """Logical NOT: not left"""
-
-    @property
-    def name(self) -> str:
-        return "not"
-
-    @property
-    def is_unary(self) -> bool:
-        return True
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        return not bool(left)
+        return f"ResolveVar({self.operand})"
 
 
 # =============================================================================
@@ -271,77 +182,185 @@ class NotOperation(LogicalOperation):
 # =============================================================================
 
 
-class ArithmeticOperation(Operation):
-    """Base class for arithmetic operations."""
+@attrs.define(frozen=True)
+class AddOperation(BinaryOperation):
+    """Addition operation: left + right"""
 
-    def _safe_arithmetic(self, left: Any, right: Any, op: Callable[[Any, Any], Any]) -> Any:
-        """Safely perform arithmetic with type checking."""
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Perform addition of two operands."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
-            return op(left, right)
+            return operator.add(left_val, right_val)
         except TypeError as e:
-            raise OperationNotSupportedError(self.name, type(left), type(right)) from e
+            raise ValueError(
+                f"Cannot add {type(left_val).__name__} and {type(right_val).__name__}"
+            ) from e
 
 
-class AddOperation(ArithmeticOperation):
-    """Addition: left + right"""
+@attrs.define(frozen=True)
+class SubtractOperation(BinaryOperation):
+    """Subtraction operation: left - right"""
 
-    @property
-    def name(self) -> str:
-        return "add"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> Any:
-        if right is None:
-            raise OperationNotSupportedError("add", type(left))
-        return self._safe_arithmetic(left, right, operator.add)
-
-
-class SubtractOperation(ArithmeticOperation):
-    """Subtraction: left - right"""
-
-    @property
-    def name(self) -> str:
-        return "sub"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> Any:
-        if right is None:
-            raise OperationNotSupportedError("sub", type(left))
-        return self._safe_arithmetic(left, right, operator.sub)
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Perform subtraction of two operands."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            return operator.sub(left_val, right_val)
+        except TypeError as e:
+            raise ValueError(
+                f"Cannot subtract {type(right_val).__name__} from {type(left_val).__name__}"
+            ) from e
 
 
-class MultiplyOperation(ArithmeticOperation):
-    """Multiplication: left * right"""
+@attrs.define(frozen=True)
+class MultiplyOperation(BinaryOperation):
+    """Multiplication operation: left * right"""
 
-    @property
-    def name(self) -> str:
-        return "mul"
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Perform multiplication of two operands."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            return operator.mul(left_val, right_val)
+        except TypeError as e:
+            raise ValueError(
+                f"Cannot multiply {type(left_val).__name__} and {type(right_val).__name__}"
+            ) from e
 
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> Any:
-        if right is None:
-            raise OperationNotSupportedError("mul", type(left))
-        return self._safe_arithmetic(left, right, operator.mul)
+
+@attrs.define(frozen=True)
+class DivideOperation(BinaryOperation):
+    """Division operation: left / right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Perform division of two operands."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            if right_val == 0:
+                raise ZeroDivisionError("Division by zero")
+            return operator.truediv(left_val, right_val)
+        except TypeError as e:
+            raise ValueError(
+                f"Cannot divide {type(left_val).__name__} by {type(right_val).__name__}"
+            ) from e
 
 
-class DivideOperation(ArithmeticOperation):
-    """Division: left / right"""
+# =============================================================================
+# COMPARISON OPERATIONS
+# =============================================================================
 
-    @property
-    def name(self) -> str:
-        return "truediv"
 
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> Any:
-        if right is None:
-            raise OperationNotSupportedError("truediv", type(left))
-        if right == 0:
-            raise ZeroDivisionError("Division by zero")
-        return self._safe_arithmetic(left, right, operator.truediv)
+@attrs.define(frozen=True)
+class GreaterThanOperation(BinaryOperation):
+    """Greater than operation: left > right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform greater than comparison."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            return operator.gt(left_val, right_val)
+        except TypeError:
+            # Handle incomparable types gracefully
+            return False
+
+
+@attrs.define(frozen=True)
+class LessThanOperation(BinaryOperation):
+    """Less than operation: left < right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform less than comparison."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            return operator.lt(left_val, right_val)
+        except TypeError:
+            return False
+
+
+@attrs.define(frozen=True)
+class GreaterEqualOperation(BinaryOperation):
+    """Greater than or equal operation: left >= right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform greater than or equal comparison."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            return operator.ge(left_val, right_val)
+        except TypeError:
+            return False
+
+
+@attrs.define(frozen=True)
+class LessEqualOperation(BinaryOperation):
+    """Less than or equal operation: left <= right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform less than or equal comparison."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            return operator.le(left_val, right_val)
+        except TypeError:
+            return False
+
+
+@attrs.define(frozen=True)
+class EqualOperation(BinaryOperation):
+    """Equality operation: left == right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform equality comparison."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        return left_val == right_val
+
+
+@attrs.define(frozen=True)
+class NotEqualOperation(BinaryOperation):
+    """Not equal operation: left != right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform not equal comparison."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        return left_val != right_val
+
+
+# =============================================================================
+# LOGICAL OPERATIONS
+# =============================================================================
+
+
+@attrs.define(frozen=True)
+class AndOperation(BinaryOperation):
+    """Logical AND operation: left and right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform logical AND with short-circuit evaluation."""
+        left_val = evaluator.resolve_operand(self.left, tree, ctx)
+        if not left_val:
+            return False  # Short-circuit
+        right_val = evaluator.resolve_operand(self.right, tree, ctx)
+        return bool(left_val) and bool(right_val)
+
+
+@attrs.define(frozen=True)
+class OrOperation(BinaryOperation):
+    """Logical OR operation: left or right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform logical OR with short-circuit evaluation."""
+        left_val = evaluator.resolve_operand(self.left, tree, ctx)
+        if left_val:
+            return True  # Short-circuit
+        right_val = evaluator.resolve_operand(self.right, tree, ctx)
+        return bool(left_val) or bool(right_val)
+
+
+@attrs.define(frozen=True)
+class NotOperation(UnaryOperation):
+    """Logical NOT operation: not operand"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Perform logical NOT."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        return not bool(operand_val)
 
 
 # =============================================================================
@@ -349,161 +368,97 @@ class DivideOperation(ArithmeticOperation):
 # =============================================================================
 
 
-class StringOperation(Operation):
-    """Base class for string operations."""
+@attrs.define(frozen=True)
+class ContainsOperation(BinaryOperation):
+    """Contains operation: right in left"""
 
-    pass
-
-
-class ContainsOperation(StringOperation):
-    """Contains check: right in left"""
-
-    @property
-    def name(self) -> str:
-        return "contains"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("contains", type(left))
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Check if right operand is contained in left operand."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
-            return right in left
+            return right_val in left_val
         except TypeError:
             return False
 
 
-class StartsWithOperation(StringOperation):
-    """String starts with: left.startswith(right)"""
+@attrs.define(frozen=True)
+class StartsWithOperation(BinaryOperation):
+    """String starts with operation: left.startswith(right)"""
 
-    @property
-    def name(self) -> str:
-        return "startswith"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("startswith", type(left))
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Check if left operand starts with right operand."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
-            return str(left).startswith(str(right))
+            return str(left_val).startswith(str(right_val))
         except (TypeError, AttributeError):
             return False
 
 
-class EndsWithOperation(StringOperation):
-    """String ends with: left.endswith(right)"""
+@attrs.define(frozen=True)
+class EndsWithOperation(BinaryOperation):
+    """String ends with operation: left.endswith(right)"""
 
-    @property
-    def name(self) -> str:
-        return "endswith"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        if right is None:
-            raise OperationNotSupportedError("endswith", type(left))
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> bool:
+        """Check if left operand ends with right operand."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
         try:
-            return str(left).endswith(str(right))
+            return str(left_val).endswith(str(right_val))
         except (TypeError, AttributeError):
             return False
 
 
 # =============================================================================
-# UNARY OPERATIONS
+# FUNCTION OPERATIONS
 # =============================================================================
 
 
-class UnaryOperation(Operation):
-    """Base class for unary operations."""
-
-    @property
-    def is_unary(self) -> bool:
-        return True
-
-
+@attrs.define(frozen=True)
 class LengthOperation(UnaryOperation):
-    """Length operation: len(left)"""
+    """Length operation: len(operand)"""
 
-    @property
-    def name(self) -> str:
-        return "length"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> int:
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> int:
+        """Get length of operand."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
         try:
-            return len(left)
+            return len(operand_val)
         except TypeError as e:
-            raise OperationNotSupportedError("length", type(left)) from e
+            raise ValueError(f"Cannot get length of {type(operand_val).__name__}") from e
 
 
-class ExistsOperation(UnaryOperation):
-    """Existence check: left is not None"""
+@attrs.define(frozen=True)
+class MaxOperation(UnaryOperation):
+    """Maximum operation: max(operand)"""
 
-    @property
-    def name(self) -> str:
-        return "exists"
-
-    def execute(
-        self, left: Any, right: Any = None, evaluator: EvaluatorProtocol | None = None
-    ) -> bool:
-        return left is not None
-
-
-# =============================================================================
-# OPERATION REGISTRY
-# =============================================================================
-
-# Global registry of operations
-OPERATIONS: dict[str, Operation] = {
-    # Comparison
-    "gt": GreaterThanOperation(),
-    "lt": LessThanOperation(),
-    "ge": GreaterEqualOperation(),
-    "le": LessEqualOperation(),
-    "eq": EqualOperation(),
-    "ne": NotEqualOperation(),
-    # Logical
-    "and": AndOperation(),
-    "or": OrOperation(),
-    "not": NotOperation(),
-    # Arithmetic
-    "add": AddOperation(),
-    "sub": SubtractOperation(),
-    "mul": MultiplyOperation(),
-    "truediv": DivideOperation(),
-    # String
-    "contains": ContainsOperation(),
-    "startswith": StartsWithOperation(),
-    "endswith": EndsWithOperation(),
-    # Unary
-    "length": LengthOperation(),
-    "exists": ExistsOperation(),
-}
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Get maximum value from operand."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        try:
+            return max(operand_val)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Cannot get max of {type(operand_val).__name__}") from e
 
 
-def get_operation(name: str) -> Operation:
-    """
-    Get operation by name.
+@attrs.define(frozen=True)
+class MinOperation(UnaryOperation):
+    """Minimum operation: min(operand)"""
 
-    Args:
-        name: Operation name
-
-    Returns:
-        Operation instance
-
-    Raises:
-        KeyError: If operation not found
-    """
-    return OPERATIONS[name]
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Get minimum value from operand."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        try:
+            return min(operand_val)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Cannot get min of {type(operand_val).__name__}") from e
 
 
-def register_operation(operation: Operation) -> None:
-    """
-    Register a new operation.
+@attrs.define(frozen=True)
+class SumOperation(UnaryOperation):
+    """Sum operation: sum(operand)"""
 
-    Args:
-        operation: Operation instance to register
-    """
-    OPERATIONS[operation.name] = operation
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any = None) -> Any:
+        """Get sum of operand values."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        try:
+            return sum(operand_val)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Cannot get sum of {type(operand_val).__name__}") from e
