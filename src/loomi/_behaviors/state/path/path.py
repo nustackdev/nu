@@ -338,8 +338,22 @@ class Path:
 
         return PathResolver().resolve(self, tree, ctx)
 
+    def evaluate(self, tree: "Tree", ctx: Any = None) -> Any:
+        """
+        This method is an alias for resolve() to maintain compatibility
+        with Query evaluation patterns.
+
+        Args:
+            tree: Tree instance to evaluate path against
+            ctx: Optional context for evaluation
+
+        Returns:
+            Value at the path location in the tree
+        """
+        return self.resolve(tree, ctx)
+
     # =========================================================================
-    # QUERY INTERFACE
+    # QUERY INTEGRATION
     # =========================================================================
 
     def to_query(self) -> "Query":
@@ -363,19 +377,341 @@ class Path:
 
         return Query.create(self)
 
-    def Q(self) -> "Query":
-        """
-        Alias for to_query() method.
+    # =========================================================================
+    # QUERY CHAINING INTEGRATION
+    # =========================================================================
 
-        Provides a more concise way to convert path to Query.
+    # =========================================================================
+    # ARITHMETIC OPERATIONS (Query Chaining)
+    # =========================================================================
+
+    def __add__(self, other: Any) -> "Query":
+        """
+        Add string or Query to path, returning a new Query.
+
+        This allows chaining operations directly on the path.
+
+        Args:
+            other: String to append or another Query
 
         Returns:
-            Query object representing this path
+            New Query with the path and additional operation
 
         Example:
             ```python
             path = tree.P.users.alice.email
-            query = path.Q()
+            query = path + "hello" + "world"
             ```
         """
-        return self.to_query()
+        return self.to_query() + other
+
+    def __sub__(self, other: Any) -> "Query":
+        """
+        Subtraction: path - other
+
+        Args:
+            other: Value to subtract
+
+        Returns:
+            New Query with subtraction operation
+        """
+        return self.to_query() - other
+
+    def __mul__(self, other: Any) -> "Query":
+        """
+        Multiplication: path * other
+
+        Args:
+            other: Value to multiply by
+
+        Returns:
+            New Query with multiplication operation
+        """
+        return self.to_query() * other
+
+    def __truediv__(self, other: Any) -> "Query":
+        """
+        Division: path / other
+
+        Args:
+            other: Value to divide by
+
+        Returns:
+            New Query with division operation
+        """
+        return self.to_query() / other
+
+    def __mod__(self, other: Any) -> "Query":
+        """
+        Modulo: path % other
+
+        Args:
+            other: Value to get modulo with
+
+        Returns:
+            New Query with modulo operation
+        """
+        return self.to_query() % other
+
+    def __pow__(self, other: Any) -> "Query":
+        """
+        Power: path ** other
+
+        Args:
+            other: Exponent value
+
+        Returns:
+            New Query with power operation
+        """
+        return self.to_query() ** other
+
+    def __abs__(self) -> "Query":
+        """
+        Absolute value: abs(path)
+
+        Returns:
+            New Query with abs operation
+        """
+        return abs(self.to_query())
+
+    # =========================================================================
+    # COMPARISON OPERATIONS (Query Chaining)
+    # =========================================================================
+
+    def __gt__(self, other: Any) -> "Query":
+        """
+        Greater than: path > other
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with greater than operation
+        """
+        return self.to_query() > other
+
+    def __lt__(self, other: Any) -> "Query":
+        """
+        Less than: path < other
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with less than operation
+        """
+        return self.to_query() < other
+
+    def __ge__(self, other: Any) -> "Query":
+        """
+        Greater than or equal: path >= other
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with greater than or equal operation
+        """
+        return self.to_query() >= other
+
+    def __le__(self, other: Any) -> "Query":
+        """
+        Less than or equal: path <= other
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with less than or equal operation
+        """
+        return self.to_query() <= other
+
+    def __eq__(self, other: Any) -> "Query":
+        """
+        Equality: path == other
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with equality operation
+
+        Note:
+            This overrides object equality for query chaining.
+            Use is_equal_path() for Path comparison if needed.
+        """
+        return self.to_query() == other
+
+    def __ne__(self, other: Any) -> "Query":
+        """
+        Not equal: path != other
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with not equal operation
+        """
+        return self.to_query() != other
+
+    # =========================================================================
+    # LOGICAL OPERATIONS (Query Chaining)
+    # =========================================================================
+
+    def and_(self, other: Any) -> "Query":
+        """
+        Logical AND: path.and_(other)
+
+        Args:
+            other: Value to AND with (can be another Query or Path)
+
+        Returns:
+            New Query with AND operation
+        """
+        return self.to_query().and_(other)
+
+    def or_(self, other: Any) -> "Query":
+        """
+        Logical OR: path.or_(other)
+
+        Args:
+            other: Value to OR with (can be another Query or Path)
+
+        Returns:
+            New Query with OR operation
+        """
+        return self.to_query().or_(other)
+
+    def __invert__(self) -> "Query":
+        """
+        Logical NOT: ~path or not path
+
+        Returns:
+            New Query with NOT operation
+        """
+        return ~self.to_query()
+
+    # =========================================================================
+    # STRING OPERATIONS (Query Chaining)
+    # =========================================================================
+
+    def contains(self, item: Any) -> "Query":
+        """
+        Contains check: path.contains(item)
+
+        Args:
+            item: Item to check for containment
+
+        Returns:
+            New Query with contains operation
+        """
+        return self.to_query().contains(item)
+
+    def startswith(self, prefix: str) -> "Query":
+        """
+        String starts with: path.startswith(prefix)
+
+        Args:
+            prefix: Prefix to check for
+
+        Returns:
+            New Query with startswith operation
+        """
+        return self.to_query().startswith(prefix)
+
+    def endswith(self, suffix: str) -> "Query":
+        """
+        String ends with: path.endswith(suffix)
+
+        Args:
+            suffix: Suffix to check for
+
+        Returns:
+            New Query with endswith operation
+        """
+        return self.to_query().endswith(suffix)
+
+    # =========================================================================
+    # FUNCTION OPERATIONS (Query Chaining)
+    # =========================================================================
+
+    def length(self) -> "Query":
+        """
+        Length: path.length()
+
+        Returns:
+            New Query with length operation
+        """
+        return self.to_query().length()
+
+    def max(self) -> "Query":
+        """
+        Maximum: path.max()
+
+        Returns:
+            New Query with max operation
+        """
+        return self.to_query().max()
+
+    def min(self) -> "Query":
+        """
+        Minimum: path.min()
+
+        Returns:
+            New Query with min operation
+        """
+        return self.to_query().min()
+
+    def sum(self) -> "Query":
+        """
+        Sum: path.sum()
+
+        Returns:
+            New Query with sum operation
+        """
+        return self.to_query().sum()
+
+    def any(self) -> "Query":
+        """
+        Any: path.any() - returns True if any element is truthy
+
+        Returns:
+            New Query with any operation
+        """
+        return self.to_query().any()
+
+    def every(self) -> "Query":
+        """
+        Every: path.every() - returns True if all elements are truthy
+
+        Returns:
+            New Query with every operation
+        """
+        return self.to_query().every()
+
+    def all(self) -> "Query":
+        """
+        All: path.all() - alias for every()
+
+        Returns:
+            New Query with every operation
+        """
+        return self.to_query().all()
+
+    def count(self) -> "Query":
+        """
+        Count: path.count() - count non-None values
+
+        Returns:
+            New Query with count operation
+        """
+        return self.to_query().count()
+
+    def bool(self) -> "Query":
+        """
+        Boolean conversion: path.bool()
+
+        Returns:
+            New Query with bool operation
+        """
+        return self.to_query().bool()
