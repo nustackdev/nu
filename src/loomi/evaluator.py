@@ -15,7 +15,6 @@ from loomi._behaviors.evaluator.expression import (
     ExpressionError,
     ExpressionMetadata,
     ExpressionValue,
-    StatePathType,
     StorageContext,
 )
 
@@ -33,7 +32,6 @@ __all__ = [
     "FleetError",
     "ExecutionTimeoutError",
     "FleetError",
-    "StatePathType",
     "StorageContext",
     "ExpressionValue",
 ]

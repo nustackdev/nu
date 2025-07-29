@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ..exceptions import ExpressionError
-from .base import Expression, ExpressionValue, StatePathType, StorageContext
+from .expression import Expression, ExpressionValue, StorageContext
 from .metadata import ExpressionMetadata
 from .types import ErrorBehavior
 
@@ -10,7 +10,6 @@ __all__ = [
     "ErrorBehavior",
     "ExpressionMetadata",
     "ExpressionError",
-    "StatePathType",
     "StorageContext",
     "ExpressionValue",
 ]

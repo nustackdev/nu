@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi.evaluator import Context, Evaluator, Expression
+from loomi.evaluator import Context, Evaluator, Expression, ExpressionValue
 from loomi.state import Value
 
 
@@ -80,7 +80,7 @@ class Print(Expression):
         ```
     """
 
-    def __init__(self, path: str, *, message: str = "{value}", **kwargs):
+    def __init__(self, path: ExpressionValue, *, message: str = "{value}", **kwargs):
         super().__init__(**kwargs)
         self.path = path
         self.message = message
@@ -88,13 +88,9 @@ class Print(Expression):
     def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """Print value using unified infrastructure."""
         # Use snapshot context for read-only operation
-        path_components = self.path.split(".")
+        with evaluator.state.snapshot() as snapshot:
+            value = self._resolve_value(self.path, evaluator.state, snapshot)
 
-        with evaluator.state.at(*path_components[:-1]).with_dict_view(snapshot=True) as view:
-            # Resolve value (could be direct value or state path)
-            resolved_value = view.get(path_components[-1], default=None)
-            # Format message
-            formatted_message = self.message.format(value=resolved_value)
-
-            # Use print for development/debugging
-            print(formatted_message)
+        # Print the value
+        formatted_message = self.message.format(value=value)
+        print(formatted_message)

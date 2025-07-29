@@ -44,43 +44,19 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, cast, final
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast, final
 
-if TYPE_CHECKING:
-    from loomi._behaviors.evaluator import Context, ErrorBehavior, Evaluator
-
-from loomi._behaviors.state.backend import SnapshotProtocol
+from loomi._behaviors.state.path import Path
 from loomi._behaviors.state.query import Query
-from loomi._behaviors.state.tree import Empty, Tree
+from loomi._behaviors.state.tree import Tree
 from loomi._behaviors.state.tree.types import Value
 
+from .exceptions import ExpressionError, ValueResolutionError
 from .logger import logger
+from .types import ErrorBehavior, ExpressionValue, StorageContext
 
-# Type definitions
-StatePathType = Union[str, Tuple[str, ...]]
-ExpressionValue = Union[Value, Empty, Query]
-StorageContext = Union["SnapshotProtocol", "SnapshotProtocol"]
-
-
-class ExpressionError(Exception):
-    """Base exception for expression-related errors."""
-
-    def __init__(
-        self,
-        message: str,
-        *,
-        expression: Optional["Expression"] = None,
-        cause: Optional[Exception] = None,
-    ):
-        super().__init__(message)
-        self.expression = expression
-        self.cause = cause
-
-
-class ValueResolutionError(ExpressionError):
-    """Raised when value resolution fails."""
-
-    pass
+if TYPE_CHECKING:
+    from loomi._behaviors.evaluator import Context, Evaluator
 
 
 class Expression(ABC):
@@ -255,7 +231,7 @@ class Expression(ABC):
                         result_view.store(result)
             ```
         """
-        pass
+        raise NotImplementedError("do_evaluate() must be implemented by subclasses")
 
     # =========================================================================
     # VALUE RESOLUTION UTILITIES
@@ -298,19 +274,17 @@ class Expression(ABC):
             ```
         """
         try:
-            if isinstance(value, (Query)):
-                # resolved_value = value.evaluate(state, ctx=storage_ctx)
-                resolved_value = False
-                return resolved_value
-            else:
-                # Direct value - return as-is
+            if isinstance(value, (Query, Path)):
                 logger.debug(
-                    f"Using direct value in {self._expression_name}",
+                    f"Resolving state expression: {value}",
                     extra={
-                        "expression_id": self._expression_id,
                         "value_type": type(value).__name__,
+                        "context_id": id(storage_ctx),
                     },
                 )
+                resolved_value = value.evaluate(state, storage_ctx)
+                return resolved_value
+            else:
                 return cast(Value, value)
 
         except Exception as e:
@@ -322,10 +296,10 @@ class Expression(ABC):
 
     def _resolve_values(
         self,
-        values: Dict[str, Value],
+        values: dict[str, ExpressionValue],
         state: "Tree",
         storage_ctx: "StorageContext",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Value]:
         """
         Resolve multiple values using the same storage context for consistency.
 
@@ -353,16 +327,6 @@ class Expression(ABC):
             # All state values resolved at the same point in time
             ```
         """
-        logger.debug(
-            f"Resolving multiple values in {self._expression_name}",
-            extra={
-                "expression_id": self._expression_id,
-                "value_count": len(values),
-                "keys": list(values.keys()),
-                "storage_context_type": type(storage_ctx).__name__,
-            },
-        )
-
         resolved = {}
         for key, value in values.items():
             try:
@@ -373,15 +337,6 @@ class Expression(ABC):
                     expression=self,
                     cause=e,
                 )
-
-        logger.debug(
-            f"Successfully resolved all values in {self._expression_name}",
-            extra={
-                "expression_id": self._expression_id,
-                "resolved_keys": list(resolved.keys()),
-                "resolved_types": {k: type(v).__name__ for k, v in resolved.items()},
-            },
-        )
 
         return resolved
 
