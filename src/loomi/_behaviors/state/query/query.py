@@ -13,12 +13,17 @@ from typing import TYPE_CHECKING, Any
 import attrs
 
 from .operations import (
+    AbsOperation,
     AddOperation,
     AndOperation,
+    AnyOperation,
+    BoolOperation,
     ContainsOperation,
+    CountOperation,
     DivideOperation,
     EndsWithOperation,
     EqualOperation,
+    EveryOperation,
     GreaterEqualOperation,
     GreaterThanOperation,
     LengthOperation,
@@ -26,10 +31,12 @@ from .operations import (
     LessThanOperation,
     MaxOperation,
     MinOperation,
+    ModuloOperation,
     MultiplyOperation,
     NotEqualOperation,
     NotOperation,
     OrOperation,
+    PowerOperation,
     ResolveVarOperation,
     StartsWithOperation,
     SubtractOperation,
@@ -119,10 +126,6 @@ class Query:
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=AddOperation(left=self.operations, right=other_ops))
 
-    def __radd__(self, other: Any) -> Query:
-        """Reverse addition: other + query"""
-        return Query(operations=AddOperation(left=other, right=self.operations))
-
     def __sub__(self, other: Any) -> Query:
         """
         Subtraction: query - other
@@ -135,10 +138,6 @@ class Query:
         """
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=SubtractOperation(left=self.operations, right=other_ops))
-
-    def __rsub__(self, other: Any) -> Query:
-        """Reverse subtraction: other - query"""
-        return Query(operations=SubtractOperation(left=other, right=self.operations))
 
     def __mul__(self, other: Any) -> Query:
         """
@@ -153,10 +152,6 @@ class Query:
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=MultiplyOperation(left=self.operations, right=other_ops))
 
-    def __rmul__(self, other: Any) -> Query:
-        """Reverse multiplication: other * query"""
-        return Query(operations=MultiplyOperation(left=other, right=self.operations))
-
     def __truediv__(self, other: Any) -> Query:
         """
         Division: query / other
@@ -170,9 +165,45 @@ class Query:
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=DivideOperation(left=self.operations, right=other_ops))
 
-    def __rtruediv__(self, other: Any) -> Query:
-        """Reverse division: other / query"""
-        return Query(operations=DivideOperation(left=other, right=self.operations))
+    def __mod__(self, other: Any) -> Query:
+        """
+        Modulo: query % other
+
+        Args:
+            other: Value to get modulo with
+
+        Returns:
+            New Query with modulo operation
+        """
+        other_ops = other.operations if isinstance(other, Query) else other
+        return Query(operations=ModuloOperation(left=self.operations, right=other_ops))
+
+    def __pow__(self, other: Any) -> Query:
+        """
+        Power: query ** other
+
+        Args:
+            other: Exponent value
+
+        Returns:
+            New Query with power operation
+        """
+        other_ops = other.operations if isinstance(other, Query) else other
+        return Query(operations=PowerOperation(left=self.operations, right=other_ops))
+
+    def __abs__(self) -> Query:
+        """
+        Absolute value: abs(query)
+
+        Returns:
+            New Query with abs operation
+
+        Example:
+            ```python
+            result = abs(query)
+            ```
+        """
+        return Query(operations=AbsOperation(operand=self.operations))
 
     # =========================================================================
     # COMPARISON OPERATIONS
@@ -263,45 +294,31 @@ class Query:
     # LOGICAL OPERATIONS
     # =========================================================================
 
-    def __and__(self, other: Any) -> Query:
+    def and_(self, other: Any) -> Query:
         """
-        Logical AND: query & other or query and other
+        Logical AND: query.and_(other)
 
         Args:
-            other: Query or value to combine with AND
+            other: Value to AND with (can be another Query)
 
         Returns:
             New Query with AND operation
-
-        Example:
-            ```python
-            result = (query1 & query2)
-            result = query1.__and__(query2)
-            ```
         """
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=AndOperation(left=self.operations, right=other_ops))
 
-    def __rand__(self, other: Any) -> Query:
-        """Reverse logical AND: other & query"""
-        return Query(operations=AndOperation(left=other, right=self.operations))
-
-    def __or__(self, other: Any) -> Query:
+    def or_(self, other: Any) -> Query:
         """
-        Logical OR: query | other or query or other
+        Logical OR: query.or_(other)
 
         Args:
-            other: Query or value to combine with OR
+            other: Value to OR with (can be another Query)
 
         Returns:
             New Query with OR operation
         """
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=OrOperation(left=self.operations, right=other_ops))
-
-    def __ror__(self, other: Any) -> Query:
-        """Reverse logical OR: other | query"""
-        return Query(operations=OrOperation(left=other, right=self.operations))
 
     def __invert__(self) -> Query:
         """
@@ -321,21 +338,6 @@ class Query:
     # =========================================================================
     # STRING OPERATIONS
     # =========================================================================
-
-    def __contains__(self, item: Any) -> Query:
-        """
-        Contains check: item in query
-
-        Args:
-            item: Item to check for containment
-
-        Returns:
-            New Query with contains operation
-
-        Note:
-            Due to Python semantics, this creates query.contains(item)
-        """
-        return Query(operations=ContainsOperation(left=self.operations, right=item))
 
     def contains(self, item: Any) -> Query:
         """
@@ -377,15 +379,6 @@ class Query:
     # FUNCTION OPERATIONS
     # =========================================================================
 
-    def __len__(self) -> Query:
-        """
-        Length: len(query)
-
-        Returns:
-            New Query with length operation
-        """
-        return Query(operations=LengthOperation(operand=self.operations))
-
     def length(self) -> Query:
         """
         Explicit length: query.length()
@@ -422,24 +415,59 @@ class Query:
         """
         return Query(operations=SumOperation(operand=self.operations))
 
+    def any(self) -> Query:
+        """
+        Any: query.any() - returns True if any element is truthy
+
+        Returns:
+            New Query with any operation
+        """
+        return Query(operations=AnyOperation(operand=self.operations))
+
+    def every(self) -> Query:
+        """
+        Every: query.every() - returns True if all elements are truthy
+
+        Returns:
+            New Query with every operation
+        """
+        return Query(operations=EveryOperation(operand=self.operations))
+
+    def all(self) -> Query:
+        """
+        All: query.all() - alias for every()
+
+        Returns:
+            New Query with every operation
+        """
+        return Query(operations=EveryOperation(operand=self.operations))
+
+    def count(self) -> Query:
+        """
+        Count: query.count() - count non-None values
+
+        Returns:
+            New Query with count operation
+        """
+        return Query(operations=CountOperation(operand=self.operations))
+
+    def bool(self) -> Query:
+        """
+        Boolean conversion: bool(query)
+
+        Returns:
+            New Query with bool operation
+
+        Example:
+            ```python
+            result = query.bool()
+            ```
+        """
+        return Query(operations=BoolOperation(operand=self.operations))
+
     # =========================================================================
     # UTILITY METHODS
     # =========================================================================
-
-    def is_equal_query(self, other: Query) -> bool:
-        """
-        Check if two queries have the same operations.
-
-        Args:
-            other: Other query to compare with
-
-        Returns:
-            True if queries have identical operation trees
-
-        Note:
-            Use this instead of == which creates an EqualOperation
-        """
-        return isinstance(other, Query) and self.operations == other.operations
 
     def __repr__(self) -> str:
         """

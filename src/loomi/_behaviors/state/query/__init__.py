@@ -37,13 +37,18 @@ Example Usage:
 from .evaluator import QueryEvaluator
 from .exceptions import QueryError, QueryEvaluationError, QueryOperationError, QuerySyntaxError
 from .operations import (  # Base classes; Path resolution; Arithmetic operations; Comparison operations; Logical operations; String operations; Function operations
+    AbsOperation,
     AddOperation,
     AndOperation,
+    AnyOperation,
     BinaryOperation,
+    BoolOperation,
     ContainsOperation,
+    CountOperation,
     DivideOperation,
     EndsWithOperation,
     EqualOperation,
+    EveryOperation,
     GreaterEqualOperation,
     GreaterThanOperation,
     LengthOperation,
@@ -51,11 +56,13 @@ from .operations import (  # Base classes; Path resolution; Arithmetic operation
     LessThanOperation,
     MaxOperation,
     MinOperation,
+    ModuloOperation,
     MultiplyOperation,
     NotEqualOperation,
     NotOperation,
     Operation,
     OrOperation,
+    PowerOperation,
     ResolveVarOperation,
     StartsWithOperation,
     SubtractOperation,
@@ -82,6 +89,8 @@ __all__ = [
     "SubtractOperation",
     "MultiplyOperation",
     "DivideOperation",
+    "ModuloOperation",
+    "PowerOperation",
     # Comparison operations
     "GreaterThanOperation",
     "LessThanOperation",
@@ -102,6 +111,11 @@ __all__ = [
     "MaxOperation",
     "MinOperation",
     "SumOperation",
+    "AnyOperation",
+    "EveryOperation",
+    "BoolOperation",
+    "AbsOperation",
+    "CountOperation",
     # Types and protocols
     "QueryResult",
     # Exceptions

@@ -32,6 +32,8 @@ __all__ = [
     "SubtractOperation",
     "MultiplyOperation",
     "DivideOperation",
+    "ModuloOperation",
+    "PowerOperation",
     # Comparison operations
     "GreaterThanOperation",
     "LessThanOperation",
@@ -52,6 +54,11 @@ __all__ = [
     "MaxOperation",
     "MinOperation",
     "SumOperation",
+    "AnyOperation",
+    "EveryOperation",
+    "BoolOperation",
+    "AbsOperation",
+    "CountOperation",
 ]
 
 
@@ -240,6 +247,51 @@ class DivideOperation(BinaryOperation):
             raise ValueError(
                 f"Cannot divide {type(left_val).__name__} by {type(right_val).__name__}"
             ) from e
+
+
+@attrs.define(frozen=True)
+class ModuloOperation(BinaryOperation):
+    """Modulo operation: left % right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
+        """Perform modulo of two operands."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            if right_val == 0:
+                raise ZeroDivisionError("Modulo by zero")
+            return operator.mod(left_val, right_val)
+        except TypeError as e:
+            raise ValueError(
+                f"Cannot perform modulo on {type(left_val).__name__} and {type(right_val).__name__}"
+            ) from e
+
+
+@attrs.define(frozen=True)
+class PowerOperation(BinaryOperation):
+    """Power operation: left ** right"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
+        """Perform power operation of two operands."""
+        left_val, right_val = self._resolve_operands(evaluator, tree, ctx)
+        try:
+            return operator.pow(left_val, right_val)
+        except (TypeError, OverflowError) as e:
+            raise ValueError(
+                f"Cannot raise {type(left_val).__name__} to power of {type(right_val).__name__}"
+            ) from e
+
+
+@attrs.define(frozen=True)
+class AbsOperation(UnaryOperation):
+    """Absolute value operation: abs(operand)"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> Any:
+        """Get absolute value of operand."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        try:
+            return abs(operand_val)
+        except TypeError as e:
+            raise ValueError(f"Cannot get absolute value of {type(operand_val).__name__}") from e
 
 
 # =============================================================================
@@ -460,3 +512,55 @@ class SumOperation(UnaryOperation):
             return sum(operand_val)
         except (TypeError, ValueError) as e:
             raise ValueError(f"Cannot get sum of {type(operand_val).__name__}") from e
+
+
+@attrs.define(frozen=True)
+class AnyOperation(UnaryOperation):
+    """Any operation: any(operand) - returns True if any element is truthy"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
+        """Check if any element in operand is truthy."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        try:
+            return any(operand_val)
+        except TypeError as e:
+            raise ValueError(f"Cannot check any() on {type(operand_val).__name__}") from e
+
+
+@attrs.define(frozen=True)
+class EveryOperation(UnaryOperation):
+    """Every operation: all(operand) - returns True if all elements are truthy"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
+        """Check if all elements in operand are truthy."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        try:
+            return all(operand_val)
+        except TypeError as e:
+            raise ValueError(f"Cannot check all() on {type(operand_val).__name__}") from e
+
+
+@attrs.define(frozen=True)
+class BoolOperation(UnaryOperation):
+    """Bool operation: bool(operand) - converts operand to boolean"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> bool:
+        """Convert operand to boolean."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        return bool(operand_val)
+
+
+@attrs.define(frozen=True)
+class CountOperation(UnaryOperation):
+    """Count operation: count non-None values in operand"""
+
+    def calc(self, evaluator: QueryEvaluator, tree: Tree, ctx: Any) -> int:
+        """Count non-None values in operand."""
+        operand_val = self._resolve_operand(evaluator, tree, ctx)
+        try:
+            if hasattr(operand_val, "__iter__") and not isinstance(operand_val, (str, bytes)):
+                return sum(1 for item in operand_val if item is not None)
+            else:
+                return 1 if operand_val is not None else 0
+        except TypeError as e:
+            raise ValueError(f"Cannot count values in {type(operand_val).__name__}") from e
