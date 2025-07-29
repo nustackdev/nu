@@ -24,6 +24,8 @@ from loomi._behaviors.state.backend import (
     ValueT_co,
     ValueT_contra,
 )
+from loomi._behaviors.state.path import Path, PathResolver
+from loomi._behaviors.state.query import Query, QueryEvaluator
 from loomi._behaviors.state.state import State, StateSpec
 from loomi._behaviors.state.tree import (
     EMPTY,
@@ -39,11 +41,8 @@ from loomi._behaviors.state.tree import (
     DictView,
     Empty,
     ListView,
-    MetaPath,
-    Path,
     PrimitiveNode,
     SnapshotContextProtocol,
-    StructPath,
     TransactionContextProtocol,
     Tree,
     create_context,
@@ -92,9 +91,6 @@ __all__ = [
     "ContainerInfo",
     "ContainerNode",
     "PrimitiveNode",
-    "MetaPath",
-    "Path",
-    "StructPath",
     "Tree",
     "EMPTY",
     "Empty",
@@ -103,6 +99,12 @@ __all__ = [
     "DictView",
     "ListView",
     "create_view_context_manager",
+    # path
+    "Path",
+    "PathResolver",
+    # query
+    "Query",
+    "QueryEvaluator",
     # state
     "State",
     "StateSpec",

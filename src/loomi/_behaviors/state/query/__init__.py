@@ -82,40 +82,6 @@ __all__ = [
     "UnaryOperation",
     "BinaryOperation",
     "TernaryOperation",
-    # Path resolution
-    "ResolveVarOperation",
-    # Arithmetic operations
-    "AddOperation",
-    "SubtractOperation",
-    "MultiplyOperation",
-    "DivideOperation",
-    "ModuloOperation",
-    "PowerOperation",
-    # Comparison operations
-    "GreaterThanOperation",
-    "LessThanOperation",
-    "GreaterEqualOperation",
-    "LessEqualOperation",
-    "EqualOperation",
-    "NotEqualOperation",
-    # Logical operations
-    "AndOperation",
-    "OrOperation",
-    "NotOperation",
-    # String operations
-    "ContainsOperation",
-    "StartsWithOperation",
-    "EndsWithOperation",
-    # Function operations
-    "LengthOperation",
-    "MaxOperation",
-    "MinOperation",
-    "SumOperation",
-    "AnyOperation",
-    "EveryOperation",
-    "BoolOperation",
-    "AbsOperation",
-    "CountOperation",
     # Types and protocols
     "QueryResult",
     # Exceptions

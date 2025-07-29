@@ -15,7 +15,7 @@ Core Components:
 from .exceptions import PathConstructionError, PathError, PathEvaluationError, PathNotFoundError
 from .path import Path
 from .resolver import PathResolver
-from .types import PathComponent, PathEvaluatorProtocol, PathProtocol, PathResult
+from .types import PathComponent, PathResult
 
 __all__ = [
     # Core classes
@@ -24,8 +24,6 @@ __all__ = [
     # Types and protocols
     "PathComponent",
     "PathResult",
-    "PathProtocol",
-    "PathEvaluatorProtocol",
     # Exceptions
     "PathError",
     "PathConstructionError",

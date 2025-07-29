@@ -305,7 +305,7 @@ class Path:
     # PATH RESOLUTION
     # =========================================================================
 
-    def resolve(self, tree: "Tree", ctx: Any = None) -> Any:
+    def resolve(self, tree: "Tree", ctx: Any, /) -> Any:
         """
         Resolve path to its value in the tree.
 
@@ -338,7 +338,7 @@ class Path:
 
         return PathResolver().resolve(self, tree, ctx)
 
-    def evaluate(self, tree: "Tree", ctx: Any = None) -> Any:
+    def evaluate(self, tree: "Tree", ctx: Any, /) -> Any:
         """
         This method is an alias for resolve() to maintain compatibility
         with Query evaluation patterns.

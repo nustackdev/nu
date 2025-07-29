@@ -491,7 +491,7 @@ class Query:
     # EVALUATION
     # =========================================================================
 
-    def evaluate(self, tree: "Tree", ctx: Any = None) -> Any:
+    def evaluate(self, tree: "Tree", ctx: Any, /) -> Any:
         """
         Evaluate the query against a tree.
 
@@ -518,4 +518,4 @@ class Query:
         from .evaluator import QueryEvaluator
 
         evaluator = QueryEvaluator()
-        return evaluator.evaluate(self, tree, ctx=ctx)
+        return evaluator.evaluate(self, tree, ctx)

@@ -38,7 +38,7 @@ class QueryEvaluator:
     - Provide consistent error handling and context management
     """
 
-    def evaluate(self, query: Query, tree: "Tree", ctx: Any) -> Any:
+    def evaluate(self, query: Query, tree: "Tree", ctx: Any, /) -> Any:
         """
         Evaluate a complete query against tree data.
 

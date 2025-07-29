@@ -45,7 +45,7 @@ class PathResolver:
     navigation patterns efficiently.
     """
 
-    def resolve(self, path: "Path", tree: "Tree", ctx: Any) -> PathResult:
+    def resolve(self, path: "Path", tree: "Tree", ctx: Any, /) -> PathResult:
         """
         Resolve path to its value in the tree.
 
