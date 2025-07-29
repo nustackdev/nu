@@ -11,10 +11,12 @@ from loomi._behaviors.state.tree.types import Value
 __all__ = [
     "ErrorBehavior",
     "ExpressionValue",
+    "ExpressionPath",
     "StorageContext",
 ]
 
 ErrorBehavior: TypeAlias = Literal["fail", "continue"]
 
 ExpressionValue = Value | Empty | Query | Path
+ExpressionPath = tuple[str, ...] | str | Path
 StorageContext = Union["SnapshotProtocol | TransactionProtocol"]

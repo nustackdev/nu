@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi.evaluator import Context, Evaluator, Expression, ExpressionValue
+from loomi.evaluator import Context, Evaluator, Expression, ExpressionPath, ExpressionValue
 from loomi.state import Value
 
 
@@ -36,17 +36,16 @@ class Set(Expression):
         ```
     """
 
-    def __init__(self, path: str, value: Value, **kwargs):
+    def __init__(self, path: ExpressionPath, value: Value, **kwargs):
         super().__init__(**kwargs)
         self.path = path
         self.value = value
 
     def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
         """Set value at state path using unified infrastructure."""
-        path_components = self.path.split(".")
-
-        with evaluator.state.at(*path_components[:-1]).with_dict_view() as view:
-            view.set(path_components[-1], self.value)
+        with evaluator.state.transaction() as transaction:
+            view, path = self._resolve_path(self.path, evaluator.state, transaction)
+            view.set(path, self.value)  # type: ignore
 
 
 class Print(Expression):

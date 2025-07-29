@@ -46,14 +46,14 @@ import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast, final
 
-from loomi._behaviors.state.path import Path
+from loomi._behaviors.state.path import Path, PathResolver
 from loomi._behaviors.state.query import Query
-from loomi._behaviors.state.tree import Tree
+from loomi._behaviors.state.tree import BaseView, Tree
 from loomi._behaviors.state.tree.types import Value
 
 from .exceptions import ExpressionError, ValueResolutionError
 from .logger import logger
-from .types import ErrorBehavior, ExpressionValue, StorageContext
+from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContext
 
 if TYPE_CHECKING:
     from loomi._behaviors.evaluator import Context, Evaluator
@@ -236,6 +236,47 @@ class Expression(ABC):
     # =========================================================================
     # VALUE RESOLUTION UTILITIES
     # =========================================================================
+
+    def _resolve_path(
+        self,
+        path: ExpressionPath,
+        state: "Tree",
+        storage_ctx: "StorageContext",
+    ) -> tuple[BaseView, str | int]:
+        """
+        Resolve a path that could be a string or Path object.
+
+        This utility allows expressions to accept parameters as either
+        literal values or paths to values in the state tree. It abstracts
+        away the complexity of path resolution, providing a consistent
+        interface for all expressions.
+
+        Args:
+            path: The path to resolve
+            state: The state tree for resolution
+            storage_ctx: The storage context for view management
+
+        Returns:
+            The resolved view for the path
+        """
+        last_component: str | int | None
+
+        if isinstance(path, str):
+            path = Path(tuple(path))
+        elif isinstance(path, tuple):
+            path = Path(path)
+
+        if path.is_root():
+            raise ValueResolutionError("Cannot resolve root path as a view")
+
+        path_resolver = PathResolver()
+        parent_view = path_resolver.parent_view(path, state, storage_ctx)
+        last_component = path.last_component()
+
+        if last_component is None:
+            raise ValueResolutionError("Path must have a last component to resolve")
+
+        return parent_view, last_component
 
     def _resolve_value(
         self,
