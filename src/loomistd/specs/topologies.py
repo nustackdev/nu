@@ -1,5 +1,5 @@
 """
-Topology Specs - Complete system configurations.
+Topology Specs
 
 Provides high-level topology functions that return complete, ready-to-deploy
 application specifications. Each topology encapsulates storage strategy,

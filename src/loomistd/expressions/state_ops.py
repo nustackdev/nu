@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from loomi.evaluator import Context, Evaluator, Expression, ExpressionPath, ExpressionValue
-from loomi.state import Value
 
 
 class Set(Expression):
@@ -21,22 +20,14 @@ class Set(Expression):
     Examples:
         ```python
         # Set direct value
-        Set("config.timeout", 30)
+        Set(("config", "timeout"), 30)
 
         # Copy value from another path
-        Set("backup.user_count", "stats.active_users")
-
-        # Set complex data
-        Set("users.alice", {"name": "Alice", "role": "admin"})
-
-        # With error handling
-        Set("critical.setting", "source.value",
-            error_behavior="continue",
-            on_fail=Print("Failed to set critical setting"))
+        Set(("backup", "user_count"), ("stats", "active_users"))
         ```
     """
 
-    def __init__(self, path: ExpressionPath, value: Value, **kwargs):
+    def __init__(self, path: ExpressionPath, value: ExpressionValue, **kwargs):
         super().__init__(**kwargs)
         self.path = path
         self.value = value
@@ -45,37 +36,24 @@ class Set(Expression):
         """Set value at state path using unified infrastructure."""
         with evaluator.state.transaction() as transaction:
             view, path = self._resolve_path(self.path, evaluator.state, transaction)
-            view.set(path, self.value)  # type: ignore
+            value = self._resolve_value(self.value, evaluator.state, transaction)
+            view.set(path, value)  # type: ignore
 
 
 class Print(Expression):
     """
     Print a value to stdout with optional formatting.
 
-    This expression demonstrates read-only operations and flexible value handling:
-    - Resolve values from state or use direct values
-    - Optional message formatting
-    - Production-ready logging integration
-    - Snapshot context for read-only operations
-
     Args:
         value: Value to print (can be direct value or state path)
         message: Optional message template (uses {value} placeholder)
-        use_logger: If True, use logger.info instead of print()
-
     Examples:
         ```python
         # Print direct value
         Print("Hello, World!")
 
-        # Print state value
-        Print("users.alice.name")
-
         # Print with custom message
-        Print("stats.user_count", message="Active users: {value}")
-
-        # Print complex data
-        Print("config.database", message="DB Config: {value}")
+        Print(("stats", "user_count"), message="Active users: {value}")
         ```
     """
 
