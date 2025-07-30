@@ -18,10 +18,11 @@ from loomi import AppSpec, EvaluatorSpec, Spec, SpecBuilder
 
 from .launcher import get_launcher_spec
 from .rpc import get_rpyc_specs
-from .state import get_lmdb_state_spec
+from .state import get_file_state_spec, get_lmdb_state_spec
 
 __all__ = [
     "get_enterprise_d_topology",
+    "get_enterprise_d_file_topology",
     "get_defiant_topology",
     "get_voyager_topology",
     "get_cerritos_topology",
@@ -87,6 +88,122 @@ def get_enterprise_d_topology(
 
     # 1. Create base state with LMDB persistence
     base_state = get_lmdb_state_spec(path=storage_path, mode="write", name=f"{app_name}_state")
+
+    # 2. Create RPC specs for state service
+    state_client, state_server = get_rpyc_specs(
+        rpc_type="unix",
+        address=f"{socket_base}_state.sock",
+        client_name=f"{app_name}_state_client",
+        server_name=f"{app_name}_state_server",
+    )
+
+    # 3. Create proxied state with launcher capability
+    proxied_state = (
+        SpecBuilder(base_state)
+        .as_proxy(state_client)
+        .with_launcher(
+            get_launcher_spec(
+                host=state_server,
+                launcher_type="multiprocessing",
+                name=f"{app_name}_state_launcher",
+            )
+        )
+        .build()
+    )
+
+    # 4. Create proxy state for workers (without launcher)
+    proxy_state_for_workers = SpecBuilder(base_state).as_proxy(state_client).build()
+
+    # 5. Create base worker app spec
+    base_worker = app_spec.with_value_at("state", value=proxy_state_for_workers).with_value_at(
+        "name", value="worker"
+    )
+
+    # 6. Create worker fleet with replication
+    worker_client, worker_server = get_rpyc_specs(
+        rpc_type="unix",
+        address=f"{socket_base}_worker.sock",
+        client_name="worker_client",
+        server_name="worker_server",
+    )
+
+    worker_fleet = (
+        SpecBuilder(base_worker)
+        .as_proxy(worker_client)
+        .with_launcher(
+            get_launcher_spec(
+                host=worker_server, launcher_type="multiprocessing", name="worker_launcher"
+            )
+        )
+        .replicate(
+            count=worker_count,
+            paths={
+                ("client_spec", "connection", "socket_path"): f"{socket_base}_worker_{{}}.sock",
+                ("launcher_spec", "host", "socket_path"): f"{socket_base}_worker_{{}}.sock",
+                ("inner_spec", "name"): "worker_{}",
+                ("client_spec", "name"): "worker_{}_client",
+                ("launcher_spec", "name"): "worker_{}_launcher",
+            },
+        )
+    )
+
+    # 7. Create evaluator with worker fleet
+    evaluator = EvaluatorSpec(
+        fleet=tuple(worker_fleet), state_service=proxied_state, name=f"{app_name}_evaluator"
+    )
+
+    # 8. Create main application spec
+    main_app = app_spec.with_value_at(
+        "state",
+        value=proxied_state,
+    ).with_value_at(
+        "evaluator",
+        value=evaluator,
+    )
+
+    return main_app
+
+
+def get_enterprise_d_file_topology(
+    app_spec: AppSpec,
+    *,
+    worker_count: int = 4,
+    storage_path: str = ".data",
+    socket_base: str = "/tmp/enterprise_file",
+    app_name: str = "enterprise_file_app",
+) -> Spec:
+    """
+    Create an Enterprise NCC-1701-D topology with file storage.
+
+    Like the flagship USS Enterprise NCC-1701-D but using file-based storage
+    instead of LMDB. Maintains the reliability and robustness of the original
+    with a simpler storage mechanism.
+
+    Features file-based persistent storage, Unix socket communication,
+    multiprocessing workers, and proven architectural patterns.
+
+    Perfect for:
+    - Production applications with simpler storage needs
+    - Distributed processing with file-based state
+    - Workloads requiring human-readable state inspection
+    - Systems with file-based data requirements
+
+    Registry: NCC-1701-D-F (Galaxy-class with file modifications)
+    Captain: Jean-Luc Picard
+
+    Args:
+        app_spec: Application spec to deploy
+        worker_count: Number of worker processes (default: 4)
+        storage_path: Directory path for file storage (default: ".data")
+        socket_base: Base path for Unix sockets (default: "/tmp/enterprise_file")
+        app_name: Name for the main application (default: "enterprise_file_app")
+
+    Returns:
+        Complete application spec ready for deployment
+    """
+
+    # 1. Create base state with file persistence
+    base_state = get_file_state_spec(path=storage_path, mode="write", name=f"{app_name}_state")
 
     # 2. Create RPC specs for state service
     state_client, state_server = get_rpyc_specs(

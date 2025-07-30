@@ -46,7 +46,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast, final
 
-from loomi._behaviors.state.path import Path, PathResolver
+from loomi._behaviors.state.path import ExtendedPath, Path, PathResolver
 from loomi._behaviors.state.query import Query
 from loomi._behaviors.state.tree import BaseView, Tree
 from loomi._behaviors.state.tree.types import Value
@@ -102,6 +102,7 @@ class Expression(ABC):
         *,
         error_behavior: "ErrorBehavior" = "fail",
         on_fail: Optional["Expression"] = None,
+        name: Optional[str] = None,
         **metadata,
     ):
         """
@@ -118,16 +119,44 @@ class Expression(ABC):
                 f"Invalid error_behavior: {error_behavior}. Must be 'fail' or 'continue'"
             )
 
-        self.error_behavior = error_behavior
-        self.on_fail = on_fail
-        self.metadata = metadata
+        self._error_behavior = error_behavior
+        self._on_fail = on_fail
+        self._name = name
+        self._metadata = metadata
 
-        # Generate unique expression ID for tracking
-        self._expression_id = id(self)
-        self._expression_name = self._get_expression_name()
-
-        # Log initialization
         self._log_init(**metadata)
+
+    @property
+    def readable_name(self) -> str:
+        """Get a human-readable name for the expression."""
+        return self._name or type(self).__name__
+
+    @property
+    def name(self) -> Optional[str]:
+        return self._name
+
+    @property
+    def error_behavior(self) -> str:
+        """Get the configured error behavior for this expression."""
+        return self._error_behavior
+
+    @property
+    def on_fail(self) -> Optional["Expression"]:
+        """Get the fallback expression to execute on error."""
+        return self._on_fail
+
+    @property
+    def info(self) -> Dict[str, Any]:
+        """Get expression metadata for debugging/introspection."""
+        info = {
+            "type": type(self).__name__,
+            "error_behavior": self.error_behavior,
+            "has_on_fail": self.on_fail is not None,
+            "metadata": self._metadata,
+        }
+        if self.name:
+            info["name"] = self.name
+        return info
 
     # =========================================================================
     # CORE EVALUATION INTERFACE
@@ -178,9 +207,8 @@ class Expression(ABC):
             # Handle infrastructure errors (logging, etc.)
             duration = time.perf_counter() - start_time
             logger.error(
-                f"Infrastructure error in expression {self._expression_name}",
+                f"Infrastructure error in expression {self.readable_name}",
                 extra={
-                    "expression_id": self._expression_id,
                     "expression_type": type(self).__name__,
                     "duration_ms": duration * 1000,
                     "error_type": type(infra_error).__name__,
@@ -189,7 +217,7 @@ class Expression(ABC):
                 exc_info=True,
             )
             raise ExpressionError(
-                f"Infrastructure failure in {self._expression_name}: {infra_error}",
+                f"Infrastructure failure in {self.readable_name}: {infra_error}",
                 expression=self,
                 cause=infra_error,
             )
@@ -242,6 +270,7 @@ class Expression(ABC):
         path: ExpressionPath,
         state: "Tree",
         storage_ctx: "StorageContext",
+        context: "Context",
     ) -> tuple[BaseView, str | int]:
         """
         Resolve a path that could be a string or Path object.
@@ -261,10 +290,7 @@ class Expression(ABC):
         """
         last_component: str | int | None
 
-        if isinstance(path, str):
-            path = Path(tuple(path))
-        elif isinstance(path, tuple):
-            path = Path(path)
+        path = self._process_path(path, context)
 
         if path.is_root():
             raise ValueResolutionError("Cannot resolve root path as a view")
@@ -283,6 +309,7 @@ class Expression(ABC):
         value: ExpressionValue,
         state: "Tree",
         storage_ctx: "StorageContext",
+        context: "Context",
     ) -> Value:
         """
         Resolve a value that could be either a direct value or a state path.
@@ -315,22 +342,25 @@ class Expression(ABC):
             ```
         """
         try:
-            if isinstance(value, (Query, Path)):
+            if isinstance(value, Query):
                 logger.debug(
                     f"Resolving state expression: {value}",
-                    extra={
-                        "value_type": type(value).__name__,
-                        "context_id": id(storage_ctx),
-                    },
+                    extra={"value_type": type(value).__name__},
                 )
-                resolved_value = value.evaluate(state, storage_ctx)
-                return resolved_value
+                return value.evaluate(state, storage_ctx, cast(dict, context.attributes))
+            elif isinstance(value, (Path, ExtendedPath)):
+                logger.debug(
+                    f"Resolving state expression: {value}",
+                    extra={"value_type": type(value).__name__},
+                )
+                value = self._process_path(value, context)
+                return value.resolve(state, storage_ctx, cast(dict, context.attributes))
             else:
                 return cast(Value, value)
 
         except Exception as e:
             raise ValueResolutionError(
-                f"Failed to resolve value {value} in {self._expression_name}: {e}",
+                f"Failed to resolve value {value} in {self.readable_name}: {e}",
                 expression=self,
                 cause=e,
             )
@@ -340,6 +370,7 @@ class Expression(ABC):
         values: dict[str, ExpressionValue],
         state: "Tree",
         storage_ctx: "StorageContext",
+        context: "Context",
     ) -> dict[str, Value]:
         """
         Resolve multiple values using the same storage context for consistency.
@@ -371,15 +402,50 @@ class Expression(ABC):
         resolved = {}
         for key, value in values.items():
             try:
-                resolved[key] = self._resolve_value(value, state, storage_ctx)
+                resolved[key] = self._resolve_value(value, state, storage_ctx, context)
             except Exception as e:
                 raise ValueResolutionError(
-                    f"Failed to resolve '{key}' in {self._expression_name}: {e}",
+                    f"Failed to resolve '{key}' in {self.readable_name}: {e}",
                     expression=self,
                     cause=e,
                 )
 
         return resolved
+
+    def _process_path(self, path: ExpressionPath, context: "Context") -> Path:
+        """
+        Process a path expression into a Path object.
+
+        This utility method ensures that the path is correctly interpreted
+        as a Path object, allowing for consistent handling of state paths.
+
+        Args:
+            evaluator: The evaluator providing execution environment
+            context: The execution context with metadata and state
+            path: The path expression to process
+
+        Returns:
+            A Path object representing the processed path expression
+        """
+        # Convert path to list of components to then inject Context values
+        if isinstance(path, str):
+            list_path = path.split(".")
+            # Convert integers in path to int
+            list_path = [
+                int(i) if i.isdigit() or (i.startswith("-") and i[1:].isdigit()) else i
+                for i in list_path
+            ]
+            return Path(tuple(list_path))
+        elif isinstance(path, tuple):
+            return Path(tuple(path))
+        elif isinstance(path, Path):
+            return path
+        elif isinstance(path, ExtendedPath):
+            return path.substitute_variables(cast(dict, context.attributes))
+
+        raise ValueResolutionError(
+            f"Invalid path type: {type(path).__name__}. Must be str, tuple, or Path"
+        )
 
     # =========================================================================
     # LOGGING INFRASTRUCTURE
@@ -388,9 +454,8 @@ class Expression(ABC):
     def _log_init(self, **extra_context) -> None:
         """Log expression initialization with metadata."""
         logger.debug(
-            f"Initialized expression {self._expression_name}",
+            f"Initialized expression {self.readable_name}",
             extra={
-                "expression_id": self._expression_id,
                 "expression_type": type(self).__name__,
                 "error_behavior": self.error_behavior,
                 "has_on_fail": self.on_fail is not None,
@@ -401,9 +466,8 @@ class Expression(ABC):
     def _log_start(self, evaluator: "Evaluator", context: "Context") -> None:
         """Log evaluation start with context."""
         logger.info(
-            f"Starting evaluation of {self._expression_name}",
+            f"Starting evaluation of {self.readable_name}",
             extra={
-                "expression_id": self._expression_id,
                 "expression_type": type(self).__name__,
                 "context_attributes": list(context.attributes.keys()) if context.attributes else [],
                 "evaluator_id": id(evaluator),
@@ -413,9 +477,8 @@ class Expression(ABC):
     def _log_end(self, evaluator: "Evaluator", context: "Context", duration: float) -> None:
         """Log successful evaluation completion."""
         logger.info(
-            f"Completed evaluation of {self._expression_name}",
+            f"Completed evaluation of {self.readable_name}",
             extra={
-                "expression_id": self._expression_id,
                 "expression_type": type(self).__name__,
                 "duration_ms": duration * 1000,
                 "success": True,
@@ -427,9 +490,8 @@ class Expression(ABC):
     ) -> None:
         """Log evaluation error with full context."""
         logger.error(
-            f"Expression {self._expression_name} failed",
+            f"Expression {self.readable_name} failed",
             extra={
-                "expression_id": self._expression_id,
                 "expression_type": type(self).__name__,
                 "duration_ms": duration * 1000,
                 "error_type": type(error).__name__,
@@ -460,18 +522,16 @@ class Expression(ABC):
         if self.on_fail is not None:
             try:
                 logger.info(
-                    f"Executing on_fail expression for {self._expression_name}",
+                    f"Executing on_fail expression for {self.readable_name}",
                     extra={
-                        "expression_id": self._expression_id,
                         "on_fail_type": type(self.on_fail).__name__,
                     },
                 )
                 self.on_fail.evaluate(evaluator, context)
             except Exception as fail_error:
                 logger.error(
-                    f"on_fail expression failed for {self._expression_name}",
+                    f"on_fail expression failed for {self.readable_name}",
                     extra={
-                        "expression_id": self._expression_id,
                         "original_error": str(error),
                         "fail_error": str(fail_error),
                     },
@@ -485,8 +545,8 @@ class Expression(ABC):
         elif self.error_behavior == "continue":
             # Log and continue execution
             logger.warning(
-                f"Continuing after error in {self._expression_name}",
-                extra={"expression_id": self._expression_id, "error_type": type(error).__name__},
+                f"Continuing after error in {self.readable_name}",
+                extra={"error_type": type(error).__name__},
             )
         # If we reach here with "continue", the error is swallowed and execution continues
 
@@ -494,21 +554,13 @@ class Expression(ABC):
     # METADATA & INTROSPECTION
     # =========================================================================
 
-    def _get_expression_name(self) -> str:
-        """Get human-readable expression name for logging."""
-        return type(self).__name__
-
-    def _get_expression_metadata(self) -> Dict[str, Any]:
-        """Get expression metadata for debugging/introspection."""
-        return {
-            "id": self._expression_id,
-            "name": self._expression_name,
-            "type": type(self).__name__,
-            "error_behavior": self.error_behavior,
-            "has_on_fail": self.on_fail is not None,
-            "metadata": self.metadata,
-        }
-
     def __repr__(self) -> str:
         """String representation for debugging."""
-        return f"{self._expression_name}(id={self._expression_id}, error_behavior={self.error_behavior})"
+        info_str = ", ".join(f"{k}={v!r}" for k, v in self.info.items() if k != "metadata")
+
+        # Add metadata separately if it exists, with better formatting
+        if self.info.get("metadata"):
+            metadata_str = ", ".join(f"{k}={v!r}" for k, v in self.info["metadata"].items())
+            info_str += f", metadata={{{metadata_str}}}"
+
+        return f"{self.readable_name}({info_str})"

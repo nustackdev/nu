@@ -24,8 +24,7 @@ from loomi._behaviors.state.backend import (
     ValueT_co,
     ValueT_contra,
 )
-from loomi._behaviors.state.path import Path, PathResolver
-from loomi._behaviors.state.query import Query, QueryEvaluator
+from loomi._behaviors.state.path import ExtendedPath, Path, PathResolver
 from loomi._behaviors.state.state import State, StateSpec
 from loomi._behaviors.state.tree import (
     EMPTY,
@@ -101,10 +100,8 @@ __all__ = [
     "create_view_context_manager",
     # path
     "Path",
+    "ExtendedPath",
     "PathResolver",
-    # query
-    "Query",
-    "QueryEvaluator",
     # state
     "State",
     "StateSpec",

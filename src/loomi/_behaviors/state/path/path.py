@@ -8,52 +8,38 @@ without any query operations or logic.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Self, Union, cast
 
 import attrs
 
 from .exceptions import PathConstructionError
-from .types import PathComponent
+from .types import ExtendedPathComponent, PathComponent
+from .variable import Variable
 
 if TYPE_CHECKING:
     from ..query import Query
     from ..tree import Tree
 
 __all__ = [
+    "ExtendedPath",
     "Path",
+    "_Path",
 ]
 
 
 @attrs.define(frozen=True, slots=True)
-class Path:
+class _Path:
     """
-    Pure path construction and evaluation - no query knowledge.
-
-    Paths represent navigation through the tree structure using attribute access
-    and indexing. They are immutable and can be evaluated against tree data
-    to retrieve actual values.
-
-    Example:
-        ```python
-        # Path construction
-        path = tree.P.users.alice.profile["email"]
-
-        # Path evaluation
-        email = path.evaluate()
-
-        # Paths are immutable - operations return new paths
-        age_path = tree.P.users.alice.age
-        profile_path = age_path.parent().profile  # Navigate back and down
-        ```
+    Path construction and evaluation base class.
     """
 
-    components: tuple[PathComponent, ...] = attrs.field(factory=tuple)
+    components: tuple[Any, ...] = attrs.field(factory=tuple)
 
     # =========================================================================
     # PATH CONSTRUCTION (Navigation Methods)
     # =========================================================================
 
-    def __getattr__(self, name: str) -> Path:
+    def __getattr__(self, name: str) -> Self:
         """
         Navigate to attribute: path.users → new Path
 
@@ -78,9 +64,9 @@ class Path:
         if not isinstance(name, str) or not name.isidentifier():
             raise PathConstructionError(f"Invalid attribute name: {name}")
 
-        return Path(tuple(self.components) + (name,))
+        return self.__class__(tuple(self.components) + (name,))
 
-    def __getitem__(self, key: Union[int, str]) -> Path:
+    def __getitem__(self, key: Union[int, str]) -> Self:
         """
         Navigate by index/key: path[0] or path["key"] → new Path
 
@@ -103,158 +89,38 @@ class Path:
         if not isinstance(key, (int, str)):
             raise PathConstructionError(f"Invalid key type: {type(key)}. Must be int or str")
 
-        return Path(tuple(self.components) + (key,))
+        return __class__(tuple(self.components) + (key,))
 
     # =========================================================================
-    # PATH MANIPULATION
+    # VARIABLE INTERFACE
     # =========================================================================
 
-    def join(self, *components: PathComponent) -> Path:
+    def var(self, path: str, *paths: str) -> ExtendedPath:
         """
-        Join additional components to create new path.
+        Add a variable component to the path.
+
+        This is the primary interface for adding variables to paths.
+        It's explicit, type-safe, and supports nested variable paths.
 
         Args:
-            *components: Components to append to path
+            *path: Variable path components
 
         Returns:
-            New Path with combined components
+            New Path with variable component added
 
-        Example:
-            ```python
-            base = tree.P.users
-            alice_email = base.join("alice", "profile", "email")
-            ```
+        Examples:
+            path.var("user_id") -> resolves to variables["user_id"]
+            path.var("user", "profile", "id") -> resolves to variables["user"]["profile"]["id"]
+            path.var("config", "table_name") -> resolves to variables["config"]["table_name"]
         """
-        return Path(tuple(self.components) + tuple(components))
+        paths = (path,) + paths
 
-    def parent(self) -> Path | None:
-        """
-        Get parent path.
+        if not paths:
+            raise PathConstructionError("Variable path cannot be empty")
 
-        Returns:
-            New Path for parent, or None if already at root
+        variable = Variable(paths)
 
-        Example:
-            ```python
-            email_path = tree.P.users.alice.email
-            alice_path = email_path.parent()  # tree.P.users.alice
-            users_path = alice_path.parent()  # tree.P.users
-            root_path = users_path.parent()   # tree.P
-            none_path = root_path.parent()    # None
-            ```
-        """
-        if not self.components:
-            return None
-
-        return Path(tuple(self.components[:-1]))
-
-    def last_component(self) -> PathComponent | None:
-        """
-        Get the last component of the path.
-
-        Returns:
-            Last component or None if path is root
-
-        Example:
-            ```python
-            path = tree.P.users.alice.email
-            last = path.last_component()  # "email"
-            ```
-        """
-        return self.components[-1] if self.components else None
-
-    def is_root(self) -> bool:
-        """
-        Check if this is the root path.
-
-        Returns:
-            True if path has no components
-
-        Example:
-            ```python
-            root = tree.P
-            assert root.is_root() == True
-
-            users = tree.P.users
-            assert users.is_root() == False
-            ```
-        """
-        return len(self.components) == 0
-
-    def is_ancestor_of(self, other: Path) -> bool:
-        """
-        Check if this path is an ancestor of another path.
-
-        Args:
-            other: Path to check against
-
-        Returns:
-            True if this path is an ancestor of other
-
-        Example:
-            ```python
-            users = tree.P.users
-            alice = tree.P.users.alice
-            email = tree.P.users.alice.email
-
-            assert users.is_ancestor_of(alice) == True
-            assert users.is_ancestor_of(email) == True
-            assert alice.is_ancestor_of(email) == True
-            assert email.is_ancestor_of(alice) == False
-            ```
-        """
-        if not isinstance(other, Path):
-            return False
-
-        if len(self.components) >= len(other.components):
-            return False
-
-        return other.components[: len(self.components)] == self.components
-
-    def is_descendant_of(self, other: Path) -> bool:
-        """
-        Check if this path is a descendant of another path.
-
-        Args:
-            other: Path to check against
-
-        Returns:
-            True if this path is a descendant of other
-
-        Example:
-            ```python
-            users = tree.P.users
-            alice = tree.P.users.alice
-
-            assert alice.is_descendant_of(users) == True
-            assert users.is_descendant_of(alice) == False
-            ```
-        """
-        return other.is_ancestor_of(self)
-
-    def relative_to(self, ancestor: Path) -> Path | None:
-        """
-        Get relative path from ancestor to this path.
-
-        Args:
-            ancestor: Ancestor path
-
-        Returns:
-            Relative path or None if not a descendant
-
-        Example:
-            ```python
-            users = tree.P.users
-            email = tree.P.users.alice.profile.email
-
-            relative = email.relative_to(users)  # Path equivalent to P.alice.profile.email
-            ```
-        """
-        if not self.is_descendant_of(ancestor):
-            return None
-
-        relative_components = self.components[len(ancestor.components) :]
-        return Path(relative_components)
+        return ExtendedPath(tuple(self.components) + (variable,))
 
     # =========================================================================
     # UTILITY METHODS
@@ -305,7 +171,7 @@ class Path:
     # PATH RESOLUTION
     # =========================================================================
 
-    def resolve(self, tree: "Tree", ctx: Any, /) -> Any:
+    def resolve(self, tree: "Tree", ctx: Any, vars: dict[str | int, Any] = {}, /) -> Any:
         """
         Resolve path to its value in the tree.
 
@@ -336,7 +202,15 @@ class Path:
         """
         from ..path.resolver import PathResolver
 
-        return PathResolver().resolve(self, tree, ctx)
+        if isinstance(self, ExtendedPath) and self.has_variables():
+            path = self.substitute_variables(vars)
+        elif isinstance(self, Path):
+            # For pure Path, no variable substitution needed
+            path = self
+        else:
+            raise TypeError(f"Unsupported path type: {type(self).__name__}")
+
+        return PathResolver().resolve(path, tree, ctx)
 
     def evaluate(self, tree: "Tree", ctx: Any, /) -> Any:
         """
@@ -715,3 +589,219 @@ class Path:
             New Query with bool operation
         """
         return self.to_query().bool()
+
+
+@attrs.define(frozen=True, slots=True)
+class Path(_Path):
+    """
+    Path construction and evaluation.
+
+    Paths represent navigation through the tree structure using attribute access
+    and indexing. They are immutable and can be evaluated against tree data
+    to retrieve actual values.
+
+    Example:
+        ```python
+        # Path construction
+        path = tree.P.users.alice.profile["email"]
+
+        # Path evaluation
+        email = path.evaluate()
+
+        # Paths are immutable - operations return new paths
+        age_path = tree.P.users.alice.age
+        profile_path = age_path.parent().profile  # Navigate back and down
+        ```
+    """
+
+    components: tuple[PathComponent, ...] = attrs.field(factory=tuple)
+
+    # =========================================================================
+    # PATH MANIPULATION
+    # =========================================================================
+
+    def join(self, *components: PathComponent) -> Path:
+        """
+        Join additional components to create new path.
+
+        Args:
+            *components: Components to append to path
+
+        Returns:
+            New Path with combined components
+
+        Example:
+            ```python
+            base = tree.P.users
+            alice_email = base.join("alice", "profile", "email")
+            ```
+        """
+        return Path(tuple(self.components) + tuple(components))
+
+    def last_component(self) -> PathComponent | None:
+        """
+        Get the last component of the path.
+
+        Returns:
+            Last component or None if path is root
+
+        Example:
+            ```python
+            path = tree.P.users.alice.email
+            last = path.last_component()  # "email"
+            ```
+        """
+        return self.components[-1] if self.components else None
+
+    def is_root(self) -> bool:
+        """
+        Check if this is the root path.
+
+        Returns:
+            True if path has no components
+
+        Example:
+            ```python
+            root = tree.P
+            assert root.is_root() == True
+
+            users = tree.P.users
+            assert users.is_root() == False
+            ```
+        """
+        return len(self.components) == 0
+
+    def is_ancestor_of(self, other: Path) -> bool:
+        """
+        Check if this path is an ancestor of another path.
+
+        Args:
+            other: Path to check against
+
+        Returns:
+            True if this path is an ancestor of other
+
+        Example:
+            ```python
+            users = tree.P.users
+            alice = tree.P.users.alice
+            email = tree.P.users.alice.email
+
+            assert users.is_ancestor_of(alice) == True
+            assert users.is_ancestor_of(email) == True
+            assert alice.is_ancestor_of(email) == True
+            assert email.is_ancestor_of(alice) == False
+            ```
+        """
+        if not isinstance(other, Path):
+            return False
+
+        if len(self.components) >= len(other.components):
+            return False
+
+        return other.components[: len(self.components)] == self.components
+
+    def is_descendant_of(self, other: Path) -> bool:
+        """
+        Check if this path is a descendant of another path.
+
+        Args:
+            other: Path to check against
+
+        Returns:
+            True if this path is a descendant of other
+
+        Example:
+            ```python
+            users = tree.P.users
+            alice = tree.P.users.alice
+
+            assert alice.is_descendant_of(users) == True
+            assert users.is_descendant_of(alice) == False
+            ```
+        """
+        return other.is_ancestor_of(self)
+
+    def relative_to(self, ancestor: Path) -> Path | None:
+        """
+        Get relative path from ancestor to this path.
+
+        Args:
+            ancestor: Ancestor path
+
+        Returns:
+            Relative path or None if not a descendant
+
+        Example:
+            ```python
+            users = tree.P.users
+            email = tree.P.users.alice.profile.email
+
+            relative = email.relative_to(users)  # Path equivalent to P.alice.profile.email
+            ```
+        """
+        if not self.is_descendant_of(ancestor):
+            return None
+
+        relative_components = self.components[len(ancestor.components) :]
+        return Path(relative_components)
+
+
+@attrs.define(frozen=True, slots=True)
+class ExtendedPath(_Path):
+    """
+    Extended path that supports variable components.
+
+    This class extends the basic Path functionality to include variable
+    references, allowing for dynamic path resolution at runtime.
+    """
+
+    components: tuple[ExtendedPathComponent, ...] = attrs.field(factory=tuple)
+
+    # =========================================================================
+    # VARIABLE INTERFACE
+    # =========================================================================
+
+    def has_variables(self) -> bool:
+        """Check if this path contains any variable components."""
+        return any(isinstance(comp, Variable) for comp in self.components)
+
+    def get_variables(self) -> tuple[Variable, ...]:
+        """Get all variable components in this path."""
+        return tuple(comp for comp in self.components if isinstance(comp, Variable))
+
+    def substitute_variables(self, variables: dict[str | int, Any]) -> Path:
+        """
+        Create a new path with all variables resolved to their values.
+
+        Args:
+            variables: Dictionary containing variable values
+
+        Returns:
+            New Path with variables substituted to str/int components
+
+        Raises:
+            ValueError: If resolved variable is not a valid path component
+            KeyError: If variable is not found in variables dict
+            TypeError: If trying to access nested path on non-dict
+        """
+        if not self.has_variables():
+            return Path(
+                cast(tuple[str | int, ...], self.components)
+            )  # No variables to substitute, return self for efficiency
+
+        resolved_components = []
+        for component in self.components:
+            if isinstance(component, Variable):
+                resolved_value = component.resolve(variables)
+                # Validate that resolved value is a valid path component
+                if not isinstance(resolved_value, (str, int)):
+                    raise ValueError(
+                        f"Variable '{component}' resolved to {type(resolved_value).__name__}, "
+                        f"but path components must be str or int. Got: {resolved_value}"
+                    )
+                resolved_components.append(resolved_value)
+            else:
+                resolved_components.append(component)
+
+        return Path(tuple(resolved_components))

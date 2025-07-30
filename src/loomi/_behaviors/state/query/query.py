@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import attrs
 
+from .exceptions import QueryEvaluationError
 from .operations import (
     AbsOperation,
     AddOperation,
@@ -44,7 +45,7 @@ from .operations import (
 )
 
 if TYPE_CHECKING:
-    from ..path import Path
+    from ..path import _Path
     from ..tree import Tree
     from .operations import Operation
 
@@ -83,7 +84,7 @@ class Query:
     # =========================================================================
 
     @classmethod
-    def create(cls, path: Path) -> Query:
+    def create(cls, path: _Path) -> Query:
         """
         Create query from path.
 
@@ -102,6 +103,66 @@ class Query:
             ```
         """
         return cls(operations=ResolveVarOperation(operand=path))
+
+    # =========================================================================
+    # UTILITY METHODS
+    # =========================================================================
+
+    def __repr__(self) -> str:
+        """
+        Debug representation showing operation tree.
+
+        Returns:
+            String representation for debugging
+        """
+        return f"Query({self.operations})"
+
+    def __hash__(self) -> int:
+        """
+        Hash based on operations tree.
+
+        Returns:
+            Hash value for use in sets/dicts
+        """
+        return hash(self.operations)
+
+    # =========================================================================
+    # EVALUATION
+    # =========================================================================
+
+    def evaluate(self, tree: "Tree", ctx: Any, vars: dict[str | int, Any]) -> Any:
+        """
+        Evaluate the query against a tree.
+
+        This resolves the operation tree and returns the final result.
+        If ctx is provided, it will be used for data access.
+
+        Args:
+            tree: Tree instance to evaluate against
+            ctx: Optional context (transaction/snapshot) for data operations
+
+        Returns:
+            Result of evaluating the query's operation tree
+
+        Raises:
+            QueryEvaluationError: If evaluation fails at any point
+
+        Example:
+            ```python
+            result = query.evaluate(tree)
+            with tree.transaction() as tx:
+                result = query.evaluate(tree, ctx=tx, vars=vars)
+            ```
+        """
+
+        try:
+            return self.operations.calc(tree, ctx, vars)
+        except Exception as e:
+            if isinstance(e, QueryEvaluationError):
+                raise
+            raise QueryEvaluationError(
+                f"Failed to evaluate query: {self}", query=self, original_error=e
+            ) from e
 
     # =========================================================================
     # ARITHMETIC OPERATIONS
@@ -464,58 +525,3 @@ class Query:
             ```
         """
         return Query(operations=BoolOperation(operand=self.operations))
-
-    # =========================================================================
-    # UTILITY METHODS
-    # =========================================================================
-
-    def __repr__(self) -> str:
-        """
-        Debug representation showing operation tree.
-
-        Returns:
-            String representation for debugging
-        """
-        return f"Query({self.operations})"
-
-    def __hash__(self) -> int:
-        """
-        Hash based on operations tree.
-
-        Returns:
-            Hash value for use in sets/dicts
-        """
-        return hash(self.operations)
-
-    # =========================================================================
-    # EVALUATION
-    # =========================================================================
-
-    def evaluate(self, tree: "Tree", ctx: Any, /) -> Any:
-        """
-        Evaluate the query against a tree.
-
-        This resolves the operation tree and returns the final result.
-        If ctx is provided, it will be used for data access.
-
-        Args:
-            tree: Tree instance to evaluate against
-            ctx: Optional context (transaction/snapshot) for data operations
-
-        Returns:
-            Result of evaluating the query's operation tree
-
-        Raises:
-            QueryEvaluationError: If evaluation fails at any point
-
-        Example:
-            ```python
-            result = query.evaluate(tree)
-            with tree.transaction() as tx:
-                result = query.evaluate(tree, ctx=tx)
-            ```
-        """
-        from .evaluator import QueryEvaluator
-
-        evaluator = QueryEvaluator()
-        return evaluator.evaluate(self, tree, ctx)

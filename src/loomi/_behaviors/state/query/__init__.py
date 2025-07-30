@@ -34,7 +34,6 @@ Example Usage:
     ```
 """
 
-from .evaluator import QueryEvaluator
 from .exceptions import QueryError, QueryEvaluationError, QueryOperationError, QuerySyntaxError
 from .operations import (  # Base classes; Path resolution; Arithmetic operations; Comparison operations; Logical operations; String operations; Function operations
     AbsOperation,
@@ -76,7 +75,6 @@ from .types import QueryResult
 __all__ = [
     # Core classes
     "Query",
-    "QueryEvaluator",
     # Base operation classes
     "Operation",
     "UnaryOperation",

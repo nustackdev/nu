@@ -116,6 +116,7 @@ def get_memory_state_spec(*, name: str = "memory_state") -> StateSpec:
 def get_file_state_spec(
     path: str | Path = "./state.json",
     *,
+    mode: str = "write",
     name: str = "file_state",
 ) -> StateSpec:
     """
@@ -150,6 +151,7 @@ def get_file_state_spec(
         name=name,
         storage=FileStorageSpec(
             path=Path(path) if isinstance(path, str) else path,
+            mode=mode,
             codec=JSONCodecSpec(),
         ),
         observer=InMemoryObserverSpec(),

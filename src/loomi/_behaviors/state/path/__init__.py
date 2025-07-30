@@ -13,13 +13,15 @@ Core Components:
 """
 
 from .exceptions import PathConstructionError, PathError, PathEvaluationError, PathNotFoundError
-from .path import Path
+from .path import ExtendedPath, Path, _Path
 from .resolver import PathResolver
 from .types import PathComponent, PathResult
 
 __all__ = [
     # Core classes
+    "_Path",
     "Path",
+    "ExtendedPath",
     "PathResolver",
     # Types and protocols
     "PathComponent",

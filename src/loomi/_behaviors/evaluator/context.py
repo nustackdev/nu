@@ -107,7 +107,6 @@ class Context:
         logger.debug(
             "Deriving new context",
             extra={
-                "parent_context_id": id(self),
                 "parent_expression_type": type(self.expression).__name__,
                 "new_expression_type": type(expression).__name__ if expression else None,
                 "has_new_attributes": attributes is not None,
@@ -131,17 +130,9 @@ class Context:
             # Merge attributes if provided
             if attributes is not None:
                 # Merge the new attributes with existing ones
+                # TODO: implement deep merge (?)
                 merged_attributes = {**values["attributes"], **attributes}
                 updates["attributes"] = frozendict(merged_attributes)
-
-                logger.debug(
-                    "Merging context attributes",
-                    extra={
-                        "existing_keys": list(values["attributes"].keys()),
-                        "new_keys": list(attributes.keys()),
-                        "merged_keys": list(merged_attributes.keys()),
-                    },
-                )
 
             values.update(updates)
 
@@ -151,8 +142,6 @@ class Context:
             logger.debug(
                 "Successfully derived new context",
                 extra={
-                    "parent_context_id": id(self),
-                    "new_context_id": id(new_context),
                     "new_expression_type": type(new_context.expression).__name__,
                     "new_attributes_count": len(new_context.attributes),
                 },
@@ -164,7 +153,6 @@ class Context:
             logger.error(
                 "Failed to derive context",
                 extra={
-                    "parent_context_id": id(self),
                     "error_type": type(e).__name__,
                     "error_message": str(e),
                 },
