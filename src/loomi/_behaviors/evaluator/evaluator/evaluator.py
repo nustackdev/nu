@@ -61,13 +61,11 @@ class Evaluator(SyncResource):
             EvaluationError: If evaluation fails and error_behavior is "fail"
         """
         expression_name = expression.__class__.__name__
-        expression_id = id(expression)
 
         logger.info(
             "Starting evaluation of expression",
             extra={
                 "expression_type": expression_name,
-                "expression_id": expression_id,
                 "context_attributes": list(context.attributes.keys()),
             },
         )
@@ -80,7 +78,6 @@ class Evaluator(SyncResource):
                 "Successfully completed expression evaluation",
                 extra={
                     "expression_type": expression_name,
-                    "expression_id": expression_id,
                 },
             )
 
@@ -89,7 +86,6 @@ class Evaluator(SyncResource):
                 "Expression evaluation failed",
                 extra={
                     "expression_type": expression_name,
-                    "expression_id": expression_id,
                     "error_type": type(e).__name__,
                     "error_message": str(e),
                 },
@@ -107,7 +103,6 @@ class Evaluator(SyncResource):
                     "Continuing execution despite evaluation error",
                     extra={
                         "expression_type": expression_name,
-                        "expression_id": expression_id,
                     },
                 )
 
@@ -118,7 +113,6 @@ class Evaluator(SyncResource):
                             "Executing on_fail expression",
                             extra={
                                 "expression_type": expression_name,
-                                "expression_id": expression_id,
                                 "on_fail_type": expression.on_fail.__class__.__name__,
                             },
                         )
@@ -128,7 +122,6 @@ class Evaluator(SyncResource):
                             "on_fail expression execution failed",
                             extra={
                                 "expression_type": expression_name,
-                                "expression_id": expression_id,
                                 "on_fail_error": str(on_fail_error),
                             },
                             exc_info=True,

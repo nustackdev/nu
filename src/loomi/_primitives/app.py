@@ -47,6 +47,7 @@ from loomicore.resource import AsyncResource, SyncResource
 if TYPE_CHECKING:
     from loomi._behaviors.evaluator import Context, Evaluator, Expression
     from loomi._behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
+    from loomi._behaviors.state import State
 
 __all__ = [
     "AppBase",
@@ -69,7 +70,7 @@ class AppBase(ABC):
     """
 
     # Attach descriptors - resolved by LoomiCore dependency injection
-    state = Attach()
+    state: State = Attach()
     evaluator: Evaluator = Attach(optional=True)
     logger: AsyncLoggerProtocol | SyncLoggerProtocol = Attach(optional=True)
 
