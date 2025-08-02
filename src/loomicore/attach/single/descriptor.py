@@ -21,12 +21,12 @@ if TYPE_CHECKING:
     from loomicore.spec import Spec
 
 __all__ = [
-    "ResourceDescriptor",
+    "SingleDescriptor",
     "Attach",
 ]
 
 
-class ResourceDescriptor(BaseResourceDescriptor):
+class SingleDescriptor(BaseResourceDescriptor):
     """
     Descriptor for single resource attachment via Attach().
 
@@ -165,7 +165,7 @@ def Attach(
               descriptor's attribute name.
 
     Returns:
-        ResourceDescriptor that will resolve to a resource instance
+        SingleDescriptor that will resolve to a resource instance
 
     Examples:
         ```python
@@ -188,8 +188,8 @@ def Attach(
 
     Notes:
         - Type annotation ResourceType is for static type checking
-        - Actual runtime type is ResourceDescriptor
+        - Actual runtime type is SingleDescriptor
         - Resolution happens during resource composition
         - Supports priority-based spec resolution
     """
-    return ResourceDescriptor(spec, alias=alias, optional=optional)
+    return SingleDescriptor(spec, alias=alias, optional=optional)

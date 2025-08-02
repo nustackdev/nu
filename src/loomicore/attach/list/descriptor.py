@@ -1,8 +1,8 @@
 """
-Many list resource attachment pattern.
+List resource attachment pattern.
 
-This module provides the ManyListDescriptor for multiple homogeneous resource
-attachment via the AttachMany() function. It creates a ListCoordinator that
+This module provides the ListDescriptor for multiple homogeneous resource
+attachment via the AttachList() function. It creates a ListCoordinator that
 manages an ordered collection of resources based on a list of specs.
 """
 
@@ -22,14 +22,14 @@ if TYPE_CHECKING:
     from loomicore.spec import Spec
 
 __all__ = [
-    "ManyListDescriptor",
-    "AttachMany",
+    "ListDescriptor",
+    "AttachList",
 ]
 
 
-class ManyListDescriptor(BaseResourceDescriptor):
+class ListDescriptor(BaseResourceDescriptor):
     """
-    Descriptor for multiple homogeneous resource attachment via AttachMany().
+    Descriptor for multiple homogeneous resource attachment via AttachList().
 
     This descriptor creates a ListCoordinator that manages multiple resources
     created from a list of specs. It handles resource creation, dependency
@@ -44,13 +44,13 @@ class ManyListDescriptor(BaseResourceDescriptor):
         ```python
         class MyService(SyncResource):
             # Specs from descriptor
-            workers = AttachMany([
+            workers = AttachList([
                 WorkerSpec(name="worker-1"),
                 WorkerSpec(name="worker-2"),
             ])
 
             # Specs from parent resource spec (MyServiceSpec.databases)
-            databases = AttachMany()
+            databases = AttachList()
         ```
     """
 
@@ -106,8 +106,8 @@ class ManyListDescriptor(BaseResourceDescriptor):
 
         if not specs:
             raise AttachError(
-                f"No specs found for AttachMany descriptor '{name}' in '{parent.readable_name}'. "
-                "Either provide specs to AttachMany() or add a list of specs to the parent resource spec."
+                f"No specs found for AttachList descriptor '{name}' in '{parent.readable_name}'. "
+                "Either provide specs to AttachList() or add a list of specs to the parent resource spec."
             )
 
         # Create resources for each spec
@@ -118,7 +118,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
                 resources.append(resource)
             except Exception as e:
                 raise AttachError(
-                    f"Failed to resolve resource at index {i} for AttachMany '{name}' with spec '{spec}' in '{parent.readable_name}': {str(e)}"
+                    f"Failed to resolve resource at index {i} for AttachList '{name}' with spec '{spec}' in '{parent.readable_name}': {str(e)}"
                 ) from e
 
         # Create and return coordinator
@@ -127,7 +127,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
             return coordinator
         except Exception as e:
             raise AttachError(
-                f"Failed to create ListCoordinator for AttachMany '{name}' "
+                f"Failed to create ListCoordinator for AttachList '{name}' "
                 f"in '{parent.readable_name}': {str(e)}"
             ) from e
 
@@ -152,7 +152,7 @@ class ManyListDescriptor(BaseResourceDescriptor):
                 return parent_specs
             else:
                 raise AttachError(
-                    f"AttachMany descriptor '{name}' in '{parent.readable_name}' "
+                    f"AttachList descriptor '{name}' in '{parent.readable_name}' "
                     f"expects a tuple of specs from parent, but got {type(parent_specs).__name__}"
                 )
 
@@ -162,13 +162,13 @@ class ManyListDescriptor(BaseResourceDescriptor):
 
         # No specs found - error
         raise AttachError(
-            f"No specs found for AttachMany descriptor '{name}' in '{parent.readable_name}'. "
-            "Either add a list of specs to the parent resource spec or use AttachMany([specs]) "
+            f"No specs found for AttachList descriptor '{name}' in '{parent.readable_name}'. "
+            "Either add a list of specs to the parent resource spec or use AttachList([specs]) "
             "to provide specifications directly."
         )
 
 
-def AttachMany(specs: tuple["Spec", ...] | None = None, /, *, alias: str | None = None) -> Any:
+def AttachList(specs: tuple["Spec", ...] | None = None, /, *, alias: str | None = None) -> Any:
     """
     Create a multiple resource attachment descriptor.
 
@@ -183,20 +183,20 @@ def AttachMany(specs: tuple["Spec", ...] | None = None, /, *, alias: str | None 
         alias: Optional alias name for the dependency group
 
     Returns:
-        ManyListDescriptor that will resolve to a ListCoordinator
+        ListDescriptor that will resolve to a ListCoordinator
 
     Examples:
         ```python
         class WorkerService(SyncResource):
             # Specs provided directly
-            workers = AttachMany([
+            workers = AttachList([
                 WorkerSpec(name="worker-1", port=8001),
                 WorkerSpec(name="worker-2", port=8002),
                 WorkerSpec(name="worker-3", port=8003),
             ])
 
             # Specs from parent resource spec (WorkerServiceSpec.databases)
-            databases = AttachMany()
+            databases = AttachList()
 
         # Usage with parent spec
         service = WorkerService(WorkerServiceSpec(
@@ -218,9 +218,9 @@ def AttachMany(specs: tuple["Spec", ...] | None = None, /, *, alias: str | None 
 
     Notes:
         - Type annotation ListCoordinator is for static type checking
-        - Actual runtime type is ManyListDescriptor
+        - Actual runtime type is ListDescriptor
         - Resolution happens during resource composition
         - Supports priority-based spec resolution
         - All resources must have the same factory type for homogeneity
     """
-    return ManyListDescriptor(specs, alias=alias)
+    return ListDescriptor(specs, alias=alias)

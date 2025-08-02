@@ -4,10 +4,12 @@ Aliases for resource attachments.
 
 from __future__ import annotations
 
-from loomicore.attach import Attach, AttachMany, ListCoordinator
+from loomicore.attach import Attach, AttachDict, AttachList, DictCoordinator, ListCoordinator
 
 __all__ = [
     "Attach",
-    "AttachMany",
+    "AttachList",
     "ListCoordinator",
+    "AttachDict",
+    "DictCoordinator",
 ]

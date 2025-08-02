@@ -8,9 +8,9 @@ where one descriptor resolves to exactly one resource instance.
 
 from __future__ import annotations
 
-from .descriptor import Attach, ResourceDescriptor
+from .descriptor import Attach, SingleDescriptor
 
 __all__ = [
-    "ResourceDescriptor",
+    "SingleDescriptor",
     "Attach",
 ]

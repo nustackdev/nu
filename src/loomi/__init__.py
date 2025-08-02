@@ -7,7 +7,7 @@ from .service import SyncService, AsyncService
 
 # Specifications and Attachments
 from .spec import Spec, ProxySpec, ResourceSpec, AppSpec, SpecBuilder
-from .attach import Attach, AttachMany
+from .attach import Attach, AttachList, AttachDict, DictCoordinator, ListCoordinator
 
 # Bheaviors
 from .state import State, StateSpec, Tree
@@ -27,7 +27,10 @@ __all__ = [
     "AppSpec",
     "SpecBuilder",
     "Attach",
-    "AttachMany",
+    "AttachList",
+    "AttachDict",
+    "DictCoordinator",
+    "ListCoordinator",
     # Behaviors
     "State",
     "StateSpec",

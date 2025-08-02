@@ -50,7 +50,7 @@ class BaseResourceDescriptor(BaseDescriptor[ResourceType]):
 
         - Attach(): Returns Resource instance
         - AttachMany(): Returns ListCoordinator
-        - AttachManyDict(): Returns DictCoordinator
+        - AttachDict(): Returns DictCoordinator
 
         Args:
             parent: The resource that contains this descriptor

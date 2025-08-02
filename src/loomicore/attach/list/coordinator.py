@@ -39,7 +39,7 @@ class ListCoordinator(Generic[ResourceType]):
     Examples:
         ```python
         class MyService(SyncResource):
-            workers = AttachMany([
+            workers = AttachList([
                 WorkerSpec(name="worker-1"),
                 WorkerSpec(name="worker-2"),
                 WorkerSpec(name="worker-3"),
@@ -65,7 +65,7 @@ class ListCoordinator(Generic[ResourceType]):
             AttachError: If resources list is empty
         """
         if not resources:
-            raise AttachError("AttachMany requires at least one resource")
+            raise AttachError("AttachList requires at least one resource")
 
         self._resources = list(resources)
 

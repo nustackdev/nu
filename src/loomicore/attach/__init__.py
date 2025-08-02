@@ -7,7 +7,8 @@ type of resource relationship and coordination.
 
 Available Patterns:
     - Attach(): Single resource attachment
-    - AttachMany(): Homogeneous resource list with load balancing (future)
+    - AttachList(): Homogeneous resource list with indexed access
+    - AttachDict(): Homogeneous resource dict with named access
 
 The attach system uses self-resolving descriptors that integrate cleanly
 with the runtime composition engine without requiring pattern-specific
@@ -18,10 +19,11 @@ from __future__ import annotations
 
 # Core components
 from .base_descriptor import BaseResourceDescriptor
-from .exceptions import AttachError
 
 # Resource attachment patterns
-from .many import AttachMany, ListCoordinator
+from .dict import AttachDict, DictCoordinator
+from .exceptions import AttachError
+from .list import AttachList, ListCoordinator
 from .single import Attach
 
 __all__ = [
@@ -30,7 +32,10 @@ __all__ = [
     "AttachError",
     # Single resource attachment
     "Attach",
-    # Many patterns
-    "AttachMany",
+    # List patterns
+    "AttachList",
     "ListCoordinator",
+    # Dict patterns
+    "AttachDict",
+    "DictCoordinator",
 ]
