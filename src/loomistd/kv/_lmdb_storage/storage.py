@@ -11,7 +11,7 @@ import lmdb
 from frozendict import frozendict
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.state import SnapshotProtocol, StorageProtocol, TransactionProtocol
+from loomi.state import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
 
@@ -19,7 +19,6 @@ from .._base import BaseStorage
 from .._exceptions import (
     SnapshotError,
     StorageError,
-    StorageKeyError,
     StorageOperationError,
     TransactionError,
     TransactionInvalidError,

@@ -7,14 +7,13 @@ from uuid import uuid4
 import attrs
 
 from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.state import SnapshotProtocol, StorageProtocol, TransactionProtocol
+from loomi.state import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
 
 from .._base import BaseStorage
 from .._exceptions import (
     SnapshotError,
-    StorageKeyError,
     StorageOperationError,
     TransactionConflictError,
     TransactionError,

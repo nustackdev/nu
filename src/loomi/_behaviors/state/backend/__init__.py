@@ -7,6 +7,7 @@ from .backend import (
     ObservableStorageTransaction,
     ObservableStorageTransactionContextManager,
 )
+from .exceptions import StorageError, StorageKeyError
 from .kv import (
     SnapshotContextManagerProtocol,
     SnapshotHandlerProtocol,
@@ -50,4 +51,7 @@ __all__ = [
     "ObservableStorageSnapshot",
     "ObservableStorageTransaction",
     "ObservableStorageSnapshotContextManager",
+    # From Exceptions
+    "StorageError",
+    "StorageKeyError",
 ]

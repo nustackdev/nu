@@ -52,9 +52,7 @@ from typing import Generator
 
 import attrs
 
-from loomistd.kv import StorageKeyError
-
-from ...backend import ObservableStorage
+from ...backend import ObservableStorage, StorageKeyError
 from ..context.protocols import ContextType
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
 from ..path import Path

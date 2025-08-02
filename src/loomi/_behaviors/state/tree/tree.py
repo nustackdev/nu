@@ -14,11 +14,10 @@ from typing import Optional, Self
 
 import attrs
 
-from loomistd.kv import StorageKeyError
-
 from ..backend import (
     SnapshotContextManagerProtocol,
     SnapshotProtocol,
+    StorageKeyError,
     SubscriptionProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,

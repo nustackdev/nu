@@ -14,6 +14,8 @@ from loomi._behaviors.state.backend import (
     SnapshotContextManagerProtocol,
     SnapshotHandlerProtocol,
     SnapshotProtocol,
+    StorageError,
+    StorageKeyError,
     StorageProtocol,
     SubscriptionProtocol,
     TransactionalHandlerProtocol,
@@ -75,6 +77,8 @@ __all__ = [
     "ObservableStorageSnapshot",
     "ObservableStorageTransaction",
     "ObservableStorageSnapshotContextManager",
+    "StorageError",
+    "StorageKeyError",
     # tree
     "ContextProtocol",
     "ContextType",
