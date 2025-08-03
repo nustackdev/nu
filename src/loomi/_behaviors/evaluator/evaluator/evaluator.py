@@ -24,7 +24,9 @@ from .fleet import AttachFleet, FleetCoordinator
 from .logger import logger
 
 if TYPE_CHECKING:
-    from loomi.state import State, Tree
+    from loomi._behaviors.state import State
+    from loomi._behaviors.state.tree import Tree
+    from loomi._primitives.app import AppBase
 
 
 class Evaluator(SyncResource):
@@ -47,6 +49,7 @@ class Evaluator(SyncResource):
 
     def evaluate(
         self,
+        app: "AppBase",
         expression: Expression,
         context: Context,
     ) -> None:
@@ -72,7 +75,7 @@ class Evaluator(SyncResource):
 
         try:
             # Delegate to the expression's evaluate method
-            expression.evaluate(self, context)
+            expression.evaluate(app, context)
 
             logger.debug(
                 "Successfully completed expression evaluation",
@@ -116,7 +119,7 @@ class Evaluator(SyncResource):
                                 "on_fail_type": expression.on_fail.__class__.__name__,
                             },
                         )
-                        expression.on_fail.evaluate(self, context)
+                        expression.on_fail.evaluate(app, context)
                     except Exception as on_fail_error:
                         logger.error(
                             "on_fail expression execution failed",

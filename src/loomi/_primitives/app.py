@@ -86,7 +86,7 @@ class AppBase(ABC):
             expression: The expression to evaluate
             context: The execution context
         """
-        self.evaluator.evaluate(expression, context)
+        self.evaluator.evaluate(self, expression, context)
 
     @abstractmethod
     def define(self) -> "Expression":

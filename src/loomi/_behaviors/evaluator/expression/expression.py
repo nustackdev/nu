@@ -27,15 +27,15 @@ Example Usage:
             self.formula = formula
             self.target = target
 
-        def do_evaluate(self, evaluator: Evaluator, context: Context) -> None:
+        def do_evaluate(self, app: App, context: Context) -> None:
             # User manages storage context via context managers
-            with evaluator.state.at("workspace").with_dict_view() as view:
+            with app.state.at("workspace").with_dict_view() as view:
                 # Resolve value using view's storage context
-                result = self._resolve_value(self.formula, evaluator.state, view.ctx)
+                result = self._resolve_value(self.formula, app.state, view.ctx)
 
                 # Store result using same storage context
                 target_path = self._parse_state_path(self.target)
-                target_view = evaluator.state.at(*target_path).dict_view(ctx=view.ctx)
+                target_view = app.state.at(*target_path).dict_view(ctx=view.ctx)
                 target_view.store(result)
     ```
 """
@@ -56,7 +56,8 @@ from .logger import logger
 from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContext
 
 if TYPE_CHECKING:
-    from loomi._behaviors.evaluator import Context, Evaluator
+    from loomi._behaviors.evaluator import Context
+    from loomi._primitives.app import AppBase
 
 
 class Expression(ABC):
@@ -86,13 +87,13 @@ class Expression(ABC):
                 self.path = path
                 self.value = value
 
-            def do_evaluate(self, evaluator: Evaluator, context: Context) -> None:
+            def do_evaluate(self, app: App, context: Context) -> None:
                 # User manages storage context via context managers
-                with evaluator.state.at("temp").with_dict_view() as view:
-                    resolved_value = self._resolve_value(self.value, evaluator.state, view.ctx)
+                with app.state.at("temp").with_dict_view() as view:
+                    resolved_value = self._resolve_value(self.value, app.state, view.ctx)
                     path_components = self._parse_state_path(self.path)
 
-                    target_view = evaluator.state.at(*path_components).dict_view(ctx=view.ctx)
+                    target_view = app.state.at(*path_components).dict_view(ctx=view.ctx)
                     target_view.store(resolved_value)
         ```
     """
@@ -163,7 +164,7 @@ class Expression(ABC):
     # =========================================================================
 
     @final
-    def evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
+    def evaluate(self, app: "AppBase", context: "Context") -> None:
         """
         Main evaluation orchestrator - handles all infrastructure.
 
@@ -180,28 +181,28 @@ class Expression(ABC):
         Subclasses should NOT override this method. Instead, implement do_evaluate().
 
         Args:
-            evaluator: The evaluator providing execution environment
+            app: The app providing execution environment
             context: The execution context with metadata and state
         """
         start_time = time.perf_counter()
 
         # Start evaluation logging
-        self._log_start(evaluator, context)
+        self._log_start(app, context)
 
         try:
             try:
                 # Execute the actual expression logic
-                self.do_evaluate(evaluator, context)
+                self.do_evaluate(app, context)
 
                 # Calculate performance metrics
                 duration = time.perf_counter() - start_time
-                self._log_end(evaluator, context, duration)
+                self._log_end(app, context, duration)
 
             except Exception as eval_error:
                 # Handle evaluation errors
                 duration = time.perf_counter() - start_time
-                self._log_error(evaluator, context, eval_error, duration)
-                self._handle_error(eval_error, evaluator, context)
+                self._log_error(app, context, eval_error, duration)
+                self._handle_error(eval_error, app, context)
 
         except Exception as infra_error:
             # Handle infrastructure errors (logging, etc.)
@@ -223,7 +224,7 @@ class Expression(ABC):
             )
 
     @abstractmethod
-    def do_evaluate(self, evaluator: "Evaluator", context: "Context") -> None:
+    def do_evaluate(self, app: "AppBase", context: "Context") -> None:
         """
         Execute the expression's core logic.
 
@@ -235,19 +236,19 @@ class Expression(ABC):
         - Storage context management is explicit via context managers
 
         Args:
-            evaluator: The evaluator providing execution environment
+            app: The app providing execution environment
             context: The execution context with metadata and state
 
         Example:
             ```python
-            def do_evaluate(self, evaluator: Evaluator, context: Context) -> None:
+            def do_evaluate(self, app: AppBase, context: Context) -> None:
                 # User manages storage context via context managers
-                with evaluator.state.at("workspace").with_dict_view() as workspace:
+                with app.state.at("workspace").with_dict_view() as workspace:
                     # Resolve input values using view's storage context
                     values = self._resolve_values({
                         "operand_a": self.a,
                         "operand_b": self.b
-                    }, evaluator.state, workspace.ctx)
+                    }, app.state, workspace.ctx)
 
                     # Perform calculation
                     result = values["operand_a"] + values["operand_b"]
@@ -255,7 +256,7 @@ class Expression(ABC):
                     # Store result using same storage context
                     if self.result_path:
                         path = self._parse_state_path(self.result_path)
-                        result_view = evaluator.state.at(*path).dict_view(ctx=workspace.ctx)
+                        result_view = app.state.at(*path).dict_view(ctx=workspace.ctx)
                         result_view.store(result)
             ```
         """
@@ -420,7 +421,6 @@ class Expression(ABC):
         as a Path object, allowing for consistent handling of state paths.
 
         Args:
-            evaluator: The evaluator providing execution environment
             context: The execution context with metadata and state
             path: The path expression to process
 
@@ -463,18 +463,17 @@ class Expression(ABC):
             },
         )
 
-    def _log_start(self, evaluator: "Evaluator", context: "Context") -> None:
+    def _log_start(self, app: "AppBase", context: "Context") -> None:
         """Log evaluation start with context."""
         logger.info(
             f"Starting evaluation of {self.readable_name}",
             extra={
                 "expression_type": type(self).__name__,
                 "context_attributes": list(context.attributes.keys()) if context.attributes else [],
-                "evaluator_id": id(evaluator),
             },
         )
 
-    def _log_end(self, evaluator: "Evaluator", context: "Context", duration: float) -> None:
+    def _log_end(self, app: "AppBase", context: "Context", duration: float) -> None:
         """Log successful evaluation completion."""
         logger.info(
             f"Completed evaluation of {self.readable_name}",
@@ -486,7 +485,7 @@ class Expression(ABC):
         )
 
     def _log_error(
-        self, evaluator: "Evaluator", context: "Context", error: Exception, duration: float
+        self, app: "AppBase", context: "Context", error: Exception, duration: float
     ) -> None:
         """Log evaluation error with full context."""
         logger.error(
@@ -506,7 +505,7 @@ class Expression(ABC):
     # ERROR HANDLING & RECOVERY
     # =========================================================================
 
-    def _handle_error(self, error: Exception, evaluator: "Evaluator", context: "Context") -> None:
+    def _handle_error(self, error: Exception, app: "AppBase", context: "Context") -> None:
         """
         Handle evaluation errors based on configured behavior.
 
@@ -515,7 +514,7 @@ class Expression(ABC):
 
         Args:
             error: The exception that occurred
-            evaluator: Evaluator instance
+            app: App instance
             context: Execution context
         """
         # Execute on_fail expression if configured
@@ -527,7 +526,7 @@ class Expression(ABC):
                         "on_fail_type": type(self.on_fail).__name__,
                     },
                 )
-                self.on_fail.evaluate(evaluator, context)
+                self.on_fail.evaluate(app, context)
             except Exception as fail_error:
                 logger.error(
                     f"on_fail expression failed for {self.readable_name}",
