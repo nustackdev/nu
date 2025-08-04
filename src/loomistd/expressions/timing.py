@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 
-class Delay(Expression):
+class Delay(Expression[AppBase]):
     """
     Pause execution for a specified duration.
 
@@ -39,15 +39,17 @@ class Delay(Expression):
         ```
     """
 
-    def __init__(self, duration: ExpressionValue, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, app: AppBase, duration: ExpressionValue, **kwargs):
+        super().__init__(app, **kwargs)
         self.duration = duration
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """Sleep for the specified duration."""
         # Use snapshot for read-only access to resolve duration
-        with app.state.tree.snapshot() as snapshot:
-            sleep_duration = self._resolve_value(self.duration, app.state.tree, snapshot, context)
+        with self.app.state.tree.snapshot() as snapshot:
+            sleep_duration = self._resolve_value(
+                self.duration, self.app.state.tree, snapshot, context
+            )
 
         # Validate duration type
         if not isinstance(sleep_duration, (int, float)):

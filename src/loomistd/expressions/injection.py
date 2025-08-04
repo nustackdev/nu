@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 
-class Function(Expression):
+class Function(Expression[AppBase]):
     """
     Executes a callable function or method.
 
@@ -33,6 +33,7 @@ class Function(Expression):
 
     def __init__(
         self,
+        app: AppBase,
         func: Callable[[Context], Awaitable[None] | None],
         /,
         *,
@@ -62,11 +63,11 @@ class Function(Expression):
             )
             raise ExpressionError(error_msg)
 
-        super().__init__(error_behavior=error_behavior, on_fail=on_fail)
+        super().__init__(app, error_behavior=error_behavior, on_fail=on_fail)
 
         self._func = func
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """
         Evaluate the Function expression by executing the wrapped function.
 
@@ -78,7 +79,7 @@ class Function(Expression):
 
         try:
             # Execute the function using the app's evaluator
-            future = app.evaluator.execute(self._func, context)
+            future = self.app.evaluator.execute(self._func, context)
 
             # Wait for completion and get result
             result = future.result()

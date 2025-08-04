@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-class Set(Expression):
+class Set(Expression[AppBase]):
     """
     Set a value at a state path.
 
@@ -35,20 +35,20 @@ class Set(Expression):
         ```
     """
 
-    def __init__(self, path: ExpressionPath, value: ExpressionValue, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, app: AppBase, path: ExpressionPath, value: ExpressionValue, **kwargs):
+        super().__init__(app, **kwargs)
         self.path = path
         self.value = value
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """Set value at state path using unified infrastructure."""
-        with app.state.tree.transaction() as transaction:
-            view, path = self._resolve_path(self.path, app.state.tree, transaction, context)
-            value = self._resolve_value(self.value, app.state.tree, transaction, context)
+        with self.app.state.tree.transaction() as transaction:
+            view, path = self._resolve_path(self.path, self.app.state.tree, transaction, context)
+            value = self._resolve_value(self.value, self.app.state.tree, transaction, context)
             view.set(path, value)  # type: ignore
 
 
-class Print(Expression):
+class Print(Expression[AppBase]):
     """
     Print a value to stdout with optional formatting.
 
@@ -65,23 +65,23 @@ class Print(Expression):
         ```
     """
 
-    def __init__(self, path: ExpressionValue, *, message: str = "{value}", **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, app: AppBase, path: ExpressionValue, *, message: str = "{value}", **kwargs):
+        super().__init__(app, **kwargs)
         self.path = path
         self.message = message
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """Print value using unified infrastructure."""
         # Use snapshot context for read-only operation
-        with app.state.tree.snapshot() as snapshot:
-            value = self._resolve_value(self.path, app.state.tree, snapshot, context)
+        with self.app.state.tree.snapshot() as snapshot:
+            value = self._resolve_value(self.path, self.app.state.tree, snapshot, context)
 
         # Print the value
         formatted_message = self.message.format(value=value)
         print(formatted_message)
 
 
-class IncrementInt(Expression):
+class IncrementInt(Expression[AppBase]):
     """
     Increment an integer value at a state path.
 
@@ -105,18 +105,20 @@ class IncrementInt(Expression):
         ```
     """
 
-    def __init__(self, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, app: AppBase, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
+        super().__init__(app, **kwargs)
         self.path = path
         self.amount = amount
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """Increment integer value at state path."""
-        with app.state.tree.transaction() as transaction:
+        with self.app.state.tree.transaction() as transaction:
             # Resolve the path and amount
-            view, path_key = self._resolve_path(self.path, app.state.tree, transaction, context)
+            view, path_key = self._resolve_path(
+                self.path, self.app.state.tree, transaction, context
+            )
             increment_amount = self._resolve_value(
-                self.amount, app.state.tree, transaction, context
+                self.amount, self.app.state.tree, transaction, context
             )
 
             # Get current value
@@ -158,7 +160,7 @@ class IncrementInt(Expression):
             # )
 
 
-class DecrementInt(Expression):
+class DecrementInt(Expression[AppBase]):
     """
     Decrement an integer value at a state path.
 
@@ -182,18 +184,20 @@ class DecrementInt(Expression):
         ```
     """
 
-    def __init__(self, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, app: AppBase, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
+        super().__init__(app, **kwargs)
         self.path = path
         self.amount = amount
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """Decrement integer value at state path."""
-        with app.state.tree.transaction() as transaction:
+        with self.app.state.tree.transaction() as transaction:
             # Resolve the path and amount
-            view, path_key = self._resolve_path(self.path, app.state.tree, transaction, context)
+            view, path_key = self._resolve_path(
+                self.path, self.app.state.tree, transaction, context
+            )
             decrement_amount = self._resolve_value(
-                self.amount, app.state.tree, transaction, context
+                self.amount, self.app.state.tree, transaction, context
             )
 
             # Get current value

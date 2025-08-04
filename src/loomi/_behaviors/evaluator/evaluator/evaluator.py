@@ -75,7 +75,7 @@ class Evaluator(SyncResource):
 
         try:
             # Delegate to the expression's evaluate method
-            expression.evaluate(app, context)
+            expression.evaluate(context)
 
             logger.debug(
                 "Successfully completed expression evaluation",
@@ -119,7 +119,7 @@ class Evaluator(SyncResource):
                                 "on_fail_type": expression.on_fail.__class__.__name__,
                             },
                         )
-                        expression.on_fail.evaluate(app, context)
+                        expression.on_fail.evaluate(context)
                     except Exception as on_fail_error:
                         logger.error(
                             "on_fail expression execution failed",

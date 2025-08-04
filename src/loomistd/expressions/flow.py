@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class Loop(Expression):
+class Loop(Expression[AppBase]):
     """
     Execute an expression repeatedly while a condition is true.
 
@@ -41,12 +41,14 @@ class Loop(Expression):
         ```
     """
 
-    def __init__(self, condition: ExpressionValue, expression: Expression, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self, app: AppBase, /, condition: ExpressionValue, expression: Expression, **kwargs
+    ):
+        super().__init__(app, **kwargs)
         self.condition = condition
         self.expression = expression
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """Execute the child expression while the condition is true."""
         iteration_count = 0
 
@@ -61,9 +63,9 @@ class Loop(Expression):
         try:
             while True:
                 # Evaluate condition using snapshot for read-only access
-                with app.state.tree.snapshot() as snapshot:
+                with self.app.state.tree.snapshot() as snapshot:
                     condition_result = self._resolve_value(
-                        self.condition, app.state.tree, snapshot, context
+                        self.condition, self.app.state.tree, snapshot, context
                     )
 
                 # Check if condition is truthy
@@ -86,7 +88,7 @@ class Loop(Expression):
                     },
                 )
 
-                self.expression.evaluate(app, context)
+                self.expression.evaluate(context)
                 iteration_count += 1
 
                 logger.debug(
@@ -115,7 +117,7 @@ class Loop(Expression):
         )
 
 
-class Sequence(Expression):
+class Sequence(Expression[AppBase]):
     """
     Executes expressions in sequential order.
 
@@ -137,6 +139,7 @@ class Sequence(Expression):
 
     def __init__(
         self,
+        app: AppBase,
         expr: Expression,
         /,
         *exprs: Expression,
@@ -170,11 +173,11 @@ class Sequence(Expression):
                 )
                 raise ExpressionError(error_msg)
 
-        super().__init__(error_behavior=error_behavior, on_fail=on_fail)
+        super().__init__(app, error_behavior=error_behavior, on_fail=on_fail)
 
         self.children = all_exprs
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """
         Evaluate all child expressions in sequential order.
 
@@ -198,7 +201,7 @@ class Sequence(Expression):
                 )
 
                 try:
-                    child.evaluate(app, context)
+                    child.evaluate(context)
                     completed_count += 1
 
                     logger.debug(
@@ -246,7 +249,7 @@ class Sequence(Expression):
             raise
 
 
-class Parallel(Expression):
+class Parallel(Expression[AppBase]):
     """
     Executes expressions concurrently.
 
@@ -273,6 +276,7 @@ class Parallel(Expression):
 
     def __init__(
         self,
+        app: AppBase,
         expr: Expression,
         /,
         *exprs: Expression,
@@ -296,7 +300,7 @@ class Parallel(Expression):
         Raises:
             ValueError: If max_concurrency is invalid
         """
-        super().__init__(error_behavior=error_behavior, on_fail=on_fail)
+        super().__init__(app, error_behavior=error_behavior, on_fail=on_fail)
 
         # Validate max_concurrency
         if max_concurrency < -1:
@@ -328,7 +332,7 @@ class Parallel(Expression):
         self._max_concurrency = max_concurrency
         self.children = all_exprs
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """
         Evaluate all child expressions in parallel with configurable concurrency.
 
@@ -366,7 +370,7 @@ class Parallel(Expression):
                             "parallel_id": id(self),
                         },
                     )
-                    future = executor.submit(child.evaluate, app, context)
+                    future = executor.submit(child.evaluate, context)
                     futures.append(future)
 
                 logger.debug(

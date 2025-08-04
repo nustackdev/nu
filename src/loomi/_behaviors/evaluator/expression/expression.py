@@ -44,7 +44,9 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast, final
+from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, TypeVar, cast, final
+
+from frozendict import frozendict
 
 from loomi._behaviors.state.path import ExtendedPath, Path, PathResolver
 from loomi._behaviors.state.query import Query
@@ -57,10 +59,11 @@ from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContex
 
 if TYPE_CHECKING:
     from loomi._behaviors.evaluator import Context
-    from loomi._primitives.app import AppBase
+
+AppT = TypeVar("AppT")
 
 
-class Expression(ABC):
+class Expression(ABC, Generic[AppT]):
     """
     Unified base class for all Loomi expressions.
 
@@ -100,6 +103,8 @@ class Expression(ABC):
 
     def __init__(
         self,
+        app: AppT,
+        /,
         *,
         error_behavior: "ErrorBehavior" = "fail",
         on_fail: Optional["Expression"] = None,
@@ -120,6 +125,7 @@ class Expression(ABC):
                 f"Invalid error_behavior: {error_behavior}. Must be 'fail' or 'continue'"
             )
 
+        self._app = app
         self._error_behavior = error_behavior
         self._on_fail = on_fail
         self._name = name
@@ -135,6 +141,11 @@ class Expression(ABC):
     @property
     def name(self) -> Optional[str]:
         return self._name
+
+    @property
+    def app(self) -> AppT:
+        """Get the app instance this expression belongs to."""
+        return self._app
 
     @property
     def error_behavior(self) -> str:
@@ -164,7 +175,7 @@ class Expression(ABC):
     # =========================================================================
 
     @final
-    def evaluate(self, app: "AppBase", context: "Context") -> None:
+    def evaluate(self, context: "Context | None" = None) -> None:
         """
         Main evaluation orchestrator - handles all infrastructure.
 
@@ -186,23 +197,28 @@ class Expression(ABC):
         """
         start_time = time.perf_counter()
 
+        if context is None:
+            from loomi._behaviors.evaluator import Context
+
+            context = Context(self, frozendict())
+
         # Start evaluation logging
-        self._log_start(app, context)
+        self._log_start(context)
 
         try:
             try:
                 # Execute the actual expression logic
-                self.do_evaluate(app, context)
+                self.do_evaluate(context)
 
                 # Calculate performance metrics
                 duration = time.perf_counter() - start_time
-                self._log_end(app, context, duration)
+                self._log_end(context, duration)
 
             except Exception as eval_error:
                 # Handle evaluation errors
                 duration = time.perf_counter() - start_time
-                self._log_error(app, context, eval_error, duration)
-                self._handle_error(eval_error, app, context)
+                self._log_error(context, eval_error, duration)
+                self._handle_error(eval_error, context)
 
         except Exception as infra_error:
             # Handle infrastructure errors (logging, etc.)
@@ -224,7 +240,7 @@ class Expression(ABC):
             )
 
     @abstractmethod
-    def do_evaluate(self, app: "AppBase", context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """
         Execute the expression's core logic.
 
@@ -463,7 +479,7 @@ class Expression(ABC):
             },
         )
 
-    def _log_start(self, app: "AppBase", context: "Context") -> None:
+    def _log_start(self, context: "Context") -> None:
         """Log evaluation start with context."""
         logger.info(
             f"Starting evaluation of {self.readable_name}",
@@ -473,7 +489,7 @@ class Expression(ABC):
             },
         )
 
-    def _log_end(self, app: "AppBase", context: "Context", duration: float) -> None:
+    def _log_end(self, context: "Context", duration: float) -> None:
         """Log successful evaluation completion."""
         logger.info(
             f"Completed evaluation of {self.readable_name}",
@@ -484,9 +500,7 @@ class Expression(ABC):
             },
         )
 
-    def _log_error(
-        self, app: "AppBase", context: "Context", error: Exception, duration: float
-    ) -> None:
+    def _log_error(self, context: "Context", error: Exception, duration: float) -> None:
         """Log evaluation error with full context."""
         logger.error(
             f"Expression {self.readable_name} failed",
@@ -505,7 +519,7 @@ class Expression(ABC):
     # ERROR HANDLING & RECOVERY
     # =========================================================================
 
-    def _handle_error(self, error: Exception, app: "AppBase", context: "Context") -> None:
+    def _handle_error(self, error: Exception, context: "Context") -> None:
         """
         Handle evaluation errors based on configured behavior.
 
@@ -526,7 +540,7 @@ class Expression(ABC):
                         "on_fail_type": type(self.on_fail).__name__,
                     },
                 )
-                self.on_fail.evaluate(app, context)
+                self.on_fail.evaluate(context)
             except Exception as fail_error:
                 logger.error(
                     f"on_fail expression failed for {self.readable_name}",

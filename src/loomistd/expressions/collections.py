@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-class MapList(Expression):
+class MapList(Expression[AppBase]):
     """
     Map an expression over a state path.
     This expression allows applying a sub-expression to each item in a list or dictionary at a given state path.
@@ -23,15 +23,17 @@ class MapList(Expression):
         name: Optional name for the mapping operation
     """
 
-    def __init__(self, path: ExpressionPath, expression: Expression, name: str = "", **kwargs):
-        super().__init__(name=name, **kwargs)
+    def __init__(
+        self, app: AppBase, path: ExpressionPath, expression: Expression, name: str = "", **kwargs
+    ):
+        super().__init__(app, name=name, **kwargs)
         self.path = path
         self.expression = expression
 
-    def do_evaluate(self, app: AppBase, context: "Context") -> None:
+    def do_evaluate(self, context: "Context") -> None:
         """Map the expression over the state path."""
-        with app.state.tree.snapshot() as snapshot:
-            view, path = self._resolve_path(self.path, app.state.tree, snapshot, context)
+        with self.app.state.tree.snapshot() as snapshot:
+            view, path = self._resolve_path(self.path, self.app.state.tree, snapshot, context)
 
             view = view.list_view(path)  # type: ignore
 
@@ -44,4 +46,4 @@ class MapList(Expression):
                 )
 
                 # Evaluate the expression for each item
-                app.evaluator.evaluate(app, self.expression, child_context)
+                self.app.evaluator.evaluate(self.app, self.expression, child_context)
