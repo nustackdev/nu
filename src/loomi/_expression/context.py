@@ -8,16 +8,13 @@ with access to state, services, and execution metadata.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import attrs
 from frozendict import frozendict
 
 from .exceptions import ContextError
 from .logger import logger
-
-if TYPE_CHECKING:
-    from .expression import Expression
 
 
 @attrs.define(frozen=True, slots=True)
@@ -29,7 +26,6 @@ class Context:
     This is the primary interface through which expressions interact with their environment.
     """
 
-    expression: "Expression"  # The expression this context is associated with
     attributes: frozendict[str, Any] = attrs.field(factory=frozendict)  # Context attributes storage
 
     # --- Context attributes access methods --- #
@@ -85,7 +81,6 @@ class Context:
 
     def derive(
         self,
-        expression: Expression | None = None,
         attributes: frozendict | None = None,
     ) -> Context:
         """
@@ -107,8 +102,6 @@ class Context:
         logger.debug(
             "Deriving new context",
             extra={
-                "parent_expression_type": type(self.expression).__name__,
-                "new_expression_type": type(expression).__name__ if expression else None,
                 "has_new_attributes": attributes is not None,
                 "parent_attributes_count": len(self.attributes),
             },
@@ -117,15 +110,10 @@ class Context:
         try:
             # Start with current values
             values = {
-                "expression": self.expression,
                 "attributes": deepcopy(self.attributes),
             }
 
             updates: dict[str, Any] = {}
-
-            # Update expression if provided
-            if expression is not None:
-                updates["expression"] = expression
 
             # Merge attributes if provided
             if attributes is not None:
@@ -142,7 +130,6 @@ class Context:
             logger.debug(
                 "Successfully derived new context",
                 extra={
-                    "new_expression_type": type(new_context.expression).__name__,
                     "new_attributes_count": len(new_context.attributes),
                 },
             )

@@ -38,9 +38,7 @@ class MapList(Expression):
                 raise ValueError(f"Expected ListView for mapping, got {type(view).__name__}")
 
             for i in range(view.length()):
-                child_context = context.derive(
-                    expression=self.expression, attributes=frozendict({self.name: {"index": i}})
-                )
+                child_context = context.derive(attributes=frozendict({self.name: {"index": i}}))
 
                 # Evaluate the expression for each item
                 self.app.evaluator.evaluate(self.app, self.expression, child_context)

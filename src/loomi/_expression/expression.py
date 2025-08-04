@@ -44,21 +44,17 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, TypeVar, cast, final
-
-from frozendict import frozendict
+from typing import Any, Dict, Generic, Optional, TypeVar, cast, final
 
 from loomi._tree.path import ExtendedPath, Path, PathResolver
 from loomi._tree.query import Query
 from loomi._tree.tree import BaseView, Tree
 from loomi._tree.tree.types import Value
 
+from .context import Context
 from .exceptions import ExpressionError, ValueResolutionError
 from .logger import logger
 from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContext
-
-if TYPE_CHECKING:
-    from .context import Context
 
 AppT = TypeVar("AppT")
 
@@ -197,10 +193,7 @@ class Expression(ABC, Generic[AppT]):
         """
         start_time = time.perf_counter()
 
-        if context is None:
-            from .context import Context
-
-            context = Context(self, frozendict())
+        context = context or Context()
 
         # Start evaluation logging
         self._log_start(context)
