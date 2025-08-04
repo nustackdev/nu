@@ -30,3 +30,14 @@ class ValueResolutionError(ExpressionError):
     """Raised when value resolution fails."""
 
     pass
+
+
+class ContextError(ExpressionError):
+    """
+    Exception raised for context-related errors.
+
+    This exception is raised when there are issues with the execution
+    context, such as missing attributes or invalid context state.
+    """
+
+    pass

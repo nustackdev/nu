@@ -1,7 +1,5 @@
 """
-Evaluator - Core Expression Evaluation Engine
-
-This module implements the main Evaluator resource that coordinates expression
+This module implements the main Runtime resource that coordinates
 execution using a fleet of workers. It provides both single and distributed
 execution capabilities.
 """
@@ -9,31 +7,20 @@ execution capabilities.
 from __future__ import annotations
 
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any, Callable
 
 import attrs
 
-from loomicore.attach import Attach
 from loomicore.resource import SyncResource
 from loomicore.spec import ResourceSpec, Spec
+from loomistd.coordinators.fleet import AttachFleet, FleetCoordinator, FleetError
 
-from ..context import Context
-from ..exceptions import EvaluationError, FleetError
-from ..expression import Expression
-from .fleet import AttachFleet, FleetCoordinator
 from .logger import logger
 
-if TYPE_CHECKING:
-    from loomi._behaviors.state import State
-    from loomi._behaviors.state.tree import Tree
-    from loomi._primitives.app import AppBase
 
-
-class Evaluator(SyncResource):
+class Runtime(SyncResource):
     """
-    Core expression evaluation engine.
-
-    The Evaluator coordinates expression execution using a fleet of workers,
+    The Runtime coordinates expression execution using a fleet of workers,
     providing both single and distributed execution capabilities.
 
     Attributes:
@@ -41,97 +28,6 @@ class Evaluator(SyncResource):
     """
 
     fleet: FleetCoordinator[Any] = AttachFleet()
-    state_service: "State" = Attach()
-
-    @property
-    def state(self) -> "Tree":
-        return self.state_service.tree
-
-    def evaluate(
-        self,
-        app: "AppBase",
-        expression: Expression,
-        context: Context,
-    ) -> None:
-        """
-        Evaluate an expression within the given context.
-
-        Args:
-            expression: The expression to evaluate
-            context: The execution context containing state and metadata
-
-        Raises:
-            EvaluationError: If evaluation fails and error_behavior is "fail"
-        """
-        expression_name = expression.__class__.__name__
-
-        logger.info(
-            "Starting evaluation of expression",
-            extra={
-                "expression_type": expression_name,
-                "context_attributes": list(context.attributes.keys()),
-            },
-        )
-
-        try:
-            # Delegate to the expression's evaluate method
-            expression.evaluate(context)
-
-            logger.debug(
-                "Successfully completed expression evaluation",
-                extra={
-                    "expression_type": expression_name,
-                },
-            )
-
-        except Exception as e:
-            logger.error(
-                "Expression evaluation failed",
-                extra={
-                    "expression_type": expression_name,
-                    "error_type": type(e).__name__,
-                    "error_message": str(e),
-                },
-                exc_info=True,
-            )
-
-            # Wrap the exception in an EvaluationError for better context
-            evaluation_error = EvaluationError(
-                f"Failed to evaluate {expression_name}: {e}", expression=expression, cause=e
-            )
-
-            # Handle error according to expression's error behavior
-            if hasattr(expression, "_error_behavior") and expression.error_behavior == "continue":
-                logger.warning(
-                    "Continuing execution despite evaluation error",
-                    extra={
-                        "expression_type": expression_name,
-                    },
-                )
-
-                # Execute on_fail expression if configured
-                if hasattr(expression, "_on_fail") and expression.on_fail is not None:
-                    try:
-                        logger.info(
-                            "Executing on_fail expression",
-                            extra={
-                                "expression_type": expression_name,
-                                "on_fail_type": expression.on_fail.__class__.__name__,
-                            },
-                        )
-                        expression.on_fail.evaluate(context)
-                    except Exception as on_fail_error:
-                        logger.error(
-                            "on_fail expression execution failed",
-                            extra={
-                                "expression_type": expression_name,
-                                "on_fail_error": str(on_fail_error),
-                            },
-                            exc_info=True,
-                        )
-            else:
-                # Re-raise as EvaluationError
-                raise evaluation_error from e
 
     def execute(
         self,
@@ -280,7 +176,7 @@ class Evaluator(SyncResource):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class EvaluatorSpec(ResourceSpec):
+class RuntimeSpec(ResourceSpec):
     """
     Specification for the Runtime resource.
 
@@ -288,6 +184,5 @@ class EvaluatorSpec(ResourceSpec):
     """
 
     name: str = "runtime"
-    factory: type = Evaluator
+    factory: type = Runtime
     fleet: tuple[Spec, ...]
-    state_service: Spec

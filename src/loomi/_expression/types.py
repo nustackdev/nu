@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Literal, TypeAlias, Union
 
-from loomi._behaviors.state.backend import SnapshotProtocol, TransactionProtocol
-from loomi._behaviors.state.path import ExtendedPath, Path
-from loomi._behaviors.state.query import Query
-from loomi._behaviors.state.tree import Empty
-from loomi._behaviors.state.tree.types import Value
+from loomi._tree.backend import SnapshotProtocol, TransactionProtocol
+from loomi._tree.path import ExtendedPath, Path
+from loomi._tree.query import Query
+from loomi._tree.tree import Empty
+from loomi._tree.tree.types import Value
 
 __all__ = [
     "ErrorBehavior",

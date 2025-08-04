@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from loomi.app import AppBase
-from loomi.evaluator import Context, Expression, ExpressionError, ExpressionPath, ExpressionValue
+from loomi.expression import Context, Expression, ExpressionError, ExpressionPath, ExpressionValue
 
 __all__ = [
     "Set",
@@ -11,7 +10,7 @@ __all__ = [
 ]
 
 
-class Set(Expression[AppBase]):
+class Set(Expression):
     """
     Set a value at a state path.
 
@@ -35,7 +34,7 @@ class Set(Expression[AppBase]):
         ```
     """
 
-    def __init__(self, app: AppBase, path: ExpressionPath, value: ExpressionValue, **kwargs):
+    def __init__(self, app, path: ExpressionPath, value: ExpressionValue, **kwargs):
         super().__init__(app, **kwargs)
         self.path = path
         self.value = value
@@ -48,7 +47,7 @@ class Set(Expression[AppBase]):
             view.set(path, value)  # type: ignore
 
 
-class Print(Expression[AppBase]):
+class Print(Expression):
     """
     Print a value to stdout with optional formatting.
 
@@ -65,7 +64,7 @@ class Print(Expression[AppBase]):
         ```
     """
 
-    def __init__(self, app: AppBase, path: ExpressionValue, *, message: str = "{value}", **kwargs):
+    def __init__(self, app, path: ExpressionValue, *, message: str = "{value}", **kwargs):
         super().__init__(app, **kwargs)
         self.path = path
         self.message = message
@@ -81,7 +80,7 @@ class Print(Expression[AppBase]):
         print(formatted_message)
 
 
-class IncrementInt(Expression[AppBase]):
+class IncrementInt(Expression):
     """
     Increment an integer value at a state path.
 
@@ -105,7 +104,7 @@ class IncrementInt(Expression[AppBase]):
         ```
     """
 
-    def __init__(self, app: AppBase, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
+    def __init__(self, app, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
         super().__init__(app, **kwargs)
         self.path = path
         self.amount = amount
@@ -160,7 +159,7 @@ class IncrementInt(Expression[AppBase]):
             # )
 
 
-class DecrementInt(Expression[AppBase]):
+class DecrementInt(Expression):
     """
     Decrement an integer value at a state path.
 
@@ -184,7 +183,7 @@ class DecrementInt(Expression[AppBase]):
         ```
     """
 
-    def __init__(self, app: AppBase, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
+    def __init__(self, app, path: ExpressionPath, amount: ExpressionValue = 1, **kwargs):
         super().__init__(app, **kwargs)
         self.path = path
         self.amount = amount

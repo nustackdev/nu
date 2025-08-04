@@ -39,44 +39,20 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from loomi._behaviors.logger import AsyncLoggerProtocol, SyncLoggerProtocol
 from loomicore.attach import Attach
 from loomicore.resource import AsyncResource, SyncResource
+from loomistd.logger.protocols import AsyncLoggerProtocol, SyncLoggerProtocol
 
 if TYPE_CHECKING:
     pass
 
 __all__ = [
-    "ServiceBase",
     "SyncService",
     "AsyncService",
 ]
 
 
-class ServiceBase(ABC):
-    """
-    Ultra-thin base for all services with logging dependency injection.
-
-    Provides dependency injection for logger via Attach descriptor and
-    convenience alias. All operational logic is handled by LoomiCore
-    and injected dependencies.
-
-    Type Parameters:
-        LoggerT: Logger protocol implementation type
-    """
-
-    logger: AsyncLoggerProtocol | SyncLoggerProtocol = Attach(
-        optional=True
-    )  # Optional logger for services
-
-    # Convenience alias for shorter syntax
-    @property
-    def log(self) -> AsyncLoggerProtocol | SyncLoggerProtocol:
-        """Short alias for logger."""
-        return self.logger
-
-
-class SyncService(ServiceBase, SyncResource):
+class SyncService(SyncResource):
     """
     Synchronous service with logging.
 
@@ -122,10 +98,10 @@ class SyncService(ServiceBase, SyncResource):
         ```
     """
 
-    pass
+    logger: SyncLoggerProtocol = Attach(optional=True)
 
 
-class AsyncService(ServiceBase, AsyncResource):
+class AsyncService(AsyncResource):
     """
     Asynchronous service with logging.
 
@@ -172,4 +148,4 @@ class AsyncService(ServiceBase, AsyncResource):
         ```
     """
 
-    pass
+    logger: AsyncLoggerProtocol = Attach(optional=True)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi.state import SnapshotContextManagerProtocol, SnapshotHandlerProtocol, SnapshotProtocol
+from loomi.tree import SnapshotContextManagerProtocol, SnapshotHandlerProtocol, SnapshotProtocol
 
 from ._types import ValueT
 

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import time
 
-from loomi.app import AppBase
-from loomi.evaluator import Context, Expression, ExpressionError, ExpressionValue
+from loomi.expression import Context, Expression, ExpressionError, ExpressionValue
 
 from .logger import logger
 
@@ -12,7 +11,7 @@ __all__ = [
 ]
 
 
-class Delay(Expression[AppBase]):
+class Delay(Expression):
     """
     Pause execution for a specified duration.
 
@@ -39,7 +38,7 @@ class Delay(Expression[AppBase]):
         ```
     """
 
-    def __init__(self, app: AppBase, duration: ExpressionValue, **kwargs):
+    def __init__(self, app, duration: ExpressionValue, **kwargs):
         super().__init__(app, **kwargs)
         self.duration = duration
 

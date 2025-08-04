@@ -6,13 +6,10 @@ from __future__ import annotations
 
 import attrs
 
+from loomi.tree import ObservableStorage, ObserverProtocol, StorageProtocol, Tree, Value
 from loomicore.attach import Attach
 from loomicore.resource import SyncResource
 from loomicore.spec import ResourceSpec, Spec
-
-from .backend import ObservableStorage, ObserverProtocol, StorageProtocol
-from .tree import Tree
-from .tree.types import Value
 
 __all__ = [
     "State",

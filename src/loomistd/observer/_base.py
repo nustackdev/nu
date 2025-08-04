@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, final
 
-from loomi.state import SubscriptionProtocol
+from loomi.tree import SubscriptionProtocol
 from loomistd.codec import CodecProtocol
 
 from ._exceptions import ObserverConnectionError, ObserverValidationError

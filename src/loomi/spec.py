@@ -31,7 +31,7 @@ class AppSpec(ResourceSpec):
     """
 
     state: Optional[Spec] = None
-    evaluator: Optional[Spec] = None
+    runtime: Optional[Spec] = None
 
 
 class SpecBuilder:

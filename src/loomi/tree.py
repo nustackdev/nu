@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi._behaviors.state.backend import (
+from ._tree.backend import (
     CallbackFn,
     Key,
     KeyBase,
@@ -26,9 +26,8 @@ from loomi._behaviors.state.backend import (
     ValueT_co,
     ValueT_contra,
 )
-from loomi._behaviors.state.path import ExtendedPath, Path, PathResolver
-from loomi._behaviors.state.state import State, StateSpec
-from loomi._behaviors.state.tree import (
+from ._tree.path import ExtendedPath, Path, PathResolver
+from ._tree.tree import (
     EMPTY,
     BaseNode,
     BaseView,
@@ -106,7 +105,4 @@ __all__ = [
     "Path",
     "ExtendedPath",
     "PathResolver",
-    # state
-    "State",
-    "StateSpec",
 ]

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from loomi.state import StateSpec
 from loomistd.codec.json import JSONCodecSpec
 from loomistd.codec.msgpack import MsgpackCodecSpec
 from loomistd.codec.passthrough import PassthroughCodecSpec
@@ -17,6 +16,7 @@ from loomistd.kv.file_storage import FileStorageSpec
 from loomistd.kv.in_memory import InMemoryStorageSpec
 from loomistd.kv.lmdb import LMDBStorageSpec
 from loomistd.observer.in_memory import InMemoryObserverSpec
+from loomistd.state import StateSpec
 
 __all__ = [
     "get_lmdb_state_spec",

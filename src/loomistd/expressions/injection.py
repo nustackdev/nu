@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Awaitable, Callable, Optional
 
-from loomi.app import AppBase
-from loomi.evaluator import Context, ErrorBehavior, Expression, ExpressionError
+from loomi.expression import Context, ErrorBehavior, Expression, ExpressionError
 
 from .logger import logger
 
@@ -12,7 +11,7 @@ __all__ = [
 ]
 
 
-class Function(Expression[AppBase]):
+class Function(Expression):
     """
     Executes a callable function or method.
 
@@ -33,7 +32,7 @@ class Function(Expression[AppBase]):
 
     def __init__(
         self,
-        app: AppBase,
+        app,
         func: Callable[[Context], Awaitable[None] | None],
         /,
         *,

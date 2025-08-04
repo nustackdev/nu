@@ -48,17 +48,17 @@ from typing import TYPE_CHECKING, Any, Dict, Generic, Optional, TypeVar, cast, f
 
 from frozendict import frozendict
 
-from loomi._behaviors.state.path import ExtendedPath, Path, PathResolver
-from loomi._behaviors.state.query import Query
-from loomi._behaviors.state.tree import BaseView, Tree
-from loomi._behaviors.state.tree.types import Value
+from loomi._tree.path import ExtendedPath, Path, PathResolver
+from loomi._tree.query import Query
+from loomi._tree.tree import BaseView, Tree
+from loomi._tree.tree.types import Value
 
 from .exceptions import ExpressionError, ValueResolutionError
 from .logger import logger
 from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContext
 
 if TYPE_CHECKING:
-    from loomi._behaviors.evaluator import Context
+    from .context import Context
 
 AppT = TypeVar("AppT")
 
@@ -198,7 +198,7 @@ class Expression(ABC, Generic[AppT]):
         start_time = time.perf_counter()
 
         if context is None:
-            from loomi._behaviors.evaluator import Context
+            from .context import Context
 
             context = Context(self, frozendict())
 

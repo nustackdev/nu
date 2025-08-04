@@ -6,10 +6,11 @@ from uuid import uuid4
 
 import attrs
 
-from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.state import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
+from loomi import Attach, ResourceSpec, Spec
+from loomi.tree import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.passthrough import PassthroughCodecSpec
+from loomistd.service import SyncService
 
 from .._base import BaseStorage
 from .._exceptions import (

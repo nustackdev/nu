@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from frozendict import frozendict
 
-from loomi.app import AppBase
-from loomi.evaluator import Context, Expression, ExpressionPath
-from loomi.state import ListView
+from loomi.expression import Context, Expression, ExpressionPath
+from loomi.tree import ListView
 
 __all__ = [
     "MapList",
 ]
 
 
-class MapList(Expression[AppBase]):
+class MapList(Expression):
     """
     Map an expression over a state path.
     This expression allows applying a sub-expression to each item in a list or dictionary at a given state path.
@@ -23,9 +22,7 @@ class MapList(Expression[AppBase]):
         name: Optional name for the mapping operation
     """
 
-    def __init__(
-        self, app: AppBase, path: ExpressionPath, expression: Expression, name: str = "", **kwargs
-    ):
+    def __init__(self, app, path: ExpressionPath, expression: Expression, name: str = "", **kwargs):
         super().__init__(app, name=name, **kwargs)
         self.path = path
         self.expression = expression

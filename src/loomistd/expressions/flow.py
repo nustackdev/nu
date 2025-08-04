@@ -3,8 +3,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Optional
 
-from loomi.app import AppBase
-from loomi.evaluator import Context, ErrorBehavior, Expression, ExpressionError, ExpressionValue
+from loomi.expression import Context, ErrorBehavior, Expression, ExpressionError, ExpressionValue
 
 from .logger import logger
 
@@ -15,7 +14,7 @@ __all__ = [
 ]
 
 
-class Loop(Expression[AppBase]):
+class Loop(Expression):
     """
     Execute an expression repeatedly while a condition is true.
 
@@ -41,9 +40,7 @@ class Loop(Expression[AppBase]):
         ```
     """
 
-    def __init__(
-        self, app: AppBase, /, condition: ExpressionValue, expression: Expression, **kwargs
-    ):
+    def __init__(self, app, /, condition: ExpressionValue, expression: Expression, **kwargs):
         super().__init__(app, **kwargs)
         self.condition = condition
         self.expression = expression
@@ -117,7 +114,7 @@ class Loop(Expression[AppBase]):
         )
 
 
-class Sequence(Expression[AppBase]):
+class Sequence(Expression):
     """
     Executes expressions in sequential order.
 
@@ -139,7 +136,7 @@ class Sequence(Expression[AppBase]):
 
     def __init__(
         self,
-        app: AppBase,
+        app,
         expr: Expression,
         /,
         *exprs: Expression,
@@ -249,7 +246,7 @@ class Sequence(Expression[AppBase]):
             raise
 
 
-class Parallel(Expression[AppBase]):
+class Parallel(Expression):
     """
     Executes expressions concurrently.
 
@@ -276,7 +273,7 @@ class Parallel(Expression[AppBase]):
 
     def __init__(
         self,
-        app: AppBase,
+        app,
         expr: Expression,
         /,
         *exprs: Expression,

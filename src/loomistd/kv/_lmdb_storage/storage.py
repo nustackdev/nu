@@ -10,10 +10,11 @@ import attrs
 import lmdb
 from frozendict import frozendict
 
-from loomi import Attach, ResourceSpec, Spec, SyncService
-from loomi.state import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
+from loomi import Attach, ResourceSpec, Spec
+from loomi.tree import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
 from loomistd.codec import CodecProtocol
 from loomistd.codec.binary import BinaryCodecSpec
+from loomistd.service import SyncService
 
 from .._base import BaseStorage
 from .._exceptions import (

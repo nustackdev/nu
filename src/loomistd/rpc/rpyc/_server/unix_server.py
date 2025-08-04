@@ -15,7 +15,8 @@ import attrs
 from frozendict import frozendict
 from rpyc.utils.server import ThreadedServer
 
-from loomi import ResourceSpec, SyncService
+from loomi import ResourceSpec
+from loomistd.service import SyncService
 
 from ..exceptions import RPyCServerError
 from .base import BaseRPyCServer

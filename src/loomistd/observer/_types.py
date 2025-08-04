@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, TypeVar
 
-from loomi.state import CallbackFn, Key
+from loomi.tree import CallbackFn, Key
 
 __all__ = [
     "Key",

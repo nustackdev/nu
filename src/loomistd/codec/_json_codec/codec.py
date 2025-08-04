@@ -6,7 +6,8 @@ from typing import Any
 
 import attrs
 
-from loomi import ResourceSpec, SyncService
+from loomi import ResourceSpec
+from loomistd.service import SyncService
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import PATH_SEPARATOR

@@ -14,7 +14,8 @@ Named after actual Star Trek starships:
 
 from __future__ import annotations
 
-from loomi import AppSpec, EvaluatorSpec, Spec, SpecBuilder
+from loomi import AppSpec, Spec, SpecBuilder
+from loomistd.runtime import RuntimeSpec
 
 from .launcher import get_launcher_spec
 from .rpc import get_rpyc_specs
@@ -147,18 +148,16 @@ def get_enterprise_d_topology(
         )
     )
 
-    # 7. Create evaluator with worker fleet
-    evaluator = EvaluatorSpec(
-        fleet=tuple(worker_fleet), state_service=proxied_state, name=f"{app_name}_evaluator"
-    )
+    # 7. Create runtime with worker fleet
+    runtime = RuntimeSpec(fleet=tuple(worker_fleet), name=f"{app_name}_runtime")
 
     # 8. Create main application spec
     main_app = app_spec.with_value_at(
         "state",
         value=proxied_state,
     ).with_value_at(
-        "evaluator",
-        value=evaluator,
+        "runtime",
+        value=runtime,
     )
 
     return main_app
@@ -263,18 +262,16 @@ def get_enterprise_d_file_topology(
         )
     )
 
-    # 7. Create evaluator with worker fleet
-    evaluator = EvaluatorSpec(
-        fleet=tuple(worker_fleet), state_service=proxied_state, name=f"{app_name}_evaluator"
-    )
+    # 7. Create runtime with worker fleet
+    runtime = RuntimeSpec(fleet=tuple(worker_fleet), name=f"{app_name}_runtime")
 
     # 8. Create main application spec
     main_app = app_spec.with_value_at(
         "state",
         value=proxied_state,
     ).with_value_at(
-        "evaluator",
-        value=evaluator,
+        "runtime",
+        value=runtime,
     )
 
     return main_app

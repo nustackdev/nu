@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import attrs
 
-from loomi import ResourceSpec, SyncService
+from loomi import ResourceSpec
+from loomistd.service import SyncService
 
 from .._exceptions import DecodeError, EncodeError
 from .constans import PATH_SEPARATOR

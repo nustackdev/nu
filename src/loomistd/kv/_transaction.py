@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from loomi.state import (
+from loomi.tree import (
     TransactionalHandlerProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,

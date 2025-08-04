@@ -6,7 +6,8 @@ from typing import cast
 import attrs
 import msgpack
 
-from loomi import ResourceSpec, SyncService
+from loomi import ResourceSpec
+from loomistd.service import SyncService
 
 from .._exceptions import DecodeError, EncodeError
 from .constants import MAX_STR_SIZE, PATH_SEPARATOR

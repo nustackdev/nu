@@ -16,7 +16,7 @@ import rpyc
 from rpyc.core import Connection as RPyCConnection
 from rpyc.core.stream import SocketStream
 
-from loomi import SyncService
+from loomistd.service import SyncService
 
 from ..exceptions import RPyCConnectionError
 from .base_conn import BaseRPyCConnection, BaseRPyCConnectionSpec

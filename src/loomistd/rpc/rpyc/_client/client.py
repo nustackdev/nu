@@ -14,7 +14,8 @@ from typing import Any, cast
 
 import attrs
 
-from loomi import Attach, ResourceSpec, Spec, SyncService
+from loomi import Attach, ResourceSpec, Spec
+from loomistd.service import SyncService
 
 from .._api import ResourceFactory
 from ..exceptions import RPyCConnectionError, RPyCOperationError
