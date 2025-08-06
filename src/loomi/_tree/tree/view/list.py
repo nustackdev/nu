@@ -15,7 +15,7 @@ from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, TreeT, 
 from .base import BaseView
 
 if TYPE_CHECKING:
-    from .dict import DictView
+    pass
 
 __all__ = [
     "ListView",
@@ -66,9 +66,7 @@ class ListView(BaseView[TreeT]):
         ```
     """
 
-    structure: ContainerStructure = attrs.field(
-        default=ContainerStructure.INDEXED_CONTAINER, init=False
-    )
+    structure: ContainerStructure = attrs.field(default=ContainerStructure(2), init=False)
 
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
@@ -115,7 +113,7 @@ class ListView(BaseView[TreeT]):
 
         return normalized_index, length
 
-    def extract(self):
+    def extract(self) -> Value:
         """
         Extract the value at the current path.
 
@@ -199,6 +197,33 @@ class ListView(BaseView[TreeT]):
         key = str(index)
 
         return self._get_child_value(key, default=default)
+
+    def set(self, index: int, value: Value) -> None:
+        """
+        Set value at index.
+
+        Args:
+            index: Index to set (supports negative indexing)
+            value: Value to store
+
+        Raises:
+            IndexError: If index is out of bounds
+            TypeError: If value type incompatible with container
+
+        Example:
+            ```python
+            # Set by positive index
+            tasks.set(0, "Updated task")
+
+            # Set by negative index
+            tasks.set(-1, "Last task updated")
+            ```
+        """
+        index, length = self._validate_index_with_length(index)
+
+        key = str(index)
+
+        self._set_child_value(key, value)
 
     def append(self, value: Value) -> None:
         """
@@ -293,52 +318,3 @@ class ListView(BaseView[TreeT]):
         """
         for i in range(self.length()):
             yield cast(Value, self.get(i))
-
-    def dict_view(self, index: int) -> DictView:
-        """
-        Get a dictionary view for a nested container at index.
-
-        Args:
-            index: Index of the nested container
-
-        Returns:
-            DictView: Dictionary view for the nested container
-
-        Raises:
-            IndexError: If index is out of bounds
-            ContainerProtocolError: If item is not a mapping container
-
-        Example:
-            ```python
-            task_details = tasks.dict_view(0)
-            task_details.set("priority", "high")
-            ```
-        """
-        normalized_index, _ = self._validate_index_with_length(index)
-
-        return self._dict_view(str(normalized_index))
-
-    def list_view(self, index: int) -> ListView:
-        """
-        Get a list view for a nested container at index.
-
-        Args:
-            index: Index of the nested container
-
-        Returns:
-            ListView: List view for the nested container
-
-        Raises:
-            IndexError: If index is out of bounds
-            ContainerProtocolError: If item is not a sequence container
-
-        Example:
-            ```python
-            subtasks = tasks.list_view(0)
-            subtasks.append("Subtask 1")
-            ```
-        """
-
-        normalized_index, _ = self._validate_index_with_length(index)
-
-        return self._list_view(str(normalized_index))

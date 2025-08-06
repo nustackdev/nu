@@ -10,7 +10,7 @@ throughout the package, establishing a consistent type system.
 from __future__ import annotations
 
 from enum import Enum, Flag, auto
-from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Any, NewType, TypeGuard, TypeVar
 
 from ..backend import CallbackFn
 
@@ -92,41 +92,7 @@ class NodeType(Enum):
 
 
 # Container protocol flags
-class ContainerStructure(Flag):
-    """
-    Protocol flags defining container capabilities and interfaces.
-
-    Container protocols determine which views and operations are compatible
-    with a specific container.
-    """
-
-    # Base protocols
-    CONTAINER = 1  # Base protocol for all containers
-
-    # Core container types
-    MAPPING_CONTAINER = 2 | CONTAINER  # Key-based access (dict-like)
-    INDEXED_CONTAINER = 2 << 1 | CONTAINER  # Index-based ordered access (list-like)
-    LINKED_CONTAINER = 2 << 2 | CONTAINER  # Collection of linked values (linked-list-like)
-    HASHED_CONTAINER = 2 << 3 | CONTAINER  # Hashed values (set-like)
-
-    DEFAULT_CONTAINER = MAPPING_CONTAINER
-
-    def __str__(self) -> str:
-        """Return a string representation of protocols."""
-        parts = []
-
-        if self & self.CONTAINER:
-            parts.append("CONTAINER")
-        if self & self.MAPPING_CONTAINER == self.MAPPING_CONTAINER:
-            parts.append("MAPPING")
-        elif self & self.INDEXED_CONTAINER == self.INDEXED_CONTAINER:
-            parts.append("SEQUENCE")
-        elif self & self.LINKED_CONTAINER == self.LINKED_CONTAINER:
-            parts.append("SET")
-        elif self & self.HASHED_CONTAINER == self.HASHED_CONTAINER:
-            parts.append("SERIES")
-
-        return " | ".join(parts)
+ContainerStructure = NewType("ContainerStructure", int)
 
 
 class ContainerProtocol(Flag):
@@ -138,7 +104,7 @@ class ContainerProtocol(Flag):
     # Container protocols
 
     MUTABLE = 1  # Can be modified after creation
-    # Add more protocols as needed
+    # ... Add more protocols as needed
 
     DEFAULT_PROTOCOL = MUTABLE
 

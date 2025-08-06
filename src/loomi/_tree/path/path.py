@@ -89,7 +89,7 @@ class _Path:
         if not isinstance(key, (int, str)):
             raise PathConstructionError(f"Invalid key type: {type(key)}. Must be int or str")
 
-        return __class__(tuple(self.components) + (key,))
+        return self.__class__(tuple(self.components) + (key,))
 
     # =========================================================================
     # VARIABLE INTERFACE
@@ -156,7 +156,7 @@ class _Path:
             repr(path)  # "Path(['users', 'alice', 'email'])"
             ```
         """
-        return f"Path({list(self.components)})"
+        return f"{self.__class__.__name__}({list(self.components)})"
 
     def __hash__(self) -> int:
         """

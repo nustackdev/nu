@@ -23,10 +23,10 @@ from ..backend import (
     TransactionProtocol,
 )
 from .context import ContextType, ContextualBase
-from .node import ContainerNode
 from .path import Path
+from .registry import ViewRegistry
 from .types import EMPTY, CallbackFn, Empty, PathComponent, Value
-from .view import DictView, ListView, create_view_context_manager
+from .view import BaseView, DictView, ListView, create_view_context_manager
 
 __all__ = [
     "Tree",
@@ -81,6 +81,8 @@ class Tree(ContextualBase):
     """
 
     path: Path = attrs.field(factory=Path, eq=False, hash=False, alias=None)
+
+    registry: ViewRegistry = attrs.field(factory=ViewRegistry, eq=False, hash=False)
 
     # =========================================================================
     # TREE NAVIGATION METHODS
@@ -152,7 +154,113 @@ class Tree(ContextualBase):
         return attrs.evolve(self, path=Path(), ctx=ctx or self.ctx)
 
     # =========================================================================
-    # CONTEXT MANAGERS FOR VIEWS (automatic transaction management)
+    # CONTEXT MANAGERS FOR VIEWS (automatic context management)
+    # =========================================================================
+
+    def with_view(
+        self,
+        view_type: type[BaseView[Self]],
+        /,
+        *,
+        snapshot: bool = False,
+    ) -> AbstractContextManager[BaseView[Self]]:
+        """
+        Access container as specified view type with automatic transaction or snapshot management.
+
+        Returns a context manager that yields a view of the specified type.
+        If path doesn't exist, creates a new container of the specified type.
+
+        Args:
+            view_type: Type of view to create
+            snapshot: If True, creates a read-only snapshot view instead of a transaction view
+
+        Returns:
+            Context manager yielding BaseView for the container
+
+        Example:
+            ```python
+            # Automatic transaction - recommended for mutations
+            with tree.at("users").with_view(DictView) as users:
+                users.set("alice", {"email": "alice@example.com"})
+                users.set("bob", {"email": "bob@example.com"})
+
+                # Nested operations inherit the transaction
+                alice_profile = users.dict_view("alice")
+                alice_profile.set("location", "San Francisco")
+            # Transaction automatically committed on success
+
+            # Read-only snapshot - recommended for consistent reads
+            with tree.at("users").with_view(DictView, snapshot=True) as users:
+                user_count = len(users.keys())
+                users_dict = users.to_dict()
+                # Read-only operations only
+            # Snapshot automatically cleaned up
+
+            # Error handling
+            try:
+                with tree.at("users").with_view(DictView) as users:
+                    users.set("invalid", None)  # This might raise an error
+                    raise ValueError("Something went wrong")
+            except ValueError:
+                # Transaction automatically rolled back
+                pass
+            ```
+        """
+        return create_view_context_manager(
+            view_type,
+            snapshot=snapshot,
+            backend=self.backend,
+            path=self.path,
+            ctx=self.ctx,
+            tree=self,
+        )
+
+    # =========================================================================
+    # DIRECT VIEW ACCESS (manual context management)
+    # =========================================================================
+
+    def view(
+        self,
+        view_type: type[BaseView[Self]],
+        /,
+        *,
+        ctx: Optional[ContextType] = None,
+    ) -> BaseView[Self]:
+        """
+        Access container as specified view type with manual context (transaction/snapshot) management.
+
+        Returns a view object directly. No automatic context handling.
+        If path doesn't exist, creates a new container of the specified type.
+
+        Args:
+            view_type: Type of view to create
+            ctx: Optional context (defaults to current context)
+
+        Returns:
+            BaseView for the container
+
+        Example:
+            ```python
+            # Direct usage - good for reads
+            users = tree.at("users").view(DictView)
+            user_count = len(users.keys())
+            users_dict = users.to_dict()
+
+            # Manual transaction management
+            tx = tree.begin_transaction()
+            try:
+                users = tree.at("users").view(DictView, ctx=tx)
+                users.set("alice", {"email": "alice@example.com"})
+                tx.commit()
+            except Exception:
+                tx.rollback()
+                raise
+            ```
+        """
+        return view_type(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
+
+    # =========================================================================
+    # CONVENIENCE METHODS FOR BUILT-IN VIEWS
     # =========================================================================
 
     def with_dict_view(self, *, snapshot: bool = False) -> AbstractContextManager[DictView[Self]]:
@@ -203,7 +311,7 @@ class Tree(ContextualBase):
             backend=self.backend,
             path=self.path,
             ctx=self.ctx,
-            tree=self.__class__,
+            tree=self,
         )
 
     def with_list_view(self, *, snapshot: bool = False) -> AbstractContextManager[ListView[Self]]:
@@ -250,22 +358,18 @@ class Tree(ContextualBase):
             backend=self.backend,
             path=self.path,
             ctx=self.ctx,
-            tree=self.__class__,
+            tree=self,
         )
-
-    # =========================================================================
-    # DIRECT VIEW ACCESS (manual transaction management)
-    # =========================================================================
 
     def dict_view(self, *, ctx: Optional[ContextType] = None) -> DictView[Self]:
         """
-        Access container as dictionary view with manual transaction management.
+        Access container as dictionary view with manual context management.
 
-        Returns a DictView object directly. No automatic transaction handling.
+        Returns a DictView object directly. No automatic context handling.
         If path doesn't exist, creates a new mapping container when accessed.
 
         Args:
-            tx: Optional transaction (defaults to current transaction)
+            ctx: Optional context (defaults to current context)
 
         Returns:
             DictView: Dictionary view for the container
@@ -280,11 +384,11 @@ class Tree(ContextualBase):
             # Manual transaction management
             tx = tree.begin_transaction()
             try:
-                users = tree.at("users").dict_view(tx=tx)
+                users = tree.at("users").dict_view(ctx=ctx)
                 users.set("alice", {"email": "alice@example.com"})
-                tx.commit()
+                ctx.commit()
             except Exception:
-                tx.rollback()
+                ctx.rollback()
                 raise
 
             # Use existing transaction from context
@@ -294,19 +398,17 @@ class Tree(ContextualBase):
                 users.set("bob", {"email": "bob@example.com"})
             ```
         """
-        return DictView(
-            backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self.__class__
-        )
+        return DictView(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
 
     def list_view(self, *, ctx: Optional[ContextType] = None) -> ListView[Self]:
         """
-        Access container as list view with manual transaction management.
+        Access container as list view with manual context management.
 
-        Returns a ListView object directly. No automatic transaction handling.
+        Returns a ListView object directly. No automatic context handling.
         If path doesn't exist, creates a new sequence container when accessed.
 
         Args:
-            tx: Optional transaction (defaults to current transaction)
+            ctx: Optional context (defaults to current context)
 
         Returns:
             ListView: List view for the container
@@ -323,9 +425,9 @@ class Tree(ContextualBase):
             try:
                 tasks = tree.at("tasks").list_view(tx=tx)
                 tasks.append("New task")
-                tx.commit()
+                ctx.commit()
             except Exception:
-                tx.rollback()
+                ctx.rollback()
                 raise
 
             # Accessing nested containers
@@ -335,9 +437,7 @@ class Tree(ContextualBase):
                 first_task_dict.set("completed", True)
             ```
         """
-        return ListView(
-            backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self.__class__
-        )
+        return ListView(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
 
     # =========================================================================
     # CONTEXT METHODS (unified transaction and snapshot support)
@@ -573,11 +673,11 @@ class Tree(ContextualBase):
             return default
 
     # IMPORTANT:
-    # - Set and remove operations are not implemented, as they are handled by specific Views.
+    # - Mutation operations (e.g. `set` and `remove`) are not implemented, as they are handled by View's specific methods.
     #   Views might implement specific logic for setting and removing values (e.g. indexed Views keeping aggregated data),
     #   so we don't want to bypass them here.
     #   Instead, users should use corresponding Views to perform these operations in a consistent manner.
-    # - Hypothetically, has and read operations might also have specific logic in Views, but until we have a use case for that,
+    # - Hypothetically, `has` and `read` operations might also have specific logic in Views, but until we have a use case for that,
     #   we keep shortcut methods here for simplicity.
 
     def is_primitive(self, *paths: PathComponent) -> bool:
@@ -619,108 +719,3 @@ class Tree(ContextualBase):
             ```
         """
         return self.backend.exists(self.path.join(*paths).struct_path.to_tuple())
-
-    def is_mapping(self, *paths: PathComponent) -> bool:
-        """
-        Check if a path is a mapping (dictionary-like).
-
-        Args:
-            *paths: Path components to check
-
-        Returns:
-            bool: True if path is a mapping, False otherwise
-
-        Example:
-            ```python
-            if tree.at("users").is_mapping("alice"):
-                print("Alice's profile is a mapping")
-            else:
-                print("Alice's profile is not a mapping")
-            ```
-        """
-        print(self.path.join(*paths))
-        try:
-            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
-            structure, protocol = ContainerNode.extract_type_info(container_type_info)
-            return ContainerNode.is_mapping_container(structure, protocol)
-        except StorageKeyError:
-            # Container does not exist
-            return False
-
-    def is_indexed(self, *paths: PathComponent) -> bool:
-        """
-        Check if a path is an indexed container (list-like).
-
-        Args:
-            *paths: Path components to check
-
-        Returns:
-            bool: True if path is an indexed container, False otherwise
-
-        Example:
-            ```python
-            if tree.at("tasks").is_indexed():
-                print("Tasks is an indexed container")
-            else:
-                print("Tasks is not an indexed container")
-            ```
-        """
-        try:
-            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
-            structure, protocol = ContainerNode.extract_type_info(container_type_info)
-            return ContainerNode.is_indexed_container(structure, protocol)
-        except StorageKeyError:
-            # Container does not exist
-            return False
-
-    def is_linked(self, *paths: PathComponent) -> bool:
-        """
-        Check if a path is a linked container (set-like).
-
-        Args:
-            *paths: Path components to check
-
-        Returns:
-            bool: True if path is a linked container, False otherwise
-
-        Example:
-            ```python
-            if tree.at("tags").is_linked():
-                print("Tags is a linked container")
-            else:
-                print("Tags is not a linked container")
-            ```
-        """
-        try:
-            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
-            structure, protocol = ContainerNode.extract_type_info(container_type_info)
-            return ContainerNode.is_linked_container(structure, protocol)
-        except StorageKeyError:
-            # Container does not exist
-            return False
-
-    def is_hashed(self, *paths: PathComponent) -> bool:
-        """
-        Check if a path is a hashed container (hash-like).
-
-        Args:
-            *paths: Path components to check
-
-        Returns:
-            bool: True if path is a hashed container, False otherwise
-
-        Example:
-            ```python
-            if tree.at("users").is_hashed():
-                print("Users is a hashed container")
-            else:
-                print("Users is not a hashed container")
-            ```
-        """
-        try:
-            container_type_info = self.backend.get(self.path.join(*paths).struct_path.to_tuple())
-            structure, protocol = ContainerNode.extract_type_info(container_type_info)
-            return ContainerNode.is_hashed_container(structure, protocol)
-        except StorageKeyError:
-            # Container does not exist
-            return False

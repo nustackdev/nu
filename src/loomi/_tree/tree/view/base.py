@@ -29,9 +29,9 @@ intervened by other threads.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from functools import cached_property
-from typing import TYPE_CHECKING, Generic, Optional
+from typing import TYPE_CHECKING, Any, Generic, Optional
 
 import attrs
 
@@ -41,14 +41,20 @@ from ..exceptions import ContainerProtocolError
 from ..node import ChildType, ContainerNode
 from ..path import Path
 from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, TreeT, Value
+from .types import AccessibleViewProtocol
 
 if TYPE_CHECKING:
-    from .dict import DictView
-    from .list import ListView
+    pass
 
 __all__ = [
     "BaseView",
 ]
+
+
+class ViewError(Exception):
+    """Base exception for view-related errors."""
+
+    pass
 
 
 @attrs.define(frozen=True, kw_only=True)
@@ -95,13 +101,13 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     path: Path = attrs.field()
 
     # Container structure type
-    structure: ContainerStructure = attrs.field()
+    structure: ContainerStructure = attrs.field(init=False)
 
     # Container protocol type
-    protocol: ContainerProtocol = attrs.field()
+    protocol: ContainerProtocol = attrs.field(init=False)
 
     # Tree class this view operates on
-    tree: type[TreeT] = attrs.field()
+    tree: TreeT = attrs.field()
 
     # =========================================================================
     # CONTAINER NODE ACCESS
@@ -168,7 +174,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             ```
         """
         new_path = self.path.join(*paths)
-        return self.tree(backend=self.backend, path=new_path, ctx=ctx or self.ctx)
+        return self.tree.at(*new_path, ctx=ctx or self.ctx)
 
     def parent(self, *, ctx: Optional[ContextType] = None) -> TreeT:
         """
@@ -187,7 +193,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
         if parent_path is None:
             # Already at root
             parent_path = self.path
-        return self.tree(backend=self.backend, path=parent_path, ctx=ctx or self.ctx)
+        return self.tree.parent(ctx=ctx or self.ctx)
 
     def root(self, *, ctx: Optional[ContextType] = None) -> TreeT:
         """
@@ -201,42 +207,17 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             root = tree.at("deeply", "nested", "path").root()
             ```
         """
-        return self.tree(backend=self.backend, path=self.path.root(), ctx=ctx or self.ctx)
+        return self.tree.root(ctx=ctx or self.ctx)
 
     # =========================================================================
-    # ABSTRACT INTERFACE (to be implemented by subclasses)
-    # =========================================================================
-
-    @abstractmethod
-    def store(self, value: Value, /, *, replace: bool = False) -> None:
-        """
-        Store value in the view. Implemented by subclasses.
-
-        Args:
-            value: Value to store in the view
-            replace: If True, replaces existing value at the path. Otherwise appends to existing list. Default is False.
-        """
-        raise NotImplementedError("Subclasses must implement store()")
-
-    @abstractmethod
-    def extract(self) -> Value | Empty:
-        """
-        Extract value from the view. Implemented by subclasses.
-
-        Returns:
-            Value or Empty: Extracted value from the view, or EMPTY if not found
-        """
-        raise NotImplementedError("Subclasses must implement extract()")
-
-    # =========================================================================
-    # COMMON CHILD MANAGEMENT OPERATIONS
+    # COMMON CHILD MANAGEMENT OPERATIONS (using registry)
     # =========================================================================
 
     def _get_child_value(
         self, key: PathComponent, /, *, default: Value | Empty = EMPTY
     ) -> Value | Empty:
         """
-        Common logic for getting child values (primitive or extracted container).
+        Common logic for getting child values using registry for view resolution.
 
         Args:
             key: Child key to retrieve
@@ -244,189 +225,188 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
 
         Returns:
             Value or default - primitives returned directly, containers extracted
+
+        Raises:
+            ViewError: If registry lookups fail
         """
-        # First check if child is a primitive, as this is the most common case
         child_info = self.container.get_child_info(key)
 
         if child_info.child_type == ChildType.NOT_FOUND:
-            # Child does not exist, return default value
             return default
 
-        # Check if child is a primitive value
         if child_info.child_type == ChildType.PRIMITIVE:
-            # Child is a primitive, return its value directly
             return child_info.value
 
-        # Child is not a primitive, check if it is a container
         if child_info.child_type == ChildType.CONTAINER:
-            # Child is a container, extract its structure and protocol
-            child_structure = child_info.stored_structure
-            child_protocol = child_info.stored_protocol
+            # Use structure ID from child info
+            structure_id = child_info.stored_structure
 
-            if child_structure is None or child_protocol is None:
-                raise ContainerProtocolError(f"Container '{key}' has malformed structure/protocol")
+            if structure_id is None:
+                raise ContainerProtocolError(f"Container '{key}' has no structure ID")
 
-            # Get the appropriate view for the existing container
-            view = self._get_view_for_container(key, child_structure, child_protocol)
-            # Extract the container value using the view
-            return view.extract()
+            # Use registry to get appropriate view
+            try:
+                view = self._get_view_for_structure_id(key, structure_id)
 
-        raise ValueError(
-            f"Unexpected child type '{child_info.child_type}' for key '{key}'. "
-            "Expected primitive or container."
-        )
+                # Ensure the view implements the AccessibleViewProtocol
+                if not isinstance(view, AccessibleViewProtocol):
+                    raise ViewError(
+                        f"View {type(view).__name__} doesn't implement AccessibleViewProtocol. Required methods for nested value extraction are missing."
+                    )
+
+                return view.extract()
+            except ValueError as e:
+                raise ViewError(f"Cannot create view for structure ID {structure_id}") from e
+
+        raise ValueError(f"Unexpected child type '{child_info.child_type}' for key '{key}'")
 
     def _set_child_value(self, key: PathComponent, value: Value, /) -> None:
         """
-        Common logic for setting child values (primitive or nested container).
+        Common logic for setting child values using registry for view resolution.
 
         Args:
             key: Child key to set
             value: Value to store
 
         Raises:
-            ValueError: If trying to overwrite container with primitive
+            ViewError: If registry lookups fail or conflicts detected
         """
         if self._is_value_primitive(value):
-            # Store the primitive value
-            # If container has a container with the same key, it will raise an error
+            # Store primitive value directly
             self.container.set_primitive_child(key, value)
         else:
-            # Value is a container (dict, list, etc.)
+            # Value is a container - need to find appropriate view
 
-            # Check if a primitive with the same key does not exist
+            # Check if primitive with same key exists (conflict)
             if self.container.has_primitive_child(key):
-                # If a primitive exists, we cannot overwrite it with a container
                 raise ValueError(
                     f"Cannot overwrite primitive value with container at key '{key}'. "
                     "Use a different key for the container."
                 )
 
-            child_view = self._get_view_for_value(key, value)
-            child_view.store(value, replace=False)
+            # Use registry to find view for this value type
+            try:
+                child_view = self._get_view_for_container_value(key, value)
+
+                # Ensure the view implements the AccessibleViewProtocol
+                if not isinstance(child_view, AccessibleViewProtocol):
+                    raise ViewError(
+                        f"View for value type {type(value).__name__} doesn't implement AccessibleViewProtocol. Required methods for nested value storage are missing."
+                    )
+
+                child_view.store(value, replace=False)
+            except ValueError as e:
+                raise ViewError(f"Cannot create view for value type {type(value)}") from e
 
     # =========================================================================
-    # NESTED VIEW CREATION
+    # REGISTRY-BASED VIEW CREATION
     # =========================================================================
 
-    def _dict_view(self, key: PathComponent, /) -> "DictView":
-        """Create nested dictionary view."""
-        from .dict import DictView
-
-        return DictView(
-            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
-        )
-
-    def _list_view(self, key: PathComponent, /) -> "ListView":
-        """Create nested list view."""
-        from .list import ListView
-
-        return ListView(
-            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
-        )
-
-    # =========================================================================
-    # UTILITY METHODS
-    # =========================================================================
-
-    def _get_view_for_container(
-        self,
-        key: PathComponent,
-        structure: ContainerStructure,
-        protocol: ContainerProtocol,
-        /,
-    ) -> BaseView:
+    def _get_view_for_structure_id(self, key: PathComponent, structure_id: int, /) -> BaseView:
         """
-        Get appropriate view for existing container.
+        Get view for existing container using registry and structure ID.
 
         Args:
-            key: Child key to retrieve
-            structure: Container structure type
-            protocol: Container protocol type
+            key: Child key
+            structure_id: Container structure ID from storage
 
         Returns:
-            BaseView: The view for the specified container type
+            BaseView: Appropriate view for the structure ID
 
         Raises:
-            ValueError: If structure/protocol combination is unsupported
+            ValueError: If structure ID not registered
         """
-        from .dict import DictView
-        from .list import ListView
+        view_class = self.tree.registry.get_view_for_structure(structure_id)
+        return self._create_view(key, view_class)
 
-        if self._satisfies_dict_view(structure, protocol):
-            return DictView(
-                backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
-            )
-        elif self._satisfies_list_view(structure, protocol):
-            return ListView(
-                backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
-            )
-        else:
-            raise ValueError(
-                f"Unsupported structure `{structure}` and protocol `{protocol}` for view creation"
-            )
-
-    def _get_view_for_value(self, key: PathComponent, value: Value, /) -> BaseView:
+    def _get_view_for_container_value(self, key: PathComponent, value: Value, /) -> BaseView:
         """
-        Get appropriate view for a value being stored.
+        Get view for container value using registry.
 
         Args:
-            key: Child key to retrieve
-            value: Value to store (can be primitive or container)
+            key: Child key
+            value: Container value to store
 
         Returns:
-            BaseView: The view for the specified value type
+            BaseView: Appropriate view for the value
 
         Raises:
-            ValueError: If value type is unsupported for view creation
+            ValueError: If no container type matches the value
         """
-        from .dict import DictView
-        from .list import ListView
+        # Find matching container type using isinstance checks
+        registry = self.tree.registry
 
-        child_path = self.path.join(key)
-        if isinstance(value, dict):
-            return DictView(backend=self.backend, path=child_path, ctx=self.ctx, tree=self.tree)
-        elif isinstance(value, list):
-            return ListView(backend=self.backend, path=child_path, ctx=self.ctx, tree=self.tree)
-        else:
-            raise ValueError(f"Unsupported value type `{type(value)}` for view creation")
+        for container_type in registry.get_registered_container_types():
+            if isinstance(value, container_type):
+                view_class = registry.get_view_for_container_type(container_type)
+                return self._create_view(key, view_class)
+
+        # No direct match found - this is an error since we removed fallback logic
+        raise ValueError(
+            f"No container type registered for value type {type(value).__name__}. "
+            f"Register a container type that matches isinstance({type(value).__name__}, container_type)."
+        )
+
+    def _get_view_for_component_type(self, key: PathComponent, component: Any, /) -> BaseView:
+        """
+        Get view that can handle a specific component type during navigation.
+
+        Args:
+            key: Child key
+            component: Component/key object for navigation
+
+        Returns:
+            BaseView: View that can handle this component type
+
+        Raises:
+            ValueError: If no component type matches the component
+        """
+        # Find matching component type using isinstance checks
+        registry = self.tree.registry
+
+        for component_type in registry.get_registered_component_types():
+            if isinstance(component, component_type):
+                # Get primary view for this component type
+                view_class = registry.get_primary_view_for_component_type(component_type)
+                return self._create_view(key, view_class)
+
+        raise ValueError(
+            f"No component type registered for component type {type(component).__name__}. "
+            f"Register a component type that matches isinstance({type(component).__name__}, component_type)."
+        )
+
+    def _create_view(self, key: PathComponent, view_class: type[BaseView]) -> BaseView:
+        """
+        Generic view creation method.
+
+        Args:
+            key: Child key
+            view_class: View class to instantiate
+
+        Returns:
+            BaseView: New view instance
+        """
+        return view_class(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
 
     def _is_value_primitive(self, value: Value, /) -> bool:
         """
         Check if value should be stored as primitive.
 
+        A value is primitive if it doesn't match any registered container type.
+
         Args:
             value: Value to check
 
         Returns:
-            bool: True if value is primitive (not a container), False otherwise
+            bool: True if value is primitive (no matching container type)
         """
-        return not isinstance(value, (dict, list, set, tuple))
+        registry = self.tree.registry
 
-    @staticmethod
-    def _satisfies_dict_view(structure: ContainerStructure, protocol: ContainerProtocol, /) -> bool:
-        """
-        Check if structure/protocol supports dictionary view.
+        # Check if value matches any registered container type
+        for container_type in registry.get_registered_container_types():
+            if isinstance(value, container_type):
+                return False  # Matches a container type, not primitive
 
-        Args:
-            structure: Container structure type
-            protocol: Container protocol type
-
-        Returns:
-            bool: True if structure/protocol supports dictionary view
-        """
-        return structure == ContainerStructure.MAPPING_CONTAINER
-
-    @staticmethod
-    def _satisfies_list_view(structure: ContainerStructure, protocol: ContainerProtocol, /) -> bool:
-        """
-        Check if structure/protocol supports list view.
-
-        Args:
-            structure: Container structure type
-            protocol: Container protocol type
-
-        Returns:
-            bool: True if structure/protocol supports list view
-        """
-        return structure == ContainerStructure.INDEXED_CONTAINER
+        return True  # No container type matches, treat as primitive

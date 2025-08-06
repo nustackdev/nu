@@ -16,7 +16,7 @@ from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathCom
 from .base import BaseView
 
 if TYPE_CHECKING:
-    from .list import ListView
+    pass
 
 __all__ = [
     "DictView",
@@ -59,9 +59,7 @@ class DictView(BaseView[TreeT]):
         ```
     """
 
-    structure: ContainerStructure = attrs.field(
-        default=ContainerStructure.MAPPING_CONTAINER, init=False
-    )
+    structure: ContainerStructure = attrs.field(default=ContainerStructure(1), init=False)
 
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
@@ -260,47 +258,3 @@ class DictView(BaseView[TreeT]):
         for key in self.keys():
             value = cast(Value, self.get(key))
             yield (key, value)
-
-    def dict_view(self, key: PathComponent) -> DictView:
-        """
-        Get a dictionary view for a nested container.
-
-        Args:
-            key: Key of the nested container
-
-        Returns:
-            DictView: Dictionary view for the nested container
-
-        Raises:
-            KeyError: If key doesn't exist
-            ContainerProtocolError: If child is not a mapping container
-
-        Example:
-            ```python
-            alice_profile = users.dict_view("alice")
-            alice_profile.set("location", "San Francisco")
-            ```
-        """
-        return self._dict_view(key)
-
-    def list_view(self, key: PathComponent) -> ListView:
-        """
-        Get a list view for a nested container.
-
-        Args:
-            key: Key of the nested container
-
-        Returns:
-            ListView: List view for the nested container
-
-        Raises:
-            KeyError: If key doesn't exist
-            ContainerProtocolError: If child is not a sequence container
-
-        Example:
-            ```python
-            alice_tasks = users.list_view("alice_tasks")
-            alice_tasks.append("new task")
-            ```
-        """
-        return self._list_view(key)

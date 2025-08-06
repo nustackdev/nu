@@ -6,7 +6,16 @@ from __future__ import annotations
 
 import attrs
 
-from loomi.tree import ObservableStorage, ObserverProtocol, StorageProtocol, Tree, Value
+from loomi._tree.tree.registry import ViewRegistry
+from loomi.tree import (
+    DictView,
+    ListView,
+    ObservableStorage,
+    ObserverProtocol,
+    StorageProtocol,
+    Tree,
+    Value,
+)
 from loomicore.attach import Attach
 from loomicore.resource import SyncResource
 from loomicore.spec import ResourceSpec, Spec
@@ -26,11 +35,15 @@ class State(SyncResource):
     observer: ObserverProtocol = Attach()
 
     def setup(self):
+        backend = ObservableStorage(
+            storage=self.storage,
+            observer=self.observer,
+        )
+        registry = ViewRegistry()
+
         self._tree = Tree(
-            backend=ObservableStorage(
-                storage=self.storage,
-                observer=self.observer,
-            )
+            backend=backend,
+            registry=registry,
         )
 
     @property

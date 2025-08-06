@@ -79,7 +79,7 @@ class Operation(ABC):
     """
 
     @staticmethod
-    def __resolve_operand(
+    def s__resolve_operand(
         operand: Operation | Any, tree: "Tree", ctx: Any, vars: dict[str | int, Any]
     ) -> Any:
         """
@@ -124,7 +124,7 @@ class Operation(ABC):
             ) from e
 
     @staticmethod
-    def __resolve_path(path: "_Path", tree: "Tree", ctx: Any, vars: dict[str | int, Any]) -> Any:
+    def s__resolve_path(path: "_Path", tree: "Tree", ctx: Any, vars: dict[str | int, Any]) -> Any:
         """
         Resolve a path to its value in the tree.
 
@@ -186,7 +186,7 @@ class UnaryOperation(Operation, ABC):
 
     def _resolve_operand(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Resolve the operand to its value."""
-        return self.__resolve_operand(self.operand, tree, ctx, vars)
+        return self.s__resolve_operand(self.operand, tree, ctx, vars)
 
 
 @attrs.define(frozen=True)
@@ -204,8 +204,8 @@ class BinaryOperation(Operation, ABC):
         self, tree: Tree, ctx: Any, vars: dict[str | int, Any]
     ) -> tuple[Any, Any]:
         """Resolve both operands to their values."""
-        left_val = self.__resolve_operand(self.left, tree, ctx, vars)
-        right_val = self.__resolve_operand(self.right, tree, ctx, vars)
+        left_val = self.s__resolve_operand(self.left, tree, ctx, vars)
+        right_val = self.s__resolve_operand(self.right, tree, ctx, vars)
         return left_val, right_val
 
 
@@ -225,9 +225,9 @@ class TernaryOperation(Operation, ABC):
         self, tree: Tree, ctx: Any, vars: dict[str | int, Any]
     ) -> tuple[Any, Any, Any]:
         """Resolve all three operands to their values."""
-        first_val = self.__resolve_operand(self.first, tree, ctx, vars)
-        second_val = self.__resolve_operand(self.second, tree, ctx, vars)
-        third_val = self.__resolve_operand(self.third, tree, ctx, vars)
+        first_val = self.s__resolve_operand(self.first, tree, ctx, vars)
+        second_val = self.s__resolve_operand(self.second, tree, ctx, vars)
+        third_val = self.s__resolve_operand(self.third, tree, ctx, vars)
         return first_val, second_val, third_val
 
 
@@ -259,7 +259,7 @@ class ResolveVarOperation(UnaryOperation):
         Returns:
             Value at the path location
         """
-        return self.__resolve_path(self.operand, tree, ctx, vars)
+        return self.s__resolve_path(self.operand, tree, ctx, vars)
 
     def __repr__(self) -> str:
         return f"ResolveVar({self.operand})"
@@ -466,10 +466,10 @@ class AndOperation(BinaryOperation):
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform logical AND with short-circuit evaluation."""
-        left_val = self.__resolve_operand(self.left, tree, ctx, vars)
+        left_val = self.s__resolve_operand(self.left, tree, ctx, vars)
         if not left_val:
             return False  # Short-circuit
-        right_val = self.__resolve_operand(self.right, tree, ctx, vars)
+        right_val = self.s__resolve_operand(self.right, tree, ctx, vars)
         return bool(left_val) and bool(right_val)
 
 
@@ -479,10 +479,10 @@ class OrOperation(BinaryOperation):
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform logical OR with short-circuit evaluation."""
-        left_val = self.__resolve_operand(self.left, tree, ctx, vars)
+        left_val = self.s__resolve_operand(self.left, tree, ctx, vars)
         if left_val:
             return True  # Short-circuit
-        right_val = self.__resolve_operand(self.right, tree, ctx, vars)
+        right_val = self.s__resolve_operand(self.right, tree, ctx, vars)
         return bool(left_val) or bool(right_val)
 
 

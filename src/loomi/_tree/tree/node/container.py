@@ -48,7 +48,7 @@ from __future__ import annotations
 import dataclasses
 from enum import Enum, auto
 from functools import cached_property
-from typing import Generator
+from typing import Generator, cast
 
 import attrs
 
@@ -201,72 +201,12 @@ class ContainerNode(BaseNode):
             raise ValueError(f"Malformed type data: {type_data}")
 
         try:
-            structure = ContainerStructure(type_data[0])
-            protocol = ContainerProtocol(type_data[1])
+            structure = ContainerStructure(int(cast(int, type_data[0])))
+            protocol = ContainerProtocol(int(cast(int, type_data[1])))
         except ValueError as e:
             raise ValueError(f"Invalid type data values: {type_data}") from e
 
         return structure, protocol
-
-    @staticmethod
-    def is_mapping_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
-        """Check if the container is a mapping container.
-
-        Args:
-            structure: The structure of the container.
-            protocol: The protocol flags of the container.
-
-        Returns:
-            bool: True if the container is a mapping container, False otherwise.
-        """
-        return (
-            structure & ContainerStructure.MAPPING_CONTAINER == ContainerStructure.MAPPING_CONTAINER
-        )
-
-    @staticmethod
-    def is_indexed_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
-        """Check if the container is an indexed container.
-
-        Args:
-            structure: The structure of the container.
-            protocol: The protocol flags of the container.
-
-        Returns:
-            bool: True if the container is an indexed container, False otherwise.
-        """
-        return (
-            structure & ContainerStructure.INDEXED_CONTAINER == ContainerStructure.INDEXED_CONTAINER
-        )
-
-    @staticmethod
-    def is_linked_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
-        """Check if the container is a linked container.
-
-        Args:
-            structure: The structure of the container.
-            protocol: The protocol flags of the container.
-
-        Returns:
-            bool: True if the container is a linked container, False otherwise.
-        """
-        return (
-            structure & ContainerStructure.LINKED_CONTAINER == ContainerStructure.LINKED_CONTAINER
-        )
-
-    @staticmethod
-    def is_hashed_container(structure: ContainerStructure, protocol: ContainerProtocol) -> bool:
-        """Check if the container is a hashed container.
-
-        Args:
-            structure: The structure of the container.
-            protocol: The protocol flags of the container.
-
-        Returns:
-            bool: True if the container is a hashed container, False otherwise.
-        """
-        return (
-            structure & ContainerStructure.HASHED_CONTAINER == ContainerStructure.HASHED_CONTAINER
-        )
 
     # ------------------------------------------------------------------------
     # HIGH-LEVEL CONTAINER OPERATIONS
@@ -522,7 +462,7 @@ class ContainerNode(BaseNode):
                 f"Container at {self.path} has malformed type data: {self.info.raw_type_data}"
             )
 
-        structure_match = self.structure & self.info.stored_structure == self.structure
+        structure_match = self.info.stored_structure == self.structure
         protocol_match = bool(self.protocol & self.info.stored_protocol)
 
         if not structure_match:
@@ -877,7 +817,7 @@ class ContainerNode(BaseNode):
 
         # Create container
         self.get_transaction_context().set(
-            self.path.struct_path.to_tuple(), [self.structure.value, self.protocol.value]
+            self.path.struct_path.to_tuple(), [self.structure, self.protocol.value]
         )
 
         return True
@@ -919,7 +859,7 @@ class ContainerNode(BaseNode):
             self.get_transaction_context().set(
                 parent_path.struct_path.to_tuple(),
                 [
-                    ContainerStructure.DEFAULT_CONTAINER.value,
+                    1,  # By default creates a dictionary-like container
                     ContainerProtocol.DEFAULT_PROTOCOL.value,
                 ],
             )
