@@ -231,6 +231,7 @@ class FileStorage(
                             matching_keys.append(decoded_key)
 
         # Yield outside lock
+        matching_keys.sort()  # Sort for consistent ordering
         for key in matching_keys:
             yield key
 

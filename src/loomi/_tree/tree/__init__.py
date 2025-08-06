@@ -13,7 +13,7 @@ from .context import (
 from .node import BaseNode, ChildInfo, ChildType, ContainerInfo, ContainerNode, PrimitiveNode
 from .path import MetaPath, Path, StructPath
 from .tree import Tree
-from .types import EMPTY, Empty, is_empty
+from .types import EMPTY, ContainerProtocol, ContainerStructure, Empty, TreeT, ViewT, is_empty
 from .view import BaseView, DictView, ListView, create_view_context_manager
 
 __all__ = [
@@ -42,4 +42,8 @@ __all__ = [
     "DictView",
     "ListView",
     "create_view_context_manager",
+    "TreeT",
+    "ViewT",
+    "ContainerProtocol",
+    "ContainerStructure",
 ]
