@@ -334,28 +334,53 @@ def get_voyager_topology(app_spec: AppSpec, **kwargs) -> Spec:
     )
 
 
-def get_cerritos_topology(app_spec: AppSpec, **kwargs) -> Spec:
+def get_cerritos_topology(
+    app_spec: AppSpec,
+    *,
+    worker_count: int = 4,
+    storage_path: str = ".db",
+    app_name: str = "local_app",
+) -> Spec:
     """
     Create a Cerritos NCC-75567 topology for simple development work.
 
     Like the USS Cerritos NCC-75567 - California-class vessel doing the
     important but unglamorous "second contact" work. Perfect for development,
-    testing, and utility operations. No red alerts, just solid work.
+    testing, and utility operations.
 
     Features:
-    - Simple in-memory storage
-    - Single process or minimal workers
-    - Straightforward configuration
+    - Simple file storage (not for production)
+    - State worker runs in the same process
+    - Single process with threaded workers
     - Easy to understand and debug
-    - Margarita Tuesday optional
 
     Perfect for:
     - Development and testing
     - Learning and prototyping
-    - Simple applications
-    - Second contact missions
 
     Registry: NCC-75567 (California-class)
     Captain: Carol Freeman
     """
-    raise NotImplementedError("Cerritos NCC-75567 topology coming soon - second contact specialist")
+
+    # 1. Create base state with file persistence
+    state = get_file_state_spec(path=storage_path, mode="write", name=f"{app_name}_state")
+
+    # 2. Create base worker app spec
+    base_worker = app_spec.with_value_at("state", value=state).with_value_at("name", value="worker")
+
+    # 3. Create worker fleet with replication
+    worker_fleet = SpecBuilder(base_worker).replicate(count=worker_count)
+
+    # 4. Create runtime with worker fleet
+    runtime = RuntimeSpec(fleet=tuple(worker_fleet), name=f"{app_name}_runtime")
+
+    # 5. Create main application spec
+    main_app = app_spec.with_value_at(
+        "state",
+        value=state,
+    ).with_value_at(
+        "runtime",
+        value=runtime,
+    )
+
+    return main_app
