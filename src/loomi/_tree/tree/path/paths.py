@@ -7,6 +7,7 @@ in the state tree and provides methods for path manipulation and navigation.
 
 from __future__ import annotations
 
+from functools import cached_property
 from typing import Iterator, Self
 
 from ..types import PathComponent
@@ -44,7 +45,7 @@ class Path:
     # Root marker for the metadata component (stores metadata)
     METADATA_ROOT_MARKER: str = "/m"
 
-    @property
+    @cached_property
     def root_marker(self) -> str:
         """
         Get the root marker for the path.
@@ -54,7 +55,7 @@ class Path:
         """
         return self.DATA_ROOT_MARKER
 
-    @property
+    @cached_property
     def struct_path(self) -> StructPath:
         """
         Get the path for the structure component.
@@ -62,9 +63,9 @@ class Path:
         Returns:
             StructPath: New path with structure root marker
         """
-        return StructPath(*self._components[1:])
+        return StructPath(*self.components)
 
-    @property
+    @cached_property
     def meta_path(self) -> MetaPath:
         """
         Get the path for the metadata component.
@@ -72,7 +73,7 @@ class Path:
         Returns:
             MetaPath: New path with metadata root marker
         """
-        return MetaPath(*self._components[1:])
+        return MetaPath(*self.components)
 
     def __init__(self, *components: PathComponent) -> None:
         """
@@ -85,7 +86,7 @@ class Path:
         """
         self._components = (self.root_marker,) + tuple(components)
 
-    @property
+    @cached_property
     def components(self) -> tuple[PathComponent, ...]:
         """
         Get the path components as a tuple.
@@ -93,7 +94,7 @@ class Path:
         Returns:
             tuple[PathComponent, ...]: Path components including root
         """
-        return self._components
+        return self._components[1:]
 
     def to_tuple(self) -> tuple[PathComponent, ...]:
         """
@@ -111,11 +112,11 @@ class Path:
         Returns:
             str: Path as a string with '/' separator
         """
-        if len(self._components) == 1:
+        if len(self.components) == 0:
             # Just the root
             return self.root_marker
 
-        return self.root_marker + self.root_marker.join(str(comp) for comp in self._components[1:])
+        return self.root_marker + "/".join(str(comp) for comp in self.components)
 
     def __repr__(self) -> str:
         """
@@ -124,10 +125,10 @@ class Path:
         Returns:
             str: Detailed representation of the path
         """
-        if len(self._components) == 1:
-            return "Path()"
+        if len(self) == 0:
+            return f"{self.__class__.__name__}()"
 
-        return f"Path({', '.join(repr(c) for c in self._components[1:])})"
+        return f"{self.__class__.__name__}({', '.join(repr(c) for c in self.components)})"
 
     def __eq__(self, other: object) -> bool:
         """
@@ -139,7 +140,7 @@ class Path:
         Returns:
             bool: True if paths have the same components
         """
-        if not isinstance(other, Path):
+        if not isinstance(other, type(self)):
             return False
         return self._components == other._components
 
@@ -159,7 +160,7 @@ class Path:
         Returns:
             int: Number of components
         """
-        return len(self._components)
+        return len(self.components)
 
     def __iter__(self) -> Iterator[PathComponent]:
         """
@@ -168,7 +169,7 @@ class Path:
         Returns:
             Iterator[PathComponent]: Iterator over components
         """
-        return iter(self._components)
+        return iter(self.components)
 
     def join(self, *components: PathComponent) -> Self:
         """
@@ -186,7 +187,7 @@ class Path:
             user_path = path.join("alice", "profile")
             ```
         """
-        return self.__class__(*self._components[1:], *components)
+        return self.__class__(*self.components, *components)
 
     def parent(self) -> Self | None:
         """
@@ -201,11 +202,11 @@ class Path:
             parent = path.parent()  # Path("users")
             ```
         """
-        if len(self._components) <= 1:
+        if len(self.components) == 0:
             # This is the root path
             return None
 
-        return self.__class__(*self._components[1:-1])
+        return self.__class__(*self.components[:-1])
 
     def last(self) -> PathComponent | None:
         """
@@ -220,11 +221,11 @@ class Path:
             last = path.last()  # "alice"
             ```
         """
-        if len(self._components) == 0:
+        if len(self.components) == 0:
             # This is the root path
             return None
 
-        return self._components[-1]
+        return self.components[-1]
 
     def root(self) -> Self:
         """
@@ -248,7 +249,7 @@ class Path:
             is_root = root.is_root()  # True
             ```
         """
-        return len(self._components) == 1
+        return len(self.components) == 0
 
     def is_ancestor_of(self, other: Path) -> bool:
         """
@@ -267,6 +268,9 @@ class Path:
             is_ancestor = users.is_ancestor_of(alice)  # True
             ```
         """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Expected {type(self).__name__}, got {type(other).__name__}")
+
         if len(self._components) >= len(other._components):
             return False
 
@@ -290,6 +294,9 @@ class Path:
             is_descendant = alice.is_descendant_of(users)  # True
             ```
         """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Expected {type(self).__name__}, got {type(other).__name__}")
+
         return other.is_ancestor_of(self)
 
     def relative_to(self, ancestor: Path) -> Self | None:
@@ -309,6 +316,9 @@ class Path:
             relative = alice_profile.relative_to(users)  # Path("alice", "profile")
             ```
         """
+        if not isinstance(ancestor, type(self)):
+            raise TypeError(f"Expected {type(self).__name__}, got {type(ancestor).__name__}")
+
         if not self.is_descendant_of(ancestor):
             return None
 
@@ -318,7 +328,7 @@ class Path:
 
 
 class StructPath(Path):
-    @property
+    @cached_property
     def root_marker(self) -> str:
         """
         Get the root marker for the path.
@@ -330,7 +340,7 @@ class StructPath(Path):
 
 
 class MetaPath(Path):
-    @property
+    @cached_property
     def root_marker(self) -> str:
         """
         Get the root marker for the path.
