@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Generator, cast
 
 import attrs
 
+from loomi._tree.tree.registry import ComponentConstructor, ContainerConstructor
 from loomi.tree import BaseView, ContainerProtocol, ContainerStructure, TreeT, Value
 
 if TYPE_CHECKING:
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
 
 __all__ = [
     "QueueView",
+    "QueueContainer",
+    "QueueComponent",
 ]
 
 
@@ -66,7 +69,7 @@ class QueueView(BaseView[TreeT]):
         ```
     """
 
-    structure: ContainerStructure = attrs.field(default=ContainerStructure(3), init=False)
+    structure: ContainerStructure = attrs.field(default=ContainerStructure(101), init=False)
 
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
@@ -122,9 +125,6 @@ class QueueView(BaseView[TreeT]):
             work_queue.store(["new_task1", "new_task2"], replace=True)
             ```
         """
-        if not hasattr(values, "__iter__") or isinstance(values, (str, bytes, dict)):
-            raise TypeError(f"Expected iterable (excluding str/bytes/dict), got {type(values)}")
-
         # If replacing, clear existing items
         if replace:
             self.clear()
@@ -270,3 +270,11 @@ class QueueView(BaseView[TreeT]):
         """
         for key in self.container.keys():
             yield cast(Value, self._get_child_value(key))
+
+
+class QueueContainer(ContainerConstructor):
+    pass
+
+
+class QueueComponent(ComponentConstructor):
+    pass

@@ -41,4 +41,4 @@ class MapList(Expression):
                 child_context = context.derive(attributes=frozendict({self.name: {"index": i}}))
 
                 # Evaluate the expression for each item
-                self.app.evaluator.evaluate(self.app, self.expression, child_context)
+                self.expression.evaluate(child_context)

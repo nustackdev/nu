@@ -19,6 +19,7 @@ from loomi.tree import (
 from loomicore.attach import Attach
 from loomicore.resource import SyncResource
 from loomicore.spec import ResourceSpec, Spec
+from loomistd.views.queue import QueueComponent, QueueContainer, QueueView
 
 __all__ = [
     "State",
@@ -40,6 +41,14 @@ class State(SyncResource):
             observer=self.observer,
         )
         registry = ViewRegistry()
+
+        # Register loomistd views
+        registry.register_view(
+            QueueView,
+            101,
+            QueueContainer,
+            QueueComponent,
+        )
 
         self._tree = Tree(
             backend=backend,

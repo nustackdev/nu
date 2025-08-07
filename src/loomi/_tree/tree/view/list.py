@@ -15,7 +15,7 @@ from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, TreeT, 
 from .base import BaseView
 
 if TYPE_CHECKING:
-    pass
+    from .dict import DictView
 
 __all__ = [
     "ListView",
@@ -318,3 +318,47 @@ class ListView(BaseView[TreeT]):
         """
         for i in range(self.length()):
             yield cast(Value, self.get(i))
+
+    def dict_view(self, index: int) -> "DictView":
+        """
+        Get a dictionary view for a nested container.
+
+        Args:
+            index: Index of the nested container
+
+        Returns:
+            DictView: Dictionary view for the nested container
+
+        Raises:
+            KeyError: If key doesn't exist
+            ContainerProtocolError: If child is not a mapping container
+
+        Example:
+            ```python
+            alice_profile = users.dict_view("alice")
+            alice_profile.set("location", "San Francisco")
+            ```
+        """
+        return self._dict_view(str(index))
+
+    def list_view(self, index: int) -> ListView:
+        """
+        Get a list view for a nested container.
+
+        Args:
+            index: Index of the nested container
+
+        Returns:
+            ListView: List view for the nested container
+
+        Raises:
+            KeyError: If key doesn't exist
+            ContainerProtocolError: If child is not a sequence container
+
+        Example:
+            ```python
+            alice_tasks = users.list_view("alice_tasks")
+            alice_tasks.append("new task")
+            ```
+        """
+        return self._list_view(str(index))

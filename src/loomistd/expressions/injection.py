@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Awaitable, Callable, Optional
 
 from loomi.expression import Context, ErrorBehavior, Expression, ExpressionError
+from loomistd.app import SyncAppProtocol
 
 from .logger import logger
 
@@ -11,7 +12,7 @@ __all__ = [
 ]
 
 
-class Function(Expression):
+class Function(Expression[SyncAppProtocol]):
     """
     Executes a callable function or method.
 
@@ -77,8 +78,8 @@ class Function(Expression):
         function_name = getattr(self._func, "__name__", "anonymous")
 
         try:
-            # Execute the function using the app's evaluator
-            future = self.app.evaluator.execute(self._func, context)
+            # Execute the function using the app's runtime
+            future = self.app.runtime.execute(self._func, context)
 
             # Wait for completion and get result
             result = future.result()

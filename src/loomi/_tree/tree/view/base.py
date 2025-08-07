@@ -40,11 +40,21 @@ from ..context.protocols import ContextType
 from ..exceptions import ContainerProtocolError
 from ..node import ChildType, ContainerNode
 from ..path import Path
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, TreeT, Value
+from ..types import (
+    EMPTY,
+    ContainerProtocol,
+    ContainerStructure,
+    Empty,
+    PathComponent,
+    TreeT,
+    Value,
+    ViewT,
+)
 from .types import AccessibleViewProtocol
 
 if TYPE_CHECKING:
-    pass
+    from .dict import DictView
+    from .list import ListView
 
 __all__ = [
     "BaseView",
@@ -210,6 +220,45 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
         return self.tree.root(ctx=ctx or self.ctx)
 
     # =========================================================================
+    # VIEW CREATION METHODS
+    # =========================================================================
+
+    def view(self, key: PathComponent, view_class: type[ViewT]) -> ViewT:
+        """
+        Generic view creation method.
+
+        Args:
+            key: Child key
+            view_class: View class to instantiate
+
+        Returns:
+            BaseView: New view instance
+        """
+        return view_class(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
+
+    # =========================================================================
+    # NESTED VIEW CREATION UTILITIES
+    # =========================================================================
+
+    def _dict_view(self, key: PathComponent, /) -> "DictView":
+        """Create nested dictionary view."""
+        from .dict import DictView
+
+        return DictView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
+
+    def _list_view(self, key: PathComponent, /) -> "ListView":
+        """Create nested list view."""
+        from .list import ListView
+
+        return ListView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
+
+    # =========================================================================
     # COMMON CHILD MANAGEMENT OPERATIONS (using registry)
     # =========================================================================
 
@@ -317,7 +366,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             ValueError: If structure ID not registered
         """
         view_class = self.tree.registry.get_view_for_structure(structure_id)
-        return self._create_view(key, view_class)
+        return self.view(key, view_class)
 
     def _get_view_for_container_value(self, key: PathComponent, value: Value, /) -> BaseView:
         """
@@ -339,7 +388,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
         for container_type in registry.get_registered_container_types():
             if isinstance(value, container_type):
                 view_class = registry.get_view_for_container_type(container_type)
-                return self._create_view(key, view_class)
+                return self.view(key, view_class)
 
         # No direct match found - this is an error since we removed fallback logic
         raise ValueError(
@@ -368,26 +417,11 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             if isinstance(component, component_type):
                 # Get primary view for this component type
                 view_class = registry.get_primary_view_for_component_type(component_type)
-                return self._create_view(key, view_class)
+                return self.view(key, view_class)
 
         raise ValueError(
             f"No component type registered for component type {type(component).__name__}. "
             f"Register a component type that matches isinstance({type(component).__name__}, component_type)."
-        )
-
-    def _create_view(self, key: PathComponent, view_class: type[BaseView]) -> BaseView:
-        """
-        Generic view creation method.
-
-        Args:
-            key: Child key
-            view_class: View class to instantiate
-
-        Returns:
-            BaseView: New view instance
-        """
-        return view_class(
-            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
         )
 
     def _is_value_primitive(self, value: Value, /) -> bool:

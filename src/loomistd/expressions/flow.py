@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Optional
 
 from loomi.expression import Context, ErrorBehavior, Expression, ExpressionError, ExpressionValue
+from loomistd.app import SyncAppProtocol
 
 from .logger import logger
 
@@ -14,7 +15,7 @@ __all__ = [
 ]
 
 
-class Loop(Expression):
+class Loop(Expression[SyncAppProtocol]):
     """
     Execute an expression repeatedly while a condition is true.
 
@@ -114,7 +115,7 @@ class Loop(Expression):
         )
 
 
-class Sequence(Expression):
+class Sequence(Expression[SyncAppProtocol]):
     """
     Executes expressions in sequential order.
 
@@ -246,7 +247,7 @@ class Sequence(Expression):
             raise
 
 
-class Parallel(Expression):
+class Parallel(Expression[SyncAppProtocol]):
     """
     Executes expressions concurrently.
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 
 from loomi.expression import Context, Expression, ExpressionError, ExpressionValue
+from loomistd.app import SyncAppProtocol
 
 from .logger import logger
 
@@ -11,7 +12,7 @@ __all__ = [
 ]
 
 
-class Delay(Expression):
+class Delay(Expression[SyncAppProtocol]):
     """
     Pause execution for a specified duration.
 

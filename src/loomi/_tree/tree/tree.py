@@ -25,8 +25,8 @@ from ..backend import (
 from .context import ContextType, ContextualBase
 from .path import Path
 from .registry import ViewRegistry
-from .types import EMPTY, CallbackFn, Empty, PathComponent, Value
-from .view import BaseView, DictView, ListView, create_view_context_manager
+from .types import EMPTY, CallbackFn, Empty, PathComponent, Value, ViewT
+from .view import DictView, ListView, create_view_context_manager
 
 __all__ = [
     "Tree",
@@ -159,11 +159,11 @@ class Tree(ContextualBase):
 
     def with_view(
         self,
-        view_type: type[BaseView[Self]],
+        view_type: type[ViewT],
         /,
         *,
         snapshot: bool = False,
-    ) -> AbstractContextManager[BaseView[Self]]:
+    ) -> AbstractContextManager[ViewT]:
         """
         Access container as specified view type with automatic transaction or snapshot management.
 
@@ -221,11 +221,11 @@ class Tree(ContextualBase):
 
     def view(
         self,
-        view_type: type[BaseView[Self]],
+        view_type: type[ViewT],
         /,
         *,
         ctx: Optional[ContextType] = None,
-    ) -> BaseView[Self]:
+    ) -> ViewT:
         """
         Access container as specified view type with manual context (transaction/snapshot) management.
 

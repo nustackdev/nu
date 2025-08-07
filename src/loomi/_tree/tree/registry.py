@@ -54,7 +54,7 @@ class ContainerConstructor(ABC):
     pass
 
 
-ContainerType: TypeAlias = type[dict | list | tuple | type[ContainerConstructor]]
+ContainerType: TypeAlias = type[dict | list | tuple | ContainerConstructor]
 
 
 class ComponentConstructor(ABC):
