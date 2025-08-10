@@ -1,8 +1,8 @@
 """
-Runtime context for expressions execution.
+Updated Context class with structural path support.
 
-This module defines the Context class, which provides expressions
-with access to state, services, and execution metadata.
+Provides execution context with hierarchical structural identification
+for deterministic and resumable expression execution.
 """
 
 from __future__ import annotations
@@ -15,18 +15,22 @@ from frozendict import frozendict
 
 from .exceptions import ContextError
 from .logger import logger
+from .structural_path import StructuralPath
+
+__all__ = ["Context"]
 
 
 @attrs.define(frozen=True, slots=True)
 class Context:
     """
-    Execution context for expressions.
+    Execution context for expressions with structural path support.
 
-    Provides expressions with access to state, execution service, and structured path data.
-    This is the primary interface through which expressions interact with their environment.
+    Provides expressions with access to attributes and hierarchical
+    structural identification for deterministic execution tracking.
     """
 
-    attributes: frozendict[str, Any] = attrs.field(factory=frozendict)  # Context attributes storage
+    attributes: frozendict[str, Any] = attrs.field(factory=frozendict)
+    structural_path: StructuralPath = attrs.field(factory=StructuralPath)
 
     # --- Context attributes access methods --- #
 
@@ -50,7 +54,7 @@ class Context:
                 extra={
                     "key": key,
                     "value_type": type(value).__name__,
-                    "context_id": id(self),
+                    "structural_path": str(self.structural_path),
                 },
             )
             return value
@@ -60,7 +64,7 @@ class Context:
                 extra={
                     "key": key,
                     "available_keys": list(self.attributes.keys()),
-                    "context_id": id(self),
+                    "structural_path": str(self.structural_path),
                 },
             )
             raise ContextError(f"Context attribute '{key}' not found") from e
@@ -77,21 +81,34 @@ class Context:
         """
         return key in self.attributes
 
+    # --- Structural path properties --- #
+
+    @property
+    def structural_key(self) -> tuple[str, ...]:
+        """Get the storage key for this structural path."""
+        return self.structural_path.components
+
+    @property
+    def is_root_context(self) -> bool:
+        """Check if this is a root execution context."""
+        return self.structural_path.is_root
+
     # --- Context creation methods --- #
 
     def derive(
         self,
-        attributes: frozendict | None = None,
+        attributes: dict | frozendict | None = None,
+        structural_path: StructuralPath | None = None,
     ) -> Context:
         """
         Create a new context derived from this one.
 
         Used to create contexts for child expressions, extending structural paths
-        and optionally updating other properties.
+        and optionally updating attributes.
 
         Args:
-            expression: New expression to associate with the context
             attributes: New attributes to merge with existing ones
+            structural_path: New structural path (if not provided, inherits parent's)
 
         Returns:
             A new context derived from this one
@@ -104,6 +121,8 @@ class Context:
             extra={
                 "has_new_attributes": attributes is not None,
                 "parent_attributes_count": len(self.attributes),
+                "parent_structural_path": str(self.structural_path),
+                "new_structural_path": str(structural_path) if structural_path else None,
             },
         )
 
@@ -111,16 +130,19 @@ class Context:
             # Start with current values
             values = {
                 "attributes": deepcopy(self.attributes),
+                "structural_path": self.structural_path,
             }
 
             updates: dict[str, Any] = {}
 
             # Merge attributes if provided
             if attributes is not None:
-                # Merge the new attributes with existing ones
-                # TODO: implement deep merge (?)
                 merged_attributes = {**values["attributes"], **attributes}
                 updates["attributes"] = frozendict(merged_attributes)
+
+            # Update structural path if provided
+            if structural_path is not None:
+                updates["structural_path"] = structural_path
 
             values.update(updates)
 
@@ -131,6 +153,7 @@ class Context:
                 "Successfully derived new context",
                 extra={
                     "new_attributes_count": len(new_context.attributes),
+                    "new_structural_path": str(new_context.structural_path),
                 },
             )
 
@@ -142,7 +165,32 @@ class Context:
                 extra={
                     "error_type": type(e).__name__,
                     "error_message": str(e),
+                    "parent_structural_path": str(self.structural_path),
                 },
                 exc_info=True,
             )
             raise ContextError(f"Failed to derive context: {e}") from e
+
+    def create_child_context(
+        self,
+        child_component: str,
+        attributes: dict | frozendict | None = None,
+    ) -> Context:
+        """
+        Create a child context with extended structural path.
+
+        This is a convenience method for creating child contexts with
+        automatically extended structural paths.
+
+        Args:
+            child_component: Component to append to structural path
+            attributes: Additional attributes for the child context
+
+        Returns:
+            A new child context with extended structural path
+        """
+        child_structural_path = self.structural_path.append(child_component)
+        return self.derive(
+            attributes=attributes,
+            structural_path=child_structural_path,
+        )

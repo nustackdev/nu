@@ -1,43 +1,8 @@
 """
-Unified Base Expression Class
+Updated Expression Base Class with Structural Path Support
 
-This module provides the foundational Expression class that all Loomi expressions
-inherit from. It provides a unified interface for value resolution, contextual
-storage access, logging, error handling, and state management.
-
-The design follows a clear separation of concerns:
-- Base class handles all infrastructure (logging, errors, utilities)
-- Subclasses implement only business logic via do_evaluate()
-- Users manage storage contexts (transactions/snapshots) via context managers
-
-Key Features:
-- @final evaluate() method provides orchestration
-- Unified value resolution (direct values or state paths)
-- Storage context abstraction (transactions and snapshots)
-- Comprehensive logging with performance tracking
-- Configurable error handling and recovery
-- Type-safe parameter validation with TypeGuard
-- Seamless integration with Loomi state system
-
-Example Usage:
-    ```python
-    class Calculate(Expression):
-        def __init__(self, formula: Union[str, float], target: str, **kwargs):
-            super().__init__(**kwargs)
-            self.formula = formula
-            self.target = target
-
-        def do_evaluate(self, app: App, context: Context) -> None:
-            # User manages storage context via context managers
-            with app.state.at("workspace").with_dict_view() as view:
-                # Resolve value using view's storage context
-                result = self._resolve_value(self.formula, app.state, view.ctx)
-
-                # Store result using same storage context
-                target_path = self._parse_state_path(self.target)
-                target_view = app.state.at(*target_path).dict_view(ctx=view.ctx)
-                target_view.store(result)
-    ```
+Provides deterministic, hierarchical identification for expressions
+enabling resumable and distributed execution through structural paths.
 """
 
 from __future__ import annotations
@@ -54,6 +19,7 @@ from loomi._tree.tree.types import Value
 from .context import Context
 from .exceptions import ExpressionError, ValueResolutionError
 from .logger import logger
+from .structural_path import create_component
 from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContext
 
 AppT = TypeVar("AppT")
@@ -61,18 +27,17 @@ AppT = TypeVar("AppT")
 
 class Expression(ABC, Generic[AppT]):
     """
-    Unified base class for all Loomi expressions.
+    Enhanced base class for all Loomi expressions with structural path support.
 
-    Provides a comprehensive foundation for building production-ready expressions
-    with minimal implementation effort. The base class handles all infrastructure
-    concerns, allowing subclasses to focus purely on business logic.
+    Provides comprehensive foundation for building production-ready expressions
+    with deterministic structural identification. The base class handles all
+    infrastructure concerns, allowing subclasses to focus purely on business logic.
 
-    Architecture:
-    - @final evaluate() handles orchestration (logging, errors, timing)
-    - @abstractmethod do_evaluate() is where subclasses implement logic
-    - Rich utility methods for value resolution and state access
-    - Automatic performance tracking and debugging support
-    - User-managed storage contexts via context managers
+    Structural Features:
+    - Automatic structural component generation based on class hierarchy
+    - Deterministic path building for resumable execution
+    - Clean child context creation with explicit index support
+    - Integration with distributed state through structural keys
 
     Args:
         error_behavior: How to handle errors ("fail" or "continue")
@@ -80,20 +45,14 @@ class Expression(ABC, Generic[AppT]):
 
     Example:
         ```python
-        class SetValue(Expression):
-            def __init__(self, path: str, value: Union[str, Any], **kwargs):
-                super().__init__(**kwargs)
-                self.path = path
-                self.value = value
-
-            def do_evaluate(self, app: App, context: Context) -> None:
-                # User manages storage context via context managers
-                with app.state.at("temp").with_dict_view() as view:
-                    resolved_value = self._resolve_value(self.value, app.state, view.ctx)
-                    path_components = self._parse_state_path(self.path)
-
-                    target_view = app.state.at(*path_components).dict_view(ctx=view.ctx)
-                    target_view.store(resolved_value)
+        class ProcessData(Expression):
+            def do_evaluate(self, context: Context) -> None:
+                for i, child_expr in enumerate(self.children):
+                    # Clean child context creation with explicit indexing
+                    child_context = self._create_child_context(
+                        context, child_expr, child_index=i
+                    )
+                    child_expr.evaluate(child_context)
         ```
     """
 
@@ -113,6 +72,7 @@ class Expression(ABC, Generic[AppT]):
         Args:
             error_behavior: How to handle evaluation errors ("fail" or "continue")
             on_fail: Optional fallback expression to execute on error
+            name: Optional name for debugging (does not affect structural path)
             **metadata: Additional metadata for debugging and introspection
         """
         # Validate error behavior
@@ -181,15 +141,12 @@ class Expression(ABC, Generic[AppT]):
         - Error handling based on configured behavior
         - Fallback expression execution
         - Debug context for troubleshooting
-
-        Storage context management is delegated to the user in do_evaluate() for
-        maximum flexibility and explicit control via context managers.
+        - Structural path validation
 
         Subclasses should NOT override this method. Instead, implement do_evaluate().
 
         Args:
-            app: The app providing execution environment
-            context: The execution context with metadata and state
+            context: The execution context with structural path information
         """
         start_time = time.perf_counter()
 
@@ -223,6 +180,7 @@ class Expression(ABC, Generic[AppT]):
                     "duration_ms": duration * 1000,
                     "error_type": type(infra_error).__name__,
                     "error_message": str(infra_error),
+                    "structural_path": str(context.structural_path),
                 },
                 exc_info=True,
             )
@@ -238,38 +196,87 @@ class Expression(ABC, Generic[AppT]):
         Execute the expression's core logic.
 
         This is the method that subclasses implement to define their behavior.
-        The base class provides all infrastructure support:
-        - Logging and error handling are automatic
-        - Performance tracking is built-in
-        - Value resolution utilities are available
-        - Storage context management is explicit via context managers
+        The base class provides all infrastructure support including structural
+        path management and child context creation utilities.
 
         Args:
-            app: The app providing execution environment
-            context: The execution context with metadata and state
+            context: The execution context with structural path information
 
         Example:
             ```python
-            def do_evaluate(self, app: AppBase, context: Context) -> None:
-                # User manages storage context via context managers
-                with app.state.at("workspace").with_dict_view() as workspace:
-                    # Resolve input values using view's storage context
-                    values = self._resolve_values({
-                        "operand_a": self.a,
-                        "operand_b": self.b
-                    }, app.state, workspace.ctx)
+            def do_evaluate(self, context: Context) -> None:
+                # Process multiple children with explicit indexing
+                for i, child_expr in enumerate(self.child_expressions):
+                    child_context = self._create_child_context(
+                        context, child_expr, child_index=i
+                    )
+                    child_expr.evaluate(child_context)
 
-                    # Perform calculation
-                    result = values["operand_a"] + values["operand_b"]
-
-                    # Store result using same storage context
-                    if self.result_path:
-                        path = self._parse_state_path(self.result_path)
-                        result_view = app.state.at(*path).dict_view(ctx=workspace.ctx)
-                        result_view.store(result)
+                # Or single child without index
+                child_context = self._create_child_context(context, single_child)
+                single_child.evaluate(child_context)
             ```
         """
         raise NotImplementedError("do_evaluate() must be implemented by subclasses")
+
+    # =========================================================================
+    # STRUCTURAL PATH UTILITIES
+    # =========================================================================
+
+    def _create_child_context(
+        self,
+        context: "Context",
+        child_expression: "Expression",
+        child_index: int | None = None,
+        attributes: dict[str, Any] | None = None,
+    ) -> "Context":
+        """
+        Create a child context with proper structural path extension.
+
+        This is the primary method users call to create contexts for child expressions.
+        It automatically generates deterministic structural components and extends
+        the structural path appropriately.
+
+        Args:
+            context: The parent context
+            child_expression: The child expression to create context for
+            child_index: Optional index for disambiguating multiple instances
+            attributes: Additional attributes for the child context
+
+        Returns:
+            A new child context with extended structural path
+
+        Example:
+            ```python
+            # Single child (no index needed)
+            child_ctx = self._create_child_context(context, processor)
+
+            # Multiple children of same type (index required)
+            for i, worker in enumerate(workers):
+                child_ctx = self._create_child_context(
+                    context, worker, child_index=i
+                )
+            ```
+        """
+        # Generate child's structural component
+        child_component = create_component(child_expression, child_index)
+
+        child_context = context.create_child_context(
+            child_component=child_component,
+            attributes=attributes,
+        )
+
+        logger.debug(
+            f"Created child context for {child_expression.readable_name}",
+            extra={
+                "parent_path": str(context.structural_path),
+                "child_component": child_component,
+                "child_path": str(child_context.structural_path),
+                "child_index": child_index,
+            },
+        )
+
+        return child_context
 
     # =========================================================================
     # VALUE RESOLUTION UTILITIES
@@ -284,19 +291,6 @@ class Expression(ABC, Generic[AppT]):
     ) -> tuple[BaseView, str | int]:
         """
         Resolve a path that could be a string or Path object.
-
-        This utility allows expressions to accept parameters as either
-        literal values or paths to values in the state tree. It abstracts
-        away the complexity of path resolution, providing a consistent
-        interface for all expressions.
-
-        Args:
-            path: The path to resolve
-            state: The state tree for resolution
-            storage_ctx: The storage context for view management
-
-        Returns:
-            The resolved view for the path
         """
         last_component: str | int | None
 
@@ -323,45 +317,24 @@ class Expression(ABC, Generic[AppT]):
     ) -> Value:
         """
         Resolve a value that could be either a direct value or a state path.
-
-        This is the core utility for flexible parameter handling. It allows
-        expressions to accept parameters as either literal values or paths
-        to values in the state tree.
-
-        Args:
-            value: Either a direct value or a string path to state
-            state: State interface for path resolution
-            storage_ctx: Storage context (transaction or snapshot) for consistent access
-
-        Returns:
-            Resolved value
-
-        Raises:
-            ValueResolutionError: If path resolution fails
-
-        Examples:
-            ```python
-            # Direct value
-            result = self._resolve_value(42, state, storage_ctx)  # Returns: 42
-
-            # State path
-            result = self._resolve_value("market.price", state, storage_ctx)  # Returns: value from state
-
-            # Complex path
-            result = self._resolve_value("users.alice.profile.email", state, storage_ctx)
-            ```
         """
         try:
             if isinstance(value, Query):
                 logger.debug(
                     f"Resolving state expression: {value}",
-                    extra={"value_type": type(value).__name__},
+                    extra={
+                        "value_type": type(value).__name__,
+                        "structural_path": str(context.structural_path),
+                    },
                 )
                 return value.evaluate(state, storage_ctx, cast(dict, context.attributes))
             elif isinstance(value, (Path, ExtendedPath)):
                 logger.debug(
                     f"Resolving state expression: {value}",
-                    extra={"value_type": type(value).__name__},
+                    extra={
+                        "value_type": type(value).__name__,
+                        "structural_path": str(context.structural_path),
+                    },
                 )
                 value = self._process_path(value, context)
                 return value.resolve(state, storage_ctx, cast(dict, context.attributes))
@@ -384,30 +357,6 @@ class Expression(ABC, Generic[AppT]):
     ) -> dict[str, Value]:
         """
         Resolve multiple values using the same storage context for consistency.
-
-        This ensures all values are resolved at the same point in time,
-        preventing race conditions and ensuring consistent state snapshots.
-        Essential for expressions that need multiple values to be coherent.
-
-        Args:
-            values: Dictionary of key -> (value or state path)
-            state: State interface for path resolution
-            storage_ctx: Storage context (transaction or snapshot) for consistent access
-
-        Returns:
-            Dictionary with all values resolved
-
-        Example:
-            ```python
-            # Resolve multiple values consistently
-            resolved = self._resolve_values({
-                "price": "market.current_price",
-                "volume": 1000,
-                "multiplier": "config.trading.multiplier"
-            }, state, storage_ctx)
-            # Returns: {"price": 150.50, "volume": 1000, "multiplier": 2.5}
-            # All state values resolved at the same point in time
-            ```
         """
         resolved = {}
         for key, value in values.items():
@@ -425,16 +374,6 @@ class Expression(ABC, Generic[AppT]):
     def _process_path(self, path: ExpressionPath, context: "Context") -> Path:
         """
         Process a path expression into a Path object.
-
-        This utility method ensures that the path is correctly interpreted
-        as a Path object, allowing for consistent handling of state paths.
-
-        Args:
-            context: The execution context with metadata and state
-            path: The path expression to process
-
-        Returns:
-            A Path object representing the processed path expression
         """
         # Convert path to list of components to then inject Context values
         if isinstance(path, str):
@@ -479,6 +418,8 @@ class Expression(ABC, Generic[AppT]):
             extra={
                 "expression_type": type(self).__name__,
                 "context_attributes": list(context.attributes.keys()) if context.attributes else [],
+                "structural_path": str(context.structural_path),
+                "structural_key": context.structural_key,
             },
         )
 
@@ -490,6 +431,7 @@ class Expression(ABC, Generic[AppT]):
                 "expression_type": type(self).__name__,
                 "duration_ms": duration * 1000,
                 "success": True,
+                "structural_path": str(context.structural_path),
             },
         )
 
@@ -504,6 +446,7 @@ class Expression(ABC, Generic[AppT]):
                 "error_message": str(error),
                 "error_behavior": self.error_behavior,
                 "will_execute_on_fail": self.on_fail is not None,
+                "structural_path": str(context.structural_path),
             },
             exc_info=True,
         )
@@ -521,7 +464,6 @@ class Expression(ABC, Generic[AppT]):
 
         Args:
             error: The exception that occurred
-            app: App instance
             context: Execution context
         """
         # Execute on_fail expression if configured
@@ -531,15 +473,19 @@ class Expression(ABC, Generic[AppT]):
                     f"Executing on_fail expression for {self.readable_name}",
                     extra={
                         "on_fail_type": type(self.on_fail).__name__,
+                        "structural_path": str(context.structural_path),
                     },
                 )
-                self.on_fail.evaluate(context)
+                # Create child context for on_fail execution
+                fail_context = self._create_child_context(context, self.on_fail)
+                self.on_fail.evaluate(fail_context)
             except Exception as fail_error:
                 logger.error(
                     f"on_fail expression failed for {self.readable_name}",
                     extra={
                         "original_error": str(error),
                         "fail_error": str(fail_error),
+                        "structural_path": str(context.structural_path),
                     },
                     exc_info=True,
                 )
@@ -552,9 +498,11 @@ class Expression(ABC, Generic[AppT]):
             # Log and continue execution
             logger.warning(
                 f"Continuing after error in {self.readable_name}",
-                extra={"error_type": type(error).__name__},
+                extra={
+                    "error_type": type(error).__name__,
+                    "structural_path": str(context.structural_path),
+                },
             )
-        # If we reach here with "continue", the error is swallowed and execution continues
 
     # =========================================================================
     # METADATA & INTROSPECTION
