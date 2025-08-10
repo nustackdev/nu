@@ -548,7 +548,6 @@ class Expression(ABC, Generic[MicroflowT]):
                 )
 
                 if cancellation:
-
                     logger.debug(
                         f"Found cancellation at {current_path}",
                         extra={
