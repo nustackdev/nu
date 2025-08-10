@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 
 from loomi.expression import Context, Expression, ExpressionError, ExpressionPath, ExpressionValue
-from loomistd.app import SyncAppProtocol
+from loomistd.app import SyncApp
 from loomistd.views.queue import QueueView
 
 __all__ = [
@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-class Queue(Expression[SyncAppProtocol]):
+class Queue(Expression[SyncApp]):
     """
     Add an item to the back of a queue.
 
@@ -57,7 +57,7 @@ class Queue(Expression[SyncAppProtocol]):
             print(queue_view)
 
 
-class Enqueue(Expression[SyncAppProtocol]):
+class Enqueue(Expression[SyncApp]):
     """
     Add an item to the back of a queue.
 
@@ -113,7 +113,7 @@ class Enqueue(Expression[SyncAppProtocol]):
                 )
 
 
-class Dequeue(Expression[SyncAppProtocol]):
+class Dequeue(Expression[SyncApp]):
     """
     Remove and return the front item from a queue.
 
@@ -176,7 +176,7 @@ class Dequeue(Expression[SyncAppProtocol]):
                     )
 
 
-class Peek(Expression[SyncAppProtocol]):
+class Peek(Expression[SyncApp]):
     """
     Look at the front item of a queue without removing it.
 
@@ -254,7 +254,7 @@ class Peek(Expression[SyncAppProtocol]):
                     )
 
 
-class ClearQueue(Expression[SyncAppProtocol]):
+class ClearQueue(Expression[SyncApp]):
     """
     Remove all items from a queue.
 
@@ -299,7 +299,7 @@ class ClearQueue(Expression[SyncAppProtocol]):
                 )
 
 
-class OnQueueChange(Expression[SyncAppProtocol]):
+class OnQueueChange(Expression[SyncApp]):
     """
     Block and wait for queue changes, then execute expression sequentially.
 

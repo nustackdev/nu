@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Awaitable, Callable, Optional
+from typing import Awaitable, Callable
 
-from loomi.expression import Context, ErrorBehavior, Expression, ExpressionError
-from loomistd.app import SyncAppProtocol
+from loomi.expression import Context, Expression, ExpressionError
+from loomistd.app import SyncApp
 
 from .logger import logger
 
@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 
-class Function(Expression[SyncAppProtocol]):
+class Function(Expression[SyncApp]):
     """
     Executes a callable function or method.
 
@@ -36,9 +36,7 @@ class Function(Expression[SyncAppProtocol]):
         app,
         func: Callable[[Context], Awaitable[None] | None],
         /,
-        *,
-        error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Expression] = None,
+        **kwargs,
     ):
         """
         Initialize the Function expression.
@@ -63,8 +61,7 @@ class Function(Expression[SyncAppProtocol]):
             )
             raise ExpressionError(error_msg)
 
-        super().__init__(app, error_behavior=error_behavior, on_fail=on_fail)
-
+        super().__init__(app, **kwargs)
         self._func = func
 
     def do_evaluate(self, context: "Context") -> None:

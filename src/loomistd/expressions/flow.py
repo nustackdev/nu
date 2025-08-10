@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, wait
-from typing import Optional
 
-from loomi.expression import Context, ErrorBehavior, Expression, ExpressionError, ExpressionValue
-from loomistd.app import SyncAppProtocol
+from loomi.expression import Context, Expression, ExpressionError, ExpressionValue
+from loomistd.app import SyncApp
 
 from .logger import logger
 
@@ -15,7 +14,7 @@ __all__ = [
 ]
 
 
-class Loop(Expression[SyncAppProtocol]):
+class Loop(Expression[SyncApp]):
     """
     Execute an expression repeatedly while a condition is true.
 
@@ -115,7 +114,7 @@ class Loop(Expression[SyncAppProtocol]):
         )
 
 
-class Sequence(Expression[SyncAppProtocol]):
+class Sequence(Expression[SyncApp]):
     """
     Executes expressions in sequential order.
 
@@ -141,8 +140,7 @@ class Sequence(Expression[SyncAppProtocol]):
         expr: Expression,
         /,
         *exprs: Expression,
-        error_behavior: ErrorBehavior = "fail",
-        on_fail: Optional[Expression] = None,
+        **kwargs,
     ):
         """
         Initialize the Sequence expression.
@@ -171,7 +169,7 @@ class Sequence(Expression[SyncAppProtocol]):
                 )
                 raise ExpressionError(error_msg)
 
-        super().__init__(app, error_behavior=error_behavior, on_fail=on_fail)
+        super().__init__(app, **kwargs)
 
         self.children = all_exprs
 
@@ -247,7 +245,7 @@ class Sequence(Expression[SyncAppProtocol]):
             raise
 
 
-class Parallel(Expression[SyncAppProtocol]):
+class Parallel(Expression[SyncApp]):
     """
     Executes expressions concurrently.
 
@@ -279,8 +277,7 @@ class Parallel(Expression[SyncAppProtocol]):
         /,
         *exprs: Expression,
         max_concurrency: int = -1,
-        error_behavior: ErrorBehavior = "fail",
-        on_fail: Expression | None = None,
+        **kwargs,
     ):
         """
         Initialize the Parallel expression.
@@ -292,13 +289,12 @@ class Parallel(Expression[SyncAppProtocol]):
                 - 1 means sequential execution (same as Sequence)
                 - >1 means limit to N concurrent expressions
                 - -1 or 0 means unlimited concurrency
-            error_behavior: How to handle errors that occur during execution
-            on_fail: Expression to execute when an error occurs
+            **kwargs: Additional keyword arguments for error handling
 
         Raises:
             ValueError: If max_concurrency is invalid
         """
-        super().__init__(app, error_behavior=error_behavior, on_fail=on_fail)
+        super().__init__(app, **kwargs)
 
         # Validate max_concurrency
         if max_concurrency < -1:

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import threading
 import time
 
-from loomi.expression import Context, Expression, ExpressionError, ExpressionValue
-from loomistd.app import SyncAppProtocol
+from loomi.expression import Context, Expression, ExpressionError, ExpressionValue, create_component
+from loomistd.app import SyncApp
 
 from .logger import logger
 
@@ -12,7 +13,7 @@ __all__ = [
 ]
 
 
-class Delay(Expression[SyncAppProtocol]):
+class Delay(Expression[SyncApp]):
     """
     Pause execution for a specified duration.
 
@@ -101,3 +102,111 @@ class Delay(Expression[SyncAppProtocol]):
                 exc_info=True,
             )
             raise
+
+
+class Timeout(Expression[SyncApp]):
+    """
+    Expression that executes a child expression with a timeout.
+
+    If the child expression doesn't complete within the specified time,
+    it will be cancelled via the cancellation token mechanism.
+
+    Example:
+        ```python
+        # Execute an expression with a 30-second timeout
+        long_task = SomeSlowExpression(app)
+
+        timed_task = Timeout(
+            app,
+            child_expression=long_task,
+            timeout_seconds=30.0,
+        )
+
+        timed_task.evaluate()  # Will cancel long_task if it takes > 30 seconds
+        ```
+    """
+
+    def __init__(
+        self,
+        app: SyncApp,
+        *,
+        expression: Expression,
+        timeout_seconds: float,
+        on_timeout: Expression | None = None,
+        **kwargs,
+    ):
+        """
+        Initialize the timeout wrapper.
+
+        Args:
+            expression: The expression to execute with timeout
+            timeout_seconds: Maximum execution time in seconds
+            on_timeout: Optional callback to execute when timeout occurs
+            **kwargs: Additional arguments passed to Expression.__init__
+        """
+        super().__init__(app, **kwargs)
+        self.expression = expression
+        self.timeout_seconds = timeout_seconds
+        self.on_timeout = on_timeout
+
+    def do_evaluate(self, context: Context) -> None:
+        """
+        Execute the child expression with timeout enforcement.
+
+        Args:
+            context: The execution context
+        """
+        # Create a child context with its own cancellation token
+        child_context = context.create_child_context(create_component(self.expression))
+        # Track completion
+        completed = threading.Event()
+        exception_holder: list[Exception | None] = [None]  # Mutable container for exception
+
+        def execute_child():
+            """Execute the child expression in a separate thread."""
+            try:
+                self.expression.evaluate(child_context)
+                completed.set()
+            except Exception as e:
+                exception_holder[0] = e
+                completed.set()
+
+        # Start the child expression in a separate thread
+        child_thread = threading.Thread(target=execute_child, daemon=True)
+        child_thread.start()
+
+        try:
+            # Wait for completion or timeout
+            if completed.wait(timeout=self.timeout_seconds):
+                # Child completed (successfully or with error)
+                if exception_holder[0] is not None:
+                    # Child failed, re-raise the exception
+                    raise exception_holder[0]
+                else:
+                    logger.info(
+                        f"Child expression {self.expression.readable_name} completed within timeout",
+                        extra={"timeout_seconds": self.timeout_seconds},
+                    )
+            else:
+                # Timeout occurred
+                logger.warning(
+                    f"Child expression {self.expression.readable_name} timed out",
+                    extra={"timeout_seconds": self.timeout_seconds},
+                )
+
+                # Cancel the child expression
+                self.expression.cancel(child_context, "timeout")
+
+                # Execute timeout callback if provided
+                if self.on_timeout:
+                    try:
+                        self.on_timeout.evaluate(context)
+                    except Exception as callback_error:
+                        logger.error(f"Timeout callback failed: {callback_error}", exc_info=True)
+
+        finally:
+            # Ensure child thread cleanup
+            if child_thread.is_alive():
+                self.expression.cancel(child_context, "timeout")
+                # Give the thread a moment to respond to cancellation
+                child_thread.join(timeout=1.0)

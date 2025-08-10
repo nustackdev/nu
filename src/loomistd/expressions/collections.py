@@ -22,7 +22,7 @@ class MapList(Expression):
         name: Optional name for the mapping operation
     """
 
-    def __init__(self, app, path: ExpressionPath, expression: Expression, name: str = "", **kwargs):
+    def __init__(self, app, path: ExpressionPath, expression: Expression, name: str, **kwargs):
         super().__init__(app, name=name, **kwargs)
         self.path = path
         self.expression = expression

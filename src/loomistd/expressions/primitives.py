@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from loomi.expression import Context, Expression, ExpressionError, ExpressionPath, ExpressionValue
-from loomistd.app import SyncAppProtocol
+from loomistd.app import SyncApp
 
 __all__ = [
     "Set",
@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-class Set(Expression[SyncAppProtocol]):
+class Set(Expression[SyncApp]):
     """
     Set a value at a state path.
 
@@ -48,7 +48,7 @@ class Set(Expression[SyncAppProtocol]):
             view.set(path, value)  # type: ignore
 
 
-class Print(Expression[SyncAppProtocol]):
+class Print(Expression[SyncApp]):
     """
     Print a value to stdout with optional formatting.
 
@@ -81,7 +81,7 @@ class Print(Expression[SyncAppProtocol]):
         print(formatted_message)
 
 
-class IncrementInt(Expression[SyncAppProtocol]):
+class IncrementInt(Expression[SyncApp]):
     """
     Increment an integer value at a state path.
 
@@ -160,7 +160,7 @@ class IncrementInt(Expression[SyncAppProtocol]):
             # )
 
 
-class DecrementInt(Expression[SyncAppProtocol]):
+class DecrementInt(Expression[SyncApp]):
     """
     Decrement an integer value at a state path.
 

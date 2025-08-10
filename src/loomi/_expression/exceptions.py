@@ -41,3 +41,14 @@ class ContextError(ExpressionError):
     """
 
     pass
+
+
+class CancellationError(ExpressionError):
+    """
+    Exception raised when an operation is cancelled.
+
+    This exception is used to indicate that an operation was cancelled
+    before it could complete.
+    """
+
+    pass

@@ -1,13 +1,24 @@
 from __future__ import annotations
 
+from typing import Protocol, TypeVar
+
+from loomicore.attach import Attach
 from loomicore.resource import AsyncResource, BaseResource, Resource, SyncResource
+
+from .._tree.tree import Tree
 
 __all__ = [
     "BaseMicroflow",
     "SyncMicroflow",
     "AsyncMicroflow",
     "Microflow",
+    "MicroflowT",
 ]
+
+
+class State(Protocol):
+    @property
+    def tree(self) -> Tree: ...
 
 
 class BaseMicroflow(BaseResource):
@@ -18,7 +29,7 @@ class BaseMicroflow(BaseResource):
     Microflows can be synchronous or asynchronous, depending on the implementation.
     """
 
-    pass
+    state: State = Attach()
 
 
 class SyncMicroflow(BaseMicroflow, SyncResource):
@@ -44,3 +55,4 @@ class AsyncMicroflow(BaseMicroflow, AsyncResource):
 
 
 Microflow = SyncMicroflow | AsyncMicroflow
+MicroflowT = TypeVar("MicroflowT", bound=Microflow)

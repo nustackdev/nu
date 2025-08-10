@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._expression import (
+    CancellationError,
     Context,
     ContextError,
     ErrorBehavior,
@@ -10,7 +11,9 @@ from ._expression import (
     ExpressionPath,
     ExpressionValue,
     StorageContext,
+    StructuralPath,
     ValueResolutionError,
+    create_component,
 )
 
 __all__ = [
@@ -24,4 +27,7 @@ __all__ = [
     "ExpressionValue",
     "ExpressionPath",
     "ValueResolutionError",
+    "CancellationError",
+    "StructuralPath",
+    "create_component",
 ]

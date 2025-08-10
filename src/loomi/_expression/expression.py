@@ -9,23 +9,22 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, Optional, TypeVar, cast, final
+from typing import Any, Dict, Generic, Optional, cast, final
 
 from loomi._tree.path import ExtendedPath, Path, PathResolver
 from loomi._tree.query import Query
 from loomi._tree.tree import BaseView, Tree
 from loomi._tree.tree.types import Value
 
+from .._microflow import MicroflowT
 from .context import Context
-from .exceptions import ExpressionError, ValueResolutionError
+from .exceptions import CancellationError, ExpressionError, ValueResolutionError
 from .logger import logger
 from .structural_path import create_component
 from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContext
 
-AppT = TypeVar("AppT")
 
-
-class Expression(ABC, Generic[AppT]):
+class Expression(ABC, Generic[MicroflowT]):
     """
     Enhanced base class for all Loomi expressions with structural path support.
 
@@ -58,11 +57,12 @@ class Expression(ABC, Generic[AppT]):
 
     def __init__(
         self,
-        app: AppT,
+        app: MicroflowT,
         /,
         *,
         error_behavior: "ErrorBehavior" = "fail",
         on_fail: Optional["Expression"] = None,
+        respect_cancellation: bool = True,
         name: Optional[str] = None,
         **metadata,
     ):
@@ -86,6 +86,7 @@ class Expression(ABC, Generic[AppT]):
         self._on_fail = on_fail
         self._name = name
         self._metadata = metadata
+        self._respect_cancellation = respect_cancellation
 
         self._log_init(**metadata)
 
@@ -99,7 +100,7 @@ class Expression(ABC, Generic[AppT]):
         return self._name
 
     @property
-    def app(self) -> AppT:
+    def app(self) -> MicroflowT:
         """Get the app instance this expression belongs to."""
         return self._app
 
@@ -112,6 +113,11 @@ class Expression(ABC, Generic[AppT]):
     def on_fail(self) -> Optional["Expression"]:
         """Get the fallback expression to execute on error."""
         return self._on_fail
+
+    @property
+    def respect_cancellation(self) -> bool:
+        """Get the configured cancellation behavior for this expression."""
+        return self._respect_cancellation
 
     @property
     def info(self) -> Dict[str, Any]:
@@ -151,6 +157,14 @@ class Expression(ABC, Generic[AppT]):
         start_time = time.perf_counter()
 
         context = context or Context()
+
+        # Check for cancellation at the start
+        if self.is_cancelled(context):
+            logger.info(
+                f"Expression {self.readable_name} was cancelled before evaluation",
+                extra={"structural_path": str(context.structural_path)},
+            )
+            return
 
         # Start evaluation logging
         self._log_start(context)
@@ -394,6 +408,166 @@ class Expression(ABC, Generic[AppT]):
         raise ValueResolutionError(
             f"Invalid path type: {type(path).__name__}. Must be str, tuple, or Path"
         )
+
+    # =========================================================================
+    # CANCELLATION
+    # =========================================================================
+
+    def throw_if_cancelled(self, context: "Context") -> None:
+        """
+        Check for cancellation and raise CancellationError if cancelled.
+
+        Checks the current path and all ancestor paths for cancellation.
+        Raises immediately if any ancestor is cancelled.
+
+        Args:
+            context: The execution context with structural path
+
+        Raises:
+            CancellationError: If this context or any ancestor is cancelled
+
+        Example:
+            ```python
+            def do_evaluate(self, context: Context) -> None:
+                # Check at start of operation
+                self.throw_if_cancelled(context)
+
+                for i in range(1000):
+                    if i % 100 == 0:  # Check every 100 iterations
+                        self.throw_if_cancelled(context)
+                    # Do work...
+            ```
+        """
+        if not self.respect_cancellation:
+            return
+
+        if self.is_cancelled(context):
+            raise CancellationError(f"Expression at {context.structural_path} was cancelled")
+
+    def is_cancelled(self, context: "Context") -> bool:
+        """
+        Check if this context or any ancestor is cancelled.
+
+        Performs hierarchical check by examining cancellation state for
+        this path and all ancestor paths in the state tree.
+
+        Args:
+            context: The execution context with structural path
+
+        Returns:
+            True if cancelled, False otherwise
+
+        Example:
+            ```python
+            def do_evaluate(self, context: Context) -> None:
+                if self.is_cancelled(context):
+                    logger.info("Skipping work - already cancelled")
+                    return
+
+                # Do work...
+
+                if not self.is_cancelled(context):
+                    expensive_operation()
+            ```
+        """
+        if not self.respect_cancellation:
+            return False
+
+        return self._check_cancellation_hierarchy(context)
+
+    def cancel(self, context: "Context", reason: str = "manual") -> None:
+        """
+        Cancel execution at this structural path.
+
+        Sets cancellation state in the distributed state tree. This will
+        affect this expression and all its descendants.
+
+        Args:
+            context: The execution context to cancel
+            reason: Human-readable reason for cancellation
+
+        Example:
+            ```python
+            # Cancel current execution
+            self.cancel(context, "User requested cancellation")
+
+            # Cancel a child execution
+            child_context = self._create_child_context(context, child_expr)
+            self.cancel(child_context, "Child timeout")
+            ```
+        """
+        storage_key = context.structural_path.to_storage_key()
+
+        try:
+            with self.app.state.tree.at(*storage_key).with_dict_view() as cancellation_state:
+                cancellation_state.set("cancelled", True)
+                cancellation_state.set("reason", reason)
+                cancellation_state.set("timestamp", time.time())
+
+            logger.info(
+                f"Cancelled expression at {context.structural_path}",
+                extra={
+                    "structural_path": str(context.structural_path),
+                    "reason": reason,
+                    "storage_key": storage_key,
+                },
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Failed to set cancellation state at {context.structural_path}",
+                extra={
+                    "structural_path": str(context.structural_path),
+                    "reason": reason,
+                    "error": str(e),
+                },
+                exc_info=True,
+            )
+            raise CancellationError(f"Failed to cancel: {e}") from e
+
+    def _check_cancellation_hierarchy(self, context: "Context") -> bool:
+        """
+        Check cancellation state for this path and all ancestors.
+
+        Walks up the structural path hierarchy checking for cancellation
+        at each level. Returns True if any ancestor is cancelled.
+
+        Args:
+            context: The execution context
+
+        Returns:
+            True if this path or any ancestor is cancelled
+        """
+        current_path = context.structural_path
+
+        while True:
+            try:
+                storage_key = current_path.to_storage_key()
+                cancellation = self.app.state.tree.get_primitive(
+                    *(storage_key + tuple("cancelled"))
+                )
+
+                if cancellation:
+
+                    logger.debug(
+                        f"Found cancellation at {current_path}",
+                        extra={
+                            "cancelled_path": str(current_path),
+                            "current_path": str(context.structural_path),
+                        },
+                    )
+                    return True
+
+            except Exception:
+                # Path doesn't exist or read failed - continue to parent
+                pass
+
+            # Move to parent path
+            if current_path.is_root:
+                break
+            current_path = current_path.parent
+
+        return False
 
     # =========================================================================
     # LOGGING INFRASTRUCTURE
