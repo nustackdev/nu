@@ -85,7 +85,11 @@ class Loop(Expression[SyncApp]):
                     },
                 )
 
-                self.expression.evaluate(context)
+                child_context = self._create_child_context(
+                    context,
+                    child_expression=self.expression,
+                )
+                self.expression.evaluate(child_context)
                 iteration_count += 1
 
                 logger.debug(
@@ -197,7 +201,12 @@ class Sequence(Expression[SyncApp]):
                 )
 
                 try:
-                    child.evaluate(context)
+                    child_context = self._create_child_context(
+                        context,
+                        child_expression=child,
+                        child_index=i,
+                    )
+                    child.evaluate(child_context)
                     completed_count += 1
 
                     logger.debug(
@@ -364,7 +373,12 @@ class Parallel(Expression[SyncApp]):
                             "parallel_id": id(self),
                         },
                     )
-                    future = executor.submit(child.evaluate, context)
+                    child_context = self._create_child_context(
+                        context,
+                        child_expression=child,
+                        child_index=i,
+                    )
+                    future = executor.submit(child.evaluate, child_context)
                     futures.append(future)
 
                 logger.debug(

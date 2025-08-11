@@ -171,7 +171,7 @@ class Context:
             )
             raise ContextError(f"Failed to derive context: {e}") from e
 
-    def create_child_context(
+    def derive_child_context(
         self,
         child_component: str,
         attributes: dict | frozendict | None = None,

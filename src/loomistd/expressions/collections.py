@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from frozendict import frozendict
-
 from loomi.expression import Context, Expression, ExpressionPath
 from loomi.tree import ListView
 
@@ -19,8 +17,10 @@ class MapList(Expression):
     Args:
         path: State path to map over (e.g., "users.alice.langs")
         expression: Expression to apply to each item
-        name: Optional name for the mapping operation
+        name: Name for the mapping operation
     """
+
+    name: str
 
     def __init__(self, app, path: ExpressionPath, expression: Expression, name: str, **kwargs):
         super().__init__(app, name=name, **kwargs)
@@ -38,7 +38,11 @@ class MapList(Expression):
                 raise ValueError(f"Expected ListView for mapping, got {type(view).__name__}")
 
             for i in range(view.length()):
-                child_context = context.derive(attributes=frozendict({self.name: {"index": i}}))
+                child_context = self._create_child_context(
+                    context,
+                    child_expression=self.expression,
+                    child_attributes={self.name: {"index": i}},
+                )
 
                 # Evaluate the expression for each item
                 self.expression.evaluate(child_context)

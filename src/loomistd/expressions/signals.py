@@ -11,7 +11,7 @@ import signal
 import threading
 from typing import Any
 
-from loomi.expression import Context, Expression, create_component
+from loomi.expression import Context, Expression
 
 from .logger import logger
 
@@ -42,7 +42,7 @@ class GracefulInterruption(Expression):
         ```
     """
 
-    def __init__(self, app, *, expression: Expression, **kwargs):
+    def __init__(self, app, expression: Expression, **kwargs):
         """
         Initialize the graceful interruption wrapper.
 
@@ -63,9 +63,6 @@ class GracefulInterruption(Expression):
         Args:
             context: The execution context
         """
-        # Create child context
-        self._child_context = context.create_child_context(create_component(self.expression))
-
         # Set up signal handlers
         self._setup_signal_handlers()
 
@@ -75,6 +72,10 @@ class GracefulInterruption(Expression):
                 extra={"child_type": type(self.expression).__name__},
             )
 
+            self._child_context = self._create_child_context(
+                context,
+                child_expression=self.expression,
+            )
             # Execute the child expression
             self.expression.evaluate(self._child_context)
 

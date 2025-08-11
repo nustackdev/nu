@@ -7,7 +7,6 @@ Enables resumable and distributed execution through structural identification.
 
 from __future__ import annotations
 
-import hashlib
 from typing import TYPE_CHECKING
 
 import attrs
@@ -66,10 +65,12 @@ class StructuralPath:
         Returns:
             Storage key that fits within length constraints
         """
-        path_str = "/".join(self.components)
-        path_hash = hashlib.md5(path_str.encode()).hexdigest()
+        # path_str = "/".join(self.components)
+        # path_hash = hashlib.md5(path_str.encode()).hexdigest()
 
-        return CANCELLATION_PREFIX + (path_hash,)
+        # return CANCELLATION_PREFIX + (path_hash,)
+
+        return CANCELLATION_PREFIX + self.components
 
     def __str__(self) -> str:
         """String representation for debugging."""

@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 import time
 
-from loomi.expression import Context, Expression, ExpressionError, ExpressionValue, create_component
+from loomi.expression import Context, Expression, ExpressionError, ExpressionValue
 from loomistd.app import SyncApp
 
 from .logger import logger
@@ -157,7 +157,10 @@ class Timeout(Expression[SyncApp]):
             context: The execution context
         """
         # Create a child context with its own cancellation token
-        child_context = context.create_child_context(create_component(self.expression))
+        child_context = self._create_child_context(
+            context,
+            child_expression=self.expression,
+        )
         # Track completion
         completed = threading.Event()
         exception_holder: list[Exception | None] = [None]  # Mutable container for exception

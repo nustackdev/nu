@@ -11,6 +11,8 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, Optional, cast, final
 
+from frozendict import frozendict
+
 from loomi._tree.path import ExtendedPath, Path, PathResolver
 from loomi._tree.query import Query
 from loomi._tree.tree import BaseView, Tree
@@ -20,7 +22,7 @@ from .._microflow import MicroflowT
 from .context import Context
 from .exceptions import CancellationError, ExpressionError, ValueResolutionError
 from .logger import logger
-from .structural_path import create_component
+from .structural_path import StructuralPath, create_component
 from .types import ErrorBehavior, ExpressionPath, ExpressionValue, StorageContext
 
 
@@ -156,7 +158,10 @@ class Expression(ABC, Generic[MicroflowT]):
         """
         start_time = time.perf_counter()
 
-        context = context or Context()
+        context = context or Context(
+            frozendict({}),
+            structural_path=StructuralPath(tuple([create_component(self)])),
+        )
 
         # Check for cancellation at the start
         if self.is_cancelled(context):
@@ -240,9 +245,10 @@ class Expression(ABC, Generic[MicroflowT]):
     def _create_child_context(
         self,
         context: "Context",
+        *,
         child_expression: "Expression",
         child_index: int | None = None,
-        attributes: dict[str, Any] | None = None,
+        child_attributes: dict[str, Any] | None = None,
     ) -> "Context":
         """
         Create a child context with proper structural path extension.
@@ -275,9 +281,9 @@ class Expression(ABC, Generic[MicroflowT]):
         # Generate child's structural component
         child_component = create_component(child_expression, child_index)
 
-        child_context = context.create_child_context(
+        child_context = context.derive_child_context(
             child_component=child_component,
-            attributes=attributes,
+            attributes=child_attributes,
         )
 
         logger.debug(
@@ -407,6 +413,35 @@ class Expression(ABC, Generic[MicroflowT]):
 
         raise ValueResolutionError(
             f"Invalid path type: {type(path).__name__}. Must be str, tuple, or Path"
+        )
+
+    # =========================================================================
+    # CONTEXT MANAGEMENT
+    # =========================================================================
+
+    def derive_child_context(
+        self,
+        context: "Context",
+        child_expression: Expression,
+        child_index: int | None = None,
+        child_attributes: dict[str, Any] | None = None,
+    ) -> "Context":
+        """
+        Derive a child context with extended structural path.
+
+        Args:
+            context: The parent context
+            child_expression: The expression for the child context
+            child_index: Optional index for ensuring unique structural path in case of multiple instances
+            child_attributes: Additional attributes for the child context
+
+        Returns:
+            A new child context with extended structural path
+        """
+        child_component = create_component(child_expression, child_index)
+
+        return context.derive_child_context(
+            child_component=child_component, attributes=child_attributes or {}
         )
 
     # =========================================================================
@@ -543,12 +578,11 @@ class Expression(ABC, Generic[MicroflowT]):
         while True:
             try:
                 storage_key = current_path.to_storage_key()
-                cancellation = self.app.state.tree.get_primitive(
-                    *(storage_key + tuple("cancelled"))
-                )
+                cancellation_path = storage_key + ("cancelled",)
+                cancellation = self.app.state.tree.get_primitive(*cancellation_path)
 
                 if cancellation:
-                    logger.debug(
+                    logger.info(
                         f"Found cancellation at {current_path}",
                         extra={
                             "cancelled_path": str(current_path),
@@ -650,7 +684,7 @@ class Expression(ABC, Generic[MicroflowT]):
                     },
                 )
                 # Create child context for on_fail execution
-                fail_context = self._create_child_context(context, self.on_fail)
+                fail_context = self._create_child_context(context, child_expression=self.on_fail)
                 self.on_fail.evaluate(fail_context)
             except Exception as fail_error:
                 logger.error(
