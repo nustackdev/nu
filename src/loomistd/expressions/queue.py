@@ -54,8 +54,6 @@ class Queue(Expression[SyncApp]):
             queue_view = view.view(str(path), QueueView)
             queue_view.is_empty()  # Ensure the queue exists. FIXME: Add init method or make this implicit
 
-            print(queue_view)
-
 
 class Enqueue(Expression[SyncApp]):
     """
@@ -174,6 +172,238 @@ class Dequeue(Expression[SyncApp]):
                         expression=self,
                         cause=e,
                     )
+
+
+class BlockingDequeue(Expression[SyncApp]):
+    """
+    Block and wait to remove an item from the front of a queue.
+
+    This expression will wait indefinitely until an item becomes available in the queue,
+    then remove and return it (FIFO). If the queue is empty, it subscribes to changes
+    and retries when items are added. Can be stopped by touching the stop_path.
+
+    Args:
+        path: State path to the queue (e.g., ("work_queue",) or ("tasks", "pending"))
+        store_at: Optional state path where to store the dequeued value
+        stop_path: Optional state path to monitor for stop signal. When this path is updated,
+                  the blocking dequeue will stop listening and shutdown gracefully.
+
+    Examples:
+        ```python
+        # Block until item available, then dequeue
+        BlockingDequeue(self, ("work_queue",))
+
+        # Block, dequeue and store result
+        BlockingDequeue(self, ("work_queue",), store_at=("current_task",))
+
+        # Block with stop mechanism
+        BlockingDequeue(self, ("work_queue",), stop_path=("shutdown", "worker1"))
+
+        # In another part of code, signal shutdown:
+        Touch(self, ("shutdown", "worker1"))
+        ```
+    """
+
+    def __init__(
+        self,
+        app,
+        path: ExpressionPath,
+        *,
+        store_at: ExpressionPath | None = None,
+        stop_path: ExpressionPath | None = None,
+        **kwargs,
+    ):
+        super().__init__(app, **kwargs)
+        self.path = path
+        self.store_at = store_at
+        self.stop_path = stop_path
+
+    def do_evaluate(self, context: "Context") -> None:
+        """Block and wait to dequeue an item, retrying on changes, with optional stop mechanism."""
+        # Thread coordination using Condition for robust synchronization
+        condition = threading.Condition()
+        queue_changed = False
+        stop_requested = False
+        queue_subscription = None
+        stop_subscription = None
+
+        def on_queue_change_callback(changed_path_tuple):
+            """Signal that a queue change occurred."""
+            print(f"Queue change detected at {changed_path_tuple}")
+            nonlocal queue_changed
+            with condition:
+                queue_changed = True
+                condition.notify_all()
+
+        def on_stop_callback(changed_path_tuple):
+            """Signal that stop was triggered."""
+            nonlocal stop_requested
+            with condition:
+                stop_requested = True
+                condition.notify_all()
+
+        try:
+            # Set up stop path subscription if provided
+            if self.stop_path is not None:
+                with self.app.state.tree.snapshot() as snapshot:
+                    stop_view, resolved_stop_path = self._resolve_path(
+                        self.stop_path, self.app.state.tree, snapshot, context
+                    )
+                    # Build full path for subscription
+                    full_stop_path = stop_view.path.components + (str(resolved_stop_path),)
+                    stop_subscription = self.app.state.tree.at(*full_stop_path).subscribe(
+                        callback=on_stop_callback, depth=0  # Exact path only
+                    )
+
+            # Set up queue subscription immediately
+            with self.app.state.tree.snapshot() as snapshot:
+                view, resolved_path = self._resolve_path(
+                    self.path, self.app.state.tree, snapshot, context
+                )
+                queue_view = view.view(str(resolved_path), QueueView)
+                queue_path = queue_view.path
+
+            queue_subscription = self.app.state.tree.at(*queue_path.components).subscribe(
+                callback=on_queue_change_callback, depth=1
+            )
+            print(f"BlockingDequeue subscribed to queue at {queue_path}.. {queue_subscription}")
+
+            # Main reactive loop - truly event-driven, no polling
+            while True:
+                # Check stop condition first (atomic check)
+                with condition:
+                    if stop_requested:
+                        return  # Graceful shutdown
+
+                # Try to dequeue with fresh transaction
+                dequeue_successful = False
+                try:
+                    with self.app.state.tree.transaction() as transaction:
+                        # Get queue view at the specified path
+                        view, resolved_path = self._resolve_path(
+                            self.path, self.app.state.tree, transaction, context
+                        )
+                        queue_view = view.view(str(resolved_path), QueueView)
+
+                        # Try to dequeue the value
+                        try:
+                            dequeued_value = queue_view.dequeue()
+                            dequeue_successful = True
+                        except IndexError:
+                            # Queue is empty, will wait for changes below
+                            pass
+
+                        if dequeue_successful:
+                            # Store the dequeued value if store_at is specified
+                            if self.store_at is not None:
+                                store_view, store_path = self._resolve_path(
+                                    self.store_at, self.app.state.tree, transaction, context
+                                )
+                                store_view.set(store_path, dequeued_value)  # type: ignore
+
+                            # Success! Transaction will commit automatically
+                            return
+
+                except Exception as e:
+                    raise ExpressionError(
+                        f"Failed to dequeue value from path {self.path}: {e}",
+                        expression=self,
+                        cause=e,
+                    )
+
+                # Queue was empty - wait for changes (no polling, pure reactive)
+                with condition:
+                    # Reset queue_changed flag before waiting
+                    queue_changed = False
+
+                    # Wait until either queue changes or stop is requested
+                    # This is the key improvement: no timeout, purely event-driven
+                    while not queue_changed and not stop_requested:
+                        condition.wait()  # Blocks until notify_all() is called
+
+                    # Check stop condition again after waking up
+                    if stop_requested:
+                        return  # Graceful shutdown
+
+                    # If we reach here, queue_changed is True - loop back to try dequeue
+
+        except Exception as e:
+            raise ExpressionError(
+                f"Failed to set up blocking dequeue for path {self.path}: {e}",
+                expression=self,
+                cause=e,
+            )
+        finally:
+            # Clean up subscriptions - guaranteed to run
+            if queue_subscription is not None:
+                try:
+                    self.app.state.tree.unsubscribe(queue_subscription)
+                except Exception as cleanup_error:
+                    print(f"Error cleaning up BlockingDequeue queue subscription: {cleanup_error}")
+
+            if stop_subscription is not None:
+                try:
+                    self.app.state.tree.unsubscribe(stop_subscription)
+                except Exception as cleanup_error:
+                    print(f"Error cleaning up BlockingDequeue stop subscription: {cleanup_error}")
+
+
+class Touch(Expression[SyncApp]):
+    """
+    Set a value at a specified path to signal or trigger other expressions.
+
+    This expression sets a value at the given path, commonly used to signal
+    shutdown conditions, trigger events, or mark state changes. By default,
+    it sets the value to True, but a custom value can be provided.
+
+    Args:
+        path: State path where to set the signal value (e.g., ("shutdown", "worker1"))
+        value: Optional value to set (defaults to True)
+
+    Examples:
+        ```python
+        # Signal shutdown (sets to True)
+        Touch(self, ("shutdown", "worker1"))
+
+        # Signal with custom value
+        Touch(self, ("events", "user_action"), value="login_completed")
+
+        # Set timestamp
+        Touch(self, ("last_update",), value=Path().current_time)
+
+        # Trigger flag
+        Touch(self, ("flags", "processing_complete"))
+        ```
+    """
+
+    def __init__(self, app, path: ExpressionPath, *, value: ExpressionValue = True, **kwargs):
+        super().__init__(app, **kwargs)
+        self.path = path
+        self.value = value
+
+    def do_evaluate(self, context: "Context") -> None:
+        """Set the value at the specified path."""
+        with self.app.state.tree.transaction() as transaction:
+            try:
+                # Resolve the target path
+                view, resolved_path = self._resolve_path(
+                    self.path, self.app.state.tree, transaction, context
+                )
+
+                # Resolve the value to set
+                resolved_value = self._resolve_value(
+                    self.value, self.app.state.tree, transaction, context
+                )
+
+                # Set the value at the path
+                view.set(resolved_path, resolved_value)  # type: ignore
+
+            except Exception as e:
+                raise ExpressionError(
+                    f"Failed to touch path {self.path} with value {self.value}: {e}",
+                    expression=self,
+                    cause=e,
+                )
 
 
 class Peek(Expression[SyncApp]):

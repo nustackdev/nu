@@ -59,6 +59,10 @@ class Loop(Expression[SyncApp]):
 
         try:
             while True:
+                if self.is_cancelled(context):
+                    logger.info("Loop evaluation is cancelled, skipping execution")
+                    return
+
                 # Evaluate condition using snapshot for read-only access
                 with self.app.state.tree.snapshot() as snapshot:
                     condition_result = self._resolve_value(

@@ -129,8 +129,9 @@ class Timeout(Expression[SyncApp]):
     def __init__(
         self,
         app: SyncApp,
-        *,
         expression: Expression,
+        /,
+        *,
         timeout_seconds: float,
         on_timeout: Expression | None = None,
         **kwargs,
@@ -192,7 +193,7 @@ class Timeout(Expression[SyncApp]):
                     )
             else:
                 # Timeout occurred
-                logger.warning(
+                logger.info(
                     f"Child expression {self.expression.readable_name} timed out",
                     extra={"timeout_seconds": self.timeout_seconds},
                 )
@@ -203,7 +204,12 @@ class Timeout(Expression[SyncApp]):
                 # Execute timeout callback if provided
                 if self.on_timeout:
                     try:
-                        self.on_timeout.evaluate(context)
+                        timeout_context = self._create_child_context(
+                            context,
+                            child_expression=self.on_timeout,
+                            child_index="timeout_callback",
+                        )
+                        self.on_timeout.evaluate(timeout_context)
                     except Exception as callback_error:
                         logger.error(f"Timeout callback failed: {callback_error}", exc_info=True)
 

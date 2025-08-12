@@ -583,7 +583,7 @@ class Expression(ABC, Generic[MicroflowT]):
 
                 if cancellation:
                     logger.info(
-                        f"Found cancellation at {current_path}",
+                        f"Found cancellation at {current_path} for {context.structural_path}",
                         extra={
                             "cancelled_path": str(current_path),
                             "current_path": str(context.structural_path),

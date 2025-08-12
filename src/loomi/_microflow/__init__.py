@@ -54,5 +54,16 @@ class AsyncMicroflow(BaseMicroflow, AsyncResource):
     pass
 
 
+class MicroflowProtocol(Protocol):
+    """
+    Protocol for microflow components.
+
+    This protocol defines the basic interface for microflow components, allowing for type checking
+    and ensuring that implementations provide the necessary methods.
+    """
+
+    state: State
+
+
 Microflow = SyncMicroflow | AsyncMicroflow
-MicroflowT = TypeVar("MicroflowT", bound=Microflow)
+MicroflowT = TypeVar("MicroflowT", bound=Microflow | MicroflowProtocol)
