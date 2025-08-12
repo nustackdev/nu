@@ -457,3 +457,82 @@ class Parallel(Expression[SyncApp]):
                 exc_info=True,
             )
             raise
+
+
+class If(Expression[SyncApp]):
+    """
+    Conditionally execute an expression if a condition is truthy.
+
+    This expression evaluates a condition and only executes the provided expression
+    if the condition evaluates to a Python truthy value (True, non-zero numbers,
+    non-empty strings, non-empty collections, etc.).
+
+    Args:
+        condition: ExpressionValue to evaluate for truthiness
+        expression: Expression to execute if condition is truthy
+
+    Examples:
+        ```python
+        # Simple boolean condition
+        If(self, True, Print(self, "This will execute"))
+        If(self, False, Print(self, "This won't execute"))
+
+        # State path condition
+        If(self, Path().is_ready, ProcessTask(self))
+
+        # Complex condition from state
+        If(
+            self,
+            Path().user.is_authenticated,
+            Sequence(
+                self,
+                Print(self, "User is logged in"),
+                LoadUserData(self)
+            )
+        )
+
+        # Number condition (0 is falsy, anything else is truthy)
+        If(self, Path().error_count, SendAlert(self))
+
+        # String condition (empty string is falsy)
+        If(self, Path().username, WelcomeUser(self))
+        ```
+    """
+
+    def __init__(
+        self,
+        app,
+        condition: ExpressionValue,
+        expression: Expression,
+        otherwise: Expression | None = None,
+        **kwargs,
+    ):
+        super().__init__(app, **kwargs)
+        self.condition = condition
+        self.expression = expression
+        self.otherwise = otherwise
+
+    def do_evaluate(self, context: "Context") -> None:
+        """Evaluate condition and execute expression if truthy."""
+        try:
+            # Use snapshot for read-only condition evaluation
+            with self.app.state.tree.snapshot() as snapshot:
+                # Resolve the condition value
+                condition_value = self._resolve_value(
+                    self.condition, self.app.state.tree, snapshot, context
+                )
+
+            # Check if condition is truthy using Python's bool() conversion
+            if condition_value:
+                # Execute the expression
+                self.expression.evaluate(context)
+            elif self.otherwise is not None:
+                # Execute the otherwise expression
+                self.otherwise.evaluate(context)
+
+        except Exception as e:
+            raise ExpressionError(
+                f"Failed to evaluate If condition {self.condition}: {e}",
+                expression=self,
+                cause=e,
+            )
