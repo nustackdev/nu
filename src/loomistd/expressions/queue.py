@@ -229,7 +229,6 @@ class BlockingDequeue(Expression[SyncApp]):
 
         def on_queue_change_callback(changed_path_tuple):
             """Signal that a queue change occurred."""
-            print(f"Queue change detected at {changed_path_tuple}")
             nonlocal queue_changed
             with condition:
                 queue_changed = True
@@ -266,7 +265,6 @@ class BlockingDequeue(Expression[SyncApp]):
             queue_subscription = self.app.state.tree.at(*queue_path.components).subscribe(
                 callback=on_queue_change_callback, depth=1
             )
-            print(f"BlockingDequeue subscribed to queue at {queue_path}.. {queue_subscription}")
 
             # Main reactive loop - truly event-driven, no polling
             while True:

@@ -1141,70 +1141,6 @@ class ContainerNode(BaseNode):
 
         self.get_transaction_context().set(self.path.join(key).to_tuple(), value)
 
-    def remove_primitive_child(self, key: PathComponent, /) -> bool:
-        """Remove primitive child with mutability validation.
-
-        Args:
-            key: Child key to remove.
-
-        Returns:
-            bool: True if removed, False if didn't exist.
-
-        Raises:
-            PathNotFoundError: If container doesn't exist.
-            PathTypeError: If container incompatible.
-            ContainerProtocolError: If container not mutable.
-
-        Example:
-            ```python
-            if container.remove_primitive_child("key"):
-                print("Primitive child removed")
-            else:
-                print("Primitive child didn't exist")
-            ```
-        """
-        # Validate container is mutable
-        self.validate_mutable
-
-        # Try to delete primitive child
-        try:
-            self.get_transaction_context().delete(self.path.join(key).to_tuple())
-            return True
-        except StorageKeyError:
-            return False
-
-    def remove_container_child(self, key: PathComponent, /) -> bool:
-        """Remove container child with mutability validation.
-
-        Args:
-            key: Child key to remove.
-
-        Returns:
-            bool: True if removed, False if didn't exist.
-
-        Raises:
-            PathNotFoundError: If container doesn't exist.
-            PathTypeError: If container incompatible.
-            ContainerProtocolError: If container not mutable.
-
-        Example:
-            ```python
-            if container.remove_container_child("key"):
-                print("Container child removed")
-            else:
-                print("Container child didn't exist")
-            ```
-        """
-        # Validate container is mutable
-        self.validate_mutable
-
-        if not self.has_container_child(key):
-            # If child doesn't exist, nothing to remove
-            return False
-
-        # Try to delete container child
-        return self._delete_subtree(self.path.join(key))
-
     def remove_child(self, key: PathComponent, /) -> bool:
         """Remove child (primitive or container) with mutability validation.
 
@@ -1230,13 +1166,7 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable
 
-        if self.remove_primitive_child(key):
-            return True
-
-        if self.remove_container_child(key):
-            return True
-
-        return False
+        return self._delete_subtree(self.path.join(key))
 
     def clear_children(self) -> int:
         """Remove all children with mutability validation.
@@ -1260,12 +1190,8 @@ class ContainerNode(BaseNode):
 
         removed_count = 0
 
-        for key in self.keys(primitives_only=True):
-            if self.remove_primitive_child(key):
-                removed_count += 1
-
-        for key in self.keys(skip_primitives=True):
-            if self.remove_container_child(key):
+        for key in self.keys():
+            if self.remove_child(key):
                 removed_count += 1
 
         return removed_count
