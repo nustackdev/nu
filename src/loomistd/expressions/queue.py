@@ -636,7 +636,12 @@ class OnQueueChange(Expression[SyncApp]):
 
                     # Execute the provided expression
                     try:
-                        self.expression.evaluate(context)
+                        self.expression.evaluate(
+                            self._create_child_context(
+                                context,
+                                child_expression=self.expression,
+                            )
+                        )
                     except Exception as expression_error:
                         raise expression_error
 

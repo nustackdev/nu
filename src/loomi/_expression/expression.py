@@ -247,7 +247,7 @@ class Expression(ABC, Generic[MicroflowT]):
         context: "Context",
         *,
         child_expression: "Expression",
-        child_index: int | None = None,
+        child_index: str | int | None = None,
         child_attributes: dict[str, Any] | None = None,
     ) -> "Context":
         """

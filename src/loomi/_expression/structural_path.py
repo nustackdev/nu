@@ -80,7 +80,7 @@ class StructuralPath:
         return f"StructuralPath({self.components!r})"
 
 
-def create_component(expression: Expression, index: int | None = None) -> str:
+def create_component(expression: Expression, index: str | int | None = None) -> str:
     """
     Create structural component for an expression.
 

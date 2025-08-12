@@ -525,10 +525,21 @@ class If(Expression[SyncApp]):
             # Check if condition is truthy using Python's bool() conversion
             if condition_value:
                 # Execute the expression
-                self.expression.evaluate(context)
+                self.expression.evaluate(
+                    self._create_child_context(
+                        context,
+                        child_expression=self.expression,
+                    )
+                )
             elif self.otherwise is not None:
                 # Execute the otherwise expression
-                self.otherwise.evaluate(context)
+                self.otherwise.evaluate(
+                    self._create_child_context(
+                        context,
+                        child_expression=self.otherwise,
+                        child_index="otherwise",
+                    )
+                )
 
         except Exception as e:
             raise ExpressionError(

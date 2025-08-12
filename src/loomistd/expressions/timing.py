@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import cast
 
 from loomi.expression import Context, Expression, ExpressionError, ExpressionValue
 from loomistd.app import SyncApp
@@ -132,7 +133,7 @@ class Timeout(Expression[SyncApp]):
         expression: Expression,
         /,
         *,
-        timeout_seconds: float,
+        timeout_seconds: ExpressionValue,
         on_timeout: Expression | None = None,
         **kwargs,
     ):
@@ -157,6 +158,12 @@ class Timeout(Expression[SyncApp]):
         Args:
             context: The execution context
         """
+        with self.app.state.tree.snapshot() as snapshot:
+            timeout_seconds = cast(
+                float,
+                self._resolve_value(self.timeout_seconds, self.app.state.tree, snapshot, context),
+            )
+
         # Create a child context with its own cancellation token
         child_context = self._create_child_context(
             context,
@@ -181,7 +188,7 @@ class Timeout(Expression[SyncApp]):
 
         try:
             # Wait for completion or timeout
-            if completed.wait(timeout=self.timeout_seconds):
+            if completed.wait(timeout=timeout_seconds):
                 # Child completed (successfully or with error)
                 if exception_holder[0] is not None:
                     # Child failed, re-raise the exception
@@ -189,13 +196,13 @@ class Timeout(Expression[SyncApp]):
                 else:
                     logger.info(
                         f"Child expression {self.expression.readable_name} completed within timeout",
-                        extra={"timeout_seconds": self.timeout_seconds},
+                        extra={"timeout_seconds": timeout_seconds},
                     )
             else:
                 # Timeout occurred
                 logger.info(
                     f"Child expression {self.expression.readable_name} timed out",
-                    extra={"timeout_seconds": self.timeout_seconds},
+                    extra={"timeout_seconds": timeout_seconds},
                 )
 
                 # Cancel the child expression
@@ -204,12 +211,13 @@ class Timeout(Expression[SyncApp]):
                 # Execute timeout callback if provided
                 if self.on_timeout:
                     try:
-                        timeout_context = self._create_child_context(
-                            context,
-                            child_expression=self.on_timeout,
-                            child_index="timeout_callback",
+                        self.on_timeout.evaluate(
+                            self._create_child_context(
+                                context,
+                                child_expression=self.on_timeout,
+                                child_index="timeout",
+                            )
                         )
-                        self.on_timeout.evaluate(timeout_context)
                     except Exception as callback_error:
                         logger.error(f"Timeout callback failed: {callback_error}", exc_info=True)
 
