@@ -32,6 +32,11 @@ logs these keys for optimistic concurrency control. If concurrent transactions t
 overlapping data, the system detects conflicts and handles them through retries or
 explicit resolution.
 
+**Container Type Marking**
+Container types are stored using special markers at the data path to distinguish them
+from primitive values. The marker format includes both structure and protocol information
+embedded in the value itself, eliminating the need for separate storage namespaces.
+
 **Example: Parent Validation**
 The validate_parents_exist() method shows these concepts working together - it checks
 and creates parent containers while the transaction tracks all accessed keys. The
@@ -48,7 +53,7 @@ from __future__ import annotations
 import dataclasses
 from enum import Enum, auto
 from functools import cached_property
-from typing import Generator, cast
+from typing import ClassVar, Generator
 
 import attrs
 
@@ -160,6 +165,15 @@ class ContainerNode(BaseNode):
         backend: Backend instance for low-level storage operations.
     """
 
+    # Container type marker for distinguishing containers from primitives
+    _CONTAINER_MARKER: ClassVar[str] = "\ue000"
+    # The Private Use Area (PUA) is a range of Unicode code points (U+E000 to U+F8FF)
+    # that are intentionally not assigned to any standard characters.
+    # Using PUA characters virtually eliminates the risk of collision since:
+    # - They don't appear on standard keyboards
+    # - They're not used in any human writing systems
+    # - They have no standard visual representation
+
     structure: ContainerStructure = attrs.field(kw_only=True)
 
     protocol: ContainerProtocol = attrs.field(kw_only=True)
@@ -185,11 +199,11 @@ class ContainerNode(BaseNode):
 
     @staticmethod
     def extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol]:
-        """Extract structure and protocol from raw type data.
+        """Extract structure and protocol from container marker data.
 
         Args:
-            type_data: Raw type data from storage, expected to be a list or tuple
-                with two elements: [structure_value, protocol_value].
+            type_data: Raw marker data from storage, expected to be a string
+                in format "\ue000[structure_value,protocol_value]".
 
         Returns:
             tuple[ContainerStructure, ContainerProtocol]: Parsed structure and protocol enums.
@@ -197,16 +211,42 @@ class ContainerNode(BaseNode):
         Raises:
             ValueError: If type_data is malformed or cannot be parsed.
         """
-        if not isinstance(type_data, (list, tuple)) or len(type_data) != 2:
-            raise ValueError(f"Malformed type data: {type_data}")
+        if not isinstance(type_data, str) or not type_data.startswith(
+            ContainerNode._CONTAINER_MARKER
+        ):
+            raise ValueError(f"Malformed container marker: {type_data}")
 
         try:
-            structure = ContainerStructure(int(cast(int, type_data[0])))
-            protocol = ContainerProtocol(int(cast(int, type_data[1])))
-        except ValueError as e:
-            raise ValueError(f"Invalid type data values: {type_data}") from e
+            # Extract the bracketed content
+            bracket_content = type_data[len(ContainerNode._CONTAINER_MARKER) :]
+            if not (bracket_content.startswith("[") and bracket_content.endswith("]")):
+                raise ValueError(f"Invalid marker format: {type_data}")
+
+            # Parse the values inside brackets
+            values_str = bracket_content[1:-1]  # Remove [ and ]
+            values = values_str.split(",")
+            if len(values) != 2:
+                raise ValueError(f"Expected 2 values in marker: {type_data}")
+
+            structure = ContainerStructure(int(values[0].strip()))
+            protocol = ContainerProtocol(int(values[1].strip()))
+        except (ValueError, IndexError) as e:
+            raise ValueError(f"Invalid container marker format: {type_data}") from e
 
         return structure, protocol
+
+    @staticmethod
+    def create_type_marker(structure: ContainerStructure, protocol: ContainerProtocol) -> str:
+        """Create a container type marker string.
+
+        Args:
+            structure: Container structure type.
+            protocol: Container protocol flags.
+
+        Returns:
+            str: Formatted marker string.
+        """
+        return f"{ContainerNode._CONTAINER_MARKER}[{structure},{protocol.value}]"
 
     # ------------------------------------------------------------------------
     # HIGH-LEVEL CONTAINER OPERATIONS
@@ -284,7 +324,7 @@ class ContainerNode(BaseNode):
 
         Args:
             path: The path to gather information about.
-            tx: The transaction object for storage operations.
+            ctx: The context object for storage operations.
 
         Returns:
             ContainerInfo: Raw data about container and parents including:
@@ -360,35 +400,34 @@ class ContainerNode(BaseNode):
     def _get_path_info(cls, path: Path, ctx: ContextType, /) -> ParentInfo:
         """Get raw storage information for a single path.
 
-        Retrieves raw type metadata from storage and attempts to parse it into
-        structure and protocol enums. Does not validate compatibility or
-        correctness - just extracts what's available.
+        Retrieves raw data from storage and attempts to parse it as a container marker.
+        Does not validate compatibility or correctness - just extracts what's available.
 
         Args:
             path: The path to gather information about.
-            tx: The transaction object for storage operations.
+            ctx: The context object for storage operations.
 
         Returns:
             ParentInfo: Raw information including:
                 - Whether the path exists in storage
-                - Parsed structure/protocol if data is well-formed
+                - Parsed structure/protocol if data is a container marker
                 - Raw storage data for malformed entries
-                - None values for structure/protocol indicate malformed data
+                - None values for structure/protocol indicate non-container or malformed data
 
         Note:
             This method does not raise storage exceptions - missing keys result
             in exists=False, and malformed data results in None enum values.
         """
-        struct_path = path.struct_path
-
         try:
-            raw_data = ctx.get(struct_path.to_tuple())
+            raw_data = ctx.get(path.to_tuple())
 
-            # Try to parse structure/protocol
+            # Try to parse as container marker
+            structure = None
+            protocol = None
             try:
                 structure, protocol = cls.extract_type_info(raw_data)
             except ValueError:
-                pass  # Keep as None - indicates malformed data
+                pass  # Keep as None - indicates non-container or malformed data
 
             return ParentInfo(
                 path=path,
@@ -550,11 +589,20 @@ class ContainerNode(BaseNode):
             # No parents - root level, no collisions possible
             return
 
-        # Check if the last path component collides with any primitive child
-        if self.get_ensured_context().exists(self.path.to_tuple()):
-            raise PathTypeError(
-                f"Path collision detected: {self.path} collides with an existing primitive value"
-            )
+        # Check if the path exists and is not a container marker
+        try:
+            existing_data = self.get_ensured_context().get(self.path.to_tuple())
+            # If we can extract type info, it's a container, which is fine
+            try:
+                self.extract_type_info(existing_data)
+            except ValueError:
+                # Not a container marker - this is a collision
+                raise PathTypeError(
+                    f"Path collision detected: {self.path} collides with an existing primitive value"
+                )
+        except StorageKeyError:
+            # Path doesn't exist - no collision
+            pass
 
     @cached_property
     def validate_parent_mutable(self) -> None:
@@ -816,9 +864,8 @@ class ContainerNode(BaseNode):
             self.try_create_parents()
 
         # Create container
-        self.get_transaction_context().set(
-            self.path.struct_path.to_tuple(), [self.structure, self.protocol.value]
-        )
+        marker = self.create_type_marker(self.structure, self.protocol)
+        self.get_transaction_context().set(self.path.to_tuple(), marker)
 
         return True
 
@@ -856,13 +903,11 @@ class ContainerNode(BaseNode):
         created = []
 
         for parent_path in self.info.missing_parent_paths:
-            self.get_transaction_context().set(
-                parent_path.struct_path.to_tuple(),
-                [
-                    1,  # By default creates a dictionary-like container
-                    ContainerProtocol.DEFAULT_PROTOCOL.value,
-                ],
+            marker = self.create_type_marker(
+                ContainerStructure(1),  # By default creates a dictionary-like container
+                ContainerProtocol.DEFAULT_PROTOCOL,
             )
+            self.get_transaction_context().set(parent_path.to_tuple(), marker)
             created.append(parent_path)
 
         return created
@@ -942,8 +987,6 @@ class ContainerNode(BaseNode):
 
         Args:
             key: Child key to inspect.
-            only_primitive_check: If True, only checks if child is a primitive.
-            skip_primitive_check: If True, skips primitive check and only checks for container.
 
         Returns:
             ChildInfo: Basic child information (exists, type, value).
@@ -953,39 +996,31 @@ class ContainerNode(BaseNode):
             Use other methods for operations that require validation.
         """
         child_path = self.path.join(key)
-        child_struct_path = child_path.struct_path
 
-        # Check if it's a primitive
-        # Note: First checking primitive to avoid unnecessary container checks,
-        # as primitives are more common.
         try:
-            primitive_data = self.get_ensured_context().get(child_path.to_tuple())
-            return ChildInfo(
-                key=key,
-                exists=True,
-                child_type=ChildType.PRIMITIVE,
-                value=primitive_data,
-            )
+            child_data = self.get_ensured_context().get(child_path.to_tuple())
+
+            # Try to parse as container marker
+            try:
+                child_structure, child_protocol = self.extract_type_info(child_data)
+                return ChildInfo(
+                    key=key,
+                    exists=True,
+                    child_type=ChildType.CONTAINER,
+                    stored_structure=child_structure,
+                    stored_protocol=child_protocol,
+                )
+            except ValueError:
+                # Not a container marker - it's a primitive
+                return ChildInfo(
+                    key=key,
+                    exists=True,
+                    child_type=ChildType.PRIMITIVE,
+                    value=child_data,
+                )
         except StorageKeyError:
-            pass
-
-        # Check if it's a container
-        try:
-            child_type_info = self.get_ensured_context().get(child_struct_path.to_tuple())
-            child_structure, child_protocol = self.extract_type_info(child_type_info)
-
-            return ChildInfo(
-                key=key,
-                exists=True,
-                child_type=ChildType.CONTAINER,
-                stored_structure=child_structure,
-                stored_protocol=child_protocol,
-            )
-        except StorageKeyError:
-            pass
-
-        # Child doesn't exist
-        return ChildInfo(key=key, exists=False, child_type=ChildType.NOT_FOUND)
+            # Child doesn't exist
+            return ChildInfo(key=key, exists=False, child_type=ChildType.NOT_FOUND)
 
     # ------------------------------------------------------------------------
     # INSPECTION LAYER - Child Existance and Type Checks
@@ -1012,8 +1047,8 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        # Otherwise, check existance of primitive child
-        return self.get_ensured_context().exists(self.path.join(key).to_tuple())
+        child_info = self.get_child_info(key)
+        return child_info.child_type == ChildType.PRIMITIVE
 
     def has_container_child(self, key: PathComponent, /) -> bool:
         """Check if container child exists with container health validation.
@@ -1036,8 +1071,8 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        # Otherwise, check existance of container child
-        return self.get_ensured_context().exists(self.path.join(key).struct_path.to_tuple())
+        child_info = self.get_child_info(key)
+        return child_info.child_type == ChildType.CONTAINER
 
     def has_child(self, key: PathComponent, /) -> ChildType:
         """Check if child exists with container health validation.
@@ -1065,12 +1100,7 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        if self.has_primitive_child(key):
-            return ChildType.PRIMITIVE
-        elif self.has_container_child(key):
-            return ChildType.CONTAINER
-
-        return ChildType.NOT_FOUND
+        return self.get_child_info(key).child_type
 
     # ------------------------------------------------------------------------
     # MANIPULATION LAYER - Add/Remove Children
@@ -1303,10 +1333,10 @@ class ContainerNode(BaseNode):
         """
         self.validate_compatible
 
-        try:
-            return self.get_ensured_context().get(self.path.join(key).to_tuple())
-        except StorageKeyError:
-            return EMPTY
+        child_info = self.get_child_info(key)
+        if child_info.child_type == ChildType.PRIMITIVE:
+            return child_info.value
+        return EMPTY
 
     def keys(
         self, *, primitives_only: bool = False, skip_primitives: bool = False
@@ -1377,26 +1407,21 @@ class ContainerNode(BaseNode):
         Yields:
             str: Child keys.
         """
-        # Get primitive keys
-        if not skip_primitives:
-            try:
-                for path_tuple in self.get_ensured_context().list_keys(
-                    self.path.to_tuple(), depth=1
-                ):
-                    yield path_tuple[-1]  # Get last component (key)
-            except StorageKeyError:
-                pass  # Container might be empty
+        try:
+            for path_tuple in self.get_ensured_context().list_keys(self.path.to_tuple(), depth=1):
+                key = path_tuple[-1]  # Get last component (key)
 
-        # Get container keys if requested
-        if not primitives_only:
-            try:
-                struct_path = self.path.struct_path
-                for path_tuple in self.get_ensured_context().list_keys(
-                    struct_path.to_tuple(), depth=1
-                ):
-                    yield path_tuple[-1]  # Get last component (key)
-            except StorageKeyError:
-                pass  # No container children
+                # Determine child type to apply filters
+                child_info = self.get_child_info(key)
+
+                if primitives_only and child_info.child_type != ChildType.PRIMITIVE:
+                    continue
+                if skip_primitives and child_info.child_type == ChildType.PRIMITIVE:
+                    continue
+
+                yield key
+        except StorageKeyError:
+            pass  # Container might be empty
 
     def _delete_subtree(self, path: Path) -> bool:
         """
@@ -1412,13 +1437,11 @@ class ContainerNode(BaseNode):
         ctx = self.get_transaction_context()
         paths_to_delete: list[PathTuple] = []
         paths_to_delete.extend([p for p in ctx.list_keys(path.to_tuple(), depth=-1)])
-        paths_to_delete.extend([p for p in ctx.list_keys(path.struct_path.to_tuple(), depth=-1)])
         paths_to_delete.extend([p for p in ctx.list_keys(path.meta_path.to_tuple(), depth=-1)])
         paths_to_delete.extend(
             [
-                self.path.to_tuple(),
-                self.path.struct_path.to_tuple(),
-                self.path.meta_path.to_tuple(),
+                path.to_tuple(),
+                path.meta_path.to_tuple(),
             ]
         )
 
@@ -1445,7 +1468,7 @@ class ContainerNode(BaseNode):
         """
         Get metadata value (e.g., __length__ for ListView).
 
-        Metadata is stored in the struct path namespace.
+        Metadata is stored in the metadata path namespace.
 
         Args:
             key: Metadata key
