@@ -15,10 +15,11 @@ import statistics
 import time
 from pathlib import Path
 
+from loomi.tree import Tree
 from loomistd.codec.msgpack import MsgpackCodecSpec
 from loomistd.kv.lmdb import LMDBStorageSpec
-from loomistd.state import StateService, StateSpec
-from loomistd.tree import Tree
+from loomistd.observer.in_memory import InMemoryObserverSpec
+from loomistd.state import State, StateSpec
 
 # Constants
 NUM_ENTRIES = 50_000
@@ -33,6 +34,7 @@ STORAGE_CONFIGS = {
         storage=LMDBStorageSpec(
             codec=MsgpackCodecSpec(),
         ),
+        observer=InMemoryObserverSpec(),
     ).with_value_at("storage", "path", value=".benchmark_lmdb"),
 }
 
@@ -412,8 +414,8 @@ class StateV3Benchmark:
         try:
             state_spec = self.create_state_spec()
 
-            with StateService(state_spec) as state_service:
-                state = state_service.state
+            with State(state_spec) as state_service:
+                state = state_service.tree
 
                 # Phase 1: Populate
                 self.populate_storage(state)
