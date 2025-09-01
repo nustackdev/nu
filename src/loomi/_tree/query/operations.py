@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import operator
 from abc import ABC, abstractmethod
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 import attrs
@@ -269,7 +270,39 @@ class ResolveVarOperation(UnaryOperation):
 # ARITHMETIC OPERATIONS
 # =============================================================================
 
+###### Custom ops end (tmp) ######
 
+
+@attrs.define(frozen=True)
+class DecimalOperation(UnaryOperation):
+    """Operation that converts a value to Decimal."""
+
+    def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
+        """Convert operand to Decimal."""
+        operand_val = self._resolve_operand(tree, ctx, vars)
+        return Decimal(operand_val) if operand_val is not None else None
+
+
+@attrs.define(frozen=True)
+class ArrayIndexOperation(BinaryOperation):
+    def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
+        """Get array element at specified index."""
+        index_val, arr_val = self._resolve_operands(tree, ctx, vars)
+        try:
+            if not isinstance(arr_val, list):
+                raise TypeError(f"Expected list for array indexing, got {type(arr_val).__name__}")
+            if not isinstance(index_val, int):
+                raise TypeError(f"Expected int for array index, got {type(index_val).__name__}")
+            return arr_val[index_val]
+        except IndexError as e:
+            raise ValueError(
+                f"Index {index_val} out of range for array of length {len(arr_val)}"
+            ) from e
+        except TypeError as e:
+            raise ValueError(f"Cannot index array with {type(index_val).__name__}") from e
+
+
+###### Custom ops end (tmp) ######
 @attrs.define(frozen=True)
 class AddOperation(BinaryOperation):
     """Addition operation: left + right"""

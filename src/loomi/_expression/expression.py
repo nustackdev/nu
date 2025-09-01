@@ -207,7 +207,7 @@ class Expression(ABC, Generic[MicroflowT]):
                 f"Infrastructure failure in {self.readable_name}: {infra_error}",
                 expression=self,
                 cause=infra_error,
-            )
+            ) from infra_error
 
     @abstractmethod
     def do_evaluate(self, context: "Context") -> None:
@@ -559,6 +559,38 @@ class Expression(ABC, Generic[MicroflowT]):
                 exc_info=True,
             )
             raise CancellationError(f"Failed to cancel: {e}") from e
+
+    def cleanup_cancellation_state(self, context: "Context") -> None:
+        """
+        Clean up cancellation state for this path and all descendants.
+
+        Args:
+            context: The execution context to clean up
+        """
+        storage_key = context.structural_path.to_storage_key()
+
+        try:
+            with self.app.state.tree.at(*storage_key).with_dict_view() as cancellation_state:
+                cancellation_state.set("cancelled", False)
+                cancellation_state.set("reason", None)
+                cancellation_state.set("timestamp", None)
+
+            logger.info(
+                f"Cleaned up cancellation state at {context.structural_path}",
+                extra={
+                    "structural_path": str(context.structural_path),
+                },
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Failed to clean up cancellation state at {context.structural_path}",
+                extra={
+                    "structural_path": str(context.structural_path),
+                    "error": str(e),
+                },
+                exc_info=True,
+            )
 
     def _check_cancellation_hierarchy(self, context: "Context") -> bool:
         """

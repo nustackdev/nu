@@ -521,6 +521,7 @@ class If(Expression[SyncApp]):
                 condition_value = self._resolve_value(
                     self.condition, self.app.state.tree, snapshot, context
                 )
+                print(f"Condition value: {condition_value}")
 
             # Check if condition is truthy using Python's bool() conversion
             if condition_value:

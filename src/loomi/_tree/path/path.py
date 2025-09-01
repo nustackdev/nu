@@ -8,6 +8,7 @@ without any query operations or logic.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Self, Union, cast
 
 import attrs
@@ -456,14 +457,26 @@ class _Path:
         """
         return self.to_query().or_(other)
 
-    def __invert__(self) -> "Query":
+    def eq(self, other: Any) -> "Query":
+        """
+        Equality: path.eq(other)
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with equality operation
+        """
+        return self.to_query().eq(other)
+
+    def not_(self) -> "Query":
         """
         Logical NOT: ~path or not path
 
         Returns:
             New Query with NOT operation
         """
-        return ~self.to_query()
+        return self.to_query().not_()
 
     # =========================================================================
     # STRING OPERATIONS (Query Chaining)
@@ -589,6 +602,16 @@ class _Path:
             New Query with bool operation
         """
         return self.to_query().bool()
+
+    # =========================================================================
+    # Custom
+    # =========================================================================
+
+    def to_dec(self) -> "Query":
+        return self.to_query().to_dec()
+
+    def get_arr_index(self, arr: list) -> "Query":
+        return self.to_query().get_arr_index(arr)
 
 
 @attrs.define(frozen=True, slots=True)

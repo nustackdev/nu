@@ -8,6 +8,7 @@ trees that can be evaluated against tree data.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 import attrs
@@ -21,6 +22,7 @@ from .operations import (
     BoolOperation,
     ContainsOperation,
     CountOperation,
+    DecimalOperation,
     DivideOperation,
     EndsWithOperation,
     EqualOperation,
@@ -42,6 +44,7 @@ from .operations import (
     StartsWithOperation,
     SubtractOperation,
     SumOperation,
+    ArrayIndexOperation,
 )
 
 if TYPE_CHECKING:
@@ -154,7 +157,6 @@ class Query:
                 result = query.evaluate(tree, ctx=tx, vars=vars)
             ```
         """
-
         try:
             return self.operations.calc(tree, ctx, vars)
         except Exception as e:
@@ -381,7 +383,20 @@ class Query:
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=OrOperation(left=self.operations, right=other_ops))
 
-    def __invert__(self) -> Query:
+    def eq(self, other: Any) -> Query:
+        """
+        Equality: query.eq(other)
+
+        Args:
+            other: Value to compare against
+
+        Returns:
+            New Query with equality operation
+        """
+        other_ops = other.operations if isinstance(other, Query) else other
+        return Query(operations=EqualOperation(left=self.operations, right=other_ops))
+
+    def not_(self) -> Query:
         """
         Logical NOT: ~query or not query
 
@@ -525,3 +540,30 @@ class Query:
             ```
         """
         return Query(operations=BoolOperation(operand=self.operations))
+
+    # -------
+    # custom (tmp, to remove)
+    # -------
+
+    def to_dec(self) -> Query:
+        """
+        Convert query to Decimal.
+
+        Returns:
+            New Query with Decimal conversion
+
+        Example:
+            ```python
+            result = query.to_dec()
+            ```
+        """
+        return Query(operations=DecimalOperation(operand=self.operations))
+
+    def get_arr_index(self, arr: list) -> Query:
+        """
+        Get array index: query.get_arr_index()
+
+        Returns:
+            New Query with array index operation
+        """
+        return Query(operations=ArrayIndexOperation(left=self.operations, right=arr))

@@ -45,7 +45,10 @@ class Set(Expression[SyncApp]):
         with self.app.state.tree.transaction() as transaction:
             view, path = self._resolve_path(self.path, self.app.state.tree, transaction, context)
             value = self._resolve_value(self.value, self.app.state.tree, transaction, context)
-            view.set(path, value)  # type: ignore
+
+            if view.container.has_child(path):
+                view.container.remove_child(path)
+                view.set(path, value)  # type: ignore
 
 
 class Print(Expression[SyncApp]):
@@ -123,7 +126,7 @@ class IncrementInt(Expression[SyncApp]):
 
             # Get current value
             try:
-                current_value = view.get(path_key)  # type: ignore
+                current_value = view.get(path_key, default=0)  # type: ignore
             except Exception as e:
                 raise ExpressionError(
                     f"Failed to get current value at path {self.path}: {e}",

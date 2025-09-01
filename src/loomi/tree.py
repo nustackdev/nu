@@ -27,6 +27,7 @@ from ._tree.backend import (
     ValueT_contra,
 )
 from ._tree.path import ExtendedPath, Path, PathResolver
+from ._tree.query import Query
 from ._tree.tree import (
     EMPTY,
     BaseNode,
@@ -114,4 +115,6 @@ __all__ = [
     "Path",
     "ExtendedPath",
     "PathResolver",
+    # query
+    "Query",
 ]

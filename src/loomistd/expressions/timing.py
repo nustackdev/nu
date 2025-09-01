@@ -131,10 +131,9 @@ class Timeout(Expression[SyncApp]):
         self,
         app: SyncApp,
         expression: Expression,
-        /,
-        *,
         timeout_seconds: ExpressionValue,
         on_timeout: Expression | None = None,
+        on_success: Expression | None = None,
         **kwargs,
     ):
         """
@@ -150,6 +149,7 @@ class Timeout(Expression[SyncApp]):
         self.expression = expression
         self.timeout_seconds = timeout_seconds
         self.on_timeout = on_timeout
+        self.on_success = on_success
 
     def do_evaluate(self, context: Context) -> None:
         """
@@ -169,6 +169,10 @@ class Timeout(Expression[SyncApp]):
             context,
             child_expression=self.expression,
         )
+
+        # Clean up cancellation state
+        self.cleanup_cancellation_state(child_context)
+
         # Track completion
         completed = threading.Event()
         exception_holder: list[Exception | None] = [None]  # Mutable container for exception
@@ -197,6 +201,14 @@ class Timeout(Expression[SyncApp]):
                     logger.info(
                         f"Child expression {self.expression.readable_name} completed within timeout",
                         extra={"timeout_seconds": timeout_seconds},
+                    )
+                if self.on_success:
+                    self.on_success.evaluate(
+                        self._create_child_context(
+                            context,
+                            child_expression=self.on_success,
+                            child_index="success",
+                        )
                     )
             else:
                 # Timeout occurred
