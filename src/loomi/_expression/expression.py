@@ -19,6 +19,7 @@ from loomi._tree.tree import BaseView, Tree
 from loomi._tree.tree.types import Value
 
 from .._microflow import MicroflowT
+from .._tree.path.variable import Variable
 from .context import Context
 from .exceptions import CancellationError, ExpressionError, ValueResolutionError
 from .logger import logger
@@ -327,6 +328,19 @@ class Expression(ABC, Generic[MicroflowT]):
             raise ValueResolutionError("Path must have a last component to resolve")
 
         return parent_view, last_component
+
+    def _resolve_variable(
+        self,
+        variable: Variable,
+        context: "Context",
+    ) -> Value:
+        """
+        Resolve a variable reference to its value.
+        """
+        try:
+            return variable.resolve(dict(context.attributes or {}))  # type: ignore
+        except KeyError:
+            raise ValueResolutionError(f"Undefined variable: {variable}", expression=self)
 
     def _resolve_value(
         self,

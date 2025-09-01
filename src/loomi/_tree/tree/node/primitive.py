@@ -148,4 +148,4 @@ class PrimitiveNode(BaseNode):
         if key is None:
             raise ValueError("Cannot delete value from a node without a key")
 
-        return self.parent_container.remove_primitive_child(key)
+        return self.parent_container.remove_child(key)

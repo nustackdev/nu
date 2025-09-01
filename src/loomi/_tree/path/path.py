@@ -8,7 +8,6 @@ without any query operations or logic.
 
 from __future__ import annotations
 
-from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Self, Union, cast
 
 import attrs
@@ -203,7 +202,7 @@ class _Path:
         """
         from ..path.resolver import PathResolver
 
-        if isinstance(self, ExtendedPath) and self.has_variables():
+        if isinstance(self, ExtendedPath):
             path = self.substitute_variables(vars)
         elif isinstance(self, Path):
             # For pure Path, no variable substitution needed

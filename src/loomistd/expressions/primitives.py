@@ -46,8 +46,8 @@ class Set(Expression[SyncApp]):
             view, path = self._resolve_path(self.path, self.app.state.tree, transaction, context)
             value = self._resolve_value(self.value, self.app.state.tree, transaction, context)
 
-            if view.container.has_child(path):
-                view.container.remove_child(path)
+            if view.container.has_child(path):  # type: ignore
+                view.container.remove_child(path)  # type: ignore
                 view.set(path, value)  # type: ignore
 
 
