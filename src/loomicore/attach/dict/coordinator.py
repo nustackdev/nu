@@ -108,7 +108,6 @@ class DictCoordinator(Generic[ResourceType]):
         """
         return dict(self._resources)  # Return copy for safety
 
-    @property
     def keys(self) -> list[str]:
         """
         Get all resource keys.
@@ -118,7 +117,7 @@ class DictCoordinator(Generic[ResourceType]):
 
         Examples:
             ```python
-            keys = coordinator.keys
+            keys = coordinator.keys()
             for key in keys:
                 resource = coordinator.get(key)
             ```
