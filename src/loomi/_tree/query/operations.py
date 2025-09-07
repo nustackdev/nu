@@ -298,11 +298,26 @@ class ArrayIndexOperation(BinaryOperation):
             raise ValueError(
                 f"Index {index_val} out of range for array of length {len(arr_val)}"
             ) from e
+
+
+@attrs.define(frozen=True)
+class DictValueOperation(BinaryOperation):
+    def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
+        """Get dictionary value for specified key."""
+        dict_val, key_val = self._resolve_operands(tree, ctx, vars)
+        try:
+            if not isinstance(dict_val, dict):
+                raise TypeError(f"Expected dict for key lookup, got {type(dict_val).__name__}")
+            return dict_val[key_val]
+        except KeyError as e:
+            raise ValueError(f"Key {key_val} not found in dictionary") from e
         except TypeError as e:
-            raise ValueError(f"Cannot index array with {type(index_val).__name__}") from e
+            raise ValueError(f"Cannot lookup key with {type(key_val).__name__}") from e
 
 
 ###### Custom ops end (tmp) ######
+
+
 @attrs.define(frozen=True)
 class AddOperation(BinaryOperation):
     """Addition operation: left + right"""

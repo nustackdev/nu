@@ -589,7 +589,7 @@ class Expression(ABC, Generic[MicroflowT]):
                 cancellation_state.set("reason", None)
                 cancellation_state.set("timestamp", None)
 
-            logger.info(
+            logger.debug(
                 f"Cleaned up cancellation state at {context.structural_path}",
                 extra={
                     "structural_path": str(context.structural_path),

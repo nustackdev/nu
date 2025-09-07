@@ -340,6 +340,7 @@ def get_cerritos_topology(
     worker_count: int = 4,
     storage_path: str = ".db",
     app_name: str = "local_app",
+    state_type: str = "file",
 ) -> Spec:
     """
     Create a Cerritos NCC-75567 topology for simple development work.
@@ -363,7 +364,12 @@ def get_cerritos_topology(
     """
 
     # 1. Create base state with file persistence
-    state = get_file_state_spec(path=storage_path, mode="write", name=f"{app_name}_state")
+    if state_type == "lmdb":
+        state = get_lmdb_state_spec(path=storage_path, mode="write", name=f"{app_name}_state")
+    elif state_type == "file":
+        state = get_file_state_spec(path=storage_path, mode="write", name=f"{app_name}_state")
+    else:
+        raise ValueError(f"Unknown state_type: {state_type}")
 
     # 2. Create base worker app spec
     base_worker = app_spec.with_value_at("state", value=state).with_value_at("name", value="worker")

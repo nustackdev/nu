@@ -609,8 +609,11 @@ class _Path:
     def to_dec(self) -> "Query":
         return self.to_query().to_dec()
 
-    def get_arr_index(self, arr: list) -> "Query":
+    def get_arr_index(self, arr: Any) -> "Query":
         return self.to_query().get_arr_index(arr)
+
+    def get_dict_value(self, key: Any) -> "Query":
+        return self.to_query().get_dict_value(key)
 
 
 @attrs.define(frozen=True, slots=True)

@@ -19,10 +19,12 @@ from .operations import (
     AddOperation,
     AndOperation,
     AnyOperation,
+    ArrayIndexOperation,
     BoolOperation,
     ContainsOperation,
     CountOperation,
     DecimalOperation,
+    DictValueOperation,
     DivideOperation,
     EndsWithOperation,
     EqualOperation,
@@ -44,7 +46,6 @@ from .operations import (
     StartsWithOperation,
     SubtractOperation,
     SumOperation,
-    ArrayIndexOperation,
 )
 
 if TYPE_CHECKING:
@@ -559,11 +560,36 @@ class Query:
         """
         return Query(operations=DecimalOperation(operand=self.operations))
 
-    def get_arr_index(self, arr: list) -> Query:
+    def get_arr_index(self, arr: Any) -> Query:
         """
         Get array index: query.get_arr_index()
 
         Returns:
             New Query with array index operation
         """
+        from ..path import Path
+
+        if isinstance(arr, Path):
+            return Query(
+                operations=ArrayIndexOperation(left=self.operations, right=ResolveVarOperation(arr))
+            )
+        elif isinstance(arr, Query):
+            return Query(operations=ArrayIndexOperation(left=self.operations, right=arr.operations))
         return Query(operations=ArrayIndexOperation(left=self.operations, right=arr))
+
+    def get_dict_value(self, key: Any) -> Query:
+        """
+        Get dictionary value: query.get_dict_value()
+
+        Returns:
+            New Query with dictionary value operation
+        """
+        from ..path import Path
+
+        if isinstance(key, Path):
+            return Query(
+                operations=DictValueOperation(left=self.operations, right=ResolveVarOperation(key))
+            )
+        elif isinstance(key, Query):
+            return Query(operations=DictValueOperation(left=self.operations, right=key.operations))
+        return Query(operations=DictValueOperation(left=self.operations, right=key))
