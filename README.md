@@ -343,6 +343,28 @@ with DataPipeline(app_spec) as app:
 - **State-Driven Logic** - Reactive, observable, transactional by design
 - **Production Ready** - From prototype to planet-scale with the same paradigm
 
+## Project Structure
+
+```
+loomicore/          # Foundation - dependency injection and lifecycle
+  ├── resource/     # Resourc management
+  ├── attach/       # Intelligent attribute descriptors
+  └── spec/         # Declarative application specifications
+
+loomi/              # Core abstractions
+  ├── tree/         # Unified state management
+  ├── expression/   # Composable computation primitives  
+  └── microflow/    # The convergence layer
+
+loomistd/           # Standard library  
+  ├── expressions/  # Production-ready expression library
+  ├── views/        # Extended view types (Queue, etc.)
+  ├── specs/        # Deployment topology specifications
+  └── app/          # Application base classes
+
+loomix/             # High-level framework
+```
+
 ---
 
 <div align="center">
