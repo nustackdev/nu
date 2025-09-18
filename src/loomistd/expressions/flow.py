@@ -516,7 +516,7 @@ class If(Expression[SyncApp]):
         """Evaluate condition and execute expression if truthy."""
         try:
             # Use snapshot for read-only condition evaluation
-            with self.app.state.tree.snapshot() as snapshot:
+            with self.app.state.tree.transaction() as snapshot:
                 # Resolve the condition value
                 condition_value = self._resolve_value(
                     self.condition, self.app.state.tree, snapshot, context

@@ -612,8 +612,17 @@ class _Path:
     def get_arr_index(self, arr: Any) -> "Query":
         return self.to_query().get_arr_index(arr)
 
+    def get_index(self, idx: Any) -> "Query":
+        return self.to_query().get_index(idx)
+
     def get_dict_value(self, key: Any) -> "Query":
         return self.to_query().get_dict_value(key)
+
+    def list_length(self) -> "Query":
+        return self.to_query().list_length()
+
+    def list_slice(self, start: Any, end: Any) -> "Query":
+        return self.to_query().list_slice(start, end)
 
 
 @attrs.define(frozen=True, slots=True)

@@ -8,7 +8,6 @@ trees that can be evaluated against tree data.
 
 from __future__ import annotations
 
-from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 import attrs
@@ -20,6 +19,7 @@ from .operations import (
     AndOperation,
     AnyOperation,
     ArrayIndexOperation,
+    ArraySliceOperation,
     BoolOperation,
     ContainsOperation,
     CountOperation,
@@ -31,9 +31,11 @@ from .operations import (
     EveryOperation,
     GreaterEqualOperation,
     GreaterThanOperation,
+    IndexOperation,
     LengthOperation,
     LessEqualOperation,
     LessThanOperation,
+    ListLengthOperation,
     MaxOperation,
     MinOperation,
     ModuloOperation,
@@ -577,6 +579,23 @@ class Query:
             return Query(operations=ArrayIndexOperation(left=self.operations, right=arr.operations))
         return Query(operations=ArrayIndexOperation(left=self.operations, right=arr))
 
+    def get_index(self, idx: Any) -> Query:
+        """
+        Get array index: query.get_index()
+
+        Returns:
+            New Query with array index operation
+        """
+        from ..path import Path
+
+        if isinstance(idx, Path):
+            return Query(
+                operations=IndexOperation(left=self.operations, right=ResolveVarOperation(idx))
+            )
+        elif isinstance(idx, Query):
+            return Query(operations=IndexOperation(left=self.operations, right=idx.operations))
+        return Query(operations=IndexOperation(left=self.operations, right=idx))
+
     def get_dict_value(self, key: Any) -> Query:
         """
         Get dictionary value: query.get_dict_value()
@@ -593,3 +612,41 @@ class Query:
         elif isinstance(key, Query):
             return Query(operations=DictValueOperation(left=self.operations, right=key.operations))
         return Query(operations=DictValueOperation(left=self.operations, right=key))
+
+    def list_length(self) -> Query:
+        """
+        Get length of list: query.list_length()
+
+        Returns:
+            New Query with length operation
+        """
+        return Query(operations=ListLengthOperation(operand=self.operations))
+
+    def list_slice(self, start: Any, end: Any) -> Query:
+        """
+        Get slice of list: query.list_slice(start, end)
+
+        Args:
+            start: Start index (inclusive)
+            end: End index (exclusive)
+
+        Returns:
+            New Query with list slice operation
+        """
+        from ..path import Path
+
+        if isinstance(start, Path):
+            start_op = ResolveVarOperation(start)
+        elif isinstance(start, Query):
+            start_op = start.operations
+        else:
+            start_op = start
+
+        if isinstance(end, Path):
+            end_op = ResolveVarOperation(end)
+        elif isinstance(end, Query):
+            end_op = end.operations
+        else:
+            end_op = end
+
+        return Query(operations=ArraySliceOperation(left=self.operations, right=(start_op, end_op)))

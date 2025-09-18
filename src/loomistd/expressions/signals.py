@@ -76,6 +76,10 @@ class GracefulInterruption(Expression):
                 context,
                 child_expression=self.expression,
             )
+
+            # Clean up any previous state
+            self.cleanup_cancellation_state(self._child_context)
+
             # Execute the child expression
             self.expression.evaluate(self._child_context)
 

@@ -301,6 +301,32 @@ class ArrayIndexOperation(BinaryOperation):
 
 
 @attrs.define(frozen=True)
+class IndexOperation(BinaryOperation):
+    def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
+        """Get element at specified index."""
+        idx = self.s__resolve_operand(self.right, tree, ctx, vars)
+
+        with tree.at(*self.left.operand.components).with_list_view() as lv:
+            return lv.get(idx)
+
+
+@attrs.define(frozen=True)
+class ArraySliceOperation(BinaryOperation):
+    def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
+        """Get array slice from start to end indices."""
+        start = self.s__resolve_operand(self.right[0], tree, ctx, vars)
+        end = self.s__resolve_operand(self.right[1], tree, ctx, vars)
+
+        with tree.at(*self.left.operand.components).with_list_view() as lv:
+            if end is None:
+                end = lv.length() - 1
+            items = []
+            for i in range(start, end + 1):
+                items.append(lv.get(i))
+        return items
+
+
+@attrs.define(frozen=True)
 class DictValueOperation(BinaryOperation):
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Get dictionary value for specified key."""
@@ -313,6 +339,14 @@ class DictValueOperation(BinaryOperation):
             raise ValueError(f"Key {key_val} not found in dictionary") from e
         except TypeError as e:
             raise ValueError(f"Cannot lookup key with {type(key_val).__name__}") from e
+
+
+@attrs.define(frozen=True)
+class ListLengthOperation(UnaryOperation):
+    def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
+        """Get length of list."""
+        with tree.at(*self.operand.operand.components).with_list_view() as lv:
+            return lv.length()
 
 
 ###### Custom ops end (tmp) ######
