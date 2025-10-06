@@ -159,19 +159,31 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
+.vscode/
+
 .DS_Store
 
-playground/
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+tests/reports/
+
+# Profiling
+*.prof
+*.lprof
+
+# Benchmarking
+benchmark_results/
+*.benchmark
+*.benchmarks
+
+# Cython
+*.c
+*.html
+
+# Ruff
+.ruff_cache/
+
+# Misc
 _playground/
-
-# Data and log files
-.db*/
-.logs*/
-.tracing*/
-
-# Ignore secret files
-.secrets.*
-*secrets.yaml
-
-# 3rd party libraries
-repomix*

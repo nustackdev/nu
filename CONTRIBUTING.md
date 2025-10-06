@@ -1,80 +1,155 @@
-# Contributing
+# Contributing to Redwood
 
-Thank you for your interest in contributing to the project!
-This guide will help you set up the development environment and follow our coding standards.
+Thanks for your interest in contributing! This guide will help you get set up and understand the development workflow.
 
-## Linting Setup
+## Development Setup
 
-We use several tools to maintain code quality and consistency. Here's how to set them up:
+### Prerequisites
 
-### 1. Install Dependencies
+- Python 3.12+
+- [uv](https://github.com/astral-sh/uv) package manager (recommended)
 
-First, install the required linting tools:
+### Install uv
 
 ```bash
-pip install flake8 black isort pre-commit
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or use pip
+pip install uv
 ```
 
-### 2. Set Up Pre-commit Hooks
+### Clone & Setup
 
-We use pre-commit hooks to automatically check and format code before each commit. To set it up:
+```bash
+git clone https://github.com/loomi-lab/redwood.git
+cd redwood
 
-1. Install the pre-commit hooks:
+# Install dependencies and build
+make dev
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install pre-commit hooks (optional but recommended)
+pre-commit install
+```
+
+## Development Workflow
+
+### Available Make Commands
+
+```bash
+make help              # Show all available commands
+
+# Development cycle
+make build            # Build Cython extensions
+make rebuild          # Clean + build (use after code changes)
+make test             # Run all tests
+make test-fast        # Run fast tests only
+make quick            # rebuild + test-fast (rapid iteration)
+
+# Code quality
+make format           # Auto-format code with ruff
+make lint             # Check code with ruff
+make pre-commit       # Run format + lint + test-fast
+
+# Testing variants
+make test-verbose     # Run with detailed output
+make test-cov         # Run with coverage report
+make test-stats       # Run with Hypothesis statistics
+
+# Dependencies
+make lock             # Lock dependencies to requirements.lock
+make sync             # Install exact versions from lock file
+make update           # Update all dependencies
+
+# Cleanup
+make clean            # Remove build artifacts
+make clean-all        # Remove everything including venv
+```
+
+### Quick Development Loop
+
+```bash
+# 1. Make changes to .pyx or .py files
+# 2. Rebuild and test
+make quick
+
+# Or for thorough testing
+make rebuild
+make test
+```
+
+## Code Style
+
+- **Formatter:** Ruff (automatic via `make format`)
+- **Linter:** Ruff (check via `make lint`)
+- **Line length:** 100 characters
+- **Import order:** isort via Ruff
+
+Run before committing:
+
+```bash
+make pre-commit
+```
+
+## Cython Development
+
+### Building
+
+```bash
+# Standard build
+make build
+
+# Debug build (with symbols)
+make build-debug
+
+# Clean rebuild (recommended after changes)
+make rebuild
+```
+
+### Cython Tips
+
+1. **After modifying `.pyx` files, always rebuild:**
+
    ```bash
-   pre-commit install
+   make rebuild
    ```
 
-2. The pre-commit configuration is already in the `.pre-commit-config.yaml` file in the repository root.
+2. **Cython generates `.c` files** - these are gitignored and regenerated on build
 
-### 3. IDE Configuration (VS Code)
+3. **Use `nogil` where possible** for better performance:
 
-Visual Studio Code configuration is located at `.vscode/settings.json`.
-If you are using any other IDE, feel free to contribute its configuration.
+   ```cython
+   cdef inline void some_func() noexcept nogil:
+       # Pure C operations here
+   ```
 
-## Linting Guidelines
+4. **Import Python exceptions at the top:**
 
-### Flake8
+   ```cython
+   from redwood.codec.errors import DecodingError
+   ```
 
-We use Flake8 for code linting. Our configuration is in the `.flake8` file in the repository root. Key points:
+## Getting Help
 
-- Max line length is 88 characters (consistent with Black).
-- We ignore some errors that conflict with Black or are overly restrictive.
+- **Issues:** [GitHub Issues](https://github.com/loomi-lab/redwood/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/loomi-lab/redwood/discussions)
 
-To run Flake8 manually:
+## Performance Tips
 
-```bash
-flake8 .
-```
+When developing high-performance code:
 
-### Black
+1. **Use Cython for hot paths** (encoding/decoding loops)
+2. **Minimize Python object creation** in tight loops
+3. **Use typed memoryviews** for buffer operations
+4. **Profile before optimizing:**
 
-We use Black for code formatting. Our configuration is in `pyproject.toml`. To format your code:
+   ```bash
+   python -m cProfile -o profile.stats examples/basic_usage.py
+   ```
 
-```bash
-black .
-```
+## License
 
-### isort
-
-We use isort to sort imports. Its configuration is also in `pyproject.toml`. To sort imports:
-
-```bash
-isort .
-```
-
-## Workflow
-
-1. Before starting work, pull the latest changes from the main branch.
-2. Create a new branch for your feature or bug fix.
-3. Write your code, following our coding standards.
-4. Run linters and formatters (this will happen automatically if you've set up pre-commit hooks).
-5. Commit your changes. The pre-commit hooks will check your code before allowing the commit.
-6. Push your branch and create a pull request.
-
-## Tips
-
-- If the pre-commit hooks modify your files, you'll need to stage and commit those changes.
-- You can run `pre-commit run --all-files` at any time to check all files in the repository.
-- If you need to bypass the pre-commit hooks for any reason, use `git commit --no-verify`. Use this sparingly!
-
-Happy coding!
+By contributing, you agree that your contributions will be licensed under the MIT License.
