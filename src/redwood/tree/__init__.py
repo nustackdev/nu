@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .tree.backend import (
+from .backend import (
     CallbackFn,
     Key,
     KeyBase,
@@ -26,9 +26,9 @@ from .tree.backend import (
     ValueT_co,
     ValueT_contra,
 )
-from .tree.path import ExtendedPath, Path, PathResolver
-from .tree.query import Query
-from .tree.tree import (
+from .path import ExtendedPath, Path, PathResolver
+from .query import Query
+from .tree import (
     EMPTY,
     BaseNode,
     BaseView,

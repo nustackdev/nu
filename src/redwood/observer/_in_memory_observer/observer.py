@@ -4,7 +4,6 @@ import threading
 from typing import TYPE_CHECKING, Any
 
 import attrs
-
 from loomi import Attach, ResourceSpec, Spec
 from loomi.tree import ObserverProtocol, SubscriptionProtocol
 from loomistd.codec import CodecProtocol
@@ -14,6 +13,7 @@ from loomistd.service import SyncService
 from .._base import BaseObserver
 from .logger import logger
 from .types import InMemoryObserverEncodedKey, InMemoryObserverKey
+
 
 __all__ = [
     "InMemoryObserverSpec",
@@ -54,7 +54,7 @@ class InMemoryObserver(
         if depth != -1 and len(topic) - len(pattern) != depth:
             return False
 
-        return all(p == "*" or t == p for t, p in zip(topic, pattern))
+        return all(p == "*" or t == p for t, p in zip(topic, pattern, strict=False))
 
     def _notify_impl(self, topic: InMemoryObserverKey) -> None:
         with self._data_lock:

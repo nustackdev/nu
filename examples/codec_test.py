@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""
+Calculator service example using Invisibles over NetKit.
+"""
+
+from __future__ import annotations
+
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+
+
+# ============================================================================
+# Main
+# ============================================================================
+
+
+def main():
+    from rwtup.binary_codec import BinaryKeyCodec
+    from rwtup.string_codec import StringKeyCodec
+
+    string_codec = StringKeyCodec()
+    binary_codec = BinaryKeyCodec()
+
+    key = ("user", -49999, "settings")
+    encoded_str = string_codec.encode(key)
+    decoded_str = string_codec.decode(encoded_str)
+    assert decoded_str == key
+    print(f"String Codec: {key} -> {encoded_str} -> {decoded_str}")
+    encoded_bin = binary_codec.encode(key)
+    decoded_bin = binary_codec.decode(encoded_bin)
+    assert decoded_bin == key
+    print(f"Binary Codec: {key} -> {encoded_bin} -> {decoded_bin}")
+
+    # Check isomorphism
+
+    assert binary_codec.encode((11, "a")) < binary_codec.encode((11, "v"))
+    # StorageCodec(
+    #     key_codec=TupleCodec()
+    #     value_codec=BinaryCodec(),
+    # )
+
+
+def codec():
+    from redwood.codec.adapters.json import JSONCodec
+    from redwood.codec.codec import StorageCodec, StorageCodecSpec
+    from rwtup.string_codec import StringKeyCodec
+
+    with StorageCodec(StorageCodecSpec(value_codec=JSONCodec, key_codec=StringKeyCodec)) as codec:
+        key = ("users", 42, "profile")
+        value = {"name": "Alice", "age": 30}
+        encoded_key = codec.encode_key(key)
+        encoded_value = codec.encode_value(value)
+        print(f"Encoded key: {encoded_key}")
+        print(f"Encoded value: {encoded_value}")
+        assert key == codec.decode_key(encoded_key)
+        assert value == codec.decode_value(encoded_value)
+
+
+if __name__ == "__main__":
+    codec()

@@ -8,6 +8,7 @@ from ._in_memory_observer import (
     InMemoryObserverSpec,
 )
 
+
 __all__ = [
     "InMemoryObserver",
     "InMemoryObserverSpec",

@@ -10,6 +10,7 @@ from loomistd.codec import CodecProtocol
 from ._exceptions import ObserverConnectionError, ObserverValidationError
 from ._types import ObserverCallbackFn, ObserverEncodedKeyT, ObserverKeyT
 
+
 __all__ = [
     "BaseObserver",
     "Subscription",

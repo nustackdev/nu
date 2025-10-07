@@ -7,6 +7,7 @@ from loomistd.codec import CodecProtocol
 
 from ._types import ObserverEncodedKeyT, ObserverKeyT
 
+
 __all__ = [
     "ObserverServiceProtocol",
 ]

@@ -5,6 +5,7 @@ from typing import Protocol
 from .._protocols import ObserverServiceProtocol
 from .._types import Key
 
+
 __all__ = [
     "InMemoryObserverKey",
     "InMemoryObserverEncodedKey",

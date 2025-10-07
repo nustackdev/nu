@@ -10,6 +10,7 @@ from ._exceptions import (
 from ._protocols import ObserverServiceProtocol
 from ._types import Key, ObserverCallbackFn, ObserverEncodedKey, ObserverEncodedKeyT, ObserverKeyT
 
+
 __all__ = [
     "ObserverServiceProtocol",
     "BaseObserver",

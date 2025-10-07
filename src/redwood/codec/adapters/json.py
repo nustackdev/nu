@@ -4,94 +4,19 @@ import base64
 import json
 from typing import Any
 
-import attrs
-from loomi import ResourceSpec
-from loomistd.service import SyncService
-
-from .._exceptions import DecodeError, EncodeError
-from .constants import PATH_SEPARATOR
-from .types import JSONCodecEncodedKey, JSONCodecEncodedValue, JSONCodecKey, JSONCodecValue
+from .exceptions import DecodeError, EncodeError
+from .types import JSONCodecEncodedValue, JSONCodecValue
 
 
 __all__ = [
     "JSONCodec",
-    "JSONCodecSpec",
 ]
 
 
-class JSONCodec(SyncService):
+class JSONCodec:
     """String and bytes codec using JSON for values with base64 encoding for binary data."""
 
-    def encode_key(self, key: JSONCodecKey) -> JSONCodecEncodedKey:
-        """
-        Convert key to string representation.
-
-        Args:
-            key: Key to encode (tuple)
-
-        Returns:
-            String representation of key
-
-        Raises:
-            EncodeError: If key cannot be encoded
-        """
-        # Convert bytes parts to base64
-        processed_key = []
-        for part in key:
-            if isinstance(part, bytes):
-                # Encode bytes to base64 and prefix with 'b:' to identify it
-                encoded_part = f"b:{base64.b64encode(part).decode('ascii')}"
-                processed_key.append(encoded_part)
-            else:
-                # Ensure part is a string
-                str_part = str(part)
-                if PATH_SEPARATOR in str_part:
-                    raise EncodeError(
-                        f"Key part '{str_part}' contains invalid character. "
-                        f"Keys should not contain PATH_SEPARATOR: <{PATH_SEPARATOR}>"
-                    )
-                processed_key.append(str_part)
-
-        try:
-            return PATH_SEPARATOR.join(processed_key)
-        except Exception as e:
-            raise EncodeError(f"Failed to encode key: {e}")
-
-    def decode_key(self, encoded: JSONCodecEncodedKey) -> JSONCodecKey:
-        """
-        Convert string back to key tuple.
-
-        Args:
-            encoded: String to decode
-
-        Returns:
-            Original key tuple
-
-        Raises:
-            DecodeError: If key cannot be decoded
-        """
-        try:
-            parts = encoded.split(PATH_SEPARATOR)
-            decoded_parts = []
-
-            for part in parts:
-                if part.startswith("b:"):
-                    # This is a base64-encoded bytes part
-                    try:
-                        # Remove the 'b:' prefix and decode
-                        bytes_data = base64.b64decode(part[2:])
-                        decoded_parts.append(bytes_data)
-                    except Exception as e:
-                        raise DecodeError(f"Failed to decode bytes in key part: {e}")
-                else:
-                    # Regular string part
-                    decoded_parts.append(part)
-
-            return tuple(decoded_parts)
-        except Exception as e:
-            raise DecodeError(f"Failed to decode key: {e}")
-
-    def encode_value(self, value: JSONCodecValue) -> JSONCodecEncodedValue:
+    def encode(self, value: JSONCodecValue) -> JSONCodecEncodedValue:
         """
         Convert value to JSON string, handling bytes with base64 encoding.
 
@@ -109,9 +34,9 @@ class JSONCodec(SyncService):
             processed_value = self._preprocess_value_for_encoding(value)
             return json.dumps(processed_value)
         except Exception as e:
-            raise EncodeError(f"Failed to encode value: {e}")
+            raise EncodeError(f"Failed to encode value: {e}") from e
 
-    def decode_value(self, encoded: JSONCodecEncodedValue) -> JSONCodecValue:
+    def decode(self, encoded: JSONCodecEncodedValue) -> JSONCodecValue:
         """
         Convert JSON string back to value, handling bytes.
 
@@ -129,7 +54,7 @@ class JSONCodec(SyncService):
             # Post-process to convert back any bytes
             return self._postprocess_value_after_decoding(parsed_json)
         except Exception as e:
-            raise DecodeError(f"Failed to decode value: {e}")
+            raise DecodeError(f"Failed to decode value: {e}") from e
 
     def _preprocess_value_for_encoding(self, value: Any) -> Any:
         """
@@ -186,9 +111,3 @@ class JSONCodec(SyncService):
         else:
             # Return other values as is
             return value
-
-
-@attrs.define(frozen=True, slots=True, kw_only=True)
-class JSONCodecSpec(ResourceSpec):
-    name: str = "json_codec"
-    factory: type = JSONCodec

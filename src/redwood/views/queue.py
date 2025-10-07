@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import TYPE_CHECKING, Generator, cast
+from collections.abc import Generator
+from typing import TYPE_CHECKING, cast
 
 import attrs
-
 from loomi._tree.tree.registry import ComponentConstructor, ContainerConstructor
 from loomi.tree import BaseView, ContainerProtocol, ContainerStructure, TreeT, Value
+
 
 if TYPE_CHECKING:
     pass
