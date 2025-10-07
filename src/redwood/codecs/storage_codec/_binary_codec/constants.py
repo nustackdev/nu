@@ -1,0 +1,62 @@
+from __future__ import annotations
+
+from struct import Struct
+
+
+__all__ = [
+    "MAX_DEPTH",
+    "MAX_COLLECTION_SIZE",
+    "MAX_STR_SIZE",
+    "PATH_SEPARATOR",
+    "TYPE_NONE",
+    "TYPE_TRUE",
+    "TYPE_FALSE",
+    "TYPE_INT",
+    "TYPE_FLOAT",
+    "TYPE_STR",
+    "TYPE_BYTES",
+    "TYPE_LIST",
+    "TYPE_DICT",
+    "TYPE_END",
+    "TYPE_MARKERS",
+    "INT64_STRUCT",
+    "UINT32_STRUCT",
+    "DOUBLE_STRUCT",
+]
+
+# Spec constants
+MAX_DEPTH: int = 100
+MAX_COLLECTION_SIZE: int = 1_000_000
+MAX_STR_SIZE: int = 10 * 1024 * 1024  # 10MB
+PATH_SEPARATOR: bytes = b"\xfe"
+
+# Type markers as integers for faster comparison
+TYPE_NONE: int = 0
+TYPE_TRUE: int = 1
+TYPE_FALSE: int = 2
+TYPE_INT: int = 3
+TYPE_FLOAT: int = 4
+TYPE_STR: int = 5
+TYPE_BYTES: int = 6
+TYPE_LIST: int = 7
+TYPE_DICT: int = 8
+TYPE_END: int = 9
+
+# Convert to bytes only once
+TYPE_MARKERS: dict[int, bytes] = {
+    TYPE_NONE: b"\x00",
+    TYPE_TRUE: b"\x01",
+    TYPE_FALSE: b"\x02",
+    TYPE_INT: b"\x03",
+    TYPE_FLOAT: b"\x04",
+    TYPE_STR: b"\x05",
+    TYPE_BYTES: b"\x06",
+    TYPE_LIST: b"\x07",
+    TYPE_DICT: b"\x08",
+    TYPE_END: b"\x09",
+}
+
+# Pre-compiled struct formats
+INT64_STRUCT: Struct = Struct(">q")  # big-endian int64
+UINT32_STRUCT: Struct = Struct(">I")  # big-endian uint32
+DOUBLE_STRUCT: Struct = Struct(">d")  # big-endian double
