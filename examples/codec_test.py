@@ -33,21 +33,23 @@ def main():
     assert decoded_bin == key
     print(f"Binary Codec: {key} -> {encoded_bin} -> {decoded_bin}")
 
-    # Check isomorphism
-
     assert binary_codec.encode((11, "a")) < binary_codec.encode((11, "v"))
-    # StorageCodec(
-    #     key_codec=TupleCodec()
-    #     value_codec=BinaryCodec(),
-    # )
 
 
 def codec():
-    from redwood.codec.adapters.json import JSONCodec
-    from redwood.codec.codec import StorageCodec, StorageCodecSpec
-    from rwtup.string_codec import StringKeyCodec
+    from redwood.codec import BinaryCodec, BinaryCodecSpec, TextCodec, TextCodecSpec
 
-    with StorageCodec(StorageCodecSpec(value_codec=JSONCodec, key_codec=StringKeyCodec)) as codec:
+    with BinaryCodec(BinaryCodecSpec()) as codec:
+        key = ("users", 42, "profile")
+        value = {"name": "Alice", "age": 30}
+        encoded_key = codec.encode_key(key)
+        encoded_value = codec.encode_value(value)
+        print(f"Encoded key: {encoded_key}")
+        print(f"Encoded value: {encoded_value}")
+        assert key == codec.decode_key(encoded_key)
+        assert value == codec.decode_value(encoded_value)
+
+    with TextCodec(TextCodecSpec()) as codec:
         key = ("users", 42, "profile")
         value = {"name": "Alice", "age": 30}
         encoded_key = codec.encode_key(key)

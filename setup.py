@@ -15,7 +15,7 @@ def get_extensions():
     extensions = []
 
     # Find all .pyx files in the src directory
-    src_dir = Path("src/redwood")
+    src_dir = Path("src")
     if src_dir.exists():
         pyx_files = list(src_dir.glob("*.pyx"))
 

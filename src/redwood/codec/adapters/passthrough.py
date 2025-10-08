@@ -1,42 +1,49 @@
+"""Passthrough codec adapter - no transformation."""
+
 from __future__ import annotations
 
-from .types import (
-    PassthroughCodecEncodedValue,
-    PassthroughCodecValue,
-)
+from collections.abc import Callable
+from typing import Any
+
+from ..protocols import ValueCodecProtocol
+from .types import PassthroughEncoded, PassthroughSupportedValues
 
 
-__all__ = [
-    "PassthroughCodec",
-]
+__all__ = ["PassthroughCodec"]
 
 
-class PassthroughCodec:
+class PassthroughCodec(ValueCodecProtocol[PassthroughSupportedValues, PassthroughEncoded]):
     """
-    Codec that performs minimal transformation of data.
-    Suitable for in-memory storage where serialization is not needed.
+    Codec that performs no transformation on data.
+
+    This adapter is suitable for in-memory storage where serialization
+    is not required. It passes values through without any encoding or
+    decoding overhead.
+
+    Type Parameters:
+        PassthroughValue: Any Python value
+        PassthroughEncoded: Same as PassthroughValue (no transformation)
     """
 
-    def encode_value(self, value: PassthroughCodecValue) -> PassthroughCodecEncodedValue:
+    __slots__ = ("encode", "decode")
+
+    encode: Callable[[PassthroughSupportedValues], PassthroughEncoded]
+    decode: Callable[[PassthroughEncoded], PassthroughSupportedValues]
+
+    def __init__(self) -> None:
+        """Initialize passthrough codec with identity function references."""
+        self.encode: Callable[[PassthroughSupportedValues], PassthroughEncoded] = self._identity
+        self.decode: Callable[[PassthroughEncoded], PassthroughSupportedValues] = self._identity
+
+    @staticmethod
+    def _identity(value: Any) -> Any:
         """
-        Pass through value without transformation.
+        Identity function that returns the input unchanged.
 
         Args:
-            value: Value to encode
+            value: Any value to pass through
 
         Returns:
-            Same value without modification
+            The same value without modification
         """
         return value
-
-    def decode_value(self, encoded: PassthroughCodecEncodedValue) -> PassthroughCodecValue:
-        """
-        Pass through value without transformation.
-
-        Args:
-            encoded: Value to decode
-
-        Returns:
-            Same value without modification
-        """
-        return encoded

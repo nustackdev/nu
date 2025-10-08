@@ -1,113 +1,138 @@
+"""JSON codec adapter - text-based serialization with base64 encoding for bytes."""
+
 from __future__ import annotations
 
 import base64
 import json
 from typing import Any
 
+from ..protocols import ValueCodecProtocol
 from .exceptions import DecodeError, EncodeError
-from .types import JSONCodecEncodedValue, JSONCodecValue
+from .types import JSONEncoded, JSONSupportedValues
 
 
-__all__ = [
-    "JSONCodec",
-]
+__all__ = ["JSONCodec"]
 
 
-class JSONCodec:
-    """String and bytes codec using JSON for values with base64 encoding for binary data."""
+class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
+    """
+    Codec using JSON for human-readable serialization.
 
-    def encode(self, value: JSONCodecValue) -> JSONCodecEncodedValue:
+    This codec provides text-based serialization suitable for debugging,
+    configuration files, and APIs. Binary data (bytes) is encoded using
+    base64 to maintain JSON compatibility.
+
+    Type Parameters:
+        JSONValue: None, bytes, bool, int, float, str, list, or dict
+        JSONEncoded: str (JSON text format)
+
+    Features:
+        - Human-readable output
+        - Base64 encoding for binary data
+        - Recursive handling of nested structures
+        - Special markers for bytes (__bytes__) and tuples (__tuple__)
+
+    Performance:
+        The encode/decode operations perform recursive preprocessing/postprocessing
+        to handle bytes and other special types that JSON doesn't natively support.
+    """
+
+    __slots__ = ()
+
+    def encode(self, value: JSONSupportedValues) -> JSONEncoded:
         """
-        Convert value to JSON string, handling bytes with base64 encoding.
+        Encode a value to JSON string with base64 for bytes.
 
         Args:
-            value: Value to encode
+            value: The value to encode
 
         Returns:
-            JSON string representation of value
+            JSON string representation
 
         Raises:
-            EncodeError: If value cannot be encoded
+            EncodeError: If encoding fails
         """
         try:
-            # Pre-process the value to handle bytes
-            processed_value = self._preprocess_value_for_encoding(value)
-            return json.dumps(processed_value)
+            processed = self._preprocess_encode(value)
+            return json.dumps(processed)
         except Exception as e:
-            raise EncodeError(f"Failed to encode value: {e}") from e
+            msg = f"Failed to encode value: {e}"
+            raise EncodeError(msg) from e
 
-    def decode(self, encoded: JSONCodecEncodedValue) -> JSONCodecValue:
+    def decode(self, encoded: JSONEncoded) -> JSONSupportedValues:
         """
-        Convert JSON string back to value, handling bytes.
+        Decode a JSON string to value, handling bytes.
 
         Args:
-            encoded: Value to decode
+            encoded: JSON string to decode
 
         Returns:
-            Original value
+            Decoded value
 
         Raises:
-            DecodeError: If value cannot be decoded
+            DecodeError: If decoding fails
         """
         try:
-            parsed_json = json.loads(encoded)
-            # Post-process to convert back any bytes
-            return self._postprocess_value_after_decoding(parsed_json)
+            parsed = json.loads(encoded)
+            return self._postprocess_decode(parsed)
         except Exception as e:
-            raise DecodeError(f"Failed to decode value: {e}") from e
+            msg = f"Failed to decode value: {e}"
+            raise DecodeError(msg) from e
 
-    def _preprocess_value_for_encoding(self, value: Any) -> Any:
+    def _preprocess_encode(self, value: Any) -> Any:
         """
-        Recursively preprocess a value to handle bytes before JSON encoding.
+        Recursively preprocess value for JSON encoding.
+
+        Converts bytes to base64-encoded dict markers and handles
+        nested structures recursively.
 
         Args:
-            value: The value to preprocess
+            value: Value to preprocess
 
         Returns:
-            The preprocessed value with bytes converted to a special format
+            Preprocessed value safe for JSON encoding
         """
         if isinstance(value, bytes):
-            # For bytes, encode to base64 and return as a dict with a special key
             return {"__bytes__": base64.b64encode(value).decode("ascii")}
-        elif isinstance(value, dict):
-            # For dictionaries, process each key-value pair
-            return {k: self._preprocess_value_for_encoding(v) for k, v in value.items()}
-        elif isinstance(value, list):
-            # For lists, process each item
-            return [self._preprocess_value_for_encoding(item) for item in value]
-        elif isinstance(value, tuple):
-            # For tuples, convert to list, process each item, and mark as tuple
-            processed = [self._preprocess_value_for_encoding(item) for item in value]
-            return {"__tuple__": processed}
-        else:
-            # Return the value as is for JSON-serializable types
-            return value
 
-    def _postprocess_value_after_decoding(self, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {k: self._preprocess_encode(v) for k, v in value.items()}
+
+        if isinstance(value, list):
+            return [self._preprocess_encode(item) for item in value]
+
+        if isinstance(value, tuple):
+            return {"__tuple__": [self._preprocess_encode(item) for item in value]}
+
+        return value
+
+    def _postprocess_decode(self, value: Any) -> Any:
         """
-        Recursively postprocess a value after JSON decoding to restore bytes.
+        Recursively postprocess value after JSON decoding.
+
+        Restores bytes from base64 dict markers and handles
+        nested structures recursively.
 
         Args:
-            value: The value to postprocess
+            value: Value to postprocess
 
         Returns:
-            The postprocessed value with bytes restored
+            Postprocessed value with bytes and tuples restored
         """
         if isinstance(value, dict):
-            # Check if this is our special bytes format
+            # Check for special byte marker
             if len(value) == 1 and "__bytes__" in value:
                 return base64.b64decode(value["__bytes__"])
-            # Check if this is our special tuple format
-            elif len(value) == 1 and "__tuple__" in value:
-                processed_items = [
-                    self._postprocess_value_after_decoding(item) for item in value["__tuple__"]
-                ]
-                return tuple(processed_items)
-            # Otherwise process each key-value pair in the dictionary
-            return {k: self._postprocess_value_after_decoding(v) for k, v in value.items()}
-        elif isinstance(value, list):
-            # For lists, process each item
-            return [self._postprocess_value_after_decoding(item) for item in value]
-        else:
-            # Return other values as is
-            return value
+
+            # Check for special tuple marker
+            if len(value) == 1 and "__tuple__" in value:
+                items = [self._postprocess_decode(item) for item in value["__tuple__"]]
+                return tuple(items)
+
+            # Process regular dict
+            return {k: self._postprocess_decode(v) for k, v in value.items()}
+
+        if isinstance(value, list):
+            return [self._postprocess_decode(item) for item in value]
+
+        return value
