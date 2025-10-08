@@ -7,7 +7,6 @@ import json
 from typing import Any
 
 from ..protocols import ValueCodecProtocol
-from .exceptions import DecodeError, EncodeError
 from .types import JSONEncoded, JSONSupportedValues
 
 
@@ -48,16 +47,9 @@ class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
 
         Returns:
             JSON string representation
-
-        Raises:
-            EncodeError: If encoding fails
         """
-        try:
-            processed = self._preprocess_encode(value)
-            return json.dumps(processed)
-        except Exception as e:
-            msg = f"Failed to encode value: {e}"
-            raise EncodeError(msg) from e
+        processed = self._preprocess_encode(value)
+        return json.dumps(processed)
 
     def decode(self, encoded: JSONEncoded) -> JSONSupportedValues:
         """
@@ -69,15 +61,9 @@ class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
         Returns:
             Decoded value
 
-        Raises:
-            DecodeError: If decoding fails
         """
-        try:
-            parsed = json.loads(encoded)
-            return self._postprocess_decode(parsed)
-        except Exception as e:
-            msg = f"Failed to decode value: {e}"
-            raise DecodeError(msg) from e
+        parsed = json.loads(encoded)
+        return self._postprocess_decode(parsed)
 
     def _preprocess_encode(self, value: Any) -> Any:
         """
