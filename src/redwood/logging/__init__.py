@@ -5,8 +5,7 @@ INIT = False
 
 
 def init_logging() -> None:
-    """
-    Configure the main logger.
+    """Configure the main logger.
     """
     global INIT
 
@@ -23,10 +22,11 @@ def init_logging() -> None:
 
 
 def get_logger(name: str, level: int | None = None) -> logging.Logger:
-    """
-    Utility function to get a logger with the specified name.
+    """Utility function to get a logger with the specified name.
+
     Args:
         name (str): The name of the logger, typically the module name.
+
     Returns:
         logging.Logger: Configured logger instance.
     """

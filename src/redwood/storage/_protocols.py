@@ -17,8 +17,7 @@ class StorageServiceProtocol(
     StorageProtocol[ValueT],
     Protocol[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT],
 ):
-    """
-    Protocol defining state storage operations.
+    """Protocol defining state storage operations.
 
     Storage implementations handle the persistence of state data with:
     - Transactional guarantees
@@ -43,8 +42,7 @@ class StorageServiceProtocol(
     def codec(
         self,
     ) -> CodecProtocol[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT]:
-        """
-        Get codec for encoding/decoding keys and values.
+        """Get codec for encoding/decoding keys and values.
 
         Returns:
             Codec instance
@@ -52,8 +50,7 @@ class StorageServiceProtocol(
         ...
 
     def connect(self) -> None:
-        """
-        Establish connection to storage backend.
+        """Establish connection to storage backend.
 
         This method must:
         - Initialize resources
@@ -66,8 +63,7 @@ class StorageServiceProtocol(
         ...
 
     def disconnect(self) -> None:
-        """
-        Close connection to storage backend.
+        """Close connection to storage backend.
 
         This method must:
         - Clean up resources

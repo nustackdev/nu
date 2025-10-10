@@ -14,8 +14,7 @@ __all__ = [
 
 
 class ObserverServiceProtocol(ObserverProtocol, Protocol[ObserverKeyT, ObserverEncodedKeyT]):
-    """
-    Protocol defining state change observation operations.
+    """Protocol defining state change observation operations.
 
     Observer implementations handle state change notifications with:
     - Topic-based routing using StorageKeyT (tuple[str, ...])
@@ -35,14 +34,12 @@ class ObserverServiceProtocol(ObserverProtocol, Protocol[ObserverKeyT, ObserverE
 
     @property
     def codec(self) -> CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]:
-        """
-        Get codec for encoding/decoding topics.
+        """Get codec for encoding/decoding topics.
         """
         ...
 
     def connect(self) -> None:
-        """
-        Establish connection to notification system.
+        """Establish connection to notification system.
 
         Raises:
             ObserverConnectionError: If connection fails
@@ -50,8 +47,7 @@ class ObserverServiceProtocol(ObserverProtocol, Protocol[ObserverKeyT, ObserverE
         ...
 
     def disconnect(self) -> None:
-        """
-        Close connection to notification system.
+        """Close connection to notification system.
 
         Raises:
             ObserverConnectionError: If disconnection fails
@@ -60,8 +56,7 @@ class ObserverServiceProtocol(ObserverProtocol, Protocol[ObserverKeyT, ObserverE
         ...
 
     def notify(self, topic: ObserverKeyT) -> None:
-        """
-        Notify all subscribers of state change.
+        """Notify all subscribers of state change.
 
         Args:
             topic: Topic identifying changed state

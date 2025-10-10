@@ -1,5 +1,4 @@
-"""
-Exception hierarchy for the path module.
+"""Exception hierarchy for the path module.
 
 This module defines path-specific exceptions that provide clear
 error handling and debugging information for path operations.

@@ -18,8 +18,7 @@ class TransactionContextManager(TransactionContextManagerProtocol[ValueT]):
     """Context manager for storage transactions."""
 
     def __init__(self, handler: TransactionalHandlerProtocol[ValueT]):
-        """
-        Initialize transaction context manager.
+        """Initialize transaction context manager.
 
         Args:
             storage: Storage instance to manage transactions for
@@ -28,8 +27,7 @@ class TransactionContextManager(TransactionContextManagerProtocol[ValueT]):
         self.transaction: TransactionProtocol[ValueT] | None = None
 
     def __enter__(self) -> TransactionProtocol[ValueT]:
-        """
-        Start a new transaction.
+        """Start a new transaction.
 
         Returns:
             New transaction instance
@@ -41,8 +39,7 @@ class TransactionContextManager(TransactionContextManagerProtocol[ValueT]):
         return self.transaction
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """
-        Commit or rollback transaction based on context exit.
+        """Commit or rollback transaction based on context exit.
 
         Args:
             exc_type: Exception type if an error occurred

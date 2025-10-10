@@ -1,5 +1,4 @@
-"""
-rwtup (Redwood Tuple) - codec for encoding/decoding tree storage keys.
+"""rwtup (Redwood Tuple) - codec for encoding/decoding tree storage keys.
 
 This package provides codecs for converting tuple keys (containing strings and integers)
 into formats suitable for key-value storage while preserving lexicographic ordering.

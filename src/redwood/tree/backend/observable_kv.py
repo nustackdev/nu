@@ -15,8 +15,7 @@ class ObservableStorageProtocol(StorageProtocol, ObserverProtocol, Protocol):
     """Protocol for observable state storage adapters."""
 
     def __hash__(self) -> int:
-        """
-        Get hash of the storage.
+        """Get hash of the storage.
 
         Returns:
             Hash value of the storage
@@ -24,8 +23,7 @@ class ObservableStorageProtocol(StorageProtocol, ObserverProtocol, Protocol):
         ...
 
     def __eq__(self, other: Any) -> bool:
-        """
-        Check equality of the storage.
+        """Check equality of the storage.
 
         Args:
             value: Value to compare with

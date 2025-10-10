@@ -1,5 +1,4 @@
-"""
-Path implementation for tree navigation.
+"""Path implementation for tree navigation.
 
 This module provides the Path class for pure path construction and evaluation.
 Paths are immutable objects that represent navigation through the tree structure
@@ -30,8 +29,7 @@ __all__ = [
 
 @attrs.define(frozen=True, slots=True)
 class _Path:
-    """
-    Path construction and evaluation base class.
+    """Path construction and evaluation base class.
     """
 
     components: tuple[Any, ...] = attrs.field(factory=tuple)
@@ -41,8 +39,7 @@ class _Path:
     # =========================================================================
 
     def __getattr__(self, name: str) -> Self:
-        """
-        Navigate to attribute: path.users → new Path
+        """Navigate to attribute: path.users → new Path
 
         Args:
             name: Attribute name to navigate to
@@ -68,8 +65,7 @@ class _Path:
         return self.__class__(tuple(self.components) + (name,))
 
     def __getitem__(self, key: int | str) -> Self:
-        """
-        Navigate by index/key: path[0] or path["key"] → new Path
+        """Navigate by index/key: path[0] or path["key"] → new Path
 
         Args:
             key: Index (int) or key (str) to navigate to
@@ -97,8 +93,7 @@ class _Path:
     # =========================================================================
 
     def var(self, path: str, *paths: str) -> ExtendedPath:
-        """
-        Add a variable component to the path.
+        """Add a variable component to the path.
 
         This is the primary interface for adding variables to paths.
         It's explicit, type-safe, and supports nested variable paths.
@@ -128,8 +123,7 @@ class _Path:
     # =========================================================================
 
     def __str__(self) -> str:
-        """
-        String representation for display.
+        """String representation for display.
 
         Returns:
             Human-readable path string
@@ -145,8 +139,7 @@ class _Path:
         return "P." + ".".join(str(c) for c in self.components)
 
     def __repr__(self) -> str:
-        """
-        String representation for debugging.
+        """String representation for debugging.
 
         Returns:
             Detailed representation showing components
@@ -160,8 +153,7 @@ class _Path:
         return f"{self.__class__.__name__}({list(self.components)})"
 
     def __hash__(self) -> int:
-        """
-        Hash value for path (enables use in sets/dicts).
+        """Hash value for path (enables use in sets/dicts).
 
         Returns:
             Hash based on components and tree reference
@@ -173,8 +165,7 @@ class _Path:
     # =========================================================================
 
     def resolve(self, tree: Tree, ctx: Any, vars: dict[str | int, Any] = {}, /) -> Any:
-        """
-        Resolve path to its value in the tree.
+        """Resolve path to its value in the tree.
 
         This method uses the PathResolver to navigate through the tree
         structure and retrieve the actual value at the specified path.
@@ -214,8 +205,7 @@ class _Path:
         return PathResolver().resolve(path, tree, ctx)
 
     def evaluate(self, tree: Tree, ctx: Any, /) -> Any:
-        """
-        This method is an alias for resolve() to maintain compatibility
+        """This method is an alias for resolve() to maintain compatibility
         with Query evaluation patterns.
 
         Args:
@@ -232,8 +222,7 @@ class _Path:
     # =========================================================================
 
     def to_query(self) -> Query:
-        """
-        Convert path to a Query object.
+        """Convert path to a Query object.
 
         This allows using the path in query operations while maintaining
         the pure path semantics.
@@ -261,8 +250,7 @@ class _Path:
     # =========================================================================
 
     def __add__(self, other: Any) -> Query:
-        """
-        Add string or Query to path, returning a new Query.
+        """Add string or Query to path, returning a new Query.
 
         This allows chaining operations directly on the path.
 
@@ -281,8 +269,7 @@ class _Path:
         return self.to_query() + other
 
     def __sub__(self, other: Any) -> Query:
-        """
-        Subtraction: path - other
+        """Subtraction: path - other
 
         Args:
             other: Value to subtract
@@ -293,8 +280,7 @@ class _Path:
         return self.to_query() - other
 
     def __mul__(self, other: Any) -> Query:
-        """
-        Multiplication: path * other
+        """Multiplication: path * other
 
         Args:
             other: Value to multiply by
@@ -305,8 +291,7 @@ class _Path:
         return self.to_query() * other
 
     def __truediv__(self, other: Any) -> Query:
-        """
-        Division: path / other
+        """Division: path / other
 
         Args:
             other: Value to divide by
@@ -317,8 +302,7 @@ class _Path:
         return self.to_query() / other
 
     def __mod__(self, other: Any) -> Query:
-        """
-        Modulo: path % other
+        """Modulo: path % other
 
         Args:
             other: Value to get modulo with
@@ -329,8 +313,7 @@ class _Path:
         return self.to_query() % other
 
     def __pow__(self, other: Any) -> Query:
-        """
-        Power: path ** other
+        """Power: path ** other
 
         Args:
             other: Exponent value
@@ -341,8 +324,7 @@ class _Path:
         return self.to_query() ** other
 
     def __abs__(self) -> Query:
-        """
-        Absolute value: abs(path)
+        """Absolute value: abs(path)
 
         Returns:
             New Query with abs operation
@@ -354,8 +336,7 @@ class _Path:
     # =========================================================================
 
     def __gt__(self, other: Any) -> Query:
-        """
-        Greater than: path > other
+        """Greater than: path > other
 
         Args:
             other: Value to compare against
@@ -366,8 +347,7 @@ class _Path:
         return self.to_query() > other
 
     def __lt__(self, other: Any) -> Query:
-        """
-        Less than: path < other
+        """Less than: path < other
 
         Args:
             other: Value to compare against
@@ -378,8 +358,7 @@ class _Path:
         return self.to_query() < other
 
     def __ge__(self, other: Any) -> Query:
-        """
-        Greater than or equal: path >= other
+        """Greater than or equal: path >= other
 
         Args:
             other: Value to compare against
@@ -390,8 +369,7 @@ class _Path:
         return self.to_query() >= other
 
     def __le__(self, other: Any) -> Query:
-        """
-        Less than or equal: path <= other
+        """Less than or equal: path <= other
 
         Args:
             other: Value to compare against
@@ -402,8 +380,7 @@ class _Path:
         return self.to_query() <= other
 
     def __eq__(self, other: Any) -> Query:
-        """
-        Equality: path == other
+        """Equality: path == other
 
         Args:
             other: Value to compare against
@@ -418,8 +395,7 @@ class _Path:
         return self.to_query() == other
 
     def __ne__(self, other: Any) -> Query:
-        """
-        Not equal: path != other
+        """Not equal: path != other
 
         Args:
             other: Value to compare against
@@ -434,8 +410,7 @@ class _Path:
     # =========================================================================
 
     def and_(self, other: Any) -> Query:
-        """
-        Logical AND: path.and_(other)
+        """Logical AND: path.and_(other)
 
         Args:
             other: Value to AND with (can be another Query or Path)
@@ -446,8 +421,7 @@ class _Path:
         return self.to_query().and_(other)
 
     def or_(self, other: Any) -> Query:
-        """
-        Logical OR: path.or_(other)
+        """Logical OR: path.or_(other)
 
         Args:
             other: Value to OR with (can be another Query or Path)
@@ -458,8 +432,7 @@ class _Path:
         return self.to_query().or_(other)
 
     def eq(self, other: Any) -> Query:
-        """
-        Equality: path.eq(other)
+        """Equality: path.eq(other)
 
         Args:
             other: Value to compare against
@@ -470,8 +443,7 @@ class _Path:
         return self.to_query().eq(other)
 
     def not_(self) -> Query:
-        """
-        Logical NOT: ~path or not path
+        """Logical NOT: ~path or not path
 
         Returns:
             New Query with NOT operation
@@ -483,8 +455,7 @@ class _Path:
     # =========================================================================
 
     def contains(self, item: Any) -> Query:
-        """
-        Contains check: path.contains(item)
+        """Contains check: path.contains(item)
 
         Args:
             item: Item to check for containment
@@ -495,8 +466,7 @@ class _Path:
         return self.to_query().contains(item)
 
     def startswith(self, prefix: str) -> Query:
-        """
-        String starts with: path.startswith(prefix)
+        """String starts with: path.startswith(prefix)
 
         Args:
             prefix: Prefix to check for
@@ -507,8 +477,7 @@ class _Path:
         return self.to_query().startswith(prefix)
 
     def endswith(self, suffix: str) -> Query:
-        """
-        String ends with: path.endswith(suffix)
+        """String ends with: path.endswith(suffix)
 
         Args:
             suffix: Suffix to check for
@@ -523,8 +492,7 @@ class _Path:
     # =========================================================================
 
     def length(self) -> Query:
-        """
-        Length: path.length()
+        """Length: path.length()
 
         Returns:
             New Query with length operation
@@ -532,8 +500,7 @@ class _Path:
         return self.to_query().length()
 
     def max(self) -> Query:
-        """
-        Maximum: path.max()
+        """Maximum: path.max()
 
         Returns:
             New Query with max operation
@@ -541,8 +508,7 @@ class _Path:
         return self.to_query().max()
 
     def min(self) -> Query:
-        """
-        Minimum: path.min()
+        """Minimum: path.min()
 
         Returns:
             New Query with min operation
@@ -550,8 +516,7 @@ class _Path:
         return self.to_query().min()
 
     def sum(self) -> Query:
-        """
-        Sum: path.sum()
+        """Sum: path.sum()
 
         Returns:
             New Query with sum operation
@@ -559,8 +524,7 @@ class _Path:
         return self.to_query().sum()
 
     def any(self) -> Query:
-        """
-        Any: path.any() - returns True if any element is truthy
+        """Any: path.any() - returns True if any element is truthy
 
         Returns:
             New Query with any operation
@@ -568,8 +532,7 @@ class _Path:
         return self.to_query().any()
 
     def every(self) -> Query:
-        """
-        Every: path.every() - returns True if all elements are truthy
+        """Every: path.every() - returns True if all elements are truthy
 
         Returns:
             New Query with every operation
@@ -577,8 +540,7 @@ class _Path:
         return self.to_query().every()
 
     def all(self) -> Query:
-        """
-        All: path.all() - alias for every()
+        """All: path.all() - alias for every()
 
         Returns:
             New Query with every operation
@@ -586,8 +548,7 @@ class _Path:
         return self.to_query().all()
 
     def count(self) -> Query:
-        """
-        Count: path.count() - count non-None values
+        """Count: path.count() - count non-None values
 
         Returns:
             New Query with count operation
@@ -595,8 +556,7 @@ class _Path:
         return self.to_query().count()
 
     def bool(self) -> Query:
-        """
-        Boolean conversion: path.bool()
+        """Boolean conversion: path.bool()
 
         Returns:
             New Query with bool operation
@@ -628,8 +588,7 @@ class _Path:
 
 @attrs.define(frozen=True, slots=True)
 class Path(_Path):
-    """
-    Path construction and evaluation.
+    """Path construction and evaluation.
 
     Paths represent navigation through the tree structure using attribute access
     and indexing. They are immutable and can be evaluated against tree data
@@ -656,8 +615,7 @@ class Path(_Path):
     # =========================================================================
 
     def join(self, *components: PathComponent) -> Path:
-        """
-        Join additional components to create new path.
+        """Join additional components to create new path.
 
         Args:
             *components: Components to append to path
@@ -674,8 +632,7 @@ class Path(_Path):
         return Path(tuple(self.components) + tuple(components))
 
     def last_component(self) -> PathComponent | None:
-        """
-        Get the last component of the path.
+        """Get the last component of the path.
 
         Returns:
             Last component or None if path is root
@@ -689,8 +646,7 @@ class Path(_Path):
         return self.components[-1] if self.components else None
 
     def is_root(self) -> bool:
-        """
-        Check if this is the root path.
+        """Check if this is the root path.
 
         Returns:
             True if path has no components
@@ -707,8 +663,7 @@ class Path(_Path):
         return len(self.components) == 0
 
     def is_ancestor_of(self, other: Path) -> bool:
-        """
-        Check if this path is an ancestor of another path.
+        """Check if this path is an ancestor of another path.
 
         Args:
             other: Path to check against
@@ -737,8 +692,7 @@ class Path(_Path):
         return other.components[: len(self.components)] == self.components
 
     def is_descendant_of(self, other: Path) -> bool:
-        """
-        Check if this path is a descendant of another path.
+        """Check if this path is a descendant of another path.
 
         Args:
             other: Path to check against
@@ -758,8 +712,7 @@ class Path(_Path):
         return other.is_ancestor_of(self)
 
     def relative_to(self, ancestor: Path) -> Path | None:
-        """
-        Get relative path from ancestor to this path.
+        """Get relative path from ancestor to this path.
 
         Args:
             ancestor: Ancestor path
@@ -784,8 +737,7 @@ class Path(_Path):
 
 @attrs.define(frozen=True, slots=True)
 class ExtendedPath(_Path):
-    """
-    Extended path that supports variable components.
+    """Extended path that supports variable components.
 
     This class extends the basic Path functionality to include variable
     references, allowing for dynamic path resolution at runtime.
@@ -806,8 +758,7 @@ class ExtendedPath(_Path):
         return tuple(comp for comp in self.components if isinstance(comp, Variable))
 
     def substitute_variables(self, variables: dict[str | int, Any]) -> Path:
-        """
-        Create a new path with all variables resolved to their values.
+        """Create a new path with all variables resolved to their values.
 
         Args:
             variables: Dictionary containing variable values

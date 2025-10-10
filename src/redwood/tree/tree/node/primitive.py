@@ -1,5 +1,4 @@
-"""
-PrimitiveNode implementation for the state management system.
+"""PrimitiveNode implementation for the state management system.
 
 This module defines the PrimitiveNode class, which represents a leaf node
 in the state tree that contains a primitive value.
@@ -24,8 +23,7 @@ __all__ = ["PrimitiveNode"]
 
 @attrs.define(frozen=True, kw_only=True)
 class PrimitiveNode(BaseNode):
-    """
-    Primitive value node (leaf node).
+    """Primitive value node (leaf node).
 
     Primitive nodes represent the leaf values in the state tree,
     similar to files in a filesystem. They contain simple values
@@ -57,8 +55,7 @@ class PrimitiveNode(BaseNode):
         ctx: ContextType,
         path: Path,
     ) -> PrimitiveNode:
-        """
-        Create a new PrimitiveNode instance.
+        """Create a new PrimitiveNode instance.
 
         Args:
             backend: The backend storage interface
@@ -72,8 +69,7 @@ class PrimitiveNode(BaseNode):
 
     @cached_property
     def parent_container(self) -> ContainerNode:
-        """
-        Get the parent container of this node.
+        """Get the parent container of this node.
 
         Returns:
             BaseNode: Always None for primitive nodes, as they have no parent container
@@ -94,8 +90,7 @@ class PrimitiveNode(BaseNode):
 
     @cached_property
     def node_type(self) -> NodeType:
-        """
-        Get the type of this node.
+        """Get the type of this node.
 
         Returns:
             NodeType: Always PRIMITIVE for primitive nodes
@@ -103,8 +98,7 @@ class PrimitiveNode(BaseNode):
         return NodeType.PRIMITIVE
 
     def get_value(self, *, default: Value | Empty = EMPTY) -> Value | Empty:
-        """
-        Get the primitive value.
+        """Get the primitive value.
 
         Args:
             tx: Optional transaction (defaults to current transaction)
@@ -121,8 +115,7 @@ class PrimitiveNode(BaseNode):
         return default if value is EMPTY else value
 
     def set_value(self, value: Value, /) -> None:
-        """
-        Set the primitive value.
+        """Set the primitive value.
 
         Args:
             value: New value to store
@@ -136,8 +129,7 @@ class PrimitiveNode(BaseNode):
         self.parent_container.set_primitive_child(key, value)
 
     def remove_value(self) -> bool:
-        """
-        Delete the primitive value.
+        """Delete the primitive value.
 
         Returns:
             bool: True if the value was deleted, False if it did not exist or was not a primitive type

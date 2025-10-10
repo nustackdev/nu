@@ -36,8 +36,7 @@ _INT_MAX: Final[int] = 49999  # Total range: 99,999 values (fits in 5 digits)
 
 
 def _validate_key(key: Key) -> None:
-    """
-    Validate that key is a non-empty tuple of strings and/or integers.
+    """Validate that key is a non-empty tuple of strings and/or integers.
 
     Args:
         key: Key to validate
@@ -59,8 +58,7 @@ def _validate_key(key: Key) -> None:
 
 
 def _validate_string_component(value: str, index: int) -> None:
-    """
-    Validate that string component doesn't contain forbidden characters.
+    """Validate that string component doesn't contain forbidden characters.
 
     Args:
         value: String component to validate
@@ -78,8 +76,7 @@ def _validate_string_component(value: str, index: int) -> None:
 
 
 def _format_integer_with_leading_zeros(value: int, width: int) -> str:
-    """
-    Format integer with leading zeros to specified width.
+    """Format integer with leading zeros to specified width.
 
     Args:
         value: Non-negative integer to format
@@ -92,8 +89,7 @@ def _format_integer_with_leading_zeros(value: int, width: int) -> str:
 
 
 def _encode_integer(value: int) -> str:
-    """
-    Encode integer (including negatives) with ordering preservation and human readability.
+    """Encode integer (including negatives) with ordering preservation and human readability.
 
     Uses bias encoding (offset binary) to map the entire integer range to non-negative
     values that maintain numeric ordering when compared lexicographically as strings.
@@ -146,8 +142,7 @@ def _encode_integer(value: int) -> str:
 
 
 def _decode_integer(encoded: str) -> int:
-    """
-    Decode integer from encoded format back to original value.
+    """Decode integer from encoded format back to original value.
 
     Extracts the human-readable original value from the bracketed suffix.
 
@@ -188,8 +183,7 @@ def _decode_integer(encoded: str) -> int:
 
 
 class StringKeyCodec:
-    """
-    Human-readable string key codec that preserves lexicographic ordering.
+    """Human-readable string key codec that preserves lexicographic ordering.
 
     This codec encodes tuple keys into human-readable string format while
     maintaining isomorphic ordering with byte-based encodings. It's designed
@@ -254,8 +248,7 @@ class StringKeyCodec:
     """
 
     def encode(self, key: Key) -> EncodedStringKey:
-        """
-        Encode tuple key into human-readable string format.
+        """Encode tuple key into human-readable string format.
 
         The encoding preserves lexicographic ordering, meaning that if one key
         would sort before another in their natural tuple form, their encoded
@@ -304,8 +297,7 @@ class StringKeyCodec:
         return _SEPARATOR.join(parts) + _SEPARATOR
 
     def decode(self, encoded: EncodedStringKey) -> Key:
-        """
-        Decode string data back to original tuple key.
+        """Decode string data back to original tuple key.
 
         Args:
             encoded: Previously encoded string key

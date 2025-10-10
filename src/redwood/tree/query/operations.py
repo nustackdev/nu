@@ -1,5 +1,4 @@
-"""
-Operation implementations for the query system.
+"""Operation implementations for the query system.
 
 This module provides the operation hierarchy with base classes and concrete
 implementations. Operations are immutable and contain their operands, with
@@ -72,8 +71,7 @@ __all__ = [
 
 @attrs.define(frozen=True)
 class Operation(ABC):
-    """
-    Base class for all operations.
+    """Base class for all operations.
 
     Operations are immutable objects that contain their operands and provide
     a single calc() method to perform the computation. They form the nodes
@@ -84,8 +82,7 @@ class Operation(ABC):
     def s__resolve_operand(
         operand: Operation | Any, tree: Tree, ctx: Any, vars: dict[str | int, Any]
     ) -> Any:
-        """
-        Resolve an operand to its actual value.
+        """Resolve an operand to its actual value.
 
         Operands can be either nested operations (which need to be calculated)
         or literal values (which are returned as-is). This method handles
@@ -127,8 +124,7 @@ class Operation(ABC):
 
     @staticmethod
     def s__resolve_path(path: _Path, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
-        """
-        Resolve a path to its value in the tree.
+        """Resolve a path to its value in the tree.
 
         This method uses the PathResolver to navigate through the tree
         structure and retrieve the actual value at the specified path.
@@ -162,8 +158,7 @@ class Operation(ABC):
 
     @abstractmethod
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
-        """
-        Calculate and return the result of this operation.
+        """Calculate and return the result of this operation.
 
         Args:
             evaluator: QueryEvaluator for resolving nested operations
@@ -178,8 +173,7 @@ class Operation(ABC):
 
 @attrs.define(frozen=True)
 class UnaryOperation(Operation, ABC):
-    """
-    Base class for operations with a single operand.
+    """Base class for operations with a single operand.
 
     Unary operations operate on a single value, such as length(), max(), min(), etc.
     """
@@ -193,8 +187,7 @@ class UnaryOperation(Operation, ABC):
 
 @attrs.define(frozen=True)
 class BinaryOperation(Operation, ABC):
-    """
-    Base class for operations with two operands.
+    """Base class for operations with two operands.
 
     Binary operations operate on two values, such as addition, comparison, etc.
     """
@@ -213,8 +206,7 @@ class BinaryOperation(Operation, ABC):
 
 @attrs.define(frozen=True)
 class TernaryOperation(Operation, ABC):
-    """
-    Base class for operations with three operands.
+    """Base class for operations with three operands.
 
     Ternary operations operate on three values, such as conditional expressions.
     """
@@ -240,8 +232,7 @@ class TernaryOperation(Operation, ABC):
 
 @attrs.define(frozen=True)
 class ResolveVarOperation(UnaryOperation):
-    """
-    Operation that resolves a path to its value in the tree.
+    """Operation that resolves a path to its value in the tree.
 
     This operation wraps path resolution for consistency - everything in the
     query system is an operation. It uses PathResolver to get the actual value.
@@ -250,8 +241,7 @@ class ResolveVarOperation(UnaryOperation):
     operand: _Path = attrs.field()
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
-        """
-        Resolve the path to its value in the tree.
+        """Resolve the path to its value in the tree.
 
         Args:
             evaluator: QueryEvaluator instance

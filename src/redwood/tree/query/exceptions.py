@@ -1,5 +1,4 @@
-"""
-Exception hierarchy for the query system.
+"""Exception hierarchy for the query system.
 
 This module defines query-specific exceptions that provide clear
 error handling and debugging information for query operations.

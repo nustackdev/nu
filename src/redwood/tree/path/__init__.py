@@ -1,5 +1,4 @@
-"""
-Path module for tree navigation.
+"""Path module for tree navigation.
 
 This module provides pure path construction and evaluation functionality
 for navigating through tree structures. Paths are immutable objects that

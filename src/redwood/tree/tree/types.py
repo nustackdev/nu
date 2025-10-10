@@ -1,7 +1,6 @@
 # _constants.py
 
-"""
-Constants and type definitions for tree storage package.
+"""Constants and type definitions for tree storage package.
 
 This module defines the core types, protocols, and enumerations used
 throughout the package, establishing a consistent type system.
@@ -97,8 +96,7 @@ ContainerStructure = NewType("ContainerStructure", int)
 
 
 class ContainerProtocol(Flag):
-    """
-    Container protocols defining container attributes and capabilities.
+    """Container protocols defining container attributes and capabilities.
     These attributes determine how the container can be used and modified.
     """
 
@@ -124,8 +122,7 @@ class ContainerProtocol(Flag):
 
 
 class Empty:
-    """
-    Sentinel object representing an empty value, distinct from None.
+    """Sentinel object representing an empty value, distinct from None.
 
     Used for distinguishing between a legitimate None value and a
     nonexistent value in operations that may return None normally.
@@ -153,8 +150,7 @@ class Empty:
 
 
 def is_empty(value: Any) -> TypeGuard[Empty]:
-    """
-    Check if a value is the EMPTY sentinel.
+    """Check if a value is the EMPTY sentinel.
 
     Args:
         value: Value to check

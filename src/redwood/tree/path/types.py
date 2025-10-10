@@ -1,5 +1,4 @@
-"""
-Type definitions for the path module.
+"""Type definitions for the path module.
 
 This module defines the core types and protocols used in path operations,
 providing clear interfaces and type safety for path construction and evaluation.

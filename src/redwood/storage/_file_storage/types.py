@@ -47,8 +47,7 @@ class FileStorageProtocol(
     ],
     Protocol,
 ):
-    """
-    File storage protocol.
+    """File storage protocol.
     """
 
     ...

@@ -1,5 +1,4 @@
-"""
-Query module for chainable operations on paths.
+"""Query module for chainable operations on paths.
 
 This module provides an immutable query system that enables fluent, chainable
 operations on path objects through operator overloading. Queries build operation

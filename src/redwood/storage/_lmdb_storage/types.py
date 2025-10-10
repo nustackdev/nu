@@ -39,8 +39,7 @@ class LMDBStorageProtocol(
     ],
     Protocol,
 ):
-    """
-    LMDB storage protocol.
+    """LMDB storage protocol.
     """
 
     ...

@@ -1,5 +1,4 @@
-"""
-ListView implementation for the tree storage.
+"""ListView implementation for the tree storage.
 
 This module defines the ListView class, which provides a list-like
 interface for containers implementing the SEQUENCE structure.
@@ -26,8 +25,7 @@ __all__ = [
 
 @attrs.define(frozen=True, kw_only=True)
 class ListView(BaseView[TreeT]):
-    """
-    List view for containers implementing the SEQUENCE structure.
+    """List view for containers implementing the SEQUENCE structure.
 
     ListView provides a list-like interface for interacting with
     containers, allowing index-based access and modification of elements.
@@ -75,8 +73,7 @@ class ListView(BaseView[TreeT]):
     LENGTH_MARKER: ClassVar[str] = "L"
 
     def _validate_index_with_length(self, index: int) -> tuple[int, int]:
-        """
-        Validate and normalize index for regular list operations, returning both index and length.
+        """Validate and normalize index for regular list operations, returning both index and length.
 
         Optimized to read length only once from storage and return it for reuse.
         Follows Python semantics: valid range is 0 <= index < len(list)
@@ -116,8 +113,7 @@ class ListView(BaseView[TreeT]):
         return normalized_index, length
 
     def extract(self) -> Value:
-        """
-        Extract the value at the current path.
+        """Extract the value at the current path.
 
         Returns:
             List: The list representation of the container contents.
@@ -129,8 +125,7 @@ class ListView(BaseView[TreeT]):
         return [v for v in self.values()]
 
     def store(self, value: list[Value], /, *, replace: bool = False) -> None:
-        """
-        Store a list value in the container.
+        """Store a list value in the container.
 
         Args:
             value: List value to store, which can contain primitives, dicts, lists, or sets.
@@ -152,8 +147,7 @@ class ListView(BaseView[TreeT]):
             self.append(item)
 
     def length(self) -> int:
-        """
-        Get the length of the list.
+        """Get the length of the list.
 
         Returns:
             int: Number of items in the list
@@ -168,8 +162,7 @@ class ListView(BaseView[TreeT]):
         return cast(int, self.container.get_metadata(self.LENGTH_MARKER, 0))
 
     def get(self, index: int, default: Value | Empty = EMPTY) -> Value | Empty:
-        """
-        Get value at index.
+        """Get value at index.
 
         For primitive values, returns the actual value.
         For container values, returns the converted Python object (dict/list/set).
@@ -201,8 +194,7 @@ class ListView(BaseView[TreeT]):
         return self._get_child_value(key, default=default)
 
     def set(self, index: int, value: Value) -> None:
-        """
-        Set value at index.
+        """Set value at index.
 
         Args:
             index: Index to set (supports negative indexing)
@@ -228,8 +220,7 @@ class ListView(BaseView[TreeT]):
         self._set_child_value(key, value)
 
     def append(self, value: Value) -> None:
-        """
-        Append value to the end of the list.
+        """Append value to the end of the list.
 
         Args:
             value: Value to append
@@ -247,8 +238,7 @@ class ListView(BaseView[TreeT]):
         self.container.set_metadata(self.LENGTH_MARKER, length + 1)
 
     def pop(self) -> Value:
-        """
-        Remove and return the last item.
+        """Remove and return the last item.
 
         Returns:
             Value: The removed value
@@ -279,8 +269,7 @@ class ListView(BaseView[TreeT]):
         return cast(Value, last_item)
 
     def extend(self, iterable) -> None:
-        """
-        Extend list by appending elements from iterable.
+        """Extend list by appending elements from iterable.
 
         Args:
             iterable: Iterable of values to append
@@ -294,8 +283,7 @@ class ListView(BaseView[TreeT]):
             self.append(item)
 
     def clear(self) -> None:
-        """
-        Remove all items from the list.
+        """Remove all items from the list.
 
         Example:
             ```python
@@ -306,8 +294,7 @@ class ListView(BaseView[TreeT]):
         self.container.delete_metadata(self.LENGTH_MARKER)
 
     def values(self) -> Generator[Value, None, None]:
-        """
-        Get all values in the list.
+        """Get all values in the list.
 
         Returns:
             Generator[Value]: Generator of values in order
@@ -322,8 +309,7 @@ class ListView(BaseView[TreeT]):
             yield cast(Value, self.get(i))
 
     def dict_view(self, index: int) -> DictView:
-        """
-        Get a dictionary view for a nested container.
+        """Get a dictionary view for a nested container.
 
         Args:
             index: Index of the nested container
@@ -344,8 +330,7 @@ class ListView(BaseView[TreeT]):
         return self._dict_view(str(index))
 
     def list_view(self, index: int) -> ListView:
-        """
-        Get a list view for a nested container.
+        """Get a list view for a nested container.
 
         Args:
             index: Index of the nested container

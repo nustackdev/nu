@@ -23,8 +23,7 @@ class StorageProtocol(Protocol[ValueT]):
     """Protocol for state storage adapters."""
 
     def get(self, key: Key) -> ValueT:
-        """
-        Get value by key.
+        """Get value by key.
 
         Args:
             key: State key to retrieve
@@ -38,8 +37,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def set(self, key: Key, value: ValueT) -> None:
-        """
-        Set value by key.
+        """Set value by key.
 
         Args:
             key: State key to set
@@ -51,8 +49,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def delete(self, key: Key) -> None:
-        """
-        Delete value by key.
+        """Delete value by key.
 
         Args:
             key: State key to delete
@@ -63,8 +60,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def exists(self, key: Key) -> bool:
-        """
-        Check if key exists.
+        """Check if key exists.
 
         Args:
             key: State key to check
@@ -82,8 +78,7 @@ class StorageProtocol(Protocol[ValueT]):
         prefix: Key,
         depth: int = ...,
     ) -> Generator[Key, None, None]:
-        """
-        List all keys under prefix.
+        """List all keys under prefix.
 
         Args:
             prefix: Key prefix to list
@@ -99,8 +94,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def begin_transaction(self) -> TransactionProtocol[ValueT]:
-        """
-        Begin transaction.
+        """Begin transaction.
 
         Returns:
             New transaction instance
@@ -111,8 +105,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def transaction(self) -> TransactionContextManagerProtocol[ValueT]:
-        """
-        Get transaction context manager.
+        """Get transaction context manager.
 
         Returns:
             Transaction context manager
@@ -120,8 +113,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def begin_snapshot(self) -> SnapshotProtocol[ValueT]:
-        """
-        Begin snapshot.
+        """Begin snapshot.
 
         Returns:
             New snapshot instance
@@ -132,8 +124,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def snapshot(self) -> SnapshotContextManagerProtocol[ValueT]:
-        """
-        Get snapshot context manager.
+        """Get snapshot context manager.
 
         Returns:
             Snapshot context manager
@@ -141,8 +132,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def __hash__(self) -> int:
-        """
-        Get hash of the storage.
+        """Get hash of the storage.
 
         Returns:
             Hash value of the storage
@@ -150,8 +140,7 @@ class StorageProtocol(Protocol[ValueT]):
         ...
 
     def __eq__(self, other: Any) -> bool:
-        """
-        Check equality of the storage.
+        """Check equality of the storage.
 
         Args:
             value: Value to compare with
@@ -167,8 +156,7 @@ class TransactionProtocol(Protocol[ValueT]):
     """Protocol defining the interface for transactions."""
 
     def get(self, key: Key) -> ValueT:
-        """
-        Get value within transaction context.
+        """Get value within transaction context.
 
         Args:
             key: Key to retrieve
@@ -184,8 +172,7 @@ class TransactionProtocol(Protocol[ValueT]):
         ...
 
     def set(self, key: Key, value: ValueT) -> None:
-        """
-        Set value within transaction context.
+        """Set value within transaction context.
 
         Args:
             key: Key to set
@@ -198,8 +185,7 @@ class TransactionProtocol(Protocol[ValueT]):
         ...
 
     def delete(self, key: Key) -> None:
-        """
-        Delete value within transaction context.
+        """Delete value within transaction context.
 
         Args:
             key: Key to delete
@@ -211,8 +197,7 @@ class TransactionProtocol(Protocol[ValueT]):
         ...
 
     def exists(self, key: Key) -> bool:
-        """
-        Check if key exists within transaction context.
+        """Check if key exists within transaction context.
 
         Args:
             key: Key to check
@@ -231,8 +216,7 @@ class TransactionProtocol(Protocol[ValueT]):
         prefix: Key,
         depth: int = ...,
     ) -> Generator[Key, None, None]:
-        """
-        List all keys under prefix within transaction context.
+        """List all keys under prefix within transaction context.
 
         Args:
             prefix: Key prefix to list
@@ -249,8 +233,7 @@ class TransactionProtocol(Protocol[ValueT]):
         ...
 
     def commit(self) -> None:
-        """
-        Commit all changes in the transaction.
+        """Commit all changes in the transaction.
 
         Raises:
             TransactionError: If commit fails or transaction is invalid
@@ -259,8 +242,7 @@ class TransactionProtocol(Protocol[ValueT]):
         ...
 
     def rollback(self) -> None:
-        """
-        Roll back all changes in the transaction.
+        """Roll back all changes in the transaction.
 
         Raises:
             TransactionError: If rollback fails or transaction is invalid
@@ -268,8 +250,7 @@ class TransactionProtocol(Protocol[ValueT]):
         ...
 
     def __hash__(self) -> int:
-        """
-        Get hash of the transaction.
+        """Get hash of the transaction.
 
         Returns:
             Hash value of the transaction
@@ -277,8 +258,7 @@ class TransactionProtocol(Protocol[ValueT]):
         ...
 
     def __eq__(self, other: Any) -> bool:
-        """
-        Check equality of the transaction.
+        """Check equality of the transaction.
 
         Args:
             value: Value to compare with
@@ -293,8 +273,7 @@ class TransactionContextManagerProtocol(Protocol[ValueT]):
     """Context manager for storage transactions."""
 
     def __enter__(self) -> TransactionProtocol[ValueT]:
-        """
-        Start a new transaction.
+        """Start a new transaction.
 
         Returns:
             New transaction instance
@@ -310,8 +289,7 @@ class TransactionContextManagerProtocol(Protocol[ValueT]):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        """
-        Commit or rollback transaction based on context exit.
+        """Commit or rollback transaction based on context exit.
 
         Args:
             exc_type (Optional[Type[BaseException]]): Exception type if an error occurred.
@@ -341,8 +319,7 @@ class SnapshotProtocol(Protocol[ValueT_co]):
     """Protocol defining the interface for read-only snapshots."""
 
     def get(self, key: Key) -> ValueT_co:
-        """
-        Get value within snapshot context.
+        """Get value within snapshot context.
 
         Args:
             key: Key to retrieve
@@ -357,8 +334,7 @@ class SnapshotProtocol(Protocol[ValueT_co]):
         ...
 
     def exists(self, key: Key) -> bool:
-        """
-        Check if key exists within snapshot context.
+        """Check if key exists within snapshot context.
 
         Args:
             key: Key to check
@@ -376,8 +352,7 @@ class SnapshotProtocol(Protocol[ValueT_co]):
         prefix: Key,
         depth: int = ...,
     ) -> Generator[Key, None, None]:
-        """
-        List all keys under prefix within snapshot context.
+        """List all keys under prefix within snapshot context.
 
         Args:
             prefix: Key prefix to list
@@ -393,8 +368,7 @@ class SnapshotProtocol(Protocol[ValueT_co]):
         ...
 
     def close(self) -> None:
-        """
-        Close snapshot and clean up resources.
+        """Close snapshot and clean up resources.
 
         Raises:
             StorageOperationError: If cleanup fails
@@ -402,8 +376,7 @@ class SnapshotProtocol(Protocol[ValueT_co]):
         ...
 
     def __hash__(self) -> int:
-        """
-        Get hash of the snapshot.
+        """Get hash of the snapshot.
 
         Returns:
             Hash value of the snapshot
@@ -411,8 +384,7 @@ class SnapshotProtocol(Protocol[ValueT_co]):
         ...
 
     def __eq__(self, other: Any) -> bool:
-        """
-        Check equality of the snapshot.
+        """Check equality of the snapshot.
 
         Args:
             value: Value to compare with
@@ -427,8 +399,7 @@ class SnapshotContextManagerProtocol(Protocol[ValueT_co]):
     """Context manager for storage snapshots."""
 
     def __enter__(self) -> SnapshotProtocol[ValueT_co]:
-        """
-        Create a new snapshot.
+        """Create a new snapshot.
 
         Returns:
             New snapshot instance
@@ -444,8 +415,7 @@ class SnapshotContextManagerProtocol(Protocol[ValueT_co]):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        """
-        Clean up snapshot resources.
+        """Clean up snapshot resources.
 
         Args:
             exc_type: Exception type if an error occurred

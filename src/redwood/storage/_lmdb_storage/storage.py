@@ -45,8 +45,7 @@ class LMDBStorage(
     ],
     SyncService,
 ):
-    """
-    LMDB storage implementation with transaction support.
+    """LMDB storage implementation with transaction support.
 
     Uses memory-mapped files for high performance and ACID guarantees.
     """
@@ -87,7 +86,6 @@ class LMDBStorage(
 
     def _connect_impl(self) -> None:
         """Initialize LMDB environment."""
-
         # Ensure directory exists
         self.path.mkdir(parents=True, exist_ok=True)
 

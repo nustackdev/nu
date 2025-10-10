@@ -8,16 +8,14 @@ from .types import EncodedKeyT, Key
 
 
 class KeyCodec(Protocol[EncodedKeyT]):
-    """
-    Protocol for key codecs that encode/decode tuples to preserve lexicographic ordering.
+    """Protocol for key codecs that encode/decode tuples to preserve lexicographic ordering.
 
     Key codecs are responsible for converting tuple keys (containing strings and integers)
     into a format suitable for storage in key-value stores while maintaining sort order.
     """
 
     def encode(self, key: Key) -> EncodedKeyT:
-        """
-        Encode a tuple key into the target format.
+        """Encode a tuple key into the target format.
 
         Args:
             key: Tuple containing strings and/or integers
@@ -31,8 +29,7 @@ class KeyCodec(Protocol[EncodedKeyT]):
         ...
 
     def decode(self, encoded: EncodedKeyT) -> Key:
-        """
-        Decode an encoded key back to the original tuple.
+        """Decode an encoded key back to the original tuple.
 
         Args:
             encoded: Previously encoded key

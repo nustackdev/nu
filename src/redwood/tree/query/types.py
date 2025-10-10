@@ -1,5 +1,4 @@
-"""
-Type definitions and protocols for the query system.
+"""Type definitions and protocols for the query system.
 
 This module defines the core types and protocols used throughout the query
 system, providing clear interfaces and type safety for query operations.

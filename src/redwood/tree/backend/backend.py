@@ -1,5 +1,4 @@
-"""
-This module includes an observable kv storage solution with:
+"""This module includes an observable kv storage solution with:
 - Persistent storage
 - Change notifications
 - Transactional operations
@@ -45,8 +44,7 @@ class ObservableStorage(Generic[ValueT]):
         storage: StorageProtocol[ValueT],
         observer: ObserverProtocol,
     ) -> None:
-        """
-        Initialize ObservableStorage with storage and observer.
+        """Initialize ObservableStorage with storage and observer.
 
         Args:
             storage: Storage ibackend
@@ -57,8 +55,7 @@ class ObservableStorage(Generic[ValueT]):
 
     @property
     def storage(self) -> StorageProtocol[ValueT]:
-        """
-        Get storage backend.
+        """Get storage backend.
 
         Returns:
             Storage instance
@@ -67,8 +64,7 @@ class ObservableStorage(Generic[ValueT]):
 
     @property
     def observer(self) -> ObserverProtocol:
-        """
-        Get observer backend.
+        """Get observer backend.
 
         Returns:
             Observer instance
@@ -76,8 +72,7 @@ class ObservableStorage(Generic[ValueT]):
         return self._observer
 
     def get(self, key: Key) -> ValueT:
-        """
-        Get value at key.
+        """Get value at key.
 
         Args:
             key: Key to retrieve
@@ -92,8 +87,7 @@ class ObservableStorage(Generic[ValueT]):
         return self.storage.get(key)
 
     def set(self, key: Key, value: ValueT) -> None:
-        """
-        Set value at key and notify observers.
+        """Set value at key and notify observers.
 
         Args:
             key: Key to set
@@ -107,8 +101,7 @@ class ObservableStorage(Generic[ValueT]):
         self.observer.notify(key)
 
     def delete(self, key: Key) -> None:
-        """
-        Delete value at key and notify observers.
+        """Delete value at key and notify observers.
 
         Args:
             key: Key to delete
@@ -122,8 +115,7 @@ class ObservableStorage(Generic[ValueT]):
         self.observer.notify(key)
 
     def exists(self, key: Key) -> bool:
-        """
-        Check if key exists.
+        """Check if key exists.
 
         Args:
             key: Key to check
@@ -137,8 +129,7 @@ class ObservableStorage(Generic[ValueT]):
         return self.storage.exists(key)
 
     def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
-        """
-        List all keys under prefix.
+        """List all keys under prefix.
 
         Args:
             prefix: Key prefix to filter results
@@ -160,8 +151,7 @@ class ObservableStorage(Generic[ValueT]):
         callback: CallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:
-        """
-        Subscribe to changes under key prefix.
+        """Subscribe to changes under key prefix.
 
         Args:
             key: Key prefix to subscribe to
@@ -179,8 +169,7 @@ class ObservableStorage(Generic[ValueT]):
         return self.observer.subscribe(key, callback, depth)
 
     def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """
-        Unsubscribe from changes under key prefix.
+        """Unsubscribe from changes under key prefix.
 
         Args:
             subscription: Subscription to cancel
@@ -191,8 +180,7 @@ class ObservableStorage(Generic[ValueT]):
         self.observer.unsubscribe(subscription)
 
     def begin_transaction(self) -> ObservableStorageTransaction:
-        """
-        Begin a new transaction that handles both storage and notifications.
+        """Begin a new transaction that handles both storage and notifications.
 
         Returns:
             New transaction instance combining storage and notifications
@@ -204,8 +192,7 @@ class ObservableStorage(Generic[ValueT]):
         return ObservableStorageTransaction(storage_txn=storage_txn, observer=self.observer)
 
     def transaction(self) -> ObservableStorageTransactionContextManager:
-        """
-        Get transaction context manager for combined storage and notification handling.
+        """Get transaction context manager for combined storage and notification handling.
 
         Returns:
             Transaction context manager for use in with statements
@@ -222,8 +209,7 @@ class ObservableStorage(Generic[ValueT]):
         return ObservableStorageTransactionContextManager(self)
 
     def begin_snapshot(self) -> ObservableStorageSnapshot:
-        """
-        Begin a new read-only snapshot.
+        """Begin a new read-only snapshot.
 
         Returns:
             New snapshot instance for read-only operations
@@ -235,8 +221,7 @@ class ObservableStorage(Generic[ValueT]):
         return ObservableStorageSnapshot(storage_snap=storage_snap)
 
     def snapshot(self) -> ObservableStorageSnapshotContextManager:
-        """
-        Get snapshot context manager for read-only operations.
+        """Get snapshot context manager for read-only operations.
 
         Returns:
             Snapshot context manager for use in with statements
@@ -266,8 +251,7 @@ class ObservableStorage(Generic[ValueT]):
 
 @attrs.define(frozen=True)
 class ObservableStorageTransaction(Generic[ValueT]):
-    """
-    Transaction implementation that combines storage operations and notifications.
+    """Transaction implementation that combines storage operations and notifications.
     Ensures atomicity between storage changes and observer notifications.
     """
 
@@ -324,8 +308,7 @@ class ObservableStorageTransaction(Generic[ValueT]):
 class ObservableStorageTransactionContextManager(
     TransactionContextManagerProtocol, Generic[ValueT]
 ):
-    """
-    Context manager for State transactions that handles both storage and notifications.
+    """Context manager for State transactions that handles both storage and notifications.
     """
 
     _observable_kv: ObservableStorage  # Reference to parent State instance
@@ -342,8 +325,7 @@ class ObservableStorageTransactionContextManager(
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool:
-        """
-        Handle transaction completion:
+        """Handle transaction completion:
         - On success (no exception): commit changes and send notifications
         - On failure (exception): rollback changes, no notifications
         """
@@ -365,8 +347,7 @@ class ObservableStorageTransactionContextManager(
 
 @attrs.define(frozen=True)
 class ObservableStorageSnapshot(Generic[ValueT]):
-    """
-    Read-only snapshot implementation that provides consistent view of storage.
+    """Read-only snapshot implementation that provides consistent view of storage.
     No observer functionality needed since snapshots are read-only.
     """
 
@@ -400,8 +381,7 @@ class ObservableStorageSnapshot(Generic[ValueT]):
 
 @dataclass
 class ObservableStorageSnapshotContextManager(SnapshotContextManagerProtocol, Generic[ValueT]):
-    """
-    Context manager for read-only snapshots.
+    """Context manager for read-only snapshots.
     """
 
     _observable_kv: ObservableStorage  # Reference to parent backend instance

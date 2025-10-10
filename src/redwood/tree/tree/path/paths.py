@@ -1,5 +1,4 @@
-"""
-Path implementation for the state management system.
+"""Path implementation for the state management system.
 
 This module defines the Path class, which represents a hierarchical path
 in the state tree and provides methods for path manipulation and navigation.
@@ -18,8 +17,7 @@ __all__ = ["Path"]
 
 
 class Path:
-    """
-    Represents a hierarchical path in the state tree.
+    """Represents a hierarchical path in the state tree.
 
     Path handles the representation and manipulation of paths for navigating
     through the state tree. It provides methods for joining paths, getting parent
@@ -49,8 +47,7 @@ class Path:
 
     @cached_property
     def root_marker(self) -> str:
-        """
-        Get the root marker for the path.
+        """Get the root marker for the path.
 
         Returns:
             str: Root marker for the path
@@ -59,8 +56,7 @@ class Path:
 
     @cached_property
     def struct_path(self) -> StructPath:
-        """
-        Get the path for the structure component.
+        """Get the path for the structure component.
 
         Returns:
             StructPath: New path with structure root marker
@@ -69,8 +65,7 @@ class Path:
 
     @cached_property
     def meta_path(self) -> MetaPath:
-        """
-        Get the path for the metadata component.
+        """Get the path for the metadata component.
 
         Returns:
             MetaPath: New path with metadata root marker
@@ -78,8 +73,7 @@ class Path:
         return MetaPath(*self.components)
 
     def __init__(self, *components: PathComponent) -> None:
-        """
-        Initialize a path with the given components.
+        """Initialize a path with the given components.
 
         Always includes a root component as the first element.
 
@@ -90,8 +84,7 @@ class Path:
 
     @cached_property
     def components(self) -> tuple[PathComponent, ...]:
-        """
-        Get the path components as a tuple.
+        """Get the path components as a tuple.
 
         Returns:
             tuple[PathComponent, ...]: Path components including root
@@ -99,8 +92,7 @@ class Path:
         return self._components[1:]
 
     def to_tuple(self) -> tuple[PathComponent, ...]:
-        """
-        Get the path as a tuple for use with the backend.
+        """Get the path as a tuple for use with the backend.
 
         Returns:
             tuple[PathComponent, ...]: Path components as a tuple
@@ -108,8 +100,7 @@ class Path:
         return self._components
 
     def __str__(self) -> str:
-        """
-        Convert path to a string representation.
+        """Convert path to a string representation.
 
         Returns:
             str: Path as a string with '/' separator
@@ -121,8 +112,7 @@ class Path:
         return self.root_marker + "/".join(str(comp) for comp in self.components)
 
     def __repr__(self) -> str:
-        """
-        Get a detailed string representation for debugging.
+        """Get a detailed string representation for debugging.
 
         Returns:
             str: Detailed representation of the path
@@ -133,8 +123,7 @@ class Path:
         return f"{self.__class__.__name__}({', '.join(repr(c) for c in self.components)})"
 
     def __eq__(self, other: object) -> bool:
-        """
-        Check if two paths are equal.
+        """Check if two paths are equal.
 
         Args:
             other: Another object to compare with
@@ -147,8 +136,7 @@ class Path:
         return self._components == other._components
 
     def __hash__(self) -> int:
-        """
-        Get hash value for the path.
+        """Get hash value for the path.
 
         Returns:
             int: Hash based on path components
@@ -156,8 +144,7 @@ class Path:
         return hash(self._components)
 
     def __len__(self) -> int:
-        """
-        Get the number of components in the path (including root).
+        """Get the number of components in the path (including root).
 
         Returns:
             int: Number of components
@@ -165,8 +152,7 @@ class Path:
         return len(self.components)
 
     def __iter__(self) -> Iterator[PathComponent]:
-        """
-        Get an iterator over the path components.
+        """Get an iterator over the path components.
 
         Returns:
             Iterator[PathComponent]: Iterator over components
@@ -174,8 +160,7 @@ class Path:
         return iter(self.components)
 
     def join(self, *components: PathComponent) -> Self:
-        """
-        Create a new path by joining with additional components.
+        """Create a new path by joining with additional components.
 
         Args:
             *components: Additional components to append
@@ -192,8 +177,7 @@ class Path:
         return self.__class__(*self.components, *components)
 
     def parent(self) -> Self | None:
-        """
-        Get the parent path.
+        """Get the parent path.
 
         Returns:
             Path: Parent path, or None if this is the root path
@@ -211,8 +195,7 @@ class Path:
         return self.__class__(*self.components[:-1])
 
     def last(self) -> PathComponent | None:
-        """
-        Get the last component of the path.
+        """Get the last component of the path.
 
         Returns:
             PathComponent: Last component
@@ -230,8 +213,7 @@ class Path:
         return self.components[-1]
 
     def root(self) -> Self:
-        """
-        Get the root path.
+        """Get the root path.
 
         Returns:
             Path: Root path (only root component)
@@ -239,8 +221,7 @@ class Path:
         return self.__class__()
 
     def is_root(self) -> bool:
-        """
-        Check if this is the root path.
+        """Check if this is the root path.
 
         Returns:
             bool: True if this is the root path (only has root component)
@@ -254,8 +235,7 @@ class Path:
         return len(self.components) == 0
 
     def is_ancestor_of(self, other: Path) -> bool:
-        """
-        Check if this path is an ancestor of another path.
+        """Check if this path is an ancestor of another path.
 
         Args:
             other: Path to check against
@@ -280,8 +260,7 @@ class Path:
         return other._components[: len(self._components)] == self._components
 
     def is_descendant_of(self, other: Path) -> bool:
-        """
-        Check if this path is a descendant of another path.
+        """Check if this path is a descendant of another path.
 
         Args:
             other: Path to check against
@@ -302,8 +281,7 @@ class Path:
         return other.is_ancestor_of(self)
 
     def relative_to(self, ancestor: Path) -> Self | None:
-        """
-        Get the relative path from an ancestor path to this path.
+        """Get the relative path from an ancestor path to this path.
 
         Args:
             ancestor: Ancestor path
@@ -332,8 +310,7 @@ class Path:
 class StructPath(Path):
     @cached_property
     def root_marker(self) -> str:
-        """
-        Get the root marker for the path.
+        """Get the root marker for the path.
 
         Returns:
             str: Root marker for the path
@@ -344,8 +321,7 @@ class StructPath(Path):
 class MetaPath(Path):
     @cached_property
     def root_marker(self) -> str:
-        """
-        Get the root marker for the path.
+        """Get the root marker for the path.
 
         Returns:
             str: Root marker for the path

@@ -20,8 +20,7 @@ __all__ = [
 
 
 class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT]):
-    """
-    Base class for storage implementations.
+    """Base class for storage implementations.
 
     Type Parameters:
         ValueT: Type of values supported by this storage
@@ -147,8 +146,7 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
 
     @final
     def list_keys(self, prefix: StorageKeyT, depth: int = 1) -> Generator[StorageKeyT, None]:
-        """
-        List all keys under prefix within transaction context.
+        """List all keys under prefix within transaction context.
 
         Args:
             prefix: Key prefix to list
@@ -182,8 +180,7 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
 
     @final
     def transaction(self) -> TransactionContextManager[ValueT]:
-        """
-        Create a transaction context manager.
+        """Create a transaction context manager.
 
         Returns:
             Context manager for handling transactions
@@ -212,8 +209,7 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
 
     @final
     def snapshot(self) -> SnapshotContextManager[ValueT]:
-        """
-        Create a snapshot context manager.
+        """Create a snapshot context manager.
 
         Returns:
             Context manager for handling snapshots
@@ -228,8 +224,7 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
 
 
 def is_valid_key(value: StorageKeyT) -> TypeGuard[StorageKeyT]:
-    """
-    Type guard to verify if a value is a valid key.
+    """Type guard to verify if a value is a valid key.
 
     Args:
         value: Value to check

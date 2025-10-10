@@ -1,5 +1,4 @@
-"""
-Node implementation for the state management system.
+"""Node implementation for the state management system.
 
 This module defines the abstract Node class, which serves as the base
 for all nodes in the state tree.
@@ -27,8 +26,7 @@ __all__ = [
 
 @attrs.define(frozen=True, kw_only=True)
 class BaseNode(ContextualBase, ABC):
-    """
-    Abstract base class for all nodes in the state tree.
+    """Abstract base class for all nodes in the state tree.
 
     Nodes are the building blocks of the state tree and come in two types:
     - Container nodes: Can contain other nodes (like directories)
@@ -55,8 +53,7 @@ class BaseNode(ContextualBase, ABC):
     @cached_property
     @abstractmethod
     def node_type(self) -> NodeType:
-        """
-        Get the type of this node.
+        """Get the type of this node.
 
         Returns:
             NodeType: CONTAINER or PRIMITIVE

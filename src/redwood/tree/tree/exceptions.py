@@ -1,5 +1,4 @@
-"""
-Hierarchical exception system for the tree storage.
+"""Hierarchical exception system for the tree storage.
 
 This module defines a comprehensive set of exceptions that follow a clear hierarchy,
 making error handling and debugging more intuitive.

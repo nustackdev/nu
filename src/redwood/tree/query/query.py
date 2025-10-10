@@ -1,5 +1,4 @@
-"""
-Query implementation for chainable operations.
+"""Query implementation for chainable operations.
 
 This module provides the Query class that enables fluent, chainable operations
 on paths through operator overloading. Queries are immutable and build operation
@@ -63,8 +62,7 @@ __all__ = [
 
 @attrs.define(frozen=True)
 class Query:
-    """
-    Immutable query object that enables chainable operations.
+    """Immutable query object that enables chainable operations.
 
     Query objects track operations through an operation tree, where each
     operation can contain nested operations or literal values. All operations
@@ -92,8 +90,7 @@ class Query:
 
     @classmethod
     def create(cls, path: _Path) -> Query:
-        """
-        Create query from path.
+        """Create query from path.
 
         Wraps the path in a ResolveVarOperation for consistency - everything
         in the query system is an operation.
@@ -116,8 +113,7 @@ class Query:
     # =========================================================================
 
     def __repr__(self) -> str:
-        """
-        Debug representation showing operation tree.
+        """Debug representation showing operation tree.
 
         Returns:
             String representation for debugging
@@ -125,8 +121,7 @@ class Query:
         return f"Query({self.operations})"
 
     def __hash__(self) -> int:
-        """
-        Hash based on operations tree.
+        """Hash based on operations tree.
 
         Returns:
             Hash value for use in sets/dicts
@@ -138,8 +133,7 @@ class Query:
     # =========================================================================
 
     def evaluate(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
-        """
-        Evaluate the query against a tree.
+        """Evaluate the query against a tree.
 
         This resolves the operation tree and returns the final result.
         If ctx is provided, it will be used for data access.
@@ -175,8 +169,7 @@ class Query:
     # =========================================================================
 
     def __add__(self, other: Any) -> Query:
-        """
-        Addition: query + other
+        """Addition: query + other
 
         Args:
             other: Value to add (can be literal or another Query)
@@ -194,8 +187,7 @@ class Query:
         return Query(operations=AddOperation(left=self.operations, right=other_ops))
 
     def __sub__(self, other: Any) -> Query:
-        """
-        Subtraction: query - other
+        """Subtraction: query - other
 
         Args:
             other: Value to subtract
@@ -207,8 +199,7 @@ class Query:
         return Query(operations=SubtractOperation(left=self.operations, right=other_ops))
 
     def __mul__(self, other: Any) -> Query:
-        """
-        Multiplication: query * other
+        """Multiplication: query * other
 
         Args:
             other: Value to multiply by
@@ -220,8 +211,7 @@ class Query:
         return Query(operations=MultiplyOperation(left=self.operations, right=other_ops))
 
     def __truediv__(self, other: Any) -> Query:
-        """
-        Division: query / other
+        """Division: query / other
 
         Args:
             other: Value to divide by
@@ -233,8 +223,7 @@ class Query:
         return Query(operations=DivideOperation(left=self.operations, right=other_ops))
 
     def __mod__(self, other: Any) -> Query:
-        """
-        Modulo: query % other
+        """Modulo: query % other
 
         Args:
             other: Value to get modulo with
@@ -246,8 +235,7 @@ class Query:
         return Query(operations=ModuloOperation(left=self.operations, right=other_ops))
 
     def __pow__(self, other: Any) -> Query:
-        """
-        Power: query ** other
+        """Power: query ** other
 
         Args:
             other: Exponent value
@@ -259,8 +247,7 @@ class Query:
         return Query(operations=PowerOperation(left=self.operations, right=other_ops))
 
     def __abs__(self) -> Query:
-        """
-        Absolute value: abs(query)
+        """Absolute value: abs(query)
 
         Returns:
             New Query with abs operation
@@ -277,8 +264,7 @@ class Query:
     # =========================================================================
 
     def __gt__(self, other: Any) -> Query:
-        """
-        Greater than: query > other
+        """Greater than: query > other
 
         Args:
             other: Value to compare against
@@ -290,8 +276,7 @@ class Query:
         return Query(operations=GreaterThanOperation(left=self.operations, right=other_ops))
 
     def __lt__(self, other: Any) -> Query:
-        """
-        Less than: query < other
+        """Less than: query < other
 
         Args:
             other: Value to compare against
@@ -303,8 +288,7 @@ class Query:
         return Query(operations=LessThanOperation(left=self.operations, right=other_ops))
 
     def __ge__(self, other: Any) -> Query:
-        """
-        Greater than or equal: query >= other
+        """Greater than or equal: query >= other
 
         Args:
             other: Value to compare against
@@ -316,8 +300,7 @@ class Query:
         return Query(operations=GreaterEqualOperation(left=self.operations, right=other_ops))
 
     def __le__(self, other: Any) -> Query:
-        """
-        Less than or equal: query <= other
+        """Less than or equal: query <= other
 
         Args:
             other: Value to compare against
@@ -329,8 +312,7 @@ class Query:
         return Query(operations=LessEqualOperation(left=self.operations, right=other_ops))
 
     def __eq__(self, other: Any) -> Query:
-        """
-        Equality: query == other
+        """Equality: query == other
 
         Args:
             other: Value to compare against
@@ -345,8 +327,7 @@ class Query:
         return Query(operations=EqualOperation(left=self.operations, right=other_ops))
 
     def __ne__(self, other: Any) -> Query:
-        """
-        Not equal: query != other
+        """Not equal: query != other
 
         Args:
             other: Value to compare against
@@ -362,8 +343,7 @@ class Query:
     # =========================================================================
 
     def and_(self, other: Any) -> Query:
-        """
-        Logical AND: query.and_(other)
+        """Logical AND: query.and_(other)
 
         Args:
             other: Value to AND with (can be another Query)
@@ -375,8 +355,7 @@ class Query:
         return Query(operations=AndOperation(left=self.operations, right=other_ops))
 
     def or_(self, other: Any) -> Query:
-        """
-        Logical OR: query.or_(other)
+        """Logical OR: query.or_(other)
 
         Args:
             other: Value to OR with (can be another Query)
@@ -388,8 +367,7 @@ class Query:
         return Query(operations=OrOperation(left=self.operations, right=other_ops))
 
     def eq(self, other: Any) -> Query:
-        """
-        Equality: query.eq(other)
+        """Equality: query.eq(other)
 
         Args:
             other: Value to compare against
@@ -401,8 +379,7 @@ class Query:
         return Query(operations=EqualOperation(left=self.operations, right=other_ops))
 
     def not_(self) -> Query:
-        """
-        Logical NOT: ~query or not query
+        """Logical NOT: ~query or not query
 
         Returns:
             New Query with NOT operation
@@ -420,8 +397,7 @@ class Query:
     # =========================================================================
 
     def contains(self, item: Any) -> Query:
-        """
-        Explicit contains check: query.contains(item)
+        """Explicit contains check: query.contains(item)
 
         Args:
             item: Item to check for containment
@@ -432,8 +408,7 @@ class Query:
         return Query(operations=ContainsOperation(left=self.operations, right=item))
 
     def startswith(self, prefix: str) -> Query:
-        """
-        String starts with: query.startswith(prefix)
+        """String starts with: query.startswith(prefix)
 
         Args:
             prefix: Prefix to check for
@@ -444,8 +419,7 @@ class Query:
         return Query(operations=StartsWithOperation(left=self.operations, right=prefix))
 
     def endswith(self, suffix: str) -> Query:
-        """
-        String ends with: query.endswith(suffix)
+        """String ends with: query.endswith(suffix)
 
         Args:
             suffix: Suffix to check for
@@ -460,8 +434,7 @@ class Query:
     # =========================================================================
 
     def length(self) -> Query:
-        """
-        Explicit length: query.length()
+        """Explicit length: query.length()
 
         Returns:
             New Query with length operation
@@ -469,8 +442,7 @@ class Query:
         return Query(operations=LengthOperation(operand=self.operations))
 
     def max(self) -> Query:
-        """
-        Maximum: query.max()
+        """Maximum: query.max()
 
         Returns:
             New Query with max operation
@@ -478,8 +450,7 @@ class Query:
         return Query(operations=MaxOperation(operand=self.operations))
 
     def min(self) -> Query:
-        """
-        Minimum: query.min()
+        """Minimum: query.min()
 
         Returns:
             New Query with min operation
@@ -487,8 +458,7 @@ class Query:
         return Query(operations=MinOperation(operand=self.operations))
 
     def sum(self) -> Query:
-        """
-        Sum: query.sum()
+        """Sum: query.sum()
 
         Returns:
             New Query with sum operation
@@ -496,8 +466,7 @@ class Query:
         return Query(operations=SumOperation(operand=self.operations))
 
     def any(self) -> Query:
-        """
-        Any: query.any() - returns True if any element is truthy
+        """Any: query.any() - returns True if any element is truthy
 
         Returns:
             New Query with any operation
@@ -505,8 +474,7 @@ class Query:
         return Query(operations=AnyOperation(operand=self.operations))
 
     def every(self) -> Query:
-        """
-        Every: query.every() - returns True if all elements are truthy
+        """Every: query.every() - returns True if all elements are truthy
 
         Returns:
             New Query with every operation
@@ -514,8 +482,7 @@ class Query:
         return Query(operations=EveryOperation(operand=self.operations))
 
     def all(self) -> Query:
-        """
-        All: query.all() - alias for every()
+        """All: query.all() - alias for every()
 
         Returns:
             New Query with every operation
@@ -523,8 +490,7 @@ class Query:
         return Query(operations=EveryOperation(operand=self.operations))
 
     def count(self) -> Query:
-        """
-        Count: query.count() - count non-None values
+        """Count: query.count() - count non-None values
 
         Returns:
             New Query with count operation
@@ -532,8 +498,7 @@ class Query:
         return Query(operations=CountOperation(operand=self.operations))
 
     def bool(self) -> Query:
-        """
-        Boolean conversion: bool(query)
+        """Boolean conversion: bool(query)
 
         Returns:
             New Query with bool operation
@@ -550,8 +515,7 @@ class Query:
     # -------
 
     def to_dec(self) -> Query:
-        """
-        Convert query to Decimal.
+        """Convert query to Decimal.
 
         Returns:
             New Query with Decimal conversion
@@ -564,8 +528,7 @@ class Query:
         return Query(operations=DecimalOperation(operand=self.operations))
 
     def get_arr_index(self, arr: Any) -> Query:
-        """
-        Get array index: query.get_arr_index()
+        """Get array index: query.get_arr_index()
 
         Returns:
             New Query with array index operation
@@ -581,8 +544,7 @@ class Query:
         return Query(operations=ArrayIndexOperation(left=self.operations, right=arr))
 
     def get_index(self, idx: Any) -> Query:
-        """
-        Get array index: query.get_index()
+        """Get array index: query.get_index()
 
         Returns:
             New Query with array index operation
@@ -598,8 +560,7 @@ class Query:
         return Query(operations=IndexOperation(left=self.operations, right=idx))
 
     def get_dict_value(self, key: Any) -> Query:
-        """
-        Get dictionary value: query.get_dict_value()
+        """Get dictionary value: query.get_dict_value()
 
         Returns:
             New Query with dictionary value operation
@@ -615,8 +576,7 @@ class Query:
         return Query(operations=DictValueOperation(left=self.operations, right=key))
 
     def list_length(self) -> Query:
-        """
-        Get length of list: query.list_length()
+        """Get length of list: query.list_length()
 
         Returns:
             New Query with length operation
@@ -624,8 +584,7 @@ class Query:
         return Query(operations=ListLengthOperation(operand=self.operations))
 
     def list_slice(self, start: Any, end: Any) -> Query:
-        """
-        Get slice of list: query.list_slice(start, end)
+        """Get slice of list: query.list_slice(start, end)
 
         Args:
             start: Start index (inclusive)

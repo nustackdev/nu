@@ -1,5 +1,4 @@
-"""
-Context protocol definitions for unified transaction and snapshot handling.
+"""Context protocol definitions for unified transaction and snapshot handling.
 """
 
 from __future__ import annotations
@@ -20,8 +19,7 @@ __all__ = [
 
 @runtime_checkable
 class ContextProtocol(Protocol):
-    """
-    Base context protocol for read-only operations.
+    """Base context protocol for read-only operations.
 
     This protocol defines the minimal interface that both transactions
     and snapshots must support for read operations.
@@ -42,8 +40,7 @@ class ContextProtocol(Protocol):
 
 @runtime_checkable
 class TransactionContextProtocol(ContextProtocol, Protocol):
-    """
-    Transaction context protocol extending base context with write operations.
+    """Transaction context protocol extending base context with write operations.
 
     Transactions support both read and write operations and provide
     commit/rollback semantics for atomicity.
@@ -68,8 +65,7 @@ class TransactionContextProtocol(ContextProtocol, Protocol):
 
 @runtime_checkable
 class SnapshotContextProtocol(ContextProtocol, Protocol):
-    """
-    Snapshot context protocol for read-only operations with cleanup.
+    """Snapshot context protocol for read-only operations with cleanup.
 
     Snapshots provide consistent read-only views of data and require
     explicit cleanup when no longer needed.

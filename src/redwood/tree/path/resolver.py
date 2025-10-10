@@ -1,5 +1,4 @@
-"""
-Path resolution engine.
+"""Path resolution engine.
 
 This module provides the PathResolver class that handles the core responsibility
 of resolving path components against tree data. The resolver uses a three-phase
@@ -24,8 +23,7 @@ __all__ = [
 
 
 class PathResolver:
-    """
-    Core path resolution engine.
+    """Core path resolution engine.
 
     The PathResolver has one primary responsibility: given a path and tree,
     resolve the path components to retrieve the actual value from the tree.
@@ -47,8 +45,7 @@ class PathResolver:
     """
 
     def resolve(self, path: Path, tree: Tree, ctx: Any = None) -> PathResult:
-        """
-        Resolve the given path against the tree.
+        """Resolve the given path against the tree.
 
         Args:
             path: Path object containing components to navigate
@@ -70,8 +67,7 @@ class PathResolver:
         return parent_view.get(path.last_component())  # type: ignore
 
     def parent_view(self, path: Path, tree: Tree, ctx: Any, /) -> BaseView:
-        """
-        Navigate to the parent view of the target path component.
+        """Navigate to the parent view of the target path component.
         For a path 'a.b.c', this method navigates to the 'a.b' view,
         allowing subsequent operations (get/set) on the 'c' component.
         If the path is empty, raises PathNotFoundError.
@@ -125,8 +121,7 @@ class PathResolver:
             ) from e
 
     def _create_view_for_component(self, tree: Tree, component: str | int, ctx: Any) -> Any:
-        """
-        Create view based on the component type.
+        """Create view based on the component type.
 
         Args:
             tree: Tree instance to create view from
@@ -144,8 +139,7 @@ class PathResolver:
             raise PathEvaluationError(f"Unsupported component type: {type(component)}")
 
     def _navigate_view(self, view: Any, component: str | int, next_component: str | int) -> Any:
-        """
-        Navigate view to next container based on next component type.
+        """Navigate view to next container based on next component type.
 
         Args:
             view: Current view to navigate from
@@ -163,8 +157,7 @@ class PathResolver:
             raise PathEvaluationError(f"Unsupported next component type: {type(next_component)}")
 
     def _format_path_components(self, components: tuple) -> str:
-        """
-        Format path components for error messages.
+        """Format path components for error messages.
 
         Args:
             components: Tuple of path components

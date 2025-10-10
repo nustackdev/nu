@@ -1,5 +1,4 @@
-"""
-DictView implementation for the tree storage.
+"""DictView implementation for the tree storage.
 
 This module defines the DictView class, which provides a dictionary-like
 interface for containers implementing the MAPPING structure.
@@ -27,8 +26,7 @@ __all__ = [
 
 @attrs.define(frozen=True, kw_only=True)
 class DictView(BaseView[TreeT]):
-    """
-    Dictionary view for containers implementing the MAPPING structure.
+    """Dictionary view for containers implementing the MAPPING structure.
 
     DictView provides a dictionary-like interface for interacting with
     containers, allowing key-based access and modification of child nodes.
@@ -66,8 +64,7 @@ class DictView(BaseView[TreeT]):
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
     def extract(self):
-        """
-        Extract the value at the current path.
+        """Extract the value at the current path.
 
         Returns:
             Any: The value at the current path, which can be a primitive,
@@ -77,12 +74,10 @@ class DictView(BaseView[TreeT]):
             KeyError: If the key does not exist in the container.
             ContainerProtocolError: If the container is not a mapping container.
         """
-
         return {k: v for k, v in self.items()}
 
     def store(self, value: dict[PathComponent, Value], /, *, replace: bool = False) -> None:
-        """
-        Store a value at the specified key.
+        """Store a value at the specified key.
 
         Args:
             value: Value to store, which can be a primitive, dict, list, or set.
@@ -105,8 +100,7 @@ class DictView(BaseView[TreeT]):
             self.set(k, v)
 
     def get(self, key: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
-        """
-        Get value at key.
+        """Get value at key.
 
         For primitive values, returns the actual value.
         For container values, returns the converted Python object (dict/list/set).
@@ -130,12 +124,10 @@ class DictView(BaseView[TreeT]):
             status = users.get("alice", {}).get("status", "active")
             ```
         """
-
         return self._get_child_value(key, default=default)
 
     def set(self, key: PathComponent, value: Value) -> None:
-        """
-        Set value at key.
+        """Set value at key.
 
         Creates appropriate node type based on the value.
         Primitive values are stored directly.
@@ -165,8 +157,7 @@ class DictView(BaseView[TreeT]):
         self._set_child_value(key, value)
 
     def has(self, key: PathComponent) -> bool:
-        """
-        Check if key exists in the container.
+        """Check if key exists in the container.
 
         Args:
             key: Key to check
@@ -183,8 +174,7 @@ class DictView(BaseView[TreeT]):
         return self.container.has_child(key) != ChildType.NOT_FOUND
 
     def remove(self, key: PathComponent) -> bool:
-        """
-        Remove key from the container.
+        """Remove key from the container.
 
         Args:
             key: Key to remove
@@ -200,8 +190,7 @@ class DictView(BaseView[TreeT]):
         return self.container.remove_child(key)
 
     def clear(self) -> int:
-        """
-        Remove all items from the container.
+        """Remove all items from the container.
 
         Returns:
             int: Number of items removed
@@ -214,8 +203,7 @@ class DictView(BaseView[TreeT]):
         return self.container.clear_children()
 
     def keys(self) -> Generator[PathComponent, None, None]:
-        """
-        Get all keys in the container.
+        """Get all keys in the container.
 
         Returns:
             List[PathComponent]: List of keys
@@ -229,8 +217,7 @@ class DictView(BaseView[TreeT]):
         yield from self.container.keys()
 
     def values(self) -> Generator[Value, None, None]:
-        """
-        Get all values in the container.
+        """Get all values in the container.
 
         Returns:
             List[Any]: List of values (primitives or view objects)
@@ -245,8 +232,7 @@ class DictView(BaseView[TreeT]):
             yield cast(Value, self.get(key))
 
     def items(self) -> Generator[tuple[PathComponent, Value]]:
-        """
-        Get all key-value pairs in the container.
+        """Get all key-value pairs in the container.
 
         Returns:
             List[Tuple[PathComponent, Any]]: List of (key, value) tuples
@@ -262,8 +248,7 @@ class DictView(BaseView[TreeT]):
             yield (key, value)
 
     def dict_view(self, key: PathComponent) -> DictView:
-        """
-        Get a dictionary view for a nested container.
+        """Get a dictionary view for a nested container.
 
         Args:
             key: Key of the nested container
@@ -284,8 +269,7 @@ class DictView(BaseView[TreeT]):
         return self._dict_view(key)
 
     def list_view(self, key: PathComponent) -> ListView:
-        """
-        Get a list view for a nested container.
+        """Get a list view for a nested container.
 
         Args:
             key: Key of the nested container

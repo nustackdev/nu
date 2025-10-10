@@ -20,8 +20,7 @@ class ObserverProtocol(Protocol):
         callback: CallbackFn,
         depth: int = ...,
     ) -> SubscriptionProtocol:
-        """
-        Subscribe to changes under key prefix.
+        """Subscribe to changes under key prefix.
 
         Args:
             key: Key prefix to subscribe to
@@ -38,8 +37,7 @@ class ObserverProtocol(Protocol):
         ...
 
     def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """
-        Unsubscribe from changes under key prefix.
+        """Unsubscribe from changes under key prefix.
 
         Args:
             subscription: Subscription to cancel
@@ -50,8 +48,7 @@ class ObserverProtocol(Protocol):
         ...
 
     def notify(self, topic: Key) -> None:
-        """
-        Notify observers of a change at the specified topic.
+        """Notify observers of a change at the specified topic.
 
         Args:
             topic: Topic identifying changed state
@@ -61,8 +58,7 @@ class ObserverProtocol(Protocol):
         """
 
     def __hash__(self) -> int:
-        """
-        Get hash of the observer.
+        """Get hash of the observer.
 
         Returns:
             Hash value of the observer
@@ -70,8 +66,7 @@ class ObserverProtocol(Protocol):
         ...
 
     def __eq__(self, other: Any) -> bool:
-        """
-        Check equality of the observer.
+        """Check equality of the observer.
 
         Args:
             value: Value to compare with
@@ -83,8 +78,7 @@ class ObserverProtocol(Protocol):
 
 
 class SubscriptionProtocol(Protocol):
-    """
-    Represents a subscription to a topic pattern.
+    """Represents a subscription to a topic pattern.
 
     Attributes:
         topic_pattern:
@@ -100,21 +94,18 @@ class SubscriptionProtocol(Protocol):
 
     @property
     def topic_pattern(self) -> Key:
-        """
-        Get topic pattern for subscription.
+        """Get topic pattern for subscription.
         """
         ...
 
     @property
     def callback(self) -> CallbackFn:
-        """
-        Get callback for subscription.
+        """Get callback for subscription.
         """
         ...
 
     @property
     def depth(self) -> int:
-        """
-        Get depth for subscription.
+        """Get depth for subscription.
         """
         ...

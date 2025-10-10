@@ -1,5 +1,4 @@
-"""
-ContainerNode implementation for the tree storage system.
+"""ContainerNode implementation for the tree storage system.
 
 This module implements ContainerNode following a filesystem mental model,
 providing low-level storage operations without handling recursion or complex logic.
@@ -265,8 +264,7 @@ class ContainerNode(BaseNode):
         path: Path,
         ensure_exists: bool = True,
     ) -> ContainerNode:
-        """
-        Create a new ContainerNode instance with the given parameters.
+        """Create a new ContainerNode instance with the given parameters.
 
         This method initializes a ContainerNode with the specified backend,
         transaction, structure, protocol, and path. It gathers raw information
@@ -1207,8 +1205,7 @@ class ContainerNode(BaseNode):
         key: PathComponent,
         /,
     ) -> ChildInfo:
-        """
-        Get child information.
+        """Get child information.
 
         This method retrieves child value and type.
 
@@ -1352,8 +1349,7 @@ class ContainerNode(BaseNode):
             pass  # Container might be empty
 
     def _delete_subtree(self, path: Path) -> bool:
-        """
-        Recursively delete a container and all its descendants.
+        """Recursively delete a container and all its descendants.
 
         Args:
             path: Root path to delete
@@ -1393,8 +1389,7 @@ class ContainerNode(BaseNode):
     # =========================================================================
 
     def get_metadata(self, key: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
-        """
-        Get metadata value (e.g., __length__ for ListView).
+        """Get metadata value (e.g., __length__ for ListView).
 
         Metadata is stored in the metadata path namespace.
 
@@ -1417,8 +1412,7 @@ class ContainerNode(BaseNode):
             return default
 
     def set_metadata(self, key: PathComponent, value: Value) -> None:
-        """
-        Set metadata value (e.g., __length__ for ListView).
+        """Set metadata value (e.g., __length__ for ListView).
 
         Args:
             key: Metadata key
@@ -1441,8 +1435,7 @@ class ContainerNode(BaseNode):
         self.get_transaction_context().set(metadata_path.to_tuple(), value)
 
     def has_metadata(self, key: PathComponent) -> bool:
-        """
-        Check if metadata key exists.
+        """Check if metadata key exists.
 
         Args:
             key: Metadata key to check
@@ -1460,8 +1453,7 @@ class ContainerNode(BaseNode):
         return self.get_ensured_context().exists(metadata_path.to_tuple())
 
     def delete_metadata(self, key: PathComponent) -> bool:
-        """
-        Delete metadata key.
+        """Delete metadata key.
 
         Args:
             key: Metadata key to delete

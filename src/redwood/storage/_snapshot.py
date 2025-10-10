@@ -14,8 +14,7 @@ class SnapshotContextManager(SnapshotContextManagerProtocol[ValueT]):
     """Context manager for storage snapshots."""
 
     def __init__(self, handler: SnapshotHandlerProtocol[ValueT]):
-        """
-        Initialize snapshot context manager.
+        """Initialize snapshot context manager.
 
         Args:
             handler: Storage instance to manage snapshots for
@@ -24,8 +23,7 @@ class SnapshotContextManager(SnapshotContextManagerProtocol[ValueT]):
         self.snapshot: SnapshotProtocol[ValueT] | None = None
 
     def __enter__(self) -> SnapshotProtocol[ValueT]:
-        """
-        Create a new snapshot.
+        """Create a new snapshot.
 
         Returns:
             New snapshot instance
@@ -37,8 +35,7 @@ class SnapshotContextManager(SnapshotContextManagerProtocol[ValueT]):
         return self.snapshot
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """
-        Clean up snapshot resources.
+        """Clean up snapshot resources.
 
         Args:
             exc_type: Exception type if an error occurred

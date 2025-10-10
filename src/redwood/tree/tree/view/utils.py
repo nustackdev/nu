@@ -15,8 +15,7 @@ __all__ = [
 def create_view_context_manager(
     view_factory: type[ContextualT], *, snapshot: bool = False, **kwargs
 ) -> AbstractContextManager[ContextualT]:
-    """
-    Create a unified context manager for view objects.
+    """Create a unified context manager for view objects.
 
     Args:
         view_factory: Function that creates a view object

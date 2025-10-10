@@ -10,8 +10,7 @@ class KeyCodecError(Exception):
 
 
 class EncodeError(KeyCodecError):
-    """
-    Raised when encoding a key fails.
+    """Raised when encoding a key fails.
 
     This can occur due to:
     - Invalid key structure (empty tuple, wrong types)
@@ -23,8 +22,7 @@ class EncodeError(KeyCodecError):
 
 
 class DecodeError(KeyCodecError):
-    """
-    Raised when decoding an encoded key fails.
+    """Raised when decoding an encoded key fails.
 
     This can occur due to:
     - Corrupted or invalid encoded data
@@ -36,8 +34,7 @@ class DecodeError(KeyCodecError):
 
 
 class IntegerOverflowError(EncodeError):
-    """
-    Raised when an integer value exceeds the codec's supported range.
+    """Raised when an integer value exceeds the codec's supported range.
 
     Different codecs may have different integer limits:
     - Binary codec: int64 range (-2^63 to 2^63-1)
@@ -52,8 +49,7 @@ class IntegerOverflowError(EncodeError):
 
 
 class StringConstraintError(EncodeError):
-    """
-    Raised when a string violates codec-specific constraints.
+    """Raised when a string violates codec-specific constraints.
 
     This can occur due to:
     - Empty strings (not allowed in keys)

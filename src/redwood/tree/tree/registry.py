@@ -1,6 +1,5 @@
 # tree/registry.py
-"""
-View registry for mapping between structures, container types, component types, and view classes.
+"""View registry for mapping between structures, container types, component types, and view classes.
 
 This module provides the ViewRegistry class that manages bidirectional mappings
 between container structure IDs, container types, navigation component types,
@@ -33,8 +32,7 @@ __all__ = [
 
 
 class ContainerConstructor(ABC):
-    """
-    Base class for container types that views can handle.
+    """Base class for container types that views can handle.
 
     Container types represent what kind of data structure a view creates/manages.
     Views register with container types to indicate what they can store.
@@ -59,8 +57,7 @@ ContainerType: TypeAlias = type[dict | list | tuple | ContainerConstructor]
 
 
 class ComponentConstructor(ABC):
-    """
-    Base class for component types that can be used in navigation.
+    """Base class for component types that can be used in navigation.
 
     Component types represent what kind of keys/navigation elements a view can handle.
     Views register with component types to indicate what navigation they support.
@@ -86,8 +83,7 @@ ComponentType: TypeAlias = type[int | str | ComponentConstructor]
 
 
 class ViewRegistry:
-    """
-    Central registry for view mappings.
+    """Central registry for view mappings.
 
     Manages mappings between:
     - Structure IDs ↔ View Classes (for resolving existing containers)
@@ -132,8 +128,7 @@ class ViewRegistry:
         container_type: ContainerType,
         component_types: ComponentType | list[ComponentType],
     ) -> None:
-        """
-        Register a view with its structure ID, container type, and supported component types.
+        """Register a view with its structure ID, container type, and supported component types.
 
         Args:
             view_class: The view class to register
@@ -233,8 +228,7 @@ class ViewRegistry:
             tuple[int, ContainerType, ComponentType | list[ComponentType]],
         ],
     ) -> None:
-        """
-        Batch register multiple views.
+        """Batch register multiple views.
 
         Args:
             mappings: Dict of {view_class: (structure_id, container_type, component_types)}
@@ -257,8 +251,7 @@ class ViewRegistry:
     # =========================================================================
 
     def get_view_for_structure(self, structure_id: int) -> type[BaseView]:
-        """
-        Get view class for structure ID.
+        """Get view class for structure ID.
 
         Used when resolving existing containers from storage.
 
@@ -277,8 +270,7 @@ class ViewRegistry:
         return view_class
 
     def get_view_for_container_type(self, container_type: ContainerType) -> type[BaseView]:
-        """
-        Get view class for container type.
+        """Get view class for container type.
 
         Used when creating new containers from values.
 
@@ -297,8 +289,7 @@ class ViewRegistry:
         return view_class
 
     def get_views_for_component_type(self, component_type: ComponentType) -> list[type[BaseView]]:
-        """
-        Get view classes that can handle a component type.
+        """Get view classes that can handle a component type.
 
         Used during navigation to find views that can handle specific key types.
         Returns list because multiple views might handle the same component type.
@@ -318,8 +309,7 @@ class ViewRegistry:
         return view_classes.copy()  # Return copy to prevent external modification
 
     def get_primary_view_for_component_type(self, component_type: ComponentType) -> type[BaseView]:
-        """
-        Get the primary (first registered) view for a component type.
+        """Get the primary (first registered) view for a component type.
 
         Convenience method for when you need just one view for a component type.
 

@@ -1,5 +1,4 @@
-"""
-Path variable storage and interface design.
+"""Path variable storage and interface design.
 
 This module focuses on how to store variables in path data and provide
 a clean interface for variable creation and usage.
@@ -17,8 +16,7 @@ __all__ = ["Variable"]
 
 @attrs.define(frozen=True, slots=True)
 class Variable:
-    """
-    Represents a variable reference in a path that needs runtime resolution.
+    """Represents a variable reference in a path that needs runtime resolution.
 
     Variables can be:
     - Simple: Variable("user_id") -> resolves to variables["user_id"]
@@ -31,8 +29,7 @@ class Variable:
     path: tuple[str | int, ...] = attrs.field()
 
     def resolve(self, vars: dict[str | int, Any]) -> Any:
-        """
-        Resolve the variable path against the provided vars dictionary.
+        """Resolve the variable path against the provided vars dictionary.
 
         Args:
             vars: Dictionary containing variable values

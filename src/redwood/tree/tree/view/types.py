@@ -1,6 +1,5 @@
 # tree/view/protocols.py
-"""
-Protocols for view data access.
+"""Protocols for view data access.
 
 This module defines the core protocol for container data access that all views must implement.
 """
@@ -17,8 +16,7 @@ __all__ = [
 
 @runtime_checkable
 class AccessibleViewProtocol(Protocol):
-    """
-    Protocol defining the interface for container data access.
+    """Protocol defining the interface for container data access.
 
     All views must implement this protocol to provide consistent data access patterns.
     The protocol defines two levels of access:
@@ -27,8 +25,7 @@ class AccessibleViewProtocol(Protocol):
     """
 
     def get(self, key: Any, *args, **kwargs) -> Any:
-        """
-        Get value by key.
+        """Get value by key.
 
         Args:
             key: Key to retrieve (can be any type - str, int, custom objects)
@@ -55,8 +52,7 @@ class AccessibleViewProtocol(Protocol):
         ...
 
     def set(self, key: Any, value: Any, *args, **kwargs) -> None:
-        """
-        Set value by key.
+        """Set value by key.
 
         Args:
             key: Key to set (can be any type - str, int, custom objects)
@@ -82,8 +78,7 @@ class AccessibleViewProtocol(Protocol):
         ...
 
     def extract(self) -> Any:
-        """
-        Extract entire container contents as a single value.
+        """Extract entire container contents as a single value.
 
         Returns the complete data structure that this view manages,
         typically as a Python native type (dict, list, etc.) or
@@ -107,8 +102,7 @@ class AccessibleViewProtocol(Protocol):
         ...
 
     def store(self, value: Any, /, *, replace: bool = False) -> None:
-        """
-        Store entire container contents from a single value.
+        """Store entire container contents from a single value.
 
         Accepts a complete data structure and stores it in the container.
         The view determines how to interpret and store the value.

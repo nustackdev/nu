@@ -1,5 +1,4 @@
-"""
-Context management for tree operations.
+"""Context management for tree operations.
 
 This module provides unified context handling for both transactions and snapshots,
 replacing the previous transaction-only approach with a more flexible system.

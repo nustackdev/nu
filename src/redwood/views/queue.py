@@ -1,5 +1,4 @@
-"""
-QueueView implementation for the tree storage.
+"""QueueView implementation for the tree storage.
 
 This module defines the QueueView class, which provides a queue-like
 interface for containers implementing the QUEUE structure with FIFO semantics.
@@ -29,8 +28,7 @@ __all__ = [
 
 @attrs.define(frozen=True, kw_only=True)
 class QueueView(BaseView[TreeT]):
-    """
-    Queue view for containers implementing the QUEUE structure.
+    """Queue view for containers implementing the QUEUE structure.
 
     QueueView provides a queue-like interface for interacting with
     containers, allowing FIFO (First In, First Out) operations.
@@ -75,8 +73,7 @@ class QueueView(BaseView[TreeT]):
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
     def _generate_key(self) -> str:
-        """
-        Generate a unique timestamp-based key for queue ordering.
+        """Generate a unique timestamp-based key for queue ordering.
 
         Uses Unix nanosecond timestamp + UUID for global uniqueness and ordering.
         Keys naturally sort in FIFO order due to timestamp prefix.
@@ -92,8 +89,7 @@ class QueueView(BaseView[TreeT]):
         return f"{timestamp}_{unique_id}"
 
     def extract(self) -> list[Value]:
-        """
-        Extract all queue contents as a list in FIFO order.
+        """Extract all queue contents as a list in FIFO order.
 
         Returns:
             list[Value]: All queue items from front to back
@@ -107,8 +103,7 @@ class QueueView(BaseView[TreeT]):
         return [cast(Value, self._get_child_value(key)) for key in self.container.keys()]
 
     def store(self, values, /, *, replace: bool = False) -> None:
-        """
-        Store iterable values in the queue.
+        """Store iterable values in the queue.
 
         Args:
             values: Iterable of values to enqueue
@@ -135,8 +130,7 @@ class QueueView(BaseView[TreeT]):
             self.enqueue(item)
 
     def enqueue(self, value: Value) -> None:
-        """
-        Add value to the back of the queue.
+        """Add value to the back of the queue.
 
         Args:
             value: Value to add to queue
@@ -151,8 +145,7 @@ class QueueView(BaseView[TreeT]):
         self._set_child_value(key, value)
 
     def dequeue(self) -> Value:
-        """
-        Remove and return the front item from the queue.
+        """Remove and return the front item from the queue.
 
         Returns:
             Value: The front item that was removed
@@ -180,8 +173,7 @@ class QueueView(BaseView[TreeT]):
         return cast(Value, value)
 
     def peek(self) -> Value:
-        """
-        Look at the front item without removing it.
+        """Look at the front item without removing it.
 
         Returns:
             Value: The front item (not removed)
@@ -205,8 +197,7 @@ class QueueView(BaseView[TreeT]):
         return cast(Value, self._get_child_value(front_key))
 
     def is_empty(self) -> bool:
-        """
-        Check if the queue has no items.
+        """Check if the queue has no items.
 
         Returns:
             bool: True if queue is empty, False otherwise
@@ -227,8 +218,7 @@ class QueueView(BaseView[TreeT]):
             return True
 
     def size(self) -> int:
-        """
-        Get the number of items in the queue.
+        """Get the number of items in the queue.
 
         Returns:
             int: Number of items in the queue
@@ -242,8 +232,7 @@ class QueueView(BaseView[TreeT]):
         return sum(1 for _ in self.container.keys())
 
     def clear(self) -> int:
-        """
-        Remove all items from the queue.
+        """Remove all items from the queue.
 
         Returns:
             int: Number of items that were removed
@@ -257,8 +246,7 @@ class QueueView(BaseView[TreeT]):
         return self.container.clear_children()
 
     def values(self) -> Generator[Value, None, None]:
-        """
-        Get all values in the queue in FIFO order.
+        """Get all values in the queue in FIFO order.
 
         Yields:
             Value: Queue values from front to back

@@ -47,8 +47,7 @@ class InMemoryStorage(
     ],
     SyncService,
 ):
-    """
-    Simple file-based storage implementation with transaction support.
+    """Simple file-based storage implementation with transaction support.
     Uses basic locking strategy for correctness over efficiency.
     """
 

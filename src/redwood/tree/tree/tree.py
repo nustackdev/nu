@@ -1,5 +1,4 @@
-"""
-This module implement Tree class - the primary interface for accessing the tree storage.
+"""This module implement Tree class - the primary interface for accessing the tree storage.
 
 This module defines the Tree class, which is the primary interface for accessing
 and manipulating the tree storage. It provides methods for navigation, accessing nodes,
@@ -36,8 +35,7 @@ __all__ = [
 
 @attrs.define(frozen=True, kw_only=True)
 class Tree(ContextualBase):
-    """
-    Primary interface for accessing the tree storage.
+    """Primary interface for accessing the tree storage.
 
     Tree provides methods for navigating the tree, querying and manipulating nodes,
     and creating appropriate views for container nodes. It follows a filesystem-like
@@ -90,8 +88,7 @@ class Tree(ContextualBase):
     # =========================================================================
 
     def at(self, *paths: PathComponent, ctx: ContextType | None = None) -> Self:
-        """
-        Navigate to a path (relative to current path).
+        """Navigate to a path (relative to current path).
 
         This creates a new State instance pointing to the specified path.
 
@@ -122,8 +119,7 @@ class Tree(ContextualBase):
         return attrs.evolve(self, path=new_path, ctx=ctx or self.ctx)
 
     def parent(self, *, ctx: ContextType | None = None) -> Self:
-        """
-        Navigate to parent path.
+        """Navigate to parent path.
 
         Returns:
             State: State for the parent path, or self if already at root
@@ -141,8 +137,7 @@ class Tree(ContextualBase):
         return attrs.evolve(self, path=parent_path, ctx=ctx or self.ctx)
 
     def root(self, *, ctx: ContextType | None = None) -> Self:
-        """
-        Navigate to root path.
+        """Navigate to root path.
 
         Returns:
             State: State for the root path
@@ -165,8 +160,7 @@ class Tree(ContextualBase):
         *,
         snapshot: bool = False,
     ) -> AbstractContextManager[ViewT]:
-        """
-        Access container as specified view type with automatic transaction or snapshot management.
+        """Access container as specified view type with automatic transaction or snapshot management.
 
         Returns a context manager that yields a view of the specified type.
         If path doesn't exist, creates a new container of the specified type.
@@ -227,8 +221,7 @@ class Tree(ContextualBase):
         *,
         ctx: ContextType | None = None,
     ) -> ViewT:
-        """
-        Access container as specified view type with manual context (transaction/snapshot) management.
+        """Access container as specified view type with manual context (transaction/snapshot) management.
 
         Returns a view object directly. No automatic context handling.
         If path doesn't exist, creates a new container of the specified type.
@@ -265,8 +258,7 @@ class Tree(ContextualBase):
     # =========================================================================
 
     def with_dict_view(self, *, snapshot: bool = False) -> AbstractContextManager[DictView[Self]]:
-        """
-        Access container as dictionary view with automatic transaction or snapshot management.
+        """Access container as dictionary view with automatic transaction or snapshot management.
 
         Returns a context manager that yields a DictView with transaction or snapshot context.
         If path doesn't exist, creates a new mapping container.
@@ -316,8 +308,7 @@ class Tree(ContextualBase):
         )
 
     def with_list_view(self, *, snapshot: bool = False) -> AbstractContextManager[ListView[Self]]:
-        """
-        Access container as list view with automatic transaction or snapshot management.
+        """Access container as list view with automatic transaction or snapshot management.
 
         Returns a context manager that yields a ListView with transaction or snapshot context.
         If path doesn't exist, creates a new sequence container.
@@ -363,8 +354,7 @@ class Tree(ContextualBase):
         )
 
     def dict_view(self, *, ctx: ContextType | None = None) -> DictView[Self]:
-        """
-        Access container as dictionary view with manual context management.
+        """Access container as dictionary view with manual context management.
 
         Returns a DictView object directly. No automatic context handling.
         If path doesn't exist, creates a new mapping container when accessed.
@@ -402,8 +392,7 @@ class Tree(ContextualBase):
         return DictView(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
 
     def list_view(self, *, ctx: ContextType | None = None) -> ListView[Self]:
-        """
-        Access container as list view with manual context management.
+        """Access container as list view with manual context management.
 
         Returns a ListView object directly. No automatic context handling.
         If path doesn't exist, creates a new sequence container when accessed.
@@ -445,8 +434,7 @@ class Tree(ContextualBase):
     # =========================================================================
 
     def begin_context(self, *, snapshot: bool = False) -> ContextType:
-        """
-        Start a new context (transaction or snapshot).
+        """Start a new context (transaction or snapshot).
 
         Args:
             snapshot: If True, creates read-only snapshot. If False, creates transaction.
@@ -485,8 +473,7 @@ class Tree(ContextualBase):
     # =========================================================================
 
     def begin_transaction(self) -> TransactionProtocol:
-        """
-        Start a new transaction.
+        """Start a new transaction.
 
         Returns:
             TransactionProtocol: New transaction
@@ -519,8 +506,7 @@ class Tree(ContextualBase):
         return self.backend.begin_transaction()
 
     def begin_snapshot(self) -> SnapshotProtocol:
-        """
-        Start a new read-only snapshot.
+        """Start a new read-only snapshot.
 
         Returns:
             Snapshot instance for read-only operations
@@ -538,8 +524,7 @@ class Tree(ContextualBase):
         return self.backend.begin_snapshot()
 
     def transaction(self) -> TransactionContextManagerProtocol:
-        """
-        Get transaction context manager for combined storage and notification handling.
+        """Get transaction context manager for combined storage and notification handling.
 
         Returns:
             Transaction context manager for use in with statements
@@ -556,8 +541,7 @@ class Tree(ContextualBase):
         return self.backend.transaction()
 
     def snapshot(self) -> SnapshotContextManagerProtocol:
-        """
-        Get snapshot context manager for read-only operations.
+        """Get snapshot context manager for read-only operations.
 
         Returns:
             Snapshot context manager for use in with statements
@@ -578,8 +562,7 @@ class Tree(ContextualBase):
     # =========================================================================
 
     def subscribe(self, callback: CallbackFn, depth: int = 0) -> SubscriptionProtocol:
-        """
-        Subscribe to changes at the current path.
+        """Subscribe to changes at the current path.
 
         Args:
             callback: Function to call when changes occur
@@ -613,8 +596,7 @@ class Tree(ContextualBase):
         return self.backend.subscribe(self.path.to_tuple(), callback, depth)
 
     def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """
-        Unsubscribe from changes under key prefix.
+        """Unsubscribe from changes under key prefix.
 
         Args:
             subscription: Subscription to cancel
@@ -629,8 +611,7 @@ class Tree(ContextualBase):
     # =========================================================================
 
     def has_primitive(self, *paths: PathComponent) -> bool:
-        """
-        Check if a path exists.
+        """Check if a path exists.
 
         Args:
             *paths: Path components to check
@@ -649,8 +630,7 @@ class Tree(ContextualBase):
         return self.backend.exists(self.path.join(*paths).to_tuple())
 
     def get_primitive(self, *paths: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
-        """
-        Get value at a path.
+        """Get value at a path.
 
         Args:
             *paths: Path components to get
@@ -682,8 +662,7 @@ class Tree(ContextualBase):
     #   we keep shortcut methods here for simplicity.
 
     def is_primitive(self, *paths: PathComponent) -> bool:
-        """
-        Check if a path is a primitive (non-container).
+        """Check if a path is a primitive (non-container).
 
         Args:
             *paths: Path components to check
@@ -702,8 +681,7 @@ class Tree(ContextualBase):
         return self.backend.exists(self.path.join(*paths).to_tuple())
 
     def is_container(self, *paths: PathComponent) -> bool:
-        """
-        Check if a path is a container (mapping, indexed, linked, or hashed).
+        """Check if a path is a container (mapping, indexed, linked, or hashed).
 
         Args:
             *paths: Path components to check

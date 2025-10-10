@@ -42,8 +42,7 @@ class InMemoryStorageProtocol(
     ],
     Protocol,
 ):
-    """
-    In-memory storage protocol.
+    """In-memory storage protocol.
     """
 
     ...

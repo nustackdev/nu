@@ -20,8 +20,7 @@ class InMemoryObserverProtocol(
     ObserverServiceProtocol[InMemoryObserverKey, InMemoryObserverEncodedKey],
     Protocol,
 ):
-    """
-    In-memory observer protocol.
+    """In-memory observer protocol.
     """
 
     ...

@@ -1,5 +1,4 @@
-"""
-Base class for objects that support unified context management.
+"""Base class for objects that support unified context management.
 
 This module provides ContextualBase, which replaces TransactionalBase
 with support for both transactions and snapshots.
@@ -20,8 +19,7 @@ __all__ = ["ContextualBase", "is_contextual"]
 
 @attrs.define(frozen=True, kw_only=True)
 class ContextualBase:
-    """
-    Base class for immutable objects with unified context support.
+    """Base class for immutable objects with unified context support.
 
     This provides context attributes and utilities for both transaction
     and snapshot contexts, but does NOT implement context manager methods
@@ -67,8 +65,7 @@ class ContextualBase:
     ctx: ContextType | None = attrs.field(default=None)
 
     def with_context(self, ctx: ContextType) -> Self:
-        """
-        Create a copy of this object with a specific context.
+        """Create a copy of this object with a specific context.
 
         Args:
             ctx: Context to use (transaction or snapshot)
@@ -91,8 +88,7 @@ class ContextualBase:
         return attrs.evolve(self, ctx=ctx)
 
     def without_context(self) -> Self:
-        """
-        Create a copy of this object without any context.
+        """Create a copy of this object without any context.
 
         Returns:
             New object with no context
@@ -106,8 +102,7 @@ class ContextualBase:
         return attrs.evolve(self, ctx=None)
 
     def has_context(self) -> bool:
-        """
-        Check if this object has an active context.
+        """Check if this object has an active context.
 
         Returns:
             True if object has a context (transaction or snapshot)
@@ -115,8 +110,7 @@ class ContextualBase:
         return self.ctx is not None
 
     def get_ensured_context(self) -> ContextType:
-        """
-        Get context or raise error if none available.
+        """Get context or raise error if none available.
 
         Returns:
             Active context (transaction or snapshot)
@@ -135,8 +129,7 @@ class ContextualBase:
         return self.ctx
 
     def is_transaction_context(self) -> bool:
-        """
-        Check if current context supports write operations.
+        """Check if current context supports write operations.
 
         Returns:
             True if context is a transaction (supports writes)
@@ -152,8 +145,7 @@ class ContextualBase:
         return isinstance(self.ctx, TransactionContextProtocol)
 
     def is_snapshot_context(self) -> bool:
-        """
-        Check if current context is read-only.
+        """Check if current context is read-only.
 
         Returns:
             True if context is a snapshot (read-only)
@@ -168,8 +160,7 @@ class ContextualBase:
         return isinstance(self.ctx, SnapshotContextProtocol)
 
     def get_transaction_context(self) -> TransactionContextProtocol:
-        """
-        Get transaction context or raise error if context is read-only.
+        """Get transaction context or raise error if context is read-only.
 
         Returns:
             Transaction context that supports write operations
@@ -197,8 +188,7 @@ class ContextualBase:
 
 
 def is_contextual(obj: Any) -> TypeGuard[ContextualBase]:
-    """
-    Check if an object supports contexts.
+    """Check if an object supports contexts.
 
     Args:
         obj: Object to check

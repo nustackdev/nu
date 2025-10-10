@@ -35,8 +35,7 @@ VALID_STRING_PATTERN: Final[re.Pattern[str]] = re.compile(
 
 
 def validate_key(key: Key) -> None:
-    """
-    Validate that a key tuple meets basic requirements.
+    """Validate that a key tuple meets basic requirements.
 
     Args:
         key: Tuple to validate
@@ -58,8 +57,7 @@ def validate_key(key: Key) -> None:
 
 
 def validate_key_component(component: KeyComponent, index: int) -> None:
-    """
-    Validate a single key component.
+    """Validate a single key component.
 
     Args:
         component: Component to validate
@@ -83,8 +81,7 @@ def validate_key_component(component: KeyComponent, index: int) -> None:
 
 
 def validate_string_component(value: str, index: int) -> None:
-    """
-    Validate a string component meets general constraints.
+    """Validate a string component meets general constraints.
 
     Args:
         value: String to validate
@@ -110,8 +107,7 @@ def validate_string_component(value: str, index: int) -> None:
 
 
 def _encode_integer(value: int) -> bytes:
-    """
-    Encode integer preserving lexicographic order using bias/offset encoding.
+    """Encode integer preserving lexicographic order using bias/offset encoding.
 
     Uses offset binary (also called excess-K or biased representation) to map
     the entire signed integer range to unsigned values that maintain numeric
@@ -154,8 +150,7 @@ def _encode_integer(value: int) -> bytes:
 
 
 def _decode_integer(data: bytes, offset: int) -> tuple[int, int]:
-    """
-    Decode integer from binary data using bias/offset encoding.
+    """Decode integer from binary data using bias/offset encoding.
 
     Args:
         data: Binary data containing encoded integer
@@ -182,8 +177,7 @@ def _decode_integer(data: bytes, offset: int) -> tuple[int, int]:
 
 
 def _encode_string(value: str) -> bytes:
-    """
-    Encode string to UTF-8 bytes.
+    """Encode string to UTF-8 bytes.
 
     No escaping needed since separator (0xFF) is invalid in UTF-8.
 
@@ -203,8 +197,7 @@ def _encode_string(value: str) -> bytes:
 
 
 def _decode_string(data: bytes) -> str:
-    """
-    Decode UTF-8 string from bytes.
+    """Decode UTF-8 string from bytes.
 
     No unescaping needed since separator (0xFF) is invalid in UTF-8.
 
@@ -224,8 +217,7 @@ def _decode_string(data: bytes) -> str:
 
 
 class BinaryKeyCodec(KeyCodec[EncodedBinaryKey]):
-    """
-    Binary key codec that preserves lexicographic ordering for KV storage.
+    """Binary key codec that preserves lexicographic ordering for KV storage.
 
     This codec encodes tuple keys into binary format while maintaining the
     natural sort order of the original tuples. It supports mixed integer
@@ -266,8 +258,7 @@ class BinaryKeyCodec(KeyCodec[EncodedBinaryKey]):
     """
 
     def encode(self, key: Key) -> EncodedBinaryKey:
-        """
-        Encode tuple key into binary format preserving lexicographic order.
+        """Encode tuple key into binary format preserving lexicographic order.
 
         Args:
             key: Tuple containing strings and/or integers
@@ -298,8 +289,7 @@ class BinaryKeyCodec(KeyCodec[EncodedBinaryKey]):
         return b"".join(parts)
 
     def decode(self, encoded: EncodedBinaryKey) -> Key:
-        """
-        Decode binary data back to original tuple key.
+        """Decode binary data back to original tuple key.
 
         Args:
             encoded: Previously encoded binary key

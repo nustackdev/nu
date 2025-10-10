@@ -1,5 +1,4 @@
-"""
-Unified context managers for both transactions and snapshots.
+"""Unified context managers for both transactions and snapshots.
 """
 
 from __future__ import annotations
@@ -24,8 +23,7 @@ __all__ = [
 def create_context(
     backend: ObservableStorage, *, snapshot: bool = False
 ) -> Generator[ContextType, None, None]:
-    """
-    Create a context manager for the given backend.
+    """Create a context manager for the given backend.
 
     Args:
         backend: Backend to create context from
@@ -70,8 +68,7 @@ def create_context(
 
 @contextmanager
 def with_context(obj: ContextualT, *, snapshot: bool = False) -> Generator[ContextualT, None, None]:
-    """
-    Context manager that provides context for an object.
+    """Context manager that provides context for an object.
 
     Args:
         obj: Object that has backend and ctx attributes

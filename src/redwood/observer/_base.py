@@ -18,8 +18,7 @@ __all__ = [
 
 
 class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
-    """
-    Base class for observer implementations.
+    """Base class for observer implementations.
 
     Provides core functionality for state change observation with:
     - Connection management
@@ -35,21 +34,18 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     codec: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
 
     def setup(self) -> None:
-        """
-        Service setup called after service initialization.
+        """Service setup called after service initialization.
         """
         self._connected = False
         self.connect()
 
     def cleanup(self) -> None:
-        """
-        Service cleanup called after service shutdown.
+        """Service cleanup called after service shutdown.
         """
         self.disconnect()
 
     def _ensure_connected(self) -> None:
-        """
-        Verify connection state.
+        """Verify connection state.
 
         Raises:
             ObserverConnectionError: If observer not connected
@@ -58,8 +54,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
             raise ObserverConnectionError("Observer not connected")
 
     def _validate_topic(self, topic: ObserverKeyT) -> None:
-        """
-        Validate topic format.
+        """Validate topic format.
 
         Args:
             topic: Topic to validate
@@ -72,8 +67,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
     @final
     def connect(self) -> None:
-        """
-        Connect to notification system.
+        """Connect to notification system.
 
         Raises:
             ObserverConnectionError: If connection fails
@@ -93,8 +87,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
     @final
     def disconnect(self) -> None:
-        """
-        Disconnect from notification system.
+        """Disconnect from notification system.
 
         Raises:
             ObserverConnectionError: If disconnection fails
@@ -113,8 +106,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
     @final
     def notify(self, topic: ObserverKeyT) -> None:
-        """
-        Notify subscribers of state change.
+        """Notify subscribers of state change.
 
         Args:
             topic: Topic identifying changed state
@@ -125,8 +117,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
     @abstractmethod
     def _notify_impl(self, topic: ObserverKeyT) -> None:
-        """
-        Implementation-specific notify logic.
+        """Implementation-specific notify logic.
 
         Args:
             topic: Topic identifying changed state
@@ -141,8 +132,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         callback: ObserverCallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:
-        """
-        Subscribe to topic pattern.
+        """Subscribe to topic pattern.
 
         Args:
             key: Topic pattern to match
@@ -172,8 +162,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
     @final
     def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """
-        Remove subscription.
+        """Remove subscription.
 
         Args:
             subscription: Subscription to remove
@@ -189,8 +178,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
 @dataclass
 class Subscription(SubscriptionProtocol, Generic[ObserverKeyT]):
-    """
-    Represents a subscription to a topic pattern.
+    """Represents a subscription to a topic pattern.
 
     Attributes:
         topic_pattern:
