@@ -100,3 +100,10 @@ TextCodecSpec = partial(
     key_codec=StringKeyCodec,
     value_codec=JSONCodec,
 )
+
+__all__ += [
+    "BinaryCodec",
+    "BinaryCodecSpec",
+    "TextCodec",
+    "TextCodecSpec",
+]
