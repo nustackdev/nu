@@ -4,23 +4,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.protocols import ValueCodecProtocol
-from redwood.types import Value
 
-from .types import MessagePackEncoded
+if TYPE_CHECKING:
+    from redwood.protocols import ValueCodecProtocol
+    from redwood.types import Value
 
+    from .types import MessagePackEncoded
 
 try:
     import msgpack
 except ImportError as e:
-    msg = "msgpack is required for MessagePackCodec. Install via: pip install msgpack"
-    raise ImportError(msg) from e
+    raise ImportError(
+        "msgpack is required for MessagePackCodec. Install via: pip install msgpack"
+    ) from e
 
 
 __all__ = ["MessagePackCodec"]
 
 
-class MessagePackCodec(ValueCodecProtocol[MessagePackEncoded]):
+class MessagePackCodec:
     """Codec using MessagePack for efficient binary serialization.
 
     MessagePack is a binary serialization format that is more compact and

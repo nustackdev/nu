@@ -7,9 +7,10 @@ from typing import TYPE_CHECKING
 import attrs
 from mesh import ResourceSpec, SyncResource
 
-from redwood.protocols import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
-from redwood.types import EncodedKeyT, EncodedValueT, Key, Value
 
+if TYPE_CHECKING:
+    from redwood.protocols import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
+    from redwood.types import Key, Value
 
 __all__ = [
     "StorageCodec",

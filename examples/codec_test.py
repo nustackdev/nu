@@ -67,5 +67,25 @@ def codec():
         assert value == codec.decode_value(encoded_value)
 
 
+def storage():
+    from redwood.codec import BinaryCodecSpec
+    from redwood.storage.lmdb_storage import LMDBStorage, LMDBStorageSpec
+
+    with LMDBStorage(
+        LMDBStorageSpec(
+            codec=BinaryCodecSpec(),
+        )
+    ) as storage:
+        storage.set(("users", 1), {"name": "Alice"})
+        storage.set(("users", 2), {"name": "Bob"})
+        print("User 1:", storage.get(("users", 1)))
+        print("User 2:", storage.get(("users", 2)))
+        # storage.delete(("users", 1))
+        try:
+            print("User 1:", storage.get(("users", 1)))
+        except Exception as e:
+            print("Error fetching user 1:", e)
+
+
 if __name__ == "__main__":
-    codec()
+    storage()

@@ -6,29 +6,16 @@ from typing import Any
 
 
 __all__ = [
-    "PassthroughEncoded",
+    "JSONEncoded",
     "MessagePackEncoded",
     "MicroPackEncoded",
-    "JSONEncoded",
+    "PassthroughEncoded",
     "PickleEncoded",
 ]
 
 
-# Passthrough codec types - no transformation
-PassthroughEncoded = Any
-
-
-# MessagePack codec types - binary serialization
-MessagePackEncoded = bytes
-
-
-# MicroPack codec types - optimized binary serialization
-MicroPackEncoded = bytes
-
-
-# JSON codec types - text serialization with base64 for bytes
-JSONEncoded = str
-
-
-# Pickle codec types - Python object serialization
-PickleEncoded = bytes
+PassthroughEncoded = Any  # Passthrough codec types - no transformation
+MessagePackEncoded = bytes  # MessagePack codec types - binary serialization
+MicroPackEncoded = bytes  # MicroPack codec types - optimized binary serialization
+JSONEncoded = str  # JSON codec types - text serialization with base64 for bytes
+PickleEncoded = bytes  # Pickle codec types - Python object serialization

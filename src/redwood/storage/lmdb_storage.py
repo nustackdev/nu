@@ -1,62 +1,63 @@
+"""LMDB storage backend with transaction and snapshot support."""
+
 from __future__ import annotations
 
 import sys
 import threading
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeGuard
+from typing import TYPE_CHECKING, TypeGuard
 from uuid import uuid4
 
 import attrs
 import lmdb
 from frozendict import frozendict
-from loomi import Attach, ResourceSpec, Spec
-from loomi.tree import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
-from loomistd.codec import CodecProtocol
-from loomistd.codec.binary import BinaryCodecSpec
-from loomistd.service import SyncService
+from mesh import Attach, ResourceSpec, Spec, SyncResource
+from mesh.common.logging import get_logger
 
-from .._base import BaseStorage
-from .._exceptions import (
+from redwood.exceptions import (
     SnapshotError,
     StorageError,
+    StorageKeyError,
     StorageOperationError,
     TransactionError,
     TransactionInvalidError,
 )
-from .logger import logger
-from .types import LMDBStorageEncodedKey, LMDBStorageEncodedValue, LMDBStorageKey, LMDBStorageValue
+
+from ._base import BaseStorage
 
 
-__all__ = [
-    "LMDBStorage",
-    "LMDBStorageSpec",
-    "LMDBStorageSnapshot",
-    "LMDBStorageTransaction",
-]
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from logging import Logger
+
+    from redwood.protocols import (
+        SnapshotProtocol,
+        StorageCodecProtocol,
+        StorageProtocol,
+        TransactionProtocol,
+    )
+    from redwood.types import Key, Value
+
+
+logger: Logger = get_logger(__name__)
 
 
 class LMDBStorage(
-    BaseStorage[
-        LMDBStorageKey,
-        LMDBStorageValue,
-        LMDBStorageEncodedKey,
-        LMDBStorageEncodedValue,
-    ],
-    SyncService,
+    BaseStorage[bytes, bytes],
+    SyncResource,
 ):
     """LMDB storage implementation with transaction support.
 
     Uses memory-mapped files for high performance and ACID guarantees.
     """
 
-    codec: CodecProtocol[
-        LMDBStorageKey, LMDBStorageValue, LMDBStorageEncodedKey, LMDBStorageEncodedValue
-    ] = Attach()
+    codec: StorageCodecProtocol[bytes, bytes] = Attach()
 
     spec: LMDBStorageSpec
 
-    def setup(self):
+    def setup(self) -> None:
+        """Initialize LMDB storage with environment setup."""
         self.path = (
             self.spec.path.resolve()
             if isinstance(self.spec.path, Path)
@@ -74,14 +75,15 @@ class LMDBStorage(
 
         super().setup()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
+        """Clean up LMDB resources."""
         super().cleanup()
 
         if self._data_lock.locked():
             self._data_lock.release()
         self._active_transactions.clear()
 
-    def _validate_value(self, value: LMDBStorageValue) -> TypeGuard[LMDBStorageValue]:
+    def _validate_value(self, value: Value) -> TypeGuard[Value]:
         return True
 
     def _connect_impl(self) -> None:
@@ -118,7 +120,7 @@ class LMDBStorage(
 
             logger.debug("Disconnected from LMDB")
 
-    def _get_impl(self, key: LMDBStorageKey) -> LMDBStorageValue:
+    def _get_impl(self, key: Key) -> Value:
         """Get value by key."""
         try:
             encoded_key = self.codec.encode_key(key)
@@ -138,9 +140,9 @@ class LMDBStorage(
         except StorageKeyError:
             raise
         except Exception as e:
-            raise StorageOperationError(f"Failed to get key {key}: {e}")
+            raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-    def _set_impl(self, key: LMDBStorageKey, value: LMDBStorageValue) -> None:
+    def _set_impl(self, key: Key, value: Value) -> None:
         """Set value for key."""
         # Encode both before transaction to avoid partial failure
         encoded_key = self.codec.encode_key(key)
@@ -151,9 +153,9 @@ class LMDBStorage(
                 txn.put(encoded_key, encoded_value)
 
         except Exception as e:
-            raise StorageOperationError(f"Failed to set key {key}: {e}")
+            raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-    def _delete_impl(self, key: LMDBStorageKey) -> None:
+    def _delete_impl(self, key: Key) -> None:
         """Delete value by key."""
         encoded_key = self.codec.encode_key(key)
 
@@ -165,9 +167,9 @@ class LMDBStorage(
         except StorageKeyError:
             raise
         except Exception as e:
-            raise StorageOperationError(f"Failed to delete key {key}: {e}")
+            raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-    def _exists_impl(self, key: LMDBStorageKey) -> bool:
+    def _exists_impl(self, key: Key) -> bool:
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
@@ -177,11 +179,9 @@ class LMDBStorage(
                 return cursor.set_key(encoded_key)
 
         except Exception as e:
-            raise StorageOperationError(f"Failed to check key {key}: {e}")
+            raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-    def _list_keys_impl(
-        self, prefix: LMDBStorageKey, depth: int
-    ) -> Generator[LMDBStorageKey, None, None]:
+    def _list_keys_impl(self, prefix: Key, depth: int) -> Generator[Key, None, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -217,7 +217,7 @@ class LMDBStorage(
                     cursor.close()
 
         except Exception as e:
-            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}")
+            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
 
     def _begin_transaction_impl(
         self,
@@ -235,7 +235,7 @@ class LMDBStorage(
             return transaction
 
         except Exception as e:
-            raise StorageError(f"Failed to begin transaction: {e}")
+            raise StorageError(f"Failed to begin transaction: {e}") from e
 
     def _begin_snapshot_impl(
         self,
@@ -251,13 +251,13 @@ class LMDBStorage(
             return snapshot
 
         except Exception as e:
-            raise StorageError(f"Failed to begin snapshot: {e}")
+            raise StorageError(f"Failed to begin snapshot: {e}") from e
 
 
 class LMDBStorageTransaction:
     """LMDB transaction implementation with proper resource management."""
 
-    def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction):
+    def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction) -> None:
         """Initialize transaction with LMDB txn."""
         self._storage = storage
         self._lmdb_txn = txn
@@ -272,7 +272,7 @@ class LMDBStorageTransaction:
         if self._rolled_back:
             raise TransactionInvalidError("Transaction already rolled back")
 
-    def get(self, key: LMDBStorageKey) -> LMDBStorageValue:
+    def get(self, key: Key) -> Value:
         """Get value within transaction context."""
         self._check_valid()
         try:
@@ -292,9 +292,9 @@ class LMDBStorageTransaction:
         except StorageKeyError:
             raise
         except Exception as e:
-            raise StorageOperationError(f"Failed to get key {key}: {e}")
+            raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-    def set(self, key: LMDBStorageKey, value: LMDBStorageValue) -> None:
+    def set(self, key: Key, value: Value) -> None:
         """Set value within transaction context."""
         self._check_valid()
 
@@ -305,9 +305,9 @@ class LMDBStorageTransaction:
         try:
             self._lmdb_txn.put(encoded_key, encoded_value)
         except Exception as e:
-            raise StorageOperationError(f"Failed to set key {key}: {e}")
+            raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-    def delete(self, key: LMDBStorageKey) -> None:
+    def delete(self, key: Key) -> None:
         """Delete key within transaction context."""
         self._check_valid()
 
@@ -319,9 +319,9 @@ class LMDBStorageTransaction:
         except StorageKeyError:
             raise
         except Exception as e:
-            raise StorageOperationError(f"Failed to delete key {key}: {e}")
+            raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-    def exists(self, key: LMDBStorageKey) -> bool:
+    def exists(self, key: Key) -> bool:
         """Check if key exists within transaction context."""
         self._check_valid()
 
@@ -332,11 +332,10 @@ class LMDBStorageTransaction:
             return cursor.set_key(encoded_key)
 
         except Exception as e:
-            raise StorageOperationError(f"Failed to check key {key}: {e}")
+            raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-    def list_keys(
-        self, prefix: LMDBStorageKey, depth: int = 1
-    ) -> Generator[LMDBStorageKey, None, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+        """List all keys under prefix within transaction context."""
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
 
@@ -365,7 +364,7 @@ class LMDBStorageTransaction:
             finally:
                 cursor.close()
         except Exception as e:
-            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}")
+            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
 
     def commit(self) -> None:
         """Commit transaction changes."""
@@ -376,7 +375,7 @@ class LMDBStorageTransaction:
             with self._storage._data_lock:
                 self._storage._active_transactions.discard(self)
         except Exception as e:
-            raise TransactionError(f"Failed to commit transaction: {e}")
+            raise TransactionError(f"Failed to commit transaction: {e}") from e
 
     def rollback(self) -> None:
         """Roll back transaction changes."""
@@ -387,12 +386,12 @@ class LMDBStorageTransaction:
             with self._storage._data_lock:
                 self._storage._active_transactions.discard(self)
         except Exception as e:
-            raise TransactionError(f"Failed to rollback transaction: {e}")
+            raise TransactionError(f"Failed to rollback transaction: {e}") from e
 
     def __hash__(self) -> int:
         return hash(str(self._uuid))
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other is None:
             return False
         return isinstance(other, type(self)) and self._uuid == other._uuid
@@ -401,7 +400,7 @@ class LMDBStorageTransaction:
 class LMDBStorageSnapshot:
     """LMDB read-only snapshot implementation."""
 
-    def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction):
+    def __init__(self, storage: LMDBStorage, txn: lmdb.Transaction) -> None:
         """Initialize snapshot with read-only LMDB txn."""
         self._storage = storage
         self._lmdb_txn = txn
@@ -413,7 +412,7 @@ class LMDBStorageSnapshot:
         if self._closed:
             raise SnapshotError("Snapshot already closed")
 
-    def get(self, key: LMDBStorageKey) -> LMDBStorageValue:
+    def get(self, key: Key) -> Value:
         """Get value within snapshot context."""
         self._check_valid()
         try:
@@ -433,9 +432,9 @@ class LMDBStorageSnapshot:
         except StorageKeyError:
             raise
         except Exception as e:
-            raise StorageOperationError(f"Failed to get key {key}: {e}")
+            raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-    def exists(self, key: LMDBStorageKey) -> bool:
+    def exists(self, key: Key) -> bool:
         """Check if key exists within snapshot context."""
         self._check_valid()
 
@@ -446,11 +445,9 @@ class LMDBStorageSnapshot:
             return cursor.set_key(encoded_key)
 
         except Exception as e:
-            raise StorageOperationError(f"Failed to check key {key}: {e}")
+            raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-    def list_keys(
-        self, prefix: LMDBStorageKey, depth: int = 1
-    ) -> Generator[LMDBStorageKey, None, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
         """List all keys under prefix within snapshot context."""
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
@@ -480,7 +477,7 @@ class LMDBStorageSnapshot:
             finally:
                 cursor.close()
         except Exception as e:
-            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}")
+            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""
@@ -493,7 +490,7 @@ class LMDBStorageSnapshot:
     def __hash__(self) -> int:
         return hash(str(self._uuid))
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other is None:
             return False
         return isinstance(other, type(self)) and self._uuid == other._uuid
@@ -501,6 +498,8 @@ class LMDBStorageSnapshot:
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class LMDBStorageSpec(ResourceSpec):
+    """Specification for LMDBStorage resource."""
+
     name: str = "lmdb_storage"
     factory: type = LMDBStorage
     mode: str = "write"

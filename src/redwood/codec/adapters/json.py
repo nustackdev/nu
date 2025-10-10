@@ -4,18 +4,19 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any
+from typing import TYPE_CHECKING
 
-from redwood.protocols import ValueCodecProtocol
-from redwood.types import Value
 
-from .types import JSONEncoded
+if TYPE_CHECKING:
+    from redwood.protocols import ValueCodecProtocol
+    from redwood.types import Value
 
+    from .types import JSONEncoded
 
 __all__ = ["JSONCodec"]
 
 
-class JSONCodec(ValueCodecProtocol[JSONEncoded]):
+class JSONCodec:
     """Codec using JSON for human-readable serialization.
 
     This codec provides text-based serialization suitable for debugging,
@@ -63,7 +64,7 @@ class JSONCodec(ValueCodecProtocol[JSONEncoded]):
         parsed = json.loads(encoded)
         return self._postprocess_decode(parsed)
 
-    def _preprocess_encode(self, value: Any) -> Any:
+    def _preprocess_encode(self, value: Value) -> Value:
         """Recursively preprocess value for JSON encoding.
 
         Converts bytes to base64-encoded dict markers and handles
@@ -89,7 +90,7 @@ class JSONCodec(ValueCodecProtocol[JSONEncoded]):
 
         return value
 
-    def _postprocess_decode(self, value: Any) -> Any:
+    def _postprocess_decode(self, value: Value) -> Value:
         """Recursively postprocess value after JSON decoding.
 
         Restores bytes from base64 dict markers and handles
@@ -118,3 +119,7 @@ class JSONCodec(ValueCodecProtocol[JSONEncoded]):
             return [self._postprocess_decode(item) for item in value]
 
         return value
+
+
+if TYPE_CHECKING:
+    _: type[ValueCodecProtocol[JSONEncoded]] = JSONCodec

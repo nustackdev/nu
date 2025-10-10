@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.protocols import ValueCodecProtocol
-from redwood.types import Value
 
-from .types import MicroPackEncoded
+if TYPE_CHECKING:
+    from redwood.protocols import ValueCodecProtocol
+    from redwood.types import Value
 
+    from .types import MicroPackEncoded
 
 try:
     from micropack import Codec
@@ -20,7 +21,7 @@ except ImportError as e:
 __all__ = ["MicroPackCodec"]
 
 
-class MicroPackCodec(ValueCodecProtocol[MicroPackEncoded]):
+class MicroPackCodec:
     """Codec using MicroPack for optimized binary serialization.
 
     MicroPack provides high-performance binary serialization with efficient

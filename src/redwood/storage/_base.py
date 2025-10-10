@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Generator
-from typing import Generic, TypeGuard, final
+from typing import TYPE_CHECKING, final
 
-from loomi.tree import SnapshotProtocol, TransactionProtocol
-from loomistd.codec import CodecProtocol
+from redwood.exceptions import StorageConnectionError, StorageOperationError
 
-from ._exceptions import StorageConnectionError, StorageOperationError, StorageValidationError
 from ._snapshot import SnapshotContextManager
 from ._transaction import TransactionContextManager
-from ._types import StorageEncodedKeyT, StorageEncodedValueT, StorageKeyT, StorageMode, ValueT
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from redwood.protocols import SnapshotProtocol, StorageCodecProtocol, TransactionProtocol
+    from redwood.types import Key, StorageMode, Value
 
 
 __all__ = [
@@ -19,14 +22,15 @@ __all__ = [
 ]
 
 
-class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT]):
+class BaseStorage[EncodedKeyT, EncodedValueT](ABC):
     """Base class for storage implementations.
 
     Type Parameters:
-        ValueT: Type of values supported by this storage
+        EncodedKeyT: Type of encoded keys (e.g., bytes, str)
+        EncodedValueT: Type of encoded values (e.g., bytes, str)
     """
 
-    codec: CodecProtocol[StorageKeyT, ValueT, StorageEncodedKeyT, StorageEncodedValueT]
+    codec: StorageCodecProtocol[EncodedKeyT, EncodedValueT]
 
     @property
     def mode(self) -> StorageMode:
@@ -44,11 +48,6 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
         """Verify connection state."""
         if not self._connected:
             raise StorageConnectionError("Storage is not connected")
-
-    def _validate_key(self, key: StorageKeyT) -> None:
-        """Validate key format."""
-        if not is_valid_key(key):
-            raise StorageValidationError(f"Invalid key format: {key}")
 
     # Connection Management
     @abstractmethod
@@ -84,68 +83,66 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
 
     # Core Operations
     @abstractmethod
-    def _get_impl(self, key: StorageKeyT) -> ValueT:
+    def _get_impl(self, key: Key) -> Value:
         """Implementation-specific get logic."""
         ...
 
     @final
-    def get(self, key: StorageKeyT) -> ValueT:
+    def get(self, key: Key) -> Value:
         """Get value by key."""
         self._ensure_connected()
         return self._get_impl(key)
 
     @abstractmethod
-    def _set_impl(self, key: StorageKeyT, value: ValueT) -> None:
+    def _set_impl(self, key: Key, value: Value) -> None:
         """Implementation-specific set logic."""
         ...
 
     @final
-    def set(self, key: StorageKeyT, value: ValueT) -> None:
+    def set(self, key: Key, value: Value) -> None:
         """Set value by key."""
         if self.mode != "write":
             raise StorageOperationError("Cannot set value in read-only mode")
 
         self._ensure_connected()
-        self._validate_key(key)
         # Validate value type (?)
         # if not self._validate_value(value):
         #     raise StorageValidationError(f"Invalid value type: {type(value)}")
         self._set_impl(key, value)
 
     @abstractmethod
-    def _delete_impl(self, key: StorageKeyT) -> None:
+    def _delete_impl(self, key: Key) -> None:
         """Implementation-specific delete logic."""
         ...
 
     @final
-    def delete(self, key: StorageKeyT) -> None:
+    def delete(self, key: Key) -> None:
         """Delete value by key."""
         if self.mode != "write":
             raise StorageOperationError("Cannot set value in read-only mode")
 
         self._ensure_connected()
-        self._validate_key(key)
         self._delete_impl(key)
 
     @abstractmethod
-    def _exists_impl(self, key: StorageKeyT) -> bool:
+    def _exists_impl(self, key: Key) -> bool:
         """Implementation-specific exists logic."""
         ...
 
     @final
-    def exists(self, key: StorageKeyT) -> bool:
+    def exists(self, key: Key) -> bool:
         """Check if key exists."""
         self._ensure_connected()
         return self._exists_impl(key)
 
     @abstractmethod
-    def _list_keys_impl(self, prefix: StorageKeyT, depth: int) -> Generator[StorageKeyT, None]:
+    def _list_keys_impl(self, prefix: Key, depth: int) -> Generator[Key, None]:
         """Implementation-specific list_keys logic."""
         if False:  # This will never execute but helps type checkers
             yield prefix  # Dummy yield to make it a true generator
 
     @final
-    def list_keys(self, prefix: StorageKeyT, depth: int = 1) -> Generator[StorageKeyT, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None]:
         """List all keys under prefix within transaction context.
 
         Args:
@@ -161,16 +158,15 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
             StorageOperationError: If list operation fails
         """
         self._ensure_connected()
-        for key in self._list_keys_impl(prefix, depth):
-            yield key
+        yield from self._list_keys_impl(prefix, depth)
 
     @abstractmethod
-    def _begin_transaction_impl(self) -> TransactionProtocol[ValueT]:
+    def _begin_transaction_impl(self) -> TransactionProtocol:
         """Implementation-specific transaction creation."""
         ...
 
     @final
-    def begin_transaction(self) -> TransactionProtocol[ValueT]:
+    def begin_transaction(self) -> TransactionProtocol:
         """Begin a new transaction."""
         self._ensure_connected()
         try:
@@ -179,7 +175,7 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
             raise StorageOperationError(f"Failed to begin transaction: {e}") from e
 
     @final
-    def transaction(self) -> TransactionContextManager[ValueT]:
+    def transaction(self) -> TransactionContextManager:
         """Create a transaction context manager.
 
         Returns:
@@ -191,15 +187,15 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
                 # Auto-commits if no exception
                 # Auto-rollbacks if exception occurs
         """
-        return TransactionContextManager[ValueT](self)
+        return TransactionContextManager(self)
 
     @abstractmethod
-    def _begin_snapshot_impl(self) -> SnapshotProtocol[ValueT]:
+    def _begin_snapshot_impl(self) -> SnapshotProtocol:
         """Implementation-specific snapshot creation."""
         ...
 
     @final
-    def begin_snapshot(self) -> SnapshotProtocol[ValueT]:
+    def begin_snapshot(self) -> SnapshotProtocol:
         """Begin a new snapshot."""
         self._ensure_connected()
         try:
@@ -208,7 +204,7 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
             raise StorageOperationError(f"Failed to begin snapshot: {e}") from e
 
     @final
-    def snapshot(self) -> SnapshotContextManager[ValueT]:
+    def snapshot(self) -> SnapshotContextManager:
         """Create a snapshot context manager.
 
         Returns:
@@ -220,18 +216,4 @@ class BaseStorage(ABC, Generic[StorageKeyT, ValueT, StorageEncodedKeyT, StorageE
                 # Read-only operations
                 # Auto-cleanup on exit
         """
-        return SnapshotContextManager[ValueT](self)
-
-
-def is_valid_key(value: StorageKeyT) -> TypeGuard[StorageKeyT]:
-    """Type guard to verify if a value is a valid key.
-
-    Args:
-        value: Value to check
-
-    Returns:
-        True if value is a valid key (tuple of strings)
-    """
-    return isinstance(value, tuple) and all(
-        isinstance(part, str) and len(part.strip()) for part in value
-    )
+        return SnapshotContextManager(self)

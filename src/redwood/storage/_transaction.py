@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from loomi.tree import (
+from redwood.protocols import (
     TransactionalHandlerProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,
 )
-
-from ._types import ValueT
 
 
 __all__ = [
@@ -14,19 +12,19 @@ __all__ = [
 ]
 
 
-class TransactionContextManager(TransactionContextManagerProtocol[ValueT]):
+class TransactionContextManager(TransactionContextManagerProtocol):
     """Context manager for storage transactions."""
 
-    def __init__(self, handler: TransactionalHandlerProtocol[ValueT]):
+    def __init__(self, handler: TransactionalHandlerProtocol) -> None:
         """Initialize transaction context manager.
 
         Args:
-            storage: Storage instance to manage transactions for
+            handler: Transactional handler to manage transactions
         """
         self.handler = handler
-        self.transaction: TransactionProtocol[ValueT] | None = None
+        self.transaction: TransactionProtocol | None = None
 
-    def __enter__(self) -> TransactionProtocol[ValueT]:
+    def __enter__(self) -> TransactionProtocol:
         """Start a new transaction.
 
         Returns:
@@ -38,7 +36,12 @@ class TransactionContextManager(TransactionContextManagerProtocol[ValueT]):
         self.transaction = self.handler.begin_transaction()
         return self.transaction
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object | None,
+    ) -> None:
         """Commit or rollback transaction based on context exit.
 
         Args:

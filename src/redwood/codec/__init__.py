@@ -38,12 +38,12 @@ from .codec import StorageCodec, StorageCodecSpec
 
 
 __all__ = [
-    # Core codec
-    "StorageCodec",
-    "StorageCodecSpec",
     # Aliases
     "BinaryCodec",
     "BinaryCodecSpec",
+    # Core codec
+    "StorageCodec",
+    "StorageCodecSpec",
     "TextCodec",
     "TextCodecSpec",
 ]

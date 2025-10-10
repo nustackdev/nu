@@ -1,22 +1,18 @@
+"""Protocol definitions for storage, transactions, snapshots, and observers."""
+
 from __future__ import annotations
 
 from collections.abc import Generator
 from types import TracebackType
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from .types import (
-    CallbackFn,
-    EncodedKeyT,
-    EncodedValueT,
-    Key,
-    Value,
-)
+from .types import CallbackFn, Key, Value
 
 
 __all__ = []
 
 
-class StorageCodecProtocol(Protocol[EncodedKeyT, EncodedValueT]):
+class StorageCodecProtocol[EncodedKeyT, EncodedValueT](Protocol):
     """Protocol for complete storage encoding/decoding.
 
     Combines key and value codec operations into a unified interface
@@ -86,7 +82,7 @@ class StorageCodecProtocol(Protocol[EncodedKeyT, EncodedValueT]):
         ...
 
 
-class KeyCodecProtocol(Protocol[EncodedKeyT]):
+class KeyCodecProtocol[EncodedKeyT](Protocol):
     """Protocol for encoding/decoding storage keys.
 
     Type Parameters:
@@ -128,7 +124,7 @@ class KeyCodecProtocol(Protocol[EncodedKeyT]):
         ...
 
 
-class ValueCodecProtocol(Protocol[EncodedValueT]):
+class ValueCodecProtocol[EncodedValueT](Protocol):
     """Protocol for encoding/decoding storage values.
 
     Type Parameters:
@@ -169,8 +165,13 @@ class ValueCodecProtocol(Protocol[EncodedValueT]):
         ...
 
 
-class StorageProtocol(Protocol):
+class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
     """Protocol for state storage adapters."""
+
+    @property
+    def codec(self) -> StorageCodecProtocol[EncodedKeyT, EncodedValueT]:
+        """Get storage codec for key/value encoding."""
+        ...
 
     def get(self, key: Key) -> Value:
         """Get value by key.
@@ -223,11 +224,7 @@ class StorageProtocol(Protocol):
         """
         ...
 
-    def list_keys(
-        self,
-        prefix: Key,
-        depth: int = ...,
-    ) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: Key, depth: int = ...) -> Generator[Key, None, None]:
         """List all keys under prefix.
 
         Args:
@@ -289,11 +286,11 @@ class StorageProtocol(Protocol):
         """
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check equality of the storage.
 
         Args:
-            value: Value to compare with
+            other: Value to compare with
 
         Returns:
             True if equal, False otherwise
@@ -361,11 +358,7 @@ class TransactionProtocol(Protocol):
         """
         ...
 
-    def list_keys(
-        self,
-        prefix: Key,
-        depth: int = ...,
-    ) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: Key, depth: int = ...) -> Generator[Key, None, None]:
         """List all keys under prefix within transaction context.
 
         Args:
@@ -407,11 +400,11 @@ class TransactionProtocol(Protocol):
         """
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check equality of the transaction.
 
         Args:
-            value: Value to compare with
+            other: Value to compare with
 
         Returns:
             True if equal, False otherwise
@@ -497,11 +490,7 @@ class SnapshotProtocol(Protocol):
         """
         ...
 
-    def list_keys(
-        self,
-        prefix: Key,
-        depth: int = ...,
-    ) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: Key, depth: int = ...) -> Generator[Key, None, None]:
         """List all keys under prefix within snapshot context.
 
         Args:
@@ -533,11 +522,11 @@ class SnapshotProtocol(Protocol):
         """
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check equality of the snapshot.
 
         Args:
-            value: Value to compare with
+            other: Snapshot to compare with
 
         Returns:
             True if equal, False otherwise
@@ -587,15 +576,15 @@ class SnapshotHandlerProtocol(Protocol):
         ...
 
 
-class ObserverProtocol(Protocol):
+class ObserverProtocol[EncodedKeyT](Protocol):
     """Protocol for observable adapters."""
 
-    def subscribe(
-        self,
-        key: Key,
-        callback: CallbackFn,
-        depth: int = ...,
-    ) -> SubscriptionProtocol:
+    @property
+    def codec(self) -> KeyCodecProtocol[EncodedKeyT]:
+        """Get key codec for encoding topics."""
+        ...
+
+    def subscribe(self, key: Key, callback: CallbackFn, depth: int = ...) -> SubscriptionProtocol:
         """Subscribe to changes under key prefix.
 
         Args:
@@ -641,11 +630,11 @@ class ObserverProtocol(Protocol):
         """
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check equality of the observer.
 
         Args:
-            value: Value to compare with
+            other: Observer to compare with
 
         Returns:
             True if equal, False otherwise

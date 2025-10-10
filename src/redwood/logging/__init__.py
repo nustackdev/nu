@@ -1,3 +1,5 @@
+"""Logging utilities for the Redwood package."""
+
 import logging
 
 
@@ -5,8 +7,7 @@ INIT = False
 
 
 def init_logging() -> None:
-    """Configure the main logger.
-    """
+    """Configure the main logger."""
     global INIT
 
     if INIT:
@@ -26,6 +27,7 @@ def get_logger(name: str, level: int | None = None) -> logging.Logger:
 
     Args:
         name (str): The name of the logger, typically the module name.
+        level (int | None): Optional logging level to set on the logger.
 
     Returns:
         logging.Logger: Configured logger instance.

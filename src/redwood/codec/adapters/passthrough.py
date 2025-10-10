@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.protocols import ValueCodecProtocol
-from redwood.types import Value
 
-from .types import PassthroughEncoded
+if TYPE_CHECKING:
+    from redwood.protocols import ValueCodecProtocol
+    from redwood.types import Value
+
+    from .types import PassthroughEncoded
 
 
 __all__ = ["PassthroughCodec"]

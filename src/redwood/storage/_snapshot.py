@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from loomi.tree import SnapshotContextManagerProtocol, SnapshotHandlerProtocol, SnapshotProtocol
-
-from ._types import ValueT
+from redwood.protocols import (
+    SnapshotContextManagerProtocol,
+    SnapshotHandlerProtocol,
+    SnapshotProtocol,
+)
 
 
 __all__ = [
@@ -10,19 +12,19 @@ __all__ = [
 ]
 
 
-class SnapshotContextManager(SnapshotContextManagerProtocol[ValueT]):
+class SnapshotContextManager(SnapshotContextManagerProtocol):
     """Context manager for storage snapshots."""
 
-    def __init__(self, handler: SnapshotHandlerProtocol[ValueT]):
+    def __init__(self, handler: SnapshotHandlerProtocol) -> None:
         """Initialize snapshot context manager.
 
         Args:
             handler: Storage instance to manage snapshots for
         """
         self.handler = handler
-        self.snapshot: SnapshotProtocol[ValueT] | None = None
+        self.snapshot: SnapshotProtocol | None = None
 
-    def __enter__(self) -> SnapshotProtocol[ValueT]:
+    def __enter__(self) -> SnapshotProtocol:
         """Create a new snapshot.
 
         Returns:
@@ -34,7 +36,12 @@ class SnapshotContextManager(SnapshotContextManagerProtocol[ValueT]):
         self.snapshot = self.handler.begin_snapshot()
         return self.snapshot
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object | None,
+    ) -> None:
         """Clean up snapshot resources.
 
         Args:

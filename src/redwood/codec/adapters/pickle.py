@@ -5,10 +5,12 @@ from __future__ import annotations
 import pickle  # nosec: S403
 from typing import TYPE_CHECKING
 
-from redwood.protocols import ValueCodecProtocol
-from redwood.types import Value
 
-from .types import PickleEncoded
+if TYPE_CHECKING:
+    from redwood.protocols import ValueCodecProtocol
+    from redwood.types import Value
+
+    from .types import PickleEncoded
 
 
 __all__ = ["PickleCodec"]

@@ -1,7 +1,7 @@
 """Type definitions."""
 
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, Literal
 
 
 # =========================================================
@@ -66,12 +66,9 @@ Key = tuple[KeyComponent, ...]
 CallbackFn = Callable[[Key], None]
 
 
-# =========================================================
-# Codec-related types
-# =========================================================
-EncodedKey = Any  # Encoded key type (e.g. bytes, str)
-EncodedValue = Any  # Encoded value type (e.g. bytes, str)
+# ========================================================
+# Storage-specific types
+# ========================================================
 
-# Type variables for generics
-EncodedKeyT = TypeVar("EncodedKeyT", bound=EncodedKey)
-EncodedValueT = TypeVar("EncodedValueT", bound=EncodedValue)
+
+StorageMode = Literal["read", "write"]

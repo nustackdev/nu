@@ -2,71 +2,74 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Generator
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import attrs
-from loomi import Attach, ResourceSpec, Spec
-from loomi.tree import SnapshotProtocol, StorageKeyError, StorageProtocol, TransactionProtocol
-from loomistd.codec import CodecProtocol
-from loomistd.codec.passthrough import PassthroughCodecSpec
-from loomistd.service import SyncService
+from mesh import Attach, ResourceSpec, Spec, SyncResource
+from mesh.common.logging import get_logger
 
-from .._base import BaseStorage
-from .._exceptions import (
+from redwood.exceptions import (
     SnapshotError,
+    StorageKeyError,
     StorageOperationError,
     TransactionConflictError,
     TransactionError,
     TransactionInvalidError,
 )
-from .logger import logger
-from .types import (
-    InMemoryStorageEncodedKey,
-    InMemoryStorageEncodedValue,
-    InMemoryStorageKey,
-    InMemoryStorageValue,
-    TransactionOperation,
-)
+from redwood.types import Value
+
+from ._base import BaseStorage
 
 
-__all__ = [
-    "InMemoryStorage",
-    "InMemoryStorageSnapshot",
-    "InMemoryStorageSpec",
-    "InMemoryStorageTransaction",
-]
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from logging import Logger
+
+    from redwood.protocols import (
+        SnapshotProtocol,
+        StorageCodecProtocol,
+        StorageProtocol,
+        TransactionProtocol,
+    )
+    from redwood.types import Key
 
 
-class InMemoryStorage(
-    BaseStorage[
-        InMemoryStorageKey,
-        InMemoryStorageValue,
-        InMemoryStorageEncodedKey,
-        InMemoryStorageEncodedValue,
-    ],
-    SyncService,
-):
+logger: Logger = get_logger(__name__)
+
+
+@dataclass
+class TransactionOperation:
+    """Represents a single operation in a transaction."""
+
+    op_type: str  # "set" or "delete"
+    key: Key
+    value: Value | None = None
+
+
+class InMemoryStorage(BaseStorage[str, Value], SyncResource):
     """Simple file-based storage implementation with transaction support.
+
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec: CodecProtocol[
-        InMemoryStorageKey,
-        InMemoryStorageValue,
-        InMemoryStorageEncodedKey,
-        InMemoryStorageEncodedValue,
+    codec: StorageCodecProtocol[
+        str,
+        Value,
     ] = Attach()
 
     spec: InMemoryStorageSpec
 
-    def setup(self):
-        self._data: dict[InMemoryStorageEncodedKey, InMemoryStorageEncodedValue] = {}
+    def setup(self) -> None:
+        """Initialize in-memory storage."""
+        self._data: dict[str, Value] = {}
         self._data_lock = threading.Lock()
         self._active_transactions: set[InMemoryStorageTransaction] = set()
         super().setup()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
+        """Clean up in-memory storage."""
         super().cleanup()
         self._data.clear()
         self._active_transactions.clear()
@@ -90,7 +93,7 @@ class InMemoryStorage(
             self._data.clear()
         logger.debug("Disconnected from in-memory storage")
 
-    def _get_impl(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
+    def _get_impl(self, key: Key) -> Value:
         """Get value by key."""
         encoded_key = self.codec.encode_key(key)
 
@@ -101,10 +104,10 @@ class InMemoryStorage(
                 return self._data[encoded_key]
             except Exception as e:
                 if not isinstance(e, StorageKeyError):
-                    raise StorageOperationError(f"Failed to get key {key}: {e}")
+                    raise StorageOperationError(f"Failed to get key {key}: {e}") from e
                 raise
 
-    def _set_impl(self, key: InMemoryStorageKey, value: InMemoryStorageValue) -> None:
+    def _set_impl(self, key: Key, value: Value) -> None:
         """Set value for key."""
         encoded_key = self.codec.encode_key(key)
 
@@ -112,37 +115,35 @@ class InMemoryStorage(
             try:
                 self._data[encoded_key] = value
             except Exception as e:
-                raise StorageOperationError(f"Failed to set key {key}: {e}")
+                raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-    def _delete_impl(self, key: InMemoryStorageKey) -> None:
+    def _delete_impl(self, key: Key) -> None:
         """Delete key."""
         encoded_key = self.codec.encode_key(key)
 
         with self._data_lock:
             try:
                 self._data.pop(encoded_key, None)
-            except KeyError:
-                raise StorageKeyError(f"Key {key} not found")
+            except KeyError as e:
+                raise StorageKeyError(f"Key {key} not found") from e
             except Exception as e:
-                raise StorageOperationError(f"Failed to delete key {key}: {e}")
+                raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-    def _exists_impl(self, key: InMemoryStorageKey) -> bool:
+    def _exists_impl(self, key: Key) -> bool:
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
         with self._data_lock:
             return encoded_key in self._data
 
-    def _list_keys_impl(
-        self, prefix: InMemoryStorageKey, depth: int
-    ) -> Generator[InMemoryStorageKey, None, None]:
+    def _list_keys_impl(self, prefix: Key, depth: int) -> Generator[Key, None, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
         # Get snapshot of keys
         with self._data_lock:
             matching_keys = []
-            for encoded_key in self._data.keys():
+            for encoded_key in self._data:
                 if encoded_key.startswith(encoded_prefix):
                     # Split the key into parts based on '/' for depth calculation
                     decoded_key = self.codec.decode_key(encoded_key)
@@ -151,8 +152,7 @@ class InMemoryStorage(
 
         # Yield outside lock
         matching_keys.sort()  # Sort for consistent ordering
-        for key in matching_keys:
-            yield key
+        yield from matching_keys
 
     def _begin_transaction_impl(
         self,
@@ -208,13 +208,13 @@ class InMemoryStorage(
                     transaction.rollback()
                 except Exception as rollback_error:
                     logger.error(f"Failed to rollback transaction: {rollback_error}")
-                raise TransactionError(f"Failed to apply transaction: {e}")
+                raise TransactionError(f"Failed to apply transaction: {e}") from e
 
 
 class InMemoryStorageTransaction:
     """Simple in-memory transaction implementation."""
 
-    def __init__(self, storage: InMemoryStorage):
+    def __init__(self, storage: InMemoryStorage) -> None:
         """Initialize transaction."""
         self._storage = storage
         self._operations: list[TransactionOperation] = []
@@ -231,7 +231,7 @@ class InMemoryStorageTransaction:
         if self._rolled_back:
             raise TransactionInvalidError("Transaction already rolled back")
 
-    def get(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
+    def get(self, key: Key) -> Value:
         """Get value within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
@@ -249,14 +249,14 @@ class InMemoryStorageTransaction:
         self._read_set.add(encoded_key)
         return value
 
-    def set(self, key: InMemoryStorageKey, value: InMemoryStorageValue) -> None:
+    def set(self, key: Key, value: Value) -> None:
         """Set value within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
         self._write_set.add(encoded_key)
         self._operations.append(TransactionOperation("set", key, value))
 
-    def delete(self, key: InMemoryStorageKey) -> None:
+    def delete(self, key: Key) -> None:
         """Delete key within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
@@ -277,9 +277,8 @@ class InMemoryStorageTransaction:
                     break
 
         # 2. Check storage if key does not exist in transaction
-        if not key_exists:
-            if self._storage.exists(key):
-                key_exists = True
+        if not key_exists and self._storage.exists(key):
+            key_exists = True
 
         if not key_exists:
             raise StorageKeyError(f"Key {key} does not exist")
@@ -287,7 +286,7 @@ class InMemoryStorageTransaction:
         self._write_set.add(encoded_key)
         self._operations.append(TransactionOperation("delete", key))
 
-    def exists(self, key: InMemoryStorageKey) -> bool:
+    def exists(self, key: Key) -> bool:
         """Check if key exists within transaction context."""
         self._check_valid()
         try:
@@ -296,9 +295,7 @@ class InMemoryStorageTransaction:
         except StorageKeyError:
             return False
 
-    def list_keys(
-        self, prefix: InMemoryStorageKey, depth: int = 1
-    ) -> Generator[InMemoryStorageKey, None, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
         """List all keys under prefix within transaction."""
         self._check_valid()
 
@@ -342,7 +339,7 @@ class InMemoryStorageTransaction:
             self._storage._apply_transaction(self)
             self._committed = True
         except Exception as e:
-            raise TransactionError(f"Failed to commit transaction: {e}")
+            raise TransactionError(f"Failed to commit transaction: {e}") from e
 
     def rollback(self) -> None:
         """Roll back transaction changes."""
@@ -355,7 +352,7 @@ class InMemoryStorageTransaction:
     def __hash__(self) -> int:
         return hash(str(self._uuid))
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other is None:
             return False
         return isinstance(other, type(self)) and self._uuid == other._uuid
@@ -367,8 +364,8 @@ class InMemoryStorageSnapshot:
     def __init__(
         self,
         storage: InMemoryStorage,
-        snapshot_data: dict[InMemoryStorageEncodedKey, InMemoryStorageEncodedValue],
-    ):
+        snapshot_data: dict[str, Value],
+    ) -> None:
         """Initialize snapshot with data copy."""
         self._storage = storage
         self._snapshot_data = snapshot_data
@@ -380,7 +377,7 @@ class InMemoryStorageSnapshot:
         if self._closed:
             raise SnapshotError("Snapshot already closed")
 
-    def get(self, key: InMemoryStorageKey) -> InMemoryStorageValue:
+    def get(self, key: Key) -> Value:
         """Get value within snapshot context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
@@ -391,32 +388,29 @@ class InMemoryStorageSnapshot:
             return self._snapshot_data[encoded_key]
         except Exception as e:
             if not isinstance(e, StorageKeyError):
-                raise StorageOperationError(f"Failed to get key {key}: {e}")
+                raise StorageOperationError(f"Failed to get key {key}: {e}") from e
             raise
 
-    def exists(self, key: InMemoryStorageKey) -> bool:
+    def exists(self, key: Key) -> bool:
         """Check if key exists within snapshot context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
         return encoded_key in self._snapshot_data
 
-    def list_keys(
-        self, prefix: InMemoryStorageKey, depth: int = 1
-    ) -> Generator[InMemoryStorageKey, None, None]:
+    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
         """List all keys under prefix within snapshot context."""
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
 
         matching_keys = []
-        for encoded_key in self._snapshot_data.keys():
+        for encoded_key in self._snapshot_data:
             if encoded_key.startswith(encoded_prefix):
                 decoded_key = self._storage.codec.decode_key(encoded_key)
                 if depth == -1 or len(decoded_key) - len(prefix) == depth:
                     matching_keys.append(decoded_key)
 
         # Yield sorted keys for consistent ordering
-        for key in sorted(matching_keys):
-            yield key
+        yield from sorted(matching_keys)
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""
@@ -435,6 +429,8 @@ class InMemoryStorageSnapshot:
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class InMemoryStorageSpec(ResourceSpec):
+    """Specification for InMemoryStorage resource."""
+
     name: str = "in_memory_storage"
     factory: type = InMemoryStorage
     mode: str = "write"

@@ -180,9 +180,14 @@ select = [
     "T20",    # flake8-print
     "D",      # pydocstyle
     "ANN",    # flake8-annotations
+    "TC",     # flake8-type-checking
+    "RUF",    # ruff-specific rules
+    "PTH",    # flake8-pathlib
+    "SIM",    # flake8-simplify
 ]
 ignore = [
     "E501",   # Line too long (handled by formatter)
+    "D105",   # Missing docstring in magic method
 ]
 
 [tool.ruff.lint.pydocstyle]
