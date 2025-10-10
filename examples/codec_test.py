@@ -87,5 +87,23 @@ def storage():
             print("Error fetching user 1:", e)
 
 
+def observer():
+    from redwood.codec import TextCodecSpec
+    from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
+    from redwood.types import Key
+
+    def callback(topic: Key) -> None:
+        print(f"Notification received for topic: {topic}")
+
+    with InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer:
+        sub = observer.subscribe(("users", "*"), callback, depth=1)
+        observer.notify(("users", 42))
+        observer.notify(("users", 42, "profile"))
+        observer.notify(("orders", 1001))
+        observer.unsubscribe(sub)
+        observer.notify(("users", 42))
+
+
 if __name__ == "__main__":
-    storage()
+    # storage()
+    observer()

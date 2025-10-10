@@ -21,6 +21,11 @@ class RedwoodError(Exception):
     pass
 
 
+# ==============================================================
+# Storage exceptions
+# ==============================================================
+
+
 class StorageError(RedwoodError):
     """Base exception for storage errors."""
 
@@ -71,5 +76,34 @@ class TransactionConflictError(TransactionError):
 
 class TransactionInvalidError(TransactionError):
     """Raised when transaction is invalid."""
+
+    pass
+
+
+# ==============================================================
+# Observer exceptions
+# ==============================================================
+
+
+class ObserverError(RedwoodError):
+    """Base exception for observer errors."""
+
+    pass
+
+
+class ObserverConnectionError(ObserverError):
+    """Raised when observer connection fails."""
+
+    pass
+
+
+class ObserverSubscriptionError(ObserverError):
+    """Raised when subscription operation fails."""
+
+    pass
+
+
+class ObserverValidationError(ObserverError):
+    """Raised when subscription operation fails."""
 
     pass

@@ -2,13 +2,23 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Generic, final
+from typing import TYPE_CHECKING, final
 
-from loomi.tree import SubscriptionProtocol
-from loomistd.codec import CodecProtocol
+from redwood.exceptions import ObserverConnectionError
+from redwood.logging import get_logger
 
-from ._exceptions import ObserverConnectionError, ObserverValidationError
-from ._types import ObserverCallbackFn, ObserverEncodedKeyT, ObserverKeyT
+
+if TYPE_CHECKING:
+    from logging import Logger
+
+    from redwood.protocols import (
+        KeyCodecProtocol,
+        SubscriptionProtocol,
+    )
+    from redwood.types import CallbackFn, Key
+
+
+logger: Logger = get_logger(__name__)
 
 
 __all__ = [
@@ -17,7 +27,7 @@ __all__ = [
 ]
 
 
-class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
+class BaseObserver[EncodedKeyT](ABC):
     """Base class for observer implementations.
 
     Provides core functionality for state change observation with:
@@ -27,21 +37,19 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     - Sync notification delivery
 
     Type Parameters:
-        ObserverKeyT: Topic type (tuple of strings)
+        Key: Topic type (tuple of strings)
         ObserverEncodedKeyT: Encoded topic type
     """
 
-    codec: CodecProtocol[ObserverKeyT, Any, ObserverEncodedKeyT, Any]
+    codec: KeyCodecProtocol[EncodedKeyT]
 
     def setup(self) -> None:
-        """Service setup called after service initialization.
-        """
+        """Service setup called after service initialization."""
         self._connected = False
         self.connect()
 
     def cleanup(self) -> None:
-        """Service cleanup called after service shutdown.
-        """
+        """Service cleanup called after service shutdown."""
         self.disconnect()
 
     def _ensure_connected(self) -> None:
@@ -52,18 +60,6 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         """
         if not self._connected:
             raise ObserverConnectionError("Observer not connected")
-
-    def _validate_topic(self, topic: ObserverKeyT) -> None:
-        """Validate topic format.
-
-        Args:
-            topic: Topic to validate
-
-        Raises:
-            ObserverValidationError: If topic format invalid
-        """
-        if not isinstance(topic, tuple) or not all(isinstance(x, str) for x in topic):
-            raise ObserverValidationError(f"Invalid topic format: {topic}")
 
     @final
     def connect(self) -> None:
@@ -105,18 +101,17 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
         raise NotImplementedError
 
     @final
-    def notify(self, topic: ObserverKeyT) -> None:
+    def notify(self, topic: Key) -> None:
         """Notify subscribers of state change.
 
         Args:
             topic: Topic identifying changed state
         """
         self._ensure_connected()
-        self._validate_topic(topic)
         self._notify_impl(topic)
 
     @abstractmethod
-    def _notify_impl(self, topic: ObserverKeyT) -> None:
+    def _notify_impl(self, topic: Key) -> None:
         """Implementation-specific notify logic.
 
         Args:
@@ -128,8 +123,8 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
     @final
     def subscribe(
         self,
-        key: ObserverKeyT,
-        callback: ObserverCallbackFn,
+        key: Key,
+        callback: CallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:
         """Subscribe to topic pattern.
@@ -144,7 +139,6 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
             New subscription instance
         """
         self._ensure_connected()
-        self._validate_topic(key)
 
         subscription = Subscription(
             key,
@@ -177,7 +171,7 @@ class BaseObserver(ABC, Generic[ObserverKeyT, ObserverEncodedKeyT]):
 
 
 @dataclass
-class Subscription(SubscriptionProtocol, Generic[ObserverKeyT]):
+class Subscription:
     """Represents a subscription to a topic pattern.
 
     Attributes:
@@ -195,16 +189,16 @@ class Subscription(SubscriptionProtocol, Generic[ObserverKeyT]):
         ObserverKey: Topic type (tuple of strings)
     """
 
-    _topic_pattern: ObserverKeyT
+    _topic_pattern: Key
     _depth: int
-    _callback: ObserverCallbackFn
+    _callback: CallbackFn
 
     @property
-    def topic_pattern(self) -> ObserverKeyT:
+    def topic_pattern(self) -> Key:
         return self._topic_pattern
 
     @property
-    def callback(self) -> ObserverCallbackFn:
+    def callback(self) -> CallbackFn:
         return self._callback
 
     @property

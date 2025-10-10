@@ -1,42 +1,50 @@
+"""In-memory observer implementation with thread-safe subscription management."""
+
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import attrs
-from loomi import Attach, ResourceSpec, Spec
-from loomi.tree import ObserverProtocol, SubscriptionProtocol
-from loomistd.codec import CodecProtocol
-from loomistd.codec.passthrough import PassthroughCodecSpec
-from loomistd.service import SyncService
+from mesh import Attach, ResourceSpec, Spec, SyncResource
+from mesh.common.logging import get_logger
 
-from .._base import BaseObserver
-from .logger import logger
-from .types import InMemoryObserverEncodedKey, InMemoryObserverKey
+from ._base import BaseObserver
+
+
+if TYPE_CHECKING:
+    from logging import Logger
+
+    from redwood.protocols import (
+        KeyCodecProtocol,
+        ObserverProtocol,
+        SubscriptionProtocol,
+    )
+    from redwood.types import Key
+
+
+logger: Logger = get_logger(__name__)
 
 
 __all__ = [
-    "InMemoryObserverSpec",
     "InMemoryObserver",
+    "InMemoryObserverSpec",
 ]
 
 
 class InMemoryObserver(
-    BaseObserver[
-        InMemoryObserverKey,
-        InMemoryObserverEncodedKey,
-    ],
-    SyncService,
+    BaseObserver[str],
+    SyncResource,
 ):
     """In-memory observer with thread-safe subscription management."""
 
-    codec: CodecProtocol[InMemoryObserverKey, Any, InMemoryObserverEncodedKey, Any] = Attach()
+    codec: KeyCodecProtocol[str] = Attach()
 
     def _connect_impl(self) -> None:
         if not hasattr(self, "_data_lock"):
             self._data_lock: threading.Lock = threading.Lock()
 
-        self._subscriptions: dict[InMemoryObserverKey, list[SubscriptionProtocol]] = {}
+        self._subscriptions: dict[Key, list[SubscriptionProtocol]] = {}
 
     def _disconnect_impl(self) -> None:
         with self._data_lock:
@@ -44,8 +52,8 @@ class InMemoryObserver(
 
     def _matches_pattern(
         self,
-        topic: InMemoryObserverKey,
-        pattern: InMemoryObserverKey,
+        topic: Key,
+        pattern: Key,
         depth: int,
     ) -> bool:
         if len(topic) < len(pattern):
@@ -56,7 +64,7 @@ class InMemoryObserver(
 
         return all(p == "*" or t == p for t, p in zip(topic, pattern, strict=False))
 
-    def _notify_impl(self, topic: InMemoryObserverKey) -> None:
+    def _notify_impl(self, topic: Key) -> None:
         with self._data_lock:
             matching_subs = []
             for pattern, subs in self._subscriptions.items():
@@ -94,10 +102,12 @@ class InMemoryObserver(
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class InMemoryObserverSpec(ResourceSpec):
+    """Specification for InMemoryObserver resource."""
+
     name: str = "in_memory_observer"
     factory: type = InMemoryObserver
     codec: Spec = attrs.field(factory=lambda: PassthroughCodecSpec())
 
 
 if TYPE_CHECKING:
-    _: type[ObserverProtocol] = InMemoryObserver
+    _: type[ObserverProtocol[str]] = InMemoryObserver
