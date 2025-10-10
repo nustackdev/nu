@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import pickle  # nosec: B403
-from collections.abc import Callable
+import pickle  # nosec: S403
+from typing import TYPE_CHECKING
 
 from ..protocols import ValueCodecProtocol
 from .types import PickleEncoded, PickleSupportedValues
@@ -12,7 +12,7 @@ from .types import PickleEncoded, PickleSupportedValues
 __all__ = ["PickleCodec"]
 
 
-class PickleCodec(ValueCodecProtocol[PickleSupportedValues, PickleEncoded]):
+class PickleCodec:
     """
     Codec using Python's pickle for arbitrary object serialization.
 
@@ -33,9 +33,6 @@ class PickleCodec(ValueCodecProtocol[PickleSupportedValues, PickleEncoded]):
         during deserialization.
     """
 
-    encode: Callable[[PickleSupportedValues], PickleEncoded]
-    decode: Callable[[PickleEncoded], PickleSupportedValues]
-
     def __init__(self) -> None:
         """
         Initialize pickle codec with direct function references.
@@ -43,5 +40,17 @@ class PickleCodec(ValueCodecProtocol[PickleSupportedValues, PickleEncoded]):
         The encode and decode attributes are set to pickle module functions
         directly to avoid any method call overhead.
         """
-        self.encode = pickle.dumps
-        self.decode = pickle.loads
+        self.encode = pickle.dumps  # type: ignore[return-value]
+        self.decode = pickle.loads  # type: ignore[return-value]
+
+    def encode(self, value: PickleSupportedValues) -> PickleEncoded:
+        """Encode a supported value into pickle binary format."""
+        ...
+
+    def decode(self, encoded: PickleEncoded) -> PickleSupportedValues:
+        """Decode pickle binary data back into a supported value."""
+        ...
+
+
+if TYPE_CHECKING:
+    _: type[ValueCodecProtocol[PickleSupportedValues, PickleEncoded]] = PickleCodec

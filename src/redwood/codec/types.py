@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TypeVar
 
+from redwood.types import StorageKey, StorageKeyComponent
+
 
 __all__ = [
     "Key",
@@ -12,8 +14,8 @@ __all__ = [
     "EncodedValueT",
 ]
 
-
-Key = tuple[str | int, ...]
-EncodedKeyT = TypeVar("EncodedKeyT", covariant=True)
-SupportedValuesT = TypeVar("SupportedValuesT", contravariant=True)
-EncodedValueT = TypeVar("EncodedValueT", covariant=True)
+KeyComponent = StorageKeyComponent
+Key = StorageKey
+EncodedKeyT = TypeVar("EncodedKeyT")
+SupportedValuesT = TypeVar("SupportedValuesT")
+EncodedValueT = TypeVar("EncodedValueT")

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from ..protocols import ValueCodecProtocol
 from .types import MicroPackEncoded, MicroPackSupportedValues
@@ -37,9 +37,6 @@ class MicroPackCodec(ValueCodecProtocol[MicroPackSupportedValues, MicroPackEncod
 
     __slots__ = ("encode", "decode", "_codec")
 
-    encode: Callable[[MicroPackSupportedValues], MicroPackEncoded]
-    decode: Callable[[MicroPackEncoded], MicroPackSupportedValues]
-
     def __init__(self) -> None:
         """
         Initialize MicroPack codec with direct function references.
@@ -48,5 +45,17 @@ class MicroPackCodec(ValueCodecProtocol[MicroPackSupportedValues, MicroPackEncod
         functions directly to avoid any method call overhead.
         """
         self._codec = Codec()
-        self.encode: Callable[[MicroPackSupportedValues], MicroPackEncoded] = self._codec.encode
-        self.decode: Callable[[MicroPackEncoded], MicroPackSupportedValues] = self._codec.decode
+        self.encode = self._codec.encode  # type: ignore[return-value]
+        self.decode = self._codec.decode  # type: ignore[return-value]
+
+    def encode(self, value: MicroPackSupportedValues) -> MicroPackEncoded:
+        """Encode a supported value into MicroPack binary format."""
+        ...
+
+    def decode(self, encoded: MicroPackEncoded) -> MicroPackSupportedValues:
+        """Decode MicroPack binary data back into a supported value."""
+        ...
+
+
+if TYPE_CHECKING:
+    _: type[ValueCodecProtocol[MicroPackSupportedValues, MicroPackEncoded]] = MicroPackCodec

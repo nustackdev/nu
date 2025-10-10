@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from redwood.types import CompositeValue
+
 
 __all__ = [
     "PassthroughSupportedValues",
@@ -25,44 +27,17 @@ PassthroughEncoded = Any
 
 
 # MessagePack codec types - binary serialization
-MessagePackSupportedValues = (
-    None
-    | bytes
-    | bool
-    | int
-    | float
-    | str
-    | list["MessagePackSupportedValues"]
-    | dict[str, "MessagePackSupportedValues"]
-)
+MessagePackSupportedValues = CompositeValue
 MessagePackEncoded = bytes
 
 
 # MicroPack codec types - optimized binary serialization
-MicroPackSupportedValues = (
-    None
-    | bytes
-    | bool
-    | int
-    | float
-    | str
-    | list["MicroPackSupportedValues"]
-    | dict[str, "MicroPackSupportedValues"]
-)
+MicroPackSupportedValues = CompositeValue
 MicroPackEncoded = bytes
 
 
 # JSON codec types - text serialization with base64 for bytes
-JSONSupportedValues = (
-    None
-    | bytes
-    | bool
-    | int
-    | float
-    | str
-    | list["JSONSupportedValues"]
-    | dict[str, "JSONSupportedValues"]
-)
+JSONSupportedValues = CompositeValue
 JSONEncoded = str
 
 

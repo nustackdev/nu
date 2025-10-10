@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Generic
+from typing import TYPE_CHECKING
 
 import attrs
 from mesh import ResourceSpec, SyncResource
 
-from .protocols import KeyCodecProtocol, ValueCodecProtocol
+from .protocols import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
 from .types import EncodedKeyT, EncodedValueT, Key, SupportedValuesT
 
 
@@ -18,7 +17,7 @@ __all__ = [
 ]
 
 
-class StorageCodec(SyncResource, Generic[EncodedKeyT, SupportedValuesT, EncodedValueT]):
+class StorageCodec[EncodedKeyT, SupportedValuesT, EncodedValueT](SyncResource):
     """
     Unified codec for storage operations.
 
@@ -40,13 +39,10 @@ class StorageCodec(SyncResource, Generic[EncodedKeyT, SupportedValuesT, EncodedV
         method call overhead and maintain maximum throughput.
     """
 
+    spec: StorageCodecSpec[EncodedKeyT, SupportedValuesT, EncodedValueT]  # type: ignore[override]
+
     key_codec: KeyCodecProtocol[EncodedKeyT]
     value_codec: ValueCodecProtocol[SupportedValuesT, EncodedValueT]
-
-    encode_key: Callable[[Key], EncodedKeyT]
-    decode_key: Callable[[EncodedKeyT], Key]
-    encode_value: Callable[[SupportedValuesT], EncodedValueT]
-    decode_value: Callable[[EncodedValueT], SupportedValuesT]
 
     def setup(self) -> None:
         """
@@ -55,19 +51,33 @@ class StorageCodec(SyncResource, Generic[EncodedKeyT, SupportedValuesT, EncodedV
         Creates codec instances from the specification and sets up direct
         function references for all encode/decode operations.
         """
-        self.key_codec: KeyCodecProtocol[EncodedKeyT] = self.spec.key_codec()
-        self.value_codec: ValueCodecProtocol[SupportedValuesT, EncodedValueT] = (
-            self.spec.value_codec()
-        )
+        self.key_codec = self.spec.key_codec()
+        self.value_codec = self.spec.value_codec()
 
-        self.encode_key: Callable[[Key], EncodedKeyT] = self.key_codec.encode
-        self.decode_key: Callable[[EncodedKeyT], Key] = self.key_codec.decode
-        self.encode_value: Callable[[SupportedValuesT], EncodedValueT] = self.value_codec.encode
-        self.decode_value: Callable[[EncodedValueT], SupportedValuesT] = self.value_codec.decode
+        self.encode_key = self.key_codec.encode
+        self.decode_key = self.key_codec.decode
+        self.encode_value = self.value_codec.encode
+        self.decode_value = self.value_codec.decode
+
+    def encode_key(self, key: Key) -> EncodedKeyT:
+        """Encode a key using the key codec."""
+        raise NotImplementedError
+
+    def decode_key(self, encoded: EncodedKeyT) -> Key:
+        """Decode a key using the key codec."""
+        raise NotImplementedError
+
+    def encode_value(self, value: SupportedValuesT) -> EncodedValueT:
+        """Encode a value using the value codec."""
+        raise NotImplementedError
+
+    def decode_value(self, encoded: EncodedValueT) -> SupportedValuesT:
+        """Decode a value using the value codec."""
+        raise NotImplementedError
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class StorageCodecSpec(ResourceSpec, Generic[EncodedKeyT, SupportedValuesT, EncodedValueT]):
+class StorageCodecSpec[EncodedKeyT, SupportedValuesT, EncodedValueT](ResourceSpec):
     """
     Specification for StorageCodec resource.
 
@@ -79,6 +89,10 @@ class StorageCodecSpec(ResourceSpec, Generic[EncodedKeyT, SupportedValuesT, Enco
     """
 
     name: str = "storage_codec"
-    factory: type = StorageCodec[EncodedKeyT, SupportedValuesT, EncodedValueT]
-    key_codec: KeyCodecProtocol[EncodedKeyT]
-    value_codec: ValueCodecProtocol[SupportedValuesT, EncodedValueT]
+    factory: type[StorageCodec[EncodedKeyT, SupportedValuesT, EncodedValueT]] = StorageCodec
+    key_codec: type[KeyCodecProtocol[EncodedKeyT]]
+    value_codec: type[ValueCodecProtocol[SupportedValuesT, EncodedValueT]]
+
+
+if TYPE_CHECKING:
+    _: type[StorageCodecProtocol] = StorageCodec

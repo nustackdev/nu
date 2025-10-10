@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from ..protocols import ValueCodecProtocol
 from .types import MessagePackEncoded, MessagePackSupportedValues
@@ -37,9 +37,6 @@ class MessagePackCodec(ValueCodecProtocol[MessagePackSupportedValues, MessagePac
 
     __slots__ = ("encode", "decode")
 
-    encode: Callable[[MessagePackSupportedValues], MessagePackEncoded]
-    decode: Callable[[MessagePackEncoded], MessagePackSupportedValues]
-
     def __init__(self) -> None:
         """
         Initialize MessagePack codec with direct function references.
@@ -47,5 +44,17 @@ class MessagePackCodec(ValueCodecProtocol[MessagePackSupportedValues, MessagePac
         The encode and decode attributes are set to msgpack library functions
         directly to avoid any method call overhead.
         """
-        self.encode: Callable[[MessagePackSupportedValues], MessagePackEncoded] = msgpack.packb
-        self.decode: Callable[[MessagePackEncoded], MessagePackSupportedValues] = msgpack.unpackb
+        self.encode = msgpack.packb  # type: ignore[return-value]
+        self.decode = msgpack.unpackb  # type: ignore[return-value]
+
+    def encode(self, value: MessagePackSupportedValues) -> MessagePackEncoded:
+        """Encode a supported value into MessagePack binary format."""
+        ...
+
+    def decode(self, encoded: MessagePackEncoded) -> MessagePackSupportedValues:
+        """Decode MessagePack binary data back into a supported value."""
+        ...
+
+
+if TYPE_CHECKING:
+    _: type[ValueCodecProtocol[MessagePackSupportedValues, MessagePackEncoded]] = MessagePackCodec

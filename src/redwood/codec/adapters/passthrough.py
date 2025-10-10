@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING
 
 from ..protocols import ValueCodecProtocol
 from .types import PassthroughEncoded, PassthroughSupportedValues
@@ -12,7 +11,7 @@ from .types import PassthroughEncoded, PassthroughSupportedValues
 __all__ = ["PassthroughCodec"]
 
 
-class PassthroughCodec(ValueCodecProtocol[PassthroughSupportedValues, PassthroughEncoded]):
+class PassthroughCodec:
     """
     Codec that performs no transformation on data.
 
@@ -27,23 +26,19 @@ class PassthroughCodec(ValueCodecProtocol[PassthroughSupportedValues, Passthroug
 
     __slots__ = ("encode", "decode")
 
-    encode: Callable[[PassthroughSupportedValues], PassthroughEncoded]
-    decode: Callable[[PassthroughEncoded], PassthroughSupportedValues]
-
     def __init__(self) -> None:
         """Initialize passthrough codec with identity function references."""
-        self.encode: Callable[[PassthroughSupportedValues], PassthroughEncoded] = self._identity
-        self.decode: Callable[[PassthroughEncoded], PassthroughSupportedValues] = self._identity
+        self.encode = lambda x: x  # type: ignore[return-value]
+        self.decode = lambda x: x  # type: ignore[return-value]
 
-    @staticmethod
-    def _identity(value: Any) -> Any:
-        """
-        Identity function that returns the input unchanged.
+    def encode(self, value: PassthroughSupportedValues) -> PassthroughEncoded:
+        """Encode a supported value (no transformation)."""
+        ...
 
-        Args:
-            value: Any value to pass through
+    def decode(self, encoded: PassthroughEncoded) -> PassthroughSupportedValues:
+        """Decode a supported value (no transformation)."""
+        ...
 
-        Returns:
-            The same value without modification
-        """
-        return value
+
+if TYPE_CHECKING:
+    _: type[ValueCodecProtocol[PassthroughSupportedValues, PassthroughEncoded]] = PassthroughCodec
