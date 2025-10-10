@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from types import TracebackType
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from .types import CallbackFn, Key, Value
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from types import TracebackType
+
+    from .types import CallbackFn, Key, Value
 
 
 __all__ = []
@@ -431,7 +434,7 @@ class TransactionContextManagerProtocol(Protocol):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
-    ) -> None:
+    ) -> bool:
         """Commit or rollback transaction based on context exit.
 
         Args:
@@ -553,7 +556,7 @@ class SnapshotContextManagerProtocol(Protocol):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
-    ) -> None:
+    ) -> bool:
         """Clean up snapshot resources.
 
         Args:

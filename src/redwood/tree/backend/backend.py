@@ -1,4 +1,6 @@
-"""This module includes an observable kv storage solution with:
+"""This module includes an observable kv storage solution.
+
+Features:
 - Persistent storage
 - Change notifications
 - Transactional operations
@@ -7,24 +9,27 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from dataclasses import dataclass
-from types import TracebackType
-from typing import TYPE_CHECKING, Any, Generic
+from typing import TYPE_CHECKING
 
 import attrs
 
-from .kv import (
+from redwood.protocols import (
+    ObserverProtocol,
     SnapshotContextManagerProtocol,
     SnapshotProtocol,
     StorageProtocol,
+    SubscriptionProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,
 )
-from .observer import ObserverProtocol, SubscriptionProtocol
-from .type_vars import ValueT
-from .types import CallbackFn, Key
 
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from types import TracebackType
+
+    from redwood.types import CallbackFn, Key, Value
 
 __all__ = [
     "ObservableStorage",
@@ -35,14 +40,16 @@ __all__ = [
 ]
 
 
-class ObservableStorage(Generic[ValueT]):
-    _storage: StorageProtocol[ValueT]
-    _observer: ObserverProtocol
+class ObservableStorage[EncodedKeyT, EncodedValueT]:
+    """Key-value storage that combines persistent storage with change notifications."""
+
+    _storage: StorageProtocol[EncodedKeyT, EncodedValueT]
+    _observer: ObserverProtocol[EncodedKeyT]
 
     def __init__(
         self,
-        storage: StorageProtocol[ValueT],
-        observer: ObserverProtocol,
+        storage: StorageProtocol[EncodedKeyT, EncodedValueT],
+        observer: ObserverProtocol[EncodedKeyT],
     ) -> None:
         """Initialize ObservableStorage with storage and observer.
 
@@ -54,7 +61,7 @@ class ObservableStorage(Generic[ValueT]):
         self._observer = observer
 
     @property
-    def storage(self) -> StorageProtocol[ValueT]:
+    def storage(self) -> StorageProtocol[EncodedKeyT, EncodedValueT]:
         """Get storage backend.
 
         Returns:
@@ -63,7 +70,7 @@ class ObservableStorage(Generic[ValueT]):
         return self._storage
 
     @property
-    def observer(self) -> ObserverProtocol:
+    def observer(self) -> ObserverProtocol[EncodedKeyT]:
         """Get observer backend.
 
         Returns:
@@ -71,7 +78,7 @@ class ObservableStorage(Generic[ValueT]):
         """
         return self._observer
 
-    def get(self, key: Key) -> ValueT:
+    def get(self, key: Key) -> Value:
         """Get value at key.
 
         Args:
@@ -86,7 +93,7 @@ class ObservableStorage(Generic[ValueT]):
         """
         return self.storage.get(key)
 
-    def set(self, key: Key, value: ValueT) -> None:
+    def set(self, key: Key, value: Value) -> None:
         """Set value at key and notify observers.
 
         Args:
@@ -142,8 +149,7 @@ class ObservableStorage(Generic[ValueT]):
         Raises:
             StorageOperationError: If listing fails
         """
-        for key in self.storage.list_keys(prefix, depth):
-            yield key
+        yield from self.storage.list_keys(prefix, depth)
 
     def subscribe(
         self,
@@ -239,19 +245,16 @@ class ObservableStorage(Generic[ValueT]):
     def __hash__(self) -> int:
         return hash((self.storage, self.observer))
 
-    def __eq__(self, other: Any) -> bool:
-        if other is None:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
             return False
-        return (
-            isinstance(other, type(self))
-            and self.storage == other.storage
-            and self.observer == other.observer
-        )
+        return self.storage == other.storage and self.observer == other.observer
 
 
 @attrs.define(frozen=True)
-class ObservableStorageTransaction(Generic[ValueT]):
+class ObservableStorageTransaction:
     """Transaction implementation that combines storage operations and notifications.
+
     Ensures atomicity between storage changes and observer notifications.
     """
 
@@ -260,62 +263,58 @@ class ObservableStorageTransaction(Generic[ValueT]):
     # Track modified keys for notification after commit
     modified_keys: set[Key] = attrs.field(factory=set)
 
-    def get(self, key: Key) -> ValueT:
-        """Get value within transaction context"""
+    def get(self, key: Key) -> Value:
+        """Get value within transaction context."""
         return self.storage_txn.get(key)
 
-    def set(self, key: Key, value: ValueT) -> None:
-        """Set value and track key for notification"""
+    def set(self, key: Key, value: Value) -> None:
+        """Set value and track key for notification."""
         self.storage_txn.set(key, value)
         self.modified_keys.add(key)
 
     def delete(self, key: Key) -> None:
-        """Delete value and track key for notification"""
+        """Delete value and track key for notification."""
         self.storage_txn.delete(key)
         self.modified_keys.add(key)
 
     def exists(self, key: Key) -> bool:
-        """Check key existence within transaction"""
+        """Check key existence within transaction."""
         return self.storage_txn.exists(key)
 
     def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
-        """List keys with prefix within transaction"""
-        for key in self.storage_txn.list_keys(prefix, depth):
-            yield key
+        """List keys with prefix within transaction."""
+        yield from self.storage_txn.list_keys(prefix, depth)
 
     def commit(self) -> None:
-        """Commit transaction and notify observers of changes"""
+        """Commit transaction and notify observers of changes."""
         self.storage_txn.commit()
         # After successful storage commit, notify observers of all modified keys
         for key in self.modified_keys:
             self.observer.notify(key)
 
     def rollback(self) -> None:
-        """Rollback transaction without notifications"""
+        """Rollback transaction without notifications."""
         self.storage_txn.rollback()
         self.modified_keys.clear()
 
     def __hash__(self) -> int:
         return hash(self.storage_txn)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other is None:
             return False
         return isinstance(other, type(self)) and self.storage_txn == other.storage_txn
 
 
 @dataclass
-class ObservableStorageTransactionContextManager(
-    TransactionContextManagerProtocol, Generic[ValueT]
-):
-    """Context manager for State transactions that handles both storage and notifications.
-    """
+class ObservableStorageTransactionContextManager(TransactionContextManagerProtocol):
+    """Context manager for State transactions that handles both storage and notifications."""
 
     _observable_kv: ObservableStorage  # Reference to parent State instance
     _transaction: ObservableStorageTransaction | None = None  # Store the active transaction
 
     def __enter__(self) -> ObservableStorageTransaction:
-        """Begin new transaction with combined storage and notification handling"""
+        """Begin new transaction with combined storage and notification handling."""
         self._transaction = self._observable_kv.begin_transaction()
         return self._transaction
 
@@ -325,7 +324,8 @@ class ObservableStorageTransactionContextManager(
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool:
-        """Handle transaction completion:
+        """Handle transaction completion.
+
         - On success (no exception): commit changes and send notifications
         - On failure (exception): rollback changes, no notifications
         """
@@ -346,49 +346,48 @@ class ObservableStorageTransactionContextManager(
 
 
 @attrs.define(frozen=True)
-class ObservableStorageSnapshot(Generic[ValueT]):
+class ObservableStorageSnapshot:
     """Read-only snapshot implementation that provides consistent view of storage.
+
     No observer functionality needed since snapshots are read-only.
     """
 
     storage_snap: SnapshotProtocol
 
-    def get(self, key: Key) -> ValueT:
-        """Get value within snapshot context"""
+    def get(self, key: Key) -> Value:
+        """Get value within snapshot context."""
         return self.storage_snap.get(key)
 
     def exists(self, key: Key) -> bool:
-        """Check key existence within snapshot"""
+        """Check key existence within snapshot."""
         return self.storage_snap.exists(key)
 
     def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
-        """List keys with prefix within snapshot"""
-        for key in self.storage_snap.list_keys(prefix, depth):
-            yield key
+        """List keys with prefix within snapshot."""
+        yield from self.storage_snap.list_keys(prefix, depth)
 
     def close(self) -> None:
-        """Close snapshot and clean up resources"""
+        """Close snapshot and clean up resources."""
         self.storage_snap.close()
 
     def __hash__(self) -> int:
         return hash(self.storage_snap)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other is None:
             return False
         return isinstance(other, type(self)) and self.storage_snap == other.storage_snap
 
 
 @dataclass
-class ObservableStorageSnapshotContextManager(SnapshotContextManagerProtocol, Generic[ValueT]):
-    """Context manager for read-only snapshots.
-    """
+class ObservableStorageSnapshotContextManager(SnapshotContextManagerProtocol):
+    """Context manager for read-only snapshots."""
 
     _observable_kv: ObservableStorage  # Reference to parent backend instance
     _snapshot: ObservableStorageSnapshot | None = None  # Store the active snapshot
 
     def __enter__(self) -> ObservableStorageSnapshot:
-        """Begin new snapshot for read-only operations"""
+        """Begin new snapshot for read-only operations."""
         self._snapshot = self._observable_kv.begin_snapshot()
         return self._snapshot
 
@@ -397,14 +396,15 @@ class ObservableStorageSnapshotContextManager(SnapshotContextManagerProtocol, Ge
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
-    ) -> None:
-        """Clean up snapshot resources"""
+    ) -> bool:
+        """Clean up snapshot resources."""
         if self._snapshot is None:
             raise RuntimeError("Snapshot not initialized")
 
         try:
             # Always clean up snapshot resources
             self._snapshot.close()
+            return exc_type is None
         finally:
             # Clear the snapshot reference
             self._snapshot = None

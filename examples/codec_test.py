@@ -4,7 +4,11 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
+
+if TYPE_CHECKING:
+    from redwood.types import Key
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,33 +18,8 @@ logging.basicConfig(level=logging.INFO)
 # ============================================================================
 
 
-def main():
-    from rwtup.binary_codec import BinaryKeyCodec
-    from rwtup.string_codec import StringKeyCodec
-
-    string_codec = StringKeyCodec()
-    binary_codec = BinaryKeyCodec()
-
-    key = ("user", -49999, "settings")
-    encoded_str = string_codec.encode(key)
-    decoded_str = string_codec.decode(encoded_str)
-    assert decoded_str == key
-    print(f"String Codec: {key} -> {encoded_str} -> {decoded_str}")
-    encoded_bin = binary_codec.encode(key)
-    decoded_bin = binary_codec.decode(encoded_bin)
-    assert decoded_bin == key
-    print(f"Binary Codec: {key} -> {encoded_bin} -> {decoded_bin}")
-
-    assert binary_codec.encode((11, "a")) < binary_codec.encode((11, "v"))
-
-    a = {1: 2, (1, 2, [1, 2]): 3}
-
-
-class A:
-    pass
-
-
-def codec():
+def codec() -> None:
+    """Test codecs."""
     from redwood.codec import BinaryCodec, BinaryCodecSpec, TextCodec, TextCodecSpec
 
     class A:
@@ -67,7 +46,8 @@ def codec():
         assert value == codec.decode_value(encoded_value)
 
 
-def storage():
+def storage() -> None:
+    """Test storage."""
     from redwood.codec import BinaryCodecSpec
     from redwood.storage.lmdb_storage import LMDBStorage, LMDBStorageSpec
 
@@ -87,10 +67,10 @@ def storage():
             print("Error fetching user 1:", e)
 
 
-def observer():
+def observer() -> None:
+    """Test observer."""
     from redwood.codec import TextCodecSpec
     from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
-    from redwood.types import Key
 
     def callback(topic: Key) -> None:
         print(f"Notification received for topic: {topic}")
@@ -104,6 +84,41 @@ def observer():
         observer.notify(("users", 42))
 
 
+def backend() -> None:
+    """Test backend."""
+    from redwood.codec import TextCodecSpec
+    from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
+    from redwood.storage.in_memory_storage import InMemoryStorage, InMemoryStorageSpec
+    from redwood.tree.backend import ObservableStorage
+
+    with (
+        InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
+        InMemoryStorage(InMemoryStorageSpec(codec=TextCodecSpec())) as storage,
+    ):
+        backend = ObservableStorage(storage=storage, observer=observer)
+
+        def on_change(topic: Key) -> None:
+            print(f"Change detected on topic: {topic}")
+
+        backend.subscribe(("users",), on_change, depth=-1)
+
+        # Start a transaction
+        with backend.transaction() as transaction:
+            transaction.set(("users", 1), {"name": "Alice"})
+            transaction.set(("users", 2), {"name": "Bob"})
+            print("User 1 in transaction:", transaction.get(("users", 1)))
+            print("User 2 in transaction:", transaction.get(("users", 2)))
+            # Commit the transaction
+
+        print("User 1 after commit:", backend.get(("users", 1)))
+        print("User 2 after commit:", backend.get(("users", 2)))
+
+        # Start a snapshot
+        with backend.snapshot() as snapshot:
+            print("Snapshot User 1:", snapshot.get(("users", 1)))
+            print("Snapshot User 2:", snapshot.get(("users", 2)))
+
+
 if __name__ == "__main__":
     # storage()
-    observer()
+    backend()
