@@ -6,23 +6,23 @@ import base64
 import json
 from typing import Any
 
-from ..protocols import ValueCodecProtocol
-from .types import JSONEncoded, JSONSupportedValues
+from redwood.protocols import ValueCodecProtocol
+from redwood.types import Value
+
+from .types import JSONEncoded
 
 
 __all__ = ["JSONCodec"]
 
 
-class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
-    """
-    Codec using JSON for human-readable serialization.
+class JSONCodec(ValueCodecProtocol[JSONEncoded]):
+    """Codec using JSON for human-readable serialization.
 
     This codec provides text-based serialization suitable for debugging,
     configuration files, and APIs. Binary data (bytes) is encoded using
     base64 to maintain JSON compatibility.
 
     Type Parameters:
-        JSONValue: None, bytes, bool, int, float, str, list, or dict
         JSONEncoded: str (JSON text format)
 
     Features:
@@ -38,9 +38,8 @@ class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
 
     __slots__ = ()
 
-    def encode(self, value: JSONSupportedValues) -> JSONEncoded:
-        """
-        Encode a value to JSON string with base64 for bytes.
+    def encode(self, value: Value) -> JSONEncoded:
+        """Encode a value to JSON string with base64 for bytes.
 
         Args:
             value: The value to encode
@@ -51,9 +50,8 @@ class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
         processed = self._preprocess_encode(value)
         return json.dumps(processed)
 
-    def decode(self, encoded: JSONEncoded) -> JSONSupportedValues:
-        """
-        Decode a JSON string to value, handling bytes.
+    def decode(self, encoded: JSONEncoded) -> Value:
+        """Decode a JSON string to value, handling bytes.
 
         Args:
             encoded: JSON string to decode
@@ -66,8 +64,7 @@ class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
         return self._postprocess_decode(parsed)
 
     def _preprocess_encode(self, value: Any) -> Any:
-        """
-        Recursively preprocess value for JSON encoding.
+        """Recursively preprocess value for JSON encoding.
 
         Converts bytes to base64-encoded dict markers and handles
         nested structures recursively.
@@ -93,8 +90,7 @@ class JSONCodec(ValueCodecProtocol[JSONSupportedValues, JSONEncoded]):
         return value
 
     def _postprocess_decode(self, value: Any) -> Any:
-        """
-        Recursively postprocess value after JSON decoding.
+        """Recursively postprocess value after JSON decoding.
 
         Restores bytes from base64 dict markers and handles
         nested structures recursively.

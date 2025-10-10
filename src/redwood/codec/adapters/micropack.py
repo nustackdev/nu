@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..protocols import ValueCodecProtocol
-from .types import MicroPackEncoded, MicroPackSupportedValues
+from redwood.protocols import ValueCodecProtocol
+from redwood.types import Value
+
+from .types import MicroPackEncoded
 
 
 try:
@@ -18,9 +20,8 @@ except ImportError as e:
 __all__ = ["MicroPackCodec"]
 
 
-class MicroPackCodec(ValueCodecProtocol[MicroPackSupportedValues, MicroPackEncoded]):
-    """
-    Codec using MicroPack for optimized binary serialization.
+class MicroPackCodec(ValueCodecProtocol[MicroPackEncoded]):
+    """Codec using MicroPack for optimized binary serialization.
 
     MicroPack provides high-performance binary serialization with efficient
     encoding and decoding. It is designed for scenarios requiring maximum
@@ -35,11 +36,8 @@ class MicroPackCodec(ValueCodecProtocol[MicroPackSupportedValues, MicroPackEncod
         - No method call indirection or wrapper overhead
     """
 
-    __slots__ = ("encode", "decode", "_codec")
-
     def __init__(self) -> None:
-        """
-        Initialize MicroPack codec with direct function references.
+        """Initialize MicroPack codec with direct function references.
 
         The encode and decode attributes are set to the underlying codec
         functions directly to avoid any method call overhead.
@@ -48,14 +46,14 @@ class MicroPackCodec(ValueCodecProtocol[MicroPackSupportedValues, MicroPackEncod
         self.encode = self._codec.encode  # type: ignore[return-value]
         self.decode = self._codec.decode  # type: ignore[return-value]
 
-    def encode(self, value: MicroPackSupportedValues) -> MicroPackEncoded:
+    def encode(self, value: Value) -> MicroPackEncoded:
         """Encode a supported value into MicroPack binary format."""
         ...
 
-    def decode(self, encoded: MicroPackEncoded) -> MicroPackSupportedValues:
+    def decode(self, encoded: MicroPackEncoded) -> Value:
         """Decode MicroPack binary data back into a supported value."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[MicroPackSupportedValues, MicroPackEncoded]] = MicroPackCodec
+    _: type[ValueCodecProtocol[MicroPackEncoded]] = MicroPackCodec

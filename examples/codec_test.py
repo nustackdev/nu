@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Calculator service example using Invisibles over NetKit.
-"""
+"""Calculator service example using Invisibles over NetKit."""
 
 from __future__ import annotations
 
@@ -35,9 +33,18 @@ def main():
 
     assert binary_codec.encode((11, "a")) < binary_codec.encode((11, "v"))
 
+    a = {1: 2, (1, 2, [1, 2]): 3}
+
+
+class A:
+    pass
+
 
 def codec():
     from redwood.codec import BinaryCodec, BinaryCodecSpec, TextCodec, TextCodecSpec
+
+    class A:
+        pass
 
     with BinaryCodec(BinaryCodecSpec()) as codec:
         key = ("users", 42, "profile")
@@ -51,7 +58,7 @@ def codec():
 
     with TextCodec(TextCodecSpec()) as codec:
         key = ("users", 42, "profile")
-        value = {"name": "Alice", "age": 30}
+        value = 12
         encoded_key = codec.encode_key(key)
         encoded_value = codec.encode_value(value)
         print(f"Encoded key: {encoded_key}")

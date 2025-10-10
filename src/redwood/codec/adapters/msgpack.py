@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..protocols import ValueCodecProtocol
-from .types import MessagePackEncoded, MessagePackSupportedValues
+from redwood.protocols import ValueCodecProtocol
+from redwood.types import Value
+
+from .types import MessagePackEncoded
 
 
 try:
@@ -18,9 +20,8 @@ except ImportError as e:
 __all__ = ["MessagePackCodec"]
 
 
-class MessagePackCodec(ValueCodecProtocol[MessagePackSupportedValues, MessagePackEncoded]):
-    """
-    Codec using MessagePack for efficient binary serialization.
+class MessagePackCodec(ValueCodecProtocol[MessagePackEncoded]):
+    """Codec using MessagePack for efficient binary serialization.
 
     MessagePack is a binary serialization format that is more compact and
     faster than JSON while supporting similar data types. It is ideal for
@@ -35,11 +36,8 @@ class MessagePackCodec(ValueCodecProtocol[MessagePackSupportedValues, MessagePac
         - No method call indirection or wrapper overhead
     """
 
-    __slots__ = ("encode", "decode")
-
     def __init__(self) -> None:
-        """
-        Initialize MessagePack codec with direct function references.
+        """Initialize MessagePack codec with direct function references.
 
         The encode and decode attributes are set to msgpack library functions
         directly to avoid any method call overhead.
@@ -47,14 +45,14 @@ class MessagePackCodec(ValueCodecProtocol[MessagePackSupportedValues, MessagePac
         self.encode = msgpack.packb  # type: ignore[return-value]
         self.decode = msgpack.unpackb  # type: ignore[return-value]
 
-    def encode(self, value: MessagePackSupportedValues) -> MessagePackEncoded:
+    def encode(self, value: Value) -> MessagePackEncoded:
         """Encode a supported value into MessagePack binary format."""
         ...
 
-    def decode(self, encoded: MessagePackEncoded) -> MessagePackSupportedValues:
+    def decode(self, encoded: MessagePackEncoded) -> Value:
         """Decode MessagePack binary data back into a supported value."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[MessagePackSupportedValues, MessagePackEncoded]] = MessagePackCodec
+    _: type[ValueCodecProtocol[MessagePackEncoded]] = MessagePackCodec

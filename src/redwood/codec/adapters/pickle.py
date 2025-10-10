@@ -5,16 +5,17 @@ from __future__ import annotations
 import pickle  # nosec: S403
 from typing import TYPE_CHECKING
 
-from ..protocols import ValueCodecProtocol
-from .types import PickleEncoded, PickleSupportedValues
+from redwood.protocols import ValueCodecProtocol
+from redwood.types import Value
+
+from .types import PickleEncoded
 
 
 __all__ = ["PickleCodec"]
 
 
 class PickleCodec:
-    """
-    Codec using Python's pickle for arbitrary object serialization.
+    """Codec using Python's pickle for arbitrary object serialization.
 
     Pickle can serialize most Python objects, making it suitable for cases
     where complex object graphs need to be persisted. However, pickle is
@@ -34,8 +35,7 @@ class PickleCodec:
     """
 
     def __init__(self) -> None:
-        """
-        Initialize pickle codec with direct function references.
+        """Initialize pickle codec with direct function references.
 
         The encode and decode attributes are set to pickle module functions
         directly to avoid any method call overhead.
@@ -43,14 +43,14 @@ class PickleCodec:
         self.encode = pickle.dumps  # type: ignore[return-value]
         self.decode = pickle.loads  # type: ignore[return-value]
 
-    def encode(self, value: PickleSupportedValues) -> PickleEncoded:
+    def encode(self, value: Value) -> PickleEncoded:
         """Encode a supported value into pickle binary format."""
         ...
 
-    def decode(self, encoded: PickleEncoded) -> PickleSupportedValues:
+    def decode(self, encoded: PickleEncoded) -> Value:
         """Decode pickle binary data back into a supported value."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[PickleSupportedValues, PickleEncoded]] = PickleCodec
+    _: type[ValueCodecProtocol[PickleEncoded]] = PickleCodec

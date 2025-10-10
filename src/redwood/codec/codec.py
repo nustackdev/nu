@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 import attrs
 from mesh import ResourceSpec, SyncResource
 
-from .protocols import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
-from .types import EncodedKeyT, EncodedValueT, Key, SupportedValuesT
+from redwood.protocols import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
+from redwood.types import EncodedKeyT, EncodedValueT, Key, Value
 
 
 __all__ = [
@@ -17,9 +17,8 @@ __all__ = [
 ]
 
 
-class StorageCodec[EncodedKeyT, SupportedValuesT, EncodedValueT](SyncResource):
-    """
-    Unified codec for storage operations.
+class StorageCodec[EncodedKeyT, EncodedValueT](SyncResource):
+    """Unified codec for storage operations.
 
     Combines separate key and value codecs into a single interface for
     storage engines. This allows different serialization strategies for
@@ -39,14 +38,13 @@ class StorageCodec[EncodedKeyT, SupportedValuesT, EncodedValueT](SyncResource):
         method call overhead and maintain maximum throughput.
     """
 
-    spec: StorageCodecSpec[EncodedKeyT, SupportedValuesT, EncodedValueT]  # type: ignore[override]
+    spec: StorageCodecSpec[EncodedKeyT, EncodedValueT]  # type: ignore[override]
 
     key_codec: KeyCodecProtocol[EncodedKeyT]
-    value_codec: ValueCodecProtocol[SupportedValuesT, EncodedValueT]
+    value_codec: ValueCodecProtocol[EncodedValueT]
 
     def setup(self) -> None:
-        """
-        Initialize storage codec with key and value codec instances.
+        """Initialize storage codec with key and value codec instances.
 
         Creates codec instances from the specification and sets up direct
         function references for all encode/decode operations.
@@ -67,19 +65,18 @@ class StorageCodec[EncodedKeyT, SupportedValuesT, EncodedValueT](SyncResource):
         """Decode a key using the key codec."""
         raise NotImplementedError
 
-    def encode_value(self, value: SupportedValuesT) -> EncodedValueT:
+    def encode_value(self, value: Value) -> EncodedValueT:
         """Encode a value using the value codec."""
         raise NotImplementedError
 
-    def decode_value(self, encoded: EncodedValueT) -> SupportedValuesT:
+    def decode_value(self, encoded: EncodedValueT) -> Value:
         """Decode a value using the value codec."""
         raise NotImplementedError
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class StorageCodecSpec[EncodedKeyT, SupportedValuesT, EncodedValueT](ResourceSpec):
-    """
-    Specification for StorageCodec resource.
+class StorageCodecSpec[EncodedKeyT, EncodedValueT](ResourceSpec):
+    """Specification for StorageCodec resource.
 
     Attributes:
         name: Resource name
@@ -89,9 +86,9 @@ class StorageCodecSpec[EncodedKeyT, SupportedValuesT, EncodedValueT](ResourceSpe
     """
 
     name: str = "storage_codec"
-    factory: type[StorageCodec[EncodedKeyT, SupportedValuesT, EncodedValueT]] = StorageCodec
+    factory: type[StorageCodec[EncodedKeyT, EncodedValueT]] = StorageCodec
     key_codec: type[KeyCodecProtocol[EncodedKeyT]]
-    value_codec: type[ValueCodecProtocol[SupportedValuesT, EncodedValueT]]
+    value_codec: type[ValueCodecProtocol[EncodedValueT]]
 
 
 if TYPE_CHECKING:

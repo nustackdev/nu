@@ -1,17 +1,28 @@
 """Type definitions."""
 
-from typing import Any
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 
-# A component of a key.
-StorageKeyComponent = str | int
-# A key in the storage, represented as a tuple of components.
-StorageKey = tuple[StorageKeyComponent, ...]
+# =========================================================
+# Global types used across the package
+# =========================================================
 
-# Base primitive values that should be supported by storage.
-PrimitiveValue = type(None) | bytes | bool | int | float | str
+# ---------------------------------------------------------
+# Value types
+# ---------------------------------------------------------
+# Values are broadly classified into:
+# - Primitive values: None, bytes, bool, int, float, str
+# - Composite values: list, set, dict, frozenset, tuple
+#   (which can recursively contain primitive or composite values)
+#
+# Values are types used for codec encoding/decoding, storage.
+# ---------------------------------------------------------
 
-# Composite values that should be supported by storage.
+# Base primitive values
+PrimitiveValue = type(None) | bytes | bool | int | float | complex | str
+
+# Composite values.
 #
 # Mutable containers (list, set, dict) use Any due to type invariance:
 # - dict[str, str] is not assignable to dict[str, str | int] even though str ⊂ (str | int)
@@ -28,3 +39,39 @@ CompositeValue = (
     | frozenset["PrimitiveValue | CompositeValue"]
     | tuple["PrimitiveValue | CompositeValue", ...]
 )
+
+# A union of all supported value types
+Value = PrimitiveValue | CompositeValue
+
+# ---------------------------------------------------------
+# Key types
+# ---------------------------------------------------------
+# Keys are tuples of strings and integers, used for identifying
+# entries in storage systems. Keys are used in codec encoding/decoding,
+# storage, and observer notifications.
+# ---------------------------------------------------------
+
+# Key type - a tuple of strings and integers
+KeyComponent = str | int
+Key = tuple[KeyComponent, ...]
+
+
+# ---------------------------------------------------------
+# Reactive types
+# ---------------------------------------------------------
+# Reactive programming constructs like observers and callbacks
+# use keys and paths to identify data points of interest.
+# ---------------------------------------------------------
+
+CallbackFn = Callable[[Key], None]
+
+
+# =========================================================
+# Codec-related types
+# =========================================================
+EncodedKey = Any  # Encoded key type (e.g. bytes, str)
+EncodedValue = Any  # Encoded value type (e.g. bytes, str)
+
+# Type variables for generics
+EncodedKeyT = TypeVar("EncodedKeyT", bound=EncodedKey)
+EncodedValueT = TypeVar("EncodedValueT", bound=EncodedValue)

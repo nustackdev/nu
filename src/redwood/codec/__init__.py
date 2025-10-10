@@ -1,5 +1,4 @@
-"""
-Codec package for Redwood storage.
+"""Codec package for Redwood storage.
 
 This package provides a modular codec system for encoding/decoding keys and
 values in storage engines. It includes:
@@ -36,32 +35,12 @@ from __future__ import annotations
 from functools import partial
 
 from .codec import StorageCodec, StorageCodecSpec
-from .protocols import (
-    KeyCodecProtocol,
-    StorageCodecProtocol,
-    ValueCodecProtocol,
-)
-from .types import (
-    EncodedKeyT,
-    EncodedValueT,
-    Key,
-    SupportedValuesT,
-)
 
 
 __all__ = [
     # Core codec
     "StorageCodec",
     "StorageCodecSpec",
-    # Protocols
-    "KeyCodecProtocol",
-    "ValueCodecProtocol",
-    "StorageCodecProtocol",
-    # Type variables
-    "Key",
-    "EncodedKeyT",
-    "SupportedValuesT",
-    "EncodedValueT",
     # Aliases
     "BinaryCodec",
     "BinaryCodecSpec",
@@ -69,9 +48,9 @@ __all__ = [
     "TextCodecSpec",
 ]
 
-########################################################
+# =========================================================
 # Aliases for common codec types
-#########################################################
+# =========================================================
 
 from rwtup import BinaryKeyCodec, StringKeyCodec
 
@@ -79,14 +58,12 @@ from .adapters.json import JSONCodec
 from .adapters.micropack import MicroPackCodec
 from .adapters.types import (
     JSONEncoded,
-    JSONSupportedValues,
     MicroPackEncoded,
-    MicroPackSupportedValues,
 )
 
 
 # MicroPack-based binary codec
-BinaryCodec = StorageCodec[bytes, MicroPackSupportedValues, MicroPackEncoded]
+BinaryCodec = StorageCodec[bytes, MicroPackEncoded]
 BinaryCodecSpec = partial(
     StorageCodecSpec,
     key_codec=BinaryKeyCodec,
@@ -94,7 +71,7 @@ BinaryCodecSpec = partial(
 )
 
 # JSON-based text codec
-TextCodec = StorageCodec[str, JSONSupportedValues, JSONEncoded]
+TextCodec = StorageCodec[str, JSONEncoded]
 TextCodecSpec = partial(
     StorageCodecSpec,
     key_codec=StringKeyCodec,

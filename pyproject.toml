@@ -178,12 +178,15 @@ select = [
     "YTT",    # flake8-2020
     "S",      # flake8-bandit (security)
     "T20",    # flake8-print
+    "D",      # pydocstyle
+    "ANN",    # flake8-annotations
 ]
 ignore = [
     "E501",   # Line too long (handled by formatter)
-    "S101",   # Use of assert (fine in tests)
-    "S301",   # pickle usage (we're a codec library)
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # Use Google style format
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
@@ -191,6 +194,7 @@ ignore = [
     "T20",    # print allowed in tests
 ]
 "examples/*.py" = [
+    "S101",   # assert allowed in examples
     "T20",    # print allowed in examples
 ]
 "setup.py" = [
@@ -207,6 +211,8 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+docstring-code-format = true         # Format code blocks in docstrings
+docstring-code-line-length = 80      # Shorter lines in docstring examples
 
 # ============================================================================
 # Type Checking - mypy
@@ -222,9 +228,3 @@ exclude = [
     "dist/",
     ".venv/",
 ]
-
-# ============================================================================
-# Security
-# ============================================================================
-[tool.bandit]
-exclude_dirs = ["tests/", "examples/", "docs/"]
