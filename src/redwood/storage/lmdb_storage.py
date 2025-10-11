@@ -12,7 +12,7 @@ from uuid import uuid4
 import attrs
 import lmdb
 from frozendict import frozendict
-from mesh import Attach, ResourceSpec, Spec, SyncResource
+from mesh import Attach, ResourceSpec, Spec
 from mesh.common.logging import get_logger
 
 from redwood.exceptions import (
@@ -43,10 +43,7 @@ if TYPE_CHECKING:
 logger: Logger = get_logger(__name__)
 
 
-class LMDBStorage(
-    BaseStorage[bytes, bytes],
-    SyncResource,
-):
+class LMDBStorage(BaseStorage[bytes, bytes]):
     """LMDB storage implementation with transaction support.
 
     Uses memory-mapped files for high performance and ACID guarantees.
@@ -504,7 +501,7 @@ class LMDBStorageSpec(ResourceSpec):
     factory: type = LMDBStorage
     mode: str = "write"
     path: Path | str = Path(".db")
-    codec: Spec = attrs.field(factory=lambda: BinaryCodecSpec())
+    codec: Spec
     map_size: int = 10 * 1024 * 1024 * 1024  # 10GB default
     max_dbs: int = 0
     lmdb_kwargs: frozendict = attrs.field(factory=frozendict)

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-from redwood.protocols import (
-    TransactionalHandlerProtocol,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
-)
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from redwood.protocols import (
+        TransactionalHandlerProtocol,
+        TransactionContextManagerProtocol,
+        TransactionProtocol,
+    )
 
 
 __all__ = [
@@ -12,7 +16,7 @@ __all__ = [
 ]
 
 
-class TransactionContextManager(TransactionContextManagerProtocol):
+class TransactionContextManager:
     """Context manager for storage transactions."""
 
     def __init__(self, handler: TransactionalHandlerProtocol) -> None:
@@ -41,7 +45,7 @@ class TransactionContextManager(TransactionContextManagerProtocol):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: object | None,
-    ) -> None:
+    ) -> bool:
         """Commit or rollback transaction based on context exit.
 
         Args:
@@ -52,5 +56,12 @@ class TransactionContextManager(TransactionContextManagerProtocol):
         if self.transaction:
             if exc_type is None:
                 self.transaction.commit()
+                return True
             else:
                 self.transaction.rollback()
+                return False
+        return exc_type is None
+
+
+if TYPE_CHECKING:
+    _: type[TransactionContextManagerProtocol] = TransactionContextManager

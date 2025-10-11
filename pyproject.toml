@@ -81,7 +81,7 @@ all = [
 # ============================================================================
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["redwood*"]
+include = ["redwood*", "rwtup*", "rwrocks*"]
 namespaces = false
 
 [tool.setuptools.package-data]

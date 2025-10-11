@@ -1,13 +1,15 @@
+"""In-memory storage implementation with transaction support."""
+
 from __future__ import annotations
 
 import threading
 from collections.abc import Generator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import attrs
-from mesh import Attach, ResourceSpec, Spec, SyncResource
+from mesh import Attach, ResourceSpec, Spec
 from mesh.common.logging import get_logger
 
 from redwood.exceptions import (
@@ -48,7 +50,7 @@ class TransactionOperation:
     value: Value | None = None
 
 
-class InMemoryStorage(BaseStorage[str, Value], SyncResource):
+class InMemoryStorage(BaseStorage[str, Value]):
     """Simple file-based storage implementation with transaction support.
 
     Uses basic locking strategy for correctness over efficiency.
@@ -421,7 +423,7 @@ class InMemoryStorageSnapshot:
     def __hash__(self) -> int:
         return hash(str(self._uuid))
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if other is None:
             return False
         return isinstance(other, type(self)) and self._uuid == other._uuid
@@ -434,7 +436,7 @@ class InMemoryStorageSpec(ResourceSpec):
     name: str = "in_memory_storage"
     factory: type = InMemoryStorage
     mode: str = "write"
-    codec: Spec = attrs.field(factory=lambda: PassthroughCodecSpec())
+    codec: Spec
 
 
 if TYPE_CHECKING:

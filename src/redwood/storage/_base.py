@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, final
 
+from mesh import SyncResource
+
 from redwood.exceptions import StorageConnectionError, StorageOperationError
 
 from ._snapshot import SnapshotContextManager
@@ -12,17 +14,21 @@ from ._transaction import TransactionContextManager
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.protocols import SnapshotProtocol, StorageCodecProtocol, TransactionProtocol
+    from redwood.protocols import (
+        SnapshotProtocol,
+        StorageCodecProtocol,
+        StorageProtocol,
+        TransactionProtocol,
+    )
     from redwood.types import Key, StorageMode, Value
 
 
 __all__ = [
     "BaseStorage",
-    "is_valid_key",
 ]
 
 
-class BaseStorage[EncodedKeyT, EncodedValueT](ABC):
+class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
     """Base class for storage implementations.
 
     Type Parameters:
@@ -217,3 +223,7 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC):
                 # Auto-cleanup on exit
         """
         return SnapshotContextManager(self)
+
+
+if TYPE_CHECKING:
+    _: type[StorageProtocol] = BaseStorage

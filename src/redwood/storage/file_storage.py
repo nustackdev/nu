@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import attrs
 import filelock
-from mesh import Attach, ResourceSpec, Spec, SyncResource
+from mesh import Attach, ResourceSpec, Spec
 from mesh.common.logging import get_logger
 
 from redwood.exceptions import (
@@ -59,10 +59,7 @@ class TransactionOperation:
     value: Value | None = None
 
 
-class FileStorage(
-    BaseStorage[str, str],
-    SyncResource,
-):
+class FileStorage(BaseStorage[str, str]):
     """Simple file-based storage implementation with transaction support.
 
     Uses basic locking strategy for correctness over efficiency.
@@ -506,7 +503,7 @@ class FileStorageSpec(ResourceSpec):
     factory: type = FileStorage
     mode: str = "write"
     path: Path | str = Path(".db")
-    codec: Spec = attrs.field(factory=lambda: JSONCodecSpec())
+    codec: Spec
 
 
 if TYPE_CHECKING:

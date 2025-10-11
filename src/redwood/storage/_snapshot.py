@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-from redwood.protocols import (
-    SnapshotContextManagerProtocol,
-    SnapshotHandlerProtocol,
-    SnapshotProtocol,
-)
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from redwood.protocols import (
+        SnapshotContextManagerProtocol,
+        SnapshotHandlerProtocol,
+        SnapshotProtocol,
+    )
 
 
 __all__ = [
@@ -12,7 +16,7 @@ __all__ = [
 ]
 
 
-class SnapshotContextManager(SnapshotContextManagerProtocol):
+class SnapshotContextManager:
     """Context manager for storage snapshots."""
 
     def __init__(self, handler: SnapshotHandlerProtocol) -> None:
@@ -41,7 +45,7 @@ class SnapshotContextManager(SnapshotContextManagerProtocol):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: object | None,
-    ) -> None:
+    ) -> bool:
         """Clean up snapshot resources.
 
         Args:
@@ -51,3 +55,8 @@ class SnapshotContextManager(SnapshotContextManagerProtocol):
         """
         if self.snapshot:
             self.snapshot.close()
+        return exc_type is None
+
+
+if TYPE_CHECKING:
+    _: type[SnapshotContextManagerProtocol] = SnapshotContextManager
