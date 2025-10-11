@@ -35,10 +35,8 @@ from typing import TYPE_CHECKING, Any, Generic
 import attrs
 
 from ..context import ContextualBase
-from ..context.protocols import ContextType
 from ..exceptions import ContainerProtocolError
 from ..node import ChildType, ContainerNode
-from ..path import Path
 from ..types import (
     EMPTY,
     ContainerProtocol,
@@ -53,6 +51,8 @@ from .types import AccessibleViewProtocol
 
 
 if TYPE_CHECKING:
+    from ..context.protocols import ContextType
+    from ..path import Path
     from .dict import DictView
     from .list import ListView
 

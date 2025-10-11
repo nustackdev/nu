@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Setup script for redwood with Cython support.
-"""
+"""Setup script for redwood with Cython support."""
 
 import os
 from pathlib import Path
@@ -35,7 +34,7 @@ def get_extensions():
     return extensions
 
 
-def main():
+def main() -> None:
     # Get extensions
     extensions = get_extensions()
 

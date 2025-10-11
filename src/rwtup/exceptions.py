@@ -61,9 +61,9 @@ class StringConstraintError(EncodeError):
 
 
 __all__ = [
-    "KeyCodecError",
-    "EncodeError",
     "DecodeError",
+    "EncodeError",
     "IntegerOverflowError",
+    "KeyCodecError",
     "StringConstraintError",
 ]

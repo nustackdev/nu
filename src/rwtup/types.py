@@ -17,9 +17,9 @@ EncodedBinaryKey = bytes
 EncodedStringKey = str
 
 __all__ = [
-    "KeyComponent",
-    "Key",
     "EncodedBinaryKey",
-    "EncodedStringKey",
     "EncodedKeyT",
+    "EncodedStringKey",
+    "Key",
+    "KeyComponent",
 ]

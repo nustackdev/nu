@@ -44,6 +44,6 @@ class KeyCodec(Protocol[EncodedKeyT]):
 
 
 __all__ = [
-    "KeyCodec",
     "EncodedKeyT",
+    "KeyCodec",
 ]

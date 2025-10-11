@@ -96,7 +96,9 @@ class AccessibleViewProtocol(Protocol):
             items = list_view.extract()  # Returns: ["item1", "item2", "item3"]
 
             # Extract custom view as domain object
-            document = document_view.extract()  # Returns: Document(title="...", content="...")
+            document = (
+                document_view.extract()
+            )  # Returns: Document(title="...", content="...")
             ```
         """
         ...

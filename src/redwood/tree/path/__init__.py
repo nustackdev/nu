@@ -20,17 +20,17 @@ from .types import PathComponent, PathResult
 
 
 __all__ = [
-    # Core classes
-    "_Path",
-    "Path",
     "ExtendedPath",
-    "PathResolver",
+    "Path",
     # Types and protocols
     "PathComponent",
-    "PathResult",
+    "PathConstructionError",
     # Exceptions
     "PathError",
-    "PathConstructionError",
     "PathEvaluationError",
     "PathNotFoundError",
+    "PathResolver",
+    "PathResult",
+    # Core classes
+    "_Path",
 ]

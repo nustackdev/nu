@@ -6,7 +6,6 @@ interface for containers implementing the SEQUENCE structure.
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from typing import TYPE_CHECKING, ClassVar, cast
 
 import attrs
@@ -16,6 +15,8 @@ from .base import BaseView
 
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from .dict import DictView
 
 __all__ = [
@@ -101,10 +102,7 @@ class ListView(BaseView[TreeT]):
             raise IndexError("list index out of range")
 
         # Normalize negative indices
-        if index < 0:
-            normalized_index = length + index
-        else:
-            normalized_index = index
+        normalized_index = length + index if index < 0 else index
 
         # Validate bounds (Python allows 0 to length-1)
         if normalized_index < 0 or normalized_index >= length:
@@ -122,7 +120,7 @@ class ListView(BaseView[TreeT]):
             KeyError: If the container does not exist.
             ContainerProtocolError: If the container is not a sequence container.
         """
-        return [v for v in self.values()]
+        return list(self.values())
 
     def store(self, value: list[Value], /, *, replace: bool = False) -> None:
         """Store a list value in the container.
@@ -159,7 +157,7 @@ class ListView(BaseView[TreeT]):
             count = len(tasks)
             ```
         """
-        return cast(int, self.container.get_metadata(self.LENGTH_MARKER, 0))
+        return cast("int", self.container.get_metadata(self.LENGTH_MARKER, 0))
 
     def get(self, index: int, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value at index.
@@ -187,7 +185,7 @@ class ListView(BaseView[TreeT]):
             ```
         """
         # Handle empty list or out of bounds gracefully
-        index, length = self._validate_index_with_length(index)
+        index, _length = self._validate_index_with_length(index)
 
         key = str(index)
 
@@ -213,7 +211,7 @@ class ListView(BaseView[TreeT]):
             tasks.set(-1, "Last task updated")
             ```
         """
-        index, length = self._validate_index_with_length(index)
+        index, _length = self._validate_index_with_length(index)
 
         key = str(index)
 
@@ -266,7 +264,7 @@ class ListView(BaseView[TreeT]):
         # Update length
         self.container.set_metadata(self.LENGTH_MARKER, length - 1)
 
-        return cast(Value, last_item)
+        return cast("Value", last_item)
 
     def extend(self, iterable) -> None:
         """Extend list by appending elements from iterable.
@@ -306,7 +304,7 @@ class ListView(BaseView[TreeT]):
             ```
         """
         for i in range(self.length()):
-            yield cast(Value, self.get(i))
+            yield cast("Value", self.get(i))
 
     def dict_view(self, index: int) -> DictView:
         """Get a dictionary view for a nested container.

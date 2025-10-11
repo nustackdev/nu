@@ -15,15 +15,15 @@ from .protocols import (
 
 
 __all__ = [
-    # Base classes
-    "ContextualBase",
-    "is_contextual",
-    # Context managers
-    "create_context",
-    "with_context",
     # Protocols
     "ContextProtocol",
     "ContextType",
+    # Base classes
+    "ContextualBase",
     "SnapshotContextProtocol",
     "TransactionContextProtocol",
+    # Context managers
+    "create_context",
+    "is_contextual",
+    "with_context",
 ]

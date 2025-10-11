@@ -22,45 +22,45 @@ if TYPE_CHECKING:
     from ..tree import Tree
 
 __all__ = [
-    # Base classes
-    "Operation",
-    "UnaryOperation",
-    "BinaryOperation",
-    "TernaryOperation",
-    # Path resolution
-    "ResolveVarOperation",
+    "AbsOperation",
     # Arithmetic operations
     "AddOperation",
-    "SubtractOperation",
-    "MultiplyOperation",
-    "DivideOperation",
-    "ModuloOperation",
-    "PowerOperation",
-    # Comparison operations
-    "GreaterThanOperation",
-    "LessThanOperation",
-    "GreaterEqualOperation",
-    "LessEqualOperation",
-    "EqualOperation",
-    "NotEqualOperation",
     # Logical operations
     "AndOperation",
-    "OrOperation",
-    "NotOperation",
+    "AnyOperation",
+    "BinaryOperation",
+    "BoolOperation",
     # String operations
     "ContainsOperation",
-    "StartsWithOperation",
+    "CountOperation",
+    "DivideOperation",
     "EndsWithOperation",
+    "EqualOperation",
+    "EveryOperation",
+    "GreaterEqualOperation",
+    # Comparison operations
+    "GreaterThanOperation",
     # Function operations
     "LengthOperation",
+    "LessEqualOperation",
+    "LessThanOperation",
     "MaxOperation",
     "MinOperation",
+    "ModuloOperation",
+    "MultiplyOperation",
+    "NotEqualOperation",
+    "NotOperation",
+    # Base classes
+    "Operation",
+    "OrOperation",
+    "PowerOperation",
+    # Path resolution
+    "ResolveVarOperation",
+    "StartsWithOperation",
+    "SubtractOperation",
     "SumOperation",
-    "AnyOperation",
-    "EveryOperation",
-    "BoolOperation",
-    "AbsOperation",
-    "CountOperation",
+    "TernaryOperation",
+    "UnaryOperation",
 ]
 
 
@@ -345,7 +345,7 @@ class ListLengthOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class AddOperation(BinaryOperation):
-    """Addition operation: left + right"""
+    """Addition operation: left + right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Perform addition of two operands."""
@@ -360,7 +360,7 @@ class AddOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class SubtractOperation(BinaryOperation):
-    """Subtraction operation: left - right"""
+    """Subtraction operation: left - right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Perform subtraction of two operands."""
@@ -375,7 +375,7 @@ class SubtractOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class MultiplyOperation(BinaryOperation):
-    """Multiplication operation: left * right"""
+    """Multiplication operation: left * right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Perform multiplication of two operands."""
@@ -390,7 +390,7 @@ class MultiplyOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class DivideOperation(BinaryOperation):
-    """Division operation: left / right"""
+    """Division operation: left / right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Perform division of two operands."""
@@ -407,7 +407,7 @@ class DivideOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class ModuloOperation(BinaryOperation):
-    """Modulo operation: left % right"""
+    """Modulo operation: left % right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Perform modulo of two operands."""
@@ -424,7 +424,7 @@ class ModuloOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class PowerOperation(BinaryOperation):
-    """Power operation: left ** right"""
+    """Power operation: left ** right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Perform power operation of two operands."""
@@ -439,7 +439,7 @@ class PowerOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class AbsOperation(UnaryOperation):
-    """Absolute value operation: abs(operand)"""
+    """Absolute value operation: abs(operand)."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Get absolute value of operand."""
@@ -457,7 +457,7 @@ class AbsOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class GreaterThanOperation(BinaryOperation):
-    """Greater than operation: left > right"""
+    """Greater than operation: left > right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform greater than comparison."""
@@ -471,7 +471,7 @@ class GreaterThanOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class LessThanOperation(BinaryOperation):
-    """Less than operation: left < right"""
+    """Less than operation: left < right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform less than comparison."""
@@ -484,7 +484,7 @@ class LessThanOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class GreaterEqualOperation(BinaryOperation):
-    """Greater than or equal operation: left >= right"""
+    """Greater than or equal operation: left >= right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform greater than or equal comparison."""
@@ -497,7 +497,7 @@ class GreaterEqualOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class LessEqualOperation(BinaryOperation):
-    """Less than or equal operation: left <= right"""
+    """Less than or equal operation: left <= right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform less than or equal comparison."""
@@ -510,7 +510,7 @@ class LessEqualOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class EqualOperation(BinaryOperation):
-    """Equality operation: left == right"""
+    """Equality operation: left == right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform equality comparison."""
@@ -520,7 +520,7 @@ class EqualOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class NotEqualOperation(BinaryOperation):
-    """Not equal operation: left != right"""
+    """Not equal operation: left != right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform not equal comparison."""
@@ -535,7 +535,7 @@ class NotEqualOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class AndOperation(BinaryOperation):
-    """Logical AND operation: left and right"""
+    """Logical AND operation: left and right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform logical AND with short-circuit evaluation."""
@@ -548,7 +548,7 @@ class AndOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class OrOperation(BinaryOperation):
-    """Logical OR operation: left or right"""
+    """Logical OR operation: left or right."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform logical OR with short-circuit evaluation."""
@@ -561,7 +561,7 @@ class OrOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class NotOperation(UnaryOperation):
-    """Logical NOT operation: not operand"""
+    """Logical NOT operation: not operand."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Perform logical NOT."""
@@ -576,7 +576,7 @@ class NotOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class ContainsOperation(BinaryOperation):
-    """Contains operation: right in left"""
+    """Contains operation: right in left."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Check if right operand is contained in left operand."""
@@ -589,7 +589,7 @@ class ContainsOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class StartsWithOperation(BinaryOperation):
-    """String starts with operation: left.startswith(right)"""
+    """String starts with operation: left.startswith(right)."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Check if left operand starts with right operand."""
@@ -602,7 +602,7 @@ class StartsWithOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class EndsWithOperation(BinaryOperation):
-    """String ends with operation: left.endswith(right)"""
+    """String ends with operation: left.endswith(right)."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Check if left operand ends with right operand."""
@@ -620,7 +620,7 @@ class EndsWithOperation(BinaryOperation):
 
 @attrs.define(frozen=True)
 class LengthOperation(UnaryOperation):
-    """Length operation: len(operand)"""
+    """Length operation: len(operand)."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> int:
         """Get length of operand."""
@@ -633,7 +633,7 @@ class LengthOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class MaxOperation(UnaryOperation):
-    """Maximum operation: max(operand)"""
+    """Maximum operation: max(operand)."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Get maximum value from operand."""
@@ -646,7 +646,7 @@ class MaxOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class MinOperation(UnaryOperation):
-    """Minimum operation: min(operand)"""
+    """Minimum operation: min(operand)."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Get minimum value from operand."""
@@ -659,7 +659,7 @@ class MinOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class SumOperation(UnaryOperation):
-    """Sum operation: sum(operand)"""
+    """Sum operation: sum(operand)."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> Any:
         """Get sum of operand values."""
@@ -672,7 +672,7 @@ class SumOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class AnyOperation(UnaryOperation):
-    """Any operation: any(operand) - returns True if any element is truthy"""
+    """Any operation: any(operand) - returns True if any element is truthy."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Check if any element in operand is truthy."""
@@ -685,7 +685,7 @@ class AnyOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class EveryOperation(UnaryOperation):
-    """Every operation: all(operand) - returns True if all elements are truthy"""
+    """Every operation: all(operand) - returns True if all elements are truthy."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Check if all elements in operand are truthy."""
@@ -698,7 +698,7 @@ class EveryOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class BoolOperation(UnaryOperation):
-    """Bool operation: bool(operand) - converts operand to boolean"""
+    """Bool operation: bool(operand) - converts operand to boolean."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> bool:
         """Convert operand to boolean."""
@@ -708,7 +708,7 @@ class BoolOperation(UnaryOperation):
 
 @attrs.define(frozen=True)
 class CountOperation(UnaryOperation):
-    """Count operation: count non-None values in operand"""
+    """Count operation: count non-None values in operand."""
 
     def calc(self, tree: Tree, ctx: Any, vars: dict[str | int, Any]) -> int:
         """Count non-None values in operand."""

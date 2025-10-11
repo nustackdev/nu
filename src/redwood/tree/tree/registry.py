@@ -16,7 +16,7 @@ logic that have no connection to Python built-in types.
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 from .view import DictView, ListView
 
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from .view import BaseView
 
 __all__ = [
-    "ContainerType",
     "ComponentType",
+    "ContainerType",
     "ViewRegistry",
 ]
 
@@ -42,8 +42,10 @@ class ContainerConstructor(ABC):
         class DictContainer(ContainerType):
             pass
 
+
         class ListContainer(ContainerType):
             pass
+
 
         class DocumentContainer(ContainerType):
             pass  # Custom container with domain-specific logic
@@ -53,7 +55,7 @@ class ContainerConstructor(ABC):
     pass
 
 
-ContainerType: TypeAlias = type[dict | list | tuple | ContainerConstructor]
+type ContainerType = type[dict | list | tuple | ContainerConstructor]
 
 
 class ComponentConstructor(ABC):
@@ -67,8 +69,10 @@ class ComponentConstructor(ABC):
         class StringComponent(ComponentType):
             pass
 
+
         class IntegerComponent(ComponentType):
             pass
+
 
         class NodeIDComponent(ComponentType):
             # Custom navigation component for graph traversal
@@ -79,7 +83,7 @@ class ComponentConstructor(ABC):
     pass
 
 
-ComponentType: TypeAlias = type[int | str | ComponentConstructor]
+type ComponentType = type[int | str | ComponentConstructor]
 
 
 class ViewRegistry:
@@ -93,7 +97,7 @@ class ViewRegistry:
     No fallback logic - all mappings must be explicitly registered.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Structure ID → View Class (for resolving existing containers)
         self._structure_to_view: dict[int, type[BaseView]] = {}
 
@@ -142,24 +146,36 @@ class ViewRegistry:
         Example:
             ```python
             # DictView handles DictContainer and navigates with StringComponent
-            registry.register_view(DictView, structure_id=1,
-                                 container_type=DictContainer,
-                                 component_types=StringComponent)
+            registry.register_view(
+                DictView,
+                structure_id=1,
+                container_type=DictContainer,
+                component_types=StringComponent,
+            )
 
             # ListView handles ListContainer and navigates with IntegerComponent
-            registry.register_view(ListView, structure_id=2,
-                                 container_type=ListContainer,
-                                 component_types=IntegerComponent)
+            registry.register_view(
+                ListView,
+                structure_id=2,
+                container_type=ListContainer,
+                component_types=IntegerComponent,
+            )
 
             # DocumentView handles DocumentContainer but navigates with StringComponent
-            registry.register_view(DocumentView, structure_id=100,
-                                 container_type=DocumentContainer,
-                                 component_types=StringComponent)
+            registry.register_view(
+                DocumentView,
+                structure_id=100,
+                container_type=DocumentContainer,
+                component_types=StringComponent,
+            )
 
             # GraphView can navigate with both StringComponent and NodeIDComponent
-            registry.register_view(GraphView, structure_id=101,
-                                 container_type=GraphContainer,
-                                 component_types=[StringComponent, NodeIDComponent])
+            registry.register_view(
+                GraphView,
+                structure_id=101,
+                container_type=GraphContainer,
+                component_types=[StringComponent, NodeIDComponent],
+            )
             ```
         """
         # Normalize component_types to list
@@ -235,12 +251,14 @@ class ViewRegistry:
 
         Example:
             ```python
-            registry.register_views({
-                DictView: (1, DictContainer, StringComponent),
-                ListView: (2, ListContainer, IntegerComponent),
-                DocumentView: (100, DocumentContainer, StringComponent),
-                GraphView: (101, GraphContainer, [StringComponent, NodeIDComponent]),
-            })
+            registry.register_views(
+                {
+                    DictView: (1, DictContainer, StringComponent),
+                    ListView: (2, ListContainer, IntegerComponent),
+                    DocumentView: (100, DocumentContainer, StringComponent),
+                    GraphView: (101, GraphContainer, [StringComponent, NodeIDComponent]),
+                }
+            )
             ```
         """
         for view_class, (structure_id, container_type, component_types) in mappings.items():

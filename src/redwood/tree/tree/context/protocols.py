@@ -1,19 +1,21 @@
-"""Context protocol definitions for unified transaction and snapshot handling.
-"""
+"""Context protocol definitions for unified transaction and snapshot handling."""
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from typing import Protocol, Union, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Union, runtime_checkable
 
-from ..types import PathTuple, Value
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from ..types import PathTuple, Value
 
 
 __all__ = [
     "ContextProtocol",
-    "TransactionContextProtocol",
-    "SnapshotContextProtocol",
     "ContextType",
+    "SnapshotContextProtocol",
+    "TransactionContextProtocol",
 ]
 
 

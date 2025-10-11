@@ -47,20 +47,20 @@ from .types import EncodedBinaryKey, EncodedStringKey, Key, KeyComponent
 
 
 __all__ = [
-    # Core types
-    "Key",
-    "KeyComponent",
-    "EncodedBinaryKey",
-    "EncodedStringKey",
-    # Protocol
-    "KeyCodec",
     # Codec implementations
     "BinaryKeyCodec",
-    "StringKeyCodec",
+    "DecodeError",
+    "EncodeError",
+    "EncodedBinaryKey",
+    "EncodedStringKey",
+    "IntegerOverflowError",
+    # Core types
+    "Key",
+    # Protocol
+    "KeyCodec",
     # Exceptions
     "KeyCodecError",
-    "EncodeError",
-    "DecodeError",
-    "IntegerOverflowError",
+    "KeyComponent",
     "StringConstraintError",
+    "StringKeyCodec",
 ]

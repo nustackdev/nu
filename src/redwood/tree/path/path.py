@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING, Any, Self, cast
 import attrs
 
 from .exceptions import PathConstructionError
-from .types import ExtendedPathComponent, PathComponent
 from .variable import Variable
 
 
 if TYPE_CHECKING:
     from ..query import Query
     from ..tree import Tree
+    from .types import ExtendedPathComponent, PathComponent
 
 __all__ = [
     "ExtendedPath",
@@ -29,8 +29,7 @@ __all__ = [
 
 @attrs.define(frozen=True, slots=True)
 class _Path:
-    """Path construction and evaluation base class.
-    """
+    """Path construction and evaluation base class."""
 
     components: tuple[Any, ...] = attrs.field(factory=tuple)
 
@@ -39,7 +38,7 @@ class _Path:
     # =========================================================================
 
     def __getattr__(self, name: str) -> Self:
-        """Navigate to attribute: path.users → new Path
+        """Navigate to attribute: path.users → new Path.
 
         Args:
             name: Attribute name to navigate to
@@ -62,10 +61,10 @@ class _Path:
         if not isinstance(name, str) or not name.isidentifier():
             raise PathConstructionError(f"Invalid attribute name: {name}")
 
-        return self.__class__(tuple(self.components) + (name,))
+        return self.__class__((*tuple(self.components), name))
 
     def __getitem__(self, key: int | str) -> Self:
-        """Navigate by index/key: path[0] or path["key"] → new Path
+        """Navigate by index/key: path[0] or path["key"] → new Path.
 
         Args:
             key: Index (int) or key (str) to navigate to
@@ -86,7 +85,7 @@ class _Path:
         if not isinstance(key, (int, str)):
             raise PathConstructionError(f"Invalid key type: {type(key)}. Must be int or str")
 
-        return self.__class__(tuple(self.components) + (key,))
+        return self.__class__((*tuple(self.components), key))
 
     # =========================================================================
     # VARIABLE INTERFACE
@@ -109,14 +108,14 @@ class _Path:
             path.var("user", "profile", "id") -> resolves to variables["user"]["profile"]["id"]
             path.var("config", "table_name") -> resolves to variables["config"]["table_name"]
         """
-        paths = (path,) + paths
+        paths = (path, *paths)
 
         if not paths:
             raise PathConstructionError("Variable path cannot be empty")
 
         variable = Variable(paths)
 
-        return ExtendedPath(tuple(self.components) + (variable,))
+        return ExtendedPath((*tuple(self.components), variable))
 
     # =========================================================================
     # UTILITY METHODS
@@ -164,7 +163,7 @@ class _Path:
     # PATH RESOLUTION
     # =========================================================================
 
-    def resolve(self, tree: Tree, ctx: Any, vars: dict[str | int, Any] = {}, /) -> Any:
+    def resolve(self, tree: Tree, ctx: Any, vars: dict[str | int, Any] | None = None, /) -> Any:
         """Resolve path to its value in the tree.
 
         This method uses the PathResolver to navigate through the tree
@@ -194,6 +193,8 @@ class _Path:
         """
         from ..path.resolver import PathResolver
 
+        if vars is None:
+            vars = {}
         if isinstance(self, ExtendedPath):
             path = self.substitute_variables(vars)
         elif isinstance(self, Path):
@@ -269,7 +270,7 @@ class _Path:
         return self.to_query() + other
 
     def __sub__(self, other: Any) -> Query:
-        """Subtraction: path - other
+        """Subtraction: path - other.
 
         Args:
             other: Value to subtract
@@ -280,7 +281,7 @@ class _Path:
         return self.to_query() - other
 
     def __mul__(self, other: Any) -> Query:
-        """Multiplication: path * other
+        """Multiplication: path * other.
 
         Args:
             other: Value to multiply by
@@ -291,7 +292,7 @@ class _Path:
         return self.to_query() * other
 
     def __truediv__(self, other: Any) -> Query:
-        """Division: path / other
+        """Division: path / other.
 
         Args:
             other: Value to divide by
@@ -302,7 +303,7 @@ class _Path:
         return self.to_query() / other
 
     def __mod__(self, other: Any) -> Query:
-        """Modulo: path % other
+        """Modulo: path % other.
 
         Args:
             other: Value to get modulo with
@@ -313,7 +314,7 @@ class _Path:
         return self.to_query() % other
 
     def __pow__(self, other: Any) -> Query:
-        """Power: path ** other
+        """Power: path ** other.
 
         Args:
             other: Exponent value
@@ -324,7 +325,7 @@ class _Path:
         return self.to_query() ** other
 
     def __abs__(self) -> Query:
-        """Absolute value: abs(path)
+        """Absolute value: abs(path).
 
         Returns:
             New Query with abs operation
@@ -336,7 +337,7 @@ class _Path:
     # =========================================================================
 
     def __gt__(self, other: Any) -> Query:
-        """Greater than: path > other
+        """Greater than: path > other.
 
         Args:
             other: Value to compare against
@@ -347,7 +348,7 @@ class _Path:
         return self.to_query() > other
 
     def __lt__(self, other: Any) -> Query:
-        """Less than: path < other
+        """Less than: path < other.
 
         Args:
             other: Value to compare against
@@ -358,7 +359,7 @@ class _Path:
         return self.to_query() < other
 
     def __ge__(self, other: Any) -> Query:
-        """Greater than or equal: path >= other
+        """Greater than or equal: path >= other.
 
         Args:
             other: Value to compare against
@@ -369,7 +370,7 @@ class _Path:
         return self.to_query() >= other
 
     def __le__(self, other: Any) -> Query:
-        """Less than or equal: path <= other
+        """Less than or equal: path <= other.
 
         Args:
             other: Value to compare against
@@ -380,7 +381,7 @@ class _Path:
         return self.to_query() <= other
 
     def __eq__(self, other: Any) -> Query:
-        """Equality: path == other
+        """Equality: path == other.
 
         Args:
             other: Value to compare against
@@ -395,7 +396,7 @@ class _Path:
         return self.to_query() == other
 
     def __ne__(self, other: Any) -> Query:
-        """Not equal: path != other
+        """Not equal: path != other.
 
         Args:
             other: Value to compare against
@@ -410,7 +411,7 @@ class _Path:
     # =========================================================================
 
     def and_(self, other: Any) -> Query:
-        """Logical AND: path.and_(other)
+        """Logical AND: path.and_(other).
 
         Args:
             other: Value to AND with (can be another Query or Path)
@@ -421,7 +422,7 @@ class _Path:
         return self.to_query().and_(other)
 
     def or_(self, other: Any) -> Query:
-        """Logical OR: path.or_(other)
+        """Logical OR: path.or_(other).
 
         Args:
             other: Value to OR with (can be another Query or Path)
@@ -432,7 +433,7 @@ class _Path:
         return self.to_query().or_(other)
 
     def eq(self, other: Any) -> Query:
-        """Equality: path.eq(other)
+        """Equality: path.eq(other).
 
         Args:
             other: Value to compare against
@@ -443,7 +444,7 @@ class _Path:
         return self.to_query().eq(other)
 
     def not_(self) -> Query:
-        """Logical NOT: ~path or not path
+        """Logical NOT: ~path or not path.
 
         Returns:
             New Query with NOT operation
@@ -455,7 +456,7 @@ class _Path:
     # =========================================================================
 
     def contains(self, item: Any) -> Query:
-        """Contains check: path.contains(item)
+        """Contains check: path.contains(item).
 
         Args:
             item: Item to check for containment
@@ -466,7 +467,7 @@ class _Path:
         return self.to_query().contains(item)
 
     def startswith(self, prefix: str) -> Query:
-        """String starts with: path.startswith(prefix)
+        """String starts with: path.startswith(prefix).
 
         Args:
             prefix: Prefix to check for
@@ -477,7 +478,7 @@ class _Path:
         return self.to_query().startswith(prefix)
 
     def endswith(self, suffix: str) -> Query:
-        """String ends with: path.endswith(suffix)
+        """String ends with: path.endswith(suffix).
 
         Args:
             suffix: Suffix to check for
@@ -492,7 +493,7 @@ class _Path:
     # =========================================================================
 
     def length(self) -> Query:
-        """Length: path.length()
+        """Length: path.length().
 
         Returns:
             New Query with length operation
@@ -500,7 +501,7 @@ class _Path:
         return self.to_query().length()
 
     def max(self) -> Query:
-        """Maximum: path.max()
+        """Maximum: path.max().
 
         Returns:
             New Query with max operation
@@ -508,7 +509,7 @@ class _Path:
         return self.to_query().max()
 
     def min(self) -> Query:
-        """Minimum: path.min()
+        """Minimum: path.min().
 
         Returns:
             New Query with min operation
@@ -516,7 +517,7 @@ class _Path:
         return self.to_query().min()
 
     def sum(self) -> Query:
-        """Sum: path.sum()
+        """Sum: path.sum().
 
         Returns:
             New Query with sum operation
@@ -524,7 +525,7 @@ class _Path:
         return self.to_query().sum()
 
     def any(self) -> Query:
-        """Any: path.any() - returns True if any element is truthy
+        """Any: path.any() - returns True if any element is truthy.
 
         Returns:
             New Query with any operation
@@ -532,7 +533,7 @@ class _Path:
         return self.to_query().any()
 
     def every(self) -> Query:
-        """Every: path.every() - returns True if all elements are truthy
+        """Every: path.every() - returns True if all elements are truthy.
 
         Returns:
             New Query with every operation
@@ -540,7 +541,7 @@ class _Path:
         return self.to_query().every()
 
     def all(self) -> Query:
-        """All: path.all() - alias for every()
+        """All: path.all() - alias for every().
 
         Returns:
             New Query with every operation
@@ -548,7 +549,7 @@ class _Path:
         return self.to_query().all()
 
     def count(self) -> Query:
-        """Count: path.count() - count non-None values
+        """Count: path.count() - count non-None values.
 
         Returns:
             New Query with count operation
@@ -556,7 +557,7 @@ class _Path:
         return self.to_query().count()
 
     def bool(self) -> Query:
-        """Boolean conversion: path.bool()
+        """Boolean conversion: path.bool().
 
         Returns:
             New Query with bool operation
@@ -773,7 +774,7 @@ class ExtendedPath(_Path):
         """
         if not self.has_variables():
             return Path(
-                cast(tuple[str | int, ...], self.components)
+                cast("tuple[str | int, ...]", self.components)
             )  # No variables to substitute, return self for efficiency
 
         resolved_components = []

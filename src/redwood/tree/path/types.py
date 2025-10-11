@@ -6,7 +6,7 @@ providing clear interfaces and type safety for path construction and evaluation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ __all__ = [
 
 # Basic path types
 PathComponent = str | int
-ExtendedPathComponent: TypeAlias = "PathComponent | Variable"
+type ExtendedPathComponent = "PathComponent | Variable"
 """A single component of a path - a string key, integer index, or variable reference."""
 
 PathResult = Any

@@ -10,12 +10,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 from .exceptions import PathEvaluationError, PathNotFoundError
-from .types import PathResult
 
 
 if TYPE_CHECKING:
     from ..tree import BaseView, Tree
     from .path import Path
+    from .types import PathResult
 
 __all__ = [
     "PathResolver",
@@ -98,7 +98,7 @@ class PathResolver:
                 i += 1
 
             if i > 0:
-                str_components = cast(tuple[str, ...], components[:i])
+                str_components = cast("tuple[str, ...]", components[:i])
                 current_tree = tree.at(*str_components, ctx=ctx) if i > 0 else tree
 
             # Create initial view for the first component

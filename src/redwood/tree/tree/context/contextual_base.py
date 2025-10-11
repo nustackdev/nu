@@ -6,12 +6,15 @@ with support for both transactions and snapshots.
 
 from __future__ import annotations
 
-from typing import Any, Self, TypeGuard
+from typing import TYPE_CHECKING, Any, Self, TypeGuard
 
 import attrs
 
-from ...backend import ObservableStorage
 from .protocols import ContextType, SnapshotContextProtocol, TransactionContextProtocol
+
+
+if TYPE_CHECKING:
+    from ...backend import ObservableStorage
 
 
 __all__ = ["ContextualBase", "is_contextual"]
@@ -44,6 +47,7 @@ class ContextualBase:
                 # Works with both transaction and snapshot contexts
                 ctx = self.get_ensured_context()
                 return ctx.get(key)
+
 
         # Direct usage
         view = DictView(backend=my_backend, path=my_path)

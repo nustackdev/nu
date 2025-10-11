@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import Generator
 from typing import TYPE_CHECKING, cast
 
 import attrs
@@ -17,12 +16,13 @@ from loomi.tree import BaseView, ContainerProtocol, ContainerStructure, TreeT, V
 
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
     pass
 
 __all__ = [
-    "QueueView",
-    "QueueContainer",
     "QueueComponent",
+    "QueueContainer",
+    "QueueView",
 ]
 
 
@@ -100,7 +100,7 @@ class QueueView(BaseView[TreeT]):
             # Returns: [front_item, ..., back_item]
             ```
         """
-        return [cast(Value, self._get_child_value(key)) for key in self.container.keys()]
+        return [cast("Value", self._get_child_value(key)) for key in self.container]
 
     def store(self, values, /, *, replace: bool = False) -> None:
         """Store iterable values in the queue.
@@ -170,7 +170,7 @@ class QueueView(BaseView[TreeT]):
 
         value = self._get_child_value(front_key)
         self.container.remove_child(front_key)
-        return cast(Value, value)
+        return cast("Value", value)
 
     def peek(self) -> Value:
         """Look at the front item without removing it.
@@ -194,7 +194,7 @@ class QueueView(BaseView[TreeT]):
         except StopIteration:
             raise IndexError("peek from empty queue")
 
-        return cast(Value, self._get_child_value(front_key))
+        return cast("Value", self._get_child_value(front_key))
 
     def is_empty(self) -> bool:
         """Check if the queue has no items.
@@ -229,7 +229,7 @@ class QueueView(BaseView[TreeT]):
             print(f"Processing {queue_size} tasks")
             ```
         """
-        return sum(1 for _ in self.container.keys())
+        return sum(1 for _ in self.container)
 
     def clear(self) -> int:
         """Remove all items from the queue.
@@ -257,8 +257,8 @@ class QueueView(BaseView[TreeT]):
                 print(f"Queued task: {task}")
             ```
         """
-        for key in self.container.keys():
-            yield cast(Value, self._get_child_value(key))
+        for key in self.container:
+            yield cast("Value", self._get_child_value(key))
 
 
 class QueueContainer(ContainerConstructor):

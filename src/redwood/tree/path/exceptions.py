@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from .path import Path
 
 __all__ = [
-    "PathError",
     "PathConstructionError",
+    "PathError",
     "PathEvaluationError",
     "PathNotFoundError",
 ]
@@ -23,7 +23,7 @@ __all__ = [
 class PathError(Exception):
     """Base exception class for all path-related errors."""
 
-    def __init__(self, message: str, path: Path | None = None):
+    def __init__(self, message: str, path: Path | None = None) -> None:
         super().__init__(message)
         self.path = path
 
@@ -31,7 +31,7 @@ class PathError(Exception):
 class PathConstructionError(PathError):
     """Raised when path construction fails due to invalid components or operations."""
 
-    def __init__(self, message: str, path: Path | None = None, component: str | None = None):
+    def __init__(self, message: str, path: Path | None = None, component: str | None = None) -> None:
         super().__init__(message, path)
         self.component = component
 
@@ -41,7 +41,7 @@ class PathEvaluationError(PathError):
 
     def __init__(
         self, message: str, path: Path | None = None, original_error: Exception | None = None
-    ):
+    ) -> None:
         super().__init__(message, path)
         self.original_error = original_error
 
@@ -49,6 +49,6 @@ class PathEvaluationError(PathError):
 class PathNotFoundError(PathEvaluationError):
     """Raised when a path does not exist in the tree during evaluation."""
 
-    def __init__(self, message: str, path: Path | None = None, component: str | None = None):
+    def __init__(self, message: str, path: Path | None = None, component: str | None = None) -> None:
         super().__init__(message, path)
         self.component = component

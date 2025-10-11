@@ -16,10 +16,13 @@ Character restrictions:
 
 from __future__ import annotations
 
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from .exceptions import DecodeError, EncodeError, IntegerOverflowError
-from .types import EncodedStringKey, Key
+
+
+if TYPE_CHECKING:
+    from .types import EncodedStringKey, Key
 
 
 # Encoding format constants
@@ -310,9 +313,9 @@ class StringKeyCodec:
 
         Example:
             >>> codec = StringKeyCodec()
-            >>> codec.decode('[s]users.[i]p00042[+00042].')
+            >>> codec.decode("[s]users.[i]p00042[+00042].")
             ('users', 42)
-            >>> codec.decode('[s]admin.[i]n49994[-00005].[s]settings.')
+            >>> codec.decode("[s]admin.[i]n49994[-00005].[s]settings.")
             ('admin', -5, 'settings')
         """
         if not isinstance(encoded, str):

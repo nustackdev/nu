@@ -6,11 +6,14 @@ in the state tree and provides methods for path manipulation and navigation.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from functools import cached_property
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
-from ..types import PathComponent
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from ..types import PathComponent
 
 
 __all__ = ["Path"]
@@ -80,7 +83,7 @@ class Path:
         Args:
             *components: Path components after the root
         """
-        self._components = (self.root_marker,) + tuple(components)
+        self._components = (self.root_marker, *tuple(components))
 
     @cached_property
     def components(self) -> tuple[PathComponent, ...]:

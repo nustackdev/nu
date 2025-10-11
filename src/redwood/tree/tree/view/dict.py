@@ -6,7 +6,6 @@ interface for containers implementing the MAPPING structure.
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from typing import TYPE_CHECKING, cast
 
 import attrs
@@ -17,6 +16,8 @@ from .base import BaseView
 
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from .list import ListView
 
 __all__ = [
@@ -74,7 +75,7 @@ class DictView(BaseView[TreeT]):
             KeyError: If the key does not exist in the container.
             ContainerProtocolError: If the container is not a mapping container.
         """
-        return {k: v for k, v in self.items()}
+        return dict(self.items())
 
     def store(self, value: dict[PathComponent, Value], /, *, replace: bool = False) -> None:
         """Store a value at the specified key.
@@ -229,7 +230,7 @@ class DictView(BaseView[TreeT]):
             ```
         """
         for key in self.keys():
-            yield cast(Value, self.get(key))
+            yield cast("Value", self.get(key))
 
     def items(self) -> Generator[tuple[PathComponent, Value]]:
         """Get all key-value pairs in the container.
@@ -244,7 +245,7 @@ class DictView(BaseView[TreeT]):
             ```
         """
         for key in self.keys():
-            value = cast(Value, self.get(key))
+            value = cast("Value", self.get(key))
             yield (key, value)
 
     def dict_view(self, key: PathComponent) -> DictView:

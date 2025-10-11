@@ -1,16 +1,19 @@
-"""Unified context managers for both transactions and snapshots.
-"""
+"""Unified context managers for both transactions and snapshots."""
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 import attrs
 
-from ...backend import ObservableStorage
-from ..types import ContextualT
-from .protocols import ContextType
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from ...backend import ObservableStorage
+    from ..types import ContextualT
+    from .protocols import ContextType
 
 
 __all__ = [
@@ -112,10 +115,7 @@ def with_context(obj: ContextualT, *, snapshot: bool = False) -> Generator[Conte
         yield obj
     else:
         # Create new context and manage its lifecycle
-        if snapshot:
-            new_ctx = backend.begin_snapshot()
-        else:
-            new_ctx = backend.begin_transaction()
+        new_ctx = backend.begin_snapshot() if snapshot else backend.begin_transaction()
 
         try:
             # Attempt to create object copy with context (robust like old system)

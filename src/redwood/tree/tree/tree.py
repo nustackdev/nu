@@ -8,8 +8,7 @@ and direct access patterns.
 
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import attrs
 
@@ -26,6 +25,10 @@ from .path import Path
 from .registry import ViewRegistry
 from .types import EMPTY, CallbackFn, Empty, PathComponent, Value, ViewT
 from .view import DictView, ListView, create_view_context_manager
+
+
+if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
 
 
 __all__ = [
@@ -578,6 +581,7 @@ class Tree(ContextualBase):
             ```python
             def on_user_change(path):
                 print(f"User path {path} changed")
+
 
             # Subscribe to changes in the users container
             sub = tree.at("users").subscribe(on_user_change, depth=1)

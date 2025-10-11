@@ -7,15 +7,19 @@ in the state tree that contains a primitive value.
 from __future__ import annotations
 
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import attrs
 
-from ...backend import ObservableStorage
-from ..context.protocols import ContextType
-from ..path import Path
 from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, NodeType, Value
 from .base import BaseNode
 from .container import ContainerNode
+
+
+if TYPE_CHECKING:
+    from ...backend import ObservableStorage
+    from ..context.protocols import ContextType
+    from ..path import Path
 
 
 __all__ = ["PrimitiveNode"]

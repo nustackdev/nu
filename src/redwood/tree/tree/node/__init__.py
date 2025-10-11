@@ -7,9 +7,9 @@ from .primitive import PrimitiveNode
 
 __all__ = [
     "BaseNode",
-    "ContainerNode",
-    "PrimitiveNode",
     "ChildInfo",
     "ChildType",
     "ContainerInfo",
+    "ContainerNode",
+    "PrimitiveNode",
 ]

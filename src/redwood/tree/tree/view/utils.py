@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Generator
 from contextlib import AbstractContextManager, contextmanager
+from typing import TYPE_CHECKING
 
 from ..context import with_context
-from ..types import ContextualT
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from ..types import ContextualT
 
 
 __all__ = [
@@ -34,8 +39,9 @@ def create_view_context_manager(
                 snapshot=False,
                 backend=self.backend,
                 path=self.path,
-                tree=self.__class__
+                tree=self.__class__,
             )
+
 
         # Snapshot-based view
         def with_dict_view_snapshot(self):
@@ -44,7 +50,7 @@ def create_view_context_manager(
                 snapshot=True,
                 backend=self.backend,
                 path=self.path,
-                tree=self.__class__
+                tree=self.__class__,
             )
         ```
     """

@@ -22,8 +22,7 @@ Example Usage:
     query = tree.P.users.alice.age.Q()
 
     # Chain operations using operators
-    result = (query + 10 + 5 > 18 and
-             tree.P.users.alice.status.Q() == "active")
+    result = query + 10 + 5 > 18 and tree.P.users.alice.status.Q() == "active"
 
     # Evaluate against tree
     is_valid = result.evaluate(tree)
@@ -73,18 +72,18 @@ from .types import QueryResult
 
 
 __all__ = [
-    # Core classes
-    "Query",
+    "BinaryOperation",
     # Base operation classes
     "Operation",
-    "UnaryOperation",
-    "BinaryOperation",
-    "TernaryOperation",
-    # Types and protocols
-    "QueryResult",
+    # Core classes
+    "Query",
     # Exceptions
     "QueryError",
     "QueryEvaluationError",
     "QueryOperationError",
+    # Types and protocols
+    "QueryResult",
     "QuerySyntaxError",
+    "TernaryOperation",
+    "UnaryOperation",
 ]

@@ -50,17 +50,14 @@ concurrency at the transaction level.*
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Generator
 from enum import Enum, auto
 from functools import cached_property
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import attrs
 
 from ...backend import ObservableStorage, StorageKeyError
-from ..context.protocols import ContextType
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
-from ..path import Path
 from ..types import (
     EMPTY,
     ContainerProtocol,
@@ -74,13 +71,20 @@ from ..types import (
 from .base import BaseNode
 
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from ..context.protocols import ContextType
+    from ..path import Path
+
+
 __all__ = [
+    "ChildInfo",
+    "ChildType",
+    "ContainerInfo",
     "ContainerNode",
     "ContainerState",
     "ParentInfo",
-    "ContainerInfo",
-    "ChildInfo",
-    "ChildType",
 ]
 
 
@@ -1223,7 +1227,9 @@ class ContainerNode(BaseNode):
         Example:
             ```python
             child_info = container.get_child("key")
-            print(f"Child {child_info.key}: {child_info.child_type}, Value: {child_info.value}")
+            print(
+                f"Child {child_info.key}: {child_info.child_type}, Value: {child_info.value}"
+            )
         """
         self.validate_compatible
 
@@ -1360,8 +1366,8 @@ class ContainerNode(BaseNode):
         # Collect all paths
         ctx = self.get_transaction_context()
         paths_to_delete: list[PathTuple] = []
-        paths_to_delete.extend([p for p in ctx.list_keys(path.to_tuple(), depth=-1)])
-        paths_to_delete.extend([p for p in ctx.list_keys(path.meta_path.to_tuple(), depth=-1)])
+        paths_to_delete.extend(list(ctx.list_keys(path.to_tuple(), depth=-1)))
+        paths_to_delete.extend(list(ctx.list_keys(path.meta_path.to_tuple(), depth=-1)))
         paths_to_delete.extend(
             [
                 path.to_tuple(),

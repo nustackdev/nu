@@ -4,7 +4,7 @@ from .paths import MetaPath, Path, StructPath
 
 
 __all__ = [
+    "MetaPath",
     "Path",
     "StructPath",
-    "MetaPath",
 ]

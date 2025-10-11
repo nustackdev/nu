@@ -8,15 +8,18 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import attrs
 
-from ...backend import ObservableStorage
 from ..context import ContextualBase
-from ..context.protocols import ContextType
-from ..path import Path
 from ..types import EMPTY, Empty, NodeType
+
+
+if TYPE_CHECKING:
+    from ...backend import ObservableStorage
+    from ..context.protocols import ContextType
+    from ..path import Path
 
 
 __all__ = [

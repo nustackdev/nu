@@ -23,7 +23,7 @@ __all__ = [
 class QueryError(Exception):
     """Base exception class for all query-related errors."""
 
-    def __init__(self, message: str, query: Query | None = None):
+    def __init__(self, message: str, query: Query | None = None) -> None:
         super().__init__(message)
         self.query = query
 
@@ -33,7 +33,7 @@ class QueryEvaluationError(QueryError):
 
     def __init__(
         self, message: str, query: Query | None = None, original_error: Exception | None = None
-    ):
+    ) -> None:
         super().__init__(message, query)
         self.original_error = original_error
 
@@ -47,7 +47,7 @@ class QueryOperationError(QueryError):
         operation: str | None = None,
         operands: tuple | None = None,
         original_error: Exception | None = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.operation = operation
         self.operands = operands
@@ -57,6 +57,6 @@ class QueryOperationError(QueryError):
 class QuerySyntaxError(QueryError):
     """Raised when query syntax or structure is invalid."""
 
-    def __init__(self, message: str, query: Query | None = None, details: str | None = None):
+    def __init__(self, message: str, query: Query | None = None, details: str | None = None) -> None:
         super().__init__(message, query)
         self.details = details
