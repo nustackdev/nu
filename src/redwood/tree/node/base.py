@@ -17,7 +17,7 @@ from ..types import EMPTY, Empty, NodeType
 
 
 if TYPE_CHECKING:
-    from ...backend import ObservableStorage
+    from ..backend import ObservableStorage
     from ..context.protocols import ContextType
     from ..path import Path
 

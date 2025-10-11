@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Union, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from ..types import PathTuple, Value
+    from ..types import TuplePath, Value
 
 
 __all__ = [
@@ -27,15 +27,15 @@ class ContextProtocol(Protocol):
     and snapshots must support for read operations.
     """
 
-    def get(self, key: PathTuple) -> Value:
+    def get(self, key: TuplePath) -> Value:
         """Get value for key."""
         ...
 
-    def exists(self, key: PathTuple) -> bool:
+    def exists(self, key: TuplePath) -> bool:
         """Check if key exists."""
         ...
 
-    def list_keys(self, prefix: PathTuple, depth: int = 1) -> Generator[PathTuple, None, None]:
+    def list_keys(self, prefix: TuplePath, depth: int = 1) -> Generator[TuplePath, None, None]:
         """List keys with given prefix and depth."""
         ...
 
@@ -48,11 +48,11 @@ class TransactionContextProtocol(ContextProtocol, Protocol):
     commit/rollback semantics for atomicity.
     """
 
-    def set(self, key: PathTuple, value: Value) -> None:
+    def set(self, key: TuplePath, value: Value) -> None:
         """Set value for key."""
         ...
 
-    def delete(self, key: PathTuple) -> None:
+    def delete(self, key: TuplePath) -> None:
         """Delete key."""
         ...
 
@@ -79,4 +79,4 @@ class SnapshotContextProtocol(ContextProtocol, Protocol):
 
 
 # Union type for context attributes
-ContextType = Union[TransactionContextProtocol, SnapshotContextProtocol]
+type ContextType = TransactionContextProtocol | SnapshotContextProtocol

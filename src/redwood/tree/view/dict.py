@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, cast
 import attrs
 
 from ..node import ChildType
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathComponent, TreeT, Value
+from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathSegment, TreeT, Value
 from .base import BaseView
 
 
@@ -64,7 +64,7 @@ class DictView(BaseView[TreeT]):
 
     protocol: ContainerProtocol = attrs.field(default=ContainerProtocol.MUTABLE, init=False)
 
-    def extract(self):
+    def extract(self) -> Value:
         """Extract the value at the current path.
 
         Returns:
@@ -77,7 +77,7 @@ class DictView(BaseView[TreeT]):
         """
         return dict(self.items())
 
-    def store(self, value: dict[PathComponent, Value], /, *, replace: bool = False) -> None:
+    def store(self, value: dict[PathSegment, Value], /, *, replace: bool = False) -> None:
         """Store a value at the specified key.
 
         Args:
@@ -100,7 +100,7 @@ class DictView(BaseView[TreeT]):
         for k, v in value.items():
             self.set(k, v)
 
-    def get(self, key: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
+    def get(self, key: PathSegment, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value at key.
 
         For primitive values, returns the actual value.
@@ -127,7 +127,7 @@ class DictView(BaseView[TreeT]):
         """
         return self._get_child_value(key, default=default)
 
-    def set(self, key: PathComponent, value: Value) -> None:
+    def set(self, key: PathSegment, value: Value) -> None:
         """Set value at key.
 
         Creates appropriate node type based on the value.
@@ -157,7 +157,7 @@ class DictView(BaseView[TreeT]):
         """
         self._set_child_value(key, value)
 
-    def has(self, key: PathComponent) -> bool:
+    def has(self, key: PathSegment) -> bool:
         """Check if key exists in the container.
 
         Args:
@@ -174,7 +174,7 @@ class DictView(BaseView[TreeT]):
         """
         return self.container.has_child(key) != ChildType.NOT_FOUND
 
-    def remove(self, key: PathComponent) -> bool:
+    def remove(self, key: PathSegment) -> bool:
         """Remove key from the container.
 
         Args:
@@ -203,11 +203,11 @@ class DictView(BaseView[TreeT]):
         """
         return self.container.clear_children()
 
-    def keys(self) -> Generator[PathComponent, None, None]:
+    def keys(self) -> Generator[PathSegment, None, None]:
         """Get all keys in the container.
 
         Returns:
-            List[PathComponent]: List of keys
+            List[PathSegment]: List of keys
 
         Example:
             ```python
@@ -232,11 +232,11 @@ class DictView(BaseView[TreeT]):
         for key in self.keys():
             yield cast("Value", self.get(key))
 
-    def items(self) -> Generator[tuple[PathComponent, Value]]:
+    def items(self) -> Generator[tuple[PathSegment, Value]]:
         """Get all key-value pairs in the container.
 
         Returns:
-            List[Tuple[PathComponent, Any]]: List of (key, value) tuples
+            List[Tuple[PathSegment, Any]]: List of (key, value) tuples
 
         Example:
             ```python
@@ -248,7 +248,7 @@ class DictView(BaseView[TreeT]):
             value = cast("Value", self.get(key))
             yield (key, value)
 
-    def dict_view(self, key: PathComponent) -> DictView:
+    def dict_view(self, key: PathSegment) -> DictView:
         """Get a dictionary view for a nested container.
 
         Args:
@@ -269,7 +269,7 @@ class DictView(BaseView[TreeT]):
         """
         return self._dict_view(key)
 
-    def list_view(self, key: PathComponent) -> ListView:
+    def list_view(self, key: PathSegment) -> ListView:
         """Get a list view for a nested container.
 
         Args:

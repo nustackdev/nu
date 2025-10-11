@@ -15,7 +15,6 @@ logic that have no connection to Python built-in types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING
 
 from .view import DictView, ListView
@@ -31,7 +30,7 @@ __all__ = [
 ]
 
 
-class ContainerConstructor(ABC):
+class ContainerConstructor:
     """Base class for container types that views can handle.
 
     Container types represent what kind of data structure a view creates/manages.
@@ -58,7 +57,7 @@ class ContainerConstructor(ABC):
 type ContainerType = type[dict | list | tuple | ContainerConstructor]
 
 
-class ComponentConstructor(ABC):
+class ComponentConstructor:
     """Base class for component types that can be used in navigation.
 
     Component types represent what kind of keys/navigation elements a view can handle.
@@ -98,6 +97,11 @@ class ViewRegistry:
     """
 
     def __init__(self) -> None:
+        """Initialize registry with native views."""
+        # =========================================================================
+        # INTERNAL STORAGE
+        # =========================================================================
+
         # Structure ID → View Class (for resolving existing containers)
         self._structure_to_view: dict[int, type[BaseView]] = {}
 
@@ -114,6 +118,10 @@ class ViewRegistry:
 
         # Track registered views for validation
         self._registered_views: set[type[BaseView]] = set()
+
+        # =========================================================================
+        # REGISTER BUILTIN VIEWS
+        # =========================================================================
 
         # Register builtin views
         self.register_views(

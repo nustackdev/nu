@@ -4,15 +4,17 @@ This module defines a comprehensive set of exceptions that follow a clear hierar
 making error handling and debugging more intuitive.
 """
 
+from redwood.exceptions import RedwoodError
 
-class StateError(Exception):
+
+class TreeError(RedwoodError):
     """Base exception class for all tree-related errors."""
 
     pass
 
 
 # Path-related exceptions
-class PathError(StateError):
+class PathError(TreeError):
     """Base exception class for errors related to path operations."""
 
     pass
@@ -43,7 +45,7 @@ class InvalidPathError(PathError):
 
 
 # Container-related exceptions
-class ContainerError(StateError):
+class ContainerError(TreeError):
     """Base exception class for errors related to container operations."""
 
     pass
@@ -62,7 +64,7 @@ class ContainerTypeError(ContainerError):
 
 
 # View-related exceptions
-class ViewError(StateError):
+class ViewError(TreeError):
     """Base exception class for errors related to view operations."""
 
     pass
@@ -75,7 +77,7 @@ class IncompatibleViewError(ViewError):
 
 
 # Operation-related exceptions
-class OperationError(StateError):
+class OperationError(TreeError):
     """Base exception class for errors related to tree operations."""
 
     pass

@@ -39,7 +39,6 @@ from .operations import (
     MinOperation,
     ModuloOperation,
     MultiplyOperation,
-    NotEqualOperation,
     NotOperation,
     OrOperation,
     PowerOperation,
@@ -51,8 +50,9 @@ from .operations import (
 
 
 if TYPE_CHECKING:
+    from redwood.tree import Tree
+
     from ..path import _Path
-    from ..tree import Tree
     from .operations import Operation
 
 __all__ = [
@@ -309,33 +309,6 @@ class Query:
         """
         other_ops = other.operations if isinstance(other, Query) else other
         return Query(operations=LessEqualOperation(left=self.operations, right=other_ops))
-
-    def __eq__(self, other: Any) -> Query:
-        """Equality: query == other.
-
-        Args:
-            other: Value to compare against
-
-        Returns:
-            New Query with equality operation
-
-        Note:
-            This overrides object equality. Use is_equal_query() for Query comparison.
-        """
-        other_ops = other.operations if isinstance(other, Query) else other
-        return Query(operations=EqualOperation(left=self.operations, right=other_ops))
-
-    def __ne__(self, other: Any) -> Query:
-        """Not equal: query != other.
-
-        Args:
-            other: Value to compare against
-
-        Returns:
-            New Query with not equal operation
-        """
-        other_ops = other.operations if isinstance(other, Query) else other
-        return Query(operations=NotEqualOperation(left=self.operations, right=other_ops))
 
     # =========================================================================
     # LOGICAL OPERATIONS

@@ -9,9 +9,9 @@ throughout the package, establishing a consistent type system.
 from __future__ import annotations
 
 from enum import Enum, Flag, auto
-from typing import TYPE_CHECKING, Any, NewType, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, NewType, TypeGuard, TypeVar
 
-from ..backend import CallbackFn
+from redwood.types import CallbackFn, Value
 
 
 if TYPE_CHECKING:
@@ -23,17 +23,15 @@ if TYPE_CHECKING:
 __all__ = [
     "EMPTY",
     "CallbackFn",
-    "ComplexValue",
     "ContainerProtocol",
     "ContainerStructure",
     "ContextualT",
     "Empty",
     "NodeT",
     "NodeType",
-    "PathComponent",
-    "PathTuple",
-    "PrimitiveValue",
+    "PathSegment",
     "TreeT",
+    "TuplePath",
     "Value",
     "ViewT",
     "is_empty",
@@ -53,26 +51,9 @@ ContextualT = TypeVar("ContextualT", bound="ContextualBase")
 # -------------------------------------------------------------------------
 
 # A component of a path in the tree.
-PathComponent = str
+type PathSegment = str | int
 # A path in the tree, represented as a tuple of components.
-PathTuple = tuple[PathComponent, ...]
-
-# Base primitive values that can be stored in the tree.
-PrimitiveValue = None | bytes | bool | int | float | str
-
-# Complex values that can be stored in the tree.
-ComplexValue = (
-    list["PrimitiveValue | ComplexValue"]
-    | set["PrimitiveValue | ComplexValue"]
-    | tuple["PrimitiveValue | ComplexValue", ...]
-    | dict[PathComponent, "PrimitiveValue | ComplexValue"]
-)
-
-# Any value that can be stored in the tree.
-Value = PrimitiveValue | ComplexValue
-
-# Callback function type for changes.
-# CallbackFn = CallbackFn
+type TuplePath = tuple[PathSegment, ...]
 
 
 # -------------------------------------------------------------------------
@@ -96,9 +77,7 @@ ContainerStructure = NewType("ContainerStructure", int)
 
 
 class ContainerProtocol(Flag):
-    """Container protocols defining container attributes and capabilities.
-    These attributes determine how the container can be used and modified.
-    """
+    """Container protocols defining container attributes and capabilities."""
 
     # Container protocols
 
@@ -149,7 +128,7 @@ class Empty:
         return isinstance(other, Empty)
 
 
-def is_empty(value: Any) -> TypeGuard[Empty]:
+def is_empty(value: object) -> TypeGuard[Empty]:
     """Check if a value is the EMPTY sentinel.
 
     Args:

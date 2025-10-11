@@ -19,11 +19,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 def codec() -> None:
-    """Test codecs."""
+    """Test codec."""
     from redwood.codec import BinaryCodec, BinaryCodecSpec, TextCodec, TextCodecSpec
-
-    class A:
-        pass
 
     with BinaryCodec(BinaryCodecSpec()) as codec:
         key = ("users", 42, "profile")
@@ -119,6 +116,43 @@ def backend() -> None:
             print("Snapshot User 2:", snapshot.get(("users", 2)))
 
 
+def tree() -> None:
+    """Test tree."""
+    from redwood.codec import TextCodecSpec
+    from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
+    from redwood.storage.file_storage import FileStorage, FileStorageSpec
+    from redwood.tree.backend import ObservableStorage
+    from redwood.tree.registry import ViewRegistry
+    from redwood.tree.tree import Tree
+
+    with (
+        InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
+        FileStorage(FileStorageSpec(codec=TextCodecSpec())) as storage,
+    ):
+        tree = Tree(
+            backend=ObservableStorage(storage=storage, observer=observer), registry=ViewRegistry()
+        )
+
+        # Work with the tree using transactions
+        with tree.at("users").with_dict_view() as users:
+            users.set("alice", {"name": "Alice", "age": 30})
+            users.set("bob", {"name": "Bob", "age": 25})
+
+            alice_profile = users.dict_view("alice")
+            alice_profile.set("location", "Wonderland")
+
+            print("Alice's profile in transaction:", alice_profile.extract())
+
+            users.list_view("names").store(["alice", "bob"])
+            users.at("random_user", 12, "profile").dict_view().store({"name": "Random", "age": 20})
+
+        # After commit, data should be visible in the backend
+        with tree.at("users").with_dict_view(snapshot=True) as users:
+            print("All users after commit:", users.extract())
+            alice_profile = users.dict_view("alice")
+            print("Alice's profile after commit:", alice_profile.extract())
+
+
 if __name__ == "__main__":
     # storage()
-    backend()
+    tree()

@@ -56,7 +56,9 @@ from typing import TYPE_CHECKING, ClassVar
 
 import attrs
 
-from ...backend import ObservableStorage, StorageKeyError
+from redwood.exceptions import StorageKeyError
+
+from ..backend import ObservableStorage
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
 from ..types import (
     EMPTY,
@@ -64,8 +66,8 @@ from ..types import (
     ContainerStructure,
     Empty,
     NodeType,
-    PathComponent,
-    PathTuple,
+    PathSegment,
+    TuplePath,
     Value,
 )
 from .base import BaseNode
@@ -100,7 +102,7 @@ class ChildType(Enum):
 class ChildInfo:
     """Basic information about a child."""
 
-    key: PathComponent
+    key: PathSegment
     exists: bool
     child_type: ChildType
     value: Value | Empty = EMPTY  # For primitives
@@ -986,7 +988,7 @@ class ContainerNode(BaseNode):
     # INFORMATION LAYER - Simple Child Data Gathering
     # ------------------------------------------------------------------------
 
-    def get_child_info(self, key: PathComponent, /) -> ChildInfo:
+    def get_child_info(self, key: PathSegment, /) -> ChildInfo:
         """Get basic information about a child.
 
         Args:
@@ -1030,7 +1032,7 @@ class ContainerNode(BaseNode):
     # INSPECTION LAYER - Child Existance and Type Checks
     # ------------------------------------------------------------------------
 
-    def has_primitive_child(self, key: PathComponent, /) -> bool:
+    def has_primitive_child(self, key: PathSegment, /) -> bool:
         """Check if primitive child exists with container health validation.
 
         Args:
@@ -1054,7 +1056,7 @@ class ContainerNode(BaseNode):
         child_info = self.get_child_info(key)
         return child_info.child_type == ChildType.PRIMITIVE
 
-    def has_container_child(self, key: PathComponent, /) -> bool:
+    def has_container_child(self, key: PathSegment, /) -> bool:
         """Check if container child exists with container health validation.
 
         Args:
@@ -1078,7 +1080,7 @@ class ContainerNode(BaseNode):
         child_info = self.get_child_info(key)
         return child_info.child_type == ChildType.CONTAINER
 
-    def has_child(self, key: PathComponent, /) -> ChildType:
+    def has_child(self, key: PathSegment, /) -> ChildType:
         """Check if child exists with container health validation.
 
         Args:
@@ -1110,7 +1112,7 @@ class ContainerNode(BaseNode):
     # MANIPULATION LAYER - Add/Remove Children
     # ------------------------------------------------------------------------
 
-    def set_primitive_child(self, key: PathComponent, value: Value, /) -> None:
+    def set_primitive_child(self, key: PathSegment, value: Value, /) -> None:
         """Set primitive child value with mutability validation.
 
         Args:
@@ -1145,7 +1147,7 @@ class ContainerNode(BaseNode):
 
         self.get_transaction_context().set(self.path.join(key).to_tuple(), value)
 
-    def remove_child(self, key: PathComponent, /) -> bool:
+    def remove_child(self, key: PathSegment, /) -> bool:
         """Remove child (primitive or container) with mutability validation.
 
         Args:
@@ -1206,7 +1208,7 @@ class ContainerNode(BaseNode):
 
     def get_child(
         self,
-        key: PathComponent,
+        key: PathSegment,
         /,
     ) -> ChildInfo:
         """Get child information.
@@ -1230,6 +1232,7 @@ class ContainerNode(BaseNode):
             print(
                 f"Child {child_info.key}: {child_info.child_type}, Value: {child_info.value}"
             )
+            ```
         """
         self.validate_compatible
 
@@ -1237,7 +1240,7 @@ class ContainerNode(BaseNode):
 
     def get_primitive_child(
         self,
-        key: PathComponent,
+        key: PathSegment,
         /,
     ) -> Value | Empty:
         """Get primitive child value.
@@ -1271,7 +1274,7 @@ class ContainerNode(BaseNode):
 
     def keys(
         self, *, primitives_only: bool = False, skip_primitives: bool = False
-    ) -> Generator[PathComponent, None, None]:
+    ) -> Generator[PathSegment, None, None]:
         """Get child keys with container health validation.
 
         Args:
@@ -1279,7 +1282,7 @@ class ContainerNode(BaseNode):
             skip_primitives: If True, skip primitive keys and only return container keys.
 
         Yields:
-            PathComponent: Child keys.
+            PathSegment: Child keys.
 
         Raises:
             PathNotFoundError: If container doesn't exist.
@@ -1365,7 +1368,7 @@ class ContainerNode(BaseNode):
         """
         # Collect all paths
         ctx = self.get_transaction_context()
-        paths_to_delete: list[PathTuple] = []
+        paths_to_delete: list[TuplePath] = []
         paths_to_delete.extend(list(ctx.list_keys(path.to_tuple(), depth=-1)))
         paths_to_delete.extend(list(ctx.list_keys(path.meta_path.to_tuple(), depth=-1)))
         paths_to_delete.extend(
@@ -1394,7 +1397,7 @@ class ContainerNode(BaseNode):
     # METADATA MANAGEMENT
     # =========================================================================
 
-    def get_metadata(self, key: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
+    def get_metadata(self, key: PathSegment, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get metadata value (e.g., __length__ for ListView).
 
         Metadata is stored in the metadata path namespace.
@@ -1417,7 +1420,7 @@ class ContainerNode(BaseNode):
         except StorageKeyError:
             return default
 
-    def set_metadata(self, key: PathComponent, value: Value) -> None:
+    def set_metadata(self, key: PathSegment, value: Value) -> None:
         """Set metadata value (e.g., __length__ for ListView).
 
         Args:
@@ -1440,7 +1443,7 @@ class ContainerNode(BaseNode):
         metadata_path = self.path.meta_path.join(key)
         self.get_transaction_context().set(metadata_path.to_tuple(), value)
 
-    def has_metadata(self, key: PathComponent) -> bool:
+    def has_metadata(self, key: PathSegment) -> bool:
         """Check if metadata key exists.
 
         Args:
@@ -1458,7 +1461,7 @@ class ContainerNode(BaseNode):
         metadata_path = self.path.meta_path.join(key)
         return self.get_ensured_context().exists(metadata_path.to_tuple())
 
-    def delete_metadata(self, key: PathComponent) -> bool:
+    def delete_metadata(self, key: PathSegment) -> bool:
         """Delete metadata key.
 
         Args:

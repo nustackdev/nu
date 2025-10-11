@@ -15,7 +15,7 @@ from .base import BaseView
 
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Iterable
 
     from .dict import DictView
 
@@ -185,11 +185,9 @@ class ListView(BaseView[TreeT]):
             ```
         """
         # Handle empty list or out of bounds gracefully
-        index, _length = self._validate_index_with_length(index)
+        index, _ = self._validate_index_with_length(index)
 
-        key = str(index)
-
-        return self._get_child_value(key, default=default)
+        return self._get_child_value(index, default=default)
 
     def set(self, index: int, value: Value) -> None:
         """Set value at index.
@@ -211,11 +209,9 @@ class ListView(BaseView[TreeT]):
             tasks.set(-1, "Last task updated")
             ```
         """
-        index, _length = self._validate_index_with_length(index)
+        index, _ = self._validate_index_with_length(index)
 
-        key = str(index)
-
-        self._set_child_value(key, value)
+        self._set_child_value(index, value)
 
     def append(self, value: Value) -> None:
         """Append value to the end of the list.
@@ -230,9 +226,7 @@ class ListView(BaseView[TreeT]):
             ```
         """
         length = self.length()
-        key = str(length)
-
-        self._set_child_value(key, value)
+        self._set_child_value(length, value)
         self.container.set_metadata(self.LENGTH_MARKER, length + 1)
 
     def pop(self) -> Value:
@@ -255,18 +249,17 @@ class ListView(BaseView[TreeT]):
             raise IndexError("Pop from empty list")
 
         index = length - 1
-        key = str(index)
 
         last_item = self.get(index)
 
-        self.container.remove_child(key)
+        self.container.remove_child(index)
 
         # Update length
         self.container.set_metadata(self.LENGTH_MARKER, length - 1)
 
         return cast("Value", last_item)
 
-    def extend(self, iterable) -> None:
+    def extend(self, iterable: Iterable[Value]) -> None:
         """Extend list by appending elements from iterable.
 
         Args:
@@ -325,7 +318,7 @@ class ListView(BaseView[TreeT]):
             alice_profile.set("location", "San Francisco")
             ```
         """
-        return self._dict_view(str(index))
+        return self._dict_view(index)
 
     def list_view(self, index: int) -> ListView:
         """Get a list view for a nested container.
@@ -346,4 +339,4 @@ class ListView(BaseView[TreeT]):
             alice_tasks.append("new task")
             ```
         """
-        return self._list_view(str(index))
+        return self._list_view(index)

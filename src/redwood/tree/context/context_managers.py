@@ -11,7 +11,7 @@ import attrs
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from ...backend import ObservableStorage
+    from ..backend import ObservableStorage
     from ..types import ContextualT
     from .protocols import ContextType
 

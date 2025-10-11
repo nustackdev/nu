@@ -7,13 +7,14 @@ approach to navigate efficiently through the tree structure.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 from .exceptions import PathEvaluationError, PathNotFoundError
 
 
 if TYPE_CHECKING:
-    from ..tree import BaseView, Tree
+    from redwood.tree import BaseView, Tree
+
     from .path import Path
     from .types import PathResult
 
@@ -44,7 +45,7 @@ class PathResolver:
     navigation patterns efficiently.
     """
 
-    def resolve(self, path: Path, tree: Tree, ctx: Any = None) -> PathResult:
+    def resolve(self, path: Path, tree: Tree, ctx: object = None) -> PathResult:
         """Resolve the given path against the tree.
 
         Args:
@@ -66,8 +67,9 @@ class PathResolver:
 
         return parent_view.get(path.last_component())  # type: ignore
 
-    def parent_view(self, path: Path, tree: Tree, ctx: Any, /) -> BaseView:
+    def parent_view(self, path: Path, tree: Tree, ctx: object, /) -> BaseView:
         """Navigate to the parent view of the target path component.
+
         For a path 'a.b.c', this method navigates to the 'a.b' view,
         allowing subsequent operations (get/set) on the 'c' component.
         If the path is empty, raises PathNotFoundError.
@@ -120,7 +122,7 @@ class PathResolver:
                 original_error=e,
             ) from e
 
-    def _create_view_for_component(self, tree: Tree, component: str | int, ctx: Any) -> Any:
+    def _create_view_for_component(self, tree: Tree, component: str | int, ctx: object) -> object:
         """Create view based on the component type.
 
         Args:
@@ -138,7 +140,9 @@ class PathResolver:
         else:
             raise PathEvaluationError(f"Unsupported component type: {type(component)}")
 
-    def _navigate_view(self, view: Any, component: str | int, next_component: str | int) -> Any:
+    def _navigate_view(
+        self, view: object, component: str | int, next_component: str | int
+    ) -> object:
         """Navigate view to next container based on next component type.
 
         Args:

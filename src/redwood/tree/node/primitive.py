@@ -17,7 +17,7 @@ from .container import ContainerNode
 
 
 if TYPE_CHECKING:
-    from ...backend import ObservableStorage
+    from ..backend import ObservableStorage
     from ..context.protocols import ContextType
     from ..path import Path
 
@@ -86,7 +86,7 @@ class PrimitiveNode(BaseNode):
             backend=self.backend,
             ctx=self.ctx,
             path=parent_path,
-            structure=ContainerStructure.DEFAULT_CONTAINER,
+            structure=ContainerStructure(1),
             protocol=ContainerProtocol.DEFAULT_PROTOCOL,
             ensure_exists=True,
         )
@@ -105,7 +105,7 @@ class PrimitiveNode(BaseNode):
         """Get the primitive value.
 
         Args:
-            tx: Optional transaction (defaults to current transaction)
+            default: Default value if the primitive does not exist
 
         Returns:
             Any: Value of the primitive node, or EMPTY if not found

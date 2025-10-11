@@ -18,8 +18,9 @@ from .exceptions import QueryEvaluationError
 
 
 if TYPE_CHECKING:
+    from redwood.tree import Tree
+
     from ..path import _Path
-    from ..tree import Tree
 
 __all__ = [
     "AbsOperation",

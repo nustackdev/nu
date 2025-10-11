@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING, Self
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from ..types import PathComponent
+    from ..types import PathSegment, TuplePath
 
 
-__all__ = ["Path"]
+__all__ = ["MetaPath", "Path"]
 
 
 class Path:
@@ -58,15 +58,6 @@ class Path:
         return self.DATA_ROOT_MARKER
 
     @cached_property
-    def struct_path(self) -> StructPath:
-        """Get the path for the structure component.
-
-        Returns:
-            StructPath: New path with structure root marker
-        """
-        return StructPath(*self.components)
-
-    @cached_property
     def meta_path(self) -> MetaPath:
         """Get the path for the metadata component.
 
@@ -75,7 +66,7 @@ class Path:
         """
         return MetaPath(*self.components)
 
-    def __init__(self, *components: PathComponent) -> None:
+    def __init__(self, *components: PathSegment) -> None:
         """Initialize a path with the given components.
 
         Always includes a root component as the first element.
@@ -86,19 +77,19 @@ class Path:
         self._components = (self.root_marker, *tuple(components))
 
     @cached_property
-    def components(self) -> tuple[PathComponent, ...]:
+    def components(self) -> TuplePath:
         """Get the path components as a tuple.
 
         Returns:
-            tuple[PathComponent, ...]: Path components including root
+            tuple[str | int, ...]: Path components including root
         """
         return self._components[1:]
 
-    def to_tuple(self) -> tuple[PathComponent, ...]:
+    def to_tuple(self) -> TuplePath:
         """Get the path as a tuple for use with the backend.
 
         Returns:
-            tuple[PathComponent, ...]: Path components as a tuple
+            tuple[str | int, ...]: Path components as a tuple
         """
         return self._components
 
@@ -154,15 +145,15 @@ class Path:
         """
         return len(self.components)
 
-    def __iter__(self) -> Iterator[PathComponent]:
+    def __iter__(self) -> Iterator[PathSegment]:
         """Get an iterator over the path components.
 
         Returns:
-            Iterator[PathComponent]: Iterator over components
+            Iterator[PathSegment]: Iterator over components
         """
         return iter(self.components)
 
-    def join(self, *components: PathComponent) -> Self:
+    def join(self, *components: PathSegment) -> Self:
         """Create a new path by joining with additional components.
 
         Args:
@@ -197,11 +188,11 @@ class Path:
 
         return self.__class__(*self.components[:-1])
 
-    def last(self) -> PathComponent | None:
+    def last(self) -> PathSegment | None:
         """Get the last component of the path.
 
         Returns:
-            PathComponent: Last component
+            PathSegment: Last component
 
         Example:
             ```python
@@ -310,18 +301,9 @@ class Path:
         return self.__class__(*relative_components)
 
 
-class StructPath(Path):
-    @cached_property
-    def root_marker(self) -> str:
-        """Get the root marker for the path.
-
-        Returns:
-            str: Root marker for the path
-        """
-        return self.STRUCT_ROOT_MARKER
-
-
 class MetaPath(Path):
+    """Path subclass for metadata component paths."""
+
     @cached_property
     def root_marker(self) -> str:
         """Get the root marker for the path.

@@ -12,24 +12,25 @@ from typing import TYPE_CHECKING, Self
 
 import attrs
 
-from ..backend import (
-    SnapshotContextManagerProtocol,
-    SnapshotProtocol,
-    StorageKeyError,
-    SubscriptionProtocol,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
-)
+from redwood.exceptions import StorageKeyError
+
 from .context import ContextType, ContextualBase
 from .path import Path
 from .registry import ViewRegistry
-from .types import EMPTY, CallbackFn, Empty, PathComponent, Value, ViewT
+from .types import EMPTY, CallbackFn, Empty, PathSegment, Value, ViewT
 from .view import DictView, ListView, create_view_context_manager
 
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
+    from redwood.protocols import (
+        SnapshotContextManagerProtocol,
+        SnapshotProtocol,
+        SubscriptionProtocol,
+        TransactionContextManagerProtocol,
+        TransactionProtocol,
+    )
 
 __all__ = [
     "Tree",
@@ -90,7 +91,7 @@ class Tree(ContextualBase):
     # TREE NAVIGATION METHODS
     # =========================================================================
 
-    def at(self, *paths: PathComponent, ctx: ContextType | None = None) -> Self:
+    def at(self, *paths: PathSegment, ctx: ContextType | None = None) -> Self:
         """Navigate to a path (relative to current path).
 
         This creates a new State instance pointing to the specified path.
@@ -614,7 +615,7 @@ class Tree(ContextualBase):
     # SHORTCUTS FOR COMMON OPERATIONS
     # =========================================================================
 
-    def has_primitive(self, *paths: PathComponent) -> bool:
+    def has_primitive(self, *paths: PathSegment) -> bool:
         """Check if a path exists.
 
         Args:
@@ -633,7 +634,7 @@ class Tree(ContextualBase):
         """
         return self.backend.exists(self.path.join(*paths).to_tuple())
 
-    def get_primitive(self, *paths: PathComponent, default: Value | Empty = EMPTY) -> Value | Empty:
+    def get_primitive(self, *paths: PathSegment, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value at a path.
 
         Args:
@@ -665,7 +666,7 @@ class Tree(ContextualBase):
     # - Hypothetically, `has` and `read` operations might also have specific logic in Views, but until we have a use case for that,
     #   we keep shortcut methods here for simplicity.
 
-    def is_primitive(self, *paths: PathComponent) -> bool:
+    def is_primitive(self, *paths: PathSegment) -> bool:
         """Check if a path is a primitive (non-container).
 
         Args:
@@ -683,22 +684,3 @@ class Tree(ContextualBase):
             ```
         """
         return self.backend.exists(self.path.join(*paths).to_tuple())
-
-    def is_container(self, *paths: PathComponent) -> bool:
-        """Check if a path is a container (mapping, indexed, linked, or hashed).
-
-        Args:
-            *paths: Path components to check
-
-        Returns:
-            bool: True if path is a container, False otherwise
-
-        Example:
-            ```python
-            if tree.at("users").is_container("alice"):
-                print("Alice's profile is a container")
-            else:
-                print("Alice's profile is not a container")
-            ```
-        """
-        return self.backend.exists(self.path.join(*paths).struct_path.to_tuple())

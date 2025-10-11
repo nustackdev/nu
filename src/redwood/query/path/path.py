@@ -16,8 +16,9 @@ from .variable import Variable
 
 
 if TYPE_CHECKING:
+    from redwood.tree import Tree
+
     from ..query import Query
-    from ..tree import Tree
     from .types import ExtendedPathComponent, PathComponent
 
 __all__ = [
@@ -380,32 +381,6 @@ class _Path:
         """
         return self.to_query() <= other
 
-    def __eq__(self, other: Any) -> Query:
-        """Equality: path == other.
-
-        Args:
-            other: Value to compare against
-
-        Returns:
-            New Query with equality operation
-
-        Note:
-            This overrides object equality for query chaining.
-            Use is_equal_path() for Path comparison if needed.
-        """
-        return self.to_query() == other
-
-    def __ne__(self, other: Any) -> Query:
-        """Not equal: path != other.
-
-        Args:
-            other: Value to compare against
-
-        Returns:
-            New Query with not equal operation
-        """
-        return self.to_query() != other
-
     # =========================================================================
     # LOGICAL OPERATIONS (Query Chaining)
     # =========================================================================
@@ -432,7 +407,7 @@ class _Path:
         """
         return self.to_query().or_(other)
 
-    def eq(self, other: Any) -> Query:
+    def eq_(self, other: Any) -> Query:
         """Equality: path.eq(other).
 
         Args:

@@ -6,8 +6,6 @@ a clean interface for variable creation and usage.
 
 from __future__ import annotations
 
-from typing import Any
-
 import attrs
 
 
@@ -28,7 +26,7 @@ class Variable:
 
     path: tuple[str | int, ...] = attrs.field()
 
-    def resolve(self, vars: dict[str | int, Any]) -> Any:
+    def resolve(self, vars: dict[str | int, object]) -> object:
         """Resolve the variable path against the provided vars dictionary.
 
         Args:
@@ -61,11 +59,11 @@ class Variable:
             elif isinstance(current, (list, tuple)):
                 try:
                     component = int(component)  # Convert to int for list access
-                except ValueError:
+                except ValueError as e:
                     raise KeyError(
                         f"Invalid index '{component}' for list at variable path "
                         f"{'.'.join([str(p) for p in self.path[:i]])}"
-                    )
+                    ) from e
         return current
 
     def __str__(self) -> str:

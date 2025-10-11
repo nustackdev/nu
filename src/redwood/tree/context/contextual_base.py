@@ -6,7 +6,7 @@ with support for both transactions and snapshots.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self, TypeGuard
+from typing import TYPE_CHECKING, Self, TypeGuard
 
 import attrs
 
@@ -14,7 +14,7 @@ from .protocols import ContextType, SnapshotContextProtocol, TransactionContextP
 
 
 if TYPE_CHECKING:
-    from ...backend import ObservableStorage
+    from ..backend import ObservableStorage
 
 
 __all__ = ["ContextualBase", "is_contextual"]
@@ -191,7 +191,7 @@ class ContextualBase:
         return ctx
 
 
-def is_contextual(obj: Any) -> TypeGuard[ContextualBase]:
+def is_contextual(obj: object) -> TypeGuard[ContextualBase]:
     """Check if an object supports contexts.
 
     Args:

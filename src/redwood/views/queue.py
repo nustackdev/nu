@@ -11,13 +11,15 @@ import uuid
 from typing import TYPE_CHECKING, cast
 
 import attrs
-from loomi._tree.tree.registry import ComponentConstructor, ContainerConstructor
-from loomi.tree import BaseView, ContainerProtocol, ContainerStructure, TreeT, Value
+
+from redwood.tree import BaseView, ContainerProtocol, ContainerStructure, TreeT
+from redwood.tree.registry import ComponentConstructor, ContainerConstructor
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    pass
+
+    from redwood.types import Value
 
 __all__ = [
     "QueueComponent",
@@ -100,7 +102,7 @@ class QueueView(BaseView[TreeT]):
             # Returns: [front_item, ..., back_item]
             ```
         """
-        return [cast("Value", self._get_child_value(key)) for key in self.container]
+        return [cast("Value", self._get_child_value(key)) for key in self.container.keys()]
 
     def store(self, values, /, *, replace: bool = False) -> None:
         """Store iterable values in the queue.
@@ -229,7 +231,7 @@ class QueueView(BaseView[TreeT]):
             print(f"Processing {queue_size} tasks")
             ```
         """
-        return sum(1 for _ in self.container)
+        return sum(1 for _ in self.container.keys())
 
     def clear(self) -> int:
         """Remove all items from the queue.
@@ -257,7 +259,7 @@ class QueueView(BaseView[TreeT]):
                 print(f"Queued task: {task}")
             ```
         """
-        for key in self.container:
+        for key in self.container.keys():
             yield cast("Value", self._get_child_value(key))
 
 

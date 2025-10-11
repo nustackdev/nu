@@ -42,7 +42,7 @@ from ..types import (
     ContainerProtocol,
     ContainerStructure,
     Empty,
-    PathComponent,
+    PathSegment,
     TreeT,
     Value,
     ViewT,
@@ -151,7 +151,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # TREE NAVIGATION METHODS (return new Tree instances)
     # =========================================================================
 
-    def at(self, *paths: PathComponent, ctx: ContextType | None = None) -> TreeT:
+    def at(self, *paths: PathSegment, ctx: ContextType | None = None) -> TreeT:
         """Navigate to a path (relative to current path).
 
         This creates a new State instance pointing to the specified path.
@@ -217,7 +217,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # VIEW CREATION METHODS
     # =========================================================================
 
-    def view(self, key: PathComponent, view_class: type[ViewT]) -> ViewT:
+    def view(self, key: PathSegment, view_class: type[ViewT]) -> ViewT:
         """Generic view creation method.
 
         Args:
@@ -235,7 +235,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # NESTED VIEW CREATION UTILITIES
     # =========================================================================
 
-    def _dict_view(self, key: PathComponent, /) -> DictView:
+    def _dict_view(self, key: PathSegment, /) -> DictView:
         """Create nested dictionary view."""
         from .dict import DictView
 
@@ -243,7 +243,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
         )
 
-    def _list_view(self, key: PathComponent, /) -> ListView:
+    def _list_view(self, key: PathSegment, /) -> ListView:
         """Create nested list view."""
         from .list import ListView
 
@@ -256,7 +256,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # =========================================================================
 
     def _get_child_value(
-        self, key: PathComponent, /, *, default: Value | Empty = EMPTY
+        self, key: PathSegment, /, *, default: Value | Empty = EMPTY
     ) -> Value | Empty:
         """Common logic for getting child values using registry for view resolution.
 
@@ -301,7 +301,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
 
         raise ValueError(f"Unexpected child type '{child_info.child_type}' for key '{key}'")
 
-    def _set_child_value(self, key: PathComponent, value: Value, /) -> None:
+    def _set_child_value(self, key: PathSegment, value: Value, /) -> None:
         """Common logic for setting child values using registry for view resolution.
 
         Args:
@@ -342,7 +342,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # REGISTRY-BASED VIEW CREATION
     # =========================================================================
 
-    def _get_view_for_structure_id(self, key: PathComponent, structure_id: int, /) -> BaseView:
+    def _get_view_for_structure_id(self, key: PathSegment, structure_id: int, /) -> BaseView:
         """Get view for existing container using registry and structure ID.
 
         Args:
@@ -358,7 +358,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
         view_class = self.tree.registry.get_view_for_structure(structure_id)
         return self.view(key, view_class)
 
-    def _get_view_for_container_value(self, key: PathComponent, value: Value, /) -> BaseView:
+    def _get_view_for_container_value(self, key: PathSegment, value: Value, /) -> BaseView:
         """Get view for container value using registry.
 
         Args:
@@ -385,7 +385,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             f"Register a container type that matches isinstance({type(value).__name__}, container_type)."
         )
 
-    def _get_view_for_component_type(self, key: PathComponent, component: Any, /) -> BaseView:
+    def _get_view_for_component_type(self, key: PathSegment, component: Any, /) -> BaseView:
         """Get view that can handle a specific component type during navigation.
 
         Args:
