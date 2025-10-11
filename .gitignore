@@ -187,3 +187,5 @@ benchmark_results/
 
 # Misc
 _playground/
+.db*
+.state*
