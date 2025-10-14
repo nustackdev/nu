@@ -41,7 +41,9 @@ __all__ = [
     # Aliases
     "BinaryCodec",
     "BinaryCodecSpec",
-    # Core codec
+    # Core codecs
+    "NoOpCodec",
+    "NoOpCodecSpec",
     "StorageCodec",
     "StorageCodecSpec",
     "TextCodec",
@@ -56,9 +58,11 @@ from rwtup import BinaryKeyCodec, StringKeyCodec
 
 from .adapters.json import JSONCodec
 from .adapters.micropack import MicroPackCodec
+from .adapters.passthrough import PassthroughCodec
 from .adapters.types import (
     JSONEncoded,
     MicroPackEncoded,
+    PassthroughEncoded,
 )
 
 
@@ -76,6 +80,14 @@ TextCodecSpec = partial(
     StorageCodecSpec,
     key_codec=StringKeyCodec,
     value_codec=JSONCodec,
+)
+
+# No-op codec
+NoOpCodec = StorageCodec[str, PassthroughEncoded]
+NoOpCodecSpec = partial(
+    StorageCodecSpec,
+    key_codec=StringKeyCodec,
+    value_codec=PassthroughCodec,
 )
 
 __all__ += [

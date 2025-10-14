@@ -106,7 +106,7 @@ class InMemoryObserverSpec(ResourceSpec):
 
     name: str = "in_memory_observer"
     factory: type = InMemoryObserver
-    codec: Spec = attrs.field(factory=lambda: PassthroughCodecSpec())
+    codec: Spec
 
 
 if TYPE_CHECKING:
