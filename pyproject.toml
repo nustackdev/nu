@@ -91,6 +91,18 @@ redwood = [
     "**/*.so",
     "py.typed",
 ]
+rwtup = [
+    "**/*.pyx",
+    "**/*.pxd",
+    "**/*.so",
+    "py.typed",
+]
+rwrocks = [
+    "**/*.pyx",
+    "**/*.pxd",
+    "**/*.so",
+    "py.typed",
+]
 
 # ============================================================================
 # Testing - pytest
@@ -207,7 +219,7 @@ convention = "google"  # Use Google style format
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["redwood"]
+known-first-party = ["redwood", "rwtup", "rwrocks"]
 force-single-line = false
 lines-after-imports = 2
 

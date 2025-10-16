@@ -189,3 +189,9 @@ benchmark_results/
 _playground/
 .db*
 .state*
+
+# Agents
+.cursor/
+Claude.md
+.agent.md
+repomix*
