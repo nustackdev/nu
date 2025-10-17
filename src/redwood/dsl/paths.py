@@ -9,6 +9,7 @@ from redwood.dsl.term import PathTerm
 
 
 if TYPE_CHECKING:
+    from redwood.dsl.operations import GetOperation, SetOperation
     from redwood.tree.context import ContextType
     from redwood.tree.tree import Tree
 

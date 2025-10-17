@@ -9,6 +9,7 @@ Core concepts:
 - Empty/NaN: Special values for missing data and invalid operations
 - Metadata: Static analysis information (purity, types, dependencies)
 - Operations: View-delegated reads and writes
+- Domain Types: Two-class pattern for custom domain logic
 
 Example:
     >>> from redwood.dsl import Schema, PrimitiveField, SchemaField
@@ -24,6 +25,7 @@ Example:
     >>> User.age.set(30).evaluate(tree, ctx)
 """
 
+# Core types
 # Commands
 from redwood.dsl.commands import DeleteCommand, UpdateCommand
 
@@ -51,8 +53,6 @@ from redwood.dsl.schema import Field, PrimitiveField, Schema, SchemaField
 
 # Base terms
 from redwood.dsl.term import CommandTerm, PathTerm, Term, ValueTerm
-
-# Core types
 from redwood.dsl.types import (
     Empty,
     NaN,
@@ -64,12 +64,25 @@ from redwood.dsl.types import (
 )
 
 # Values
-from redwood.dsl.values import BinaryOp, LiteralValue, PathValue, UnaryOp
+from redwood.dsl.values import (
+    BinaryOp,
+    DomainTypeExpr,
+    LiteralValue,
+    MethodCallValue,
+    PathValue,
+    UnaryOp,
+)
 
 
 __all__ = [
-    "BinaryOp",
-    "CommandTerm",
+    # Core types
+    "Empty",
+    "NaN",
+    "SpecialValue",
+    "is_empty",
+    "is_nan",
+    "is_special",
+    "propagate_special",
     # Exceptions
     "DSLError",
     "DSLEvaluationError",
@@ -77,36 +90,32 @@ __all__ = [
     "DSLSchemaError",
     "DSLTypeError",
     "DSLViewError",
-    # Commands
-    "DeleteCommand",
-    # Paths
-    "DocumentPath",
-    # Core types
-    "Empty",
-    # Schema system
-    "Field",
-    # Operations
-    "GetOperation",
-    "LiteralValue",
-    "NaN",
-    "PathTerm",
-    # Values
-    "PathValue",
-    "PrimitiveField",
-    "PrimitivePath",
-    "Schema",
-    "SchemaField",
-    "SetOperation",
-    "SpecialValue",
-    # Base terms
-    "Term",
     # Metadata
     "TermMetadata",
-    "UnaryOp",
-    "UpdateCommand",
+    # Base terms
+    "Term",
+    "PathTerm",
     "ValueTerm",
-    "is_empty",
-    "is_nan",
-    "is_special",
-    "propagate_special",
+    "CommandTerm",
+    # Schema system
+    "Field",
+    "Schema",
+    "SchemaField",
+    "PrimitiveField",
+    # Paths
+    "DocumentPath",
+    "PrimitivePath",
+    # Values
+    "PathValue",
+    "LiteralValue",
+    "BinaryOp",
+    "UnaryOp",
+    "DomainTypeExpr",
+    "MethodCallValue",
+    # Operations
+    "GetOperation",
+    "SetOperation",
+    # Commands
+    "DeleteCommand",
+    "UpdateCommand",
 ]

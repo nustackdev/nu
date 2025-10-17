@@ -5,12 +5,15 @@ ValueTerms represent pure computed values (R-values):
 - LiteralValue: Constants (42, "hello", True)
 - BinaryOp: Binary operations (>, <, ==, +, -, *, /, &, |)
 - UnaryOp: Unary operations (not, -, +)
+- DomainTypeExpr: Links expression class to implementation class
+- MethodCallValue: Calls methods on domain types
 """
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from redwood.dsl.term import PathTerm, ValueTerm
-from redwood.dsl.types import NaN, propagate_special
+from redwood.dsl.types import NaN, is_special, propagate_special
 
 
 if TYPE_CHECKING:
@@ -275,3 +278,154 @@ class UnaryOp(ValueTerm):
             return operator(operand_val)
         except (TypeError, ValueError):
             return NaN
+
+
+class DomainTypeExpr(ValueTerm):
+    """Links expression class to implementation class.
+
+    This is the core of the two-class pattern for domain types.
+    Created when a domain type is instantiated during expression building.
+
+    The two-class pattern:
+    - Expression class (e.g., EMAExpr) - for building expressions (lazy)
+    - Implementation class (e.g., EMA) - for execution (evaluates)
+
+    Example:
+        # Expression building (lazy)
+        ema_expr = EMAExpr(Market.price, window=20)
+        # ↓ Creates DomainTypeExpr internally
+
+        # Evaluation (executes)
+        ema_expr.evaluate(tree, ctx)
+        # ↓ Reads Market.price value
+        # ↓ Constructs EMA(value, window=20)
+        # ↓ Returns EMA instance
+    """
+
+    def __init__(
+        self,
+        expr_class: type,
+        impl_class: type,
+        inner: ValueTerm,
+        init_kwargs: dict[str, Any],
+    ) -> None:
+        """Initialize domain type expression.
+
+        Args:
+            expr_class: Expression class (e.g., EMAExpr)
+            impl_class: Implementation class (e.g., EMA)
+            inner: Source value term (e.g., PathValue(Market.price))
+            init_kwargs: Constructor arguments for impl_class
+        """
+        super().__init__()
+        self.expr_class = expr_class
+        self.impl_class = impl_class
+        self.inner = inner
+        self.init_kwargs = init_kwargs
+
+        # Inherit metadata from inner
+        self.meta.is_pure = inner.meta.is_pure
+        self.meta.dependencies = inner.meta.dependencies
+
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+        """Evaluate inner expression and construct implementation instance.
+
+        Flow:
+        1. Evaluate inner expression to get raw value
+        2. Construct implementation instance with value + kwargs
+        3. Return implementation instance
+
+        Args:
+            tree: Tree instance
+            ctx: Context
+
+        Returns:
+            Implementation instance (e.g., EMA object)
+        """
+        # Evaluate the source expression to get raw value
+        raw_value = self.inner.evaluate(tree, ctx)
+
+        # Handle special values
+        if is_special(raw_value):
+            raise ValueError(f"{self.impl_class.__name__} received special value: {raw_value}")
+
+        # Construct implementation instance with the value
+        impl_instance = self.impl_class(raw_value, **self.init_kwargs)
+
+        return impl_instance
+
+
+class MethodCallValue(ValueTerm):
+    """Method call on a domain type.
+
+    Represents calling a method on a domain type implementation.
+    Stores the callable reference (not a string!) for execution.
+
+    Example:
+        # Building (lazy)
+        is_trending = ema_expr.is_trending_up()
+        # ↓ Creates MethodCallValue(domain_expr, "is_trending_up", EMA.is_trending_up)
+
+        # Evaluation (executes)
+        result = is_trending.evaluate(tree, ctx)
+        # ↓ Evaluates domain_expr → EMA instance
+        # ↓ Calls EMA.is_trending_up() on instance
+        # ↓ Returns bool
+    """
+
+    def __init__(
+        self,
+        domain_expr: DomainTypeExpr,
+        method_name: str,
+        method: Callable,
+        arg_exprs: dict[str, ValueTerm] | None = None,
+        kwargs: dict[str, Any] | None = None,
+    ) -> None:
+        """Initialize method call.
+
+        Args:
+            domain_expr: Domain type expression
+            method_name: Method name (for debugging)
+            method: Actual method to call (callable reference)
+            arg_exprs: Expression arguments (evaluated at runtime)
+            kwargs: Literal keyword arguments
+        """
+        super().__init__()
+        self.domain_expr = domain_expr
+        self.method_name = method_name
+        self.method = method
+        self.arg_exprs = arg_exprs or {}
+        self.kwargs = kwargs or {}
+
+        # Inherit metadata
+        self.meta.is_pure = domain_expr.meta.is_pure
+        self.meta.dependencies = domain_expr.meta.dependencies
+
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+        """Evaluate domain expression and call method on result.
+
+        Flow:
+        1. Evaluate domain expression → implementation instance
+        2. Evaluate any expression arguments
+        3. Call method on implementation instance
+        4. Return result
+
+        Args:
+            tree: Tree instance
+            ctx: Context
+
+        Returns:
+            Method result
+        """
+        # 1. Evaluate domain expression to get implementation instance
+        impl_instance = self.domain_expr.evaluate(tree, ctx)
+
+        # 2. Evaluate any expression arguments
+        eval_kwargs = dict(self.kwargs)  # Start with literal kwargs
+        for name, arg_expr in self.arg_exprs.items():
+            eval_kwargs[name] = arg_expr.evaluate(tree, ctx)
+
+        # 3. Call method on implementation instance
+        result = self.method(impl_instance, **eval_kwargs)
+
+        return result
