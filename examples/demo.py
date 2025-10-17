@@ -43,7 +43,7 @@ class User(Schema):
 # ============================================================================
 
 
-def main():
+def main() -> None:
     """Run DSL demo."""
     print("\n" + "=" * 70)
     print("REDWOOD DSL - FINAL DEMO")
@@ -91,7 +91,7 @@ def main():
             print(f"   User.age > 18 = {result}")
 
         # Complex expression
-        is_active_adult = (User.age >= 18) & (User.active == True)
+        is_active_adult = (User.age >= 18) & (User.active == True)  # noqa: E712
         with tree.transaction() as ctx:
             result = is_active_adult.evaluate(tree, ctx)
             print(f"   (User.age >= 18) & (User.active == True) = {result}")
