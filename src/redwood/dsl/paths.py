@@ -1,7 +1,6 @@
-"""Path term implementations (minimal stubs for Layer 1).
+"""Path term implementations.
 
-These are basic stubs to support schema field descriptors.
-Full implementation comes in Layer 2.
+Provides navigable paths to tree locations with schema-guided access.
 """
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
@@ -21,7 +20,11 @@ class DocumentPath(PathTerm, Generic[T]):
     """Path to a nested document (schema instance).
 
     Represents a location containing a nested schema structure.
-    Full navigation implementation comes in Layer 2.
+    Provides navigation to nested fields via schema definitions.
+
+    Example:
+        User.profile  # DocumentPath[Profile]
+        User.profile.email  # PrimitivePath[str] (navigated from Profile schema)
     """
 
     def __init__(
@@ -36,7 +39,7 @@ class DocumentPath(PathTerm, Generic[T]):
         Args:
             schema_class: Schema class this path belongs to
             field_name: Name of the field
-            field_def: Field definition
+            field_def: Field definition (SchemaField)
             parent: Parent path term (if nested)
         """
         super().__init__()
@@ -45,8 +48,13 @@ class DocumentPath(PathTerm, Generic[T]):
         self.field_def = field_def
         self.parent = parent
 
-        # Metadata
+        # Metadata - extract nested schema
         self.meta.schema = field_def.schema if hasattr(field_def, "schema") else None
+
+        # View type - DocumentPath uses DictView
+        from redwood.tree.view import DictView
+
+        self.meta.view_type = DictView
 
         # Path resolution
         if parent and parent.meta.resolved_path:
@@ -54,25 +62,92 @@ class DocumentPath(PathTerm, Generic[T]):
         else:
             self.meta.resolved_path = (field_name,)
 
+    def __getattribute__(self, name: str) -> object:
+        """Navigate to nested schema fields.
+
+        This enables User.profile.email navigation - when you access
+        a field on DocumentPath, it looks up that field in the nested
+        schema and returns the appropriate PathTerm.
+
+        Args:
+            name: Field name to access
+
+        Returns:
+            PathTerm for the nested field (DocumentPath or PrimitivePath)
+
+        Raises:
+            AttributeError: If field doesn't exist in schema
+        """
+        # Allow access to internal attributes
+        if name in [
+            "meta",
+            "evaluate",
+            "schema_class",
+            "field_name",
+            "field_def",
+            "parent",
+            "resolve_path",
+            "parent_path",
+            "last_segment",
+        ]:
+            return object.__getattribute__(self, name)
+
+        # Get nested schema
+        schema_type = object.__getattribute__(self, "meta").schema
+        if schema_type and hasattr(schema_type, "_fields"):
+            fields = schema_type._fields
+            if name in fields:
+                # Found field in nested schema - create PathTerm for it
+                field_def = fields[name]
+
+                # Delegate to field's create_path_term for extensibility
+                return field_def.create_path_term(
+                    schema_class=schema_type,
+                    field_name=name,
+                    parent=self,
+                )
+
+        # Not a schema field
+        raise AttributeError(
+            f"DocumentPath[{schema_type.__name__ if schema_type else '?'}] has no field '{name}'"
+        )
+
     def evaluate(self, tree: "Tree", ctx: "ContextType") -> "DocumentPath[T]":
-        """Stub evaluation - returns self for now."""
+        """Evaluate path - returns self (path is the location)."""
         return self
 
     def resolve_path(self, tree: "Tree", ctx: "ContextType") -> tuple[str, ...]:
-        """Resolve to path segments."""
+        """Resolve to path segments.
+
+        Args:
+            tree: Tree instance (unused for static paths)
+            ctx: Context (unused for static paths)
+
+        Returns:
+            Tuple of path segments
+        """
         if self.meta.resolved_path:
             return self.meta.resolved_path
         return (self.field_name,)
 
     def parent_path(self) -> PathTerm | None:
-        """Get parent path."""
+        """Get parent path.
+
+        Returns:
+            Parent PathTerm, or None if this is root
+        """
         return self.parent
 
     def last_segment(self) -> str:
-        """Get last segment."""
+        """Get last path segment.
+
+        Returns:
+            Field name
+        """
         return self.field_name
 
     def __repr__(self) -> str:
+        """String representation."""
         if self.parent:
             return f"{self.parent}.{self.field_name}"
         return f"{self.schema_class.__name__}.{self.field_name}"
@@ -82,7 +157,11 @@ class PrimitivePath(PathTerm, Generic[T]):
     """Path to a primitive value.
 
     Represents a location containing a primitive value (int, str, float, etc.).
-    Full operations implementation comes in Layer 2.
+    Provides .get() and .set() operations that delegate to parent view.
+
+    Example:
+        User.age.get()  # GetOperation[int]
+        User.age.set(30)  # SetOperation
     """
 
     def __init__(
@@ -97,7 +176,7 @@ class PrimitivePath(PathTerm, Generic[T]):
         Args:
             schema_class: Schema class this path belongs to
             field_name: Name of the field
-            field_def: Field definition
+            field_def: Field definition (PrimitiveField)
             parent: Parent path term (if nested)
         """
         super().__init__()
@@ -106,10 +185,18 @@ class PrimitivePath(PathTerm, Generic[T]):
         self.field_def = field_def
         self.parent = parent
 
-        # Metadata
+        # Metadata - extract primitive type
         self.meta.primitive_type = (
             field_def.primitive_type if hasattr(field_def, "primitive_type") else None
         )
+
+        # Parent view type - inherited from parent or default to DictView
+        from redwood.tree.view import DictView
+
+        if parent and hasattr(parent, "meta") and parent.meta.view_type:
+            self._parent_view_type = parent.meta.view_type
+        else:
+            self._parent_view_type = DictView
 
         # Path resolution
         if parent and parent.meta.resolved_path:
@@ -117,25 +204,77 @@ class PrimitivePath(PathTerm, Generic[T]):
         else:
             self.meta.resolved_path = (field_name,)
 
+    def get(self) -> "GetOperation[T]":
+        """Create read operation.
+
+        Returns GetOperation that will read this primitive value
+        through the parent view's .get() method.
+
+        Returns:
+            GetOperation[T] that evaluates to the primitive value
+
+        Example:
+            value = User.age.get().evaluate(tree, ctx)  # Returns int
+        """
+        from redwood.dsl.operations import GetOperation
+
+        return GetOperation(self, self._parent_view_type)
+
+    def set(self, value: T) -> "SetOperation":
+        """Create write operation.
+
+        Returns SetOperation that will write this primitive value
+        through the parent view's .set() method.
+
+        Args:
+            value: Value to set (type T)
+
+        Returns:
+            SetOperation that evaluates to None (side effect)
+
+        Example:
+            User.age.set(30).evaluate(tree, ctx)  # Writes to tree
+        """
+        from redwood.dsl.operations import SetOperation
+
+        return SetOperation(self, value, self._parent_view_type)
+
     def evaluate(self, tree: "Tree", ctx: "ContextType") -> "PrimitivePath[T]":
-        """Stub evaluation - returns self for now."""
+        """Evaluate path - returns self (path is the location)."""
         return self
 
     def resolve_path(self, tree: "Tree", ctx: "ContextType") -> tuple[str, ...]:
-        """Resolve to path segments."""
+        """Resolve to path segments.
+
+        Args:
+            tree: Tree instance (unused for static paths)
+            ctx: Context (unused for static paths)
+
+        Returns:
+            Tuple of path segments
+        """
         if self.meta.resolved_path:
             return self.meta.resolved_path
         return (self.field_name,)
 
     def parent_path(self) -> PathTerm | None:
-        """Get parent path."""
+        """Get parent path.
+
+        Returns:
+            Parent PathTerm, or None if this is root
+        """
         return self.parent
 
     def last_segment(self) -> str:
-        """Get last segment."""
+        """Get last path segment.
+
+        Returns:
+            Field name
+        """
         return self.field_name
 
     def __repr__(self) -> str:
+        """String representation."""
         if self.parent:
             return f"{self.parent}.{self.field_name}"
         return f"{self.schema_class.__name__}.{self.field_name}"
