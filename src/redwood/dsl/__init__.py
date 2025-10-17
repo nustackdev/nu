@@ -74,7 +74,7 @@ from redwood.dsl.values import (
 )
 
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # Core types
     "Empty",
     "NaN",

@@ -49,7 +49,7 @@ class PathValue(ValueTerm):
         else:
             self.meta.dependencies = frozenset()
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> object:
         """Evaluate by reading path value.
 
         Delegates to path's .get() operation.
@@ -67,7 +67,7 @@ class PathValue(ValueTerm):
 
         # Get parent view type (default to DictView)
         if hasattr(self.path, "_parent_view_type"):
-            view_type = self.path._parent_view_type
+            view_type = self.path._parent_view_type  # type: ignore[attr-defined]
         else:
             view_type = DictView
 
@@ -86,7 +86,7 @@ class LiteralValue(ValueTerm):
         hello = LiteralValue("hello")
     """
 
-    def __init__(self, value: Any) -> None:
+    def __init__(self, value: object) -> None:
         """Initialize literal value.
 
         Args:
@@ -99,7 +99,7 @@ class LiteralValue(ValueTerm):
         self.meta.value_type = type(value)
         self.meta.is_constant = True
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> object:
         """Evaluate to literal value.
 
         Args:
@@ -176,7 +176,7 @@ class BinaryOp(ValueTerm):
         # Merge dependencies
         self.meta.dependencies = left.meta.dependencies | right.meta.dependencies
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> object:
         """Evaluate binary operation with Empty/NaN propagation.
 
         Args:
@@ -251,7 +251,7 @@ class UnaryOp(ValueTerm):
         self.meta.is_pure = operand.meta.is_pure
         self.meta.dependencies = operand.meta.dependencies
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> object:
         """Evaluate unary operation with Empty/NaN propagation.
 
         Args:
@@ -327,7 +327,7 @@ class DomainTypeExpr(ValueTerm):
         self.meta.is_pure = inner.meta.is_pure
         self.meta.dependencies = inner.meta.dependencies
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> object:
         """Evaluate inner expression and construct implementation instance.
 
         Flow:
@@ -401,7 +401,7 @@ class MethodCallValue(ValueTerm):
         self.meta.is_pure = domain_expr.meta.is_pure
         self.meta.dependencies = domain_expr.meta.dependencies
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> object:
         """Evaluate domain expression and call method on result.
 
         Flow:

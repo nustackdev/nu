@@ -6,19 +6,16 @@ Extensions can define additional field types.
 """
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from redwood.dsl.exceptions import DSLSchemaError
+from .exceptions import DSLSchemaError
 
 
 if TYPE_CHECKING:
-    from redwood.dsl.term import PathTerm
+    from .term import PathTerm
 
 
-T = TypeVar("T")
-
-
-class Field(ABC, Generic[T]):
+class Field(ABC):
     """Abstract base field - defines structure and path creation.
 
     Each field type must implement create_path_term() to specify
@@ -46,7 +43,7 @@ class Field(ABC, Generic[T]):
         pass
 
 
-class SchemaField(Field[T]):
+class SchemaField[T: Schema](Field):
     """Nested document field - embeds another schema.
 
     Core field type for schema composition. Uses DictView internally.
@@ -83,7 +80,7 @@ class SchemaField(Field[T]):
         )
 
 
-class PrimitiveField(Field[T]):
+class PrimitiveField[T](Field):
     """Primitive value field - leaf nodes.
 
     Core field type for primitive values (int, str, float, bool, etc.).
@@ -129,14 +126,14 @@ class PrimitiveField(Field[T]):
         )
 
 
-class FieldDescriptor(Generic[T]):
+class FieldDescriptor:
     """Descriptor that delegates PathTerm creation to Field.
 
     This is the bridge between Schema class attributes and PathTerms.
     Extensible - just calls field.create_path_term(), no hardcoded logic.
     """
 
-    def __init__(self, name: str, field_def: Field[T]) -> None:
+    def __init__(self, name: str, field_def: Field) -> None:
         """Initialize descriptor.
 
         Args:
@@ -144,7 +141,7 @@ class FieldDescriptor(Generic[T]):
             field_def: Field definition
         """
         self.name: str = name
-        self.field_def: Field[T] = field_def
+        self.field_def: Field = field_def
 
     def __get__(
         self,
@@ -175,7 +172,7 @@ class FieldDescriptor(Generic[T]):
             parent=None,
         )
 
-    def __set__(self, obj: Any, value: Any) -> None:
+    def __set__(self, obj: object, value: object) -> None:
         """Prevent setting field values."""
         raise AttributeError(f"Cannot set field '{self.name}' - fields are read-only")
 
@@ -245,7 +242,7 @@ class Schema(metaclass=SchemaMeta):
             profile: Profile = SchemaField(Profile)
     """
 
-    _fields: dict[str, Field] = {}
+    _fields: ClassVar[dict[str, Field]] = {}
 
     @classmethod
     def get_field(cls, name: str) -> Field | None:

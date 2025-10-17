@@ -3,21 +3,25 @@
 Provides navigable paths to tree locations with schema-guided access.
 """
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar
 
 from redwood.dsl.term import PathTerm
 
 
 if TYPE_CHECKING:
-    from redwood.dsl.operations import GetOperation, SetOperation
     from redwood.tree.context import ContextType
     from redwood.tree.tree import Tree
+
+    from .operations import GetOperation, SetOperation
+    from .schema import PrimitiveField, SchemaField
 
 
 T = TypeVar("T")  # Schema type
 
 
-class DocumentPath(PathTerm, Generic[T]):
+class DocumentPath[T](PathTerm):
     """Path to a nested document (schema instance).
 
     Represents a location containing a nested schema structure.
@@ -32,7 +36,7 @@ class DocumentPath(PathTerm, Generic[T]):
         self,
         schema_class: type,
         field_name: str,
-        field_def: Any,
+        field_def: SchemaField,
         parent: PathTerm | None = None,
     ) -> None:
         """Initialize document path.
@@ -59,7 +63,7 @@ class DocumentPath(PathTerm, Generic[T]):
 
         # Path resolution
         if parent and parent.meta.resolved_path:
-            self.meta.resolved_path = parent.meta.resolved_path + (field_name,)
+            self.meta.resolved_path = (*parent.meta.resolved_path, field_name)
         else:
             self.meta.resolved_path = (field_name,)
 
@@ -113,11 +117,11 @@ class DocumentPath(PathTerm, Generic[T]):
             f"DocumentPath[{schema_type.__name__ if schema_type else '?'}] has no field '{name}'"
         )
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> "DocumentPath[T]":
+    def evaluate(self, tree: Tree, ctx: ContextType) -> DocumentPath[T]:
         """Evaluate path - returns self (path is the location)."""
         return self
 
-    def resolve_path(self, tree: "Tree", ctx: "ContextType") -> tuple[str, ...]:
+    def resolve_path(self, tree: Tree, ctx: ContextType) -> tuple[str, ...]:
         """Resolve to path segments.
 
         Args:
@@ -154,7 +158,7 @@ class DocumentPath(PathTerm, Generic[T]):
         return f"{self.schema_class.__name__}.{self.field_name}"
 
 
-class PrimitivePath(PathTerm, Generic[T]):
+class PrimitivePath[T](PathTerm):
     """Path to a primitive value.
 
     Represents a location containing a primitive value (int, str, float, etc.).
@@ -169,7 +173,7 @@ class PrimitivePath(PathTerm, Generic[T]):
         self,
         schema_class: type,
         field_name: str,
-        field_def: Any,
+        field_def: PrimitiveField[T],
         parent: PathTerm | None = None,
     ) -> None:
         """Initialize primitive path.
@@ -201,11 +205,11 @@ class PrimitivePath(PathTerm, Generic[T]):
 
         # Path resolution
         if parent and parent.meta.resolved_path:
-            self.meta.resolved_path = parent.meta.resolved_path + (field_name,)
+            self.meta.resolved_path = (*parent.meta.resolved_path, field_name)
         else:
             self.meta.resolved_path = (field_name,)
 
-    def get(self) -> "GetOperation[T]":
+    def get(self) -> GetOperation[T]:
         """Create read operation.
 
         Returns GetOperation that will read this primitive value
@@ -221,7 +225,7 @@ class PrimitivePath(PathTerm, Generic[T]):
 
         return GetOperation(self, self._parent_view_type)
 
-    def set(self, value: T) -> "SetOperation":
+    def set(self, value: T) -> SetOperation:
         """Create write operation.
 
         Returns SetOperation that will write this primitive value
@@ -240,11 +244,11 @@ class PrimitivePath(PathTerm, Generic[T]):
 
         return SetOperation(self, value, self._parent_view_type)
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> "PrimitivePath[T]":
+    def evaluate(self, tree: Tree, ctx: ContextType) -> PrimitivePath[T]:
         """Evaluate path - returns self (path is the location)."""
         return self
 
-    def resolve_path(self, tree: "Tree", ctx: "ContextType") -> tuple[str, ...]:
+    def resolve_path(self, tree: Tree, ctx: ContextType) -> tuple[str, ...]:
         """Resolve to path segments.
 
         Args:

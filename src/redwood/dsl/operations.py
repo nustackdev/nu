@@ -4,10 +4,10 @@ Operations delegate to view protocols for all tree access.
 All access goes through parent views, never directly to storage.
 """
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 from redwood.dsl.term import CommandTerm, PathTerm, ValueTerm
-from redwood.dsl.types import Empty
+from redwood.dsl.types import Empty, SpecialValue
 
 
 if TYPE_CHECKING:
@@ -15,10 +15,7 @@ if TYPE_CHECKING:
     from redwood.tree.tree import Tree
 
 
-T = TypeVar("T")
-
-
-class GetOperation(ValueTerm, Generic[T]):
+class GetOperation[T](ValueTerm):
     """Pure read operation - reads value through parent view.
 
     Gets the value at a path by navigating to the parent container
@@ -44,7 +41,7 @@ class GetOperation(ValueTerm, Generic[T]):
         self.meta.value_type = path.meta.primitive_type
         self.meta.dependencies = path.meta.dependencies
 
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> T:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> T | SpecialValue:
         """Read value through parent view.
 
         Navigation strategy:
@@ -103,7 +100,7 @@ class SetOperation(CommandTerm):
         op.evaluate(tree, ctx)  # Writes via parent view
     """
 
-    def __init__(self, path: PathTerm, value: Any, view_type: type) -> None:
+    def __init__(self, path: PathTerm, value: object, view_type: type) -> None:
         """Initialize set operation.
 
         Args:

@@ -40,7 +40,7 @@ class Term(ABC):
         self.meta = TermMetadata()
 
     @abstractmethod
-    def evaluate(self, tree: "Tree", ctx: "ContextType") -> Any:
+    def evaluate(self, tree: "Tree", ctx: "ContextType") -> object:
         """Evaluate term against tree with context.
 
         Args:
@@ -125,7 +125,7 @@ class PathTerm(Term):
     # Operator overloading - implicit .get() in value contexts
     # ========================================================================
 
-    def _wrap_value(self, other: Any) -> "ValueTerm":
+    def _wrap_value(self, other: object) -> "ValueTerm":
         """Wrap value as ValueTerm if needed (helper)."""
         from redwood.dsl.values import LiteralValue
 
@@ -140,75 +140,75 @@ class PathTerm(Term):
         return PathValue(self)
 
     # Comparison operators
-    def __gt__(self, other: Any) -> "ValueTerm":
+    def __gt__(self, other: object) -> "ValueTerm":
         """Greater than: path > value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("gt", self._to_value(), self._wrap_value(other))
 
-    def __lt__(self, other: Any) -> "ValueTerm":
+    def __lt__(self, other: object) -> "ValueTerm":
         """Less than: path < value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("lt", self._to_value(), self._wrap_value(other))
 
-    def __eq__(self, other: Any) -> "ValueTerm":  # type: ignore[override]
+    def __eq__(self, other: object) -> "ValueTerm":  # type: ignore[override]
         """Equality: path == value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("eq", self._to_value(), self._wrap_value(other))
 
-    def __ne__(self, other: Any) -> "ValueTerm":  # type: ignore[override]
+    def __ne__(self, other: object) -> "ValueTerm":  # type: ignore[override]
         """Inequality: path != value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("ne", self._to_value(), self._wrap_value(other))
 
-    def __ge__(self, other: Any) -> "ValueTerm":
+    def __ge__(self, other: object) -> "ValueTerm":
         """Greater or equal: path >= value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("ge", self._to_value(), self._wrap_value(other))
 
-    def __le__(self, other: Any) -> "ValueTerm":
+    def __le__(self, other: object) -> "ValueTerm":
         """Less or equal: path <= value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("le", self._to_value(), self._wrap_value(other))
 
     # Arithmetic operators
-    def __add__(self, other: Any) -> "ValueTerm":
+    def __add__(self, other: object) -> "ValueTerm":
         """Addition: path + value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("add", self._to_value(), self._wrap_value(other))
 
-    def __sub__(self, other: Any) -> "ValueTerm":
+    def __sub__(self, other: object) -> "ValueTerm":
         """Subtraction: path - value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("sub", self._to_value(), self._wrap_value(other))
 
-    def __mul__(self, other: Any) -> "ValueTerm":
+    def __mul__(self, other: object) -> "ValueTerm":
         """Multiplication: path * value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("mul", self._to_value(), self._wrap_value(other))
 
-    def __truediv__(self, other: Any) -> "ValueTerm":
+    def __truediv__(self, other: object) -> "ValueTerm":
         """Division: path / value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("div", self._to_value(), self._wrap_value(other))
 
     # Logical operators
-    def __and__(self, other: Any) -> "ValueTerm":
+    def __and__(self, other: object) -> "ValueTerm":
         """Logical AND: path & value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("and", self._to_value(), self._wrap_value(other))
 
-    def __or__(self, other: Any) -> "ValueTerm":
+    def __or__(self, other: object) -> "ValueTerm":
         """Logical OR: path | value (implicit .get())."""
         from redwood.dsl.values import BinaryOp
 
@@ -263,7 +263,7 @@ class ValueTerm(Term):
     # Operator overloading for ValueTerm composition
     # ========================================================================
 
-    def _wrap_value(self, other: Any) -> "ValueTerm":
+    def _wrap_value(self, other: object) -> "ValueTerm":
         """Wrap value as ValueTerm if needed (helper)."""
         from redwood.dsl.values import LiteralValue
 
@@ -272,75 +272,75 @@ class ValueTerm(Term):
         return LiteralValue(other)
 
     # Comparison operators
-    def __gt__(self, other: Any) -> "ValueTerm":
+    def __gt__(self, other: object) -> "ValueTerm":
         """Greater than: value > other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("gt", self, self._wrap_value(other))
 
-    def __lt__(self, other: Any) -> "ValueTerm":
+    def __lt__(self, other: object) -> "ValueTerm":
         """Less than: value < other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("lt", self, self._wrap_value(other))
 
-    def __eq__(self, other: Any) -> "ValueTerm":  # type: ignore[override]
+    def __eq__(self, other: object) -> "ValueTerm":  # type: ignore[override]
         """Equality: value == other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("eq", self, self._wrap_value(other))
 
-    def __ne__(self, other: Any) -> "ValueTerm":  # type: ignore[override]
+    def __ne__(self, other: object) -> "ValueTerm":  # type: ignore[override]
         """Inequality: value != other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("ne", self, self._wrap_value(other))
 
-    def __ge__(self, other: Any) -> "ValueTerm":
+    def __ge__(self, other: object) -> "ValueTerm":
         """Greater or equal: value >= other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("ge", self, self._wrap_value(other))
 
-    def __le__(self, other: Any) -> "ValueTerm":
+    def __le__(self, other: object) -> "ValueTerm":
         """Less or equal: value <= other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("le", self, self._wrap_value(other))
 
     # Arithmetic operators
-    def __add__(self, other: Any) -> "ValueTerm":
+    def __add__(self, other: object) -> "ValueTerm":
         """Addition: value + other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("add", self, self._wrap_value(other))
 
-    def __sub__(self, other: Any) -> "ValueTerm":
+    def __sub__(self, other: object) -> "ValueTerm":
         """Subtraction: value - other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("sub", self, self._wrap_value(other))
 
-    def __mul__(self, other: Any) -> "ValueTerm":
+    def __mul__(self, other: object) -> "ValueTerm":
         """Multiplication: value * other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("mul", self, self._wrap_value(other))
 
-    def __truediv__(self, other: Any) -> "ValueTerm":
+    def __truediv__(self, other: object) -> "ValueTerm":
         """Division: value / other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("div", self, self._wrap_value(other))
 
     # Logical operators
-    def __and__(self, other: Any) -> "ValueTerm":
+    def __and__(self, other: object) -> "ValueTerm":
         """Logical AND: value & other."""
         from redwood.dsl.values import BinaryOp
 
         return BinaryOp("and", self, self._wrap_value(other))
 
-    def __or__(self, other: Any) -> "ValueTerm":
+    def __or__(self, other: object) -> "ValueTerm":
         """Logical OR: value | other."""
         from redwood.dsl.values import BinaryOp
 

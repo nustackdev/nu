@@ -4,7 +4,7 @@ TermMetadata tracks static information about terms during construction.
 Computed eagerly to enable optimization and analysis.
 """
 
-from typing import Any
+from .schema import Schema
 
 
 class TermMetadata:
@@ -32,7 +32,7 @@ class TermMetadata:
         has_side_effects: bool = False,
         value_type: type | None = None,
         primitive_type: type | None = None,
-        schema: Any = None,  # Schema type
+        schema: type[Schema] | None = None,
         view_type: type | None = None,
         resolved_path: tuple[str, ...] | None = None,
         has_dynamic_components: bool = False,
@@ -51,7 +51,7 @@ class TermMetadata:
         self.dependencies = dependencies if dependencies is not None else frozenset()
         self.is_constant = is_constant
 
-    def merge(self, **updates: Any) -> "TermMetadata":
+    def merge(self, **updates: object) -> "TermMetadata":
         """Create new metadata with specified updates.
 
         Args:
