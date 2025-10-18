@@ -1,6 +1,7 @@
 """Path term implementations.
 
 Provides navigable paths to tree locations with schema-guided access.
+Supports both static and dynamic path resolution.
 """
 
 from __future__ import annotations
@@ -26,6 +27,9 @@ class DocumentPath[T](PathTerm):
 
     Represents a location containing a nested schema structure.
     Provides navigation to nested fields via schema definitions.
+
+    Supports dynamic parents - if parent has dynamic components,
+    this path inherits that property.
 
     Example:
         User.profile  # DocumentPath[Profile]
@@ -61,11 +65,19 @@ class DocumentPath[T](PathTerm):
 
         self.meta.view_type = DictView
 
-        # Path resolution
-        if parent and parent.meta.resolved_path:
+        # Path resolution - handle dynamic parents
+        if parent and parent.meta.has_dynamic_components:
+            # Parent is dynamic - we're dynamic too
+            self.meta.has_dynamic_components = True
+            self.meta.resolved_path = None
+        elif parent and parent.meta.resolved_path:
+            # Parent is static and resolved
             self.meta.resolved_path = (*parent.meta.resolved_path, field_name)
+            self.meta.has_dynamic_components = False
         else:
+            # Root path
             self.meta.resolved_path = (field_name,)
+            self.meta.has_dynamic_components = False
 
     def __getattribute__(self, name: str) -> object:
         """Navigate to nested schema fields.
@@ -124,16 +136,28 @@ class DocumentPath[T](PathTerm):
     def resolve_path(self, tree: Tree, ctx: ContextType) -> tuple[str, ...]:
         """Resolve to path segments.
 
+        For dynamic paths, delegates to parent for resolution then appends own segment.
+
         Args:
-            tree: Tree instance (unused for static paths)
-            ctx: Context (unused for static paths)
+            tree: Tree instance (needed for dynamic resolution)
+            ctx: Context (needed for dynamic resolution)
 
         Returns:
             Tuple of path segments
         """
-        if self.meta.resolved_path:
-            return self.meta.resolved_path
-        return (self.field_name,)
+        if self.meta.has_dynamic_components:
+            # Dynamic path - resolve parent first
+            if self.parent:
+                parent_resolved = self.parent.resolve_path(tree, ctx)
+                return (*parent_resolved, self.field_name)
+            else:
+                # Root dynamic path (shouldn't happen normally)
+                return (self.field_name,)
+        else:
+            # Static path - use cached resolution
+            if self.meta.resolved_path:
+                return self.meta.resolved_path
+            return (self.field_name,)
 
     def parent_path(self) -> PathTerm | None:
         """Get parent path.
@@ -163,6 +187,9 @@ class PrimitivePath[T](PathTerm):
 
     Represents a location containing a primitive value (int, str, float, etc.).
     Provides .get() and .set() operations that delegate to parent view.
+
+    Supports dynamic parents - if parent has dynamic components,
+    this path inherits that property.
 
     Example:
         User.age.get()  # GetOperation[int]
@@ -200,14 +227,24 @@ class PrimitivePath[T](PathTerm):
 
         if parent and hasattr(parent, "meta") and parent.meta.view_type:
             self._parent_view_type = parent.meta.view_type
+        elif parent and hasattr(parent, "_parent_view_type"):
+            self._parent_view_type = parent._parent_view_type
         else:
             self._parent_view_type = DictView
 
-        # Path resolution
-        if parent and parent.meta.resolved_path:
+        # Path resolution - handle dynamic parents
+        if parent and parent.meta.has_dynamic_components:
+            # Parent is dynamic - we're dynamic too
+            self.meta.has_dynamic_components = True
+            self.meta.resolved_path = None
+        elif parent and parent.meta.resolved_path:
+            # Parent is static and resolved
             self.meta.resolved_path = (*parent.meta.resolved_path, field_name)
+            self.meta.has_dynamic_components = False
         else:
+            # Root path
             self.meta.resolved_path = (field_name,)
+            self.meta.has_dynamic_components = False
 
     def get(self) -> GetOperation[T]:
         """Create read operation.
@@ -251,16 +288,28 @@ class PrimitivePath[T](PathTerm):
     def resolve_path(self, tree: Tree, ctx: ContextType) -> tuple[str, ...]:
         """Resolve to path segments.
 
+        For dynamic paths, delegates to parent for resolution then appends own segment.
+
         Args:
-            tree: Tree instance (unused for static paths)
-            ctx: Context (unused for static paths)
+            tree: Tree instance (needed for dynamic resolution)
+            ctx: Context (needed for dynamic resolution)
 
         Returns:
             Tuple of path segments
         """
-        if self.meta.resolved_path:
-            return self.meta.resolved_path
-        return (self.field_name,)
+        if self.meta.has_dynamic_components:
+            # Dynamic path - resolve parent first
+            if self.parent:
+                parent_resolved = self.parent.resolve_path(tree, ctx)
+                return (*parent_resolved, self.field_name)
+            else:
+                # Root dynamic path (shouldn't happen normally)
+                return (self.field_name,)
+        else:
+            # Static path - use cached resolution
+            if self.meta.resolved_path:
+                return self.meta.resolved_path
+            return (self.field_name,)
 
     def parent_path(self) -> PathTerm | None:
         """Get parent path.

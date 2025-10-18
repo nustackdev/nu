@@ -9,28 +9,31 @@ Supports ANY type:
 - Schemas: Collection[Order], Collection[Profile]
 - Nested: Collection[List[Order]] (future)
 
+Supports DYNAMIC KEYS:
+- Static: Market.orders["AAPL"]
+- Dynamic: Market.orders[Market.current.get()]
+
 Example:
     class Order(Schema):
         volume: PrimitivePath[int] = PrimitiveField(int)
         price: PrimitivePath[float] = PrimitiveField(float)
 
     class Market(Schema):
-        # Schema collection
+        current: PrimitivePath[str] = PrimitiveField(str)
         orders: CollectionPath[Order] = CollectionField(Order)
-        # Primitive collection
         prices: CollectionPath[float] = CollectionField(float)
 
-    # Access schemas
+    # Static key
     Market.orders["AAPL"].volume.get()
 
-    # Access primitives
-    Market.prices["AAPL"].get()
+    # Dynamic key
+    Market.orders[Market.current.get()].volume.get()
 """
 
 from typing import TYPE_CHECKING, TypeVar
 
 from redwood.dsl.schema import Field
-from redwood.dsl.term import PathTerm
+from redwood.dsl.term import PathTerm, ValueTerm
 
 
 if TYPE_CHECKING:
@@ -48,7 +51,7 @@ class CollectionField[T](Field):
     All values in the collection must be the same type, but that type
     can be anything: primitives, schemas, or nested structures.
 
-    Access via dynamic keys: path["key"]
+    Access via dynamic keys: path["key"] or path[expr]
 
     Example:
         class Market(Schema):
@@ -90,15 +93,17 @@ class CollectionPath[T](PathTerm):
     This is the TYPE ANNOTATION used in schemas!
 
     Provides __getitem__ for accessing specific keys in the collection.
-    The key creates a CollectionItemPath.
+    Supports both static keys (strings) and dynamic keys (expressions).
 
     Example:
         # In schema
         orders: CollectionPath[Order] = CollectionField(Order)
 
-        # In code
-        orders_coll = Market.orders  # CollectionPath
-        apple_order = orders_coll["AAPL"]  # CollectionItemPath
+        # Static key
+        Market.orders["AAPL"]  # Key known at construction
+
+        # Dynamic key
+        Market.orders[Market.current.get()]  # Key evaluated at runtime
     """
 
     def __init__(
@@ -138,21 +143,38 @@ class CollectionPath[T](PathTerm):
         else:
             self.meta.resolved_path = (field_name,)
 
-    def __getitem__(self, key: str) -> T:
-        """Access item in collection by key.
+    def __getitem__(self, key: str | ValueTerm) -> T:
+        """Access item in collection by key (static or dynamic).
 
         Args:
-            key: Collection key (string)
+            key: Collection key - string (static) or ValueTerm (dynamic)
 
         Returns:
             CollectionItemPath for the specific key
 
         Example:
-            Market.orders["AAPL"]  # Returns CollectionItemPath[Order]
+            # Static key
+            Market.orders["AAPL"]
+
+            # Dynamic key (evaluated at runtime)
+            Market.orders[Market.current.get()]
         """
+        # Wrap static keys in LiteralValue
+        if isinstance(key, str):
+            from redwood.dsl.values import LiteralValue
+
+            key_expr = LiteralValue(key)
+            is_static = True
+        elif isinstance(key, ValueTerm):
+            key_expr = key
+            is_static = False
+        else:
+            raise TypeError(f"Collection key must be str or ValueTerm, got {type(key)}")
+
         return CollectionItemPath(
             collection_path=self,
-            key=key,
+            key_expr=key_expr,
+            is_static_key=is_static,
             item_type=self.field_def.item_type,
             is_primitive=self.field_def.is_primitive,
         )
@@ -185,24 +207,29 @@ class CollectionPath[T](PathTerm):
 class CollectionItemPath[T](PathTerm):
     """Path to a specific item in a collection (with dynamic key).
 
+    Supports both static and dynamic keys:
+    - Static: Key known at construction (string literal)
+    - Dynamic: Key evaluated at runtime (expression)
+
     Behavior depends on item type:
     - Primitives: Provides .get()/.set()
     - Schemas: Provides __getattribute__ for field navigation
 
     Example:
-        # Primitive
+        # Static key + primitive
         item = Market.prices["AAPL"]  # CollectionItemPath[float]
         value = item.get().evaluate(tree, ctx)
 
-        # Schema
-        item = Market.orders["AAPL"]  # CollectionItemPath[Order]
+        # Dynamic key + schema
+        item = Market.orders[Market.current.get()]  # CollectionItemPath[Order]
         volume = item.volume.get().evaluate(tree, ctx)
     """
 
     def __init__(
         self,
         collection_path: CollectionPath[T],
-        key: str,
+        key_expr: ValueTerm,
+        is_static_key: bool,
         item_type: type[T],
         is_primitive: bool,
     ) -> None:
@@ -210,13 +237,15 @@ class CollectionItemPath[T](PathTerm):
 
         Args:
             collection_path: Parent CollectionPath
-            key: Collection key
+            key_expr: Key expression (LiteralValue for static, any ValueTerm for dynamic)
+            is_static_key: Whether key is known at construction time
             item_type: Type of the item
             is_primitive: Whether item is primitive or schema
         """
         super().__init__()
         self.collection_path = collection_path
-        self.key = key
+        self.key_expr = key_expr
+        self.is_static_key = is_static_key
         self.item_type = item_type
         self.is_primitive = is_primitive
 
@@ -230,11 +259,23 @@ class CollectionItemPath[T](PathTerm):
         else:
             self.meta.schema = item_type
 
-        # Path resolution - append key to collection path
-        if collection_path.meta.resolved_path:
-            self.meta.resolved_path = (*collection_path.meta.resolved_path, key)
+        # Mark as dynamic if key is not static
+        self.meta.has_dynamic_components = not is_static_key
+
+        # Path resolution - append key if static, otherwise defer
+        if is_static_key:
+            # Static key - resolve now
+            from redwood.dsl.values import LiteralValue
+
+            if isinstance(key_expr, LiteralValue):
+                static_key = key_expr.value
+                if collection_path.meta.resolved_path:
+                    self.meta.resolved_path = (*collection_path.meta.resolved_path, static_key)
+                else:
+                    self.meta.resolved_path = (static_key,)
         else:
-            self.meta.resolved_path = (key,)
+            # Dynamic key - cannot resolve statically
+            self.meta.resolved_path = None
 
     def get(self) -> "GetOperation[T]":
         """Create read operation (primitives only).
@@ -275,7 +316,7 @@ class CollectionItemPath[T](PathTerm):
             name: Field name to access
 
         Returns:
-            PathTerm for the nested field
+            PathTerm for the nested field (typed as T for IDE support)
 
         Raises:
             AttributeError: If item is primitive or field doesn't exist
@@ -285,7 +326,8 @@ class CollectionItemPath[T](PathTerm):
             "meta",
             "evaluate",
             "collection_path",
-            "key",
+            "key_expr",
+            "is_static_key",
             "item_type",
             "is_primitive",
             "resolve_path",
@@ -331,19 +373,55 @@ class CollectionItemPath[T](PathTerm):
         return self
 
     def resolve_path(self, tree: "Tree", ctx: "ContextType") -> tuple[str, ...]:
-        """Resolve to path segments (includes key)."""
-        if self.meta.resolved_path:
-            return self.meta.resolved_path
-        return (self.key,)
+        """Resolve to path segments.
+
+        For dynamic keys, evaluates the key expression at runtime.
+
+        Args:
+            tree: Tree instance for evaluation
+            ctx: Context for evaluation
+
+        Returns:
+            Tuple of path segments with evaluated key
+        """
+        # Evaluate key expression to get actual key
+        actual_key = self.key_expr.evaluate(tree, ctx)
+
+        # Handle special values
+        from redwood.dsl.types import is_special
+
+        if is_special(actual_key):
+            raise ValueError(f"Collection key evaluated to special value: {actual_key}")
+
+        # Convert to string
+        key_str = str(actual_key)
+
+        # Append to parent path
+        parent_resolved = self.collection_path.resolve_path(tree, ctx)
+        return (*parent_resolved, key_str)
 
     def parent_path(self) -> PathTerm | None:
         """Get parent path (the collection itself)."""
         return self.collection_path
 
     def last_segment(self) -> str:
-        """Get last segment (the key)."""
-        return self.key
+        """Get last segment.
+
+        For dynamic keys, this requires evaluation context,
+        so we return a placeholder.
+        """
+        if self.is_static_key:
+            from redwood.dsl.values import LiteralValue
+
+            if isinstance(self.key_expr, LiteralValue):
+                return str(self.key_expr.value)
+        return "<dynamic_key>"
 
     def __repr__(self) -> str:
         """String representation."""
-        return f'{self.collection_path}["{self.key}"]'
+        if self.is_static_key:
+            from redwood.dsl.values import LiteralValue
+
+            if isinstance(self.key_expr, LiteralValue):
+                return f'{self.collection_path}["{self.key_expr.value}"]'
+        return f"{self.collection_path}[<dynamic>]"
