@@ -372,7 +372,7 @@ class CollectionItemPath[T](PathTerm):
         """Evaluate path - returns self (path is the location)."""
         return self
 
-    def resolve_path(self, tree: "Tree", ctx: "ContextType") -> tuple[str, ...]:
+    def resolve_path(self, tree: "Tree", ctx: "ContextType") -> tuple[str | int, ...]:
         """Resolve to path segments.
 
         For dynamic keys, evaluates the key expression at runtime.
@@ -394,7 +394,7 @@ class CollectionItemPath[T](PathTerm):
             raise ValueError(f"Collection key evaluated to special value: {actual_key}")
 
         # Convert to string
-        key_str = str(actual_key)
+        key_str = actual_key
 
         # Append to parent path
         parent_resolved = self.collection_path.resolve_path(tree, ctx)
@@ -404,7 +404,7 @@ class CollectionItemPath[T](PathTerm):
         """Get parent path (the collection itself)."""
         return self.collection_path
 
-    def last_segment(self) -> str:
+    def last_segment(self) -> str | int:
         """Get last segment.
 
         For dynamic keys, this requires evaluation context,
@@ -414,7 +414,7 @@ class CollectionItemPath[T](PathTerm):
             from redwood.dsl.values import LiteralValue
 
             if isinstance(self.key_expr, LiteralValue):
-                return str(self.key_expr.value)
+                return self.key_expr.value
         return "<dynamic_key>"
 
     def __repr__(self) -> str:

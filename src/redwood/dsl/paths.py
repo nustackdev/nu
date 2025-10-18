@@ -225,12 +225,13 @@ class PrimitivePath[T](PathTerm):
         # Parent view type - inherited from parent or default to DictView
         from redwood.tree.view import DictView
 
-        if parent and hasattr(parent, "meta") and parent.meta.view_type:
-            self._parent_view_type = parent.meta.view_type
-        elif parent and hasattr(parent, "_parent_view_type"):
-            self._parent_view_type = parent._parent_view_type
-        else:
-            self._parent_view_type = DictView
+        # if parent and hasattr(parent, "meta") and parent.meta.view_type:
+        #     self._parent_view_type = parent.meta.view_type
+        # elif parent and hasattr(parent, "_parent_view_type"):
+        #     self._parent_view_type = parent._parent_view_type
+        # else:
+        #     self._parent_view_type = DictView
+        self._parent_view_type = DictView
 
         # Path resolution - handle dynamic parents
         if parent and parent.meta.has_dynamic_components:
@@ -239,6 +240,7 @@ class PrimitivePath[T](PathTerm):
             self.meta.resolved_path = None
         elif parent and parent.meta.resolved_path:
             # Parent is static and resolved
+
             self.meta.resolved_path = (*parent.meta.resolved_path, field_name)
             self.meta.has_dynamic_components = False
         else:
