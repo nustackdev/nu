@@ -92,7 +92,7 @@ class LValue(Term):
         ...
 
     @abstractmethod
-    def last_segment(self) -> str:
+    def last_segment(self) -> str | int:
         """Return the last segment name in the reference path."""
         ...
 
@@ -116,71 +116,8 @@ class RValue(Term):
         return self.meta.is_pure
 
 
-class Operation(RValue, Generic[T]):
-    """A *pure* RValue — produces a value deterministically without side effects.
-
-    Operations correspond to reads, computations, or logical expressions.
-    They can be cached or composed freely.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.meta.is_pure = True
-        self.meta.has_side_effects = False
-
-    @abstractmethod
-    def evaluate(self, context: C) -> T:
-        """Evaluate the operation and return a value."""
-        ...
-
-
-class Command(RValue):
-    """An *impure* RValue — performs an effect or mutation when evaluated.
-
-    Commands correspond to writes, deletions, or stateful updates. They
-    express *intent* to change the system.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.meta.is_pure = False
-        self.meta.has_side_effects = True
-
-    @abstractmethod
-    def evaluate(self, context: C) -> None:
-        """Execute the command's side effect."""
-        ...
-
-
-# ============================================================================
-# Protocols for type-checking convenience
-# ============================================================================
-
-
-@runtime_checkable
-class SupportsEvaluate(Protocol):
-    """A minimal protocol for any evaluable semantic entity."""
-
-    def evaluate(self, context: C) -> Any: ...
-
-
-@runtime_checkable
-class SupportsMetadata(Protocol):
-    """A protocol for any semantic entity carrying TermMetadata."""
-
-    meta: TermMetadata
-
-
-# ============================================================================
-# Friendly exports
-# ============================================================================
-
 __all__ = [
-    "Command",
     "LValue",
-    "Operation",
     "RValue",
-    "SupportsEvaluate",
-    "SupportsMetadata",
     "Term",
 ]
