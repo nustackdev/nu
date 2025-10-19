@@ -1,3 +1,4 @@
+from ..types import Context
 from .term import RValue
 
 
@@ -14,6 +15,6 @@ class Command(RValue):
         self.meta.has_side_effects = True
 
     @abstractmethod
-    def evaluate(self, context: C) -> None:
+    def execute(self, context: Context) -> None:
         """Execute the command's side effect."""
         ...

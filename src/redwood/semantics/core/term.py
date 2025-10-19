@@ -1,119 +1,143 @@
-"""This module defines the *semantic vocabulary* for all nodes in the Redwood Semantics system.
+"""Core term contracts for Redwood Semantics.
 
-It declares the abstract base classes that express the
-core hierarchy of meaning:
+This module defines the semantic vocabulary - the abstract base classes
+that express the hierarchy of meaning in the Redwood system:
 
-    Term
-    ├── LValue  → addressable location (Ref)
-    └── RValue  → evaluable expression
-         ├── Operation → pure (no side effects)
-         └── Command   → impure (has side effects)
+    Term (abstract)
+    ├── LValue → addressable location (references)
+    └── RValue → evaluable expression
+         ├── Operation → pure (reads, computations)
+         └── Command → impure (writes, mutations)
 
-This layer provides contracts only — no execution logic.
-Concrete implementations live in higher layers (structure, behavior, execution).
+Contracts:
+    - Term: Base for all semantic nodes, defines execute() contract
+    - LValue: Addressable locations, defines resolve() / parent() / last_segment()
+    - RValue: Evaluable expressions, defines is_pure property
+
+This is the CONTRACT layer - no implementations here, just interfaces.
+Concrete implementations live in higher layers:
+    - behavior/refs.py → LValue implementations
+    - behavior/operations.py → pure RValue implementations
+    - behavior/commands.py → impure RValue implementations
+
+Design Philosophy:
+    - Minimal contracts (only essential methods)
+    - Clear separation (location vs computation)
+
+The term hierarchy mirrors classic L-value / R-value semantics from
+programming language theory:
+    - LValue = something that can appear on left of assignment (has location)
+    - RValue = something that can appear on right of assignment (produces value)
+
+Example conceptual mapping:
+    Market.orders["AAPL"].price       → LValue (location)
+    Market.orders["AAPL"].price.get() → RValue (reads from location)
+    price > 100                       → RValue (compares values)
+    price.set(150)                    → RValue (writes to location, impure)
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
-
-# Forward imports within the core subpackage
-from redwood.semantics.core.metadata import TermMetadata
+from typing import TYPE_CHECKING, Any
 
 
-T = TypeVar("T")
-C = TypeVar("C")  # Context type for evaluation
+if TYPE_CHECKING:
+    from ..types import Context, PathSegment, TuplePath
 
 
 # ============================================================================
-# Abstract Semantic Contracts
+# Base Term
 # ============================================================================
 
 
 class Term(ABC):
-    """The most abstract semantic unit.
+    """Abstract base for all semantic nodes.
 
-    A Term represents something *meaningful* in the Redwood semantic system —
-    either a declarative structure or a runtime expression. Every Term carries
-    static metadata describing purity, dependencies, and type expectations.
+    Terms represent meaningful units in the Redwood semantics - either
+    addressable locations or evaluable expressions.
     """
 
-    meta: TermMetadata
-
-    def __init__(self) -> None:
-        self.meta = TermMetadata()
-
     @abstractmethod
-    def evaluate(self, context: C) -> Any:
-        """Evaluate this term within a given context.
-
-        Context provides the execution environment (e.g. a tree snapshot, a
-        view layer, or a transaction). Pure terms return a value, impure terms
-        may mutate state, and addressable terms may return themselves.
+    def execute(self, context: Context) -> Any:
+        """Execute this term within a context.
 
         Args:
-            context: A runtime context object.
+            context: Execution environment (tree + storage context)
 
         Returns:
-            Evaluation result — depends on subclass semantics.
+            Execution result - depends on term type
         """
         ...
 
 
 # ============================================================================
-# LValue — Addressable Terms
+# LValue - Addressable Terms
 # ============================================================================
 
 
 class LValue(Term):
-    """A *locatable* semantic entity — something that can be addressed.
+    """Addressable location in tree.
 
-    LValues correspond to the notion of "reference" or "path" — positions in
-    a Shape where data resides. They do not inherently perform work; they
-    represent the *where* of meaning.
+    LValues represent references to positions where data lives.
+    They can be resolved to concrete paths.
     """
 
     @abstractmethod
-    def resolve(self, context: C) -> tuple[str, ...]:
-        """Resolve this reference into a tuple of concrete path segments.
+    def resolve(self, context: Context) -> TuplePath:
+        """Resolve to concrete path segments.
 
-        Implementations may evaluate dynamic indices or keys using the
-        provided context.
+        For static refs: returns cached path
+        For dynamic refs: evaluates expressions to compute path
+
+        Args:
+            context: Context for evaluating dynamic components
 
         Returns:
-            A tuple of path segments leading to the addressed slot.
+            Tuple of path segments
         """
         ...
 
     @abstractmethod
     def parent(self) -> LValue | None:
-        """Return the parent LValue (if any) in the reference chain."""
+        """Return parent reference in navigation chain.
+
+        Returns:
+            Parent LValue, or None if root
+        """
         ...
 
     @abstractmethod
-    def last_segment(self) -> str | int:
-        """Return the last segment name in the reference path."""
+    def last_segment(self) -> PathSegment:
+        """Return the last segment in the path.
+
+        Returns:
+            Final key or index as a path segment
+        """
         ...
 
 
 # ============================================================================
-# RValue — Evaluable Terms
+# RValue - Evaluable Terms
 # ============================================================================
 
 
 class RValue(Term):
-    """An *evaluable* semantic entity — something that produces a value.
+    """Evaluable expression that produces a value.
 
-    RValues correspond to "expressions" in the Redwood semantics: they may be
-    pure (operations) or impure (commands). They represent the *what* of
-    meaning — what happens when you evaluate this node.
+    RValues represent computations - either pure (operations) or
+    impure (commands).
     """
 
     @property
+    @abstractmethod
     def is_pure(self) -> bool:
-        """Whether this RValue has no side effects."""
-        return self.meta.is_pure
+        """Whether this expression has side effects.
+
+        Returns:
+            True if pure (no side effects), False if impure
+        """
+        ...
 
 
 __all__ = [

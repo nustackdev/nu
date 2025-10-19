@@ -1,3 +1,4 @@
+from ..types import Context
 from .term import RValue
 
 
@@ -14,6 +15,6 @@ class Operation[T](RValue):
         self.meta.has_side_effects = False
 
     @abstractmethod
-    def evaluate(self, context: C) -> T:
-        """Evaluate the operation and return a value."""
+    def execute(self, context: Context) -> T:
+        """Execute the operation and return a value."""
         ...

@@ -1,3 +1,8 @@
+"""Core type definitions.
+
+This module provides foundational types used throughout the semantics layer.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

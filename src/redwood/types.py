@@ -1,7 +1,7 @@
 """Type definitions."""
 
 from collections.abc import Callable
-from typing import Any, Literal
+from typing import Literal
 
 
 # =========================================================
@@ -20,7 +20,7 @@ from typing import Any, Literal
 # ---------------------------------------------------------
 
 # Base primitive values
-PrimitiveValue = type(None) | bytes | bool | int | float | complex | str
+type PrimitiveValue = None | bytes | bool | int | float | complex | str
 
 # Composite values.
 #
@@ -32,16 +32,16 @@ PrimitiveValue = type(None) | bytes | bool | int | float | complex | str
 # Immutable containers (tuple, frozenset) use precise types:
 # - These are covariant, so tuple[str, ...] IS assignable to tuple[str | int, ...]
 # - Safe because they can't be modified after creation
-CompositeValue = (
-    list[Any]
-    | set[Any]
-    | dict[Any, Any]
+type CompositeValue = (
+    list[object]
+    | set[object]
+    | dict[object, object]
     | frozenset["PrimitiveValue | CompositeValue"]
     | tuple["PrimitiveValue | CompositeValue", ...]
 )
 
 # A union of all supported value types
-Value = PrimitiveValue | CompositeValue
+type Value = PrimitiveValue | CompositeValue
 
 # ---------------------------------------------------------
 # Key types
@@ -52,8 +52,8 @@ Value = PrimitiveValue | CompositeValue
 # ---------------------------------------------------------
 
 # Key type - a tuple of strings and integers
-KeyComponent = str | int
-Key = tuple[KeyComponent, ...]
+type KeyComponent = str | int
+type Key = tuple[KeyComponent, ...]
 
 
 # ---------------------------------------------------------
@@ -63,7 +63,7 @@ Key = tuple[KeyComponent, ...]
 # use keys and paths to identify data points of interest.
 # ---------------------------------------------------------
 
-CallbackFn = Callable[[Key], None]
+type CallbackFn = Callable[[Key], None]
 
 
 # ========================================================
@@ -71,4 +71,4 @@ CallbackFn = Callable[[Key], None]
 # ========================================================
 
 
-StorageMode = Literal["read", "write"]
+type StorageMode = Literal["read", "write"]
