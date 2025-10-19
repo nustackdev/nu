@@ -51,3 +51,224 @@ Why Operations Return RValues:
     - Enables optimization: constant folding, dead code elimination
     - Enables serialization: expressions as data
 """
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, ClassVar
+
+from ..core import Operation, RValue
+from ..types import Context, Empty
+
+
+if TYPE_CHECKING:
+    from ..core import Ref
+
+
+# ============================================================================
+# Get Operation - Pure Read
+# ============================================================================
+
+
+class GetOp(Operation):
+    """Pure read operation.
+
+    Reads a value from a ref location using view protocols.
+
+    Flow:
+    1. Resolve ref to path segments
+    2. Navigate to parent container
+    3. Get view from parent
+    4. Call view.get() with final key
+
+    Example:
+        Market.signal.get().execute(ctx) → 42.0
+        Market.orders["AAPL"].price.get().execute(ctx) → 150.0
+    """
+
+    def __init__(self, ref: Ref) -> None:
+        """Initialize get operation.
+
+        Args:
+            ref: Reference to read from
+        """
+        self.ref = ref
+
+    @property
+    def is_pure(self) -> bool:
+        """Get operations are pure."""
+        return True
+
+    def execute(self, context: Context) -> object:
+        """Execute read operation.
+
+        Args:
+            context: Execution context (tree + storage)
+
+        Returns:
+            Value at ref location, or Empty if not found
+        """
+        from ..executors.resolver import (
+            get_view,
+            navigate_to_parent,
+            resolve_ref,
+        )
+
+        try:
+            # 1. Resolve ref to path
+            path = resolve_ref(self.ref, context)
+
+            if not path:
+                return Empty
+
+            # 2. Navigate to parent
+            if len(path) == 1:
+                # Single segment - read from root
+                parent = context.tree
+                key = path[0]
+            else:
+                # Multiple segments - navigate to parent
+                parent_path = path[:-1]
+                key = path[-1]
+                parent = navigate_to_parent(context.tree, parent_path, context)
+
+            # 3. Get view from parent
+            view = get_view(parent, self.ref.view_type, context)
+
+            # 4. Call view protocol method
+            result = view.get(key)
+
+            return result if result is not None else Empty
+
+        except (KeyError, AttributeError, IndexError):
+            # Graceful failure
+            return Empty
+
+
+# ============================================================================
+# Literal Value - Constants
+# ============================================================================
+
+
+class LiteralValue(Operation):
+    """Constant literal value.
+
+    Represents a compile-time constant (42, "hello", True, etc.)
+
+    Example:
+        LiteralValue(10).execute(ctx) → 10
+    """
+
+    def __init__(self, value: object) -> None:
+        """Initialize literal.
+
+        Args:
+            value: The constant value
+        """
+        self.value = value
+
+    @property
+    def is_pure(self) -> bool:
+        """Literals are pure."""
+        return True
+
+    def execute(self, context: Context) -> object:
+        """Return the literal value.
+
+        Args:
+            context: Unused
+
+        Returns:
+            The constant value
+        """
+        return self.value
+
+
+# ============================================================================
+# Binary Operation - Comparisons and Arithmetic
+# ============================================================================
+
+
+class BinaryOp(Operation):
+    """Binary operation between two RValues.
+
+    Supports comparison, arithmetic, and logical operations.
+    Handles special value propagation.
+
+    Example:
+        BinaryOp("gt", price.get(), LiteralValue(100))
+        → Evaluates to: price > 100
+    """
+
+    # Operator implementations
+    _OPERATORS: ClassVar[dict[str, Any]] = {
+        # Comparison
+        "gt": lambda a, b: a > b,
+        "lt": lambda a, b: a < b,
+        "eq": lambda a, b: a == b,
+        "ne": lambda a, b: a != b,
+        "ge": lambda a, b: a >= b,
+        "le": lambda a, b: a <= b,
+        # Arithmetic
+        "add": lambda a, b: a + b,
+        "sub": lambda a, b: a - b,
+        "mul": lambda a, b: a * b,
+        "div": lambda a, b: a / b if b != 0 else None,
+        # Logical
+        "and": lambda a, b: a and b,
+        "or": lambda a, b: a or b,
+    }
+
+    def __init__(self, op: str, left: RValue, right: RValue) -> None:
+        """Initialize binary operation.
+
+        Args:
+            op: Operator name (gt, lt, add, sub, etc.)
+            left: Left operand
+            right: Right operand
+        """
+        self.op = op
+        self.left = left
+        self.right = right
+
+    @property
+    def is_pure(self) -> bool:
+        """Binary ops are pure if both operands are pure."""
+        return self.left.is_pure and self.right.is_pure
+
+    def execute(self, context: Context) -> object:
+        """Execute binary operation.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            Operation result, or NaN if operands are special
+        """
+        from ..types import NaN, propagate_special
+
+        # Evaluate operands
+        left_val = self.left.execute(context)
+        right_val = self.right.execute(context)
+
+        # Handle special values
+        special = propagate_special(left_val, right_val)
+        if special is not None:
+            return special
+
+        # Apply operator
+        operator = self._OPERATORS.get(self.op)
+        if operator is None:
+            raise ValueError(f"Unknown operator: {self.op}")
+
+        try:
+            result = operator(left_val, right_val)
+            return result if result is not None else NaN
+        except (TypeError, ValueError, ZeroDivisionError):
+            return NaN
+
+
+__all__ = [
+    "BinaryOp",
+    "GetOp",
+    "LiteralValue",
+]

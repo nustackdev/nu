@@ -1,3 +1,5 @@
+"""Core."""
+
 from .command import Command
 from .operation import Operation
 from .ref import Ref
