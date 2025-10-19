@@ -283,6 +283,7 @@ class ContainerNode(BaseNode):
             structure (ContainerStructure): The expected structure type of the container.
             protocol (ContainerProtocol): The expected protocol flags for the container.
             path (Path): The path to the container in the state tree.
+            ensure_exists (bool): If True, ensures the container exists by creating it
 
         Returns:
             ContainerNode: A new instance of ContainerNode initialized with the provided parameters.
