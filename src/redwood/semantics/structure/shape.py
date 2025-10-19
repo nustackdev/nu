@@ -30,7 +30,7 @@ class Slot(ABC):
     @abstractmethod
     def create_ref(self, owner: Shape, parent_ref: Ref | None = None) -> Ref:
         """Produce a Ref that points at this slot, owned by a given Shape.
-        
+
         Implemented by higher layers that know how refs are constructed.
         """
         ...
