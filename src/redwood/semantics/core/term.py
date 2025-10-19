@@ -39,7 +39,7 @@ Example conceptual mapping:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -59,7 +59,7 @@ class Term(ABC):
     """
 
     @abstractmethod
-    def execute(self, context: Context) -> Any:
+    def execute(self, context: Context) -> object:
         """Execute this term within a context.
 
         Args:
