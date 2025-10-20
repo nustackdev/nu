@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from redwood.abc import TupleKey
-    from redwood.tree import BaseView, Tree
+    from redwood.tree import Tree, View
 
     from ..core import Ref
     from ..types import Context
@@ -83,7 +83,7 @@ def get_view(
     tree: Tree,
     view_type: type,
     context: Context,
-) -> BaseView:
+) -> View:
     """Get view instance for a tree node.
 
     Simple wrapper around tree.view() for consistency.

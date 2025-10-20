@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from redwood.abc import KeyComponent
     from redwood.backends import StorageContextType
-    from redwood.tree import BaseView, Tree
+    from redwood.tree import Tree, View
 
     from .core.term import RValue
 
@@ -37,7 +37,7 @@ class Context:
 class RefStaticSegment:
     """A static path segment in reference resolution."""
 
-    view_type: type[BaseView]
+    view_type: type[View]
     key: KeyComponent
 
 
@@ -45,7 +45,7 @@ class RefStaticSegment:
 class RefDynamicSegment:
     """A dynamic path segment in reference resolution."""
 
-    view_type: type[BaseView]
+    view_type: type[View]
     key_expr: RValue
 
 

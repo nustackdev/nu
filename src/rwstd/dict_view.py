@@ -11,16 +11,16 @@ from typing import TYPE_CHECKING, cast
 import attrs
 
 from redwood.abc import EMPTY, Empty, KeyComponent, Value
-
-from ..node import ChildType
-from ..types import ContainerProtocol, ContainerStructure
-from .base import BaseView
+from redwood.tree import View
+from redwood.tree.node import ChildType
+from redwood.tree.types import ContainerProtocol, ContainerStructure
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from .list import ListView
+    from .extended_tree import Tree
+    from .list_view import ListView
 
 __all__ = [
     "DictView",
@@ -28,7 +28,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class DictView(BaseView):
+class DictView[TreeT: Tree](View[TreeT]):
     """Dictionary view for containers implementing the MAPPING structure.
 
     DictView provides a dictionary-like interface for interacting with
@@ -250,7 +250,7 @@ class DictView(BaseView):
             value = cast("Value", self.get(key))
             yield (key, value)
 
-    def dict_view(self, key: KeyComponent) -> DictView:
+    def dict_view(self, key: KeyComponent) -> DictView[TreeT]:
         """Get a dictionary view for a nested container.
 
         Args:
@@ -269,9 +269,11 @@ class DictView(BaseView):
             alice_profile.set("location", "San Francisco")
             ```
         """
-        return self._dict_view(key)
+        return DictView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
 
-    def list_view(self, key: KeyComponent) -> ListView:
+    def list_view(self, key: KeyComponent) -> ListView[TreeT]:
         """Get a list view for a nested container.
 
         Args:
@@ -290,4 +292,8 @@ class DictView(BaseView):
             alice_tasks.append("new task")
             ```
         """
-        return self._list_view(key)
+        from .list_view import ListView
+
+        return ListView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )

@@ -81,7 +81,7 @@ all = [
 # ============================================================================
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["redwood*", "rwtup*", "rwrocks*"]
+include = ["redwood*", "rwtup*", "rwrocks*", "rwstd*"]
 namespaces = false
 
 [tool.setuptools.package-data]
@@ -98,6 +98,12 @@ rwtup = [
     "py.typed",
 ]
 rwrocks = [
+    "**/*.pyx",
+    "**/*.pxd",
+    "**/*.so",
+    "py.typed",
+]
+rwstd = [
     "**/*.pyx",
     "**/*.pxd",
     "**/*.so",
@@ -219,7 +225,7 @@ convention = "google"  # Use Google style format
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["redwood", "rwtup", "rwrocks"]
+known-first-party = ["redwood", "rwtup", "rwrocks", "rwstd"]
 force-single-line = false
 lines-after-imports = 2
 

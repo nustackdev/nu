@@ -1,16 +1,10 @@
 from __future__ import annotations
 
-from .base import BaseView
-from .dict import DictView
-from .list import ListView
 from .utils import create_view_context_manager
+from .view import View
 
 
 __all__ = [
-    # Views
-    "BaseView",
-    "DictView",
-    "ListView",
-    # View utilities
+    "View",
     "create_view_context_manager",
 ]

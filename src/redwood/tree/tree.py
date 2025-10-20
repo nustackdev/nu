@@ -18,7 +18,7 @@ from redwood.exceptions import StorageKeyError
 from .context import ContextualBase
 from .path import Path
 from .registry import ViewRegistry
-from .view import DictView, ListView, create_view_context_manager
+from .view import create_view_context_manager
 
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
         TransactionProtocol,
     )
 
-    from .view import BaseView
+    from .view import View
 
 __all__ = [
     "Tree",
@@ -160,7 +160,7 @@ class Tree(ContextualBase):
     # CONTEXT MANAGERS FOR VIEWS (automatic context management)
     # =========================================================================
 
-    def with_view[ViewT: BaseView](
+    def with_view[ViewT: View](
         self,
         view_type: type[ViewT],
         /,
@@ -177,7 +177,7 @@ class Tree(ContextualBase):
             snapshot: If True, creates a read-only snapshot view instead of a transaction view
 
         Returns:
-            Context manager yielding BaseView for the container
+            Context manager yielding View for the container
 
         Example:
             ```python
@@ -221,7 +221,7 @@ class Tree(ContextualBase):
     # DIRECT VIEW ACCESS (manual context management)
     # =========================================================================
 
-    def view[ViewT: BaseView](
+    def view[ViewT: View](
         self,
         view_type: type[ViewT],
         /,
@@ -238,7 +238,7 @@ class Tree(ContextualBase):
             ctx: Optional context (defaults to current context)
 
         Returns:
-            BaseView for the container
+            View for the container
 
         Example:
             ```python
@@ -259,182 +259,6 @@ class Tree(ContextualBase):
             ```
         """
         return view_type(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
-
-    # =========================================================================
-    # CONVENIENCE METHODS FOR BUILT-IN VIEWS
-    # =========================================================================
-
-    def with_dict_view(self, *, snapshot: bool = False) -> AbstractContextManager[DictView]:
-        """Access container as dictionary view with automatic transaction or snapshot management.
-
-        Returns a context manager that yields a DictView with transaction or snapshot context.
-        If path doesn't exist, creates a new mapping container.
-
-        Args:
-            snapshot: If True, creates a read-only snapshot view instead of a transaction view
-
-        Returns:
-            Context manager yielding DictView with transaction or snapshot
-
-        Example:
-            ```python
-            # Automatic transaction - recommended for mutations
-            with tree.at("users").with_dict_view() as users:
-                users.set("alice", {"email": "alice@example.com"})
-                users.set("bob", {"email": "bob@example.com"})
-
-                # Nested operations inherit the transaction
-                alice_profile = users.dict_view("alice")
-                alice_profile.set("location", "San Francisco")
-            # Transaction automatically committed on success
-
-            # Read-only snapshot - recommended for consistent reads
-            with tree.at("users").with_dict_view(snapshot=True) as users:
-                user_count = len(users.keys())
-                users_dict = users.to_dict()
-                # Read-only operations only
-            # Snapshot automatically cleaned up
-
-            # Error handling
-            try:
-                with tree.at("users").with_dict_view() as users:
-                    users.set("invalid", None)  # This might raise an error
-                    raise ValueError("Something went wrong")
-            except ValueError:
-                # Transaction automatically rolled back
-                pass
-            ```
-        """
-        return create_view_context_manager(
-            DictView,
-            snapshot=snapshot,
-            backend=self.backend,
-            path=self.path,
-            ctx=self.ctx,
-            tree=self,
-        )
-
-    def with_list_view(self, *, snapshot: bool = False) -> AbstractContextManager[ListView]:
-        """Access container as list view with automatic transaction or snapshot management.
-
-        Returns a context manager that yields a ListView with transaction or snapshot context.
-        If path doesn't exist, creates a new sequence container.
-
-        Args:
-            snapshot: If True, creates a read-only snapshot view instead of a transaction view
-
-        Returns:
-            Context manager yielding ListView with transaction or snapshot
-
-        Example:
-            ```python
-            # Automatic transaction - recommended for mutations
-            with tree.at("tasks").with_list_view() as tasks:
-                tasks.append("Setup project")
-                tasks.append("Write documentation")
-                tasks.insert(1, "Create tests")
-            # Transaction automatically committed on success
-
-            # Read-only snapshot - recommended for consistent reads
-            with tree.at("tasks").with_list_view(snapshot=True) as tasks:
-                task_count = tasks.length()
-                tasks_list = tasks.to_list()
-                # Read-only operations only
-            # Snapshot automatically cleaned up
-
-            # Nested container operations
-            with tree.at("projects").with_list_view() as projects:
-                projects.append({"name": "Project 1", "tasks": []})
-
-                # Access nested dict in list
-                project_dict = projects.dict_view(0)
-                project_dict.set("status", "active")
-            ```
-        """
-        return create_view_context_manager(
-            ListView,
-            snapshot=snapshot,
-            backend=self.backend,
-            path=self.path,
-            ctx=self.ctx,
-            tree=self,
-        )
-
-    def dict_view(self, *, ctx: StorageContextType | None = None) -> DictView:
-        """Access container as dictionary view with manual context management.
-
-        Returns a DictView object directly. No automatic context handling.
-        If path doesn't exist, creates a new mapping container when accessed.
-
-        Args:
-            ctx: Optional context (defaults to current context)
-
-        Returns:
-            DictView: Dictionary view for the container
-
-        Example:
-            ```python
-            # Direct usage - good for reads
-            users = tree.at("users").dict_view()
-            user_count = len(users.keys())
-            users_dict = users.to_dict()
-
-            # Manual transaction management
-            tx = tree.begin_transaction()
-            try:
-                users = tree.at("users").dict_view(ctx=ctx)
-                users.set("alice", {"email": "alice@example.com"})
-                ctx.commit()
-            except Exception:
-                ctx.rollback()
-                raise
-
-            # Use existing transaction from context
-            with tree.with_dict_view() as root_dict:
-                # This inherits the transaction from the context
-                users = tree.at("users").dict_view()
-                users.set("bob", {"email": "bob@example.com"})
-            ```
-        """
-        return DictView(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
-
-    def list_view(self, *, ctx: StorageContextType | None = None) -> ListView:
-        """Access container as list view with manual context management.
-
-        Returns a ListView object directly. No automatic context handling.
-        If path doesn't exist, creates a new sequence container when accessed.
-
-        Args:
-            ctx: Optional context (defaults to current context)
-
-        Returns:
-            ListView: List view for the container
-
-        Example:
-            ```python
-            # Direct usage - good for reads
-            tasks = tree.at("tasks").list_view()
-            task_count = tasks.length()
-            tasks_list = tasks.to_list()
-
-            # Manual transaction management
-            tx = tree.begin_transaction()
-            try:
-                tasks = tree.at("tasks").list_view(tx=tx)
-                tasks.append("New task")
-                ctx.commit()
-            except Exception:
-                ctx.rollback()
-                raise
-
-            # Accessing nested containers
-            tasks = tree.at("tasks").list_view()
-            if tasks.length() > 0:
-                first_task_dict = tasks.dict_view(0)  # Access first item as dict
-                first_task_dict.set("completed", True)
-            ```
-        """
-        return ListView(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
 
     # =========================================================================
     # CONTEXT METHODS (unified transaction and snapshot support)

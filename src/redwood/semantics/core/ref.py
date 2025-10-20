@@ -134,7 +134,7 @@ from .term import LValue
 
 if TYPE_CHECKING:
     from redwood.abc import KeyComponent, TupleKey
-    from redwood.tree import BaseView
+    from redwood.tree import View
 
     from ..types import Context
 
@@ -161,7 +161,7 @@ class Ref[T](LValue, ABC):
     value_type: type[T]
     """Type of value at this location (int, Order, etc.)."""
 
-    view_type: type[BaseView]
+    view_type: type[View]
     """View class to use for accessing parent container."""
 
     parent_ref: Ref | None

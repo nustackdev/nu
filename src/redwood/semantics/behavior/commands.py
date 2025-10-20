@@ -64,8 +64,10 @@ from ..core import Command
 
 
 if TYPE_CHECKING:
+    from redwood.abc import Value
+
     from ..core import Ref
-    from ..types import Context, PrimitiveNodeValue
+    from ..types import Context
 
 
 # ============================================================================
@@ -89,7 +91,7 @@ class SetCmd(Command):
         Market.orders["AAPL"].price.set(150.0).execute(ctx)
     """
 
-    def __init__(self, ref: Ref, value: PrimitiveNodeValue) -> None:
+    def __init__(self, ref: Ref, value: Value) -> None:
         """Initialize set command.
 
         Args:

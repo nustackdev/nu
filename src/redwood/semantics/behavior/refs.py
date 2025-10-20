@@ -44,7 +44,7 @@ from ..core import Ref
 
 if TYPE_CHECKING:
     from redwood.abc import KeyComponent, TupleKey, Value
-    from redwood.tree import BaseView
+    from redwood.tree import View
 
     from ..core.term import RValue
     from ..types import Context
@@ -71,7 +71,7 @@ class ValueRef(Ref):
         self,
         field_name: str,
         value_type: type,
-        view_type: type[BaseView],
+        view_type: type[View],
         parent_ref: Ref | None = None,
     ) -> None:
         """Initialize value reference.
@@ -185,7 +185,7 @@ class MapRef(Ref):
         self,
         field_name: str,
         value_type: type,
-        view_type: type[BaseView],
+        view_type: type[View],
         parent_ref: Ref | None = None,
     ) -> None:
         """Initialize map reference.
@@ -299,7 +299,7 @@ class MapItemRef(Ref):
         key: str | None,
         key_expr: RValue | None,
         value_type: type,
-        view_type: type[BaseView],
+        view_type: type[View],
     ) -> None:
         """Initialize map item reference.
 
