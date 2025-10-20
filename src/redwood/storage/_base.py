@@ -14,13 +14,14 @@ from ._transaction import TransactionContextManager
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.protocols import (
+    from redwood.abc import TupleKey, Value
+    from redwood.backends import (
+        CodecProtocol,
         SnapshotProtocol,
-        StorageCodecProtocol,
+        StorageMode,
         StorageProtocol,
         TransactionProtocol,
     )
-    from redwood.types import Key, StorageMode, Value
 
 
 __all__ = [
@@ -36,7 +37,7 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         EncodedValueT: Type of encoded values (e.g., bytes, str)
     """
 
-    codec: StorageCodecProtocol[EncodedKeyT, EncodedValueT]
+    codec: CodecProtocol[EncodedKeyT, EncodedValueT]
 
     @property
     def mode(self) -> StorageMode:
@@ -89,23 +90,23 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
 
     # Core Operations
     @abstractmethod
-    def _get_impl(self, key: Key) -> Value:
+    def _get_impl(self, key: TupleKey) -> Value:
         """Implementation-specific get logic."""
         ...
 
     @final
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value by key."""
         self._ensure_connected()
         return self._get_impl(key)
 
     @abstractmethod
-    def _set_impl(self, key: Key, value: Value) -> None:
+    def _set_impl(self, key: TupleKey, value: Value) -> None:
         """Implementation-specific set logic."""
         ...
 
     @final
-    def set(self, key: Key, value: Value) -> None:
+    def set(self, key: TupleKey, value: Value) -> None:
         """Set value by key."""
         if self.mode != "write":
             raise StorageOperationError("Cannot set value in read-only mode")
@@ -117,12 +118,12 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         self._set_impl(key, value)
 
     @abstractmethod
-    def _delete_impl(self, key: Key) -> None:
+    def _delete_impl(self, key: TupleKey) -> None:
         """Implementation-specific delete logic."""
         ...
 
     @final
-    def delete(self, key: Key) -> None:
+    def delete(self, key: TupleKey) -> None:
         """Delete value by key."""
         if self.mode != "write":
             raise StorageOperationError("Cannot set value in read-only mode")
@@ -131,24 +132,24 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         self._delete_impl(key)
 
     @abstractmethod
-    def _exists_impl(self, key: Key) -> bool:
+    def _exists_impl(self, key: TupleKey) -> bool:
         """Implementation-specific exists logic."""
         ...
 
     @final
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check if key exists."""
         self._ensure_connected()
         return self._exists_impl(key)
 
     @abstractmethod
-    def _list_keys_impl(self, prefix: Key, depth: int) -> Generator[Key, None]:
+    def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None]:
         """Implementation-specific list_keys logic."""
         if False:  # This will never execute but helps type checkers
             yield prefix  # Dummy yield to make it a true generator
 
     @final
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None]:
         """List all keys under prefix within transaction context.
 
         Args:

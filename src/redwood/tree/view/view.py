@@ -1,6 +1,6 @@
 """Base view implementation for the state management system.
 
-This module defines the BaseView class, which provides common functionality
+This module defines the View class, which provides common functionality
 for all view implementations. Views provide protocol-specific interfaces
 for interacting with container nodes.
 
@@ -30,34 +30,32 @@ from __future__ import annotations
 
 from abc import ABC
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Generic
+from typing import TYPE_CHECKING
 
 import attrs
+
+from redwood.abc import (
+    EMPTY,
+    Empty,
+    KeyComponent,
+    Value,
+)
 
 from ..context import ContextualBase
 from ..exceptions import ContainerProtocolError
 from ..node import ChildType, ContainerNode
-from ..types import (
-    EMPTY,
-    ContainerProtocol,
-    ContainerStructure,
-    Empty,
-    PathSegment,
-    TreeT,
-    Value,
-    ViewT,
-)
 from .types import AccessibleViewProtocol
 
 
 if TYPE_CHECKING:
-    from ..context.protocols import ContextType
+    from redwood.backends import StorageContextType
+
     from ..path import Path
-    from .dict import DictView
-    from .list import ListView
+    from ..tree import Tree
+    from ..types import ContainerProtocol, ContainerStructure
 
 __all__ = [
-    "BaseView",
+    "View",
 ]
 
 
@@ -68,14 +66,14 @@ class ViewError(Exception):
 
 
 @attrs.define(frozen=True, kw_only=True)
-class BaseView(Generic[TreeT], ContextualBase, ABC):
+class View[TreeT: Tree](ContextualBase, ABC):
     """Base class for all container views.
 
     Views provide protocol-specific interfaces for interacting with
     container nodes. Each view type implements specific operations
     appropriate for a particular container protocol.
 
-    The BaseView provides common functionality used by all view types,
+    The View provides common functionality used by all view types,
     including path access, container creation, and navigation utilities.
     It is now a pure frozen dataclass with no context manager logic.
 
@@ -151,7 +149,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # TREE NAVIGATION METHODS (return new Tree instances)
     # =========================================================================
 
-    def at(self, *paths: PathSegment, ctx: ContextType | None = None) -> TreeT:
+    def at(self, *paths: KeyComponent, ctx: StorageContextType | None = None) -> TreeT:
         """Navigate to a path (relative to current path).
 
         This creates a new State instance pointing to the specified path.
@@ -182,7 +180,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
         new_path = self.path.join(*paths)
         return self.tree.at(*new_path, ctx=ctx or self.ctx)
 
-    def parent(self, *, ctx: ContextType | None = None) -> TreeT:
+    def parent(self, *, ctx: StorageContextType | None = None) -> TreeT:
         """Navigate to parent path.
 
         Returns:
@@ -200,7 +198,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             parent_path = self.path
         return self.tree.parent(ctx=ctx or self.ctx)
 
-    def root(self, *, ctx: ContextType | None = None) -> TreeT:
+    def root(self, *, ctx: StorageContextType | None = None) -> TreeT:
         """Navigate to root path.
 
         Returns:
@@ -217,7 +215,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # VIEW CREATION METHODS
     # =========================================================================
 
-    def view(self, key: PathSegment, view_class: type[ViewT]) -> ViewT:
+    def view[ViewT: View](self, key: KeyComponent, view_class: type[ViewT]) -> ViewT:
         """Generic view creation method.
 
         Args:
@@ -225,29 +223,9 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             view_class: View class to instantiate
 
         Returns:
-            BaseView: New view instance
+            View: New view instance
         """
         return view_class(
-            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
-        )
-
-    # =========================================================================
-    # NESTED VIEW CREATION UTILITIES
-    # =========================================================================
-
-    def _dict_view(self, key: PathSegment, /) -> DictView:
-        """Create nested dictionary view."""
-        from .dict import DictView
-
-        return DictView(
-            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
-        )
-
-    def _list_view(self, key: PathSegment, /) -> ListView:
-        """Create nested list view."""
-        from .list import ListView
-
-        return ListView(
             backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
         )
 
@@ -256,7 +234,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # =========================================================================
 
     def _get_child_value(
-        self, key: PathSegment, /, *, default: Value | Empty = EMPTY
+        self, key: KeyComponent, /, *, default: Value | Empty = EMPTY
     ) -> Value | Empty:
         """Common logic for getting child values using registry for view resolution.
 
@@ -301,7 +279,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
 
         raise ValueError(f"Unexpected child type '{child_info.child_type}' for key '{key}'")
 
-    def _set_child_value(self, key: PathSegment, value: Value, /) -> None:
+    def _set_child_value(self, key: KeyComponent, value: Value, /) -> None:
         """Common logic for setting child values using registry for view resolution.
 
         Args:
@@ -342,7 +320,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
     # REGISTRY-BASED VIEW CREATION
     # =========================================================================
 
-    def _get_view_for_structure_id(self, key: PathSegment, structure_id: int, /) -> BaseView:
+    def _get_view_for_structure_id(self, key: KeyComponent, structure_id: int, /) -> View:
         """Get view for existing container using registry and structure ID.
 
         Args:
@@ -350,7 +328,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             structure_id: Container structure ID from storage
 
         Returns:
-            BaseView: Appropriate view for the structure ID
+            View: Appropriate view for the structure ID
 
         Raises:
             ValueError: If structure ID not registered
@@ -358,7 +336,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
         view_class = self.tree.registry.get_view_for_structure(structure_id)
         return self.view(key, view_class)
 
-    def _get_view_for_container_value(self, key: PathSegment, value: Value, /) -> BaseView:
+    def _get_view_for_container_value(self, key: KeyComponent, value: Value, /) -> View:
         """Get view for container value using registry.
 
         Args:
@@ -366,7 +344,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             value: Container value to store
 
         Returns:
-            BaseView: Appropriate view for the value
+            View: Appropriate view for the value
 
         Raises:
             ValueError: If no container type matches the value
@@ -385,7 +363,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             f"Register a container type that matches isinstance({type(value).__name__}, container_type)."
         )
 
-    def _get_view_for_component_type(self, key: PathSegment, component: Any, /) -> BaseView:
+    def _get_view_for_component_type(self, key: KeyComponent, component: object, /) -> View:
         """Get view that can handle a specific component type during navigation.
 
         Args:
@@ -393,7 +371,7 @@ class BaseView(Generic[TreeT], ContextualBase, ABC):
             component: Component/key object for navigation
 
         Returns:
-            BaseView: View that can handle this component type
+            View: View that can handle this component type
 
         Raises:
             ValueError: If no component type matches the component

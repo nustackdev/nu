@@ -1,8 +1,19 @@
-"""Type definitions."""
+"""Type definitions for ABC modules."""
 
-from collections.abc import Callable
-from typing import Any, Literal
+from __future__ import annotations
 
+from collections.abc import Callable, Iterable
+from typing import Any
+
+
+__all__ = [
+    "CallbackFn",
+    "CompositeValue",
+    "KeyComponent",
+    "PrimitiveValue",
+    "TupleKey",
+    "Value",
+]
 
 # =========================================================
 # Global types used across the package
@@ -20,7 +31,7 @@ from typing import Any, Literal
 # ---------------------------------------------------------
 
 # Base primitive values
-PrimitiveValue = type(None) | bytes | bool | int | float | complex | str
+type PrimitiveValue = None | bytes | bool | int | float | complex | str
 
 # Composite values.
 #
@@ -32,7 +43,7 @@ PrimitiveValue = type(None) | bytes | bool | int | float | complex | str
 # Immutable containers (tuple, frozenset) use precise types:
 # - These are covariant, so tuple[str, ...] IS assignable to tuple[str | int, ...]
 # - Safe because they can't be modified after creation
-CompositeValue = (
+type CompositeValue = (
     list[Any]
     | set[Any]
     | dict[Any, Any]
@@ -41,7 +52,10 @@ CompositeValue = (
 )
 
 # A union of all supported value types
-Value = PrimitiveValue | CompositeValue
+type Value = PrimitiveValue | CompositeValue
+
+# Iterable of values. Used in type hints for functions that process collections of values.
+type IterableValues = Iterable[Value]
 
 # ---------------------------------------------------------
 # Key types
@@ -52,8 +66,8 @@ Value = PrimitiveValue | CompositeValue
 # ---------------------------------------------------------
 
 # Key type - a tuple of strings and integers
-KeyComponent = str | int
-Key = tuple[KeyComponent, ...]
+type KeyComponent = str | int
+type TupleKey = tuple[KeyComponent, ...]
 
 
 # ---------------------------------------------------------
@@ -63,12 +77,4 @@ Key = tuple[KeyComponent, ...]
 # use keys and paths to identify data points of interest.
 # ---------------------------------------------------------
 
-CallbackFn = Callable[[Key], None]
-
-
-# ========================================================
-# Storage-specific types
-# ========================================================
-
-
-StorageMode = Literal["read", "write"]
+type CallbackFn = Callable[[TupleKey], None]

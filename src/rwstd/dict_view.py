@@ -10,15 +10,17 @@ from typing import TYPE_CHECKING, cast
 
 import attrs
 
-from ..node import ChildType
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, PathSegment, TreeT, Value
-from .base import BaseView
+from redwood.abc import EMPTY, Empty, KeyComponent, Value
+from redwood.tree import View
+from redwood.tree.node import ChildType
+from redwood.tree.types import ContainerProtocol, ContainerStructure
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from .list import ListView
+    from .extended_tree import Tree
+    from .list_view import ListView
 
 __all__ = [
     "DictView",
@@ -26,7 +28,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class DictView(BaseView[TreeT]):
+class DictView[TreeT: Tree](View[TreeT]):
     """Dictionary view for containers implementing the MAPPING structure.
 
     DictView provides a dictionary-like interface for interacting with
@@ -77,7 +79,7 @@ class DictView(BaseView[TreeT]):
         """
         return dict(self.items())
 
-    def store(self, value: dict[PathSegment, Value], /, *, replace: bool = False) -> None:
+    def store(self, value: dict[KeyComponent, Value], /, *, replace: bool = False) -> None:
         """Store a value at the specified key.
 
         Args:
@@ -100,7 +102,7 @@ class DictView(BaseView[TreeT]):
         for k, v in value.items():
             self.set(k, v)
 
-    def get(self, key: PathSegment, default: Value | Empty = EMPTY) -> Value | Empty:
+    def get(self, key: KeyComponent, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value at key.
 
         For primitive values, returns the actual value.
@@ -127,7 +129,7 @@ class DictView(BaseView[TreeT]):
         """
         return self._get_child_value(key, default=default)
 
-    def set(self, key: PathSegment, value: Value) -> None:
+    def set(self, key: KeyComponent, value: Value) -> None:
         """Set value at key.
 
         Creates appropriate node type based on the value.
@@ -157,7 +159,7 @@ class DictView(BaseView[TreeT]):
         """
         self._set_child_value(key, value)
 
-    def has(self, key: PathSegment) -> bool:
+    def has(self, key: KeyComponent) -> bool:
         """Check if key exists in the container.
 
         Args:
@@ -174,7 +176,7 @@ class DictView(BaseView[TreeT]):
         """
         return self.container.has_child(key) != ChildType.NOT_FOUND
 
-    def remove(self, key: PathSegment) -> bool:
+    def remove(self, key: KeyComponent) -> bool:
         """Remove key from the container.
 
         Args:
@@ -203,11 +205,11 @@ class DictView(BaseView[TreeT]):
         """
         return self.container.clear_children()
 
-    def keys(self) -> Generator[PathSegment, None, None]:
+    def keys(self) -> Generator[KeyComponent, None, None]:
         """Get all keys in the container.
 
         Returns:
-            List[PathSegment]: List of keys
+            List[KeyComponent]: List of keys
 
         Example:
             ```python
@@ -232,11 +234,11 @@ class DictView(BaseView[TreeT]):
         for key in self.keys():
             yield cast("Value", self.get(key))
 
-    def items(self) -> Generator[tuple[PathSegment, Value]]:
+    def items(self) -> Generator[tuple[KeyComponent, Value]]:
         """Get all key-value pairs in the container.
 
         Returns:
-            List[Tuple[PathSegment, Any]]: List of (key, value) tuples
+            List[Tuple[KeyComponent, Any]]: List of (key, value) tuples
 
         Example:
             ```python
@@ -248,7 +250,7 @@ class DictView(BaseView[TreeT]):
             value = cast("Value", self.get(key))
             yield (key, value)
 
-    def dict_view(self, key: PathSegment) -> DictView:
+    def dict_view(self, key: KeyComponent) -> DictView[TreeT]:
         """Get a dictionary view for a nested container.
 
         Args:
@@ -267,9 +269,11 @@ class DictView(BaseView[TreeT]):
             alice_profile.set("location", "San Francisco")
             ```
         """
-        return self._dict_view(key)
+        return DictView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )
 
-    def list_view(self, key: PathSegment) -> ListView:
+    def list_view(self, key: KeyComponent) -> ListView[TreeT]:
         """Get a list view for a nested container.
 
         Args:
@@ -288,4 +292,8 @@ class DictView(BaseView[TreeT]):
             alice_tasks.append("new task")
             ```
         """
-        return self._list_view(key)
+        from .list_view import ListView
+
+        return ListView(
+            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+        )

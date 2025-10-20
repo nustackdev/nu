@@ -9,7 +9,7 @@ from ..context import with_context
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from ..types import ContextualT
+    from ..context import ContextualBase
 
 
 __all__ = [
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-def create_view_context_manager(
+def create_view_context_manager[ContextualT: ContextualBase](
     view_factory: type[ContextualT], *, snapshot: bool = False, **kwargs
 ) -> AbstractContextManager[ContextualT]:
     """Create a unified context manager for view objects.

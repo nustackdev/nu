@@ -12,14 +12,18 @@ from typing import TYPE_CHECKING, cast
 
 import attrs
 
-from redwood.tree import BaseView, ContainerProtocol, ContainerStructure, TreeT
+from redwood.tree import View
 from redwood.tree.registry import ComponentConstructor, ContainerConstructor
+from redwood.tree.types import ContainerProtocol, ContainerStructure
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.types import Value
+    from redwood.abc import Value
+
+    from .extended_tree import Tree
+
 
 __all__ = [
     "QueueComponent",
@@ -29,7 +33,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class QueueView(BaseView[TreeT]):
+class QueueView[TreeT: Tree](View[TreeT]):
     """Queue view for containers implementing the QUEUE structure.
 
     QueueView provides a queue-like interface for interacting with
@@ -168,7 +172,7 @@ class QueueView(BaseView[TreeT]):
         try:
             front_key = next(keys_iter)  # First key is front of queue (lexicographically smallest)
         except StopIteration:
-            raise IndexError("dequeue from empty queue")
+            raise IndexError("dequeue from empty queue") from None
 
         value = self._get_child_value(front_key)
         self.container.remove_child(front_key)
@@ -194,7 +198,7 @@ class QueueView(BaseView[TreeT]):
         try:
             front_key = next(keys_iter)  # First key is front of queue (lexicographically smallest)
         except StopIteration:
-            raise IndexError("peek from empty queue")
+            raise IndexError("peek from empty queue") from None
 
         return cast("Value", self._get_child_value(front_key))
 

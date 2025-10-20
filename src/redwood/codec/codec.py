@@ -9,8 +9,8 @@ from mesh import ResourceSpec, SyncResource
 
 
 if TYPE_CHECKING:
-    from redwood.protocols import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
-    from redwood.types import Key, Value
+    from redwood.abc import TupleKey, Value
+    from redwood.backends import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
 
 __all__ = [
     "StorageCodec",
@@ -58,11 +58,11 @@ class StorageCodec[EncodedKeyT, EncodedValueT](SyncResource):
         self.encode_value = self.value_codec.encode
         self.decode_value = self.value_codec.decode
 
-    def encode_key(self, key: Key) -> EncodedKeyT:
+    def encode_key(self, key: TupleKey) -> EncodedKeyT:
         """Encode a key using the key codec."""
         raise NotImplementedError
 
-    def decode_key(self, encoded: EncodedKeyT) -> Key:
+    def decode_key(self, encoded: EncodedKeyT) -> TupleKey:
         """Decode a key using the key codec."""
         raise NotImplementedError
 

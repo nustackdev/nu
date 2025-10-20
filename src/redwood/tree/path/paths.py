@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Self
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from ..types import PathSegment, TuplePath
+    from redwood.abc import KeyComponent, TupleKey
 
 
 __all__ = ["MetaPath", "Path"]
@@ -66,7 +66,7 @@ class Path:
         """
         return MetaPath(*self.components)
 
-    def __init__(self, *components: PathSegment) -> None:
+    def __init__(self, *components: KeyComponent) -> None:
         """Initialize a path with the given components.
 
         Always includes a root component as the first element.
@@ -77,7 +77,7 @@ class Path:
         self._components = (self.root_marker, *tuple(components))
 
     @cached_property
-    def components(self) -> TuplePath:
+    def components(self) -> TupleKey:
         """Get the path components as a tuple.
 
         Returns:
@@ -85,7 +85,7 @@ class Path:
         """
         return self._components[1:]
 
-    def to_tuple(self) -> TuplePath:
+    def to_tuple(self) -> TupleKey:
         """Get the path as a tuple for use with the backend.
 
         Returns:
@@ -145,7 +145,7 @@ class Path:
         """
         return len(self.components)
 
-    def __iter__(self) -> Iterator[PathSegment]:
+    def __iter__(self) -> Iterator[KeyComponent]:
         """Get an iterator over the path components.
 
         Returns:
@@ -153,7 +153,7 @@ class Path:
         """
         return iter(self.components)
 
-    def join(self, *components: PathSegment) -> Self:
+    def join(self, *components: KeyComponent) -> Self:
         """Create a new path by joining with additional components.
 
         Args:
@@ -188,7 +188,7 @@ class Path:
 
         return self.__class__(*self.components[:-1])
 
-    def last(self) -> PathSegment | None:
+    def last(self) -> KeyComponent | None:
         """Get the last component of the path.
 
         Returns:

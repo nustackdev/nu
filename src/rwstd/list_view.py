@@ -10,14 +10,16 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import attrs
 
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, TreeT, Value
-from .base import BaseView
+from redwood.abc import EMPTY, Empty, Value
+from redwood.tree import View
+from redwood.tree.types import ContainerProtocol, ContainerStructure
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
-    from .dict import DictView
+    from .dict_view import DictView
+    from .extended_tree import Tree
 
 __all__ = [
     "ListView",
@@ -25,7 +27,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class ListView(BaseView[TreeT]):
+class ListView[TreeT: Tree](View[TreeT]):
     """List view for containers implementing the SEQUENCE structure.
 
     ListView provides a list-like interface for interacting with
@@ -299,7 +301,7 @@ class ListView(BaseView[TreeT]):
         for i in range(self.length()):
             yield cast("Value", self.get(i))
 
-    def dict_view(self, index: int) -> DictView:
+    def dict_view(self, index: int) -> DictView[TreeT]:
         """Get a dictionary view for a nested container.
 
         Args:
@@ -318,9 +320,13 @@ class ListView(BaseView[TreeT]):
             alice_profile.set("location", "San Francisco")
             ```
         """
-        return self._dict_view(index)
+        from .dict_view import DictView
 
-    def list_view(self, index: int) -> ListView:
+        return DictView(
+            backend=self.backend, path=self.path.join(index), ctx=self.ctx, tree=self.tree
+        )
+
+    def list_view(self, index: int) -> ListView[TreeT]:
         """Get a list view for a nested container.
 
         Args:
@@ -339,4 +345,6 @@ class ListView(BaseView[TreeT]):
             alice_tasks.append("new task")
             ```
         """
-        return self._list_view(index)
+        return ListView(
+            backend=self.backend, path=self.path.join(index), ctx=self.ctx, tree=self.tree
+        )
