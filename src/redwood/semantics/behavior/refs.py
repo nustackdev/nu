@@ -435,3 +435,139 @@ __all__ = [
     "MapRef",
     "ValueRef",
 ]
+
+
+class ShapeRef(Ref):
+    """Reference to a nested Shape instance.
+
+    Points to a slot containing another Shape (nested structure).
+    Supports field navigation via __getattribute__.
+
+    Example:
+        class Profile(Shape):
+            email = ValueSlot(str)
+            age = ValueSlot(int)
+
+        class User(Shape):
+            profile = ShapeSlot(Profile)
+
+        User.profile          # → ShapeRef
+        User.profile.email    # → Navigate to ValueRef
+    """
+
+    def __init__(
+        self,
+        field_name: str,
+        shape_type: type,
+        view_type: type[View],
+        parent_ref: Ref | None = None,
+    ) -> None:
+        """Initialize shape reference.
+
+        Args:
+            field_name: Name of the shape field
+            shape_type: Shape class for nested structure
+            view_type: View class for parent container
+            parent_ref: Parent reference in chain
+        """
+        self.field_name = field_name
+        self.shape_type = shape_type
+        self.value_type = shape_type  # For consistency with other refs
+        self.view_type = view_type
+        self.parent_ref = parent_ref
+
+        # Compute static path and dynamic flag
+        if parent_ref is None:
+            # Root field
+            self.static_path = (field_name,)
+            self.is_dynamic = False
+        elif not parent_ref.is_dynamic:
+            # Parent is static - extend its path
+            self.static_path = (*parent_ref.static_path, field_name)
+            self.is_dynamic = False
+        else:
+            # Parent is dynamic - can't precompute path
+            self.static_path = None
+            self.is_dynamic = True
+
+    # ----- LValue contract -----
+
+    def resolve(self, context: Context) -> TupleKey:
+        """Resolve to path segments."""
+        if self.static_path is not None and not self.is_dynamic:
+            return self.static_path
+
+        # Dynamic - walk chain
+        segments = [self.field_name]
+        current = self.parent_ref
+        while current is not None:
+            segments.insert(0, current.last_segment())
+            current = current.parent()
+
+        return tuple(segments)
+
+    def parent(self) -> Ref | None:
+        """Return parent reference."""
+        return self.parent_ref
+
+    def last_segment(self) -> KeyComponent:
+        """Return field name."""
+        return self.field_name
+
+    # ----- Nested field navigation -----
+
+    def __getattribute__(self, name: str) -> object:
+        """Navigate to nested fields in the shape.
+
+        When accessing User.profile.email:
+        1. User.profile returns ShapeRef (this instance)
+        2. .email calls this method
+        3. Look up 'email' in Profile._slots
+        4. Call slot.create_ref(Profile, parent_ref=self)
+        5. Return the new ref
+
+        Args:
+            name: Field name to access
+
+        Returns:
+            Ref created by the nested slot
+
+        Raises:
+            AttributeError: If field doesn't exist in nested shape
+        """
+        # Allow access to internal attributes
+        if name in [
+            "field_name",
+            "shape_type",
+            "value_type",
+            "view_type",
+            "parent_ref",
+            "static_path",
+            "is_dynamic",
+            "resolve",
+            "parent",
+            "last_segment",
+            "execute",
+        ]:
+            return object.__getattribute__(self, name)
+
+        # Get nested shape type
+        shape_type = object.__getattribute__(self, "shape_type")
+
+        # Check if shape has this slot
+        if hasattr(shape_type, "_slots") and name in shape_type._slots:
+            slot = shape_type._slots[name]
+
+            # Create ref with self as parent
+            return slot.create_ref(
+                owner_shape=shape_type,
+                parent_ref=self,
+            )
+
+        # Not a slot in the nested shape
+        raise AttributeError(f"{shape_type.__name__} has no slot '{name}'")
+
+    def __repr__(self) -> str:
+        if self.parent_ref:
+            return f"{self.parent_ref}.{self.field_name}"
+        return self.field_name
