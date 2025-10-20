@@ -154,7 +154,7 @@ def run_benchmarks() -> None:
         with tree.transaction() as tx:
             get_cmd = User.name.get()
             for _ in range(10_000):
-                get_cmd.execute(Context(tree=tree, storage_context=tx))
+                User.name.get().execute(Context(tree=tree, storage_context=tx))
         end_time = time.perf_counter()
 
         print(f"Elapsed time: {end_time - start_time:.4f} seconds")
