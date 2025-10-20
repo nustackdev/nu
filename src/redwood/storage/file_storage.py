@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import threading
 from dataclasses import dataclass
+from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import uuid4
@@ -12,7 +13,6 @@ from uuid import uuid4
 import attrs
 import filelock
 from mesh import Attach, ResourceSpec, Spec
-from mesh.common.logging import get_logger
 
 from redwood.exceptions import (
     SnapshotError,
@@ -28,18 +28,17 @@ from ._base import BaseStorage
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    from logging import Logger
 
+    from redwood.abc import TupleKey, Value
     from redwood.backends import (
+        CodecProtocol,
         SnapshotProtocol,
-        StorageCodecProtocol,
         StorageProtocol,
         TransactionProtocol,
     )
-    from redwood.abc import TupleKey, Value
 
 
-logger: Logger = get_logger(__name__)
+logger = getLogger(__name__)
 
 
 __all__ = [
@@ -65,7 +64,7 @@ class FileStorage(BaseStorage[str, str]):
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec: StorageCodecProtocol[str, str] = Attach()
+    codec: CodecProtocol[str, str] = Attach()
 
     spec: FileStorageSpec
 

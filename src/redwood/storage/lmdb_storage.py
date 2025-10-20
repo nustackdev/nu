@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 import threading
 from collections.abc import Generator
+from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeGuard
 from uuid import uuid4
@@ -13,7 +14,6 @@ import attrs
 import lmdb
 from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
-from mesh.common.logging import get_logger
 
 from redwood.exceptions import (
     SnapshotError,
@@ -29,18 +29,17 @@ from ._base import BaseStorage
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    from logging import Logger
 
     from redwood.abc import TupleKey, Value
     from redwood.backends import (
+        CodecProtocol,
         SnapshotProtocol,
-        StorageCodecProtocol,
         StorageProtocol,
         TransactionProtocol,
     )
 
 
-logger: Logger = get_logger(__name__)
+logger = getLogger(__name__)
 
 
 class LMDBStorage(BaseStorage[bytes, bytes]):
@@ -49,7 +48,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
     Uses memory-mapped files for high performance and ACID guarantees.
     """
 
-    codec: StorageCodecProtocol[bytes, bytes] = Attach()
+    codec: CodecProtocol[bytes, bytes] = Attach()
 
     spec: LMDBStorageSpec
 

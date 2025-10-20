@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
     from redwood.abc import TupleKey, Value
     from redwood.backends import (
+        CodecProtocol,
         SnapshotProtocol,
-        StorageCodecProtocol,
         StorageMode,
         StorageProtocol,
         TransactionProtocol,
@@ -37,7 +37,7 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         EncodedValueT: Type of encoded values (e.g., bytes, str)
     """
 
-    codec: StorageCodecProtocol[EncodedKeyT, EncodedValueT]
+    codec: CodecProtocol[EncodedKeyT, EncodedValueT]
 
     @property
     def mode(self) -> StorageMode:

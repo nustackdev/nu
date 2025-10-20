@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from logging import getLogger
 from typing import TYPE_CHECKING, final
 
 from redwood.exceptions import ObserverConnectionError
-from redwood.logging import get_logger
 
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
+logger = getLogger(__name__)
 
 
 __all__ = [

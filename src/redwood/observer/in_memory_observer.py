@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import threading
+from logging import getLogger
 from typing import TYPE_CHECKING
 
 import attrs
 from mesh import Attach, ResourceSpec, Spec, SyncResource
-from mesh.common.logging import get_logger
 
 from ._base import BaseObserver
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     )
 
 
-logger: Logger = get_logger(__name__)
+logger: Logger = getLogger(__name__)
 
 
 __all__ = [

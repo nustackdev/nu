@@ -5,12 +5,12 @@ from __future__ import annotations
 import threading
 from collections.abc import Generator
 from dataclasses import dataclass
+from logging import getLogger
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import attrs
 from mesh import Attach, ResourceSpec, Spec
-from mesh.common.logging import get_logger
 
 from redwood.abc import Value
 from redwood.exceptions import (
@@ -27,18 +27,17 @@ from ._base import BaseStorage
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    from logging import Logger
 
     from redwood.abc import TupleKey
     from redwood.backends import (
+        CodecProtocol,
         SnapshotProtocol,
-        StorageCodecProtocol,
         StorageProtocol,
         TransactionProtocol,
     )
 
 
-logger: Logger = get_logger(__name__)
+logger = getLogger(__name__)
 
 
 @dataclass
@@ -56,7 +55,7 @@ class InMemoryStorage(BaseStorage[str, Value]):
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec: StorageCodecProtocol[
+    codec: CodecProtocol[
         str,
         Value,
     ] = Attach()
