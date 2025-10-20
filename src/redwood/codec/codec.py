@@ -10,7 +10,7 @@ from mesh import ResourceSpec, SyncResource
 
 if TYPE_CHECKING:
     from redwood.abc import TupleKey, Value
-    from redwood.backends import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
+    from redwood.backend import KeyCodecProtocol, StorageCodecProtocol, ValueCodecProtocol
 
 __all__ = [
     "StorageCodec",

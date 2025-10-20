@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.abc import TupleKey
-    from redwood.backends import (
+    from redwood.backend import (
         CodecProtocol,
         SnapshotProtocol,
         StorageProtocol,

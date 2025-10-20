@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import attrs
 
-from redwood.backends import (
+from redwood.backend import (
     ObserverProtocol,
     SnapshotContextManagerProtocol,
     SnapshotProtocol,

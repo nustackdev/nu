@@ -10,7 +10,7 @@ from redwood.exceptions import ObserverConnectionError
 
 if TYPE_CHECKING:
     from redwood.abc import CallbackFn, TupleKey
-    from redwood.backends import (
+    from redwood.backend import (
         KeyCodecProtocol,
         SubscriptionProtocol,
     )

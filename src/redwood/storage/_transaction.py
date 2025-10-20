@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.backends import (
+    from redwood.backend import (
         TransactionalHandlerProtocol,
         TransactionContextManagerProtocol,
         TransactionProtocol,

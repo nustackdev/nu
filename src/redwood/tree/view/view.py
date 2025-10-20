@@ -48,7 +48,7 @@ from .types import AccessibleViewProtocol
 
 
 if TYPE_CHECKING:
-    from redwood.backends import StorageContextType
+    from redwood.backend import StorageContextType
 
     from ..path import Path
     from ..tree import Tree

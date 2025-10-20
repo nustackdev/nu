@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.abc import TupleKey, Value
-    from redwood.backends import (
+    from redwood.backend import (
         CodecProtocol,
         SnapshotProtocol,
         StorageMode,

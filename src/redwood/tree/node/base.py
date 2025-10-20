@@ -18,7 +18,7 @@ from ..context import ContextualBase
 
 
 if TYPE_CHECKING:
-    from redwood.backends import StorageContextType
+    from redwood.backend import StorageContextType
     from redwood.reactive import ReactiveStorage
 
     from ..path import Path

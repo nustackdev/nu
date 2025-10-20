@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from logging import Logger
 
     from redwood.abc import TupleKey
-    from redwood.backends import (
+    from redwood.backend import (
         KeyCodecProtocol,
         ObserverProtocol,
         SubscriptionProtocol,
