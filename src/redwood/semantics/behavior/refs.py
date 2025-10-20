@@ -366,10 +366,10 @@ class MapItemRef(Ref):
 
     def get(self) -> GetOp:
         """Create read operation (primitives only)."""
-        if not self.is_primitive:
-            raise AttributeError(
-                "Cannot call .get() on non-primitive item. Navigate to a field first."
-            )
+        # if not self.is_primitive:
+        #     raise AttributeError(
+        #         "Cannot call .get() on non-primitive item. Navigate to a field first."
+        #     )
 
         from .operations import GetOp
 
@@ -377,10 +377,10 @@ class MapItemRef(Ref):
 
     def set(self, value: PrimitiveNodeValue) -> SetCmd:
         """Create write operation (primitives only)."""
-        if not self.is_primitive:
-            raise AttributeError(
-                "Cannot call .set() on non-primitive item. Navigate to a field first."
-            )
+        # if not self.is_primitive:
+        #     raise AttributeError(
+        #         "Cannot call .set() on non-primitive item. Navigate to a field first."
+        #     )
 
         from .commands import SetCmd
 

@@ -99,11 +99,6 @@ class SetCmd(Command):
         self.ref = ref
         self.value = value
 
-    @property
-    def is_pure(self) -> bool:
-        """Set commands are impure."""
-        return False
-
     def execute(self, context: Context) -> None:
         """Execute write operation.
 
@@ -164,11 +159,6 @@ class DeleteCmd(Command):
             ref: Reference to delete
         """
         self.ref = ref
-
-    @property
-    def is_pure(self) -> bool:
-        """Delete commands are impure."""
-        return False
 
     def execute(self, context: Context) -> None:
         """Execute delete operation.

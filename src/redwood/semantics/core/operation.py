@@ -71,7 +71,10 @@ if TYPE_CHECKING:
 
 
 class Operation[T](RValue):
-    """Pure RValue that produces a value of type T.
+    """RValue that produces a value of type T.
+
+    Base operations are always pure computations.
+    Though, when composing operations, the overall operation remains pure as long as its children are pure.
 
     Operations are deterministic computations with no side effects.
     They can be cached, composed, and executed in any order.
@@ -79,14 +82,17 @@ class Operation[T](RValue):
     Type parameter T specifies the return type.
     """
 
+    children: tuple[RValue, ...]
+    """Child RValues that this operation depends on."""
+
     @property
     def is_pure(self) -> bool:
-        """Operations are always pure.
+        """Operations purity depends on their children.
 
         Returns:
-            True (operations never have side effects)
+            True if all children are pure, False otherwise.
         """
-        return True
+        return all(child.is_pure for child in self.children)
 
     @abstractmethod
     def execute(self, context: Context) -> T:

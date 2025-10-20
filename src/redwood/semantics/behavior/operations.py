@@ -93,11 +93,6 @@ class GetOp(Operation):
         """
         self.ref = ref
 
-    @property
-    def is_pure(self) -> bool:
-        """Get operations are pure."""
-        return True
-
     def execute(self, context: Context) -> object:
         """Execute read operation.
 
@@ -166,11 +161,6 @@ class LiteralValue(Operation):
         """
         self.value = value
 
-    @property
-    def is_pure(self) -> bool:
-        """Literals are pure."""
-        return True
-
     def execute(self, context: Context) -> object:
         """Return the literal value.
 
@@ -227,13 +217,7 @@ class BinaryOp(Operation):
             right: Right operand
         """
         self.op = op
-        self.left = left
-        self.right = right
-
-    @property
-    def is_pure(self) -> bool:
-        """Binary ops are pure if both operands are pure."""
-        return self.left.is_pure and self.right.is_pure
+        self.children = (left, right)
 
     def execute(self, context: Context) -> object:
         """Execute binary operation.
@@ -247,8 +231,8 @@ class BinaryOp(Operation):
         from ..types import NaN, propagate_special
 
         # Evaluate operands
-        left_val = self.left.execute(context)
-        right_val = self.right.execute(context)
+        left_val = self.children[0].execute(context)
+        right_val = self.children[1].execute(context)
 
         # Handle special values
         special = propagate_special(left_val, right_val)
