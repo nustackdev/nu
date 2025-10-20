@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING, Self, TypeGuard
 
 import attrs
 
-from .protocols import ContextType, SnapshotContextProtocol, TransactionContextProtocol
+from redwood.backends import SnapshotProtocol, StorageContextType, TransactionProtocol
 
 
 if TYPE_CHECKING:
-    from ..backend import ObservableStorage
+    from redwood.reactive import ReactiveStorage
 
 
 __all__ = ["ContextualBase", "is_contextual"]
@@ -63,12 +63,12 @@ class ContextualBase:
     """
 
     # Backend instance for context management
-    backend: ObservableStorage = attrs.field()
+    backend: ReactiveStorage = attrs.field()
 
     # Current context if any (transaction or snapshot)
-    ctx: ContextType | None = attrs.field(default=None)
+    ctx: StorageContextType | None = attrs.field(default=None)
 
-    def with_context(self, ctx: ContextType) -> Self:
+    def with_context(self, ctx: StorageContextType) -> Self:
         """Create a copy of this object with a specific context.
 
         Args:
@@ -113,7 +113,7 @@ class ContextualBase:
         """
         return self.ctx is not None
 
-    def get_ensured_context(self) -> ContextType:
+    def get_ensured_context(self) -> StorageContextType:
         """Get context or raise error if none available.
 
         Returns:
@@ -146,7 +146,7 @@ class ContextualBase:
                 value = obj.get("key")  # Read-only
             ```
         """
-        return isinstance(self.ctx, TransactionContextProtocol)
+        return isinstance(self.ctx, TransactionProtocol)
 
     def is_snapshot_context(self) -> bool:
         """Check if current context is read-only.
@@ -161,9 +161,9 @@ class ContextualBase:
                 value = obj.get("key")
             ```
         """
-        return isinstance(self.ctx, SnapshotContextProtocol)
+        return isinstance(self.ctx, SnapshotProtocol)
 
-    def get_transaction_context(self) -> TransactionContextProtocol:
+    def get_transaction_context(self) -> TransactionProtocol:
         """Get transaction context or raise error if context is read-only.
 
         Returns:
@@ -183,7 +183,7 @@ class ContextualBase:
             ```
         """
         ctx = self.get_ensured_context()
-        if not isinstance(ctx, TransactionContextProtocol):
+        if not isinstance(ctx, TransactionProtocol):
             raise ValueError(
                 "Context is read-only (snapshot). Write operations not allowed. "
                 "Use a transaction context for write operations."

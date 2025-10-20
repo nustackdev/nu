@@ -56,12 +56,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from redwood.abc import Empty
+
 from ..core import Operation, RValue
-from ..types import Context, Empty
 
 
 if TYPE_CHECKING:
     from ..core import Ref
+    from ..types import Context
 
 
 # ============================================================================

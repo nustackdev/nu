@@ -12,25 +12,28 @@ from typing import TYPE_CHECKING, Self
 
 import attrs
 
+from redwood.abc import EMPTY, CallbackFn, Empty, KeyComponent, Value
 from redwood.exceptions import StorageKeyError
 
-from .context import ContextType, ContextualBase
+from .context import ContextualBase
 from .path import Path
 from .registry import ViewRegistry
-from .types import EMPTY, CallbackFn, Empty, PathSegment, Value, ViewT
 from .view import DictView, ListView, create_view_context_manager
 
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from redwood.protocols import (
+    from redwood.backends import (
         SnapshotContextManagerProtocol,
         SnapshotProtocol,
+        StorageContextType,
         SubscriptionProtocol,
         TransactionContextManagerProtocol,
         TransactionProtocol,
     )
+
+    from .view import BaseView
 
 __all__ = [
     "Tree",
@@ -91,7 +94,7 @@ class Tree(ContextualBase):
     # TREE NAVIGATION METHODS
     # =========================================================================
 
-    def at(self, *paths: PathSegment, ctx: ContextType | None = None) -> Self:
+    def at(self, *paths: KeyComponent, ctx: StorageContextType | None = None) -> Self:
         """Navigate to a path (relative to current path).
 
         This creates a new State instance pointing to the specified path.
@@ -122,7 +125,7 @@ class Tree(ContextualBase):
         new_path = self.path.join(*paths)
         return attrs.evolve(self, path=new_path, ctx=ctx or self.ctx)
 
-    def parent(self, *, ctx: ContextType | None = None) -> Self:
+    def parent(self, *, ctx: StorageContextType | None = None) -> Self:
         """Navigate to parent path.
 
         Returns:
@@ -140,7 +143,7 @@ class Tree(ContextualBase):
             return self
         return attrs.evolve(self, path=parent_path, ctx=ctx or self.ctx)
 
-    def root(self, *, ctx: ContextType | None = None) -> Self:
+    def root(self, *, ctx: StorageContextType | None = None) -> Self:
         """Navigate to root path.
 
         Returns:
@@ -157,7 +160,7 @@ class Tree(ContextualBase):
     # CONTEXT MANAGERS FOR VIEWS (automatic context management)
     # =========================================================================
 
-    def with_view(
+    def with_view[ViewT: BaseView](
         self,
         view_type: type[ViewT],
         /,
@@ -218,12 +221,12 @@ class Tree(ContextualBase):
     # DIRECT VIEW ACCESS (manual context management)
     # =========================================================================
 
-    def view(
+    def view[ViewT: BaseView](
         self,
         view_type: type[ViewT],
         /,
         *,
-        ctx: ContextType | None = None,
+        ctx: StorageContextType | None = None,
     ) -> ViewT:
         """Access container as specified view type with manual context (transaction/snapshot) management.
 
@@ -261,7 +264,7 @@ class Tree(ContextualBase):
     # CONVENIENCE METHODS FOR BUILT-IN VIEWS
     # =========================================================================
 
-    def with_dict_view(self, *, snapshot: bool = False) -> AbstractContextManager[DictView[Self]]:
+    def with_dict_view(self, *, snapshot: bool = False) -> AbstractContextManager[DictView]:
         """Access container as dictionary view with automatic transaction or snapshot management.
 
         Returns a context manager that yields a DictView with transaction or snapshot context.
@@ -311,7 +314,7 @@ class Tree(ContextualBase):
             tree=self,
         )
 
-    def with_list_view(self, *, snapshot: bool = False) -> AbstractContextManager[ListView[Self]]:
+    def with_list_view(self, *, snapshot: bool = False) -> AbstractContextManager[ListView]:
         """Access container as list view with automatic transaction or snapshot management.
 
         Returns a context manager that yields a ListView with transaction or snapshot context.
@@ -357,7 +360,7 @@ class Tree(ContextualBase):
             tree=self,
         )
 
-    def dict_view(self, *, ctx: ContextType | None = None) -> DictView[Self]:
+    def dict_view(self, *, ctx: StorageContextType | None = None) -> DictView:
         """Access container as dictionary view with manual context management.
 
         Returns a DictView object directly. No automatic context handling.
@@ -395,7 +398,7 @@ class Tree(ContextualBase):
         """
         return DictView(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
 
-    def list_view(self, *, ctx: ContextType | None = None) -> ListView[Self]:
+    def list_view(self, *, ctx: StorageContextType | None = None) -> ListView:
         """Access container as list view with manual context management.
 
         Returns a ListView object directly. No automatic context handling.
@@ -437,7 +440,7 @@ class Tree(ContextualBase):
     # CONTEXT METHODS (unified transaction and snapshot support)
     # =========================================================================
 
-    def begin_context(self, *, snapshot: bool = False) -> ContextType:
+    def begin_context(self, *, snapshot: bool = False) -> StorageContextType:
         """Start a new context (transaction or snapshot).
 
         Args:
@@ -615,7 +618,7 @@ class Tree(ContextualBase):
     # SHORTCUTS FOR COMMON OPERATIONS
     # =========================================================================
 
-    def has_primitive(self, *paths: PathSegment) -> bool:
+    def has_primitive(self, *paths: KeyComponent) -> bool:
         """Check if a path exists.
 
         Args:
@@ -634,7 +637,7 @@ class Tree(ContextualBase):
         """
         return self.backend.exists(self.path.join(*paths).to_tuple())
 
-    def get_primitive(self, *paths: PathSegment, default: Value | Empty = EMPTY) -> Value | Empty:
+    def get_primitive(self, *paths: KeyComponent, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value at a path.
 
         Args:
@@ -666,7 +669,7 @@ class Tree(ContextualBase):
     # - Hypothetically, `has` and `read` operations might also have specific logic in Views, but until we have a use case for that,
     #   we keep shortcut methods here for simplicity.
 
-    def is_primitive(self, *paths: PathSegment) -> bool:
+    def is_primitive(self, *paths: KeyComponent) -> bool:
         """Check if a path is a primitive (non-container).
 
         Args:

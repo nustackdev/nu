@@ -1,8 +1,19 @@
-"""Type definitions."""
+"""Type definitions for ABC modules."""
 
-from collections.abc import Callable
-from typing import Literal
+from __future__ import annotations
 
+from collections.abc import Callable, Iterable
+from typing import Any
+
+
+__all__ = [
+    "CallbackFn",
+    "CompositeValue",
+    "KeyComponent",
+    "PrimitiveValue",
+    "TupleKey",
+    "Value",
+]
 
 # =========================================================
 # Global types used across the package
@@ -33,15 +44,18 @@ type PrimitiveValue = None | bytes | bool | int | float | complex | str
 # - These are covariant, so tuple[str, ...] IS assignable to tuple[str | int, ...]
 # - Safe because they can't be modified after creation
 type CompositeValue = (
-    list[object]
-    | set[object]
-    | dict[object, object]
+    list[Any]
+    | set[Any]
+    | dict[Any, Any]
     | frozenset["PrimitiveValue | CompositeValue"]
     | tuple["PrimitiveValue | CompositeValue", ...]
 )
 
 # A union of all supported value types
 type Value = PrimitiveValue | CompositeValue
+
+# Iterable of values. Used in type hints for functions that process collections of values.
+type IterableValues = Iterable[Value]
 
 # ---------------------------------------------------------
 # Key types
@@ -53,7 +67,7 @@ type Value = PrimitiveValue | CompositeValue
 
 # Key type - a tuple of strings and integers
 type KeyComponent = str | int
-type Key = tuple[KeyComponent, ...]
+type TupleKey = tuple[KeyComponent, ...]
 
 
 # ---------------------------------------------------------
@@ -63,12 +77,4 @@ type Key = tuple[KeyComponent, ...]
 # use keys and paths to identify data points of interest.
 # ---------------------------------------------------------
 
-type CallbackFn = Callable[[Key], None]
-
-
-# ========================================================
-# Storage-specific types
-# ========================================================
-
-
-type StorageMode = Literal["read", "write"]
+type CallbackFn = Callable[[TupleKey], None]

@@ -11,9 +11,10 @@ import attrs
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from ..backend import ObservableStorage
-    from ..types import ContextualT
-    from .protocols import ContextType
+    from redwood.backends import StorageContextType
+    from redwood.reactive import ReactiveStorage
+
+    from .contextual_base import ContextualBase
 
 
 __all__ = [
@@ -24,8 +25,8 @@ __all__ = [
 
 @contextmanager
 def create_context(
-    backend: ObservableStorage, *, snapshot: bool = False
-) -> Generator[ContextType, None, None]:
+    backend: ReactiveStorage, *, snapshot: bool = False
+) -> Generator[StorageContextType, None, None]:
     """Create a context manager for the given backend.
 
     Args:
@@ -70,7 +71,9 @@ def create_context(
 
 
 @contextmanager
-def with_context(obj: ContextualT, *, snapshot: bool = False) -> Generator[ContextualT, None, None]:
+def with_context[ContextualT: ContextualBase](
+    obj: ContextualT, *, snapshot: bool = False
+) -> Generator[ContextualT, None, None]:
     """Context manager that provides context for an object.
 
     Args:

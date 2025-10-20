@@ -31,13 +31,13 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from logging import Logger
 
-    from redwood.protocols import (
+    from redwood.abc import TupleKey, Value
+    from redwood.backends import (
         SnapshotProtocol,
         StorageCodecProtocol,
         StorageProtocol,
         TransactionProtocol,
     )
-    from redwood.types import Key, Value
 
 
 logger: Logger = get_logger(__name__)
@@ -117,7 +117,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
 
             logger.debug("Disconnected from LMDB")
 
-    def _get_impl(self, key: Key) -> Value:
+    def _get_impl(self, key: TupleKey) -> Value:
         """Get value by key."""
         try:
             encoded_key = self.codec.encode_key(key)
@@ -139,7 +139,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
         except Exception as e:
             raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-    def _set_impl(self, key: Key, value: Value) -> None:
+    def _set_impl(self, key: TupleKey, value: Value) -> None:
         """Set value for key."""
         # Encode both before transaction to avoid partial failure
         encoded_key = self.codec.encode_key(key)
@@ -152,7 +152,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
         except Exception as e:
             raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-    def _delete_impl(self, key: Key) -> None:
+    def _delete_impl(self, key: TupleKey) -> None:
         """Delete value by key."""
         encoded_key = self.codec.encode_key(key)
 
@@ -166,7 +166,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
         except Exception as e:
             raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-    def _exists_impl(self, key: Key) -> bool:
+    def _exists_impl(self, key: TupleKey) -> bool:
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
@@ -178,7 +178,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-    def _list_keys_impl(self, prefix: Key, depth: int) -> Generator[Key, None, None]:
+    def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -269,7 +269,7 @@ class LMDBStorageTransaction:
         if self._rolled_back:
             raise TransactionInvalidError("Transaction already rolled back")
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value within transaction context."""
         self._check_valid()
         try:
@@ -291,7 +291,7 @@ class LMDBStorageTransaction:
         except Exception as e:
             raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-    def set(self, key: Key, value: Value) -> None:
+    def set(self, key: TupleKey, value: Value) -> None:
         """Set value within transaction context."""
         self._check_valid()
 
@@ -304,7 +304,7 @@ class LMDBStorageTransaction:
         except Exception as e:
             raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-    def delete(self, key: Key) -> None:
+    def delete(self, key: TupleKey) -> None:
         """Delete key within transaction context."""
         self._check_valid()
 
@@ -318,7 +318,7 @@ class LMDBStorageTransaction:
         except Exception as e:
             raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check if key exists within transaction context."""
         self._check_valid()
 
@@ -331,7 +331,7 @@ class LMDBStorageTransaction:
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List all keys under prefix within transaction context."""
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)
@@ -409,7 +409,7 @@ class LMDBStorageSnapshot:
         if self._closed:
             raise SnapshotError("Snapshot already closed")
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value within snapshot context."""
         self._check_valid()
         try:
@@ -431,7 +431,7 @@ class LMDBStorageSnapshot:
         except Exception as e:
             raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check if key exists within snapshot context."""
         self._check_valid()
 
@@ -444,7 +444,7 @@ class LMDBStorageSnapshot:
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List all keys under prefix within snapshot context."""
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)

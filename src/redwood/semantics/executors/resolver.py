@@ -10,10 +10,11 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from redwood.abc import TupleKey
     from redwood.tree import BaseView, Tree
 
     from ..core import Ref
-    from ..types import Context, TuplePath
+    from ..types import Context
 
 
 # ============================================================================
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 # ============================================================================
 
 
-def resolve_ref(ref: Ref, context: Context) -> TuplePath:
+def resolve_ref(ref: Ref, context: Context) -> TupleKey:
     """Resolve reference to concrete path segments.
 
     For static refs: returns cached path immediately (O(1))
@@ -48,7 +49,7 @@ def resolve_ref(ref: Ref, context: Context) -> TuplePath:
 
 def navigate_to_parent(
     tree: Tree,
-    path: TuplePath,
+    path: TupleKey,
     context: Context,
 ) -> Tree:
     """Navigate to parent container using path segments.

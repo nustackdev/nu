@@ -15,12 +15,12 @@ from ._base import BaseObserver
 if TYPE_CHECKING:
     from logging import Logger
 
-    from redwood.protocols import (
+    from redwood.abc import TupleKey
+    from redwood.backends import (
         KeyCodecProtocol,
         ObserverProtocol,
         SubscriptionProtocol,
     )
-    from redwood.types import Key
 
 
 logger: Logger = get_logger(__name__)
@@ -44,7 +44,7 @@ class InMemoryObserver(
         if not hasattr(self, "_data_lock"):
             self._data_lock: threading.Lock = threading.Lock()
 
-        self._subscriptions: dict[Key, list[SubscriptionProtocol]] = {}
+        self._subscriptions: dict[TupleKey, list[SubscriptionProtocol]] = {}
 
     def _disconnect_impl(self) -> None:
         with self._data_lock:
@@ -52,8 +52,8 @@ class InMemoryObserver(
 
     def _matches_pattern(
         self,
-        topic: Key,
-        pattern: Key,
+        topic: TupleKey,
+        pattern: TupleKey,
         depth: int,
     ) -> bool:
         if len(topic) < len(pattern):
@@ -64,7 +64,7 @@ class InMemoryObserver(
 
         return all(p == "*" or t == p for t, p in zip(topic, pattern, strict=False))
 
-    def _notify_impl(self, topic: Key) -> None:
+    def _notify_impl(self, topic: TupleKey) -> None:
         with self._data_lock:
             matching_subs = []
             for pattern, subs in self._subscriptions.items():

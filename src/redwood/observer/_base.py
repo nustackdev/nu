@@ -9,16 +9,14 @@ from redwood.logging import get_logger
 
 
 if TYPE_CHECKING:
-    from logging import Logger
-
-    from redwood.protocols import (
+    from redwood.abc import CallbackFn, TupleKey
+    from redwood.backends import (
         KeyCodecProtocol,
         SubscriptionProtocol,
     )
-    from redwood.types import CallbackFn, Key
 
 
-logger: Logger = get_logger(__name__)
+logger = get_logger(__name__)
 
 
 __all__ = [
@@ -101,7 +99,7 @@ class BaseObserver[EncodedKeyT](ABC):
         raise NotImplementedError
 
     @final
-    def notify(self, topic: Key) -> None:
+    def notify(self, topic: TupleKey) -> None:
         """Notify subscribers of state change.
 
         Args:
@@ -111,7 +109,7 @@ class BaseObserver[EncodedKeyT](ABC):
         self._notify_impl(topic)
 
     @abstractmethod
-    def _notify_impl(self, topic: Key) -> None:
+    def _notify_impl(self, topic: TupleKey) -> None:
         """Implementation-specific notify logic.
 
         Args:
@@ -123,7 +121,7 @@ class BaseObserver[EncodedKeyT](ABC):
     @final
     def subscribe(
         self,
-        key: Key,
+        key: TupleKey,
         callback: CallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:
@@ -189,12 +187,12 @@ class Subscription:
         ObserverKey: Topic type (tuple of strings)
     """
 
-    _topic_pattern: Key
+    _topic_pattern: TupleKey
     _depth: int
     _callback: CallbackFn
 
     @property
-    def topic_pattern(self) -> Key:
+    def topic_pattern(self) -> TupleKey:
         return self._topic_pattern
 
     @property

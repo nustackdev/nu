@@ -30,13 +30,13 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from logging import Logger
 
-    from redwood.protocols import (
+    from redwood.backends import (
         SnapshotProtocol,
         StorageCodecProtocol,
         StorageProtocol,
         TransactionProtocol,
     )
-    from redwood.types import Key, Value
+    from redwood.abc import TupleKey, Value
 
 
 logger: Logger = get_logger(__name__)
@@ -55,7 +55,7 @@ class TransactionOperation:
     """Represents a single operation in a transaction."""
 
     op_type: str  # "set" or "delete"
-    key: Key
+    key: TupleKey
     value: Value | None = None
 
 
@@ -167,7 +167,7 @@ class FileStorage(BaseStorage[str, str]):
                 temp_path.unlink()
             raise StorageError(f"Failed to save data: {e}") from e
 
-    def _get_impl(self, key: Key) -> Value:
+    def _get_impl(self, key: TupleKey) -> Value:
         """Get value by key."""
         encoded_key = self.codec.encode_key(key)
 
@@ -184,7 +184,7 @@ class FileStorage(BaseStorage[str, str]):
             except Exception as e:
                 raise StorageOperationError(f"Failed to decode value: {e}") from e
 
-    def _set_impl(self, key: Key, value: Value) -> None:
+    def _set_impl(self, key: TupleKey, value: Value) -> None:
         """Set value for key."""
         encoded_key = self.codec.encode_key(key)
         encoded_value = self.codec.encode_value(value)
@@ -194,7 +194,7 @@ class FileStorage(BaseStorage[str, str]):
             self._data[encoded_key] = encoded_value
             self._save()
 
-    def _delete_impl(self, key: Key) -> None:
+    def _delete_impl(self, key: TupleKey) -> None:
         """Delete value by key."""
         encoded_key = self.codec.encode_key(key)
 
@@ -208,7 +208,7 @@ class FileStorage(BaseStorage[str, str]):
                 raise StorageOperationError(f"Failed to delete key: {e}") from e
             self._save()
 
-    def _exists_impl(self, key: Key) -> bool:
+    def _exists_impl(self, key: TupleKey) -> bool:
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
@@ -216,7 +216,7 @@ class FileStorage(BaseStorage[str, str]):
             self._load_data()  # Get latest data
             return encoded_key in self._data
 
-    def _list_keys_impl(self, prefix: Key, depth: int) -> Generator[Key, None, None]:
+    def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -309,7 +309,7 @@ class FileStorageTransaction:
         if self._rolled_back:
             raise TransactionInvalidError("Transaction already rolled back")
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
@@ -327,14 +327,14 @@ class FileStorageTransaction:
         self._read_set.add(encoded_key)
         return value
 
-    def set(self, key: Key, value: Value) -> None:
+    def set(self, key: TupleKey, value: Value) -> None:
         """Set value within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
         self._write_set.add(encoded_key)
         self._operations.append(TransactionOperation("set", key, value))
 
-    def delete(self, key: Key) -> None:
+    def delete(self, key: TupleKey) -> None:
         """Delete key within transaction context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
@@ -364,7 +364,7 @@ class FileStorageTransaction:
         self._write_set.add(encoded_key)
         self._operations.append(TransactionOperation("delete", key))
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check if key exists within transaction context."""
         self._check_valid()
         try:
@@ -373,7 +373,7 @@ class FileStorageTransaction:
         except StorageKeyError:
             return False
 
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List all keys under prefix within transaction."""
         self._check_valid()
 
@@ -444,7 +444,7 @@ class FileStorageSnapshot:
         if self._closed:
             raise SnapshotError("Snapshot already closed")
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value within snapshot context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
@@ -459,13 +459,13 @@ class FileStorageSnapshot:
         except Exception as e:
             raise StorageOperationError(f"Failed to decode value: {e}") from e
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check if key exists within snapshot context."""
         self._check_valid()
         encoded_key = self._storage.codec.encode_key(key)
         return encoded_key in self._snapshot_data
 
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List all keys under prefix within snapshot context."""
         self._check_valid()
         encoded_prefix = self._storage.codec.encode_key(prefix)

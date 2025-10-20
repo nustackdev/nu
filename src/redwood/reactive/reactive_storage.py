@@ -1,4 +1,4 @@
-"""This module includes an observable kv storage solution.
+"""This module includes an reactive kv storage solution.
 
 Features:
 - Persistent storage
@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import attrs
 
-from redwood.protocols import (
+from redwood.backends import (
     ObserverProtocol,
     SnapshotContextManagerProtocol,
     SnapshotProtocol,
@@ -29,18 +29,18 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
-    from redwood.types import CallbackFn, Key, Value
+    from redwood.abc import CallbackFn, TupleKey, Value
 
 __all__ = [
-    "ObservableStorage",
-    "ObservableStorageSnapshot",
-    "ObservableStorageSnapshotContextManager",
-    "ObservableStorageTransaction",
-    "ObservableStorageTransactionContextManager",
+    "ReactiveStorage",
+    "ReactiveStorageSnapshot",
+    "ReactiveStorageSnapshotContextManager",
+    "ReactiveStorageTransaction",
+    "ReactiveStorageTransactionContextManager",
 ]
 
 
-class ObservableStorage[EncodedKeyT, EncodedValueT]:
+class ReactiveStorage[EncodedKeyT, EncodedValueT]:
     """Key-value storage that combines persistent storage with change notifications."""
 
     _storage: StorageProtocol[EncodedKeyT, EncodedValueT]
@@ -51,7 +51,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
         storage: StorageProtocol[EncodedKeyT, EncodedValueT],
         observer: ObserverProtocol[EncodedKeyT],
     ) -> None:
-        """Initialize ObservableStorage with storage and observer.
+        """Initialize ReactiveStorage with storage and observer.
 
         Args:
             storage: Storage ibackend
@@ -78,7 +78,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
         """
         return self._observer
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value at key.
 
         Args:
@@ -93,7 +93,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
         """
         return self.storage.get(key)
 
-    def set(self, key: Key, value: Value) -> None:
+    def set(self, key: TupleKey, value: Value) -> None:
         """Set value at key and notify observers.
 
         Args:
@@ -107,7 +107,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
         self.storage.set(key, value)
         self.observer.notify(key)
 
-    def delete(self, key: Key) -> None:
+    def delete(self, key: TupleKey) -> None:
         """Delete value at key and notify observers.
 
         Args:
@@ -121,7 +121,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
         self.storage.delete(key)
         self.observer.notify(key)
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check if key exists.
 
         Args:
@@ -135,7 +135,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
         """
         return self.storage.exists(key)
 
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List all keys under prefix.
 
         Args:
@@ -153,7 +153,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
 
     def subscribe(
         self,
-        key: Key,
+        key: TupleKey,
         callback: CallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:
@@ -185,7 +185,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
         """
         self.observer.unsubscribe(subscription)
 
-    def begin_transaction(self) -> ObservableStorageTransaction:
+    def begin_transaction(self) -> ReactiveStorageTransaction:
         """Begin a new transaction that handles both storage and notifications.
 
         Returns:
@@ -195,9 +195,9 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
             TransactionError: If transaction cannot be started
         """
         storage_txn = self.storage.begin_transaction()
-        return ObservableStorageTransaction(storage_txn=storage_txn, observer=self.observer)
+        return ReactiveStorageTransaction(storage_txn=storage_txn, observer=self.observer)
 
-    def transaction(self) -> ObservableStorageTransactionContextManager:
+    def transaction(self) -> ReactiveStorageTransactionContextManager:
         """Get transaction context manager for combined storage and notification handling.
 
         Returns:
@@ -212,9 +212,9 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
                 # Auto-rollbacks with no notifications on failure
             ```
         """
-        return ObservableStorageTransactionContextManager(self)
+        return ReactiveStorageTransactionContextManager(self)
 
-    def begin_snapshot(self) -> ObservableStorageSnapshot:
+    def begin_snapshot(self) -> ReactiveStorageSnapshot:
         """Begin a new read-only snapshot.
 
         Returns:
@@ -224,9 +224,9 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
             StorageError: If snapshot cannot be started
         """
         storage_snap = self.storage.begin_snapshot()
-        return ObservableStorageSnapshot(storage_snap=storage_snap)
+        return ReactiveStorageSnapshot(storage_snap=storage_snap)
 
-    def snapshot(self) -> ObservableStorageSnapshotContextManager:
+    def snapshot(self) -> ReactiveStorageSnapshotContextManager:
         """Get snapshot context manager for read-only operations.
 
         Returns:
@@ -240,7 +240,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
                 # Auto-cleanup on exit
             ```
         """
-        return ObservableStorageSnapshotContextManager(self)
+        return ReactiveStorageSnapshotContextManager(self)
 
     def __hash__(self) -> int:
         return hash((self.storage, self.observer))
@@ -252,7 +252,7 @@ class ObservableStorage[EncodedKeyT, EncodedValueT]:
 
 
 @attrs.define(frozen=True)
-class ObservableStorageTransaction:
+class ReactiveStorageTransaction:
     """Transaction implementation that combines storage operations and notifications.
 
     Ensures atomicity between storage changes and observer notifications.
@@ -261,27 +261,27 @@ class ObservableStorageTransaction:
     storage_txn: TransactionProtocol
     observer: ObserverProtocol
     # Track modified keys for notification after commit
-    modified_keys: set[Key] = attrs.field(factory=set)
+    modified_keys: set[TupleKey] = attrs.field(factory=set)
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value within transaction context."""
         return self.storage_txn.get(key)
 
-    def set(self, key: Key, value: Value) -> None:
+    def set(self, key: TupleKey, value: Value) -> None:
         """Set value and track key for notification."""
         self.storage_txn.set(key, value)
         self.modified_keys.add(key)
 
-    def delete(self, key: Key) -> None:
+    def delete(self, key: TupleKey) -> None:
         """Delete value and track key for notification."""
         self.storage_txn.delete(key)
         self.modified_keys.add(key)
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check key existence within transaction."""
         return self.storage_txn.exists(key)
 
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List keys with prefix within transaction."""
         yield from self.storage_txn.list_keys(prefix, depth)
 
@@ -307,15 +307,15 @@ class ObservableStorageTransaction:
 
 
 @dataclass
-class ObservableStorageTransactionContextManager(TransactionContextManagerProtocol):
+class ReactiveStorageTransactionContextManager(TransactionContextManagerProtocol):
     """Context manager for State transactions that handles both storage and notifications."""
 
-    _observable_kv: ObservableStorage  # Reference to parent State instance
-    _transaction: ObservableStorageTransaction | None = None  # Store the active transaction
+    _reactive_kv: ReactiveStorage  # Reference to parent State instance
+    _transaction: ReactiveStorageTransaction | None = None  # Store the active transaction
 
-    def __enter__(self) -> ObservableStorageTransaction:
+    def __enter__(self) -> ReactiveStorageTransaction:
         """Begin new transaction with combined storage and notification handling."""
-        self._transaction = self._observable_kv.begin_transaction()
+        self._transaction = self._reactive_kv.begin_transaction()
         return self._transaction
 
     def __exit__(
@@ -346,7 +346,7 @@ class ObservableStorageTransactionContextManager(TransactionContextManagerProtoc
 
 
 @attrs.define(frozen=True)
-class ObservableStorageSnapshot:
+class ReactiveStorageSnapshot:
     """Read-only snapshot implementation that provides consistent view of storage.
 
     No observer functionality needed since snapshots are read-only.
@@ -354,15 +354,15 @@ class ObservableStorageSnapshot:
 
     storage_snap: SnapshotProtocol
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value within snapshot context."""
         return self.storage_snap.get(key)
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check key existence within snapshot."""
         return self.storage_snap.exists(key)
 
-    def list_keys(self, prefix: Key, depth: int = 1) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List keys with prefix within snapshot."""
         yield from self.storage_snap.list_keys(prefix, depth)
 
@@ -380,15 +380,15 @@ class ObservableStorageSnapshot:
 
 
 @dataclass
-class ObservableStorageSnapshotContextManager(SnapshotContextManagerProtocol):
+class ReactiveStorageSnapshotContextManager(SnapshotContextManagerProtocol):
     """Context manager for read-only snapshots."""
 
-    _observable_kv: ObservableStorage  # Reference to parent backend instance
-    _snapshot: ObservableStorageSnapshot | None = None  # Store the active snapshot
+    _reactive_kv: ReactiveStorage  # Reference to parent backend instance
+    _snapshot: ReactiveStorageSnapshot | None = None  # Store the active snapshot
 
-    def __enter__(self) -> ObservableStorageSnapshot:
+    def __enter__(self) -> ReactiveStorageSnapshot:
         """Begin new snapshot for read-only operations."""
-        self._snapshot = self._observable_kv.begin_snapshot()
+        self._snapshot = self._reactive_kv.begin_snapshot()
         return self._snapshot
 
     def __exit__(
@@ -411,5 +411,5 @@ class ObservableStorageSnapshotContextManager(SnapshotContextManagerProtocol):
 
 
 if TYPE_CHECKING:
-    __: type[TransactionProtocol] = ObservableStorageTransaction
-    ___: type[SnapshotProtocol] = ObservableStorageSnapshot
+    __: type[TransactionProtocol] = ReactiveStorageTransaction
+    ___: type[SnapshotProtocol] = ReactiveStorageSnapshot

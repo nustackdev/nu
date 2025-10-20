@@ -133,9 +133,10 @@ from .term import LValue
 
 
 if TYPE_CHECKING:
-    from redwood.tree.view import BaseView
+    from redwood.abc import KeyComponent, TupleKey
+    from redwood.tree import BaseView
 
-    from ..types import Context, PathSegment, TuplePath
+    from ..types import Context
 
 
 class Ref[T](LValue, ABC):
@@ -166,7 +167,7 @@ class Ref[T](LValue, ABC):
     parent_ref: Ref | None
     """Parent reference in navigation chain (None if root)."""
 
-    static_path: tuple[PathSegment, ...] | None
+    static_path: TupleKey | None
     """Cached path segments if fully static (None if dynamic)."""
 
     is_dynamic: bool
@@ -175,7 +176,7 @@ class Ref[T](LValue, ABC):
     # ---- LValue contract (must implement) ----
 
     @abstractmethod
-    def resolve(self, context: Context) -> TuplePath:
+    def resolve(self, context: Context) -> TupleKey:
         """Resolve reference to concrete path segments.
 
         Static refs: Return cached static_path (O(1))
@@ -199,7 +200,7 @@ class Ref[T](LValue, ABC):
         ...
 
     @abstractmethod
-    def last_segment(self) -> PathSegment:
+    def last_segment(self) -> KeyComponent:
         """Return the last segment in the path.
 
         For most refs, this is field_name.

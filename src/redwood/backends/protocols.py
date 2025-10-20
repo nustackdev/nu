@@ -1,21 +1,39 @@
-"""Protocol definitions for storage, transactions, snapshots, and observers."""
+"""Protocol definitions for coddec, storage, and observer."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
-    from .types import CallbackFn, Key, Value
+    from redwood.abc import CallbackFn, TupleKey, Value
+
+    from .context import SnapshotProtocol, TransactionProtocol
 
 
-__all__ = []
+__all__ = [  # noqa: RUF022
+    # Codec Protocols
+    "KeyCodecProtocol",
+    "ValueCodecProtocol",
+    "CodecProtocol",
+    # Storage Protocols
+    "StorageProtocol",
+    "SnapshotContextManagerProtocol",
+    "SnapshotHandlerProtocol",
+    "TransactionContextManagerProtocol",
+    "TransactionalHandlerProtocol",
+    # Observer Protocols
+    "ObserverProtocol",
+    "SubscriptionProtocol",
+    # Reactive Storage Protocol
+    "ReactiveStorageProtocol",
+]
 
 
-class StorageCodecProtocol[EncodedKeyT, EncodedValueT](Protocol):
+class CodecProtocol[EncodedKeyT, EncodedValueT](Protocol):
     """Protocol for complete storage encoding/decoding.
 
     Combines key and value codec operations into a unified interface
@@ -28,7 +46,7 @@ class StorageCodecProtocol[EncodedKeyT, EncodedValueT](Protocol):
         EncodedValueT: The type of encoded values (covariant)
     """
 
-    def encode_key(self, key: Key) -> EncodedKeyT:
+    def encode_key(self, key: TupleKey) -> EncodedKeyT:
         """Encode a key for storage.
 
         Args:
@@ -42,7 +60,7 @@ class StorageCodecProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
-    def decode_key(self, encoded: EncodedKeyT) -> Key:
+    def decode_key(self, encoded: EncodedKeyT) -> TupleKey:
         """Decode a key from storage.
 
         Args:
@@ -96,7 +114,7 @@ class KeyCodecProtocol[EncodedKeyT](Protocol):
     range queries and efficient prefix scans in storage engines.
     """
 
-    def encode(self, key: Key) -> EncodedKeyT:
+    def encode(self, key: TupleKey) -> EncodedKeyT:
         """Encode a key for storage.
 
         Args:
@@ -111,7 +129,7 @@ class KeyCodecProtocol[EncodedKeyT](Protocol):
         """
         ...
 
-    def decode(self, encoded: EncodedKeyT) -> Key:
+    def decode(self, encoded: EncodedKeyT) -> TupleKey:
         """Decode a key from storage.
 
         Args:
@@ -172,11 +190,11 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
     """Protocol for state storage adapters."""
 
     @property
-    def codec(self) -> StorageCodecProtocol[EncodedKeyT, EncodedValueT]:
+    def codec(self) -> CodecProtocol[EncodedKeyT, EncodedValueT]:
         """Get storage codec for key/value encoding."""
         ...
 
-    def get(self, key: Key) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value by key.
 
         Args:
@@ -190,7 +208,7 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
-    def set(self, key: Key, value: Value) -> None:
+    def set(self, key: TupleKey, value: Value) -> None:
         """Set value by key.
 
         Args:
@@ -202,7 +220,7 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
-    def delete(self, key: Key) -> None:
+    def delete(self, key: TupleKey) -> None:
         """Delete value by key.
 
         Args:
@@ -213,7 +231,7 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
-    def exists(self, key: Key) -> bool:
+    def exists(self, key: TupleKey) -> bool:
         """Check if key exists.
 
         Args:
@@ -227,7 +245,7 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
-    def list_keys(self, prefix: Key, depth: int = ...) -> Generator[Key, None, None]:
+    def list_keys(self, prefix: TupleKey, depth: int = ...) -> Generator[TupleKey, None, None]:
         """List all keys under prefix.
 
         Args:
@@ -301,120 +319,6 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         ...
 
 
-@runtime_checkable
-class TransactionProtocol(Protocol):
-    """Protocol defining the interface for transactions."""
-
-    def get(self, key: Key) -> Value:
-        """Get value within transaction context.
-
-        Args:
-            key: Key to retrieve
-
-        Returns:
-            Value if found, None if not found
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            KeyError: If key not found
-            StorageOperationError: If get operation fails
-        """
-        ...
-
-    def set(self, key: Key, value: Value) -> None:
-        """Set value within transaction context.
-
-        Args:
-            key: Key to set
-            value: Value to store
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If set operation fails
-        """
-        ...
-
-    def delete(self, key: Key) -> None:
-        """Delete value within transaction context.
-
-        Args:
-            key: Key to delete
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If delete operation fails
-        """
-        ...
-
-    def exists(self, key: Key) -> bool:
-        """Check if key exists within transaction context.
-
-        Args:
-            key: Key to check
-
-        Returns:
-            True if key exists, False otherwise
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If exists check fails
-        """
-        ...
-
-    def list_keys(self, prefix: Key, depth: int = ...) -> Generator[Key, None, None]:
-        """List all keys under prefix within transaction context.
-
-        Args:
-            prefix: Key prefix to list
-            depth: Depth of listing (default is 1)
-                If depth is -1, lists all keys under prefix.
-
-        Returns:
-            Generator of matching keys
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If list operation fails
-        """
-        ...
-
-    def commit(self) -> None:
-        """Commit all changes in the transaction.
-
-        Raises:
-            TransactionError: If commit fails or transaction is invalid
-            StorageOperationError: If storage operations fail during commit
-        """
-        ...
-
-    def rollback(self) -> None:
-        """Roll back all changes in the transaction.
-
-        Raises:
-            TransactionError: If rollback fails or transaction is invalid
-        """
-        ...
-
-    def __hash__(self) -> int:
-        """Get hash of the transaction.
-
-        Returns:
-            Hash value of the transaction
-        """
-        ...
-
-    def __eq__(self, other: object) -> bool:
-        """Check equality of the transaction.
-
-        Args:
-            other: Value to compare with
-
-        Returns:
-            True if equal, False otherwise
-        """
-        ...
-
-
 class TransactionContextManagerProtocol(Protocol):
     """Context manager for storage transactions."""
 
@@ -457,83 +361,6 @@ class TransactionalHandlerProtocol(Protocol):
 
     def transaction(self) -> TransactionContextManagerProtocol:
         """Get a typed transaction context manager."""
-        ...
-
-
-@runtime_checkable
-class SnapshotProtocol(Protocol):
-    """Protocol defining the interface for read-only snapshots."""
-
-    def get(self, key: Key) -> Value:
-        """Get value within snapshot context.
-
-        Args:
-            key: Key to retrieve
-
-        Returns:
-            Value if found, None if not found
-
-        Raises:
-            KeyError: If key not found
-            StorageOperationError: If get operation fails
-        """
-        ...
-
-    def exists(self, key: Key) -> bool:
-        """Check if key exists within snapshot context.
-
-        Args:
-            key: Key to check
-
-        Returns:
-            True if key exists, False otherwise
-
-        Raises:
-            StorageOperationError: If exists check fails
-        """
-        ...
-
-    def list_keys(self, prefix: Key, depth: int = ...) -> Generator[Key, None, None]:
-        """List all keys under prefix within snapshot context.
-
-        Args:
-            prefix: Key prefix to list
-            depth: Depth of listing (default is 1)
-                If depth is -1, lists all keys under prefix.
-
-        Returns:
-            Generator of matching keys
-
-        Raises:
-            StorageOperationError: If list operation fails
-        """
-        ...
-
-    def close(self) -> None:
-        """Close snapshot and clean up resources.
-
-        Raises:
-            StorageOperationError: If cleanup fails
-        """
-        ...
-
-    def __hash__(self) -> int:
-        """Get hash of the snapshot.
-
-        Returns:
-            Hash value of the snapshot
-        """
-        ...
-
-    def __eq__(self, other: object) -> bool:
-        """Check equality of the snapshot.
-
-        Args:
-            other: Snapshot to compare with
-
-        Returns:
-            True if equal, False otherwise
-        """
         ...
 
 
@@ -583,11 +410,13 @@ class ObserverProtocol[EncodedKeyT](Protocol):
     """Protocol for observable adapters."""
 
     @property
-    def codec(self) -> KeyCodecProtocol[EncodedKeyT]:
+    def codec(self) -> CodecProtocol[EncodedKeyT, Any]:
         """Get key codec for encoding topics."""
         ...
 
-    def subscribe(self, key: Key, callback: CallbackFn, depth: int = ...) -> SubscriptionProtocol:
+    def subscribe(
+        self, key: TupleKey, callback: CallbackFn, depth: int = ...
+    ) -> SubscriptionProtocol:
         """Subscribe to changes under key prefix.
 
         Args:
@@ -615,7 +444,7 @@ class ObserverProtocol[EncodedKeyT](Protocol):
         """
         ...
 
-    def notify(self, topic: Key) -> None:
+    def notify(self, topic: TupleKey) -> None:
         """Notify observers of a change at the specified topic.
 
         Args:
@@ -661,7 +490,7 @@ class SubscriptionProtocol(Protocol):
     """
 
     @property
-    def topic_pattern(self) -> Key:
+    def topic_pattern(self) -> TupleKey:
         """Get topic pattern for subscription."""
         ...
 
@@ -674,3 +503,19 @@ class SubscriptionProtocol(Protocol):
     def depth(self) -> int:
         """Get depth for subscription."""
         ...
+
+
+class ReactiveStorageProtocol[EncodedKeyT, EncodedValueT](
+    StorageProtocol[EncodedKeyT, EncodedValueT], ObserverProtocol[EncodedKeyT], Protocol
+):
+    """Protocol for reactive storage adapters.
+
+    Combines storage and observer protocols to provide
+    a unified interface for reactive state storage.
+
+    Type Parameters:
+        EncodedKeyT: The type of encoded keys (covariant)
+        EncodedValueT: The type of encoded values (covariant)
+    """
+
+    ...

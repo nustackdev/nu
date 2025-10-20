@@ -43,10 +43,11 @@ from ..core import Ref
 
 
 if TYPE_CHECKING:
-    from redwood.tree.view import BaseView
+    from redwood.abc import KeyComponent, TupleKey, Value
+    from redwood.tree import BaseView
 
     from ..core.term import RValue
-    from ..types import Context, PathSegment, PrimitiveNodeValue, TuplePath
+    from ..types import Context
     from .commands import SetCmd
     from .operations import GetOp
 
@@ -102,7 +103,7 @@ class ValueRef(Ref):
 
     # ----- LValue contract -----
 
-    def resolve(self, context: Context) -> TuplePath:
+    def resolve(self, context: Context) -> TupleKey:
         """Resolve to path segments.
 
         Returns cached path for static refs, computes for dynamic.
@@ -111,7 +112,7 @@ class ValueRef(Ref):
             return self.static_path
 
         # Dynamic path - walk parent chain
-        segments: list[PathSegment] = [self.field_name]
+        segments: list[KeyComponent] = [self.field_name]
         current = self.parent_ref
         while current is not None:
             segments.insert(0, current.last_segment())
@@ -123,7 +124,7 @@ class ValueRef(Ref):
         """Return parent reference."""
         return self.parent_ref
 
-    def last_segment(self) -> PathSegment:
+    def last_segment(self) -> KeyComponent:
         """Return field name as last segment."""
         return self.field_name
 
@@ -145,7 +146,7 @@ class ValueRef(Ref):
 
         return GetOp(self)
 
-    def set(self, value: PrimitiveNodeValue) -> SetCmd:
+    def set(self, value: Value) -> SetCmd:
         """Create write operation.
 
         Args:
@@ -213,13 +214,13 @@ class MapRef(Ref):
 
     # ----- LValue contract -----
 
-    def resolve(self, context: Context) -> TuplePath:
+    def resolve(self, context: Context) -> TupleKey:
         """Resolve to path segments."""
         if self.static_path is not None and not self.is_dynamic:
             return self.static_path
 
         # Dynamic - walk chain
-        segments: list[PathSegment] = [self.field_name]
+        segments: list[KeyComponent] = [self.field_name]
         current = self.parent_ref
         while current is not None:
             segments.insert(0, current.last_segment())
@@ -231,7 +232,7 @@ class MapRef(Ref):
         """Return parent reference."""
         return self.parent_ref
 
-    def last_segment(self) -> PathSegment:
+    def last_segment(self) -> KeyComponent:
         """Return field name."""
         return self.field_name
 
@@ -330,7 +331,7 @@ class MapItemRef(Ref):
 
     # ----- LValue contract -----
 
-    def resolve(self, context: Context) -> TuplePath:
+    def resolve(self, context: Context) -> TupleKey:
         """Resolve to path segments.
 
         For dynamic keys, evaluates the expression.
@@ -350,7 +351,7 @@ class MapItemRef(Ref):
         """Return parent MapRef."""
         return self.map_ref
 
-    def last_segment(self) -> PathSegment:
+    def last_segment(self) -> KeyComponent:
         """Return key as last segment."""
         if self.key is not None:
             return self.key
@@ -375,7 +376,7 @@ class MapItemRef(Ref):
 
         return GetOp(self)
 
-    def set(self, value: PrimitiveNodeValue) -> SetCmd:
+    def set(self, value: Value) -> SetCmd:
         """Create write operation (primitives only)."""
         # if not self.is_primitive:
         #     raise AttributeError(

@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import attrs
 
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, TreeT, Value
+from redwood.abc import EMPTY, Empty, Value
+
+from ..types import ContainerProtocol, ContainerStructure
 from .base import BaseView
 
 
@@ -25,7 +27,7 @@ __all__ = [
 
 
 @attrs.define(frozen=True, kw_only=True)
-class ListView(BaseView[TreeT]):
+class ListView(BaseView):
     """List view for containers implementing the SEQUENCE structure.
 
     ListView provides a list-like interface for interacting with

@@ -12,14 +12,17 @@ from typing import TYPE_CHECKING, ClassVar
 
 import attrs
 
+from redwood.abc import EMPTY, Empty
+
 from ..context import ContextualBase
-from ..types import EMPTY, Empty, NodeType
 
 
 if TYPE_CHECKING:
-    from ..backend import ObservableStorage
-    from ..context.protocols import ContextType
+    from redwood.backends import StorageContextType
+    from redwood.reactive import ReactiveStorage
+
     from ..path import Path
+    from ..types import NodeType
 
 
 __all__ = [
@@ -39,10 +42,10 @@ class BaseNode(ContextualBase, ABC):
     """
 
     # Backend instance for transaction management
-    backend: ObservableStorage = attrs.field(kw_only=True)
+    backend: ReactiveStorage = attrs.field(kw_only=True)
 
     # Current transaction if any
-    ctx: ContextType = attrs.field(kw_only=True)  # type: ignore[assignment]
+    ctx: StorageContextType = attrs.field(kw_only=True)  # type: ignore[assignment]
 
     # Path to this node in the state tree
     path: Path = attrs.field(eq=False, kw_only=True)

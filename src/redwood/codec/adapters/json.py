@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.protocols import ValueCodecProtocol
-    from redwood.types import Value
+    from redwood.abc import Value
+    from redwood.backends import ValueCodecProtocol
 
     from .types import JSONEncoded
 

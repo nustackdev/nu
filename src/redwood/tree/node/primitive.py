@@ -11,14 +11,17 @@ from typing import TYPE_CHECKING
 
 import attrs
 
-from ..types import EMPTY, ContainerProtocol, ContainerStructure, Empty, NodeType, Value
+from redwood.abc import EMPTY, Empty, Value
+
+from ..types import ContainerProtocol, ContainerStructure, NodeType
 from .base import BaseNode
 from .container import ContainerNode
 
 
 if TYPE_CHECKING:
-    from ..backend import ObservableStorage
-    from ..context.protocols import ContextType
+    from redwood.backends import StorageContextType
+    from redwood.reactive import ReactiveStorage
+
     from ..path import Path
 
 
@@ -55,8 +58,8 @@ class PrimitiveNode(BaseNode):
     def create(
         cls,
         *,
-        backend: ObservableStorage,
-        ctx: ContextType,
+        backend: ReactiveStorage,
+        ctx: StorageContextType,
         path: Path,
     ) -> PrimitiveNode:
         """Create a new PrimitiveNode instance.

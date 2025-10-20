@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.protocols import (
+    from redwood.backends import (
         SnapshotContextManagerProtocol,
         SnapshotHandlerProtocol,
         SnapshotProtocol,

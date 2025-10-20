@@ -9,13 +9,6 @@ Design Philosophy:
     - No runtime checks (trust static analysis)
     - Composable (views can implement multiple protocols)
 
-Usage Pattern:
-    1. Views implement protocol methods
-    2. Slots declare view_type at construction
-    3. Refs store view_type as concrete class
-    4. Operations call view methods (type-checked)
-    5. Type checker verifies compatibility
-
 Protocol Extension Pattern:
     To add new protocol (e.g., SequenceProtocol):
     1. Define protocol with required methods
@@ -40,8 +33,12 @@ from typing import TYPE_CHECKING, Protocol
 
 
 if TYPE_CHECKING:
-    from .types import PrimitiveNodeValue
+    from .types import KeyComponent, Value
 
+__all__ = [
+    "MappingProtocol",
+    "MutableMappingProtocol",
+]
 
 # ============================================================================
 # Mapping Protocol
@@ -59,7 +56,7 @@ class MappingProtocol(Protocol):
     Used by: DictView, any custom mapping views
     """
 
-    def get(self, key: str) -> PrimitiveNodeValue:
+    def get(self, key: KeyComponent) -> Value:
         """Retrieve value by key.
 
         Args:
@@ -70,7 +67,7 @@ class MappingProtocol(Protocol):
         """
         ...
 
-    def keys(self) -> list[str]:
+    def keys(self) -> list[KeyComponent]:
         """Return all keys in the mapping.
 
         Returns:
@@ -78,7 +75,7 @@ class MappingProtocol(Protocol):
         """
         ...
 
-    def __contains__(self, key: str) -> bool:
+    def __contains__(self, key: KeyComponent) -> bool:
         """Check if key exists in mapping.
 
         Args:
@@ -98,7 +95,7 @@ class MutableMappingProtocol(MappingProtocol, Protocol):
     Used by: DictView in write contexts
     """
 
-    def set(self, key: str, value: PrimitiveNodeValue) -> None:
+    def set(self, key: KeyComponent, value: Value) -> None:
         """Set value at key.
 
         Args:
@@ -107,7 +104,7 @@ class MutableMappingProtocol(MappingProtocol, Protocol):
         """
         ...
 
-    def remove(self, key: str) -> None:
+    def remove(self, key: KeyComponent) -> None:
         """Remove key from mapping.
 
         Args:
