@@ -1,0 +1,97 @@
+# ============================================================================
+# MANIFEST.in - Source Distribution File Inclusion
+# ============================================================================
+# This file specifies which files to include in source distributions (.tar.gz)
+# Wheel distributions (.whl) use pyproject.toml's package-data instead
+
+# ============================================================================
+# Documentation and Metadata
+# ============================================================================
+include README.md
+include LICENSE
+include CHANGELOG.md
+include pyproject.toml
+include setup.py
+
+# ============================================================================
+# Build Scripts (for users building from source)
+# ============================================================================
+include scripts/build-rocksdb-linux.sh
+include scripts/build-rocksdb-macos.sh
+include scripts/build-rocksdb-windows.ps1
+
+# ============================================================================
+# rwrocks Package Files
+# ============================================================================
+# Cython source files (.pyx, .pxd)
+recursive-include src/rwrocks *.pyx
+recursive-include src/rwrocks *.pxd
+
+# C++ wrapper headers
+recursive-include src/rwrocks/include *.hpp
+recursive-include src/rwrocks/include *.h
+
+# Python type stubs
+recursive-include src/rwrocks *.pyi
+
+# py.typed marker for PEP 561 compliance
+recursive-include src py.typed
+
+# ============================================================================
+# Other Packages (Pure Python)
+# ============================================================================
+# These are automatically included by setuptools, but we can be explicit
+recursive-include src/redwood *.py
+recursive-include src/rwtup *.py
+recursive-include src/rwstd *.py
+
+# ============================================================================
+# Tests (optional - include if you want tests in sdist)
+# ============================================================================
+recursive-include tests *.py
+include tests/README.md
+
+# ============================================================================
+# Exclusions
+# ============================================================================
+# Exclude compiled files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+
+# Exclude Cython-generated C/C++ files (they'll be regenerated)
+global-exclude *.c
+global-exclude *.cpp
+exclude src/rwrocks/*.c
+exclude src/rwrocks/*.cpp
+
+# Exclude build artifacts
+global-exclude *.so
+global-exclude *.dylib
+global-exclude *.dll
+prune build
+prune dist
+prune *.egg-info
+
+# Exclude IDE and editor files
+global-exclude .DS_Store
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~
+prune .vscode
+prune .idea
+
+# Exclude version control
+prune .git
+global-exclude .gitignore
+global-exclude .gitattributes
+
+# Exclude CI/CD that users don't need
+prune .github
+exclude .pre-commit-config.yaml
+
+# Exclude development files
+exclude .coveragerc
+exclude .ruff_cache
+prune htmlcov

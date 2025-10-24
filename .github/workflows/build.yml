@@ -1,0 +1,252 @@
+name: Build and Test Wheels
+
+# When to run
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Manual trigger
+
+# Workflow-level environment variables
+env:
+  ROCKSDB_VERSION: "9.7.3"
+  CIBW_BUILD_VERBOSITY: 1
+
+jobs:
+  # ============================================================================
+  # JOB 1: Build wheels for all platforms
+  # ============================================================================
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false  # Continue other builds if one fails
+      matrix:
+        # Define all platforms to build for
+        os: [
+          ubuntu-22.04,      # x86_64 Linux
+          ubuntu-24.04-arm,  # aarch64 Linux (NEW in 2024!)
+          macos-13,          # x86_64 macOS (Intel)
+          macos-14,          # arm64 macOS (M1/M2/M3)
+          windows-2022       # x86_64 Windows
+        ]
+    
+    steps:
+      # ------------------------------------------------------------------------
+      # STEP 1: Checkout code
+      # ------------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for version detection
+      
+      # ------------------------------------------------------------------------
+      # STEP 2: Set up Python (for running cibuildwheel)
+      # ------------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'  # Version to run cibuildwheel itself
+      
+      # ------------------------------------------------------------------------
+      # STEP 3: Install cibuildwheel
+      # ------------------------------------------------------------------------
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.16.2
+      
+      # ------------------------------------------------------------------------
+      # STEP 4: Build wheels with cibuildwheel
+      # This is where the magic happens!
+      # ------------------------------------------------------------------------
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          # ---------------------------------------------------------------------
+          # CIBUILDWHEEL CONFIGURATION
+          # ---------------------------------------------------------------------
+          
+          # Which Python versions to build for
+          # cp39 = CPython 3.9, cp310 = CPython 3.10, etc.
+          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+          
+          # Which builds to skip
+          # - musllinux: Alpine Linux (different libc, would need separate builds)
+          # - win32: 32-bit Windows (rare, not worth supporting)
+          # - manylinux_i686: 32-bit Linux (rare, not worth supporting)
+          CIBW_SKIP: "*-musllinux_* *-win32 *-manylinux_i686"
+          
+          # ---------------------------------------------------------------------
+          # LINUX-SPECIFIC SETTINGS
+          # ---------------------------------------------------------------------
+          
+          # Which manylinux standard to use
+          # manylinux2014: Compatible with RHEL/CentOS 7+ (2014+)
+          # This covers ~95% of Linux systems in 2024
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+          
+          # Build RocksDB before building Python wheels (Linux)
+          CIBW_BEFORE_ALL_LINUX: |
+            yum install -y wget
+            bash {project}/scripts/build-rocksdb-linux.sh
+          
+          # Where to find built libraries (Linux)
+          CIBW_ENVIRONMENT_LINUX: >
+            RWROCKS_DEP_DIR=/tmp/rwrocks_deps
+            LD_LIBRARY_PATH=/tmp/rwrocks_deps/lib:$LD_LIBRARY_PATH
+          
+          # Test the wheel after building (Linux)
+          CIBW_TEST_COMMAND_LINUX: |
+            python -c "import rwrocks; print('Linux wheel OK:', rwrocks.__version__)"
+          
+          # ---------------------------------------------------------------------
+          # MACOS-SPECIFIC SETTINGS
+          # ---------------------------------------------------------------------
+          
+          # Which macOS architectures to build
+          # x86_64: Intel Macs
+          # arm64: Apple Silicon (M1/M2/M3)
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          
+          # Minimum macOS version to support
+          # 10.14 = Mojave (2018) - good compatibility
+          MACOSX_DEPLOYMENT_TARGET: "10.14"
+          
+          # Build RocksDB before building Python wheels (macOS)
+          CIBW_BEFORE_ALL_MACOS: |
+            brew install wget || true
+            bash {project}/scripts/build-rocksdb-macos.sh
+          
+          # Where to find built libraries (macOS)
+          CIBW_ENVIRONMENT_MACOS: >
+            RWROCKS_DEP_DIR=/tmp/rwrocks_deps
+            DYLD_LIBRARY_PATH=/tmp/rwrocks_deps/lib:$DYLD_LIBRARY_PATH
+          
+          # Test the wheel after building (macOS)
+          CIBW_TEST_COMMAND_MACOS: |
+            python -c "import rwrocks; print('macOS wheel OK:', rwrocks.__version__)"
+          
+          # Fix library paths in macOS wheels (for arm64 cross-compilation)
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: |
+            delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}
+          
+          # ---------------------------------------------------------------------
+          # WINDOWS-SPECIFIC SETTINGS
+          # ---------------------------------------------------------------------
+          
+          # Build RocksDB before building Python wheels (Windows)
+          # Note: This requires vcpkg or manual builds
+          CIBW_BEFORE_ALL_WINDOWS: |
+            powershell -File {project}/scripts/build-rocksdb-windows.ps1
+          
+          # Where to find built libraries (Windows)
+          CIBW_ENVIRONMENT_WINDOWS: >
+            RWROCKS_DEP_DIR=C:\rwrocks_deps
+          
+          # Test the wheel after building (Windows)
+          CIBW_TEST_COMMAND_WINDOWS: |
+            python -c "import rwrocks; print('Windows wheel OK:', rwrocks.__version__)"
+      
+      # ------------------------------------------------------------------------
+      # STEP 5: Upload built wheels as artifacts
+      # ------------------------------------------------------------------------
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+          retention-days: 30
+  
+  # ============================================================================
+  # JOB 2: Run tests on built wheels
+  # ============================================================================
+  test_wheels:
+    name: Test wheels on ${{ matrix.os }}
+    needs: build_wheels
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14, windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: wheelhouse
+      
+      - name: Install wheel
+        run: |
+          python -m pip install --find-links wheelhouse rwrocks
+      
+      - name: Run tests
+        run: |
+          python -m pip install pytest
+          pytest tests/ -v
+  
+  # ============================================================================
+  # JOB 3: Build source distribution (sdist)
+  # ============================================================================
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install build tools
+        run: python -m pip install build
+      
+      - name: Build sdist
+        run: python -m build --sdist
+      
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+  
+  # ============================================================================
+  # JOB 4: Publish to PyPI (only on tags)
+  # ============================================================================
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels, test_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    # Only run on version tags (v1.0.0, v0.1.0, etc.)
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: "*"
+          merge-multiple: true
+      
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
