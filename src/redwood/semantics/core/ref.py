@@ -155,7 +155,7 @@ class Ref[T](LValue, ABC):
 
     # ---- Required attributes (set by concrete classes) ----
 
-    field_name: str
+    field_name: KeyComponent
     """Name of the field this ref points to."""
 
     value_type: type[T]

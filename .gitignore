@@ -187,11 +187,13 @@ benchmark_results/
 
 # Misc
 _playground/
-.db*
-.state*
+.db*/
+.state*/
+.logs*/
 
-# Agents
+# AI-related
 .cursor/
+.agent.md/
+.claude/
 Claude.md
-.agent.md
-repomix*
+repomix*.txt
