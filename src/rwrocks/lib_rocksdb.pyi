@@ -93,7 +93,6 @@
 #     raise Exception("Unknown error: %s" % st.ToString())
 # ######################################################
 
-
 # cdef string bytes_to_string(path) except *:
 #     return string(PyBytes_AsString(path), PyBytes_Size(path))
 
@@ -182,8 +181,6 @@
 #     cdef const comparator.Comparator* get_comparator(self):
 #         return self.comparator_ptr
 
-
-
 # cdef int compare_callback(
 #     void* ctx,
 #     logger.Logger* log,
@@ -200,8 +197,6 @@
 
 # BytewiseComparator = PyBytewiseComparator
 # #########################################
-
-
 
 # ## Here comes the stuff for the filter policy
 # @cython.internal
@@ -239,7 +234,6 @@
 
 #     cdef set_info_log(self, shared_ptr[logger.Logger] info_log):
 #         self.policy.get().set_info_log(info_log)
-
 
 # cdef void create_filter_callback(
 #     void* ctx,
@@ -312,8 +306,6 @@
 # BloomFilterPolicy = PyBloomFilterPolicy
 # #############################################
 
-
-
 # ## Here comes the stuff for the merge operator
 # @cython.internal
 # cdef class PyMergeOperator(object):
@@ -360,7 +352,6 @@
 #             msg = "%s is not of this types %s"
 #             msg %= (ob, (IAssociativeMergeOperator, IMergeOperator))
 #             raise TypeError(msg)
-
 
 #     cdef object get_ob(self):
 #         return self.ob
@@ -503,7 +494,6 @@
 #         cdef slice_transform.SliceTransformWrapper* ptr
 #         ptr = <slice_transform.SliceTransformWrapper*> self.transfomer.get()
 #         ptr.set_info_log(info_log)
-
 
 # cdef Slice slice_transform_callback(
 #     void* ctx,
@@ -713,7 +703,6 @@
 #         self.factory.reset(memtablerep.NewHashLinkListRepFactory(bucket_count))
 # ##################################
 
-
 # cdef class CompressionType(object):
 #     no_compression = u'no_compression'
 #     snappy_compression = u'snappy_compression'
@@ -767,20 +756,11 @@
 #         return self.weak_handle
 
 class ColumnFamilyHandle:
-
     @property
-    def is_valid(self) -> bool:
-        ...
-
-    def __repr__(self) -> str:
-        ...
-
-    def __eq__(self, other) -> bool:
-        ...
-
-    def __lt__(self, other) -> bool:
-        ...
-
+    def is_valid(self) -> bool: ...
+    def __repr__(self) -> str: ...
+    def __eq__(self, other) -> bool: ...
+    def __lt__(self, other) -> bool: ...
     def __ne__(self, other):
         return not self == other
 
@@ -793,13 +773,10 @@ class ColumnFamilyHandle:
     def __ge__(self, other):
         return not self < other
 
-    def __hash__(self) -> int:
-        ...
+    def __hash__(self) -> int: ...
 
-
-class ColumnFamilyOptions(object):
-
-    def __init__(self, **kwargs):
+class ColumnFamilyOptions:
+    def __init__(self, **kwargs) -> None:
         self.py_comparator = None
         self.py_merge_operator = None
         self.py_prefix_extractor = None
@@ -835,10 +812,8 @@ class ColumnFamilyOptions(object):
         self.merge_operator = None
         self.prefix_extractors = None
 
-
 class Options(ColumnFamilyOptions):
-
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__()
         self.create_if_missing: bool
         self.error_if_exists: bool
@@ -869,7 +844,6 @@ class Options(ColumnFamilyOptions):
         self.bytes_per_sync = None
         self.row_cache = None
 
-
 # # Forward declaration
 # cdef class Snapshot
 
@@ -881,35 +855,16 @@ class Options(ColumnFamilyOptions):
 # # Forward declaration
 # cdef class WriteBatchIterator
 
-class WriteBatch(object):
-
-    def __init__(self, data=None):
-        ...
-
-    def put(self, key: bytes, value: bytes):
-        ...
-
-    def merge(self, key: bytes, value: bytes):
-        ...
-
-    def delete(self, key: bytes):
-        ...
-
-    def delete_range(self, key: Tuple[bytes, bytes]):
-        ...
-
-    def clear(self):
-        ...
-
-    def data(self):
-        ...
-
-    def count(self):
-        ...
-
-    def __iter__(self):
-        ...
-
+class WriteBatch:
+    def __init__(self, data=None) -> None: ...
+    def put(self, key: bytes, value: bytes): ...
+    def merge(self, key: bytes, value: bytes): ...
+    def delete(self, key: bytes): ...
+    def delete_range(self, key: tuple[bytes, bytes]): ...
+    def clear(self): ...
+    def data(self): ...
+    def count(self): ...
+    def __iter__(self): ...
 
 # @cython.internal
 # cdef class WriteBatchIterator(object):
@@ -962,17 +917,17 @@ class WriteBatch(object):
 #         self.pos += 1
 #         return ret
 
+from collections.abc import Iterable
+from typing import Any
 
-from typing import Any, Dict, Iterable, List, Tuple
-
-
-class DB(object):
-
-    def __init__(self,
-                 db_name: str,
-                 opts: 'Options',
-                 column_families: dict = None,
-                 read_only: bool = False):
+class DB:
+    def __init__(
+        self,
+        db_name: str,
+        opts: Options,
+        column_families: dict | None = None,
+        read_only: bool = False,
+    ) -> None:
         ...
         self.opts = opts
         self.opts.in_use = True
@@ -980,106 +935,31 @@ class DB(object):
     def __dealloc__(self):
         self.close()
 
-    def close(self):
-        ...
-
+    def close(self): ...
     @property
-    def column_families(self) -> list:
-        ...
-
-    def get_column_family(self, name: bytes):
-        ...
-
-    def put(
-        self,
-        key: bytes,
-        value: bytes,
-        sync: bool = False,
-        disable_wal: bool = False
-    ):
-        ...
-
-    def delete(
-        self,
-        key: bytes,
-        sync: bool = False,
-        disable_wal: bool = False
-    ):
-        ...
-
+    def column_families(self) -> list: ...
+    def get_column_family(self, name: bytes): ...
+    def put(self, key: bytes, value: bytes, sync: bool = False, disable_wal: bool = False): ...
+    def delete(self, key: bytes, sync: bool = False, disable_wal: bool = False): ...
     def delete_range(
-        self,
-        key: Tuple[bytes, bytes],
-        sync: bool = False,
-        disable_wal: bool = False
-    ):
-        ...
-
-    def merge(
-        self,
-        key: bytes,
-        value: bytes,
-        sync: bool = False,
-        disable_wal: bool = False
-    ):
-        ...
-
-    def write(
-        self,
-        batch: 'WriteBatch',
-        sync: bool = False,
-        disable_wal: bool = False
-    ):
-        ...
-
-    def get(
-        self,
-        key: bytes,
-        *args,
-        **kwargs
-    ) -> bytes:
-        ...
-
-    def multi_get(
-        self,
-        keys: Iterable[bytes],
-        *args,
-        **kwargs
-    ) -> Dict[bytes, bytes]:
-        ...
-
+        self, key: tuple[bytes, bytes], sync: bool = False, disable_wal: bool = False
+    ): ...
+    def merge(self, key: bytes, value: bytes, sync: bool = False, disable_wal: bool = False): ...
+    def write(self, batch: WriteBatch, sync: bool = False, disable_wal: bool = False): ...
+    def get(self, key: bytes, *args, **kwargs) -> bytes: ...
+    def multi_get(self, keys: Iterable[bytes], *args, **kwargs) -> dict[bytes, bytes]: ...
     def key_may_exist(
-        self,
-        key: bytes,
-        fetch: bool = False,
-        *args,
-        **kwargs
-    ) -> Tuple[bool, Any]:
-        ...
-
+        self, key: bytes, fetch: bool = False, *args, **kwargs
+    ) -> tuple[bool, Any]: ...
     def iterkeys(
-        self,
-        column_family: 'ColumnFamilyHandle' = None,
-        *args,
-        **kwargs
-    ) -> 'KeysIterator':
-        ...
-
+        self, column_family: ColumnFamilyHandle = None, *args, **kwargs
+    ) -> KeysIterator: ...
     def itervalues(
-        self,
-        column_family: 'ColumnFamilyHandle' = None,
-        *args,
-        **kwargs
-    ) -> 'ValuesIterator':
-        ...
-
+        self, column_family: ColumnFamilyHandle = None, *args, **kwargs
+    ) -> ValuesIterator: ...
     def iteritems(
-        self,
-        column_family: 'ColumnFamilyHandle' = None,
-        *args,
-        **kwargs
-    ) -> 'ItemsIterator':
-        ...
+        self, column_family: ColumnFamilyHandle = None, *args, **kwargs
+    ) -> ItemsIterator: ...
 
     # def iterskeys(self, column_families, *args, **kwargs):
     #     cdef vector[db.Iterator*] iters
@@ -1147,7 +1027,6 @@ class DB(object):
     #     with nogil:
     #         self.db.NewIterators(opts, cf_handles, &iters)
 
-
     #     cf_iter = iter(column_families)
     #     cdef list ret = []
     #     for it_ptr in iters:
@@ -1159,11 +1038,8 @@ class DB(object):
     # def snapshot(self):
     #     return Snapshot(self)
 
-    def get_property(self, prop: bytes, column_family: 'ColumnFamilyHandle' = None):
-        ...
-
-    def get_live_files_metadata(self) -> List[Dict[str, Any]]:
-        ...
+    def get_property(self, prop: bytes, column_family: ColumnFamilyHandle = None): ...
+    def get_live_files_metadata(self) -> list[dict[str, Any]]: ...
 
     # def compact_range(self, begin=None, end=None, ColumnFamilyHandle column_family=None, **py_options):
     #     cdef options.CompactRangeOptions c_options
@@ -1278,6 +1154,108 @@ class DB(object):
     #     if copts:
     #         copts.in_use = False
 
+class TxnDBWritePolicy:
+    write_committed: str = "write_committed"
+    write_prepared: str = "write_prepared"
+    write_unprepared: str = "write_unprepared"
+
+class TransactionDBOptions:
+    max_num_locks: int
+    max_num_deadlocks: int
+    num_stripes: int
+    transaction_lock_timeout: int
+    default_lock_timeout: int
+    write_policy: str
+    rollback_merge_operands: bool
+    skip_concurrency_control: bool
+    default_write_batch_flush_threshold: int
+    in_use: bool
+
+    def __init__(self, **kwargs: Any) -> None: ...
+
+class TransactionOptions:
+    set_snapshot: bool
+    deadlock_detect: bool
+    use_only_the_last_commit_time_batch_for_recovery: bool
+    lock_timeout: int
+    expiration: int
+    deadlock_detect_depth: int
+    max_write_batch_size: int
+    skip_concurrency_control: bool
+    skip_prepare: bool
+    write_batch_flush_threshold: int
+
+    def __init__(self, **kwargs: Any) -> None: ...
+
+class TransactionDB(DB):
+    txn_opts: TransactionDBOptions
+
+    def __init__(
+        self,
+        db_name: str,
+        opts: Options,
+        txn_db_opts: TransactionDBOptions | None = None,
+        column_families: dict | None = None,
+    ) -> None: ...
+    def begin_transaction(
+        self,
+        txn_options: TransactionOptions | None = ...,
+        write_options: dict[str, Any] | None = ...,
+        reuse: Transaction | None = ...,
+    ) -> Transaction: ...
+    def close(self) -> None: ...
+
+class Transaction:
+    closed: bool
+
+    def close(self) -> None: ...
+    def commit(self) -> None: ...
+    def rollback(self) -> None: ...
+    def prepare(self) -> None: ...
+    def set_snapshot(self) -> None: ...
+    def clear_snapshot(self) -> None: ...
+    def snapshot(self) -> TransactionSnapshot | None: ...
+    def save_point(self) -> None: ...
+    def rollback_to_save_point(self) -> None: ...
+    def pop_save_point(self) -> None: ...
+    def set_name(self, name: str | bytes) -> None: ...
+    def get_name(self) -> str: ...
+    def get_id(self) -> int: ...
+    def put(
+        self,
+        key: bytes,
+        value: bytes,
+        column_family: ColumnFamilyHandle | None = None,
+        assume_tracked: bool = False,
+    ) -> None: ...
+    def merge(
+        self,
+        key: bytes,
+        value: bytes,
+        column_family: ColumnFamilyHandle | None = None,
+        assume_tracked: bool = False,
+    ) -> None: ...
+    def delete_single(
+        self,
+        key: bytes,
+        column_family: ColumnFamilyHandle | None = None,
+        assume_tracked: bool = False,
+    ) -> None: ...
+    def get(self, key: bytes, column_family: ColumnFamilyHandle | None = None) -> bytes | None: ...
+    def multi_get(
+        self, keys: Iterable[bytes | tuple[ColumnFamilyHandle, bytes]]
+    ) -> dict[Any, bytes | None]: ...
+    def iterkeys(self, column_family: ColumnFamilyHandle | None = None) -> KeysIterator: ...
+    def itervalues(self, column_family: ColumnFamilyHandle | None = None) -> ValuesIterator: ...
+    def iteritems(self, column_family: ColumnFamilyHandle | None = None) -> ItemsIterator: ...
+    def disable_indexing(self) -> None: ...
+    def enable_indexing(self) -> None: ...
+
+class TransactionSnapshot:
+    pointer: int
+    transaction: Transaction
+
+    def __bool__(self) -> bool: ...
 
 # def repair_db(db_name, Options opts):
 #     cdef Status st
@@ -1286,7 +1264,6 @@ class DB(object):
 #     db_path = path_to_string(db_name)
 #     st = db.RepairDB(db_path, deref(opts.opts))
 #     check_status(st)
-
 
 # def list_column_families(db_name, Options opts):
 #     cdef Status st
@@ -1299,7 +1276,6 @@ class DB(object):
 #     check_status(st)
 
 #     return column_families
-
 
 # @cython.no_gc_clear
 # @cython.internal
@@ -1318,60 +1294,33 @@ class DB(object):
 #             with nogil:
 #                 self.db.db.ReleaseSnapshot(self.ptr)
 
-
-class BaseIterator(object):
-    def __init__(self, db: 'DB', handle: 'ColumnFamilyHandle' = None):
-        ...
-
-    def __dealloc__(self):
-        ...
-
+class BaseIterator:
+    def __init__(self, db: DB, handle: ColumnFamilyHandle = None) -> None: ...
+    def __dealloc__(self): ...
     def __iter__(self):
         return self
 
-    def __next__(self):
-        ...
-
-    def get(self):
-        ...
-
-    def __reversed__(self):
-        ...
-
-    def seek_to_first(self):
-        ...
-
-    def seek_to_last(self):
-        ...
-
-    def seek(self, key: bytes):
-        ...
-
-    def seek_for_prev(self, key):
-        ...
-
-    def get_ob(self):
+    def __next__(self): ...
+    def get(self): ...
+    def __reversed__(self): ...
+    def seek_to_first(self): ...
+    def seek_to_last(self): ...
+    def seek(self, key: bytes): ...
+    def seek_for_prev(self, key): ...
+    def get_ob(self) -> None:
         return None
 
-
 class KeysIterator(BaseIterator):
-    def get(self) -> bytes:
-        ...
-    def __next__(self) -> bytes:
-        ...
+    def get(self) -> bytes: ...
+    def __next__(self) -> bytes: ...
 
 class ValuesIterator(BaseIterator):
-    def get(self) -> bytes:
-        ...
-    def __next__(self) -> bytes:
-        ...
-
+    def get(self) -> bytes: ...
+    def __next__(self) -> bytes: ...
 
 class ItemsIterator(BaseIterator):
-    def get(self) -> Tuple[bytes, bytes]:
-        ...
-    def __next__(self) -> Tuple[bytes, bytes]:
-        ...
+    def get(self) -> tuple[bytes, bytes]: ...
+    def __next__(self) -> tuple[bytes, bytes]: ...
 
 # @cython.internal
 # cdef class ReversedIterator(object):

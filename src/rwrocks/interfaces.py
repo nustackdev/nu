@@ -1,5 +1,4 @@
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 
 class Comparator:
@@ -56,6 +55,7 @@ class FilterPolicy:
     @abstractmethod
     def key_may_match(self, key, filter_):
         pass
+
 
 class SliceTransform:
     __metaclass__ = ABCMeta

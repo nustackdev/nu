@@ -6,6 +6,7 @@ from libcpp.deque cimport deque
 from libcpp.vector cimport vector
 from cpython cimport bool as py_bool
 from libcpp cimport bool as cpp_bool
+from libc.stddef cimport size_t
 from libc.stdint cimport uint32_t
 from cython.operator cimport dereference as deref
 from cpython.bytes cimport PyBytes_AsString
@@ -27,6 +28,7 @@ cimport rwrocks.db as db
 cimport rwrocks.iterator as iterator
 cimport rwrocks.backup as backup
 cimport rwrocks.env as env
+cimport rwrocks.transaction as transaction
 cimport rwrocks.table_factory as table_factory
 cimport rwrocks.memtablerep as memtablerep
 cimport rwrocks.universal_compaction as universal_compaction
@@ -748,6 +750,12 @@ cdef class CompactionPri(object):
     min_overlapping_ratio = u'min_overlapping_ratio'
 
 
+cdef class TxnDBWritePolicy(object):
+    write_committed = u'write_committed'
+    write_prepared = u'write_prepared'
+    write_unprepared = u'write_unprepared'
+
+
 cdef class _ColumnFamilyHandle:
     """ This is an internal class that we will weakref for safety """
     # pxd defines:
@@ -1455,6 +1463,170 @@ cdef class Options(ColumnFamilyOptions):
             self.opts.skip_stats_update_on_db_open = value
 
 
+cdef class TransactionDBOptions(object):
+    # pxd defines:
+    # cdef transaction.TransactionDBOptions* opts
+    # cdef bint in_use
+
+    def __cinit__(self):
+        self.opts = new transaction.TransactionDBOptions()
+        self.in_use = False
+
+    def __dealloc__(self):
+        if self.opts != NULL:
+            del self.opts
+            self.opts = NULL
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    property max_num_locks:
+        def __get__(self):
+            return self.opts.max_num_locks
+        def __set__(self, value):
+            self.opts.max_num_locks = value
+
+    property max_num_deadlocks:
+        def __get__(self):
+            return self.opts.max_num_deadlocks
+        def __set__(self, value):
+            self.opts.max_num_deadlocks = value
+
+    property num_stripes:
+        def __get__(self):
+            return self.opts.num_stripes
+        def __set__(self, value):
+            self.opts.num_stripes = value
+
+    property transaction_lock_timeout:
+        def __get__(self):
+            return self.opts.transaction_lock_timeout
+        def __set__(self, value):
+            self.opts.transaction_lock_timeout = value
+
+    property default_lock_timeout:
+        def __get__(self):
+            return self.opts.default_lock_timeout
+        def __set__(self, value):
+            self.opts.default_lock_timeout = value
+
+    property write_policy:
+        def __get__(self):
+            if self.opts.write_policy == transaction.WRITE_COMMITTED:
+                return TxnDBWritePolicy.write_committed
+            elif self.opts.write_policy == transaction.WRITE_PREPARED:
+                return TxnDBWritePolicy.write_prepared
+            elif self.opts.write_policy == transaction.WRITE_UNPREPARED:
+                return TxnDBWritePolicy.write_unprepared
+            raise TypeError("Unknown write policy value: %r" % self.opts.write_policy)
+
+        def __set__(self, value):
+            if value in (TxnDBWritePolicy.write_committed, b'write_committed', 'write_committed'):
+                self.opts.write_policy = transaction.WRITE_COMMITTED
+            elif value in (TxnDBWritePolicy.write_prepared, b'write_prepared', 'write_prepared'):
+                self.opts.write_policy = transaction.WRITE_PREPARED
+            elif value in (TxnDBWritePolicy.write_unprepared, b'write_unprepared', 'write_unprepared'):
+                self.opts.write_policy = transaction.WRITE_UNPREPARED
+            else:
+                raise TypeError("Unknown transaction write policy: %r" % value)
+
+    property rollback_merge_operands:
+        def __get__(self):
+            return self.opts.rollback_merge_operands
+        def __set__(self, value):
+            self.opts.rollback_merge_operands = value
+
+    property skip_concurrency_control:
+        def __get__(self):
+            return self.opts.skip_concurrency_control
+        def __set__(self, value):
+            self.opts.skip_concurrency_control = value
+
+    property default_write_batch_flush_threshold:
+        def __get__(self):
+            return self.opts.default_write_batch_flush_threshold
+        def __set__(self, value):
+            self.opts.default_write_batch_flush_threshold = value
+
+
+cdef class TransactionOptions(object):
+    # pxd defines:
+    # cdef transaction.TransactionOptions* opts
+
+    def __cinit__(self):
+        self.opts = new transaction.TransactionOptions()
+
+    def __dealloc__(self):
+        if self.opts != NULL:
+            del self.opts
+            self.opts = NULL
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    property set_snapshot:
+        def __get__(self):
+            return self.opts.set_snapshot
+        def __set__(self, value):
+            self.opts.set_snapshot = value
+
+    property deadlock_detect:
+        def __get__(self):
+            return self.opts.deadlock_detect
+        def __set__(self, value):
+            self.opts.deadlock_detect = value
+
+    property use_only_the_last_commit_time_batch_for_recovery:
+        def __get__(self):
+            return self.opts.use_only_the_last_commit_time_batch_for_recovery
+        def __set__(self, value):
+            self.opts.use_only_the_last_commit_time_batch_for_recovery = value
+
+    property lock_timeout:
+        def __get__(self):
+            return self.opts.lock_timeout
+        def __set__(self, value):
+            self.opts.lock_timeout = value
+
+    property expiration:
+        def __get__(self):
+            return self.opts.expiration
+        def __set__(self, value):
+            self.opts.expiration = value
+
+    property deadlock_detect_depth:
+        def __get__(self):
+            return self.opts.deadlock_detect_depth
+        def __set__(self, value):
+            self.opts.deadlock_detect_depth = value
+
+    property max_write_batch_size:
+        def __get__(self):
+            return self.opts.max_write_batch_size
+        def __set__(self, value):
+            self.opts.max_write_batch_size = value
+
+    property skip_concurrency_control:
+        def __get__(self):
+            return self.opts.skip_concurrency_control
+        def __set__(self, value):
+            self.opts.skip_concurrency_control = value
+
+    property skip_prepare:
+        def __get__(self):
+            return self.opts.skip_prepare
+        def __set__(self, value):
+            self.opts.skip_prepare = value
+
+    property write_batch_flush_threshold:
+        def __get__(self):
+            return self.opts.write_batch_flush_threshold
+        def __set__(self, value):
+            self.opts.write_batch_flush_threshold = value
+
+
 
 # TODO inherit from writableDB
 cdef class WriteBatch(object):
@@ -1970,6 +2142,7 @@ cdef class DB(IDB):
             cf_handle = column_family.get_handle()
 
         it = KeysIterator(self)
+        it.owner = self
 
         with nogil:
             it.ptr = self.db.NewIterator(opts, cf_handle)
@@ -1983,6 +2156,7 @@ cdef class DB(IDB):
             cf_handle = column_family.get_handle()
 
         it = ValuesIterator(self)
+        it.owner = self
 
         with nogil:
             it.ptr = self.db.NewIterator(opts, cf_handle)
@@ -1997,6 +2171,7 @@ cdef class DB(IDB):
 
         it = ItemsIterator.__new__(ItemsIterator)
         it.db = self
+        it.owner = self
 
         with nogil:
             it.ptr = self.db.NewIterator(opts, cf_handle)
@@ -2023,6 +2198,7 @@ cdef class DB(IDB):
         for it_ptr in iters:
             it = KeysIterator(self, next(cf_iter))
             it.ptr = it_ptr
+            it.owner = self
             ret.append(it)
         return ret
 
@@ -2046,6 +2222,7 @@ cdef class DB(IDB):
         for it_ptr in iters:
             it = ValuesIterator(self)
             it.ptr = it_ptr
+            it.owner = self
             ret.append(it)
         return ret
 
@@ -2071,6 +2248,7 @@ cdef class DB(IDB):
         for it_ptr in iters:
             it = ItemsIterator(self, next(cf_iter))
             it.ptr = it_ptr
+            it.owner = self
             ret.append(it)
         return ret
 
@@ -2239,6 +2417,467 @@ cdef class DB(IDB):
             copts.in_use = False
 
 
+@cython.no_gc_clear
+cdef class TransactionDB(DB):
+    def __cinit__(
+        self,
+        db_name,
+        Options opts,
+        TransactionDBOptions txn_db_opts = None,
+        dict column_families = None):
+        cdef Status st
+        cdef string db_path
+        cdef vector[db.ColumnFamilyDescriptor] column_family_descriptors
+        cdef vector[db.ColumnFamilyHandle*] column_family_handles
+        cdef bytes default_cf_name = db.kDefaultColumnFamilyName
+
+        self.txn_db = NULL
+        self.txn_opts = None
+        self.db = NULL
+        self.opts = None
+        self.cf_handles = []
+        self.cf_options = []
+
+        if opts.in_use:
+            raise Exception("Options object is already used by another DB")
+
+        if txn_db_opts is None:
+            txn_db_opts = TransactionDBOptions()
+
+        if txn_db_opts.in_use:
+            raise Exception("TransactionDBOptions object is already used by another DB")
+
+        db_path = path_to_string(db_name)
+
+        if not column_families or default_cf_name not in column_families:
+            column_family_descriptors.push_back(
+                db.ColumnFamilyDescriptor(
+                    db.kDefaultColumnFamilyName,
+                    options.ColumnFamilyOptions(deref(opts.opts))
+                )
+            )
+            self.cf_options.append(None)
+
+        if column_families:
+            for cf_name, cf_options in column_families.items():
+                if not isinstance(cf_name, bytes):
+                    raise TypeError(
+                        f"column family name {cf_name!r} is not of type {bytes}!"
+                    )
+                if not isinstance(cf_options, ColumnFamilyOptions):
+                    raise TypeError(
+                        f"column family options {cf_options!r} is not of type "
+                        f"{ColumnFamilyOptions}!"
+                    )
+                if (<ColumnFamilyOptions>cf_options).in_use:
+                    raise Exception(
+                        f"ColumnFamilyOptions object for {cf_name} is already "
+                        "used by another Column Family"
+                    )
+                (<ColumnFamilyOptions>cf_options).in_use = True
+                column_family_descriptors.push_back(
+                    db.ColumnFamilyDescriptor(
+                        cf_name,
+                        deref((<ColumnFamilyOptions>cf_options).copts)
+                    )
+                )
+                self.cf_options.append(cf_options)
+
+        with nogil:
+            st = transaction.TransactionDB_Open_CF(
+                <options.DBOptions&>deref(opts.opts),
+                deref(txn_db_opts.opts),
+                db_path,
+                column_family_descriptors,
+                &column_family_handles,
+                &self.txn_db)
+
+        check_status(st)
+
+        for handle in column_family_handles:
+            wrapper = _ColumnFamilyHandle.from_handle_ptr(handle)
+            self.cf_handles.append(wrapper)
+
+        self.db = <db.DB*>self.txn_db
+
+        cdef shared_ptr[logger.Logger] info_log = self.db.GetOptions(
+            self.db.DefaultColumnFamily()).info_log
+        if opts.py_comparator is not None:
+            opts.py_comparator.set_info_log(info_log)
+
+        if opts.py_table_factory is not None:
+            opts.py_table_factory.set_info_log(info_log)
+
+        if opts.prefix_extractor is not None:
+            opts.py_prefix_extractor.set_info_log(info_log)
+
+        cdef ColumnFamilyOptions copts
+        for idx, copts in enumerate(self.cf_options):
+            if not copts:
+                continue
+
+            info_log = self.db.GetOptions(column_family_handles[idx]).info_log
+
+            if copts.py_comparator is not None:
+                copts.py_comparator.set_info_log(info_log)
+
+            if copts.py_table_factory is not None:
+                copts.py_table_factory.set_info_log(info_log)
+
+            if copts.py_prefix_extractor is not None:
+                copts.py_prefix_extractor.set_info_log(info_log)
+
+        self.opts = opts
+        self.opts.in_use = True
+        self.txn_opts = txn_db_opts
+        self.txn_opts.in_use = True
+
+    cpdef begin_transaction(
+        self,
+        TransactionOptions txn_options = None,
+        dict write_options = None,
+        Transaction reuse = None):
+
+        if self.txn_db == NULL:
+            raise RuntimeError("TransactionDB is closed")
+
+        cdef options.WriteOptions wopts
+        wopts.sync = False
+        wopts.disableWAL = False
+
+        if write_options is not None:
+            if 'sync' in write_options:
+                wopts.sync = write_options['sync']
+            if 'disable_wal' in write_options:
+                wopts.disableWAL = write_options['disable_wal']
+            if 'disableWAL' in write_options:
+                wopts.disableWAL = write_options['disableWAL']
+
+        cdef transaction.TransactionOptions stack_opts = transaction.TransactionOptions()
+        cdef transaction.TransactionOptions* txn_opts_ptr
+
+        if txn_options is not None:
+            if txn_options.opts == NULL:
+                raise ValueError("TransactionOptions is invalid")
+            txn_opts_ptr = txn_options.opts
+        else:
+            txn_opts_ptr = cython.address(stack_opts)
+
+        cdef transaction.Transaction* raw_txn = NULL
+
+        if reuse is not None:
+            if reuse.txn == NULL:
+                raise ValueError("Reuse transaction handle is closed")
+            if reuse.db is not self:
+                raise ValueError("Reuse transaction belongs to a different TransactionDB")
+            with nogil:
+                raw_txn = self.txn_db.BeginTransaction(
+                    wopts,
+                    deref(txn_opts_ptr),
+                    reuse.txn)
+            if raw_txn == NULL:
+                raise RuntimeError("BeginTransaction returned NULL")
+            reuse.txn = raw_txn
+            reuse.db = self
+            reuse.closed = False
+            reuse.owns_ptr = True
+            return reuse
+
+        with nogil:
+            raw_txn = self.txn_db.BeginTransaction(
+                wopts,
+                deref(txn_opts_ptr))
+
+        if raw_txn == NULL:
+            raise RuntimeError("BeginTransaction returned NULL")
+
+        txn = Transaction.__new__(Transaction)
+        txn.txn = raw_txn
+        txn.db = self
+        txn.closed = False
+        txn.owns_ptr = True
+        return txn
+
+    cpdef void close(self):
+        if self.txn_opts is not None and self.txn_opts.in_use:
+            self.txn_opts.in_use = False
+        DB.close(self)
+        self.txn_db = NULL
+        self.txn_opts = None
+
+
+cdef class Transaction(object):
+    def __cinit__(self):
+        self.txn = NULL
+        self.db = None
+        self.owns_ptr = True
+        self.closed = True
+
+    def __dealloc__(self):
+        self.close()
+
+    cdef void _ensure_open(self):
+        if self.txn == NULL or self.closed:
+            raise RuntimeError("Transaction handle is closed")
+        if self.db is None or self.db.db == NULL:
+            raise RuntimeError("Owning TransactionDB is closed")
+
+    cpdef void close(self):
+        if not self.closed and self.txn != NULL and self.owns_ptr:
+            with nogil:
+                del self.txn
+        self.txn = NULL
+        self.closed = True
+
+    cpdef void commit(self):
+        self._ensure_open()
+        cdef Status st
+        with nogil:
+            st = self.txn.Commit()
+        check_status(st)
+
+    cpdef void rollback(self):
+        self._ensure_open()
+        cdef Status st
+        with nogil:
+            st = self.txn.Rollback()
+        check_status(st)
+
+    cpdef void prepare(self):
+        self._ensure_open()
+        cdef Status st
+        with nogil:
+            st = self.txn.Prepare()
+        check_status(st)
+
+    cpdef void set_snapshot(self):
+        self._ensure_open()
+        with nogil:
+            self.txn.SetSnapshot()
+
+    cpdef void clear_snapshot(self):
+        self._ensure_open()
+        with nogil:
+            self.txn.ClearSnapshot()
+
+    cpdef snapshot(self):
+        self._ensure_open()
+        cdef const snapshot.Snapshot* ptr = self.txn.GetSnapshot()
+        if ptr == NULL:
+            return None
+        return TransactionSnapshot(self, <size_t><void*>ptr)
+
+    cpdef void save_point(self):
+        self._ensure_open()
+        self.txn.SetSavePoint()
+
+    cpdef void rollback_to_save_point(self):
+        self._ensure_open()
+        cdef Status st
+        with nogil:
+            st = self.txn.RollbackToSavePoint()
+        check_status(st)
+
+    cpdef void pop_save_point(self):
+        self._ensure_open()
+        cdef Status st
+        with nogil:
+            st = self.txn.PopSavePoint()
+        check_status(st)
+
+    cpdef set_name(self, name):
+        self._ensure_open()
+        cdef string c_name
+        if isinstance(name, bytes):
+            c_name = bytes_to_string(name)
+        elif isinstance(name, str):
+            c_name = bytes_to_string(name.encode('utf-8'))
+        else:
+            raise TypeError("Transaction name must be bytes or str")
+
+        cdef Status st
+        with nogil:
+            st = self.txn.SetName(c_name)
+        check_status(st)
+
+    cpdef get_name(self):
+        self._ensure_open()
+        cdef string name = self.txn.GetName()
+        return string_to_bytes(name).decode('utf-8', 'ignore')
+
+    cpdef get_id(self):
+        self._ensure_open()
+        return self.txn.GetID()
+
+    cpdef void put(self, bytes key, bytes value, ColumnFamilyHandle column_family = None, cpp_bool assume_tracked = False):
+        self._ensure_open()
+        cdef Status st
+        cdef Slice c_key = bytes_to_slice(key)
+        cdef Slice c_value = bytes_to_slice(value)
+        cdef db.ColumnFamilyHandle* cf_handle
+        if column_family is not None:
+            cf_handle = column_family.get_handle()
+            with nogil:
+                st = self.txn.Put(cf_handle, c_key, c_value, assume_tracked)
+        else:
+            with nogil:
+                st = self.txn.Put(c_key, c_value)
+        check_status(st)
+
+    cpdef void merge(self, bytes key, bytes value, ColumnFamilyHandle column_family = None, cpp_bool assume_tracked = False):
+        self._ensure_open()
+        cdef Status st
+        cdef Slice c_key = bytes_to_slice(key)
+        cdef Slice c_value = bytes_to_slice(value)
+        cdef db.ColumnFamilyHandle* cf_handle
+        if column_family is not None:
+            cf_handle = column_family.get_handle()
+            with nogil:
+                st = self.txn.Merge(cf_handle, c_key, c_value, assume_tracked)
+        else:
+            with nogil:
+                st = self.txn.Merge(c_key, c_value)
+        check_status(st)
+
+    cpdef void delete_single(self, bytes key, ColumnFamilyHandle column_family = None, cpp_bool assume_tracked = False):
+        self._ensure_open()
+        cdef Status st
+        cdef Slice c_key = bytes_to_slice(key)
+        cdef db.ColumnFamilyHandle* cf_handle
+        if column_family is not None:
+            cf_handle = column_family.get_handle()
+            with nogil:
+                st = self.txn.Delete(cf_handle, c_key, assume_tracked)
+        else:
+            with nogil:
+                st = self.txn.Delete(c_key)
+        check_status(st)
+
+    cpdef get(self, bytes key, ColumnFamilyHandle column_family = None):
+        self._ensure_open()
+        cdef Status st
+        cdef string res
+        cdef options.ReadOptions opts
+        cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
+        if column_family is not None:
+            cf_handle = column_family.get_handle()
+        with nogil:
+            st = self.txn.Get(opts, cf_handle, bytes_to_slice(key), cython.address(res))
+
+        if st.ok():
+            return string_to_bytes(res)
+        elif st.IsNotFound():
+            return None
+        else:
+            check_status(st)
+
+    cpdef multi_get(self, keys):
+        self._ensure_open()
+        cdef vector[string] values
+        values.resize(len(keys))
+
+        cdef db.ColumnFamilyHandle* cf_handle
+        cdef vector[db.ColumnFamilyHandle*] cf_handles
+        cdef vector[Slice] c_keys
+        for key in keys:
+            if isinstance(key, tuple):
+                py_handle, key = key
+                cf_handle = (<ColumnFamilyHandle?>py_handle).get_handle()
+            else:
+                cf_handle = self.db.db.DefaultColumnFamily()
+            c_keys.push_back(bytes_to_slice(key))
+            cf_handles.push_back(cf_handle)
+
+        cdef options.ReadOptions opts
+        cdef vector[Status] res
+
+        with nogil:
+            res = self.txn.MultiGet(
+                opts,
+                cf_handles,
+                c_keys,
+                cython.address(values))
+
+        cdef dict ret_dict = {}
+        for index in range(len(keys)):
+            if res[index].ok():
+                ret_dict[keys[index]] = string_to_bytes(values[index])
+            elif res[index].IsNotFound():
+                ret_dict[keys[index]] = None
+            else:
+                check_status(res[index])
+        return ret_dict
+
+    cpdef Iterator iterkeys(self, ColumnFamilyHandle column_family = None):
+        self._ensure_open()
+        cdef options.ReadOptions opts
+        cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
+        if column_family is not None:
+            cf_handle = column_family.get_handle()
+
+        it = KeysIterator(self.db, column_family)
+        it.owner = self
+
+        with nogil:
+            it.ptr = self.txn.GetIterator(opts, cf_handle)
+        return it
+
+    cpdef Iterator itervalues(self, ColumnFamilyHandle column_family = None):
+        self._ensure_open()
+        cdef options.ReadOptions opts
+        cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
+        if column_family is not None:
+            cf_handle = column_family.get_handle()
+
+        it = ValuesIterator(self.db, column_family)
+        it.owner = self
+
+        with nogil:
+            it.ptr = self.txn.GetIterator(opts, cf_handle)
+        return it
+
+    cpdef Iterator iteritems(self, ColumnFamilyHandle column_family = None):
+        self._ensure_open()
+        cdef options.ReadOptions opts
+        cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
+        if column_family is not None:
+            cf_handle = column_family.get_handle()
+
+        it = ItemsIterator.__new__(ItemsIterator)
+        it.db = self.db
+        it.handle = column_family
+        it.owner = self
+
+        with nogil:
+            it.ptr = self.txn.GetIterator(opts, cf_handle)
+        return it
+
+    cpdef void disable_indexing(self):
+        self._ensure_open()
+        with nogil:
+            self.txn.DisableIndexing()
+
+    cpdef void enable_indexing(self):
+        self._ensure_open()
+        with nogil:
+            self.txn.EnableIndexing()
+
+
+class TransactionSnapshot:
+    __slots__ = ("transaction", "pointer")
+
+    def __init__(self, transaction, pointer):
+        self.transaction = transaction
+        self.pointer = pointer
+
+    def __bool__(self):
+        return bool(self.pointer)
+
+    def __repr__(self):
+        state = "set" if self.pointer else "unset"
+        return f"<TransactionSnapshot {state}>"
+
+
 cpdef repair_db(db_name, Options opts):
     cdef Status st
     cdef string db_path
@@ -2316,6 +2955,7 @@ cdef class BaseIterator(Iterator):
         self.db = db
         self.ptr = NULL
         self.handle = handle
+        self.owner = db
 
     def __dealloc__(self):
         if not self.ptr == NULL:

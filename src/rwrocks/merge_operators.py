@@ -10,7 +10,7 @@ class UintAddOperator(AssociativeMergeOperator):
             return (True, py_struct.pack("Q", s))
         return (True, value)
 
-    def name(self):
+    def name(self) -> bytes:
         return b"uint64add"
 
 
@@ -21,5 +21,5 @@ class StringAppendOperator(AssociativeMergeOperator):
             return (True, s)
         return (True, value)
 
-    def name(self):
+    def name(self) -> bytes:
         return b"StringAppendOperator"
