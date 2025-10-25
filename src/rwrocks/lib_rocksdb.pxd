@@ -671,7 +671,6 @@ cdef class TransactionDB(DB):
 cdef class Transaction(object):
     cdef transaction.Transaction* txn
     cdef TransactionDB db
-    cdef bint owns_ptr
     cdef bint closed
 
     cdef void _ensure_open(self)

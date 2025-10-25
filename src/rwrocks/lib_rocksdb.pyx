@@ -2592,7 +2592,6 @@ cdef class TransactionDB(DB):
             reuse.txn = raw_txn
             reuse.db = self
             reuse.closed = False
-            reuse.owns_ptr = True
             return reuse
 
         raw_txn = self.txn_db.BeginTransaction(
@@ -2606,49 +2605,77 @@ cdef class TransactionDB(DB):
         txn.txn = raw_txn
         txn.db = self
         txn.closed = False
-        txn.owns_ptr = True
         return txn
 
+    def __dealloc__(self):
+        # CRITICAL: NO RETURN STATEMENT
+        self.close()
+
     cpdef void close(self):
-        if self.txn_opts is not None and self.txn_opts.in_use:
-            self.txn_opts.in_use = False
-        DB.close(self)
-        self.txn_db = NULL
-        self.txn_opts = None
+        # Clear handles first
+        self.cf_handles.clear()
 
+        # Delete the C++ object ONCE
+        if self.txn_db != NULL:
+            with nogil:
+                del self.txn_db
+            self.txn_db = NULL
 
+            # CRITICAL: Set aliased pointer to NULL
+            # This prevents parent from trying to delete
+            self.db = NULL
+
+        # Release options
+        if self.opts is not None:
+            self.opts.in_use = False
+
+@cython.no_gc_clear
 cdef class Transaction(object):
+    # pxd should define:
+    # cdef transaction.Transaction* txn
+    # cdef object db  # Reference to TransactionDB
+    # cdef cpp_bool closed
+
     def __cinit__(self):
         self.txn = NULL
         self.db = None
-        self.owns_ptr = True
         self.closed = True
 
     def __dealloc__(self):
-        self.close()
+        # If still open, rollback. RocksDB handles deletion after rollback.
+        if self.txn != NULL and not self.closed:
+            self.txn.Rollback()
+        self.txn = NULL
+
+    cpdef void close(self):
+        """Close the transaction by rolling it back."""
+        if not self.closed:
+            self.rollback()
+            self.closed = True
 
     cdef void _ensure_open(self):
         if self.txn == NULL or self.closed:
-            raise RuntimeError("Transaction handle is closed")
-        if self.db is None or self.db.db == NULL:
-            raise RuntimeError("Owning TransactionDB is closed")
-
-    cpdef void close(self):
-        if not self.closed and self.txn != NULL and self.owns_ptr:
-            del self.txn
-        self.txn = NULL
-        self.closed = True
+            raise RuntimeError("Transaction is closed")
+        if self.db is None or (<TransactionDB>self.db).txn_db == NULL:
+            raise RuntimeError("Parent TransactionDB is closed")
 
     cpdef void commit(self):
         self._ensure_open()
         cdef Status st
         st = self.txn.Commit()
+        self.closed = True
+        self.txn = NULL  # Pointer invalid after commit
         check_status(st)
 
     cpdef void rollback(self):
-        self._ensure_open()
+        if self.closed:
+            return  # Idempotent
+        if self.txn == NULL:
+            return
         cdef Status st
         st = self.txn.Rollback()
+        self.closed = True
+        self.txn = NULL  # Pointer invalid after rollback
         check_status(st)
 
     cpdef void prepare(self):
