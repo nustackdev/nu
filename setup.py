@@ -281,7 +281,7 @@ def create_rwrocks_extensions() -> list[Extension]:
         # Convert path to module name
         # e.g., src/rwrocks/lib_rocksdb.pyx -> rwrocks.lib_rocksdb
         rel_path = pyx_file.relative_to("src")
-        module_parts = list(rel_path.parts[:-1]) + [rel_path.stem]
+        module_parts = [*list(rel_path.parts[:-1]), rel_path.stem]
         module_name = ".".join(module_parts)
 
         print(f"\n   Creating extension: {module_name}")
@@ -325,7 +325,7 @@ def create_rwrocks_extensions() -> list[Extension]:
 # ============================================================================
 
 
-def main():
+def main() -> None:
     """Main setup function."""
     # Get extensions (only for rwrocks if it exists)
     extensions = create_rwrocks_extensions()
