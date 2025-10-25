@@ -574,45 +574,6 @@ cdef class TransactionDBOptions(object):
 cdef class TransactionOptions(object):
     cdef transaction.TransactionOptions* opts
 
-
-@cython.no_gc_clear
-cdef class TransactionDB(DB):
-    cdef transaction.TransactionDB* txn_db
-    cdef TransactionDBOptions txn_opts
-    cpdef begin_transaction(self, TransactionOptions txn_options = *, dict write_options = *, Transaction reuse = *)
-    cpdef void close(self)
-
-
-cdef class Transaction(object):
-    cdef transaction.Transaction* txn
-    cdef TransactionDB db
-    cdef bint owns_ptr
-    cdef bint closed
-
-    cpdef void close(self)
-    cpdef void commit(self)
-    cpdef void rollback(self)
-    cpdef void prepare(self)
-    cpdef void set_snapshot(self)
-    cpdef void clear_snapshot(self)
-    cpdef snapshot(self)
-    cpdef void save_point(self)
-    cpdef void rollback_to_save_point(self)
-    cpdef void pop_save_point(self)
-    cpdef set_name(self, name)
-    cpdef get_name(self)
-    cpdef get_id(self)
-    cpdef void put(self, bytes key, bytes value, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
-    cpdef void merge(self, bytes key, bytes value, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
-    cpdef void delete_single(self, bytes key, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
-    cpdef get(self, bytes key, ColumnFamilyHandle column_family = *)
-    cpdef multi_get(self, keys)
-    cpdef Iterator iterkeys(self, ColumnFamilyHandle column_family = *)
-    cpdef Iterator itervalues(self, ColumnFamilyHandle column_family = *)
-    cpdef Iterator iteritems(self, ColumnFamilyHandle column_family = *)
-    cpdef void disable_indexing(self)
-    cpdef void enable_indexing(self)
-
 # # Forward declaration
 # cdef class WriteBatchIterator
 
@@ -698,6 +659,46 @@ cdef class DB(IDB):
 cpdef repair_db(db_name, Options opts)
 
 cpdef list_column_families(db_name, Options opts)
+
+@cython.no_gc_clear
+cdef class TransactionDB(DB):
+    cdef transaction.CppTransactionDB* txn_db
+    cdef TransactionDBOptions txn_opts
+    cpdef begin_transaction(self, TransactionOptions txn_options = *, dict write_options = *, Transaction reuse = *)
+    cpdef void close(self)
+
+
+cdef class Transaction(object):
+    cdef transaction.Transaction* txn
+    cdef TransactionDB db
+    cdef bint owns_ptr
+    cdef bint closed
+
+    cdef void _ensure_open(self)
+    cpdef void close(self)
+    cpdef void commit(self)
+    cpdef void rollback(self)
+    cpdef void prepare(self)
+    cpdef void set_snapshot(self)
+    cpdef void clear_snapshot(self)
+    cpdef snapshot(self)
+    cpdef void save_point(self)
+    cpdef void rollback_to_save_point(self)
+    cpdef void pop_save_point(self)
+    cpdef set_name(self, name)
+    cpdef get_name(self)
+    cpdef get_id(self)
+    cpdef void put(self, bytes key, bytes value, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
+    cpdef void merge(self, bytes key, bytes value, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
+    cpdef void delete_single(self, bytes key, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
+    cpdef get(self, bytes key, ColumnFamilyHandle column_family = *)
+    cpdef multi_get(self, keys)
+    cpdef Iterator iterkeys(self, ColumnFamilyHandle column_family = *)
+    cpdef Iterator itervalues(self, ColumnFamilyHandle column_family = *)
+    cpdef Iterator iteritems(self, ColumnFamilyHandle column_family = *)
+    cpdef void disable_indexing(self)
+    cpdef void enable_indexing(self)
+
 
 @cython.no_gc_clear
 cdef class Snapshot(object):

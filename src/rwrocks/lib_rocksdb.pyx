@@ -1797,6 +1797,7 @@ cdef class DB(IDB):
         dict column_families=None,
         read_only=False,
         secondary_path=None,
+        txn_db_opts=None,
     ):
         cdef Status st
         cdef string db_path
@@ -1808,6 +1809,18 @@ cdef class DB(IDB):
         self.opts = None
         self.cf_handles = []
         self.cf_options = []
+
+        # TransactionDB subclasses handle opening the underlying C++ handle
+        # themselves. Skipping here prevents double initialisation that leads to
+        # use-after-free during teardown.
+        if isinstance(self, TransactionDB):
+            return
+
+        # TransactionDB passes txn_db_opts so it can manage opening the C++
+        # TransactionDB itself. When present we skip the vanilla DB open here
+        # and let the subclass finish initialisation.
+        if txn_db_opts is not None:
+            return
 
         if opts.in_use:
             raise Exception("Options object is already used by another DB")
@@ -2570,11 +2583,10 @@ cdef class TransactionDB(DB):
                 raise ValueError("Reuse transaction handle is closed")
             if reuse.db is not self:
                 raise ValueError("Reuse transaction belongs to a different TransactionDB")
-            with nogil:
-                raw_txn = self.txn_db.BeginTransaction(
-                    wopts,
-                    deref(txn_opts_ptr),
-                    reuse.txn)
+            raw_txn = self.txn_db.BeginTransaction(
+                wopts,
+                deref(txn_opts_ptr),
+                reuse.txn)
             if raw_txn == NULL:
                 raise RuntimeError("BeginTransaction returned NULL")
             reuse.txn = raw_txn
@@ -2583,15 +2595,14 @@ cdef class TransactionDB(DB):
             reuse.owns_ptr = True
             return reuse
 
-        with nogil:
-            raw_txn = self.txn_db.BeginTransaction(
-                wopts,
-                deref(txn_opts_ptr))
+        raw_txn = self.txn_db.BeginTransaction(
+            wopts,
+            deref(txn_opts_ptr))
 
         if raw_txn == NULL:
             raise RuntimeError("BeginTransaction returned NULL")
 
-        txn = Transaction.__new__(Transaction)
+        cdef Transaction txn = Transaction.__new__(Transaction)
         txn.txn = raw_txn
         txn.db = self
         txn.closed = False
@@ -2624,41 +2635,35 @@ cdef class Transaction(object):
 
     cpdef void close(self):
         if not self.closed and self.txn != NULL and self.owns_ptr:
-            with nogil:
-                del self.txn
+            del self.txn
         self.txn = NULL
         self.closed = True
 
     cpdef void commit(self):
         self._ensure_open()
         cdef Status st
-        with nogil:
-            st = self.txn.Commit()
+        st = self.txn.Commit()
         check_status(st)
 
     cpdef void rollback(self):
         self._ensure_open()
         cdef Status st
-        with nogil:
-            st = self.txn.Rollback()
+        st = self.txn.Rollback()
         check_status(st)
 
     cpdef void prepare(self):
         self._ensure_open()
         cdef Status st
-        with nogil:
-            st = self.txn.Prepare()
+        st = self.txn.Prepare()
         check_status(st)
 
     cpdef void set_snapshot(self):
         self._ensure_open()
-        with nogil:
-            self.txn.SetSnapshot()
+        self.txn.SetSnapshot()
 
     cpdef void clear_snapshot(self):
         self._ensure_open()
-        with nogil:
-            self.txn.ClearSnapshot()
+        self.txn.ClearSnapshot()
 
     cpdef snapshot(self):
         self._ensure_open()
@@ -2674,15 +2679,13 @@ cdef class Transaction(object):
     cpdef void rollback_to_save_point(self):
         self._ensure_open()
         cdef Status st
-        with nogil:
-            st = self.txn.RollbackToSavePoint()
+        st = self.txn.RollbackToSavePoint()
         check_status(st)
 
     cpdef void pop_save_point(self):
         self._ensure_open()
         cdef Status st
-        with nogil:
-            st = self.txn.PopSavePoint()
+        st = self.txn.PopSavePoint()
         check_status(st)
 
     cpdef set_name(self, name):
@@ -2696,8 +2699,7 @@ cdef class Transaction(object):
             raise TypeError("Transaction name must be bytes or str")
 
         cdef Status st
-        with nogil:
-            st = self.txn.SetName(c_name)
+        st = self.txn.SetName(c_name)
         check_status(st)
 
     cpdef get_name(self):
@@ -2717,11 +2719,9 @@ cdef class Transaction(object):
         cdef db.ColumnFamilyHandle* cf_handle
         if column_family is not None:
             cf_handle = column_family.get_handle()
-            with nogil:
-                st = self.txn.Put(cf_handle, c_key, c_value, assume_tracked)
+            st = self.txn.Put(cf_handle, c_key, c_value, assume_tracked)
         else:
-            with nogil:
-                st = self.txn.Put(c_key, c_value)
+            st = self.txn.Put(c_key, c_value)
         check_status(st)
 
     cpdef void merge(self, bytes key, bytes value, ColumnFamilyHandle column_family = None, cpp_bool assume_tracked = False):
@@ -2732,11 +2732,9 @@ cdef class Transaction(object):
         cdef db.ColumnFamilyHandle* cf_handle
         if column_family is not None:
             cf_handle = column_family.get_handle()
-            with nogil:
-                st = self.txn.Merge(cf_handle, c_key, c_value, assume_tracked)
+            st = self.txn.Merge(cf_handle, c_key, c_value, assume_tracked)
         else:
-            with nogil:
-                st = self.txn.Merge(c_key, c_value)
+            st = self.txn.Merge(c_key, c_value)
         check_status(st)
 
     cpdef void delete_single(self, bytes key, ColumnFamilyHandle column_family = None, cpp_bool assume_tracked = False):
@@ -2746,11 +2744,9 @@ cdef class Transaction(object):
         cdef db.ColumnFamilyHandle* cf_handle
         if column_family is not None:
             cf_handle = column_family.get_handle()
-            with nogil:
-                st = self.txn.Delete(cf_handle, c_key, assume_tracked)
+            st = self.txn.Delete(cf_handle, c_key, assume_tracked)
         else:
-            with nogil:
-                st = self.txn.Delete(c_key)
+            st = self.txn.Delete(c_key)
         check_status(st)
 
     cpdef get(self, bytes key, ColumnFamilyHandle column_family = None):
@@ -2761,8 +2757,7 @@ cdef class Transaction(object):
         cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
         if column_family is not None:
             cf_handle = column_family.get_handle()
-        with nogil:
-            st = self.txn.Get(opts, cf_handle, bytes_to_slice(key), cython.address(res))
+        st = self.txn.Get(opts, cf_handle, bytes_to_slice(key), cython.address(res))
 
         if st.ok():
             return string_to_bytes(res)
@@ -2791,12 +2786,11 @@ cdef class Transaction(object):
         cdef options.ReadOptions opts
         cdef vector[Status] res
 
-        with nogil:
-            res = self.txn.MultiGet(
-                opts,
-                cf_handles,
-                c_keys,
-                cython.address(values))
+        res = self.txn.MultiGet(
+            opts,
+            cf_handles,
+            c_keys,
+            cython.address(values))
 
         cdef dict ret_dict = {}
         for index in range(len(keys)):
@@ -2811,56 +2805,69 @@ cdef class Transaction(object):
     cpdef Iterator iterkeys(self, ColumnFamilyHandle column_family = None):
         self._ensure_open()
         cdef options.ReadOptions opts
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle
+        cdef iterator.Iterator* it_ptr
+        cdef transaction.Transaction* txn_ptr = self.txn
+        cdef KeysIterator it
+
         if column_family is not None:
             cf_handle = column_family.get_handle()
+            it_ptr = transaction.Transaction_GetIterator_CF(txn_ptr, opts, cf_handle)
+        else:
+            it_ptr = transaction.Transaction_GetIterator(txn_ptr, opts)
 
         it = KeysIterator(self.db, column_family)
         it.owner = self
-
-        with nogil:
-            it.ptr = self.txn.GetIterator(opts, cf_handle)
+        it.ptr = it_ptr
         return it
 
     cpdef Iterator itervalues(self, ColumnFamilyHandle column_family = None):
         self._ensure_open()
         cdef options.ReadOptions opts
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle
+        cdef iterator.Iterator* it_ptr
+        cdef transaction.Transaction* txn_ptr = self.txn
+        cdef ValuesIterator it
+
         if column_family is not None:
             cf_handle = column_family.get_handle()
+            it_ptr = transaction.Transaction_GetIterator_CF(txn_ptr, opts, cf_handle)
+        else:
+            it_ptr = transaction.Transaction_GetIterator(txn_ptr, opts)
 
         it = ValuesIterator(self.db, column_family)
         it.owner = self
-
-        with nogil:
-            it.ptr = self.txn.GetIterator(opts, cf_handle)
+        it.ptr = it_ptr
         return it
 
     cpdef Iterator iteritems(self, ColumnFamilyHandle column_family = None):
         self._ensure_open()
         cdef options.ReadOptions opts
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle
+        cdef iterator.Iterator* it_ptr
+        cdef transaction.Transaction* txn_ptr = self.txn
+        cdef ItemsIterator it
+
         if column_family is not None:
             cf_handle = column_family.get_handle()
+            it_ptr = transaction.Transaction_GetIterator_CF(txn_ptr, opts, cf_handle)
+        else:
+            it_ptr = transaction.Transaction_GetIterator(txn_ptr, opts)
 
         it = ItemsIterator.__new__(ItemsIterator)
         it.db = self.db
         it.handle = column_family
         it.owner = self
-
-        with nogil:
-            it.ptr = self.txn.GetIterator(opts, cf_handle)
+        it.ptr = it_ptr
         return it
 
     cpdef void disable_indexing(self):
         self._ensure_open()
-        with nogil:
-            self.txn.DisableIndexing()
+        self.txn.DisableIndexing()
 
     cpdef void enable_indexing(self):
         self._ensure_open()
-        with nogil:
-            self.txn.EnableIndexing()
+        self.txn.EnableIndexing()
 
 
 class TransactionSnapshot:

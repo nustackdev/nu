@@ -4,13 +4,13 @@ from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 
-from rwrocks.iterator cimport Iterator
 from rwrocks.slice_ cimport Slice
 from rwrocks.snapshot cimport Snapshot
 from rwrocks.status cimport Status
 from rwrocks.std_memory cimport shared_ptr
 
 cimport rwrocks.db as db
+cimport rwrocks.iterator as iterator
 cimport rwrocks.options as options
 
 
@@ -71,23 +71,23 @@ cdef extern from "rocksdb/utilities/transaction_db.h" namespace "rocksdb":
         Status Rollback() nogil except+
         Status Prepare() nogil except+
         void SetSnapshot() nogil except+
-        const Snapshot* GetSnapshot() const nogil except+
+        const Snapshot* GetSnapshot() nogil except+
         void ClearSnapshot() nogil except+
         Status SetName(const TransactionName&) nogil except+
-        TransactionName GetName() const nogil except+
-        TransactionID GetID() const nogil except+
+        TransactionName GetName() nogil except+
+        TransactionID GetID() nogil except+
         void SetSavePoint() nogil except+
         Status PopSavePoint() nogil except+
         Status RollbackToSavePoint() nogil except+
         void DisableIndexing() nogil except+
         void EnableIndexing() nogil except+
-        Status Put(db.ColumnFamilyHandle*, const Slice&, const Slice&, cpp_bool assume_tracked = False) nogil except+
+        Status Put(db.ColumnFamilyHandle*, const Slice&, const Slice&, cpp_bool assume_tracked) nogil except+
         Status Put(const Slice&, const Slice&) nogil except+
-        Status Merge(db.ColumnFamilyHandle*, const Slice&, const Slice&, cpp_bool assume_tracked = False) nogil except+
+        Status Merge(db.ColumnFamilyHandle*, const Slice&, const Slice&, cpp_bool assume_tracked) nogil except+
         Status Merge(const Slice&, const Slice&) nogil except+
-        Status Delete(db.ColumnFamilyHandle*, const Slice&, cpp_bool assume_tracked = False) nogil except+
+        Status Delete(db.ColumnFamilyHandle*, const Slice&, cpp_bool assume_tracked) nogil except+
         Status Delete(const Slice&) nogil except+
-        Status SingleDelete(db.ColumnFamilyHandle*, const Slice&, cpp_bool assume_tracked = False) nogil except+
+        Status SingleDelete(db.ColumnFamilyHandle*, const Slice&, cpp_bool assume_tracked) nogil except+
         Status SingleDelete(const Slice&) nogil except+
         Status Get(const options.ReadOptions&, db.ColumnFamilyHandle*, const Slice&, string*) nogil except+
         Status Get(const options.ReadOptions&, const Slice&, string*) nogil except+
@@ -100,10 +100,10 @@ cdef extern from "rocksdb/utilities/transaction_db.h" namespace "rocksdb":
             const options.ReadOptions&,
             const vector[Slice]&,
             vector[string]*) nogil except+
-        Iterator* GetIterator(const options.ReadOptions&) nogil except+
-        Iterator* GetIterator(const options.ReadOptions&, db.ColumnFamilyHandle*) nogil except+
+        iterator.Iterator* GetIterator(const options.ReadOptions&) nogil except+
+        iterator.Iterator* GetIterator(const options.ReadOptions&, db.ColumnFamilyHandle*) nogil except+
 
-    cdef cppclass TransactionDB(db.DB):
+    cdef cppclass CppTransactionDB "rocksdb::TransactionDB"(db.DB):
         Transaction* BeginTransaction(
             const options.WriteOptions&,
             const TransactionOptions&,
@@ -118,7 +118,7 @@ cdef extern from "rocksdb/utilities/transaction_db.h" namespace "rocksdb":
         const options.Options&,
         const TransactionDBOptions&,
         const string&,
-        TransactionDB**) nogil except+
+        CppTransactionDB**) nogil except+
 
     cdef Status TransactionDB_Open_CF "rocksdb::TransactionDB::Open"(
         const options.DBOptions&,
@@ -126,4 +126,29 @@ cdef extern from "rocksdb/utilities/transaction_db.h" namespace "rocksdb":
         const string&,
         const vector[db.ColumnFamilyDescriptor]&,
         vector[db.ColumnFamilyHandle*]*,
-        TransactionDB**) nogil except+
+        CppTransactionDB**) nogil except+
+
+
+# Helper functions to disambiguate overloaded Transaction methods
+cdef extern from "rocksdb/utilities/transaction.h":
+    """
+    static inline rocksdb::Iterator* Transaction_GetIterator(
+        rocksdb::Transaction* txn,
+        const rocksdb::ReadOptions& opts) {
+        return txn->GetIterator(opts);
+    }
+
+    static inline rocksdb::Iterator* Transaction_GetIterator_CF(
+        rocksdb::Transaction* txn,
+        const rocksdb::ReadOptions& opts,
+        rocksdb::ColumnFamilyHandle* cf) {
+        return txn->GetIterator(opts, cf);
+    }
+    """
+    iterator.Iterator* Transaction_GetIterator(
+        Transaction*,
+        const options.ReadOptions&) nogil except+
+    iterator.Iterator* Transaction_GetIterator_CF(
+        Transaction*,
+        const options.ReadOptions&,
+        db.ColumnFamilyHandle*) nogil except+
