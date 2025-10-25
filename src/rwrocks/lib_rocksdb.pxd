@@ -27,6 +27,7 @@ cimport rwrocks.db as db
 cimport rwrocks.iterator as iterator
 cimport rwrocks.backup as backup
 cimport rwrocks.env as env
+cimport rwrocks.transaction as transaction
 cimport rwrocks.table_factory as table_factory
 cimport rwrocks.memtablerep as memtablerep
 cimport rwrocks.universal_compaction as universal_compaction
@@ -566,6 +567,13 @@ cdef class Options(ColumnFamilyOptions):
 # cdef class ItemsIterator
 # cdef class ReversedIterator
 
+cdef class TransactionDBOptions(object):
+    cdef transaction.TransactionDBOptions* opts
+    cdef bint in_use
+
+cdef class TransactionOptions(object):
+    cdef transaction.TransactionOptions* opts
+
 # # Forward declaration
 # cdef class WriteBatchIterator
 
@@ -653,6 +661,45 @@ cpdef repair_db(db_name, Options opts)
 cpdef list_column_families(db_name, Options opts)
 
 @cython.no_gc_clear
+cdef class TransactionDB(DB):
+    cdef transaction.CppTransactionDB* txn_db
+    cdef TransactionDBOptions txn_opts
+    cpdef begin_transaction(self, TransactionOptions txn_options = *, dict write_options = *, Transaction reuse = *)
+    cpdef void close(self)
+
+
+cdef class Transaction(object):
+    cdef transaction.Transaction* txn
+    cdef TransactionDB db
+    cdef bint closed
+
+    cdef void _ensure_open(self)
+    cpdef void close(self)
+    cpdef void commit(self)
+    cpdef void rollback(self)
+    cpdef void prepare(self)
+    cpdef void set_snapshot(self)
+    cpdef void clear_snapshot(self)
+    cpdef snapshot(self)
+    cpdef void save_point(self)
+    cpdef void rollback_to_save_point(self)
+    cpdef void pop_save_point(self)
+    cpdef set_name(self, name)
+    cpdef get_name(self)
+    cpdef get_id(self)
+    cpdef void put(self, bytes key, bytes value, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
+    cpdef void merge(self, bytes key, bytes value, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
+    cpdef void delete_single(self, bytes key, ColumnFamilyHandle column_family = *, cpp_bool assume_tracked = *)
+    cpdef get(self, bytes key, ColumnFamilyHandle column_family = *)
+    cpdef multi_get(self, keys)
+    cpdef Iterator iterkeys(self, ColumnFamilyHandle column_family = *)
+    cpdef Iterator itervalues(self, ColumnFamilyHandle column_family = *)
+    cpdef Iterator iteritems(self, ColumnFamilyHandle column_family = *)
+    cpdef void disable_indexing(self)
+    cpdef void enable_indexing(self)
+
+
+@cython.no_gc_clear
 cdef class Snapshot(object):
     cdef const snapshot.Snapshot* ptr
     cdef DB db
@@ -673,6 +720,7 @@ cdef class BaseIterator(Iterator):
     cdef iterator.Iterator* ptr
     cdef DB db
     cdef ColumnFamilyHandle handle
+    cdef object owner
 
     # def __cinit__(self, DB db, ColumnFamilyHandle handle = None)
     # def __dealloc__(self)

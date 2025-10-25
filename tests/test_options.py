@@ -1,17 +1,16 @@
-import sys
 import unittest
 
 import rwrocks
 
 
 class TestFilterPolicy(rwrocks.interfaces.FilterPolicy):
-    def create_filter(self, keys):
+    def create_filter(self, keys) -> bytes:
         return b"nix"
 
-    def key_may_match(self, key, fil):
+    def key_may_match(self, key, fil) -> bool:
         return True
 
-    def name(self):
+    def name(self) -> bytes:
         return b"testfilter"
 
 
@@ -22,7 +21,7 @@ class TestMergeOperator(rwrocks.interfaces.MergeOperator):
     def partial_merge(self, *args, **kwargs):
         return (False, None)
 
-    def name(self):
+    def name(self) -> bytes:
         return b"testmergeop"
 
 
@@ -53,19 +52,19 @@ class TestOptions(unittest.TestCase):
     #  opts.compaction_pri = rocksdb.CompactionPri.min_overlapping_ratio
     #  self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.min_overlapping_ratio)
 
-    def test_enable_write_thread_adaptive_yield(self):
+    def test_enable_write_thread_adaptive_yield(self) -> None:
         opts = rwrocks.Options()
         self.assertEqual(opts.enable_write_thread_adaptive_yield, True)
         opts.enable_write_thread_adaptive_yield = False
         self.assertEqual(opts.enable_write_thread_adaptive_yield, False)
 
-    def test_allow_concurrent_memtable_write(self):
+    def test_allow_concurrent_memtable_write(self) -> None:
         opts = rwrocks.Options()
         self.assertEqual(opts.allow_concurrent_memtable_write, True)
         opts.allow_concurrent_memtable_write = False
         self.assertEqual(opts.allow_concurrent_memtable_write, False)
 
-    def test_compression_opts(self):
+    def test_compression_opts(self) -> None:
         opts = rwrocks.Options()
         compression_opts = opts.compression_opts
         # default value
@@ -86,7 +85,7 @@ class TestOptions(unittest.TestCase):
         self.assertEqual(compression_opts["strategy"], 3)
         self.assertEqual(compression_opts["max_dict_bytes"], 4)
 
-    def test_simple(self):
+    def test_simple(self) -> None:
         opts = rwrocks.Options()
         self.assertEqual(True, opts.paranoid_checks)
         opts.paranoid_checks = False
@@ -107,12 +106,12 @@ class TestOptions(unittest.TestCase):
         opts.compression = rwrocks.CompressionType.zstd_compression
         self.assertEqual(rwrocks.CompressionType.zstd_compression, opts.compression)
 
-    def test_block_options(self):
+    def test_block_options(self) -> None:
         rwrocks.BlockBasedTableFactory(
             block_size=4096, filter_policy=TestFilterPolicy(), block_cache=rwrocks.LRUCache(100)
         )
 
-    def test_unicode_path(self):
+    def test_unicode_path(self) -> None:
         name = b"/tmp/M\xc3\xbcnchen".decode("utf8")
         opts = rwrocks.Options()
         opts.db_log_dir = name
@@ -121,14 +120,14 @@ class TestOptions(unittest.TestCase):
         self.assertEqual(name, opts.db_log_dir)
         self.assertEqual(name, opts.wal_dir)
 
-    def test_table_factory(self):
+    def test_table_factory(self) -> None:
         opts = rwrocks.Options()
         self.assertIsNone(opts.table_factory)
 
         opts.table_factory = rwrocks.BlockBasedTableFactory()
         opts.table_factory = rwrocks.PlainTableFactory()
 
-    def test_compaction_style(self):
+    def test_compaction_style(self) -> None:
         opts = rwrocks.Options()
         self.assertEqual("level", opts.compaction_style)
 
@@ -138,15 +137,12 @@ class TestOptions(unittest.TestCase):
         opts.compaction_style = "level"
         self.assertEqual("level", opts.compaction_style)
 
-        if sys.version_info[0] == 3:
-            assertRaisesRegex = self.assertRaisesRegex
-        else:
-            assertRaisesRegex = self.assertRaisesRegexp
+        assertRaisesRegex = self.assertRaisesRegex
 
         with assertRaisesRegex(Exception, "Unknown compaction style"):
             opts.compaction_style = "foo"
 
-    def test_compaction_opts_universal(self):
+    def test_compaction_opts_universal(self) -> None:
         opts = rwrocks.Options()
         uopts = opts.compaction_options_universal
         self.assertEqual(-1, uopts["compression_size_percent"])
@@ -167,7 +163,7 @@ class TestOptions(unittest.TestCase):
         self.assertEqual(2, uopts["min_merge_width"])
         self.assertEqual(30, uopts["max_merge_width"])
 
-    def test_row_cache(self):
+    def test_row_cache(self) -> None:
         opts = rwrocks.Options()
         self.assertIsNone(opts.row_cache)
         opts.row_cache = cache = rwrocks.LRUCache(2 * 1024 * 1024)
