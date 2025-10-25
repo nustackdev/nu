@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.types import Key
+    from redwood.abc import TupleKey
 
 logging.basicConfig(level=logging.INFO)
 
@@ -83,21 +83,21 @@ def observer() -> None:
 
 def backend() -> None:
     """Test backend."""
-    from redwood.codec import TextCodecSpec
+    from redwood.codec import BinaryCodecSpec, TextCodecSpec
     from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
-    from redwood.storage.in_memory_storage import InMemoryStorage, InMemoryStorageSpec
-    from redwood.tree.backend import ObservableStorage
+    from redwood.reactive import ReactiveStorage
+    from redwood.storage.rocksdb_storage import RocksDBStorage, RocksDBStorageSpec
 
     with (
         InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
-        InMemoryStorage(InMemoryStorageSpec(codec=TextCodecSpec())) as storage,
+        RocksDBStorage(RocksDBStorageSpec(codec=BinaryCodecSpec())) as storage,
     ):
-        backend = ObservableStorage(storage=storage, observer=observer)
+        backend = ReactiveStorage(storage=storage, observer=observer)
 
-        def on_change(topic: Key) -> None:
+        def on_change(topic: TupleKey) -> None:
             print(f"Change detected on topic: {topic}")
 
-        backend.subscribe(("users",), on_change, depth=-1)
+        # backend.subscribe(("users",), on_change, depth=-1)
 
         # Start a transaction
         with backend.transaction() as transaction:
@@ -107,8 +107,29 @@ def backend() -> None:
             print("User 2 in transaction:", transaction.get(("users", 2)))
             # Commit the transaction
 
-        print("User 1 after commit:", backend.get(("users", 1)))
-        print("User 2 after commit:", backend.get(("users", 2)))
+        import time
+
+        start_time = time.perf_counter()
+        with backend.transaction() as transaction:
+            for i in range(100000):
+                transaction.set(("users", i), f"User{i}")
+        end_time = time.perf_counter()
+        print(f"Committed 100000 users in {end_time - start_time:.4f} seconds")
+
+        start_time = time.perf_counter()
+        with backend.transaction() as transaction:
+            for i in range(100000):
+                transaction.set(("users", i), f"User{i}Updated")
+        end_time = time.perf_counter()
+        print(f"Updated 100000 users in {end_time - start_time:.4f} seconds")
+
+        start_time = time.perf_counter()
+        with backend.snapshot() as snapshot:
+            for i in range(100000):
+                user = snapshot.get(("users", i))
+                assert user == f"User{i}Updated"
+        end_time = time.perf_counter()
+        print(f"Fetched 100000 users in {end_time - start_time:.4f} seconds")
 
         # Start a snapshot
         with backend.snapshot() as snapshot:
@@ -116,43 +137,43 @@ def backend() -> None:
             print("Snapshot User 2:", snapshot.get(("users", 2)))
 
 
-def tree() -> None:
-    """Test tree."""
-    from redwood.codec import TextCodecSpec
-    from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
-    from redwood.storage.file_storage import FileStorage, FileStorageSpec
-    from redwood.tree.backend import ObservableStorage
-    from redwood.tree.registry import ViewRegistry
-    from redwood.tree.tree import Tree
+# def tree() -> None:
+#     """Test tree."""
+#     from redwood.codec import TextCodecSpec
+#     from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
+#     from redwood.storage.file_storage import FileStorage, FileStorageSpec
+#     from redwood.tree.backend import ObservableStorage
+#     from redwood.tree.registry import ViewRegistry
+#     from redwood.tree.tree import Tree
 
-    with (
-        InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
-        FileStorage(FileStorageSpec(codec=TextCodecSpec())) as storage,
-    ):
-        tree = Tree(
-            backend=ObservableStorage(storage=storage, observer=observer), registry=ViewRegistry()
-        )
+#     with (
+#         InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
+#         FileStorage(FileStorageSpec(codec=TextCodecSpec())) as storage,
+#     ):
+#         tree = Tree(
+#             backend=ObservableStorage(storage=storage, observer=observer), registry=ViewRegistry()
+#         )
 
-        # Work with the tree using transactions
-        with tree.at("users").with_dict_view() as users:
-            users.set("alice", {"name": "Alice", "age": 30})
-            users.set("bob", {"name": "Bob", "age": 25})
+#         # Work with the tree using transactions
+#         with tree.at("users").with_dict_view() as users:
+#             users.set("alice", {"name": "Alice", "age": 30})
+#             users.set("bob", {"name": "Bob", "age": 25})
 
-            alice_profile = users.dict_view("alice")
-            alice_profile.set("location", "Wonderland")
+#             alice_profile = users.dict_view("alice")
+#             alice_profile.set("location", "Wonderland")
 
-            print("Alice's profile in transaction:", alice_profile.extract())
+#             print("Alice's profile in transaction:", alice_profile.extract())
 
-            users.list_view("names").store(["alice", "bob"])
-            users.at("random_user", 12, "profile").dict_view().store({"name": "Random", "age": 20})
+#             users.list_view("names").store(["alice", "bob"])
+#             users.at("random_user", 12, "profile").dict_view().store({"name": "Random", "age": 20})
 
-        # After commit, data should be visible in the backend
-        with tree.at("users").with_dict_view(snapshot=True) as users:
-            print("All users after commit:", users.extract())
-            alice_profile = users.dict_view("alice")
-            print("Alice's profile after commit:", alice_profile.extract())
+#         # After commit, data should be visible in the backend
+#         with tree.at("users").with_dict_view(snapshot=True) as users:
+#             print("All users after commit:", users.extract())
+#             alice_profile = users.dict_view("alice")
+#             print("Alice's profile after commit:", alice_profile.extract())
 
 
 if __name__ == "__main__":
     # storage()
-    tree()
+    backend()
