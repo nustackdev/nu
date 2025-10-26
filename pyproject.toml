@@ -46,7 +46,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Database",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = []
 
 [project.urls]
@@ -272,7 +272,7 @@ directory = "tests/reports/coverage"
 # ============================================================================
 [tool.ruff]
 line-length = 100
-target-version = "py39"  # Changed to support minimum version
+target-version = "py312"
 src = ["src", "tests"]
 extend-exclude = [
     ".venv",
@@ -347,7 +347,7 @@ docstring-code-line-length = 80      # Shorter lines in docstring examples
 # Type Checking - mypy
 # ============================================================================
 [tool.mypy]
-python_version = "3.9"  # Match minimum supported version
+python_version = "3.12"  # Match minimum supported version
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

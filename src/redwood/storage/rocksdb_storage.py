@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import attrs
@@ -13,6 +14,7 @@ from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
 
 import rwrocks
+from redwood.backend.types import ScanOptions, StorageCapabilities
 from redwood.exceptions import (
     SnapshotError,
     StorageConnectionError,
@@ -133,12 +135,89 @@ def _collect_prefixed_items(
 
     return items
 
+
+def _scan_prefixed_items(
+    iterator: Any,
+    codec: CodecProtocol[bytes, bytes],
+    options: ScanOptions,
+) -> list[tuple[TupleKey, Value]]:
+    """Collect key/value pairs honouring scan options."""
+    if options.limit == 0:
+        return []
+
+    encoded_prefix = codec.encode_key(options.prefix)
+    encoded_start = codec.encode_key(options.start) if options.start is not None else encoded_prefix
+    seek_key = encoded_start if encoded_start >= encoded_prefix else encoded_prefix
+
+    items: list[tuple[TupleKey, Value]] = []
+
+    try:
+        if seek_key:
+            iterator.seek(seek_key)
+        else:
+            iterator.seek_to_first()
+    except ValueError:
+        return items
+
+    while True:
+        try:
+            encoded_key, encoded_value = iterator.get()
+        except ValueError:
+            break
+
+        if not encoded_key.startswith(encoded_prefix):
+            break
+
+        decoded_key = codec.decode_key(encoded_key)
+
+        if options.start is not None and decoded_key < options.start:
+            try:
+                iterator.skip()
+            except ValueError:
+                break
+            continue
+
+        if options.end is not None and decoded_key >= options.end:
+            break
+
+        if options.depth != -1 and len(decoded_key) - len(options.prefix) != options.depth:
+            try:
+                iterator.skip()
+            except ValueError:
+                break
+            continue
+
+        decoded_value = codec.decode_value(encoded_value)
+        items.append((decoded_key, decoded_value))
+
+        if not options.reverse and options.limit is not None and len(items) >= options.limit:
+            break
+
+        try:
+            iterator.skip()
+        except ValueError:
+            break
+
+    if options.reverse:
+        items.reverse()
+
+    if options.limit is not None:
+        items = items[: options.limit]
+
+    return items
+
+
 class RocksDBStorage(BaseStorage[bytes, bytes]):
     """RocksDB storage implementation leveraging the rwrocks bindings."""
 
     codec: CodecProtocol[bytes, bytes] = Attach()
 
     spec: RocksDBStorageSpec
+
+    @classmethod
+    def capabilities(cls) -> StorageCapabilities:
+        """RocksDB backend exposes full scan capability and range deletes."""
+        return StorageCapabilities(scan=True, range_delete=True, approximate_size=True)
 
     def setup(self) -> None:
         """Prepare filesystem locations and synchronization primitives."""
@@ -386,6 +465,19 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
 
         yield from items
 
+    def _scan_items_impl(
+        self,
+        options: ScanOptions,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        try:
+            with self._db_lock:
+                iterator = self._get_db().iteritems()
+                items = _scan_prefixed_items(iterator, self.codec, options)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
+
+        yield from items
+
     def _begin_transaction_impl(self) -> RocksDBStorageTransaction:
         with self._db_lock:
             txn_options_kwargs = dict(self.spec.transaction_options_kwargs)
@@ -578,6 +670,29 @@ class RocksDBStorageTransaction:
 
         yield from items
 
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform ordered scan within transaction context."""
+        for key, _ in self.scan_items(options):
+            yield key
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform ordered scan yielding key/value pairs within transaction context."""
+        txn = self._require_txn()
+
+        try:
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+                items = _scan_prefixed_items(iterator, self._storage.codec, options)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
+
+        for key, value in items:
+            yield key, value
+
     def commit(self) -> None:
         txn = self._require_txn()
 
@@ -672,6 +787,75 @@ class RocksDBStorageSnapshot:
 
         for key in keys:
             yield key
+
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        txn = self._require_txn()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        try:
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+                items = _collect_prefixed_items(
+                    iterator,
+                    encoded_prefix,
+                    self._storage.codec.decode_key,
+                    self._storage.codec.decode_value,
+                    prefix,
+                    depth,
+                )
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list values under {prefix}: {e}") from e
+
+        for _, value in items:
+            yield value
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        txn = self._require_txn()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        try:
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+                items = _collect_prefixed_items(
+                    iterator,
+                    encoded_prefix,
+                    self._storage.codec.decode_key,
+                    self._storage.codec.decode_value,
+                    prefix,
+                    depth,
+                )
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
+
+        for key, value in items:
+            yield key, value
+
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform ordered scan within snapshot context."""
+        for key, _ in self.scan_items(options):
+            yield key
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform ordered scan yielding key/value pairs within snapshot context."""
+        txn = self._require_txn()
+
+        try:
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+                items = _scan_prefixed_items(iterator, self._storage.codec, options)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
+
+        for key, value in items:
+            yield key, value
 
     def close(self) -> None:
         if self._closed:

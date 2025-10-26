@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from redwood.abc import CallbackFn, TupleKey, Value
 
     from .context import SnapshotProtocol, TransactionProtocol
+    from .types import ScanOptions, StorageDescriptor
 
 
 __all__ = [  # noqa: RUF022
@@ -297,6 +298,18 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform an ordered scan over keys with fine-grained bounds."""
+        ...
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform an ordered scan yielding key/value pairs."""
+        ...
+
     def begin_transaction(self) -> TransactionProtocol:
         """Begin transaction.
 
@@ -333,6 +346,10 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         Returns:
             Snapshot context manager
         """
+        ...
+
+    def describe(self) -> StorageDescriptor:
+        """Return capability and configuration metadata for this storage."""
         ...
 
     def __hash__(self) -> int:

@@ -25,6 +25,9 @@ from .protocols import (
     ValueCodecProtocol,
 )
 from .types import (
+    ScanOptions,
+    StorageCapabilities,
+    StorageDescriptor,
     StorageMode,
 )
 
@@ -47,5 +50,8 @@ __all__ = [  # noqa: RUF022
     "StorageContextType",
     "TransactionProtocol",
     # Types
+    "ScanOptions",
+    "StorageCapabilities",
+    "StorageDescriptor",
     "StorageMode",
 ]

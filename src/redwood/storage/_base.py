@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, final
 
 from mesh import SyncResource
 
+from redwood.backend.types import ScanOptions, StorageCapabilities, StorageDescriptor
 from redwood.exceptions import StorageConnectionError, StorageOperationError
 
 from ._snapshot import SnapshotContextManager
@@ -38,6 +39,7 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
     """
 
     codec: CodecProtocol[EncodedKeyT, EncodedValueT]
+    _default_capabilities: StorageCapabilities = StorageCapabilities()
 
     @property
     def mode(self) -> StorageMode:
@@ -55,6 +57,20 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         """Verify connection state."""
         if not self._connected:
             raise StorageConnectionError("Storage is not connected")
+
+    @classmethod
+    def capabilities(cls) -> StorageCapabilities:
+        """Advertise backend capabilities. Subclasses may override."""
+        return cls._default_capabilities
+
+    def describe(self) -> StorageDescriptor:
+        """Return metadata describing this storage instance."""
+        return StorageDescriptor(
+            name=getattr(self.spec, "name", type(self).__name__),
+            mode=self.mode,
+            capabilities=self.capabilities(),
+            details={"backend": type(self).__name__},
+        )
 
     # Connection Management
     @abstractmethod
@@ -189,6 +205,32 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         for _, value in self._list_items_impl(prefix, depth):
             yield value
 
+    def _scan_items_impl(
+        self,
+        options: ScanOptions,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Default scan implementation derived from list_items.
+
+        Subclasses should override for backends that support ordered
+        iteration to avoid materialising the entire prefix subtree.
+        """
+        prefix_depth = options.depth if options.depth != -1 else -1
+        items = []
+        for key, value in self._list_items_impl(options.prefix, prefix_depth):
+            if options.start is not None and key < options.start:
+                continue
+            if options.end is not None and key >= options.end:
+                continue
+            items.append((key, value))
+
+        items.sort(key=lambda pair: pair[0], reverse=options.reverse)
+
+        if options.limit is not None:
+            del items[options.limit :]
+
+        for key, value in items:
+            yield key, value
+
     @final
     def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
         """List all values under prefix.
@@ -228,6 +270,23 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         """
         self._ensure_connected()
         yield from self._list_items_impl(prefix, depth)
+
+    @final
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform an ordered scan over keys."""
+        self._ensure_connected()
+        for key, _ in self._scan_items_impl(options):
+            yield key
+
+    @final
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform an ordered scan yielding key/value pairs."""
+        self._ensure_connected()
+        yield from self._scan_items_impl(options)
 
     @abstractmethod
     def _begin_transaction_impl(self) -> TransactionProtocol:

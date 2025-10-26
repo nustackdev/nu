@@ -15,6 +15,7 @@ import lmdb
 from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
 
+from redwood.backend.types import ScanOptions, StorageCapabilities
 from redwood.exceptions import (
     SnapshotError,
     StorageError,
@@ -42,6 +43,62 @@ if TYPE_CHECKING:
 logger = getLogger(__name__)
 
 
+def _scan_cursor_items(
+    cursor: lmdb.Cursor,
+    codec: CodecProtocol[bytes, bytes],
+    options: ScanOptions,
+) -> list[tuple[TupleKey, Value]]:
+    """Collect ordered key/value pairs from an LMDB cursor."""
+    if options.limit == 0:
+        return []
+
+    encoded_prefix = codec.encode_key(options.prefix)
+    encoded_start = codec.encode_key(options.start) if options.start is not None else encoded_prefix
+    seek_key = encoded_start if encoded_start >= encoded_prefix else encoded_prefix
+    depth = options.depth
+
+    results: list[tuple[TupleKey, Value]] = []
+
+    found = cursor.set_range(seek_key)
+    if not found:
+        return results
+
+    while True:
+        encoded_key = cursor.key()
+        if not encoded_key.startswith(encoded_prefix):
+            break
+
+        decoded_key = codec.decode_key(encoded_key)
+
+        if options.start is not None and decoded_key < options.start:
+            if not cursor.next():
+                break
+            continue
+
+        if options.end is not None and decoded_key >= options.end:
+            break
+
+        if depth != -1 and len(decoded_key) - len(options.prefix) != depth:
+            if not cursor.next():
+                break
+            continue
+
+        encoded_value = cursor.value()
+        decoded_value = codec.decode_value(encoded_value)
+        results.append((decoded_key, decoded_value))
+
+        if not cursor.next():
+            break
+
+    if options.reverse:
+        results.reverse()
+
+    if options.limit is not None:
+        results = results[: options.limit]
+
+    return results
+
+
 class LMDBStorage(BaseStorage[bytes, bytes]):
     """LMDB storage implementation with transaction support.
 
@@ -51,6 +108,11 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
     codec: CodecProtocol[bytes, bytes] = Attach()
 
     spec: LMDBStorageSpec
+
+    @classmethod
+    def capabilities(cls) -> StorageCapabilities:
+        """LMDB backend supports efficient range scans."""
+        return StorageCapabilities(scan=True)
 
     def setup(self) -> None:
         """Initialize LMDB storage with environment setup."""
@@ -255,6 +317,25 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
 
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
+
+    def _scan_items_impl(
+        self,
+        options: ScanOptions,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Efficient ordered scan leveraging LMDB cursor semantics."""
+        try:
+            with self._env.begin() as txn:
+                cursor = txn.cursor()
+                try:
+                    items = _scan_cursor_items(cursor, self.codec, options)
+                finally:
+                    cursor.close()
+
+            for item in items:
+                yield item
+
+        except Exception as e:
+            raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
 
     def _list_values_impl(self, prefix: TupleKey, depth: int) -> Generator[Value, None, None]:
         """List all values under prefix."""
@@ -470,6 +551,27 @@ class LMDBStorageTransaction:
         """List key/value pairs under prefix within transaction context."""
         yield from self._collect_items(prefix, depth)
 
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform ordered scan within transaction context."""
+        for key, _ in self.scan_items(options):
+            yield key
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform ordered scan yielding key/value pairs within transaction context."""
+        self._check_valid()
+        cursor = self._lmdb_txn.cursor()
+        try:
+            items = _scan_cursor_items(cursor, self._storage.codec, options)
+        finally:
+            cursor.close()
+
+        for key, value in items:
+            yield key, value
+
     def commit(self) -> None:
         """Commit transaction changes."""
         self._check_valid()
@@ -636,6 +738,27 @@ class LMDBStorageSnapshot:
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """List key/value pairs under prefix within snapshot context."""
         yield from self._collect_items(prefix, depth)
+
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform ordered scan within snapshot context."""
+        for key, _ in self.scan_items(options):
+            yield key
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform ordered scan yielding key/value pairs within snapshot context."""
+        self._check_valid()
+        cursor = self._lmdb_txn.cursor()
+        try:
+            items = _scan_cursor_items(cursor, self._storage.codec, options)
+        finally:
+            cursor.close()
+
+        for key, value in items:
+            yield key, value
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""

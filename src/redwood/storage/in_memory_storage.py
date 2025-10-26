@@ -13,6 +13,7 @@ import attrs
 from mesh import Attach, ResourceSpec, Spec
 
 from redwood.abc import Value
+from redwood.backend.types import ScanOptions, StorageCapabilities
 from redwood.exceptions import (
     SnapshotError,
     StorageKeyError,
@@ -61,6 +62,11 @@ class InMemoryStorage(BaseStorage[str, Value]):
     ] = Attach()
 
     spec: InMemoryStorageSpec
+
+    @classmethod
+    def capabilities(cls) -> StorageCapabilities:
+        """In-memory backend supports full scan semantics."""
+        return StorageCapabilities(scan=True)
 
     def setup(self) -> None:
         """Initialize in-memory storage."""
@@ -366,6 +372,37 @@ class InMemoryStorageTransaction:
         for key in self.list_keys(prefix, depth):
             yield key, self.get(key)
 
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform ordered scan within transaction context."""
+        for key, _ in self.scan_items(options):
+            yield key
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform ordered scan yielding key/value pairs within transaction."""
+        self._check_valid()
+
+        depth = options.depth if options.depth != -1 else -1
+        collected: list[tuple[TupleKey, Value]] = []
+        for key in self.list_keys(options.prefix, depth):
+            if options.start is not None and key < options.start:
+                continue
+            if options.end is not None and key >= options.end:
+                continue
+            collected.append((key, self.get(key)))
+
+        if options.reverse:
+            collected.reverse()
+
+        if options.limit is not None:
+            del collected[options.limit :]
+
+        for item in collected:
+            yield item
+
     def commit(self) -> None:
         """Commit transaction changes."""
         self._check_valid()
@@ -463,6 +500,37 @@ class InMemoryStorageSnapshot:
         """List key/value pairs under prefix within snapshot context."""
         for key in self.list_keys(prefix, depth):
             yield key, self.get(key)
+
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform ordered scan within snapshot context."""
+        for key, _ in self.scan_items(options):
+            yield key
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform ordered scan yielding key/value pairs within snapshot context."""
+        self._check_valid()
+
+        depth = options.depth if options.depth != -1 else -1
+        collected: list[tuple[TupleKey, Value]] = []
+        for key in self.list_keys(options.prefix, depth):
+            if options.start is not None and key < options.start:
+                continue
+            if options.end is not None and key >= options.end:
+                continue
+            collected.append((key, self.get(key)))
+
+        if options.reverse:
+            collected.reverse()
+
+        if options.limit is not None:
+            del collected[options.limit :]
+
+        for item in collected:
+            yield item
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""

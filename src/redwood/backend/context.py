@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.abc import TupleKey, Value
+    from redwood.backend.types import ScanOptions
 
 
 __all__ = [
@@ -111,6 +112,18 @@ class StorageContextProtocol(Protocol):
             TransactionError: If transaction is invalid or operation fails
             StorageOperationError: If list operation fails
         """
+        ...
+
+    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+        """Perform an ordered scan over keys."""
+        ...
+
+    def scan_items(
+        self,
+        options: ScanOptions,
+        /,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Perform an ordered scan yielding key/value pairs."""
         ...
 
     def __hash__(self) -> int:
