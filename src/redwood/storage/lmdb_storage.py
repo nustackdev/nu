@@ -177,6 +177,47 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
+    def _collect_items(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> list[tuple[TupleKey, Value]]:
+        """Collect matching key/value pairs for list operations."""
+        encoded_prefix = self.codec.encode_key(prefix)
+
+        try:
+            with self._env.begin() as txn:
+                cursor = txn.cursor()
+                items: list[tuple[TupleKey, Value]] = []
+                try:
+                    found = cursor.set_range(encoded_prefix)
+                    if not found:
+                        return []
+
+                    while True:
+                        encoded_key = cursor.key()
+                        if not encoded_key.startswith(encoded_prefix):
+                            break
+
+                        decoded_key = self.codec.decode_key(encoded_key)
+                        if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                            if not cursor.next():
+                                break
+                            continue
+
+                        encoded_value = cursor.value()
+                        decoded_value = self.codec.decode_value(encoded_value)
+                        items.append((decoded_key, decoded_value))
+
+                        if not cursor.next():
+                            break
+                finally:
+                    cursor.close()
+
+            return items
+        except Exception as e:
+            raise StorageOperationError(f"Failed to collect items under {prefix}: {e}") from e
+
     def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None, None]:
         """List all keys under prefix."""
         encoded_prefix = self.codec.encode_key(prefix)
@@ -214,6 +255,19 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
 
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
+
+    def _list_values_impl(self, prefix: TupleKey, depth: int) -> Generator[Value, None, None]:
+        """List all values under prefix."""
+        for _, value in self._collect_items(prefix, depth):
+            yield value
+
+    def _list_items_impl(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix."""
+        yield from self._collect_items(prefix, depth)
 
     def _begin_transaction_impl(
         self,
@@ -362,6 +416,60 @@ class LMDBStorageTransaction:
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
 
+    def _collect_items(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> list[tuple[TupleKey, Value]]:
+        """Collect matching items within transaction context."""
+        self._check_valid()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        try:
+            cursor = self._lmdb_txn.cursor()
+            items: list[tuple[TupleKey, Value]] = []
+            try:
+                found = cursor.set_range(encoded_prefix)
+                if not found:
+                    return []
+
+                while True:
+                    encoded_key = cursor.key()
+                    if not encoded_key.startswith(encoded_prefix):
+                        break
+
+                    decoded_key = self._storage.codec.decode_key(encoded_key)
+                    if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                        if not cursor.next():
+                            break
+                        continue
+
+                    encoded_value = cursor.value()
+                    decoded_value = self._storage.codec.decode_value(encoded_value)
+                    items.append((decoded_key, decoded_value))
+
+                    if not cursor.next():
+                        break
+            finally:
+                cursor.close()
+
+            return items
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
+
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List all values under prefix within transaction context."""
+        for _, value in self._collect_items(prefix, depth):
+            yield value
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix within transaction context."""
+        yield from self._collect_items(prefix, depth)
+
     def commit(self) -> None:
         """Commit transaction changes."""
         self._check_valid()
@@ -474,6 +582,60 @@ class LMDBStorageSnapshot:
                 cursor.close()
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
+
+    def _collect_items(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> list[tuple[TupleKey, Value]]:
+        """Collect matching key/value pairs within snapshot context."""
+        self._check_valid()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        try:
+            cursor = self._lmdb_txn.cursor()
+            items: list[tuple[TupleKey, Value]] = []
+            try:
+                found = cursor.set_range(encoded_prefix)
+                if not found:
+                    return []
+
+                while True:
+                    encoded_key = cursor.key()
+                    if not encoded_key.startswith(encoded_prefix):
+                        break
+
+                    decoded_key = self._storage.codec.decode_key(encoded_key)
+                    if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                        if not cursor.next():
+                            break
+                        continue
+
+                    encoded_value = cursor.value()
+                    decoded_value = self._storage.codec.decode_value(encoded_value)
+                    items.append((decoded_key, decoded_value))
+
+                    if not cursor.next():
+                        break
+            finally:
+                cursor.close()
+
+            return items
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
+
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List all values under prefix within snapshot context."""
+        for _, value in self._collect_items(prefix, depth):
+            yield value
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix within snapshot context."""
+        yield from self._collect_items(prefix, depth)
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""

@@ -88,6 +88,51 @@ def _collect_prefixed_keys(
     return keys
 
 
+def _collect_prefixed_items(
+    iterator: Any,
+    encoded_prefix: bytes,
+    decode_key: Callable[[bytes], TupleKey],
+    decode_value: Callable[[bytes], Value],
+    prefix: TupleKey,
+    depth: int,
+) -> list[tuple[TupleKey, Value]]:
+    """Collect key/value pairs matching the encoded prefix."""
+    items: list[tuple[TupleKey, Value]] = []
+    try:
+        if encoded_prefix:
+            iterator.seek(encoded_prefix)
+        else:
+            iterator.seek_to_first()
+
+        while True:
+            try:
+                encoded_key, encoded_value = iterator.get()
+            except ValueError:
+                break
+
+            if not encoded_key.startswith(encoded_prefix):
+                break
+
+            decoded_key = decode_key(encoded_key)
+            if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                try:
+                    iterator.skip()
+                except ValueError:
+                    break
+                continue
+
+            decoded_value = decode_value(encoded_value)
+            items.append((decoded_key, decoded_value))
+
+            try:
+                iterator.skip()
+            except ValueError:
+                break
+    finally:
+        del iterator
+
+    return items
+
 class RocksDBStorage(BaseStorage[bytes, bytes]):
     """RocksDB storage implementation leveraging the rwrocks bindings."""
 
@@ -294,6 +339,53 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
 
         yield from keys
 
+    def _list_values_impl(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> Generator[Value, None, None]:
+        encoded_prefix = self.codec.encode_key(prefix)
+
+        try:
+            with self._db_lock:
+                iterator = self._get_db().iteritems()
+                items = _collect_prefixed_items(
+                    iterator,
+                    encoded_prefix,
+                    self.codec.decode_key,
+                    self.codec.decode_value,
+                    prefix,
+                    depth,
+                )
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list values under {prefix}: {e}") from e
+
+        for _, value in items:
+            yield value
+
+    def _list_items_impl(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        encoded_prefix = self.codec.encode_key(prefix)
+
+        try:
+            with self._db_lock:
+                iterator = self._get_db().iteritems()
+                items = _collect_prefixed_items(
+                    iterator,
+                    encoded_prefix,
+                    self.codec.decode_key,
+                    self.codec.decode_value,
+                    prefix,
+                    depth,
+                )
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
+
+        yield from items
+
     def _begin_transaction_impl(self) -> RocksDBStorageTransaction:
         with self._db_lock:
             txn_options_kwargs = dict(self.spec.transaction_options_kwargs)
@@ -439,8 +531,52 @@ class RocksDBStorageTransaction:
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
 
-        for key in keys:
-            yield key
+        yield from keys
+
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        txn = self._require_txn()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        try:
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+                items = _collect_prefixed_items(
+                    iterator,
+                    encoded_prefix,
+                    self._storage.codec.decode_key,
+                    self._storage.codec.decode_value,
+                    prefix,
+                    depth,
+                )
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list values under {prefix}: {e}") from e
+
+        for _, value in items:
+            yield value
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        txn = self._require_txn()
+        encoded_prefix = self._storage.codec.encode_key(prefix)
+
+        try:
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+                items = _collect_prefixed_items(
+                    iterator,
+                    encoded_prefix,
+                    self._storage.codec.decode_key,
+                    self._storage.codec.decode_value,
+                    prefix,
+                    depth,
+                )
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
+
+        yield from items
 
     def commit(self) -> None:
         txn = self._require_txn()

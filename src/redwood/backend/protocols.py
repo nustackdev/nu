@@ -261,6 +261,42 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
+    def list_values(self, prefix: TupleKey, depth: int = ...) -> Generator[Value, None, None]:
+        """List all values under prefix.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all values under prefix.
+
+        Returns:
+            Generator of matching state values
+
+        Raises:
+            StateError: If listing fails
+        """
+        ...
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = ...,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all entries under prefix.
+
+        Returns:
+            Generator of matching key/value pairs
+
+        Raises:
+            StateError: If listing fails
+        """
+        ...
+
     def begin_transaction(self) -> TransactionProtocol:
         """Begin transaction.
 

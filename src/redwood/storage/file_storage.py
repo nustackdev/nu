@@ -215,24 +215,58 @@ class FileStorage(BaseStorage[str, str]):
             self._load_data()  # Get latest data
             return encoded_key in self._data
 
-    def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None, None]:
-        """List all keys under prefix."""
+    def _collect_items(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> list[tuple[TupleKey, Value]]:
+        """Collect matching key/value pairs for list operations."""
         encoded_prefix = self.codec.encode_key(prefix)
 
-        # Get snapshot of keys while holding locks
         with self._memory_lock, self._file_lock:
             self._load_data()  # Get latest data
-            matching_keys = []
-            for encoded_key in self._data:
-                if encoded_key.startswith(encoded_prefix):
-                    # Split the key into parts based on '/' for depth calculation
-                    decoded_key = self.codec.decode_key(encoded_key)
-                    if depth == -1 or len(decoded_key) - len(prefix) == depth:
-                        matching_keys.append(decoded_key)
+            matching_items: list[tuple[TupleKey, Value]] = []
+            for encoded_key, encoded_value in self._data.items():
+                if not encoded_key.startswith(encoded_prefix):
+                    continue
 
-        # Yield outside lock
-        matching_keys.sort()  # Sort for consistent ordering
-        yield from matching_keys
+                try:
+                    decoded_key = self.codec.decode_key(encoded_key)
+                except Exception as e:
+                    raise StorageOperationError(f"Failed to decode key: {e}") from e
+
+                if depth != -1 and len(decoded_key) - len(prefix) != depth:
+                    continue
+
+                try:
+                    decoded_value = self.codec.decode_value(encoded_value)
+                except Exception as e:
+                    raise StorageOperationError(
+                        f"Failed to decode value for key {decoded_key}: {e}"
+                    ) from e
+
+                matching_items.append((decoded_key, decoded_value))
+
+        matching_items.sort(key=lambda pair: pair[0])
+        return matching_items
+
+    def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None, None]:
+        """List all keys under prefix."""
+        for key, _ in self._collect_items(prefix, depth):
+            yield key
+
+    def _list_values_impl(self, prefix: TupleKey, depth: int) -> Generator[Value, None, None]:
+        """List all values under prefix."""
+        for _, value in self._collect_items(prefix, depth):
+            yield value
+
+    def _list_items_impl(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix."""
+        yield from self._collect_items(prefix, depth)
 
     def _begin_transaction_impl(
         self,
@@ -405,6 +439,20 @@ class FileStorageTransaction:
         for encoded_key in sorted(base_keys):  # Sort for consistent ordering
             yield self._storage.codec.decode_key(encoded_key)
 
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List all values under prefix within transaction."""
+        for key in self.list_keys(prefix, depth):
+            yield self.get(key)
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix within transaction."""
+        for key in self.list_keys(prefix, depth):
+            yield key, self.get(key)
+
     def commit(self) -> None:
         """Commit transaction changes."""
         self._check_valid()
@@ -478,6 +526,20 @@ class FileStorageSnapshot:
 
         # Yield sorted keys for consistent ordering
         yield from sorted(matching_keys)
+
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List all values under prefix within snapshot context."""
+        for key in self.list_keys(prefix, depth):
+            yield self.get(key)
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix within snapshot context."""
+        for key in self.list_keys(prefix, depth):
+            yield key, self.get(key)
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""

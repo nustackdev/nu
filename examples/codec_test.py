@@ -137,43 +137,64 @@ def backend() -> None:
             print("Snapshot User 2:", snapshot.get(("users", 2)))
 
 
-# def tree() -> None:
-#     """Test tree."""
-#     from redwood.codec import TextCodecSpec
-#     from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
-#     from redwood.storage.file_storage import FileStorage, FileStorageSpec
-#     from redwood.tree.backend import ObservableStorage
-#     from redwood.tree.registry import ViewRegistry
-#     from redwood.tree.tree import Tree
+def tree() -> None:
+    """Test tree."""
+    from redwood.codec import BinaryCodecSpec, TextCodecSpec
+    from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
+    from redwood.reactive import ReactiveStorage
+    from redwood.storage.rocksdb_storage import RocksDBStorage, RocksDBStorageSpec
+    from redwood.tree.registry import ViewRegistry
+    from rwstd import DictView, ListView, QueueComponent, QueueContainer, QueueView, Tree
 
-#     with (
-#         InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
-#         FileStorage(FileStorageSpec(codec=TextCodecSpec())) as storage,
-#     ):
-#         tree = Tree(
-#             backend=ObservableStorage(storage=storage, observer=observer), registry=ViewRegistry()
-#         )
+    with (
+        InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
+        RocksDBStorage(RocksDBStorageSpec(codec=BinaryCodecSpec())) as storage,
+    ):
+        reactive_storage = ReactiveStorage(storage=storage, observer=observer)
+        view_registry = ViewRegistry()
+        view_registry.register_view(DictView, 1, dict, [str, int])
+        view_registry.register_view(ListView, 2, list, [int])
+        view_registry.register_view(QueueView, 101, QueueContainer, [QueueComponent])
 
-#         # Work with the tree using transactions
-#         with tree.at("users").with_dict_view() as users:
-#             users.set("alice", {"name": "Alice", "age": 30})
-#             users.set("bob", {"name": "Bob", "age": 25})
+        tree = Tree(
+            backend=reactive_storage,
+            registry=view_registry,
+        )
 
-#             alice_profile = users.dict_view("alice")
-#             alice_profile.set("location", "Wonderland")
+        # Work with the tree using transactions
+        # with tree.at("users").with_dict_view() as users:
+        #     users.set("alice", {"name": "Alice", "age": 30})
+        #     users.set("bob", {"name": "Bob", "age": 25})
 
-#             print("Alice's profile in transaction:", alice_profile.extract())
+        #     alice_profile = users.dict_view("alice")
+        #     alice_profile.set("location", "Wonderland")
 
-#             users.list_view("names").store(["alice", "bob"])
-#             users.at("random_user", 12, "profile").dict_view().store({"name": "Random", "age": 20})
+        #     print("Alice's profile in transaction:", alice_profile.extract())
 
-#         # After commit, data should be visible in the backend
-#         with tree.at("users").with_dict_view(snapshot=True) as users:
-#             print("All users after commit:", users.extract())
-#             alice_profile = users.dict_view("alice")
-#             print("Alice's profile after commit:", alice_profile.extract())
+        #     users.list_view("names").store(["alice", "bob"])
+        #     users.at("random_user", 12, "profile").dict_view().store({"name": "Random", "age": 20})
+
+        # with tree.at("large_dict").with_dict_view() as large_dict:
+        #     for i in range(100_000):
+        #         large_dict.set(f"key_{i}", f"value_{i}")
+
+        with tree.at("large_dict").with_dict_view() as large_dict:
+            import time
+
+            time_start = time.perf_counter()
+            for i in range(100_000):
+                _ = large_dict.get(f"key_{i}")
+            time_end = time.perf_counter()
+            print(f"Fetched 100_000 items from large_dict in {time_end - time_start:.4f} seconds")
+
+        # # After commit, data should be visible in the backend
+        # with tree.at("users").with_dict_view(snapshot=True) as users:
+        #     print("All users after commit:", users.extract())
+        #     alice_profile = users.dict_view("alice")
+        #     print("Alice's profile after commit:", alice_profile.extract())
 
 
 if __name__ == "__main__":
     # storage()
-    backend()
+    # backend()
+    tree()

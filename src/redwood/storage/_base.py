@@ -167,6 +167,68 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         self._ensure_connected()
         yield from self._list_keys_impl(prefix, depth)
 
+    def _list_items_impl(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Default implementation for listing key/value pairs under prefix.
+
+        Subclasses can override this method to provide more efficient
+        iteration strategies without re-implementing the public API.
+        """
+        for key in self._list_keys_impl(prefix, depth):
+            yield key, self._get_impl(key)
+
+    def _list_values_impl(
+        self,
+        prefix: TupleKey,
+        depth: int,
+    ) -> Generator[Value, None, None]:
+        """Default implementation for listing values under prefix."""
+        for _, value in self._list_items_impl(prefix, depth):
+            yield value
+
+    @final
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List all values under prefix.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all values under prefix.
+
+        Returns:
+            Generator of matching values
+
+        Raises:
+            StorageOperationError: If list operation fails
+        """
+        self._ensure_connected()
+        yield from self._list_values_impl(prefix, depth)
+
+    @final
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all entries under prefix.
+
+        Returns:
+            Generator of matching key/value pairs
+
+        Raises:
+            StorageOperationError: If list operation fails
+        """
+        self._ensure_connected()
+        yield from self._list_items_impl(prefix, depth)
+
     @abstractmethod
     def _begin_transaction_impl(self) -> TransactionProtocol:
         """Implementation-specific transaction creation."""

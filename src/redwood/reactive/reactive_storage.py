@@ -151,6 +151,18 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
         """
         yield from self.storage.list_keys(prefix, depth)
 
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List all values under prefix."""
+        yield from self.storage.list_values(prefix, depth)
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix."""
+        yield from self.storage.list_items(prefix, depth)
+
     def subscribe(
         self,
         key: TupleKey,
@@ -285,6 +297,18 @@ class ReactiveStorageTransaction:
         """List keys with prefix within transaction."""
         yield from self.storage_txn.list_keys(prefix, depth)
 
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List values with prefix within transaction."""
+        yield from self.storage_txn.list_values(prefix, depth)
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs with prefix within transaction."""
+        yield from self.storage_txn.list_items(prefix, depth)
+
     def commit(self) -> None:
         """Commit transaction and notify observers of changes."""
         self.storage_txn.commit()
@@ -365,6 +389,18 @@ class ReactiveStorageSnapshot:
     def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         """List keys with prefix within snapshot."""
         yield from self.storage_snap.list_keys(prefix, depth)
+
+    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+        """List values with prefix within snapshot."""
+        yield from self.storage_snap.list_values(prefix, depth)
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = 1,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs with prefix within snapshot."""
+        yield from self.storage_snap.list_items(prefix, depth)
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""

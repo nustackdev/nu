@@ -75,6 +75,44 @@ class StorageContextProtocol(Protocol):
         """
         ...
 
+    def list_values(self, prefix: TupleKey, depth: int = ...) -> Generator[Value, None, None]:
+        """List all values under prefix within transaction context.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all values under prefix.
+
+        Returns:
+            Generator of matching values
+
+        Raises:
+            TransactionError: If transaction is invalid or operation fails
+            StorageOperationError: If list operation fails
+        """
+        ...
+
+    def list_items(
+        self,
+        prefix: TupleKey,
+        depth: int = ...,
+    ) -> Generator[tuple[TupleKey, Value], None, None]:
+        """List key/value pairs under prefix within transaction context.
+
+        Args:
+            prefix: Key prefix to list
+            depth: Depth of listing (default is 1)
+                If depth is -1, lists all entries under prefix.
+
+        Returns:
+            Generator of matching key/value pairs
+
+        Raises:
+            TransactionError: If transaction is invalid or operation fails
+            StorageOperationError: If list operation fails
+        """
+        ...
+
     def __hash__(self) -> int:
         """Get hash of the transaction.
 
