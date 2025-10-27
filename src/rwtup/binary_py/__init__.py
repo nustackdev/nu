@@ -1,0 +1,1 @@
+"""Binary codec package."""

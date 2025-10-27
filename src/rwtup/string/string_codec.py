@@ -18,11 +18,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final
 
-from .exceptions import DecodeError, EncodeError, IntegerOverflowError
+from ..exceptions import DecodeError, EncodeError, IntegerOverflowError
 
 
 if TYPE_CHECKING:
-    from .types import EncodedStringKey, Key
+    from ..types import EncodedStringKey, Key
 
 
 # Encoding format constants

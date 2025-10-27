@@ -1,15 +1,17 @@
 """
 Setup script for redwood package.
 
-This setup.py handles Cython compilation for the rwrocks package, which provides Python bindings to RocksDB.
-Other packages (redwood, rwtup, rwstd) are pure Python and don't need special build handling.
+This setup.py handles:
+- Cython compilation for the rwrocks package, which provides Python bindings to RocksDB,
+- Cython compilation for the rwstd package, which provides tuple to binary codec,
+- Other packages (redwood, rwstd) are pure Python and don't need special build handling.
 
 Package structure:
     src/
     ├── redwood/     (pure Python - main package)
-    ├── rwtup/       (pure Python)
+    ├── rwtup/       (Cython - tuple to binary codec)
     ├── rwstd/       (pure Python)
-    └── rwrocks/     (Cython + C++ - RocksDB bindings) ← THIS SCRIPT HANDLES THIS
+    └── rwrocks/     (Cython + C++ - RocksDB bindings)
 
 Build environments:
     - Local development: May or may not have RocksDB installed
@@ -320,6 +322,74 @@ def create_rwrocks_extensions() -> list[Extension]:
     return cythonized
 
 
+def create_rwtup_extensions() -> list[Extension]:
+    """Create Extension objects for rwtup Cython files."""
+    RWTUP_PATH = Path("src/rwtup")
+    pyx_files = find_cython_files(RWTUP_PATH)
+
+    if not pyx_files:
+        print("⚠️  No .pyx files found in rwtup")
+        return []
+
+    print("=" * 80)
+    print("Building rwtup Cython extensions")
+    print("=" * 80)
+
+    # Check if Cython is available
+    try:
+        from Cython.Build import cythonize
+    except ImportError:
+        print("❌ ERROR: Cython not found!")
+        print("   Install it with: pip install Cython>=3.0")
+        sys.exit(1)
+
+    print(f"📦 Found {len(pyx_files)} Cython file(s):")
+    for pyx in pyx_files:
+        print(f"   - {pyx}")
+
+    # Create extensions
+    extensions = []
+
+    for pyx_file in pyx_files:
+        # Convert path to module name
+        # e.g., src/rwtup/binary_codec.pyx -> rwtup.binary_codec
+        rel_path = pyx_file.relative_to("src")
+        module_parts = [*list(rel_path.parts[:-1]), rel_path.stem]
+        module_name = ".".join(module_parts)
+
+        print(f"\n   Creating extension: {module_name}")
+
+        ext = Extension(
+            name=module_name,
+            sources=[str(pyx_file)],
+            language="c++",
+        )
+        extensions.append(ext)
+
+    # Cythonize
+    print(f"\n🔨 Cythonizing {len(extensions)} extension(s)...")
+
+    cythonized = cythonize(
+        extensions,
+        compiler_directives={
+            "language_level": "3",  # Python 3
+            "embedsignature": True,  # Add signatures to docstrings
+            "boundscheck": False,  # Disable bounds checking (faster)
+            "wraparound": False,  # Disable negative indexing (faster)
+            "initializedcheck": False,  # Disable initialized checking (faster)
+            "nonecheck": False,  # Disable None checking (faster)
+            "cdivision": True,  # Enable C division (faster)
+            "overflowcheck": False,  # Disable overflow checking (faster)
+        },
+        annotate=False,  # Set to True for debugging to generate .html files
+    )
+
+    print(f"✅ Successfully created {len(cythonized)} extension(s)")
+    print("=" * 80)
+
+    return cythonized
+
+
 # ============================================================================
 # Main Setup
 # ============================================================================
@@ -329,6 +399,7 @@ def main() -> None:
     """Main setup function."""
     # Get extensions (only for rwrocks if it exists)
     extensions = create_rwrocks_extensions()
+    extensions += create_rwtup_extensions()
 
     # Check if we're building wheels or installing
     if "bdist_wheel" in sys.argv or "build" in sys.argv or "install" in sys.argv:

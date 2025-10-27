@@ -142,12 +142,15 @@ def tree() -> None:
     from redwood.codec import BinaryCodecSpec, TextCodecSpec
     from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
     from redwood.reactive import ReactiveStorage
+
+    # from redwood.storage.lmdb_storage import LMDBStorage, LMDBStorageSpec
     from redwood.storage.rocksdb_storage import RocksDBStorage, RocksDBStorageSpec
     from redwood.tree.registry import ViewRegistry
     from rwstd import DictView, ListView, QueueComponent, QueueContainer, QueueView, Tree
 
     with (
         InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
+        # LMDBStorage(LMDBStorageSpec(codec=BinaryCodecSpec())) as storage,
         RocksDBStorage(RocksDBStorageSpec(codec=BinaryCodecSpec())) as storage,
     ):
         reactive_storage = ReactiveStorage(storage=storage, observer=observer)
@@ -182,8 +185,11 @@ def tree() -> None:
             import time
 
             time_start = time.perf_counter()
-            for i in range(100_000):
-                _ = large_dict.get(f"key_{i}")
+            for item in large_dict.items():
+                pass
+            #     pass
+            # # for i in range(100_000):
+            # #     _ = large_dict.get(f"key_{i}")
             time_end = time.perf_counter()
             print(f"Fetched 100_000 items from large_dict in {time_end - time_start:.4f} seconds")
 

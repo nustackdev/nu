@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 from typing import Final
 
-from .exceptions import DecodeError, EncodeError, IntegerOverflowError, StringConstraintError
-from .protocols import KeyCodec
-from .types import EncodedBinaryKey, Key, KeyComponent
+from ..exceptions import DecodeError, EncodeError, IntegerOverflowError, StringConstraintError
+from ..protocols import KeyCodec
+from ..types import EncodedBinaryKey, Key, KeyComponent
 
 
 # Type markers for lexicographic ordering (int < str)
@@ -44,7 +44,7 @@ def validate_key(key: Key) -> None:
         EncodeError: If key structure is invalid
         StringConstraintError: If string components violate constraints
     """
-    from .exceptions import EncodeError
+    from ..exceptions import EncodeError
 
     if not isinstance(key, tuple):
         raise EncodeError(f"Key must be a tuple, got {type(key).__name__}")
@@ -67,7 +67,7 @@ def validate_key_component(component: KeyComponent, index: int) -> None:
         EncodeError: If component type is invalid
         StringConstraintError: If string component violates constraints
     """
-    from .exceptions import EncodeError
+    from ..exceptions import EncodeError
 
     if isinstance(component, str):
         validate_string_component(component, index)
@@ -216,7 +216,7 @@ def _decode_string(data: bytes) -> str:
         raise DecodeError(f"Invalid UTF-8 in encoded string: {e}") from e
 
 
-class BinaryKeyCodec(KeyCodec[EncodedBinaryKey]):
+class PyBinaryKeyCodec(KeyCodec[EncodedBinaryKey]):
     """Binary key codec that preserves lexicographic ordering for KV storage.
 
     This codec encodes tuple keys into binary format while maintaining the
@@ -270,7 +270,7 @@ class BinaryKeyCodec(KeyCodec[EncodedBinaryKey]):
             EncodeError: If key structure is invalid
             IntegerOverflowError: If integer is outside supported range
         """
-        validate_key(key)
+        # validate_key(key)
 
         parts: list[bytes] = []
 
@@ -346,5 +346,5 @@ class BinaryKeyCodec(KeyCodec[EncodedBinaryKey]):
 
 
 __all__ = [
-    "BinaryKeyCodec",
+    "PyBinaryKeyCodec",
 ]

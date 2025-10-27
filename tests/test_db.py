@@ -5,7 +5,6 @@ import struct
 import tempfile
 import unittest
 from itertools import takewhile
-from typing import Optional
 
 import rwrocks
 from rwrocks.merge_operators import StringAppendOperator, UintAddOperator
@@ -391,7 +390,7 @@ class SimpleComparator(rwrocks.interfaces.Comparator):
     def name(self) -> bytes:
         return b"mycompare"
 
-    def compare(self, a, b) -> Optional[int]:
+    def compare(self, a, b) -> int | None:
         a = int(a)
         b = int(b)
         if a < b:

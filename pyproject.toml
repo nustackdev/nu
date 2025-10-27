@@ -105,6 +105,9 @@ redwood = [
     "py.typed",
 ]
 rwtup = [
+    "**/*.pyx",
+    "**/*.pxd",
+    "**/*.hpp",
     "py.typed",
 ]
 rwrocks = [

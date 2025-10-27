@@ -33,7 +33,8 @@ Example usage:
 
 from __future__ import annotations
 
-from .binary_codec import BinaryKeyCodec
+from .binary.binary_codec import BinaryKeyCodec
+from .binary_py.binary_codec import PyBinaryKeyCodec
 from .exceptions import (
     DecodeError,
     EncodeError,
@@ -42,25 +43,22 @@ from .exceptions import (
     StringConstraintError,
 )
 from .protocols import KeyCodec
-from .string_codec import StringKeyCodec
+from .string.string_codec import StringKeyCodec
 from .types import EncodedBinaryKey, EncodedStringKey, Key, KeyComponent
 
 
 __all__ = [
-    # Codec implementations
     "BinaryKeyCodec",
     "DecodeError",
     "EncodeError",
     "EncodedBinaryKey",
     "EncodedStringKey",
     "IntegerOverflowError",
-    # Core types
     "Key",
-    # Protocol
     "KeyCodec",
-    # Exceptions
     "KeyCodecError",
     "KeyComponent",
+    "PyBinaryKeyCodec",
     "StringConstraintError",
     "StringKeyCodec",
 ]

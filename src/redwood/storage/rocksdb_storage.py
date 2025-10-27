@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
+from functools import cached_property
 from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -214,6 +215,11 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
 
     spec: RocksDBStorageSpec
 
+    @cached_property
+    def codec_cached(self) -> CodecProtocol[bytes, bytes]:
+        """Cached property for codec to avoid repeated lookups."""
+        return self.codec
+
     @classmethod
     def capabilities(cls) -> StorageCapabilities:
         """RocksDB backend exposes full scan capability and range deletes."""
@@ -343,7 +349,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
         return db
 
     def _get_impl(self, key: TupleKey) -> Value:
-        encoded_key = self.codec.encode_key(key)
+        encoded_key = self.codec_cached.encode_key(key)
 
         with self._db_lock:
             try:
@@ -355,13 +361,13 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
             raise StorageKeyError(f"Key {key} not found")
 
         try:
-            return self.codec.decode_value(encoded_value)
+            return self.codec_cached.decode_value(encoded_value)
         except Exception as e:
             raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
 
     def _set_impl(self, key: TupleKey, value: Value) -> None:
-        encoded_key = self.codec.encode_key(key)
-        encoded_value = self.codec.encode_value(value)
+        encoded_key = self.codec_cached.encode_key(key)
+        encoded_value = self.codec_cached.encode_value(value)
 
         with self._db_lock:
             try:
@@ -370,7 +376,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
                 raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
     def _delete_impl(self, key: TupleKey) -> None:
-        encoded_key = self.codec.encode_key(key)
+        encoded_key = self.codec_cached.encode_key(key)
 
         with self._db_lock:
             db = self._get_db()
@@ -388,7 +394,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
                 raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
     def _exists_impl(self, key: TupleKey) -> bool:
-        encoded_key = self.codec.encode_key(key)
+        encoded_key = self.codec_cached.encode_key(key)
 
         with self._db_lock:
             try:
@@ -401,7 +407,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
         prefix: TupleKey,
         depth: int,
     ) -> Generator[TupleKey, None, None]:
-        encoded_prefix = self.codec.encode_key(prefix)
+        encoded_prefix = self.codec_cached.encode_key(prefix)
 
         try:
             with self._db_lock:
@@ -409,7 +415,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
                 keys = _collect_prefixed_keys(
                     iterator,
                     encoded_prefix,
-                    self.codec.decode_key,
+                    self.codec_cached.decode_key,
                     prefix,
                     depth,
                 )
@@ -423,7 +429,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
         prefix: TupleKey,
         depth: int,
     ) -> Generator[Value, None, None]:
-        encoded_prefix = self.codec.encode_key(prefix)
+        encoded_prefix = self.codec_cached.encode_key(prefix)
 
         try:
             with self._db_lock:
@@ -431,8 +437,8 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
                 items = _collect_prefixed_items(
                     iterator,
                     encoded_prefix,
-                    self.codec.decode_key,
-                    self.codec.decode_value,
+                    self.codec_cached.decode_key,
+                    self.codec_cached.decode_value,
                     prefix,
                     depth,
                 )
@@ -447,7 +453,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
         prefix: TupleKey,
         depth: int,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
-        encoded_prefix = self.codec.encode_key(prefix)
+        encoded_prefix = self.codec_cached.encode_key(prefix)
 
         try:
             with self._db_lock:
@@ -455,8 +461,8 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
                 items = _collect_prefixed_items(
                     iterator,
                     encoded_prefix,
-                    self.codec.decode_key,
-                    self.codec.decode_value,
+                    self.codec_cached.decode_key,
+                    self.codec_cached.decode_value,
                     prefix,
                     depth,
                 )
@@ -551,7 +557,7 @@ class RocksDBStorageTransaction:
 
     def get(self, key: TupleKey) -> Value:
         txn = self._require_txn()
-        encoded_key = self._storage.codec.encode_key(key)
+        encoded_key = self._storage.codec_cached.encode_key(key)
 
         with self._storage._db_lock:
             try:
@@ -563,14 +569,14 @@ class RocksDBStorageTransaction:
             raise StorageKeyError(f"Key {key} not found")
 
         try:
-            return self._storage.codec.decode_value(encoded_value)
+            return self._storage.codec_cached.decode_value(encoded_value)
         except Exception as e:
             raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
 
     def set(self, key: TupleKey, value: Value) -> None:
         txn = self._require_txn()
-        encoded_key = self._storage.codec.encode_key(key)
-        encoded_value = self._storage.codec.encode_value(value)
+        encoded_key = self._storage.codec_cached.encode_key(key)
+        encoded_value = self._storage.codec_cached.encode_value(value)
 
         with self._storage._db_lock:
             try:
@@ -580,7 +586,7 @@ class RocksDBStorageTransaction:
 
     def delete(self, key: TupleKey) -> None:
         txn = self._require_txn()
-        encoded_key = self._storage.codec.encode_key(key)
+        encoded_key = self._storage.codec_cached.encode_key(key)
 
         with self._storage._db_lock:
             try:
@@ -598,7 +604,7 @@ class RocksDBStorageTransaction:
 
     def exists(self, key: TupleKey) -> bool:
         txn = self._require_txn()
-        encoded_key = self._storage.codec.encode_key(key)
+        encoded_key = self._storage.codec_cached.encode_key(key)
 
         with self._storage._db_lock:
             try:
@@ -608,7 +614,7 @@ class RocksDBStorageTransaction:
 
     def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         txn = self._require_txn()
-        encoded_prefix = self._storage.codec.encode_key(prefix)
+        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
 
         try:
             with self._storage._db_lock:
@@ -616,7 +622,7 @@ class RocksDBStorageTransaction:
                 keys = _collect_prefixed_keys(
                     iterator,
                     encoded_prefix,
-                    self._storage.codec.decode_key,
+                    self._storage.codec_cached.decode_key,
                     prefix,
                     depth,
                 )
@@ -627,7 +633,7 @@ class RocksDBStorageTransaction:
 
     def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
         txn = self._require_txn()
-        encoded_prefix = self._storage.codec.encode_key(prefix)
+        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
 
         try:
             with self._storage._db_lock:
@@ -635,8 +641,8 @@ class RocksDBStorageTransaction:
                 items = _collect_prefixed_items(
                     iterator,
                     encoded_prefix,
-                    self._storage.codec.decode_key,
-                    self._storage.codec.decode_value,
+                    self._storage.codec_cached.decode_key,
+                    self._storage.codec_cached.decode_value,
                     prefix,
                     depth,
                 )
@@ -652,7 +658,7 @@ class RocksDBStorageTransaction:
         depth: int = 1,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         txn = self._require_txn()
-        encoded_prefix = self._storage.codec.encode_key(prefix)
+        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
 
         try:
             with self._storage._db_lock:
@@ -660,8 +666,8 @@ class RocksDBStorageTransaction:
                 items = _collect_prefixed_items(
                     iterator,
                     encoded_prefix,
-                    self._storage.codec.decode_key,
-                    self._storage.codec.decode_value,
+                    self._storage.codec_cached.decode_key,
+                    self._storage.codec_cached.decode_value,
                     prefix,
                     depth,
                 )
@@ -686,12 +692,11 @@ class RocksDBStorageTransaction:
         try:
             with self._storage._db_lock:
                 iterator = txn.iteritems()
-                items = _scan_prefixed_items(iterator, self._storage.codec, options)
+                items = _scan_prefixed_items(iterator, self._storage.codec_cached, options)
         except Exception as e:
             raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
 
-        for key, value in items:
-            yield key, value
+        yield from items
 
     def commit(self) -> None:
         txn = self._require_txn()
@@ -742,7 +747,7 @@ class RocksDBStorageSnapshot:
 
     def get(self, key: TupleKey) -> Value:
         txn = self._require_txn()
-        encoded_key = self._storage.codec.encode_key(key)
+        encoded_key = self._storage.codec_cached.encode_key(key)
 
         with self._storage._db_lock:
             try:
@@ -754,13 +759,13 @@ class RocksDBStorageSnapshot:
             raise StorageKeyError(f"Key {key} not found")
 
         try:
-            return self._storage.codec.decode_value(encoded_value)
+            return self._storage.codec_cached.decode_value(encoded_value)
         except Exception as e:
             raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
 
     def exists(self, key: TupleKey) -> bool:
         txn = self._require_txn()
-        encoded_key = self._storage.codec.encode_key(key)
+        encoded_key = self._storage.codec_cached.encode_key(key)
 
         with self._storage._db_lock:
             try:
@@ -770,7 +775,7 @@ class RocksDBStorageSnapshot:
 
     def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
         txn = self._require_txn()
-        encoded_prefix = self._storage.codec.encode_key(prefix)
+        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
 
         try:
             with self._storage._db_lock:
@@ -778,19 +783,18 @@ class RocksDBStorageSnapshot:
                 keys = _collect_prefixed_keys(
                     iterator,
                     encoded_prefix,
-                    self._storage.codec.decode_key,
+                    self._storage.codec_cached.decode_key,
                     prefix,
                     depth,
                 )
         except Exception as e:
             raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
 
-        for key in keys:
-            yield key
+        yield from keys
 
     def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
         txn = self._require_txn()
-        encoded_prefix = self._storage.codec.encode_key(prefix)
+        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
 
         try:
             with self._storage._db_lock:
@@ -798,8 +802,8 @@ class RocksDBStorageSnapshot:
                 items = _collect_prefixed_items(
                     iterator,
                     encoded_prefix,
-                    self._storage.codec.decode_key,
-                    self._storage.codec.decode_value,
+                    self._storage.codec_cached.decode_key,
+                    self._storage.codec_cached.decode_value,
                     prefix,
                     depth,
                 )
@@ -815,7 +819,7 @@ class RocksDBStorageSnapshot:
         depth: int = 1,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         txn = self._require_txn()
-        encoded_prefix = self._storage.codec.encode_key(prefix)
+        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
 
         try:
             with self._storage._db_lock:
@@ -823,8 +827,8 @@ class RocksDBStorageSnapshot:
                 items = _collect_prefixed_items(
                     iterator,
                     encoded_prefix,
-                    self._storage.codec.decode_key,
-                    self._storage.codec.decode_value,
+                    self._storage.codec_cached.decode_key,
+                    self._storage.codec_cached.decode_value,
                     prefix,
                     depth,
                 )
@@ -850,7 +854,7 @@ class RocksDBStorageSnapshot:
         try:
             with self._storage._db_lock:
                 iterator = txn.iteritems()
-                items = _scan_prefixed_items(iterator, self._storage.codec, options)
+                items = _scan_prefixed_items(iterator, self._storage.codec_cached, options)
         except Exception as e:
             raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
 
