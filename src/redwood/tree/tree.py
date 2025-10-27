@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Self
 
 import attrs
 
-from redwood.abc import EMPTY, CallbackFn, Empty, KeyComponent, Value
+from redwood.abc import EMPTY, CallbackFn, Empty, KeyComponent, TupleKey, Value
 from redwood.exceptions import StorageKeyError
 
 from .context import ContextualBase
@@ -86,7 +86,7 @@ class Tree(ContextualBase):
         ```
     """
 
-    path: Path = attrs.field(factory=Path, eq=False, hash=False, alias=None)
+    path: TupleKey = attrs.field(factory=Path.create, eq=False, hash=False, alias=None)
 
     registry: ViewRegistry = attrs.field(factory=ViewRegistry, eq=False, hash=False)
 
@@ -122,7 +122,7 @@ class Tree(ContextualBase):
             alice_data = users.get("alice")
             ```
         """
-        new_path = self.path.join(*paths)
+        new_path = Path.join(self.path, *paths)
         return attrs.evolve(self, path=new_path, ctx=ctx or self.ctx)
 
     def parent(self, *, ctx: StorageContextType | None = None) -> Self:
@@ -137,7 +137,7 @@ class Tree(ContextualBase):
             users = user.parent()
             ```
         """
-        parent_path = self.path.parent()
+        parent_path = Path.parent(self.path)
         if parent_path is None:
             # Already at root
             return self
@@ -425,7 +425,7 @@ class Tree(ContextualBase):
             sub.unsubscribe()
             ```
         """
-        return self.backend.subscribe(self.path.to_tuple(), callback, depth)
+        return self.backend.subscribe(self.path, callback, depth)
 
     def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
         """Unsubscribe from changes under key prefix.
@@ -459,7 +459,7 @@ class Tree(ContextualBase):
                 print("Alice does not exist")
             ```
         """
-        return self.backend.exists(self.path.join(*paths).to_tuple())
+        return self.backend.exists(Path.join(self.path, *paths))
 
     def get_primitive(self, *paths: KeyComponent, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value at a path.
@@ -481,7 +481,7 @@ class Tree(ContextualBase):
             ```
         """
         try:
-            return self.backend.get(self.path.join(*paths).to_tuple())
+            return self.backend.get(Path.join(self.path, *paths))
         except StorageKeyError:
             return default
 
@@ -510,4 +510,4 @@ class Tree(ContextualBase):
                 print("Alice's email is not a primitive value")
             ```
         """
-        return self.backend.exists(self.path.join(*paths).to_tuple())
+        return self.backend.exists(Path.join(self.path, *paths))

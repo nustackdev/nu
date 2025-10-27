@@ -12,16 +12,15 @@ from typing import TYPE_CHECKING, ClassVar
 
 import attrs
 
-from redwood.abc import EMPTY, Empty
+from redwood.abc import EMPTY, Empty, TupleKey
 
 from ..context import ContextualBase
 
 
 if TYPE_CHECKING:
     from redwood.backend import StorageContextType
-    from redwood.reactive import ReactiveStorage
+    from redwood.storage import ReactiveStorage
 
-    from ..path import Path
     from ..types import NodeType
 
 
@@ -48,7 +47,7 @@ class BaseNode(ContextualBase, ABC):
     ctx: StorageContextType = attrs.field(kw_only=True)  # type: ignore[assignment]
 
     # Path to this node in the state tree
-    path: Path = attrs.field(eq=False, kw_only=True)
+    path: TupleKey = attrs.field(eq=False, kw_only=True)
 
     # Empty marker for non-existent values
     EMPTY: ClassVar[Empty] = EMPTY

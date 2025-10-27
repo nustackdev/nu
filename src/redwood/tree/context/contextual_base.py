@@ -14,7 +14,7 @@ from redwood.backend import SnapshotProtocol, StorageContextType, TransactionPro
 
 
 if TYPE_CHECKING:
-    from redwood.reactive import ReactiveStorage
+    from redwood.storage import ReactiveStorage
 
 
 __all__ = ["ContextualBase", "is_contextual"]

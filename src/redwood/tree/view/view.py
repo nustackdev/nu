@@ -38,19 +38,20 @@ from redwood.abc import (
     EMPTY,
     Empty,
     KeyComponent,
+    TupleKey,
     Value,
 )
 
 from ..context import ContextualBase
 from ..exceptions import ContainerProtocolError
 from ..node import ChildType, ContainerNode
+from ..path import Path
 from .types import AccessibleViewProtocol
 
 
 if TYPE_CHECKING:
     from redwood.backend import StorageContextType
 
-    from ..path import Path
     from ..tree import Tree
     from ..types import ContainerProtocol, ContainerStructure
 
@@ -105,7 +106,7 @@ class View[TreeT: Tree](ContextualBase, ABC):
     """
 
     # Path to the container
-    path: Path = attrs.field()
+    path: TupleKey = attrs.field()
 
     # Container structure type
     structure: ContainerStructure = attrs.field(init=False)
@@ -177,7 +178,7 @@ class View[TreeT: Tree](ContextualBase, ABC):
             alice_data = users.get("alice")
             ```
         """
-        new_path = self.path.join(*paths)
+        new_path = Path.join(self.path, *paths)
         return self.tree.at(*new_path, ctx=ctx or self.ctx)
 
     def parent(self, *, ctx: StorageContextType | None = None) -> TreeT:
@@ -192,7 +193,7 @@ class View[TreeT: Tree](ContextualBase, ABC):
             users = user.parent()
             ```
         """
-        parent_path = self.path.parent()
+        parent_path = Path.parent(self.path)
         if parent_path is None:
             # Already at root
             parent_path = self.path
@@ -226,7 +227,7 @@ class View[TreeT: Tree](ContextualBase, ABC):
             View: New view instance
         """
         return view_class(
-            backend=self.backend, path=self.path.join(key), ctx=self.ctx, tree=self.tree
+            backend=self.backend, path=Path.join(self.path, key), ctx=self.ctx, tree=self.tree
         )
 
     # =========================================================================

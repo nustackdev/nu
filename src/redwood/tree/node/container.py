@@ -66,6 +66,7 @@ from redwood.abc import (
 from redwood.exceptions import StorageKeyError
 
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
+from ..path import Path
 from ..types import (
     ContainerProtocol,
     ContainerStructure,
@@ -78,9 +79,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.backend import StorageContextType
-    from redwood.reactive import ReactiveStorage
-
-    from ..path import Path
+    from redwood.storage import ReactiveStorage
 
 
 __all__ = [
@@ -117,7 +116,7 @@ class ChildInfo:
 class ParentInfo:
     """Raw information about a parent container."""
 
-    path: Path
+    path: TupleKey
     exists: bool
     stored_structure: ContainerStructure | None = None
     stored_protocol: ContainerProtocol | None = None
@@ -138,8 +137,8 @@ class ContainerInfo:
     parents: tuple[ParentInfo, ...] = dataclasses.field(default_factory=tuple)
 
     # Paths categorization (pure facts, no validation decisions)
-    missing_parent_paths: tuple[Path, ...] = dataclasses.field(default_factory=tuple)
-    malformed_parent_paths: tuple[Path, ...] = dataclasses.field(default_factory=tuple)
+    missing_parent_paths: tuple[TupleKey, ...] = dataclasses.field(default_factory=tuple)
+    malformed_parent_paths: tuple[TupleKey, ...] = dataclasses.field(default_factory=tuple)
 
 
 class ContainerState(Enum):
@@ -270,7 +269,7 @@ class ContainerNode(BaseNode):
         ctx: StorageContextType,
         structure: ContainerStructure,
         protocol: ContainerProtocol,
-        path: Path,
+        path: TupleKey,
         ensure_exists: bool = True,
     ) -> ContainerNode:
         """Create a new ContainerNode instance with the given parameters.
@@ -285,7 +284,7 @@ class ContainerNode(BaseNode):
             ctx (StorageContextType): The context object for storage operations (transaction or snapshot).
             structure (ContainerStructure): The expected structure type of the container.
             protocol (ContainerProtocol): The expected protocol flags for the container.
-            path (Path): The path to the container in the state tree.
+            path (TupleKey): The path to the container in the state tree.
             ensure_exists (bool): If True, ensures the container exists by creating it
 
         Returns:
@@ -319,7 +318,7 @@ class ContainerNode(BaseNode):
     # ------------------------------------------------------------------------
 
     @classmethod
-    def get_info(cls, path: Path, ctx: StorageContextType, /) -> ContainerInfo:
+    def get_info(cls, path: TupleKey, ctx: StorageContextType, /) -> ContainerInfo:
         """Gather raw information about container and parent chain.
 
         This method performs pure data collection without making any validation
@@ -383,7 +382,7 @@ class ContainerNode(BaseNode):
         )
 
     @classmethod
-    def _get_path_chain(cls, path: Path, /) -> list[Path]:
+    def _get_path_chain(cls, path: TupleKey, /) -> list[TupleKey]:
         """Get complete path chain from root to target container.
 
         Traverses from the target path up to the root, collecting all intermediate
@@ -393,7 +392,7 @@ class ContainerNode(BaseNode):
             path: The path to process.
 
         Returns:
-            list[Path]: Ordered list of paths from root to target, including
+            list[TupleKey]: Ordered list of paths from root to target, including
                 the target path itself. Empty list if path has no parents.
 
         Example:
@@ -403,11 +402,11 @@ class ContainerNode(BaseNode):
         current = path
         while current is not None:
             paths.append(current)
-            current = current.parent()
+            current = Path.parent(current)
         return list(reversed(paths))
 
     @classmethod
-    def _get_path_info(cls, path: Path, ctx: StorageContextType, /) -> ParentInfo:
+    def _get_path_info(cls, path: TupleKey, ctx: StorageContextType, /) -> ParentInfo:
         """Get raw storage information for a single path.
 
         Retrieves raw data from storage and attempts to parse it as a container marker.
@@ -429,7 +428,7 @@ class ContainerNode(BaseNode):
             in exists=False, and malformed data results in None enum values.
         """
         try:
-            raw_data = ctx.get(path.to_tuple())
+            raw_data = ctx.get(path)
 
             # Try to parse as container marker
             structure = None
@@ -601,7 +600,7 @@ class ContainerNode(BaseNode):
 
         # Check if the path exists and is not a container marker
         try:
-            existing_data = self.get_ensured_context().get(self.path.to_tuple())
+            existing_data = self.get_ensured_context().get(self.path)
             # If we can extract type info, it's a container, which is fine
             try:
                 self.extract_type_info(existing_data)
@@ -609,7 +608,7 @@ class ContainerNode(BaseNode):
                 # Not a container marker - this is a collision
                 raise PathTypeError(
                     f"Path collision detected: {self.path} collides with an existing primitive value"
-                )
+                ) from None
         except StorageKeyError:
             # Path doesn't exist - no collision
             pass
@@ -875,18 +874,18 @@ class ContainerNode(BaseNode):
 
         # Create container
         marker = self.create_type_marker(self.structure, self.protocol)
-        self.get_transaction_context().set(self.path.to_tuple(), marker)
+        self.get_transaction_context().set(self.path, marker)
 
         return True
 
-    def try_create_parents(self) -> list[Path]:
+    def try_create_parents(self) -> list[TupleKey]:
         """Create missing parent containers.
 
         Creates any missing parent containers using default structure and protocol.
         Only creates parents that are actually missing - existing parents are left unchanged.
 
         Returns:
-            list[Path]: List of parent paths that were actually created.
+            list[TupleKey]: List of parent paths that were actually created.
                 Empty list if no parents needed creation.
 
         Raises:
@@ -917,7 +916,7 @@ class ContainerNode(BaseNode):
                 ContainerStructure(1),  # By default creates a dictionary-like container
                 ContainerProtocol.DEFAULT_PROTOCOL,
             )
-            self.get_transaction_context().set(parent_path.to_tuple(), marker)
+            self.get_transaction_context().set(parent_path, marker)
             created.append(parent_path)
 
         return created
@@ -957,7 +956,7 @@ class ContainerNode(BaseNode):
         else:
             return self.try_create(parents=parents)
 
-    def ensure_parents(self) -> list[Path]:
+    def ensure_parents(self) -> list[TupleKey]:
         """Ensure all parent containers exist, creating missing ones.
 
         Convenience method that ensures the entire parent chain is healthy
@@ -965,7 +964,7 @@ class ContainerNode(BaseNode):
         parents have well-formed data.
 
         Returns:
-            list[Path]: List of parent paths that were created. Empty if
+            list[TupleKey]: List of parent paths that were created. Empty if
                 all parents already existed.
 
         Raises:
@@ -1005,10 +1004,10 @@ class ContainerNode(BaseNode):
             Does NOT validate container health - pure data gathering.
             Use other methods for operations that require validation.
         """
-        child_path = self.path.join(key)
+        child_path = Path.join(self.path, key)
 
         try:
-            child_data = self.get_ensured_context().get(child_path.to_tuple())
+            child_data = self.get_ensured_context().get(child_path)
 
             # Try to parse as container marker
             try:
@@ -1149,7 +1148,7 @@ class ContainerNode(BaseNode):
                 f"Child '{key}' already exists as a container. Cannot set primitive value."
             )
 
-        self.get_transaction_context().set(self.path.join(key).to_tuple(), value)
+        self.get_transaction_context().set(Path.join(self.path, key), value)
 
     def remove_child(self, key: KeyComponent, /) -> bool:
         """Remove child (primitive or container) with mutability validation.
@@ -1176,7 +1175,7 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable
 
-        return self._delete_subtree(self.path.join(key))
+        return self._delete_subtree(Path.join(self.path, key))
 
     def clear_children(self) -> int:
         """Remove all children with mutability validation.
@@ -1346,7 +1345,7 @@ class ContainerNode(BaseNode):
             str: Child keys.
         """
         try:
-            for path_tuple in self.get_ensured_context().list_keys(self.path.to_tuple(), depth=1):
+            for path_tuple in self.get_ensured_context().list_keys(self.path, depth=1):
                 key = path_tuple[-1]  # Get last component (key)
 
                 # Determine child type to apply filters
@@ -1361,7 +1360,7 @@ class ContainerNode(BaseNode):
         except StorageKeyError:
             pass  # Container might be empty
 
-    def _delete_subtree(self, path: Path) -> bool:
+    def _delete_subtree(self, path: TupleKey) -> bool:
         """Recursively delete a container and all its descendants.
 
         Args:
@@ -1373,12 +1372,12 @@ class ContainerNode(BaseNode):
         # Collect all paths
         ctx = self.get_transaction_context()
         paths_to_delete: list[TupleKey] = []
-        paths_to_delete.extend(list(ctx.list_keys(path.to_tuple(), depth=-1)))
-        paths_to_delete.extend(list(ctx.list_keys(path.meta_path.to_tuple(), depth=-1)))
+        paths_to_delete.extend(list(ctx.list_keys(path, depth=-1)))
+        paths_to_delete.extend(list(ctx.list_keys(Path.to_meta(path), depth=-1)))
         paths_to_delete.extend(
             [
-                path.to_tuple(),
-                path.meta_path.to_tuple(),
+                path,
+                Path.to_meta(path),
             ]
         )
 
@@ -1418,9 +1417,9 @@ class ContainerNode(BaseNode):
             length = container.get_metadata("__length__", 0)
             ```
         """
-        metadata_path = self.path.meta_path.join(key)
+        metadata_path = Path.join(Path.to_meta(self.path), key)
         try:
-            return self.get_ensured_context().get(metadata_path.to_tuple())
+            return self.get_ensured_context().get(metadata_path)
         except StorageKeyError:
             return default
 
@@ -1444,8 +1443,8 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable
 
-        metadata_path = self.path.meta_path.join(key)
-        self.get_transaction_context().set(metadata_path.to_tuple(), value)
+        metadata_path = Path.join(Path.to_meta(self.path), key)
+        self.get_transaction_context().set(metadata_path, value)
 
     def has_metadata(self, key: KeyComponent) -> bool:
         """Check if metadata key exists.
@@ -1462,8 +1461,8 @@ class ContainerNode(BaseNode):
                 print("Container has length metadata")
             ```
         """
-        metadata_path = self.path.meta_path.join(key)
-        return self.get_ensured_context().exists(metadata_path.to_tuple())
+        metadata_path = Path.join(Path.to_meta(self.path), key)
+        return self.get_ensured_context().exists(metadata_path)
 
     def delete_metadata(self, key: KeyComponent) -> bool:
         """Delete metadata key.
@@ -1487,9 +1486,9 @@ class ContainerNode(BaseNode):
         # Validate container is mutable
         self.validate_mutable
 
-        metadata_path = self.path.meta_path.join(key)
+        metadata_path = Path.join(Path.to_meta(self.path), key)
         try:
-            self.get_transaction_context().delete(metadata_path.to_tuple())
+            self.get_transaction_context().delete(metadata_path)
             return True
         except StorageKeyError:
             return False  # Metadata didn't exist
