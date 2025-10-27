@@ -1,4 +1,4 @@
-"""Type stubs for binary_key_codec Cython extension.
+"""Type stubs for binary_codec Cython extension.
 
 This stub file provides type hints for IDE support and static type checking.
 """
@@ -7,22 +7,7 @@ from ..types import Key
 
 __all__ = [
     "BinaryKeyCodec",
-    "DecodeError",
-    "EncodeError",
-    "IntegerOverflowError",
 ]
-
-class IntegerOverflowError(Exception):
-    """Raised when integer is outside int64 range [-2^63, 2^63-1]."""
-    def __init__(self, message: str) -> None: ...
-
-class EncodeError(Exception):
-    """Raised when encoding fails due to invalid input."""
-    def __init__(self, message: str) -> None: ...
-
-class DecodeError(Exception):
-    """Raised when decoding fails due to invalid or corrupted data."""
-    def __init__(self, message: str) -> None: ...
 
 class BinaryKeyCodec:
     """Binary key codec that preserves lexicographic ordering for KV storage.

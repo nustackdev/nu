@@ -41,11 +41,21 @@ class IntegerOverflowError(EncodeError):
     - String codec: uint16 range (0 to 65535) for human readability
     """
 
-    def __init__(self, value: int, min_value: int, max_value: int) -> None:
-        self.value = value
-        self.min_value = min_value
-        self.max_value = max_value
-        super().__init__(f"Integer {value} out of supported range [{min_value}, {max_value}]")
+    def __init__(
+        self,
+        value: int | None = None,
+        min_value: int | None = None,
+        max_value: int | None = None,
+    ) -> None:
+        if value is not None:
+            self.value = value
+            self.min_value = min_value
+            self.max_value = max_value
+            super().__init__(
+                f"Integer {value} out of supported range{f' [{min_value}, {max_value}]' if min_value is not None and max_value is not None else ''}"
+            )
+        else:
+            super().__init__("Integer value out of supported range")
 
 
 class StringConstraintError(EncodeError):

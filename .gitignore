@@ -198,8 +198,10 @@ _playground/
 Claude.md
 repomix*.txt
 
-# rwrocks compiled libraries
-src/rwrocks/lib_rocksdb.cpp
+# cython files
+*.c
+*.cpp
 *.dylib
+*.so
 lib*.so.*
 src/rwrocks/include/rocksdb
