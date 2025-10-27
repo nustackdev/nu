@@ -25,7 +25,7 @@ from redwood.exceptions import (
     TransactionInvalidError,
 )
 
-from ._base import BaseStorage
+from .abc import BaseStorage
 
 
 if TYPE_CHECKING:
@@ -331,8 +331,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
                 finally:
                     cursor.close()
 
-            for item in items:
-                yield item
+            yield from items
 
         except Exception as e:
             raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
@@ -569,8 +568,7 @@ class LMDBStorageTransaction:
         finally:
             cursor.close()
 
-        for key, value in items:
-            yield key, value
+        yield from items
 
     def commit(self) -> None:
         """Commit transaction changes."""
@@ -757,8 +755,7 @@ class LMDBStorageSnapshot:
         finally:
             cursor.close()
 
-        for key, value in items:
-            yield key, value
+        yield from items
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""

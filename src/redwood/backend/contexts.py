@@ -9,7 +9,8 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.abc import TupleKey, Value
-    from redwood.backend.types import ScanOptions
+
+    from .types import ScanOptions
 
 
 __all__ = [

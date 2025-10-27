@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     from redwood.abc import CallbackFn, TupleKey, Value
 
-    from .context import SnapshotProtocol, TransactionProtocol
+    from .contexts import SnapshotProtocol, TransactionProtocol
     from .types import ScanOptions, StorageDescriptor
 
 

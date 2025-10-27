@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable
 from functools import cached_property
 from logging import getLogger
 from pathlib import Path
@@ -26,11 +25,11 @@ from redwood.exceptions import (
     TransactionInvalidError,
 )
 
-from ._base import BaseStorage
+from .abc import BaseStorage
 
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
     from redwood.abc import TupleKey, Value
     from redwood.backend import (

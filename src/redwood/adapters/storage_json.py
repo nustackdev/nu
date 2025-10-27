@@ -24,7 +24,7 @@ from redwood.exceptions import (
     TransactionInvalidError,
 )
 
-from ._base import BaseStorage
+from .abc import BaseStorage
 
 
 if TYPE_CHECKING:
@@ -487,8 +487,7 @@ class FileStorageTransaction:
         if options.limit is not None:
             del collected[options.limit :]
 
-        for item in collected:
-            yield item
+        yield from collected
 
     def commit(self) -> None:
         """Commit transaction changes."""
@@ -606,8 +605,7 @@ class FileStorageSnapshot:
         if options.limit is not None:
             del collected[options.limit :]
 
-        for item in collected:
-            yield item
+        yield from collected
 
     def close(self) -> None:
         """Close snapshot and clean up resources."""

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
     from redwood.abc import TupleKey
 
 

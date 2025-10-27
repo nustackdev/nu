@@ -10,8 +10,6 @@ if TYPE_CHECKING:
     from redwood.abc import Value
     from redwood.backend import ValueCodecProtocol
 
-    from .types import PickleEncoded
-
 
 __all__ = ["PickleCodec"]
 
@@ -22,10 +20,6 @@ class PickleCodec:
     Pickle can serialize most Python objects, making it suitable for cases
     where complex object graphs need to be persisted. However, pickle is
     Python-specific and has security implications for untrusted data.
-
-    Type Parameters:
-        PickleValue: Any picklable Python object
-        PickleEncoded: bytes (Python pickle format)
 
     Performance:
         - Encode/decode methods are direct function references for zero overhead
@@ -45,14 +39,14 @@ class PickleCodec:
         self.encode = pickle.dumps  # type: ignore[return-value]
         self.decode = pickle.loads  # type: ignore[return-value]
 
-    def encode(self, value: Value) -> PickleEncoded:
+    def encode(self, value: Value) -> bytes:
         """Encode a supported value into pickle binary format."""
         ...
 
-    def decode(self, encoded: PickleEncoded) -> Value:
+    def decode(self, encoded: bytes) -> Value:
         """Decode pickle binary data back into a supported value."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[PickleEncoded]] = PickleCodec
+    _: type[ValueCodecProtocol[bytes]] = PickleCodec

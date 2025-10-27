@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from redwood.abc import Value
     from redwood.backend import ValueCodecProtocol
 
-    from .types import MessagePackEncoded
 
 try:
     import msgpack
@@ -29,10 +28,6 @@ class MessagePackCodec:
     faster than JSON while supporting similar data types. It is ideal for
     network transmission and persistent storage.
 
-    Type Parameters:
-        MessagePackValue: None, bytes, bool, int, float, str, list, or dict
-        MessagePackEncoded: bytes (binary MessagePack format)
-
     Performance:
         - Encode/decode methods are direct function references for zero overhead
         - No method call indirection or wrapper overhead
@@ -47,14 +42,14 @@ class MessagePackCodec:
         self.encode = msgpack.packb  # type: ignore[return-value]
         self.decode = msgpack.unpackb  # type: ignore[return-value]
 
-    def encode(self, value: Value) -> MessagePackEncoded:
+    def encode(self, value: Value) -> bytes:
         """Encode a supported value into MessagePack binary format."""
         ...
 
-    def decode(self, encoded: MessagePackEncoded) -> Value:
+    def decode(self, encoded: bytes) -> Value:
         """Decode MessagePack binary data back into a supported value."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[MessagePackEncoded]] = MessagePackCodec
+    _: type[ValueCodecProtocol[bytes]] = MessagePackCodec

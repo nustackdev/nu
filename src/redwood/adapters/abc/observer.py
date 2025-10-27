@@ -41,15 +41,6 @@ class BaseObserver[EncodedKeyT](ABC):
 
     codec: KeyCodecProtocol[EncodedKeyT]
 
-    def setup(self) -> None:
-        """Service setup called after service initialization."""
-        self._connected = False
-        self.connect()
-
-    def cleanup(self) -> None:
-        """Service cleanup called after service shutdown."""
-        self.disconnect()
-
     def _ensure_connected(self) -> None:
         """Verify connection state.
 

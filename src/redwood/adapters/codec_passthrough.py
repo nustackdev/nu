@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
     from redwood.abc import Value
     from redwood.backend import ValueCodecProtocol
-
-    from .types import PassthroughEncoded
-
 
 __all__ = ["PassthroughCodec"]
 
@@ -22,9 +19,6 @@ class PassthroughCodec:
     is not required. It passes values through without any encoding or
     decoding overhead.
 
-    Type Parameters:
-        PassthroughValue: Any Python value
-        PassthroughEncoded: Same as PassthroughValue (no transformation)
     """
 
     def __init__(self) -> None:
@@ -32,14 +26,14 @@ class PassthroughCodec:
         self.encode = lambda x: x  # type: ignore[return-value]
         self.decode = lambda x: x  # type: ignore[return-value]
 
-    def encode(self, value: Value) -> PassthroughEncoded:
+    def encode(self, value: Value) -> Any:
         """Encode a supported value (no transformation)."""
         ...
 
-    def decode(self, encoded: PassthroughEncoded) -> Value:
+    def decode(self, encoded: Any) -> Value:
         """Decode a supported value (no transformation)."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[PassthroughEncoded]] = PassthroughCodec
+    _: type[ValueCodecProtocol[Any]] = PassthroughCodec

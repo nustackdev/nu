@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from redwood.abc import Value
     from redwood.backend import ValueCodecProtocol
 
-    from .types import JSONEncoded
 
 __all__ = ["JSONCodec"]
 
@@ -23,8 +22,6 @@ class JSONCodec:
     configuration files, and APIs. Binary data (bytes) is encoded using
     base64 to maintain JSON compatibility.
 
-    Type Parameters:
-        JSONEncoded: str (JSON text format)
 
     Features:
         - Human-readable output
@@ -39,7 +36,7 @@ class JSONCodec:
 
     __slots__ = ()
 
-    def encode(self, value: Value) -> JSONEncoded:
+    def encode(self, value: Value) -> str:
         """Encode a value to JSON string with base64 for bytes.
 
         Args:
@@ -51,7 +48,7 @@ class JSONCodec:
         processed = self._preprocess_encode(value)
         return json.dumps(processed)
 
-    def decode(self, encoded: JSONEncoded) -> Value:
+    def decode(self, encoded: str) -> Value:
         """Decode a JSON string to value, handling bytes.
 
         Args:
@@ -122,4 +119,4 @@ class JSONCodec:
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[JSONEncoded]] = JSONCodec
+    _: type[ValueCodecProtocol[str]] = JSONCodec

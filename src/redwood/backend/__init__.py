@@ -6,7 +6,7 @@ Concrete implementations are in storage, observer, etc.
 
 from __future__ import annotations
 
-from .context import (
+from .contexts import (
     SnapshotProtocol,
     StorageContextProtocol,
     StorageContextType,

@@ -33,19 +33,16 @@ Usage:
 from __future__ import annotations
 
 from functools import partial
+from typing import Any
 
-from .codec import StorageCodec, StorageCodecSpec
+from redwood.storage.codec import StorageCodec, StorageCodecSpec
 
 
 __all__ = [
-    # Aliases
     "BinaryCodec",
     "BinaryCodecSpec",
-    # Core codecs
     "NoOpCodec",
     "NoOpCodecSpec",
-    "StorageCodec",
-    "StorageCodecSpec",
     "TextCodec",
     "TextCodecSpec",
 ]
@@ -56,18 +53,13 @@ __all__ = [
 
 from rwtup import BinaryKeyCodec, StringKeyCodec
 
-from .adapters.json import JSONCodec
-from .adapters.micropack import MicroPackCodec
-from .adapters.passthrough import PassthroughCodec
-from .adapters.types import (
-    JSONEncoded,
-    MicroPackEncoded,
-    PassthroughEncoded,
-)
+from .codec_json import JSONCodec
+from .codec_micropack import MicroPackCodec
+from .codec_passthrough import PassthroughCodec
 
 
 # MicroPack-based binary codec
-BinaryCodec = StorageCodec[bytes, MicroPackEncoded]
+BinaryCodec = StorageCodec[bytes, bytes]
 BinaryCodecSpec = partial(
     StorageCodecSpec,
     key_codec=BinaryKeyCodec,
@@ -75,7 +67,7 @@ BinaryCodecSpec = partial(
 )
 
 # JSON-based text codec
-TextCodec = StorageCodec[str, JSONEncoded]
+TextCodec = StorageCodec[str, str]
 TextCodecSpec = partial(
     StorageCodecSpec,
     key_codec=StringKeyCodec,
@@ -83,7 +75,7 @@ TextCodecSpec = partial(
 )
 
 # No-op codec
-NoOpCodec = StorageCodec[str, PassthroughEncoded]
+NoOpCodec = StorageCodec[str, Any]
 NoOpCodecSpec = partial(
     StorageCodecSpec,
     key_codec=StringKeyCodec,

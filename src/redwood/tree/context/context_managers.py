@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.backend import StorageContextType
-    from redwood.reactive import ReactiveStorage
+    from redwood.storage import ReactiveStorage
 
     from .contextual_base import ContextualBase
 

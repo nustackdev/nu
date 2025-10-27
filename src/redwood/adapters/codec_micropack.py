@@ -9,8 +9,6 @@ if TYPE_CHECKING:
     from redwood.abc import Value
     from redwood.backend import ValueCodecProtocol
 
-    from .types import MicroPackEncoded
-
 try:
     from micropack import Codec
 except ImportError as e:
@@ -28,10 +26,6 @@ class MicroPackCodec:
     encoding and decoding. It is designed for scenarios requiring maximum
     performance and minimal overhead.
 
-    Type Parameters:
-        MicroPackValue: None, bytes, bool, int, float, str, list, or dict
-        MicroPackEncoded: bytes (binary MicroPack format)
-
     Performance:
         - Encode/decode methods are direct function references for zero overhead
         - No method call indirection or wrapper overhead
@@ -47,14 +41,14 @@ class MicroPackCodec:
         self.encode = self._codec.encode  # type: ignore[return-value]
         self.decode = self._codec.decode  # type: ignore[return-value]
 
-    def encode(self, value: Value) -> MicroPackEncoded:
+    def encode(self, value: Value) -> bytes:
         """Encode a supported value into MicroPack binary format."""
         ...
 
-    def decode(self, encoded: MicroPackEncoded) -> Value:
+    def decode(self, encoded: bytes) -> Value:
         """Decode MicroPack binary data back into a supported value."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[MicroPackEncoded]] = MicroPackCodec
+    _: type[ValueCodecProtocol[bytes]] = MicroPackCodec
