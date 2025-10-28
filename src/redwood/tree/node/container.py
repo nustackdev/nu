@@ -51,7 +51,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 import attrs
 
@@ -173,15 +173,6 @@ class ContainerNode(BaseNode):
         backend: Backend instance for low-level storage operations.
     """
 
-    # Container type marker for distinguishing containers from primitives
-    _CONTAINER_MARKER: ClassVar[str] = "\ue000"
-    # The Private Use Area (PUA) is a range of Unicode code points (U+E000 to U+F8FF)
-    # that are intentionally not assigned to any standard characters.
-    # Using PUA characters virtually eliminates the risk of collision since:
-    # - They don't appear on standard keyboards
-    # - They're not used in any human writing systems
-    # - They have no standard visual representation
-
     structure: ContainerStructure = attrs.field(kw_only=True)
 
     protocol: ContainerProtocol = attrs.field(kw_only=True)
@@ -205,12 +196,34 @@ class ContainerNode(BaseNode):
     # HELPER STATIC METHODS (typically used internally)
     # ------------------------------------------------------------------------
     @staticmethod
-    def extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol]:
+    def create_type_marker(structure: ContainerStructure, protocol: ContainerProtocol) -> tuple:
+        """Create a container type marker as bytes.
+
+        Args:
+            structure: Container structure type.
+            protocol: Container protocol flags.
+
+        Returns:
+            tuple: 4-length marker [marker, structure_int, protocol_int, marker].
+        """
+        # Container type marker for distinguishing containers from primitives
+        marker = "\ue000"
+        # The Private Use Area (PUA) is a range of Unicode code points (U+E000 to U+F8FF)
+        # that are intentionally not assigned to any standard characters.
+        # Using PUA characters virtually eliminates the risk of collision since:
+        # - They don't appear on standard keyboards
+        # - They're not used in any human writing systems
+        # - They have no standard visual representation
+
+        return (marker, structure, protocol.value, marker)
+
+    @staticmethod
+    def extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol] | None:
         """Extract structure and protocol from container marker data.
 
         Args:
-            type_data: Raw marker data from storage, expected to be a string
-                in format "\ue000[structure_value,protocol_value]".
+            type_data: Raw marker data from storage, expected to be 3 bytes:
+                [0xE0, structure_value, protocol_value].
 
         Returns:
             tuple[ContainerStructure, ContainerProtocol]: Parsed structure and protocol enums.
@@ -218,48 +231,28 @@ class ContainerNode(BaseNode):
         Raises:
             ValueError: If type_data is malformed or cannot be parsed.
         """
-        # Fast path: check type and prefix in one go
-        if type(type_data) is not str:  # type() is faster than isinstance() for exact type
-            raise ValueError(f"Malformed container marker: {type_data}")
+        # Container type marker for distinguishing containers from primitives
+        marker = "\ue000"
+        # The Private Use Area (PUA) is a range of Unicode code points (U+E000 to U+F8FF)
+        # that are intentionally not assigned to any standard characters.
+        # Using PUA characters virtually eliminates the risk of collision since:
+        # - They don't appear on standard keyboards
+        # - They're not used in any human writing systems
+        # - They have no standard visual representation
 
-        # Single slice check instead of startswith
-        marker_len = 1  # len("\ue000") = 1
-        if len(type_data) < marker_len + 3 or type_data[0] != "\ue000":  # minimum: "\ue000[,]"
-            raise ValueError(f"Malformed container marker: {type_data}")
+        if (
+            type(type_data) is not tuple
+            or len(type_data) != 4
+            or type_data[0] != marker
+            or type_data[3] != marker
+        ):
+            # raise ValueError(f"Malformed container marker: {type_data}")
+            return None
 
-        # Direct indexing instead of multiple slices
-        if type_data[marker_len] != "[" or type_data[-1] != "]":
-            raise ValueError(f"Invalid marker format: {type_data}")
-
-        try:
-            # Single slice for inner content
-            values_str = type_data[marker_len + 1 : -1]  # Skip "\ue000[" and "]"
-
-            # Find comma position directly instead of split
-            comma_idx = values_str.find(",")
-            if comma_idx == -1:
-                raise ValueError(f"Expected 2 values in marker: {type_data}")
-
-            # Parse integers directly from slices (strip is expensive)
-            structure = ContainerStructure(int(values_str[:comma_idx]))
-            protocol = ContainerProtocol(int(values_str[comma_idx + 1 :]))
-        except (ValueError, IndexError) as e:
-            raise ValueError(f"Invalid container marker format: {type_data}") from e
+        structure = ContainerStructure(type_data[1])  # type: ignore[arg-type]
+        protocol = ContainerProtocol(type_data[2])
 
         return structure, protocol
-
-    @staticmethod
-    def create_type_marker(structure: ContainerStructure, protocol: ContainerProtocol) -> str:
-        """Create a container type marker string.
-
-        Args:
-            structure: Container structure type.
-            protocol: Container protocol flags.
-
-        Returns:
-            str: Formatted marker string.
-        """
-        return f"{ContainerNode._CONTAINER_MARKER}[{structure},{protocol.value}]"
 
     # ------------------------------------------------------------------------
     # HIGH-LEVEL CONTAINER OPERATIONS
@@ -437,10 +430,10 @@ class ContainerNode(BaseNode):
             # Try to parse as container marker
             structure = None
             protocol = None
-            try:
-                structure, protocol = cls.extract_type_info(raw_data)
-            except ValueError:
-                pass  # Keep as None - indicates non-container or malformed data
+
+            if res := cls.extract_type_info(raw_data):
+                structure, protocol = res
+            # else: Keep as None - indicates non-container or malformed data
 
             return ParentInfo(
                 path=path,
@@ -606,13 +599,11 @@ class ContainerNode(BaseNode):
         try:
             existing_data = self.get_ensured_context().get(self.path)
             # If we can extract type info, it's a container, which is fine
-            try:
-                self.extract_type_info(existing_data)
-            except ValueError:
-                # Not a container marker - this is a collision
+            if self.extract_type_info(existing_data) is None:
+                # Existing data is not a container marker - collision detected
                 raise PathTypeError(
                     f"Path collision detected: {self.path} collides with an existing primitive value"
-                ) from None
+                )
         except StorageKeyError:
             # Path doesn't exist - no collision
             pass
@@ -1014,23 +1005,21 @@ class ContainerNode(BaseNode):
             child_data = self.get_ensured_context().get(child_path)
 
             # Try to parse as container marker
-            try:
-                child_structure, child_protocol = self.extract_type_info(child_data)
+            if res := self.extract_type_info(child_data):
                 return ChildInfo(
                     key=key,
                     exists=True,
                     child_type=ChildType.CONTAINER,
-                    stored_structure=child_structure,
-                    stored_protocol=child_protocol,
+                    stored_structure=res[0],
+                    stored_protocol=res[1],
                 )
-            except ValueError:
-                # Not a container marker - it's a primitive
-                return ChildInfo(
-                    key=key,
-                    exists=True,
-                    child_type=ChildType.PRIMITIVE,
-                    value=child_data,
-                )
+            # Not a container marker - it's a primitive
+            return ChildInfo(
+                key=key,
+                exists=True,
+                child_type=ChildType.PRIMITIVE,
+                value=child_data,
+            )
         except StorageKeyError:
             # Child doesn't exist
             return ChildInfo(key=key, exists=False, child_type=ChildType.NOT_FOUND)
