@@ -49,9 +49,8 @@ concurrency at the transaction level.*
 
 from __future__ import annotations
 
-from enum import Enum, auto
 from functools import cached_property
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING
 
 import attrs
 
@@ -64,6 +63,7 @@ from redwood.abc import (
 )
 from redwood.be import StorageKeyError
 
+from ..context import ContextualBase
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
 from ..path import Path
 from ..types import (
@@ -71,7 +71,7 @@ from ..types import (
     ContainerStructure,
     NodeType,
 )
-from .base import BaseNode
+from .types import ChildInfo, ChildType, ContainerInfo, ParentInfo
 
 
 if TYPE_CHECKING:
@@ -82,75 +82,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ChildInfo",
-    "ChildType",
-    "ContainerInfo",
     "ContainerNode",
-    "ContainerState",
-    "ParentInfo",
 ]
 
 
-class ChildType(Enum):
-    """Simple child type classification."""
-
-    PRIMITIVE = auto()
-    CONTAINER = auto()
-    NOT_FOUND = auto()
-
-
-class ChildInfo(NamedTuple):
-    """Basic information about a child.
-
-    Using NamedTuple for more efficient initialization than dataclass.
-    """
-
-    key: KeyComponent
-    exists: bool
-    child_type: ChildType
-    value: Value | Empty = EMPTY  # For primitives
-    stored_structure: ContainerStructure | None = None  # For containers
-    stored_protocol: ContainerProtocol | None = None  # For containers
-
-
-class ParentInfo(NamedTuple):
-    """Raw information about a parent container."""
-
-    path: TupleKey
-    exists: bool
-    stored_structure: ContainerStructure | None = None
-    stored_protocol: ContainerProtocol | None = None
-    raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
-
-
-class ContainerInfo(NamedTuple):
-    """Pure information about container and parent chain - no validation logic."""
-
-    # Container raw data
-    exists: bool
-    stored_structure: ContainerStructure | None = None
-    stored_protocol: ContainerProtocol | None = None
-    raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
-
-    # Parent chain raw data (from root to immediate parent)
-    parents: tuple[ParentInfo, ...] = ()
-
-    # Paths categorization (pure facts, no validation decisions)
-    missing_parent_paths: tuple[TupleKey, ...] = ()
-    malformed_parent_paths: tuple[TupleKey, ...] = ()
-
-
-class ContainerState(Enum):
-    """Container states after validation."""
-
-    VALID = auto()  # Exists and matches expected type
-    NOT_FOUND = auto()  # Doesn't exist
-    TYPE_MISMATCH = auto()  # Exists but wrong type
-    MALFORMED = auto()  # Exists but corrupted data
-
-
 @attrs.define(frozen=True, kw_only=True)
-class ContainerNode(BaseNode):
+class ContainerNode(ContextualBase):
     """Container node implementation.
 
     Provides filesystem-like operations for containers with a layered architecture
@@ -173,8 +110,19 @@ class ContainerNode(BaseNode):
         backend: Backend instance for low-level storage operations.
     """
 
+    # Backend instance for transaction management
+    backend: ReactiveStorage = attrs.field(kw_only=True)
+
+    # Current transaction if any
+    ctx: StorageContextType = attrs.field(kw_only=True)  # type: ignore[assignment]
+
+    # Path to this node in the state tree
+    path: TupleKey = attrs.field(eq=False, kw_only=True)
+
+    # Container type expectations
     structure: ContainerStructure = attrs.field(kw_only=True)
 
+    # Container protocol expectations
     protocol: ContainerProtocol = attrs.field(kw_only=True)
 
     info: ContainerInfo = attrs.field(kw_only=True, eq=False, hash=False)

@@ -42,9 +42,9 @@ from redwood.abc import (
     Value,
 )
 
+from ..container import ChildType, ContainerNode
 from ..context import ContextualBase
 from ..exceptions import ContainerProtocolError
-from ..node import ChildType, ContainerNode
 from ..path import Path
 from .types import AccessibleViewProtocol
 

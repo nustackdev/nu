@@ -7,7 +7,7 @@ from mesh import SyncResource
 
 from redwood.be import StorageConnectionError, StorageOperationError
 from redwood.be.types import StorageCapabilities, StorageDescriptor, StorageScanOptions
-from redwood.storage.contexts import SnapshotContextManager, TransactionContextManager
+from redwood.storage.utils import SnapshotContextManager, TransactionContextManager
 
 
 if TYPE_CHECKING:

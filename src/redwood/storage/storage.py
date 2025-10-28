@@ -9,35 +9,35 @@ Features:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import attrs
 
-from redwood.be import (
-    ObserverProtocol,
-    SnapshotContextManagerProtocol,
-    SnapshotProtocol,
-    StorageProtocol,
-    StorageScanOptions,
-    SubscriptionProtocol,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
-)
+from .utils import SnapshotContextManager, TransactionContextManager
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    from types import TracebackType
 
     from redwood.abc import CallbackFn, TupleKey, Value
+    from redwood.be import (
+        CodecProtocol,
+        ObserverProtocol,
+        SnapshotContextManagerProtocol,
+        SnapshotProtocol,
+        StorageDescriptor,
+        StorageProtocol,
+        StorageScanOptions,
+        SubscriptionProtocol,
+        TransactionContextManagerProtocol,
+        TransactionProtocol,
+    )
+
 
 __all__ = [
     "ReactiveStorage",
     "ReactiveStorageSnapshot",
-    "ReactiveStorageSnapshotContextManager",
     "ReactiveStorageTransaction",
-    "ReactiveStorageTransactionContextManager",
 ]
 
 
@@ -62,6 +62,15 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
         self._observer = observer
 
     @property
+    def codec(self) -> CodecProtocol[EncodedKeyT, EncodedValueT]:
+        """Get storage codec.
+
+        Returns:
+            Storage codec
+        """
+        return self.storage.codec
+
+    @property
     def storage(self) -> StorageProtocol[EncodedKeyT, EncodedValueT]:
         """Get storage backend.
 
@@ -78,6 +87,14 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
             Observer instance
         """
         return self._observer
+
+    def describe(self) -> StorageDescriptor:
+        """Get storage descriptor.
+
+        Returns:
+            Storage descriptor
+        """
+        return self.storage.describe()
 
     def get(self, key: TupleKey) -> Value:
         """Get value at key.
@@ -222,7 +239,7 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
         storage_txn = self.storage.begin_transaction()
         return ReactiveStorageTransaction(storage_txn=storage_txn, observer=self.observer)
 
-    def transaction(self) -> ReactiveStorageTransactionContextManager:
+    def transaction(self) -> TransactionContextManagerProtocol:
         """Get transaction context manager for combined storage and notification handling.
 
         Returns:
@@ -237,7 +254,7 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
                 # Auto-rollbacks with no notifications on failure
             ```
         """
-        return ReactiveStorageTransactionContextManager(self)
+        return TransactionContextManager(self)
 
     def begin_snapshot(self) -> ReactiveStorageSnapshot:
         """Begin a new read-only snapshot.
@@ -251,7 +268,7 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
         storage_snap = self.storage.begin_snapshot()
         return ReactiveStorageSnapshot(storage_snap=storage_snap)
 
-    def snapshot(self) -> ReactiveStorageSnapshotContextManager:
+    def snapshot(self) -> SnapshotContextManagerProtocol:
         """Get snapshot context manager for read-only operations.
 
         Returns:
@@ -265,7 +282,7 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
                 # Auto-cleanup on exit
             ```
         """
-        return ReactiveStorageSnapshotContextManager(self)
+        return SnapshotContextManager(self)
 
     def __hash__(self) -> int:
         return hash((self.storage, self.observer))
@@ -355,45 +372,6 @@ class ReactiveStorageTransaction:
         return isinstance(other, type(self)) and self.storage_txn == other.storage_txn
 
 
-@dataclass
-class ReactiveStorageTransactionContextManager(TransactionContextManagerProtocol):
-    """Context manager for State transactions that handles both storage and notifications."""
-
-    _reactive_kv: ReactiveStorage  # Reference to parent State instance
-    _transaction: ReactiveStorageTransaction | None = None  # Store the active transaction
-
-    def __enter__(self) -> ReactiveStorageTransaction:
-        """Begin new transaction with combined storage and notification handling."""
-        self._transaction = self._reactive_kv.begin_transaction()
-        return self._transaction
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        """Handle transaction completion.
-
-        - On success (no exception): commit changes and send notifications
-        - On failure (exception): rollback changes, no notifications
-        """
-        if self._transaction is None:
-            raise RuntimeError("Transaction not initialized")
-
-        try:
-            if exc_type is not None:
-                # Exception occurred, rollback
-                self._transaction.rollback()
-                return False
-            # No exception, commit
-            self._transaction.commit()
-            return True
-        finally:
-            # Clear the transaction reference
-            self._transaction = None
-
-
 @attrs.define(frozen=True)
 class ReactiveStorageSnapshot:
     """Read-only snapshot implementation that provides consistent view of storage.
@@ -452,37 +430,7 @@ class ReactiveStorageSnapshot:
         return isinstance(other, type(self)) and self.storage_snap == other.storage_snap
 
 
-@dataclass
-class ReactiveStorageSnapshotContextManager(SnapshotContextManagerProtocol):
-    """Context manager for read-only snapshots."""
-
-    _reactive_kv: ReactiveStorage  # Reference to parent backend instance
-    _snapshot: ReactiveStorageSnapshot | None = None  # Store the active snapshot
-
-    def __enter__(self) -> ReactiveStorageSnapshot:
-        """Begin new snapshot for read-only operations."""
-        self._snapshot = self._reactive_kv.begin_snapshot()
-        return self._snapshot
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        """Clean up snapshot resources."""
-        if self._snapshot is None:
-            raise RuntimeError("Snapshot not initialized")
-
-        try:
-            # Always clean up snapshot resources
-            self._snapshot.close()
-            return exc_type is None
-        finally:
-            # Clear the snapshot reference
-            self._snapshot = None
-
-
 if TYPE_CHECKING:
+    _: type[StorageProtocol] = ReactiveStorage
     __: type[TransactionProtocol] = ReactiveStorageTransaction
     ___: type[SnapshotProtocol] = ReactiveStorageSnapshot
