@@ -30,7 +30,7 @@ class StorageCapabilities:
 
 
 @dataclass(frozen=True, slots=True)
-class ScanOptions:
+class StorageScanOptions:
     """Configuration for ordered range scans."""
 
     prefix: TupleKey = ()

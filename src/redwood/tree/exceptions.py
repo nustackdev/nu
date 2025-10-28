@@ -4,7 +4,7 @@ This module defines a comprehensive set of exceptions that follow a clear hierar
 making error handling and debugging more intuitive.
 """
 
-from redwood.exceptions import RedwoodError
+from redwood._rw_exception import RedwoodError
 
 
 class TreeError(RedwoodError):

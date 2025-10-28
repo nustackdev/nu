@@ -13,11 +13,12 @@ import attrs
 from mesh import Attach, ResourceSpec, Spec
 
 from redwood.abc import Value
-from redwood.be.types import ScanOptions, StorageCapabilities
-from redwood.exceptions import (
+from redwood.be import (
     SnapshotError,
+    StorageCapabilities,
     StorageKeyError,
     StorageOperationError,
+    StorageScanOptions,
     TransactionConflictError,
     TransactionError,
     TransactionInvalidError,
@@ -372,14 +373,14 @@ class InMemoryStorageTransaction:
         for key in self.list_keys(prefix, depth):
             yield key, self.get(key)
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform ordered scan within transaction context."""
         for key, _ in self.scan_items(options):
             yield key
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform ordered scan yielding key/value pairs within transaction."""
@@ -500,14 +501,14 @@ class InMemoryStorageSnapshot:
         for key in self.list_keys(prefix, depth):
             yield key, self.get(key)
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform ordered scan within snapshot context."""
         for key, _ in self.scan_items(options):
             yield key
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform ordered scan yielding key/value pairs within snapshot context."""

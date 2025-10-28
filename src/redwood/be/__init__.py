@@ -6,6 +6,21 @@ Concrete implementations are in storage, observer, etc.
 
 from __future__ import annotations
 
+from .exceptions import (
+    ObserverConnectionError,
+    ObserverError,
+    ObserverSubscriptionError,
+    ObserverValidationError,
+    SnapshotError,
+    StorageConnectionError,
+    StorageError,
+    StorageKeyError,
+    StorageOperationError,
+    StorageValidationError,
+    TransactionConflictError,
+    TransactionError,
+    TransactionInvalidError,
+)
 from .protocols import (
     CodecProtocol,
     KeyCodecProtocol,
@@ -24,10 +39,10 @@ from .protocols import (
     ValueCodecProtocol,
 )
 from .types import (
-    ScanOptions,
     StorageCapabilities,
     StorageDescriptor,
     StorageMode,
+    StorageScanOptions,
 )
 
 
@@ -49,8 +64,22 @@ __all__ = [  # noqa: RUF022
     "TransactionalHandlerProtocol",
     "ValueCodecProtocol",
     # Types
-    "ScanOptions",
+    "StorageScanOptions",
     "StorageCapabilities",
     "StorageDescriptor",
     "StorageMode",
+    # Exceptions
+    "ObserverConnectionError",
+    "ObserverError",
+    "ObserverSubscriptionError",
+    "ObserverValidationError",
+    "SnapshotError",
+    "StorageConnectionError",
+    "StorageError",
+    "StorageKeyError",
+    "StorageOperationError",
+    "StorageValidationError",
+    "TransactionConflictError",
+    "TransactionError",
+    "TransactionInvalidError",
 ]

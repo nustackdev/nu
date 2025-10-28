@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
     from redwood.abc import TupleKey, Value
 
-    from ..types import ScanOptions, StorageDescriptor
+    from ..types import StorageDescriptor, StorageScanOptions
     from .codec import CodecProtocol
     from .transaction import (
         SnapshotContextManagerProtocol,
@@ -136,13 +136,13 @@ class StorageProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform an ordered scan over keys with fine-grained bounds."""
         ...
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform an ordered scan yielding key/value pairs."""

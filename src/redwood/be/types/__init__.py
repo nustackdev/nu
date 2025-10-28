@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from .storage import ScanOptions, StorageCapabilities, StorageDescriptor, StorageMode
+from .storage import StorageCapabilities, StorageDescriptor, StorageMode, StorageScanOptions
 
 
 __all__ = [
-    "ScanOptions",
     "StorageCapabilities",
     "StorageDescriptor",
     "StorageMode",
+    "StorageScanOptions",
 ]

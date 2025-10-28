@@ -13,13 +13,14 @@ import attrs
 from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
 
-from redwood.be import ScanOptions, StorageCapabilities
-from redwood.exceptions import (
+from redwood.be import (
     SnapshotError,
+    StorageCapabilities,
     StorageConnectionError,
     StorageError,
     StorageKeyError,
     StorageOperationError,
+    StorageScanOptions,
     TransactionError,
     TransactionInvalidError,
 )
@@ -145,7 +146,7 @@ def _collect_prefixed_items(
 def _scan_prefixed_items(
     iterator: Any,
     codec: CodecProtocol[bytes, bytes],
-    options: ScanOptions,
+    options: StorageScanOptions,
 ) -> list[tuple[TupleKey, Value]]:
     """Collect key/value pairs honouring scan options."""
     if options.limit == 0:
@@ -478,7 +479,7 @@ class RocksDBStorage(BaseStorage[bytes, bytes]):
 
     def _scan_items_impl(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         try:
             with self._db_lock:
@@ -681,14 +682,14 @@ class RocksDBStorageTransaction:
 
         yield from items
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform ordered scan within transaction context."""
         for key, _ in self.scan_items(options):
             yield key
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform ordered scan yielding key/value pairs within transaction context."""
@@ -843,14 +844,14 @@ class RocksDBStorageSnapshot:
         for key, value in items:
             yield key, value
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform ordered scan within snapshot context."""
         for key, _ in self.scan_items(options):
             yield key
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform ordered scan yielding key/value pairs within snapshot context."""

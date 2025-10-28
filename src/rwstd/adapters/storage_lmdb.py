@@ -14,12 +14,13 @@ import attrs
 from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
 
-from redwood.be.types import ScanOptions, StorageCapabilities
-from redwood.exceptions import (
+from redwood.be import (
     SnapshotError,
+    StorageCapabilities,
     StorageError,
     StorageKeyError,
     StorageOperationError,
+    StorageScanOptions,
     TransactionError,
     TransactionInvalidError,
 )
@@ -53,7 +54,7 @@ lmdb = cast(
 def _scan_cursor_items(
     cursor: lmdb.Cursor,
     codec: CodecProtocol[bytes, bytes],
-    options: ScanOptions,
+    options: StorageScanOptions,
 ) -> list[tuple[TupleKey, Value]]:
     """Collect ordered key/value pairs from an LMDB cursor."""
     if options.limit == 0:
@@ -327,7 +328,7 @@ class LMDBStorage(BaseStorage[bytes, bytes]):
 
     def _scan_items_impl(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Efficient ordered scan leveraging LMDB cursor semantics."""
         try:
@@ -557,14 +558,14 @@ class LMDBStorageTransaction:
         """List key/value pairs under prefix within transaction context."""
         yield from self._collect_items(prefix, depth)
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform ordered scan within transaction context."""
         for key, _ in self.scan_items(options):
             yield key
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform ordered scan yielding key/value pairs within transaction context."""
@@ -744,14 +745,14 @@ class LMDBStorageSnapshot:
         """List key/value pairs under prefix within snapshot context."""
         yield from self._collect_items(prefix, depth)
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform ordered scan within snapshot context."""
         for key, _ in self.scan_items(options):
             yield key
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform ordered scan yielding key/value pairs within snapshot context."""

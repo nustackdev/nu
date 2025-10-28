@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, final
 
 from mesh import SyncResource
 
-from redwood.be.types import ScanOptions, StorageCapabilities, StorageDescriptor
-from redwood.exceptions import StorageConnectionError, StorageOperationError
+from redwood.be import StorageConnectionError, StorageOperationError
+from redwood.be.types import StorageCapabilities, StorageDescriptor, StorageScanOptions
 from redwood.storage.contexts import SnapshotContextManager, TransactionContextManager
 
 
@@ -205,7 +205,7 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
 
     def _scan_items_impl(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Default scan implementation derived from list_items.
 
@@ -270,7 +270,7 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
         yield from self._list_items_impl(prefix, depth)
 
     @final
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform an ordered scan over keys."""
         self._ensure_connected()
         for key, _ in self._scan_items_impl(options):
@@ -279,7 +279,7 @@ class BaseStorage[EncodedKeyT, EncodedValueT](ABC, SyncResource):
     @final
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform an ordered scan yielding key/value pairs."""

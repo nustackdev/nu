@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Self
 import attrs
 
 from redwood.abc import EMPTY, CallbackFn, Empty, KeyComponent, TupleKey, Value
-from redwood.exceptions import StorageKeyError
+from redwood.be import StorageKeyError
 
 from .context import ContextualBase
 from .path import Path

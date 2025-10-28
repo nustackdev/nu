@@ -16,10 +16,10 @@ import attrs
 
 from redwood.be import (
     ObserverProtocol,
-    ScanOptions,
     SnapshotContextManagerProtocol,
     SnapshotProtocol,
     StorageProtocol,
+    StorageScanOptions,
     SubscriptionProtocol,
     TransactionContextManagerProtocol,
     TransactionProtocol,
@@ -164,13 +164,13 @@ class ReactiveStorage[EncodedKeyT, EncodedValueT]:
         """List key/value pairs under prefix."""
         yield from self.storage.list_items(prefix, depth)
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Scan keys using configured options."""
         yield from self.storage.scan_keys(options)
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Scan key/value pairs using configured options."""
@@ -322,13 +322,13 @@ class ReactiveStorageTransaction:
         """List key/value pairs with prefix within transaction."""
         yield from self.storage_txn.list_items(prefix, depth)
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Scan keys within transaction."""
         yield from self.storage_txn.scan_keys(options)
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Scan key/value pairs within transaction."""
@@ -427,13 +427,13 @@ class ReactiveStorageSnapshot:
         """List key/value pairs with prefix within snapshot."""
         yield from self.storage_snap.list_items(prefix, depth)
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Scan keys within snapshot."""
         yield from self.storage_snap.scan_keys(options)
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Scan key/value pairs within snapshot."""

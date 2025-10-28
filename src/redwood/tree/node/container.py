@@ -62,7 +62,7 @@ from redwood.abc import (
     TupleKey,
     Value,
 )
-from redwood.exceptions import StorageKeyError
+from redwood.be import StorageKeyError
 
 from ..exceptions import ContainerProtocolError, PathExistsError, PathNotFoundError, PathTypeError
 from ..path import Path

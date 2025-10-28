@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import TYPE_CHECKING, final
 
-from redwood.exceptions import ObserverConnectionError
+from redwood.be import ObserverConnectionError
 
 
 if TYPE_CHECKING:

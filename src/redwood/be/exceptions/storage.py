@@ -1,9 +1,12 @@
-"""Exception system for the whole redwood package."""
+"""Storage-specific exceptions."""
 
 from __future__ import annotations
 
+from redwood._rw_exception import RedwoodError
+
 
 __all__ = [
+    "SnapshotError",
     "StorageConnectionError",
     "StorageError",
     "StorageKeyError",
@@ -13,17 +16,6 @@ __all__ = [
     "TransactionError",
     "TransactionInvalidError",
 ]
-
-
-class RedwoodError(Exception):
-    """Base exception for redwood errors."""
-
-    pass
-
-
-# ==============================================================
-# Storage exceptions
-# ==============================================================
 
 
 class StorageError(RedwoodError):
@@ -76,34 +68,5 @@ class TransactionConflictError(TransactionError):
 
 class TransactionInvalidError(TransactionError):
     """Raised when transaction is invalid."""
-
-    pass
-
-
-# ==============================================================
-# Observer exceptions
-# ==============================================================
-
-
-class ObserverError(RedwoodError):
-    """Base exception for observer errors."""
-
-    pass
-
-
-class ObserverConnectionError(ObserverError):
-    """Raised when observer connection fails."""
-
-    pass
-
-
-class ObserverSubscriptionError(ObserverError):
-    """Raised when subscription operation fails."""
-
-    pass
-
-
-class ObserverValidationError(ObserverError):
-    """Raised when subscription operation fails."""
 
     pass

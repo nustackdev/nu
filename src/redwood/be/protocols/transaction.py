@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     from redwood.abc import TupleKey, Value
 
-    from ..types import ScanOptions
+    from ..types import StorageScanOptions
 
 
 __all__ = [
@@ -120,13 +120,13 @@ class StorageContextProtocol(Protocol):
         """
         ...
 
-    def scan_keys(self, options: ScanOptions, /) -> Generator[TupleKey, None, None]:
+    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
         """Perform an ordered scan over keys."""
         ...
 
     def scan_items(
         self,
-        options: ScanOptions,
+        options: StorageScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
         """Perform an ordered scan yielding key/value pairs."""
