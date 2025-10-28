@@ -9,21 +9,22 @@ This shows the full declarative → runtime flow:
 
 import time
 
-from redwood.codec import BinaryCodecSpec, TextCodecSpec
-from redwood.observer.in_memory_observer import InMemoryObserver, InMemoryObserverSpec
-from redwood.reactive import ReactiveStorage
 from redwood.semantics.structure.shape import Shape
 from redwood.semantics.structure.slots import MapSlot, ShapeSlot, ValueSlot
-
-# Import new semantics
 from redwood.semantics.types import Context
-from redwood.storage.file_storage import FileStorage, FileStorageSpec
-from redwood.storage.lmdb_storage import LMDBStorage, LMDBStorageSpec
+from redwood.storage import ReactiveStorage
 from redwood.tree.registry import ViewRegistry
-
-# Import views
-from rwstd import DictView, ListView, Tree
-from rwstd.queue_view import QueueComponent, QueueContainer, QueueView
+from rwstd.adapters import (
+    BinaryCodecSpec,
+    InMemoryObserver,
+    InMemoryObserverSpec,
+    LMDBStorage,
+    LMDBStorageSpec,
+    RocksDBStorage,
+    RocksDBStorageSpec,
+    TextCodecSpec,
+)
+from rwstd.views import DictView, ListView, QueueComponent, QueueContainer, QueueView, Tree
 
 
 # ============================================================================
@@ -71,7 +72,7 @@ class User(Shape):
 def run_examples() -> None:
     with (
         InMemoryObserver(InMemoryObserverSpec(codec=TextCodecSpec())) as observer,
-        FileStorage(FileStorageSpec(codec=TextCodecSpec())) as storage,
+        RocksDBStorage(RocksDBStorageSpec(codec=BinaryCodecSpec(), path=".db-layer4")) as storage,
     ):
         reactive_storage = ReactiveStorage(storage=storage, observer=observer)
         view_registry = ViewRegistry()
@@ -145,14 +146,20 @@ def run_benchmarks() -> None:
         print("\n" + "=" * 60)
         print("Benchmark 1: Read Performance")
         print("=" * 60)
+
         start_time = time.perf_counter()
+        with tree.with_dict_view() as users_view:
+            for _ in range(10_000):
+                users_view.get("name")
+        end_time = time.perf_counter()
+        print(f"Elapsed time: {end_time - start_time:.4f} seconds for 10,000 view reads")
 
-        # with tree.with_dict_view() as users_view:
-        #     for _ in range(10_000):
-        #         users_view.get("name")
-
+        # --- Benchmark 2: command execution performance ---
+        print("\n" + "=" * 60)
+        print("Benchmark 2: Command Execution Performance")
+        print("=" * 60)
+        start_time = time.perf_counter()
         with tree.transaction() as tx:
-            get_cmd = User.name.get()
             for _ in range(10_000):
                 User.name.get().execute(Context(tree=tree, storage_context=tx))
         end_time = time.perf_counter()
@@ -161,5 +168,5 @@ def run_benchmarks() -> None:
 
 
 if __name__ == "__main__":
-    # run_examples()
+    run_examples()
     run_benchmarks()

@@ -13,7 +13,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from rwstd import DictView
+from rwstd.views import DictView
 
 
 if TYPE_CHECKING:
