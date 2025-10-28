@@ -189,70 +189,133 @@ class ContainerNode(BaseNode):
         return NodeType.CONTAINER
 
     # ========================================================================
-    # CONTAINER OPERATIONS
+    # CONTAINER TYPE MARKER SYSTEM
+    # ========================================================================
+    #
+    # PURPOSE:
+    #   Distinguishes container objects from primitive values using an
+    #   embedded type marker that can be safely stored alongside data.
+    #
+    # MARKER STRUCTURE:
+    # ┌──────────────────────────────────────────────────────────────────┐
+    # │  Type Marker Tuple (4 elements)                                  │
+    # ├──────────────┬─────────────┬─────────────┬───────────────────────┤
+    # │   Sentinel   │  Structure  │  Protocol   │      Sentinel         │
+    # │   (string)   │    (enum)   │   (flags)   │      (string)         │
+    # │              │             │             │                       │
+    # │ "\uE000      │ Dict        │ 0x01 = Mut  │ "\uE000               │
+    # │  \U000F0000" │ List        │             │  \U000F0000"          │
+    # └──────────────┴─────────────┴─────────────┴───────────────────────┘
+    #      [0]            [1]            [2]             [3]
+    #
+    # SENTINEL CHARACTER COMPOSITION:
+    # ┌──────────────────────────────────────────────────────────────────┐
+    # │ Unicode Private Use Area Marker (2 characters, 7 UTF-8 bytes)    │
+    # ├──────────────────────────────┬───────────────────────────────────┤
+    # │  Character 1: U+E000         │  Character 2: U+F0000             │
+    # │  • From BMP Private Use Area │  • From Supplementary PUA-A       │
+    # │  • Range: U+E000 - U+F8FF    │  • Range: U+F0000 - U+FFFFD       │
+    # │  • UTF-8: 3 bytes (EE 80 80) │  • UTF-8: 4 bytes (F4 8F 80 80)   │
+    # └──────────────────────────────┴───────────────────────────────────┘
+    #
+    # UNICODE PLANE LAYOUT:
+    # ┌──────────────────────────────────────────────────────────────────┐
+    # │ Plane 0 (BMP) - Basic Multilingual Plane                         │
+    # │  U+0000 ────────── Standard Characters ────────── U+DFFF         │
+    # │  U+E000 ▓▓▓▓ Private Use Area (PUA) ▓▓▓▓ U+F8FF  ← 1st char      │
+    # │  U+F900 ────────── More Standard ─────────────── U+FFFF          │
+    # ├──────────────────────────────────────────────────────────────────┤
+    # │ Planes 1-14: Standard Assignments (Emoji, Historic, etc.)        │
+    # ├──────────────────────────────────────────────────────────────────┤
+    # │ Plane 15 (SPUA-A) - Supplementary Private Use Area A             │
+    # │  U+F0000 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ U+FFFFD  ← 2nd char        │
+    # │  65,534 Private Use Code Points                                  │
+    # └──────────────────────────────────────────────────────────────────┘
+    #
+    # COLLISION RESISTANCE:
+    #   Layer 1 - Private Use Areas:
+    #     • Never assigned to standard characters (Unicode Stability Policy)
+    #     • Not used in any human writing system
+    #     • No standard keyboard input or visual representation
+    #
+    #   Layer 2 - Multi-Plane Strategy:
+    #     • Spans two separate Unicode planes (Plane 0 + Plane 15)
+    #     • Requires intentional dual-plane PUA usage to collide
+    #     • Sentinel bookending (same marker at positions [0] and [3])
+    #
+    # COLLISION PROBABILITY:
+    #
+    #   The marker tuple contains a string combining PUA characters from
+    #   two separate Unicode planes. This specific combination makes
+    #   accidental collision VIRTUALLY IMPOSSIBLE.
+    #
+    # USAGE:
+    #   The marker is embedded in serialized container data to enable:
+    #   • Type identification during deserialization
+    #   • Distinction between containers and primitive values
+    #   • Structure and protocol flag recovery
+    #   • Safe coexistence with user data
+    #
+    # MORE INFO:
+    #   Unicode Standard - Private Use Areas
+    #   https://www.unicode.org/faq/private_use.html
+    #   https://en.wikipedia.org/wiki/Private_Use_Areas
     # ========================================================================
 
-    # ------------------------------------------------------------------------
-    # HELPER STATIC METHODS (typically used internally)
-    # ------------------------------------------------------------------------
     @staticmethod
-    def create_type_marker(structure: ContainerStructure, protocol: ContainerProtocol) -> tuple:
-        """Create a container type marker as bytes.
+    def create_type_marker(
+        structure: ContainerStructure, protocol: ContainerProtocol
+    ) -> tuple[str, ContainerStructure, int, str]:
+        """Create a container type marker tuple.
+
+        The marker tuple embeds type information that can be stored alongside
+        container data to enable type identification during deserialization.
 
         Args:
-            structure: Container structure type.
-            protocol: Container protocol flags.
+            structure: Container structure type (Sequential, Associative, Set).
+            protocol: Container protocol flags (Duplicates, Ordered, Mutable).
 
         Returns:
-            tuple: 4-length marker [marker, structure_int, protocol_int, marker].
+            tuple: 4-element marker [sentinel, structure, protocol_int, sentinel].
         """
-        # Container type marker for distinguishing containers from primitives
-        marker = "\ue000"
-        # The Private Use Area (PUA) is a range of Unicode code points (U+E000 to U+F8FF)
-        # that are intentionally not assigned to any standard characters.
-        # Using PUA characters virtually eliminates the risk of collision since:
-        # - They don't appear on standard keyboards
-        # - They're not used in any human writing systems
-        # - They have no standard visual representation
-
-        return (marker, structure, protocol.value, marker)
+        return (
+            "\ue000\U000f0000",
+            structure,
+            protocol.value,
+            "\ue000\U000f0000",
+        )
 
     @staticmethod
     def extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol] | None:
-        """Extract structure and protocol from container marker data.
+        """Extract structure and protocol from container marker tuple.
+
+        Validates the marker tuple structure and extracts the embedded type
+        information. Returns None if the data is not a valid container marker.
 
         Args:
-            type_data: Raw marker data from storage, expected to be 3 bytes:
-                [0xE0, structure_value, protocol_value].
+            type_data: Raw marker tuple from storage, expected format:
+                [sentinel, structure_enum, protocol_int, sentinel].
 
         Returns:
-            tuple[ContainerStructure, ContainerProtocol]: Parsed structure and protocol enums.
-
-        Raises:
-            ValueError: If type_data is malformed or cannot be parsed.
+            tuple[ContainerStructure, ContainerProtocol] | None:
+                Parsed structure and protocol enums, or None if invalid.
         """
-        # Container type marker for distinguishing containers from primitives
-        marker = "\ue000"
-        # The Private Use Area (PUA) is a range of Unicode code points (U+E000 to U+F8FF)
-        # that are intentionally not assigned to any standard characters.
-        # Using PUA characters virtually eliminates the risk of collision since:
-        # - They don't appear on standard keyboards
-        # - They're not used in any human writing systems
-        # - They have no standard visual representation
-
         if (
             type(type_data) is not tuple
             or len(type_data) != 4
-            or type_data[0] != marker
-            or type_data[3] != marker
+            or type_data[0] != "\ue000\U000f0000"
+            or type_data[3] != "\ue000\U000f0000"
         ):
-            # raise ValueError(f"Malformed container marker: {type_data}")
             return None
 
         structure = ContainerStructure(type_data[1])  # type: ignore[arg-type]
         protocol = ContainerProtocol(type_data[2])
 
         return structure, protocol
+
+    # ========================================================================
+    # CONTAINER OPERATIONS
+    # ========================================================================
 
     # ------------------------------------------------------------------------
     # HIGH-LEVEL CONTAINER OPERATIONS
