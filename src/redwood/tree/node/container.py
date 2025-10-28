@@ -49,10 +49,9 @@ concurrency at the transaction level.*
 
 from __future__ import annotations
 
-import dataclasses
 from enum import Enum, auto
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
 import attrs
 
@@ -100,9 +99,11 @@ class ChildType(Enum):
     NOT_FOUND = auto()
 
 
-@dataclasses.dataclass(frozen=True)
-class ChildInfo:
-    """Basic information about a child."""
+class ChildInfo(NamedTuple):
+    """Basic information about a child.
+
+    Using NamedTuple for more efficient initialization than dataclass.
+    """
 
     key: KeyComponent
     exists: bool
@@ -112,8 +113,7 @@ class ChildInfo:
     stored_protocol: ContainerProtocol | None = None  # For containers
 
 
-@dataclasses.dataclass(frozen=True)
-class ParentInfo:
+class ParentInfo(NamedTuple):
     """Raw information about a parent container."""
 
     path: TupleKey
@@ -123,8 +123,7 @@ class ParentInfo:
     raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
 
 
-@dataclasses.dataclass(frozen=True)
-class ContainerInfo:
+class ContainerInfo(NamedTuple):
     """Pure information about container and parent chain - no validation logic."""
 
     # Container raw data
@@ -134,11 +133,11 @@ class ContainerInfo:
     raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
 
     # Parent chain raw data (from root to immediate parent)
-    parents: tuple[ParentInfo, ...] = dataclasses.field(default_factory=tuple)
+    parents: tuple[ParentInfo, ...] = ()
 
     # Paths categorization (pure facts, no validation decisions)
-    missing_parent_paths: tuple[TupleKey, ...] = dataclasses.field(default_factory=tuple)
-    malformed_parent_paths: tuple[TupleKey, ...] = dataclasses.field(default_factory=tuple)
+    missing_parent_paths: tuple[TupleKey, ...] = ()
+    malformed_parent_paths: tuple[TupleKey, ...] = ()
 
 
 class ContainerState(Enum):
@@ -205,7 +204,6 @@ class ContainerNode(BaseNode):
     # ------------------------------------------------------------------------
     # HELPER STATIC METHODS (typically used internally)
     # ------------------------------------------------------------------------
-
     @staticmethod
     def extract_type_info(type_data: Value) -> tuple[ContainerStructure, ContainerProtocol]:
         """Extract structure and protocol from container marker data.
@@ -220,25 +218,31 @@ class ContainerNode(BaseNode):
         Raises:
             ValueError: If type_data is malformed or cannot be parsed.
         """
-        if not isinstance(type_data, str) or not type_data.startswith(
-            ContainerNode._CONTAINER_MARKER
-        ):
+        # Fast path: check type and prefix in one go
+        if type(type_data) is not str:  # type() is faster than isinstance() for exact type
             raise ValueError(f"Malformed container marker: {type_data}")
 
-        try:
-            # Extract the bracketed content
-            bracket_content = type_data[len(ContainerNode._CONTAINER_MARKER) :]
-            if not (bracket_content.startswith("[") and bracket_content.endswith("]")):
-                raise ValueError(f"Invalid marker format: {type_data}")
+        # Single slice check instead of startswith
+        marker_len = 1  # len("\ue000") = 1
+        if len(type_data) < marker_len + 3 or type_data[0] != "\ue000":  # minimum: "\ue000[,]"
+            raise ValueError(f"Malformed container marker: {type_data}")
 
-            # Parse the values inside brackets
-            values_str = bracket_content[1:-1]  # Remove [ and ]
-            values = values_str.split(",")
-            if len(values) != 2:
+        # Direct indexing instead of multiple slices
+        if type_data[marker_len] != "[" or type_data[-1] != "]":
+            raise ValueError(f"Invalid marker format: {type_data}")
+
+        try:
+            # Single slice for inner content
+            values_str = type_data[marker_len + 1 : -1]  # Skip "\ue000[" and "]"
+
+            # Find comma position directly instead of split
+            comma_idx = values_str.find(",")
+            if comma_idx == -1:
                 raise ValueError(f"Expected 2 values in marker: {type_data}")
 
-            structure = ContainerStructure(int(values[0].strip()))
-            protocol = ContainerProtocol(int(values[1].strip()))
+            # Parse integers directly from slices (strip is expensive)
+            structure = ContainerStructure(int(values_str[:comma_idx]))
+            protocol = ContainerProtocol(int(values_str[comma_idx + 1 :]))
         except (ValueError, IndexError) as e:
             raise ValueError(f"Invalid container marker format: {type_data}") from e
 

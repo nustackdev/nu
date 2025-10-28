@@ -41,6 +41,13 @@ class BaseObserver[EncodedKeyT](ABC):
 
     codec: KeyCodecProtocol[EncodedKeyT]
 
+    def setup(self) -> None:
+        self._connected = False
+        self.connect()
+
+    def cleanup(self) -> None:
+        self.disconnect()
+
     def _ensure_connected(self) -> None:
         """Verify connection state.
 
