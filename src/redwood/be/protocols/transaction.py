@@ -7,17 +7,22 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from types import TracebackType
 
     from redwood.abc import TupleKey, Value
 
-    from .types import ScanOptions
+    from ..types import ScanOptions
 
 
 __all__ = [
+    "SnapshotContextManagerProtocol",
+    "SnapshotHandlerProtocol",
     "SnapshotProtocol",
     "StorageContextProtocol",
     "StorageContextType",
+    "TransactionContextManagerProtocol",
     "TransactionProtocol",
+    "TransactionalHandlerProtocol",
 ]
 
 
@@ -213,3 +218,90 @@ class SnapshotProtocol(StorageContextProtocol, Protocol):
 
 # Union type for context attributes
 type StorageContextType = TransactionProtocol | SnapshotProtocol
+
+
+class TransactionContextManagerProtocol(Protocol):
+    """Context manager for storage transactions."""
+
+    def __enter__(self) -> TransactionProtocol:
+        """Start a new transaction.
+
+        Returns:
+            New transaction instance
+
+        Raises:
+            StorageError: If transaction cannot be started
+        """
+        ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Commit or rollback transaction based on context exit.
+
+        Args:
+            exc_type (Optional[Type[BaseException]]): Exception type if an error occurred.
+            exc_val (Optional[BaseException]): Exception value if an error occurred.
+            exc_tb (Optional[TracebackType]): Exception traceback if an error occurred.
+
+        Returns:
+            None
+        """
+        ...
+
+
+class TransactionalHandlerProtocol(Protocol):
+    """Protocol defining the interface for transactionable storage."""
+
+    def begin_transaction(self) -> TransactionProtocol:
+        """Begin a new transaction."""
+        ...
+
+    def transaction(self) -> TransactionContextManagerProtocol:
+        """Get a typed transaction context manager."""
+        ...
+
+
+class SnapshotContextManagerProtocol(Protocol):
+    """Context manager for storage snapshots."""
+
+    def __enter__(self) -> SnapshotProtocol:
+        """Create a new snapshot.
+
+        Returns:
+            New snapshot instance
+
+        Raises:
+            StorageError: If snapshot cannot be created
+        """
+        ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Clean up snapshot resources.
+
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+        """
+        ...
+
+
+class SnapshotHandlerProtocol(Protocol):
+    """Protocol defining the interface for snapshot-capable storage."""
+
+    def begin_snapshot(self) -> SnapshotProtocol:
+        """Begin a new read-only snapshot."""
+        ...
+
+    def snapshot(self) -> SnapshotContextManagerProtocol:
+        """Get a typed snapshot context manager."""
+        ...

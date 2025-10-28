@@ -1,4 +1,4 @@
-"""Backend-specific types."""
+"""Storage-related types."""
 
 from __future__ import annotations
 
@@ -11,11 +11,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
     from redwood.abc import TupleKey
-
-
-# ========================================================
-# Storage-specific types
-# ========================================================
 
 
 type StorageMode = Literal["read", "write"]

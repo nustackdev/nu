@@ -6,7 +6,16 @@ These ABCs provide a common types, interfaces and set of behaviors for various c
 
 from __future__ import annotations
 
-from .collections import (
+from .common import (
+    CallbackFn,
+    CompositeValue,
+    IterableValues,
+    KeyComponent,
+    PrimitiveValue,
+    TupleKey,
+    Value,
+)
+from .mapping import (
     MappingProtocol,
     MutableMappingProtocol,
 )
@@ -20,15 +29,6 @@ from .special import (
     is_nan,
     is_special,
     propagate_special,
-)
-from .types import (
-    CallbackFn,
-    CompositeValue,
-    IterableValues,
-    KeyComponent,
-    PrimitiveValue,
-    TupleKey,
-    Value,
 )
 
 

@@ -19,7 +19,7 @@ from .container import ContainerNode
 
 
 if TYPE_CHECKING:
-    from redwood.backend import StorageContextType
+    from redwood.be import StorageContextType
     from redwood.reactive import ReactiveStorage
 
     from ..path import Path

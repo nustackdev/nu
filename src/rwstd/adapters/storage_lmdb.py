@@ -15,7 +15,7 @@ import lmdb
 from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
 
-from redwood.backend.types import ScanOptions, StorageCapabilities
+from redwood.be.types import ScanOptions, StorageCapabilities
 from redwood.exceptions import (
     SnapshotError,
     StorageError,
@@ -25,14 +25,14 @@ from redwood.exceptions import (
     TransactionInvalidError,
 )
 
-from .abc import BaseStorage
+from .bases import BaseStorage
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.abc import TupleKey, Value
-    from redwood.backend import (
+    from redwood.be import (
         CodecProtocol,
         SnapshotProtocol,
         StorageProtocol,

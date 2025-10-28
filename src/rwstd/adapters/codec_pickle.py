@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from redwood.abc import Value
-    from redwood.backend import ValueCodecProtocol
+    from redwood.be import ValueCodecProtocol
 
 
 __all__ = ["PickleCodec"]

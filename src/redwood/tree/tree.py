@@ -24,7 +24,7 @@ from .view import create_view_context_manager
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from redwood.backend import (
+    from redwood.be import (
         SnapshotContextManagerProtocol,
         SnapshotProtocol,
         StorageContextType,

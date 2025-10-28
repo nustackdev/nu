@@ -77,7 +77,7 @@ from .base import BaseNode
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.backend import StorageContextType
+    from redwood.be import StorageContextType
     from redwood.storage import ReactiveStorage
 
 

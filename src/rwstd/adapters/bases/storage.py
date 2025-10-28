@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, final
 
 from mesh import SyncResource
 
-from redwood.backend.types import ScanOptions, StorageCapabilities, StorageDescriptor
+from redwood.be.types import ScanOptions, StorageCapabilities, StorageDescriptor
 from redwood.exceptions import StorageConnectionError, StorageOperationError
 from redwood.storage.contexts import SnapshotContextManager, TransactionContextManager
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.abc import TupleKey, Value
-    from redwood.backend import (
+    from redwood.be import (
         CodecProtocol,
         SnapshotProtocol,
         StorageMode,

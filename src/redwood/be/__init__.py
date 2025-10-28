@@ -6,22 +6,21 @@ Concrete implementations are in storage, observer, etc.
 
 from __future__ import annotations
 
-from .contexts import (
-    SnapshotProtocol,
-    StorageContextProtocol,
-    StorageContextType,
-    TransactionProtocol,
-)
 from .protocols import (
     CodecProtocol,
     KeyCodecProtocol,
     ObserverProtocol,
+    ReactiveStorageProtocol,
     SnapshotContextManagerProtocol,
     SnapshotHandlerProtocol,
+    SnapshotProtocol,
+    StorageContextProtocol,
+    StorageContextType,
     StorageProtocol,
     SubscriptionProtocol,
     TransactionalHandlerProtocol,
     TransactionContextManagerProtocol,
+    TransactionProtocol,
     ValueCodecProtocol,
 )
 from .types import (
@@ -34,21 +33,21 @@ from .types import (
 
 __all__ = [  # noqa: RUF022
     # Protocols
-    "KeyCodecProtocol",
-    "ValueCodecProtocol",
     "CodecProtocol",
-    "StorageProtocol",
+    "KeyCodecProtocol",
+    "ObserverProtocol",
+    "ReactiveStorageProtocol",
     "SnapshotContextManagerProtocol",
     "SnapshotHandlerProtocol",
-    "TransactionContextManagerProtocol",
-    "TransactionalHandlerProtocol",
-    "ObserverProtocol",
-    "SubscriptionProtocol",
-    # Contexts
     "SnapshotProtocol",
     "StorageContextProtocol",
     "StorageContextType",
+    "StorageProtocol",
+    "SubscriptionProtocol",
+    "TransactionContextManagerProtocol",
     "TransactionProtocol",
+    "TransactionalHandlerProtocol",
+    "ValueCodecProtocol",
     # Types
     "ScanOptions",
     "StorageCapabilities",

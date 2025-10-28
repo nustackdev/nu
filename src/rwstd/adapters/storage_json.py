@@ -1,36 +1,37 @@
-"""In-memory storage implementation with transaction support."""
+"""File-based storage implementation with transaction support."""
 
 from __future__ import annotations
 
+import json
 import threading
-from collections.abc import Generator
 from dataclasses import dataclass
 from logging import getLogger
+from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import attrs
+import filelock
 from mesh import Attach, ResourceSpec, Spec
 
-from redwood.abc import Value
-from redwood.backend.types import ScanOptions, StorageCapabilities
+from redwood.be.types import ScanOptions, StorageCapabilities
 from redwood.exceptions import (
     SnapshotError,
+    StorageError,
     StorageKeyError,
     StorageOperationError,
-    TransactionConflictError,
     TransactionError,
     TransactionInvalidError,
 )
 
-from .abc import BaseStorage
+from .bases import BaseStorage
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.abc import TupleKey
-    from redwood.backend import (
+    from redwood.abc import TupleKey, Value
+    from redwood.be import (
         CodecProtocol,
         SnapshotProtocol,
         StorageProtocol,
@@ -39,6 +40,14 @@ if TYPE_CHECKING:
 
 
 logger = getLogger(__name__)
+
+
+__all__ = [
+    "FileStorage",
+    "FileStorageSnapshot",
+    "FileStorageSpec",
+    "FileStorageTransaction",
+]
 
 
 @dataclass
@@ -50,97 +59,166 @@ class TransactionOperation:
     value: Value | None = None
 
 
-class InMemoryStorage(BaseStorage[str, Value]):
+class FileStorage(BaseStorage[str, str]):
     """Simple file-based storage implementation with transaction support.
 
     Uses basic locking strategy for correctness over efficiency.
     """
 
-    codec: CodecProtocol[
-        str,
-        Value,
-    ] = Attach()
+    codec: CodecProtocol[str, str] = Attach()
 
-    spec: InMemoryStorageSpec
+    spec: FileStorageSpec
 
     @classmethod
     def capabilities(cls) -> StorageCapabilities:
-        """In-memory backend supports full scan semantics."""
+        """File backend advertises full transactional and scan support."""
         return StorageCapabilities(scan=True)
 
     def setup(self) -> None:
-        """Initialize in-memory storage."""
-        self._data: dict[str, Value] = {}
-        self._data_lock = threading.Lock()
-        self._active_transactions: set[InMemoryStorageTransaction] = set()
+        """Set up file storage resources."""
+        self.path = (
+            self.spec.path.resolve()
+            if isinstance(self.spec.path, Path)
+            else Path(self.spec.path).resolve()
+        )
+
+        # Single lock for all in-process synchronization
+        self._memory_lock = threading.Lock()
+
+        # Database file path
+        self._data_file_path = self.path / "db.json"
+
+        # Single lock file for all inter-process synchronization
+        self._lock_file = self.path / f"{self.path.name}.lock"
+        self._file_lock = filelock.FileLock(self._lock_file)
+
+        self._data: dict[str, str] = {}
+        self._active_transactions: set[FileStorageTransaction] = set()
+
         super().setup()
 
     def cleanup(self) -> None:
-        """Clean up in-memory storage."""
+        """Clean up resources."""
         super().cleanup()
+
+        # Clean up lock file
+        if self._lock_file.exists():
+            self._lock_file.unlink()
+        if self._memory_lock.locked():
+            self._memory_lock.release()
+        if self._file_lock.is_locked:
+            self._file_lock.release()
         self._data.clear()
         self._active_transactions.clear()
-        if self._data_lock.locked():
-            self._data_lock.release()
 
     def _connect_impl(self) -> None:
-        """Initialize storage."""
-        with self._data_lock:
-            self._data.clear()
-            self._active_transactions.clear()
-        logger.debug("Connected to in-memory storage")
+        """Load data from file if it exists."""
+        # Ensure directory exists
+        self.path.mkdir(parents=True, exist_ok=True)
+        self._data_file_path.touch(exist_ok=True)
+
+        with self._memory_lock, self._file_lock:
+            # Create file if needed
+            if not self.path.exists():
+                if self.mode == "write":
+                    with Path.open(self._data_file_path, "w") as f:
+                        f.write("{}")
+                else:
+                    raise StorageError(
+                        f"Storage file {self.path} does not exist and mode is read-only"
+                    )
+
+            # Load initial data
+            self._load_data()
+
+        logger.debug(f"Connected to file storage at {self.path} in {self.mode} mode")
 
     def _disconnect_impl(self) -> None:
-        """Clean up storage."""
-        with self._data_lock:
+        """Ensure all data is saved and clean up."""
+        with self._memory_lock, self._file_lock:
             # Roll back any active transactions
             for transaction in self._active_transactions.copy():
                 transaction.rollback()
 
-            self._data.clear()
-        logger.debug("Disconnected from in-memory storage")
+            # Final save if in write mode
+            if self.mode == "write":
+                self._save()
+
+        logger.debug("Disconnected from file storage")
+
+    def _load_data(self) -> None:
+        """Load data from file. Must be called with both locks held."""
+        try:
+            content = self._data_file_path.read_text()
+            self._data = json.loads(content) if content else {}
+        except json.JSONDecodeError as e:
+            raise StorageError(f"Corrupted storage file: {e}") from e
+        except Exception as e:
+            raise StorageError(f"Failed to load data: {e}") from e
+
+    def _save(self) -> None:
+        """Save data to file. Must be called with both locks held."""
+        if self.mode != "write":
+            raise StorageError("Cannot save in read-only mode")
+
+        temp_path = self._data_file_path.with_suffix(".tmp")
+        try:
+            content = json.dumps(self._data, indent=2)
+            with Path.open(temp_path, "w") as f:
+                f.write(content)
+            Path.replace(temp_path, self._data_file_path)
+        except Exception as e:
+            if temp_path.exists():
+                temp_path.unlink()
+            raise StorageError(f"Failed to save data: {e}") from e
 
     def _get_impl(self, key: TupleKey) -> Value:
         """Get value by key."""
         encoded_key = self.codec.encode_key(key)
 
-        with self._data_lock:
+        # Always get fresh data
+        with self._memory_lock, self._file_lock:
+            self._load_data()
             try:
-                if encoded_key not in self._data:
-                    raise StorageKeyError(f"Key {key} not found")
-                return self._data[encoded_key]
+                encoded_value = self._data[encoded_key]
+            except KeyError as e:
+                raise StorageKeyError(f"Key {key} not found") from e
+
+            try:
+                return self.codec.decode_value(encoded_value)
             except Exception as e:
-                if not isinstance(e, StorageKeyError):
-                    raise StorageOperationError(f"Failed to get key {key}: {e}") from e
-                raise
+                raise StorageOperationError(f"Failed to decode value: {e}") from e
 
     def _set_impl(self, key: TupleKey, value: Value) -> None:
         """Set value for key."""
         encoded_key = self.codec.encode_key(key)
+        encoded_value = self.codec.encode_value(value)
 
-        with self._data_lock:
-            try:
-                self._data[encoded_key] = value
-            except Exception as e:
-                raise StorageOperationError(f"Failed to set key {key}: {e}") from e
+        with self._memory_lock, self._file_lock:
+            self._load_data()  # Get latest data
+            self._data[encoded_key] = encoded_value
+            self._save()
 
     def _delete_impl(self, key: TupleKey) -> None:
-        """Delete key."""
+        """Delete value by key."""
         encoded_key = self.codec.encode_key(key)
 
-        with self._data_lock:
+        with self._memory_lock, self._file_lock:
+            self._load_data()  # Get latest data
             try:
-                self._data.pop(encoded_key, None)
+                del self._data[encoded_key]
             except KeyError as e:
                 raise StorageKeyError(f"Key {key} not found") from e
             except Exception as e:
-                raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
+                raise StorageOperationError(f"Failed to delete key: {e}") from e
+            self._save()
 
     def _exists_impl(self, key: TupleKey) -> bool:
         """Check if key exists."""
         encoded_key = self.codec.encode_key(key)
 
-        with self._data_lock:
+        with self._memory_lock, self._file_lock:
+            self._load_data()  # Get latest data
             return encoded_key in self._data
 
     def _collect_items(
@@ -148,20 +226,32 @@ class InMemoryStorage(BaseStorage[str, Value]):
         prefix: TupleKey,
         depth: int,
     ) -> list[tuple[TupleKey, Value]]:
-        """Collect matching items for list operations."""
+        """Collect matching key/value pairs for list operations."""
         encoded_prefix = self.codec.encode_key(prefix)
 
-        with self._data_lock:
+        with self._memory_lock, self._file_lock:
+            self._load_data()  # Get latest data
             matching_items: list[tuple[TupleKey, Value]] = []
-            for encoded_key, stored_value in self._data.items():
+            for encoded_key, encoded_value in self._data.items():
                 if not encoded_key.startswith(encoded_prefix):
                     continue
 
-                decoded_key = self.codec.decode_key(encoded_key)
+                try:
+                    decoded_key = self.codec.decode_key(encoded_key)
+                except Exception as e:
+                    raise StorageOperationError(f"Failed to decode key: {e}") from e
+
                 if depth != -1 and len(decoded_key) - len(prefix) != depth:
                     continue
 
-                matching_items.append((decoded_key, stored_value))
+                try:
+                    decoded_value = self.codec.decode_value(encoded_value)
+                except Exception as e:
+                    raise StorageOperationError(
+                        f"Failed to decode value for key {decoded_key}: {e}"
+                    ) from e
+
+                matching_items.append((decoded_key, decoded_value))
 
         matching_items.sort(key=lambda pair: pair[0])
         return matching_items
@@ -186,48 +276,45 @@ class InMemoryStorage(BaseStorage[str, Value]):
 
     def _begin_transaction_impl(
         self,
-    ) -> InMemoryStorageTransaction:
+    ) -> FileStorageTransaction:
         """Begin a new transaction."""
-        transaction = InMemoryStorageTransaction(self)
-        with self._data_lock:
+        transaction = FileStorageTransaction(self)
+        with self._memory_lock:
             self._active_transactions.add(transaction)
         return transaction
 
     def _begin_snapshot_impl(
         self,
-    ) -> InMemoryStorageSnapshot:
+    ) -> FileStorageSnapshot:
         """Begin a new read-only snapshot."""
         # Create snapshot with current data state
-        with self._data_lock:
+        with self._memory_lock, self._file_lock:
+            self._load_data()  # Get latest data
             # Create a deep copy of current data for the snapshot
             snapshot_data = self._data.copy()
 
-        return InMemoryStorageSnapshot(self, snapshot_data)
+        return FileStorageSnapshot(self, snapshot_data)
 
-    def _check_conflicts(self, transaction: InMemoryStorageTransaction) -> bool:
-        """Check for conflicts with other transactions."""
-        with self._data_lock:
-            for other_txn in self._active_transactions:
-                if other_txn is not transaction:
-                    # Check for write-write conflicts
-                    if transaction._write_set & other_txn._write_set:
-                        return False
-                    # Check for read-write conflicts
-                    if transaction._read_set & other_txn._write_set:
-                        return False
-            return True
-
-    def _apply_transaction(self, transaction: InMemoryStorageTransaction) -> None:
+    def _apply_transaction(self, transaction: FileStorageTransaction) -> None:
         """Apply transaction operations atomically."""
-        with self._data_lock:
+        if self.mode != "write":
+            raise StorageError("Cannot apply transaction in read-only mode")
+
+        with self._memory_lock, self._file_lock:
             try:
-                # Apply operations
+                self._load_data()  # Get latest data
+
+                # Apply all operations
                 for op in transaction._operations:
                     encoded_key = self.codec.encode_key(op.key)
                     if op.op_type == "set":
-                        self._data[encoded_key] = op.value
+                        encoded_value = self.codec.encode_value(op.value)
+                        self._data[encoded_key] = encoded_value
                     elif op.op_type == "delete":
                         self._data.pop(encoded_key, None)
+
+                # Save changes
+                self._save()
 
                 # Remove from active transactions
                 self._active_transactions.discard(transaction)
@@ -241,10 +328,10 @@ class InMemoryStorage(BaseStorage[str, Value]):
                 raise TransactionError(f"Failed to apply transaction: {e}") from e
 
 
-class InMemoryStorageTransaction:
-    """Simple in-memory transaction implementation."""
+class FileStorageTransaction:
+    """Implementation of transaction for file-based storage."""
 
-    def __init__(self, storage: InMemoryStorage) -> None:
+    def __init__(self, storage: FileStorage) -> None:
         """Initialize transaction."""
         self._storage = storage
         self._operations: list[TransactionOperation] = []
@@ -382,7 +469,7 @@ class InMemoryStorageTransaction:
         options: ScanOptions,
         /,
     ) -> Generator[tuple[TupleKey, Value], None, None]:
-        """Perform ordered scan yielding key/value pairs within transaction."""
+        """Perform ordered scan yielding key/value pairs within transaction context."""
         self._check_valid()
 
         depth = options.depth if options.depth != -1 else -1
@@ -405,15 +492,8 @@ class InMemoryStorageTransaction:
     def commit(self) -> None:
         """Commit transaction changes."""
         self._check_valid()
-
-        if not self._storage._check_conflicts(self):
-            raise TransactionConflictError("Transaction conflicts with other changes")
-
-        try:
-            self._storage._apply_transaction(self)
-            self._committed = True
-        except Exception as e:
-            raise TransactionError(f"Failed to commit transaction: {e}") from e
+        self._storage._apply_transaction(self)
+        self._committed = True
 
     def rollback(self) -> None:
         """Roll back transaction changes."""
@@ -432,14 +512,10 @@ class InMemoryStorageTransaction:
         return isinstance(other, type(self)) and self._uuid == other._uuid
 
 
-class InMemoryStorageSnapshot:
-    """In-memory storage read-only snapshot implementation."""
+class FileStorageSnapshot:
+    """File storage read-only snapshot implementation."""
 
-    def __init__(
-        self,
-        storage: InMemoryStorage,
-        snapshot_data: dict[str, Value],
-    ) -> None:
+    def __init__(self, storage: FileStorage, snapshot_data: dict[str, str]) -> None:
         """Initialize snapshot with data copy."""
         self._storage = storage
         self._snapshot_data = snapshot_data
@@ -457,13 +533,14 @@ class InMemoryStorageSnapshot:
         encoded_key = self._storage.codec.encode_key(key)
 
         try:
-            if encoded_key not in self._snapshot_data:
-                raise StorageKeyError(f"Key {key} not found")
-            return self._snapshot_data[encoded_key]
+            encoded_value = self._snapshot_data[encoded_key]
+        except KeyError as e:
+            raise StorageKeyError(f"Key {key} not found") from e
+
+        try:
+            return self._storage.codec.decode_value(encoded_value)
         except Exception as e:
-            if not isinstance(e, StorageKeyError):
-                raise StorageOperationError(f"Failed to get key {key}: {e}") from e
-            raise
+            raise StorageOperationError(f"Failed to decode value: {e}") from e
 
     def exists(self, key: TupleKey) -> bool:
         """Check if key exists within snapshot context."""
@@ -546,16 +623,17 @@ class InMemoryStorageSnapshot:
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class InMemoryStorageSpec(ResourceSpec):
-    """Specification for InMemoryStorage resource."""
+class FileStorageSpec(ResourceSpec):
+    """Specification for FileStorage resource."""
 
-    name: str = "in_memory_storage"
-    factory: type = InMemoryStorage
+    name: str = "file_storage"
+    factory: type = FileStorage
     mode: str = "write"
+    path: Path | str = Path(".db")
     codec: Spec
 
 
 if TYPE_CHECKING:
-    _: type[StorageProtocol] = InMemoryStorage
-    __: type[TransactionProtocol] = InMemoryStorageTransaction
-    ___: type[SnapshotProtocol] = InMemoryStorageSnapshot
+    _: type[StorageProtocol] = FileStorage
+    __: type[TransactionProtocol] = FileStorageTransaction
+    ___: type[SnapshotProtocol] = FileStorageSnapshot

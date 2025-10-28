@@ -7,13 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from redwood.abc import Value
-    from redwood.backend import ValueCodecProtocol
-
-try:
-    from micropack import Codec
-except ImportError as e:
-    msg = "micropack is required for MicroPackCodec. Install via: pip install micropack"
-    raise ImportError(msg) from e
+    from redwood.be import ValueCodecProtocol
 
 
 __all__ = ["MicroPackCodec"]
@@ -37,6 +31,13 @@ class MicroPackCodec:
         The encode and decode attributes are set to the underlying codec
         functions directly to avoid any method call overhead.
         """
+        try:
+            from micropack import Codec
+        except ImportError:
+            raise ImportError(
+                "micropack is required for MicroPackCodec. Install via: pip install micropack"
+            ) from None
+
         self._codec = Codec()
         self.encode = self._codec.encode  # type: ignore[return-value]
         self.decode = self._codec.decode  # type: ignore[return-value]

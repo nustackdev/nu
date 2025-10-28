@@ -7,15 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from redwood.abc import Value
-    from redwood.backend import ValueCodecProtocol
-
-
-try:
-    import msgpack
-except ImportError as e:
-    raise ImportError(
-        "msgpack is required for MessagePackCodec. Install via: pip install msgpack"
-    ) from e
+    from redwood.be import ValueCodecProtocol
 
 
 __all__ = ["MessagePackCodec"]
@@ -39,6 +31,13 @@ class MessagePackCodec:
         The encode and decode attributes are set to msgpack library functions
         directly to avoid any method call overhead.
         """
+        try:
+            import msgpack
+        except ImportError:
+            raise ImportError(
+                "msgpack is required for MessagePackCodec. Install via: pip install msgpack"
+            ) from None
+
         self.encode = msgpack.packb  # type: ignore[return-value]
         self.decode = msgpack.unpackb  # type: ignore[return-value]
 

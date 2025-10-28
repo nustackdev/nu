@@ -9,14 +9,14 @@ from typing import TYPE_CHECKING
 import attrs
 from mesh import Attach, ResourceSpec, Spec, SyncResource
 
-from .abc import BaseObserver
+from .bases import BaseObserver
 
 
 if TYPE_CHECKING:
     from logging import Logger
 
     from redwood.abc import TupleKey
-    from redwood.backend import (
+    from redwood.be import (
         KeyCodecProtocol,
         ObserverProtocol,
         SubscriptionProtocol,

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Self, TypeGuard
 
 import attrs
 
-from redwood.backend import SnapshotProtocol, StorageContextType, TransactionProtocol
+from redwood.be import SnapshotProtocol, StorageContextType, TransactionProtocol
 
 
 if TYPE_CHECKING:
