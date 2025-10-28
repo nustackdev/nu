@@ -2,15 +2,26 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+
+from rwstd.lazy_import import lazy_import
 
 
 if TYPE_CHECKING:
+    import micropack as _micropack  # type: ignore[import]
+
     from redwood.abc import Value
     from redwood.be import ValueCodecProtocol
 
 
 __all__ = ["MicroPackCodec"]
+
+micropack = cast(
+    "_micropack",
+    lazy_import(
+        "micropack", "micropack is required for MicroPackCodec. Install via: pip install micropack"
+    ),
+)
 
 
 class MicroPackCodec:
@@ -31,14 +42,7 @@ class MicroPackCodec:
         The encode and decode attributes are set to the underlying codec
         functions directly to avoid any method call overhead.
         """
-        try:
-            from micropack import Codec
-        except ImportError:
-            raise ImportError(
-                "micropack is required for MicroPackCodec. Install via: pip install micropack"
-            ) from None
-
-        self._codec = Codec()
+        self._codec = micropack.Codec()
         self.encode = self._codec.encode  # type: ignore[return-value]
         self.decode = self._codec.decode  # type: ignore[return-value]
 

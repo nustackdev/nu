@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -26,14 +26,14 @@ class PassthroughCodec:
         self.encode = lambda x: x  # type: ignore[return-value]
         self.decode = lambda x: x  # type: ignore[return-value]
 
-    def encode(self, value: Value) -> Any:
+    def encode(self, value: Value) -> object:
         """Encode a supported value (no transformation)."""
         ...
 
-    def decode(self, encoded: Any) -> Value:
+    def decode(self, encoded: object) -> Value:
         """Decode a supported value (no transformation)."""
         ...
 
 
 if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[Any]] = PassthroughCodec
+    _: type[ValueCodecProtocol[object]] = PassthroughCodec

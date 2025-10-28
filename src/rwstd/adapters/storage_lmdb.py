@@ -7,11 +7,10 @@ import threading
 from collections.abc import Generator
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TYPE_CHECKING, TypeGuard, cast
 from uuid import uuid4
 
 import attrs
-import lmdb
 from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
 
@@ -24,12 +23,15 @@ from redwood.exceptions import (
     TransactionError,
     TransactionInvalidError,
 )
+from rwstd.lazy_import import lazy_import
 
 from .bases import BaseStorage
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    import lmdb as _lmdb  # type: ignore[import]
 
     from redwood.abc import TupleKey, Value
     from redwood.be import (
@@ -41,6 +43,11 @@ if TYPE_CHECKING:
 
 
 logger = getLogger(__name__)
+
+lmdb = cast(
+    "_lmdb",
+    lazy_import("lmdb", "lmdb is required for LMDBStorage. Install via: pip install lmdb"),
+)
 
 
 def _scan_cursor_items(

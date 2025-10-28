@@ -2,15 +2,26 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+
+from rwstd.lazy_import import lazy_import
 
 
 if TYPE_CHECKING:
+    import msgpack as _msgpack  # type: ignore[import]
+
     from redwood.abc import Value
     from redwood.be import ValueCodecProtocol
 
 
 __all__ = ["MessagePackCodec"]
+
+msgpack = cast(
+    "_msgpack",
+    lazy_import(
+        "msgpack", "msgpack is required for MessagePackCodec. Install via: pip install msgpack"
+    ),
+)
 
 
 class MessagePackCodec:
@@ -31,13 +42,6 @@ class MessagePackCodec:
         The encode and decode attributes are set to msgpack library functions
         directly to avoid any method call overhead.
         """
-        try:
-            import msgpack
-        except ImportError:
-            raise ImportError(
-                "msgpack is required for MessagePackCodec. Install via: pip install msgpack"
-            ) from None
-
         self.encode = msgpack.packb  # type: ignore[return-value]
         self.decode = msgpack.unpackb  # type: ignore[return-value]
 

@@ -7,11 +7,10 @@ import threading
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import uuid4
 
 import attrs
-import filelock
 from mesh import Attach, ResourceSpec, Spec
 
 from redwood.be.types import ScanOptions, StorageCapabilities
@@ -23,12 +22,15 @@ from redwood.exceptions import (
     TransactionError,
     TransactionInvalidError,
 )
+from rwstd.lazy_import import lazy_import
 
 from .bases import BaseStorage
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    import filelock as _filelock  # type: ignore[import]
 
     from redwood.abc import TupleKey, Value
     from redwood.be import (
@@ -48,6 +50,14 @@ __all__ = [
     "FileStorageSpec",
     "FileStorageTransaction",
 ]
+
+filelock = cast(
+    "_filelock",
+    lazy_import(
+        "filelock",
+        "filelock is required for FileStorage. Install via: pip install filelock",
+    ),
+)
 
 
 @dataclass

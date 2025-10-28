@@ -6,15 +6,14 @@ import threading
 from functools import cached_property
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
 import attrs
 from frozendict import frozendict
 from mesh import Attach, ResourceSpec, Spec
 
-import rwrocks
-from redwood.be.types import ScanOptions, StorageCapabilities
+from redwood.be import ScanOptions, StorageCapabilities
 from redwood.exceptions import (
     SnapshotError,
     StorageConnectionError,
@@ -24,6 +23,7 @@ from redwood.exceptions import (
     TransactionError,
     TransactionInvalidError,
 )
+from rwstd.lazy_import import lazy_import
 
 from .bases import BaseStorage
 
@@ -31,6 +31,7 @@ from .bases import BaseStorage
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
+    import rwrocks as _rwrocks  # type: ignore[import]
     from redwood.abc import TupleKey, Value
     from redwood.be import (
         CodecProtocol,
@@ -49,6 +50,11 @@ __all__ = [
     "RocksDBStorageSpec",
     "RocksDBStorageTransaction",
 ]
+
+rwrocks = cast(
+    "_rwrocks",
+    lazy_import("rwrocks", "rwrocks is required for RocksDBStorage."),
+)
 
 
 def _collect_prefixed_keys(
