@@ -12,9 +12,6 @@ from typing import TYPE_CHECKING, Self
 
 import attrs
 
-from redwood.abc import EMPTY, CallbackFn, Empty, KeyComponent, TupleKey, Value
-from redwood.be import StorageKeyError
-
 from .context import ContextualBase
 from .path import Path
 from .registry import ViewRegistry
@@ -24,6 +21,7 @@ from .view import create_view_context_manager
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
+    from redwood.abc import CallbackFn, KeyComponent, TupleKey
     from redwood.be import (
         SnapshotContextManagerProtocol,
         SnapshotProtocol,
@@ -261,46 +259,7 @@ class Tree(ContextualBase):
         return view_type(backend=self.backend, path=self.path, ctx=ctx or self.ctx, tree=self)
 
     # =========================================================================
-    # CONTEXT METHODS (unified transaction and snapshot support)
-    # =========================================================================
-
-    def begin_context(self, *, snapshot: bool = False) -> StorageContextType:
-        """Start a new context (transaction or snapshot).
-
-        Args:
-            snapshot: If True, creates read-only snapshot. If False, creates transaction.
-
-        Returns:
-            Context instance (transaction or snapshot)
-
-        Example:
-            ```python
-            # Transaction context
-            ctx = tree.begin_context()
-            try:
-                view = tree.dict_view(ctx=ctx)
-                view.set("key", "value")
-                ctx.commit()
-            except Exception:
-                ctx.rollback()
-                raise
-
-            # Snapshot context
-            ctx = tree.begin_context(snapshot=True)
-            try:
-                view = tree.dict_view(ctx=ctx)
-                value = view.get("key")
-            finally:
-                ctx.close()
-            ```
-        """
-        if snapshot:
-            return self.backend.begin_snapshot()
-        else:
-            return self.backend.begin_transaction()
-
-    # =========================================================================
-    # TRANSACTION METHODS
+    # CONTEXT METHODS (transaction and snapshot support)
     # =========================================================================
 
     def begin_transaction(self) -> TransactionProtocol:
@@ -437,77 +396,3 @@ class Tree(ContextualBase):
             ObserverError: If unsubscribe fails
         """
         self.backend.unsubscribe(subscription)
-
-    # =========================================================================
-    # SHORTCUTS FOR COMMON OPERATIONS
-    # =========================================================================
-
-    def has_primitive(self, *paths: KeyComponent) -> bool:
-        """Check if a path exists.
-
-        Args:
-            *paths: Path components to check
-
-        Returns:
-            bool: True if path exists, False otherwise
-
-        Example:
-            ```python
-            if tree.at("users").has("alice"):
-                print("Alice exists")
-            else:
-                print("Alice does not exist")
-            ```
-        """
-        return self.backend.exists(Path.join(self.path, *paths))
-
-    def get_primitive(self, *paths: KeyComponent, default: Value | Empty = EMPTY) -> Value | Empty:
-        """Get value at a path.
-
-        Args:
-            *paths: Path components to get
-            default: Default value if path does not exist
-
-        Returns:
-            Value at the path, or default if not found
-
-        Example:
-            ```python
-            email = tree.at("users", "alice").get("email", default="not found")
-            if email is None:
-                print("Alice's email not found")
-            else:
-                print(f"Alice's email: {email}")
-            ```
-        """
-        try:
-            return self.backend.get(Path.join(self.path, *paths))
-        except StorageKeyError:
-            return default
-
-    # IMPORTANT:
-    # - Mutation operations (e.g. `set` and `remove`) are not implemented, as they are handled by View's specific methods.
-    #   Views might implement specific logic for setting and removing values (e.g. indexed Views keeping aggregated data),
-    #   so we don't want to bypass them here.
-    #   Instead, users should use corresponding Views to perform these operations in a consistent manner.
-    # - Hypothetically, `has` and `read` operations might also have specific logic in Views, but until we have a use case for that,
-    #   we keep shortcut methods here for simplicity.
-
-    def is_primitive(self, *paths: KeyComponent) -> bool:
-        """Check if a path is a primitive (non-container).
-
-        Args:
-            *paths: Path components to check
-
-        Returns:
-            bool: True if path is a primitive, False otherwise
-
-        Example:
-            ```python
-            if tree.at("users").is_primitive("alice", "email"):
-                print("Alice's email is a primitive value")
-            else:
-                print("Alice's email is not a primitive value")
-            ```
-        """
-        return self.backend.exists(Path.join(self.path, *paths))
