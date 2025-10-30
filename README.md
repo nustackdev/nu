@@ -1,3 +1,3 @@
 # Redwood
 
-Persistent reactive trees for Python
+Persistent reactive trees for Python.
