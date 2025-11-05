@@ -1,56 +1,46 @@
-"""RocksDB storage backend with transaction and snapshot support."""
+"""RocksDB storage backend implementation.
+
+This module provides a RocksDB-backed storage implementation conforming to
+the Redwood storage protocol. It uses composition of base classes to build
+transactions and snapshots with proper resource management and error handling.
+"""
 
 from __future__ import annotations
 
 import threading
-from functools import cached_property
-from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
-import attrs
-from frozendict import frozendict
-from mesh import Attach, ResourceSpec, Spec
-
 from redwood.be import (
-    SnapshotError,
-    StorageCapabilities,
-    StorageConnectionError,
+    # Protocols
+    CodecProtocol,
+    ObserverProtocol,
+    # Types
+    ScanOptions,
+    ScanProtocol,
+    SnapshotProtocol,
+    # Exceptions
+    StorageClosedError,
+    StorageDeleteError,
     StorageError,
     StorageKeyError,
     StorageOperationError,
-    StorageScanOptions,
-    TransactionError,
-    TransactionInvalidError,
+    StorageTransactionAbortedError,
+    StorageTransactionError,
+    SubscriptionProtocol,
+    TransactionProtocol,
+    WriteBatchProtocol,
 )
 from rwstd.lazy_import import lazy_import
 
-from .bases import BaseStorage
-
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator
+    from collections.abc import Iterator
 
     import rwrocks as _rwrocks  # type: ignore[import]
-    from redwood.abc import TupleKey, Value
-    from redwood.be import (
-        CodecProtocol,
-        SnapshotProtocol,
-        StorageProtocol,
-        TransactionProtocol,
-    )
+    from redwood.abc import CallbackFn, TupleKey, Value
 
-
-logger = getLogger(__name__)
-
-
-__all__ = [
-    "RocksDBStorage",
-    "RocksDBStorageSnapshot",
-    "RocksDBStorageSpec",
-    "RocksDBStorageTransaction",
-]
 
 rwrocks = cast(
     "_rwrocks",
@@ -58,862 +48,1057 @@ rwrocks = cast(
 )
 
 
-def _collect_prefixed_keys(
-    iterator: Any,
-    encoded_prefix: bytes,
-    decode_key: Callable[[bytes], TupleKey],
-    prefix: TupleKey,
-    depth: int,
-) -> list[TupleKey]:
-    """Collect keys that match the encoded prefix using a RocksDB iterator."""
-    keys: list[TupleKey] = []
-    try:
-        if encoded_prefix:
-            iterator.seek(encoded_prefix)
-        else:
-            iterator.seek_to_first()
+__all__ = [
+    "RocksDBScan",
+    "RocksDBSnapshot",
+    "RocksDBStorage",
+    "RocksDBTransaction",
+]
 
-        while True:
+
+# =============================================================================
+# Base Context Class
+# =============================================================================
+
+
+class _RocksDBContextBase:
+    """Base class for RocksDB transaction/snapshot contexts.
+
+    Provides common functionality for state management, validation, and
+    resource cleanup. All contexts wrap a RocksDB transaction handle.
+    """
+
+    def __init__(
+        self,
+        storage: RocksDBStorage,
+        rwrocks_txn: rwrocks.Transaction,
+    ) -> None:
+        """Initialize context with storage reference and RocksDB transaction.
+
+        Args:
+            storage: Parent storage instance
+            rwrocks_txn: RocksDB transaction handle
+        """
+        self._storage = storage
+        self._rwrocks_txn: Any | None = rwrocks_txn
+        self._closed = False
+        self._uuid = uuid4()
+
+    def _require_active(self) -> Any:
+        """Validate context is active and return transaction handle.
+
+        Returns:
+            Active RocksDB transaction handle
+
+        Raises:
+            StorageClosedError: If context is closed or invalid
+        """
+        if self._closed:
+            raise StorageClosedError("Context is closed")
+        if self._rwrocks_txn is None:
+            raise StorageClosedError("Context handle is invalid")
+        return self._rwrocks_txn
+
+    def _mark_closed(self) -> None:
+        """Mark context as closed and clear handle."""
+        self._closed = True
+        self._rwrocks_txn = None
+
+    def __hash__(self) -> int:
+        """Hash based on unique identifier."""
+        return hash(self._uuid)
+
+    def __eq__(self, other: object) -> bool:
+        """Compare contexts by UUID."""
+        return isinstance(other, _RocksDBContextBase) and self._uuid == other._uuid
+
+
+# =============================================================================
+# Read Operations Mixin
+# =============================================================================
+
+
+class _ReadOperationsMixin:
+    """Mixin providing read operations for RocksDB contexts.
+
+    Implements point access (get, has), batch access (multiget),
+    and range access (scan) operations.
+    """
+
+    # Type hints for mixed-in attributes
+    _storage: RocksDBStorage
+    _require_active: Any  # Method from _RocksDBContextBase
+
+    def get(self, key: TupleKey, default: Value | None = None) -> Value:
+        """Get value by key.
+
+        Args:
+            key: Key to retrieve
+            default: Default value if key not found
+
+        Returns:
+            Value at key, or default if not found
+
+        Raises:
+            StorageKeyError: If key not found and no default provided
+            StorageOperationError: If operation fails
+            StorageClosedError: If context is closed
+        """
+        txn = self._require_active()
+        codec = self._storage.codec
+
+        # Encode key for RocksDB
+        try:
+            encoded_key = codec.encode_key(key)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to encode key {key}: {e}") from e
+
+        # Retrieve from RocksDB
+        try:
+            with self._storage._db_lock:
+                encoded_value = txn.get(encoded_key)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to get key {key}: {e}") from e
+
+        # Handle not found
+        if encoded_value is None:
+            if default is not None:
+                return default
+            raise StorageKeyError(f"Key {key} not found")
+
+        # Decode value
+        try:
+            return codec.decode_value(encoded_value)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
+
+    def has(self, key: TupleKey) -> bool:
+        """Check if key exists.
+
+        Args:
+            key: Key to check
+
+        Returns:
+            True if key exists, False otherwise
+
+        Raises:
+            StorageOperationError: If check fails
+            StorageClosedError: If context is closed
+        """
+        txn = self._require_active()
+        codec = self._storage.codec
+
+        try:
+            encoded_key = codec.encode_key(key)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to encode key {key}: {e}") from e
+
+        try:
+            with self._storage._db_lock:
+                return txn.get(encoded_key) is not None
+        except Exception as e:
+            raise StorageOperationError(f"Failed to check key {key}: {e}") from e
+
+    def multiget(self, keys: list[TupleKey]) -> dict[TupleKey, Value]:
+        """Get multiple keys.
+
+        Args:
+            keys: List of keys to retrieve
+
+        Returns:
+            Dict mapping keys to values. Missing keys are omitted.
+
+        Raises:
+            StorageOperationError: If operation fails
+            StorageClosedError: If context is closed
+        """
+        result: dict[TupleKey, Value] = {}
+
+        for key in keys:
             try:
-                encoded_key, _ = iterator.get()
-            except ValueError:
-                break
-
-            if not encoded_key.startswith(encoded_prefix):
-                break
-
-            decoded_key = decode_key(encoded_key)
-            if depth == -1 or len(decoded_key) - len(prefix) == depth:
-                keys.append(decoded_key)
-
-            try:
-                iterator.skip()
-            except ValueError:
-                break
-    finally:
-        # Ensure the underlying C++ iterator is released promptly.
-        del iterator
-
-    return keys
-
-
-def _collect_prefixed_items(
-    iterator: Any,
-    encoded_prefix: bytes,
-    decode_key: Callable[[bytes], TupleKey],
-    decode_value: Callable[[bytes], Value],
-    prefix: TupleKey,
-    depth: int,
-) -> list[tuple[TupleKey, Value]]:
-    """Collect key/value pairs matching the encoded prefix."""
-    items: list[tuple[TupleKey, Value]] = []
-    try:
-        if encoded_prefix:
-            iterator.seek(encoded_prefix)
-        else:
-            iterator.seek_to_first()
-
-        while True:
-            try:
-                encoded_key, encoded_value = iterator.get()
-            except ValueError:
-                break
-
-            if not encoded_key.startswith(encoded_prefix):
-                break
-
-            decoded_key = decode_key(encoded_key)
-            if depth != -1 and len(decoded_key) - len(prefix) != depth:
-                try:
-                    iterator.skip()
-                except ValueError:
-                    break
+                value = self.get(key)
+                result[key] = value
+            except StorageKeyError:
+                # Skip missing keys
                 continue
 
-            decoded_value = decode_value(encoded_value)
-            items.append((decoded_key, decoded_value))
+        return result
 
-            try:
-                iterator.skip()
-            except ValueError:
-                break
-    finally:
-        del iterator
+    def scan(self, options: ScanOptions) -> ScanProtocol:
+        """Create scan iterator with configured options.
 
-    return items
+        Args:
+            options: Scan configuration (bounds, direction, limits)
 
+        Returns:
+            Scan iterator conforming to ScanProtocol
 
-def _scan_prefixed_items(
-    iterator: Any,
-    codec: CodecProtocol[bytes, bytes],
-    options: StorageScanOptions,
-) -> list[tuple[TupleKey, Value]]:
-    """Collect key/value pairs honouring scan options."""
-    if options.limit == 0:
-        return []
-
-    encoded_prefix = codec.encode_key(options.prefix)
-    encoded_start = codec.encode_key(options.start) if options.start is not None else encoded_prefix
-    seek_key = encoded_start if encoded_start >= encoded_prefix else encoded_prefix
-
-    items: list[tuple[TupleKey, Value]] = []
-
-    try:
-        if seek_key:
-            iterator.seek(seek_key)
-        else:
-            iterator.seek_to_first()
-    except ValueError:
-        return items
-
-    while True:
-        try:
-            encoded_key, encoded_value = iterator.get()
-        except ValueError:
-            break
-
-        if not encoded_key.startswith(encoded_prefix):
-            break
-
-        decoded_key = codec.decode_key(encoded_key)
-
-        if options.start is not None and decoded_key < options.start:
-            try:
-                iterator.skip()
-            except ValueError:
-                break
-            continue
-
-        if options.end is not None and decoded_key >= options.end:
-            break
-
-        if options.depth != -1 and len(decoded_key) - len(options.prefix) != options.depth:
-            try:
-                iterator.skip()
-            except ValueError:
-                break
-            continue
-
-        decoded_value = codec.decode_value(encoded_value)
-        items.append((decoded_key, decoded_value))
-
-        if not options.reverse and options.limit is not None and len(items) >= options.limit:
-            break
+        Raises:
+            StorageOperationError: If scan creation fails
+            StorageClosedError: If context is closed
+        """
+        txn = self._require_active()
 
         try:
-            iterator.skip()
-        except ValueError:
-            break
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+        except Exception as e:
+            raise StorageOperationError(f"Failed to create scan iterator: {e}") from e
 
-    if options.reverse:
-        items.reverse()
-
-    if options.limit is not None:
-        items = items[: options.limit]
-
-    return items
+        return RocksDBScan(self._storage, iterator, options)
 
 
-class RocksDBStorage(BaseStorage[bytes, bytes]):
-    """RocksDB storage implementation leveraging the rwrocks bindings."""
+# =============================================================================
+# Write Operations Mixin
+# =============================================================================
 
-    codec: CodecProtocol[bytes, bytes] = Attach()
 
-    spec: RocksDBStorageSpec
+class _WriteOperationsMixin:
+    """Mixin providing write operations for RocksDB contexts.
 
-    @cached_property
-    def codec_cached(self) -> CodecProtocol[bytes, bytes]:
-        """Cached property for codec to avoid repeated lookups."""
-        return self.codec
+    Implements point writes (put, delete) and range writes (range_delete).
+    Tracks modified keys for notification on commit.
+    """
 
-    @classmethod
-    def capabilities(cls) -> StorageCapabilities:
-        """RocksDB backend exposes full scan capability and range deletes."""
-        return StorageCapabilities(scan=True, range_delete=True, approximate_size=True)
+    # Type hints for mixed-in attributes
+    _storage: RocksDBStorage
+    _require_active: Any  # Method from _RocksDBContextBase
+    _modified_keys: set[TupleKey]  # Initialized in __init__
 
-    def setup(self) -> None:
-        """Prepare filesystem locations and synchronization primitives."""
-        self.path = (
-            self.spec.path.resolve()
-            if isinstance(self.spec.path, Path)
-            else Path(self.spec.path).resolve()
-        )
+    def put(self, key: TupleKey, value: Value) -> None:
+        """Put key-value pair.
 
-        wal_path_spec = self.spec.wal_path
-        if wal_path_spec is not None:
-            self._wal_path = (
-                wal_path_spec.resolve()
-                if isinstance(wal_path_spec, Path)
-                else Path(wal_path_spec).resolve()
-            )
+        Args:
+            key: Key to set
+            value: Value to store
+
+        Raises:
+            StorageOperationError: If write fails
+            StorageClosedError: If context is closed
+        """
+        txn = self._require_active()
+        codec = self._storage.codec
+
+        # Encode key and value
+        try:
+            encoded_key = codec.encode_key(key)
+            encoded_value = codec.encode_value(value)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to encode key/value for {key}: {e}") from e
+
+        # Write to RocksDB
+        try:
+            with self._storage._db_lock:
+                txn.put(encoded_key, encoded_value)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to put key {key}: {e}") from e
+
+        # Track modification for notifications
+        self._modified_keys.add(key)
+
+    def delete(self, key: TupleKey) -> bool:
+        """Delete key.
+
+        Args:
+            key: Key to delete
+
+        Returns:
+            True if key was deleted, False if key didn't exist
+
+        Raises:
+            StorageDeleteError: If deletion fails
+            StorageClosedError: If context is closed
+        """
+        txn = self._require_active()
+        codec = self._storage.codec
+
+        try:
+            encoded_key = codec.encode_key(key)
+        except Exception as e:
+            raise StorageDeleteError(f"Failed to encode key {key}: {e}") from e
+
+        # Check if key exists
+        try:
+            with self._storage._db_lock:
+                exists = txn.get(encoded_key) is not None
+
+                if not exists:
+                    return False
+
+                # Delete the key
+                txn.delete_single(encoded_key)
+        except Exception as e:
+            raise StorageDeleteError(f"Failed to delete key {key}: {e}") from e
+
+        # Track modification for notifications
+        self._modified_keys.add(key)
+        return True
+
+    # def range_delete(
+    #     self,
+    #     start: TupleKey,
+    #     end: TupleKey,
+    #     *,
+    #     start_inclusive: bool = True,
+    #     end_inclusive: bool = False,
+    # ) -> int:
+    #     """Delete all keys in range.
+
+    #     Args:
+    #         start: Start of range
+    #         end: End of range
+    #         start_inclusive: Whether start is inclusive
+    #         end_inclusive: Whether end is inclusive
+
+    #     Returns:
+    #         Number of keys deleted
+
+    #     Raises:
+    #         StorageDeleteError: If deletion fails
+    #         StorageClosedError: If context is closed
+    #     """
+    #     # Create scan options for the range
+    #     scan_options = ScanOptions(
+    #         start=start,
+    #         end=end,
+    #         start_inclusive=start_inclusive,
+    #         end_inclusive=end_inclusive,
+    #         reverse=False,
+    #         limit=None,
+    #     )
+
+    #     # Collect keys to delete
+    #     try:
+    #         keys_to_delete = list(self.scan(scan_options).keys())
+    #     except Exception as e:
+    #         raise StorageDeleteError(f"Failed to scan range for deletion: {e}") from e
+
+    #     # Delete each key
+    #     deleted_count = 0
+    #     for key in keys_to_delete:
+    #         if self.delete(key):
+    #             deleted_count += 1
+
+    #     return deleted_count
+
+
+# =============================================================================
+# Transaction Control Mixin
+# =============================================================================
+
+
+class _TransactionControlMixin:
+    """Mixin providing transaction control operations.
+
+    Implements commit and abort operations with proper notification
+    and cleanup handling.
+    """
+
+    # Type hints for mixed-in attributes
+    _storage: RocksDBStorage
+    _require_active: Any  # Method from _RocksDBContextBase
+    _mark_closed: Any  # Method from _RocksDBContextBase
+    _modified_keys: set[TupleKey]
+    _committed: bool
+    _aborted: bool
+
+    def commit(self) -> None:
+        """Commit all changes in the transaction.
+
+        Sends notifications for all modified keys after successful commit.
+
+        Raises:
+            StorageTransactionError: If commit fails or transaction is invalid
+            StorageClosedError: If context is closed
+        """
+        if self._committed:
+            raise StorageTransactionError("Transaction already committed")
+        if self._aborted:
+            raise StorageTransactionError("Transaction already aborted")
+
+        txn = self._require_active()
+
+        # Commit to RocksDB
+        try:
+            with self._storage._db_lock:
+                txn.commit()
+        except Exception as e:
+            raise StorageTransactionError(f"Failed to commit transaction: {e}") from e
+
+        # Mark as committed before notifications
+        self._committed = True
+        self._mark_closed()
+
+        # Notify observers of all modifications
+        for key in self._modified_keys:
+            self._storage._notify(key)
+
+        # Remove from active transactions
+        self._storage._remove_transaction(self)
+
+    def abort(self) -> None:
+        """Abort transaction and discard all changes.
+
+        Raises:
+            StorageTransactionAbortedError: If abort fails
+            StorageClosedError: If context is closed
+        """
+        if self._committed:
+            raise StorageTransactionError("Transaction already committed")
+        if self._aborted:
+            raise StorageTransactionError("Transaction already aborted")
+
+        txn = self._require_active()
+
+        try:
+            with self._storage._db_lock:
+                txn.rollback()
+        except Exception as e:
+            raise StorageTransactionAbortedError(f"Failed to abort transaction: {e}") from e
+        finally:
+            self._aborted = True
+            self._mark_closed()
+            self._storage._remove_transaction(self)
+
+
+# =============================================================================
+# Composed Classes
+# =============================================================================
+
+
+class RocksDBSnapshot(_RocksDBContextBase, _ReadOperationsMixin):
+    """Read-only snapshot implementation.
+
+    Provides consistent read-only view of the database at a point in time.
+    Composed from base context and read operations.
+    """
+
+    @property
+    def writable(self) -> bool:
+        """Always False for snapshots."""
+        return False
+
+    def close(self) -> None:
+        """Close snapshot and release resources.
+
+        Raises:
+            StorageError: If close fails
+        """
+        if self._closed:
+            return
+
+        if self._rwrocks_txn is not None:
+            try:
+                with self._storage._db_lock:
+                    # Rollback to release the snapshot
+                    self._rwrocks_txn.rollback()
+            except Exception as e:
+                raise StorageError(f"Failed to close snapshot: {e}") from e
+            finally:
+                self._mark_closed()
+                self._storage._remove_snapshot(self)
         else:
-            self._wal_path = None
+            self._mark_closed()
+            self._storage._remove_snapshot(self)
 
+    def __enter__(self) -> RocksDBSnapshot:
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager - auto close."""
+        self.close()
+
+
+class RocksDBTransaction(
+    _RocksDBContextBase,
+    _ReadOperationsMixin,
+    _WriteOperationsMixin,
+    _TransactionControlMixin,
+):
+    """Read-write transaction implementation.
+
+    Provides full read-write access with ACID guarantees.
+    Composed from base context, read operations, write operations,
+    and transaction control.
+    """
+
+    def __init__(
+        self,
+        storage: RocksDBStorage,
+        rwrocks_txn: rwrocks.Transaction,
+    ) -> None:
+        """Initialize transaction.
+
+        Args:
+            storage: Parent storage instance
+            rwrocks_txn: RocksDB transaction handle
+        """
+        super().__init__(storage, rwrocks_txn)
+        self._modified_keys: set[TupleKey] = set()
+        self._committed = False
+        self._aborted = False
+
+    @property
+    def writable(self) -> bool:
+        """Always True for transactions."""
+        return True
+
+    def __enter__(self) -> RocksDBTransaction:
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager - auto commit or abort.
+
+        If an exception occurred, abort the transaction.
+        Otherwise, commit the transaction.
+        """
+        if exc_type is not None:
+            # Exception occurred - abort
+            try:
+                self.abort()
+            except Exception:
+                # Suppress abort errors if already handling exception
+                pass
+        else:
+            # No exception - commit
+            self.commit()
+
+
+# =============================================================================
+# Scan Iterator
+# =============================================================================
+
+
+class RocksDBScan:
+    """Scan iterator implementation conforming to ScanProtocol.
+
+    Provides Pythonic iteration interface over a range of keys.
+    Handles bounds checking, direction, and limits.
+    """
+
+    def __init__(
+        self,
+        storage: RocksDBStorage,
+        rwrocks_iterator: Any,
+        options: ScanOptions,
+    ) -> None:
+        """Initialize scan iterator.
+
+        Args:
+            storage: Parent storage instance
+            rwrocks_iterator: RocksDB iterator
+            options: Scan configuration
+        """
+        self._storage = storage
+        self._iterator = rwrocks_iterator
+        self._options = options
+        self._items: list[tuple[TupleKey, Value]] | None = None
+
+    def _ensure_collected(self) -> list[tuple[TupleKey, Value]]:
+        """Collect all items matching scan options.
+
+        Lazily collects items on first access. Subsequent calls return
+        cached results.
+
+        Returns:
+            List of (key, value) tuples
+        """
+        if self._items is not None:
+            return self._items
+
+        codec = self._storage.codec
+        options = self._options
+        items: list[tuple[TupleKey, Value]] = []
+
+        try:
+            # Encode bounds
+            start_key = codec.encode_key(options.start) if options.start else b""
+            end_key = codec.encode_key(options.end) if options.end else None
+
+            # Seek to start position
+            try:
+                if start_key:
+                    self._iterator.seek(start_key)
+                else:
+                    self._iterator.seek_to_first()
+            except ValueError:
+                # Iterator exhausted immediately
+                self._items = []
+                return self._items
+
+            # Iterate through range
+            while True:
+                try:
+                    encoded_key, encoded_value = self._iterator.get()
+                except ValueError:
+                    # Iterator exhausted
+                    break
+
+                # Decode key for bound checking
+                try:
+                    key = codec.decode_key(encoded_key)
+                except Exception as e:
+                    raise StorageOperationError(f"Failed to decode key: {e}") from e
+
+                # Check end bound
+                if end_key is not None:
+                    if options.end_inclusive:
+                        if encoded_key > end_key:
+                            break
+                    else:
+                        if encoded_key >= end_key:
+                            break
+
+                # Check start bound (inclusive/exclusive)
+                if options.start is not None:
+                    if options.start_inclusive:
+                        if key < options.start:
+                            try:
+                                self._iterator.skip()
+                            except ValueError:
+                                break
+                            continue
+                    else:
+                        if key <= options.start:
+                            try:
+                                self._iterator.skip()
+                            except ValueError:
+                                break
+                            continue
+
+                # Decode value
+                try:
+                    value = codec.decode_value(encoded_value)
+                except Exception as e:
+                    raise StorageOperationError(f"Failed to decode value: {e}") from e
+
+                items.append((key, value))
+
+                # Check limit
+                if options.limit is not None and len(items) >= options.limit:
+                    break
+
+                # Advance iterator
+                try:
+                    self._iterator.skip()
+                except ValueError:
+                    break
+
+        except Exception as e:
+            raise StorageOperationError(f"Failed during scan: {e}") from e
+        finally:
+            # Release iterator to free C++ resources
+            del self._iterator
+
+        # Apply reverse if requested
+        if options.reverse:
+            items.reverse()
+
+        self._items = items
+        return self._items
+
+    def items(self) -> Iterator[tuple[TupleKey, Value]]:
+        """Iterate over (key, value) tuples.
+
+        Yields:
+            Tuples of (key, value) for each item in scan range
+
+        Raises:
+            StorageOperationError: If iteration fails
+        """
+        yield from self._ensure_collected()
+
+    def keys(self) -> Iterator[TupleKey]:
+        """Iterate over keys only.
+
+        Yields:
+            Keys in scan range
+
+        Raises:
+            StorageOperationError: If iteration fails
+        """
+        for key, _ in self._ensure_collected():
+            yield key
+
+    def values(self) -> Iterator[Value]:
+        """Iterate over values only.
+
+        Yields:
+            Values in scan range
+
+        Raises:
+            StorageOperationError: If iteration fails
+        """
+        for _, value in self._ensure_collected():
+            yield value
+
+    def __iter__(self) -> Iterator[TupleKey]:
+        """Default iteration yields keys."""
+        return self.keys()
+
+    def __enter__(self) -> RocksDBScan:
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager."""
+        pass
+
+
+# =============================================================================
+# Main Storage Class
+# =============================================================================
+
+
+class RocksDBStorage:
+    """RocksDB storage implementation conforming to StorageProtocol.
+
+    Provides persistent key-value storage with transactions, snapshots,
+    and optional change notifications via an observer.
+    """
+
+    def __init__(
+        self,
+        path: Path | str,
+        codec: CodecProtocol[bytes, bytes],
+        observer: ObserverProtocol[bytes] | None = None,
+        *,
+        wal_path: Path | str | None = None,
+        options: dict[str, Any] | None = None,
+        txn_db_options: dict[str, Any] | None = None,
+        txn_options: dict[str, Any] | None = None,
+        create_if_missing: bool = True,
+        sync_writes: bool = False,
+        disable_wal: bool = False,
+    ) -> None:
+        """Initialize RocksDB storage.
+
+        Args:
+            path: Database directory path
+            codec: Codec for key/value encoding
+            observer: Optional observer for change notifications
+            wal_path: Optional separate WAL directory
+            options: RocksDB options dict
+            txn_db_options: TransactionDB options dict
+            txn_options: Transaction options dict
+            create_if_missing: Create database if it doesn't exist
+            sync_writes: Sync writes to disk
+            disable_wal: Disable write-ahead log
+        """
+        # Core dependencies
+        self._codec = codec
+        self._observer = observer
+
+        # Paths
+        self._path = Path(path) if isinstance(path, str) else path
+        self._wal_path = Path(wal_path) if isinstance(wal_path, str) else wal_path
+
+        # Configuration
+        self._options_dict = options or {}
+        self._txn_db_options_dict = txn_db_options or {}
+        self._txn_options_dict = txn_options or {}
+        self._create_if_missing = create_if_missing
+        self._sync_writes = sync_writes
+        self._disable_wal = disable_wal
+
+        # State
         self._db: rwrocks.TransactionDB | None = None
-        self._options: rwrocks.Options | None = None
-        self._txn_db_options: rwrocks.TransactionDBOptions | None = None
-
         self._db_lock = threading.RLock()
-        self._active_transactions: set[RocksDBStorageTransaction] = set()
-        self._active_snapshots: set[RocksDBStorageSnapshot] = set()
+        self._active_transactions: set[RocksDBTransaction] = set()
+        self._active_snapshots: set[RocksDBSnapshot] = set()
+        self._opened = False
 
-        self._write_kwargs = {
-            "sync": self.spec.sync_writes,
-            "disable_wal": self.spec.disable_wal,
-        }
+        self._uuid = uuid4()
 
-        super().setup()
+    def __hash__(self) -> int:
+        return hash(self._uuid)
 
-    def _connect_impl(self) -> None:
-        """Open the RocksDB database using the configured specification."""
+    def __eq__(self, value: object) -> bool:
+        return isinstance(value, RocksDBStorage) and self._uuid == value._uuid
+
+    @property
+    def codec(self) -> CodecProtocol[bytes, bytes]:
+        """Get codec for key/value encoding."""
+        return self._codec
+
+    def open(self) -> None:
+        """Open RocksDB database and initialize resources.
+
+        Raises:
+            StorageError: If database cannot be opened
+        """
+        if self._opened:
+            return
+
         with self._db_lock:
-            if self.mode == "write":
-                self.path.mkdir(parents=True, exist_ok=True)
+            # Create directories
+            try:
+                self._path.mkdir(parents=True, exist_ok=True)
                 if self._wal_path is not None:
                     self._wal_path.mkdir(parents=True, exist_ok=True)
-            else:
-                if not self.path.exists():
-                    raise StorageConnectionError(
-                        f"RocksDB path {self.path} does not exist in read mode"
-                    )
-                if self._wal_path is not None and not self._wal_path.exists():
-                    raise StorageConnectionError(
-                        f"WAL path {self._wal_path} does not exist in read mode"
-                    )
+            except Exception as e:
+                raise StorageError(f"Failed to create database directories: {e}") from e
 
-            options_kwargs = dict(self.spec.options_kwargs)
-            if "create_if_missing" not in options_kwargs:
-                options_kwargs["create_if_missing"] = (
-                    self.mode == "write" and self.spec.create_if_missing
-                )
+            # Configure RocksDB options
+            options_dict = dict(self._options_dict)
+            if "create_if_missing" not in options_dict:
+                options_dict["create_if_missing"] = self._create_if_missing
 
             try:
-                self._options = rwrocks.Options(**options_kwargs)
+                options = rwrocks.Options(**options_dict)
             except Exception as e:
                 raise StorageError(f"Invalid RocksDB options: {e}") from e
 
             if self._wal_path is not None:
-                self._options.wal_dir = str(self._wal_path)
+                options.wal_dir = str(self._wal_path)
 
-            txn_db_kwargs = dict(self.spec.txn_db_options_kwargs)
-            try:
-                self._txn_db_options = (
-                    rwrocks.TransactionDBOptions(**txn_db_kwargs) if txn_db_kwargs else None
-                )
-            except Exception as e:
-                raise StorageError(f"Invalid RocksDB transaction options: {e}") from e
+            # Configure TransactionDB options
+            txn_db_options = None
+            if self._txn_db_options_dict:
+                try:
+                    txn_db_options = rwrocks.TransactionDBOptions(**self._txn_db_options_dict)
+                except Exception as e:
+                    raise StorageError(f"Invalid TransactionDB options: {e}") from e
 
+            # Open database
             try:
                 self._db = rwrocks.TransactionDB(
-                    str(self.path),
-                    self._options,
-                    self._txn_db_options,
+                    str(self._path),
+                    options,
+                    txn_db_options,
                 )
             except Exception as e:
-                raise StorageConnectionError(f"Failed to open RocksDB: {e}") from e
+                raise StorageError(f"Failed to open RocksDB database: {e}") from e
 
-        logger.debug("Connected to RocksDB at %s in %s mode", self.path, self.mode)
+            self._opened = True
 
-    def _disconnect_impl(self) -> None:
-        """Close the RocksDB database and clean up active resources."""
+    def close(self) -> None:
+        """Close database and release all resources.
+
+        All active transactions are aborted and snapshots are closed.
+
+        Raises:
+            StorageError: If close fails
+        """
+        if not self._opened:
+            return
+
         with self._db_lock:
+            # Abort all active transactions
             for transaction in list(self._active_transactions):
                 try:
-                    transaction.rollback()
-                except Exception as exc:
-                    logger.error(
-                        "Failed to rollback RocksDB transaction during disconnect: %s",
-                        exc,
-                    )
+                    transaction.abort()
+                except Exception:
+                    # Best effort cleanup
+                    pass
 
+            # Close all active snapshots
             for snapshot in list(self._active_snapshots):
                 try:
                     snapshot.close()
-                except Exception as exc:
-                    logger.error(
-                        "Failed to close RocksDB snapshot during disconnect: %s",
-                        exc,
-                    )
+                except Exception:
+                    # Best effort cleanup
+                    pass
 
+            # Clear tracking sets
             self._active_transactions.clear()
             self._active_snapshots.clear()
 
+            # Close database
             if self._db is not None:
                 try:
                     self._db.close()
+                except Exception as e:
+                    raise StorageError(f"Failed to close database: {e}") from e
                 finally:
                     self._db = None
-            self._options = None
-            self._txn_db_options = None
 
-        logger.debug("Disconnected from RocksDB")
+            self._opened = False
 
-    def _get_db(self) -> rwrocks.TransactionDB:
-        db = self._db
-        if db is None:
-            raise StorageConnectionError("RocksDB instance is not connected")
-        return db
-
-    def _get_impl(self, key: TupleKey) -> Value:
-        encoded_key = self.codec_cached.encode_key(key)
-
-        with self._db_lock:
-            try:
-                encoded_value = self._get_db().get(encoded_key)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to get key {key}: {e}") from e
-
-        if encoded_value is None:
-            raise StorageKeyError(f"Key {key} not found")
-
-        try:
-            return self.codec_cached.decode_value(encoded_value)
-        except Exception as e:
-            raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
-
-    def _set_impl(self, key: TupleKey, value: Value) -> None:
-        encoded_key = self.codec_cached.encode_key(key)
-        encoded_value = self.codec_cached.encode_value(value)
-
-        with self._db_lock:
-            try:
-                self._get_db().put(encoded_key, encoded_value, **self._write_kwargs)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to set key {key}: {e}") from e
-
-    def _delete_impl(self, key: TupleKey) -> None:
-        encoded_key = self.codec_cached.encode_key(key)
-
-        with self._db_lock:
-            db = self._get_db()
-            try:
-                existing = db.get(encoded_key)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
-
-            if existing is None:
-                raise StorageKeyError(f"Key {key} not found")
-
-            try:
-                db.delete(encoded_key, **self._write_kwargs)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
-
-    def _exists_impl(self, key: TupleKey) -> bool:
-        encoded_key = self.codec_cached.encode_key(key)
-
-        with self._db_lock:
-            try:
-                return self._get_db().get(encoded_key) is not None
-            except Exception as e:
-                raise StorageOperationError(f"Failed to check key {key}: {e}") from e
-
-    def _list_keys_impl(
+    def subscribe(
         self,
-        prefix: TupleKey,
-        depth: int,
-    ) -> Generator[TupleKey, None, None]:
-        encoded_prefix = self.codec_cached.encode_key(prefix)
+        pattern: TupleKey,
+        callback: CallbackFn,
+        depth: int = 0,
+    ) -> SubscriptionProtocol:
+        """Subscribe to key pattern changes.
+
+        Args:
+            pattern: Key prefix pattern to match
+            callback: Function called on matching mutations
+            depth: Depth of pattern matching (0=exact, 1=prefix, -1=all subkeys)
+
+        Returns:
+            Subscription handle for unsubscribing
+
+        Raises:
+            StorageOperationError: If subscription fails
+        """
+        if self._observer is None:
+            raise StorageOperationError("Observer not configured for this storage")
 
         try:
-            with self._db_lock:
-                iterator = self._get_db().iteritems()
-                keys = _collect_prefixed_keys(
-                    iterator,
-                    encoded_prefix,
-                    self.codec_cached.decode_key,
-                    prefix,
-                    depth,
-                )
+            return self._observer.subscribe(pattern, callback, depth)
         except Exception as e:
-            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
+            raise StorageOperationError(f"Failed to subscribe: {e}") from e
 
-        yield from keys
+    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
+        """Unsubscribe from changes.
 
-    def _list_values_impl(
-        self,
-        prefix: TupleKey,
-        depth: int,
-    ) -> Generator[Value, None, None]:
-        encoded_prefix = self.codec_cached.encode_key(prefix)
+        Args:
+            subscription: Subscription from subscribe()
+
+        Raises:
+            StorageOperationError: If unsubscribe fails
+        """
+        if self._observer is None:
+            raise StorageOperationError("Observer not configured for this storage")
 
         try:
-            with self._db_lock:
-                iterator = self._get_db().iteritems()
-                items = _collect_prefixed_items(
-                    iterator,
-                    encoded_prefix,
-                    self.codec_cached.decode_key,
-                    self.codec_cached.decode_value,
-                    prefix,
-                    depth,
-                )
+            self._observer.unsubscribe(subscription)
         except Exception as e:
-            raise StorageOperationError(f"Failed to list values under {prefix}: {e}") from e
+            raise StorageOperationError(f"Failed to unsubscribe: {e}") from e
 
-        for _, value in items:
-            yield value
+    def begin(self, *, write: bool = False) -> TransactionProtocol | SnapshotProtocol:
+        """Begin transaction or snapshot.
 
-    def _list_items_impl(
-        self,
-        prefix: TupleKey,
-        depth: int,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        encoded_prefix = self.codec_cached.encode_key(prefix)
+        Args:
+            write: If True, begin read-write transaction; else read-only snapshot
 
-        try:
-            with self._db_lock:
-                iterator = self._get_db().iteritems()
-                items = _collect_prefixed_items(
-                    iterator,
-                    encoded_prefix,
-                    self.codec_cached.decode_key,
-                    self.codec_cached.decode_value,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
+        Returns:
+            Transaction if write=True, Snapshot if write=False
 
-        yield from items
+        Raises:
+            StorageError: If begin fails
+            StorageClosedError: If storage is not open
+        """
+        if write:
+            return self.begin_transaction()
+        else:
+            return self.begin_snapshot()
 
-    def _scan_items_impl(
-        self,
-        options: StorageScanOptions,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        try:
-            with self._db_lock:
-                iterator = self._get_db().iteritems()
-                items = _scan_prefixed_items(iterator, self.codec, options)
-        except Exception as e:
-            raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
+    def begin_snapshot(self) -> RocksDBSnapshot:
+        """Begin read-only snapshot.
 
-        yield from items
+        Returns:
+            New snapshot instance
 
-    def _begin_transaction_impl(self) -> RocksDBStorageTransaction:
+        Raises:
+            StorageError: If snapshot creation fails
+            StorageClosedError: If storage is not open
+        """
+        self._require_open()
+
         with self._db_lock:
-            txn_options_kwargs = dict(self.spec.transaction_options_kwargs)
-            txn_options = (
-                rwrocks.TransactionOptions(**txn_options_kwargs) if txn_options_kwargs else None
-            )
-
-            db = self._get_db()
-            try:
-                txn = (
-                    db.begin_transaction(txn_options)
-                    if txn_options is not None
-                    else db.begin_transaction()
-                )
-            except Exception as e:
-                raise StorageError(f"Failed to begin RocksDB transaction: {e}") from e
-
-            transaction = RocksDBStorageTransaction(self, txn)
-            self._active_transactions.add(transaction)
-            return transaction
-
-    def _begin_snapshot_impl(self) -> RocksDBStorageSnapshot:
-        with self._db_lock:
-            txn_options_kwargs = dict(self.spec.snapshot_options_kwargs)
-            txn_options_kwargs.setdefault("set_snapshot", True)
-            try:
-                txn_options = rwrocks.TransactionOptions(**txn_options_kwargs)
-            except Exception as e:
-                raise StorageError(f"Invalid RocksDB snapshot options: {e}") from e
-
-            db = self._get_db()
-            try:
-                txn = db.begin_transaction(txn_options)
-            except Exception as e:
-                raise StorageError(f"Failed to begin RocksDB snapshot: {e}") from e
+            # Create transaction options with snapshot
+            txn_options_dict = dict(self._txn_options_dict)
+            txn_options_dict["set_snapshot"] = True
 
             try:
-                txn.set_snapshot()
+                txn_options = rwrocks.TransactionOptions(**txn_options_dict)
             except Exception as e:
-                raise StorageError(f"Failed to initialize RocksDB snapshot: {e}") from e
+                raise StorageError(f"Invalid snapshot options: {e}") from e
 
-            snapshot = RocksDBStorageSnapshot(self, txn)
+            # Begin transaction with snapshot
+            try:
+                rwrocks_txn = self._db.begin_transaction(txn_options)
+                rwrocks_txn.set_snapshot()
+            except Exception as e:
+                raise StorageError(f"Failed to begin snapshot: {e}") from e
+
+            snapshot = RocksDBSnapshot(self, rwrocks_txn)
             self._active_snapshots.add(snapshot)
             return snapshot
 
-    def _remove_transaction(self, transaction: RocksDBStorageTransaction) -> None:
+    def begin_transaction(self) -> RocksDBTransaction:
+        """Begin read-write transaction.
+
+        Returns:
+            New transaction instance
+
+        Raises:
+            StorageError: If transaction creation fails
+            StorageClosedError: If storage is not open
+        """
+        self._require_open()
+
+        with self._db_lock:
+            # Create transaction options
+            txn_options = None
+            if self._txn_options_dict:
+                try:
+                    txn_options = rwrocks.TransactionOptions(**self._txn_options_dict)
+                except Exception as e:
+                    raise StorageError(f"Invalid transaction options: {e}") from e
+
+            # Begin transaction
+            try:
+                if txn_options is not None:
+                    rwrocks_txn = self._db.begin_transaction(txn_options)
+                else:
+                    rwrocks_txn = self._db.begin_transaction()
+            except Exception as e:
+                raise StorageError(f"Failed to begin transaction: {e}") from e
+
+            transaction = RocksDBTransaction(self, rwrocks_txn)
+            self._active_transactions.add(transaction)
+            return transaction
+
+    def begin_write_batch(self) -> WriteBatchProtocol:
+        """Begin write-only batch.
+
+        Not implemented for RocksDB storage.
+
+        Raises:
+            NotImplementedError: Always
+        """
+        raise NotImplementedError("Write batches not supported by RocksDB storage")
+
+    def _notify(self, key: TupleKey) -> None:
+        """Notify observer of key change.
+
+        Args:
+            key: Key that changed
+        """
+        if self._observer is not None:
+            try:
+                self._observer.notify(key)
+            except Exception:
+                # Best effort notification - don't fail transaction
+                pass
+
+    def _remove_transaction(self, transaction: RocksDBTransaction) -> None:
+        """Remove transaction from active set.
+
+        Args:
+            transaction: Transaction to remove
+        """
         self._active_transactions.discard(transaction)
 
-    def _remove_snapshot(self, snapshot: RocksDBStorageSnapshot) -> None:
+    def _remove_snapshot(self, snapshot: RocksDBSnapshot) -> None:
+        """Remove snapshot from active set.
+
+        Args:
+            snapshot: Snapshot to remove
+        """
         self._active_snapshots.discard(snapshot)
 
-
-class RocksDBStorageTransaction:
-    """Transaction wrapper implementing Redwood's transaction protocol."""
-
-    def __init__(self, storage: RocksDBStorage, txn: rwrocks.Transaction) -> None:
-        self._storage = storage
-        self._txn: rwrocks.Transaction | None = txn
-        self._committed = False
-        self._rolled_back = False
-        self._uuid = uuid4()
-
-    def _require_txn(self) -> rwrocks.Transaction:
-        if self._committed:
-            raise TransactionInvalidError("Transaction already committed")
-        if self._rolled_back:
-            raise TransactionInvalidError("Transaction already rolled back")
-        if self._txn is None:
-            raise TransactionInvalidError("Transaction handle is closed")
-        return self._txn
-
-    def get(self, key: TupleKey) -> Value:
-        txn = self._require_txn()
-        encoded_key = self._storage.codec_cached.encode_key(key)
-
-        with self._storage._db_lock:
-            try:
-                encoded_value = txn.get(encoded_key)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to get key {key}: {e}") from e
-
-        if encoded_value is None:
-            raise StorageKeyError(f"Key {key} not found")
-
-        try:
-            return self._storage.codec_cached.decode_value(encoded_value)
-        except Exception as e:
-            raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
-
-    def set(self, key: TupleKey, value: Value) -> None:
-        txn = self._require_txn()
-        encoded_key = self._storage.codec_cached.encode_key(key)
-        encoded_value = self._storage.codec_cached.encode_value(value)
-
-        with self._storage._db_lock:
-            try:
-                txn.put(encoded_key, encoded_value)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to set key {key}: {e}") from e
-
-    def delete(self, key: TupleKey) -> None:
-        txn = self._require_txn()
-        encoded_key = self._storage.codec_cached.encode_key(key)
-
-        with self._storage._db_lock:
-            try:
-                existing = txn.get(encoded_key)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
-
-            if existing is None:
-                raise StorageKeyError(f"Key {key} not found")
-
-            try:
-                txn.delete_single(encoded_key)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
-
-    def exists(self, key: TupleKey) -> bool:
-        txn = self._require_txn()
-        encoded_key = self._storage.codec_cached.encode_key(key)
-
-        with self._storage._db_lock:
-            try:
-                return txn.get(encoded_key) is not None
-            except Exception as e:
-                raise StorageOperationError(f"Failed to check key {key}: {e}") from e
-
-    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
-        txn = self._require_txn()
-        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                keys = _collect_prefixed_keys(
-                    iterator,
-                    encoded_prefix,
-                    self._storage.codec_cached.decode_key,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
-
-        yield from keys
-
-    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
-        txn = self._require_txn()
-        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                items = _collect_prefixed_items(
-                    iterator,
-                    encoded_prefix,
-                    self._storage.codec_cached.decode_key,
-                    self._storage.codec_cached.decode_value,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list values under {prefix}: {e}") from e
-
-        for _, value in items:
-            yield value
-
-    def list_items(
-        self,
-        prefix: TupleKey,
-        depth: int = 1,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        txn = self._require_txn()
-        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                items = _collect_prefixed_items(
-                    iterator,
-                    encoded_prefix,
-                    self._storage.codec_cached.decode_key,
-                    self._storage.codec_cached.decode_value,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
-
-        yield from items
-
-    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
-        """Perform ordered scan within transaction context."""
-        for key, _ in self.scan_items(options):
-            yield key
-
-    def scan_items(
-        self,
-        options: StorageScanOptions,
-        /,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        """Perform ordered scan yielding key/value pairs within transaction context."""
-        txn = self._require_txn()
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                items = _scan_prefixed_items(iterator, self._storage.codec_cached, options)
-        except Exception as e:
-            raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
-
-        yield from items
-
-    def commit(self) -> None:
-        txn = self._require_txn()
-
-        with self._storage._db_lock:
-            try:
-                txn.commit()
-            except Exception as e:
-                raise TransactionError(f"Failed to commit RocksDB transaction: {e}") from e
-
-            self._committed = True
-            self._txn = None
-            self._storage._remove_transaction(self)
-
-    def rollback(self) -> None:
-        txn = self._require_txn()
-
-        with self._storage._db_lock:
-            try:
-                txn.rollback()
-            except Exception as e:
-                raise TransactionError(f"Failed to rollback RocksDB transaction: {e}") from e
-
-            self._rolled_back = True
-            self._txn = None
-            self._storage._remove_transaction(self)
-
-    def __hash__(self) -> int:
-        return hash(str(self._uuid))
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, RocksDBStorageTransaction) and self._uuid == other._uuid
-
-
-class RocksDBStorageSnapshot:
-    """Read-only snapshot backed by a RocksDB transaction snapshot."""
-
-    def __init__(self, storage: RocksDBStorage, txn: rwrocks.Transaction) -> None:
-        self._storage = storage
-        self._txn: rwrocks.Transaction | None = txn
-        self._closed = False
-        self._uuid = uuid4()
-
-    def _require_txn(self) -> rwrocks.Transaction:
-        if self._closed or self._txn is None:
-            raise SnapshotError("Snapshot is already closed")
-        return self._txn
-
-    def get(self, key: TupleKey) -> Value:
-        txn = self._require_txn()
-        encoded_key = self._storage.codec_cached.encode_key(key)
-
-        with self._storage._db_lock:
-            try:
-                encoded_value = txn.get(encoded_key)
-            except Exception as e:
-                raise StorageOperationError(f"Failed to get key {key}: {e}") from e
-
-        if encoded_value is None:
-            raise StorageKeyError(f"Key {key} not found")
-
-        try:
-            return self._storage.codec_cached.decode_value(encoded_value)
-        except Exception as e:
-            raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
-
-    def exists(self, key: TupleKey) -> bool:
-        txn = self._require_txn()
-        encoded_key = self._storage.codec_cached.encode_key(key)
-
-        with self._storage._db_lock:
-            try:
-                return txn.get(encoded_key) is not None
-            except Exception as e:
-                raise StorageOperationError(f"Failed to check key {key}: {e}") from e
-
-    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
-        txn = self._require_txn()
-        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                keys = _collect_prefixed_keys(
-                    iterator,
-                    encoded_prefix,
-                    self._storage.codec_cached.decode_key,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
-
-        yield from keys
-
-    def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
-        txn = self._require_txn()
-        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                items = _collect_prefixed_items(
-                    iterator,
-                    encoded_prefix,
-                    self._storage.codec_cached.decode_key,
-                    self._storage.codec_cached.decode_value,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list values under {prefix}: {e}") from e
-
-        for _, value in items:
-            yield value
-
-    def list_items(
-        self,
-        prefix: TupleKey,
-        depth: int = 1,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        txn = self._require_txn()
-        encoded_prefix = self._storage.codec_cached.encode_key(prefix)
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                items = _collect_prefixed_items(
-                    iterator,
-                    encoded_prefix,
-                    self._storage.codec_cached.decode_key,
-                    self._storage.codec_cached.decode_value,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
-
-        for key, value in items:
-            yield key, value
-
-    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
-        """Perform ordered scan within snapshot context."""
-        for key, _ in self.scan_items(options):
-            yield key
-
-    def scan_items(
-        self,
-        options: StorageScanOptions,
-        /,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        """Perform ordered scan yielding key/value pairs within snapshot context."""
-        txn = self._require_txn()
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                items = _scan_prefixed_items(iterator, self._storage.codec_cached, options)
-        except Exception as e:
-            raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
-
-        for key, value in items:
-            yield key, value
-
-    def close(self) -> None:
-        if self._closed:
-            return
-
-        txn = self._txn
-        if txn is None:
-            self._closed = True
-            self._storage._remove_snapshot(self)
-            return
-
-        with self._storage._db_lock:
-            try:
-                txn.rollback()
-            except Exception as e:
-                raise SnapshotError(f"Failed to close RocksDB snapshot: {e}") from e
-            finally:
-                self._closed = True
-                self._txn = None
-                self._storage._remove_snapshot(self)
-
-    def __hash__(self) -> int:
-        return hash(str(self._uuid))
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, RocksDBStorageSnapshot) and self._uuid == other._uuid
-
-
-@attrs.define(frozen=True, slots=True, kw_only=True)
-class RocksDBStorageSpec(ResourceSpec):
-    """Specification for configuring a RocksDBStorage resource."""
-
-    name: str = "rocksdb_storage"
-    factory: type = RocksDBStorage
-    mode: str = "write"
-    path: Path | str = Path(".db")
-    wal_path: Path | str | None = None
-    codec: Spec
-    create_if_missing: bool = True
-    options_kwargs: frozendict = attrs.field(factory=frozendict)
-    txn_db_options_kwargs: frozendict = attrs.field(factory=frozendict)
-    transaction_options_kwargs: frozendict = attrs.field(factory=frozendict)
-    snapshot_options_kwargs: frozendict = attrs.field(factory=frozendict)
-    sync_writes: bool = False
-    disable_wal: bool = False
-
-
-if TYPE_CHECKING:
-    _: type[StorageProtocol] = RocksDBStorage
-    __: type[TransactionProtocol] = RocksDBStorageTransaction
-    ___: type[SnapshotProtocol] = RocksDBStorageSnapshot
+    def _require_open(self) -> None:
+        """Validate storage is open.
+
+        Raises:
+            StorageClosedError: If storage is not open
+        """
+        if not self._opened or self._db is None:
+            raise StorageClosedError("Storage is not open")
+
+    def __enter__(self) -> RocksDBStorage:
+        """Enter context manager - open storage."""
+        self.open()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager - close storage."""
+        self.close()
