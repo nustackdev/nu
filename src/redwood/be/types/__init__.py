@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .storage import StorageCapabilities, StorageDescriptor, StorageMode, StorageScanOptions
+from ..storage.types import StorageCapabilities, StorageDescriptor, StorageMode, StorageScanOptions
 
 
 __all__ = [

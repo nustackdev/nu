@@ -8,7 +8,7 @@ from .observer import (
     ObserverSubscriptionError,
     ObserverValidationError,
 )
-from .storage import (
+from ..storage.exceptions import (
     SnapshotError,
     StorageConnectionError,
     StorageError,
