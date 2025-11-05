@@ -1,56 +1,62 @@
-"""Storage-related types."""
+"""Storage type definitions.
+
+Defines data structures and type aliases used across the storage layer.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Literal
+from dataclasses import dataclass
+from enum import Enum
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable
 
-    from redwood.abc import TupleKey
-
-
-type StorageMode = Literal["read", "write"]
+    from redwood.abc import TupleKey, Value
 
 
-@dataclass(frozen=True, slots=True)
-class StorageCapabilities:
-    """Feature flags describing what a storage backend can do."""
+class ScanDirection(Enum):
+    """Direction for range scans."""
 
-    transactions: bool = True
-    snapshots: bool = True
-    scan: bool = False
-    approximate_size: bool = False
-    range_delete: bool = False
-    batch_mutation: bool = False
-    ttl: bool = False
+    FORWARD = "forward"
+    REVERSE = "reverse"
 
 
-@dataclass(frozen=True, slots=True)
-class StorageScanOptions:
-    """Configuration for ordered range scans."""
+@dataclass(frozen=True, kw_only=True)
+class ScanOptions:
+    """Options for range scan operations.
 
-    prefix: TupleKey = ()
-    start: TupleKey | None = None  # inclusive lower bound
-    end: TupleKey | None = None  # exclusive upper bound
-    depth: int = -1
-    reverse: bool = False
+    Defines the bounds, direction, and limits for iterating over key ranges.
+
+    Attributes:
+        start: Starting key (inclusive by default). None means from beginning.
+        end: Ending key (exclusive by default). None means to end.
+        start_inclusive: Whether start key is inclusive.
+        end_inclusive: Whether end key is inclusive.
+        direction: Direction to scan (forward or reverse).
+        limit: Maximum number of results. None means unlimited.
+    """
+
+    start: TupleKey | None = None
+    end: TupleKey | None = None
+    start_inclusive: bool = True
+    end_inclusive: bool = False
+    direction: ScanDirection = ScanDirection.FORWARD
     limit: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class StorageDescriptor:
-    """High-level description of a storage instance and capabilities."""
+# Type alias for subscription handles
+type SubscriptionHandle = int | str
 
-    name: str
-    mode: StorageMode
-    capabilities: StorageCapabilities
-    details: Mapping[str, Any] = field(default_factory=dict)
-    warnings: Sequence[str] = field(default_factory=tuple)
 
-    def __post_init__(self) -> None:
-        # Ensure detail mapping is immutable to callers.
-        object.__setattr__(self, "details", MappingProxyType(dict(self.details)))
+# Type alias for subscription callbacks
+type SubscriptionCallback = Callable[[TupleKey, Value], None]
+
+
+__all__ = [
+    "ScanDirection",
+    "ScanOptions",
+    "SubscriptionCallback",
+    "SubscriptionHandle",
+]

@@ -1,72 +1,101 @@
-"""Storage-specific exceptions."""
+"""Storage exception hierarchy.
+
+Defines an exception system for storage operations.
+Exceptions are designed to be backend-agnostic and composable.
+"""
 
 from __future__ import annotations
 
 from redwood._rw_exception import RedwoodError
 
 
-__all__ = [
-    "SnapshotError",
-    "StorageConnectionError",
-    "StorageError",
-    "StorageKeyError",
-    "StorageOperationError",
-    "StorageValidationError",
-    "TransactionConflictError",
-    "TransactionError",
-    "TransactionInvalidError",
-]
-
-
 class StorageError(RedwoodError):
-    """Base exception for storage errors."""
-
-    pass
-
-
-class StorageConnectionError(StorageError):
-    """Raised when storage connection fails."""
-
-    pass
+    """Base exception for all storage errors."""
 
 
 class StorageOperationError(StorageError):
-    """Raised when storage operation fails."""
+    """General operation failure.
 
-    pass
-
-
-class StorageKeyError(StorageOperationError):
-    """Raised when storage key does not exist."""
-
-    pass
+    Raised when a storage operation fails for reasons not covered by
+    more specific exceptions.
+    """
 
 
-class StorageValidationError(StorageOperationError):
-    """Raised when storage key does not exist."""
+class StorageKeyError(StorageError, KeyError):
+    """Key not found or key-related error.
 
-    pass
-
-
-class SnapshotError(StorageError):
-    """Raised when snapshot operation fails."""
-
-    pass
+    Raised when attempting to access a key that doesn't exist, or when
+    a key-related constraint is violated.
+    """
 
 
-class TransactionError(StorageError):
-    """Raised when transaction fails."""
+class StorageLookupError(StorageOperationError, LookupError):
+    """Lookup/retrieval operation failed.
 
-    pass
-
-
-class TransactionConflictError(TransactionError):
-    """Raised when transaction is invalid."""
-
-    pass
+    Raised when data retrieval fails for reasons other than missing keys.
+    """
 
 
-class TransactionInvalidError(TransactionError):
-    """Raised when transaction is invalid."""
+class StorageWriteError(StorageOperationError):
+    """Write operation failed.
 
-    pass
+    Raised when put, delete, or other write operations fail.
+    """
+
+
+class StorageDeleteError(StorageWriteError):
+    """Delete operation failed.
+
+    Raised specifically when deletion fails.
+    """
+
+
+class StorageTransactionError(StorageError):
+    """Transaction-related error.
+
+    Base class for all transaction-specific errors.
+    """
+
+
+class StorageTransactionConflictError(StorageTransactionError):
+    """Transaction conflict detected.
+
+    Raised when optimistic locking detects conflicting concurrent modifications.
+    """
+
+
+class StorageTransactionAbortedError(StorageTransactionError):
+    """Transaction was aborted.
+
+    Raised when a transaction is explicitly aborted or rolled back.
+    """
+
+
+class StorageClosedError(StorageError):
+    """Operation attempted on closed resource.
+
+    Raised when operations are attempted on closed storage, transactions,
+    or iterators.
+    """
+
+
+class StorageIteratorError(StorageError):
+    """Iterator operation failed.
+
+    Raised when iterator operations encounter errors.
+    """
+
+
+__all__ = [
+    "StorageClosedError",
+    "StorageDeleteError",
+    "StorageError",
+    "StorageIteratorError",
+    "StorageKeyError",
+    "StorageLookupError",
+    "StorageOperationError",
+    "StorageTransactionAbortedError",
+    "StorageTransactionConflictError",
+    "StorageTransactionError",
+    "StorageWriteError",
+]
