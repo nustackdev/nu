@@ -1,5 +1,5 @@
 
-# Layer 1: TKV Storage
+# Layer 1: KV Storage
 
 ## What It Is
 
@@ -9,7 +9,7 @@ A generic key-value store where keys are tuples instead of strings.
 # Traditional KV store
 db["user:alice:name"] = "Alice"
 
-# TKV store
+# KV store
 db[("user", "alice", "name")] = "Alice"
 ```
 
@@ -123,7 +123,7 @@ for key in db.all_keys():
     if key.startswith("users:"):
         yield key
 
-# TKV: efficient range scan
+# KV: efficient range scan
 for key, value in tx.scan(
     start=("users",),
     end=("users", "￿"),  # "￿" is max unicode char
@@ -141,7 +141,7 @@ Tuples naturally represent paths:
 ("users", "alice", "profile")
 ```
 
-But TKV Storage doesn't KNOW this is hierarchical. Higher layers interpret it.
+But KV Storage doesn't KNOW this is hierarchical. Higher layers interpret it.
 
 ### Type Safety
 
@@ -149,11 +149,11 @@ But TKV Storage doesn't KNOW this is hierarchical. Higher layers interpret it.
 # Traditional KV: all strings, easy to make mistakes
 db["user:alice:age"] = "30"  # Should be int?
 
-# TKV: tuples preserve types
+# KV: tuples preserve types
 db[("users", "alice", "age")] = 30  # Clear
 ```
 
-## What TKV Storage Does NOT Do
+## What KV Storage Does NOT Do
 
 ### No Hierarchy
 
@@ -189,7 +189,7 @@ These are Layer 3+ responsibilities.
 
 ### Encoding
 
-TKV keys must be encoded to backend format:
+KV keys must be encoded to backend format:
 
 ```python
 tuple → bytes (eg for LMDB)

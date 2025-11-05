@@ -13,14 +13,14 @@ Redwood is a layered data system. Each layer builds on the one below, adding one
 │ Layer 2: Tree                       │  Hierarchical semantics, containers
 ├─────────────────────────────────────┤
 │ Layer 1:                            │  Flat tuple key-value store
-│ + TKV Storage Interface             │
+│ + KV Storage Interface              │
 │ + Backend: LMDB/RocksDB/etc>        │
 └─────────────────────────────────────┘
 ```
 
 ## The Layers
 
-### Layer 1: TKV Storage
+### Layer 1: KV Storage
 
 - Generic key-value store where keys are tuples
 - No hierarchy, no semantics
@@ -54,7 +54,7 @@ Redwood is a layered data system. Each layer builds on the one below, adding one
 
 Each layer knows ONLY its own concept:
 
-- TKV Storage: doesn't know what "container" means
+- KV Storage: doesn't know what "container" means
 - Tree: doesn't know what "DictView" means
 - Views: don't know about application semantics
 - Semantics: doesn't know about storage internals
@@ -70,7 +70,7 @@ Each layer knows ONLY its own concept:
 
 Higher layers use lower layer primitives:
 
-- Tree uses TKV's `scan()` to implement `list_children()`
+- Tree uses KV's `scan()` to implement `list_children()`
 - DictView uses Tree's containers to implement dict operations
 - Semantics uses Views to implement domain objects
 
@@ -90,7 +90,7 @@ container.create_child_container("alice")
 container.set_child_value("name", "Alice")
 container.set_child_value("age", 30)
 
-# ↓ uses Layer 1 (TKV Storage)
+# ↓ uses Layer 1 (KV Storage)
 tx.put(("users", "alice"), <CONTAINER_SENTINEL>)
 tx.put(("users", "alice", "name"), "Alice")
 tx.put(("users", "alice", "age"), 30)
@@ -113,7 +113,7 @@ DictView.extract()
 # ↓ uses Layer 2 (Tree)
 container.list_children()
 
-# ↓ uses Layer 1 (TKV Storage)
+# ↓ uses Layer 1 (KV Storage)
 tx.scan(start=("users", "alice"), end=("users", "alice", "￿"))
 
 # ↓ uses Backend
@@ -130,19 +130,19 @@ lmdb.iterator(encode(("users", "alice")), encode(("users", "alice", "￿")))
 
 **Testability**: Each layer has clear boundaries
 
-- Test TKV Storage without Tree logic
+- Test KV Storage without Tree logic
 - Test Tree without View logic
 - Test Views without Semantics
 
 **Performance**: Lower layers are optimized
 
-- TKV Storage maps directly to backend primitives
+- KV Storage maps directly to backend primitives
 - No unnecessary abstractions
 - Each layer adds minimal overhead
 
 **Simplicity**: Each layer is simple in isolation
 
-- TKV Storage: just a KV store with tuple keys
+- KV Storage: just a KV store with tuple keys
 - Tree: just adds container concept
 - Views: just data structure patterns
 - Semantics: just domain logic
