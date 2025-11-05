@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from redwood.abc import CallbackFn, TupleKey
-
-    from .codec import CodecProtocol
+    from redwood.be.codec import CodecProtocol
 
 
 __all__ = [
@@ -26,15 +25,14 @@ class ObserverProtocol[EncodedKeyT](Protocol):
         ...
 
     def subscribe(
-        self, key: TupleKey, callback: CallbackFn, depth: int = ...
+        self, prefix: TupleKey, callback: CallbackFn, prefix_depth: int = 0
     ) -> SubscriptionProtocol:
         """Subscribe to changes under key prefix.
 
         Args:
-            key: Key prefix to subscribe to
+            prefix: Key prefix to subscribe to
             callback: Callback function for notifications
-            depth: Depth of topic pattern matching (default: 0 for exact match)
-                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+            prefix_depth: Depth of topic pattern matching (default: 0 for exact match, 1 for prefix, -1 for all subkeys)
 
         Returns:
             Subscription object for unsubscribing
@@ -89,19 +87,19 @@ class SubscriptionProtocol(Protocol):
     """Represents a subscription to a topic pattern.
 
     Attributes:
-        topic_pattern:
+        prefix:
             Topic pattern to match against notifications.
             Must be a tuple of strings matching state keys.
         callback:
             Callable that will be invoked on matching notifications.
             Must accept a single parameter of type StorageValue.
-
-    Type Parameters:
-        StorageValue: Topic type (tuple of strings)
+        prefix_depth:
+            Depth of topic pattern matching.
+            0 = exact match, 1 = prefix match, -1 = all subkeys
     """
 
     @property
-    def topic_pattern(self) -> TupleKey:
+    def prefix(self) -> TupleKey:
         """Get topic pattern for subscription."""
         ...
 
@@ -111,6 +109,6 @@ class SubscriptionProtocol(Protocol):
         ...
 
     @property
-    def depth(self) -> int:
+    def prefix_depth(self) -> int:
         """Get depth for subscription."""
         ...

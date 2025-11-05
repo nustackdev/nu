@@ -12,9 +12,8 @@ from .transaction import TransactionalStorageProtocol
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey
-
-    from .types import SubscriptionCallback, SubscriptionHandle
+    from redwood.abc import CallbackFn, TupleKey
+    from redwood.be.observer import SubscriptionProtocol
 
 
 @runtime_checkable
@@ -54,13 +53,15 @@ class StorageProtocol(TransactionalStorageProtocol, Protocol):
     def subscribe(
         self,
         pattern: TupleKey,
-        callback: SubscriptionCallback,
-    ) -> SubscriptionHandle:
+        callback: CallbackFn,
+        depth: int = 0,
+    ) -> SubscriptionProtocol:
         """Subscribe to key pattern changes.
 
         Args:
             pattern: Key prefix pattern to match.
             callback: Function called on matching mutations.
+            depth: Depth of pattern matching (0=exact, 1=prefix, -1=all subkeys).
 
         Returns:
             Handle for unsubscribing.
@@ -70,14 +71,14 @@ class StorageProtocol(TransactionalStorageProtocol, Protocol):
         """
         ...
 
-    def unsubscribe(self, handle: SubscriptionHandle) -> None:
+    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
         """Unsubscribe from changes.
 
         Args:
-            handle: Subscription handle from subscribe().
+            subscription: Subscription object from subscribe().
 
         Raises:
-            StorageOperationError: If handle invalid or unsubscribe fails.
+            StorageOperationError: If subscription is invalid or unsubscribe fails.
         """
         ...
 

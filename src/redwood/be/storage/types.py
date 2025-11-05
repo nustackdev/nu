@@ -10,9 +10,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from redwood.abc import TupleKey, Value
+    from redwood.abc import TupleKey
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -38,16 +36,6 @@ class ScanOptions:
     limit: int | None = None
 
 
-# Type alias for subscription handles
-type SubscriptionHandle = int | str
-
-
-# Type alias for subscription callbacks
-type SubscriptionCallback = Callable[[TupleKey, Value], None]
-
-
 __all__ = [
     "ScanOptions",
-    "SubscriptionCallback",
-    "SubscriptionHandle",
 ]

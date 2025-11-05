@@ -1,85 +1,79 @@
-"""Backend integration protocols.
-
-This module defines the abstract interfaces for pluggable backends.
-Concrete implementations are in storage, observer, etc.
-"""
+"""Backend."""
 
 from __future__ import annotations
 
-from .exceptions import (
+from .codec import CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
+from .observer import (
     ObserverConnectionError,
     ObserverError,
+    ObserverProtocol,
     ObserverSubscriptionError,
     ObserverValidationError,
-    SnapshotError,
-    StorageConnectionError,
-    StorageError,
-    StorageKeyError,
-    StorageOperationError,
-    StorageValidationError,
-    TransactionConflictError,
-    TransactionError,
-    TransactionInvalidError,
-)
-from .protocols import (
-    CodecProtocol,
-    KeyCodecProtocol,
-    ObserverProtocol,
-    ReactiveStorageProtocol,
-    SnapshotContextManagerProtocol,
-    SnapshotHandlerProtocol,
-    SnapshotProtocol,
-    StorageContextProtocol,
-    StorageContextType,
-    StorageProtocol,
     SubscriptionProtocol,
-    TransactionalHandlerProtocol,
-    TransactionContextManagerProtocol,
-    TransactionProtocol,
-    ValueCodecProtocol,
 )
-from .types import (
-    StorageCapabilities,
-    StorageDescriptor,
-    StorageMode,
-    StorageScanOptions,
+from .storage import (
+    BaseContextProtocol,
+    ReadAccessProtocol,
+    ScanOptions,
+    ScanProtocol,
+    SnapshotProtocol,
+    StorageClosedError,
+    StorageDeleteError,
+    StorageError,
+    StorageIteratorError,
+    StorageKeyError,
+    StorageLookupError,
+    StorageOperationError,
+    StorageProtocol,
+    StorageTransactionAbortedError,
+    StorageTransactionConflictError,
+    StorageTransactionError,
+    StorageWriteError,
+    TransactionalStorageProtocol,
+    TransactionControlProtocol,
+    TransactionProtocol,
+    WriteAccessProtocol,
+    WriteBatchProtocol,
 )
 
 
 __all__ = [  # noqa: RUF022
-    # Protocols
-    "CodecProtocol",
-    "KeyCodecProtocol",
-    "ObserverProtocol",
-    "ReactiveStorageProtocol",
-    "SnapshotContextManagerProtocol",
-    "SnapshotHandlerProtocol",
-    "SnapshotProtocol",
-    "StorageContextProtocol",
-    "StorageContextType",
+    # Storage
     "StorageProtocol",
-    "SubscriptionProtocol",
-    "TransactionContextManagerProtocol",
+    "ScanProtocol",
+    ## Errors
+    "StorageClosedError",
+    "StorageDeleteError",
+    "StorageError",
+    "StorageIteratorError",
+    "StorageKeyError",
+    "StorageLookupError",
+    "StorageOperationError",
+    "StorageTransactionAbortedError",
+    "StorageTransactionConflictError",
+    "StorageTransactionError",
+    "StorageWriteError",
+    ## Transaction Protocols
+    "BaseContextProtocol",
+    "ReadAccessProtocol",
+    "WriteAccessProtocol",
+    "TransactionControlProtocol",
+    "SnapshotProtocol",
+    "WriteBatchProtocol",
     "TransactionProtocol",
-    "TransactionalHandlerProtocol",
-    "ValueCodecProtocol",
-    # Types
-    "StorageScanOptions",
-    "StorageCapabilities",
-    "StorageDescriptor",
-    "StorageMode",
-    # Exceptions
-    "ObserverConnectionError",
+    "TransactionalStorageProtocol",
+    ## Types
+    "ScanOptions",
+    # Observer
+    "ObserverProtocol",
+    "SubscriptionProtocol",
+    ## Errors
     "ObserverError",
+    "ObserverConnectionError",
     "ObserverSubscriptionError",
     "ObserverValidationError",
-    "SnapshotError",
-    "StorageConnectionError",
-    "StorageError",
-    "StorageKeyError",
-    "StorageOperationError",
-    "StorageValidationError",
-    "TransactionConflictError",
-    "TransactionError",
-    "TransactionInvalidError",
+    # Codec
+    "CodecProtocol",
+    "KeyCodecProtocol",
+    "ValueCodecProtocol",
 ]
