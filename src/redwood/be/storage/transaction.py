@@ -1,4 +1,8 @@
-"""Context protocol definitions for unified transaction and snapshot handling."""
+"""Storage protocol definitions.
+
+Defines the abstract interfaces for storage operations, transactions,
+and iteration. Implementations must conform to these protocols.
+"""
 
 from __future__ import annotations
 
@@ -6,302 +10,198 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Iterable
     from types import TracebackType
 
     from redwood.abc import TupleKey, Value
 
-    from ..types import StorageScanOptions
+    from .iterator import IteratorProtocol
+    from .types import ScanOptions
+
+
+@runtime_checkable
+class TransactionProtocol(Protocol):
+    """Transaction interface for atomic operations.
+
+    Provides ACID guarantees for read and write operations with support
+    for point, batch, and range access patterns.
+    """
+
+    # ========================================================================
+    # Point Access
+    # ========================================================================
+
+    def get(self, key: TupleKey) -> Value:
+        """Get value at key.
+
+        Args:
+            key: Key to retrieve.
+
+        Returns:
+            Value at key.
+
+        Raises:
+            StorageKeyError: If key not found.
+            StorageOperationError: If operation fails.
+        """
+        ...
+
+    def put(self, key: TupleKey, value: Value) -> None:
+        """Put value at key.
+
+        Args:
+            key: Key to set.
+            value: Value to store.
+
+        Raises:
+            StorageWriteError: If write fails.
+            StorageClosedError: If transaction is closed.
+        """
+        ...
+
+    def rm(self, key: TupleKey) -> bool:
+        """Remove key.
+
+        Args:
+            key: Key to remove.
+
+        Returns:
+            True if key was removed, False if key didn't exist.
+
+        Raises:
+            StorageDeleteError: If deletion fails.
+            StorageClosedError: If transaction is closed.
+        """
+        ...
+
+    def has(self, key: TupleKey) -> bool:
+        """Check if key exists.
+
+        Args:
+            key: Key to check.
+
+        Returns:
+            True if key exists, False otherwise.
+
+        Raises:
+            StorageOperationError: If check fails.
+        """
+        ...
+
+    # ========================================================================
+    # Batch Access
+    # ========================================================================
+
+    def multiget(self, keys: Iterable[TupleKey]) -> dict[TupleKey, Value]:
+        """Get multiple keys.
+
+        Args:
+            keys: Keys to retrieve.
+
+        Returns:
+            Dict mapping keys to values. Missing keys are omitted.
+
+        Raises:
+            StorageOperationError: If operation fails.
+        """
+        ...
+
+    # ========================================================================
+    # Range Access
+    # ========================================================================
+
+    def iterator(self) -> IteratorProtocol:
+        """Create iterator over all keys.
+
+        Returns:
+            New iterator instance.
+
+        Raises:
+            StorageOperationError: If iterator creation fails.
+        """
+        ...
+
+    def range_scan(self, options: ScanOptions) -> IteratorProtocol:
+        """Create iterator with scan options.
+
+        Args:
+            options: Scan configuration.
+
+        Returns:
+            New iterator instance configured with options.
+
+        Raises:
+            StorageOperationError: If iterator creation fails.
+        """
+        ...
+
+    def range_delete(
+        self,
+        start: TupleKey,
+        end: TupleKey,
+    ) -> int:
+        """Delete all keys in range.
+
+        Args:
+            start: Start of range.
+            end: End of range.
+
+        Returns:
+            Number of keys deleted.
+
+        Raises:
+            StorageDeleteError: If deletion fails.
+            StorageClosedError: If transaction is closed.
+        """
+        ...
+
+    # ========================================================================
+    # Transaction Control
+    # ========================================================================
+
+    def commit(self) -> None:
+        """Commit transaction.
+
+        Makes all changes permanent and releases locks.
+
+        Raises:
+            StorageTransactionError: If commit fails.
+            StorageTransactionConflictError: If optimistic lock conflict.
+            StorageClosedError: If already committed or aborted.
+        """
+        ...
+
+    def abort(self) -> None:
+        """Abort transaction.
+
+        Discards all changes and releases locks.
+
+        Raises:
+            StorageTransactionError: If abort fails.
+        """
+        ...
+
+    # ========================================================================
+    # Context Manager
+    # ========================================================================
+
+    def __enter__(self) -> TransactionProtocol:
+        """Enter context manager."""
+        ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Exit context manager.
+
+        Commits on success, aborts on exception.
+        """
+        ...
 
 
 __all__ = [
-    "SnapshotContextManagerProtocol",
-    "SnapshotHandlerProtocol",
-    "SnapshotProtocol",
-    "StorageContextProtocol",
-    "StorageContextType",
-    "TransactionContextManagerProtocol",
     "TransactionProtocol",
-    "TransactionalHandlerProtocol",
 ]
-
-
-@runtime_checkable
-class StorageContextProtocol(Protocol):
-    """Base context protocol for storage operations.
-
-    This protocol defines the minimal interface that all context types
-    (transactions, snapshots) must support.
-    """
-
-    def get(self, key: TupleKey) -> Value:
-        """Get value within transaction context.
-
-        Args:
-            key: Key to retrieve
-
-        Returns:
-            Value if found, None if not found
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            KeyError: If key not found
-            StorageOperationError: If get operation fails
-        """
-        ...
-
-    def exists(self, key: TupleKey) -> bool:
-        """Check if key exists within transaction context.
-
-        Args:
-            key: Key to check
-
-        Returns:
-            True if key exists, False otherwise
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If exists check fails
-        """
-        ...
-
-    def list_keys(self, prefix: TupleKey, depth: int = ...) -> Generator[TupleKey, None, None]:
-        """List all keys under prefix within transaction context.
-
-        Args:
-            prefix: Key prefix to list
-            depth: Depth of listing (default is 1)
-                If depth is -1, lists all keys under prefix.
-
-        Returns:
-            Generator of matching keys
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If list operation fails
-        """
-        ...
-
-    def list_values(self, prefix: TupleKey, depth: int = ...) -> Generator[Value, None, None]:
-        """List all values under prefix within transaction context.
-
-        Args:
-            prefix: Key prefix to list
-            depth: Depth of listing (default is 1)
-                If depth is -1, lists all values under prefix.
-
-        Returns:
-            Generator of matching values
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If list operation fails
-        """
-        ...
-
-    def list_items(
-        self,
-        prefix: TupleKey,
-        depth: int = ...,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        """List key/value pairs under prefix within transaction context.
-
-        Args:
-            prefix: Key prefix to list
-            depth: Depth of listing (default is 1)
-                If depth is -1, lists all entries under prefix.
-
-        Returns:
-            Generator of matching key/value pairs
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If list operation fails
-        """
-        ...
-
-    def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
-        """Perform an ordered scan over keys."""
-        ...
-
-    def scan_items(
-        self,
-        options: StorageScanOptions,
-        /,
-    ) -> Generator[tuple[TupleKey, Value], None, None]:
-        """Perform an ordered scan yielding key/value pairs."""
-        ...
-
-    def __hash__(self) -> int:
-        """Get hash of the transaction.
-
-        Returns:
-            Hash value of the transaction
-        """
-        ...
-
-    def __eq__(self, other: object) -> bool:
-        """Check equality of the transaction.
-
-        Args:
-            other: Value to compare with
-
-        Returns:
-            True if equal, False otherwise
-        """
-        ...
-
-
-@runtime_checkable
-class TransactionProtocol(StorageContextProtocol, Protocol):
-    """Transaction context protocol extending base context with write operations.
-
-    Transactions support both read and write operations and provide
-    commit/rollback semantics for atomicity.
-    """
-
-    def set(self, key: TupleKey, value: Value) -> None:
-        """Set value within transaction context.
-
-        Args:
-            key: Key to set
-            value: Value to store
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If set operation fails
-        """
-        ...
-
-    def delete(self, key: TupleKey) -> None:
-        """Delete value within transaction context.
-
-        Args:
-            key: Key to delete
-
-        Raises:
-            TransactionError: If transaction is invalid or operation fails
-            StorageOperationError: If delete operation fails
-        """
-        ...
-
-    def commit(self) -> None:
-        """Commit all changes in the transaction.
-
-        Raises:
-            TransactionError: If commit fails or transaction is invalid
-            StorageOperationError: If storage operations fail during commit
-        """
-        ...
-
-    def rollback(self) -> None:
-        """Roll back all changes in the transaction.
-
-        Raises:
-            TransactionError: If rollback fails or transaction is invalid
-        """
-        ...
-
-
-@runtime_checkable
-class SnapshotProtocol(StorageContextProtocol, Protocol):
-    """Snapshot context protocol for read-only operations with cleanup.
-
-    Snapshots provide consistent read-only views of data and require
-    explicit cleanup when no longer needed.
-    """
-
-    def close(self) -> None:
-        """Close snapshot and release resources."""
-        ...
-
-
-# Union type for context attributes
-type StorageContextType = TransactionProtocol | SnapshotProtocol
-
-
-class TransactionContextManagerProtocol(Protocol):
-    """Context manager for storage transactions."""
-
-    def __enter__(self) -> TransactionProtocol:
-        """Start a new transaction.
-
-        Returns:
-            New transaction instance
-
-        Raises:
-            StorageError: If transaction cannot be started
-        """
-        ...
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        """Commit or rollback transaction based on context exit.
-
-        Args:
-            exc_type (Optional[Type[BaseException]]): Exception type if an error occurred.
-            exc_val (Optional[BaseException]): Exception value if an error occurred.
-            exc_tb (Optional[TracebackType]): Exception traceback if an error occurred.
-
-        Returns:
-            None
-        """
-        ...
-
-
-class TransactionalHandlerProtocol(Protocol):
-    """Protocol defining the interface for transactionable storage."""
-
-    def begin_transaction(self) -> TransactionProtocol:
-        """Begin a new transaction."""
-        ...
-
-    def transaction(self) -> TransactionContextManagerProtocol:
-        """Get a typed transaction context manager."""
-        ...
-
-
-class SnapshotContextManagerProtocol(Protocol):
-    """Context manager for storage snapshots."""
-
-    def __enter__(self) -> SnapshotProtocol:
-        """Create a new snapshot.
-
-        Returns:
-            New snapshot instance
-
-        Raises:
-            StorageError: If snapshot cannot be created
-        """
-        ...
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        """Clean up snapshot resources.
-
-        Args:
-            exc_type: Exception type if an error occurred
-            exc_val: Exception value if an error occurred
-            exc_tb: Exception traceback if an error occurred
-        """
-        ...
-
-
-class SnapshotHandlerProtocol(Protocol):
-    """Protocol defining the interface for snapshot-capable storage."""
-
-    def begin_snapshot(self) -> SnapshotProtocol:
-        """Begin a new read-only snapshot."""
-        ...
-
-    def snapshot(self) -> SnapshotContextManagerProtocol:
-        """Get a typed snapshot context manager."""
-        ...
