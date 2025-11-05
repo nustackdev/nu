@@ -114,7 +114,9 @@ DictView.extract()
 container.list_children()
 
 # ↓ uses Layer 1 (KV Storage)
-tx.scan(start=("users", "alice"), end=("users", "alice", "￿"))
+scan = tx.scan(ScanOptions(start=("users", "alice"), end=("users", "alice", "￿")))
+for _ in scan.items():
+    pass
 
 # ↓ uses Backend
 lmdb.iterator(encode(("users", "alice")), encode(("users", "alice", "￿")))

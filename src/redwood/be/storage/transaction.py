@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from redwood.abc import TupleKey, Value
 
-    from .iterator import IteratorProtocol
+    from .scan import ScanProtocol
     from .types import ScanOptions
 
 
@@ -124,28 +124,18 @@ class ReadAccessProtocol(Protocol):
         ...
 
     # Range access
-    def iterator(self) -> IteratorProtocol:
-        """Create iterator over all keys.
-
-        Returns:
-            New iterator instance.
-
-        Raises:
-            StorageOperationError: If iterator creation fails.
-        """
-        ...
-
-    def scan(self, options: ScanOptions) -> IteratorProtocol:
-        """Create iterator with scan options.
+    def scan(self, options: ScanOptions) -> ScanProtocol:
+        """Create a Pythonic scan handle with configured options.
 
         Args:
-            options: Scan configuration.
+            options: Scan configuration (bounds, direction, limits).
 
         Returns:
-            New iterator instance configured with options.
+            A ScanProtocol that exposes dict-like iteration via
+            .items(), .keys(), and .values().
 
         Raises:
-            StorageOperationError: If iterator creation fails.
+            StorageOperationError: If scan creation fails.
         """
         ...
 

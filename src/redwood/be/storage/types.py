@@ -6,7 +6,6 @@ Defines data structures and type aliases used across the storage layer.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
 from typing import TYPE_CHECKING
 
 
@@ -14,13 +13,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from redwood.abc import TupleKey, Value
-
-
-class ScanDirection(Enum):
-    """Direction for range scans."""
-
-    FORWARD = "forward"
-    REVERSE = "reverse"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -42,7 +34,7 @@ class ScanOptions:
     end: TupleKey | None = None
     start_inclusive: bool = True
     end_inclusive: bool = False
-    direction: ScanDirection = ScanDirection.FORWARD
+    reverse: bool = False
     limit: int | None = None
 
 
@@ -55,7 +47,6 @@ type SubscriptionCallback = Callable[[TupleKey, Value], None]
 
 
 __all__ = [
-    "ScanDirection",
     "ScanOptions",
     "SubscriptionCallback",
     "SubscriptionHandle",

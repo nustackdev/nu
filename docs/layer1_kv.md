@@ -64,12 +64,14 @@ exists = tx.exists(key)                # Check
 
 ```python
 # Scan all keys in range [start, end)
-for key, value in tx.scan(
+options = ScanOptions(
     start=("users", "a"),
     end=("users", "z"),
     reverse=False,
     limit=100,
-):
+)
+
+for key, value in tx.scan(options).items():
     print(key, value)
 ```
 
@@ -124,10 +126,11 @@ for key in db.all_keys():
         yield key
 
 # KV: efficient range scan
-for key, value in tx.scan(
+scan = tx.scan(ScanOptions(
     start=("users",),
     end=("users", "￿"),  # "￿" is max unicode char
-):
+))
+for key in scan.keys():
     yield key
 ```
 
