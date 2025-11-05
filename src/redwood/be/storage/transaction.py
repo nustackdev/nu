@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Literal, Protocol, overload, runtime_checkable
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from types import TracebackType
 
     from redwood.abc import TupleKey, Value
@@ -386,6 +387,18 @@ class TransactionalStorageProtocol(Protocol):
         Raises:
             StorageOperationError: If batch creation fails.
         """
+        ...
+
+    def transaction(self) -> Iterator[TransactionProtocol]:
+        """Context manager for transactions: commit on success, abort on exception."""
+        ...
+
+    def snapshot(self) -> Iterator[SnapshotProtocol]:
+        """Context manager for read-only snapshots: always closes snapshot on exit."""
+        ...
+
+    def batch_write(self) -> Iterator[WriteBatchProtocol]:
+        """Context manager for write batches: commit on success, abort on exception."""
         ...
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from logging import getLogger
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Any, final
 
 from redwood.be import ObserverConnectionError
 
@@ -11,7 +11,7 @@ from redwood.be import ObserverConnectionError
 if TYPE_CHECKING:
     from redwood.abc import CallbackFn, TupleKey
     from redwood.be import (
-        KeyCodecProtocol,
+        CodecProtocol,
         SubscriptionProtocol,
     )
 
@@ -39,7 +39,7 @@ class BaseObserver[EncodedKeyT](ABC):
         ObserverEncodedKeyT: Encoded topic type
     """
 
-    codec: KeyCodecProtocol[EncodedKeyT]
+    codec: CodecProtocol[EncodedKeyT, Any]
 
     def setup(self) -> None:
         self._connected = False
@@ -185,18 +185,18 @@ class Subscription:
         ObserverKey: Topic type (tuple of strings)
     """
 
-    _topic_pattern: TupleKey
-    _depth: int
+    _prefix: TupleKey
+    _prefix_depth: int
     _callback: CallbackFn
 
     @property
-    def topic_pattern(self) -> TupleKey:
-        return self._topic_pattern
+    def prefix(self) -> TupleKey:
+        return self._prefix
 
     @property
     def callback(self) -> CallbackFn:
         return self._callback
 
     @property
-    def depth(self) -> int:
-        return self._depth
+    def prefix_depth(self) -> int:
+        return self._prefix_depth

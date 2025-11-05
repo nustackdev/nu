@@ -33,18 +33,14 @@ Usage:
 from __future__ import annotations
 
 from functools import partial
-from typing import Any
 
-from redwood.storage.codec import StorageCodec, StorageCodecSpec
+from redwood.be import Codec
 
 
 __all__ = [
     "BinaryCodec",
-    "BinaryCodecSpec",
     "NoOpCodec",
-    "NoOpCodecSpec",
     "TextCodec",
-    "TextCodecSpec",
 ]
 
 # =========================================================
@@ -59,32 +55,22 @@ from .codec_passthrough import PassthroughCodec
 
 
 # MicroPack-based binary codec
-BinaryCodec = StorageCodec[bytes, bytes]
-BinaryCodecSpec = partial(
-    StorageCodecSpec,
-    key_codec=BinaryKeyCodec,
-    value_codec=MicroPackCodec,
+BinaryCodec = partial(
+    Codec,
+    key_codec_cls=BinaryKeyCodec,
+    value_codec_cls=MicroPackCodec,
 )
 
 # JSON-based text codec
-TextCodec = StorageCodec[str, str]
-TextCodecSpec = partial(
-    StorageCodecSpec,
-    key_codec=StringKeyCodec,
-    value_codec=JSONCodec,
+TextCodec = partial(
+    Codec,
+    key_codec_cls=StringKeyCodec,
+    value_codec_cls=JSONCodec,
 )
 
 # No-op codec
-NoOpCodec = StorageCodec[str, Any]
-NoOpCodecSpec = partial(
-    StorageCodecSpec,
-    key_codec=StringKeyCodec,
-    value_codec=PassthroughCodec,
+NoOpCodec = partial(
+    Codec,
+    key_codec_cls=StringKeyCodec,
+    value_codec_cls=PassthroughCodec,
 )
-
-__all__ += [
-    "BinaryCodec",
-    "BinaryCodecSpec",
-    "TextCodec",
-    "TextCodecSpec",
-]

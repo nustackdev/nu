@@ -8,6 +8,7 @@ transactions and snapshots with proper resource management and error handling.
 from __future__ import annotations
 
 import threading
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
@@ -1055,6 +1056,67 @@ class RocksDBStorage:
             NotImplementedError: Always
         """
         raise NotImplementedError("Write batches not supported by RocksDB storage")
+
+    @contextmanager
+    def transaction(self) -> Iterator[RocksDBTransaction]:
+        """Context manager for a read-write transaction.
+
+        Begins a transaction, yields it to the caller, and commits on successful
+        exit. If an exception is raised inside the context, the transaction is
+        aborted. Best-effort cleanup is used for abort/commit errors.
+        """
+        txn = self.begin_transaction()
+        try:
+            yield txn
+            # If caller didn't already commit/abort, commit now.
+            if not txn._committed and not txn._aborted:
+                txn.commit()
+        except Exception:
+            # On error, ensure transaction is aborted if not already finalized.
+            try:
+                if not txn._committed and not txn._aborted:
+                    txn.abort()
+            except Exception:
+                # Best-effort cleanup; preserve original exception.
+                pass
+            raise
+
+    @contextmanager
+    def snapshot(self) -> Iterator[RocksDBSnapshot]:
+        """Context manager for a read-only snapshot.
+
+        Begins a snapshot and ensures it is closed on exit.
+        """
+        snap = self.begin_snapshot()
+        try:
+            yield snap
+        finally:
+            try:
+                snap.close()
+            except Exception:
+                # Best-effort cleanup
+                pass
+
+    @contextmanager
+    def write_batch(self) -> Iterator[WriteBatchProtocol]:
+        """Context manager providing a write-batch-like interface.
+
+        RocksDB write-batch is not implemented separately; use a transaction as a
+        write batch. Commits on successful exit, aborts on exception.
+        """
+        # Use a transaction as a write-batch
+        batch = self.begin_transaction()
+        try:
+            yield batch
+            if not batch._committed and not batch._aborted:
+                batch.commit()
+        except Exception:
+            try:
+                if not batch._committed and not batch._aborted:
+                    batch.abort()
+            except Exception:
+                pass
+            raise
 
     def _notify(self, key: TupleKey) -> None:
         """Notify observer of key change.

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import threading
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import attrs
 from mesh import Attach, ResourceSpec, Spec, SyncResource
 
-from .bases import BaseObserver
+from .observer import BaseObserver
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from redwood.abc import TupleKey
     from redwood.be import (
-        KeyCodecProtocol,
+        CodecProtocol,
         ObserverProtocol,
         SubscriptionProtocol,
     )
@@ -38,7 +38,7 @@ class InMemoryObserver(
 ):
     """In-memory observer with thread-safe subscription management."""
 
-    codec: KeyCodecProtocol[str] = Attach()
+    codec: CodecProtocol[str, Any] = Attach()
 
     def _connect_impl(self) -> None:
         if not hasattr(self, "_data_lock"):
@@ -74,7 +74,7 @@ class InMemoryObserver(
         # Execute callbacks outside lock
         for sub in matching_subs:
             # Check if the subscription matches the topic with the specified depth
-            if not self._matches_pattern(topic, sub.topic_pattern, sub.depth):
+            if not self._matches_pattern(topic, sub.prefix, sub.prefix_depth):
                 continue
 
             try:
@@ -83,21 +83,21 @@ class InMemoryObserver(
                 logger.error(f"Callback failed for {topic}: {e}")
 
     def _subscribe_impl(self, subscription: SubscriptionProtocol) -> None:
-        topic_pattern = subscription.topic_pattern
+        prefix = subscription.prefix
         with self._data_lock:
-            if topic_pattern not in self._subscriptions:
-                self._subscriptions[topic_pattern] = []
-            self._subscriptions[topic_pattern].append(subscription)
+            if prefix not in self._subscriptions:
+                self._subscriptions[prefix] = []
+            self._subscriptions[prefix].append(subscription)
 
     def _unsubscribe_impl(self, subscription: SubscriptionProtocol) -> None:
         with self._data_lock:
-            if subscription.topic_pattern in self._subscriptions:
-                subs = self._subscriptions[subscription.topic_pattern]
+            if subscription.prefix in self._subscriptions:
+                subs = self._subscriptions[subscription.prefix]
                 subs = [s for s in subs if s != subscription]
                 if subs:
-                    self._subscriptions[subscription.topic_pattern] = subs
+                    self._subscriptions[subscription.prefix] = subs
                 else:
-                    del self._subscriptions[subscription.topic_pattern]
+                    del self._subscriptions[subscription.prefix]
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)

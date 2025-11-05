@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .codec import CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
+from .codec import Codec, CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
 from .observer import (
     ObserverConnectionError,
     ObserverError,
@@ -76,4 +76,5 @@ __all__ = [  # noqa: RUF022
     "CodecProtocol",
     "KeyCodecProtocol",
     "ValueCodecProtocol",
+    "Codec",
 ]

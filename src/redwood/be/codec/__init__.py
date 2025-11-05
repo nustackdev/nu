@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from .codec import CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
+from .codec import Codec
+from .protocol import CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
 
 
 __all__ = [
+    "Codec",
     "CodecProtocol",
     "KeyCodecProtocol",
     "ValueCodecProtocol",
