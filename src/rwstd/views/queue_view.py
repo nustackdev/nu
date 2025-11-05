@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, cast
 import attrs
 
 from redwood.tree import View
-from redwood.tree.registry import ComponentConstructor, ContainerConstructor
+from redwood.view.registry import ComponentConstructor, ContainerConstructor
 from redwood.tree.types import ContainerProtocol, ContainerStructure
 
 

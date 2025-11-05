@@ -52,7 +52,8 @@ from .transaction import (
     WriteBatchProtocol,
 )
 from .types import (
-    ScanOptions,
+    StorageContextType,
+    StorageScanOptions,
 )
 
 
@@ -82,5 +83,6 @@ __all__ = [  # noqa: RUF022
     "TransactionProtocol",
     "TransactionalStorageProtocol",
     # Types
-    "ScanOptions",
+    "StorageScanOptions",
+    "StorageContextType",
 ]

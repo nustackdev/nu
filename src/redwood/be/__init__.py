@@ -14,10 +14,10 @@ from .observer import (
 from .storage import (
     BaseContextProtocol,
     ReadAccessProtocol,
-    ScanOptions,
     ScanProtocol,
     SnapshotProtocol,
     StorageClosedError,
+    StorageContextType,
     StorageDeleteError,
     StorageError,
     StorageIteratorError,
@@ -25,6 +25,7 @@ from .storage import (
     StorageLookupError,
     StorageOperationError,
     StorageProtocol,
+    StorageScanOptions,
     StorageTransactionAbortedError,
     StorageTransactionConflictError,
     StorageTransactionError,
@@ -63,7 +64,8 @@ __all__ = [  # noqa: RUF022
     "TransactionProtocol",
     "TransactionalStorageProtocol",
     ## Types
-    "ScanOptions",
+    "StorageScanOptions",
+    "StorageContextType",
     # Observer
     "ObserverProtocol",
     "SubscriptionProtocol",

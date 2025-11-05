@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from redwood.abc import TupleKey, Value
 
     from .scan import ScanProtocol
-    from .types import ScanOptions
+    from .types import StorageScanOptions
 
 
 # ============================================================================
@@ -125,7 +125,7 @@ class ReadAccessProtocol(Protocol):
         ...
 
     # Range access
-    def scan(self, options: ScanOptions) -> ScanProtocol:
+    def scan(self, options: StorageScanOptions) -> ScanProtocol:
         """Create a Pythonic scan handle with configured options.
 
         Args:

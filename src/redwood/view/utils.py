@@ -3,13 +3,13 @@ from __future__ import annotations
 from contextlib import AbstractContextManager, contextmanager
 from typing import TYPE_CHECKING
 
-from ..context import with_context
+from redwood.utils.context import with_context
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from ..context import ContextualBase
+    from redwood.utils.context import ContextualBase
 
 
 __all__ = [

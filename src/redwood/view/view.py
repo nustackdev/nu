@@ -41,19 +41,20 @@ from redwood.abc import (
     TupleKey,
     Value,
 )
+from redwood.tree.exceptions import ContainerProtocolError
+from redwood.tree.tree import ContainerNode
+from redwood.tree.types import ChildType
+from redwood.utils.context import ContextualBase
+from redwood.utils.path import Path
 
-from ..container import ChildType, ContainerNode
-from ..context import ContextualBase
-from ..exceptions import ContainerProtocolError
-from ..path import Path
 from .types import AccessibleViewProtocol
 
 
 if TYPE_CHECKING:
     from redwood.be import StorageContextType
+    from redwood.tree.types import ContainerProtocol, ContainerStructure
 
-    from ..tree import Tree
-    from ..types import ContainerProtocol, ContainerStructure
+    from .tree import Tree
 
 __all__ = [
     "View",

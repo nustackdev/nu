@@ -11,8 +11,7 @@ import attrs
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.be import StorageContextType
-    from redwood.storage import ReactiveStorage
+    from redwood.be import StorageContextType, StorageProtocol
 
     from .contextual_base import ContextualBase
 
@@ -25,7 +24,7 @@ __all__ = [
 
 @contextmanager
 def create_context(
-    backend: ReactiveStorage, *, snapshot: bool = False
+    backend: StorageProtocol, *, snapshot: bool = False
 ) -> Generator[StorageContextType, None, None]:
     """Create a context manager for the given backend.
 
@@ -110,8 +109,8 @@ def with_context[ContextualT: ContextualBase](
             f"Object {type(obj).__name__} must have 'ctx' attribute for context support"
         )
 
-    backend = obj.backend
-    current_ctx = obj.ctx
+    backend: StorageProtocol = obj.backend
+    current_ctx: StorageContextType = obj.ctx
 
     if current_ctx is not None:
         # Noop - use existing context (like original with_transaction)

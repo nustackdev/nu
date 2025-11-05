@@ -145,7 +145,7 @@ def tree() -> None:
 
     # from redwood.storage.lmdb_storage import LMDBStorage, LMDBStorageSpec
     from redwood.storage.rocksdb_storage import RocksDBStorage, RocksDBStorageSpec
-    from redwood.tree.registry import ViewRegistry
+    from redwood.view.registry import ViewRegistry
     from rwstd import DictView, ListView, QueueComponent, QueueContainer, QueueView, Tree
 
     with (

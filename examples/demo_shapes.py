@@ -13,7 +13,7 @@ from redwood.semantics.structure.shape import Shape
 from redwood.semantics.structure.slots import MapSlot, ShapeSlot, ValueSlot
 from redwood.semantics.types import Context
 from redwood.storage import ReactiveStorage
-from redwood.tree.registry import ViewRegistry
+from redwood.view.registry import ViewRegistry
 from rwstd.adapters import (
     BinaryCodecSpec,
     InMemoryObserver,

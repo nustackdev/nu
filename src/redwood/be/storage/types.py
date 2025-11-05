@@ -12,9 +12,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from redwood.abc import TupleKey
 
+    from .transaction import SnapshotProtocol, TransactionProtocol, WriteBatchProtocol
+
 
 @dataclass(frozen=True, kw_only=True)
-class ScanOptions:
+class StorageScanOptions:
     """Options for range scan operations.
 
     Defines the bounds, direction, and limits for iterating over key ranges.
@@ -36,6 +38,10 @@ class ScanOptions:
     limit: int | None = None
 
 
+type StorageContextType = SnapshotProtocol | WriteBatchProtocol | TransactionProtocol
+
+
 __all__ = [
-    "ScanOptions",
+    "StorageContextType",
+    "StorageScanOptions",
 ]

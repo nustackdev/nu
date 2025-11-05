@@ -14,19 +14,16 @@ from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
 from redwood.be import (
-    # Protocols
     CodecProtocol,
     ObserverProtocol,
-    # Types
-    ScanOptions,
     ScanProtocol,
     SnapshotProtocol,
-    # Exceptions
     StorageClosedError,
     StorageDeleteError,
     StorageError,
     StorageKeyError,
     StorageOperationError,
+    StorageScanOptions,
     StorageTransactionAbortedError,
     StorageTransactionError,
     SubscriptionProtocol,
@@ -37,7 +34,7 @@ from rwstd.lazy_import import lazy_import
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Generator, Iterator
 
     import rwrocks as _rwrocks  # type: ignore[import]
     from redwood.abc import CallbackFn, TupleKey, Value
@@ -225,7 +222,7 @@ class _ReadOperationsMixin:
 
         return result
 
-    def scan(self, options: ScanOptions) -> ScanProtocol:
+    def scan(self, options: StorageScanOptions) -> ScanProtocol:
         """Create scan iterator with configured options.
 
         Args:
@@ -247,6 +244,67 @@ class _ReadOperationsMixin:
             raise StorageOperationError(f"Failed to create scan iterator: {e}") from e
 
         return RocksDBScan(self._storage, iterator, options)
+
+    ###### TEMP METHOD FOR COMPATIBILITY ######
+    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
+        txn = self._require_active()
+        codec = self._storage.codec
+        encoded_prefix = codec.encode_key(prefix)
+
+        try:
+            with self._storage._db_lock:
+                iterator = txn.iteritems()
+                keys = _collect_prefixed_keys(
+                    iterator,
+                    encoded_prefix,
+                    codec.decode_key,
+                    prefix,
+                    depth,
+                )
+        except Exception as e:
+            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
+
+        yield from keys
+
+
+###### TEMP METHOD FOR COMPATIBILITY ######
+def _collect_prefixed_keys(
+    iterator: Any,
+    encoded_prefix: bytes,
+    decode_key: Callable[[bytes], TupleKey],
+    prefix: TupleKey,
+    depth: int,
+) -> list[TupleKey]:
+    """Collect keys that match the encoded prefix using a RocksDB iterator."""
+    keys: list[TupleKey] = []
+    try:
+        if encoded_prefix:
+            iterator.seek(encoded_prefix)
+        else:
+            iterator.seek_to_first()
+
+        while True:
+            try:
+                encoded_key, _ = iterator.get()
+            except ValueError:
+                break
+
+            if not encoded_key.startswith(encoded_prefix):
+                break
+
+            decoded_key = decode_key(encoded_key)
+            if depth == -1 or len(decoded_key) - len(prefix) == depth:
+                keys.append(decoded_key)
+
+            try:
+                iterator.skip()
+            except ValueError:
+                break
+    finally:
+        # Ensure the underlying C++ iterator is released promptly.
+        del iterator
+
+    return keys
 
 
 # =============================================================================
@@ -359,7 +417,7 @@ class _WriteOperationsMixin:
     #         StorageClosedError: If context is closed
     #     """
     #     # Create scan options for the range
-    #     scan_options = ScanOptions(
+    #     scan_options = StorageScanOptions(
     #         start=start,
     #         end=end,
     #         start_inclusive=start_inclusive,
@@ -583,7 +641,7 @@ class RocksDBScan:
         self,
         storage: RocksDBStorage,
         rwrocks_iterator: Any,
-        options: ScanOptions,
+        options: StorageScanOptions,
     ) -> None:
         """Initialize scan iterator.
 
