@@ -8,16 +8,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from .transaction import TransactionalStorageProtocol
+
 
 if TYPE_CHECKING:
     from redwood.abc import TupleKey
 
-    from .transaction import TransactionProtocol
     from .types import SubscriptionCallback, SubscriptionHandle
 
 
 @runtime_checkable
-class StorageProtocol(Protocol):
+class StorageProtocol(TransactionalStorageProtocol, Protocol):
     """Storage interface with transactions and subscriptions.
 
     Top-level interface for storage operations. Provides transaction
@@ -25,20 +26,24 @@ class StorageProtocol(Protocol):
     """
 
     # ========================================================================
-    # Transaction Management
+    # Lifecycle
     # ========================================================================
 
-    def begin(self, *, write: bool = False) -> TransactionProtocol:
-        """Begin new transaction.
-
-        Args:
-            write: Whether transaction allows writes.
-
-        Returns:
-            New transaction instance.
+    def open(self) -> None:
+        """Open storage and initialize resources.
 
         Raises:
-            StorageOperationError: If transaction creation fails.
+            StorageOperationError: If open fails.
+        """
+        ...
+
+    def close(self) -> None:
+        """Close storage and release resources.
+
+        All transactions must be completed before closing.
+
+        Raises:
+            StorageOperationError: If close fails.
         """
         ...
 
@@ -77,26 +82,11 @@ class StorageProtocol(Protocol):
         ...
 
     # ========================================================================
-    # Lifecycle
+    # Transaction Management
+    # ------------------------------------------------------------------------
+    # Transaction management methods are inherited from TransactionalStorageProtocol.
+    # begin() -> TransactionProtocol | SnapshotProtocol | WriteBatchProtocol
     # ========================================================================
-
-    def open(self) -> None:
-        """Open storage and initialize resources.
-
-        Raises:
-            StorageOperationError: If open fails.
-        """
-        ...
-
-    def close(self) -> None:
-        """Close storage and release resources.
-
-        All transactions must be completed before closing.
-
-        Raises:
-            StorageOperationError: If close fails.
-        """
-        ...
 
 
 __all__ = [
