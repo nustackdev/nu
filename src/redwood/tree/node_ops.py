@@ -51,8 +51,7 @@ def node_exists(path: TupleKey, ctx: StorageContextType) -> bool:
             f"Context type {type(ctx).__name__} doesn't implement read access protocol. Use Snapshot or Transaction to read data from storage."
         )
     try:
-        ctx.get(path)
-        return True
+        return ctx.has(path)
     except StorageKeyError:
         return False
 

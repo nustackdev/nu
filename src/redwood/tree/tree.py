@@ -10,14 +10,12 @@ functions with explicit context passing.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
-import attrs
-
-from . import container as container_ops
-from . import navigation as nav_ops
-from . import validation as val_ops
-from .node import get_node_info, get_node_type, node_exists
+from . import container_ops as container_ops
+from . import navigation as nav
+from . import node_ops as node_ops
+from . import validation_ops as val_ops
 from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, ParentChainInfo
 
 
@@ -32,8 +30,7 @@ __all__ = [
 ]
 
 
-@attrs.define(frozen=True, kw_only=True)
-class Tree:
+class Tree(NamedTuple):
     """Tree interface with convenience methods.
 
     Optional wrapper around functional API that binds a storage context,
@@ -54,7 +51,7 @@ class Tree:
         ...     info = tree.get_node_info(("users", "alice"))
     """
 
-    ctx: StorageContextType = attrs.field()
+    ctx: StorageContextType
 
     # ========================================================================
     # NODE OPERATIONS
@@ -74,7 +71,7 @@ class Tree:
             >>> if info.node_type == NodeType.CONTAINER:
             ...     print("It's a container")
         """
-        return get_node_info(path, self.ctx)
+        return node_ops.get_node_info(path, self.ctx)
 
     def get_node_type(self, path: TupleKey) -> NodeType:
         """Get node type.
@@ -88,7 +85,7 @@ class Tree:
         Example:
             >>> node_type = tree.get_node_type(("users", "alice"))
         """
-        return get_node_type(path, self.ctx)
+        return node_ops.get_node_type(path, self.ctx)
 
     def exists(self, path: TupleKey) -> bool:
         """Check if node exists.
@@ -103,7 +100,7 @@ class Tree:
             >>> if tree.exists(("users", "alice")):
             ...     print("User exists")
         """
-        return node_exists(path, self.ctx)
+        return node_ops.node_exists(path, self.ctx)
 
     # ========================================================================
     # VALIDATION OPERATIONS
@@ -518,7 +515,7 @@ class Tree:
             >>> print(parent)
             ("users",)
         """
-        return nav_ops.get_parent(path)
+        return nav.get_parent(path)
 
     @staticmethod
     def get_ancestors(path: TupleKey) -> list[TupleKey]:
@@ -535,7 +532,7 @@ class Tree:
             >>> print(ancestors)
             [(), ("users",), ("users", "alice")]
         """
-        return nav_ops.get_ancestors(path)
+        return nav.get_ancestors(path)
 
     @staticmethod
     def get_path_chain(path: TupleKey) -> list[TupleKey]:
@@ -552,7 +549,7 @@ class Tree:
             >>> print(chain)
             [(), ("users",), ("users", "alice")]
         """
-        return nav_ops.get_path_chain(path)
+        return nav.get_path_chain(path)
 
     @staticmethod
     def is_ancestor(parent: TupleKey, child: TupleKey) -> bool:
@@ -569,29 +566,29 @@ class Tree:
             >>> Tree.is_ancestor(("users",), ("users", "alice"))
             True
         """
-        return nav_ops.is_ancestor(parent, child)
+        return nav.is_ancestor(parent, child)
 
     @staticmethod
     def is_descendant(child: TupleKey, parent: TupleKey) -> bool:
         """Check if child is descendant of parent (pure function)."""
-        return nav_ops.is_descendant(child, parent)
+        return nav.is_descendant(child, parent)
 
     @staticmethod
     def is_sibling(path1: TupleKey, path2: TupleKey) -> bool:
         """Check if paths are siblings (pure function)."""
-        return nav_ops.is_sibling(path1, path2)
+        return nav.is_sibling(path1, path2)
 
     @staticmethod
     def get_depth(path: TupleKey) -> int:
         """Get depth of path (pure function)."""
-        return nav_ops.get_depth(path)
+        return nav.get_depth(path)
 
     @staticmethod
     def join_path(*components: KeyComponent | TupleKey) -> TupleKey:
         """Join path components (pure function)."""
-        return nav_ops.join_path(*components)
+        return nav.join_path(*components)
 
     @staticmethod
     def get_common_ancestor(path1: TupleKey, path2: TupleKey) -> TupleKey:
         """Find lowest common ancestor (pure function)."""
-        return nav_ops.get_common_ancestor(path1, path2)
+        return nav.get_common_ancestor(path1, path2)

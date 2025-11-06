@@ -14,7 +14,7 @@ from redwood.be import ReadAccessProtocol, StorageInterfaceError
 
 from .exceptions import PathNotFoundError, PathTypeError
 from .navigation import get_ancestors
-from .node import get_node_info, get_node_type
+from .node_ops import get_node_info, get_node_type
 from .types import ContainerProtocol, ContainerStructure, NodeType, ParentChainInfo, ParentInfo
 
 

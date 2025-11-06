@@ -24,9 +24,9 @@ from redwood.be import (
 from .exceptions import PathExistsError, PathTypeError
 from .marker import create_marker, is_marker
 from .navigation import join_path
-from .node import get_node_info, get_node_type
+from .node_ops import get_node_info, get_node_type
 from .types import ContainerProtocol, ContainerStructure, NodeType
-from .validation import (
+from .validation_ops import (
     gather_parent_info,
     validate_compatible,
     validate_is_container,

@@ -50,7 +50,7 @@ from __future__ import annotations
 # ============================================================================
 # Container Operations
 # ============================================================================
-from .container import (
+from .container_ops import (
     clear_children,
     count_children,
     create_child_container,
@@ -112,7 +112,7 @@ from .navigation import (
 # ============================================================================
 # Node Operations
 # ============================================================================
-from .node import (
+from .node_ops import (
     get_node_info,
     get_node_type,
     node_exists,
@@ -138,7 +138,7 @@ from .types import (
 # ============================================================================
 # Validation Operations
 # ============================================================================
-from .validation import (
+from .validation_ops import (
     gather_parent_info,
     validate_compatible,
     validate_exists,
