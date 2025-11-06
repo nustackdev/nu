@@ -42,9 +42,11 @@ __all__ = [
     "count_children",
     "create_child_container",
     "create_container",
+    "create_parents",
     "delete_child",
     "delete_container",
     "delete_subtree",
+    "ensure_parents",
     "get_child_type",
     "has_child",
     "list_child_keys",
@@ -711,3 +713,127 @@ def walk_tree(
     for key, value in ctx.scan(scan_opts).items():
         node_type = NodeType.CONTAINER if is_marker(value) else NodeType.PRIMITIVE
         yield (key, node_type)
+
+
+# ============================================================================
+# PARENT MANAGEMENT OPERATIONS
+# ============================================================================
+
+
+def create_parents(
+    path: TupleKey,
+    default_structure: ContainerStructure,
+    default_protocol: ContainerProtocol,
+    ctx: StorageContextType,
+) -> list[TupleKey]:
+    """Create all missing parents.
+
+    Creates parent containers for the given path using the specified
+    default structure and protocol. Only creates parents that are missing;
+    existing parents are left unchanged.
+
+    Args:
+        path: Target path
+        default_structure: Structure ID for created parents
+        default_protocol: Protocol flags for created parents
+        ctx: Storage context (transaction)
+
+    Returns:
+        List of created parent paths (empty if all existed)
+
+    Raises:
+        PathTypeError: If existing parents have malformed data
+        StorageInterfaceError: If context doesn't support required operations
+
+    Example:
+        >>> created = create_parents(
+        ...     ("users", "alice", "profile"),
+        ...     ContainerStructure(1),
+        ...     ContainerProtocol.MUTABLE,
+        ...     tx,
+        ... )
+        >>> print(f"Created {len(created)} parents: {created}")
+    """
+    if not isinstance(ctx, ReadAccessProtocol):
+        raise StorageInterfaceError(
+            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
+            "Use Snapshot or Transaction to read data from storage."
+        )
+
+    if not isinstance(ctx, WriteAccessProtocol):
+        raise StorageInterfaceError(
+            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
+            "Use Transaction to write data to storage."
+        )
+
+    validate_parents_healthy(path, ctx)
+
+    from .validation import gather_parent_info
+
+    parent_info = gather_parent_info(path, ctx)
+    if not parent_info.missing_paths:
+        return []
+
+    created = []
+    for missing_path in parent_info.missing_paths:
+        marker = create_marker(default_structure, default_protocol)
+        ctx.put(missing_path, marker)
+        created.append(missing_path)
+
+    return created
+
+
+def ensure_parents(
+    path: TupleKey,
+    default_structure: ContainerStructure,
+    default_protocol: ContainerProtocol,
+    ctx: StorageContextType,
+) -> list[TupleKey]:
+    """Ensure all parents exist, creating if needed.
+
+    Guarantees that the complete parent chain exists and is healthy.
+    Creates any missing parents and validates that existing parents
+    have well-formed data.
+
+    Args:
+        path: Target path
+        default_structure: Structure ID for created parents
+        default_protocol: Protocol flags for created parents
+        ctx: Storage context (transaction)
+
+    Returns:
+        List of created parent paths (empty if all existed)
+
+    Raises:
+        PathTypeError: If existing parents have malformed data
+        StorageInterfaceError: If context doesn't support required operations
+
+    Example:
+        >>> created = ensure_parents(
+        ...     ("users", "alice", "profile"),
+        ...     ContainerStructure(1),
+        ...     ContainerProtocol.MUTABLE,
+        ...     tx,
+        ... )
+        # Now guaranteed: all parents exist and are healthy
+    """
+    if not isinstance(ctx, ReadAccessProtocol):
+        raise StorageInterfaceError(
+            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
+            "Use Snapshot or Transaction to read data from storage."
+        )
+
+    if not isinstance(ctx, WriteAccessProtocol):
+        raise StorageInterfaceError(
+            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
+            "Use Transaction to write data to storage."
+        )
+
+    from .validation import gather_parent_info
+
+    parent_info = gather_parent_info(path, ctx)
+    if parent_info.all_exist:
+        validate_parents_healthy(path, ctx)
+        return []
+
+    return create_parents(path, default_structure, default_protocol, ctx)
