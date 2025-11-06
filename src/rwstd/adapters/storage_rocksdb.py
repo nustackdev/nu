@@ -102,6 +102,24 @@ class _RocksDBContextBase:
         self._closed = True
         self._rwrocks_txn = None
 
+    @property
+    def is_closed(self) -> bool:
+        """Check if context is closed.
+
+        Returns:
+            True if closed, False otherwise.
+        """
+        return self._closed
+
+    @property
+    def is_active(self) -> bool:
+        """Check if context is active.
+
+        Returns:
+            True if active and not closed, False otherwise.
+        """
+        return not self._closed
+
     def __hash__(self) -> int:
         """Hash based on unique identifier."""
         return hash(self._uuid)
@@ -392,53 +410,6 @@ class _WriteOperationsMixin:
         # Track modification for notifications
         self._modified_keys.add(key)
         return True
-
-    # def range_delete(
-    #     self,
-    #     start: TupleKey,
-    #     end: TupleKey,
-    #     *,
-    #     start_inclusive: bool = True,
-    #     end_inclusive: bool = False,
-    # ) -> int:
-    #     """Delete all keys in range.
-
-    #     Args:
-    #         start: Start of range
-    #         end: End of range
-    #         start_inclusive: Whether start is inclusive
-    #         end_inclusive: Whether end is inclusive
-
-    #     Returns:
-    #         Number of keys deleted
-
-    #     Raises:
-    #         StorageDeleteError: If deletion fails
-    #         StorageClosedError: If context is closed
-    #     """
-    #     # Create scan options for the range
-    #     scan_options = StorageScanOptions(
-    #         start=start,
-    #         end=end,
-    #         start_inclusive=start_inclusive,
-    #         end_inclusive=end_inclusive,
-    #         reverse=False,
-    #         limit=None,
-    #     )
-
-    #     # Collect keys to delete
-    #     try:
-    #         keys_to_delete = list(self.scan(scan_options).keys())
-    #     except Exception as e:
-    #         raise StorageDeleteError(f"Failed to scan range for deletion: {e}") from e
-
-    #     # Delete each key
-    #     deleted_count = 0
-    #     for key in keys_to_delete:
-    #         if self.delete(key):
-    #             deleted_count += 1
-
-    #     return deleted_count
 
 
 # =============================================================================
@@ -1222,3 +1193,8 @@ class RocksDBStorage:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context manager - close storage."""
         self.close()
+
+
+if TYPE_CHECKING:
+    _: type[TransactionProtocol] = RocksDBTransaction
+    __: type[SnapshotProtocol] = RocksDBSnapshot
