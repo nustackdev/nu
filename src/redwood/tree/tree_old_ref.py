@@ -1281,6 +1281,19 @@ class ContainerNode(ContextualBase):
             return child_info.value
         return EMPTY
 
+    def get_primitive_child_fast(
+        self,
+        key: KeyComponent,
+        /,
+    ):
+        try:
+            child_path = Path.join(self.path, key)
+            child_data = self.get_ensured_context().get(child_path)
+            return child_data
+        except StorageKeyError:
+            # Child doesn't exist
+            return EMPTY
+
     def keys(
         self, *, primitives_only: bool = False, skip_primitives: bool = False
     ) -> Generator[KeyComponent, None, None]:

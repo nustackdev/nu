@@ -1,113 +1,88 @@
-"""Hierarchical exception system for the tree storage.
+"""Tree layer exception hierarchy.
 
-This module defines a comprehensive set of exceptions that follow a clear hierarchy,
-making error handling and debugging more intuitive.
+This module defines all tree-specific exceptions with a clear hierarchy
+that reflects the different error categories in tree operations.
 """
 
-from redwood._rw_exception import RedwoodError
+from __future__ import annotations
 
 
-class TreeError(RedwoodError):
-    """Base exception class for all tree-related errors."""
-
-    pass
-
-
-# Path-related exceptions
-class PathError(TreeError):
-    """Base exception class for errors related to path operations."""
-
-    pass
-
-
-class PathNotFoundError(PathError):
-    """Raised when attempting to access a path that does not exist."""
-
-    pass
+__all__ = [
+    "InvalidDepthError",
+    "ParentMalformedError",
+    "ParentNotFoundError",
+    "PathCollisionError",
+    "PathExistsError",
+    "PathNotFoundError",
+    "PathTypeError",
+    "TreeError",
+]
 
 
-class PathExistsError(PathError):
-    """Raised when attempting to create a path that already exists."""
+class TreeError(Exception):
+    """Base exception for all tree layer errors.
 
-    pass
-
-
-class PathTypeError(PathError):
-    """Raised when a path exists but is of an incompatible type for the operation."""
-
-    pass
+    All tree-specific exceptions inherit from this base class,
+    allowing for broad exception handling when needed.
+    """
 
 
-class InvalidPathError(PathError):
-    """Raised when a path specification is invalid."""
+class PathNotFoundError(TreeError):
+    """Path does not exist in storage.
 
-    pass
-
-
-# Container-related exceptions
-class ContainerError(TreeError):
-    """Base exception class for errors related to container operations."""
-
-    pass
+    Raised when attempting to access or validate a path that
+    doesn't exist in the underlying storage.
+    """
 
 
-class ContainerProtocolError(ContainerError):
-    """Raised when attempting an operation unsupported by a container's protocols."""
+class PathExistsError(TreeError):
+    """Path already exists in storage.
 
-    pass
-
-
-class ContainerTypeError(ContainerError):
-    """Raised when a container is of an incompatible type for the operation."""
-
-    pass
+    Raised when attempting to create a node at a path that
+    already contains data, typically with incompatible type.
+    """
 
 
-# View-related exceptions
-class ViewError(TreeError):
-    """Base exception class for errors related to view operations."""
+class PathTypeError(TreeError):
+    """Type mismatch or malformed data at path.
 
-    pass
-
-
-class IncompatibleViewError(ViewError):
-    """Raised when attempting to use a view incompatible with a container's protocols."""
-
-    pass
+    Raised when:
+    - Expected type doesn't match actual type
+    - Data at path is corrupted or malformed
+    - Type information cannot be parsed
+    """
 
 
-# Operation-related exceptions
-class OperationError(TreeError):
-    """Base exception class for errors related to tree operations."""
+class PathCollisionError(PathTypeError):
+    """Primitive value collides with container path.
 
-    pass
-
-
-class ReadOnlyError(OperationError):
-    """Raised when attempting to modify a read-only structure."""
-
-    pass
+    Raised when a primitive value exists at a path where a
+    container is expected, or vice versa. This is a specific
+    type of PathTypeError.
+    """
 
 
-class TypeConversionError(OperationError):
-    """Raised when a type conversion fails."""
+class ParentNotFoundError(PathNotFoundError):
+    """Parent path is missing from storage.
 
-    pass
-
-
-class SerializationError(OperationError):
-    """Raised when serialization or deserialization fails."""
-
-    pass
+    Raised when parent containers required for an operation
+    don't exist. This is a specific case of PathNotFoundError
+    focused on parent chain issues.
+    """
 
 
-class IndexOutOfBoundsError(OperationError):
-    """Raised when attempting to access an index outside the valid range."""
+class ParentMalformedError(PathTypeError):
+    """Parent has corrupted or invalid data.
 
-    pass
+    Raised when parent containers exist but have malformed
+    type markers or corrupted data. This is a specific case
+    of PathTypeError focused on parent chain issues.
+    """
 
 
-class ValueTypeError(OperationError):
-    """Raised when attempting to access an index outside the valid range."""
+class InvalidDepthError(TreeError):
+    """Invalid depth parameter provided.
 
-    pass
+    Raised when a depth parameter is invalid (e.g., negative
+    when positive required, exceeds maximum allowed depth).
+    """

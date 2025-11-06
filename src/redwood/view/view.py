@@ -42,7 +42,7 @@ from redwood.abc import (
     Value,
 )
 from redwood.tree.exceptions import ContainerProtocolError
-from redwood.tree.tree import ContainerNode
+from redwood.tree.tree_old_ref import ContainerNode
 from redwood.tree.types import ChildType
 from redwood.utils.context import ContextualBase
 from redwood.utils.path import Path

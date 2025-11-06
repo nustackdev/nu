@@ -12,7 +12,7 @@ import attrs
 
 from redwood.abc import EMPTY, Empty, KeyComponent, Value
 from redwood.tree import View
-from redwood.tree.tree import ChildType
+from redwood.tree.tree_old_ref import ChildType
 from redwood.tree.types import ContainerProtocol, ContainerStructure
 
 

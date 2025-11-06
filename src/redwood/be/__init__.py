@@ -20,6 +20,7 @@ from .storage import (
     StorageContextType,
     StorageDeleteError,
     StorageError,
+    StorageInterfaceError,
     StorageIteratorError,
     StorageKeyError,
     StorageLookupError,
@@ -54,6 +55,7 @@ __all__ = [  # noqa: RUF022
     "StorageTransactionConflictError",
     "StorageTransactionError",
     "StorageWriteError",
+    "StorageInterfaceError",
     ## Transaction Protocols
     "BaseContextProtocol",
     "ReadAccessProtocol",

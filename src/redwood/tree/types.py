@@ -1,119 +1,152 @@
-# _constants.py
+"""Tree layer type definitions and data structures.
 
-"""Constants and type definitions for tree storage package.
-
-This module defines the core types, protocols, and enumerations used
-throughout the package, establishing a consistent type system.
+This module defines the core types, enums, and data structures used throughout
+the tree layer. All data structures are immutable to ensure thread safety and enable safe caching.
 """
 
 from __future__ import annotations
 
-from enum import Enum, Flag, auto
-from typing import NamedTuple, NewType
+from enum import Enum, IntFlag, auto
+from typing import TYPE_CHECKING, NamedTuple, NewType
 
-from redwood.abc import (
-    EMPTY,
-    Empty,
-    KeyComponent,
-    TupleKey,
-    Value,
-)
+
+if TYPE_CHECKING:
+    from redwood.abc import TupleKey, Value
 
 
 __all__ = [
-    "ChildInfo",
-    "ChildType",
-    "ContainerInfo",
     "ContainerProtocol",
-    "ContainerState",
     "ContainerStructure",
+    "NodeInfo",
     "NodeType",
+    "ParentChainInfo",
     "ParentInfo",
 ]
 
 
-class ChildType(Enum):
-    """Simple child type classification."""
+# ========================================================
+# Node types
+# ========================================================
+
+
+class NodeType(Enum):
+    """Node type classification in the tree hierarchy.
+
+    Attributes:
+        CONTAINER: Node that can have children (internal node)
+        PRIMITIVE: Leaf node with a value
+        NOT_FOUND: Path does not exist in storage
+    """
 
     PRIMITIVE = auto()
     CONTAINER = auto()
     NOT_FOUND = auto()
 
-
-class ChildInfo(NamedTuple):
-    """Basic information about a child.
-
-    Using NamedTuple for more efficient initialization than dataclass.
-    """
-
-    key: KeyComponent
-    exists: bool
-    child_type: ChildType
-    value: Value | Empty = EMPTY  # For primitives
-    stored_structure: ContainerStructure | None = None  # For containers
-    stored_protocol: ContainerProtocol | None = None  # For containers
-
-
-class ParentInfo(NamedTuple):
-    """Raw information about a parent container."""
-
-    path: TupleKey
-    exists: bool
-    stored_structure: ContainerStructure | None = None
-    stored_protocol: ContainerProtocol | None = None
-    raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
-
-
-class ContainerInfo(NamedTuple):
-    """Pure information about container and parent chain - no validation logic."""
-
-    # Container raw data
-    exists: bool
-    stored_structure: ContainerStructure | None = None
-    stored_protocol: ContainerProtocol | None = None
-    raw_type_data: Value | Empty = EMPTY  # Raw data from storage, could be malformed
-
-    # Parent chain raw data (from root to immediate parent)
-    parents: tuple[ParentInfo, ...] = ()
-
-    # Paths categorization (pure facts, no validation decisions)
-    missing_parent_paths: tuple[TupleKey, ...] = ()
-    malformed_parent_paths: tuple[TupleKey, ...] = ()
-
-
-class ContainerState(Enum):
-    """Container states after validation."""
-
-    VALID = auto()  # Exists and matches expected type
-    NOT_FOUND = auto()  # Doesn't exist
-    TYPE_MISMATCH = auto()  # Exists but wrong type
-    MALFORMED = auto()  # Exists but corrupted data
-
-
-class NodeType(Enum):
-    """Enumeration of possible node types in the state tree."""
-
-    NOT_FOUND = auto()  # Path does not exist
-    CONTAINER = auto()  # Container node that can have children
-    PRIMITIVE = auto()  # Primitive value node (leaf)
-
     def __str__(self) -> str:
         return self.name
 
 
-# Container protocol flags
-ContainerStructure = NewType("ContainerStructure", int)
+class NodeInfo(NamedTuple):
+    """Complete information about a node in the tree.
+
+    This data structure contains all available information about a node,
+    including its existence, type, and type-specific attributes.
+
+    Attributes:
+        path: Location of the node in the tree
+        exists: Whether the node exists in storage
+        node_type: Classification of the node (container/primitive/not_found)
+        raw_value: Raw value from storage (may be marker or primitive)
+        structure: Container structure type (None for primitives)
+        protocol: Container protocol flags (None for primitives)
+        primitive_value: Actual value for primitives (None for containers)
+    """
+
+    path: TupleKey
+    exists: bool
+    node_type: NodeType
+
+    # Container-specific fields
+    structure: ContainerStructure | None = None
+    protocol: ContainerProtocol | None = None
+
+    # Primitive-specific fields
+    primitive_value: Value | None = None
 
 
-class ContainerProtocol(Flag):
-    """Container protocols defining container attributes and capabilities."""
+class ParentInfo(NamedTuple):
+    """Information about a parent node in the tree hierarchy.
 
-    # Container protocols
+    Used when gathering information about the parent chain of a node.
 
-    MUTABLE = 1  # Can be modified after creation
-    # ... Add more protocols as needed
+    Attributes:
+        path: Location of the parent node
+        exists: Whether the parent exists in storage
+        structure: Container structure type (None if malformed or missing)
+        protocol: Container protocol flags (None if malformed or missing)
+        raw_type_data: Raw value from storage (for debugging malformed data)
+    """
 
-    DEFAULT_PROTOCOL = MUTABLE
+    path: TupleKey
+    exists: bool
+    structure: ContainerStructure | None = None
+    protocol: ContainerProtocol | None = None
+    raw_type_data: Value | None = None
+
+
+class ParentChainInfo(NamedTuple):
+    """Information about the complete parent chain of a node.
+
+    This structure aggregates information about all parents from root to
+    immediate parent, categorizing them by their state.
+
+    Attributes:
+        chain: Complete parent chain from root to immediate parent
+        missing_paths: Paths that don't exist in storage
+        malformed_paths: Paths with corrupted or invalid data
+    """
+
+    chain: tuple[ParentInfo, ...]
+    missing_paths: tuple[TupleKey, ...]
+    malformed_paths: tuple[TupleKey, ...]
+
+    @property
+    def all_exist(self) -> bool:
+        """Check if all parents exist in storage."""
+        return len(self.missing_paths) == 0
+
+    @property
+    def all_healthy(self) -> bool:
+        """Check if all parents have well-formed data."""
+        return len(self.malformed_paths) == 0
+
+
+# ========================================================
+# Continer-related types
+# ========================================================
+
+ContainerStructure = NewType("ContainerStructure", int)  # Container structure type: dict, list, etc
+
+
+class ContainerProtocol(IntFlag):
+    """Container behavior flags using bitwise operations.
+
+    Protocol flags define behavioral constraints and capabilities of containers.
+    Multiple flags can be combined using bitwise OR operations.
+
+    Important note:
+        Protocols don't enforce behavior, they merely act as a hint system for
+        debugging, visualization, etc.
+
+    Attributes:
+        MUTABLE: Container can be modified after creation
+        SIZED: Container keeps track of its children count
+        INDEXED: Children maintain insertion order
+    """
+
+    MUTABLE = 0x01
+    SIZED = 0x02
+    INDEXED = 0x04
 
     def __str__(self) -> str:
         parts = []

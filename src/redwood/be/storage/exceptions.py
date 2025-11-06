@@ -13,6 +13,14 @@ class StorageError(RedwoodError):
     """Base exception for all storage errors."""
 
 
+class StorageInterfaceError(StorageError):
+    """Permission error.
+
+    Raised when called operation violates context interface,
+    e.g. calling get() on BatchWrite or put() on Snapshot.
+    """
+
+
 class StorageOperationError(StorageError):
     """General operation failure.
 
@@ -94,6 +102,7 @@ __all__ = [
     "StorageKeyError",
     "StorageLookupError",
     "StorageOperationError",
+    "StoragePermissionError",
     "StorageTransactionAbortedError",
     "StorageTransactionConflictError",
     "StorageTransactionError",
