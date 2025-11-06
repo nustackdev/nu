@@ -28,6 +28,10 @@ class StorageScanOptions:
         end_inclusive: Whether end key is inclusive.
         direction: Direction to scan (forward or reverse).
         limit: Maximum number of results. None means unlimited.
+        length: Filter by tuple key length.
+            -1: no filtering (all lengths)
+             0: invalid (will raise)
+            >0: exact match on key tuple length
     """
 
     start: TupleKey | None = None
@@ -36,6 +40,7 @@ class StorageScanOptions:
     end_inclusive: bool = False
     reverse: bool = False
     limit: int | None = None
+    length: int = -1
 
 
 type StorageContextType = SnapshotProtocol | WriteBatchProtocol | TransactionProtocol

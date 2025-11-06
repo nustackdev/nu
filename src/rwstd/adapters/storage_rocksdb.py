@@ -643,6 +643,10 @@ class RocksDBScan:
         items: list[tuple[TupleKey, Value]] = []
 
         try:
+            # Validate length option
+            if options.length == 0 or options.length < -1:
+                raise StorageOperationError(f"Invalid scan length: {options.length}")
+
             # Encode bounds
             start_key = codec.encode_key(options.start) if options.start else b""
             end_key = codec.encode_key(options.end) if options.end else None
@@ -698,13 +702,15 @@ class RocksDBScan:
                                 break
                             continue
 
-                # Decode value
-                try:
-                    value = codec.decode_value(encoded_value)
-                except Exception as e:
-                    raise StorageOperationError(f"Failed to decode value: {e}") from e
+                # Length filter (if requested)
+                if options.length == -1 or len(key) == options.length:
+                    # Decode value only if key passes length filter
+                    try:
+                        value = codec.decode_value(encoded_value)
+                    except Exception as e:
+                        raise StorageOperationError(f"Failed to decode value: {e}") from e
 
-                items.append((key, value))
+                    items.append((key, value))
 
                 # Check limit
                 if options.limit is not None and len(items) >= options.limit:
