@@ -27,8 +27,12 @@ __all__ = [
     "is_descendant",
     "is_sibling",
     "join_path",
-    "split_path",
 ]
+
+# Root marker for the root data component (stores actual data)
+DATA_ROOT: str = "/"
+# Root marker for the metadata component (stores metadata)
+METADATA_ROOT: str = "/m"
 
 
 def get_parent(path: TupleKey) -> TupleKey | None:
@@ -46,8 +50,9 @@ def get_parent(path: TupleKey) -> TupleKey | None:
         >>> get_parent(())
         None
     """
-    if not path:
+    if len(path) <= 1:
         return None
+
     return path[:-1]
 
 
@@ -67,7 +72,7 @@ def get_ancestors(path: TupleKey) -> list[TupleKey]:
         >>> get_ancestors(("users", "alice", "profile"))
         [(), ("users",), ("users", "alice")]
     """
-    if not path:
+    if len(path) <= 1:
         return []
 
     ancestors = []
@@ -213,31 +218,6 @@ def join_path(*components: KeyComponent | TupleKey) -> TupleKey:
         else:
             result.append(component)
     return tuple(result)
-
-
-def split_path(path: TupleKey) -> tuple[TupleKey | None, KeyComponent | None]:
-    """Split path into parent and last component.
-
-    Args:
-        path: Path to split
-
-    Returns:
-        Tuple of (parent_path, last_component)
-        Returns (None, None) for empty path
-
-    Example:
-        >>> split_path(("users", "alice"))
-        (("users",), "alice")
-        >>> split_path(("users",))
-        ((), "users")
-        >>> split_path(())
-        (None, None)
-    """
-    if not path:
-        return None, None
-    if len(path) == 1:
-        return (), path[0]
-    return path[:-1], path[-1]
 
 
 def get_common_ancestor(path1: TupleKey, path2: TupleKey) -> TupleKey:

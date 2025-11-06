@@ -107,7 +107,6 @@ from .navigation import (
     is_descendant,
     is_sibling,
     join_path,
-    split_path,
 )
 
 # ============================================================================
@@ -192,7 +191,6 @@ __all__ = [  # noqa: RUF022
     "is_sibling",
     "get_depth",
     "join_path",
-    "split_path",
     "get_common_ancestor",
     # Validation
     "gather_parent_info",

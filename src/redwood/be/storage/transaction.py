@@ -178,62 +178,6 @@ class WriteAccessProtocol(Protocol):
         """
         ...
 
-    # Range access
-    def range_delete(
-        self,
-        start: TupleKey,
-        end: TupleKey,
-        *,
-        start_inclusive: bool = True,
-        end_inclusive: bool = False,
-    ) -> int:
-        """Delete all keys in range.
-
-        Args:
-            start: Start of range.
-            end: End of range.
-            start_inclusive: Whether start is inclusive.
-            end_inclusive: Whether end is inclusive.
-
-        Returns:
-            Number of keys deleted.
-
-        Raises:
-            StorageDeleteError: If deletion fails.
-            StorageClosedError: If context is closed.
-        """
-        ...
-
-
-@runtime_checkable
-class TransactionControlProtocol(Protocol):
-    """Protocol for transaction control operations.
-
-    Provides commit and abort semantics for atomic operations.
-    """
-
-    def commit(self) -> None:
-        """Commit transaction.
-
-        Makes all changes permanent and releases locks.
-
-        Raises:
-            StorageTransactionError: If commit fails.
-            StorageTransactionConflictError: If optimistic lock conflict.
-            StorageClosedError: If already committed or aborted.
-        """
-        ...
-
-    def abort(self) -> None:
-        """Abort transaction.
-
-        Discards all changes and releases locks.
-
-        Raises:
-            StorageTransactionError: If abort fails.
-        """
-        ...
-
 
 # ============================================================================
 # Composed Transaction Protocols
@@ -264,7 +208,6 @@ class SnapshotProtocol(BaseContextProtocol, ReadAccessProtocol, Protocol):
 class WriteBatchProtocol(
     BaseContextProtocol,
     WriteAccessProtocol,
-    TransactionControlProtocol,
     Protocol,
 ):
     """Write-only batch protocol.
@@ -275,8 +218,30 @@ class WriteBatchProtocol(
     Composition:
         - BaseContextProtocol: Lifecycle management
         - WriteAccessProtocol: Write operations
-        - TransactionControlProtocol: Commit/abort
+        - Write/abort
     """
+
+    def write(self) -> None:
+        """Write batch.
+
+        Persist all writes.
+
+        Raises:
+            StorageTransactionError: If commit fails.
+            StorageTransactionConflictError: If optimistic lock conflict.
+            StorageClosedError: If already committed or aborted.
+        """
+        ...
+
+    def abort(self) -> None:
+        """Abort write batch.
+
+        Discards all writes.
+
+        Raises:
+            StorageTransactionError: If abort fails.
+        """
+        ...
 
 
 @runtime_checkable
@@ -284,7 +249,6 @@ class TransactionProtocol(
     BaseContextProtocol,
     ReadAccessProtocol,
     WriteAccessProtocol,
-    TransactionControlProtocol,
     Protocol,
 ):
     """Full read-write transaction protocol.
@@ -296,8 +260,30 @@ class TransactionProtocol(
         - BaseContextProtocol: Lifecycle management
         - ReadAccessProtocol: Read operations
         - WriteAccessProtocol: Write operations
-        - TransactionControlProtocol: Commit/abort
+        - Commit/abort
     """
+
+    def commit(self) -> None:
+        """Commit transaction.
+
+        Makes all changes permanent and releases locks.
+
+        Raises:
+            StorageTransactionError: If commit fails.
+            StorageTransactionConflictError: If optimistic lock conflict.
+            StorageClosedError: If already committed or aborted.
+        """
+        ...
+
+    def abort(self) -> None:
+        """Abort transaction.
+
+        Discards all changes and releases locks.
+
+        Raises:
+            StorageTransactionError: If abort fails.
+        """
+        ...
 
 
 # ============================================================================
@@ -408,7 +394,6 @@ __all__ = [  # noqa: RUF022
     # Access
     "ReadAccessProtocol",
     "WriteAccessProtocol",
-    "TransactionControlProtocol",
     # Composed
     "SnapshotProtocol",
     "WriteBatchProtocol",

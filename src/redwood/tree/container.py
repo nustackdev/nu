@@ -9,6 +9,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from redwood.abc import (
+    EMPTY,
+    Empty,
+)
 from redwood.be import (
     ReadAccessProtocol,
     StorageInterfaceError,
@@ -524,6 +528,44 @@ def set_child_primitive(
     ctx.put(child_path, value)
 
 
+def get_child_primitive(
+    parent_path: TupleKey,
+    key: KeyComponent,
+    ctx: StorageContextType,
+) -> Value | Empty:
+    """Get primitive child value.
+
+    Returns the stored primitive value for the given child key, or None if the
+    child doesn't exist.
+
+    Raises:
+        PathNotFoundError: If parent doesn't exist
+        PathTypeError: If parent is not a container or child is a container
+        StorageInterfaceError: If context doesn't support read access
+    """
+    if not isinstance(ctx, ReadAccessProtocol):
+        raise StorageInterfaceError(
+            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
+            "Use Snapshot or Transaction to read data from storage."
+        )
+
+    validate_is_container(parent_path, ctx)
+
+    child_path = join_path(parent_path, key)
+    info = get_node_info(child_path, ctx)
+
+    if not info.exists:
+        return EMPTY
+
+    if info.node_type == NodeType.CONTAINER:
+        raise PathTypeError(f"Child is a container: {child_path}")
+
+    try:
+        return ctx.get(child_path)
+    except StorageKeyError:
+        return EMPTY
+
+
 def delete_child(
     parent_path: TupleKey,
     key: KeyComponent,
@@ -768,8 +810,6 @@ def create_parents(
 
     validate_parents_healthy(path, ctx)
 
-    from .validation import gather_parent_info
-
     parent_info = gather_parent_info(path, ctx)
     if not parent_info.missing_paths:
         return []
@@ -828,8 +868,6 @@ def ensure_parents(
             f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
             "Use Transaction to write data to storage."
         )
-
-    from .validation import gather_parent_info
 
     parent_info = gather_parent_info(path, ctx)
     if parent_info.all_exist:

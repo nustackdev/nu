@@ -43,6 +43,15 @@ class PathExistsError(TreeError):
     """
 
 
+class InvalidPathError(TreeError):
+    """Invalid path.
+
+    Raised when:
+    - Path is empty tuple
+    - Path root segment is neither of / and /m
+    """
+
+
 class PathTypeError(TreeError):
     """Type mismatch or malformed data at path.
 

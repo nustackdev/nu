@@ -14,8 +14,6 @@ from typing import TYPE_CHECKING
 
 import attrs
 
-from redwood.be import ReadAccessProtocol, StorageInterfaceError
-
 from . import container as container_ops
 from . import navigation as nav_ops
 from . import validation as val_ops
@@ -26,7 +24,7 @@ from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, Pa
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.abc import KeyComponent, TupleKey, Value
+    from redwood.abc import Empty, KeyComponent, TupleKey, Value
     from redwood.be import StorageContextType
 
 __all__ = [
@@ -57,14 +55,6 @@ class Tree:
     """
 
     ctx: StorageContextType = attrs.field()
-
-    def _validate_ctx(self, value: object) -> None:
-        """Validate that context supports read access."""
-        if not isinstance(value, ReadAccessProtocol):
-            raise StorageInterfaceError(
-                f"Context type {type(value).__name__} doesn't implement read access protocol. "
-                "Use Snapshot or Transaction to read data from storage."
-            )
 
     # ========================================================================
     # NODE OPERATIONS
@@ -365,6 +355,23 @@ class Tree:
         """
         container_ops.set_child_primitive(parent_path, key, value, self.ctx)
 
+    def get_child_primitive(
+        self,
+        parent_path: TupleKey,
+        key: KeyComponent,
+    ) -> Value | Empty:
+        """Get primitive child value.
+
+        Args:
+            parent_path: Parent container path
+            key: Child key
+
+        Example:
+            >>> tree.get_child_primitive(("users", "alice"), "name")
+            "Alice Smith"
+        """
+        return container_ops.get_child_primitive(parent_path, key, self.ctx)
+
     def delete_child(
         self,
         parent_path: TupleKey,
@@ -583,11 +590,6 @@ class Tree:
     def join_path(*components: KeyComponent | TupleKey) -> TupleKey:
         """Join path components (pure function)."""
         return nav_ops.join_path(*components)
-
-    @staticmethod
-    def split_path(path: TupleKey) -> tuple[TupleKey | None, KeyComponent | None]:
-        """Split path into parent and last component (pure function)."""
-        return nav_ops.split_path(path)
 
     @staticmethod
     def get_common_ancestor(path1: TupleKey, path2: TupleKey) -> TupleKey:
