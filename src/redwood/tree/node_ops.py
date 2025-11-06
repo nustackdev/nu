@@ -13,10 +13,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.be import ReadAccessProtocol, StorageInterfaceError, StorageKeyError
+from redwood.be import StorageKeyError
 
 from .marker import extract_marker
-from .types import NodeInfo, NodeType
+from .types import NodeInfo, NodeType, require_read_context
 
 
 if TYPE_CHECKING:
@@ -46,12 +46,9 @@ def node_exists(path: TupleKey, ctx: StorageContextType) -> bool:
         >>> node_exists(("users", "alice"), tx)
         True
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. Use Snapshot or Transaction to read data from storage."
-        )
+    rctx = require_read_context(ctx)
     try:
-        return ctx.has(path)
+        return rctx.has(path)
     except StorageKeyError:
         return False
 
@@ -72,12 +69,9 @@ def get_node_type(path: TupleKey, ctx: StorageContextType) -> NodeType:
         >>> get_node_type(("users", "alice"), tx)
         <NodeType.CONTAINER>
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. Use Snapshot or Transaction to read data from storage."
-        )
+    rctx = require_read_context(ctx)
     try:
-        raw_value = ctx.get(path)
+        raw_value = rctx.get(path)
 
         # Quick marker check - extract_marker is fast
         if extract_marker(raw_value) is not None:
@@ -110,12 +104,9 @@ def get_node_info(path: TupleKey, ctx: StorageContextType) -> NodeInfo:
         >>> if info.node_type == NodeType.CONTAINER:
         ...     print(f"Container with structure {info.structure}")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. Use Snapshot or Transaction to read data from storage."
-        )
+    rctx = require_read_context(ctx)
     try:
-        raw_value = ctx.get(path)
+        raw_value = rctx.get(path)
 
         # Try to parse as container marker
         marker_info = extract_marker(raw_value)

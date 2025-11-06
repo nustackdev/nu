@@ -12,11 +12,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple
 
+from redwood.abc import EMPTY
+from redwood.be import StorageKeyError
+from redwood.utils.path import Path
+
 from . import container_ops as container_ops
 from . import navigation as nav
 from . import node_ops as node_ops
 from . import validation_ops as val_ops
-from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, ParentChainInfo
+from .types import (
+    ContainerProtocol,
+    ContainerStructure,
+    NodeInfo,
+    NodeType,
+    ParentChainInfo,
+    require_read_context,
+    require_write_context,
+)
 
 
 if TYPE_CHECKING:
@@ -222,6 +234,76 @@ class Tree(NamedTuple):
             >>> print(f"Deleted {count} nodes")
         """
         return container_ops.delete_subtree(path, self.ctx)
+
+    # ========================================================================
+    # METADATA OPERATIONS
+    # ========================================================================
+
+    def get_metadata(
+        self,
+        path: TupleKey,
+        key: KeyComponent,
+        default: Value | Empty = EMPTY,
+    ) -> Value | Empty:
+        """Get metadata value stored under a container's metadata namespace.
+
+        Args:
+            path: Container path
+            key: Metadata key (e.g., "__length__")
+            default: Value to return if metadata is not found
+
+        Returns:
+            Stored metadata value or the provided default if missing
+        """
+        metadata_path = Path.join(Path.to_meta(path), key)
+        ctx = require_read_context(self.ctx)
+        try:
+            return ctx.get(metadata_path)
+        except StorageKeyError:
+            return default
+
+    def set_metadata(self, path: TupleKey, key: KeyComponent, value: Value) -> None:
+        """Set metadata value under a container's metadata namespace.
+
+        Args:
+            path: Container path
+            key: Metadata key
+            value: Metadata value to store
+        """
+        metadata_path = Path.join(Path.to_meta(path), key)
+        ctx = require_write_context(self.ctx)
+        ctx.put(metadata_path, value)
+
+    def has_metadata(self, path: TupleKey, key: KeyComponent) -> bool:
+        """Check whether a metadata key exists for a container.
+
+        Args:
+            path: Container path
+            key: Metadata key
+
+        Returns:
+            True if the metadata key exists, False otherwise
+        """
+        metadata_path = Path.join(Path.to_meta(path), key)
+        ctx = require_read_context(self.ctx)
+        return ctx.has(metadata_path)
+
+    def delete_metadata(self, path: TupleKey, key: KeyComponent) -> bool:
+        """Delete a metadata key for a container.
+
+        Args:
+            path: Container path
+            key: Metadata key to delete
+
+        Returns:
+            True if a metadata entry was deleted, False if it did not exist
+        """
+        metadata_path = Path.join(Path.to_meta(path), key)
+        ctx = require_write_context(self.ctx)
+        try:
+            return ctx.delete(metadata_path)
+        except StorageKeyError:
+            return False
 
     # ========================================================================
     # CHILD OPERATIONS

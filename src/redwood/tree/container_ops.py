@@ -13,19 +13,20 @@ from redwood.abc import (
     EMPTY,
     Empty,
 )
-from redwood.be import (
-    ReadAccessProtocol,
-    StorageInterfaceError,
-    StorageKeyError,
-    StorageScanOptions,
-    WriteAccessProtocol,
-)
+from redwood.be import StorageKeyError, StorageScanOptions
 
 from .exceptions import PathExistsError, PathTypeError
 from .marker import create_marker, is_marker
 from .navigation import join_path
 from .node_ops import get_node_info, get_node_type
-from .types import ContainerProtocol, ContainerStructure, NodeType
+from .types import (
+    ContainerProtocol,
+    ContainerStructure,
+    NodeType,
+    require_read_context,
+    require_readwrite_context,
+    require_write_context,
+)
 from .validation_ops import (
     gather_parent_info,
     validate_compatible,
@@ -102,17 +103,7 @@ def create_container(
         ... )
         True
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
+    wctx = require_write_context(ctx)
 
     # Check if already exists
     info = get_node_info(path, ctx)
@@ -138,13 +129,13 @@ def create_container(
                     ContainerStructure(1),  # Default associative
                     ContainerProtocol.MUTABLE,
                 )
-                ctx.put(missing_path, marker)
+                wctx.put(missing_path, marker)
     else:
         validate_parents_chain(path, ctx)
 
     # Create container
     marker = create_marker(structure, protocol)
-    ctx.put(path, marker)
+    wctx.put(path, marker)
     return True
 
 
@@ -172,17 +163,7 @@ def delete_container(
         >>> delete_container(("users", "alice"), tx, recursive=True)
         True
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
+    wctx = require_write_context(ctx)
 
     info = get_node_info(path, ctx)
     if not info.exists:
@@ -196,7 +177,7 @@ def delete_container(
     else:
         # Just delete the container marker
         try:
-            ctx.delete(path)
+            wctx.delete(path)
             return True
         except StorageKeyError:
             return False
@@ -221,17 +202,7 @@ def delete_subtree(path: TupleKey, ctx: StorageContextType) -> int:
         >>> count = delete_subtree(("users", "alice"), tx)
         >>> print(f"Deleted {count} nodes")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
+    rwctx = require_readwrite_context(ctx)
 
     # Scan all descendants
     start_key = (*path, "")
@@ -240,14 +211,14 @@ def delete_subtree(path: TupleKey, ctx: StorageContextType) -> int:
     scan_opts = StorageScanOptions(start=start_key, end=end_key)
     keys_to_delete = [path]
 
-    for key, _ in ctx.scan(scan_opts).items():
+    for key, _ in rwctx.scan(scan_opts).items():
         keys_to_delete.append(key)
 
     # Delete all
     deleted_count = 0
     for key in keys_to_delete:
         try:
-            ctx.delete(key)
+            rwctx.delete(key)
             deleted_count += 1
         except StorageKeyError:
             pass
@@ -278,12 +249,6 @@ def has_child(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -> boo
         >>> has_child(("users", "alice"), "profile", tx)
         True
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     child_path = join_path(path, key)
     child_type = get_node_type(child_path, ctx)
     return child_type != NodeType.NOT_FOUND
@@ -308,12 +273,6 @@ def get_child_type(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -
         >>> if child_type == NodeType.CONTAINER:
         ...     print("Child is a container")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     child_path = join_path(path, key)
     return get_node_type(child_path, ctx)
 
@@ -338,12 +297,7 @@ def list_child_keys(path: TupleKey, ctx: StorageContextType) -> list[KeyComponen
         >>> print(keys)
         ["profile", "settings", "posts"]
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
+    rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
     start_key = (*path, "")
@@ -353,7 +307,7 @@ def list_child_keys(path: TupleKey, ctx: StorageContextType) -> list[KeyComponen
     scan_opts = StorageScanOptions(start=start_key, end=end_key)
     keys = []
 
-    for key, _ in ctx.scan(scan_opts).items():
+    for key, _ in rctx.scan(scan_opts).items():
         if len(key) == target_depth:
             keys.append(key[-1])
 
@@ -380,12 +334,7 @@ def list_children(path: TupleKey, ctx: StorageContextType) -> list[tuple[TupleKe
         >>> for child_path, node_type in children:
         ...     print(f"{child_path}: {node_type}")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
+    rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
     start_key = (*path, "")
@@ -395,7 +344,7 @@ def list_children(path: TupleKey, ctx: StorageContextType) -> list[tuple[TupleKe
     scan_opts = StorageScanOptions(start=start_key, end=end_key)
     children = []
 
-    for key, value in ctx.scan(scan_opts).items():
+    for key, value in rctx.scan(scan_opts).items():
         if len(key) == target_depth:
             node_type = NodeType.CONTAINER if is_marker(value) else NodeType.PRIMITIVE
             children.append((key, node_type))
@@ -422,12 +371,6 @@ def count_children(path: TupleKey, ctx: StorageContextType) -> int:
         >>> count = count_children(("users", "alice"), tx)
         >>> print(f"Container has {count} children")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     return len(list_child_keys(path, ctx))
 
 
@@ -470,18 +413,6 @@ def create_child_container(
         ... )
         True
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
-
     validate_is_container(parent_path, ctx)
 
     child_path = join_path(parent_path, key)
@@ -510,22 +441,12 @@ def set_child_primitive(
     Example:
         >>> set_child_primitive(("users", "alice"), "name", "Alice Smith", tx)
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
+    wctx = require_write_context(ctx)
 
     validate_is_container(parent_path, ctx)
 
     child_path = join_path(parent_path, key)
-    ctx.put(child_path, value)
+    wctx.put(child_path, value)
 
 
 def get_child_primitive(
@@ -543,12 +464,7 @@ def get_child_primitive(
         PathTypeError: If parent is not a container or child is a container
         StorageInterfaceError: If context doesn't support read access
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
+    rctx = require_read_context(ctx)
     validate_is_container(parent_path, ctx)
 
     child_path = join_path(parent_path, key)
@@ -561,7 +477,7 @@ def get_child_primitive(
         raise PathTypeError(f"Child is a container: {child_path}")
 
     try:
-        return ctx.get(child_path)
+        return rctx.get(child_path)
     except StorageKeyError:
         return EMPTY
 
@@ -593,17 +509,7 @@ def delete_child(
         >>> delete_child(("users", "alice"), "old_profile", tx, recursive=True)
         True
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
+    wctx = require_write_context(ctx)
 
     validate_is_container(parent_path, ctx)
 
@@ -617,7 +523,7 @@ def delete_child(
         return delete_container(child_path, ctx, recursive=recursive)
     else:
         try:
-            ctx.delete(child_path)
+            wctx.delete(child_path)
             return True
         except StorageKeyError:
             return False
@@ -642,18 +548,6 @@ def clear_children(path: TupleKey, ctx: StorageContextType) -> int:
         >>> count = clear_children(("users", "alice", "temp"), tx)
         >>> print(f"Cleared {count} children")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
-
     keys = list_child_keys(path, ctx)
     count = 0
     for key in keys:
@@ -692,12 +586,7 @@ def list_descendants(
         >>> descendants = list_descendants(("users", "alice"), tx, max_depth=2)
         >>> print(f"Found {len(descendants)} descendants")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
+    rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
     start_key = (*path, "")
@@ -707,7 +596,7 @@ def list_descendants(
     descendants = []
     base_depth = len(path)
 
-    for key, _ in ctx.scan(scan_opts).items():
+    for key, _ in rctx.scan(scan_opts).items():
         if max_depth is None or (len(key) - base_depth) <= max_depth:
             descendants.append(key)
 
@@ -739,12 +628,7 @@ def walk_tree(
         >>> for child_path, node_type in walk_tree(("users", "alice"), tx):
         ...     print(f"{child_path}: {node_type}")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
+    rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
     start_key = (*path, "")
@@ -752,7 +636,7 @@ def walk_tree(
 
     scan_opts = StorageScanOptions(start=start_key, end=end_key)
 
-    for key, value in ctx.scan(scan_opts).items():
+    for key, value in rctx.scan(scan_opts).items():
         node_type = NodeType.CONTAINER if is_marker(value) else NodeType.PRIMITIVE
         yield (key, node_type)
 
@@ -796,17 +680,7 @@ def create_parents(
         ... )
         >>> print(f"Created {len(created)} parents: {created}")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
+    wctx = require_write_context(ctx)
 
     validate_parents_healthy(path, ctx)
 
@@ -817,7 +691,7 @@ def create_parents(
     created = []
     for missing_path in parent_info.missing_paths:
         marker = create_marker(default_structure, default_protocol)
-        ctx.put(missing_path, marker)
+        wctx.put(missing_path, marker)
         created.append(missing_path)
 
     return created
@@ -857,18 +731,6 @@ def ensure_parents(
         ... )
         # Now guaranteed: all parents exist and are healthy
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    if not isinstance(ctx, WriteAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement write access protocol. "
-            "Use Transaction to write data to storage."
-        )
-
     parent_info = gather_parent_info(path, ctx)
     if parent_info.all_exist:
         validate_parents_healthy(path, ctx)

@@ -10,9 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.be import ReadAccessProtocol, StorageInterfaceError
-
-from .exceptions import PathNotFoundError, PathTypeError
+from .exceptions import PathExistsError, PathNotFoundError, PathTypeError
 from .navigation import get_ancestors
 from .node_ops import get_node_info, get_node_type
 from .types import ContainerProtocol, ContainerStructure, NodeType, ParentChainInfo, ParentInfo
@@ -57,12 +55,6 @@ def gather_parent_info(path: TupleKey, ctx: StorageContextType) -> ParentChainIn
         >>> if info.all_exist and info.all_healthy:
         ...     print("Parent chain is complete and healthy")
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     ancestors = get_ancestors(path)
     if not ancestors:
         # Root level - no parents
@@ -141,12 +133,6 @@ def validate_exists(path: TupleKey, ctx: StorageContextType) -> None:
     Example:
         >>> validate_exists(("users", "alice"), tx)  # Raises if not found
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     node_type = get_node_type(path, ctx)
     if node_type == NodeType.NOT_FOUND:
         raise PathNotFoundError(f"Path does not exist: {path}")
@@ -165,14 +151,6 @@ def validate_not_exists(path: TupleKey, ctx: StorageContextType) -> None:
     Example:
         >>> validate_not_exists(("users", "new_user"), tx)  # Raises if exists
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
-    from .exceptions import PathExistsError
-
     node_type = get_node_type(path, ctx)
     if node_type != NodeType.NOT_FOUND:
         raise PathExistsError(f"Path already exists: {path}")
@@ -192,12 +170,6 @@ def validate_is_container(path: TupleKey, ctx: StorageContextType) -> None:
     Example:
         >>> validate_is_container(("users",), tx)  # Raises if not container
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     node_type = get_node_type(path, ctx)
     if node_type == NodeType.NOT_FOUND:
         raise PathNotFoundError(f"Path does not exist: {path}")
@@ -219,12 +191,6 @@ def validate_is_primitive(path: TupleKey, ctx: StorageContextType) -> None:
     Example:
         >>> validate_is_primitive(("users", "alice", "name"), tx)  # Raises if not primitive
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     node_type = get_node_type(path, ctx)
     if node_type == NodeType.NOT_FOUND:
         raise PathNotFoundError(f"Path does not exist: {path}")
@@ -245,12 +211,6 @@ def validate_parents_exist(path: TupleKey, ctx: StorageContextType) -> None:
     Example:
         >>> validate_parents_exist(("users", "alice", "profile"), tx)
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     parent_info = gather_parent_info(path, ctx)
     if not parent_info.all_exist:
         raise PathNotFoundError(f"Missing parent containers: {parent_info.missing_paths}")
@@ -269,12 +229,6 @@ def validate_parents_healthy(path: TupleKey, ctx: StorageContextType) -> None:
     Example:
         >>> validate_parents_healthy(("users", "alice", "profile"), tx)
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     parent_info = gather_parent_info(path, ctx)
     if not parent_info.all_healthy:
         raise PathTypeError(f"Malformed parent containers: {parent_info.malformed_paths}")
@@ -297,12 +251,6 @@ def validate_parents_chain(path: TupleKey, ctx: StorageContextType) -> None:
     Example:
         >>> validate_parents_chain(("users", "alice", "profile"), tx)
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     parent_info = gather_parent_info(path, ctx)
 
     if not parent_info.all_exist:
@@ -339,12 +287,6 @@ def validate_compatible(
         ...     ("users",), ContainerStructure(1), ContainerProtocol.MUTABLE, tx
         ... )
     """
-    if not isinstance(ctx, ReadAccessProtocol):
-        raise StorageInterfaceError(
-            f"Context type {type(ctx).__name__} doesn't implement read access protocol. "
-            "Use Snapshot or Transaction to read data from storage."
-        )
-
     info = get_node_info(path, ctx)
 
     if not info.exists:

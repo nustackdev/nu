@@ -14,6 +14,7 @@ from .observer import (
 from .storage import (
     BaseContextProtocol,
     ReadAccessProtocol,
+    ReadWriteAccessProtocol,
     ScanProtocol,
     SnapshotProtocol,
     StorageClosedError,
@@ -59,6 +60,7 @@ __all__ = [  # noqa: RUF022
     "BaseContextProtocol",
     "ReadAccessProtocol",
     "WriteAccessProtocol",
+    "ReadWriteAccessProtocol",
     "SnapshotProtocol",
     "WriteBatchProtocol",
     "TransactionProtocol",

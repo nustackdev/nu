@@ -45,6 +45,7 @@ from .storage import (
 from .transaction import (
     BaseContextProtocol,
     ReadAccessProtocol,
+    ReadWriteAccessProtocol,
     SnapshotProtocol,
     TransactionalStorageProtocol,
     TransactionProtocol,
@@ -78,6 +79,7 @@ __all__ = [  # noqa: RUF022
     "BaseContextProtocol",
     "ReadAccessProtocol",
     "WriteAccessProtocol",
+    "ReadWriteAccessProtocol",
     "SnapshotProtocol",
     "WriteBatchProtocol",
     "TransactionProtocol",

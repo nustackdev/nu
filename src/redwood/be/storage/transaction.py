@@ -19,6 +19,21 @@ if TYPE_CHECKING:
     from .scan import ScanProtocol
     from .types import StorageScanOptions
 
+__all__ = [  # noqa: RUF022
+    # Base
+    "BaseContextProtocol",
+    # Access
+    "ReadAccessProtocol",
+    "WriteAccessProtocol",
+    "ReadWriteAccessProtocol",
+    # Composed
+    "SnapshotProtocol",
+    "WriteBatchProtocol",
+    "TransactionProtocol",
+    # Storage
+    "TransactionalStorageProtocol",
+]
+
 
 # ============================================================================
 # Base Protocol
@@ -177,6 +192,11 @@ class WriteAccessProtocol(Protocol):
             StorageClosedError: If context is closed.
         """
         ...
+
+
+@runtime_checkable
+class ReadWriteAccessProtocol(ReadAccessProtocol, WriteAccessProtocol, Protocol):
+    """Protocol supporting both read and write operations."""
 
 
 # ============================================================================
@@ -386,18 +406,3 @@ class TransactionalStorageProtocol(Protocol):
     def batch_write(self) -> Iterator[WriteBatchProtocol]:
         """Context manager for write batches: commit on success, abort on exception."""
         ...
-
-
-__all__ = [  # noqa: RUF022
-    # Base
-    "BaseContextProtocol",
-    # Access
-    "ReadAccessProtocol",
-    "WriteAccessProtocol",
-    # Composed
-    "SnapshotProtocol",
-    "WriteBatchProtocol",
-    "TransactionProtocol",
-    # Storage
-    "TransactionalStorageProtocol",
-]
