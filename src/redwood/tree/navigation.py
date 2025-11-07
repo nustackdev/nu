@@ -26,6 +26,7 @@ __all__ = [
     "is_ancestor",
     "is_descendant",
     "is_sibling",
+    "join_component",
     "join_path",
 ]
 
@@ -218,6 +219,21 @@ def join_path(*components: KeyComponent | TupleKey) -> TupleKey:
         else:
             result.append(component)
     return tuple(result)
+
+
+def join_component(path: TupleKey, *components: KeyComponent) -> TupleKey:
+    """Join path components into a single path.
+
+    Adds new components to the original path.
+
+    Args:
+        path: Original path
+        *components: Components to join
+
+    Returns:
+        Combined path as tuple
+    """
+    return path + components
 
 
 def get_common_ancestor(path1: TupleKey, path2: TupleKey) -> TupleKey:

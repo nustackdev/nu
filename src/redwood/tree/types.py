@@ -10,6 +10,7 @@ from enum import Enum, IntFlag, auto
 from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple, NewType
 
+from redwood.abc import EMPTY
 from redwood.be import (
     ReadAccessProtocol,
     ReadWriteAccessProtocol,
@@ -22,7 +23,7 @@ from redwood.be import (
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey, Value
+    from redwood.abc import Empty, TupleKey, Value
 
 
 __all__ = [
@@ -82,13 +83,14 @@ class NodeInfo(NamedTuple):
     path: TupleKey
     exists: bool
     node_type: NodeType
+    raw_value: Value | Empty = EMPTY
 
     # Container-specific fields
     structure: ContainerStructure | None = None
     protocol: ContainerProtocol | None = None
 
     # Primitive-specific fields
-    primitive_value: Value | None = None
+    primitive_value: Value | Empty = EMPTY
 
 
 class ParentInfo(NamedTuple):
@@ -108,7 +110,7 @@ class ParentInfo(NamedTuple):
     exists: bool
     structure: ContainerStructure | None = None
     protocol: ContainerProtocol | None = None
-    raw_type_data: Value | None = None
+    raw_type_data: Value | Empty = EMPTY
 
 
 class ParentChainInfo(NamedTuple):

@@ -16,7 +16,8 @@ from typing import TYPE_CHECKING
 from redwood.be import StorageKeyError
 
 from .marker import extract_marker
-from .types import NodeInfo, NodeType, require_read_context
+from .navigation import get_ancestors
+from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read_context
 
 
 if TYPE_CHECKING:
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
     from redwood.be import StorageContextType
 
 __all__ = [
+    "gather_parent_info",
     "get_node_info",
     "get_node_type",
     "node_exists",
@@ -116,6 +118,7 @@ def get_node_info(path: TupleKey, ctx: StorageContextType) -> NodeInfo:
                 path=path,
                 exists=True,
                 node_type=NodeType.CONTAINER,
+                raw_value=raw_value,
                 structure=structure,
                 protocol=protocol,
             )
@@ -125,6 +128,7 @@ def get_node_info(path: TupleKey, ctx: StorageContextType) -> NodeInfo:
             path=path,
             exists=True,
             node_type=NodeType.PRIMITIVE,
+            raw_value=raw_value,
             primitive_value=raw_value,
         )
 
@@ -135,3 +139,90 @@ def get_node_info(path: TupleKey, ctx: StorageContextType) -> NodeInfo:
             exists=False,
             node_type=NodeType.NOT_FOUND,
         )
+
+
+def gather_parent_info(path: TupleKey, ctx: StorageContextType) -> ParentChainInfo:
+    """Gather parent chain information without validation.
+
+    Pure information collection - traverses the path hierarchy from root to
+    immediate parent, collecting raw storage data and categorizing paths based
+    on existence and data format. Does not make validation decisions.
+
+    Args:
+        path: Path to gather parent information for
+        ctx: Storage context (transaction or snapshot)
+
+    Returns:
+        ParentChainInfo with raw data about parent chain:
+        - chain: All parent infos from root to immediate parent
+        - missing_paths: Paths that don't exist in storage
+        - malformed_paths: Paths with corrupted markers
+
+    Example:
+        >>> info = gather_parent_info(("users", "alice", "profile"), tx)
+        >>> if info.all_exist and info.all_healthy:
+        ...     print("Parent chain is complete and healthy")
+    """
+    ancestors = get_ancestors(path)
+    if not ancestors:
+        # Root level - no parents
+        return ParentChainInfo(
+            chain=(),
+            missing_paths=(),
+            malformed_paths=(),
+        )
+
+    parent_infos = []
+    missing_paths = []
+    malformed_paths = []
+
+    for ancestor_path in ancestors:
+        info = get_node_info(ancestor_path, ctx)
+
+        if not info.exists:
+            parent_info = ParentInfo(
+                path=ancestor_path,
+                exists=False,
+            )
+            parent_infos.append(parent_info)
+            missing_paths.append(ancestor_path)
+
+        elif info.node_type == NodeType.CONTAINER:
+            # Check if marker is well-formed
+            if info.structure is None or info.protocol is None:
+                parent_info = ParentInfo(
+                    path=ancestor_path,
+                    exists=True,
+                    structure=None,
+                    protocol=None,
+                    raw_type_data=None,  # Malformed
+                )
+                parent_infos.append(parent_info)
+                malformed_paths.append(ancestor_path)
+            else:
+                parent_info = ParentInfo(
+                    path=ancestor_path,
+                    exists=True,
+                    structure=info.structure,
+                    protocol=info.protocol,
+                    raw_type_data=None,
+                )
+                parent_infos.append(parent_info)
+
+        else:
+            # Primitive at parent location - malformed
+            parent_info = ParentInfo(
+                path=ancestor_path,
+                exists=True,
+                structure=None,
+                protocol=None,
+                raw_type_data=info.primitive_value,
+            )
+            parent_infos.append(parent_info)
+            malformed_paths.append(ancestor_path)
+
+    return ParentChainInfo(
+        chain=tuple(parent_infos),
+        missing_paths=tuple(missing_paths),
+        malformed_paths=tuple(malformed_paths),
+    )

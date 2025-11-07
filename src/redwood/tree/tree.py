@@ -181,7 +181,7 @@ class Tree(NamedTuple):
         structure: ContainerStructure,
         protocol: ContainerProtocol,
         *,
-        create_parents: bool = True,
+        ensure_healthy_parents: bool = True,
     ) -> bool:
         """Create container at path.
 
@@ -189,7 +189,7 @@ class Tree(NamedTuple):
             path: Container path
             structure: Container structure ID
             protocol: Container protocol flags
-            create_parents: Whether to create missing parents
+            ensure_healthy_parents: Validate parents chain, create non-existent parents
 
         Returns:
             True if created, False if already exists with compatible type
@@ -201,7 +201,7 @@ class Tree(NamedTuple):
             True
         """
         return container_ops.create_container(
-            path, structure, protocol, self.ctx, create_parents=create_parents
+            path, structure, protocol, self.ctx, ensure_healthy_parents=ensure_healthy_parents
         )
 
     def delete_container(self, path: TupleKey, *, recursive: bool = False) -> bool:
@@ -555,26 +555,6 @@ class Tree(NamedTuple):
             >>> print(f"Created {len(created)} parents")
         """
         return container_ops.create_parents(
-            path, ContainerStructure(1), ContainerProtocol.MUTABLE, self.ctx
-        )
-
-    def ensure_parents(
-        self,
-        path: TupleKey,
-    ) -> list[TupleKey]:
-        """Ensure all parents exist, creating if needed.
-
-        Args:
-            path: Target path
-
-        Returns:
-            List of created parent paths (empty if all existed)
-
-        Example:
-            >>> created = tree.ensure_parents(("users", "alice", "profile"))
-            # Now guaranteed: all parents exist and are healthy
-        """
-        return container_ops.ensure_parents(
             path, ContainerStructure(1), ContainerProtocol.MUTABLE, self.ctx
         )
 

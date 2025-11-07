@@ -59,7 +59,6 @@ from .container_ops import (
     delete_child,
     delete_container,
     delete_subtree,
-    ensure_parents,
     get_child_type,
     has_child,
     list_child_keys,
@@ -106,6 +105,7 @@ from .navigation import (
     is_ancestor,
     is_descendant,
     is_sibling,
+    join_component,
     join_path,
 )
 
@@ -113,6 +113,7 @@ from .navigation import (
 # Node Operations
 # ============================================================================
 from .node_ops import (
+    gather_parent_info,
     get_node_info,
     get_node_type,
     node_exists,
@@ -139,7 +140,6 @@ from .types import (
 # Validation Operations
 # ============================================================================
 from .validation_ops import (
-    gather_parent_info,
     validate_compatible,
     validate_exists,
     validate_is_container,
@@ -182,6 +182,7 @@ __all__ = [  # noqa: RUF022
     "get_node_info",
     "get_node_type",
     "node_exists",
+    "gather_parent_info",
     # Navigation (pure functions)
     "get_parent",
     "get_ancestors",
@@ -191,9 +192,9 @@ __all__ = [  # noqa: RUF022
     "is_sibling",
     "get_depth",
     "join_path",
+    "join_component",
     "get_common_ancestor",
     # Validation
-    "gather_parent_info",
     "validate_exists",
     "validate_not_exists",
     "validate_is_container",
@@ -218,7 +219,6 @@ __all__ = [  # noqa: RUF022
     "list_descendants",
     "walk_tree",
     "create_parents",
-    "ensure_parents",
     # Main interface
     "Tree",
 ]

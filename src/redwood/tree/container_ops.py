@@ -17,7 +17,7 @@ from redwood.be import StorageKeyError, StorageScanOptions
 
 from .exceptions import PathExistsError, PathTypeError
 from .marker import create_marker, is_marker
-from .navigation import join_path
+from .navigation import join_component
 from .node_ops import get_node_info, get_node_type
 from .types import (
     ContainerProtocol,
@@ -31,7 +31,7 @@ from .validation_ops import (
     gather_parent_info,
     validate_compatible,
     validate_is_container,
-    validate_parents_chain,
+    validate_is_primitive,
     validate_parents_healthy,
 )
 
@@ -51,7 +51,6 @@ __all__ = [
     "delete_child",
     "delete_container",
     "delete_subtree",
-    "ensure_parents",
     "get_child_type",
     "has_child",
     "list_child_keys",
@@ -73,7 +72,7 @@ def create_container(
     protocol: ContainerProtocol,
     ctx: StorageContextType,
     *,
-    create_parents: bool = True,
+    ensure_healthy_parents: bool = True,
 ) -> bool:
     """Create container at path.
 
@@ -82,7 +81,7 @@ def create_container(
         structure: Container structure ID
         protocol: Container protocol flags
         ctx: Storage context (transaction)
-        create_parents: Whether to create missing parents
+        ensure_healthy_parents: Validate parents chain, create non-existent parents
 
     Returns:
         True if created, False if already exists with compatible type
@@ -103,38 +102,42 @@ def create_container(
         ... )
         True
     """
-    wctx = require_write_context(ctx)
-
     # Check if already exists
-    info = get_node_info(path, ctx)
-    if info.exists:
-        if info.node_type != NodeType.CONTAINER:
+    node_info = get_node_info(path, ctx)
+
+    # Validate type consistency if node already exists
+    if node_info.exists:
+        # Primitive check
+        if node_info.node_type != NodeType.CONTAINER:
             raise PathTypeError(f"Path exists as primitive: {path}")
-        # Check compatibility
+
+        # Existing container type compatibility
         try:
-            validate_compatible(path, structure, protocol, ctx)
+            validate_compatible(path, structure, protocol, ctx, node_info=node_info)
             return False  # Already exists with compatible type
         except PathTypeError:
             raise PathExistsError(f"Container exists with incompatible type: {path}") from None
 
-    # Validate/create parents
-    if create_parents:
-        validate_parents_healthy(path, ctx)
-
+    # Ensure parents chain is healthy
+    if ensure_healthy_parents:
         parent_info = gather_parent_info(path, ctx)
-        if not parent_info.all_exist:
-            # Create missing parents with default type
-            for missing_path in parent_info.missing_paths:
-                marker = create_marker(
-                    ContainerStructure(1),  # Default associative
-                    ContainerProtocol.MUTABLE,
-                )
-                wctx.put(missing_path, marker)
-    else:
-        validate_parents_chain(path, ctx)
+
+        # Validate existing parents are healthy
+        validate_parents_healthy(path, ctx, parent_info=parent_info)
+
+        # Create missing parents
+        if parent_info.missing_paths:
+            create_parents(
+                path,
+                ContainerStructure(1),  # Default associative
+                ContainerProtocol.MUTABLE,
+                ctx,
+            )
 
     # Create container
     marker = create_marker(structure, protocol)
+
+    wctx = require_write_context(ctx)
     wctx.put(path, marker)
     return True
 
@@ -249,7 +252,7 @@ def has_child(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -> boo
         >>> has_child(("users", "alice"), "profile", tx)
         True
     """
-    child_path = join_path(path, key)
+    child_path = join_component(path, key)
     child_type = get_node_type(child_path, ctx)
     return child_type != NodeType.NOT_FOUND
 
@@ -273,7 +276,7 @@ def get_child_type(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -
         >>> if child_type == NodeType.CONTAINER:
         ...     print("Child is a container")
     """
-    child_path = join_path(path, key)
+    child_path = join_component(path, key)
     return get_node_type(child_path, ctx)
 
 
@@ -415,8 +418,8 @@ def create_child_container(
     """
     validate_is_container(parent_path, ctx)
 
-    child_path = join_path(parent_path, key)
-    return create_container(child_path, structure, protocol, ctx, create_parents=False)
+    child_path = join_component(parent_path, key)
+    return create_container(child_path, structure, protocol, ctx, ensure_healthy_parents=False)
 
 
 def set_child_primitive(
@@ -441,12 +444,15 @@ def set_child_primitive(
     Example:
         >>> set_child_primitive(("users", "alice"), "name", "Alice Smith", tx)
     """
-    wctx = require_write_context(ctx)
-
     validate_is_container(parent_path, ctx)
 
-    child_path = join_path(parent_path, key)
-    wctx.put(child_path, value)
+    child_path = join_component(parent_path, key)
+    child_node_info = get_node_info(child_path, ctx)
+
+    if child_node_info.exists:
+        validate_is_primitive(child_path, ctx, node_type=child_node_info.node_type)
+
+    require_write_context(ctx).put(child_path, value)
 
 
 def get_child_primitive(
@@ -464,22 +470,17 @@ def get_child_primitive(
         PathTypeError: If parent is not a container or child is a container
         StorageInterfaceError: If context doesn't support read access
     """
-    rctx = require_read_context(ctx)
     validate_is_container(parent_path, ctx)
 
-    child_path = join_path(parent_path, key)
-    info = get_node_info(child_path, ctx)
+    child_path = join_component(parent_path, key)
+    child_node_info = get_node_info(child_path, ctx)
 
-    if not info.exists:
+    if not child_node_info.exists:
         return EMPTY
 
-    if info.node_type == NodeType.CONTAINER:
-        raise PathTypeError(f"Child is a container: {child_path}")
+    validate_is_primitive(child_path, ctx, node_type=child_node_info.node_type)
 
-    try:
-        return rctx.get(child_path)
-    except StorageKeyError:
-        return EMPTY
+    return child_node_info.primitive_value
 
 
 def delete_child(
@@ -509,11 +510,9 @@ def delete_child(
         >>> delete_child(("users", "alice"), "old_profile", tx, recursive=True)
         True
     """
-    wctx = require_write_context(ctx)
-
     validate_is_container(parent_path, ctx)
 
-    child_path = join_path(parent_path, key)
+    child_path = join_component(parent_path, key)
     info = get_node_info(child_path, ctx)
 
     if not info.exists:
@@ -523,7 +522,7 @@ def delete_child(
         return delete_container(child_path, ctx, recursive=recursive)
     else:
         try:
-            wctx.delete(child_path)
+            require_write_context(ctx).delete(child_path)
             return True
         except StorageKeyError:
             return False
@@ -682,9 +681,10 @@ def create_parents(
     """
     wctx = require_write_context(ctx)
 
-    validate_parents_healthy(path, ctx)
-
     parent_info = gather_parent_info(path, ctx)
+
+    validate_parents_healthy(path, ctx, parent_info=parent_info)
+
     if not parent_info.missing_paths:
         return []
 
@@ -695,45 +695,3 @@ def create_parents(
         created.append(missing_path)
 
     return created
-
-
-def ensure_parents(
-    path: TupleKey,
-    default_structure: ContainerStructure,
-    default_protocol: ContainerProtocol,
-    ctx: StorageContextType,
-) -> list[TupleKey]:
-    """Ensure all parents exist, creating if needed.
-
-    Guarantees that the complete parent chain exists and is healthy.
-    Creates any missing parents and validates that existing parents
-    have well-formed data.
-
-    Args:
-        path: Target path
-        default_structure: Structure ID for created parents
-        default_protocol: Protocol flags for created parents
-        ctx: Storage context (transaction)
-
-    Returns:
-        List of created parent paths (empty if all existed)
-
-    Raises:
-        PathTypeError: If existing parents have malformed data
-        StorageInterfaceError: If context doesn't support required operations
-
-    Example:
-        >>> created = ensure_parents(
-        ...     ("users", "alice", "profile"),
-        ...     ContainerStructure(1),
-        ...     ContainerProtocol.MUTABLE,
-        ...     tx,
-        ... )
-        # Now guaranteed: all parents exist and are healthy
-    """
-    parent_info = gather_parent_info(path, ctx)
-    if parent_info.all_exist:
-        validate_parents_healthy(path, ctx)
-        return []
-
-    return create_parents(path, default_structure, default_protocol, ctx)
