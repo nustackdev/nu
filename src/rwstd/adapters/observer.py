@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, final
 
-from redwood.be import ObserverConnectionError
+from redwood.storage import ObserverConnectionError
 
 
 if TYPE_CHECKING:
     from redwood.abc import CallbackFn, TupleKey
-    from redwood.be import (
+    from redwood.storage import (
         CodecProtocol,
         SubscriptionProtocol,
     )

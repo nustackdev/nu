@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
 
 from redwood.abc import EMPTY
-from redwood.be import StorageKeyError
+from redwood.storage import StorageKeyError
 from redwood.utils.path import Path
 
 from . import container_ops as container_ops
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.abc import Empty, KeyComponent, TupleKey, Value
-    from redwood.be import StorageContextType
+    from redwood.storage import StorageContextType
 
 __all__ = [
     "Tree",

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from redwood.abc import KeyComponent
-    from redwood.be import StorageContextType
+    from redwood.storage import StorageContextType
     from redwood.tree import Tree, View
 
     from .core.term import RValue

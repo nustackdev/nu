@@ -11,7 +11,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple, NewType
 
 from redwood.abc import NOT_SET, NotSet
-from redwood.be import (
+from redwood.storage import (
     ReadAccessProtocol,
     ReadWriteAccessProtocol,
     SnapshotProtocol,

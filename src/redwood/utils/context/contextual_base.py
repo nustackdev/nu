@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING, Self, TypeGuard
 
 import attrs
 
-from redwood.be import SnapshotProtocol, StorageContextType, TransactionProtocol
+from redwood.storage import SnapshotProtocol, StorageContextType, TransactionProtocol
 
 
 if TYPE_CHECKING:
-    from redwood.be import StorageProtocol
+    from redwood.storage import StorageProtocol
 
 
 __all__ = ["ContextualBase", "is_contextual"]

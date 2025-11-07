@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from redwood.abc import NOT_SET, NotSet, Value, is_notset
-from redwood.be import StorageKeyError
+from redwood.storage import StorageKeyError
 
 from .marker import extract_marker
 from .navigation import get_ancestors
@@ -23,7 +23,7 @@ from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read
 
 if TYPE_CHECKING:
     from redwood.abc import TupleKey
-    from redwood.be import StorageContextType
+    from redwood.storage import StorageContextType
 
 __all__ = [
     "gather_parent_info",

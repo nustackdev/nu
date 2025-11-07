@@ -17,7 +17,7 @@ from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, Pa
 
 if TYPE_CHECKING:
     from redwood.abc import TupleKey
-    from redwood.be import StorageContextType
+    from redwood.storage import StorageContextType
 
 __all__ = [
     "validate_compatible",

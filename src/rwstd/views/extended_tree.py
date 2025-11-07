@@ -21,7 +21,7 @@ from .queue_view import QueueView
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from redwood.be import (
+    from redwood.storage import (
         StorageContextType,
     )
 

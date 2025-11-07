@@ -11,7 +11,7 @@ import attrs
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.be import StorageContextType, StorageProtocol
+    from redwood.storage import StorageContextType, StorageProtocol
 
     from .contextual_base import ContextualBase
 

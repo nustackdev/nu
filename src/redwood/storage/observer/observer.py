@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from redwood.abc import CallbackFn, TupleKey
-    from redwood.be.codec import CodecProtocol
+    from redwood.storage.codec import CodecProtocol
 
 
 __all__ = [

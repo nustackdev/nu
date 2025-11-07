@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from functools import partial
 
-from redwood.be import Codec
+from redwood.storage import Codec
 
 
 __all__ = [

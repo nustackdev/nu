@@ -13,7 +13,7 @@ from .transaction import TransactionalStorageProtocol
 
 if TYPE_CHECKING:
     from redwood.abc import CallbackFn, TupleKey
-    from redwood.be.observer import SubscriptionProtocol
+    from redwood.storage.observer import SubscriptionProtocol
 
 
 @runtime_checkable

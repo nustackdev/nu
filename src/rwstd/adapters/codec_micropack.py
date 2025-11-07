@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     import micropack as _micropack  # type: ignore[import]
 
     from redwood.abc import Value
-    from redwood.be import ValueCodecProtocol
+    from redwood.storage import ValueCodecProtocol
 
 
 __all__ = ["MicroPackCodec"]

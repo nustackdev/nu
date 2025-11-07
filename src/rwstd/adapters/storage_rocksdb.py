@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
-from redwood.be import (
+from redwood.storage import (
     CodecProtocol,
     ObserverProtocol,
     ScanProtocol,

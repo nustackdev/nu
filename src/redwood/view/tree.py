@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
     from redwood.abc import CallbackFn, KeyComponent, TupleKey
-    from redwood.be import (
+    from redwood.storage import (
         SnapshotProtocol,
         StorageContextType,
         SubscriptionProtocol,

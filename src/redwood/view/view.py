@@ -51,7 +51,7 @@ from .types import AccessibleViewProtocol
 
 
 if TYPE_CHECKING:
-    from redwood.be import StorageContextType
+    from redwood.storage import StorageContextType
     from redwood.tree.types import ContainerProtocol, ContainerStructure
 
     from .tree import Tree
