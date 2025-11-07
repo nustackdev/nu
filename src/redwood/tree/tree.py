@@ -340,7 +340,7 @@ class Tree(NamedTuple):
         """
         return container_ops.get_child_type(path, key, self.ctx)
 
-    def list_child_keys(self, path: TupleKey) -> list[KeyComponent]:
+    def list_child_keys(self, path: TupleKey) -> Generator[KeyComponent, None, None]:
         """List direct child keys.
 
         Args:
@@ -354,9 +354,25 @@ class Tree(NamedTuple):
             >>> print(keys)
             ["profile", "settings", "posts"]
         """
-        return container_ops.list_child_keys(path, self.ctx)
+        yield from container_ops.list_child_keys(path, self.ctx)
 
-    def list_children(self, path: TupleKey) -> list[tuple[TupleKey, NodeType]]:
+    def list_child_values(self, path: TupleKey) -> Generator[NodeInfo, None, None]:
+        """List direct child keys.
+
+        Args:
+            path: Container path
+
+        Returns:
+            List of child keys
+
+        Example:
+            >>> keys = tree.list_child_keys(("users", "alice"))
+            >>> print(keys)
+            ["profile", "settings", "posts"]
+        """
+        yield from container_ops.list_child_values(path, self.ctx)
+
+    def list_children(self, path: TupleKey) -> Generator[tuple[KeyComponent, NodeInfo], None, None]:
         """List all direct children with types.
 
         Args:
@@ -370,7 +386,7 @@ class Tree(NamedTuple):
             >>> for child_path, node_type in children:
             ...     print(f"{child_path}: {node_type}")
         """
-        return container_ops.list_children(path, self.ctx)
+        yield from container_ops.list_children(path, self.ctx)
 
     def count_children(self, path: TupleKey) -> int:
         """Count direct children.

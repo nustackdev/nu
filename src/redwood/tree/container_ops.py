@@ -22,6 +22,7 @@ from .node_ops import get_node_info, get_node_type
 from .types import (
     ContainerProtocol,
     ContainerStructure,
+    NodeInfo,
     NodeType,
     require_read_context,
     require_readwrite_context,
@@ -280,7 +281,7 @@ def get_child_type(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -
     return get_node_type(child_path, ctx)
 
 
-def list_child_keys(path: TupleKey, ctx: StorageContextType) -> list[KeyComponent]:
+def list_child_keys(path: TupleKey, ctx: StorageContextType) -> Generator[KeyComponent, None, None]:
     """List direct child keys only.
 
     Args:
@@ -300,24 +301,50 @@ def list_child_keys(path: TupleKey, ctx: StorageContextType) -> list[KeyComponen
         >>> print(keys)
         ["profile", "settings", "posts"]
     """
-    rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
-    start_key = (*path, "")
-    end_key = (*path, "\uffff")
-    target_depth = len(path) + 1
+    scan_opts = StorageScanOptions(
+        start=path,
+        start_inclusive=False,
+        end=(*path, "\uffff"),
+        length=len(path) + 1,
+    )
 
-    scan_opts = StorageScanOptions(start=start_key, end=end_key)
-    keys = []
-
-    for key, _ in rctx.scan(scan_opts).items():
-        if len(key) == target_depth:
-            keys.append(key[-1])
-
-    return keys
+    for key in require_read_context(ctx).scan(scan_opts).keys():
+        yield key[-1]
 
 
-def list_children(path: TupleKey, ctx: StorageContextType) -> list[tuple[TupleKey, NodeType]]:
+def list_child_values(path: TupleKey, ctx: StorageContextType) -> Generator[NodeInfo, None, None]:
+    """List direct child values only.
+
+    Args:
+        path: Container path
+        ctx: Storage context (transaction or snapshot)
+
+    Returns:
+        List of child values
+
+    Raises:
+        PathNotFoundError: If container doesn't exist
+        PathTypeError: If path is not a container
+        StorageInterfaceError: If context doesn't support read access
+    """
+    validate_is_container(path, ctx)
+
+    scan_opts = StorageScanOptions(
+        start=path,
+        start_inclusive=False,
+        end=(*path, "\uffff"),
+        length=len(path) + 1,
+    )
+
+    for key, value in require_read_context(ctx).scan(scan_opts).items():
+        yield get_node_info(key, ctx, raw_value=value)
+
+
+def list_children(
+    path: TupleKey, ctx: StorageContextType
+) -> Generator[tuple[KeyComponent, NodeInfo], None, None]:
     """List all direct children with types.
 
     Args:
@@ -337,22 +364,17 @@ def list_children(path: TupleKey, ctx: StorageContextType) -> list[tuple[TupleKe
         >>> for child_path, node_type in children:
         ...     print(f"{child_path}: {node_type}")
     """
-    rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
-    start_key = (*path, "")
-    end_key = (*path, "\uffff")
-    target_depth = len(path) + 1
+    scan_opts = StorageScanOptions(
+        start=path,
+        start_inclusive=False,
+        end=(*path, "\uffff"),
+        length=len(path) + 1,
+    )
 
-    scan_opts = StorageScanOptions(start=start_key, end=end_key)
-    children = []
-
-    for key, value in rctx.scan(scan_opts).items():
-        if len(key) == target_depth:
-            node_type = NodeType.CONTAINER if is_marker(value) else NodeType.PRIMITIVE
-            children.append((key, node_type))
-
-    return children
+    for key, value in require_read_context(ctx).scan(scan_opts).items():
+        yield (key[-1], get_node_info(key, ctx, raw_value=value))
 
 
 def count_children(path: TupleKey, ctx: StorageContextType) -> int:
@@ -374,7 +396,10 @@ def count_children(path: TupleKey, ctx: StorageContextType) -> int:
         >>> count = count_children(("users", "alice"), tx)
         >>> print(f"Container has {count} children")
     """
-    return len(list_child_keys(path, ctx))
+    counter = 0
+    while list_child_keys(path, ctx):
+        counter += 1
+    return counter
 
 
 # ============================================================================

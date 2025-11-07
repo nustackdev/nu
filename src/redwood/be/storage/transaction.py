@@ -94,18 +94,17 @@ class ReadAccessProtocol(Protocol):
     """
 
     # Point access
-    def get(self, key: TupleKey, default: Value | None = None) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value at key.
 
         Args:
             key: Key to retrieve.
-            default: Default value if key not found.
 
         Returns:
-            Value at key, or default if not found.
+            Value at key.
 
         Raises:
-            StorageKeyError: If key not found and no default provided.
+            StorageKeyError: If key not found.
             StorageOperationError: If operation fails.
         """
         ...

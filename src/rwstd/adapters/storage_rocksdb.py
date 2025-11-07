@@ -1,8 +1,11 @@
-"""RocksDB storage backend implementation.
+"""RocksDB storage backend implementation - OPTIMIZED SCAN.
 
-This module provides a RocksDB-backed storage implementation conforming to
-the Redwood storage protocol. It uses composition of base classes to build
-transactions and snapshots with proper resource management and error handling.
+Key optimization: RocksDBScan now uses lazy iteration and only decodes what's requested:
+- keys() only decodes keys (no value decoding)
+- values() only decodes values
+- items() decodes both
+
+This eliminates wasteful operations when only keys or values are needed.
 """
 
 from __future__ import annotations
@@ -34,7 +37,7 @@ from rwstd.lazy_import import lazy_import
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator, Iterator
+    from collections.abc import Iterator
 
     import rwrocks as _rwrocks  # type: ignore[import]
     from redwood.abc import CallbackFn, TupleKey, Value
@@ -130,7 +133,7 @@ class _RocksDBContextBase:
 
 
 # =============================================================================
-# Read Operations Mixin
+# Operation Mixins
 # =============================================================================
 
 
@@ -145,7 +148,7 @@ class _ReadOperationsMixin:
     _storage: RocksDBStorage
     _require_active: Any  # Method from _RocksDBContextBase
 
-    def get(self, key: TupleKey, default: Value | None = None) -> Value:
+    def get(self, key: TupleKey) -> Value:
         """Get value by key.
 
         Args:
@@ -178,8 +181,6 @@ class _ReadOperationsMixin:
 
         # Handle not found
         if encoded_value is None:
-            if default is not None:
-                return default
             raise StorageKeyError(f"Key {key} not found")
 
         # Decode value
@@ -253,81 +254,9 @@ class _ReadOperationsMixin:
             StorageOperationError: If scan creation fails
             StorageClosedError: If context is closed
         """
-        txn = self._require_active()
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-        except Exception as e:
-            raise StorageOperationError(f"Failed to create scan iterator: {e}") from e
-
-        return RocksDBScan(self._storage, iterator, options)
-
-    ###### TEMP METHOD FOR COMPATIBILITY ######
-    def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
-        txn = self._require_active()
-        codec = self._storage.codec
-        encoded_prefix = codec.encode_key(prefix)
-
-        try:
-            with self._storage._db_lock:
-                iterator = txn.iteritems()
-                keys = _collect_prefixed_keys(
-                    iterator,
-                    encoded_prefix,
-                    codec.decode_key,
-                    prefix,
-                    depth,
-                )
-        except Exception as e:
-            raise StorageOperationError(f"Failed to list keys under {prefix}: {e}") from e
-
-        yield from keys
-
-
-###### TEMP METHOD FOR COMPATIBILITY ######
-def _collect_prefixed_keys(
-    iterator: Any,
-    encoded_prefix: bytes,
-    decode_key: Callable[[bytes], TupleKey],
-    prefix: TupleKey,
-    depth: int,
-) -> list[TupleKey]:
-    """Collect keys that match the encoded prefix using a RocksDB iterator."""
-    keys: list[TupleKey] = []
-    try:
-        if encoded_prefix:
-            iterator.seek(encoded_prefix)
-        else:
-            iterator.seek_to_first()
-
-        while True:
-            try:
-                encoded_key, _ = iterator.get()
-            except ValueError:
-                break
-
-            if not encoded_key.startswith(encoded_prefix):
-                break
-
-            decoded_key = decode_key(encoded_key)
-            if depth == -1 or len(decoded_key) - len(prefix) == depth:
-                keys.append(decoded_key)
-
-            try:
-                iterator.skip()
-            except ValueError:
-                break
-    finally:
-        # Ensure the underlying C++ iterator is released promptly.
-        del iterator
-
-    return keys
-
-
-# =============================================================================
-# Write Operations Mixin
-# =============================================================================
+        # Don't create iterator yet - let keys()/values()/items() create
+        # the appropriate iterator type (iterkeys vs iteritems)
+        return RocksDBScan(self, options)
 
 
 class _WriteOperationsMixin:
@@ -413,24 +342,110 @@ class _WriteOperationsMixin:
 
 
 # =============================================================================
-# Transaction Control Mixin
+# Composed Classes
 # =============================================================================
 
 
-class _TransactionControlMixin:
-    """Mixin providing transaction control operations.
+class RocksDBSnapshot(
+    _RocksDBContextBase,
+    _ReadOperationsMixin,
+):
+    """Read-only snapshot implementation.
 
-    Implements commit and abort operations with proper notification
-    and cleanup handling.
+    Provides consistent read-only view of the database at a point in time.
+    Composed from base context and read operations.
     """
 
-    # Type hints for mixed-in attributes
-    _storage: RocksDBStorage
-    _require_active: Any  # Method from _RocksDBContextBase
-    _mark_closed: Any  # Method from _RocksDBContextBase
-    _modified_keys: set[TupleKey]
-    _committed: bool
-    _aborted: bool
+    @property
+    def writable(self) -> bool:
+        """Always False for snapshots."""
+        return False
+
+    def close(self) -> None:
+        """Close snapshot and release resources.
+
+        Raises:
+            StorageError: If close fails
+        """
+        if self._closed:
+            return
+
+        if self._rwrocks_txn is not None:
+            try:
+                with self._storage._db_lock:
+                    # Rollback to release the snapshot
+                    self._rwrocks_txn.rollback()
+            except Exception as e:
+                raise StorageError(f"Failed to close snapshot: {e}") from e
+            finally:
+                self._mark_closed()
+                self._storage._remove_snapshot(self)
+        else:
+            self._mark_closed()
+            self._storage._remove_snapshot(self)
+
+    def __enter__(self) -> RocksDBSnapshot:
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager - auto close."""
+        self.close()
+
+
+class RocksDBTransaction(
+    _RocksDBContextBase,
+    _ReadOperationsMixin,
+    _WriteOperationsMixin,
+):
+    """Read-write transaction implementation.
+
+    Provides full read-write access with ACID guarantees.
+    Composed from base context, read operations, write operations,
+    and transaction control.
+    """
+
+    def __init__(
+        self,
+        storage: RocksDBStorage,
+        rwrocks_txn: rwrocks.Transaction,
+    ) -> None:
+        """Initialize transaction.
+
+        Args:
+            storage: Parent storage instance
+            rwrocks_txn: RocksDB transaction handle
+        """
+        super().__init__(storage, rwrocks_txn)
+        self._modified_keys: set[TupleKey] = set()
+        self._committed = False
+        self._aborted = False
+
+    @property
+    def writable(self) -> bool:
+        """Always True for transactions."""
+        return True
+
+    def __enter__(self) -> RocksDBTransaction:
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager - auto commit or abort.
+
+        If an exception occurred, abort the transaction.
+        Otherwise, commit the transaction.
+        """
+        if exc_type is not None:
+            # Exception occurred - abort
+            try:
+                self.abort()
+            except Exception:
+                # Suppress abort errors if already handling exception
+                pass
+        else:
+            # No exception - commit
+            self.commit()
 
     def commit(self) -> None:
         """Commit all changes in the transaction.
@@ -492,155 +507,87 @@ class _TransactionControlMixin:
 
 
 # =============================================================================
-# Composed Classes
+# OPTIMIZED Scan Iterator
 # =============================================================================
 
-
-class RocksDBSnapshot(_RocksDBContextBase, _ReadOperationsMixin):
-    """Read-only snapshot implementation.
-
-    Provides consistent read-only view of the database at a point in time.
-    Composed from base context and read operations.
-    """
-
-    @property
-    def writable(self) -> bool:
-        """Always False for snapshots."""
-        return False
-
-    def close(self) -> None:
-        """Close snapshot and release resources.
-
-        Raises:
-            StorageError: If close fails
-        """
-        if self._closed:
-            return
-
-        if self._rwrocks_txn is not None:
-            try:
-                with self._storage._db_lock:
-                    # Rollback to release the snapshot
-                    self._rwrocks_txn.rollback()
-            except Exception as e:
-                raise StorageError(f"Failed to close snapshot: {e}") from e
-            finally:
-                self._mark_closed()
-                self._storage._remove_snapshot(self)
-        else:
-            self._mark_closed()
-            self._storage._remove_snapshot(self)
-
-    def __enter__(self) -> RocksDBSnapshot:
-        """Enter context manager."""
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Exit context manager - auto close."""
-        self.close()
+from collections.abc import Generator
+from enum import Enum, auto
+from typing import Literal, overload
 
 
-class RocksDBTransaction(
-    _RocksDBContextBase,
-    _ReadOperationsMixin,
-    _WriteOperationsMixin,
-    _TransactionControlMixin,
-):
-    """Read-write transaction implementation.
-
-    Provides full read-write access with ACID guarantees.
-    Composed from base context, read operations, write operations,
-    and transaction control.
-    """
-
-    def __init__(
-        self,
-        storage: RocksDBStorage,
-        rwrocks_txn: rwrocks.Transaction,
-    ) -> None:
-        """Initialize transaction.
-
-        Args:
-            storage: Parent storage instance
-            rwrocks_txn: RocksDB transaction handle
-        """
-        super().__init__(storage, rwrocks_txn)
-        self._modified_keys: set[TupleKey] = set()
-        self._committed = False
-        self._aborted = False
-
-    @property
-    def writable(self) -> bool:
-        """Always True for transactions."""
-        return True
-
-    def __enter__(self) -> RocksDBTransaction:
-        """Enter context manager."""
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Exit context manager - auto commit or abort.
-
-        If an exception occurred, abort the transaction.
-        Otherwise, commit the transaction.
-        """
-        if exc_type is not None:
-            # Exception occurred - abort
-            try:
-                self.abort()
-            except Exception:
-                # Suppress abort errors if already handling exception
-                pass
-        else:
-            # No exception - commit
-            self.commit()
-
-
-# =============================================================================
-# Scan Iterator
-# =============================================================================
+class IteratorType(Enum):
+    KEYS = auto()
+    VALUES = auto()
+    ITEMS = auto()
 
 
 class RocksDBScan:
-    """Scan iterator implementation conforming to ScanProtocol.
+    """OPTIMIZED scan iterator implementation conforming to ScanProtocol.
 
     Provides Pythonic iteration interface over a range of keys.
-    Handles bounds checking, direction, and limits.
+
+    KEY OPTIMIZATIONS:
+    1. Uses iterkeys() when only keys needed (no value I/O from disk)
+    2. Uses iteritems() when values needed
+    3. For reverse iteration, seeks to end and uses prev() instead of caching
     """
 
     def __init__(
         self,
-        storage: RocksDBStorage,
-        rwrocks_iterator: Any,
+        context: _ReadOperationsMixin,
         options: StorageScanOptions,
     ) -> None:
         """Initialize scan iterator.
 
         Args:
-            storage: Parent storage instance
-            rwrocks_iterator: RocksDB iterator
+            context: Storage context (transaction/snapshot) with _require_active and _storage
             options: Scan configuration
         """
-        self._storage = storage
-        self._iterator = rwrocks_iterator
+        self._context = context
+        self._storage = context._storage
         self._options = options
-        self._items: list[tuple[TupleKey, Value]] | None = None
 
-    def _ensure_collected(self) -> list[tuple[TupleKey, Value]]:
-        """Collect all items matching scan options.
+    @overload
+    def _iterate_impl(
+        self, iterator_type: Literal[IteratorType.KEYS]
+    ) -> Generator[TupleKey, None, None]: ...
 
-        Lazily collects items on first access. Subsequent calls return
-        cached results.
+    @overload
+    def _iterate_impl(
+        self, iterator_type: Literal[IteratorType.VALUES]
+    ) -> Generator[Value, None, None]: ...
 
-        Returns:
-            List of (key, value) tuples
+    @overload
+    def _iterate_impl(
+        self, iterator_type: Literal[IteratorType.ITEMS]
+    ) -> Generator[tuple[TupleKey, Value], None, None]: ...
+
+    def _iterate_impl(self, iterator_type: IteratorType) -> Generator[object, None, None]:
+        """Core iteration implementation.
+
+        Args:
+            iterator_type: Use iteritems(), itervalues() or iterkeys().
+
+        Yields:
+            Tuples of (decoded_key, encoded_value_or_None)
         """
-        if self._items is not None:
-            return self._items
-
+        txn = self._context._require_active()
         codec = self._storage.codec
         options = self._options
-        items: list[tuple[TupleKey, Value]] = []
+
+        # Create appropriate iterator based on what we need
+        need_values = False
+        try:
+            with self._storage._db_lock:
+                if iterator_type == IteratorType.KEYS:
+                    iterator = txn.iterkeys()  # Read ONLY keys from disk
+                elif iterator_type == IteratorType.VALUES or iterator_type == IteratorType.ITEMS:
+                    iterator = txn.iteritems()  # Read ONLY values from disk
+                    need_values = True
+                else:
+                    raise ValueError("Unknown iterator_type argument")
+        except Exception as e:
+            raise StorageOperationError(f"Failed to create iterator: {e}") from e
 
         try:
             # Validate length option
@@ -648,77 +595,153 @@ class RocksDBScan:
                 raise StorageOperationError(f"Invalid scan length: {options.length}")
 
             # Encode bounds
-            start_key = codec.encode_key(options.start) if options.start else b""
-            end_key = codec.encode_key(options.end) if options.end else None
+            start_key_encoded = codec.encode_key(options.start) if options.start else b""
+            end_key_encoded = codec.encode_key(options.end) if options.end else None
 
-            # Seek to start position
+            # Seek to start/end based on direction
             try:
-                if start_key:
-                    self._iterator.seek(start_key)
+                if options.reverse:
+                    # Seek to end of range (or last key if no end bound)
+                    if end_key_encoded:
+                        iterator.seek(end_key_encoded)
+                        # If end_inclusive, we're at the right spot
+                        # If not end_inclusive, we need to be before end_key
+                        if not options.end_inclusive:
+                            try:
+                                # Move to previous key
+                                encoded_key = iterator.get()[0] if need_values else iterator.get()
+                                if encoded_key >= end_key_encoded:
+                                    iterator.skip_back()
+                            except (ValueError, IndexError):
+                                return
+                    else:
+                        iterator.seek_to_last()
                 else:
-                    self._iterator.seek_to_first()
+                    # Forward: seek to start
+                    if start_key_encoded:
+                        iterator.seek(start_key_encoded)
+                    else:
+                        iterator.seek_to_first()
             except ValueError:
                 # Iterator exhausted immediately
-                self._items = []
-                return self._items
+                return
+
+            # Track count for limit
+            count = 0
 
             # Iterate through range
             while True:
                 try:
-                    encoded_key, encoded_value = self._iterator.get()
-                except ValueError:
+                    if need_values:
+                        encoded_key, encoded_value = iterator.get()
+                    else:
+                        encoded_key = iterator.get()
+                        encoded_value = None
+                except (ValueError, IndexError):
                     # Iterator exhausted
                     break
 
-                # Decode key for bound checking
+                # Decode key (needed for filtering)
                 try:
                     key = codec.decode_key(encoded_key)
                 except Exception as e:
                     raise StorageOperationError(f"Failed to decode key: {e}") from e
 
-                # Check end bound
-                if end_key is not None:
-                    if options.end_inclusive:
-                        if encoded_key > end_key:
-                            break
-                    else:
-                        if encoded_key >= end_key:
-                            break
-
-                # Check start bound (inclusive/exclusive)
-                if options.start is not None:
-                    if options.start_inclusive:
-                        if key < options.start:
-                            try:
-                                self._iterator.skip()
-                            except ValueError:
+                # Check bounds based on direction
+                if options.reverse:
+                    # Going backward - check start bound
+                    if start_key_encoded:
+                        if options.start_inclusive:
+                            if encoded_key < start_key_encoded:
                                 break
-                            continue
-                    else:
-                        if key <= options.start:
-                            try:
-                                self._iterator.skip()
-                            except ValueError:
+                        else:
+                            if encoded_key <= start_key_encoded:
                                 break
-                            continue
+                else:
+                    # Going forward - check end bound
+                    if end_key_encoded is not None:
+                        if options.end_inclusive:
+                            if encoded_key > end_key_encoded:
+                                break
+                        else:
+                            if encoded_key >= end_key_encoded:
+                                break
 
-                # Length filter (if requested)
-                if options.length == -1 or len(key) == options.length:
-                    # Decode value only if key passes length filter
+                # Check start/end bound (for non-primary direction)
+                if options.reverse:
+                    # Already checked start bound above, check end bound
+                    if end_key_encoded is not None:
+                        if options.end_inclusive:
+                            if encoded_key > end_key_encoded:
+                                try:
+                                    iterator.skip_back()
+                                except ValueError:
+                                    break
+                                continue
+                        else:
+                            if encoded_key >= end_key_encoded:
+                                try:
+                                    iterator.skip_back()
+                                except ValueError:
+                                    break
+                                continue
+                else:
+                    # Already checked end bound above, check start bound
+                    if options.start is not None:
+                        if options.start_inclusive:
+                            if key < options.start:
+                                try:
+                                    iterator.skip()
+                                except ValueError:
+                                    break
+                                continue
+                        else:
+                            if key <= options.start:
+                                try:
+                                    iterator.skip()
+                                except ValueError:
+                                    break
+                                continue
+
+                # Length filter
+                if options.length != -1 and len(key) != options.length:
+                    try:
+                        if options.reverse:
+                            iterator.skip_back()
+                        else:
+                            iterator.skip()
+                    except ValueError:
+                        break
+                    continue
+
+                # Yield result
+                value = None
+                if need_values and encoded_value:
+                    # Decode value
                     try:
                         value = codec.decode_value(encoded_value)
                     except Exception as e:
                         raise StorageOperationError(f"Failed to decode value: {e}") from e
 
-                    items.append((key, value))
+                if iterator_type == IteratorType.ITEMS:
+                    yield (key, value)
+                elif iterator_type == IteratorType.VALUES:
+                    yield value
+                elif iterator_type == IteratorType.KEYS:
+                    yield key
+
+                count += 1
 
                 # Check limit
-                if options.limit is not None and len(items) >= options.limit:
+                if options.limit is not None and count >= options.limit:
                     break
 
                 # Advance iterator
                 try:
-                    self._iterator.skip()
+                    if options.reverse:
+                        iterator.skip_back()
+                    else:
+                        iterator.skip()
                 except ValueError:
                     break
 
@@ -726,28 +749,10 @@ class RocksDBScan:
             raise StorageOperationError(f"Failed during scan: {e}") from e
         finally:
             # Release iterator to free C++ resources
-            del self._iterator
+            del iterator
 
-        # Apply reverse if requested
-        if options.reverse:
-            items.reverse()
-
-        self._items = items
-        return self._items
-
-    def items(self) -> Iterator[tuple[TupleKey, Value]]:
-        """Iterate over (key, value) tuples.
-
-        Yields:
-            Tuples of (key, value) for each item in scan range
-
-        Raises:
-            StorageOperationError: If iteration fails
-        """
-        yield from self._ensure_collected()
-
-    def keys(self) -> Iterator[TupleKey]:
-        """Iterate over keys only.
+    def keys(self) -> Generator[TupleKey, None, None]:
+        """Iterate over keys only - uses iterkeys() for minimal I/O.
 
         Yields:
             Keys in scan range
@@ -755,11 +760,10 @@ class RocksDBScan:
         Raises:
             StorageOperationError: If iteration fails
         """
-        for key, _ in self._ensure_collected():
-            yield key
+        yield from self._iterate_impl(iterator_type=IteratorType.KEYS)
 
-    def values(self) -> Iterator[Value]:
-        """Iterate over values only.
+    def values(self) -> Generator[Value, None, None]:
+        """Iterate over values only - must use iteritems().
 
         Yields:
             Values in scan range
@@ -767,8 +771,18 @@ class RocksDBScan:
         Raises:
             StorageOperationError: If iteration fails
         """
-        for _, value in self._ensure_collected():
-            yield value
+        yield from self._iterate_impl(iterator_type=IteratorType.VALUES)
+
+    def items(self) -> Generator[tuple[TupleKey, Value], None, None]:
+        """Iterate over (key, value) tuples - uses iteritems().
+
+        Yields:
+            Tuples of (key, value) for each item in scan range
+
+        Raises:
+            StorageOperationError: If iteration fails
+        """
+        yield from self._iterate_impl(iterator_type=IteratorType.ITEMS)
 
     def __iter__(self) -> Iterator[TupleKey]:
         """Default iteration yields keys."""

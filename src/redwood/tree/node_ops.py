@@ -11,8 +11,9 @@ Hot path optimizations:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from redwood.abc import NOT_SET, NotSet, Value, is_notset
 from redwood.be import StorageKeyError
 
 from .marker import extract_marker
@@ -48,14 +49,15 @@ def node_exists(path: TupleKey, ctx: StorageContextType) -> bool:
         >>> node_exists(("users", "alice"), tx)
         True
     """
-    rctx = require_read_context(ctx)
     try:
-        return rctx.has(path)
+        return require_read_context(ctx).has(path)
     except StorageKeyError:
         return False
 
 
-def get_node_type(path: TupleKey, ctx: StorageContextType) -> NodeType:
+def get_node_type(
+    path: TupleKey, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
+) -> NodeType:
     """Get node type without full information gathering.
 
     Optimized for hot path - determines type without creating full NodeInfo.
@@ -63,6 +65,7 @@ def get_node_type(path: TupleKey, ctx: StorageContextType) -> NodeType:
     Args:
         path: Path to check
         ctx: Storage context (transaction or snapshot)
+        raw_value: Prefetched value to parse info from
 
     Returns:
         NodeType: CONTAINER, PRIMITIVE, or NOT_FOUND
@@ -71,9 +74,10 @@ def get_node_type(path: TupleKey, ctx: StorageContextType) -> NodeType:
         >>> get_node_type(("users", "alice"), tx)
         <NodeType.CONTAINER>
     """
-    rctx = require_read_context(ctx)
     try:
-        raw_value = rctx.get(path)
+        raw_value = cast(
+            "Value", require_read_context(ctx).get(path) if is_notset(raw_value) else raw_value
+        )
 
         # Quick marker check - extract_marker is fast
         if extract_marker(raw_value) is not None:
@@ -85,7 +89,9 @@ def get_node_type(path: TupleKey, ctx: StorageContextType) -> NodeType:
         return NodeType.NOT_FOUND
 
 
-def get_node_info(path: TupleKey, ctx: StorageContextType) -> NodeInfo:
+def get_node_info(
+    path: TupleKey, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
+) -> NodeInfo:
     """Get complete node information.
 
     Gathers all available information about a node including type-specific
@@ -94,6 +100,7 @@ def get_node_info(path: TupleKey, ctx: StorageContextType) -> NodeInfo:
     Args:
         path: Path to gather information about
         ctx: Storage context (transaction or snapshot)
+        raw_value: Prefetched value to parse info from
 
     Returns:
         NodeInfo with all available data:
@@ -106,9 +113,10 @@ def get_node_info(path: TupleKey, ctx: StorageContextType) -> NodeInfo:
         >>> if info.node_type == NodeType.CONTAINER:
         ...     print(f"Container with structure {info.structure}")
     """
-    rctx = require_read_context(ctx)
     try:
-        raw_value = rctx.get(path)
+        raw_value = cast(
+            "Value", require_read_context(ctx).get(path) if is_notset(raw_value) else raw_value
+        )
 
         # Try to parse as container marker
         marker_info = extract_marker(raw_value)

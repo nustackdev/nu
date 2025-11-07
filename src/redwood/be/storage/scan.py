@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
     from redwood.abc import TupleKey, Value
 
@@ -45,7 +45,7 @@ class ScanProtocol(Protocol):
                 process(key, value)
     """
 
-    def items(self) -> Iterator[tuple[TupleKey, Value]]:
+    def items(self) -> Generator[tuple[TupleKey, Value], None, None]:
         """Iterate over (key, value) tuples.
 
         Yields:
@@ -56,7 +56,7 @@ class ScanProtocol(Protocol):
         """
         ...
 
-    def keys(self) -> Iterator[TupleKey]:
+    def keys(self) -> Generator[TupleKey, None, None]:
         """Iterate over keys only.
 
         Yields:
@@ -67,7 +67,7 @@ class ScanProtocol(Protocol):
         """
         ...
 
-    def values(self) -> Iterator[Value]:
+    def values(self) -> Generator[Value, None, None]:
         """Iterate over values only.
 
         Yields:
