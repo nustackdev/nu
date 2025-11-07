@@ -1,7 +1,7 @@
 # content of test_sample.py
-import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import rwrocks
 
@@ -13,7 +13,7 @@ def test_open_skiplist_memtable_factory() -> None:
 
     loc = tempfile.mkdtemp()
     try:
-        rwrocks.DB(os.path.join(loc, "test"), opts)
+        rwrocks.DB(str(Path(loc) / "test"), opts)
     finally:
         shutil.rmtree(loc)
 
@@ -25,6 +25,6 @@ def test_open_vector_memtable_factory() -> None:
     opts.create_if_missing = True
     loc = tempfile.mkdtemp()
     try:
-        rwrocks.DB(os.path.join(loc, "test"), opts)
+        rwrocks.DB(str(Path(loc) / "test"), opts)
     finally:
         shutil.rmtree(loc)

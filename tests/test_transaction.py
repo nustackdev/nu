@@ -1,8 +1,8 @@
 import gc
-import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 
 import rwrocks
 
@@ -16,7 +16,7 @@ class TransactionTestHelper(unittest.TestCase):
         if hasattr(self, "db"):
             del self.db
         gc.collect()
-        if os.path.exists(self.db_loc):
+        if Path(self.db_loc).exists():
             shutil.rmtree(self.db_loc)
 
 
@@ -26,7 +26,7 @@ class TestTransactionDB(TransactionTestHelper):
         opts = rwrocks.Options(create_if_missing=True)
         self.txn_opts = rwrocks.TransactionDBOptions()
         self.db = rwrocks.TransactionDB(
-            os.path.join(self.db_loc, "txn"),
+            str(Path(self.db_loc) / "txn"),
             opts,
             txn_db_opts=self.txn_opts,
         )

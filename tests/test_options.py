@@ -1,13 +1,14 @@
 import unittest
+from collections.abc import Sequence
 
 import rwrocks
 
 
 class TestFilterPolicy(rwrocks.interfaces.FilterPolicy):
-    def create_filter(self, keys) -> bytes:
+    def create_filter(self, keys: Sequence[bytes]) -> bytes:
         return b"nix"
 
-    def key_may_match(self, key, fil) -> bool:
+    def key_may_match(self, key: bytes, fil: bytes) -> bool:
         return True
 
     def name(self) -> bytes:
@@ -15,10 +16,10 @@ class TestFilterPolicy(rwrocks.interfaces.FilterPolicy):
 
 
 class TestMergeOperator(rwrocks.interfaces.MergeOperator):
-    def full_merge(self, *args, **kwargs):
+    def full_merge(self, *args: object, **kwargs: object) -> tuple[bool, bytes | None]:
         return (False, None)
 
-    def partial_merge(self, *args, **kwargs):
+    def partial_merge(self, *args: object, **kwargs: object) -> tuple[bool, bytes | None]:
         return (False, None)
 
     def name(self) -> bytes:
@@ -137,9 +138,9 @@ class TestOptions(unittest.TestCase):
         opts.compaction_style = "level"
         self.assertEqual("level", opts.compaction_style)
 
-        assertRaisesRegex = self.assertRaisesRegex
+        assert_raises_regex = self.assertRaisesRegex
 
-        with assertRaisesRegex(Exception, "Unknown compaction style"):
+        with assert_raises_regex(Exception, "Unknown compaction style"):
             opts.compaction_style = "foo"
 
     def test_compaction_opts_universal(self) -> None:

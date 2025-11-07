@@ -1,16 +1,16 @@
 import gc
-import os
 import shutil
 import struct
 import tempfile
 import unittest
 from itertools import takewhile
+from pathlib import Path
 
 import rwrocks
 from rwrocks.merge_operators import StringAppendOperator, UintAddOperator
 
 
-def int_to_bytes(ob):
+def int_to_bytes(ob: object) -> bytes:
     return str(ob).encode("ascii")
 
 
@@ -22,7 +22,7 @@ class TestHelper(unittest.TestCase):
     def _close_db(self) -> None:
         del self.db
         gc.collect()
-        if os.path.exists(self.db_loc):
+        if Path(self.db_loc).exists():
             shutil.rmtree(self.db_loc)
 
 
@@ -30,19 +30,19 @@ class TestDB(TestHelper):
     def setUp(self) -> None:
         TestHelper.setUp(self)
         opts = rwrocks.Options(create_if_missing=True)
-        self.db = rwrocks.DB(os.path.join(self.db_loc, "test"), opts)
+        self.db = rwrocks.DB(str(Path(self.db_loc) / "test"), opts)
 
     def test_options_used_twice(self) -> None:
-        assertRaisesRegex = self.assertRaisesRegex
+        assert_raises_regex = self.assertRaisesRegex
         expected = "Options object is already used by another DB"
-        with assertRaisesRegex(Exception, expected):
-            rwrocks.DB(os.path.join(self.db_loc, "test2"), self.db.options)
+        with assert_raises_regex(Exception, expected):
+            rwrocks.DB(str(Path(self.db_loc) / "test2"), self.db.options)
 
     def test_unicode_path(self) -> None:
-        name = os.path.join(self.db_loc, b"M\xc3\xbcnchen".decode("utf8"))
+        name = str(Path(self.db_loc) / b"M\xc3\xbcnchen".decode("utf8"))
         rwrocks.DB(name, rwrocks.Options(create_if_missing=True))
         self.addCleanup(shutil.rmtree, name)
-        self.assertTrue(os.path.isdir(name))
+        self.assertTrue(Path(name).is_dir())
 
     def test_get_none(self) -> None:
         self.assertIsNone(self.db.get(b"xxx"))
@@ -261,7 +261,7 @@ class TestDB(TestHelper):
 
 
 class AssocCounter(rwrocks.interfaces.AssociativeMergeOperator):
-    def merge(self, key, existing_value, value):
+    def merge(self, key: bytes, existing_value: bytes | None, value: bytes) -> tuple[bool, bytes]:
         if existing_value:
             return (True, int_to_bytes(int(existing_value) + int(value)))
         return (True, value)
@@ -276,7 +276,7 @@ class TestUint64Merge(TestHelper):
         opts = rwrocks.Options()
         opts.create_if_missing = True
         opts.merge_operator = UintAddOperator()
-        self.db = rwrocks.DB(os.path.join(self.db_loc, "test"), opts)
+        self.db = rwrocks.DB(str(Path(self.db_loc) / "test"), opts)
 
     def test_merge(self) -> None:
         self.db.put(b"a", struct.pack("Q", 5566))
@@ -318,7 +318,7 @@ class TestStringAppendOperatorMerge(TestHelper):
         opts = rwrocks.Options()
         opts.create_if_missing = True
         opts.merge_operator = StringAppendOperator()
-        self.db = rwrocks.DB(os.path.join(self.db_loc, "test"), opts)
+        self.db = rwrocks.DB(str(Path(self.db_loc) / "test"), opts)
 
     # NOTE(sileht): Raise "Corruption: Error: Could not perform merge." on PY3
     # @unittest.skipIf(sys.version_info[0] == 3,
@@ -349,7 +349,7 @@ class TestAssocMerge(TestHelper):
         opts = rwrocks.Options()
         opts.create_if_missing = True
         opts.merge_operator = AssocCounter()
-        self.db = rwrocks.DB(os.path.join(self.db_loc, "test"), opts)
+        self.db = rwrocks.DB(str(Path(self.db_loc) / "test"), opts)
 
     def test_merge(self) -> None:
         for x in range(1000):
@@ -361,14 +361,16 @@ class FullCounter(rwrocks.interfaces.MergeOperator):
     def name(self) -> bytes:
         return b"fullcounter"
 
-    def full_merge(self, key, existing_value, operand_list):
-        ret = sum([int(x) for x in operand_list])
+    def full_merge(
+        self, key: bytes, existing_value: bytes | None, operand_list: list[bytes]
+    ) -> tuple[bool, bytes]:
+        ret = sum(int(x) for x in operand_list)
         if existing_value:
             ret += int(existing_value)
 
         return (True, int_to_bytes(ret))
 
-    def partial_merge(self, key, left, right):
+    def partial_merge(self, key: bytes, left: bytes, right: bytes) -> tuple[bool, bytes]:
         return (True, int_to_bytes(int(left) + int(right)))
 
 
@@ -378,7 +380,7 @@ class TestFullMerge(TestHelper):
         opts = rwrocks.Options()
         opts.create_if_missing = True
         opts.merge_operator = FullCounter()
-        self.db = rwrocks.DB(os.path.join(self.db_loc, "test"), opts)
+        self.db = rwrocks.DB(str(Path(self.db_loc) / "test"), opts)
 
     def test_merge(self) -> None:
         for x in range(1000):
@@ -390,7 +392,7 @@ class SimpleComparator(rwrocks.interfaces.Comparator):
     def name(self) -> bytes:
         return b"mycompare"
 
-    def compare(self, a, b) -> int | None:
+    def compare(self, a: bytes, b: bytes) -> int:
         a = int(a)
         b = int(b)
         if a < b:
@@ -407,7 +409,7 @@ class TestComparator(TestHelper):
         opts = rwrocks.Options()
         opts.create_if_missing = True
         opts.comparator = SimpleComparator()
-        self.db = rwrocks.DB(os.path.join(self.db_loc, "test"), opts)
+        self.db = rwrocks.DB(str(Path(self.db_loc) / "test"), opts)
 
     def test_compare(self) -> None:
         for x in range(1000):
@@ -420,13 +422,13 @@ class StaticPrefix(rwrocks.interfaces.SliceTransform):
     def name(self) -> bytes:
         return b"static"
 
-    def transform(self, src):
+    def transform(self, src: bytes) -> tuple[int, int]:
         return (0, 5)
 
-    def in_domain(self, src):
+    def in_domain(self, src: bytes) -> bool:
         return len(src) >= 5
 
-    def in_range(self, dst):
+    def in_range(self, dst: bytes) -> bool:
         return len(dst) == 5
 
 
@@ -435,7 +437,7 @@ class TestPrefixExtractor(TestHelper):
         TestHelper.setUp(self)
         opts = rwrocks.Options(create_if_missing=True)
         opts.prefix_extractor = StaticPrefix()
-        self.db = rwrocks.DB(os.path.join(self.db_loc, "test"), opts)
+        self.db = rwrocks.DB(str(Path(self.db_loc) / "test"), opts)
 
     def _fill_db(self) -> None:
         for x in range(3000):
@@ -475,7 +477,7 @@ class TestDBColumnFamilies(TestHelper):
         TestHelper.setUp(self)
         opts = rwrocks.Options(create_if_missing=True)
         self.db = rwrocks.DB(
-            os.path.join(self.db_loc, "test"),
+            str(Path(self.db_loc) / "test"),
             opts,
         )
 
@@ -492,7 +494,7 @@ class TestDBColumnFamilies(TestHelper):
         self.assertEqual(
             names,
             rwrocks.list_column_families(
-                os.path.join(self.db_loc, "test"),
+                str(Path(self.db_loc) / "test"),
                 rwrocks.Options(),
             ),
         )
