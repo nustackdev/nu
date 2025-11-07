@@ -7,12 +7,9 @@ delegate validation to the validation module.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from redwood.abc import (
-    EMPTY,
-    Empty,
-)
+from redwood.abc import EMPTY, Empty, Value
 from redwood.be import StorageKeyError, StorageScanOptions
 
 from .exceptions import PathExistsError, PathTypeError
@@ -40,7 +37,7 @@ from .validation_ops import (
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.abc import KeyComponent, TupleKey, Value
+    from redwood.abc import KeyComponent, TupleKey
     from redwood.be import StorageContextType
 
 __all__ = [
@@ -505,7 +502,7 @@ def get_child_primitive(
 
     validate_is_primitive(child_path, ctx, node_type=child_node_info.node_type)
 
-    return child_node_info.primitive_value
+    return cast("Value", child_node_info.primitive_value)
 
 
 def delete_child(
