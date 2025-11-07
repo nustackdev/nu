@@ -97,6 +97,7 @@ from .marker import (
 # Navigation Operations (Pure Functions)
 # ============================================================================
 from .navigation import (
+    create_path,
     get_ancestors,
     get_common_ancestor,
     get_depth,
@@ -107,6 +108,7 @@ from .navigation import (
     is_sibling,
     join_component,
     join_path,
+    to_meta,
 )
 
 # ============================================================================
@@ -184,6 +186,8 @@ __all__ = [  # noqa: RUF022
     "node_exists",
     "gather_parent_info",
     # Navigation (pure functions)
+    "create_path",
+    "to_meta",
     "get_parent",
     "get_ancestors",
     "get_path_chain",

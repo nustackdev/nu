@@ -1,5 +1,4 @@
-
-# Layer 1: KV Storage
+# Layer 1: Storage
 
 ## What It Is
 

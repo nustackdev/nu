@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from redwood.abc import KeyComponent, TupleKey
 
 __all__ = [
+    "create_path",
     "get_ancestors",
     "get_common_ancestor",
     "get_depth",
@@ -28,12 +29,49 @@ __all__ = [
     "is_sibling",
     "join_component",
     "join_path",
+    "to_meta",
 ]
 
 # Root marker for the root data component (stores actual data)
 DATA_ROOT: str = "/"
 # Root marker for the metadata component (stores metadata)
 METADATA_ROOT: str = "/m"
+
+
+def create_path(*components: KeyComponent) -> TupleKey:
+    """Creata a path from given components.
+
+    Args:
+        *components: Path components
+
+    Returns:
+        Single path (includes tree root </>)
+
+    Example:
+        >>> get_parent(("users", "alice"))
+        ("/", "users", "alice")
+    """
+    return (DATA_ROOT, *components)
+
+
+def to_meta(path: TupleKey) -> TupleKey:
+    """Convert a path to its metadata equivalent.
+
+    Args:
+        path: Path tuple
+
+    Returns:
+        tuple: New path with metadata root marker
+
+    Example:
+        >>> path = create_path("users", "alice")
+        >>> path
+        ("/", "users", "alice")
+        >>> to_meta(path)
+        ("/m", "users", "alice")
+        ```
+    """
+    return (METADATA_ROOT, *path[1:])
 
 
 def get_parent(path: TupleKey) -> TupleKey | None:
