@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast
 from redwood.abc import EMPTY, Empty, Value
 from redwood.storage import StorageKeyError, StorageScanOptions
 
-from .exceptions import PathExistsError, PathTypeError
+from .exceptions import InvalidDepthError, PathExistsError, PathTypeError
 from .marker import create_marker, is_marker
 from .navigation import join_component
 from .node_ops import get_node_info, get_node_type
@@ -143,8 +143,6 @@ def create_container(
 def delete_container(
     path: TupleKey,
     ctx: StorageContextType,
-    *,
-    recursive: bool = False,
 ) -> bool:
     """Delete container.
 
@@ -164,8 +162,6 @@ def delete_container(
         >>> delete_container(("users", "alice"), tx, recursive=True)
         True
     """
-    wctx = require_write_context(ctx)
-
     info = get_node_info(path, ctx)
     if not info.exists:
         return False
@@ -173,17 +169,7 @@ def delete_container(
     if info.node_type != NodeType.CONTAINER:
         raise PathTypeError(f"Path is not a container: {path}")
 
-    if recursive:
-        delete_subtree(path, ctx)
-    else:
-        # Just delete the container marker
-        try:
-            wctx.delete(path)
-            return True
-        except StorageKeyError:
-            return False
-
-    return True
+    return delete_subtree(path, ctx) > 0
 
 
 def delete_subtree(path: TupleKey, ctx: StorageContextType) -> int:
@@ -206,18 +192,15 @@ def delete_subtree(path: TupleKey, ctx: StorageContextType) -> int:
     rwctx = require_readwrite_context(ctx)
 
     # Scan all descendants
-    start_key = (*path, "")
-    end_key = (*path, "\uffff")
+    scan_opts = StorageScanOptions(
+        start=path,
+        start_inclusive=True,
+        end=(*path, "\uffff"),
+        length=-1,
+    )
 
-    scan_opts = StorageScanOptions(start=start_key, end=end_key)
-    keys_to_delete = [path]
-
-    for key, _ in rwctx.scan(scan_opts).items():
-        keys_to_delete.append(key)
-
-    # Delete all
     deleted_count = 0
-    for key in keys_to_delete:
+    for key in rwctx.scan(scan_opts).keys():
         try:
             rwctx.delete(key)
             deleted_count += 1
@@ -393,8 +376,16 @@ def count_children(path: TupleKey, ctx: StorageContextType) -> int:
         >>> count = count_children(("users", "alice"), tx)
         >>> print(f"Container has {count} children")
     """
+    validate_is_container(path, ctx)
+
+    scan_opts = StorageScanOptions(
+        start=path,
+        start_inclusive=False,
+        end=(*path, "\uffff"),
+        length=len(path) + 1,
+    )
     counter = 0
-    while list_child_keys(path, ctx):
+    for _ in require_read_context(ctx).scan(scan_opts).keys():
         counter += 1
     return counter
 
@@ -509,8 +500,6 @@ def delete_child(
     parent_path: TupleKey,
     key: KeyComponent,
     ctx: StorageContextType,
-    *,
-    recursive: bool = False,
 ) -> bool:
     """Delete direct child.
 
@@ -541,7 +530,7 @@ def delete_child(
         return False
 
     if info.node_type == NodeType.CONTAINER:
-        return delete_container(child_path, ctx, recursive=recursive)
+        return delete_container(child_path, ctx)
     else:
         try:
             require_write_context(ctx).delete(child_path)
@@ -569,10 +558,9 @@ def clear_children(path: TupleKey, ctx: StorageContextType) -> int:
         >>> count = clear_children(("users", "alice", "temp"), tx)
         >>> print(f"Cleared {count} children")
     """
-    keys = list_child_keys(path, ctx)
     count = 0
-    for key in keys:
-        if delete_child(path, key, ctx, recursive=True):
+    for key in list_child_keys(path, ctx):
+        if delete_child(path, key, ctx):
             count += 1
     return count
 
@@ -586,14 +574,14 @@ def list_descendants(
     path: TupleKey,
     ctx: StorageContextType,
     *,
-    max_depth: int | None = None,
-) -> list[TupleKey]:
+    depth: int = -1,
+) -> Generator[TupleKey, None, None]:
     """List all descendants recursively.
 
     Args:
         path: Container path
         ctx: Storage context (transaction or snapshot)
-        max_depth: Maximum depth to traverse (None = unlimited)
+        depth: Depth to traverse (-1=unlimited, 1=children, >1 exact depth match)
 
     Returns:
         List of descendant paths
@@ -602,40 +590,36 @@ def list_descendants(
         PathNotFoundError: If container doesn't exist
         PathTypeError: If path is not a container
         StorageInterfaceError: If context doesn't support read access
+        InvalidDepthError: If depth arguments is invalid
 
     Example:
-        >>> descendants = list_descendants(("users", "alice"), tx, max_depth=2)
-        >>> print(f"Found {len(descendants)} descendants")
+        >>> descendants = list_descendants(("users", "alice"), tx, depth=2)
+        >>> print(f"Found {len(descendants)} descendants at level 2")
     """
+    if depth < -2 or depth == 0:
+        raise InvalidDepthError(f"Depth argument shoild be either -1 or >= 1. {depth} given")
+
     rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
-    start_key = (*path, "")
-    end_key = (*path, "\uffff")
+    scan_opts = StorageScanOptions(
+        start=path,
+        end=(*path, "\uffff"),
+        length=-1 if depth == -1 else len(path) + depth,
+    )
 
-    scan_opts = StorageScanOptions(start=start_key, end=end_key)
-    descendants = []
-    base_depth = len(path)
-
-    for key, _ in rctx.scan(scan_opts).items():
-        if max_depth is None or (len(key) - base_depth) <= max_depth:
-            descendants.append(key)
-
-    return descendants
+    yield from rctx.scan(scan_opts).keys()
 
 
 def walk_tree(
     path: TupleKey,
     ctx: StorageContextType,
-    *,
-    depth_first: bool = True,
 ) -> Generator[tuple[TupleKey, NodeType], None, None]:
     """Iterate over tree structure.
 
     Args:
         path: Container path
         ctx: Storage context (transaction or snapshot)
-        depth_first: If True, use depth-first traversal (unused currently)
 
     Yields:
         (path, node_type) tuples for each descendant
@@ -652,10 +636,7 @@ def walk_tree(
     rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
-    start_key = (*path, "")
-    end_key = (*path, "\uffff")
-
-    scan_opts = StorageScanOptions(start=start_key, end=end_key)
+    scan_opts = StorageScanOptions(start=path, end=(*path, "\uffff"), length=-1)
 
     for key, value in rctx.scan(scan_opts).items():
         node_type = NodeType.CONTAINER if is_marker(value) else NodeType.PRIMITIVE

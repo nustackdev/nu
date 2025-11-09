@@ -78,6 +78,7 @@ from .container_ops import (
 # ============================================================================
 from .exceptions import (
     InvalidDepthError,
+    InvalidPathError,
     ParentMalformedError,
     ParentNotFoundError,
     PathCollisionError,
@@ -179,6 +180,7 @@ __all__ = [  # noqa: RUF022
     "ParentNotFoundError",
     "ParentMalformedError",
     "InvalidDepthError",
+    "InvalidPathError",
     # Marker system
     "MARKER_SENTINEL",
     "create_marker",

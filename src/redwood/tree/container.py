@@ -48,6 +48,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
 
 from . import container_ops, navigation, node_ops, validation_ops
+from .exceptions import InvalidPathError
 
 
 if TYPE_CHECKING:
@@ -149,6 +150,9 @@ class Container(NamedTuple):
             ...     ContainerProtocol.MUTABLE,
             ... )
         """
+        if not path or path[0] != navigation.DATA_ROOT:
+            raise InvalidPathError("Path is either empty or it doesn't start with ROOT segment")
+
         container_ops.create_container(
             path,
             structure,
@@ -181,6 +185,9 @@ class Container(NamedTuple):
             >>> container = Container.get(("users", "alice"), tx)
             >>> info = container.info()
         """
+        if not path or path[0] != navigation.DATA_ROOT:
+            raise InvalidPathError("Path is either empty or it doesn't start with ROOT segment")
+
         validation_ops.validate_is_container(path, ctx)
         return cls(ctx=ctx, path=path)
 
@@ -453,24 +460,19 @@ class Container(NamedTuple):
     def delete_child(
         self,
         key: KeyComponent,
-        *,
-        recursive: bool = False,
     ) -> bool:
         """Delete direct child.
 
-        Deletes a child node. For container children, recursive must be
-        True to delete the entire subtree.
+        Deletes a child node (both containers and primitives).
 
         Args:
             key: Child key
-            recursive: If True, delete subtree for container children
 
         Returns:
             True if deleted, False if didn't exist
 
         Raises:
             PathNotFoundError: If this container doesn't exist
-            PathTypeError: If this is not a container
             StorageInterfaceError: If context doesn't support writes
 
         Example:
@@ -479,10 +481,10 @@ class Container(NamedTuple):
             True
             >>>
             >>> # Delete container child and its subtree
-            >>> container.delete_child("old_section", recursive=True)
+            >>> container.delete_child("old_section")
             True
         """
-        return container_ops.delete_child(self.path, key, self.ctx, recursive=recursive)
+        return container_ops.delete_child(self.path, key, self.ctx)
 
     def clear_children(self) -> int:
         """Delete all direct children.
@@ -511,43 +513,37 @@ class Container(NamedTuple):
     def list_descendants(
         self,
         *,
-        max_depth: int | None = None,
-    ) -> list[TupleKey]:
+        depth: int = -1,
+    ) -> Generator[TupleKey, None, None]:
         """List all descendants recursively.
 
         Returns all descendant paths, optionally limited by depth.
 
         Args:
-            max_depth: Maximum depth to traverse (None = unlimited)
+            depth: Depth to traverse (-1=unlimited, 1=children, >1 exact depth match)
 
         Returns:
-            List of descendant paths
+            List of descendant paths (full path tuples)
 
         Raises:
             PathNotFoundError: If this container doesn't exist
             PathTypeError: If this is not a container
             StorageInterfaceError: If context doesn't support reads
+            InvalidDepthError: If depth arguments is invalid
 
         Example:
             >>> # Get all descendants
             >>> all_descendants = container.list_descendants()
             >>>
-            >>> # Get only immediate children and grandchildren
-            >>> nearby = container.list_descendants(max_depth=2)
+            >>> # Get only grandchildren
+            >>> nearby = container.list_descendants(depth=2)
         """
-        return container_ops.list_descendants(self.path, self.ctx, max_depth=max_depth)
+        yield from container_ops.list_descendants(self.path, self.ctx, depth=depth)
 
-    def walk_tree(
-        self,
-        *,
-        depth_first: bool = True,
-    ) -> Generator[tuple[TupleKey, NodeType], None, None]:
+    def walk_tree(self) -> Generator[tuple[TupleKey, NodeType], None, None]:
         """Iterate over tree structure.
 
         Yields (path, node_type) tuples for all descendants.
-
-        Args:
-            depth_first: Traversal order (currently unused)
 
         Yields:
             (path, node_type) tuples
@@ -564,20 +560,16 @@ class Container(NamedTuple):
             ...     else:
             ...         print(f"Primitive: {child_path}")
         """
-        return container_ops.walk_tree(self.path, self.ctx, depth_first=depth_first)
+        return container_ops.walk_tree(self.path, self.ctx)
 
     # ========================================================================
     # SELF: DESTRUCTIVE OPERATIONS
     # ========================================================================
 
-    def delete(self, *, recursive: bool = False) -> bool:
+    def delete(self) -> bool:
         """Delete this container.
 
-        Deletes this container from storage. With recursive=True, deletes
-        entire subtree. With recursive=False, fails if container has children.
-
-        Args:
-            recursive: If True, delete entire subtree
+        Deletes this container from storage. Deletes entire subtree.
 
         Returns:
             True if deleted, False if didn't exist
@@ -596,7 +588,7 @@ class Container(NamedTuple):
             True
             >>> container.exists()  # False
         """
-        return container_ops.delete_container(self.path, self.ctx, recursive=recursive)
+        return container_ops.delete_container(self.path, self.ctx)
 
     # ========================================================================
     # VALIDATION HELPERS

@@ -7,6 +7,7 @@ for maximum flexibility and type safety.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Literal, Protocol, overload, runtime_checkable
 
 
@@ -394,14 +395,17 @@ class TransactionalStorageProtocol(Protocol):
         """
         ...
 
+    @contextmanager
     def transaction(self) -> Iterator[TransactionProtocol]:
         """Context manager for transactions: commit on success, abort on exception."""
         ...
 
+    @contextmanager
     def snapshot(self) -> Iterator[SnapshotProtocol]:
         """Context manager for read-only snapshots: always closes snapshot on exit."""
         ...
 
+    @contextmanager
     def batch_write(self) -> Iterator[WriteBatchProtocol]:
         """Context manager for write batches: commit on success, abort on exception."""
         ...
