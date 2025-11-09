@@ -109,7 +109,7 @@ def is_empty(value: object) -> TypeGuard[Empty]:
 
 
 def is_notset(value: object) -> TypeGuard[NotSet]:
-    """Check if value is Empty sentinel."""
+    """Check if value is NotSet sentinel."""
     return isinstance(value, NotSet)
 
 

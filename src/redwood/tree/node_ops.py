@@ -74,19 +74,16 @@ def get_node_type(
         >>> get_node_type(("users", "alice"), tx)
         <NodeType.CONTAINER>
     """
-    try:
-        raw_value = cast(
-            "Value", require_read_context(ctx).get(path) if is_notset(raw_value) else raw_value
+    if is_notset(raw_value):
+        try:
+            raw_value = require_read_context(ctx).get(path)
+            return NodeType.CONTAINER if extract_marker(raw_value) else NodeType.PRIMITIVE
+        except StorageKeyError:
+            return NodeType.NOT_FOUND
+    else:
+        return (
+            NodeType.CONTAINER if extract_marker(cast("Value", raw_value)) else NodeType.PRIMITIVE
         )
-
-        # Quick marker check - extract_marker is fast
-        if extract_marker(raw_value) is not None:
-            return NodeType.CONTAINER
-
-        return NodeType.PRIMITIVE
-
-    except StorageKeyError:
-        return NodeType.NOT_FOUND
 
 
 def get_node_info(

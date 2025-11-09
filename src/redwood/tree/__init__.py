@@ -48,6 +48,11 @@ Usage:
 from __future__ import annotations
 
 # ============================================================================
+# Container Interface
+# ============================================================================
+from .container import Container
+
+# ============================================================================
 # Container Operations
 # ============================================================================
 from .container_ops import (
@@ -122,7 +127,7 @@ from .node_ops import (
 )
 
 # ============================================================================
-# Main Tree Interface
+# Tree Interface
 # ============================================================================
 from .tree import Tree
 
@@ -223,6 +228,7 @@ __all__ = [  # noqa: RUF022
     "list_descendants",
     "walk_tree",
     "create_parents",
-    # Main interface
+    # Main interfaces
     "Tree",
+    "Container",
 ]
