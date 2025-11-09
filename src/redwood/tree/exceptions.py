@@ -6,6 +6,8 @@ that reflects the different error categories in tree operations.
 
 from __future__ import annotations
 
+from redwood._rw_exception import RedwoodError
+
 
 __all__ = [
     "InvalidDepthError",
@@ -19,7 +21,7 @@ __all__ = [
 ]
 
 
-class TreeError(Exception):
+class TreeError(RedwoodError):
     """Base exception for all tree layer errors.
 
     All tree-specific exceptions inherit from this base class,

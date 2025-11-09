@@ -2,24 +2,69 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from contextlib import AbstractContextManager, contextmanager
+from logging import getLogger
+from typing import TYPE_CHECKING, Any
 
 import attrs
 
+
+logger = getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from redwood.storage import StorageContextType, StorageProtocol
 
-    from .contextual_base import ContextualBase
+
+def create_view_context_manager(
+    view_factory: type, *, snapshot: bool = False, **kwargs: object
+) -> AbstractContextManager[Any]:
+    """Create a unified context manager for view objects.
+
+    Args:
+        view_factory: Function that creates a view object
+        snapshot: If True, creates snapshot context. If False, creates transaction context.
+        **kwargs: Arguments to pass to view_factory
+
+    Returns:
+        Context manager that yields a view with appropriate context
+
+    Example:
+        ```python
+        # Transaction-based view
+        def with_dict_view(self):
+            return create_view_context_manager(
+                DictView,
+                snapshot=False,
+                backend=self.backend,
+                path=self.path,
+                tree=self.__class__,
+            )
 
 
-__all__ = [
-    "create_context",
-    "with_context",
-]
+        # Snapshot-based view
+        def with_dict_view_snapshot(self):
+            return create_view_context_manager(
+                DictView,
+                snapshot=True,
+                backend=self.backend,
+                path=self.path,
+                tree=self.__class__,
+            )
+        ```
+    """
+
+    @contextmanager
+    def view_context() -> Generator[object, None, None]:
+        # Step 1: Create view (potentially with None context)
+        view_obj = view_factory(**kwargs)
+
+        # Step 2: Wrap view with context management
+        with with_context(view_obj, snapshot=snapshot) as context_wrapped_view:
+            yield context_wrapped_view
+
+    return view_context()
 
 
 @contextmanager
@@ -63,16 +108,14 @@ def create_context(
         try:
             yield tx
         except Exception:
-            tx.rollback()
+            tx.abort()
             raise
         else:
             tx.commit()
 
 
 @contextmanager
-def with_context[ContextualT: ContextualBase](
-    obj: ContextualT, *, snapshot: bool = False
-) -> Generator[ContextualT, None, None]:
+def with_context(obj: Any, *, snapshot: bool = False) -> Generator[Any, None, None]:  # noqa: ANN401
     """Context manager that provides context for an object.
 
     Args:
@@ -129,7 +172,8 @@ def with_context[ContextualT: ContextualBase](
                     new_ctx.close()
                 else:
                     new_ctx.rollback()
-            except Exception:
+            except Exception as e:
+                logger.error(f"Error during storage context cleanup: {e}")
                 pass  # Cleanup failed, but original error is more important
 
             context_type = "snapshot" if snapshot else "transaction"
@@ -149,7 +193,8 @@ def with_context[ContextualT: ContextualBase](
                         new_ctx.close()
                     else:
                         new_ctx.rollback()
-                except Exception:
+                except Exception as e:
+                    logger.error(f"Error during storage context cleanup: {e}")
                     # Cleanup failed, but we still want to propagate the original exception
                     pass
             raise

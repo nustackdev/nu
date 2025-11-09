@@ -163,9 +163,11 @@ class ContainerProtocol(IntFlag):
         INDEXED: Children maintain insertion order
     """
 
+    NONE = 0x0
     MUTABLE = 0x01
     SIZED = 0x02
     INDEXED = 0x04
+    MAPPING = 0x08
 
     def __str__(self) -> str:
         parts = []

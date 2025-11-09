@@ -1,13 +1,7 @@
-# tree/registry.py
-"""View registry for mapping between structures, container types, component types, and view classes.
+"""View registry for mapping between structures, container types and view classes.
 
 This module provides the ViewRegistry class that manages bidirectional mappings
-between container structure IDs, container types, navigation component types,
-and view classes.
-
-The registry handles two distinct use cases:
-1. Container creation: When storing a value, which view should handle it?
-2. Navigation: When navigating with a component, which view can handle that component type?
+between container structure IDs, container types and view classes.
 
 Users can create completely custom container and component types with domain-specific
 logic that have no connection to Python built-in types.
@@ -15,414 +9,152 @@ logic that have no connection to Python built-in types.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
+
+from .exceptions import RegistryError
 
 
 if TYPE_CHECKING:
     from .view import View
 
 __all__ = [
-    "ComponentType",
-    "ContainerType",
+    "ViewRegistration",
     "ViewRegistry",
 ]
 
 
-class ContainerConstructor:
-    """Base class for container types that views can handle.
+class ViewRegistration(NamedTuple):
+    """Registration entry mapping types to views."""
 
-    Container types represent what kind of data structure a view creates/manages.
-    Views register with container types to indicate what they can store.
-
-    Example:
-        ```python
-        class DictContainer(ContainerType):
-            pass
-
-
-        class ListContainer(ContainerType):
-            pass
-
-
-        class DocumentContainer(ContainerType):
-            pass  # Custom container with domain-specific logic
-        ```
-    """
-
-    pass
-
-
-type ContainerType = type[dict | list | tuple | ContainerConstructor]
-
-
-class ComponentConstructor:
-    """Base class for component types that can be used in navigation.
-
-    Component types represent what kind of keys/navigation elements a view can handle.
-    Views register with component types to indicate what navigation they support.
-
-    Example:
-        ```python
-        class StringComponent(ComponentType):
-            pass
-
-
-        class IntegerComponent(ComponentType):
-            pass
-
-
-        class NodeIDComponent(ComponentType):
-            # Custom navigation component for graph traversal
-            pass
-        ```
-    """
-
-    pass
-
-
-type ComponentType = type[int | str | ComponentConstructor]
+    view_class: type[View]
+    structure_id: int
+    container_type: type | None = None
 
 
 class ViewRegistry:
-    """Central registry for view mappings.
+    """Maps between Python types and View classes.
 
-    Manages mappings between:
-    - Structure IDs ↔ View Classes (for resolving existing containers)
-    - Container Types ↔ View Classes (for creating new containers from values)
-    - Component Types ↔ View Classes (for navigation with different key types)
+    Provides bidirectional mapping:
+    - Python type → View (for writing/storing)
+    - Structure ID → View (for reading/extracting)
 
-    No fallback logic - all mappings must be explicitly registered.
+    Example:
+        >>> registry = ViewRegistry()
+        >>> registry.register(DictView, structure_id=1, container_type=dict)
+        >>> registry.register(ListView, structure_id=2, container_type=list)
+        >>> # Writing: dict → DictView
+        >>> view_class = registry.get_view_for_type(dict)
+        >>> # Reading: structure=1 → DictView
+        >>> view_class = registry.get_view_for_structure(1)
     """
 
     def __init__(self) -> None:
-        """Initialize registry with native views."""
-        # =========================================================================
-        # INTERNAL STORAGE
-        # =========================================================================
-
-        # Structure ID → View Class (for resolving existing containers)
+        """Initialize registry."""
         self._structure_to_view: dict[int, type[View]] = {}
+        self._type_to_registration: dict[type, ViewRegistration] = {}
 
-        # Container Type → View Class (for creating containers from values)
-        self._container_type_to_view: dict[ContainerType, type[View]] = {}
-
-        # Component Type → List[View Classes] (for navigation - multiple views can handle same component type)
-        self._component_type_to_views: dict[ComponentType, list[type[View]]] = {}
-
-        # Reverse mappings
-        self._view_to_structure: dict[type[View], int] = {}
-        self._view_to_container_type: dict[type[View], ContainerType] = {}
-        self._view_to_component_types: dict[type[View], set[ComponentType]] = {}
-
-        # Track registered views for validation
-        self._registered_views: set[type[View]] = set()
-
-    def register_view(
+    def register(
         self,
         view_class: type[View],
-        structure_id: int,
-        container_type: ContainerType,
-        component_types: ComponentType | list[ComponentType],
     ) -> None:
-        """Register a view with its structure ID, container type, and supported component types.
+        """Register a view class.
 
         Args:
-            view_class: The view class to register
-            structure_id: Unique container structure ID this view handles
-            container_type: Container type this view creates/manages
-            component_types: Component type(s) this view can navigate with
-
+            view_class: View class to register
         Raises:
-            ValueError: If structure_id already registered or other conflicts detected
-
-        Example:
-            ```python
-            # DictView handles DictContainer and navigates with StringComponent
-            registry.register_view(
-                DictView,
-                structure_id=1,
-                container_type=DictContainer,
-                component_types=StringComponent,
-            )
-
-            # ListView handles ListContainer and navigates with IntegerComponent
-            registry.register_view(
-                ListView,
-                structure_id=2,
-                container_type=ListContainer,
-                component_types=IntegerComponent,
-            )
-
-            # DocumentView handles DocumentContainer but navigates with StringComponent
-            registry.register_view(
-                DocumentView,
-                structure_id=100,
-                container_type=DocumentContainer,
-                component_types=StringComponent,
-            )
-
-            # GraphView can navigate with both StringComponent and NodeIDComponent
-            registry.register_view(
-                GraphView,
-                structure_id=101,
-                container_type=GraphContainer,
-                component_types=[StringComponent, NodeIDComponent],
-            )
-            ```
+            RegistryError: If structure_id or container_type already registered
         """
-        # Normalize component_types to list
-        if not isinstance(component_types, list):
-            component_types = [component_types]
+        structure_id: int = view_class.get_structure()
+        container_type: type | None = view_class.get_container_cls()
 
-        # Validation: Check for structure ID conflicts
+        # Register structure ID → view
         if structure_id in self._structure_to_view:
-            existing_view = self._structure_to_view[structure_id]
-            if existing_view != view_class:
-                raise ValueError(
-                    f"Structure ID {structure_id} already registered to {existing_view.__name__}, "
-                    f"cannot register to {view_class.__name__}"
-                )
-
-        # Validation: Check for container type conflicts
-        if container_type in self._container_type_to_view:
-            existing_view = self._container_type_to_view[container_type]
-            if existing_view != view_class:
-                raise ValueError(
-                    f"Container type {container_type} already registered to {existing_view.__name__}, "
-                    f"cannot register to {view_class.__name__}"
-                )
-
-        # Validation: Check if view already registered with different structure ID
-        if view_class in self._view_to_structure:
-            existing_structure = self._view_to_structure[view_class]
-            if existing_structure != structure_id:
-                raise ValueError(
-                    f"View {view_class.__name__} already registered with structure ID {existing_structure}, "
-                    f"cannot re-register with structure ID {structure_id}"
-                )
-
-        # Validation: Check if view already registered with different container type
-        if view_class in self._view_to_container_type:
-            existing_container_type = self._view_to_container_type[view_class]
-            if existing_container_type != container_type:
-                raise ValueError(
-                    f"View {view_class.__name__} already registered with container type {existing_container_type}, "
-                    f"cannot re-register with container type {container_type}"
-                )
-
-        # Register forward mappings
-        self._structure_to_view[structure_id] = view_class
-        self._container_type_to_view[container_type] = view_class
-
-        # Register component type mappings (multiple views can handle same component type)
-        for comp_type in component_types:
-            if comp_type not in self._component_type_to_views:
-                self._component_type_to_views[comp_type] = []
-            if view_class not in self._component_type_to_views[comp_type]:
-                self._component_type_to_views[comp_type].append(view_class)
-
-        # Register reverse mappings
-        self._view_to_structure[view_class] = structure_id
-        self._view_to_container_type[view_class] = container_type
-        self._view_to_component_types[view_class] = set(component_types)
-
-        # Track registered views
-        self._registered_views.add(view_class)
-
-    def register_views(
-        self,
-        mappings: dict[
-            type[View],
-            tuple[int, ContainerType, ComponentType | list[ComponentType]],
-        ],
-    ) -> None:
-        """Batch register multiple views.
-
-        Args:
-            mappings: Dict of {view_class: (structure_id, container_type, component_types)}
-
-        Example:
-            ```python
-            registry.register_views(
-                {
-                    DictView: (1, DictContainer, StringComponent),
-                    ListView: (2, ListContainer, IntegerComponent),
-                    DocumentView: (100, DocumentContainer, StringComponent),
-                    GraphView: (101, GraphContainer, [StringComponent, NodeIDComponent]),
-                }
+            existing = self._structure_to_view[structure_id]
+            raise RegistryError(
+                f"Structure ID {structure_id} already registered to {existing.__name__}"
             )
-            ```
-        """
-        for view_class, (structure_id, container_type, component_types) in mappings.items():
-            self.register_view(view_class, structure_id, container_type, component_types)
+        self._structure_to_view[structure_id] = view_class
 
-    # =========================================================================
-    # LOOKUP METHODS - Forward Mappings
-    # =========================================================================
+        # Register container type → registration
+        if container_type is not None:
+            if container_type in self._type_to_registration:
+                existing = self._type_to_registration[container_type]
+                raise RegistryError(
+                    f"Container type {container_type.__name__} already registered to "
+                    f"{existing.view_class.__name__}"
+                )
+            registration = ViewRegistration(
+                view_class=view_class,
+                structure_id=structure_id,
+                container_type=container_type,
+            )
+            self._type_to_registration[container_type] = registration
 
     def get_view_for_structure(self, structure_id: int) -> type[View]:
-        """Get view class for structure ID.
-
-        Used when resolving existing containers from storage.
+        """Get view class for structure ID (reading).
 
         Args:
-            structure_id: Container structure ID
+            structure_id: Structure ID from storage
 
         Returns:
-            View class that handles this structure ID
+            View class for this structure
 
         Raises:
-            ValueError: If structure ID not registered
+            RegistryError: If structure_id not registered
         """
-        view_class = self._structure_to_view.get(structure_id)
-        if view_class is None:
-            raise ValueError(f"No view registered for structure ID {structure_id}")
-        return view_class
+        if structure_id not in self._structure_to_view:
+            raise RegistryError(f"No view registered for structure ID {structure_id}")
+        return self._structure_to_view[structure_id]
 
-    def get_view_for_container_type(self, container_type: ContainerType) -> type[View]:
-        """Get view class for container type.
-
-        Used when creating new containers from values.
+    def get_view_for_type(self, container_type: type) -> type[View]:
+        """Get view class for Python type (writing).
 
         Args:
-            container_type: Container type class
+            container_type: Python type (dict, list, etc.)
 
         Returns:
-            View class that handles this container type
+            View class for this type
 
         Raises:
-            ValueError: If container type not registered
+            RegistryError: If type not registered
         """
-        view_class = self._container_type_to_view.get(container_type)
-        if view_class is None:
-            raise ValueError(f"No view registered for container type {container_type}")
-        return view_class
+        # Try exact match first
+        if container_type in self._type_to_registration:
+            return self._type_to_registration[container_type].view_class
 
-    def get_views_for_component_type(self, component_type: ComponentType) -> list[type[View]]:
-        """Get view classes that can handle a component type.
+        # Try isinstance check for subclasses
+        for registered_type, registration in self._type_to_registration.items():
+            if isinstance(container_type, type) and issubclass(container_type, registered_type):
+                return registration.view_class
 
-        Used during navigation to find views that can handle specific key types.
-        Returns list because multiple views might handle the same component type.
+        raise RegistryError(f"No view registered for type {container_type.__name__}")
+
+    def get_structure_for_type(self, container_type: type) -> int:
+        """Get structure ID for Python type.
 
         Args:
-            component_type: Component/key type class
+            container_type: Python type
 
         Returns:
-            List of view classes that can handle this component type
+            Structure ID for this type
 
         Raises:
-            ValueError: If component type not supported by any view
+            RegistryError: If type not registered
         """
-        view_classes = self._component_type_to_views.get(component_type, [])
-        if not view_classes:
-            raise ValueError(f"No views registered for component type {component_type}")
-        return view_classes.copy()  # Return copy to prevent external modification
+        if container_type not in self._type_to_registration:
+            raise RegistryError(f"No registration for type {container_type.__name__}")
+        return self._type_to_registration[container_type].structure_id
 
-    def get_primary_view_for_component_type(self, component_type: ComponentType) -> type[View]:
-        """Get the primary (first registered) view for a component type.
-
-        Convenience method for when you need just one view for a component type.
+    def is_container_type(self, value: object) -> bool:
+        """Check if value matches any registered container type.
 
         Args:
-            component_type: Component/key type class
+            value: Value to check
 
         Returns:
-            Primary view class for this component type
+            True if value matches a registered container type
         """
-        views = self.get_views_for_component_type(component_type)
-        return views[0]
-
-    # =========================================================================
-    # LOOKUP METHODS - Reverse Mappings
-    # =========================================================================
-
-    def get_structure_for_view(self, view_class: type[View]) -> int:
-        """Get structure ID for view class."""
-        structure_id = self._view_to_structure.get(view_class)
-        if structure_id is None:
-            raise ValueError(f"View class {view_class.__name__} not registered")
-        return structure_id
-
-    def get_container_type_for_view(self, view_class: type[View]) -> ContainerType:
-        """Get container type for view class."""
-        container_type = self._view_to_container_type.get(view_class)
-        if container_type is None:
-            raise ValueError(f"View class {view_class.__name__} not registered")
-        return container_type
-
-    def get_component_types_for_view(self, view_class: type[View]) -> set[ComponentType]:
-        """Get supported component types for view class."""
-        component_types = self._view_to_component_types.get(view_class)
-        if component_types is None:
-            raise ValueError(f"View class {view_class.__name__} not registered")
-        return component_types.copy()  # Return copy to prevent external modification
-
-    # =========================================================================
-    # VALIDATION AND INTROSPECTION
-    # =========================================================================
-
-    def is_registered_structure(self, structure_id: int) -> bool:
-        """Check if structure ID is registered."""
-        return structure_id in self._structure_to_view
-
-    def is_registered_container_type(self, container_type: ContainerType) -> bool:
-        """Check if container type is registered."""
-        return container_type in self._container_type_to_view
-
-    def is_registered_component_type(self, component_type: ComponentType) -> bool:
-        """Check if component type is supported by any view."""
-        return component_type in self._component_type_to_views
-
-    def is_registered_view(self, view_class: type[View]) -> bool:
-        """Check if view class is registered."""
-        return view_class in self._registered_views
-
-    def get_registered_structures(self) -> dict[int, type[View]]:
-        """Get copy of structure ID → view class mappings."""
-        return self._structure_to_view.copy()
-
-    def get_registered_container_types(self) -> dict[ContainerType, type[View]]:
-        """Get copy of container type → view class mappings."""
-        return self._container_type_to_view.copy()
-
-    def get_registered_component_types(self) -> dict[ComponentType, list[type[View]]]:
-        """Get copy of component type → view classes mappings."""
-        return {k: v.copy() for k, v in self._component_type_to_views.items()}
-
-    def get_registered_views(self) -> set[type[View]]:
-        """Get copy of all registered view classes."""
-        return self._registered_views.copy()
-
-    # =========================================================================
-    # DEBUGGING AND REPRESENTATION
-    # =========================================================================
-
-    def __repr__(self) -> str:
-        """Debug representation."""
-        return (
-            f"ViewRegistry("
-            f"views={len(self._registered_views)}, "
-            f"structures={len(self._structure_to_view)}, "
-            f"container_types={len(self._container_type_to_view)}, "
-            f"component_types={len(self._component_type_to_views)})"
-        )
-
-    def debug_info(self) -> str:
-        """Detailed debug information about registry state."""
-        lines = ["ViewRegistry Debug Info:"]
-        lines.append(f"  Registered Views: {len(self._registered_views)}")
-
-        lines.append("  Structure ID → View:")
-        for struct_id, view_class in sorted(self._structure_to_view.items()):
-            lines.append(f"    {struct_id} → {view_class.__name__}")
-
-        lines.append("  Container Type → View:")
-        for cont_type, view_class in self._container_type_to_view.items():
-            lines.append(f"    {cont_type} → {view_class.__name__}")
-
-        lines.append("  Component Type → Views:")
-        for comp_type, view_classes in self._component_type_to_views.items():
-            view_names = [v.__name__ for v in view_classes]
-            lines.append(f"    {comp_type} → {view_names}")
-
-        return "\n".join(lines)
+        for container_type in self._type_to_registration:
+            if isinstance(value, container_type):
+                return True
+        return False
