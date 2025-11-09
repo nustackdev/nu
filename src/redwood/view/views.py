@@ -1,4 +1,44 @@
-"""Built-in views for common Python data structures."""
+"""Built-in views for common Python data structures.
+
+This module provides view implementations for standard Python types,
+all built on the Container API. Each view provides a familiar interface
+while delegating storage operations to Layer 2.
+
+Available views:
+    - DictView: Mutable mapping (dict)
+    - ListView: Mutable sequence (list)
+    - TupleView: Immutable sequence (tuple)
+    - SetView: Mutable set (set)
+    - FrozenSetView: Immutable set (frozenset)
+    - ByteArrayView: Mutable byte sequence (bytearray)
+
+Each view implements:
+    - Native Python protocols (__getitem__, __iter__, etc.)
+    - Convertible protocol (extract() method)
+    - Initializable protocol (store() method)
+    - Nestable protocol (open_view() method) where appropriate
+
+Example:
+    >>> from redwood.view import ViewRegistry
+    >>> from redwood.view.views import DictView
+    >>> from redwood.tree import Container, ContainerStructure, ContainerProtocol
+    >>> registry = ViewRegistry()
+    >>> registry.register_builtin_views()
+    >>> with storage.transaction() as tx:
+    ...     container = Container.create(
+    ...         path=("users",),
+    ...         ctx=tx,
+    ...         structure=DictView.STRUCTURE,
+    ...         protocol=DictView.PROTOCOL,
+    ...     )
+    ...
+    ...     users = DictView(container, registry)
+    ...     users["alice"] = {"name": "Alice", "age": 30}
+    ...     users["bob"] = {"name": "Bob", "tags": ["python", "ai"]}
+    ...
+    ...     # Nested structures auto-populate
+    ...     alice = users["alice"]  # Returns: {"name": "Alice", "age": 30}
+"""
 
 from __future__ import annotations
 
