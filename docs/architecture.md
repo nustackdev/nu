@@ -6,7 +6,7 @@ Redwood is a layered data system. Each layer builds on the one below, adding one
 
 ```text
 ┌─────────────────────────────────────┐
-│ Layer 4: Semantics                  │  Application logic, commands, queries
+│ Layer 4: Shapes                     │  Application logic, commands, queries
 ├─────────────────────────────────────┤
 │ Layer 3: Views                      │  Data structures (Dict, List, Queue)
 ├─────────────────────────────────────┤

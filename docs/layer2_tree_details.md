@@ -10,13 +10,13 @@ The Tree layer interprets flat tuple-key-value storage as a hierarchical structu
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Layer 4: Semantics (Application Logic)     │
+│ Layer 4: Shapes                             │
 ├─────────────────────────────────────────────┤
-│ Layer 3: Views (Data Structures)           │
+│ Layer 3: Views (Data Structures)            │
 ├─────────────────────────────────────────────┤
-│ Layer 2: Tree (Hierarchical Semantics) ◄── │  THIS LAYER
+│ Layer 2: Tree (Hierarchical Semantics)   ◄──│  THIS LAYER
 ├─────────────────────────────────────────────┤
-│ Layer 1: Storage (Tuple-Key-Value)         │
+│ Layer 1: Storage (Tuple-Key-Value)          │
 └─────────────────────────────────────────────┘
 ```
 

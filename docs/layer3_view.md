@@ -402,4 +402,4 @@ Doesn't handle:
 - Domain validation
 - Command/query patterns
 
-These are Semantics Layer 4 responsibilities.
+These are Shapes Layer 4 responsibilities.
