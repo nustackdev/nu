@@ -15,6 +15,7 @@ from .common import (
     PrimitiveValue,
     TupleKey,
     Value,
+    cast_value,
 )
 from .mapping import (
     MappingProtocol,
@@ -45,6 +46,7 @@ __all__ = [  # noqa: RUF022
     "TupleKey",
     "Value",
     "IterableValues",
+    "cast_value",
     # Special sentinels
     "EMPTY",
     "NAN",

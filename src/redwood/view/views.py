@@ -44,7 +44,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, cast
 
-from redwood.abc import EMPTY, Empty, KeyComponent, Value, is_empty
+from redwood.abc import EMPTY, Empty, KeyComponent, Value, cast_value, is_empty
 from redwood.tree import (
     Container,
     ContainerProtocol,
@@ -167,9 +167,9 @@ class DictView(View):
         """
         for k, v in self.container.list_children():
             if v.node_type == NodeType.PRIMITIVE:
-                yield cast("Value", v.primitive_value)
+                yield cast_value(v.primitive_value)
             elif v.node_type == NodeType.CONTAINER:
-                yield cast("Value", self[k])
+                yield cast_value(self[k])
 
     def items(self) -> Generator[tuple[KeyComponent, Value], None, None]:
         """Get all key-value pairs.
@@ -179,9 +179,9 @@ class DictView(View):
         """
         for k, v in self.container.list_children():
             if v.node_type == NodeType.PRIMITIVE:
-                yield k, cast("Value", v.primitive_value)
+                yield k, cast_value(v.primitive_value)
             elif v.node_type == NodeType.CONTAINER:
-                yield k, cast("Value", self[k])
+                yield k, cast_value(self[k])
 
     def get(self, key: KeyComponent, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value with default fallback.
@@ -381,9 +381,8 @@ class ListView(View):
             child_type = self.container.get_child_type(i)
             if child_type == NodeType.PRIMITIVE:
                 value = self.container.get_child_primitive(i)
-                if not is_empty(value):
-                    self.container.set_child_primitive(i - 1, value)
-                    self.container.delete_child(i)
+                self.container.set_child_primitive(i - 1, cast_value(value))
+                self.container.delete_child(i)
             elif child_type == NodeType.CONTAINER:
                 # Container child - needs more complex move logic
                 raise NotImplementedError(
@@ -404,8 +403,11 @@ class ListView(View):
         Yields:
             Items in order
         """
-        for i in range(len(self)):
-            yield cast("Value", self[i])
+        for k, v in self.container.list_children():
+            if v.node_type == NodeType.PRIMITIVE:
+                yield cast_value(v.primitive_value)
+            elif v.node_type == NodeType.CONTAINER:
+                yield cast_value(self[int(k)])
 
     def append(self, value: Value) -> None:
         """Append value to end.
@@ -455,8 +457,7 @@ class ListView(View):
             child_type = self.container.get_child_type(i)
             if child_type == NodeType.PRIMITIVE:
                 child_value = self.container.get_child_primitive(i)
-                if not is_empty(child_value):
-                    self.container.set_child_primitive(i + 1, child_value)
+                self.container.set_child_primitive(i + 1, cast_value(child_value))
             elif child_type == NodeType.CONTAINER:
                 raise NotImplementedError(
                     "Inserting into list with container children not yet supported"
@@ -593,7 +594,7 @@ class TupleView(View):
             Items in order
         """
         for i in range(len(self)):
-            yield cast("Value", self[i])
+            yield cast_value(self[i])
 
     def count(self, value: Value) -> int:
         """Count occurrences of value.
@@ -774,7 +775,7 @@ class SetView(View):
         for key in self.container.list_child_keys():
             stored_value = self.container.get_child_primitive(key)
             if not is_empty(stored_value):
-                yield cast("Value", stored_value)
+                yield cast_value(stored_value)
 
     def clear(self) -> None:
         """Remove all values."""
@@ -869,7 +870,7 @@ class FrozenSetView(View):
         for key in self.container.list_child_keys():
             stored_value = self.container.get_child_primitive(key)
             if not is_empty(stored_value):
-                yield cast("Value", stored_value)
+                yield cast_value(stored_value)
 
     # =========================================================================
     # VIEW INTERFACE

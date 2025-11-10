@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, cast
 
 
 __all__ = [
@@ -13,6 +13,7 @@ __all__ = [
     "PrimitiveValue",
     "TupleKey",
     "Value",
+    "cast_value",
 ]
 
 # =========================================================
@@ -78,3 +79,13 @@ type TupleKey = tuple[KeyComponent, ...]
 # ---------------------------------------------------------
 
 type CallbackFn = Callable[[TupleKey], None]
+
+
+# ---------------------------------------------------------
+# Type guards
+# ---------------------------------------------------------
+
+
+def cast_value(value: object) -> Value:
+    """Convenience function to cast given object to Value."""
+    return cast("Value", value)
