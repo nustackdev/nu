@@ -53,8 +53,7 @@ from redwood.tree import (
     PathNotFoundError,
     join_component,
 )
-
-from .view import View
+from redwood.view import View
 
 
 if TYPE_CHECKING:

@@ -49,6 +49,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from . import container_ops, navigation, node_ops, validation_ops
 from .exceptions import InvalidPathError
+from .types import DEFAULT_PARENT_PROTOCOL, DEFAULT_PARENT_STRUCTURE
 
 
 if TYPE_CHECKING:
@@ -118,6 +119,8 @@ class Container(NamedTuple):
         structure: ContainerStructure,
         protocol: ContainerProtocol,
         *,
+        default_parent_structure: ContainerStructure = DEFAULT_PARENT_STRUCTURE,
+        default_parent_protocol: ContainerProtocol = DEFAULT_PARENT_PROTOCOL,
         ensure_healthy_parents: bool = True,
     ) -> Container:
         """Create new container at path and return Container instance.
@@ -131,6 +134,8 @@ class Container(NamedTuple):
             ctx: Storage context (must support writes)
             structure: Container structure ID (for View reconstruction)
             protocol: Container protocol flags (behavior hints)
+            default_parent_structure: Container structure for parent containers
+            default_parent_protocol: Container protocol for parent containers
             ensure_healthy_parents: Validate parents chain, create non-existent parents
 
         Returns:
@@ -158,6 +163,8 @@ class Container(NamedTuple):
             structure,
             protocol,
             ctx,
+            default_parent_structure=default_parent_structure,
+            default_parent_protocol=default_parent_protocol,
             ensure_healthy_parents=ensure_healthy_parents,
         )
 

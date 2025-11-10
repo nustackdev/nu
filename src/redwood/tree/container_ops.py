@@ -17,6 +17,8 @@ from .marker import create_marker, is_marker
 from .navigation import join_component
 from .node_ops import get_node_info, get_node_type
 from .types import (
+    DEFAULT_PARENT_PROTOCOL,
+    DEFAULT_PARENT_STRUCTURE,
     ContainerProtocol,
     ContainerStructure,
     NodeInfo,
@@ -70,6 +72,8 @@ def create_container(
     protocol: ContainerProtocol,
     ctx: StorageContextType,
     *,
+    default_parent_structure: ContainerStructure = DEFAULT_PARENT_STRUCTURE,
+    default_parent_protocol: ContainerProtocol = DEFAULT_PARENT_PROTOCOL,
     ensure_healthy_parents: bool = True,
 ) -> bool:
     """Create container at path.
@@ -79,6 +83,8 @@ def create_container(
         structure: Container structure ID
         protocol: Container protocol flags
         ctx: Storage context (transaction)
+        default_parent_structure: Container structure for parent containers
+        default_parent_protocol: Container protocol for parent containers
         ensure_healthy_parents: Validate parents chain, create non-existent parents
 
     Returns:
@@ -127,8 +133,8 @@ def create_container(
         if parent_info.missing_paths:
             create_parents(
                 path,
-                ContainerStructure(1),  # Default associative
-                ContainerProtocol.MUTABLE,
+                default_parent_structure,
+                default_parent_protocol,
                 ctx,
             )
 

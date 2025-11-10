@@ -90,13 +90,21 @@ class View(ABC):
     # =========================================================================
 
     @classmethod
-    def create(cls, path: tuple, ctx: StorageContextType, views: tuple[type[View], ...]) -> Self:
+    def create(
+        cls,
+        path: tuple,
+        ctx: StorageContextType,
+        views: tuple[type[View], ...],
+        default_parent_view: type[View],
+    ) -> Self:
         """Create a new View instance of this type."""
         container = Container.create(
             path,
             ctx,
             cls.get_structure(),
             cls.get_protocol(),
+            default_parent_structure=default_parent_view.get_structure(),
+            default_parent_protocol=default_parent_view.get_protocol(),
             ensure_healthy_parents=True,
         )
 
@@ -238,13 +246,14 @@ class View(ABC):
         # Get view class and structure for this value type
         value_type = type(value)
         view_class = self.registry.get_view_for_type(value_type)
-        structure_id = self.registry.get_structure_for_type(value_type)
+        structure_id = view_class.get_structure()
+        protocol_hints = view_class.get_protocol()
 
         # Create child container
         child_container = self.container.create_child_container(
             key=key,
             structure=ContainerStructure(structure_id),
-            protocol=ContainerProtocol.MUTABLE,
+            protocol=protocol_hints,
         )
 
         # Create view and populate
