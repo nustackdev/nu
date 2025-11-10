@@ -6,19 +6,19 @@ Views are thin wrappers over Container providing protocol-based capabilities.
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Self
 
 import attrs
 
 from redwood.abc import Convertible, Empty, Initializable, Nestable, is_empty
 from redwood.tree import Container, ContainerProtocol, ContainerStructure, NodeType, get_parent
 
+from .registry import ViewRegistry
+
 
 if TYPE_CHECKING:
     from redwood.abc import KeyComponent, Value
-
-    from .registry import ViewRegistry
-
+    from redwood.storage import StorageContextType
 
 __all__ = [
     "View",
@@ -84,6 +84,27 @@ class View(ABC):
     def get_container_cls(cls) -> type | None:
         """Get container type, associated with this view."""
         return cls.CONTAINER_CLS
+
+    # =========================================================================
+    # Initialization
+    # =========================================================================
+
+    @classmethod
+    def create(cls, path: tuple, ctx: StorageContextType, views: tuple[type[View], ...]) -> Self:
+        """Create a new View instance of this type."""
+        container = Container.create(
+            path,
+            ctx,
+            cls.get_structure(),
+            cls.get_protocol(),
+            ensure_healthy_parents=True,
+        )
+
+        registry = ViewRegistry()
+        for view in views:
+            registry.register(view)
+
+        return cls(container, registry)
 
     # =========================================================================
     # NAVIGATION HELPERS
