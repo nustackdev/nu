@@ -39,15 +39,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..core import Ref
+from redwood.shape.evaluation import Ref
 
 
 if TYPE_CHECKING:
     from redwood.abc import KeyComponent, TupleKey, Value
-    from redwood.tree import View
+    from redwood.shape.evaluation.term import RValue
+    from redwood.shape.types import Context
+    from redwood.view import View
 
-    from ..core.term import RValue
-    from ..types import Context
     from .commands import SetCmd
     from .operations import GetOp
 

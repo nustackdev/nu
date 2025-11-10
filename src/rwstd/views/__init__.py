@@ -1,18 +1,15 @@
-"""Collection of for Redwood Standard Library (rwstd)."""
+"""Collection of standard views."""
 
 from __future__ import annotations
 
-from .dict_view import DictView
-from .extended_tree import Tree
-from .list_view import ListView
-from .queue_view import QueueComponent, QueueContainer, QueueView
+from .views import ByteArrayView, DictView, FrozenSetView, ListView, SetView, TupleView
 
 
-__all__ = [
+__all__ = (
+    "ByteArrayView",
     "DictView",
+    "FrozenSetView",
     "ListView",
-    "QueueComponent",
-    "QueueContainer",
-    "QueueView",
-    "Tree",
-]
+    "SetView",
+    "TupleView",
+)

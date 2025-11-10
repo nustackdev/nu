@@ -48,6 +48,13 @@ if TYPE_CHECKING:
     from ..types import Context
 
 
+__all__ = [
+    "LValue",
+    "RValue",
+    "Term",
+]
+
+
 # ============================================================================
 # Base Term
 # ============================================================================
@@ -140,10 +147,3 @@ class RValue(Term):
             True if pure (no side effects), False if impure
         """
         ...
-
-
-__all__ = [
-    "LValue",
-    "RValue",
-    "Term",
-]

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar, Self
 
 import attrs
 
-from redwood.abc import Convertible, Empty, Initializable, Nestable, is_empty
+from redwood.abc import Convertible, Empty, Initializable, is_empty
 from redwood.tree import Container, ContainerProtocol, ContainerStructure, NodeType, get_parent
 
 from .registry import ViewRegistry
@@ -117,21 +117,6 @@ class View(ABC):
     # =========================================================================
     # NAVIGATION HELPERS
     # =========================================================================
-
-    def open_child[ViewT: View](self, key: KeyComponent, child_view: type[ViewT]) -> ViewT:
-        """Navigate to child container (alias for open_view).
-
-        Args:
-            key: Child container key
-            child_view: View to open child container with
-
-        Returns:
-            View instance for child container
-        """
-        if not isinstance(self, Nestable):
-            raise TypeError(f"The view {self.__name__} does not support nested views.")
-
-        return self.open_view(key, child_view)
 
     def open_parent(self) -> View:
         """Navigate to parent container.

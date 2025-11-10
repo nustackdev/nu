@@ -1,0 +1,1 @@
+"""Structural semantics - Shape, Slot."""

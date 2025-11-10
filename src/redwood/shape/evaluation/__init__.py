@@ -1,4 +1,4 @@
-"""Core."""
+"""Evaluation/language semantics - Term, RValue, LValue."""
 
 from .command import Command
 from .operation import Operation

@@ -20,14 +20,19 @@ Example:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
-
-from ..core.term import LValue
+from typing import TYPE_CHECKING, ClassVar, cast
 
 
 if TYPE_CHECKING:
-    from .slots import Slot
+    from ..evaluation import LValue
+    from .slot import Slot
 
+
+__all__ = [
+    "Shape",
+    "ShapeMeta",
+    "SlotDescriptor",
+]
 
 # ============================================================================
 # Slot Descriptor
@@ -80,7 +85,7 @@ class SlotDescriptor:
             parent_ref=None,
         )
 
-    def __set__(self, obj: Shape, value: Any) -> None:
+    def __set__(self, obj: Shape, value: object) -> None:
         """Prevent setting slots - they're structure definitions."""
         raise AttributeError(
             f"Cannot set slot '{self.name}' - slots are read-only structure definitions"
@@ -108,8 +113,8 @@ class ShapeMeta(type):
         mcs,
         name: str,
         bases: tuple[type, ...],
-        namespace: dict[str, Any],
-        **kwargs: Any,
+        namespace: dict[str, object],
+        **kwargs: object,
     ) -> type:
         """Create Shape class with slot processing.
 
@@ -130,12 +135,12 @@ class ShapeMeta(type):
                 slots.update(base._slots)
 
         # 2. Collect slots from current class annotations
-        annotations = namespace.get("__annotations__", {})
+        annotations = cast("dict", namespace.get("__annotations__", {}))
         for field_name in annotations:
             value = namespace.get(field_name)
 
             # Import here to avoid circular dependency
-            from .slots import Slot
+            from .slot import Slot
 
             if isinstance(value, Slot):
                 # Set the slot's name (it doesn't know it yet)
@@ -238,10 +243,3 @@ class Shape(metaclass=ShapeMeta):
             List of field name strings
         """
         return list(cls._slots.keys())
-
-
-__all__ = [
-    "Shape",
-    "ShapeMeta",
-    "SlotDescriptor",
-]

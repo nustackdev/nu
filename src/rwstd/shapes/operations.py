@@ -56,14 +56,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from redwood.abc import Empty
+from redwood.abc import Empty, NaN, propagate_special
+from redwood.shape.evaluation import Operation, RValue
 
-from ..core import Operation, RValue
-
+from from redwood.shape.utils.resolver import (
+    get_view,
+    navigate_to_parent,
+    resolve_ref,
+)
 
 if TYPE_CHECKING:
-    from ..core import Ref
-    from ..types import Context
+    from redwood.shape.evaluation import Ref
+    from redwood.shape.types import Context
 
 
 # ============================================================================
@@ -104,12 +108,6 @@ class GetOp(Operation):
         Returns:
             Value at ref location, or Empty if not found
         """
-        from ..executors.resolver import (
-            get_view,
-            navigate_to_parent,
-            resolve_ref,
-        )
-
         try:
             # 1. Resolve ref to path
             path = resolve_ref(self.ref, context)
@@ -230,8 +228,6 @@ class BinaryOp(Operation):
         Returns:
             Operation result, or NaN if operands are special
         """
-        from ..types import NaN, propagate_special
-
         # Evaluate operands
         left_val = self.children[0].execute(context)
         right_val = self.children[1].execute(context)

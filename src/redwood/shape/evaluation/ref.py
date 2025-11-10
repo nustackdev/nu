@@ -134,9 +134,14 @@ from .term import LValue
 
 if TYPE_CHECKING:
     from redwood.abc import KeyComponent, TupleKey
-    from redwood.tree import View
+    from redwood.view import View
 
     from ..types import Context
+
+
+__all__ = [
+    "Ref",
+]
 
 
 class Ref[T](LValue, ABC):
@@ -223,8 +228,3 @@ class Ref[T](LValue, ABC):
             Self (the location)
         """
         return self
-
-
-__all__ = [
-    "Ref",
-]

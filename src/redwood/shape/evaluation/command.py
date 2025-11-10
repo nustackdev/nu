@@ -80,6 +80,11 @@ if TYPE_CHECKING:
     from ..types import Context
 
 
+__all__ = [
+    "Command",
+]
+
+
 class Command(RValue):
     """Impure RValue that performs a mutation.
 
@@ -108,8 +113,3 @@ class Command(RValue):
             None (mutation is the purpose)
         """
         ...
-
-
-__all__ = [
-    "Command",
-]

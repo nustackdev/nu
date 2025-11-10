@@ -69,6 +69,10 @@ from .term import RValue
 if TYPE_CHECKING:
     from ..types import Context
 
+__all__ = [
+    "Operation",
+]
+
 
 class Operation[T](RValue):
     """RValue that produces a value of type T.
@@ -105,8 +109,3 @@ class Operation[T](RValue):
             Computed value of type T
         """
         ...
-
-
-__all__ = [
-    "Operation",
-]

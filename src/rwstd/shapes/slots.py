@@ -10,70 +10,14 @@ Slots are declarative - they describe structure, not behavior.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from rwstd.views import DictView
+from .slot import Slot
 
 
 if TYPE_CHECKING:
-    from ..core.term import LValue
+    from ..semantics import LValue
     from .shape import Shape
-
-
-# ============================================================================
-# Slot Base Class
-# ============================================================================
-
-
-class Slot(ABC):
-    """Abstract base for all slot types.
-
-    Slots are structure definitions that create refs when accessed.
-    They act as factories - constructing refs with appropriate types.
-
-    All slots must implement:
-        - create_ref(): Factory method that produces a Ref
-
-    Attributes:
-        name: Field name (set by Shape metaclass)
-        value_type: Type of data at this location
-        view_type: View class for accessing this location
-    """
-
-    def __init__(self, value_type: type, view_type: type | None = None) -> None:
-        """Initialize slot.
-
-        Args:
-            value_type: Python type of the value (int, str, Order, etc.)
-            view_type: View class for access (defaults to DictView)
-        """
-        self.name: str | None = None  # Set by metaclass
-        self.value_type = value_type
-        self.view_type = view_type if view_type is not None else DictView
-
-    @abstractmethod
-    def create_ref(
-        self,
-        owner_shape: type[Shape],
-        parent_ref: LValue | None = None,
-    ) -> LValue:
-        """Create ref for this slot.
-
-        This is the factory method - each slot type creates its
-        corresponding ref type.
-
-        Args:
-            owner_shape: Shape class this slot belongs to
-            parent_ref: Parent ref (for nested access)
-
-        Returns:
-            Appropriate Ref instance
-        """
-        ...
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} name={self.name!r} type={self.value_type}>"
 
 
 # ============================================================================
