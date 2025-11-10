@@ -42,7 +42,8 @@ Example:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, cast
+from abc import ABC
+from typing import TYPE_CHECKING, ClassVar, Self, cast
 
 from redwood.abc import EMPTY, Empty, KeyComponent, Value, cast_value, is_empty
 from redwood.tree import (
@@ -53,11 +54,13 @@ from redwood.tree import (
     PathNotFoundError,
     join_component,
 )
-from redwood.view import View
+from redwood.view import View, ViewRegistry
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
+
+    from redwood.storage import StorageContextType
 
 __all__ = [
     "ByteArrayView",
@@ -73,7 +76,42 @@ __all__ = [
 # =============================================================================
 
 
-class DictView(View):
+class StdView(View, ABC):
+    @classmethod
+    def create(
+        cls,
+        path: tuple,
+        ctx: StorageContextType,
+        views: tuple[type[View], ...] = (),
+        default_parent_view: type[View] | None = None,
+    ) -> Self:
+        """Create a new View instance of this type."""
+        default_parent_view = default_parent_view or DictView
+
+        container = Container.create(
+            path,
+            ctx,
+            cls.get_structure(),
+            cls.get_protocol(),
+            default_parent_structure=default_parent_view.get_structure(),
+            default_parent_protocol=default_parent_view.get_protocol(),
+            ensure_healthy_parents=True,
+        )
+
+        registry = ViewRegistry()
+        registry.register(DictView)
+        registry.register(ListView)
+        registry.register(TupleView)
+        registry.register(SetView)
+        registry.register(FrozenSetView)
+        registry.register(ByteArrayView)
+        for view in views:
+            registry.register(view)
+
+        return cls(container, registry)
+
+
+class DictView(StdView):
     """Dict-like view over container.
 
     Provides familiar dict interface while delegating to Container:
@@ -285,7 +323,7 @@ class DictView(View):
 # =============================================================================
 
 
-class ListView(View):
+class ListView(StdView):
     """List-like view over container.
 
     Provides familiar list interface using integer keys:
@@ -519,7 +557,7 @@ class ListView(View):
 # =============================================================================
 
 
-class TupleView(View):
+class TupleView(StdView):
     """Tuple-like view over container (immutable sequence).
 
     Provides read-only tuple interface using integer keys:
@@ -679,7 +717,7 @@ class TupleView(View):
 # =============================================================================
 
 
-class SetView(View):
+class SetView(StdView):
     """Set-like view over container.
 
     Provides set interface using values as keys:
@@ -811,7 +849,7 @@ class SetView(View):
 # =============================================================================
 
 
-class FrozenSetView(View):
+class FrozenSetView(StdView):
     """Frozenset-like view over container (immutable set).
 
     Provides read-only set interface:
@@ -903,7 +941,7 @@ class FrozenSetView(View):
 # =============================================================================
 
 
-class ByteArrayView(View):
+class ByteArrayView(StdView):
     """ByteArray-like view over container.
 
     Stores bytes as individual integer children for efficient access.
