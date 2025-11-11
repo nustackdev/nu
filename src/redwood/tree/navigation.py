@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from redwood.abc import KeyComponent, TupleKey
 
 __all__ = [
+    "DATA_ROOT",
+    "METADATA_ROOT",
     "create_path",
     "get_ancestors",
     "get_common_ancestor",

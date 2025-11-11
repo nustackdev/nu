@@ -103,6 +103,8 @@ from .marker import (
 # Navigation Operations (Pure Functions)
 # ============================================================================
 from .navigation import (
+    DATA_ROOT,
+    METADATA_ROOT,
     create_path,
     get_ancestors,
     get_common_ancestor,
@@ -200,6 +202,8 @@ __all__ = [  # noqa: RUF022
     "join_path",
     "join_component",
     "get_common_ancestor",
+    "DATA_ROOT",
+    "METADATA_ROOT",
     # Validation
     "validate_exists",
     "validate_not_exists",

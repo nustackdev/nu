@@ -6,7 +6,14 @@ These ABCs provide a common types, interfaces and set of behaviors for various c
 
 from __future__ import annotations
 
-from .capabilities import Convertible, Initializable, Nestable
+from .capabilities import (
+    Convertible,
+    Initializable,
+    Nestable,
+    is_convertible,
+    is_initializable,
+    is_nestable,
+)
 from .common import (
     CallbackFn,
     CompositeValue,
@@ -64,6 +71,9 @@ __all__ = [  # noqa: RUF022
     "Convertible",
     "Initializable",
     "Nestable",
+    "is_convertible",
+    "is_initializable",
+    "is_nestable",
     # Collections
     "MappingProtocol",
     "MutableMappingProtocol",

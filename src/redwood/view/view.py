@@ -10,14 +10,21 @@ from typing import TYPE_CHECKING, ClassVar, Self
 
 import attrs
 
-from redwood.abc import Convertible, Empty, Initializable, is_empty
-from redwood.tree import Container, ContainerProtocol, ContainerStructure, NodeType, get_parent
+from redwood.abc import Convertible, Empty, Initializable, KeyComponent, Value, is_empty
+from redwood.tree import (
+    DATA_ROOT,
+    Container,
+    ContainerProtocol,
+    ContainerStructure,
+    NodeType,
+    get_parent,
+)
 
 from .registry import ViewRegistry
 
 
 if TYPE_CHECKING:
-    from redwood.abc import KeyComponent, Value
+    from redwood.abc import Value
     from redwood.storage import StorageContextType
 
 __all__ = [
@@ -92,14 +99,13 @@ class View(ABC):
     @classmethod
     def create(
         cls,
-        path: tuple,
         ctx: StorageContextType,
         views: tuple[type[View], ...],
         default_parent_view: type[View],
     ) -> Self:
-        """Create a new View instance of this type."""
+        """Create a new View instance of this type on a root path."""
         container = Container.create(
-            path,
+            (DATA_ROOT,),
             ctx,
             cls.get_structure(),
             cls.get_protocol(),

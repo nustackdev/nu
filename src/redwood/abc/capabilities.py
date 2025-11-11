@@ -6,7 +6,7 @@ Not all containers support all operations - check protocol support before use.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
 
 if TYPE_CHECKING:
@@ -119,7 +119,7 @@ class Nestable(Protocol):
 # =============================================================================
 
 
-def is_convertible(obj: object) -> bool:
+def is_convertible(obj: object) -> TypeGuard[Convertible]:
     """Check if object supports extract operation.
 
     Args:
@@ -131,7 +131,7 @@ def is_convertible(obj: object) -> bool:
     return isinstance(obj, Convertible)
 
 
-def is_initializable(obj: object) -> bool:
+def is_initializable(obj: object) -> TypeGuard[Initializable]:
     """Check if object supports store operation.
 
     Args:
@@ -143,7 +143,7 @@ def is_initializable(obj: object) -> bool:
     return isinstance(obj, Initializable)
 
 
-def is_nestable(obj: object) -> bool:
+def is_nestable(obj: object) -> TypeGuard[Nestable]:
     """Check if object supports child navigation.
 
     Args:

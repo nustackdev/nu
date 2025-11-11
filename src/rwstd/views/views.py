@@ -54,7 +54,7 @@ from redwood.tree import (
     PathNotFoundError,
     join_component,
 )
-from redwood.view import View, ViewRegistry
+from redwood.view import View
 
 
 if TYPE_CHECKING:
@@ -80,35 +80,15 @@ class StdView(View, ABC):
     @classmethod
     def create(
         cls,
-        path: tuple,
         ctx: StorageContextType,
         views: tuple[type[View], ...] = (),
         default_parent_view: type[View] | None = None,
     ) -> Self:
         """Create a new View instance of this type."""
         default_parent_view = default_parent_view or DictView
+        views = (DictView, ListView, TupleView, SetView, FrozenSetView, ByteArrayView, *views)
 
-        container = Container.create(
-            path,
-            ctx,
-            cls.get_structure(),
-            cls.get_protocol(),
-            default_parent_structure=default_parent_view.get_structure(),
-            default_parent_protocol=default_parent_view.get_protocol(),
-            ensure_healthy_parents=True,
-        )
-
-        registry = ViewRegistry()
-        registry.register(DictView)
-        registry.register(ListView)
-        registry.register(TupleView)
-        registry.register(SetView)
-        registry.register(FrozenSetView)
-        registry.register(ByteArrayView)
-        for view in views:
-            registry.register(view)
-
-        return cls(container, registry)
+        return super().create(ctx, views, default_parent_view)
 
 
 class DictView(StdView):

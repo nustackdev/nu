@@ -11,10 +11,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple
 
+from redwood.tree import ContainerStructure
+
 from .exceptions import RegistryError
 
 
 if TYPE_CHECKING:
+    from redwood.tree import ContainerStructure
+
     from .view import View
 
 __all__ = [
@@ -50,7 +54,7 @@ class ViewRegistry:
 
     def __init__(self) -> None:
         """Initialize registry."""
-        self._structure_to_view: dict[int, type[View]] = {}
+        self._structure_to_view: dict[ContainerStructure, type[View]] = {}
         self._type_to_registration: dict[type, ViewRegistration] = {}
 
     def register(
@@ -64,7 +68,7 @@ class ViewRegistry:
         Raises:
             RegistryError: If structure_id or container_type already registered
         """
-        structure_id: int = view_class.get_structure()
+        structure_id: ContainerStructure = view_class.get_structure()
         container_type: type | None = view_class.get_container_cls()
 
         # Register structure ID → view
@@ -90,7 +94,7 @@ class ViewRegistry:
             )
             self._type_to_registration[container_type] = registration
 
-    def get_view_for_structure(self, structure_id: int) -> type[View]:
+    def get_view_for_structure(self, structure_id: ContainerStructure) -> type[View]:
         """Get view class for structure ID (reading).
 
         Args:
