@@ -212,7 +212,7 @@ class Shape(metaclass=ShapeMeta):
         return dict(cls._slots)
 
     @classmethod
-    def get_slot(cls, name: str) -> Slot | None:
+    def get_slot(cls, name: str) -> Slot:
         """Get slot definition by name.
 
         Args:
@@ -221,7 +221,7 @@ class Shape(metaclass=ShapeMeta):
         Returns:
             Slot instance, or None if not found
         """
-        return cls._slots.get(name)
+        return cls._slots[name]
 
     @classmethod
     def has_slot(cls, name: str) -> bool:

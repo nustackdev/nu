@@ -25,4 +25,5 @@ class Context:
         storage_context: Context for data access (transaction or snapshot)
     """
 
+    root_view: object
     storage_context: StorageContextType

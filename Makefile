@@ -2,7 +2,7 @@
 
 # Configuration
 PYTHON := python
-SRC_DIR := src/redwood
+SRC_DIR := src
 TEST_DIR := tests
 
 # Colors for output
@@ -137,18 +137,18 @@ quick: build test-fast
 
 lint:
 	@echo "$(BLUE)Running linters...$(NC)"
-	ruff check $(SRC_DIR) $(TEST_DIR)
+	ruff check $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
 
 format:
 	@echo "$(BLUE)Formatting code...$(NC)"
-	ruff format $(SRC_DIR) $(TEST_DIR)
-	ruff check --fix $(SRC_DIR) $(TEST_DIR)
+	ruff format $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
+	ruff check --fix $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking code format...$(NC)"
-	ruff format --check $(SRC_DIR) $(TEST_DIR)
-	ruff check $(SRC_DIR) $(TEST_DIR)
+	ruff format --check $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
+	ruff check $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
 
 pre-commit: format lint test-fast
 	@echo ""
