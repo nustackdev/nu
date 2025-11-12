@@ -1,8 +1,8 @@
-# Layer 4: Semantics (Shape System)
+# Layer 4: Shapes (Shape System)
 
 ## Overview
 
-The Semantics layer turns declarative structure into executable meaning. It provides application-level abstractions where developers describe *what exists* (Shapes), *where it lives* (Slots), and *how to interact with it* (Refs, Operations, Commands).
+The Shapes layer turns declarative structure into executable meaning. It provides application-level abstractions where developers describe *what exists* (Shapes), *where it lives* (Slots), and *how to interact with it* (Refs, Operations, Commands).
 
 **Core Responsibility**: Provide type-safe, declarative data structures with semantic operations.
 
@@ -10,11 +10,11 @@ The Semantics layer turns declarative structure into executable meaning. It prov
 
 ```text
 ┌─────────────────────────────────────────────┐
-│ Layer 4: Semantics (Application Logic)   ◄──│  THIS LAYER
+│ Layer 4: Shapes (Application Logic)      ◄──│  THIS LAYER
 ├─────────────────────────────────────────────┤
 │ Layer 3: Views (Data Structures)            │
 ├─────────────────────────────────────────────┤
-│ Layer 2: Tree (Hierarchical Semantics)      │
+│ Layer 2: Tree (Hierarchical Shapes)         │
 ├─────────────────────────────────────────────┤
 │ Layer 1: Storage (Tuple-Key-Value)          │
 └─────────────────────────────────────────────┘
@@ -22,7 +22,7 @@ The Semantics layer turns declarative structure into executable meaning. It prov
 
 ## What It Is
 
-Semantics is a **cognitive model** for data:
+Shapes is a **cognitive model** for data:
 
 - **Shape**: Blueprint defining structure
 - **Slot**: Position within structure (field definition)
@@ -159,12 +159,12 @@ Market.orders["AAPL"].price.update(lambda p: p * 1.1)  # UpdateCmd
 
 ## How It Uses Layer 3
 
-Semantics builds on Views for data access:
+Shapes builds on Views for data access:
 
 ### Reading: Ref → View → Value
 
 ```python
-# Semantics Layer 4
+# Shapes Layer 4
 price_value = Market.orders["AAPL"].price.get()
 
 # ↓ resolves to path
@@ -185,7 +185,7 @@ storage.get(path)
 ### Writing: Cmd → View → Tree
 
 ```python
-# Semantics Layer 4
+# Shapes Layer 4
 Market.orders["AAPL"].price.set(150.0)
 
 # ↓ resolves to path
@@ -221,7 +221,7 @@ dict_view.store({...}, replace=True)
 # Then stores: orders/AAPL/price, orders/AAPL/volume, etc.
 ```
 
-## What Semantics Does
+## What Shapes Does
 
 ✅ **Declarative Structure**
 
@@ -247,7 +247,7 @@ dict_view.store({...}, replace=True)
 - Custom operations and commands
 - Business logic encapsulation
 
-## What Semantics Does NOT Do
+## What Shapes Does NOT Do
 
 ### No Direct Storage Access
 

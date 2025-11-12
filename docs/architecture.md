@@ -41,7 +41,7 @@ Redwood is a layered data system. Each layer builds on the one below, adding one
 - Auto-population and extraction of Python objects
 - Example: `users["alice"] = {"name": "Alice"}` stores as tree structure
 
-### Layer 4: Semantics
+### Layer 4: Shapes
 
 - Application logic and domain models
 - Commands (mutations), queries (reads), refs (locations)
@@ -57,7 +57,7 @@ Each layer knows ONLY its own concept:
 - KV Storage: doesn't know what "container" means
 - Tree: doesn't know what "DictView" means
 - Views: don't know about application semantics
-- Semantics: doesn't know about storage internals
+- Shapes: doesn't know about storage internals
 
 ### One Concept Per Layer
 
@@ -72,14 +72,14 @@ Higher layers use lower layer primitives:
 
 - Tree uses KV's `scan()` to implement `list_children()`
 - DictView uses Tree's containers to implement dict operations
-- Semantics uses Views to implement domain objects
+- Shapes uses Views to implement domain objects
 
 ## Data Flow Example
 
 Storing a user:
 
 ```python
-# Layer 4 (Semantics)
+# Layer 4 (Shapes)
 users.alice.set({"name": "Alice", "age": 30})
 
 # ↓ uses Layer 3 (View)
@@ -104,7 +104,7 @@ lmdb.put(encode(("users", "alice", "age")), encode(30))
 Reading a user:
 
 ```python
-# Layer 4 (Semantics)
+# Layer 4 (Shapes)
 data = users.alice.get()
 
 # ↓ uses Layer 3 (View)
@@ -134,7 +134,7 @@ lmdb.iterator(encode(("users", "alice")), encode(("users", "alice", "￿")))
 
 - Test KV Storage without Tree logic
 - Test Tree without View logic
-- Test Views without Semantics
+- Test Views without Shapes
 
 **Performance**: Lower layers are optimized
 
@@ -147,4 +147,4 @@ lmdb.iterator(encode(("users", "alice")), encode(("users", "alice", "￿")))
 - KV Storage: just a KV store with tuple keys
 - Tree: just adds container concept
 - Views: just data structure patterns
-- Semantics: just domain logic
+- Shapes: just domain logic
