@@ -163,19 +163,6 @@ class LValue(Term):
         """
         ...
 
-    @abstractmethod
-    def last_segment(self) -> path.PathSegment:
-        """Get the final segment in this location's path.
-
-        Returns:
-            Final path segment
-
-        Example:
-            >>> Market.orders["AAPL"].price.last_segment()
-            ("price", float))
-        """
-        ...
-
 
 # =============================================================================
 # RVALUE - EVALUABLE EXPRESSIONS

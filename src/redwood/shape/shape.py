@@ -308,3 +308,7 @@ class Shape(metaclass=ShapeMeta):
             List of field name strings
         """
         return list(cls._slots.keys())
+
+    def store(self, data: object): ...
+
+    def extract(self): ...
