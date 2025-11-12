@@ -1,8 +1,36 @@
+"""Unary operations with graceful special value handling.
+
+This module provides type-safe unary operations, each as its own atomic class:
+
+Arithmetic: NegOp, AbsOp
+Logical: NotOp (internal only, not exposed via ergonomics)
+
+Design principles:
+1. Atomic classes: one operator = one class
+2. Graceful degradation: return NaN/Empty instead of raising exceptions
+3. Special value propagation: Empty/NaN flow through operations
+4. Type safety: preserve generic T for type inference
+5. Explicit handling: no generic try-catches, specific error cases handled
+6. Backward compatibility: UnaryOp factory maintains string-based API
+
+Usage:
+    # Direct instantiation (specific operator class)
+    NegOp(balance.get())
+    AbsOp(temperature.get())
+
+    # Factory (string-based, backward compatible)
+    UnaryOp("neg", balance.get())
+
+    # Via operator overloading (ergonomics.py)
+    -price_var  # → NegOp(price_var)
+    abs(price_var)  # → AbsOp(price_var)
+"""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, cast
 
-from redwood.types import NaN, propagate_special
+from redwood.types import NAN, SpecialValue, propagate_special
 
 from ..term import Operation
 
@@ -10,48 +38,41 @@ from ..term import Operation
 if TYPE_CHECKING:
     from ..context import Context
     from ..term import RValue
+    from .ergonomics import ErgonomicsMixin
+
+__all__ = [
+    "AbsOp",
+    "NegOp",
+    "NotOp",
+    "UnaryOp",
+]
+
+# =============================================================================
+# ABSTRACT UNARY OPERATION
+# =============================================================================
+
+type OpArgument = RValue | ErgonomicsMixin
 
 
 class UnaryOp[T](Operation[T]):
-    """Unary operation on a single term.
+    """Base class for unary operations.
 
-    Supports negation, logical not, and other single-operand operations.
-    Handles special value propagation.
+    Defines execution pattern: evaluate operand → handle special values →
+    apply operator → return result.
 
-    Operators:
-        neg: arithmetic negation (-x)
-        not: logical negation (not x)
-        abs: absolute value (abs(x))
-
-    Example:
-        >>> UnaryOp("neg", balance.get())
-        >>> UnaryOp("not", is_active.get())
+    Subclasses implement specific operators (NegOp, AbsOp, etc.).
     """
 
-    # Operator implementations
-    _OPERATORS: ClassVar[dict[str, Any]] = {
-        "neg": lambda x: -x,
-        "not": lambda x: not x,
-        "abs": lambda x: abs(x),
-    }
-
-    def __init__(self, op: str, operand: RValue) -> None:
+    def __init__(self, operand: OpArgument) -> None:
         """Initialize unary operation.
 
         Args:
-            op: Operator name (neg, not, abs)
+            op: Operator name
             operand: Single operand
-
-        Raises:
-            ValueError: If operator is unknown
         """
-        if op not in self._OPERATORS:
-            raise ValueError(f"Unknown operator: {op}")
+        self.children = (cast("RValue", operand),)
 
-        self.op = op
-        self.children = (operand,)
-
-    def execute(self, context: Context) -> T:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute unary operation.
 
         Args:
@@ -63,19 +84,68 @@ class UnaryOp[T](Operation[T]):
         # Evaluate operand
         operand_val = self.children[0].execute(context)
 
-        # Handle special values
+        # Handle special values (Empty, NaN)
         special = propagate_special(operand_val)
         if special is not None:
             return special  # type: ignore[return-value]
 
-        # Apply operator
-        operator = self._OPERATORS[self.op]
-        try:
-            result = operator(operand_val)
-            return result if result is not None else NaN  # type: ignore[return-value]
-        except (TypeError, ValueError, OverflowError):
-            return NaN  # type: ignore[return-value]
+        # Apply operator-specific logic
+        return self._apply_op(operand_val)  # type: ignore[return-value]
+
+    def _apply_op(self, operand: object) -> T | SpecialValue:
+        """Apply the operator to operand.
+
+        Subclasses override with operator-specific logic.
+
+        Args:
+            operand: Operand (not special)
+
+        Returns:
+            Operation result or NaN for errors
+        """
+        raise NotImplementedError
 
     def __repr__(self) -> str:
         """String representation."""
-        return f"UnaryOp({self.op!r}, {self.children[0]!r})"
+        return f"{self.__class__.__name__}({self.children[0]!r})"
+
+
+# =============================================================================
+# ARITHMETIC OPERATIONS
+# =============================================================================
+
+
+class NegOp[T](UnaryOp[T]):
+    """Negation: -operand."""
+
+    def _apply_op(self, operand: object) -> T | SpecialValue:
+        try:
+            return -operand  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class AbsOp[T](UnaryOp[T]):
+    """Absolute value: abs(operand)."""
+
+    def _apply_op(self, operand: object) -> T | SpecialValue:
+        try:
+            return abs(operand)  # type: ignore
+        except TypeError:
+            return NAN
+
+
+# =============================================================================
+# LOGICAL OPERATIONS (Internal only, not exposed via ergonomics)
+# =============================================================================
+
+
+class NotOp[T](UnaryOp[T]):
+    """Logical NOT: not operand.
+
+    Internal only - Python's 'not' keyword cannot be overloaded.
+    Use explicit comparisons in ergonomics instead.
+    """
+
+    def _apply_op(self, operand: object) -> T | SpecialValue:
+        return not operand  # type: ignore

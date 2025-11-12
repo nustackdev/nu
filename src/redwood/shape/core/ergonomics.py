@@ -1,31 +1,43 @@
 """Operator overloading for RValue expressions.
 
-This mixin provides Python operator syntax for building binary operation expressions.
+This mixin provides Python operator syntax for building binary and unary operation expressions.
 All operators automatically convert literals to LiteralValue.
 
 Safe vs Unsafe Operations:
     Safe (operator syntax):
+    - Unary: -, abs()
     - Arithmetic: +, -, *, /, %, **
     - Comparison: >, <, >=, <=
+    - Bitwise: ^, <<, >>
     - Logical (safe methods): .and_(), .or_()
     - Equality (safe methods): .eq(), .ne()
 
     Unsafe (raise TypeError):
     - == (use .eq() instead)
     - != (use .ne() instead)
-    - & (use .and_() instead - prevents Python's short-circuit semantics)
-    - | (use .or_() instead - prevents Python's short-circuit semantics)
+    - & (use .and_() instead - for logical AND to prevent Python's short-circuit semantics)
+    - | (use .or_() instead - for logical OR to prevent Python's short-circuit semantics)
+    - ~ (not supported - use explicit comparison instead)
     - bool() (use explicit comparison instead)
-    - ~ (not supported)
+
+    Note: Bitwise AND (&) and OR (|) are blocked because Python's & and | are often
+    confused with logical operations. Use .and_() and .or_() methods for logical ops.
 
 Example:
     >>> price = item.price.get()
+    >>> # Unary
+    >>> negative = -price  # NegOp
+    >>> magnitude = abs(price)  # AbsOp
     >>> # Arithmetic
     >>> total = price + 10  # AddOp
     >>> discounted = price * 0.9  # MulOp
-    >>> # Comparison (safe)
+    >>> # Comparison
     >>> is_expensive = price > 100  # GtOp
     >>> is_exact = price.eq(100)  # EqOp
+    >>> # Bitwise
+    >>> masked = flags ^ 0xFF  # XorOp
+    >>> shifted = bits << 2  # LShiftOp
+    >>> reduced = bits >> 1  # RShiftOp
     >>> # Logical (safe methods)
     >>> valid = price.and_(price < 1000)  # AndOp
 """
@@ -45,14 +57,18 @@ if TYPE_CHECKING:
         GeOp,
         GtOp,
         LeOp,
+        LShiftOp,
         LtOp,
         ModOp,
         MulOp,
         NeOp,
         OrOp,
         PowOp,
+        RShiftOp,
         SubOp,
+        XorOp,
     )
+    from .unary_ops import AbsOp, NegOp
 
 
 class ErgonomicsMixin[T]:
@@ -153,6 +169,22 @@ class ErgonomicsMixin[T]:
         raise TypeError(
             "Logical NOT (~) is not supported. Use explicit comparison instead: expr == False, expr > 0, etc."
         )
+
+    # =========================================================================
+    # UNARY OPERATIONS
+    # =========================================================================
+
+    def __neg__(self) -> NegOp[T]:
+        """Negation: -self."""
+        from .unary_ops import NegOp
+
+        return NegOp(self)
+
+    def __abs__(self) -> AbsOp[T]:
+        """Absolute value: abs(self)."""
+        from .unary_ops import AbsOp
+
+        return AbsOp(self)
 
     # =========================================================================
     # ARITHMETIC OPERATIONS
@@ -323,3 +355,43 @@ class ErgonomicsMixin[T]:
         from .binary_ops import OrOp
 
         return OrOp(self, self._operand(other))
+
+    # =========================================================================
+    # BITWISE OPERATIONS
+    # =========================================================================
+
+    def __xor__(self, other: object) -> XorOp[T]:
+        """Bitwise XOR: self ^ other."""
+        from .binary_ops import XorOp
+
+        return XorOp(self, self._operand(other))
+
+    def __rxor__(self, other: object) -> XorOp[T]:
+        """Right bitwise XOR: other ^ self."""
+        from .binary_ops import XorOp
+
+        return XorOp(self._operand(other), self)
+
+    def __lshift__(self, other: object) -> LShiftOp[T]:
+        """Left shift: self << other."""
+        from .binary_ops import LShiftOp
+
+        return LShiftOp(self, self._operand(other))
+
+    def __rlshift__(self, other: object) -> LShiftOp[T]:
+        """Right left shift: other << self."""
+        from .binary_ops import LShiftOp
+
+        return LShiftOp(self._operand(other), self)
+
+    def __rshift__(self, other: object) -> RShiftOp[T]:
+        """Right shift: self >> other."""
+        from .binary_ops import RShiftOp
+
+        return RShiftOp(self, self._operand(other))
+
+    def __rrshift__(self, other: object) -> RShiftOp[T]:
+        """Right right shift: other >> self."""
+        from .binary_ops import RShiftOp
+
+        return RShiftOp(self._operand(other), self)

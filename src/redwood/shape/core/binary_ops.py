@@ -5,6 +5,8 @@ This module provides type-safe binary operations, each as its own atomic class:
 Arithmetic: AddOp, SubOp, MulOp, DivOp, ModOp, PowOp
 Comparison: GtOp, LtOp, EqOp, NeOp, GeOp, LeOp
 Logical: AndOp, OrOp
+Bitwise: XorOp, LShiftOp, RShiftOp
+  (Note: & and | are blocked in ergonomics for safety - use .and_() and .or_() instead)
 
 Design principles:
 1. Atomic classes: one operator = one class
@@ -42,9 +44,6 @@ if TYPE_CHECKING:
     from .ergonomics import ErgonomicsMixin
 
 
-type OpArgument = RValue | ErgonomicsMixin
-
-
 __all__ = [
     "AddOp",
     "AndOp",
@@ -53,6 +52,7 @@ __all__ = [
     "EqOp",
     "GeOp",
     "GtOp",
+    "LShiftOp",
     "LeOp",
     "LtOp",
     "ModOp",
@@ -60,13 +60,17 @@ __all__ = [
     "NeOp",
     "OrOp",
     "PowOp",
+    "RShiftOp",
     "SubOp",
+    "XorOp",
 ]
 
 
 # =============================================================================
 # ABSTRACT BINARY OPERATION
 # =============================================================================
+
+type OpArgument = RValue | ErgonomicsMixin
 
 
 class BinaryOp[T](Operation[T], ABC):
@@ -137,8 +141,6 @@ class BinaryOp[T](Operation[T], ABC):
 class AddOp[T](BinaryOp[T]):
     """Addition: left + right."""
 
-    op: str = "add"
-
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
             return left + right  # type: ignore
@@ -148,8 +150,6 @@ class AddOp[T](BinaryOp[T]):
 
 class SubOp[T](BinaryOp[T]):
     """Subtraction: left - right."""
-
-    op: str = "sub"
 
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
@@ -161,8 +161,6 @@ class SubOp[T](BinaryOp[T]):
 class MulOp[T](BinaryOp[T]):
     """Multiplication: left * right."""
 
-    op: str = "mul"
-
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
             return left * right  # type: ignore
@@ -172,8 +170,6 @@ class MulOp[T](BinaryOp[T]):
 
 class DivOp[T](BinaryOp[T]):
     """Division: left / right. Returns NaN on division by zero."""
-
-    op: str = "div"
 
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         # Explicit zero check before division
@@ -188,8 +184,6 @@ class DivOp[T](BinaryOp[T]):
 class ModOp[T](BinaryOp[T]):
     """Modulo: left % right. Returns NaN on division by zero."""
 
-    op: str = "mod"
-
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         # Explicit zero check before modulo
         if right == 0:
@@ -202,8 +196,6 @@ class ModOp[T](BinaryOp[T]):
 
 class PowOp[T](BinaryOp[T]):
     """Power: left ** right."""
-
-    op: str = "pow"
 
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
@@ -220,8 +212,6 @@ class PowOp[T](BinaryOp[T]):
 class GtOp[T](BinaryOp[T]):
     """Greater than: left > right."""
 
-    op: str = "gt"
-
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
             return left > right  # type: ignore
@@ -231,8 +221,6 @@ class GtOp[T](BinaryOp[T]):
 
 class LtOp[T](BinaryOp[T]):
     """Less than: left < right."""
-
-    op: str = "lt"
 
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
@@ -244,8 +232,6 @@ class LtOp[T](BinaryOp[T]):
 class EqOp[T](BinaryOp[T]):
     """Equality: left == right."""
 
-    op: str = "eq"
-
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
             return left == right  # type: ignore
@@ -255,8 +241,6 @@ class EqOp[T](BinaryOp[T]):
 
 class NeOp[T](BinaryOp[T]):
     """Not equal: left != right."""
-
-    op: str = "ne"
 
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
@@ -268,8 +252,6 @@ class NeOp[T](BinaryOp[T]):
 class GeOp[T](BinaryOp[T]):
     """Greater than or equal: left >= right."""
 
-    op: str = "ge"
-
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
             return left >= right  # type: ignore
@@ -279,8 +261,6 @@ class GeOp[T](BinaryOp[T]):
 
 class LeOp[T](BinaryOp[T]):
     """Less than or equal: left <= right."""
-
-    op: str = "le"
 
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         try:
@@ -372,3 +352,38 @@ class OrOp[T](BinaryOp[T]):
     def _apply_op(self, left: object, right: object) -> T | SpecialValue:
         # Unreachable code, added for type checkers
         raise NotImplementedError
+
+
+# =============================================================================
+# BITWISE OPERATIONS
+# =============================================================================
+
+
+class XorOp[T](BinaryOp[T]):
+    """Bitwise XOR: left ^ right."""
+
+    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+        try:
+            return left ^ right  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class LShiftOp[T](BinaryOp[T]):
+    """Left shift: left << right."""
+
+    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+        try:
+            return left << right  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class RShiftOp[T](BinaryOp[T]):
+    """Right shift: left >> right."""
+
+    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+        try:
+            return left >> right  # type: ignore
+        except TypeError:
+            return NAN
