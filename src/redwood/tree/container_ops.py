@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from redwood.abc import EMPTY, Empty, Value
+from redwood.loc import key as key_
 from redwood.storage import StorageKeyError, StorageScanOptions
+from redwood.types import EMPTY, Empty, Value
 
 from .exceptions import InvalidDepthError, PathExistsError, PathTypeError
 from .marker import create_marker, is_marker
-from .navigation import join_component
 from .node_ops import get_node_info, get_node_type
 from .types import (
     DEFAULT_PARENT_PROTOCOL,
@@ -39,7 +39,6 @@ from .validation_ops import (
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.abc import KeyComponent, TupleKey
     from redwood.storage import StorageContextType
 
 __all__ = [
@@ -67,7 +66,7 @@ __all__ = [
 
 
 def create_container(
-    path: TupleKey,
+    path: key_.Key,
     structure: ContainerStructure,
     protocol: ContainerProtocol,
     ctx: StorageContextType,
@@ -147,7 +146,7 @@ def create_container(
 
 
 def delete_container(
-    path: TupleKey,
+    path: key_.Key,
     ctx: StorageContextType,
 ) -> bool:
     """Delete container.
@@ -178,7 +177,7 @@ def delete_container(
     return delete_subtree(path, ctx) > 0
 
 
-def delete_subtree(path: TupleKey, ctx: StorageContextType) -> int:
+def delete_subtree(path: key_.Key, ctx: StorageContextType) -> int:
     """Delete container and all descendants.
 
     Args:
@@ -221,7 +220,7 @@ def delete_subtree(path: TupleKey, ctx: StorageContextType) -> int:
 # ============================================================================
 
 
-def has_child(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -> bool:
+def has_child(path: key_.Key, key: key_.KeySegment, ctx: StorageContextType) -> bool:
     """Check if direct child exists.
 
     Args:
@@ -239,12 +238,12 @@ def has_child(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -> boo
         >>> has_child(("users", "alice"), "profile", tx)
         True
     """
-    child_path = join_component(path, key)
+    child_path = key_.join_segment(path, key)
     child_type = get_node_type(child_path, ctx)
     return child_type != NodeType.NOT_FOUND
 
 
-def get_child_type(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -> NodeType:
+def get_child_type(path: key_.Key, key: key_.KeySegment, ctx: StorageContextType) -> NodeType:
     """Get type of direct child.
 
     Args:
@@ -263,11 +262,13 @@ def get_child_type(path: TupleKey, key: KeyComponent, ctx: StorageContextType) -
         >>> if child_type == NodeType.CONTAINER:
         ...     print("Child is a container")
     """
-    child_path = join_component(path, key)
+    child_path = key_.join_segment(path, key)
     return get_node_type(child_path, ctx)
 
 
-def list_child_keys(path: TupleKey, ctx: StorageContextType) -> Generator[KeyComponent, None, None]:
+def list_child_keys(
+    path: key_.Key, ctx: StorageContextType
+) -> Generator[key_.KeySegment, None, None]:
     """List direct child keys only.
 
     Args:
@@ -300,7 +301,7 @@ def list_child_keys(path: TupleKey, ctx: StorageContextType) -> Generator[KeyCom
         yield key[-1]
 
 
-def list_child_values(path: TupleKey, ctx: StorageContextType) -> Generator[NodeInfo, None, None]:
+def list_child_values(path: key_.Key, ctx: StorageContextType) -> Generator[NodeInfo, None, None]:
     """List direct child values only.
 
     Args:
@@ -329,8 +330,8 @@ def list_child_values(path: TupleKey, ctx: StorageContextType) -> Generator[Node
 
 
 def list_children(
-    path: TupleKey, ctx: StorageContextType
-) -> Generator[tuple[KeyComponent, NodeInfo], None, None]:
+    path: key_.Key, ctx: StorageContextType
+) -> Generator[tuple[key_.KeySegment, NodeInfo], None, None]:
     """List all direct children with types.
 
     Args:
@@ -363,7 +364,7 @@ def list_children(
         yield (key[-1], get_node_info(key, ctx, raw_value=value))
 
 
-def count_children(path: TupleKey, ctx: StorageContextType) -> int:
+def count_children(path: key_.Key, ctx: StorageContextType) -> int:
     """Count direct children.
 
     Args:
@@ -402,8 +403,8 @@ def count_children(path: TupleKey, ctx: StorageContextType) -> int:
 
 
 def create_child_container(
-    parent_path: TupleKey,
-    key: KeyComponent,
+    parent_path: key_.Key,
+    key: key_.KeySegment,
     structure: ContainerStructure,
     protocol: ContainerProtocol,
     ctx: StorageContextType,
@@ -437,13 +438,13 @@ def create_child_container(
     """
     validate_is_container(parent_path, ctx)
 
-    child_path = join_component(parent_path, key)
+    child_path = key_.join_segment(parent_path, key)
     return create_container(child_path, structure, protocol, ctx, ensure_healthy_parents=False)
 
 
 def set_child_primitive(
-    parent_path: TupleKey,
-    key: KeyComponent,
+    parent_path: key_.Key,
+    key: key_.KeySegment,
     value: Value,
     ctx: StorageContextType,
 ) -> None:
@@ -465,7 +466,7 @@ def set_child_primitive(
     """
     validate_is_container(parent_path, ctx)
 
-    child_path = join_component(parent_path, key)
+    child_path = key_.join_segment(parent_path, key)
     child_node_info = get_node_info(child_path, ctx)
 
     if child_node_info.exists:
@@ -475,8 +476,8 @@ def set_child_primitive(
 
 
 def get_child_primitive(
-    parent_path: TupleKey,
-    key: KeyComponent,
+    parent_path: key_.Key,
+    key: key_.KeySegment,
     ctx: StorageContextType,
 ) -> Value | Empty:
     """Get primitive child value.
@@ -491,7 +492,7 @@ def get_child_primitive(
     """
     validate_is_container(parent_path, ctx)
 
-    child_path = join_component(parent_path, key)
+    child_path = key_.join_segment(parent_path, key)
     child_node_info = get_node_info(child_path, ctx)
 
     if not child_node_info.exists:
@@ -503,8 +504,8 @@ def get_child_primitive(
 
 
 def delete_child(
-    parent_path: TupleKey,
-    key: KeyComponent,
+    parent_path: key_.Key,
+    key: key_.KeySegment,
     ctx: StorageContextType,
 ) -> bool:
     """Delete direct child.
@@ -529,7 +530,7 @@ def delete_child(
     """
     validate_is_container(parent_path, ctx)
 
-    child_path = join_component(parent_path, key)
+    child_path = key_.join_segment(parent_path, key)
     info = get_node_info(child_path, ctx)
 
     if not info.exists:
@@ -545,7 +546,7 @@ def delete_child(
             return False
 
 
-def clear_children(path: TupleKey, ctx: StorageContextType) -> int:
+def clear_children(path: key_.Key, ctx: StorageContextType) -> int:
     """Delete all direct children.
 
     Args:
@@ -577,11 +578,11 @@ def clear_children(path: TupleKey, ctx: StorageContextType) -> int:
 
 
 def list_descendants(
-    path: TupleKey,
+    path: key_.Key,
     ctx: StorageContextType,
     *,
     depth: int = -1,
-) -> Generator[TupleKey, None, None]:
+) -> Generator[key_.Key, None, None]:
     """List all descendants recursively.
 
     Args:
@@ -618,9 +619,9 @@ def list_descendants(
 
 
 def walk_tree(
-    path: TupleKey,
+    path: key_.Key,
     ctx: StorageContextType,
-) -> Generator[tuple[TupleKey, NodeType], None, None]:
+) -> Generator[tuple[key_.Key, NodeType], None, None]:
     """Iterate over tree structure.
 
     Args:
@@ -655,11 +656,11 @@ def walk_tree(
 
 
 def create_parents(
-    path: TupleKey,
+    path: key_.Key,
     default_structure: ContainerStructure,
     default_protocol: ContainerProtocol,
     ctx: StorageContextType,
-) -> list[TupleKey]:
+) -> list[key_.Key]:
     """Create all missing parents.
 
     Creates parent containers for the given path using the specified

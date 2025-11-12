@@ -16,7 +16,7 @@ from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, Pa
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey
+    from redwood.loc import key
     from redwood.storage import StorageContextType
 
 __all__ = [
@@ -32,7 +32,7 @@ __all__ = [
 
 
 def validate_exists(
-    path: TupleKey, ctx: StorageContextType, *, node_type: NodeType | None = None
+    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
     """Validate that node exists at path.
 
@@ -53,7 +53,7 @@ def validate_exists(
 
 
 def validate_not_exists(
-    path: TupleKey, ctx: StorageContextType, *, node_type: NodeType | None = None
+    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
     """Validate that node does not exist at path.
 
@@ -74,7 +74,7 @@ def validate_not_exists(
 
 
 def validate_is_container(
-    path: TupleKey, ctx: StorageContextType, *, node_type: NodeType | None = None
+    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
     """Validate that path is a container.
 
@@ -98,7 +98,7 @@ def validate_is_container(
 
 
 def validate_is_primitive(
-    path: TupleKey, ctx: StorageContextType, *, node_type: NodeType | None = None
+    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
     """Validate that path is a primitive value.
 
@@ -122,7 +122,7 @@ def validate_is_primitive(
 
 
 def validate_parents_exist(
-    path: TupleKey, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
+    path: key.Key, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
 ) -> None:
     """Validate that all parent containers exist.
 
@@ -143,7 +143,7 @@ def validate_parents_exist(
 
 
 def validate_parents_healthy(
-    path: TupleKey, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
+    path: key.Key, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
 ) -> None:
     """Validate that all parent containers have well-formed markers.
 
@@ -164,7 +164,7 @@ def validate_parents_healthy(
 
 
 def validate_parents_chain(
-    path: TupleKey, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
+    path: key.Key, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
 ) -> None:
     """Validate complete parent chain (existence + health).
 
@@ -193,7 +193,7 @@ def validate_parents_chain(
 
 
 def validate_compatible(
-    path: TupleKey,
+    path: key.Key,
     expected_structure: ContainerStructure,
     expected_protocol: ContainerProtocol,
     ctx: StorageContextType,

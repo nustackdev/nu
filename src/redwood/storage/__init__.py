@@ -37,6 +37,7 @@ from .storage import (
     WriteAccessProtocol,
     WriteBatchProtocol,
 )
+from .types import CallbackFn
 
 
 __all__ = [  # noqa: RUF022
@@ -81,4 +82,6 @@ __all__ = [  # noqa: RUF022
     "KeyCodecProtocol",
     "ValueCodecProtocol",
     "Codec",
+    # Common types
+    "CallbackFn",
 ]

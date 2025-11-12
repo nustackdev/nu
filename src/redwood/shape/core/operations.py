@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from redwood.abc import NaN, propagate_special
-from redwood.shape.evaluation import Operation, RValue
+from redwood.types import NaN, propagate_special
+
+from ..evaluation import Operation, RValue
 
 
 if TYPE_CHECKING:
-    from redwood.shape.types import Context
+    from ..types import Context
 
 
 __all__ = [

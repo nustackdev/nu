@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey
+    from redwood.loc import key
 
     from .transaction import SnapshotProtocol, TransactionProtocol, WriteBatchProtocol
 
@@ -34,8 +34,8 @@ class StorageScanOptions:
             >0: exact match on key tuple length
     """
 
-    start: TupleKey | None = None
-    end: TupleKey | None = None
+    start: key.Key | None = None
+    end: key.Key | None = None
     start_inclusive: bool = True
     end_inclusive: bool = False
     reverse: bool = False

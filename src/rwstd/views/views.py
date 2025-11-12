@@ -45,15 +45,15 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, ClassVar, Self, cast
 
-from redwood.abc import EMPTY, Empty, KeyComponent, Value, cast_value, is_empty
+from redwood.loc import key as key_
 from redwood.tree import (
     Container,
     ContainerProtocol,
     ContainerStructure,
     NodeType,
     PathNotFoundError,
-    join_component,
 )
+from redwood.types import EMPTY, Empty, Value, cast_value, is_empty
 from redwood.view import View
 
 
@@ -110,7 +110,7 @@ class DictView(StdView):
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.MAPPING | ContainerProtocol.MUTABLE
     CONTAINER_CLS: ClassVar[type] = dict
 
-    def __getitem__(self, key: KeyComponent) -> Value | Empty:
+    def __getitem__(self, key: key_.KeySegment) -> Value | Empty:
         """Get value for key.
 
         Args:
@@ -127,7 +127,7 @@ class DictView(StdView):
         except PathNotFoundError as e:
             raise KeyError(key) from e
 
-    def __setitem__(self, key: KeyComponent, value: Value) -> None:
+    def __setitem__(self, key: key_.KeySegment, value: Value) -> None:
         """Set value for key.
 
         Args:
@@ -136,7 +136,7 @@ class DictView(StdView):
         """
         self._set_child_value(key, value)
 
-    def __delitem__(self, key: KeyComponent) -> None:
+    def __delitem__(self, key: key_.KeySegment) -> None:
         """Delete key.
 
         Args:
@@ -149,7 +149,7 @@ class DictView(StdView):
         if not deleted:
             raise KeyError(key)
 
-    def __contains__(self, key: KeyComponent) -> bool:
+    def __contains__(self, key: key_.KeySegment) -> bool:
         """Check if key exists.
 
         Args:
@@ -168,7 +168,7 @@ class DictView(StdView):
         """
         return self.container.count_children()
 
-    def keys(self) -> Generator[KeyComponent, None, None]:
+    def keys(self) -> Generator[key_.KeySegment, None, None]:
         """Get all keys.
 
         Yields:
@@ -188,7 +188,7 @@ class DictView(StdView):
             elif v.node_type == NodeType.CONTAINER:
                 yield cast_value(self[k])
 
-    def items(self) -> Generator[tuple[KeyComponent, Value], None, None]:
+    def items(self) -> Generator[tuple[key_.KeySegment, Value], None, None]:
         """Get all key-value pairs.
 
         Yields:
@@ -200,7 +200,7 @@ class DictView(StdView):
             elif v.node_type == NodeType.CONTAINER:
                 yield k, cast_value(self[k])
 
-    def get(self, key: KeyComponent, default: Value | Empty = EMPTY) -> Value | Empty:
+    def get(self, key: key_.KeySegment, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value with default fallback.
 
         Args:
@@ -215,7 +215,7 @@ class DictView(StdView):
         except Exception:
             return default
 
-    def pop(self, key: KeyComponent, default: Value | Empty = EMPTY) -> Value | Empty:
+    def pop(self, key: key_.KeySegment, default: Value | Empty = EMPTY) -> Value | Empty:
         """Remove and return value.
 
         Args:
@@ -241,7 +241,7 @@ class DictView(StdView):
         """Remove all items."""
         self.container.clear_children()
 
-    def update(self, other: Mapping[KeyComponent, Value] | None = None, **kwargs: Value) -> None:
+    def update(self, other: Mapping[key_.KeySegment, Value] | None = None, **kwargs: Value) -> None:
         """Update from dict or kwargs.
 
         Args:
@@ -258,7 +258,7 @@ class DictView(StdView):
     # VIEW INTERFACE
     # =========================================================================
 
-    def extract(self) -> dict[KeyComponent, Value]:
+    def extract(self) -> dict[key_.KeySegment, Value]:
         """Extract all items as dict.
 
         Returns:
@@ -279,7 +279,7 @@ class DictView(StdView):
         for key, val in value.items():
             self[key] = val
 
-    def open_view[ViewT: View](self, key: KeyComponent, child_view: type[ViewT]) -> ViewT:
+    def open_view[ViewT: View](self, key: key_.KeySegment, child_view: type[ViewT]) -> ViewT:
         """Open child view.
 
         Args:
@@ -290,7 +290,7 @@ class DictView(StdView):
             View instance for child container
         """
         child_container = Container.create(
-            join_component(self.container.path, key),
+            key_.join_segment(self.container.path, key),
             self.container.ctx,
             child_view.get_structure(),
             child_view.get_protocol(),
@@ -524,7 +524,7 @@ class ListView(StdView):
         """
         normalized = self._normalize_index(index)
         child_container = Container.create(
-            join_component(self.container.path, normalized),
+            key_.join_segment(self.container.path, normalized),
             self.container.ctx,
             child_view.get_structure(),
             child_view.get_protocol(),
@@ -684,7 +684,7 @@ class TupleView(StdView):
         """
         normalized = self._normalize_index(index)
         child_container = Container.create(
-            join_component(self.container.path, normalized),
+            key_.join_segment(self.container.path, normalized),
             self.container.ctx,
             child_view.get_structure(),
             child_view.get_protocol(),
@@ -720,7 +720,7 @@ class SetView(StdView):
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.SET | ContainerProtocol.MUTABLE
     CONTAINER_CLS: ClassVar[type] = set
 
-    def _make_key(self, value: Value) -> KeyComponent:
+    def _make_key(self, value: Value) -> key_.KeySegment:
         """Convert value to storage key.
 
         Args:
@@ -847,7 +847,7 @@ class FrozenSetView(StdView):
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.SET
     CONTAINER_CLS: ClassVar[type] = frozenset
 
-    def _make_key(self, value: Value) -> KeyComponent:
+    def _make_key(self, value: Value) -> key_.KeySegment:
         """Convert value to storage key.
 
         Args:

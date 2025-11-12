@@ -1,17 +1,14 @@
-"""Type definitions for ABC modules."""
+"""Primitve types."""
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from typing import Any, cast
 
 
 __all__ = [
-    "CallbackFn",
     "CompositeValue",
-    "KeyComponent",
     "PrimitiveValue",
-    "TupleKey",
     "Value",
     "cast_value",
 ]
@@ -57,28 +54,6 @@ type Value = PrimitiveValue | CompositeValue
 
 # Iterable of values. Used in type hints for functions that process collections of values.
 type IterableValues = Iterable[Value]
-
-# ---------------------------------------------------------
-# Key types
-# ---------------------------------------------------------
-# Keys are tuples of strings and integers, used for identifying
-# entries in storage systems. Keys are used in codec encoding/decoding,
-# storage, and observer notifications.
-# ---------------------------------------------------------
-
-# Key type - a tuple of strings and integers
-type KeyComponent = str | int
-type TupleKey = tuple[KeyComponent, ...]
-
-
-# ---------------------------------------------------------
-# Reactive types
-# ---------------------------------------------------------
-# Reactive programming constructs like observers and callbacks
-# use keys and paths to identify data points of interest.
-# ---------------------------------------------------------
-
-type CallbackFn = Callable[[TupleKey], None]
 
 
 # ---------------------------------------------------------

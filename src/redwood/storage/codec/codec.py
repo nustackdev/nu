@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey, Value
+    from redwood.loc import key
+    from redwood.types import Value
 
     from .protocol import CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
 
@@ -56,11 +57,11 @@ class Codec[EncodedKeyT, EncodedValueT]:
         self.encode_value = self.value_codec.encode
         self.decode_value = self.value_codec.decode
 
-    def encode_key(self, key: TupleKey) -> EncodedKeyT:
+    def encode_key(self, key: key.Key) -> EncodedKeyT:
         """Encode a key using the key codec."""
         raise NotImplementedError
 
-    def decode_key(self, encoded: EncodedKeyT) -> TupleKey:
+    def decode_key(self, encoded: EncodedKeyT) -> key.Key:
         """Decode a key using the key codec."""
         raise NotImplementedError
 

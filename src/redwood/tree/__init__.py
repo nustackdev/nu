@@ -100,26 +100,6 @@ from .marker import (
 )
 
 # ============================================================================
-# Navigation Operations (Pure Functions)
-# ============================================================================
-from .navigation import (
-    DATA_ROOT,
-    METADATA_ROOT,
-    create_path,
-    get_ancestors,
-    get_common_ancestor,
-    get_depth,
-    get_parent,
-    get_path_chain,
-    is_ancestor,
-    is_descendant,
-    is_sibling,
-    join_component,
-    join_path,
-    to_meta,
-)
-
-# ============================================================================
 # Node Operations
 # ============================================================================
 from .node_ops import (
@@ -189,21 +169,6 @@ __all__ = [  # noqa: RUF022
     "get_node_type",
     "node_exists",
     "gather_parent_info",
-    # Navigation (pure functions)
-    "create_path",
-    "to_meta",
-    "get_parent",
-    "get_ancestors",
-    "get_path_chain",
-    "is_ancestor",
-    "is_descendant",
-    "is_sibling",
-    "get_depth",
-    "join_path",
-    "join_component",
-    "get_common_ancestor",
-    "DATA_ROOT",
-    "METADATA_ROOT",
     # Validation
     "validate_exists",
     "validate_not_exists",

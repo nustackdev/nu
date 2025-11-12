@@ -47,7 +47,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple
 
-from . import container_ops, navigation, node_ops, validation_ops
+from redwood.loc import key as key_
+
+from . import container_ops, node_ops, validation_ops
 from .exceptions import InvalidPathError
 from .types import DEFAULT_PARENT_PROTOCOL, DEFAULT_PARENT_STRUCTURE
 
@@ -55,8 +57,8 @@ from .types import DEFAULT_PARENT_PROTOCOL, DEFAULT_PARENT_STRUCTURE
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.abc import Empty, KeyComponent, TupleKey, Value
     from redwood.storage import StorageContextType
+    from redwood.types import Empty, Value
 
     from .types import (
         ContainerProtocol,
@@ -104,7 +106,7 @@ class Container(NamedTuple):
     ctx: StorageContextType
     """Storage context (transaction or snapshot)."""
 
-    path: TupleKey
+    path: key_.Key
     """Path to this container in the tree."""
 
     # ========================================================================
@@ -114,7 +116,7 @@ class Container(NamedTuple):
     @classmethod
     def create(
         cls,
-        path: TupleKey,
+        path: key_.Key,
         ctx: StorageContextType,
         structure: ContainerStructure,
         protocol: ContainerProtocol,
@@ -155,7 +157,7 @@ class Container(NamedTuple):
             ...     ContainerProtocol.MUTABLE,
             ... )
         """
-        if not path or path[0] != navigation.DATA_ROOT:
+        if not path or path[0] != key_.DATA_ROOT:
             raise InvalidPathError("Path is either empty or it doesn't start with ROOT segment")
 
         container_ops.create_container(
@@ -171,7 +173,7 @@ class Container(NamedTuple):
         return cls(ctx=ctx, path=path)
 
     @classmethod
-    def get(cls, path: TupleKey, ctx: StorageContextType) -> Container:
+    def get(cls, path: key_.Key, ctx: StorageContextType) -> Container:
         """Get Container instance for existing container.
 
         Validates that a container exists at the given path and returns
@@ -192,7 +194,7 @@ class Container(NamedTuple):
             >>> container = Container.get(("users", "alice"), tx)
             >>> info = container.info()
         """
-        if not path or path[0] != navigation.DATA_ROOT:
+        if not path or path[0] != key_.DATA_ROOT:
             raise InvalidPathError("Path is either empty or it doesn't start with ROOT segment")
 
         validation_ops.validate_is_container(path, ctx)
@@ -271,7 +273,7 @@ class Container(NamedTuple):
     # CHILDREN: QUERY (Read operations)
     # ========================================================================
 
-    def has_child(self, key: KeyComponent) -> bool:
+    def has_child(self, key: key_.KeySegment) -> bool:
         """Check if direct child exists.
 
         Args:
@@ -290,7 +292,7 @@ class Container(NamedTuple):
         """
         return container_ops.has_child(self.path, key, self.ctx)
 
-    def get_child_type(self, key: KeyComponent) -> NodeType:
+    def get_child_type(self, key: key_.KeySegment) -> NodeType:
         """Get child node type.
 
         Args:
@@ -310,7 +312,7 @@ class Container(NamedTuple):
         """
         return container_ops.get_child_type(self.path, key, self.ctx)
 
-    def list_child_keys(self) -> Generator[KeyComponent, None, None]:
+    def list_child_keys(self) -> Generator[key_.KeySegment, None, None]:
         """List direct child keys.
 
         Returns:
@@ -327,7 +329,7 @@ class Container(NamedTuple):
         """
         yield from container_ops.list_child_keys(self.path, self.ctx)
 
-    def list_children(self) -> Generator[tuple[KeyComponent, NodeInfo], None, None]:
+    def list_children(self) -> Generator[tuple[key_.KeySegment, NodeInfo], None, None]:
         """List direct child paths.
 
         Returns full paths for all direct children.
@@ -370,7 +372,7 @@ class Container(NamedTuple):
 
     def create_child_container(
         self,
-        key: KeyComponent,
+        key: key_.KeySegment,
         structure: ContainerStructure,
         protocol: ContainerProtocol,
     ) -> Container:
@@ -409,12 +411,12 @@ class Container(NamedTuple):
             self.ctx,
         )
 
-        child_path = navigation.join_component(self.path, key)
+        child_path = key_.join_segment(self.path, key)
         return Container(ctx=self.ctx, path=child_path)
 
     def set_child_primitive(
         self,
-        key: KeyComponent,
+        key: key_.KeySegment,
         value: Value,
     ) -> None:
         """Set primitive child value.
@@ -438,7 +440,7 @@ class Container(NamedTuple):
         """
         container_ops.set_child_primitive(self.path, key, value, self.ctx)
 
-    def get_child_primitive(self, key: KeyComponent) -> Value | Empty:
+    def get_child_primitive(self, key: key_.KeySegment) -> Value | Empty:
         """Get primitive child value.
 
         Args:
@@ -466,7 +468,7 @@ class Container(NamedTuple):
 
     def delete_child(
         self,
-        key: KeyComponent,
+        key: key_.KeySegment,
     ) -> bool:
         """Delete direct child.
 
@@ -521,7 +523,7 @@ class Container(NamedTuple):
         self,
         *,
         depth: int = -1,
-    ) -> Generator[TupleKey, None, None]:
+    ) -> Generator[key_.Key, None, None]:
         """List all descendants recursively.
 
         Returns all descendant paths, optionally limited by depth.
@@ -547,7 +549,7 @@ class Container(NamedTuple):
         """
         yield from container_ops.list_descendants(self.path, self.ctx, depth=depth)
 
-    def walk_tree(self) -> Generator[tuple[TupleKey, NodeType], None, None]:
+    def walk_tree(self) -> Generator[tuple[key_.Key, NodeType], None, None]:
         """Iterate over tree structure.
 
         Yields (path, node_type) tuples for all descendants.
@@ -637,7 +639,7 @@ class Container(NamedTuple):
     # UTILITY METHODS
     # ========================================================================
 
-    def get_child_container(self, key: KeyComponent) -> Container:
+    def get_child_container(self, key: key_.KeySegment) -> Container:
         """Get Container instance for child container.
 
         Convenience method that combines validation and Container creation.
@@ -656,7 +658,7 @@ class Container(NamedTuple):
             >>> users = root.get_child_container("users")
             >>> alice = users.get_child_container("alice")
         """
-        child_path = navigation.join_component(self.path, key)
+        child_path = key_.join_segment(self.path, key)
         validation_ops.validate_is_container(child_path, self.ctx)
         return Container(ctx=self.ctx, path=child_path)
 

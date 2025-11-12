@@ -11,14 +11,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
+from redwood.loc import key as key_
+from redwood.loc import path as path_
 from redwood.shape import Command, LValue, Operation, Ref, Slot
-from redwood.view import navigate_value
 
 
 if TYPE_CHECKING:
-    from redwood.abc import KeyComponent
     from redwood.shape import Context, Shape
-    from redwood.view import ValuePath, View, ViewPath
+    from redwood.view import View
 
 
 __all__ = [
@@ -54,7 +54,7 @@ class ValueRef[T](Ref[T]):
 
     def __init__(
         self,
-        field_name: KeyComponent,
+        field_name: key_.KeySegment,
         value_type: type[T],
         view_type: type[View],
         parent_ref: Ref | None = None,
@@ -78,14 +78,14 @@ class ValueRef[T](Ref[T]):
     def _compute_static_path(self) -> None:
         """Compute and cache static ViewPath."""
         if self.parent_ref is None:
-            self.static_view_path: ViewPath = ()
+            self.static_view_path: path_.Path = ()
             self.is_dynamic = False
         else:
             # Build from parent's view path
             self.static_view_path = self.parent_ref.resolve_view_path()
             self.is_dynamic = False
 
-    def resolve_view_path(self) -> ViewPath:
+    def resolve_view_path(self) -> path_.Path:
         """Get ViewPath to parent container.
 
         Returns:
@@ -93,8 +93,8 @@ class ValueRef[T](Ref[T]):
         """
         return self.static_view_path
 
-    def resolve(self, context: Context) -> ValuePath:
-        """Resolve to complete ValuePath.
+    def resolve(self, context: Context) -> path_.Path:
+        """Resolve to complete path_.ValuePath.
 
         Args:
             context: Execution context (unused for static refs)
@@ -113,7 +113,7 @@ class ValueRef[T](Ref[T]):
         """
         return self.parent_ref
 
-    def last_segment(self) -> KeyComponent:
+    def last_segment(self) -> key_.KeySegment:
         """Get last path segment.
 
         Returns:
@@ -179,7 +179,7 @@ class ShapeRef[T](Ref[T]):
 
     def __init__(
         self,
-        field_name: KeyComponent,
+        field_name: key_.KeySegment,
         shape_type: type[Shape],
         view_type: type[View],
         parent_ref: Ref | None = None,
@@ -204,13 +204,13 @@ class ShapeRef[T](Ref[T]):
     def _compute_static_path(self) -> None:
         """Compute and cache static ViewPath."""
         if self.parent_ref is None:
-            self.static_view_path: ViewPath = ()
+            self.static_view_path: path_.Path = ()
             self.is_dynamic = False
         else:
             self.static_view_path = self.parent_ref.resolve_view_path()
             self.is_dynamic = False
 
-    def resolve_view_path(self) -> ViewPath:
+    def resolve_view_path(self) -> path_.Path:
         """Get ViewPath including this container.
 
         Returns:
@@ -219,8 +219,8 @@ class ShapeRef[T](Ref[T]):
         parent_path = self.static_view_path
         return (*parent_path, (self.field_name, self.view_type))
 
-    def resolve(self, context: Context) -> ValuePath:
-        """Resolve to ValuePath (same as ViewPath for containers).
+    def resolve(self, context: Context) -> path_.Path:
+        """Resolve to path_.ValuePath (same as ViewPath for containers).
 
         Args:
             context: Execution context (unused)
@@ -238,7 +238,7 @@ class ShapeRef[T](Ref[T]):
         """
         return self.parent_ref
 
-    def last_segment(self) -> KeyComponent:
+    def last_segment(self) -> key_.KeySegment:
         """Get last path segment.
 
         Returns:
@@ -358,11 +358,11 @@ class GetOp[T](Operation[T]):
         Raises:
             KeyError: If value doesn't exist
         """
-        # Resolve ref to ValuePath
+        # Resolve ref to path_.ValuePath
         value_path = self.ref.resolve(context)
 
         # Navigate using layer 3
-        parent_view, key = navigate_value(context.root_view, value_path)
+        parent_view, key = path_.navigate_value(context.root_view, value_path)
 
         # Read primitive value through View
         value = parent_view._get_child_value(key)
@@ -410,11 +410,11 @@ class SetCmd[T](Command):
         Args:
             context: Execution context with root view and storage context
         """
-        # Resolve ref to ValuePath
+        # Resolve ref to path_.ValuePath
         value_path = self.ref.resolve(context)
 
         # Navigate using layer 3
-        parent_view, key = navigate_value(context.root_view, value_path)
+        parent_view, key = path_.navigate_value(context.root_view, value_path)
 
         # Write primitive value through View
         parent_view._set_child_value(key, self.value)

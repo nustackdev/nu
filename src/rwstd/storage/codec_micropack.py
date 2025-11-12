@@ -10,8 +10,8 @@ from rwstd.lazy_import import lazy_import
 if TYPE_CHECKING:
     import micropack as _micropack  # type: ignore[import]
 
-    from redwood.abc import Value
     from redwood.storage import ValueCodecProtocol
+    from redwood.types import Value
 
 
 __all__ = ["MicroPackCodec"]

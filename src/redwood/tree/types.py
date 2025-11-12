@@ -10,7 +10,6 @@ from enum import Enum, IntFlag, auto
 from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple, NewType
 
-from redwood.abc import NOT_SET, NotSet
 from redwood.storage import (
     ReadAccessProtocol,
     ReadWriteAccessProtocol,
@@ -20,10 +19,12 @@ from redwood.storage import (
     WriteAccessProtocol,
     WriteBatchProtocol,
 )
+from redwood.types import NOT_SET, NotSet
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey, Value
+    from redwood.loc import key
+    from redwood.types import Value
 
 
 __all__ = [
@@ -82,7 +83,7 @@ class NodeInfo(NamedTuple):
         primitive_value: Actual value for primitives (None for containers)
     """
 
-    path: TupleKey
+    path: key.Key
     exists: bool
     node_type: NodeType
     raw_value: Value | NotSet = NOT_SET
@@ -108,7 +109,7 @@ class ParentInfo(NamedTuple):
         raw_type_data: Raw value from storage (for debugging malformed data)
     """
 
-    path: TupleKey
+    path: key.Key
     exists: bool
     structure: ContainerStructure | None = None
     protocol: ContainerProtocol | None = None
@@ -128,8 +129,8 @@ class ParentChainInfo(NamedTuple):
     """
 
     chain: tuple[ParentInfo, ...]
-    missing_paths: tuple[TupleKey, ...]
-    malformed_paths: tuple[TupleKey, ...]
+    missing_paths: tuple[key.Key, ...]
+    malformed_paths: tuple[key.Key, ...]
 
     @property
     def all_exist(self) -> bool:

@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.abc import TupleKey, Value
+    from redwood.loc import key
+    from redwood.types import Value
 
 
 @runtime_checkable
@@ -45,7 +46,7 @@ class ScanProtocol(Protocol):
                 process(key, value)
     """
 
-    def items(self) -> Generator[tuple[TupleKey, Value], None, None]:
+    def items(self) -> Generator[tuple[key.Key, Value], None, None]:
         """Iterate over (key, value) tuples.
 
         Yields:
@@ -56,7 +57,7 @@ class ScanProtocol(Protocol):
         """
         ...
 
-    def keys(self) -> Generator[TupleKey, None, None]:
+    def keys(self) -> Generator[key.Key, None, None]:
         """Iterate over keys only.
 
         Yields:

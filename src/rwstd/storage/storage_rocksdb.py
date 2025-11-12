@@ -40,7 +40,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     import rwrocks as _rwrocks  # type: ignore[import]
-    from redwood.abc import CallbackFn, TupleKey, Value
+    from redwood.loc.key import Key
+    from redwood.storage import CallbackFn
+    from redwood.types import Value
 
 
 rwrocks = cast(
@@ -148,7 +150,7 @@ class _ReadOperationsMixin:
     _storage: RocksDBStorage
     _require_active: Any  # Method from _RocksDBContextBase
 
-    def get(self, key: TupleKey) -> Value:
+    def get(self, key: Key) -> Value:
         """Get value by key.
 
         Args:
@@ -189,7 +191,7 @@ class _ReadOperationsMixin:
         except Exception as e:
             raise StorageOperationError(f"Failed to decode value for key {key}: {e}") from e
 
-    def has(self, key: TupleKey) -> bool:
+    def has(self, key: Key) -> bool:
         """Check if key exists.
 
         Args:
@@ -216,7 +218,7 @@ class _ReadOperationsMixin:
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-    def multiget(self, keys: list[TupleKey]) -> dict[TupleKey, Value]:
+    def multiget(self, keys: list[Key]) -> dict[Key, Value]:
         """Get multiple keys.
 
         Args:
@@ -229,7 +231,7 @@ class _ReadOperationsMixin:
             StorageOperationError: If operation fails
             StorageClosedError: If context is closed
         """
-        result: dict[TupleKey, Value] = {}
+        result: dict[Key, Value] = {}
 
         for key in keys:
             try:
@@ -269,9 +271,9 @@ class _WriteOperationsMixin:
     # Type hints for mixed-in attributes
     _storage: RocksDBStorage
     _require_active: Any  # Method from _RocksDBContextBase
-    _modified_keys: set[TupleKey]  # Initialized in __init__
+    _modified_keys: set[Key]  # Initialized in __init__
 
-    def put(self, key: TupleKey, value: Value) -> None:
+    def put(self, key: Key, value: Value) -> None:
         """Put key-value pair.
 
         Args:
@@ -302,7 +304,7 @@ class _WriteOperationsMixin:
         # Track modification for notifications
         self._modified_keys.add(key)
 
-    def delete(self, key: TupleKey) -> bool:
+    def delete(self, key: Key) -> bool:
         """Delete key.
 
         Args:
@@ -417,7 +419,7 @@ class RocksDBTransaction(
             rwrocks_txn: RocksDB transaction handle
         """
         super().__init__(storage, rwrocks_txn)
-        self._modified_keys: set[TupleKey] = set()
+        self._modified_keys: set[Key] = set()
         self._committed = False
         self._aborted = False
 
@@ -550,7 +552,7 @@ class RocksDBScan:
     @overload
     def _iterate_impl(
         self, iterator_type: Literal[IteratorType.KEYS]
-    ) -> Generator[TupleKey, None, None]: ...
+    ) -> Generator[Key, None, None]: ...
 
     @overload
     def _iterate_impl(
@@ -560,7 +562,7 @@ class RocksDBScan:
     @overload
     def _iterate_impl(
         self, iterator_type: Literal[IteratorType.ITEMS]
-    ) -> Generator[tuple[TupleKey, Value], None, None]: ...
+    ) -> Generator[tuple[Key, Value], None, None]: ...
 
     def _iterate_impl(self, iterator_type: IteratorType) -> Generator[object, None, None]:
         """Core iteration implementation.
@@ -751,7 +753,7 @@ class RocksDBScan:
             # Release iterator to free C++ resources
             del iterator
 
-    def keys(self) -> Generator[TupleKey, None, None]:
+    def keys(self) -> Generator[Key, None, None]:
         """Iterate over keys only - uses iterkeys() for minimal I/O.
 
         Yields:
@@ -773,7 +775,7 @@ class RocksDBScan:
         """
         yield from self._iterate_impl(iterator_type=IteratorType.VALUES)
 
-    def items(self) -> Generator[tuple[TupleKey, Value], None, None]:
+    def items(self) -> Generator[tuple[Key, Value], None, None]:
         """Iterate over (key, value) tuples - uses iteritems().
 
         Yields:
@@ -784,7 +786,7 @@ class RocksDBScan:
         """
         yield from self._iterate_impl(iterator_type=IteratorType.ITEMS)
 
-    def __iter__(self) -> Iterator[TupleKey]:
+    def __iter__(self) -> Iterator[Key]:
         """Default iteration yields keys."""
         return self.keys()
 
@@ -969,7 +971,7 @@ class RocksDBStorage:
 
     def subscribe(
         self,
-        pattern: TupleKey,
+        pattern: Key,
         callback: CallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:
@@ -1167,7 +1169,7 @@ class RocksDBStorage:
                 pass
             raise
 
-    def _notify(self, key: TupleKey) -> None:
+    def _notify(self, key: Key) -> None:
         """Notify observer of key change.
 
         Args:

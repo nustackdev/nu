@@ -10,22 +10,16 @@ from typing import TYPE_CHECKING, ClassVar, Self
 
 import attrs
 
-from redwood.abc import Convertible, Empty, Initializable, KeyComponent, Value, is_empty
-from redwood.tree import (
-    DATA_ROOT,
-    Container,
-    ContainerProtocol,
-    ContainerStructure,
-    NodeType,
-    get_parent,
-)
+from redwood.loc import key as key_
+from redwood.tree import Container, ContainerProtocol, ContainerStructure, NodeType
+from redwood.types import Convertible, Empty, Initializable, Value, is_empty
 
 from .registry import ViewRegistry
 
 
 if TYPE_CHECKING:
-    from redwood.abc import Value
     from redwood.storage import StorageContextType
+    from redwood.types import Value
 
 __all__ = [
     "View",
@@ -105,7 +99,7 @@ class View(ABC):
     ) -> Self:
         """Create a new View instance of this type on a root path."""
         container = Container.create(
-            (DATA_ROOT,),
+            (key_.DATA_ROOT,),
             ctx,
             cls.get_structure(),
             cls.get_protocol(),
@@ -133,7 +127,7 @@ class View(ABC):
         Raises:
             ValueError: If already at root (no parent)
         """
-        parent_path = get_parent(self.container.path)
+        parent_path = key_.get_parent(self.container.path)
         if parent_path is None:
             raise ValueError("Cannot navigate to parent - already at root")
 
@@ -153,7 +147,7 @@ class View(ABC):
     # HELPER METHODS FOR SUBCLASSES
     # =========================================================================
 
-    def _get_child_value(self, key: KeyComponent) -> Value | Empty:
+    def _get_child_value(self, key: key_.KeySegment) -> Value | Empty:
         """Get child value, auto-extracting containers.
 
         Helper for subclasses implementing dict-like or list-like access.
@@ -182,7 +176,7 @@ class View(ABC):
         # Child is container - extract it
         return self._extract_child_container(key)
 
-    def _set_child_value(self, key: KeyComponent, value: Value) -> None:
+    def _set_child_value(self, key: key_.KeySegment, value: Value) -> None:
         """Set child value, auto-creating containers for complex types.
 
         Helper for subclasses implementing dict-like or list-like mutation.
@@ -199,7 +193,7 @@ class View(ABC):
             # Primitive value - store directly
             self.container.set_child_primitive(key, value)
 
-    def _extract_child_container(self, key: KeyComponent) -> Value:
+    def _extract_child_container(self, key: key_.KeySegment) -> Value:
         """Extract child container contents using registry.
 
         Args:
@@ -227,7 +221,7 @@ class View(ABC):
 
         return child_view.extract()
 
-    def _populate_child_container(self, key: KeyComponent, value: Value) -> None:
+    def _populate_child_container(self, key: key_.KeySegment, value: Value) -> None:
         """Populate child container from Python value using registry.
 
         Args:

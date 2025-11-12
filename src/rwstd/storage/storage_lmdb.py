@@ -1,4 +1,4 @@
-# """LMDB storage backend with transaction and snapshot support."""
+"""LMDB storage backend with transaction and snapshot support."""
 
 # from __future__ import annotations
 
@@ -34,7 +34,7 @@
 
 #     import lmdb as _lmdb  # type: ignore[import]
 
-#     from redwood.abc import TupleKey, Value
+#     from redwood.abc import key.Key, Value
 #     from redwood.be import (
 #         CodecProtocol,
 #         SnapshotProtocol,
@@ -55,7 +55,7 @@
 #     cursor: lmdb.Cursor,
 #     codec: CodecProtocol[bytes, bytes],
 #     options: StorageScanOptions,
-# ) -> list[tuple[TupleKey, Value]]:
+# ) -> list[tuple[key.Key, Value]]:
 #     """Collect ordered key/value pairs from an LMDB cursor."""
 #     if options.limit == 0:
 #         return []
@@ -65,7 +65,7 @@
 #     seek_key = encoded_start if encoded_start >= encoded_prefix else encoded_prefix
 #     depth = options.depth
 
-#     results: list[tuple[TupleKey, Value]] = []
+#     results: list[tuple[key.Key, Value]] = []
 
 #     found = cursor.set_range(seek_key)
 #     if not found:
@@ -186,7 +186,7 @@
 
 #             logger.debug("Disconnected from LMDB")
 
-#     def _get_impl(self, key: TupleKey) -> Value:
+#     def _get_impl(self, key: key.Key) -> Value:
 #         """Get value by key."""
 #         try:
 #             encoded_key = self.codec.encode_key(key)
@@ -208,7 +208,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-#     def _set_impl(self, key: TupleKey, value: Value) -> None:
+#     def _set_impl(self, key: key.Key, value: Value) -> None:
 #         """Set value for key."""
 #         # Encode both before transaction to avoid partial failure
 #         encoded_key = self.codec.encode_key(key)
@@ -221,7 +221,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-#     def _delete_impl(self, key: TupleKey) -> None:
+#     def _delete_impl(self, key: key.Key) -> None:
 #         """Delete value by key."""
 #         encoded_key = self.codec.encode_key(key)
 
@@ -235,7 +235,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-#     def _exists_impl(self, key: TupleKey) -> bool:
+#     def _exists_impl(self, key: key.Key) -> bool:
 #         """Check if key exists."""
 #         encoded_key = self.codec.encode_key(key)
 
@@ -249,16 +249,16 @@
 
 #     def _collect_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int,
-#     ) -> list[tuple[TupleKey, Value]]:
+#     ) -> list[tuple[key.Key, Value]]:
 #         """Collect matching key/value pairs for list operations."""
 #         encoded_prefix = self.codec.encode_key(prefix)
 
 #         try:
 #             with self._env.begin() as txn:
 #                 cursor = txn.cursor()
-#                 items: list[tuple[TupleKey, Value]] = []
+#                 items: list[tuple[key.Key, Value]] = []
 #                 try:
 #                     found = cursor.set_range(encoded_prefix)
 #                     if not found:
@@ -288,7 +288,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to collect items under {prefix}: {e}") from e
 
-#     def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None, None]:
+#     def _list_keys_impl(self, prefix: key.Key, depth: int) -> Generator[key.Key, None, None]:
 #         """List all keys under prefix."""
 #         encoded_prefix = self.codec.encode_key(prefix)
 
@@ -329,7 +329,7 @@
 #     def _scan_items_impl(
 #         self,
 #         options: StorageScanOptions,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """Efficient ordered scan leveraging LMDB cursor semantics."""
 #         try:
 #             with self._env.begin() as txn:
@@ -344,16 +344,16 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to scan items under {options.prefix}: {e}") from e
 
-#     def _list_values_impl(self, prefix: TupleKey, depth: int) -> Generator[Value, None, None]:
+#     def _list_values_impl(self, prefix: key.Key, depth: int) -> Generator[Value, None, None]:
 #         """List all values under prefix."""
 #         for _, value in self._collect_items(prefix, depth):
 #             yield value
 
 #     def _list_items_impl(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """List key/value pairs under prefix."""
 #         yield from self._collect_items(prefix, depth)
 
@@ -410,7 +410,7 @@
 #         if self._rolled_back:
 #             raise TransactionInvalidError("Transaction already rolled back")
 
-#     def get(self, key: TupleKey) -> Value:
+#     def get(self, key: key.Key) -> Value:
 #         """Get value within transaction context."""
 #         self._check_valid()
 #         try:
@@ -432,7 +432,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-#     def set(self, key: TupleKey, value: Value) -> None:
+#     def set(self, key: key.Key, value: Value) -> None:
 #         """Set value within transaction context."""
 #         self._check_valid()
 
@@ -445,7 +445,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-#     def delete(self, key: TupleKey) -> None:
+#     def delete(self, key: key.Key) -> None:
 #         """Delete key within transaction context."""
 #         self._check_valid()
 
@@ -459,7 +459,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-#     def exists(self, key: TupleKey) -> bool:
+#     def exists(self, key: key.Key) -> bool:
 #         """Check if key exists within transaction context."""
 #         self._check_valid()
 
@@ -472,7 +472,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-#     def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
+#     def list_keys(self, prefix: key.Key, depth: int = 1) -> Generator[key.Key, None, None]:
 #         """List all keys under prefix within transaction context."""
 #         self._check_valid()
 #         encoded_prefix = self._storage.codec.encode_key(prefix)
@@ -506,16 +506,16 @@
 
 #     def _collect_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int,
-#     ) -> list[tuple[TupleKey, Value]]:
+#     ) -> list[tuple[key.Key, Value]]:
 #         """Collect matching items within transaction context."""
 #         self._check_valid()
 #         encoded_prefix = self._storage.codec.encode_key(prefix)
 
 #         try:
 #             cursor = self._lmdb_txn.cursor()
-#             items: list[tuple[TupleKey, Value]] = []
+#             items: list[tuple[key.Key, Value]] = []
 #             try:
 #                 found = cursor.set_range(encoded_prefix)
 #                 if not found:
@@ -545,20 +545,20 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
 
-#     def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+#     def list_values(self, prefix: key.Key, depth: int = 1) -> Generator[Value, None, None]:
 #         """List all values under prefix within transaction context."""
 #         for _, value in self._collect_items(prefix, depth):
 #             yield value
 
 #     def list_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int = 1,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """List key/value pairs under prefix within transaction context."""
 #         yield from self._collect_items(prefix, depth)
 
-#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
+#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[key.Key, None, None]:
 #         """Perform ordered scan within transaction context."""
 #         for key, _ in self.scan_items(options):
 #             yield key
@@ -567,7 +567,7 @@
 #         self,
 #         options: StorageScanOptions,
 #         /,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """Perform ordered scan yielding key/value pairs within transaction context."""
 #         self._check_valid()
 #         cursor = self._lmdb_txn.cursor()
@@ -624,7 +624,7 @@
 #         if self._closed:
 #             raise SnapshotError("Snapshot already closed")
 
-#     def get(self, key: TupleKey) -> Value:
+#     def get(self, key: key.Key) -> Value:
 #         """Get value within snapshot context."""
 #         self._check_valid()
 #         try:
@@ -646,7 +646,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
-#     def exists(self, key: TupleKey) -> bool:
+#     def exists(self, key: key.Key) -> bool:
 #         """Check if key exists within snapshot context."""
 #         self._check_valid()
 
@@ -659,7 +659,7 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
-#     def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
+#     def list_keys(self, prefix: key.Key, depth: int = 1) -> Generator[key.Key, None, None]:
 #         """List all keys under prefix within snapshot context."""
 #         self._check_valid()
 #         encoded_prefix = self._storage.codec.encode_key(prefix)
@@ -693,16 +693,16 @@
 
 #     def _collect_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int,
-#     ) -> list[tuple[TupleKey, Value]]:
+#     ) -> list[tuple[key.Key, Value]]:
 #         """Collect matching key/value pairs within snapshot context."""
 #         self._check_valid()
 #         encoded_prefix = self._storage.codec.encode_key(prefix)
 
 #         try:
 #             cursor = self._lmdb_txn.cursor()
-#             items: list[tuple[TupleKey, Value]] = []
+#             items: list[tuple[key.Key, Value]] = []
 #             try:
 #                 found = cursor.set_range(encoded_prefix)
 #                 if not found:
@@ -732,20 +732,20 @@
 #         except Exception as e:
 #             raise StorageOperationError(f"Failed to list items under {prefix}: {e}") from e
 
-#     def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+#     def list_values(self, prefix: key.Key, depth: int = 1) -> Generator[Value, None, None]:
 #         """List all values under prefix within snapshot context."""
 #         for _, value in self._collect_items(prefix, depth):
 #             yield value
 
 #     def list_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int = 1,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """List key/value pairs under prefix within snapshot context."""
 #         yield from self._collect_items(prefix, depth)
 
-#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
+#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[key.Key, None, None]:
 #         """Perform ordered scan within snapshot context."""
 #         for key, _ in self.scan_items(options):
 #             yield key
@@ -754,7 +754,7 @@
 #         self,
 #         options: StorageScanOptions,
 #         /,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """Perform ordered scan yielding key/value pairs within snapshot context."""
 #         self._check_valid()
 #         cursor = self._lmdb_txn.cursor()

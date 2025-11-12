@@ -133,7 +133,7 @@ from .term import LValue
 
 
 if TYPE_CHECKING:
-    from redwood.abc import KeyComponent, TupleKey
+    from redwood.loc import key
     from redwood.view import View
 
     from ..types import Context
@@ -160,7 +160,7 @@ class Ref[T](LValue, ABC):
 
     # ---- Required attributes (set by concrete classes) ----
 
-    field_name: KeyComponent
+    field_name: key.KeySegment
     """Name of the field this ref points to."""
 
     value_type: type[T]
@@ -172,7 +172,7 @@ class Ref[T](LValue, ABC):
     parent_ref: Ref | None
     """Parent reference in navigation chain (None if root)."""
 
-    static_path: TupleKey | None
+    static_path: key.Key | None
     """Cached path segments if fully static (None if dynamic)."""
 
     is_dynamic: bool
@@ -181,7 +181,7 @@ class Ref[T](LValue, ABC):
     # ---- LValue contract (must implement) ----
 
     @abstractmethod
-    def resolve(self, context: Context) -> TupleKey:
+    def resolve(self, context: Context) -> key.Key:
         """Resolve reference to concrete path segments.
 
         Static refs: Return cached static_path (O(1))
@@ -205,7 +205,7 @@ class Ref[T](LValue, ABC):
         ...
 
     @abstractmethod
-    def last_segment(self) -> KeyComponent:
+    def last_segment(self) -> key.KeySegment:
         """Return the last segment in the path.
 
         For most refs, this is field_name.

@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.abc import KeyComponent, TupleKey
+    from redwood.loc import key
 
     from ..types import Context
 
@@ -93,7 +93,7 @@ class LValue(Term):
     """
 
     @abstractmethod
-    def resolve(self, context: Context) -> TupleKey:
+    def resolve(self, context: Context) -> key.Key:
         """Resolve to concrete path segments.
 
         For static refs: returns cached path
@@ -117,7 +117,7 @@ class LValue(Term):
         ...
 
     @abstractmethod
-    def last_segment(self) -> KeyComponent:
+    def last_segment(self) -> key.KeySegment:
         """Return the last segment in the path.
 
         Returns:

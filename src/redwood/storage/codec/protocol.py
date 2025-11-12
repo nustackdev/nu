@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Protocol
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey, Value
+    from redwood.loc import key
+    from redwood.types import Value
 
 
 __all__ = [
@@ -29,7 +30,7 @@ class CodecProtocol[EncodedKeyT, EncodedValueT](Protocol):
         EncodedValueT: The type of encoded values (covariant)
     """
 
-    def encode_key(self, key: TupleKey) -> EncodedKeyT:
+    def encode_key(self, key: key.Key) -> EncodedKeyT:
         """Encode a key for storage.
 
         Args:
@@ -43,7 +44,7 @@ class CodecProtocol[EncodedKeyT, EncodedValueT](Protocol):
         """
         ...
 
-    def decode_key(self, encoded: EncodedKeyT) -> TupleKey:
+    def decode_key(self, encoded: EncodedKeyT) -> key.Key:
         """Decode a key from storage.
 
         Args:
@@ -97,7 +98,7 @@ class KeyCodecProtocol[EncodedKeyT](Protocol):
     range queries and efficient prefix scans in storage engines.
     """
 
-    def encode(self, key: TupleKey) -> EncodedKeyT:
+    def encode(self, key: key.Key) -> EncodedKeyT:
         """Encode a key for storage.
 
         Args:
@@ -112,7 +113,7 @@ class KeyCodecProtocol[EncodedKeyT](Protocol):
         """
         ...
 
-    def decode(self, encoded: EncodedKeyT) -> TupleKey:
+    def decode(self, encoded: EncodedKeyT) -> key.Key:
         """Decode a key from storage.
 
         Args:

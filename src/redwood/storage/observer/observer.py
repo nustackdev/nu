@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 
 if TYPE_CHECKING:
-    from redwood.abc import CallbackFn, TupleKey
-    from redwood.storage.codec import CodecProtocol
+    from redwood.loc import key
+    from redwood.storage import CallbackFn, CodecProtocol
 
 
 __all__ = [
@@ -25,7 +25,7 @@ class ObserverProtocol[EncodedKeyT](Protocol):
         ...
 
     def subscribe(
-        self, prefix: TupleKey, callback: CallbackFn, prefix_depth: int = 0
+        self, prefix: key.Key, callback: CallbackFn, prefix_depth: int = 0
     ) -> SubscriptionProtocol:
         """Subscribe to changes under key prefix.
 
@@ -53,7 +53,7 @@ class ObserverProtocol[EncodedKeyT](Protocol):
         """
         ...
 
-    def notify(self, topic: TupleKey) -> None:
+    def notify(self, topic: key.Key) -> None:
         """Notify observers of a change at the specified topic.
 
         Args:
@@ -99,7 +99,7 @@ class SubscriptionProtocol(Protocol):
     """
 
     @property
-    def prefix(self) -> TupleKey:
+    def prefix(self) -> key.Key:
         """Get topic pattern for subscription."""
         ...
 

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey
+    from redwood.types import key.Key
 
 logging.basicConfig(level=logging.INFO)
 
@@ -94,7 +94,7 @@ def backend() -> None:
     ):
         backend = ReactiveStorage(storage=storage, observer=observer)
 
-        def on_change(topic: TupleKey) -> None:
+        def on_change(topic: key.Key) -> None:
             print(f"Change detected on topic: {topic}")
 
         # backend.subscribe(("users",), on_change, depth=-1)

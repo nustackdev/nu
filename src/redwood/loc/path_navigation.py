@@ -1,7 +1,7 @@
-"""View navigation system for Layer 3.
+"""Path navigation system.
 
 Minimal, practical navigation that works through Views using the Nestable protocol.
-Views handle their own key translation (e.g., ListView negative indexing).
+Views handle their own path translation (e.g., ListView negative indexing).
 
 This module provides:
 - Types: ViewPath, ValuePath, segments
@@ -15,13 +15,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.abc import is_nestable
+from redwood.types import is_nestable
 
 
 if TYPE_CHECKING:
     from redwood.view import View
 
-    from .types import ValuePath, ValueSegment, ViewKey, ViewPath, ViewSegment
+    from .path_location import (
+        Path,
+        PathAddress,
+        PathSegment,
+        PathToValue,
+        PathToView,
+        PathValueSegment,
+        PathViewSegment,
+    )
 
 
 __all__ = [  # noqa: RUF022
@@ -44,7 +52,7 @@ __all__ = [  # noqa: RUF022
 # =============================================================================
 
 
-def build_view_path(*segments: ViewSegment) -> ViewPath:
+def build_view_path(*segments: PathViewSegment) -> PathToView:
     """Build ViewPath from segments.
 
     Example:
@@ -56,20 +64,20 @@ def build_view_path(*segments: ViewSegment) -> ViewPath:
     return segments
 
 
-def build_value_path(*segments: ViewSegment | ValueSegment) -> ValuePath:
+def build_value_path(*segments: *tuple[PathViewSegment, ...], v: PathValueSegment) -> PathToValue:
     """Build ValuePath from segments.
 
     Example:
         >>> path = build_value_path(
         ...     ("users", DictView),
         ...     ("alice", DictView),
-        ...     ("name", str),
+        ...     v=("name", str),
         ... )
     """
-    return segments
+    return (*segments, v)
 
 
-def split_value_path(path: ValuePath) -> tuple[ViewPath, ValueSegment]:
+def split_value_path(path: PathToValue) -> tuple[PathToView, PathValueSegment]:
     """Split ValuePath into parent ViewPath and final value segment.
 
     Args:
@@ -80,14 +88,14 @@ def split_value_path(path: ValuePath) -> tuple[ViewPath, ValueSegment]:
 
     Example:
         >>> path = (("users", DictView), ("alice", DictView), ("name", str))
-        >>> parent, (key, type) = split_value_path(path)
+        >>> parent, (address, type) = split_value_path(path)
         >>> # parent = (("users", DictView), ("alice", DictView))
-        >>> # key = "name", type = str
+        >>> # address = "name", type = str
     """
     return path[:-1], path[-1]
 
 
-def parent_view_path(path: ViewPath) -> ViewPath:
+def parent_view_path(path: Path) -> PathToView:
     """Get parent ViewPath by removing last segment.
 
     Example:
@@ -98,7 +106,7 @@ def parent_view_path(path: ViewPath) -> ViewPath:
     return path[:-1]
 
 
-def last_segment(path: ViewPath | ValuePath) -> ViewSegment | ValueSegment:
+def last_segment(path: Path) -> PathSegment:
     """Get last segment from path.
 
     Example:
@@ -116,16 +124,16 @@ def last_segment(path: ViewPath | ValuePath) -> ViewSegment | ValueSegment:
 
 def open_child_view(
     parent_view: View,
-    key: ViewKey,
+    address: PathAddress,
     child_view_type: type[View],
 ) -> View:
     """Navigate from parent to child View.
 
-    Uses Nestable protocol - parent View handles key translation.
+    Uses Nestable protocol - parent View handles path translation.
 
     Args:
         parent_view: Parent view (must be Nestable)
-        key: Key in parent's domain (e.g., -1 for ListView)
+        address: Address in parent's domain (e.g., -1 for ListView)
         child_view_type: Expected child View type
 
     Returns:
@@ -142,12 +150,12 @@ def open_child_view(
             f"{type(parent_view).__name__} is not Nestable. Cannot navigate to children."
         )
 
-    return parent_view.open_view(key, child_view_type)
+    return parent_view.open_view(address, child_view_type)
 
 
 def navigate_view(
     start_view: View,
-    path: ViewPath,
+    path: PathToView,
 ) -> View:
     """Navigate ViewPath to reach target View.
 
@@ -165,52 +173,52 @@ def navigate_view(
     """
     current_view = start_view
 
-    for key, expected_type in path:
-        current_view = open_child_view(current_view, key, expected_type)
+    for address, expected_type in path:
+        current_view = open_child_view(current_view, address, expected_type)
 
     return current_view
 
 
 def navigate_value(
     start_view: View,
-    path: ValuePath,
-) -> tuple[View, ViewKey]:
-    """Navigate ValuePath and return (parent View, value key).
+    path: PathToValue,
+) -> tuple[View, PathAddress]:
+    """Navigate ValuePath and return (parent View, value address).
 
-    This returns the parent View and key so you can do view.get(key) or
-    view[key] yourself. Useful when you need the View for other operations.
+    This returns the parent View and address so you can do view.get(address) or
+    view[address] yourself. Useful when you need the View for other operations.
 
     Args:
         start_view: Starting view
-        path: ValuePath to navigate
+        path: PathToValue to navigate
 
     Returns:
-        (parent View, value key) - call parent._get_child_value(key)
+        (parent View, value address) - call parent._get_child_value(address)
 
     Example:
         >>> root = get_root_view(DictView, tx, registry)
         >>> path = (("users", DictView), ("alice", DictView), ("name", str))
-        >>> parent, key = navigate_value(root, path)
-        >>> name = parent._get_child_value(key)  # or parent[key]
+        >>> parent, address = navigate_value(root, path)
+        >>> name = parent._get_child_value(address)  # or parent[address]
         >>> # name = "Alice"
 
         >>> # With negative indexing
         >>> path = (("users", DictView), ("alice", DictView), ("tags", ListView), (-1, str))
-        >>> parent, key = navigate_value(root, path)
-        >>> # parent is ListView, key is -1
+        >>> parent, address = navigate_value(root, path)
+        >>> # parent is ListView, address is -1
         >>> # parent handles -1 → actual last index
     """
     if len(path) == 0:
         raise ValueError("Cannot navigate empty ValuePath")
 
-    parent_path, (value_key, _) = split_value_path(path)
+    parent_path, (value_address, _) = split_value_path(path)
 
     if len(parent_path) > 0:
         parent_view = navigate_view(start_view, parent_path)
     else:
         parent_view = start_view
 
-    return parent_view, value_key
+    return parent_view, value_address
 
 
 def open_parent_view(child_view: View) -> View:

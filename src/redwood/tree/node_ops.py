@@ -13,16 +13,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from redwood.abc import NOT_SET, NotSet, Value, is_notset
+from redwood.loc import key
 from redwood.storage import StorageKeyError
+from redwood.types import NOT_SET, NotSet, Value, is_notset
 
 from .marker import extract_marker
-from .navigation import get_ancestors
 from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read_context
 
 
 if TYPE_CHECKING:
-    from redwood.abc import TupleKey
     from redwood.storage import StorageContextType
 
 __all__ = [
@@ -33,7 +32,7 @@ __all__ = [
 ]
 
 
-def node_exists(path: TupleKey, ctx: StorageContextType) -> bool:
+def node_exists(path: key.Key, ctx: StorageContextType) -> bool:
     """Check if node exists at path.
 
     Optimized hot path - performs minimal work to determine existence.
@@ -56,7 +55,7 @@ def node_exists(path: TupleKey, ctx: StorageContextType) -> bool:
 
 
 def get_node_type(
-    path: TupleKey, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
+    path: key.Key, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
 ) -> NodeType:
     """Get node type without full information gathering.
 
@@ -87,7 +86,7 @@ def get_node_type(
 
 
 def get_node_info(
-    path: TupleKey, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
+    path: key.Key, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
 ) -> NodeInfo:
     """Get complete node information.
 
@@ -146,7 +145,7 @@ def get_node_info(
         )
 
 
-def gather_parent_info(path: TupleKey, ctx: StorageContextType) -> ParentChainInfo:
+def gather_parent_info(path: key.Key, ctx: StorageContextType) -> ParentChainInfo:
     """Gather parent chain information without validation.
 
     Pure information collection - traverses the path hierarchy from root to
@@ -168,7 +167,7 @@ def gather_parent_info(path: TupleKey, ctx: StorageContextType) -> ParentChainIn
         >>> if info.all_exist and info.all_healthy:
         ...     print("Parent chain is complete and healthy")
     """
-    ancestors = get_ancestors(path)
+    ancestors = key.get_ancestors(path)
     if not ancestors:
         # Root level - no parents
         return ParentChainInfo(

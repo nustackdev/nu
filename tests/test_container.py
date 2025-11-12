@@ -9,7 +9,6 @@ from collections.abc import Generator
 
 import pytest
 
-from redwood.abc import EMPTY
 from redwood.storage import StorageProtocol, TransactionProtocol
 from redwood.tree import (
     Container,
@@ -21,6 +20,7 @@ from redwood.tree import (
     PathNotFoundError,
     PathTypeError,
 )
+from redwood.types import EMPTY
 
 
 # ============================================================================
@@ -31,8 +31,8 @@ from redwood.tree import (
 @pytest.fixture
 def storage(tmp_path: pathlib.Path) -> Generator[StorageProtocol, None, None]:
     """Create temporary storage backend for testing."""
-    from rwstd.adapters.codecs import BinaryCodec
-    from rwstd.adapters.storage_rocksdb import RocksDBStorage
+    from rwstd.storage.codecs import BinaryCodec
+    from rwstd.storage.storage_rocksdb import RocksDBStorage
 
     db_path = tmp_path / "test_db"
     storage = RocksDBStorage(path=db_path, codec=BinaryCodec())

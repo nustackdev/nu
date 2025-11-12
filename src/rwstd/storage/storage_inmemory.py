@@ -1,4 +1,4 @@
-# """In-memory storage implementation with transaction support."""
+"""In-memory storage implementation with transaction support."""
 
 # from __future__ import annotations
 
@@ -30,7 +30,7 @@
 # if TYPE_CHECKING:
 #     from collections.abc import Generator
 
-#     from redwood.abc import TupleKey
+#     from redwood.abc import key.Key
 #     from redwood.be import (
 #         CodecProtocol,
 #         SnapshotProtocol,
@@ -47,7 +47,7 @@
 #     """Represents a single operation in a transaction."""
 
 #     op_type: str  # "set" or "delete"
-#     key: TupleKey
+#     key: key.Key
 #     value: Value | None = None
 
 
@@ -101,7 +101,7 @@
 #             self._data.clear()
 #         logger.debug("Disconnected from in-memory storage")
 
-#     def _get_impl(self, key: TupleKey) -> Value:
+#     def _get_impl(self, key: key.Key) -> Value:
 #         """Get value by key."""
 #         encoded_key = self.codec.encode_key(key)
 
@@ -115,7 +115,7 @@
 #                     raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 #                 raise
 
-#     def _set_impl(self, key: TupleKey, value: Value) -> None:
+#     def _set_impl(self, key: key.Key, value: Value) -> None:
 #         """Set value for key."""
 #         encoded_key = self.codec.encode_key(key)
 
@@ -125,7 +125,7 @@
 #             except Exception as e:
 #                 raise StorageOperationError(f"Failed to set key {key}: {e}") from e
 
-#     def _delete_impl(self, key: TupleKey) -> None:
+#     def _delete_impl(self, key: key.Key) -> None:
 #         """Delete key."""
 #         encoded_key = self.codec.encode_key(key)
 
@@ -137,7 +137,7 @@
 #             except Exception as e:
 #                 raise StorageOperationError(f"Failed to delete key {key}: {e}") from e
 
-#     def _exists_impl(self, key: TupleKey) -> bool:
+#     def _exists_impl(self, key: key.Key) -> bool:
 #         """Check if key exists."""
 #         encoded_key = self.codec.encode_key(key)
 
@@ -146,14 +146,14 @@
 
 #     def _collect_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int,
-#     ) -> list[tuple[TupleKey, Value]]:
+#     ) -> list[tuple[key.Key, Value]]:
 #         """Collect matching items for list operations."""
 #         encoded_prefix = self.codec.encode_key(prefix)
 
 #         with self._data_lock:
-#             matching_items: list[tuple[TupleKey, Value]] = []
+#             matching_items: list[tuple[key.Key, Value]] = []
 #             for encoded_key, stored_value in self._data.items():
 #                 if not encoded_key.startswith(encoded_prefix):
 #                     continue
@@ -167,21 +167,21 @@
 #         matching_items.sort(key=lambda pair: pair[0])
 #         return matching_items
 
-#     def _list_keys_impl(self, prefix: TupleKey, depth: int) -> Generator[TupleKey, None, None]:
+#     def _list_keys_impl(self, prefix: key.Key, depth: int) -> Generator[key.Key, None, None]:
 #         """List all keys under prefix."""
 #         for key, _ in self._collect_items(prefix, depth):
 #             yield key
 
-#     def _list_values_impl(self, prefix: TupleKey, depth: int) -> Generator[Value, None, None]:
+#     def _list_values_impl(self, prefix: key.Key, depth: int) -> Generator[Value, None, None]:
 #         """List all values under prefix."""
 #         for _, value in self._collect_items(prefix, depth):
 #             yield value
 
 #     def _list_items_impl(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """List key/value pairs under prefix."""
 #         yield from self._collect_items(prefix, depth)
 
@@ -262,7 +262,7 @@
 #         if self._rolled_back:
 #             raise TransactionInvalidError("Transaction already rolled back")
 
-#     def get(self, key: TupleKey) -> Value:
+#     def get(self, key: key.Key) -> Value:
 #         """Get value within transaction context."""
 #         self._check_valid()
 #         encoded_key = self._storage.codec.encode_key(key)
@@ -280,14 +280,14 @@
 #         self._read_set.add(encoded_key)
 #         return value
 
-#     def set(self, key: TupleKey, value: Value) -> None:
+#     def set(self, key: key.Key, value: Value) -> None:
 #         """Set value within transaction context."""
 #         self._check_valid()
 #         encoded_key = self._storage.codec.encode_key(key)
 #         self._write_set.add(encoded_key)
 #         self._operations.append(TransactionOperation("set", key, value))
 
-#     def delete(self, key: TupleKey) -> None:
+#     def delete(self, key: key.Key) -> None:
 #         """Delete key within transaction context."""
 #         self._check_valid()
 #         encoded_key = self._storage.codec.encode_key(key)
@@ -317,7 +317,7 @@
 #         self._write_set.add(encoded_key)
 #         self._operations.append(TransactionOperation("delete", key))
 
-#     def exists(self, key: TupleKey) -> bool:
+#     def exists(self, key: key.Key) -> bool:
 #         """Check if key exists within transaction context."""
 #         self._check_valid()
 #         try:
@@ -326,7 +326,7 @@
 #         except StorageKeyError:
 #             return False
 
-#     def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
+#     def list_keys(self, prefix: key.Key, depth: int = 1) -> Generator[key.Key, None, None]:
 #         """List all keys under prefix within transaction."""
 #         self._check_valid()
 
@@ -359,21 +359,21 @@
 #         for encoded_key in sorted(base_keys):  # Sort for consistent ordering
 #             yield self._storage.codec.decode_key(encoded_key)
 
-#     def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+#     def list_values(self, prefix: key.Key, depth: int = 1) -> Generator[Value, None, None]:
 #         """List all values under prefix within transaction."""
 #         for key in self.list_keys(prefix, depth):
 #             yield self.get(key)
 
 #     def list_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int = 1,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """List key/value pairs under prefix within transaction."""
 #         for key in self.list_keys(prefix, depth):
 #             yield key, self.get(key)
 
-#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
+#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[key.Key, None, None]:
 #         """Perform ordered scan within transaction context."""
 #         for key, _ in self.scan_items(options):
 #             yield key
@@ -382,12 +382,12 @@
 #         self,
 #         options: StorageScanOptions,
 #         /,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """Perform ordered scan yielding key/value pairs within transaction."""
 #         self._check_valid()
 
 #         depth = options.depth if options.depth != -1 else -1
-#         collected: list[tuple[TupleKey, Value]] = []
+#         collected: list[tuple[key.Key, Value]] = []
 #         for key in self.list_keys(options.prefix, depth):
 #             if options.start is not None and key < options.start:
 #                 continue
@@ -452,7 +452,7 @@
 #         if self._closed:
 #             raise SnapshotError("Snapshot already closed")
 
-#     def get(self, key: TupleKey) -> Value:
+#     def get(self, key: key.Key) -> Value:
 #         """Get value within snapshot context."""
 #         self._check_valid()
 #         encoded_key = self._storage.codec.encode_key(key)
@@ -466,13 +466,13 @@
 #                 raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 #             raise
 
-#     def exists(self, key: TupleKey) -> bool:
+#     def exists(self, key: key.Key) -> bool:
 #         """Check if key exists within snapshot context."""
 #         self._check_valid()
 #         encoded_key = self._storage.codec.encode_key(key)
 #         return encoded_key in self._snapshot_data
 
-#     def list_keys(self, prefix: TupleKey, depth: int = 1) -> Generator[TupleKey, None, None]:
+#     def list_keys(self, prefix: key.Key, depth: int = 1) -> Generator[key.Key, None, None]:
 #         """List all keys under prefix within snapshot context."""
 #         self._check_valid()
 #         encoded_prefix = self._storage.codec.encode_key(prefix)
@@ -487,21 +487,21 @@
 #         # Yield sorted keys for consistent ordering
 #         yield from sorted(matching_keys)
 
-#     def list_values(self, prefix: TupleKey, depth: int = 1) -> Generator[Value, None, None]:
+#     def list_values(self, prefix: key.Key, depth: int = 1) -> Generator[Value, None, None]:
 #         """List all values under prefix within snapshot context."""
 #         for key in self.list_keys(prefix, depth):
 #             yield self.get(key)
 
 #     def list_items(
 #         self,
-#         prefix: TupleKey,
+#         prefix: key.Key,
 #         depth: int = 1,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """List key/value pairs under prefix within snapshot context."""
 #         for key in self.list_keys(prefix, depth):
 #             yield key, self.get(key)
 
-#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[TupleKey, None, None]:
+#     def scan_keys(self, options: StorageScanOptions, /) -> Generator[key.Key, None, None]:
 #         """Perform ordered scan within snapshot context."""
 #         for key, _ in self.scan_items(options):
 #             yield key
@@ -510,12 +510,12 @@
 #         self,
 #         options: StorageScanOptions,
 #         /,
-#     ) -> Generator[tuple[TupleKey, Value], None, None]:
+#     ) -> Generator[tuple[key.Key, Value], None, None]:
 #         """Perform ordered scan yielding key/value pairs within snapshot context."""
 #         self._check_valid()
 
 #         depth = options.depth if options.depth != -1 else -1
-#         collected: list[tuple[TupleKey, Value]] = []
+#         collected: list[tuple[key.Key, Value]] = []
 #         for key in self.list_keys(options.prefix, depth):
 #             if options.start is not None and key < options.start:
 #                 continue

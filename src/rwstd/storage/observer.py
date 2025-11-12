@@ -9,8 +9,9 @@ from redwood.storage import ObserverConnectionError
 
 
 if TYPE_CHECKING:
-    from redwood.abc import CallbackFn, TupleKey
+    from redwood.loc import key
     from redwood.storage import (
+        CallbackFn,
         CodecProtocol,
         SubscriptionProtocol,
     )
@@ -97,7 +98,7 @@ class BaseObserver[EncodedKeyT](ABC):
         raise NotImplementedError
 
     @final
-    def notify(self, topic: TupleKey) -> None:
+    def notify(self, topic: key.Key) -> None:
         """Notify subscribers of state change.
 
         Args:
@@ -107,7 +108,7 @@ class BaseObserver[EncodedKeyT](ABC):
         self._notify_impl(topic)
 
     @abstractmethod
-    def _notify_impl(self, topic: TupleKey) -> None:
+    def _notify_impl(self, topic: key.Key) -> None:
         """Implementation-specific notify logic.
 
         Args:
@@ -119,9 +120,9 @@ class BaseObserver[EncodedKeyT](ABC):
     @final
     def subscribe(
         self,
-        key: TupleKey,
+        prefix: key.Key,
         callback: CallbackFn,
-        depth: int = 0,
+        prefix_depth: int = 0,
     ) -> SubscriptionProtocol:
         """Subscribe to topic pattern.
 
@@ -137,8 +138,8 @@ class BaseObserver[EncodedKeyT](ABC):
         self._ensure_connected()
 
         subscription = Subscription(
-            key,
-            depth,
+            prefix,
+            prefix_depth,
             callback,
         )
 
@@ -185,12 +186,12 @@ class Subscription:
         ObserverKey: Topic type (tuple of strings)
     """
 
-    _prefix: TupleKey
+    _prefix: key.Key
     _prefix_depth: int
     _callback: CallbackFn
 
     @property
-    def prefix(self) -> TupleKey:
+    def prefix(self) -> key.Key:
         return self._prefix
 
     @property

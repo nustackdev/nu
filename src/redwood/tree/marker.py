@@ -84,7 +84,7 @@ from .types import ContainerProtocol, ContainerStructure
 
 
 if TYPE_CHECKING:
-    from redwood.abc import Value
+    from redwood.types import Value
 
 
 __all__ = [

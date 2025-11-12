@@ -14,19 +14,16 @@ from .capabilities import (
     is_initializable,
     is_nestable,
 )
-from .common import (
-    CallbackFn,
-    CompositeValue,
-    IterableValues,
-    KeyComponent,
-    PrimitiveValue,
-    TupleKey,
-    Value,
-    cast_value,
-)
 from .mapping import (
     MappingProtocol,
     MutableMappingProtocol,
+)
+from .primitive import (
+    CompositeValue,
+    IterableValues,
+    PrimitiveValue,
+    Value,
+    cast_value,
 )
 from .special import (
     EMPTY,
@@ -46,11 +43,8 @@ from .special import (
 
 __all__ = [  # noqa: RUF022
     # Base types
-    "CallbackFn",
     "CompositeValue",
-    "KeyComponent",
     "PrimitiveValue",
-    "TupleKey",
     "Value",
     "IterableValues",
     "cast_value",

@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Protocol
 
 
 if TYPE_CHECKING:
-    from .common import KeyComponent, Value
+    from .primitive import Value
 
 __all__ = [
     "MappingProtocol",
@@ -56,7 +56,7 @@ class MappingProtocol(Protocol):
     Used by: DictView, any custom mapping views
     """
 
-    def get(self, key: KeyComponent) -> Value:
+    def get(self, key: object) -> Value:
         """Retrieve value by key.
 
         Args:
@@ -67,7 +67,7 @@ class MappingProtocol(Protocol):
         """
         ...
 
-    def keys(self) -> list[KeyComponent]:
+    def keys(self) -> list[object]:
         """Return all keys in the mapping.
 
         Returns:
@@ -75,7 +75,7 @@ class MappingProtocol(Protocol):
         """
         ...
 
-    def __contains__(self, key: KeyComponent) -> bool:
+    def __contains__(self, key: object) -> bool:
         """Check if key exists in mapping.
 
         Args:
@@ -95,7 +95,7 @@ class MutableMappingProtocol(MappingProtocol, Protocol):
     Used by: DictView in write contexts
     """
 
-    def set(self, key: KeyComponent, value: Value) -> None:
+    def set(self, key: object, value: Value) -> None:
         """Set value at key.
 
         Args:
@@ -104,7 +104,7 @@ class MutableMappingProtocol(MappingProtocol, Protocol):
         """
         ...
 
-    def remove(self, key: KeyComponent) -> None:
+    def remove(self, key: object) -> None:
         """Remove key from mapping.
 
         Args:

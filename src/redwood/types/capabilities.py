@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from redwood.abc import Value
+    from redwood.types import Value
 
 
 __all__ = [

@@ -15,7 +15,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import TracebackType
 
-    from redwood.abc import TupleKey, Value
+    from redwood.loc import key
+    from redwood.types import Value
 
     from .scan import ScanProtocol
     from .types import StorageScanOptions
@@ -95,7 +96,7 @@ class ReadAccessProtocol(Protocol):
     """
 
     # Point access
-    def get(self, key: TupleKey) -> Value:
+    def get(self, key: key.Key) -> Value:
         """Get value at key.
 
         Args:
@@ -110,7 +111,7 @@ class ReadAccessProtocol(Protocol):
         """
         ...
 
-    def has(self, key: TupleKey) -> bool:
+    def has(self, key: key.Key) -> bool:
         """Check if key exists.
 
         Args:
@@ -125,7 +126,7 @@ class ReadAccessProtocol(Protocol):
         ...
 
     # Batch access
-    def multiget(self, keys: list[TupleKey]) -> dict[TupleKey, Value]:
+    def multiget(self, keys: list[key.Key]) -> dict[key.Key, Value]:
         """Get multiple keys.
 
         Args:
@@ -165,7 +166,7 @@ class WriteAccessProtocol(Protocol):
     """
 
     # Point access
-    def put(self, key: TupleKey, value: Value) -> None:
+    def put(self, key: key.Key, value: Value) -> None:
         """Put value at key.
 
         Args:
@@ -178,7 +179,7 @@ class WriteAccessProtocol(Protocol):
         """
         ...
 
-    def delete(self, key: TupleKey) -> bool:
+    def delete(self, key: key.Key) -> bool:
         """Delete key.
 
         Args:

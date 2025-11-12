@@ -12,8 +12,8 @@ from .transaction import TransactionalStorageProtocol
 
 
 if TYPE_CHECKING:
-    from redwood.abc import CallbackFn, TupleKey
-    from redwood.storage.observer import SubscriptionProtocol
+    from redwood.loc import key
+    from redwood.storage import CallbackFn, SubscriptionProtocol
 
 
 @runtime_checkable
@@ -52,7 +52,7 @@ class StorageProtocol(TransactionalStorageProtocol, Protocol):
 
     def subscribe(
         self,
-        pattern: TupleKey,
+        pattern: key.Key,
         callback: CallbackFn,
         depth: int = 0,
     ) -> SubscriptionProtocol:

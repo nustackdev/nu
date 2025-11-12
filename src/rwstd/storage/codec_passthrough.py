@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from redwood.abc import Value
     from redwood.storage import ValueCodecProtocol
+    from redwood.types import Value
 
 __all__ = ["PassthroughCodec"]
 
