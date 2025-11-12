@@ -50,6 +50,7 @@ __all__ = [
     "BinaryOp",
     "DivOp",
     "EqOp",
+    "FloorDivOp",
     "GeOp",
     "GtOp",
     "LShiftOp",
@@ -177,6 +178,19 @@ class DivOp[T](BinaryOp[T]):
             return NAN
         try:
             return left / right  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class FloorDivOp[T](BinaryOp[T]):
+    """Floor division: left // right. Returns NaN on division by zero."""
+
+    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+        # Explicit zero check before division
+        if right == 0:
+            return NAN
+        try:
+            return left // right  # type: ignore
         except TypeError:
             return NAN
 

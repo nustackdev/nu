@@ -42,8 +42,10 @@ if TYPE_CHECKING:
 
 __all__ = [
     "AbsOp",
+    "BitwiseNotOp",
     "NegOp",
     "NotOp",
+    "PosOp",
     "UnaryOp",
 ]
 
@@ -143,9 +145,33 @@ class AbsOp[T](UnaryOp[T]):
 class NotOp[T](UnaryOp[T]):
     """Logical NOT: not operand.
 
-    Internal only - Python's 'not' keyword cannot be overloaded.
-    Use explicit comparisons in ergonomics instead.
+    Python's 'not' keyword cannot be overloaded.
+    Use .not_() method in ergonomics instead.
     """
 
     def _apply_op(self, operand: object) -> T | SpecialValue:
         return not operand  # type: ignore
+
+
+class BitwiseNotOp[T](UnaryOp[T]):
+    """Bitwise NOT: ~operand (two's complement).
+
+    Note: Python's ~ operator is blocked in ergonomics.
+    Use .bitnot() method instead.
+    """
+
+    def _apply_op(self, operand: object) -> T | SpecialValue:
+        try:
+            return ~operand  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class PosOp[T](UnaryOp[T]):
+    """Unary plus: +operand."""
+
+    def _apply_op(self, operand: object) -> T | SpecialValue:
+        try:
+            return +operand  # type: ignore
+        except TypeError:
+            return NAN

@@ -5,8 +5,8 @@ All operators automatically convert literals to LiteralValue.
 
 Safe vs Unsafe Operations:
     Safe (operator syntax):
-    - Unary: -, abs()
-    - Arithmetic: +, -, *, /, %, **
+    - Unary: -, +, abs(), .not_(), .bitnot()
+    - Arithmetic: +, -, *, /, //, %, **
     - Comparison: >, <, >=, <=
     - Bitwise: ^, <<, >>
     - Logical (safe methods): .and_(), .or_()
@@ -27,10 +27,14 @@ Example:
     >>> price = item.price.get()
     >>> # Unary
     >>> negative = -price  # NegOp
+    >>> positive = +price  # PosOp
     >>> magnitude = abs(price)  # AbsOp
+    >>> inverted = price.bitnot()  # BitwiseNotOp
+    >>> negated = price.not_()  # NotOp
     >>> # Arithmetic
     >>> total = price + 10  # AddOp
     >>> discounted = price * 0.9  # MulOp
+    >>> quotient = price // 2  # FloorDivOp
     >>> # Comparison
     >>> is_expensive = price > 100  # GtOp
     >>> is_exact = price.eq(100)  # EqOp
@@ -54,6 +58,7 @@ if TYPE_CHECKING:
         AndOp,
         DivOp,
         EqOp,
+        FloorDivOp,
         GeOp,
         GtOp,
         LeOp,
@@ -68,7 +73,7 @@ if TYPE_CHECKING:
         SubOp,
         XorOp,
     )
-    from .unary_ops import AbsOp, NegOp
+    from .unary_ops import AbsOp, BitwiseNotOp, NegOp, NotOp, PosOp
 
 
 class ErgonomicsMixin[T]:
@@ -186,6 +191,12 @@ class ErgonomicsMixin[T]:
 
         return AbsOp(self)
 
+    def __pos__(self) -> PosOp[T]:
+        """Unary plus: +self."""
+        from .unary_ops import PosOp
+
+        return PosOp(self)
+
     # =========================================================================
     # ARITHMETIC OPERATIONS
     # =========================================================================
@@ -237,6 +248,18 @@ class ErgonomicsMixin[T]:
         from .binary_ops import DivOp
 
         return DivOp(self._operand(other), self)
+
+    def __floordiv__(self, other: object) -> FloorDivOp[T]:
+        """Floor division: self // other."""
+        from .binary_ops import FloorDivOp
+
+        return FloorDivOp(self, self._operand(other))
+
+    def __rfloordiv__(self, other: object) -> FloorDivOp[T]:
+        """Right floor division: other // self."""
+        from .binary_ops import FloorDivOp
+
+        return FloorDivOp(self._operand(other), self)
 
     def __mod__(self, other: object) -> ModOp[T]:
         """Modulo: self % other."""
@@ -356,6 +379,18 @@ class ErgonomicsMixin[T]:
 
         return OrOp(self, self._operand(other))
 
+    def not_(self) -> NotOp[T]:
+        """Logical NOT (safe method).
+
+        Use this instead of Python's 'not' keyword which cannot be overloaded.
+
+        Returns:
+            NotOp expression
+        """
+        from .unary_ops import NotOp
+
+        return NotOp(self)
+
     # =========================================================================
     # BITWISE OPERATIONS
     # =========================================================================
@@ -395,3 +430,15 @@ class ErgonomicsMixin[T]:
         from .binary_ops import RShiftOp
 
         return RShiftOp(self._operand(other), self)
+
+    def bitnot(self) -> BitwiseNotOp[T]:
+        """Bitwise NOT: ~self (safe method).
+
+        Use this instead of ~ operator which is blocked.
+
+        Returns:
+            BitwiseNotOp expression
+        """
+        from .unary_ops import BitwiseNotOp
+
+        return BitwiseNotOp(self)
