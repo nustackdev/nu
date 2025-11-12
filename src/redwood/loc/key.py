@@ -1,4 +1,4 @@
 """Key system in redwood."""
 
-from .key_location import *  # noqa: F403
-from .key_navigation import *  # noqa: F403
+from .key_def import *  # noqa: F403
+from .key_nav import *  # noqa: F403

@@ -21,7 +21,7 @@ from redwood.types import is_nestable
 if TYPE_CHECKING:
     from redwood.view import View
 
-    from .path_location import (
+    from .path_def import (
         Path,
         PathAddress,
         PathSegment,

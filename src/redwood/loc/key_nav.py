@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .key_location import Key, KeySegment
+    from .key_def import Key, KeySegment
 
 __all__ = [
     "DATA_ROOT",
