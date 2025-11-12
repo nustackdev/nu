@@ -28,14 +28,11 @@ from .primitive import (
 from .special import (
     EMPTY,
     NAN,
-    NOT_SET,
     Empty,
     NaN,
-    NotSet,
     SpecialValue,
     is_empty,
     is_nan,
-    is_notset,
     is_special,
     propagate_special,
 )
@@ -51,14 +48,11 @@ __all__ = [  # noqa: RUF022
     # Special sentinels
     "EMPTY",
     "NAN",
-    "NOT_SET",
     "Empty",
     "NaN",
-    "NotSet",
     "SpecialValue",
     "is_empty",
     "is_nan",
-    "is_notset",
     "is_special",
     "propagate_special",
     # Capabilities

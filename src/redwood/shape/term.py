@@ -55,6 +55,7 @@ from .core.ergonomics import ErgonomicsMixin
 
 if TYPE_CHECKING:
     from redwood.loc import path
+    from redwood.types import SpecialValue
 
     from .context import Context
 
@@ -74,7 +75,7 @@ __all__ = [
 # =============================================================================
 
 
-class Term(ABC):
+class Term[T](ABC):
     """Base contract for all executable semantic nodes.
 
     Everything in the Shape system is a Term:
@@ -87,7 +88,7 @@ class Term(ABC):
     """
 
     @abstractmethod
-    def execute(self, context: Context) -> object:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute this term within a context.
 
         Semantics depend on term type:
@@ -192,10 +193,13 @@ class RValue[T](Term, ErgonomicsMixin[T]):
     - is_pure: Whether this has side effects
 
     Composition pattern:
+        # Via factory (backward compatible)
         expr = BinaryOp("add",
             left=GetOp(price_ref),
             right=LiteralValue(100)
         )
+        # Or via atomic classes (preferred)
+        expr = AddOp(GetOp(price_ref), LiteralValue(100))
         expr.children = (GetOp(...), LiteralValue(...))
 
     Children can be any Term:
@@ -203,7 +207,7 @@ class RValue[T](Term, ErgonomicsMixin[T]):
     - LValues (refs for read/write operations)
 
     Concrete implementations (in rwstd):
-    - Operations: GetOp, BinaryOp, UnaryOp, LiteralValue
+    - Operations: GetOp, AddOp, SubOp, MulOp, DivOp, etc., UnaryOp, LiteralValue
     - Commands: SetCmd, DeleteCmd, UpdateCmd
     """
 
@@ -281,7 +285,7 @@ class Operation[T](RValue[T]):
         return all(child.is_pure for child in self.children if isinstance(child, RValue))
 
     @abstractmethod
-    def execute(self, context: Context) -> T:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute pure computation and return typed result.
 
         Typical execution pattern:
@@ -334,7 +338,7 @@ class Command[T](RValue[T]):
         return False
 
     @abstractmethod
-    def execute(self, context: Context) -> T:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute mutation and return result.
 
         Typical execution pattern:

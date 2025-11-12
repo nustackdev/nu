@@ -10,6 +10,7 @@ from enum import Enum, IntFlag, auto
 from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple, NewType
 
+from redwood._types import NOT_SET, NotSet
 from redwood.storage import (
     ReadAccessProtocol,
     ReadWriteAccessProtocol,
@@ -19,7 +20,6 @@ from redwood.storage import (
     WriteAccessProtocol,
     WriteBatchProtocol,
 )
-from redwood.types import NOT_SET, NotSet
 
 
 if TYPE_CHECKING:

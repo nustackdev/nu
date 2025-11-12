@@ -8,14 +8,11 @@ from typing import TypeGuard
 __all__ = [
     "EMPTY",
     "NAN",
-    "NOT_SET",
     "Empty",
     "NaN",
-    "NotSet",
     "SpecialValue",
     "is_empty",
     "is_nan",
-    "is_notset",
     "is_special",
     "propagate_special",
 ]
@@ -53,28 +50,6 @@ class Empty(SpecialValue):
         return hash("Empty")
 
 
-class NotSet(SpecialValue):
-    """Sentinel for indicating a value argument is not provided."""
-
-    def __repr__(self) -> str:
-        """String representation for debugging."""
-        return "<NotSet>"
-
-    def __str__(self) -> str:
-        """String representation for display."""
-        return "NotSet"
-
-    def __bool__(self) -> bool:
-        """Boolean evaluation, always False."""
-        return False
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, NotSet)
-
-    def __hash__(self) -> int:
-        return hash("NotSet")
-
-
 class NaN(SpecialValue):
     """Sentinel for invalid operations."""
 
@@ -100,17 +75,11 @@ class NaN(SpecialValue):
 # Singleton instances
 EMPTY = Empty()
 NAN = NaN()
-NOT_SET = NotSet()
 
 
 def is_empty(value: object) -> TypeGuard[Empty]:
     """Check if value is Empty sentinel."""
     return isinstance(value, Empty)
-
-
-def is_notset(value: object) -> TypeGuard[NotSet]:
-    """Check if value is NotSet sentinel."""
-    return isinstance(value, NotSet)
 
 
 def is_nan(value: object) -> TypeGuard[NaN]:
@@ -123,7 +92,7 @@ def is_special(value: object) -> TypeGuard[SpecialValue]:
     return isinstance(value, SpecialValue)
 
 
-def propagate_special(*values: object) -> SpecialValue | None:
+def propagate_special(*values: object) -> NaN | Empty | None:
     """Propagate special values through operations.
 
     Rules:

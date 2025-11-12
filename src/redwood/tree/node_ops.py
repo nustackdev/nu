@@ -13,9 +13,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from redwood._types import NOT_SET, NotSet, is_notset
 from redwood.loc import key
 from redwood.storage import StorageKeyError
-from redwood.types import NOT_SET, NotSet, Value, is_notset
 
 from .marker import extract_marker
 from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read_context
@@ -23,6 +23,7 @@ from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read
 
 if TYPE_CHECKING:
     from redwood.storage import StorageContextType
+    from redwood.types import Value
 
 __all__ = [
     "gather_parent_info",
