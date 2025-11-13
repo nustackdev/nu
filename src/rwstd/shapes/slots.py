@@ -56,7 +56,7 @@ class _ValueSlot(Slot):
         )
 
 
-def ValueSlot(value_type: type, view_type: type | None = None) -> Any:
+def ValueSlot(value_type: type, view_type: type | None = None) -> Any:  # noqa: ANN401, N802
     """Create a value slot for primitive types.
 
     Factory function that returns a slot instance.
@@ -111,7 +111,7 @@ class _ShapeSlot(Slot):
         )
 
 
-def ShapeSlot(shape_type: type[Shape], view_type: type | None = None) -> Any:
+def ShapeSlot(shape_type: type[Shape], view_type: type | None = None) -> Any:  # noqa: ANN401, N802
     """Create a shape slot for nested shapes.
 
     Factory function that returns a slot instance.

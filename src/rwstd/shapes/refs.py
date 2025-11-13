@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.shape import Ref
+from redwood.shape import LValue, Ref
 
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ class ValueRef[T](Ref[T]):
         field_name: path.PathAddress,
         value_type: type[T],
         view_type: type,
-        parent_ref: Ref | None = None,
+        parent_ref: LValue | None = None,
     ) -> None:
         """Initialize value reference.
 
@@ -70,7 +70,7 @@ class ValueRef[T](Ref[T]):
         self.view_type = view_type
         self.parent_ref = parent_ref
 
-    def resolve(self, context: Context) -> path.Path:
+    def resolve(self, context: Context) -> path.PathToValue:
         """Resolve to complete path ending at value.
 
         Args:
@@ -85,7 +85,7 @@ class ValueRef[T](Ref[T]):
         parent_path = self.parent_ref.resolve(context)
         return (*parent_path, (self.field_name, self.value_type))  # type: ignore[return-value]
 
-    def parent(self) -> Ref | None:
+    def parent(self) -> LValue | None:
         """Get parent reference."""
         return self.parent_ref
 
@@ -134,7 +134,7 @@ class ShapeRef[T](Ref[T]):
         field_name: path.PathAddress,
         shape_type: type[Shape],
         view_type: type,
-        parent_ref: Ref | None = None,
+        parent_ref: LValue | None = None,
     ) -> None:
         """Initialize shape reference.
 
@@ -150,7 +150,7 @@ class ShapeRef[T](Ref[T]):
         self.view_type = view_type
         self.parent_ref = parent_ref
 
-    def resolve(self, context: Context) -> path.Path:
+    def resolve(self, context: Context) -> path.PathToView:
         """Resolve to path ending at this shape's view.
 
         Args:
@@ -165,7 +165,7 @@ class ShapeRef[T](Ref[T]):
         parent_path = self.parent_ref.resolve(context)
         return (*parent_path, (self.field_name, self.view_type))  # type: ignore[return-value]
 
-    def parent(self) -> Ref | None:
+    def parent(self) -> LValue | None:
         """Get parent reference."""
         return self.parent_ref
 

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, cast
 
 from redwood.loc import path
 from redwood.shape import Command, literal
-from redwood.types import Initializable
+from redwood.types import Assignable, Initializable
 
 
 if TYPE_CHECKING:
@@ -73,8 +73,14 @@ class SetCmd[T](Command[T]):
         # Navigate using Path system
         parent_view, key = path.navigate_value(context.root_view, value_path)
 
+        # Store structure through view
+        if not isinstance(parent_view, Assignable):
+            raise TypeError(
+                f"View {parent_view.__class__.__name__} does not implelement Assignable protocol (e.g. ['item'] = 12)."
+            )
+
         # Write value through View
-        parent_view._set_child_value(key, value)
+        parent_view[key] = value
 
         return cast("T", value)
 

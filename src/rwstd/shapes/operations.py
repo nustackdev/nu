@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, cast
 
 from redwood.loc import path
 from redwood.shape import Operation
-from redwood.types import Convertible, Empty
+from redwood.types import Convertible, Empty, Subscriptable
 
 
 if TYPE_CHECKING:
@@ -66,7 +66,13 @@ class GetOp[T](Operation[T]):
         # Navigate using Path system
         try:
             parent_view, key = path.navigate_value(context.root_view, value_path)
-            value = parent_view._get_child_value(key)
+
+            if not isinstance(parent_view, Subscriptable):
+                raise TypeError(
+                    f"View {parent_view.__class__.__name__} does not implelement Subscriptible protocol (e.g. ['item'])."
+                )
+
+            value = parent_view[key]
             return cast("T | Empty", value)
         except KeyError:
             return Empty()

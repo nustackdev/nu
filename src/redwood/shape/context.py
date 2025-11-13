@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from redwood.storage import StorageContextType
+    from redwood.view import View
 
 
 @dataclass(frozen=True)
@@ -25,5 +26,5 @@ class Context:
         storage_context: Context for data access (transaction or snapshot)
     """
 
-    root_view: object
+    root_view: View
     storage_context: StorageContextType
