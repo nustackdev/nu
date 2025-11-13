@@ -89,18 +89,18 @@ class Nestable(Protocol):
 
     Example:
         >>> if isinstance(container, Nestable):
-        ...     child = container.open_view(key)
-        ...     # child is another container at the nested path
+        ...     child = container.open_child("users", DictView)
+        ...     # child is another container at the given location
     """
 
-    def open_view[ViewT](
-        self, key: object, child_view: type[ViewT], *args: object, **kwargs: object
+    def open_child[ViewT](
+        self, address: object, view: type[ViewT], *args: object, **kwargs: object
     ) -> ViewT:
         """Navigate to child container.
 
         Args:
-            key: Child container key
-            child_view: View to open child container with
+            address: Child container address
+            view: View to open child container with
             *args: Positional arguments
             **kwargs: Keyword arguments
 

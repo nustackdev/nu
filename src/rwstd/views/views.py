@@ -16,9 +16,9 @@ Each view implements:
     - Native Python protocols (__getitem__, __iter__, etc.)
     - Convertible protocol (extract() method)
     - Initializable protocol (store() method)
-    - Nestable protocol (open_view() method) where appropriate
+    - Nestable protocol (open_child() method) where appropriate
 
-Example:
+address:
     >>> from redwood.view import ViewRegistry
     >>> from redwood.view.views import DictView
     >>> from redwood.tree import Container, ContainerStructure, ContainerProtocol
@@ -279,23 +279,23 @@ class DictView(StdView):
         for key, val in value.items():
             self[key] = val
 
-    def open_view[ViewT: View](self, key: key_.KeySegment, child_view: type[ViewT]) -> ViewT:
+    def open_child[ViewT: View](self, address: key_.KeySegment, view: type[ViewT]) -> ViewT:
         """Open child view.
 
         Args:
-            key: Child container key
-            child_view: View class for child
+            address: Child container key
+            view: View class for child
 
         Returns:
             View instance for child container
         """
         child_container = Container.create(
-            key_.join_segment(self.container.path, key),
+            key_.join_segment(self.container.path, address),
             self.container.ctx,
-            child_view.get_structure(),
-            child_view.get_protocol(),
+            view.get_structure(),
+            view.get_protocol(),
         )
-        return child_view(child_container, self.registry)
+        return view(child_container, self.registry)
 
 
 # =============================================================================
@@ -512,24 +512,24 @@ class ListView(StdView):
         for item in value:
             self.append(item)
 
-    def open_view[ViewT: View](self, index: int, child_view: type[ViewT]) -> ViewT:
+    def open_child[ViewT: View](self, address: int, view: type[ViewT]) -> ViewT:
         """Open child view at index.
 
         Args:
-            index: Child container index
-            child_view: View class for child
+            address: Child container index
+            view: View class for child
 
         Returns:
             View instance for child container
         """
-        normalized = self._normalize_index(index)
+        normalized = self._normalize_index(address)
         child_container = Container.create(
             key_.join_segment(self.container.path, normalized),
             self.container.ctx,
-            child_view.get_structure(),
-            child_view.get_protocol(),
+            view.get_structure(),
+            view.get_protocol(),
         )
-        return child_view(child_container, self.registry)
+        return view(child_container, self.registry)
 
 
 # =============================================================================
@@ -672,24 +672,24 @@ class TupleView(StdView):
         for index, item in enumerate(value):
             self._set_child_value(index, item)
 
-    def open_view[ViewT: View](self, index: int, child_view: type[ViewT]) -> ViewT:
+    def open_child[ViewT: View](self, address: int, view: type[ViewT]) -> ViewT:
         """Open child view at index.
 
         Args:
-            index: Child container index
-            child_view: View class for child
+            address: Child container index
+            view: View class for child
 
         Returns:
             View instance for child container
         """
-        normalized = self._normalize_index(index)
+        normalized = self._normalize_index(address)
         child_container = Container.create(
             key_.join_segment(self.container.path, normalized),
             self.container.ctx,
-            child_view.get_structure(),
-            child_view.get_protocol(),
+            view.get_structure(),
+            view.get_protocol(),
         )
-        return child_view(child_container, self.registry)
+        return view(child_container, self.registry)
 
 
 # =============================================================================

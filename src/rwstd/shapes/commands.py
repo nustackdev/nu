@@ -93,7 +93,7 @@ class StoreCmd[T](Command[T]):
         {"email": "alice@example.com", "age": 30}
     """
 
-    def __init__(self, ref: ShapeRef[T], data: dict | RValue) -> None:
+    def __init__(self, ref: ShapeRef[T], data: T | RValue) -> None:
         """Initialize store command.
 
         Args:

@@ -18,7 +18,6 @@ from redwood.shape import Ref
 if TYPE_CHECKING:
     from redwood.loc import path
     from redwood.shape import Context, RValue, Shape
-    from redwood.types import Value
 
     from .commands import SetCmd, StoreCmd
     from .operations import ExtractOp, GetOp
@@ -96,7 +95,7 @@ class ValueRef[T](Ref[T]):
 
         return GetOp(self)
 
-    def set(self, value: Value | RValue[T]) -> SetCmd[T]:
+    def set(self, value: T | RValue[T]) -> SetCmd[T]:
         """Create write command."""
         from .commands import SetCmd
 
@@ -219,7 +218,7 @@ class ShapeRef[T](Ref[T]):
 
         return ExtractOp(self)
 
-    def store(self, data: Value | RValue[T]) -> StoreCmd[T]:
+    def store(self, data: T | RValue[T]) -> StoreCmd[T]:
         """Create store command.
 
         Args:
