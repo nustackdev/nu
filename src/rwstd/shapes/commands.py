@@ -134,7 +134,7 @@ class StoreCmd[T](Command[T]):
                 f"View {shape_view.__class__.__name__} does not implelement Initializable protocol (store() method)."
             )
 
-        shape_view.store(data, replace=True)
+        shape_view.store(data)
 
         return cast("T", data)
 

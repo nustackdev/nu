@@ -74,7 +74,7 @@ def ValueSlot(value_type: type, view_type: type | None = None) -> Any:
             age: ValueRef[int] = ValueSlot(int)
             balance: ValueRef[float] = ValueSlot(float)
     """
-    from rwstd.views import DictView
+    from rwstd.collections.views import DictView
 
     return _ValueSlot(value_type=value_type, view_type=view_type or DictView)
 
@@ -133,6 +133,6 @@ def ShapeSlot(shape_type: type[Shape], view_type: type | None = None) -> Any:
         # Navigate to nested field
         User.profile.email  # Returns ValueRef[str]
     """
-    from rwstd.views import DictView
+    from rwstd.collections.views import DictView
 
     return _ShapeSlot(value_type=shape_type, view_type=view_type or DictView)

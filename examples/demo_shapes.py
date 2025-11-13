@@ -24,7 +24,8 @@ from rwstd.adapters import (
     RocksDBStorageSpec,
     TextCodecSpec,
 )
-from rwstd.views import DictView, ListView, QueueComponent, QueueContainer, QueueView, Tree
+from rwstd.collections.views import DictView, ListView
+from rwstd.views import QueueComponent, QueueContainer, QueueView, Tree
 
 
 # ============================================================================

@@ -6,13 +6,13 @@ Views are thin wrappers over Container providing protocol-based capabilities.
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self, cast
 
 import attrs
 
 from redwood.loc import key as key_
 from redwood.tree import Container, ContainerProtocol, ContainerStructure, NodeType
-from redwood.types import Convertible, Empty, Initializable, Value, is_empty
+from redwood.types import Convertible, Empty, Initializable, is_empty
 
 from .registry import ViewRegistry
 
@@ -33,6 +33,12 @@ class View(ABC):
     Views are thin wrappers over Container that provide familiar Python
     interfaces. All storage operations are delegated to the Container API.
 
+    Type Parameters:
+        AddressT: Type of addresses this view accept
+            - Types of objects indicating children node's location, e.g. set(address=address, ...)
+            - For example, int in case of ListView, int | str in case of DictView, None in case of QueueView, ...
+        ValueT: Type of values this view stores/returns
+
     Design:
     - Stateless: No cached data, always delegates to container
     - Immutable: View instances don't change (NamedTuple)
@@ -44,14 +50,14 @@ class View(ABC):
         registry: Registry for nested view creation
 
     Example:
-        >>> class DictView(View):
-        ...     def extract(self) -> dict:
+        >>> class DictView[K, V](View[K, V]):
+        ...     def extract(self) -> dict[K, V]:
         ...         return {
         ...             key: self._get_child_value(key)
         ...             for key in self.container.list_child_keys()
         ...         }
         ...
-        ...     def store(self, value: dict, /, *, replace: bool = False) -> None:
+        ...     def store(self, value: dict[K, V], /, *, replace: bool = False) -> None:
         ...         if replace:
         ...             self.container.clear_children()
         ...         for k, v in value.items():
@@ -147,7 +153,7 @@ class View(ABC):
     # HELPER METHODS FOR SUBCLASSES
     # =========================================================================
 
-    def _get_child_value(self, key: key_.KeySegment) -> Value | Empty:
+    def _get_child_value(self, key: key_.KeySegment) -> object | Empty:
         """Get child value, auto-extracting containers.
 
         Helper for subclasses implementing dict-like or list-like access.
@@ -176,7 +182,7 @@ class View(ABC):
         # Child is container - extract it
         return self._extract_child_container(key)
 
-    def _set_child_value(self, key: key_.KeySegment, value: Value) -> None:
+    def _set_child_value(self, key: key_.KeySegment, value: object) -> None:
         """Set child value, auto-creating containers for complex types.
 
         Helper for subclasses implementing dict-like or list-like mutation.
@@ -191,9 +197,9 @@ class View(ABC):
             self._populate_child_container(key, value)
         else:
             # Primitive value - store directly
-            self.container.set_child_primitive(key, value)
+            self.container.set_child_primitive(key, cast("Value", value))
 
-    def _extract_child_container(self, key: key_.KeySegment) -> Value:
+    def _extract_child_container(self, key: key_.KeySegment) -> object:
         """Extract child container contents using registry.
 
         Args:
@@ -221,7 +227,7 @@ class View(ABC):
 
         return child_view.extract()
 
-    def _populate_child_container(self, key: key_.KeySegment, value: Value) -> None:
+    def _populate_child_container(self, key: key_.KeySegment, value: object) -> None:
         """Populate child container from Python value using registry.
 
         Args:
