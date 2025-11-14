@@ -13,7 +13,7 @@ from redwood.shape import Slot
 
 
 if TYPE_CHECKING:
-    from redwood.shape import LValue, Shape
+    from redwood.shape import Ref, Shape
     from redwood.types import Value
     from redwood.view import View
 
@@ -43,7 +43,7 @@ class _PrimitiveSlot(Slot):
     def create_ref(
         self,
         owner_shape: type[Shape],
-        parent_ref: LValue | None = None,
+        parent_ref: Ref | None = None,
     ) -> ValueRef:
         """Create ValueRef for this slot.
 
@@ -99,7 +99,7 @@ class _ShapeSlot(Slot):
     def create_ref(
         self,
         owner_shape: type[Shape],
-        parent_ref: LValue | None = None,
+        parent_ref: Ref | None = None,
     ) -> ShapeRef:
         """Create ShapeRef for this slot.
 
@@ -163,7 +163,7 @@ class _MappingSlot(Slot):
     def create_ref(
         self,
         owner_shape: type[Shape],
-        parent_ref: LValue | None = None,
+        parent_ref: Ref | None = None,
     ) -> MappingRef:
         """Create MappingRef for this slot.
 
@@ -235,7 +235,7 @@ class _SequenceSlot(Slot):
     def create_ref(
         self,
         owner_shape: type[Shape],
-        parent_ref: LValue | None = None,
+        parent_ref: Ref | None = None,
     ) -> SequenceRef:
         """Create SequenceRef for this slot.
 

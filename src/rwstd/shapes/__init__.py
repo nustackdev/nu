@@ -5,6 +5,7 @@ from __future__ import annotations
 from .commands import AppendCmd, SetCmd, StoreCmd
 from .operations import ExtractOp, GetOp
 from .refs import MappingRef, MappingValueRef, SequenceRef, SequenceValueRef, ShapeRef, ValueRef
+from .shape import Shape
 from .slots import MappingSlot, PrimitiveSlot, SequenceSlot, ShapeSlot
 
 
@@ -20,6 +21,7 @@ __all__ = [
     "SequenceSlot",
     "SequenceValueRef",
     "SetCmd",
+    "Shape",
     "ShapeRef",
     "ShapeSlot",
     "StoreCmd",

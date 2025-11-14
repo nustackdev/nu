@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 
 if TYPE_CHECKING:
-    from .term import LValue
+    from .term import Ref
 
 
 __all__ = [
@@ -75,8 +75,8 @@ class Slot(ABC):
     def create_ref(
         self,
         owner_shape: type[Shape],
-        parent_ref: LValue | None = None,
-    ) -> LValue:
+        parent_ref: Ref | None = None,
+    ) -> Ref:
         """Create ref for this slot.
 
         This is the factory method - each slot type creates its
@@ -124,7 +124,7 @@ class SlotDescriptor:
         self.name = name
         self.slot = slot
 
-    def __get__(self, obj: Shape | None, objtype: type[Shape] | None = None) -> LValue:
+    def __get__(self, obj: Shape | None, objtype: type[Shape] | None = None) -> Ref:
         """Return ref when slot is accessed.
 
         Args:
@@ -301,7 +301,3 @@ class Shape(metaclass=ShapeMeta):
             List of field name strings
         """
         return list(cls._slots.keys())
-
-    # def store(self, data: object): ...
-
-    # def extract(self): ...

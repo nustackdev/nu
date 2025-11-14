@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from redwood.shape import LValue, PrimitiveRefBase, RValue, Shape, ViewRefBase, literal
+from redwood.shape import PrimitiveRefBase, Ref, RValue, Shape, ViewRefBase, literal
 
 
 if TYPE_CHECKING:
@@ -151,7 +151,7 @@ class ShapeRef[T](ViewRefBase):
         address: path.PathAddress,
         shape_type: type[Shape],
         view_type: type[View],
-        parent_ref: LValue | None = None,
+        parent_ref: Ref | None = None,
     ) -> None:
         """Initialize shape reference.
 
@@ -251,7 +251,7 @@ class MappingRef[K: int | str, V](ViewRefBase):
         address: path.PathAddress,
         value_type: type[V],
         view_type: type[View],
-        parent_ref: LValue | None = None,
+        parent_ref: Ref | None = None,
     ) -> None:
         """Initialize mapping reference.
 
@@ -337,7 +337,7 @@ class SequenceRef[T](ViewRefBase):
         address: path.PathAddress,
         item_type: type[T],
         view_type: type[View],
-        parent_ref: LValue | None = None,
+        parent_ref: Ref | None = None,
     ) -> None:
         """Initialize mapping reference.
 

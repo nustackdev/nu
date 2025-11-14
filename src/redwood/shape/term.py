@@ -77,7 +77,7 @@ __all__ = [
 # =============================================================================
 
 
-class Term[T](ABC):
+class Term[ResultT](ABC):
     """Base contract for all executable semantic nodes.
 
     Everything in the Shape system is a Term:
@@ -90,7 +90,7 @@ class Term[T](ABC):
     """
 
     @abstractmethod
-    def execute(self, context: Context) -> T | SpecialValue:
+    def execute(self, context: Context) -> ResultT | SpecialValue:
         """Execute this term within a context.
 
         Semantics depend on term type:
@@ -112,7 +112,7 @@ class Term[T](ABC):
 # =============================================================================
 
 
-class LValue[T: path.Path](Term[None]):
+class LValue[PathTypeT: path.Path](Term[None]):
     """Addressable location in the data tree.
 
     LValues represent positions where data lives.
@@ -136,7 +136,7 @@ class LValue[T: path.Path](Term[None]):
     """
 
     @abstractmethod
-    def resolve(self, context: Context) -> T:
+    def resolve(self, context: Context) -> PathTypeT:
         """Resolve to concrete Path.
 
         Args:
@@ -159,7 +159,7 @@ class LValue[T: path.Path](Term[None]):
 # =============================================================================
 
 
-class RValue[T](Term[T], ErgonomicsMixin[T]):
+class RValue[ResultT](Term[ResultT], ErgonomicsMixin[ResultT]):
     """Evaluable expression that produces a value.
 
     RValues represent computations - both pure (operations) and
@@ -226,7 +226,7 @@ class RValue[T](Term[T], ErgonomicsMixin[T]):
 # =============================================================================
 
 
-class Operation[T](RValue[T]):
+class Operation[OperationResultT](RValue[OperationResultT]):
     """Pure computation that returns a value of type T.
 
     Operations are deterministic expressions with no side effects:
@@ -262,7 +262,7 @@ class Operation[T](RValue[T]):
         return all(child.is_pure for child in self.children if isinstance(child, RValue))
 
     @abstractmethod
-    def execute(self, context: Context) -> T | SpecialValue:
+    def execute(self, context: Context) -> OperationResultT | SpecialValue:
         """Execute pure computation and return typed result.
 
         Typical execution pattern:
@@ -284,7 +284,7 @@ class Operation[T](RValue[T]):
 # =============================================================================
 
 
-class Command[T](RValue[T]):
+class Command[CommandResultT](RValue[CommandResultT]):
     """Impure mutation that returns a result of type T.
 
     Commands modify tree state with explicit side effects:
@@ -315,7 +315,7 @@ class Command[T](RValue[T]):
         return False
 
     @abstractmethod
-    def execute(self, context: Context) -> T | SpecialValue:
+    def execute(self, context: Context) -> CommandResultT | SpecialValue:
         """Execute mutation and return result.
 
         Typical execution pattern:
@@ -342,16 +342,15 @@ class Command[T](RValue[T]):
 # =============================================================================
 
 
-class Ref[T: path.Path](LValue[T], ABC):
+class Ref[PathTypeT: path.Path](LValue[PathTypeT], ABC):
     """Typed reference to a location in the tree.
 
     Combines addressability (LValue) with type information.
     Refs are both locations AND terms (dual nature):
 
-    As LValue:
+    As Ref:
     - Can resolve to paths
     - Can navigate to parent
-    - Can get last segment
 
     As Term:
     - Can execute (returns self)
@@ -374,19 +373,19 @@ class Ref[T: path.Path](LValue[T], ABC):
     - Available operations (get/set for values, keys/items for maps)
     """
 
-    def __init__(self, parent_ref: LValue | None) -> None:
+    def __init__(self, parent_ref: Ref | None) -> None:
         """Init Ref."""
         self.parent_ref = parent_ref
 
     @property
-    def parent(self) -> LValue | None:
+    def parent(self) -> Ref | None:
         """Get parent location in the navigation chain.
 
         Used for path construction and hierarchy traversal.
         Root locations return None.
 
         Returns:
-            Parent LValue, or None if this is root
+            Parent Ref, or None if this is root
         """
         return self.parent_ref
 
@@ -405,12 +404,12 @@ class Ref[T: path.Path](LValue[T], ABC):
         raise NotImplementedError("Refs are not executables.")
 
 
-class ViewRefBase[T: type[View]](Ref[path.PathToView], ABC):
+class ViewRefBase[ViewT: type[View]](Ref[path.PathToView], ABC):
     def __init__(
         self,
         address: path.PathAddress | RValue,
-        view_type: T,
-        parent_ref: LValue | None = None,
+        view_type: ViewT,
+        parent_ref: Ref | None = None,
     ) -> None:
         """Init ViewRef."""
         super().__init__(parent_ref)
@@ -451,12 +450,12 @@ class ViewRefBase[T: type[View]](Ref[path.PathToView], ABC):
         return str(self.address)
 
 
-class PrimitiveRefBase[T: Value](Ref[path.PathToValue], ABC):
+class PrimitiveRefBase[ValueT: Value](Ref[path.PathToValue], ABC):
     def __init__(
         self,
         address: path.PathAddress | RValue,
-        value_type: T,
-        parent_ref: LValue | None,
+        value_type: ValueT,
+        parent_ref: Ref | None,
     ) -> None:
         """Init ValueRef."""
         super().__init__(parent_ref)
