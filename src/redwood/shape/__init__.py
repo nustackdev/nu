@@ -14,9 +14,11 @@ from .term import (
     Command,
     LValue,
     Operation,
+    PrimitiveRefBase,
     Ref,
     RValue,
     Term,
+    ViewRefBase,
 )
 
 
@@ -27,6 +29,7 @@ __all__ = [
     "LValue",
     "LiteralValue",
     "Operation",
+    "PrimitiveRefBase",
     "RValue",
     "Ref",
     "Shape",
@@ -35,5 +38,6 @@ __all__ = [
     "SlotDescriptor",
     "Term",
     "UnaryOp",
+    "ViewRefBase",
     "literal",
 ]

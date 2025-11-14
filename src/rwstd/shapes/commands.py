@@ -6,17 +6,17 @@ This module provides concrete commands that mutate state:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from redwood.loc import path
-from redwood.shape import Command, literal
+from redwood.shape import Command
 from redwood.types import Assignable, Initializable
+from rwstd.collections import ListView
 
 
 if TYPE_CHECKING:
-    from redwood.shape import Context, RValue
-
-    from .refs import ShapeRef, ValueRef
+    from redwood.shape import Context, PrimitiveRefBase, RValue, ViewRefBase
+    from redwood.types import SpecialValue
 
 
 __all__ = [
@@ -42,7 +42,7 @@ class SetCmd[T](Command[T]):
         31
     """
 
-    def __init__(self, ref: ValueRef[T], value: T | RValue) -> None:
+    def __init__(self, ref: PrimitiveRefBase, value: RValue[T]) -> None:
         """Initialize write command.
 
         Args:
@@ -50,10 +50,10 @@ class SetCmd[T](Command[T]):
             value: Value to write (literal or RValue)
         """
         self.ref = ref
-        self.value_expr = literal(value)
+        self.value_expr = value
         self.children = (ref, self.value_expr)
 
-    def execute(self, context: Context) -> T:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute write command.
 
         Uses Path navigation to reach the target and write the value.
@@ -82,10 +82,71 @@ class SetCmd[T](Command[T]):
         # Write value through View
         parent_view[key] = value
 
-        return cast("T", value)
+        return value
 
     def __repr__(self) -> str:
         return f"SetCmd({self.ref!r}, {self.value_expr!r})"
+
+
+class AppendCmd[T](Command[T]):
+    """Write command for primitive values.
+
+    Impure command that navigates to a location and writes a value.
+    Returns the written value.
+
+    Example:
+        >>> User.name.set("Alice").execute(ctx)
+        "Alice"
+        >>> User.age.set(User.age.get() + 1).execute(ctx)
+        31
+    """
+
+    def __init__(self, ref: ViewRefBase, value: RValue[T]) -> None:
+        """Initialize write command.
+
+        Args:
+            ref: Reference to write to
+            value: Value to write (literal or RValue)
+        """
+        self.ref = ref
+        self.value_expr = value
+        self.children = (ref, self.value_expr)
+
+    def execute(self, context: Context) -> T | SpecialValue:
+        """Execute write command.
+
+        Uses Path navigation to reach the target and write the value.
+
+        Args:
+            context: Execution context with transaction
+
+        Returns:
+            The written value
+        """
+        # Resolve ref to Path
+        view_path = self.ref.resolve(context)
+
+        # Evaluate value expression
+        value = self.value_expr.execute(context)
+
+        # Navigate to the shape's view
+        if not view_path:
+            # Root shape
+            view = context.root_view
+        else:
+            view = path.navigate_view(context.root_view, view_path)
+
+        # Store structure through view
+        if not isinstance(view, ListView):
+            raise TypeError(f"View at path {view} does not support append() operation.")
+
+        # Write value through View
+        view.append(value)
+
+        return value
+
+    def __repr__(self) -> str:
+        return f"AppendCmd({self.ref!r}, {self.value_expr!r})"
 
 
 class StoreCmd[T](Command[T]):
@@ -99,7 +160,7 @@ class StoreCmd[T](Command[T]):
         {"email": "alice@example.com", "age": 30}
     """
 
-    def __init__(self, ref: ShapeRef[T], data: T | RValue) -> None:
+    def __init__(self, ref: ViewRefBase, data: RValue[T]) -> None:
         """Initialize store command.
 
         Args:
@@ -107,10 +168,10 @@ class StoreCmd[T](Command[T]):
             data: Dictionary with data to store (or RValue producing dict)
         """
         self.ref = ref
-        self.data_expr = literal(data)
+        self.data_expr = data
         self.children = (ref, self.data_expr)
 
-    def execute(self, context: Context) -> T:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute store command.
 
         Navigates to shape location and stores entire structure.
@@ -142,7 +203,7 @@ class StoreCmd[T](Command[T]):
 
         shape_view.store(data)
 
-        return cast("T", data)
+        return data
 
     def __repr__(self) -> str:
         return f"StoreCmd({self.ref!r}, {self.data_expr!r})"

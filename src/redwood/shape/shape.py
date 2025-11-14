@@ -67,16 +67,9 @@ class Slot(ABC):
         view_type: View class for accessing this location
     """
 
-    def __init__(self, value_type: type, view_type: type) -> None:
-        """Initialize slot.
-
-        Args:
-            value_type: Python type of the value (int, str, Order, etc.)
-            view_type: View class for access
-        """
+    def __init__(self) -> None:
+        """Init Slot."""
         self.name: str | None = None  # Set by metaclass
-        self.value_type = value_type
-        self.view_type = view_type
 
     @abstractmethod
     def create_ref(
@@ -99,7 +92,7 @@ class Slot(ABC):
         ...
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} name={self.name!r} type={self.value_type}>"
+        return f"<{self.__class__.__name__} name={self.name!r}>"
 
 
 # ============================================================================
@@ -309,6 +302,6 @@ class Shape(metaclass=ShapeMeta):
         """
         return list(cls._slots.keys())
 
-    def store(self, data: object): ...
+    # def store(self, data: object): ...
 
-    def extract(self): ...
+    # def extract(self): ...

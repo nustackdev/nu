@@ -150,7 +150,7 @@ def open_child_view(
             f"{type(parent_view).__name__} is not Nestable. Cannot navigate to children."
         )
 
-    return parent_view.open_view(address, child_view_type)
+    return parent_view.open_child(address, child_view_type)
 
 
 def navigate_view(

@@ -50,12 +50,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from redwood.loc import path
+from redwood.view import View
+
 from .core.ergonomics import ErgonomicsMixin
 
 
 if TYPE_CHECKING:
-    from redwood.loc import path
-    from redwood.types import SpecialValue
+    from redwood.types import SpecialValue, Value
 
     from .context import Context
 
@@ -110,7 +112,7 @@ class Term[T](ABC):
 # =============================================================================
 
 
-class LValue(Term):
+class LValue[T: path.Path](Term[None]):
     """Addressable location in the data tree.
 
     LValues represent positions where data lives.
@@ -134,7 +136,7 @@ class LValue(Term):
     """
 
     @abstractmethod
-    def resolve(self, context: Context) -> path.Path:
+    def resolve(self, context: Context) -> T:
         """Resolve to concrete Path.
 
         Args:
@@ -151,25 +153,13 @@ class LValue(Term):
         """
         ...
 
-    @abstractmethod
-    def parent(self) -> LValue | None:
-        """Get parent location in the navigation chain.
-
-        Used for path construction and hierarchy traversal.
-        Root locations return None.
-
-        Returns:
-            Parent LValue, or None if this is root
-        """
-        ...
-
 
 # =============================================================================
 # RVALUE - EVALUABLE EXPRESSIONS
 # =============================================================================
 
 
-class RValue[T](Term, ErgonomicsMixin[T]):
+class RValue[T](Term[T], ErgonomicsMixin[T]):
     """Evaluable expression that produces a value.
 
     RValues represent computations - both pure (operations) and
@@ -352,7 +342,7 @@ class Command[T](RValue[T]):
 # =============================================================================
 
 
-class Ref[T](LValue, ABC):
+class Ref[T: path.Path](LValue[T], ABC):
     """Typed reference to a location in the tree.
 
     Combines addressability (LValue) with type information.
@@ -384,7 +374,23 @@ class Ref[T](LValue, ABC):
     - Available operations (get/set for values, keys/items for maps)
     """
 
-    def execute(self, context: Context) -> Ref[T]:
+    def __init__(self, parent_ref: LValue | None) -> None:
+        """Init Ref."""
+        self.parent_ref = parent_ref
+
+    @property
+    def parent(self) -> LValue | None:
+        """Get parent location in the navigation chain.
+
+        Used for path construction and hierarchy traversal.
+        Root locations return None.
+
+        Returns:
+            Parent LValue, or None if this is root
+        """
+        return self.parent_ref
+
+    def execute(self, context: Context) -> None:
         """Execute returns self - refs are locations, not computations.
 
         This enables refs to be used uniformly in expression trees
@@ -396,4 +402,95 @@ class Ref[T](LValue, ABC):
         Returns:
             Self (the location reference)
         """
-        return self
+        raise NotImplementedError("Refs are not executables.")
+
+
+class ViewRefBase[T: type[View]](Ref[path.PathToView], ABC):
+    def __init__(
+        self,
+        address: path.PathAddress | RValue,
+        view_type: T,
+        parent_ref: LValue | None = None,
+    ) -> None:
+        """Init ViewRef."""
+        super().__init__(parent_ref)
+
+        self.address = address
+        self.view_type = view_type
+
+    def resolve(self, context: Context) -> path.PathToView:
+        """Resolve to path ending at this shape's view.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            Path ending with view segment
+        """
+        if isinstance(self.address, RValue):
+            address = self.address.execute(context)
+        else:
+            address = self.address
+
+        if self.parent_ref is None:
+            return ((address, self.view_type),)
+        else:
+            parent_path = self.parent_ref.resolve(context)
+            return (*parent_path, (address, self.view_type))
+
+    def __repr__(self) -> str:
+        """ViewRef representation in machine-friendly format."""
+        if self.parent_ref:
+            return f"{self.parent_ref!r} -> {self.address!r}"
+        return f"{self.address!r}"
+
+    def __str__(self) -> str:
+        """ViewRef representation in human-friendly format."""
+        if self.parent_ref:
+            return f"{self.parent_ref!s} -> {self.address!s}"
+        return str(self.address)
+
+
+class PrimitiveRefBase[T: Value](Ref[path.PathToValue], ABC):
+    def __init__(
+        self,
+        address: path.PathAddress | RValue,
+        value_type: T,
+        parent_ref: LValue | None,
+    ) -> None:
+        """Init ValueRef."""
+        super().__init__(parent_ref)
+        self.address = address
+        self.value_type = value_type
+
+    def resolve(self, context: Context) -> path.PathToValue:
+        """Resolve to complete path ending at value.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            Path ending with value segment
+        """
+        if isinstance(self.address, RValue):
+            address = self.address.execute(context)
+        else:
+            address = self.address
+
+        if self.parent_ref is None:
+            return ((self.address, self.value_type),)
+        else:
+            parent_path = self.parent_ref.resolve(context)
+            return (*parent_path, (address, self.value_type))
+
+    def __repr__(self) -> str:
+        """PrimitiveRef representation in machine-friendly format."""
+        if self.parent_ref:
+            return f"{self.parent_ref!r} -> {self.address!r}"
+        return f"{self.address!r}"
+
+    def __str__(self) -> str:
+        """PrimitiveRef representation in human-friendly format."""
+        if self.parent_ref:
+            return f"{self.parent_ref!s} -> {self.address!s}"
+        return str(self.address)

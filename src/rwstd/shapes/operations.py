@@ -14,9 +14,7 @@ from redwood.types import Convertible, Empty, Subscriptable
 
 
 if TYPE_CHECKING:
-    from redwood.shape import Context
-
-    from .refs import ShapeRef, ValueRef
+    from redwood.shape import Context, PrimitiveRefBase, ViewRefBase
 
 
 __all__ = [
@@ -40,7 +38,7 @@ class GetOp[T](Operation[T]):
         >>> age = User.age.get().execute(ctx)
     """
 
-    def __init__(self, ref: ValueRef[T]) -> None:
+    def __init__(self, ref: PrimitiveRefBase) -> None:
         """Initialize read operation.
 
         Args:
@@ -61,7 +59,7 @@ class GetOp[T](Operation[T]):
             Value read from storage, or Empty if not found
         """
         # Resolve ref to Path
-        value_path = self.ref.resolve(context)
+        value_path = cast("path.PathToValue", self.ref.resolve(context))
 
         # Navigate using Path system
         try:
@@ -73,7 +71,7 @@ class GetOp[T](Operation[T]):
                 )
 
             value = parent_view[key]
-            return cast("T | Empty", value)
+            return value
         except KeyError:
             return Empty()
 
@@ -92,7 +90,7 @@ class ExtractOp[T](Operation[T]):
         >>> # Returns: {"email": "alice@example.com", "age": 30}
     """
 
-    def __init__(self, ref: ShapeRef[T]) -> None:
+    def __init__(self, ref: ViewRefBase) -> None:
         """Initialize extract operation.
 
         Args:
@@ -129,7 +127,7 @@ class ExtractOp[T](Operation[T]):
                     f"View {shape_view.__class__.__name__} does not implelement Convertible protocol (extract() method)."
                 )
             data = shape_view.extract()
-            return cast("T | Empty", data)
+            return data
         except KeyError:
             return Empty()
 
