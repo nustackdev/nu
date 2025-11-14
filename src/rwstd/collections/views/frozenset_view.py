@@ -14,9 +14,10 @@ from .base import StdView
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
+    from collections.abc import Set as PySet
 
     from redwood.loc import key as key_
-    from redwood.types import Convertible, Initializable
+    from redwood.types import Containable, Convertible, Initializable, Set, Sizeable
 
 
 __all__ = ["FrozenSetView"]
@@ -58,16 +59,16 @@ class FrozenSetView(StdView):
         # Returns int for use in hash tables, or use .hexdigest() for string
         return int.from_bytes(hashlib.sha256(pickled).digest()[:64], "big")
 
-    def __contains__(self, value: object) -> bool:
+    def __contains__(self, obj: object) -> bool:
         """Check if value in set.
 
         Args:
-            value: Value to check
+            obj: Value to check
 
         Returns:
             True if value in set
         """
-        key = self._make_key(value)
+        key = self._make_key(obj)
         return self.container.has_child(key)
 
     def __len__(self) -> int:
@@ -88,6 +89,39 @@ class FrozenSetView(StdView):
             stored_value = self.container.get_child_primitive(key)
             if not is_empty(stored_value):
                 yield cast_value(stored_value)  # type: ignore[misc]
+
+    def isdisjoint(self, other: PySet[object]) -> bool:
+        """Check if no elements in common with other.
+
+        Args:
+            other: Set to compare with
+
+        Returns:
+            True if no common elements
+        """
+        return not any(value in self for value in other)
+
+    def issubset(self, other: PySet[object]) -> bool:
+        """Check if all elements are in other.
+
+        Args:
+            other: Set to compare with
+
+        Returns:
+            True if subset
+        """
+        return all(value in other for value in self)
+
+    def issuperset(self, other: PySet[object]) -> bool:
+        """Check if all elements of other are in this set.
+
+        Args:
+            other: Set to compare with
+
+        Returns:
+            True if superset
+        """
+        return all(value in self for value in other)
 
     def extract(self) -> frozenset[object]:
         """Extract all values as frozenset.
@@ -112,5 +146,9 @@ class FrozenSetView(StdView):
 
 
 if TYPE_CHECKING:
-    _c: type[Convertible[object]] = FrozenSetView
-    _i: type[Initializable[Iterable[object]]] = FrozenSetView
+    # Verify protocol implementations
+    _convertible: type[Convertible[object]] = FrozenSetView
+    _initializable: type[Initializable[Iterable[object]]] = FrozenSetView
+    _containable: type[Containable[object]] = FrozenSetView
+    _sizeable: type[Sizeable] = FrozenSetView
+    _set: type[Set[object]] = FrozenSetView

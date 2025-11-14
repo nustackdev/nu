@@ -21,7 +21,19 @@ from .base import StdView
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
-    from redwood.types import Assignable, Convertible, Initializable, Nestable, Subscriptable
+    from redwood.types import (
+        Appendable,
+        Assignable,
+        Clearable,
+        Containable,
+        Convertible,
+        Deletable,
+        Initializable,
+        MutableSequence,
+        Nestable,
+        Sizeable,
+        Subscriptable,
+    )
 
 
 __all__ = ["ListView"]
@@ -153,6 +165,20 @@ class ListView(StdView):
             elif v.node_type == NodeType.CONTAINER:
                 yield cast_value(self[int(k)])
 
+    def __contains__(self, obj: object) -> bool:
+        """Check if value exists in list.
+
+        Args:
+            obj: Value to check for
+
+        Returns:
+            True if value exists in list
+        """
+        for item in self:
+            if item == obj:
+                return True
+        return False
+
     def append(self, value: object) -> None:
         """Append value to end.
 
@@ -181,7 +207,7 @@ class ListView(StdView):
         del self[address]
         return value
 
-    def insert(self, address: int, value: Value) -> None:
+    def insert(self, address: int, value: object) -> None:
         """Insert value at index, shifting later items.
 
         Args:
@@ -259,8 +285,15 @@ class ListView(StdView):
 
 
 if TYPE_CHECKING:
-    _s: type[Subscriptable[int, object]] = ListView
-    _c: type[Convertible[object]] = ListView
-    _i: type[Initializable[Iterable[object]]] = ListView
-    _a: type[Assignable[int, object]] = ListView
-    _n: type[Nestable[int]] = ListView
+    # Verify protocol implementations
+    _subscriptable: type[Subscriptable[int, object]] = ListView
+    _convertible: type[Convertible[object]] = ListView
+    _initializable: type[Initializable[Iterable[object]]] = ListView
+    _assignable: type[Assignable[int, object]] = ListView
+    _nestable: type[Nestable[int]] = ListView
+    _containable: type[Containable[object]] = ListView
+    _sizeable: type[Sizeable] = ListView
+    _deletable: type[Deletable[int]] = ListView
+    _clearable: type[Clearable] = ListView
+    _appendable: type[Appendable[object]] = ListView
+    _mutable_sequence: type[MutableSequence[object]] = ListView

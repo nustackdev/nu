@@ -19,9 +19,21 @@ from .base import StdView
 
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping
+    from collections.abc import Generator
+    from collections.abc import Mapping as PyMapping
 
-    from redwood.types import Assignable, Convertible, Initializable, Nestable, Subscriptable
+    from redwood.types import (
+        Assignable,
+        Clearable,
+        Containable,
+        Convertible,
+        Deletable,
+        Initializable,
+        MutableMapping,
+        Nestable,
+        Sizeable,
+        Subscriptable,
+    )
 
 __all__ = [
     "DictView",
@@ -90,16 +102,16 @@ class DictView(StdView):
         if not deleted:
             raise KeyError(address)
 
-    def __contains__(self, address: str | int) -> bool:
+    def __contains__(self, obj: str | int) -> bool:
         """Check if key exists.
 
         Args:
-            address: Key to check
+            obj: Key to check
 
         Returns:
             True if key exists
         """
-        return self.container.has_child(address)
+        return self.container.has_child(obj)
 
     def __len__(self) -> int:
         """Get number of keys.
@@ -182,7 +194,7 @@ class DictView(StdView):
         """Remove all items."""
         self.container.clear_children()
 
-    def update(self, other: Mapping[str | int, object] | None = None, **kwargs: object) -> None:
+    def update(self, other: PyMapping[str | int, object] | None = None, **kwargs: object) -> None:
         """Update from dict or kwargs.
 
         Args:
@@ -203,7 +215,7 @@ class DictView(StdView):
         """
         return dict(self.items())
 
-    def store(self, value: Mapping[str | int, object]) -> None:
+    def store(self, value: PyMapping[str | int, object]) -> None:
         """Store dict contents.
 
         Args:
@@ -235,8 +247,14 @@ class DictView(StdView):
 
 
 if TYPE_CHECKING:
-    _s: type[Subscriptable[str | int, object]] = DictView
-    _c: type[Convertible[object]] = DictView
-    _i: type[Initializable[Mapping[str | int, object]]] = DictView
-    _a: type[Assignable[str | int, object]] = DictView
-    _n: type[Nestable[str | int]] = DictView
+    # Verify protocol implementations
+    _subscriptable: type[Subscriptable[str | int, object]] = DictView
+    _convertible: type[Convertible[object]] = DictView
+    _initializable: type[Initializable[PyMapping[str | int, object]]] = DictView
+    _assignable: type[Assignable[str | int, object]] = DictView
+    _nestable: type[Nestable[str | int]] = DictView
+    _containable: type[Containable[str | int]] = DictView
+    _sizeable: type[Sizeable] = DictView
+    _deletable: type[Deletable[str | int]] = DictView
+    _clearable: type[Clearable] = DictView
+    _mutable_mapping: type[MutableMapping[str | int, object]] = DictView

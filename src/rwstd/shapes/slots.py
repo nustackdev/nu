@@ -14,8 +14,7 @@ from redwood.shape import Slot
 
 if TYPE_CHECKING:
     from redwood.shape import Ref, Shape
-    from redwood.types import Value
-    from redwood.view import View
+    from redwood.types import MutableMapping, MutableSequence, Value
 
     from .refs import MappingRef, SequenceRef, ShapeRef, ValueRef
 
@@ -91,7 +90,7 @@ def PrimitiveSlot(value_type: type[Value]) -> Any:  # noqa: ANN401, N802
 class _ShapeSlot(Slot):
     """Internal slot implementation for nested shapes."""
 
-    def __init__(self, shape_type: type[Shape], view_type: type[View]) -> None:
+    def __init__(self, shape_type: type[Shape], view_type: type[MutableMapping]) -> None:
         super().__init__()
         self.shape_type = shape_type
         self.view_type = view_type
@@ -120,7 +119,7 @@ class _ShapeSlot(Slot):
         )
 
 
-def ShapeSlot(shape_type: type[Shape], view_type: type[View] | None = None) -> Any:  # noqa: ANN401, N802
+def ShapeSlot(shape_type: type[Shape], view_type: type[MutableMapping] | None = None) -> Any:  # noqa: ANN401, N802
     """Create a shape slot for nested shapes.
 
     Factory function that returns a slot instance.
@@ -155,7 +154,7 @@ def ShapeSlot(shape_type: type[Shape], view_type: type[View] | None = None) -> A
 class _MappingSlot(Slot):
     """Internal slot implementation for mapping collections."""
 
-    def __init__(self, value_type: type, view_type: type[View]) -> None:
+    def __init__(self, value_type: type, view_type: type[MutableMapping]) -> None:
         super().__init__()
         self.value_type = value_type
         self.view_type = view_type
@@ -184,14 +183,14 @@ class _MappingSlot(Slot):
         )
 
 
-def MappingSlot(value_type: type, view_type: type | None = None) -> Any:  # noqa: ANN401, N802
+def MappingSlot(value_type: type, view_type: type[MutableMapping] | None = None) -> Any:  # noqa: ANN401, N802
     """Create a mapping slot for dict-like collections.
 
     Factory function that returns a slot instance.
 
     Args:
         value_type: Python type of values (primitives, Shapes, or CollectionDescriptor)
-        view_type: Optional view type (defaults to DictView)
+        view_type: Optional view type implementing MutableMapping protocol (defaults to DictView)
 
     Returns:
         Slot instance
@@ -213,6 +212,10 @@ def MappingSlot(value_type: type, view_type: type | None = None) -> Any:  # noqa
         Market.signals["vix"].get()           # ValueRef[float]
         Market.symbols["AAPL"].price.get()    # ShapeRef navigation
         Market.data["timeseries"][0].get()    # Nested collection
+
+    Note:
+        The view_type must structurally implement the MutableMapping protocol
+        from redwood.types.collections.
     """
     from rwstd.collections.views import DictView
 
@@ -227,7 +230,7 @@ def MappingSlot(value_type: type, view_type: type | None = None) -> Any:  # noqa
 class _SequenceSlot(Slot):
     """Internal slot implementation for sequence collections."""
 
-    def __init__(self, item_type: type, view_type: type[View]) -> None:
+    def __init__(self, item_type: type, view_type: type[MutableSequence]) -> None:
         super().__init__()
         self.item_type = item_type
         self.view_type = view_type
@@ -256,14 +259,14 @@ class _SequenceSlot(Slot):
         )
 
 
-def SequenceSlot(item_type: type, view_type: type | None = None) -> Any:  # noqa: ANN401, N802
+def SequenceSlot(item_type: type, view_type: type[MutableSequence] | None = None) -> Any:  # noqa: ANN401, N802
     """Create a sequence slot for list-like collections.
 
     Factory function that returns a slot instance.
 
     Args:
         item_type: Python type of values (primitives, Shapes, or CollectionDescriptor)
-        view_type: Optional view type (defaults to ListView)
+        view_type: Optional view type implementing MutableSequence protocol (defaults to ListView)
 
     Returns:
         Slot instance
@@ -285,6 +288,10 @@ def SequenceSlot(item_type: type, view_type: type | None = None) -> Any:  # noqa
         Market.prices[0].get()              # ValueRef[float]
         Market.orders[0].id.get()           # ShapeRef navigation
         Market.data[0]["key"].get()         # Nested collection
+
+    Note:
+        The view_type must structurally implement the MutableSequence protocol
+        from redwood.types.collections.
     """
     from rwstd.collections.views import ListView
 

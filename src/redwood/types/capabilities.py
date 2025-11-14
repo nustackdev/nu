@@ -16,15 +16,25 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "Appendable",
     "Assignable",
+    "Clearable",
+    "Containable",
     "Convertible",
+    "Deletable",
     "Initializable",
     "Nestable",
+    "Sizeable",
     "Subscriptable",
+    "is_appendable",
     "is_assignable",
+    "is_clearable",
+    "is_containable",
     "is_convertible",
+    "is_deletable",
     "is_initializable",
     "is_nestable",
+    "is_sizeable",
     "is_subscriptable",
 ]
 
@@ -182,6 +192,124 @@ class Assignable[A, V](Protocol):
         ...
 
 
+@runtime_checkable
+class Containable[V](Protocol):
+    """Protocol for containers that support membership testing.
+
+    Containable containers implement __contains__ to check if an address
+    exists using the 'in' operator.
+
+    Type Parameters:
+        A: The type of address to check for membership
+
+    Example:
+        >>> if isinstance(container, Containable):
+        ...     if "key" in container:
+        ...         print("Key exists")
+    """
+
+    def __contains__(self, obj: V) -> bool:
+        """Check if address exists in container.
+
+        Args:
+            obj: Object to check for existence (existence dimension is based on the view semantics - value, address, etc)
+
+        Returns:
+            True if address exists in container
+        """
+        ...
+
+
+@runtime_checkable
+class Sizeable(Protocol):
+    """Protocol for containers that support size queries.
+
+    Sizeable containers implement __len__ to return the number of items
+    using the len() function.
+
+    Example:
+        >>> if isinstance(container, Sizeable):
+        ...     size = len(container)
+    """
+
+    def __len__(self) -> int:
+        """Get number of items in container.
+
+        Returns:
+            Number of items
+        """
+        ...
+
+
+@runtime_checkable
+class Deletable[A](Protocol):
+    """Protocol for containers that support item deletion.
+
+    Deletable containers implement __delitem__ to remove items by
+    address using the del statement.
+
+    Type Parameters:
+        A: The type of address to delete
+
+    Example:
+        >>> if isinstance(container, Deletable):
+        ...     del container["key"]
+        ...     # or: del container[0]
+    """
+
+    def __delitem__(self, address: A) -> None:
+        """Delete item at address.
+
+        Args:
+            address: Item address to delete
+
+        Raises:
+            KeyError: If address doesn't exist
+            IndexError: If index out of range
+        """
+        ...
+
+
+@runtime_checkable
+class Clearable(Protocol):
+    """Protocol for containers that support clearing all items.
+
+    Clearable containers implement clear() to remove all items at once.
+
+    Example:
+        >>> if isinstance(container, Clearable):
+        ...     container.clear()
+    """
+
+    def clear(self) -> None:
+        """Remove all items from container."""
+        ...
+
+
+@runtime_checkable
+class Appendable[V](Protocol):
+    """Protocol for containers that support appending items.
+
+    Appendable containers implement append() to add items to the end
+    of a sequence or collection.
+
+    Type Parameters:
+        V: The type of value to append
+
+    Example:
+        >>> if isinstance(container, Appendable):
+        ...     container.append(value)
+    """
+
+    def append(self, value: V) -> None:
+        """Append value to container.
+
+        Args:
+            value: Value to append
+        """
+        ...
+
+
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
@@ -245,3 +373,63 @@ def is_assignable(obj: object) -> TypeGuard[Assignable]:
         True if object implements Assignable protocol
     """
     return isinstance(obj, Assignable)
+
+
+def is_containable(obj: object) -> TypeGuard[Containable]:
+    """Check if object supports membership testing.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Containable protocol
+    """
+    return isinstance(obj, Containable)
+
+
+def is_sizeable(obj: object) -> TypeGuard[Sizeable]:
+    """Check if object supports size queries.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Sizeable protocol
+    """
+    return isinstance(obj, Sizeable)
+
+
+def is_deletable(obj: object) -> TypeGuard[Deletable]:
+    """Check if object supports item deletion.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Deletable protocol
+    """
+    return isinstance(obj, Deletable)
+
+
+def is_clearable(obj: object) -> TypeGuard[Clearable]:
+    """Check if object supports clearing all items.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Clearable protocol
+    """
+    return isinstance(obj, Clearable)
+
+
+def is_appendable(obj: object) -> TypeGuard[Appendable]:
+    """Check if object supports appending items.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Appendable protocol
+    """
+    return isinstance(obj, Appendable)

@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING
 
 from redwood.loc import path
 from redwood.shape import Command
-from redwood.types import Assignable, Initializable
-from rwstd.collections import ListView
+from redwood.types import Appendable, Assignable, Initializable
 
 
 if TYPE_CHECKING:
@@ -137,8 +136,10 @@ class AppendCmd[T](Command[T]):
             view = path.navigate_view(context.root_view, view_path)
 
         # Store structure through view
-        if not isinstance(view, ListView):
-            raise TypeError(f"View at path {view} does not support append() operation.")
+        if not isinstance(view, Appendable):
+            raise TypeError(
+                f"View {view.__class__.__name__} does not implement Appendable protocol (append() method)."
+            )
 
         # Write value through View
         view.append(value)

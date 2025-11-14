@@ -16,9 +16,12 @@ from redwood.shape import PrimitiveRefBase, Ref, RValue, Shape, ViewRefBase, lit
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator as PyIterator
+    from collections.abc import Mapping as PyMapping
+
     from redwood.loc import path
     from redwood.shape import RValue, Shape
-    from redwood.view import View
+    from redwood.types import MutableMapping, MutableSequence
 
     from .commands import AppendCmd, SetCmd, StoreCmd
     from .operations import ExtractOp, GetOp
@@ -150,7 +153,7 @@ class ShapeRef[T](ViewRefBase):
         self,
         address: path.PathAddress,
         shape_type: type[Shape],
-        view_type: type[View],
+        view_type: type[MutableMapping],
         parent_ref: Ref | None = None,
     ) -> None:
         """Initialize shape reference.
@@ -250,7 +253,7 @@ class MappingRef[K: int | str, V](ViewRefBase):
         self,
         address: path.PathAddress,
         value_type: type[V],
-        view_type: type[View],
+        view_type: type[MutableMapping],
         parent_ref: Ref | None = None,
     ) -> None:
         """Initialize mapping reference.
@@ -295,7 +298,7 @@ class MappingRef[K: int | str, V](ViewRefBase):
 
         return ExtractOp(self)
 
-    def store(self, data: dict[K, V] | RValue[dict[K, V]]) -> StoreCmd[dict[K, V]]:
+    def store(self, data: PyMapping[K, V] | RValue[PyMapping[K, V]]) -> StoreCmd[dict[K, V]]:
         """Create store command.
 
         Args:
@@ -336,7 +339,7 @@ class SequenceRef[T](ViewRefBase):
         self,
         address: path.PathAddress,
         item_type: type[T],
-        view_type: type[View],
+        view_type: type[MutableSequence],
         parent_ref: Ref | None = None,
     ) -> None:
         """Initialize mapping reference.
@@ -387,7 +390,7 @@ class SequenceRef[T](ViewRefBase):
 
         return ExtractOp(self)
 
-    def store(self, data: list[T] | RValue[list[T]]) -> StoreCmd[list[T]]:
+    def store(self, data: PyIterator[T] | RValue[PyIterator[T]]) -> StoreCmd[list[T]]:
         """Create store command.
 
         Args:

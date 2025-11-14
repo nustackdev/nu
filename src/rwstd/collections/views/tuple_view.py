@@ -20,7 +20,15 @@ from .base import StdView
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
-    from redwood.types import Convertible, Initializable, Nestable, Subscriptable
+    from redwood.types import (
+        Containable,
+        Convertible,
+        Initializable,
+        Nestable,
+        Sequence,
+        Sizeable,
+        Subscriptable,
+    )
 
 __all__ = ["TupleView"]
 
@@ -104,6 +112,46 @@ class TupleView(StdView):
         for i in range(len(self)):
             yield cast_value(self[i])  # type: ignore[misc]
 
+    def __contains__(self, obj: object) -> bool:
+        """Check if value exists in tuple.
+
+        Args:
+            obj: Value to check for
+
+        Returns:
+            True if value exists in tuple
+        """
+        for item in self:
+            if item == obj:
+                return True
+        return False
+
+    def __reversed__(self) -> Generator[object, None, None]:
+        """Iterate in reverse order.
+
+        Yields:
+            Items in reverse order
+        """
+        for i in range(len(self) - 1, -1, -1):
+            yield cast_value(self[i])  # type: ignore[misc]
+
+    def index(self, value: object) -> int:
+        """Find index of first occurrence of value.
+
+        Args:
+            value: Value to find
+
+        Returns:
+            Index of first occurrence
+
+        Raises:
+            ValueError: If value not found
+        """
+        for i, item in enumerate(self):
+            if item == value:
+                return i
+        raise ValueError(f"{value!r} is not in tuple")
+
     def count(self, value: object) -> int:
         """Count occurrences of value.
 
@@ -160,7 +208,11 @@ class TupleView(StdView):
 
 
 if TYPE_CHECKING:
-    _s: type[Subscriptable[int, object]] = TupleView
-    _c: type[Convertible[object]] = TupleView
-    _i: type[Initializable[Iterable[object]]] = TupleView
-    _n: type[Nestable[int]] = TupleView
+    # Verify protocol implementations
+    _subscriptable: type[Subscriptable[int, object]] = TupleView
+    _convertible: type[Convertible[object]] = TupleView
+    _initializable: type[Initializable[Iterable[object]]] = TupleView
+    _nestable: type[Nestable[int]] = TupleView
+    _containable: type[Containable[object]] = TupleView
+    _sizeable: type[Sizeable] = TupleView
+    _sequence: type[Sequence[object]] = TupleView

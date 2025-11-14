@@ -254,4 +254,4 @@ class View(ABC):
         if not isinstance(child_view, Initializable):
             raise TypeError(f"Child view {view_class.__name__} does not support initialization")
 
-        child_view.store(value, replace=False)
+        child_view.store(value)
