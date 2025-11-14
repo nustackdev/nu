@@ -16,12 +16,14 @@ if TYPE_CHECKING:
     from redwood.shape import Ref, Shape
     from redwood.types import MutableMapping, MutableSequence, Value
 
-    from .refs import MappingRef, SequenceRef, ShapeRef, ValueRef
+    from .refs import MappingRef, MappingShapeRef, SequenceRef, SequenceShapeRef, ShapeRef, ValueRef
 
 
 __all__ = [
+    "MappingShapeSlot",
     "MappingSlot",
     "PrimitiveSlot",
+    "SequenceShapeSlot",
     "SequenceSlot",
     "ShapeSlot",
 ]
@@ -296,3 +298,151 @@ def SequenceSlot(item_type: type, view_type: type[MutableSequence] | None = None
     from rwstd.collections.views import ListView
 
     return _SequenceSlot(item_type=item_type, view_type=view_type or ListView)
+
+
+# =============================================================================
+# SEQUENCE SHAPE SLOT
+# =============================================================================
+
+
+class _SequenceShapeSlot(Slot):
+    """Internal slot implementation for sequence of shapes."""
+
+    def __init__(self, shape_type: type[Shape], view_type: type[MutableSequence]) -> None:
+        super().__init__()
+        self.shape_type = shape_type
+        self.view_type = view_type
+
+    def create_ref(
+        self,
+        owner_shape: type[Shape],
+        parent_ref: Ref | None = None,
+    ) -> SequenceShapeRef:
+        """Create SequenceShapeRef for this slot.
+
+        Args:
+            owner_shape: Shape class this slot belongs to
+            parent_ref: Parent reference for nested access
+
+        Returns:
+            SequenceShapeRef instance
+        """
+        from .refs import SequenceShapeRef
+
+        return SequenceShapeRef(
+            address=self.name,
+            shape_type=self.shape_type,
+            view_type=self.view_type,
+            parent_ref=parent_ref,
+        )
+
+
+def SequenceShapeSlot(shape_type: type[Shape], view_type: type[MutableSequence] | None = None) -> Any:  # noqa: ANN401, N802
+    """Create a sequence slot for list-like collections of shapes.
+
+    Factory function that returns a slot instance for homogeneous shape collections.
+
+    Args:
+        shape_type: Shape class for items in the sequence
+        view_type: Optional view type implementing MutableSequence protocol (defaults to ListView)
+
+    Returns:
+        Slot instance
+
+    Example:
+        class Order(Shape):
+            id: ValueRef[str] = PrimitiveSlot(str)
+            price: ValueRef[float] = PrimitiveSlot(float)
+            quantity: ValueRef[int] = PrimitiveSlot(int)
+
+        class Market(Shape):
+            # Sequence of Order shapes
+            orders: SequenceShapeRef[Order] = SequenceShapeSlot(Order)
+
+        # Access items and navigate to their fields
+        Market.orders[0].id.get()           # Get order ID
+        Market.orders[0].price.set(100.5)   # Set order price
+        Market.orders.extract()             # Get list of all order dicts
+        Market.orders.append({"id": "123", "price": 99.0, "quantity": 10})
+
+    Note:
+        The view_type must structurally implement the MutableSequence protocol
+        from redwood.types.collections.
+    """
+    from rwstd.collections.views import ListView
+
+    return _SequenceShapeSlot(shape_type=shape_type, view_type=view_type or ListView)
+
+
+# =============================================================================
+# MAPPING SHAPE SLOT
+# =============================================================================
+
+
+class _MappingShapeSlot(Slot):
+    """Internal slot implementation for mapping of shapes."""
+
+    def __init__(self, shape_type: type[Shape], view_type: type[MutableMapping]) -> None:
+        super().__init__()
+        self.shape_type = shape_type
+        self.view_type = view_type
+
+    def create_ref(
+        self,
+        owner_shape: type[Shape],
+        parent_ref: Ref | None = None,
+    ) -> MappingShapeRef:
+        """Create MappingShapeRef for this slot.
+
+        Args:
+            owner_shape: Shape class this slot belongs to
+            parent_ref: Parent reference for nested access
+
+        Returns:
+            MappingShapeRef instance
+        """
+        from .refs import MappingShapeRef
+
+        return MappingShapeRef(
+            address=self.name,
+            shape_type=self.shape_type,
+            view_type=self.view_type,
+            parent_ref=parent_ref,
+        )
+
+
+def MappingShapeSlot(shape_type: type[Shape], view_type: type[MutableMapping] | None = None) -> Any:  # noqa: ANN401, N802
+    """Create a mapping slot for dict-like collections of shapes.
+
+    Factory function that returns a slot instance for homogeneous shape collections.
+
+    Args:
+        shape_type: Shape class for values in the mapping
+        view_type: Optional view type implementing MutableMapping protocol (defaults to DictView)
+
+    Returns:
+        Slot instance
+
+    Example:
+        class SymbolInfo(Shape):
+            price: ValueRef[float] = PrimitiveSlot(float)
+            volume: ValueRef[int] = PrimitiveSlot(int)
+            exchange: ValueRef[str] = PrimitiveSlot(str)
+
+        class Market(Shape):
+            # Mapping of symbol name to SymbolInfo
+            symbols: MappingShapeRef[str, SymbolInfo] = MappingShapeSlot(SymbolInfo)
+
+        # Access items and navigate to their fields
+        Market.symbols["AAPL"].price.get()           # Get AAPL price
+        Market.symbols["AAPL"].volume.set(1000000)   # Set AAPL volume
+        Market.symbols.extract()                     # Get dict of all symbols
+        Market.symbols.store({"AAPL": {"price": 150.0, "volume": 1000000, "exchange": "NASDAQ"}})
+
+    Note:
+        The view_type must structurally implement the MutableMapping protocol
+        from redwood.types.collections.
+    """
+    from rwstd.collections.views import DictView
+
+    return _MappingShapeSlot(shape_type=shape_type, view_type=view_type or DictView)

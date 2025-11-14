@@ -29,7 +29,9 @@ if TYPE_CHECKING:
 
 __all__ = [
     "MappingRef",
+    "MappingShapeRef",
     "SequenceRef",
+    "SequenceShapeRef",
     "ShapeRef",
     "ValueRef",
 ]
@@ -398,6 +400,191 @@ class SequenceRef[T](ViewRefBase):
 
         Returns:
             StoreCmd that writes entire structure
+        """
+        from .commands import StoreCmd
+
+        return StoreCmd(self, literal(data))
+
+
+# =============================================================================
+# SEQUENCE SHAPE REFERENCE
+# =============================================================================
+
+
+class SequenceShapeRef[T: Shape](ViewRefBase):
+    """Reference to a sequence of homogeneous shapes.
+
+    Points to list-like nodes containing shape instances.
+    Supports subscripting to access individual shapes.
+
+    Example:
+        class Order(Shape):
+            id: ValueRef[str] = PrimitiveSlot(str)
+            price: ValueRef[float] = PrimitiveSlot(float)
+
+        class Market(Shape):
+            orders: SequenceShapeRef[Order] = SequenceShapeSlot(Order)
+
+        # Access items
+        Market.orders[0].id.get()       # Navigate to shape and its fields
+        Market.orders.extract()         # Get list of all order dicts
+        Market.orders.append({...})     # Add new order
+    """
+
+    def __init__(
+        self,
+        address: path.PathAddress,
+        shape_type: type[T],
+        view_type: type[MutableSequence],
+        parent_ref: Ref | None = None,
+    ) -> None:
+        """Initialize sequence shape reference.
+
+        Args:
+            address: Address of this field in parent's domain
+            shape_type: Shape class for items
+            view_type: View class for this sequence (e.g., ListView)
+            parent_ref: Parent reference in navigation chain
+        """
+        super().__init__(address, view_type, parent_ref)
+        self.shape_type = shape_type
+
+    def __getitem__(self, index: int | RValue[int]) -> T:
+        """Subscript to get shape at index.
+
+        Args:
+            index: Index to access in sequence
+
+        Returns:
+            ShapeRef to the item, allowing field navigation
+        """
+        from rwstd.collections.views import DictView
+
+        return ShapeRef(
+            address=literal(index),
+            shape_type=self.shape_type,
+            view_type=DictView,
+            parent_ref=self,
+        )  # type: ignore
+
+    def append(self, value: dict | RValue[dict]) -> AppendCmd[dict]:
+        """Append new shape to sequence.
+
+        Args:
+            value: Shape data as dictionary
+
+        Returns:
+            AppendCmd that adds the shape
+        """
+        from .commands import AppendCmd
+
+        return AppendCmd(ref=self, value=literal(value))
+
+    def extract(self) -> ExtractOp[list[dict]]:
+        """Extract all shapes as list of dicts.
+
+        Returns:
+            ExtractOp that reads entire sequence
+        """
+        from .operations import ExtractOp
+
+        return ExtractOp(self)
+
+    def store(self, data: list[dict] | RValue[list[dict]]) -> StoreCmd[list[dict]]:
+        """Store list of shapes.
+
+        Args:
+            data: List of shape dictionaries
+
+        Returns:
+            StoreCmd that writes entire sequence
+        """
+        from .commands import StoreCmd
+
+        return StoreCmd(self, literal(data))
+
+
+# =============================================================================
+# MAPPING SHAPE REFERENCE
+# =============================================================================
+
+
+class MappingShapeRef[K: int | str, T: Shape](ViewRefBase):
+    """Reference to a mapping of homogeneous shapes.
+
+    Points to dict-like nodes containing shape instances.
+    Supports subscripting to access individual shapes by key.
+
+    Example:
+        class SymbolInfo(Shape):
+            price: ValueRef[float] = PrimitiveSlot(float)
+            volume: ValueRef[int] = PrimitiveSlot(int)
+
+        class Market(Shape):
+            symbols: MappingShapeRef[str, SymbolInfo] = MappingShapeSlot(SymbolInfo)
+
+        # Access items
+        Market.symbols["AAPL"].price.get()   # Navigate to shape and its fields
+        Market.symbols.extract()             # Get dict of all symbols
+        Market.symbols.store({...})          # Store multiple symbols
+    """
+
+    def __init__(
+        self,
+        address: path.PathAddress,
+        shape_type: type[T],
+        view_type: type[MutableMapping],
+        parent_ref: Ref | None = None,
+    ) -> None:
+        """Initialize mapping shape reference.
+
+        Args:
+            address: Address of this field in parent's domain
+            shape_type: Shape class for values
+            view_type: View class for this mapping (e.g., DictView)
+            parent_ref: Parent reference in navigation chain
+        """
+        super().__init__(address, view_type, parent_ref)
+        self.shape_type = shape_type
+
+    def __getitem__(self, key: K | RValue[K]) -> T:
+        """Subscript to get shape at key.
+
+        Args:
+            key: Key to access in mapping
+
+        Returns:
+            ShapeRef to the item, allowing field navigation
+        """
+        from rwstd.collections.views import DictView
+
+        return ShapeRef(
+            address=literal(key),
+            shape_type=self.shape_type,
+            view_type=DictView,
+            parent_ref=self,
+        )  # type: ignore
+
+    def extract(self) -> ExtractOp[dict[K, dict]]:
+        """Extract all shapes as dict of dicts.
+
+        Returns:
+            ExtractOp that reads entire mapping
+        """
+        from .operations import ExtractOp
+
+        return ExtractOp(self)
+
+    def store(
+        self, data: PyMapping[K, dict] | RValue[PyMapping[K, dict]]
+    ) -> StoreCmd[dict[K, dict]]:
+        """Store mapping of shapes.
+
+        Args:
+            data: Dict of shape dictionaries
+
+        Returns:
+            StoreCmd that writes entire mapping
         """
         from .commands import StoreCmd
 

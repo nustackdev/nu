@@ -4,9 +4,25 @@ from __future__ import annotations
 
 from .commands import AppendCmd, SetCmd, StoreCmd
 from .operations import ExtractOp, GetOp
-from .refs import MappingRef, MappingValueRef, SequenceRef, SequenceValueRef, ShapeRef, ValueRef
+from .refs import (
+    MappingRef,
+    MappingShapeRef,
+    MappingValueRef,
+    SequenceRef,
+    SequenceShapeRef,
+    SequenceValueRef,
+    ShapeRef,
+    ValueRef,
+)
 from .shape import Shape
-from .slots import MappingSlot, PrimitiveSlot, SequenceSlot, ShapeSlot
+from .slots import (
+    MappingShapeSlot,
+    MappingSlot,
+    PrimitiveSlot,
+    SequenceShapeSlot,
+    SequenceSlot,
+    ShapeSlot,
+)
 
 
 __all__ = [
@@ -14,10 +30,14 @@ __all__ = [
     "ExtractOp",
     "GetOp",
     "MappingRef",
+    "MappingShapeRef",
+    "MappingShapeSlot",
     "MappingSlot",
     "MappingValueRef",
     "PrimitiveSlot",
     "SequenceRef",
+    "SequenceShapeRef",
+    "SequenceShapeSlot",
     "SequenceSlot",
     "SequenceValueRef",
     "SetCmd",
