@@ -794,14 +794,11 @@ class Container(NamedTuple):
             StorageOperationError: If subscription fails
 
         Example:
-            >>> subs = container.watch_children(
-            ...     storage, "alice", "bob", callback=my_callback
-            ... )
+            >>> subs = container.watch_children(storage, "alice", "bob", callback=my_callback)
             >>> # subs is (sub1, sub2)
         """
         return tuple(
-            storage.subscribe(key_.join_segment(self.path, key), callback, depth)
-            for key in keys
+            storage.subscribe(key_.join_segment(self.path, key), callback, depth) for key in keys
         )
 
     def watch_descendants(

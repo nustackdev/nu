@@ -4,16 +4,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from redwood.loc import key as key_
 from redwood.tree import (
-    Container,
     ContainerProtocol,
     ContainerStructure,
     NodeType,
     PathNotFoundError,
 )
 from redwood.types import Empty, Value, cast_value
-from redwood.view import View
+from redwood.view import (
+    ChildNavigationMixin,
+    ChildNestedGetMixin,
+    ChildNestedSetMixin,
+    MetadataBasedChildrenCountMixin,
+)
 
 from .base import StdView
 
@@ -39,7 +42,13 @@ if TYPE_CHECKING:
 __all__ = ["ListView"]
 
 
-class ListView(StdView):
+class ListView(
+    MetadataBasedChildrenCountMixin,
+    ChildNavigationMixin[int],
+    ChildNestedGetMixin,
+    ChildNestedSetMixin,
+    StdView,
+):
     """List-like view over container.
 
     Provides familiar list interface using integer keys:
@@ -64,7 +73,7 @@ class ListView(StdView):
     )
     CONTAINER_CLS: ClassVar[type] = list
 
-    def _normalize_index(self, address: int) -> int:
+    def address_normalization(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
         Args:
@@ -98,7 +107,7 @@ class ListView(StdView):
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self._normalize_index(address)
+        normalized = self.address_normalization(address)
         try:
             return self._get_child_value(normalized)
         except PathNotFoundError as e:
@@ -114,7 +123,7 @@ class ListView(StdView):
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self._normalize_index(address)
+        normalized = self.address_normalization(address)
         self._set_child_value(normalized, value)
 
     def __delitem__(self, address: int) -> None:
@@ -126,7 +135,7 @@ class ListView(StdView):
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self._normalize_index(address)
+        normalized = self.address_normalization(address)
         length = len(self)
 
         # Delete the item
@@ -146,17 +155,7 @@ class ListView(StdView):
                 )
 
         # Update length metadata
-        self.container.set_metadata("__len__", length - 1)
-
-    def __len__(self) -> int:
-        """Get number of items.
-
-        Returns:
-            Number of items
-        """
-        # Use metadata for O(1) length lookup
-        length = self.container.get_metadata("__len__", default=0)
-        return int(length) if length is not None else 0
+        self._set_length(length - 1)
 
     def __iter__(self) -> Generator[Value, None, None]:
         """Iterate over items.
@@ -193,7 +192,7 @@ class ListView(StdView):
         index = len(self)
         self._set_child_value(index, value)
         # Update length metadata
-        self.container.set_metadata("__len__", index + 1)
+        self._set_length(index + 1)
 
     def pop(self, address: int = -1) -> object | Empty:
         """Remove and return item at index.
@@ -243,13 +242,13 @@ class ListView(StdView):
         # Insert new value
         self._set_child_value(address, value)
         # Update length metadata
-        self.container.set_metadata("__len__", length + 1)
+        self._set_length(length + 1)
 
     def clear(self) -> None:
         """Remove all items."""
         self.container.clear_children()
         # Reset length metadata
-        self.container.set_metadata("__len__", 0)
+        self._set_length(0)
 
     # =========================================================================
     # VIEW INTERFACE
@@ -279,26 +278,7 @@ class ListView(StdView):
             count += 1
 
         # Set final length metadata
-        self.container.set_metadata("__len__", count)
-
-    def open_child[ViewT: View](self, address: int, view: type[ViewT]) -> ViewT:
-        """Open child view at index.
-
-        Args:
-            address: Child container index
-            view: View class for child
-
-        Returns:
-            View instance for child container
-        """
-        normalized = self._normalize_index(address)
-        child_container = Container.create(
-            key_.join_segment(self.container.path, normalized),
-            self.container.ctx,
-            view.get_structure(),
-            view.get_protocol(),
-        )
-        return view(child_container, self.registry)
+        self._set_length(count)
 
 
 if TYPE_CHECKING:

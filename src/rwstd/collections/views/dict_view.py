@@ -4,16 +4,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from redwood.loc import key as key_
 from redwood.tree import (
-    Container,
     ContainerProtocol,
     ContainerStructure,
     NodeType,
     PathNotFoundError,
 )
 from redwood.types import EMPTY, Empty, cast_value, is_empty
-from redwood.view import View
+from redwood.view import (
+    ChildNavigationMixin,
+    ChildNestedGetMixin,
+    ChildNestedSetMixin,
+    MetadataBasedChildrenCountMixin,
+)
 
 from .base import StdView
 
@@ -40,7 +43,13 @@ __all__ = [
 ]
 
 
-class DictView(StdView):
+class DictView(
+    MetadataBasedChildrenCountMixin,
+    ChildNavigationMixin[str | int],
+    ChildNestedGetMixin,
+    ChildNestedSetMixin,
+    StdView,
+):
     """Dict-like view over container.
 
     Provides familiar dict interface while delegating to Container:
@@ -62,6 +71,17 @@ class DictView(StdView):
     STRUCTURE: ClassVar[ContainerStructure] = ContainerStructure(1)
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.MAPPING | ContainerProtocol.MUTABLE
     CONTAINER_CLS: ClassVar[type] = dict
+
+    def address_normalization(self, address: str | int) -> str | int:
+        """No normalization needed for dict keys - passthrough.
+
+        Args:
+            address: Key to access
+
+        Returns:
+            Same key unchanged
+        """
+        return address
 
     def __getitem__(self, address: str | int) -> object | Empty:
         """Get value for key.
@@ -92,8 +112,7 @@ class DictView(StdView):
         self._set_child_value(address, value)
         # Update length metadata if new key
         if is_new:
-            current_len = self.container.get_metadata("__len__", default=0)
-            self.container.set_metadata("__len__", int(current_len) + 1 if current_len is not None else 1)
+            self._increment_length()
 
     def __delitem__(self, address: str | int) -> None:
         """Delete key.
@@ -108,9 +127,7 @@ class DictView(StdView):
         if not deleted:
             raise KeyError(address)
         # Update length metadata
-        current_len = self.container.get_metadata("__len__", default=0)
-        if current_len and int(current_len) > 0:
-            self.container.set_metadata("__len__", int(current_len) - 1)
+        self._decrement_length()
 
     def __contains__(self, obj: str | int) -> bool:
         """Check if key exists.
@@ -122,16 +139,6 @@ class DictView(StdView):
             True if key exists
         """
         return self.container.has_child(obj)
-
-    def __len__(self) -> int:
-        """Get number of keys.
-
-        Returns:
-            Number of keys
-        """
-        # Use metadata for O(1) length lookup
-        length = self.container.get_metadata("__len__", default=0)
-        return int(length) if length is not None else 0
 
     def keys(self) -> Generator[str | int, None, None]:
         """Get all keys.
@@ -206,7 +213,7 @@ class DictView(StdView):
         """Remove all items."""
         self.container.clear_children()
         # Reset length metadata
-        self.container.set_metadata("__len__", 0)
+        self._set_length(0)
 
     def update(self, other: PyMapping[str | int, object] | None = None, **kwargs: object) -> None:
         """Update from dict or kwargs.
@@ -245,25 +252,7 @@ class DictView(StdView):
             count += 1
 
         # Set final length metadata
-        self.container.set_metadata("__len__", count)
-
-    def open_child[ViewT: View](self, address: str | int, view: type[ViewT]) -> ViewT:
-        """Open child view.
-
-        Args:
-            address: Child container key
-            view: View class for child
-
-        Returns:
-            View instance for child container
-        """
-        child_container = Container.create(
-            key_.join_segment(self.container.path, address),
-            self.container.ctx,
-            view.get_structure(),
-            view.get_protocol(),
-        )
-        return view(child_container, self.registry)
+        self._set_length(count)
 
 
 if TYPE_CHECKING:

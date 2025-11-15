@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 from redwood.tree import ContainerProtocol, ContainerStructure
 from redwood.types import is_empty
+from redwood.view import MetadataBasedChildrenCountMixin
 
 from .base import StdView
 
@@ -20,7 +21,10 @@ if TYPE_CHECKING:
 __all__ = ["ByteArrayView"]
 
 
-class ByteArrayView(StdView):
+class ByteArrayView(
+    MetadataBasedChildrenCountMixin,
+    StdView,
+):
     """ByteArray-like view over container.
 
     Stores bytes as individual integer children for efficient access.
@@ -38,7 +42,7 @@ class ByteArrayView(StdView):
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.MUTABLE | ContainerProtocol.INDEXED
     CONTAINER_CLS: ClassVar[type] = bytearray
 
-    def _normalize_index(self, address: int) -> int:
+    def address_normalization(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
         Args:
@@ -72,7 +76,7 @@ class ByteArrayView(StdView):
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self._normalize_index(address)
+        normalized = self.address_normalization(address)
         value = self.container.get_child_primitive(normalized)
         if is_empty(value):
             raise IndexError("bytearray index out of range")
@@ -92,16 +96,8 @@ class ByteArrayView(StdView):
         if not isinstance(value, int) or not 0 <= value <= 255:
             raise ValueError("byte must be in range(0, 256)")
 
-        normalized = self._normalize_index(address)
+        normalized = self.address_normalization(address)
         self.container.set_child_primitive(normalized, value)
-
-    def __len__(self) -> int:
-        """Get number of bytes.
-
-        Returns:
-            Number of bytes
-        """
-        return self.container.count_children()
 
     def __iter__(self) -> Generator[int, None, None]:
         """Iterate over bytes.

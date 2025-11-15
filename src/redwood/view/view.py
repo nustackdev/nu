@@ -6,20 +6,23 @@ Views are thin wrappers over Container providing protocol-based capabilities.
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, ClassVar, Self, cast
+from typing import TYPE_CHECKING, ClassVar, Self
 
 import attrs
 
 from redwood.loc import key as key_
-from redwood.tree import Container, ContainerProtocol, ContainerStructure, NodeType
-from redwood.types import Convertible, Empty, Initializable, is_empty
+from redwood.tree import Container, ContainerProtocol, ContainerStructure
 
 from .registry import ViewRegistry
 
 
 if TYPE_CHECKING:
-    from redwood.storage import CallbackFn, StorageContextType, StorageProtocol, SubscriptionProtocol
-    from redwood.types import Value
+    from redwood.storage import (
+        CallbackFn,
+        StorageContextType,
+        StorageProtocol,
+        SubscriptionProtocol,
+    )
 
 __all__ = [
     "View",
@@ -152,109 +155,11 @@ class View(ABC):
     # =========================================================================
     # HELPER METHODS FOR SUBCLASSES
     # =========================================================================
-
-    def _get_child_value(self, key: key_.KeySegment) -> object | Empty:
-        """Get child value, auto-extracting containers.
-
-        Helper for subclasses implementing dict-like or list-like access.
-        Automatically extracts nested containers using registry.
-
-        Args:
-            key: Child key
-
-        Returns:
-            Primitive value or extracted container contents
-
-        Raises:
-            KeyError: If child doesn't exist
-        """
-        child_type = self.container.get_child_type(key)
-
-        if child_type == NodeType.NOT_FOUND:
-            raise KeyError(key)
-
-        if child_type == NodeType.PRIMITIVE:
-            value = self.container.get_child_primitive(key)
-            if is_empty(value):
-                raise KeyError(key)
-            return value
-
-        # Child is container - extract it
-        return self._extract_child_container(key)
-
-    def _set_child_value(self, key: key_.KeySegment, value: object) -> None:
-        """Set child value, auto-creating containers for complex types.
-
-        Helper for subclasses implementing dict-like or list-like mutation.
-        Automatically populates nested containers using registry.
-
-        Args:
-            key: Child key
-            value: Value to store (primitive or container)
-        """
-        if self.registry.is_container_type(value):
-            # Value is a container type - populate it
-            self._populate_child_container(key, value)
-        else:
-            # Primitive value - store directly
-            self.container.set_child_primitive(key, cast("Value", value))
-
-    def _extract_child_container(self, key: key_.KeySegment) -> object:
-        """Extract child container contents using registry.
-
-        Args:
-            key: Child key
-
-        Returns:
-            Extracted Python value
-        """
-        # Get child container
-        child_path = (*self.container.path, key)
-        child_container = Container(ctx=self.container.ctx, path=child_path)
-
-        # Get structure ID
-        child_info = child_container.info()
-        if child_info.structure is None:
-            raise ValueError(f"Child container '{key}' has no structure ID")
-
-        # Find appropriate view
-        view_class = self.registry.get_view_for_structure(child_info.structure)
-        child_view = view_class(container=child_container, registry=self.registry)
-
-        # Extract if supported
-        if not isinstance(child_view, Convertible):
-            raise TypeError(f"Child view {view_class.__name__} does not support extraction")
-
-        return child_view.extract()
-
-    def _populate_child_container(self, key: key_.KeySegment, value: object) -> None:
-        """Populate child container from Python value using registry.
-
-        Args:
-            key: Child key
-            value: Container value to store
-        """
-        # Get view class and structure for this value type
-        value_type = type(value)
-        view_class = self.registry.get_view_for_type(value_type)
-        structure_id = view_class.get_structure()
-        protocol_hints = view_class.get_protocol()
-
-        # Create child container
-        child_container = self.container.create_child_container(
-            key=key,
-            structure=ContainerStructure(structure_id),
-            protocol=protocol_hints,
-        )
-
-        # Create view and populate
-        child_view = view_class(container=child_container, registry=self.registry)
-
-        # Store if supported
-        if not isinstance(child_view, Initializable):
-            raise TypeError(f"Child view {view_class.__name__} does not support initialization")
-
-        child_view.store(value)
+    # Note: Common helper methods have been moved to mixins in redwood.view.mixins:
+    # - _get_child_value, _extract_child_container -> ChildNestedGetMixin
+    # - _set_child_value, _populate_child_container -> ChildNestedSetMixin
+    # - __len__, _increment_length, etc. -> MetadataBasedChildrenCountMixin
+    # - open_child, address_normalization -> ChildNavigationMixin
 
     # =========================================================================
     # WATCH METHODS: SUBSCRIPTIONS

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from redwood.tree import ContainerProtocol, ContainerStructure
 from redwood.types import cast_value, is_empty
+from redwood.view import ChildNestedSetMixin, MetadataBasedChildrenCountMixin
 
 from .base import StdView
 
@@ -23,7 +24,11 @@ if TYPE_CHECKING:
 __all__ = ["FrozenSetView"]
 
 
-class FrozenSetView(StdView):
+class FrozenSetView(
+    MetadataBasedChildrenCountMixin,
+    ChildNestedSetMixin,
+    StdView,
+):
     """Frozenset-like view over container (immutable set).
 
     Provides read-only set interface:
@@ -70,14 +75,6 @@ class FrozenSetView(StdView):
         """
         key = self._make_key(obj)
         return self.container.has_child(key)
-
-    def __len__(self) -> int:
-        """Get number of values.
-
-        Returns:
-            Number of values
-        """
-        return self.container.count_children()
 
     def __iter__(self) -> Generator[object, None, None]:
         """Iterate over values.

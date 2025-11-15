@@ -27,11 +27,23 @@ Example:
 from __future__ import annotations
 
 from .exceptions import RegistryError, ViewError, ViewOperationError
+from .mixins import (
+    ChildNavigationMixin,
+    ChildNestedGetMixin,
+    ChildNestedSetMixin,
+    LiveChildrenCountMixin,
+    MetadataBasedChildrenCountMixin,
+)
 from .registry import ViewRegistry
 from .view import View
 
 
 __all__ = [
+    "ChildNavigationMixin",
+    "ChildNestedGetMixin",
+    "ChildNestedSetMixin",
+    "LiveChildrenCountMixin",
+    "MetadataBasedChildrenCountMixin",
     "RegistryError",
     "View",
     "ViewError",

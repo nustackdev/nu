@@ -12,7 +12,13 @@ from redwood.tree import (
     PathNotFoundError,
 )
 from redwood.types import Empty, cast_value
-from redwood.view import View
+from redwood.view import (
+    ChildNavigationMixin,
+    ChildNestedGetMixin,
+    ChildNestedSetMixin,
+    MetadataBasedChildrenCountMixin,
+    View,
+)
 
 from .base import StdView
 
@@ -33,7 +39,13 @@ if TYPE_CHECKING:
 __all__ = ["TupleView"]
 
 
-class TupleView(StdView):
+class TupleView(
+    MetadataBasedChildrenCountMixin,
+    ChildNavigationMixin[int],
+    ChildNestedGetMixin,
+    ChildNestedSetMixin,
+    StdView,
+):
     """Tuple-like view over container (immutable sequence).
 
     Provides read-only tuple interface using integer keys:
@@ -55,7 +67,7 @@ class TupleView(StdView):
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.INDEXED | ContainerProtocol.SIZED
     CONTAINER_CLS: ClassVar[type] = tuple
 
-    def _normalize_index(self, address: int) -> int:
+    def address_normalization(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
         Args:
@@ -89,19 +101,11 @@ class TupleView(StdView):
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self._normalize_index(address)
+        normalized = self.address_normalization(address)
         try:
             return self._get_child_value(normalized)
         except PathNotFoundError as e:
             raise IndexError("tuple index out of range") from e
-
-    def __len__(self) -> int:
-        """Get number of items.
-
-        Returns:
-            Number of items
-        """
-        return self.container.count_children()
 
     def __iter__(self) -> Generator[object, None, None]:
         """Iterate over items.
@@ -197,7 +201,7 @@ class TupleView(StdView):
         Returns:
             View instance for child container
         """
-        normalized = self._normalize_index(address)
+        normalized = self.address_normalization(address)
         child_container = Container.create(
             key_.join_segment(self.container.path, normalized),
             self.container.ctx,
