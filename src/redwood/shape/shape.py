@@ -32,7 +32,7 @@ Slots are declarative - they describe structure, not behavior.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 
 if TYPE_CHECKING:
@@ -163,7 +163,7 @@ class ShapeMeta(type):
 
     Processing steps:
     1. Collect slots from base classes (inheritance)
-    2. Collect slots from current class annotations
+    2. Scan class namespace for Slot instances
     3. Store in _slots class variable
     4. Replace Slot instances with SlotDescriptors
 
@@ -195,11 +195,8 @@ class ShapeMeta(type):
             if hasattr(base, "_slots"):
                 slots.update(base._slots)
 
-        # 2. Collect slots from current class annotations
-        annotations = cast("dict", namespace.get("__annotations__", {}))
-        for field_name in annotations:
-            value = namespace.get(field_name)
-
+        # 2. Scan namespace for Slot instances
+        for field_name, value in namespace.items():
             if isinstance(value, Slot):
                 # Set the slot's name (it doesn't know it yet)
                 value.name = field_name
