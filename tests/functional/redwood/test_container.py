@@ -4,12 +4,9 @@ These tests validate the Container interface works correctly and maintains
 safety guarantees.
 """
 
-import pathlib
-from collections.abc import Generator
-
 import pytest
 
-from redwood.storage import StorageProtocol, TransactionProtocol
+from redwood.storage import TransactionProtocol
 from redwood.tree import (
     Container,
     ContainerProtocol,
@@ -21,31 +18,6 @@ from redwood.tree import (
     PathTypeError,
 )
 from redwood.types import EMPTY
-
-
-# ============================================================================
-# FIXTURES
-# ============================================================================
-
-
-@pytest.fixture
-def storage(tmp_path: pathlib.Path) -> Generator[StorageProtocol, None, None]:
-    """Create temporary storage backend for testing."""
-    from rwstd.storage.codecs import BinaryCodec
-    from rwstd.storage.storage_rocksdb import RocksDBStorage
-
-    db_path = tmp_path / "test_db"
-    storage = RocksDBStorage(path=db_path, codec=BinaryCodec())
-    storage.open()
-    yield storage  # type: ignore
-    storage.close()
-
-
-@pytest.fixture
-def tx(storage: StorageProtocol) -> Generator[TransactionProtocol, None, None]:
-    """Create transaction context."""
-    with storage.transaction() as tx:
-        yield tx
 
 
 # ============================================================================

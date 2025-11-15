@@ -225,9 +225,17 @@ addopts = [
     "--durations=10",
 ]
 markers = [
+    # Test type markers
     "unit: Unit tests - fast, isolated",
     "functional: Functional end-to-end tests",
+    "integration: Integration tests - cross-component",
     "performance: Performance benchmarks",
+    # Package markers
+    "redwood: Tests for core redwood package",
+    "rwrocks: Tests for RocksDB bindings",
+    "rwstd: Tests for standard library utils",
+    "rwtup: Tests for tuple codec",
+    # Legacy/specific markers
     "codec: Codec-specific tests",
     "rocksdb: RocksDB-specific tests",
     "slow: Slow-running tests",
