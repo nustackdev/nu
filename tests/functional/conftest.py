@@ -16,6 +16,7 @@ from redwood.storage import SnapshotProtocol, StorageProtocol, TransactionProtoc
 @pytest.fixture(
     params=[
         pytest.param("rocksdb", marks=pytest.mark.rocksdb),
+        pytest.param("text", marks=pytest.mark.text),
         # Future backends (currently commented out in codebase):
         # pytest.param("lmdb", marks=[pytest.mark.lmdb, pytest.mark.skip("not implemented")]),
         # pytest.param("inmemory", marks=[pytest.mark.inmemory, pytest.mark.skip("not implemented")]),
@@ -25,8 +26,8 @@ from redwood.storage import SnapshotProtocol, StorageProtocol, TransactionProtoc
 def backend_type(request: pytest.FixtureRequest) -> str:
     """Storage backend type for parametrization.
 
-    Currently only RocksDB is active. LMDB and InMemory implementations
-    are commented out in the codebase.
+    Currently active: RocksDB and Text (debug storage).
+    LMDB and InMemory implementations are commented out in the codebase.
     """
     return request.param
 
@@ -36,24 +37,17 @@ def backend_type(request: pytest.FixtureRequest) -> str:
 # ============================================================================
 
 
-@pytest.fixture(
-    params=["binary"],  # Start with binary only
-    scope="session",
-)
-def codec(request: pytest.FixtureRequest):
-    """Codec for key/value encoding.
+@pytest.fixture(scope="session")
+def codec(backend_type: str):
+    """Codec matched to backend type."""
+    from rwstd.storage.codecs import BinaryCodec, TextCodec
 
-    Currently parametrized with binary only. Can expand to test
-    multiple codecs if needed: ["binary", "text", "noop"]
-    """
-    from rwstd.storage.codecs import BinaryCodec, NoOpCodec, TextCodec
-
-    codecs = {
-        "binary": BinaryCodec,
-        "text": TextCodec,
-        "noop": NoOpCodec,
-    }
-    return codecs[request.param]()
+    if backend_type == "rocksdb":
+        return BinaryCodec()
+    elif backend_type == "text":
+        return TextCodec()
+    else:
+        raise ValueError(f"No codec for backend: {backend_type}")
 
 
 # ============================================================================
@@ -77,6 +71,10 @@ def storage(
         from rwstd.storage.storage_rocksdb import RocksDBStorage
 
         storage = RocksDBStorage(path=tmp_path / "test_db", codec=codec)
+    elif backend_type == "text":
+        from rwstd.storage.storage_text import TextStorage
+
+        storage = TextStorage(path=tmp_path / "test_db", codec=codec, log_operations=True)
     else:
         raise ValueError(f"Backend not implemented: {backend_type}")
 

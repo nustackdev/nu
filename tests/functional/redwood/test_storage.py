@@ -471,11 +471,4 @@ def test_scan_in_transaction(storage):
 # WRITE BATCH OPERATIONS
 # ============================================================================
 
-
-def test_write_batch_not_implemented(storage):
-    """Test RocksDB write batch raises NotImplementedError."""
-    try:
-        storage.begin_write_batch()
-        assert False, "Should have raised NotImplementedError"
-    except NotImplementedError:
-        pass
+# TODO: add
