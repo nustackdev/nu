@@ -471,4 +471,182 @@ def test_scan_in_transaction(storage):
 # WRITE BATCH OPERATIONS
 # ============================================================================
 
-# TODO: add
+
+def test_write_batch_basic_put(storage):
+    """Test basic write batch put operation."""
+    key = ("batch", "put_test")
+    value = {"data": "batch_write"}
+
+    # Write batch with context manager
+    with storage.begin_write_batch() as batch:
+        batch.put(key, value)
+        # Auto-writes on exit
+
+    # Verify data persisted
+    with storage.transaction() as txn:
+        result = txn.get(key)
+        assert result == value
+
+
+def test_write_batch_explicit_write(storage):
+    """Test write batch with explicit write() call."""
+    key = ("batch", "explicit")
+    value = {"method": "explicit_write"}
+
+    batch = storage.begin_write_batch()
+    batch.put(key, value)
+    batch.write()
+
+    # Verify data persisted
+    with storage.transaction() as txn:
+        result = txn.get(key)
+        assert result == value
+
+
+def test_write_batch_delete(storage):
+    """Test write batch delete operation."""
+    key = ("batch", "delete_test")
+
+    # Put initial data
+    with storage.transaction() as txn:
+        txn.put(key, {"data": "to_delete"})
+
+    # Delete via write batch
+    with storage.begin_write_batch() as batch:
+        deleted = batch.delete(key)
+        assert deleted is True
+
+    # Verify deletion
+    with storage.transaction() as txn:
+        assert not txn.has(key)
+
+
+def test_write_batch_delete_nonexistent(storage):
+    """Test write batch delete of nonexistent key returns False."""
+    key = ("batch", "nonexistent")
+
+    with storage.begin_write_batch() as batch:
+        deleted = batch.delete(key)
+        assert deleted is False
+
+
+def test_write_batch_abort(storage):
+    """Test write batch abort discards changes."""
+    key = ("batch", "abort_test")
+
+    batch = storage.begin_write_batch()
+    batch.put(key, {"data": "should_not_persist"})
+    batch.abort()
+
+    # Verify key doesn't exist
+    with storage.transaction() as txn:
+        assert not txn.has(key)
+
+
+def test_write_batch_exception_auto_abort(storage):
+    """Test write batch auto-aborts on exception."""
+    key = ("batch", "exception_test")
+
+    try:
+        with storage.begin_write_batch() as batch:
+            batch.put(key, {"data": "should_not_persist"})
+            raise ValueError("Test exception")
+    except ValueError:
+        pass
+
+    # Verify key doesn't exist
+    with storage.transaction() as txn:
+        assert not txn.has(key)
+
+
+def test_write_batch_multiple_operations(storage):
+    """Test write batch with multiple put/delete operations."""
+    keys = [
+        ("batch", "multi1"),
+        ("batch", "multi2"),
+        ("batch", "multi3"),
+    ]
+
+    # Setup: put multi3
+    with storage.transaction() as txn:
+        txn.put(keys[2], {"old": "value"})
+
+    # Batch: put multi1, put multi2, delete multi3
+    with storage.begin_write_batch() as batch:
+        batch.put(keys[0], {"id": 1})
+        batch.put(keys[1], {"id": 2})
+        batch.delete(keys[2])
+
+    # Verify all operations
+    with storage.transaction() as txn:
+        assert txn.get(keys[0])["id"] == 1
+        assert txn.get(keys[1])["id"] == 2
+        assert not txn.has(keys[2])
+
+
+def test_write_batch_update_value(storage):
+    """Test write batch updating existing value."""
+    key = ("batch", "update_test")
+
+    # Initial value
+    with storage.transaction() as txn:
+        txn.put(key, {"version": 1})
+
+    # Update via write batch
+    with storage.begin_write_batch() as batch:
+        batch.put(key, {"version": 2})
+
+    # Verify update
+    with storage.transaction() as txn:
+        result = txn.get(key)
+        assert result == {"version": 2}
+
+
+def test_write_batch_isolation(storage):
+    """Test write batch changes not visible until written."""
+    key = ("batch", "isolation_test")
+
+    # Start write batch but don't write yet
+    batch = storage.begin_write_batch()
+    batch.put(key, {"data": "uncommitted"})
+
+    # Verify not visible in transaction
+    with storage.transaction() as txn:
+        assert not txn.has(key)
+
+    # Write the batch
+    batch.write()
+
+    # Now should be visible
+    with storage.transaction() as txn:
+        assert txn.has(key)
+
+def test_write_batch_operations_after_close_raise(storage):
+    """Test write batch operations after close raise error."""
+    from redwood.storage import StorageClosedError
+
+    batch = storage.begin_write_batch()
+    batch.abort()  # Close the batch
+
+    # Operations after close should raise
+    try:
+        batch.put(("any", "key"), {"data": "test"})
+        assert False, "Should have raised StorageClosedError"
+    except StorageClosedError:
+        pass
+
+
+def test_write_batch_bulk_writes(storage):
+    """Test write batch efficient bulk write operations."""
+    # Write batch should be efficient for bulk operations
+    keys = [(f"batch", f"bulk_{i:03d}") for i in range(100)]
+
+    with storage.begin_write_batch() as batch:
+        for i, key in enumerate(keys):
+            batch.put(key, {"index": i})
+
+    # Verify all written
+    with storage.transaction() as txn:
+        for i, key in enumerate(keys):
+            result = txn.get(key)
+            assert result["index"] == i

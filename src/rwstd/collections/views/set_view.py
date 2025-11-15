@@ -71,7 +71,7 @@ class SetView(
         """
         pickled = pickle.dumps(value, protocol=4)  # Use fixed protocol
         # Returns int for use in hash tables, or use .hexdigest() for string
-        return (hashlib.sha256(pickled).digest()[:32]).decode("utf-8", errors="replace")
+        return hashlib.sha256(pickled).hexdigest()[:64]
 
     def add(self, value: object) -> None:
         """Add value to set.

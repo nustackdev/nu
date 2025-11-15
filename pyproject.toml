@@ -235,9 +235,11 @@ markers = [
     "rwrocks: Tests for RocksDB bindings",
     "rwstd: Tests for standard library utils",
     "rwtup: Tests for tuple codec",
+    # Backend markers (for parametrized storage tests)
+    "rocksdb: RocksDB backend tests",
+    "text: TextStorage backend tests",
     # Legacy/specific markers
     "codec: Codec-specific tests",
-    "rocksdb: RocksDB-specific tests",
     "slow: Slow-running tests",
 ]
 filterwarnings = [
