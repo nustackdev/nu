@@ -87,7 +87,13 @@ class DictView(StdView):
             address: Key to set
             value: Value to store (auto-populated if container type)
         """
+        # Check if key is new before setting
+        is_new = not self.container.has_child(address)
         self._set_child_value(address, value)
+        # Update length metadata if new key
+        if is_new:
+            current_len = self.container.get_metadata("__len__", default=0)
+            self.container.set_metadata("__len__", int(current_len) + 1 if current_len is not None else 1)
 
     def __delitem__(self, address: str | int) -> None:
         """Delete key.
@@ -101,6 +107,10 @@ class DictView(StdView):
         deleted = self.container.delete_child(address)
         if not deleted:
             raise KeyError(address)
+        # Update length metadata
+        current_len = self.container.get_metadata("__len__", default=0)
+        if current_len and int(current_len) > 0:
+            self.container.set_metadata("__len__", int(current_len) - 1)
 
     def __contains__(self, obj: str | int) -> bool:
         """Check if key exists.
@@ -119,7 +129,9 @@ class DictView(StdView):
         Returns:
             Number of keys
         """
-        return self.container.count_children()
+        # Use metadata for O(1) length lookup
+        length = self.container.get_metadata("__len__", default=0)
+        return int(length) if length is not None else 0
 
     def keys(self) -> Generator[str | int, None, None]:
         """Get all keys.
@@ -193,6 +205,8 @@ class DictView(StdView):
     def clear(self) -> None:
         """Remove all items."""
         self.container.clear_children()
+        # Reset length metadata
+        self.container.set_metadata("__len__", 0)
 
     def update(self, other: PyMapping[str | int, object] | None = None, **kwargs: object) -> None:
         """Update from dict or kwargs.
@@ -224,8 +238,14 @@ class DictView(StdView):
         """
         self.clear()
 
+        # Batch store and update length once at end
+        count = 0
         for key, val in value.items():
-            self[key] = val
+            self._set_child_value(key, val)
+            count += 1
+
+        # Set final length metadata
+        self.container.set_metadata("__len__", count)
 
     def open_child[ViewT: View](self, address: str | int, view: type[ViewT]) -> ViewT:
         """Open child view.

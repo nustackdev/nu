@@ -49,7 +49,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from redwood.loc import key as key_
 
-from . import container_ops, node_ops, validation_ops
+from . import container_ops, meta_ops, node_ops, validation_ops
 from .exceptions import InvalidPathError
 from .types import DEFAULT_PARENT_PROTOCOL, DEFAULT_PARENT_STRUCTURE
 
@@ -57,7 +57,12 @@ from .types import DEFAULT_PARENT_PROTOCOL, DEFAULT_PARENT_STRUCTURE
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from redwood.storage import StorageContextType
+    from redwood.storage import (
+        CallbackFn,
+        StorageContextType,
+        StorageProtocol,
+        SubscriptionProtocol,
+    )
     from redwood.types import Empty, Value
 
     from .types import (
@@ -634,6 +639,217 @@ class Container(NamedTuple):
             protocol,
             self.ctx,
         )
+
+    # ========================================================================
+    # METADATA: FLAT KEY-VALUE STORAGE AT /m TREE
+    # ========================================================================
+
+    def set_metadata(self, key: key_.KeySegment, value: Value) -> None:
+        """Set metadata for this container.
+
+        Metadata is stored in the /m tree parallel to the data tree.
+        Metadata must be primitive values (no containers).
+
+        Args:
+            key: Metadata key
+            value: Primitive value to store
+
+        Raises:
+            PathNotFoundError: If this container doesn't exist
+            StorageInterfaceError: If context doesn't support writes
+
+        Example:
+            >>> container.set_metadata("created_at", 1234567890)
+            >>> container.set_metadata("version", "1.0")
+        """
+        meta_ops.set_metadata(self.path, key, value, self.ctx)
+
+    def get_metadata(self, key: key_.KeySegment, default: Value | Empty = None) -> Value | Empty:
+        """Get metadata value.
+
+        Args:
+            key: Metadata key
+            default: Default value if not found (defaults to None)
+
+        Returns:
+            Metadata value or default if doesn't exist
+
+        Raises:
+            PathNotFoundError: If this container doesn't exist
+            StorageInterfaceError: If context doesn't support reads
+
+        Example:
+            >>> created = container.get_metadata("created_at")
+            >>> if created is not None:
+            ...     print(f"Created at: {created}")
+        """
+        return meta_ops.get_metadata(self.path, key, self.ctx, default)
+
+    def has_metadata(self, key: key_.KeySegment) -> bool:
+        """Check if metadata key exists.
+
+        Args:
+            key: Metadata key to check
+
+        Returns:
+            True if metadata exists
+
+        Raises:
+            PathNotFoundError: If this container doesn't exist
+            StorageInterfaceError: If context doesn't support reads
+
+        Example:
+            >>> if container.has_metadata("version"):
+            ...     print("Version metadata exists")
+        """
+        return meta_ops.has_metadata(self.path, key, self.ctx)
+
+    def delete_metadata(self, key: key_.KeySegment) -> bool:
+        """Delete metadata key.
+
+        Args:
+            key: Metadata key to delete
+
+        Returns:
+            True if deleted, False if didn't exist
+
+        Raises:
+            PathNotFoundError: If this container doesn't exist
+            StorageInterfaceError: If context doesn't support writes
+
+        Example:
+            >>> container.delete_metadata("temp_flag")
+            True
+        """
+        return meta_ops.delete_metadata(self.path, key, self.ctx)
+
+    def list_metadata_keys(self) -> Generator[key_.KeySegment, None, None]:
+        """List all metadata keys for this container.
+
+        Returns:
+            Generator of metadata keys
+
+        Raises:
+            PathNotFoundError: If this container doesn't exist
+            StorageInterfaceError: If context doesn't support reads
+
+        Example:
+            >>> for key in container.list_metadata_keys():
+            ...     value = container.get_metadata(key)
+            ...     print(f"{key}: {value}")
+        """
+        yield from meta_ops.list_metadata_keys(self.path, self.ctx)
+
+    # ========================================================================
+    # SUBSCRIPTIONS: WATCH CONTAINER CHANGES
+    # ========================================================================
+
+    def watch_child(
+        self,
+        storage: StorageProtocol,
+        key: key_.KeySegment,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to a specific child and its subtree.
+
+        Args:
+            storage: Storage instance for subscriptions
+            key: Child key to watch
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
+
+        Returns:
+            Subscription handle
+
+        Raises:
+            StorageOperationError: If subscription fails
+
+        Example:
+            >>> sub = container.watch_child(storage, "alice", my_callback)
+            >>> # Callback fires on changes to /users/alice/**
+        """
+        child_path = key_.join_segment(self.path, key)
+        return storage.subscribe(child_path, callback, depth)
+
+    def watch_children(
+        self,
+        storage: StorageProtocol,
+        *keys: key_.KeySegment,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> tuple[SubscriptionProtocol, ...]:
+        """Watch changes to multiple children and their subtrees.
+
+        Args:
+            storage: Storage instance for subscriptions
+            *keys: Child keys to watch
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
+
+        Returns:
+            Tuple of subscription handles
+
+        Raises:
+            StorageOperationError: If subscription fails
+
+        Example:
+            >>> subs = container.watch_children(
+            ...     storage, "alice", "bob", callback=my_callback
+            ... )
+            >>> # subs is (sub1, sub2)
+        """
+        return tuple(
+            storage.subscribe(key_.join_segment(self.path, key), callback, depth)
+            for key in keys
+        )
+
+    def watch_descendants(
+        self,
+        storage: StorageProtocol,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to all descendants of this container.
+
+        Args:
+            storage: Storage instance for subscriptions
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire tree, 0=exact, N=depth)
+
+        Returns:
+            Subscription handle
+
+        Raises:
+            StorageOperationError: If subscription fails
+
+        Example:
+            >>> sub = container.watch_descendants(storage, my_callback)
+            >>> # Callback fires on any change under this container
+        """
+        return storage.subscribe(self.path, callback, depth)
+
+    def unwatch(
+        self,
+        storage: StorageProtocol,
+        subscription: SubscriptionProtocol,
+    ) -> None:
+        """Unsubscribe from changes.
+
+        Convenience wrapper for storage.unsubscribe().
+
+        Args:
+            storage: Storage instance
+            subscription: Subscription to cancel
+
+        Raises:
+            StorageOperationError: If unsubscribe fails
+
+        Example:
+            >>> sub = container.watch_child(storage, "alice", callback)
+            >>> container.unwatch(storage, sub)
+        """
+        storage.unsubscribe(subscription)
 
     # ========================================================================
     # UTILITY METHODS

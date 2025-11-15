@@ -145,13 +145,18 @@ class ListView(StdView):
                     "Deleting list items with container children not yet supported"
                 )
 
+        # Update length metadata
+        self.container.set_metadata("__len__", length - 1)
+
     def __len__(self) -> int:
         """Get number of items.
 
         Returns:
             Number of items
         """
-        return self.container.count_children()
+        # Use metadata for O(1) length lookup
+        length = self.container.get_metadata("__len__", default=0)
+        return int(length) if length is not None else 0
 
     def __iter__(self) -> Generator[Value, None, None]:
         """Iterate over items.
@@ -187,6 +192,8 @@ class ListView(StdView):
         """
         index = len(self)
         self._set_child_value(index, value)
+        # Update length metadata
+        self.container.set_metadata("__len__", index + 1)
 
     def pop(self, address: int = -1) -> object | Empty:
         """Remove and return item at index.
@@ -235,10 +242,14 @@ class ListView(StdView):
 
         # Insert new value
         self._set_child_value(address, value)
+        # Update length metadata
+        self.container.set_metadata("__len__", length + 1)
 
     def clear(self) -> None:
         """Remove all items."""
         self.container.clear_children()
+        # Reset length metadata
+        self.container.set_metadata("__len__", 0)
 
     # =========================================================================
     # VIEW INTERFACE
@@ -261,8 +272,14 @@ class ListView(StdView):
         """
         self.clear()
 
+        # Batch append and update length once at end
+        count = 0
         for item in value:
-            self.append(item)
+            self._set_child_value(count, item)
+            count += 1
+
+        # Set final length metadata
+        self.container.set_metadata("__len__", count)
 
     def open_child[ViewT: View](self, address: int, view: type[ViewT]) -> ViewT:
         """Open child view at index.

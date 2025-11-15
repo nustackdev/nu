@@ -75,7 +75,12 @@ class SetView(StdView):
             value: Value to add
         """
         key = self._make_key(value)
+        is_new = not self.container.has_child(key)
         self._set_child_value(key, value)
+        # Update length metadata if new value
+        if is_new:
+            current_len = self.container.get_metadata("__len__", default=0)
+            self.container.set_metadata("__len__", int(current_len) + 1 if current_len is not None else 1)
 
     def remove(self, value: object) -> None:
         """Remove value from set.
@@ -90,6 +95,10 @@ class SetView(StdView):
         deleted = self.container.delete_child(key)
         if not deleted:
             raise KeyError(value)
+        # Update length metadata
+        current_len = self.container.get_metadata("__len__", default=0)
+        if current_len and int(current_len) > 0:
+            self.container.set_metadata("__len__", int(current_len) - 1)
 
     def discard(self, value: object) -> None:
         """Remove value from set if present.
@@ -98,7 +107,12 @@ class SetView(StdView):
             value: Value to remove
         """
         key = self._make_key(value)
-        self.container.delete_child(key)
+        deleted = self.container.delete_child(key)
+        # Update length metadata if actually deleted
+        if deleted:
+            current_len = self.container.get_metadata("__len__", default=0)
+            if current_len and int(current_len) > 0:
+                self.container.set_metadata("__len__", int(current_len) - 1)
 
     def __contains__(self, obj: object) -> bool:
         """Check if value in set.
@@ -118,7 +132,9 @@ class SetView(StdView):
         Returns:
             Number of values
         """
-        return self.container.count_children()
+        # Use metadata for O(1) length lookup
+        length = self.container.get_metadata("__len__", default=0)
+        return int(length) if length is not None else 0
 
     def __iter__(self) -> Generator[object, None, None]:
         """Iterate over values.
@@ -134,6 +150,8 @@ class SetView(StdView):
     def clear(self) -> None:
         """Remove all values."""
         self.container.clear_children()
+        # Reset length metadata
+        self.container.set_metadata("__len__", 0)
 
     def isdisjoint(self, other: PySet[object]) -> bool:
         """Check if no elements in common with other.
@@ -188,8 +206,16 @@ class SetView(StdView):
         """
         self.clear()
 
+        # Batch store and update length once at end
+        count = 0
         for item in value:
-            self.add(item)
+            key = self._make_key(item)
+            if not self.container.has_child(key):
+                self._set_child_value(key, item)
+                count += 1
+
+        # Set final length metadata
+        self.container.set_metadata("__len__", count)
 
 
 if TYPE_CHECKING:

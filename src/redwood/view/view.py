@@ -18,7 +18,7 @@ from .registry import ViewRegistry
 
 
 if TYPE_CHECKING:
-    from redwood.storage import StorageContextType
+    from redwood.storage import CallbackFn, StorageContextType, StorageProtocol, SubscriptionProtocol
     from redwood.types import Value
 
 __all__ = [
@@ -255,3 +255,108 @@ class View(ABC):
             raise TypeError(f"Child view {view_class.__name__} does not support initialization")
 
         child_view.store(value)
+
+    # =========================================================================
+    # WATCH METHODS: SUBSCRIPTIONS
+    # =========================================================================
+
+    def watch_child(
+        self,
+        storage: StorageProtocol,
+        key: key_.KeySegment,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to a specific child and its subtree.
+
+        Args:
+            storage: Storage instance for subscriptions
+            key: Child key to watch
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
+
+        Returns:
+            Subscription handle
+
+        Raises:
+            StorageOperationError: If subscription fails
+
+        Example:
+            >>> sub = view.watch_child(storage, "alice", my_callback)
+            >>> # Callback fires on changes to child and its subtree
+        """
+        return self.container.watch_child(storage, key, callback, depth)
+
+    def watch_children(
+        self,
+        storage: StorageProtocol,
+        *keys: key_.KeySegment,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> tuple[SubscriptionProtocol, ...]:
+        """Watch changes to multiple children and their subtrees.
+
+        Args:
+            storage: Storage instance for subscriptions
+            *keys: Child keys to watch
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
+
+        Returns:
+            Tuple of subscription handles
+
+        Raises:
+            StorageOperationError: If subscription fails
+
+        Example:
+            >>> subs = view.watch_children(storage, "alice", "bob", callback=my_callback)
+            >>> # subs is (sub1, sub2)
+        """
+        return self.container.watch_children(storage, *keys, callback=callback, depth=depth)
+
+    def watch_descendants(
+        self,
+        storage: StorageProtocol,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to all descendants of this view's container.
+
+        Args:
+            storage: Storage instance for subscriptions
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire tree, 0=exact, N=depth)
+
+        Returns:
+            Subscription handle
+
+        Raises:
+            StorageOperationError: If subscription fails
+
+        Example:
+            >>> sub = view.watch_descendants(storage, my_callback)
+            >>> # Callback fires on any change under this view
+        """
+        return self.container.watch_descendants(storage, callback, depth)
+
+    def unwatch(
+        self,
+        storage: StorageProtocol,
+        subscription: SubscriptionProtocol,
+    ) -> None:
+        """Unsubscribe from changes.
+
+        Convenience wrapper for storage.unsubscribe().
+
+        Args:
+            storage: Storage instance
+            subscription: Subscription to cancel
+
+        Raises:
+            StorageOperationError: If unsubscribe fails
+
+        Example:
+            >>> sub = view.watch_child(storage, "alice", callback)
+            >>> view.unwatch(storage, sub)
+        """
+        self.container.unwatch(storage, subscription)
