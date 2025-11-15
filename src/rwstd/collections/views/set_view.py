@@ -60,7 +60,7 @@ class SetView(
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.SET | ContainerProtocol.MUTABLE
     CONTAINER_CLS: ClassVar[type] = set
 
-    def _make_key(self, value: object) -> int:
+    def _make_key(self, value: object) -> str:
         """Convert value to storage key.
 
         Args:
@@ -71,7 +71,7 @@ class SetView(
         """
         pickled = pickle.dumps(value, protocol=4)  # Use fixed protocol
         # Returns int for use in hash tables, or use .hexdigest() for string
-        return int.from_bytes(hashlib.sha256(pickled).digest()[:64], "big")
+        return (hashlib.sha256(pickled).digest()[:32]).decode("utf-8", errors="replace")
 
     def add(self, value: object) -> None:
         """Add value to set.

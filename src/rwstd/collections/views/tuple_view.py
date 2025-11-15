@@ -188,8 +188,13 @@ class TupleView(
         """
         self.container.clear_children()
 
+        count = 0
         for index, item in enumerate(value):
             self._set_child_value(index, item)
+            count += 1
+
+        # Set final length metadata
+        self._set_length(count)
 
     def open_child[ViewT: View](self, address: int, view: type[ViewT]) -> ViewT:
         """Open child view at index.
