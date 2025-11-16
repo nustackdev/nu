@@ -17,17 +17,17 @@ from redwood.storage import SnapshotProtocol, StorageProtocol, TransactionProtoc
     params=[
         pytest.param("rocksdb", marks=pytest.mark.rocksdb),
         pytest.param("text", marks=pytest.mark.text),
+        pytest.param("inmemory", marks=pytest.mark.inmemory),
         # Future backends (currently commented out in codebase):
         # pytest.param("lmdb", marks=[pytest.mark.lmdb, pytest.mark.skip("not implemented")]),
-        # pytest.param("inmemory", marks=[pytest.mark.inmemory, pytest.mark.skip("not implemented")]),
     ],
     scope="session",
 )
 def backend_type(request: pytest.FixtureRequest) -> str:
     """Storage backend type for parametrization.
 
-    Currently active: RocksDB and Text (debug storage).
-    LMDB and InMemory implementations are commented out in the codebase.
+    Currently active: RocksDB, Text (debug storage), and InMemory (fast ephemeral).
+    LMDB implementation is commented out in the codebase.
     """
     return request.param
 
@@ -46,6 +46,8 @@ def codec(backend_type: str):
         return BinaryCodec()
     elif backend_type == "text":
         return TextCodec()
+    elif backend_type == "inmemory":
+        return BinaryCodec()
     else:
         raise ValueError(f"No codec for backend: {backend_type}")
 
@@ -75,6 +77,10 @@ def storage(
         from rwstd.storage import TextStorage
 
         storage = TextStorage(path=tmp_path / "test_db", codec=codec, log_operations=True)
+    elif backend_type == "inmemory":
+        from rwstd.storage import InMemoryStorage
+
+        storage = InMemoryStorage(codec=codec)
     else:
         raise ValueError(f"Backend not implemented: {backend_type}")
 

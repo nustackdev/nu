@@ -238,6 +238,7 @@ markers = [
     # Backend markers (for parametrized storage tests)
     "rocksdb: RocksDB backend tests",
     "text: TextStorage backend tests",
+    "inmemory: InMemoryStorage backend tests",
     # Legacy/specific markers
     "codec: Codec-specific tests",
     "slow: Slow-running tests",

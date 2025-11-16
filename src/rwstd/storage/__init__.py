@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-# Codec adapters
 from .codecs import (
     BinaryCodec,
     BinaryKeyCodec,
@@ -15,11 +14,8 @@ from .codecs import (
     StringKeyCodec,
     TextCodec,
 )
-
-# Observer adapters
+from .in_memory import InMemoryStorage
 from .observers import InMemoryObserver, InMemoryObserverSpec
-
-# Storages
 from .rocks_db import RocksDBStorage
 from .text import TextStorage
 
@@ -29,6 +25,7 @@ __all__ = [
     "BinaryKeyCodec",
     "InMemoryObserver",
     "InMemoryObserverSpec",
+    "InMemoryStorage",
     "JSONCodec",
     "MessagePackCodec",
     "MicroPackCodec",
