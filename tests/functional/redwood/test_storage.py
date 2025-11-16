@@ -117,7 +117,7 @@ def test_transaction_get_nonexistent_raises(storage):
     try:
         with storage.transaction() as txn:
             txn.get(key)
-        assert False, "Should have raised StorageKeyError"
+        raise AssertionError("Should have raised StorageKeyError")
     except StorageKeyError:
         pass
 
@@ -280,7 +280,7 @@ def test_snapshot_after_close_raises(storage):
 
     try:
         snap.get(("any", "key"))
-        assert False, "Should have raised StorageClosedError"
+        raise AssertionError("Should have raised StorageClosedError")
     except StorageClosedError:
         pass
 
@@ -632,7 +632,7 @@ def test_write_batch_operations_after_close_raise(storage):
     # Operations after close should raise
     try:
         batch.put(("any", "key"), {"data": "test"})
-        assert False, "Should have raised StorageClosedError"
+        raise AssertionError("Should have raised StorageClosedError")
     except StorageClosedError:
         pass
 

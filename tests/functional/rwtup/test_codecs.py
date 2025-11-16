@@ -6,11 +6,15 @@ using pytest parametrization.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from hypothesis import given
 from hypothesis import strategies as st
 
-from rwtup.protocols import KeyCodec
-from rwtup.types import Key
+
+if TYPE_CHECKING:
+    from rwtup.protocols import KeyCodec
+    from rwtup.types import Key
 
 
 # ============================================================================

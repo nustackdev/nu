@@ -330,6 +330,7 @@ convention = "google"  # Use Google style format
     "T20",    # print allowed in tests
     "D",      # docstrings not required in tests
     "ANN",    # type annotations not required in tests
+    "N806",   # disable variable name checks like `User = collection_shapes["User"]`
 ]
 "examples/**/*.py" = [
     "S101",   # assert allowed in examples

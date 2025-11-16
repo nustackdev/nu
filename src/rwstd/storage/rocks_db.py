@@ -37,7 +37,7 @@ from rwstd.lazy_import import lazy_import
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator, Iterator
 
     import rwrocks as _rwrocks  # type: ignore[import]
     from redwood.loc.key import Key
@@ -693,7 +693,6 @@ class RocksDBTransaction(
 # OPTIMIZED Scan Iterator
 # =============================================================================
 
-from collections.abc import Generator
 from enum import Enum, auto
 from typing import Literal, overload
 
