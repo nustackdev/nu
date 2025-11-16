@@ -7,7 +7,7 @@ This module provides concrete slot types that create refs:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from redwood.shape import Slot
 
@@ -64,7 +64,7 @@ class _PrimitiveSlot(Slot):
         )
 
 
-def PrimitiveSlot(value_type: type[Value]) -> Any:  # noqa: ANN401, N802
+def PrimitiveSlot[V: Value](value_type: type[V]) -> ValueRef[V]:  # noqa: N802
     """Create a value slot for primitive types.
 
     Factory function that returns a slot instance.
@@ -81,7 +81,7 @@ def PrimitiveSlot(value_type: type[Value]) -> Any:  # noqa: ANN401, N802
             age: ValueRef[int] = ValueSlot(int)
             balance: ValueRef[float] = ValueSlot(float)
     """
-    return _PrimitiveSlot(value_type=value_type)
+    return _PrimitiveSlot(value_type=value_type)  # type: ignore
 
 
 # =============================================================================
@@ -121,7 +121,7 @@ class _ShapeSlot(Slot):
         )
 
 
-def ShapeSlot(shape_type: type[Shape], view_type: type[MutableMapping] | None = None) -> Any:  # noqa: ANN401, N802
+def ShapeSlot[S: Shape](shape_type: type[S], view_type: type[MutableMapping] | None = None) -> S:  # noqa: N802
     """Create a shape slot for nested shapes.
 
     Factory function that returns a slot instance.
@@ -145,7 +145,7 @@ def ShapeSlot(shape_type: type[Shape], view_type: type[MutableMapping] | None = 
     """
     from rwstd.collections.views import DictView
 
-    return _ShapeSlot(shape_type=shape_type, view_type=view_type or DictView)
+    return _ShapeSlot(shape_type=shape_type, view_type=view_type or DictView)  # type: ignore
 
 
 # =============================================================================
@@ -185,7 +185,9 @@ class _MappingSlot(Slot):
         )
 
 
-def MappingSlot(value_type: type, view_type: type[MutableMapping] | None = None) -> Any:  # noqa: ANN401, N802
+def MappingSlot[V: Value, M: MutableMapping](  # noqa: N802
+    value_type: type[V], view_type: type[M] | None = None
+) -> MappingRef[str | int, V]:
     """Create a mapping slot for dict-like collections.
 
     Factory function that returns a slot instance.
@@ -221,7 +223,7 @@ def MappingSlot(value_type: type, view_type: type[MutableMapping] | None = None)
     """
     from rwstd.collections.views import DictView
 
-    return _MappingSlot(value_type=value_type, view_type=view_type or DictView)
+    return _MappingSlot(value_type=value_type, view_type=view_type or DictView)  # type: ignore
 
 
 # =============================================================================
@@ -261,7 +263,9 @@ class _SequenceSlot(Slot):
         )
 
 
-def SequenceSlot(item_type: type, view_type: type[MutableSequence] | None = None) -> Any:  # noqa: ANN401, N802
+def SequenceSlot[V: Value, S: MutableSequence](  # noqa: N802
+    item_type: type[V], view_type: type[S] | None = None
+) -> SequenceRef[V]:
     """Create a sequence slot for list-like collections.
 
     Factory function that returns a slot instance.
@@ -297,7 +301,7 @@ def SequenceSlot(item_type: type, view_type: type[MutableSequence] | None = None
     """
     from rwstd.collections.views import ListView
 
-    return _SequenceSlot(item_type=item_type, view_type=view_type or ListView)
+    return _SequenceSlot(item_type=item_type, view_type=view_type or ListView)  # type: ignore
 
 
 # =============================================================================
@@ -337,7 +341,9 @@ class _SequenceShapeSlot(Slot):
         )
 
 
-def SequenceShapeSlot(shape_type: type[Shape], view_type: type[MutableSequence] | None = None) -> Any:  # noqa: ANN401, N802
+def SequenceShapeSlot[S: Shape, SeqT: MutableSequence](  # noqa: N802
+    shape_type: type[S], view_type: type[SeqT] | None = None
+) -> SequenceShapeRef[S]:
     """Create a sequence slot for list-like collections of shapes.
 
     Factory function that returns a slot instance for homogeneous shape collections.
@@ -371,7 +377,7 @@ def SequenceShapeSlot(shape_type: type[Shape], view_type: type[MutableSequence] 
     """
     from rwstd.collections.views import ListView
 
-    return _SequenceShapeSlot(shape_type=shape_type, view_type=view_type or ListView)
+    return _SequenceShapeSlot(shape_type=shape_type, view_type=view_type or ListView)  # type: ignore
 
 
 # =============================================================================
@@ -411,7 +417,9 @@ class _MappingShapeSlot(Slot):
         )
 
 
-def MappingShapeSlot(shape_type: type[Shape], view_type: type[MutableMapping] | None = None) -> Any:  # noqa: ANN401, N802
+def MappingShapeSlot[S: Shape, M: MutableMapping](  # noqa: N802
+    shape_type: type[S], view_type: type[M] | None = None
+) -> MappingShapeRef[str | int, S]:
     """Create a mapping slot for dict-like collections of shapes.
 
     Factory function that returns a slot instance for homogeneous shape collections.
@@ -445,4 +453,4 @@ def MappingShapeSlot(shape_type: type[Shape], view_type: type[MutableMapping] | 
     """
     from rwstd.collections.views import DictView
 
-    return _MappingShapeSlot(shape_type=shape_type, view_type=view_type or DictView)
+    return _MappingShapeSlot(shape_type=shape_type, view_type=view_type or DictView)  # type: ignore
