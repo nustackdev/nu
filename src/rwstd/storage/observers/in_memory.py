@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 import attrs
 from mesh import Attach, ResourceSpec, Spec, SyncResource
 
-from .observer import BaseObserver
+from ._base import BaseObserver
 
 
 if TYPE_CHECKING:

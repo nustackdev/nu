@@ -12,16 +12,12 @@ from pathlib import Path
 from redwood import Context
 from rwstd.collections import DictView
 from rwstd.shapes import (
-    MappingShapeRef,
     MappingShapeSlot,
     PrimitiveSlot,
-    SequenceShapeRef,
     SequenceShapeSlot,
     Shape,
-    ValueRef,
 )
-from rwstd.storage.codecs import BinaryCodec
-from rwstd.storage.storage_rocksdb import RocksDBStorage
+from rwstd.storage import BinaryCodec, RocksDBStorage
 
 
 # =============================================================================
@@ -32,28 +28,28 @@ from rwstd.storage.storage_rocksdb import RocksDBStorage
 class Order(Shape):
     """Order information."""
 
-    id: ValueRef[str] = PrimitiveSlot(str)
-    symbol: ValueRef[str] = PrimitiveSlot(str)
-    quantity: ValueRef[int] = PrimitiveSlot(int)
-    price: ValueRef[float] = PrimitiveSlot(float)
+    id = PrimitiveSlot(str)
+    symbol = PrimitiveSlot(str)
+    quantity = PrimitiveSlot(int)
+    price = PrimitiveSlot(float)
 
 
 class SymbolInfo(Shape):
     """Individual symbol information."""
 
-    price: ValueRef[float] = PrimitiveSlot(float)
-    volume: ValueRef[int] = PrimitiveSlot(int)
-    exchange: ValueRef[str] = PrimitiveSlot(str)
+    price = PrimitiveSlot(float)
+    volume = PrimitiveSlot(int)
+    exchange = PrimitiveSlot(str)
 
 
 class Market(Shape):
     """Market data with shape collections."""
 
     # Sequence of Order shapes
-    orders: SequenceShapeRef[Order] = SequenceShapeSlot(Order)
+    orders = SequenceShapeSlot(Order)
 
     # Mapping of symbol name to SymbolInfo
-    symbols: MappingShapeRef[str, SymbolInfo] = MappingShapeSlot(SymbolInfo)
+    symbols = MappingShapeSlot(SymbolInfo)
 
 
 # =============================================================================

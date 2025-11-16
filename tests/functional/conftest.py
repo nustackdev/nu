@@ -40,7 +40,7 @@ def backend_type(request: pytest.FixtureRequest) -> str:
 @pytest.fixture(scope="session")
 def codec(backend_type: str):
     """Codec matched to backend type."""
-    from rwstd.storage.codecs import BinaryCodec, TextCodec
+    from rwstd.storage import BinaryCodec, TextCodec
 
     if backend_type == "rocksdb":
         return BinaryCodec()
@@ -68,11 +68,11 @@ def storage(
     Uses tmp_path for ephemeral test databases. Each test gets a clean storage instance.
     """
     if backend_type == "rocksdb":
-        from rwstd.storage.storage_rocksdb import RocksDBStorage
+        from rwstd.storage import RocksDBStorage
 
         storage = RocksDBStorage(path=tmp_path / "test_db", codec=codec)
     elif backend_type == "text":
-        from rwstd.storage.storage_text import TextStorage
+        from rwstd.storage import TextStorage
 
         storage = TextStorage(path=tmp_path / "test_db", codec=codec, log_operations=True)
     else:

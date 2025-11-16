@@ -106,7 +106,7 @@ build-debug:
 # ============================================================================
 test:
 	@echo "$(BLUE)Running all tests...$(NC)"
-	pytest $(TEST_DIR) -v
+	pytest $(TEST_DIR) -n 4
 
 test-fast:
 	@echo "$(BLUE)Running fast tests (no slow tests)...$(NC)"

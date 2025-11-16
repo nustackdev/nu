@@ -32,7 +32,7 @@ def test_storage_open_close(storage):
 
 def test_storage_context_manager(tmp_path, codec):
     """Test storage context manager auto open/close."""
-    from rwstd.storage.storage_rocksdb import RocksDBStorage
+    from rwstd.storage import RocksDBStorage
 
     db_path = tmp_path / "ctx_test_db"
 
@@ -621,6 +621,7 @@ def test_write_batch_isolation(storage):
     with storage.transaction() as txn:
         assert txn.has(key)
 
+
 def test_write_batch_operations_after_close_raise(storage):
     """Test write batch operations after close raise error."""
     from redwood.storage import StorageClosedError
@@ -639,7 +640,7 @@ def test_write_batch_operations_after_close_raise(storage):
 def test_write_batch_bulk_writes(storage):
     """Test write batch efficient bulk write operations."""
     # Write batch should be efficient for bulk operations
-    keys = [(f"batch", f"bulk_{i:03d}") for i in range(100)]
+    keys = [("batch", f"bulk_{i:03d}") for i in range(100)]
 
     with storage.begin_write_batch() as batch:
         for i, key in enumerate(keys):

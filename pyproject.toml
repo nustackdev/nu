@@ -329,11 +329,13 @@ convention = "google"  # Use Google style format
     "S101",   # assert allowed in tests
     "T20",    # print allowed in tests
     "D",      # docstrings not required in tests
+    "ANN",    # type annotations not required in tests
 ]
 "examples/**/*.py" = [
     "S101",   # assert allowed in examples
     "T20",    # print allowed in examples
     "D",      # docstrings not required in examples
+    "ANN",    # type annotations not required in examples
 ]
 "setup.py" = [
     "T20",    # print allowed in setup

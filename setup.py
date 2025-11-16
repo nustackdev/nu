@@ -33,19 +33,21 @@ from setuptools import Extension, setup
 # ============================================================================
 # Configuration
 # ============================================================================
-
-# Determine if we're building rwrocks (has Cython files)
-RWROCKS_PATH = Path("src/rwrocks")
-HAS_RWROCKS = RWROCKS_PATH.exists() and list(RWROCKS_PATH.glob("*.pyx"))
-
-# Get dependency directory from environment (set by build scripts)
-DEP_DIR = os.environ.get("RWROCKS_DEP_DIR", None)
-
 # Detect platform
 SYSTEM = platform.system()
 IS_LINUX = SYSTEM == "Linux"
 IS_MACOS = SYSTEM == "Darwin"
 IS_WINDOWS = SYSTEM == "Windows"
+
+# Config for rwtup
+RWTUP_PATH = Path("src/rwtup")
+
+# Config for rwrocks
+# Determine if we're building rwrocks (has Cython files)
+RWROCKS_PATH = Path("src/rwrocks")
+HAS_RWROCKS = RWROCKS_PATH.exists() and list(RWROCKS_PATH.glob("*.pyx"))
+# Get dependency directory from environment (set by build scripts)
+DEP_DIR = os.environ.get("RWROCKS_DEP_DIR", None)
 
 
 # ============================================================================
@@ -236,7 +238,7 @@ def get_link_args() -> list[str]:
 def create_rwrocks_extensions() -> list[Extension]:
     """Create Extension objects for rwrocks Cython files."""
     if not HAS_RWROCKS:
-        print("⚠️  No rwrocks package found or no .pyx files - skipping Cython compilation")
+        print("No rwrocks package found or no .pyx files - skipping Cython compilation")
         return []
 
     print("=" * 80)
@@ -247,7 +249,7 @@ def create_rwrocks_extensions() -> list[Extension]:
     try:
         from Cython.Build import cythonize
     except ImportError:
-        print("❌ ERROR: Cython not found!")
+        print("ERROR: Cython not found!")
         print("   Install it with: pip install Cython>=3.0")
         sys.exit(1)
 
@@ -255,7 +257,7 @@ def create_rwrocks_extensions() -> list[Extension]:
     pyx_files = find_cython_files(RWROCKS_PATH)
 
     if not pyx_files:
-        print("⚠️  No .pyx files found in rwrocks")
+        print("No .pyx files found in rwrocks")
         return []
 
     print(f"📦 Found {len(pyx_files)} Cython file(s):")
@@ -316,7 +318,7 @@ def create_rwrocks_extensions() -> list[Extension]:
         annotate=False,  # Set to True for debugging to generate .html files
     )
 
-    print(f"✅ Successfully created {len(cythonized)} extension(s)")
+    print(f"Successfully created {len(cythonized)} extension(s)")
     print("=" * 80)
 
     return cythonized
@@ -324,11 +326,11 @@ def create_rwrocks_extensions() -> list[Extension]:
 
 def create_rwtup_extensions() -> list[Extension]:
     """Create Extension objects for rwtup Cython files."""
-    RWTUP_PATH = Path("src/rwtup")
+
     pyx_files = find_cython_files(RWTUP_PATH)
 
     if not pyx_files:
-        print("⚠️  No .pyx files found in rwtup")
+        print("No .pyx files found in rwtup")
         return []
 
     print("=" * 80)
@@ -339,7 +341,7 @@ def create_rwtup_extensions() -> list[Extension]:
     try:
         from Cython.Build import cythonize
     except ImportError:
-        print("❌ ERROR: Cython not found!")
+        print("ERROR: Cython not found!")
         print("   Install it with: pip install Cython>=3.0")
         sys.exit(1)
 
@@ -384,7 +386,7 @@ def create_rwtup_extensions() -> list[Extension]:
         annotate=False,  # Set to True for debugging to generate .html files
     )
 
-    print(f"✅ Successfully created {len(cythonized)} extension(s)")
+    print(f"Successfully created {len(cythonized)} extension(s)")
     print("=" * 80)
 
     return cythonized
@@ -405,7 +407,7 @@ def main() -> None:
     if "bdist_wheel" in sys.argv or "build" in sys.argv or "install" in sys.argv:
         if extensions and not DEP_DIR:
             print("\n" + "=" * 80)
-            print("⚠️  WARNING: Building without RWROCKS_DEP_DIR set!")
+            print("WARNING: Building without RWROCKS_DEP_DIR set!")
             print("=" * 80)
             print("This may fail if RocksDB is not installed system-wide.")
             print("For CI/CD builds, ensure build-rocksdb-*.sh scripts run first.")
@@ -427,10 +429,10 @@ def main() -> None:
     )
 
     if extensions:
-        print("\n✅ Build completed successfully!")
+        print("\nBuild completed successfully!")
         print("   rwrocks RocksDB bindings are ready to use.")
     else:
-        print("\n✅ Build completed (pure Python packages only)")
+        print("\nBuild completed (pure Python packages only)")
 
 
 if __name__ == "__main__":

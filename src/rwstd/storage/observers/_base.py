@@ -1,3 +1,5 @@
+"""Observer base."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -43,10 +45,12 @@ class BaseObserver[EncodedKeyT](ABC):
     codec: CodecProtocol[EncodedKeyT, Any]
 
     def setup(self) -> None:
+        """Setup implementation."""
         self._connected = False
         self.connect()
 
     def cleanup(self) -> None:
+        """Cleanup implementation."""
         self.disconnect()
 
     def _ensure_connected(self) -> None:
@@ -127,9 +131,9 @@ class BaseObserver[EncodedKeyT](ABC):
         """Subscribe to topic pattern.
 
         Args:
-            key: Topic pattern to match
+            prefix: Topic pattern to match
             callback: Sync callback for notifications
-            depth: Depth of topic pattern matching (default: 0 for exact match)
+            prefix_depth: Depth of topic pattern matching (default: 0 for exact match)
                 If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
 
         Returns:
@@ -192,12 +196,15 @@ class Subscription:
 
     @property
     def prefix(self) -> key.Key:
+        """Prefix access."""
         return self._prefix
 
     @property
     def callback(self) -> CallbackFn:
+        """Callback access."""
         return self._callback
 
     @property
     def prefix_depth(self) -> int:
+        """prefix_depth access."""
         return self._prefix_depth
