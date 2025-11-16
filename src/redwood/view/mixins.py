@@ -11,9 +11,12 @@ This module provides reusable mixins that encapsulate common view patterns:
 from __future__ import annotations
 
 from abc import abstractmethod
+from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from redwood.loc import key as key_
+
+logger = getLogger(__name__)
 from redwood.tree import Container, ContainerStructure, NodeType
 from redwood.types import Convertible, Empty, Initializable, is_empty
 
@@ -251,6 +254,10 @@ class ChildNestedGetMixin:
         # Get structure ID
         child_info = child_container.info()
         if child_info.structure is None:
+            logger.error(
+                "Child container has no structure ID",
+                extra={"parent_path": self.container.path, "child_key": key},
+            )
             raise ValueError(f"Child container '{key}' has no structure ID")
 
         # Find appropriate view
@@ -259,8 +266,25 @@ class ChildNestedGetMixin:
 
         # Extract if supported
         if not isinstance(child_view, Convertible):
+            logger.error(
+                "Child view does not support extraction",
+                extra={
+                    "parent_path": self.container.path,
+                    "child_key": key,
+                    "view_class": view_class.__name__,
+                },
+            )
             raise TypeError(f"Child view {view_class.__name__} does not support extraction")
 
+        logger.debug(
+            "Extracting child container",
+            extra={
+                "parent_path": self.container.path,
+                "child_key": key,
+                "view_class": view_class.__name__,
+                "structure": child_info.structure,
+            },
+        )
         return child_view.extract()
 
 
@@ -318,6 +342,17 @@ class ChildNestedSetMixin:
         structure_id = view_class.get_structure()
         protocol_hints = view_class.get_protocol()
 
+        logger.debug(
+            "Populating child container",
+            extra={
+                "parent_path": self.container.path,
+                "child_key": key,
+                "value_type": value_type.__name__,
+                "view_class": view_class.__name__,
+                "structure": structure_id,
+            },
+        )
+
         # Create child container
         child_container = self.container.create_child_container(
             key=key,
@@ -330,6 +365,14 @@ class ChildNestedSetMixin:
 
         # Store if supported
         if not isinstance(child_view, Initializable):
+            logger.error(
+                "Child view does not support initialization",
+                extra={
+                    "parent_path": self.container.path,
+                    "child_key": key,
+                    "view_class": view_class.__name__,
+                },
+            )
             raise TypeError(f"Child view {view_class.__name__} does not support initialization")
 
         child_view.store(value)

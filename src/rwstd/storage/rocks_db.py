@@ -12,9 +12,12 @@ from __future__ import annotations
 
 import threading
 from contextlib import contextmanager
+from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
+
+logger = getLogger(__name__)
 
 from redwood.storage import (
     CodecProtocol,
@@ -509,10 +512,13 @@ class RocksDBWriteBatch(
             StorageClosedError: If already written or aborted
         """
         if self._closed:
+            logger.error("Cannot write, batch is closed", extra={"batch_id": str(self._uuid)})
             raise StorageClosedError("Write batch is closed")
         if self._written:
+            logger.error("Cannot write, batch already written", extra={"batch_id": str(self._uuid)})
             raise StorageTransactionError("Write batch already written")
         if self._aborted:
+            logger.error("Cannot write, batch already aborted", extra={"batch_id": str(self._uuid)})
             raise StorageTransactionError("Write batch already aborted")
 
         batch = self._require_active()
@@ -522,7 +528,17 @@ class RocksDBWriteBatch(
             with self._storage._db_lock:
                 self._storage._db.write(batch)
         except Exception as e:
+            logger.error(
+                "Write batch write failed",
+                extra={"batch_id": str(self._uuid), "error": str(e)},
+                exc_info=True,
+            )
             raise StorageTransactionError(f"Failed to write batch: {e}") from e
+
+        logger.info(
+            "Write batch written",
+            extra={"batch_id": str(self._uuid), "modified_keys": len(self._modified_keys)},
+        )
 
         # Mark as written before notifications
         self._written = True
@@ -544,13 +560,24 @@ class RocksDBWriteBatch(
         """
         if self._closed:
             # Already closed, nothing to do
+            logger.debug("Abort called on closed write batch", extra={"batch_id": str(self._uuid)})
             return
 
         try:
+            logger.info(
+                "Write batch aborted",
+                extra={"batch_id": str(self._uuid), "discarded_keys": len(self._modified_keys)},
+            )
+
             self._aborted = True
             self._mark_closed()
             self._storage._remove_write_batch(self)
         except Exception as e:
+            logger.error(
+                "Write batch abort failed",
+                extra={"batch_id": str(self._uuid), "error": str(e)},
+                exc_info=True,
+            )
             raise StorageTransactionError(f"Failed to abort write batch: {e}") from e
 
     def __enter__(self) -> RocksDBWriteBatch:
@@ -640,8 +667,14 @@ class RocksDBTransaction(
             StorageClosedError: If context is closed
         """
         if self._committed:
+            logger.error(
+                "Cannot commit, transaction already committed", extra={"txn_id": str(self._uuid)}
+            )
             raise StorageTransactionError("Transaction already committed")
         if self._aborted:
+            logger.error(
+                "Cannot commit, transaction already aborted", extra={"txn_id": str(self._uuid)}
+            )
             raise StorageTransactionError("Transaction already aborted")
 
         txn = self._require_active()
@@ -651,7 +684,17 @@ class RocksDBTransaction(
             with self._storage._db_lock:
                 txn.commit()
         except Exception as e:
+            logger.error(
+                "Transaction commit failed",
+                extra={"txn_id": str(self._uuid), "error": str(e)},
+                exc_info=True,
+            )
             raise StorageTransactionError(f"Failed to commit transaction: {e}") from e
+
+        logger.info(
+            "Transaction committed",
+            extra={"txn_id": str(self._uuid), "modified_keys": len(self._modified_keys)},
+        )
 
         # Mark as committed before notifications
         self._committed = True
@@ -672,8 +715,14 @@ class RocksDBTransaction(
             StorageClosedError: If context is closed
         """
         if self._committed:
+            logger.error(
+                "Cannot abort, transaction already committed", extra={"txn_id": str(self._uuid)}
+            )
             raise StorageTransactionError("Transaction already committed")
         if self._aborted:
+            logger.error(
+                "Cannot abort, transaction already aborted", extra={"txn_id": str(self._uuid)}
+            )
             raise StorageTransactionError("Transaction already aborted")
 
         txn = self._require_active()
@@ -681,7 +730,17 @@ class RocksDBTransaction(
         try:
             with self._storage._db_lock:
                 txn.rollback()
+
+            logger.info(
+                "Transaction aborted",
+                extra={"txn_id": str(self._uuid), "discarded_keys": len(self._modified_keys)},
+            )
         except Exception as e:
+            logger.error(
+                "Transaction abort failed",
+                extra={"txn_id": str(self._uuid), "error": str(e)},
+                exc_info=True,
+            )
             raise StorageTransactionAbortedError(f"Failed to abort transaction: {e}") from e
         finally:
             self._aborted = True

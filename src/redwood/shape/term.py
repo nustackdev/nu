@@ -48,6 +48,9 @@ Example usage:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from logging import getLogger
+
+logger = getLogger(__name__)
 from typing import TYPE_CHECKING
 
 from redwood.loc import path
@@ -432,10 +435,21 @@ class ViewRefBase[ViewT: type[View]](Ref[path.PathToView], ABC):
             address = self.address
 
         if self.parent_ref is None:
-            return ((address, self.view_type),)
+            resolved_path = ((address, self.view_type),)
         else:
             parent_path = self.parent_ref.resolve(context)
-            return (*parent_path, (address, self.view_type))
+            resolved_path = (*parent_path, (address, self.view_type))
+
+        logger.debug(
+            "ViewRef resolved",
+            extra={
+                "address": address,
+                "view_type": self.view_type.__name__,
+                "has_parent": self.parent_ref is not None,
+                "resolved_path": resolved_path,
+            },
+        )
+        return resolved_path
 
     def __repr__(self) -> str:
         """ViewRef representation in machine-friendly format."""
@@ -477,10 +491,21 @@ class PrimitiveRefBase[ValueT: Value](Ref[path.PathToValue], ABC):
             address = self.address
 
         if self.parent_ref is None:
-            return ((self.address, self.value_type),)
+            resolved_path = ((self.address, self.value_type),)
         else:
             parent_path = self.parent_ref.resolve(context)
-            return (*parent_path, (address, self.value_type))
+            resolved_path = (*parent_path, (address, self.value_type))
+
+        logger.debug(
+            "PrimitiveRef resolved",
+            extra={
+                "address": address,
+                "value_type": type(self.value_type).__name__,
+                "has_parent": self.parent_ref is not None,
+                "resolved_path": resolved_path,
+            },
+        )
+        return resolved_path
 
     def __repr__(self) -> str:
         """PrimitiveRef representation in machine-friendly format."""

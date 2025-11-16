@@ -7,9 +7,12 @@ delegate validation to the validation module.
 
 from __future__ import annotations
 
+from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from redwood.loc import key as key_
+
+logger = getLogger(__name__)
 from redwood.storage import StorageKeyError, StorageScanOptions
 from redwood.types import EMPTY, Empty, Value
 
@@ -112,13 +115,25 @@ def create_container(
     if node_info.exists:
         # Primitive check
         if node_info.node_type != NodeType.CONTAINER:
+            logger.error(
+                "Path exists as primitive, cannot create container",
+                extra={"path": path, "node_type": node_info.node_type.name},
+            )
             raise PathTypeError(f"Path exists as primitive: {path}")
 
         # Existing container type compatibility
         try:
             validate_compatible(path, structure, protocol, ctx, node_info=node_info)
+            logger.debug(
+                "Container already exists with compatible type",
+                extra={"path": path, "structure": structure, "protocol": protocol},
+            )
             return False  # Already exists with compatible type
         except PathTypeError:
+            logger.error(
+                "Container exists with incompatible type",
+                extra={"path": path, "structure": structure, "protocol": protocol},
+            )
             raise PathExistsError(f"Container exists with incompatible type: {path}") from None
 
     # Ensure parents chain is healthy
@@ -142,6 +157,11 @@ def create_container(
 
     wctx = require_write_context(ctx)
     wctx.put(path, marker)
+
+    logger.info(
+        "Container created",
+        extra={"path": path, "structure": structure, "protocol": protocol},
+    )
     return True
 
 
@@ -169,9 +189,14 @@ def delete_container(
     """
     info = get_node_info(path, ctx)
     if not info.exists:
+        logger.debug("Cannot delete container, path does not exist", extra={"path": path})
         return False
 
     if info.node_type != NodeType.CONTAINER:
+        logger.error(
+            "Cannot delete container, path is not a container",
+            extra={"path": path, "node_type": info.node_type.name},
+        )
         raise PathTypeError(f"Path is not a container: {path}")
 
     return delete_subtree(path, ctx) > 0
@@ -212,6 +237,7 @@ def delete_subtree(path: key_.Key, ctx: StorageContextType) -> int:
         except StorageKeyError:
             pass
 
+    logger.info("Subtree deleted", extra={"path": path, "deleted_count": deleted_count})
     return deleted_count
 
 
@@ -474,6 +500,16 @@ def set_child_primitive(
 
     require_write_context(ctx).put(child_path, value)
 
+    logger.debug(
+        "Child primitive set",
+        extra={
+            "parent_path": parent_path,
+            "key": key,
+            "value_type": type(value).__name__,
+            "existed": child_node_info.exists,
+        },
+    )
+
 
 def get_child_primitive(
     parent_path: key_.Key,
@@ -534,16 +570,32 @@ def delete_child(
     info = get_node_info(child_path, ctx)
 
     if not info.exists:
+        logger.debug(
+            "Cannot delete child, does not exist",
+            extra={"parent_path": parent_path, "key": key},
+        )
         return False
 
     if info.node_type == NodeType.CONTAINER:
-        return delete_container(child_path, ctx)
+        deleted = delete_container(child_path, ctx)
     else:
         try:
             require_write_context(ctx).delete(child_path)
-            return True
+            deleted = True
         except StorageKeyError:
-            return False
+            deleted = False
+
+    if deleted:
+        logger.debug(
+            "Child deleted",
+            extra={
+                "parent_path": parent_path,
+                "key": key,
+                "node_type": info.node_type.name,
+            },
+        )
+
+    return deleted
 
 
 def clear_children(path: key_.Key, ctx: StorageContextType) -> int:
@@ -569,6 +621,8 @@ def clear_children(path: key_.Key, ctx: StorageContextType) -> int:
     for key in list_child_keys(path, ctx):
         if delete_child(path, key, ctx):
             count += 1
+
+    logger.info("Children cleared", extra={"path": path, "cleared_count": count})
     return count
 
 
@@ -703,5 +757,15 @@ def create_parents(
         marker = create_marker(default_structure, default_protocol)
         wctx.put(missing_path, marker)
         created.append(missing_path)
+
+    if created:
+        logger.info(
+            "Missing parents created",
+            extra={
+                "target_path": path,
+                "created_count": len(created),
+                "created_paths": created,
+            },
+        )
 
     return created

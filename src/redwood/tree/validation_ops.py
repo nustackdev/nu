@@ -8,9 +8,12 @@ raise exceptions on failure.
 
 from __future__ import annotations
 
+from logging import getLogger
 from typing import TYPE_CHECKING
 
 from .exceptions import PathExistsError, PathNotFoundError, PathTypeError
+
+logger = getLogger(__name__)
 from .node_ops import gather_parent_info, get_node_info, get_node_type
 from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, ParentChainInfo
 
@@ -49,6 +52,7 @@ def validate_exists(
     """
     node_type = get_node_type(path, ctx) if node_type is None else node_type
     if node_type == NodeType.NOT_FOUND:
+        logger.warning("Validation failed: path does not exist", extra={"path": path})
         raise PathNotFoundError(f"Path does not exist: {path}")
 
 
@@ -70,6 +74,10 @@ def validate_not_exists(
     """
     node_type = get_node_type(path, ctx) if node_type is None else node_type
     if node_type != NodeType.NOT_FOUND:
+        logger.warning(
+            "Validation failed: path already exists",
+            extra={"path": path, "node_type": node_type.name},
+        )
         raise PathExistsError(f"Path already exists: {path}")
 
 
@@ -92,8 +100,13 @@ def validate_is_container(
     """
     node_type = get_node_type(path, ctx) if node_type is None else node_type
     if node_type == NodeType.NOT_FOUND:
+        logger.warning("Validation failed: path does not exist", extra={"path": path})
         raise PathNotFoundError(f"Path does not exist: {path}")
     if node_type != NodeType.CONTAINER:
+        logger.warning(
+            "Validation failed: path is not a container",
+            extra={"path": path, "actual_type": node_type.name},
+        )
         raise PathTypeError(f"Path is not a container: {path}")
 
 
@@ -116,8 +129,13 @@ def validate_is_primitive(
     """
     node_type = get_node_type(path, ctx) if node_type is None else node_type
     if node_type == NodeType.NOT_FOUND:
+        logger.warning("Validation failed: path does not exist", extra={"path": path})
         raise PathNotFoundError(f"Path does not exist: {path}")
     if node_type != NodeType.PRIMITIVE:
+        logger.warning(
+            "Validation failed: path is not a primitive",
+            extra={"path": path, "actual_type": node_type.name},
+        )
         raise PathTypeError(f"Path is not a primitive: {path}")
 
 
@@ -139,6 +157,10 @@ def validate_parents_exist(
     """
     parent_info = gather_parent_info(path, ctx) if parent_info is None else parent_info
     if not parent_info.all_exist:
+        logger.warning(
+            "Validation failed: missing parent containers",
+            extra={"path": path, "missing_paths": parent_info.missing_paths},
+        )
         raise PathNotFoundError(f"Missing parent containers: {parent_info.missing_paths}")
 
 
@@ -160,6 +182,10 @@ def validate_parents_healthy(
     """
     parent_info = gather_parent_info(path, ctx) if parent_info is None else parent_info
     if not parent_info.all_healthy:
+        logger.error(
+            "Validation failed: malformed parent containers",
+            extra={"path": path, "malformed_paths": parent_info.malformed_paths},
+        )
         raise PathTypeError(f"Malformed parent containers: {parent_info.malformed_paths}")
 
 
@@ -186,9 +212,17 @@ def validate_parents_chain(
     parent_info = gather_parent_info(path, ctx) if parent_info is None else parent_info
 
     if not parent_info.all_exist:
+        logger.warning(
+            "Validation failed: parent chain broken, missing containers",
+            extra={"path": path, "missing_paths": parent_info.missing_paths},
+        )
         raise PathNotFoundError(f"Missing parent containers: {parent_info.missing_paths}")
 
     if not parent_info.all_healthy:
+        logger.error(
+            "Validation failed: parent chain broken, malformed containers",
+            extra={"path": path, "malformed_paths": parent_info.malformed_paths},
+        )
         raise PathTypeError(f"Malformed parent containers: {parent_info.malformed_paths}")
 
 
@@ -225,22 +259,47 @@ def validate_compatible(
     node_info = get_node_info(path, ctx) if node_info is None else node_info
 
     if not node_info.exists:
+        logger.warning("Validation failed: container does not exist", extra={"path": path})
         raise PathNotFoundError(f"Container does not exist: {path}")
 
     if node_info.node_type != NodeType.CONTAINER:
+        logger.warning(
+            "Validation failed: path is not a container",
+            extra={"path": path, "actual_type": node_info.node_type.name},
+        )
         raise PathTypeError(f"Path is not a container: {path}")
 
     if node_info.structure is None or node_info.protocol is None:
+        logger.error(
+            "Validation failed: container has malformed data",
+            extra={"path": path, "structure": node_info.structure, "protocol": node_info.protocol},
+        )
         raise PathTypeError(f"Container has malformed data: {path}")
 
     # Structure must match exactly
     if node_info.structure != expected_structure:
+        logger.warning(
+            "Validation failed: structure mismatch",
+            extra={
+                "path": path,
+                "expected_structure": expected_structure,
+                "actual_structure": node_info.structure,
+            },
+        )
         raise PathTypeError(
             f"Structure mismatch at {path}: expected {expected_structure}, got {node_info.structure}"
         )
 
     # Protocol must have at least one common flag
     if not (expected_protocol & node_info.protocol):
+        logger.warning(
+            "Validation failed: protocol mismatch",
+            extra={
+                "path": path,
+                "expected_protocol": expected_protocol,
+                "actual_protocol": node_info.protocol,
+            },
+        )
         raise PathTypeError(
             f"Protocol mismatch at {path}: expected {expected_protocol}, got {node_info.protocol}"
         )

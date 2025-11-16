@@ -23,9 +23,12 @@ import threading
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from enum import Enum, auto
+from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
+
+logger = getLogger(__name__)
 
 from redwood.storage import (
     CallbackFn,
@@ -531,10 +534,17 @@ class TextTransaction(
             StorageClosedError: If already committed or aborted
         """
         if self._closed:
+            logger.error("Cannot commit, transaction is closed", extra={"txn_id": str(self._uuid)})
             raise StorageClosedError("Transaction is closed")
         if self._committed:
+            logger.error(
+                "Cannot commit, transaction already committed", extra={"txn_id": str(self._uuid)}
+            )
             raise StorageTransactionError("Transaction already committed")
         if self._aborted:
+            logger.error(
+                "Cannot commit, transaction already aborted", extra={"txn_id": str(self._uuid)}
+            )
             raise StorageTransactionError("Transaction already aborted")
 
         try:
@@ -545,10 +555,20 @@ class TextTransaction(
             if self._storage._log_operations:
                 self._storage._log_operation("commit", None, None, txn_id=str(self._uuid))
 
+            logger.info(
+                "Transaction committed",
+                extra={"txn_id": str(self._uuid), "modified_keys": len(self._modified_keys)},
+            )
+
             self._committed = True
             self._mark_closed()
             self._storage._untrack_transaction(self)
         except Exception as e:
+            logger.error(
+                "Transaction commit failed",
+                extra={"txn_id": str(self._uuid), "error": str(e)},
+                exc_info=True,
+            )
             raise StorageTransactionError(f"Failed to commit transaction: {e}") from e
 
     def abort(self) -> None:
@@ -559,6 +579,7 @@ class TextTransaction(
         """
         if self._closed:
             # Already closed, nothing to do
+            logger.debug("Abort called on closed transaction", extra={"txn_id": str(self._uuid)})
             return
 
         try:
@@ -566,10 +587,20 @@ class TextTransaction(
             if self._storage._log_operations:
                 self._storage._log_operation("abort", None, None, txn_id=str(self._uuid))
 
+            logger.info(
+                "Transaction aborted",
+                extra={"txn_id": str(self._uuid), "discarded_keys": len(self._modified_keys)},
+            )
+
             self._aborted = True
             self._mark_closed()
             self._storage._untrack_transaction(self)
         except Exception as e:
+            logger.error(
+                "Transaction abort failed",
+                extra={"txn_id": str(self._uuid), "error": str(e)},
+                exc_info=True,
+            )
             raise StorageTransactionError(f"Failed to abort transaction: {e}") from e
 
     def __enter__(self) -> TextTransaction:
@@ -618,10 +649,13 @@ class TextWriteBatch(_TextContextBase, _WriteOperationsMixin, WriteBatchProtocol
             StorageClosedError: If already written or aborted
         """
         if self._closed:
+            logger.error("Cannot write, batch is closed", extra={"batch_id": str(self._uuid)})
             raise StorageClosedError("Write batch is closed")
         if self._written:
+            logger.error("Cannot write, batch already written", extra={"batch_id": str(self._uuid)})
             raise StorageTransactionError("Write batch already written")
         if self._aborted:
+            logger.error("Cannot write, batch already aborted", extra={"batch_id": str(self._uuid)})
             raise StorageTransactionError("Write batch already aborted")
 
         try:
@@ -632,10 +666,20 @@ class TextWriteBatch(_TextContextBase, _WriteOperationsMixin, WriteBatchProtocol
             if self._storage._log_operations:
                 self._storage._log_operation("write", None, None, txn_id=str(self._uuid))
 
+            logger.info(
+                "Write batch written",
+                extra={"batch_id": str(self._uuid), "modified_keys": len(self._modified_keys)},
+            )
+
             self._written = True
             self._mark_closed()
             self._storage._untrack_write_batch(self)
         except Exception as e:
+            logger.error(
+                "Write batch write failed",
+                extra={"batch_id": str(self._uuid), "error": str(e)},
+                exc_info=True,
+            )
             raise StorageTransactionError(f"Failed to write batch: {e}") from e
 
     def abort(self) -> None:
@@ -646,12 +690,18 @@ class TextWriteBatch(_TextContextBase, _WriteOperationsMixin, WriteBatchProtocol
         """
         if self._closed:
             # Already closed, nothing to do
+            logger.debug("Abort called on closed write batch", extra={"batch_id": str(self._uuid)})
             return
 
         try:
             # Log operation if enabled
             if self._storage._log_operations:
                 self._storage._log_operation("abort", None, None, txn_id=str(self._uuid))
+
+            logger.info(
+                "Write batch aborted",
+                extra={"batch_id": str(self._uuid), "discarded_keys": len(self._modified_keys)},
+            )
 
             self._aborted = True
             self._mark_closed()

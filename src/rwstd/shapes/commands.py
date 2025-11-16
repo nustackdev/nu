@@ -6,9 +6,12 @@ This module provides concrete commands that mutate state:
 
 from __future__ import annotations
 
+from logging import getLogger
 from typing import TYPE_CHECKING
 
 from redwood.loc import path
+
+logger = getLogger(__name__)
 from redwood.shape import Command
 from redwood.types import Appendable, Assignable, Initializable
 
@@ -74,6 +77,13 @@ class SetCmd[T](Command[T]):
 
         # Store structure through view
         if not isinstance(parent_view, Assignable):
+            logger.error(
+                "View does not implement Assignable protocol",
+                extra={
+                    "view_class": parent_view.__class__.__name__,
+                    "path": value_path,
+                },
+            )
             raise TypeError(
                 f"View {parent_view.__class__.__name__} does not implelement Assignable protocol (e.g. ['item'] = 12)."
             )
@@ -81,6 +91,14 @@ class SetCmd[T](Command[T]):
         # Write value through View
         parent_view[key] = value
 
+        logger.info(
+            "SetCmd executed",
+            extra={
+                "path": value_path,
+                "key": key,
+                "value_type": type(value).__name__,
+            },
+        )
         return value
 
     def __repr__(self) -> str:
@@ -137,6 +155,13 @@ class AppendCmd[T](Command[T]):
 
         # Store structure through view
         if not isinstance(view, Appendable):
+            logger.error(
+                "View does not implement Appendable protocol",
+                extra={
+                    "view_class": view.__class__.__name__,
+                    "path": view_path,
+                },
+            )
             raise TypeError(
                 f"View {view.__class__.__name__} does not implement Appendable protocol (append() method)."
             )
@@ -144,6 +169,13 @@ class AppendCmd[T](Command[T]):
         # Write value through View
         view.append(value)
 
+        logger.info(
+            "AppendCmd executed",
+            extra={
+                "path": view_path,
+                "value_type": type(value).__name__,
+            },
+        )
         return value
 
     def __repr__(self) -> str:
@@ -198,12 +230,26 @@ class StoreCmd[T](Command[T]):
 
         # Store structure through view
         if not isinstance(shape_view, Initializable):
+            logger.error(
+                "View does not implement Initializable protocol",
+                extra={
+                    "view_class": shape_view.__class__.__name__,
+                    "path": view_path,
+                },
+            )
             raise TypeError(
                 f"View {shape_view.__class__.__name__} does not implelement Initializable protocol (store() method)."
             )
 
         shape_view.store(data)
 
+        logger.info(
+            "StoreCmd executed",
+            extra={
+                "path": view_path,
+                "data_type": type(data).__name__,
+            },
+        )
         return data
 
     def __repr__(self) -> str:

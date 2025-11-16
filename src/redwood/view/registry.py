@@ -9,11 +9,14 @@ logic that have no connection to Python built-in types.
 
 from __future__ import annotations
 
+from logging import getLogger
 from typing import TYPE_CHECKING, NamedTuple
 
 from redwood.tree import ContainerStructure
 
 from .exceptions import RegistryError
+
+logger = getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -74,6 +77,14 @@ class ViewRegistry:
         # Register structure ID → view
         if structure_id in self._structure_to_view:
             existing = self._structure_to_view[structure_id]
+            logger.error(
+                "Structure ID already registered",
+                extra={
+                    "structure_id": structure_id,
+                    "existing_view": existing.__name__,
+                    "attempted_view": view_class.__name__,
+                },
+            )
             raise RegistryError(
                 f"Structure ID {structure_id} already registered to {existing.__name__}"
             )
@@ -83,6 +94,14 @@ class ViewRegistry:
         if container_type is not None:
             if container_type in self._type_to_registration:
                 existing = self._type_to_registration[container_type]
+                logger.error(
+                    "Container type already registered",
+                    extra={
+                        "container_type": container_type.__name__,
+                        "existing_view": existing.view_class.__name__,
+                        "attempted_view": view_class.__name__,
+                    },
+                )
                 raise RegistryError(
                     f"Container type {container_type.__name__} already registered to "
                     f"{existing.view_class.__name__}"
@@ -93,6 +112,15 @@ class ViewRegistry:
                 container_type=container_type,
             )
             self._type_to_registration[container_type] = registration
+
+        logger.debug(
+            "View registered",
+            extra={
+                "view_class": view_class.__name__,
+                "structure_id": structure_id,
+                "container_type": container_type.__name__ if container_type else None,
+            },
+        )
 
     def get_view_for_structure(self, structure_id: ContainerStructure) -> type[View]:
         """Get view class for structure ID (reading).
@@ -107,8 +135,18 @@ class ViewRegistry:
             RegistryError: If structure_id not registered
         """
         if structure_id not in self._structure_to_view:
+            logger.warning(
+                "No view registered for structure ID",
+                extra={"structure_id": structure_id},
+            )
             raise RegistryError(f"No view registered for structure ID {structure_id}")
-        return self._structure_to_view[structure_id]
+
+        view_class = self._structure_to_view[structure_id]
+        logger.debug(
+            "View lookup by structure",
+            extra={"structure_id": structure_id, "view_class": view_class.__name__},
+        )
+        return view_class
 
     def get_view_for_type(self, container_type: type) -> type[View]:
         """Get view class for Python type (writing).
@@ -124,13 +162,30 @@ class ViewRegistry:
         """
         # Try exact match first
         if container_type in self._type_to_registration:
-            return self._type_to_registration[container_type].view_class
+            view_class = self._type_to_registration[container_type].view_class
+            logger.debug(
+                "View lookup by type (exact match)",
+                extra={"container_type": container_type.__name__, "view_class": view_class.__name__},
+            )
+            return view_class
 
         # Try isinstance check for subclasses
         for registered_type, registration in self._type_to_registration.items():
             if isinstance(container_type, type) and issubclass(container_type, registered_type):
+                logger.debug(
+                    "View lookup by type (subclass match)",
+                    extra={
+                        "container_type": container_type.__name__,
+                        "registered_type": registered_type.__name__,
+                        "view_class": registration.view_class.__name__,
+                    },
+                )
                 return registration.view_class
 
+        logger.warning(
+            "No view registered for type",
+            extra={"container_type": container_type.__name__},
+        )
         raise RegistryError(f"No view registered for type {container_type.__name__}")
 
     def get_structure_for_type(self, container_type: type) -> int:
