@@ -11,8 +11,6 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from redwood.loc import key as key_
-
-logger = getLogger(__name__)
 from redwood.storage import StorageKeyError, StorageScanOptions
 from redwood.types import EMPTY, Empty, Value
 
@@ -62,6 +60,8 @@ __all__ = [
     "walk_tree",
 ]
 
+
+logger = getLogger(__name__)
 
 # ============================================================================
 # CONTAINER LIFECYCLE

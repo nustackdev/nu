@@ -12,8 +12,6 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from .exceptions import PathExistsError, PathNotFoundError, PathTypeError
-
-logger = getLogger(__name__)
 from .node_ops import gather_parent_info, get_node_info, get_node_type
 from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, ParentChainInfo
 
@@ -32,6 +30,8 @@ __all__ = [
     "validate_parents_exist",
     "validate_parents_healthy",
 ]
+
+logger = getLogger(__name__)
 
 
 def validate_exists(

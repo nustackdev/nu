@@ -49,8 +49,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from logging import getLogger
-
-logger = getLogger(__name__)
 from typing import TYPE_CHECKING
 
 from redwood.loc import path
@@ -74,6 +72,8 @@ __all__ = [
     "Term",
 ]
 
+
+logger = getLogger(__name__)
 
 # =============================================================================
 # BASE TERM

@@ -16,8 +16,6 @@ from redwood.tree import ContainerStructure
 
 from .exceptions import RegistryError
 
-logger = getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from redwood.tree import ContainerStructure
@@ -28,6 +26,9 @@ __all__ = [
     "ViewRegistration",
     "ViewRegistry",
 ]
+
+
+logger = getLogger(__name__)
 
 
 class ViewRegistration(NamedTuple):
@@ -165,7 +166,10 @@ class ViewRegistry:
             view_class = self._type_to_registration[container_type].view_class
             logger.debug(
                 "View lookup by type (exact match)",
-                extra={"container_type": container_type.__name__, "view_class": view_class.__name__},
+                extra={
+                    "container_type": container_type.__name__,
+                    "view_class": view_class.__name__,
+                },
             )
             return view_class
 

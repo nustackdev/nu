@@ -15,8 +15,6 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from redwood.loc import key as key_
-
-logger = getLogger(__name__)
 from redwood.tree import Container, ContainerStructure, NodeType
 from redwood.types import Convertible, Empty, Initializable, is_empty
 
@@ -32,6 +30,8 @@ __all__ = [
     "LiveChildrenCountMixin",
     "MetadataBasedChildrenCountMixin",
 ]
+
+logger = getLogger(__name__)
 
 
 class MetadataBasedChildrenCountMixin:
