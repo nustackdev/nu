@@ -766,8 +766,11 @@ class TextStorage:
         self._state: dict[str, Any] = {}  # key_str -> value
         self._opened = False
 
-        # Synchronization (use RLock to allow reentrant locking during close)
+        # Synchronization
+        # - _lock: protects in-memory state and context tracking (reentrant for close)
+        # - _write_lock: enforces single-writer (transaction/batch) semantics
         self._lock = threading.RLock()
+        self._write_lock = threading.Lock()
 
         # Context tracking
         self._active_transactions: set[TextTransaction] = set()
@@ -905,6 +908,13 @@ class TextStorage:
         """
         with self._lock:
             self._active_transactions.discard(txn)
+            # Release write lock when no writers remain so other writers can proceed
+            if not self._active_transactions and not self._active_write_batches:
+                try:
+                    self._write_lock.release()
+                except RuntimeError:
+                    # Lock may already be released or not held; ignore
+                    pass
 
     def _untrack_snapshot(self, snap: TextSnapshot) -> None:
         """Remove snapshot from active set.
@@ -923,6 +933,13 @@ class TextStorage:
         """
         with self._lock:
             self._active_write_batches.discard(batch)
+            # Release write lock when no writers remain so other writers can proceed
+            if not self._active_transactions and not self._active_write_batches:
+                try:
+                    self._write_lock.release()
+                except RuntimeError:
+                    # Lock may already be released or not held; ignore
+                    pass
 
     # =========================================================================
     # Lifecycle
@@ -1079,11 +1096,20 @@ class TextStorage:
         """
         self._require_open()
 
-        with self._lock:
-            # Create transaction with copy of current state
-            transaction = TextTransaction(self, self._state.copy())
-            self._active_transactions.add(transaction)
-            return transaction
+        # Enforce single-writer semantics: only one transaction or write batch
+        # may be active at a time. Other writers block until the current one
+        # commits or aborts.
+        self._write_lock.acquire()
+        try:
+            with self._lock:
+                # Create transaction with copy of current state
+                transaction = TextTransaction(self, self._state.copy())
+                self._active_transactions.add(transaction)
+                return transaction
+        except Exception:
+            # If creation fails, release lock so other writers aren't blocked
+            self._write_lock.release()
+            raise
 
     def begin_write_batch(self) -> TextWriteBatch:
         """Begin write-only batch.
@@ -1096,11 +1122,20 @@ class TextStorage:
         """
         self._require_open()
 
-        with self._lock:
-            # Create write batch with copy of current state
-            write_batch = TextWriteBatch(self, self._state.copy())
-            self._active_write_batches.add(write_batch)
-            return write_batch
+        # Enforce single-writer semantics: only one transaction or write batch
+        # may be active at a time. Other writers block until the current one
+        # completes.
+        self._write_lock.acquire()
+        try:
+            with self._lock:
+                # Create write batch with copy of current state
+                write_batch = TextWriteBatch(self, self._state.copy())
+                self._active_write_batches.add(write_batch)
+                return write_batch
+        except Exception:
+            # If creation fails, release lock so other writers aren't blocked
+            self._write_lock.release()
+            raise
 
     @contextmanager
     def transaction(self) -> Iterator[TextTransaction]:
