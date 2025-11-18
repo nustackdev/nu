@@ -179,8 +179,7 @@ class _ReadOperationsMixin:
 
         # Retrieve from RocksDB
         try:
-            with self._storage._db_lock:
-                encoded_value = txn.get(encoded_key)
+            encoded_value = txn.get(encoded_key)
         except Exception as e:
             raise StorageOperationError(f"Failed to get key {key}: {e}") from e
 
@@ -216,8 +215,7 @@ class _ReadOperationsMixin:
             raise StorageOperationError(f"Failed to encode key {key}: {e}") from e
 
         try:
-            with self._storage._db_lock:
-                return txn.get(encoded_key) is not None
+            return txn.get(encoded_key) is not None
         except Exception as e:
             raise StorageOperationError(f"Failed to check key {key}: {e}") from e
 
@@ -299,8 +297,7 @@ class _WriteOperationsMixin:
 
         # Write to RocksDB
         try:
-            with self._storage._db_lock:
-                txn.put(encoded_key, encoded_value)
+            txn.put(encoded_key, encoded_value)
         except Exception as e:
             raise StorageOperationError(f"Failed to put key {key}: {e}") from e
 
@@ -330,14 +327,13 @@ class _WriteOperationsMixin:
 
         # Check if key exists
         try:
-            with self._storage._db_lock:
-                exists = txn.get(encoded_key) is not None
+            exists = txn.get(encoded_key) is not None
 
-                if not exists:
-                    return False
+            if not exists:
+                return False
 
-                # Delete the key
-                txn.delete_single(encoded_key)
+            # Delete the key
+            txn.delete_single(encoded_key)
         except Exception as e:
             raise StorageDeleteError(f"Failed to delete key {key}: {e}") from e
 
@@ -377,9 +373,8 @@ class RocksDBSnapshot(
 
         if self._rwrocks_txn is not None:
             try:
-                with self._storage._db_lock:
-                    # Rollback to release the snapshot
-                    self._rwrocks_txn.rollback()
+                # Rollback to release the snapshot
+                self._rwrocks_txn.rollback()
             except Exception as e:
                 raise StorageError(f"Failed to close snapshot: {e}") from e
             finally:
@@ -451,8 +446,7 @@ class RocksDBWriteBatch(
 
         # Add to batch
         try:
-            with self._storage._db_lock:
-                batch.put(encoded_key, encoded_value)
+            batch.put(encoded_key, encoded_value)
         except Exception as e:
             raise StorageOperationError(f"Failed to put key {key}: {e}") from e
 
@@ -487,14 +481,13 @@ class RocksDBWriteBatch(
         # Check if key exists in storage via snapshot
         # This is necessary to return accurate True/False per protocol
         try:
-            with self._storage._db_lock:
-                exists = self._storage._db.get(encoded_key) is not None
+            exists = self._storage._db.get(encoded_key) is not None
 
-                if not exists:
-                    return False
+            if not exists:
+                return False
 
-                # Add delete to batch
-                batch.delete(encoded_key)
+            # Add delete to batch
+            batch.delete(encoded_key)
         except Exception as e:
             raise StorageDeleteError(f"Failed to delete key {key}: {e}") from e
 
@@ -525,8 +518,7 @@ class RocksDBWriteBatch(
 
         # Write to RocksDB
         try:
-            with self._storage._db_lock:
-                self._storage._db.write(batch)
+            self._storage._db.write(batch)
         except Exception as e:
             logger.error(
                 "Write batch write failed",
@@ -681,8 +673,7 @@ class RocksDBTransaction(
 
         # Commit to RocksDB
         try:
-            with self._storage._db_lock:
-                txn.commit()
+            txn.commit()
         except Exception as e:
             logger.error(
                 "Transaction commit failed",
@@ -728,8 +719,7 @@ class RocksDBTransaction(
         txn = self._require_active()
 
         try:
-            with self._storage._db_lock:
-                txn.rollback()
+            txn.rollback()
 
             logger.info(
                 "Transaction aborted",
@@ -819,14 +809,13 @@ class RocksDBScan:
         # Create appropriate iterator based on what we need
         need_values = False
         try:
-            with self._storage._db_lock:
-                if iterator_type == IteratorType.KEYS:
-                    iterator = txn.iterkeys()  # Read ONLY keys from disk
-                elif iterator_type == IteratorType.VALUES or iterator_type == IteratorType.ITEMS:
-                    iterator = txn.iteritems()  # Read ONLY values from disk
-                    need_values = True
-                else:
-                    raise ValueError("Unknown iterator_type argument")
+            if iterator_type == IteratorType.KEYS:
+                iterator = txn.iterkeys()  # Read ONLY keys from disk
+            elif iterator_type == IteratorType.VALUES or iterator_type == IteratorType.ITEMS:
+                iterator = txn.iteritems()  # Read ONLY values from disk
+                need_values = True
+            else:
+                raise ValueError("Unknown iterator_type argument")
         except Exception as e:
             raise StorageOperationError(f"Failed to create iterator: {e}") from e
 
@@ -1450,7 +1439,8 @@ class RocksDBStorage:
         Args:
             transaction: Transaction to remove
         """
-        self._active_transactions.discard(transaction)
+        with self._db_lock:
+            self._active_transactions.discard(transaction)
 
     def _remove_snapshot(self, snapshot: RocksDBSnapshot) -> None:
         """Remove snapshot from active set.
@@ -1458,7 +1448,8 @@ class RocksDBStorage:
         Args:
             snapshot: Snapshot to remove
         """
-        self._active_snapshots.discard(snapshot)
+        with self._db_lock:
+            self._active_snapshots.discard(snapshot)
 
     def _remove_write_batch(self, write_batch: RocksDBWriteBatch) -> None:
         """Remove write batch from active set.
@@ -1466,7 +1457,8 @@ class RocksDBStorage:
         Args:
             write_batch: Write batch to remove
         """
-        self._active_write_batches.discard(write_batch)
+        with self._db_lock:
+            self._active_write_batches.discard(write_batch)
 
     def _require_open(self) -> None:
         """Validate storage is open.
