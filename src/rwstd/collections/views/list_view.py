@@ -16,6 +16,7 @@ from redwood.view import (
     ChildNestedGetMixin,
     ChildNestedSetMixin,
     MetadataBasedChildrenCountMixin,
+    WatchMixin,
 )
 
 from .base import StdView
@@ -43,6 +44,7 @@ __all__ = ["ListView"]
 
 
 class ListView(
+    WatchMixin[int],
     MetadataBasedChildrenCountMixin,
     ChildNavigationMixin[int],
     ChildNestedGetMixin,

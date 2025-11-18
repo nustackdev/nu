@@ -801,13 +801,13 @@ class Container(NamedTuple):
             storage.subscribe(key_.join_segment(self.path, key), callback, depth) for key in keys
         )
 
-    def watch_descendants(
+    def watch(
         self,
         storage: StorageProtocol,
         callback: CallbackFn,
         depth: int = -1,
     ) -> SubscriptionProtocol:
-        """Watch changes to all descendants of this container.
+        """Watch changes to this container and its descendants.
 
         Args:
             storage: Storage instance for subscriptions
@@ -821,8 +821,8 @@ class Container(NamedTuple):
             StorageOperationError: If subscription fails
 
         Example:
-            >>> sub = container.watch_descendants(storage, my_callback)
-            >>> # Callback fires on any change under this container
+            >>> sub = container.watch(storage, my_callback)
+            >>> # Callback fires on any change at or under this container
         """
         return storage.subscribe(self.path, callback, depth)
 

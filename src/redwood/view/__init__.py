@@ -33,6 +33,7 @@ from .mixins import (
     ChildNestedSetMixin,
     LiveChildrenCountMixin,
     MetadataBasedChildrenCountMixin,
+    WatchMixin,
 )
 from .registry import ViewRegistry
 from .view import View
@@ -49,4 +50,5 @@ __all__ = [
     "ViewError",
     "ViewOperationError",
     "ViewRegistry",
+    "WatchMixin",
 ]

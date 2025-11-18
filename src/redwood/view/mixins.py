@@ -20,6 +20,11 @@ from redwood.types import Convertible, Empty, Initializable, is_empty
 
 
 if TYPE_CHECKING:
+    from redwood.storage import (
+        CallbackFn,
+        StorageProtocol,
+        SubscriptionProtocol,
+    )
     from redwood.view import View, ViewRegistry
 
 
@@ -29,6 +34,7 @@ __all__ = [
     "ChildNestedSetMixin",
     "LiveChildrenCountMixin",
     "MetadataBasedChildrenCountMixin",
+    "WatchMixin",
 ]
 
 logger = getLogger(__name__)
@@ -376,3 +382,69 @@ class ChildNestedSetMixin:
             raise TypeError(f"Child view {view_class.__name__} does not support initialization")
 
         child_view.store(value)
+
+
+class WatchMixin[A]:
+    """Mixin providing subscription-based watch methods for views.
+
+    Delegates all watch operations to the underlying container, using
+    address normalization when available to convert from view-level
+    addresses to storage keys.
+
+    Example:
+        >>> class MyView(WatchMixin[int], View): ...
+        >>> sub = view.watch_child(storage, 0, callback)
+        >>> view.unwatch(storage, sub)
+    """
+
+    container: Container
+
+    def _normalize_watch_address(self, address: A) -> key_.KeySegment:
+        """Normalize address to a storage key.
+
+        Uses address_normalization(address) when implemented on the view,
+        otherwise assumes the address is already a valid storage key.
+        """
+        normalizer = getattr(self, "address_normalization", None)
+        if normalizer is None:
+            return cast("key_.KeySegment", address)
+        return cast("key_.KeySegment", normalizer(address))
+
+    def watch_child(
+        self,
+        storage: StorageProtocol,
+        address: A,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to a specific child and its subtree."""
+        key = self._normalize_watch_address(address)
+        return self.container.watch_child(storage, key, callback, depth)
+
+    def watch_children(
+        self,
+        storage: StorageProtocol,
+        *addresses: A,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> tuple[SubscriptionProtocol, ...]:
+        """Watch changes to multiple children and their subtrees."""
+        keys = tuple(self._normalize_watch_address(address) for address in addresses)
+        return self.container.watch_children(storage, *keys, callback=callback, depth=depth)
+
+    def watch(
+        self,
+        storage: StorageProtocol,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to this view's container and its descendants."""
+        return self.container.watch(storage, callback, depth)
+
+    def unwatch(
+        self,
+        storage: StorageProtocol,
+        subscription: SubscriptionProtocol,
+    ) -> None:
+        """Unsubscribe from changes."""
+        self.container.unwatch(storage, subscription)

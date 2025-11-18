@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 from redwood.tree import ContainerProtocol, ContainerStructure
 from redwood.types import is_empty
-from redwood.view import MetadataBasedChildrenCountMixin
+from redwood.view import MetadataBasedChildrenCountMixin, WatchMixin
 
 from .base import StdView
 
@@ -22,6 +22,7 @@ __all__ = ["ByteArrayView"]
 
 
 class ByteArrayView(
+    WatchMixin[int],
     MetadataBasedChildrenCountMixin,
     StdView,
 ):

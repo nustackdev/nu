@@ -18,6 +18,7 @@ from redwood.view import (
     ChildNestedSetMixin,
     MetadataBasedChildrenCountMixin,
     View,
+    WatchMixin,
 )
 
 from .base import StdView
@@ -40,6 +41,7 @@ __all__ = ["TupleView"]
 
 
 class TupleView(
+    WatchMixin[int],
     MetadataBasedChildrenCountMixin,
     ChildNavigationMixin[int],
     ChildNestedGetMixin,

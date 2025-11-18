@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from redwood.tree import ContainerProtocol, ContainerStructure
 from redwood.types import cast_value, is_empty
-from redwood.view import ChildNestedSetMixin, MetadataBasedChildrenCountMixin
+from redwood.view import ChildNestedSetMixin, MetadataBasedChildrenCountMixin, WatchMixin
 
 from .base import StdView
 
@@ -25,6 +25,7 @@ __all__ = ["FrozenSetView"]
 
 
 class FrozenSetView(
+    WatchMixin[object],
     MetadataBasedChildrenCountMixin,
     ChildNestedSetMixin,
     StdView,
@@ -63,6 +64,10 @@ class FrozenSetView(
         pickled = pickle.dumps(value, protocol=4)  # Use fixed protocol
         # Returns int for use in hash tables, or use .hexdigest() for string
         return hashlib.sha256(pickled).hexdigest()[:64]
+
+    def address_normalization(self, address: object) -> key_.KeySegment:
+        """Normalize value address to an internal storage key."""
+        return self._make_key(address)
 
     def __contains__(self, obj: object) -> bool:
         """Check if value in set.
