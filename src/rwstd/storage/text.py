@@ -1,19 +1,31 @@
-"""Text-based storage backend for debugging and development.
+"""Text-based storage backend for debugging and learning.
 
-Human-readable JSON storage for inspecting data structures, tracing operations,
-and understanding system behavior. Not intended for production use.
+⚠️  TOY IMPLEMENTATION - NOT FOR PRODUCTION USE
+
+This storage backend prioritizes human readability and simplicity over performance.
+Perfect for tutorials, examples, and understanding how storage layers work.
+
+Purpose:
+  • Learning and onboarding (understand storage concepts)
+  • Debugging (inspect state.json with cat/jq/text editor)
+  • Toy projects and experimentation
+  • Example code and documentation
 
 Features:
-- Human-readable JSON format
-- Simple file-based persistence
-- Optional operation logging
-- Implements StorageProtocol correctly
+  • Human-readable JSON format
+  • Simple file-based persistence
+  • Optional operation logging
+  • Implements StorageProtocol correctly
 
 Limitations:
-- No concurrent access safety
-- Memory-bound (entire state in memory)
-- Slow writes (rewrites entire file)
-- Single process only
+  • Writes serialized (one transaction at a time)
+  • Last writer wins (no conflict detection or optimistic locking)
+  • Memory-bound (entire state kept in RAM)
+  • Slow writes (full state written to disk on every commit)
+  • Single process only (no file locking or coordination)
+  • Not suitable for datasets >1000 keys
+
+Use RocksDB adapter for real workloads.
 """
 
 from __future__ import annotations
@@ -730,15 +742,51 @@ class TextWriteBatch(_TextContextBase, _WriteOperationsMixin, WriteBatchProtocol
 
 
 class TextStorage:
-    """Text-based storage backend for debugging and development.
+    """Text-based storage for debugging and learning.
 
-    Stores data as human-readable JSON with optional operation logging.
-    Implements StorageProtocol but not optimized for production use.
+    ⚠️  Toy implementation - prioritizes simplicity and readability over performance.
+
+    Example - Basic usage:
+        >>> from redwood.storage import TextStorage
+        >>> from rwstd.storage.codecs import TupleCodec
+        >>>
+        >>> storage = TextStorage("./debug", TupleCodec())
+        >>> storage.open()
+        >>>
+        >>> with storage.transaction() as txn:
+        ...     txn.put(("users", "alice"), {"name": "Alice", "age": 30})
+        ...     txn.put(("users", "bob"), {"name": "Bob", "age": 25})
+        >>>
+        >>> # Inspect state.json to see your data!
+        >>> storage.close()
+
+    Example - Reading your data:
+        $ cat debug/state.json
+        {
+          "version": 1,
+          "data": {
+            "('users', 'alice')": {"name": "Alice", "age": 30},
+            "('users', 'bob')": {"name": "Bob", "age": 25}
+          }
+        }
 
     File structure:
         storage_dir/
-        ├── state.json          # Current key-value state
-        └── operations.jsonl    # Operation log (optional)
+        ├── state.json          # Current key-value state (human-readable)
+        └── operations.jsonl    # Operation log (optional, for tracing)
+
+    Thread Safety:
+        • Snapshots: Safe to create and use concurrently
+        • Transactions: Must not share transaction objects between threads
+        • Writes: Automatically serialized (only one commit at a time)
+        • Lost updates: Possible - last writer wins, no conflict detection
+
+    Limitations:
+        • ONE write at a time (commits fully serialized via _write_lock)
+        • NO conflict detection (concurrent transactions on different keys → last wins)
+        • Entire state in memory (bounded by RAM, max ~1000 keys recommended)
+        • Full state written to disk on every commit (slow, not for high-throughput)
+        • Single process only (no file locking or multi-process coordination)
 
     Attributes:
         path: Storage directory path
@@ -825,41 +873,42 @@ class TextStorage:
         Raises:
             StorageError: If write fails
         """
-        state_path = self.path / STATE_FILE
-
-        # Create directory if needed
-        self.path.mkdir(parents=True, exist_ok=True)
-
-        # Prepare data
-        data = {"version": STATE_VERSION, "data": state}
-
-        # Write to temp file
-        temp_path = state_path.with_suffix(".tmp")
-        try:
-            with open(temp_path, "w") as f:
-                json.dump(data, f, indent=2, sort_keys=True)
-                f.flush()
-        except Exception as e:
-            # Clean up temp file
-            try:
-                temp_path.unlink(missing_ok=True)
-            except Exception:
-                pass
-            raise StorageError(f"Failed to write state file: {e}") from e
-
-        # Atomic rename
-        try:
-            temp_path.replace(state_path)
-        except Exception as e:
-            # Clean up temp file
-            try:
-                temp_path.unlink(missing_ok=True)
-            except Exception:
-                pass
-            raise StorageError(f"Failed to replace state file: {e}") from e
-
-        # Update in-memory state
+        # Lock entire operation to ensure disk and memory stay consistent
         with self._lock:
+            state_path = self.path / STATE_FILE
+
+            # Create directory if needed
+            self.path.mkdir(parents=True, exist_ok=True)
+
+            # Prepare data
+            data = {"version": STATE_VERSION, "data": state}
+
+            # Write to temp file
+            temp_path = state_path.with_suffix(".tmp")
+            try:
+                with open(temp_path, "w") as f:
+                    json.dump(data, f, indent=2, sort_keys=True)
+                    f.flush()
+            except Exception as e:
+                # Clean up temp file
+                try:
+                    temp_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
+                raise StorageError(f"Failed to write state file: {e}") from e
+
+            # Atomic rename
+            try:
+                temp_path.replace(state_path)
+            except Exception as e:
+                # Clean up temp file
+                try:
+                    temp_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
+                raise StorageError(f"Failed to replace state file: {e}") from e
+
+            # Update in-memory state
             self._state = state.copy()
 
     def _log_operation(
