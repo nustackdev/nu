@@ -13,7 +13,7 @@ That's it. Everything else is just tuple operations Python already gives you.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from redwood.types import is_nestable
 
@@ -153,10 +153,10 @@ def open_child_view(
     return parent_view.open_child(address, child_view_type)
 
 
-def navigate_view(
+def navigate_view[V: View](
     start_view: View,
-    path: PathToView,
-) -> View:
+    path: tuple[*PathToView, tuple[PathAddress, type[V]]],
+) -> V:
     """Navigate ViewPath to reach target View.
 
     Args:
@@ -176,7 +176,7 @@ def navigate_view(
     for address, expected_type in path:
         current_view = open_child_view(current_view, address, expected_type)
 
-    return current_view
+    return cast("V", current_view)
 
 
 def navigate_value(

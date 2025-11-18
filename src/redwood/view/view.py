@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, ClassVar, Self
 import attrs
 
 from redwood.loc import key as key_
+from redwood.loc import path as path_
 from redwood.tree import Container, ContainerProtocol, ContainerStructure
 
 from .registry import ViewRegistry
@@ -76,6 +77,16 @@ class View(ABC):
     CONTAINER_CLS: ClassVar[type | None] = None
 
     @classmethod
+    def get_default_parent_view(cls) -> type[View] | None:
+        """Returns view used to create missing parents."""
+        return None
+
+    @classmethod
+    def get_available_views(cls) -> tuple[type[View], ...]:
+        """Returns tuple of avaible views to use for reading and writing data to tree."""
+        return ()
+
+    @classmethod
     def get_structure(cls) -> ContainerStructure:
         """Get view structure."""
         if cls.STRUCTURE is None:
@@ -97,13 +108,22 @@ class View(ABC):
     # =========================================================================
 
     @classmethod
-    def create(
+    def open_root(
         cls,
         ctx: StorageContextType,
-        views: tuple[type[View], ...],
-        default_parent_view: type[View],
+        *,
+        views: tuple[type[View], ...] = (),
+        default_parent_view: type[View] | None = None,
     ) -> Self:
         """Create a new View instance of this type on a root path."""
+        if default_parent_view is None:
+            default_parent_view = cls.get_default_parent_view()
+
+        if default_parent_view is None:
+            raise ValueError(
+                "default_parent_view is None, either provide default_parent_view or override get_default_parent_view method."
+            )
+
         container = Container.create(
             (key_.DATA_ROOT,),
             ctx,
@@ -115,7 +135,121 @@ class View(ABC):
         )
 
         registry = ViewRegistry()
-        for view in views:
+        for view in cls.get_available_views() + views:
+            registry.register(view)
+
+        return cls(container, registry)
+
+    @classmethod
+    def open_at(
+        cls,
+        parent_path: path_.PathToView,
+        address: path_.PathAddress,
+        ctx: StorageContextType,
+        *,
+        views: tuple[type[View], ...] = (),
+        default_parent_view: type[View] | None = None,
+    ) -> Self:
+        """Create a View at the specified path.
+
+        Creates all necessary intermediate containers along the path and returns
+        the View instance at the final path location.
+
+        Args:
+            parent_path: ViewPath to navigate - sequence of (address, ViewType) pairs
+            address: Address in the parent path view
+            ctx: Storage context (transaction or snapshot)
+            views: Tuple of available views
+            default_parent_view: View type to use for default parent containers
+
+        Returns:
+            View instance at the final path location
+
+        Raises:
+            TypeError: If parent view is not Nestable
+            KeyError/IndexError: If address is invalid after normalization
+
+        Example:
+            >>> path = (("users", DictView), ("alice", DictView))
+            >>> alice_view = DictView.create_at_path(tx, path, DictView)
+        """
+        # root view
+        root_view_cls = default_parent_view or cls.get_default_parent_view()
+        if not root_view_cls:
+            raise ValueError(
+                "default_parent_view is None, either provide default_parent_view or override get_default_parent_view method."
+            )
+
+        # Create root view of the first segment's type
+        root_view = root_view_cls.open_root(
+            ctx,
+            views=views,
+            default_parent_view=default_parent_view,
+        )
+
+        # Navigate through remaining segments
+        full_path = (*parent_path, (address, cls))
+        return path_.navigate_view(root_view, full_path)
+
+    @classmethod
+    def open_at_key(
+        cls,
+        key: key_.Key,
+        ctx: StorageContextType,
+        *,
+        views: tuple[type[View], ...] = (),
+        default_parent_view: type[View] | None = None,
+    ) -> Self:
+        """Create a View at the specified container key.
+
+        Creates all necessary intermediate containers along the key path and
+        returns the View instance at the final container location.
+
+        Args:
+            ctx: Storage context (transaction or snapshot)
+            key: Container key tuple (raw storage path)
+            views: Tuple of available views
+            default_parent_view: View type for intermediate parent containers
+
+        Returns:
+            View instance at the final container location
+
+        Raises:
+            ValueError: If key is empty or only root
+            TypeError: If default_parent_view cannot provide structure/protocol
+
+        Example:
+            >>> key = ("/", "users", "alice")
+            >>> alice_view = DictView.create_at_key(tx, key, DictView)
+        """
+        if not key:
+            raise ValueError("Key is empty, provide a complete key")
+
+        if key[0] != key_.DATA_ROOT:
+            raise ValueError("Key must start with DATA_ROOT ('/')")
+
+        if default_parent_view is None:
+            default_parent_view = cls.get_default_parent_view()
+
+        if default_parent_view is None:
+            raise ValueError(
+                "default_parent_view is None, either provide default_parent_view or override get_default_parent_view method."
+            )
+
+        # Create the target container with proper structure and protocol
+        container = Container.create(
+            key,
+            ctx,
+            cls.get_structure(),
+            cls.get_protocol(),
+            default_parent_structure=default_parent_view.get_structure(),
+            default_parent_protocol=default_parent_view.get_protocol(),
+            ensure_healthy_parents=True,
+        )
+
+        # Build registry from default_parent_view
+        registry = ViewRegistry()
+        for view in cls.get_available_views() + views:
             registry.register(view)
 
         return cls(container, registry)

@@ -2,13 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
-
 from redwood.view import View
-
-
-if TYPE_CHECKING:
-    from redwood.storage import StorageContextType
 
 
 __all__ = [
@@ -25,14 +19,8 @@ class StdView(View):
     """
 
     @classmethod
-    def create(
-        cls,
-        ctx: StorageContextType,
-        views: tuple[type[View], ...] = (),
-        default_parent_view: type[View] | None = None,
-    ) -> Self:
-        """Create a new View instance of this type."""
-        # Import here to avoid circular imports
+    def get_available_views(cls) -> tuple[type[View], ...]:
+        """Returns tuple of views defined in collections module."""
         from .bytearray_view import ByteArrayView
         from .dict_view import DictView
         from .frozenset_view import FrozenSetView
@@ -40,7 +28,11 @@ class StdView(View):
         from .set_view import SetView
         from .tuple_view import TupleView
 
-        default_parent_view = default_parent_view or DictView
-        views = (DictView, ListView, TupleView, SetView, FrozenSetView, ByteArrayView, *views)
+        return (ByteArrayView, DictView, FrozenSetView, ListView, SetView, TupleView)
 
-        return super().create(ctx, views, default_parent_view)
+    @classmethod
+    def get_default_parent_view(cls) -> type[View]:
+        """Returns DictView as a default view."""
+        from .dict_view import DictView
+
+        return DictView
