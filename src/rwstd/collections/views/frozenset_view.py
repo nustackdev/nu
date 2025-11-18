@@ -65,7 +65,7 @@ class FrozenSetView(
         # Returns int for use in hash tables, or use .hexdigest() for string
         return hashlib.sha256(pickled).hexdigest()[:64]
 
-    def address_normalization(self, address: object) -> key_.KeySegment:
+    def normalize_address(self, address: object) -> key_.KeySegment:
         """Normalize value address to an internal storage key."""
         return self._make_key(address)
 

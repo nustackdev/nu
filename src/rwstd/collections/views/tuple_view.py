@@ -69,7 +69,7 @@ class TupleView(
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.INDEXED | ContainerProtocol.SIZED
     CONTAINER_CLS: ClassVar[type] = tuple
 
-    def address_normalization(self, address: int) -> int:
+    def normalize_address(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
         Args:
@@ -103,7 +103,7 @@ class TupleView(
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self.address_normalization(address)
+        normalized = self.normalize_address(address)
         try:
             return self._get_child_value(normalized)
         except PathNotFoundError as e:
@@ -208,7 +208,7 @@ class TupleView(
         Returns:
             View instance for child container
         """
-        normalized = self.address_normalization(address)
+        normalized = self.normalize_address(address)
         child_container = Container.create(
             key_.join_segment(self.container.path, normalized),
             self.container.ctx,

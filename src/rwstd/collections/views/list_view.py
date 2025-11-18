@@ -75,7 +75,7 @@ class ListView(
     )
     CONTAINER_CLS: ClassVar[type] = list
 
-    def address_normalization(self, address: int) -> int:
+    def normalize_address(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
         Args:
@@ -109,7 +109,7 @@ class ListView(
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self.address_normalization(address)
+        normalized = self.normalize_address(address)
         try:
             return self._get_child_value(normalized)
         except PathNotFoundError as e:
@@ -125,7 +125,7 @@ class ListView(
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self.address_normalization(address)
+        normalized = self.normalize_address(address)
         self._set_child_value(normalized, value)
 
     def __delitem__(self, address: int) -> None:
@@ -137,7 +137,7 @@ class ListView(
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self.address_normalization(address)
+        normalized = self.normalize_address(address)
         length = len(self)
 
         # Delete the item

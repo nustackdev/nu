@@ -10,7 +10,6 @@ This module provides reusable mixins that encapsulate common view patterns:
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
@@ -128,11 +127,28 @@ class LiveChildrenCountMixin:
         return sum(1 for _ in self.container.list_child_keys())
 
 
-class ChildNavigationMixin[A]:
+class AddressMappingMixin[A]:
+    """Mixin for converting view-level addresses to container keys.
+
+    Provides a single hook normalize_address() that defines how a view's
+    address type A maps onto the underlying Container key space.
+
+    Type Parameters:
+        A: Address type for children at the view level
+    """
+
+    container: Container
+
+    def normalize_address(self, address: A) -> key_.KeySegment:
+        """Normalize view address to a storage key."""
+        raise NotImplementedError
+
+
+class ChildNavigationMixin[A](AddressMappingMixin[A]):
     """Mixin for typed child view access with address normalization.
 
     Provides open_child() method that creates a child view with proper
-    address normalization. Subclasses implement address_normalization()
+    address normalization. Subclasses implement normalize_address()
     to customize address handling (e.g., negative index support).
 
     Type Parameters:
@@ -141,7 +157,7 @@ class ChildNavigationMixin[A]:
 
     Example:
         >>> class MyListView(ChildNavigationMixin[int, str], View):
-        ...     def address_normalization(self, address: int) -> int:
+        ...     def normalize_address(self, address: int) -> int:
         ...         # Support negative indices
         ...         if address < 0:
         ...             return len(self) + address
@@ -150,24 +166,6 @@ class ChildNavigationMixin[A]:
 
     container: Container
     registry: ViewRegistry
-
-    @abstractmethod
-    def address_normalization(self, address: A) -> str | int:
-        """Normalize address before accessing child.
-
-        Subclasses implement this to handle view-specific address logic
-        (e.g., negative indices for ListView, passthrough for DictView).
-
-        Args:
-            address: Raw address from user
-
-        Returns:
-            Normalized address for storage access
-
-        Raises:
-            IndexError, KeyError: If address invalid
-        """
-        ...
 
     def open_child[ViewT: View](self, address: A, view: type[ViewT]) -> ViewT:
         """Open child view at address.
@@ -182,7 +180,7 @@ class ChildNavigationMixin[A]:
         Raises:
             IndexError, KeyError: If address invalid after normalization
         """
-        normalized_address = self.address_normalization(address)
+        normalized_address = self.normalize_address(address)
         child_container = Container.create(
             key_.join_segment(self.container.path, normalized_address),
             self.container.ctx,
@@ -384,7 +382,7 @@ class ChildNestedSetMixin:
         child_view.store(value)
 
 
-class WatchMixin[A]:
+class WatchMixin[A](AddressMappingMixin[A]):
     """Mixin providing subscription-based watch methods for views.
 
     Delegates all watch operations to the underlying container, using
@@ -397,19 +395,6 @@ class WatchMixin[A]:
         >>> view.unwatch(storage, sub)
     """
 
-    container: Container
-
-    def _normalize_watch_address(self, address: A) -> key_.KeySegment:
-        """Normalize address to a storage key.
-
-        Uses address_normalization(address) when implemented on the view,
-        otherwise assumes the address is already a valid storage key.
-        """
-        normalizer = getattr(self, "address_normalization", None)
-        if normalizer is None:
-            return cast("key_.KeySegment", address)
-        return cast("key_.KeySegment", normalizer(address))
-
     def watch_child(
         self,
         storage: StorageProtocol,
@@ -418,7 +403,7 @@ class WatchMixin[A]:
         depth: int = -1,
     ) -> SubscriptionProtocol:
         """Watch changes to a specific child and its subtree."""
-        key = self._normalize_watch_address(address)
+        key = self.normalize_address(address)
         return self.container.watch_child(storage, key, callback, depth)
 
     def watch_children(
@@ -429,7 +414,7 @@ class WatchMixin[A]:
         depth: int = -1,
     ) -> tuple[SubscriptionProtocol, ...]:
         """Watch changes to multiple children and their subtrees."""
-        keys = tuple(self._normalize_watch_address(address) for address in addresses)
+        keys = tuple(self.normalize_address(address) for address in addresses)
         return self.container.watch_children(storage, *keys, callback=callback, depth=depth)
 
     def watch(

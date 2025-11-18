@@ -43,7 +43,7 @@ class ByteArrayView(
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.MUTABLE | ContainerProtocol.INDEXED
     CONTAINER_CLS: ClassVar[type] = bytearray
 
-    def address_normalization(self, address: int) -> int:
+    def normalize_address(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
         Args:
@@ -77,7 +77,7 @@ class ByteArrayView(
         Raises:
             IndexError: If index out of bounds
         """
-        normalized = self.address_normalization(address)
+        normalized = self.normalize_address(address)
         value = self.container.get_child_primitive(normalized)
         if is_empty(value):
             raise IndexError("bytearray index out of range")
@@ -97,7 +97,7 @@ class ByteArrayView(
         if not isinstance(value, int) or not 0 <= value <= 255:
             raise ValueError("byte must be in range(0, 256)")
 
-        normalized = self.address_normalization(address)
+        normalized = self.normalize_address(address)
         self.container.set_child_primitive(normalized, value)
 
     def __iter__(self) -> Generator[int, None, None]:

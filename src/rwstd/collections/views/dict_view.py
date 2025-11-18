@@ -74,7 +74,7 @@ class DictView(
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.MAPPING | ContainerProtocol.MUTABLE
     CONTAINER_CLS: ClassVar[type] = dict
 
-    def address_normalization(self, address: str | int) -> str | int:
+    def normalize_address(self, address: str | int) -> str | int:
         """No normalization needed for dict keys - passthrough.
 
         Args:
