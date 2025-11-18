@@ -10,8 +10,6 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from redwood.loc import path
-
-logger = getLogger(__name__)
 from redwood.shape import Command
 from redwood.types import Appendable, Assignable, Initializable
 
@@ -25,6 +23,8 @@ __all__ = [
     "SetCmd",
 ]
 
+
+logger = getLogger(__name__)
 
 # =============================================================================
 # SET COMMAND

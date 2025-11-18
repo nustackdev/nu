@@ -6,7 +6,7 @@ Views are thin wrappers over Container providing protocol-based capabilities.
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self, cast
 
 import attrs
 
@@ -189,7 +189,7 @@ class View(ABC):
 
         # Navigate through remaining segments
         full_path = (*parent_path, (address, cls))
-        return path_.navigate_view(root_view, full_path)
+        return cast("Self", path_.navigate_view(root_view, full_path))
 
     @classmethod
     def open_at_key(
