@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from redwood.view import View
+from rwstd.collections import DictView
 
 
 # ============================================================================
@@ -14,7 +15,7 @@ from redwood.view import View
 
 
 @pytest.fixture
-def dict_factory(root_view: View) -> Callable[[str, dict[str, Any] | None], View]:
+def dict_factory(root_view: DictView) -> Callable[[str, dict[str, Any] | None], View]:
     """Factory for creating DictViews with test data.
 
     Navigates from root_view using open_child() to create child DictView.
@@ -37,7 +38,7 @@ def dict_factory(root_view: View) -> Callable[[str, dict[str, Any] | None], View
 
 
 @pytest.fixture
-def list_factory(root_view: View) -> Callable[[str, list[Any] | None], View]:
+def list_factory(root_view: DictView) -> Callable[[str, list[Any] | None], View]:
     """Factory for creating ListViews with test data.
 
     Navigates from root_view using open_child() to create child ListView.
@@ -60,7 +61,7 @@ def list_factory(root_view: View) -> Callable[[str, list[Any] | None], View]:
 
 
 @pytest.fixture
-def set_factory(root_view: View) -> Callable[[str, set[Any] | None], View]:
+def set_factory(root_view: DictView) -> Callable[[str, set[Any] | None], View]:
     """Factory for creating SetViews with test data.
 
     Navigates from root_view using open_child() to create child SetView.
@@ -83,7 +84,7 @@ def set_factory(root_view: View) -> Callable[[str, set[Any] | None], View]:
 
 
 @pytest.fixture
-def tuple_factory(root_view: View) -> Callable[[str, tuple[Any, ...] | None], View]:
+def tuple_factory(root_view: DictView) -> Callable[[str, tuple[Any, ...] | None], View]:
     """Factory for creating TupleViews with test data.
 
     Navigates from root_view using open_child() to create child TupleView.

@@ -23,7 +23,7 @@ def root_view(tx: TransactionProtocol) -> View:
     """
     from rwstd.collections import DictView
 
-    return DictView.create(ctx=tx)
+    return DictView.open_root(ctx=tx)
 
 
 # ============================================================================
