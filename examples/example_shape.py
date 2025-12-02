@@ -12,9 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from redwood import Context
-from rwstd.collections import DictView
-from rwstd.shapes import (
+from esstd.collections import DictView
+from esstd.shapes import (
     MappingShapeSlot,
     MappingSlot,
     PrimitiveSlot,
@@ -23,7 +22,8 @@ from rwstd.shapes import (
     Shape,
     ShapeSlot,
 )
-from rwstd.storage import TextCodec, TextStorage
+from esstd.storage import TextCodec, TextStorage
+from everyshape import Context
 
 
 # =============================================================================

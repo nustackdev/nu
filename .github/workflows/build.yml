@@ -90,12 +90,12 @@ jobs:
 
           # Where to find built libraries (Linux)
           CIBW_ENVIRONMENT_LINUX: >
-            RWROCKS_DEP_DIR=/tmp/rwrocks_deps
-            LD_LIBRARY_PATH=/tmp/rwrocks_deps/lib:$LD_LIBRARY_PATH
+            ESROCKS_DEP_DIR=/tmp/esrocks_deps
+            LD_LIBRARY_PATH=/tmp/esrocks_deps/lib:$LD_LIBRARY_PATH
 
           # Test the wheel after building (Linux)
           CIBW_TEST_COMMAND_LINUX: |
-            python -c "import rwrocks; print('Linux wheel OK:', rwrocks.__version__)"
+            python -c "import esrocks; print('Linux wheel OK:', esrocks.__version__)"
 
           # ---------------------------------------------------------------------
           # MACOS-SPECIFIC SETTINGS
@@ -117,12 +117,12 @@ jobs:
 
           # Where to find built libraries (macOS)
           CIBW_ENVIRONMENT_MACOS: >
-            RWROCKS_DEP_DIR=/tmp/rwrocks_deps
-            DYLD_LIBRARY_PATH=/tmp/rwrocks_deps/lib:$DYLD_LIBRARY_PATH
+            ESROCKS_DEP_DIR=/tmp/esrocks_deps
+            DYLD_LIBRARY_PATH=/tmp/esrocks_deps/lib:$DYLD_LIBRARY_PATH
 
           # Test the wheel after building (macOS)
           CIBW_TEST_COMMAND_MACOS: |
-            python -c "import rwrocks; print('macOS wheel OK:', rwrocks.__version__)"
+            python -c "import esrocks; print('macOS wheel OK:', esrocks.__version__)"
 
           # Fix library paths in macOS wheels (for arm64 cross-compilation)
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: |
@@ -139,11 +139,11 @@ jobs:
 
           # Where to find built libraries (Windows)
           CIBW_ENVIRONMENT_WINDOWS: >
-            RWROCKS_DEP_DIR=C:\rwrocks_deps
+            ESROCKS_DEP_DIR=C:\esrocks_deps
 
           # Test the wheel after building (Windows)
           CIBW_TEST_COMMAND_WINDOWS: |
-            python -c "import rwrocks; print('Windows wheel OK:', rwrocks.__version__)"
+            python -c "import esrocks; print('Windows wheel OK:', esrocks.__version__)"
 
       # ------------------------------------------------------------------------
       # STEP 5: Upload built wheels as artifacts
@@ -187,7 +187,7 @@ jobs:
 
       - name: Install wheel
         run: |
-          python -m pip install --find-links wheelhouse rwrocks
+          python -m pip install --find-links wheelhouse esrocks
 
       - name: Run tests
         run: |

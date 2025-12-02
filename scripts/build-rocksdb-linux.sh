@@ -16,19 +16,19 @@ set -x  # Print commands (for debugging)
 # - snappy (compression)
 # - RocksDB (main database library)
 #
-# All libraries are installed to $RWROCKS_DEP_DIR
+# All libraries are installed to $ESROCKS_DEP_DIR
 # ==============================================================================
 
 # Configuration
 ROCKSDB_VERSION="${ROCKSDB_VERSION:-9.7.3}"
-RWROCKS_DEP_DIR="${RWROCKS_DEP_DIR:-/tmp/rwrocks_deps}"
+ESROCKS_DEP_DIR="${ESROCKS_DEP_DIR:-/tmp/esrocks_deps}"
 
 # Create directories
-mkdir -p "$RWROCKS_DEP_DIR"/{lib,include}
+mkdir -p "$ESROCKS_DEP_DIR"/{lib,include}
 cd /tmp
 
 echo "========================================="
-echo "Building dependencies in: $RWROCKS_DEP_DIR"
+echo "Building dependencies in: $ESROCKS_DEP_DIR"
 echo "RocksDB version: $ROCKSDB_VERSION"
 echo "========================================="
 
@@ -48,7 +48,7 @@ fi
 # Common compiler flags
 export CFLAGS="-fPIC -O3"
 export CXXFLAGS="-fPIC -O3"
-export PREFIX="$RWROCKS_DEP_DIR"
+export PREFIX="$ESROCKS_DEP_DIR"
 
 # ==============================================================================
 # Build zlib (compression library)

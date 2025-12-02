@@ -60,7 +60,7 @@ Term (AST base)
 Shapes are class-level definitions describing data topology:
 
 ```python
-from redwood.semantics import Shape, ValueSlot, ShapeSlot, MapSlot
+from everyshape.semantics import Shape, ValueSlot, ShapeSlot, MapSlot
 
 class Order(Shape):
     price = ValueSlot(float)
@@ -281,7 +281,7 @@ These are View Layer 3 responsibilities.
 
 ## Summary
 
-Layer 4 provides the **cognitive model** for Redwood:
+Layer 4 provides the **cognitive model** for EveryShape:
 
 - **Shapes** define structure declaratively
 - **Slots** create Refs when accessed
@@ -291,4 +291,4 @@ Layer 4 provides the **cognitive model** for Redwood:
 
 This vocabulary gives developers a clear mental model: describe what exists, where it lives, and how to interact with it. The system handles the rest—navigation, storage, transactions, and type safety.
 
-The semantics layer is where Redwood transforms from a generic tree store into a domain-specific data platform.
+The semantics layer is where EveryShape transforms from a generic tree store into a domain-specific data platform.

@@ -1,4 +1,4 @@
-# Contributing to Redwood
+# Contributing to EveryShape
 
 Thanks for your interest in contributing! This guide will help you get set up and understand the development workflow.
 
@@ -22,8 +22,8 @@ pip install uv
 ### Clone & Setup
 
 ```bash
-git clone https://github.com/loomi-lab/redwood.git
-cd redwood
+git clone https://github.com/loomi-lab/everyshape.git
+cd everyshape
 
 # Install dependencies and build
 make dev
@@ -129,13 +129,13 @@ make rebuild
 4. **Import Python exceptions at the top:**
 
    ```cython
-   from redwood.codec.errors import DecodingError
+   from everyshape.codec.errors import DecodingError
    ```
 
 ## Getting Help
 
-- **Issues:** [GitHub Issues](https://github.com/loomi-lab/redwood/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/loomi-lab/redwood/discussions)
+- **Issues:** [GitHub Issues](https://github.com/loomi-lab/everyshape/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/loomi-lab/everyshape/discussions)
 
 ## Performance Tips
 

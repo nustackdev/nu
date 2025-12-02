@@ -252,8 +252,8 @@ Build these on top using Tree's iteration primitives.
 ## Usage Example
 
 ```python
-from redwood.storage import create_lmdb_storage
-from redwood.tree import Tree
+from everyshape.storage import create_lmdb_storage
+from everyshape.tree import Tree
 
 # Create storage and tree
 storage = create_lmdb_storage("data.db")

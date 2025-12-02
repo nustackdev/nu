@@ -16,7 +16,7 @@ NC := \033[0m
 # ============================================================================
 
 help:
-	@echo "$(BLUE)Redwood Development Commands$(NC)"
+	@echo "$(BLUE)EveryShape Development Commands$(NC)"
 	@echo ""
 	@echo "$(GREEN)Setup:$(NC)"
 	@echo "  make install-uv      - Install uv package manager"
@@ -122,7 +122,7 @@ test-verbose:
 
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
-	pytest $(TEST_DIR) --cov=redwood --cov-report=html:tests/reports/coverage --cov-report=term-missing --cov-branch
+	pytest $(TEST_DIR) --cov=everyshape --cov-report=html:tests/reports/coverage --cov-report=term-missing --cov-branch
 	@echo "$(GREEN)✓ Coverage report: tests/reports/coverage/index.html$(NC)"
 
 test-watch:
@@ -137,18 +137,18 @@ quick: build test-fast
 
 lint:
 	@echo "$(BLUE)Running linters...$(NC)"
-	ruff check $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
+	ruff check $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
 
 format:
 	@echo "$(BLUE)Formatting code...$(NC)"
-	ruff format $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
-	ruff check --fix $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
+	ruff format $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
+	ruff check --fix $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking code format...$(NC)"
-	ruff format --check $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
-	ruff check $(SRC_DIR)/redwood $(SRC_DIR)/rwstd $(TEST_DIR)
+	ruff format --check $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
+	ruff check $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
 
 pre-commit: format lint test-fast
 	@echo ""
@@ -208,11 +208,11 @@ publish-test: check-dist
 	@echo "$(GREEN)✓ Published to TestPyPI$(NC)"
 	@echo ""
 	@echo "Test installation:"
-	@echo "  pip install --index-url https://test.pypi.org/simple/ redwood"
+	@echo "  pip install --index-url https://test.pypi.org/simple/ everyshape"
 
 publish: check-dist
 	@echo "$(YELLOW)⚠️  Publishing to PyPI (are you sure?)$(NC)"
-	@echo "Package: redwood"
+	@echo "Package: everyshape"
 	@echo "Version: $(shell grep '^version = ' pyproject.toml | cut -d'"' -f2)"
 	@echo ""
 	@read -p "Press Enter to continue or Ctrl+C to cancel..."
@@ -220,7 +220,7 @@ publish: check-dist
 	twine upload dist/*
 	@echo "$(GREEN)✓ Published to PyPI!$(NC)"
 	@echo ""
-	@echo "Install with: pip install redwood"
+	@echo "Install with: pip install everyshape"
 
 # ============================================================================
 # Cleanup

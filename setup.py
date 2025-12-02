@@ -1,17 +1,17 @@
 """
-Setup script for redwood package.
+Setup script for everyshape package.
 
 This setup.py handles:
-- Cython compilation for the rwrocks package, which provides Python bindings to RocksDB,
-- Cython compilation for the rwstd package, which provides tuple to binary codec,
-- Other packages (redwood, rwstd) are pure Python and don't need special build handling.
+- Cython compilation for the esrocks package, which provides Python bindings to RocksDB,
+- Cython compilation for the esstd package, which provides tuple to binary codec,
+- Other packages (everyshape, esstd) are pure Python and don't need special build handling.
 
 Package structure:
     src/
-    ├── redwood/     (pure Python - main package)
-    ├── rwtup/       (Cython - tuple to binary codec)
-    ├── rwstd/       (pure Python)
-    └── rwrocks/     (Cython + C++ - RocksDB bindings)
+    ├── everyshape/     (pure Python - main package)
+    ├── estup/       (Cython - tuple to binary codec)
+    ├── esstd/       (pure Python)
+    └── esrocks/     (Cython + C++ - RocksDB bindings)
 
 Build environments:
     - Local development: May or may not have RocksDB installed
@@ -19,7 +19,7 @@ Build environments:
     - Source distribution: Users must have RocksDB installed
 
 Environment variables:
-    RWROCKS_DEP_DIR: Path to RocksDB and compression libraries (set by build scripts)
+    ESROCKS_DEP_DIR: Path to RocksDB and compression libraries (set by build scripts)
 """
 
 import os
@@ -39,15 +39,15 @@ IS_LINUX = SYSTEM == "Linux"
 IS_MACOS = SYSTEM == "Darwin"
 IS_WINDOWS = SYSTEM == "Windows"
 
-# Config for rwtup
-RWTUP_PATH = Path("src/rwtup")
+# Config for estup
+ESTUP_PATH = Path("src/estup")
 
-# Config for rwrocks
-# Determine if we're building rwrocks (has Cython files)
-RWROCKS_PATH = Path("src/rwrocks")
-HAS_RWROCKS = RWROCKS_PATH.exists() and list(RWROCKS_PATH.glob("*.pyx"))
+# Config for esrocks
+# Determine if we're building esrocks (has Cython files)
+ESROCKS_PATH = Path("src/esrocks")
+HAS_ESROCKS = ESROCKS_PATH.exists() and list(ESROCKS_PATH.glob("*.pyx"))
 # Get dependency directory from environment (set by build scripts)
-DEP_DIR = os.environ.get("RWROCKS_DEP_DIR", None)
+DEP_DIR = os.environ.get("ESROCKS_DEP_DIR", None)
 
 
 # ============================================================================
@@ -63,7 +63,7 @@ def find_cython_files(package_path: Path) -> list[Path]:
 def get_include_dirs() -> list[str]:
     """Get include directories for compilation."""
     include_dirs = [
-        "src/rwrocks/include",  # Our C++ wrapper headers
+        "src/esrocks/include",  # Our C++ wrapper headers
     ]
 
     if DEP_DIR:
@@ -235,14 +235,14 @@ def get_link_args() -> list[str]:
 # ============================================================================
 
 
-def create_rwrocks_extensions() -> list[Extension]:
-    """Create Extension objects for rwrocks Cython files."""
-    if not HAS_RWROCKS:
-        print("No rwrocks package found or no .pyx files - skipping Cython compilation")
+def create_esrocks_extensions() -> list[Extension]:
+    """Create Extension objects for esrocks Cython files."""
+    if not HAS_ESROCKS:
+        print("No esrocks package found or no .pyx files - skipping Cython compilation")
         return []
 
     print("=" * 80)
-    print("Building rwrocks RocksDB bindings")
+    print("Building esrocks RocksDB bindings")
     print("=" * 80)
 
     # Check if Cython is available
@@ -253,11 +253,11 @@ def create_rwrocks_extensions() -> list[Extension]:
         print("   Install it with: pip install Cython>=3.0")
         sys.exit(1)
 
-    # Find all .pyx files in rwrocks
-    pyx_files = find_cython_files(RWROCKS_PATH)
+    # Find all .pyx files in esrocks
+    pyx_files = find_cython_files(ESROCKS_PATH)
 
     if not pyx_files:
-        print("No .pyx files found in rwrocks")
+        print("No .pyx files found in esrocks")
         return []
 
     print(f"📦 Found {len(pyx_files)} Cython file(s):")
@@ -283,7 +283,7 @@ def create_rwrocks_extensions() -> list[Extension]:
 
     for pyx_file in pyx_files:
         # Convert path to module name
-        # e.g., src/rwrocks/lib_rocksdb.pyx -> rwrocks.lib_rocksdb
+        # e.g., src/esrocks/lib_rocksdb.pyx -> esrocks.lib_rocksdb
         rel_path = pyx_file.relative_to("src")
         module_parts = [*list(rel_path.parts[:-1]), rel_path.stem]
         module_name = ".".join(module_parts)
@@ -324,17 +324,17 @@ def create_rwrocks_extensions() -> list[Extension]:
     return cythonized
 
 
-def create_rwtup_extensions() -> list[Extension]:
-    """Create Extension objects for rwtup Cython files."""
+def create_estup_extensions() -> list[Extension]:
+    """Create Extension objects for estup Cython files."""
 
-    pyx_files = find_cython_files(RWTUP_PATH)
+    pyx_files = find_cython_files(ESTUP_PATH)
 
     if not pyx_files:
-        print("No .pyx files found in rwtup")
+        print("No .pyx files found in estup")
         return []
 
     print("=" * 80)
-    print("Building rwtup Cython extensions")
+    print("Building estup Cython extensions")
     print("=" * 80)
 
     # Check if Cython is available
@@ -354,7 +354,7 @@ def create_rwtup_extensions() -> list[Extension]:
 
     for pyx_file in pyx_files:
         # Convert path to module name
-        # e.g., src/rwtup/binary_codec.pyx -> rwtup.binary_codec
+        # e.g., src/estup/binary_codec.pyx -> estup.binary_codec
         rel_path = pyx_file.relative_to("src")
         module_parts = [*list(rel_path.parts[:-1]), rel_path.stem]
         module_name = ".".join(module_parts)
@@ -399,15 +399,15 @@ def create_rwtup_extensions() -> list[Extension]:
 
 def main() -> None:
     """Main setup function."""
-    # Get extensions (only for rwrocks if it exists)
-    extensions = create_rwrocks_extensions()
-    extensions += create_rwtup_extensions()
+    # Get extensions (only for esrocks if it exists)
+    extensions = create_esrocks_extensions()
+    extensions += create_estup_extensions()
 
     # Check if we're building wheels or installing
     if "bdist_wheel" in sys.argv or "build" in sys.argv or "install" in sys.argv:
         if extensions and not DEP_DIR:
             print("\n" + "=" * 80)
-            print("WARNING: Building without RWROCKS_DEP_DIR set!")
+            print("WARNING: Building without ESROCKS_DEP_DIR set!")
             print("=" * 80)
             print("This may fail if RocksDB is not installed system-wide.")
             print("For CI/CD builds, ensure build-rocksdb-*.sh scripts run first.")
@@ -430,7 +430,7 @@ def main() -> None:
 
     if extensions:
         print("\nBuild completed successfully!")
-        print("   rwrocks RocksDB bindings are ready to use.")
+        print("   esrocks RocksDB bindings are ready to use.")
     else:
         print("\nBuild completed (pure Python packages only)")
 

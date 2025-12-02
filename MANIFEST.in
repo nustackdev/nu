@@ -24,40 +24,40 @@ include scripts/build-rocksdb-macos.sh
 include scripts/build-rocksdb-windows.ps1
 
 # ============================================================================
-# rwrocks Package Files
+# esrocks Package Files
 # ============================================================================
 # Cython source files (.pyx, .pxd)
-recursive-include src/rwrocks *.pyx
-recursive-include src/rwrocks *.pxd
+recursive-include src/esrocks *.pyx
+recursive-include src/esrocks *.pxd
 
 # C++ wrapper headers
-recursive-include src/rwrocks/include *.hpp
-recursive-include src/rwrocks/include *.h
+recursive-include src/esrocks/include *.hpp
+recursive-include src/esrocks/include *.h
 
 # Python type stubs
-recursive-include src/rwrocks *.pyi
+recursive-include src/esrocks *.pyi
 
 # ============================================================================
-# rwtup Package Files
+# estup Package Files
 # ============================================================================
 # Cython source files (.pyx, .pxd)
-recursive-include src/rwtup *.pyx
-recursive-include src/rwtup *.pxd
+recursive-include src/estup *.pyx
+recursive-include src/estup *.pxd
 
 # C++ wrapper headers
-recursive-include src/rwtup/include *.hpp
-recursive-include src/rwtup/include *.h
+recursive-include src/estup/include *.hpp
+recursive-include src/estup/include *.h
 
 # Python type stubs
-recursive-include src/rwtup *.pyi
+recursive-include src/estup *.pyi
 
 # ============================================================================
 # Other Packages (Pure Python)
 # ============================================================================
 # These are automatically included by setuptools, but we can be explicit
-recursive-include src/redwood *.py
-recursive-include src/rwtup *.py
-recursive-include src/rwstd *.py
+recursive-include src/everyshape *.py
+recursive-include src/estup *.py
+recursive-include src/esstd *.py
 
 # ============================================================================
 # Tests (optional - include if you want tests in sdist)
@@ -77,8 +77,8 @@ global-exclude __pycache__
 # Exclude Cython-generated C/C++ files (they'll be regenerated)
 global-exclude *.c
 global-exclude *.cpp
-exclude src/rwrocks/*.c
-exclude src/rwrocks/*.cpp
+exclude src/esrocks/*.c
+exclude src/esrocks/*.cpp
 
 # Exclude build artifacts
 global-exclude *.so

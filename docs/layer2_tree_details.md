@@ -53,7 +53,7 @@ The Tree layer interprets flat tuple-key-value storage as a hierarchical structu
 ### Module Organization
 
 ```
-redwood/tree/
+everyshape/tree/
 ├── __init__.py          # Public API exports
 ├── types.py             # Type definitions, enums, data structures
 ├── exceptions.py        # Exception hierarchy
@@ -179,7 +179,7 @@ chain = [
 
 **Functional API** (recommended for libraries):
 ```python
-from redwood.tree import create_container, get_node_info
+from everyshape.tree import create_container, get_node_info
 
 with storage.transaction() as tx:
     create_container(
@@ -193,7 +193,7 @@ with storage.transaction() as tx:
 
 **Object-Oriented API** (convenient for applications):
 ```python
-from redwood.tree import Tree
+from everyshape.tree import Tree
 
 with storage.transaction() as tx:
     tree = Tree(ctx=tx)
@@ -294,7 +294,7 @@ created_paths = ensure_parents(path, structure, protocol, ctx)
 ### Basic Container Creation
 
 ```python
-from redwood.tree import Tree, ContainerStructure, ContainerProtocol
+from everyshape.tree import Tree, ContainerStructure, ContainerProtocol
 
 with storage.transaction() as tx:
     tree = Tree(ctx=tx)
@@ -382,7 +382,7 @@ with storage.transaction() as tx:
 ## Error Handling
 
 ```python
-from redwood.tree import (
+from everyshape.tree import (
     PathNotFoundError,
     PathExistsError,
     PathTypeError,

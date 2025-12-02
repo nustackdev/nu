@@ -9,8 +9,8 @@ build-backend = "setuptools.build_meta"
 # Project Metadata (PEP 621)
 # ============================================================================
 [project]
-name = "redwood"
-version = "0.4.0"
+name = "everyshape"
+version = "1.0.0"
 description = "Persistent reactive trees for Python with multiple storage backends"
 readme = "README.md"
 license = "MIT"
@@ -47,18 +47,20 @@ classifiers = [
     "Topic :: Database",
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "attrs",
+]
 
 [project.urls]
-Homepage = "https://github.com/loomi-lab/redwood"
-Documentation = "https://github.com/loomi-lab/redwood#readme"
-Repository = "https://github.com/loomi-lab/redwood"
-Issues = "https://github.com/loomi-lab/redwood/issues"
-Changelog = "https://github.com/loomi-lab/redwood/releases"
+Homepage = "https://github.com/loomi-lab/everyshape"
+Documentation = "https://github.com/loomi-lab/everyshape#readme"
+Repository = "https://github.com/loomi-lab/everyshape"
+Issues = "https://github.com/loomi-lab/everyshape/issues"
+Changelog = "https://github.com/loomi-lab/everyshape/releases"
 
 [project.optional-dependencies]
 # RocksDB backend support (binary wheels available)
-rocksdb = []  # rwrocks is included in main package
+rocksdb = []  # esrocks is included in main package
 
 # Development tools
 dev = [
@@ -84,7 +86,7 @@ cython = [
 
 # All development dependencies
 all = [
-    "redwood[dev,test,cython]",
+    "everyshape[dev,test,cython]",
 ]
 
 # ============================================================================
@@ -96,31 +98,31 @@ zip-safe = false
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["redwood*", "rwtup*", "rwrocks*", "rwstd*"]
+include = ["everyshape*", "estup*", "esrocks*", "esstd*"]
 namespaces = false
 
 [tool.setuptools.package-data]
 # Include all necessary files for each package
-redwood = [
+everyshape = [
     "py.typed",
 ]
-rwtup = [
+estup = [
     "**/*.pyx",
     "**/*.pxd",
     "**/*.hpp",
     "py.typed",
 ]
-rwrocks = [
+esrocks = [
     "**/*.pyx",
     "**/*.pxd",
     "**/*.hpp",
     "py.typed",
 ]
-rwstd = [
+esstd = [
     "py.typed",
 ]
 
-# Include C++ headers for rwrocks in source distributions
+# Include C++ headers for esrocks in source distributions
 [tool.setuptools.exclude-package-data]
 "*" = ["*.c", "*.cpp"]  # Exclude generated C/C++ files
 
@@ -142,7 +144,7 @@ skip = [
 build-verbosity = 1
 
 # Test the wheels after building
-test-command = "python -c \"import rwrocks; print('rwrocks version:', rwrocks.__version__)\""
+test-command = "python -c \"import esrocks; print('esrocks version:', esrocks.__version__)\""
 test-requires = ["pytest"]
 
 # ============================================================================
@@ -160,12 +162,12 @@ before-all = [
 ]
 
 # Set environment variables for the build
-environment = { RWROCKS_DEP_DIR="/tmp/rwrocks_deps", LD_LIBRARY_PATH="/tmp/rwrocks_deps/lib:$LD_LIBRARY_PATH" }
+environment = { ESROCKS_DEP_DIR="/tmp/esrocks_deps", LD_LIBRARY_PATH="/tmp/esrocks_deps/lib:$LD_LIBRARY_PATH" }
 
 # Additional test command to verify RocksDB functionality
 test-command = [
-    "python -c \"import rwrocks; print('rwrocks imported successfully')\"",
-    "python -c \"import rwrocks; db = rwrocks.DB('/tmp/test.db', rwrocks.Options(create_if_missing=True)); db.put(b'key', b'value'); assert db.get(b'key') == b'value'; print('RocksDB basic test passed')\""
+    "python -c \"import esrocks; print('esrocks imported successfully')\"",
+    "python -c \"import esrocks; db = esrocks.DB('/tmp/test.db', esrocks.Options(create_if_missing=True)); db.put(b'key', b'value'); assert db.get(b'key') == b'value'; print('RocksDB basic test passed')\""
 ]
 
 # ============================================================================
@@ -176,7 +178,7 @@ test-command = [
 archs = ["x86_64", "arm64"]
 
 # Minimum macOS version to support
-environment = { MACOSX_DEPLOYMENT_TARGET="10.14", RWROCKS_DEP_DIR="/tmp/rwrocks_deps", DYLD_LIBRARY_PATH="/tmp/rwrocks_deps/lib:$DYLD_LIBRARY_PATH" }
+environment = { MACOSX_DEPLOYMENT_TARGET="10.14", ESROCKS_DEP_DIR="/tmp/esrocks_deps", DYLD_LIBRARY_PATH="/tmp/esrocks_deps/lib:$DYLD_LIBRARY_PATH" }
 
 # Build RocksDB and dependencies before building wheels
 before-all = [
@@ -188,8 +190,8 @@ repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest
 
 # Test the wheels
 test-command = [
-    "python -c \"import rwrocks; print('rwrocks imported successfully')\"",
-    "python -c \"import rwrocks; db = rwrocks.DB('/tmp/test_macos.db', rwrocks.Options(create_if_missing=True)); db.put(b'key', b'value'); assert db.get(b'key') == b'value'; print('RocksDB basic test passed')\""
+    "python -c \"import esrocks; print('esrocks imported successfully')\"",
+    "python -c \"import esrocks; db = esrocks.DB('/tmp/test_macos.db', esrocks.Options(create_if_missing=True)); db.put(b'key', b'value'); assert db.get(b'key') == b'value'; print('RocksDB basic test passed')\""
 ]
 
 # ============================================================================
@@ -202,11 +204,11 @@ before-all = [
 ]
 
 # Set environment for Windows builds
-environment = { RWROCKS_DEP_DIR="C:\\rwrocks_deps" }
+environment = { ESROCKS_DEP_DIR="C:\\esrocks_deps" }
 
 # Test the wheels
 test-command = [
-    "python -c \"import rwrocks; print('rwrocks imported successfully')\"",
+    "python -c \"import esrocks; print('esrocks imported successfully')\"",
 ]
 
 # ============================================================================
@@ -231,10 +233,10 @@ markers = [
     "integration: Integration tests - cross-component",
     "performance: Performance benchmarks",
     # Package markers
-    "redwood: Tests for core redwood package",
-    "rwrocks: Tests for RocksDB bindings",
-    "rwstd: Tests for standard library utils",
-    "rwtup: Tests for tuple codec",
+    "everyshape: Tests for core everyshape package",
+    "esrocks: Tests for RocksDB bindings",
+    "esstd: Tests for standard library utils",
+    "estup: Tests for tuple codec",
     # Backend markers (for parametrized storage tests)
     "rocksdb: RocksDB backend tests",
     "text: TextStorage backend tests",
@@ -343,12 +345,12 @@ convention = "google"  # Use Google style format
     "T20",    # print allowed in setup
     "D",      # docstrings not required in setup
 ]
-"src/rwrocks/**/*.py" = [
+"src/esrocks/**/*.py" = [
     "D",      # Some docstrings may be in .pyx files
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["redwood", "rwtup", "rwrocks", "rwstd"]
+known-first-party = ["everyshape", "estup", "esrocks", "esstd"]
 force-single-line = false
 lines-after-imports = 2
 
@@ -378,5 +380,5 @@ exclude = [
 
 # Per-module options
 [[tool.mypy.overrides]]
-module = "rwrocks.*"
+module = "esrocks.*"
 ignore_errors = true  # Cython modules have type stubs but may not be perfect

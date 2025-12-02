@@ -266,8 +266,8 @@ storage.put(("tasks", 0), "Task 1")
 ### Registering Views
 
 ```python
-from redwood.view import ViewRegistry
-from redwood.view.views import DictView, ListView
+from everyshape.view import ViewRegistry
+from everyshape.view.views import DictView, ListView
 
 registry = ViewRegistry()
 
@@ -348,7 +348,7 @@ perms = alice["permissions"]  # set
 ## Custom Views
 
 ```python
-from redwood.view import View, ContainerStructure, ContainerProtocol
+from everyshape.view import View, ContainerStructure, ContainerProtocol
 
 class DocumentView(View):
     """Custom view for documents."""

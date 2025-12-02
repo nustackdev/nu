@@ -1,6 +1,6 @@
 # Location Vocabulary
 
-Redwood has three location abstractions, each at a different layer:
+EveryShape has three location abstractions, each at a different layer:
 
 ## Keys
 

@@ -1,8 +1,8 @@
-# Redwood Architecture
+# EveryShape Architecture
 
 ## Overview
 
-Redwood is a layered data system. Each layer builds on the one below, adding one concept at a time.
+EveryShape is a layered data system. Each layer builds on the one below, adding one concept at a time.
 
 ```text
 ┌─────────────────────────────────────┐
