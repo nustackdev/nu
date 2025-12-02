@@ -22,7 +22,7 @@ pip install uv
 ### Clone & Setup
 
 ```bash
-git clone https://github.com/loomi-lab/everyshape.git
+git clone https://github.com/everyabc/everyshape.git
 cd everyshape
 
 # Install dependencies and build
@@ -134,8 +134,8 @@ make rebuild
 
 ## Getting Help
 
-- **Issues:** [GitHub Issues](https://github.com/loomi-lab/everyshape/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/loomi-lab/everyshape/discussions)
+- **Issues:** [GitHub Issues](https://github.com/everyabc/everyshape/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/everyabc/everyshape/discussions)
 
 ## Performance Tips
 

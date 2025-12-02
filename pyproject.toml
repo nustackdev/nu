@@ -52,11 +52,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/loomi-lab/everyshape"
-Documentation = "https://github.com/loomi-lab/everyshape#readme"
-Repository = "https://github.com/loomi-lab/everyshape"
-Issues = "https://github.com/loomi-lab/everyshape/issues"
-Changelog = "https://github.com/loomi-lab/everyshape/releases"
+Homepage = "https://github.com/everyabc/everyshape"
+Documentation = "https://github.com/everyabc/everyshape#readme"
+Repository = "https://github.com/everyabc/everyshape"
+Issues = "https://github.com/everyabc/everyshape/issues"
+Changelog = "https://github.com/everyabc/everyshape/releases"
 
 [project.optional-dependencies]
 # RocksDB backend support (binary wheels available)
