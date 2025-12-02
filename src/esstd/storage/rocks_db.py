@@ -21,7 +21,6 @@ from uuid import uuid4
 logger = getLogger(__name__)
 
 from esstd.lazy_import import lazy_import
-
 from everyshape.storage import (
     CodecProtocol,
     ObserverProtocol,

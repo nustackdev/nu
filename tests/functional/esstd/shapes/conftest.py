@@ -1,6 +1,7 @@
 """Fixtures for shape layer testing."""
 
 import pytest
+
 from esstd.shapes import (
     MappingRef,
     MappingShapeRef,

@@ -4,8 +4,8 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-from esstd.collections import DictView
 
+from esstd.collections import DictView
 from everyshape.view import View
 
 
