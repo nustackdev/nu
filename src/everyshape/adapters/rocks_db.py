@@ -12,13 +12,11 @@ from __future__ import annotations
 
 import threading
 from contextlib import contextmanager
+from enum import Enum, auto
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 from uuid import uuid4
-
-
-logger = getLogger(__name__)
 
 from esstd.lazy_import import lazy_import
 from everyshape.storage import (
@@ -42,6 +40,7 @@ from everyshape.storage import (
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
+    from types import TracebackType
 
     import esrocks as _esrocks  # type: ignore[import]
     from everyshape.loc.key import Key
@@ -61,6 +60,20 @@ __all__ = [
     "RocksDBStorage",
     "RocksDBTransaction",
 ]
+
+
+logger = getLogger(__name__)
+
+
+# =============================================================================
+# Types
+# =============================================================================
+
+
+class IteratorType(Enum):
+    KEYS = auto()
+    VALUES = auto()
+    ITEMS = auto()
 
 
 # =============================================================================
@@ -91,7 +104,7 @@ class _RocksDBContextBase:
         self._closed = False
         self._uuid = uuid4()
 
-    def _require_active(self) -> Any:
+    def _require_active(self) -> object:
         """Validate context is active and return transaction handle.
 
         Returns:
@@ -389,7 +402,12 @@ class RocksDBSnapshot(
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager - auto close."""
         self.close()
 
@@ -577,7 +595,12 @@ class RocksDBWriteBatch(
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager - auto write or abort.
 
         If an exception occurred, abort the batch.
@@ -587,9 +610,12 @@ class RocksDBWriteBatch(
             # Exception occurred - abort
             try:
                 self.abort()
-            except Exception:
-                # Suppress abort errors if already handling exception
-                pass
+            except Exception as e:
+                logger.error(
+                    "Write batch abort failed",
+                    extra={"batch_id": str(self._uuid), "error": str(e)},
+                    exc_info=True,
+                )
         else:
             # No exception - write if not already done
             if not self._written and not self._aborted:
@@ -633,7 +659,12 @@ class RocksDBTransaction(
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager - auto commit or abort.
 
         If an exception occurred, abort the transaction.
@@ -643,9 +674,12 @@ class RocksDBTransaction(
             # Exception occurred - abort
             try:
                 self.abort()
-            except Exception:
-                # Suppress abort errors if already handling exception
-                pass
+            except Exception as e:
+                logger.error(
+                    "Transaction abort failed",
+                    extra={"txn_id": str(self._uuid), "error": str(e)},
+                    exc_info=True,
+                )
         else:
             # No exception - commit
             self.commit()
@@ -742,15 +776,6 @@ class RocksDBTransaction(
 # =============================================================================
 # OPTIMIZED Scan Iterator
 # =============================================================================
-
-from enum import Enum, auto
-from typing import Literal, overload
-
-
-class IteratorType(Enum):
-    KEYS = auto()
-    VALUES = auto()
-    ITEMS = auto()
 
 
 class RocksDBScan:
@@ -1023,7 +1048,12 @@ class RocksDBScan:
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         pass
 
@@ -1172,25 +1202,34 @@ class RocksDBStorage:
             for transaction in list(self._active_transactions):
                 try:
                     transaction.abort()
-                except Exception:
-                    # Best effort cleanup
-                    pass
+                except Exception as e:
+                    logger.error(
+                        "Transaction abort failed",
+                        extra={"txn_id": str(self._uuid), "error": str(e)},
+                        exc_info=True,
+                    )
 
             # Close all active snapshots
             for snapshot in list(self._active_snapshots):
                 try:
                     snapshot.close()
-                except Exception:
-                    # Best effort cleanup
-                    pass
+                except Exception as e:
+                    logger.error(
+                        "Snapshot close failed",
+                        extra={"snapshot_id": str(self._uuid), "error": str(e)},
+                        exc_info=True,
+                    )
 
             # Abort all active write batches
             for write_batch in list(self._active_write_batches):
                 try:
                     write_batch.abort()
-                except Exception:
-                    # Best effort cleanup
-                    pass
+                except Exception as e:
+                    logger.error(
+                        "Write batch abort failed",
+                        extra={"write_batch_id": str(self._uuid), "error": str(e)},
+                        exc_info=True,
+                    )
 
             # Clear tracking sets
             self._active_transactions.clear()
@@ -1379,9 +1418,12 @@ class RocksDBStorage:
             try:
                 if not txn._committed and not txn._aborted:
                     txn.abort()
-            except Exception:
-                # Best-effort cleanup; preserve original exception.
-                pass
+            except Exception as e:
+                logger.error(
+                    "Transaction abort failed",
+                    extra={"txn_id": str(self._uuid), "error": str(e)},
+                    exc_info=True,
+                )
             raise
 
     @contextmanager
@@ -1396,9 +1438,12 @@ class RocksDBStorage:
         finally:
             try:
                 snap.close()
-            except Exception:
-                # Best-effort cleanup
-                pass
+            except Exception as e:
+                logger.error(
+                    "Snapshot close failed",
+                    extra={"snapshot_id": str(self._uuid), "error": str(e)},
+                    exc_info=True,
+                )
 
     @contextmanager
     def write_batch(self) -> Iterator[WriteBatchProtocol]:
@@ -1417,8 +1462,12 @@ class RocksDBStorage:
             try:
                 if not batch._committed and not batch._aborted:
                     batch.abort()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(
+                    "Write batch abort failed",
+                    extra={"write_batch_id": str(self._uuid), "error": str(e)},
+                    exc_info=True,
+                )
             raise
 
     def _notify(self, key: Key) -> None:
@@ -1430,9 +1479,12 @@ class RocksDBStorage:
         if self._observer is not None:
             try:
                 self._observer.notify(key)
-            except Exception:
-                # Best effort notification - don't fail transaction
-                pass
+            except Exception as e:
+                logger.error(
+                    "Observer notification failed",
+                    extra={"observer_id": str(self._uuid), "error": str(e)},
+                    exc_info=True,
+                )
 
     def _remove_transaction(self, transaction: RocksDBTransaction) -> None:
         """Remove transaction from active set.
@@ -1475,7 +1527,12 @@ class RocksDBStorage:
         self.open()
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager - close storage."""
         self.close()
 

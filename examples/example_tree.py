@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from esstd.storage import BinaryCodec, RocksDBStorage
-
+from esstd.adapters import BinaryCodec, RocksDBStorage
 from everyshape.tree import Container, ContainerProtocol, ContainerStructure
 
 

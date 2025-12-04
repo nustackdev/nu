@@ -45,6 +45,7 @@ from everyshape.storage import (
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
+    from types import TracebackType
 
     from everyshape.loc.key import Key
     from everyshape.types import Value
@@ -74,7 +75,7 @@ class _TransactionState:
     Only modified keys are stored locally.
     """
 
-    def __init__(self, parent: dict[str, Any]):
+    def __init__(self, parent: dict[str, Any]) -> None:
         """Initialize overlay with parent state reference.
 
         Args:
@@ -84,7 +85,7 @@ class _TransactionState:
         self._local: dict[str, Any] = {}  # Modified keys
         self._deleted: set[str] = set()  # Deleted keys
 
-    def get(self, key: str) -> Any:
+    def get(self, key: str) -> object:
         """Get value by key.
 
         Args:
@@ -115,7 +116,7 @@ class _TransactionState:
             return False
         return key in self._local or key in self._parent
 
-    def __setitem__(self, key: str, value: Any) -> None:
+    def __setitem__(self, key: str, value: object) -> None:
         """Set key-value pair in overlay.
 
         Args:
@@ -596,7 +597,12 @@ class InMemorySnapshot(_InMemoryContextBase, _ReadOperationsMixin, SnapshotProto
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         self.close()
 
@@ -717,7 +723,12 @@ class InMemoryTransaction(
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         if exc_type is not None:
             # Exception occurred, abort
@@ -834,7 +845,12 @@ class InMemoryWriteBatch(_InMemoryContextBase, _WriteOperationsMixin, WriteBatch
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         if exc_type is not None:
             # Exception occurred, abort
@@ -905,8 +921,7 @@ class InMemoryStorage:
             try:
                 self._observer.notify(key)
             except Exception:
-                # Best effort notification - don't fail transaction
-                pass
+                logger.error("Observer notification failed")
 
     def _untrack_transaction(self, txn: InMemoryTransaction) -> None:
         """Remove transaction from active set.
@@ -970,22 +985,22 @@ class InMemoryStorage:
             for txn in list(self._active_transactions):
                 try:
                     txn.abort()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error(f"Failed to abort transaction during close: {e}")
 
             # Close all active snapshots
             for snap in list(self._active_snapshots):
                 try:
                     snap.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error(f"Failed to close snapshot during close: {e}")
 
             # Close all active write batches
             for batch in list(self._active_write_batches):
                 try:
                     batch.abort()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error(f"Failed to abort write batch during close: {e}")
 
             # Clear tracking sets
             self._active_transactions.clear()
@@ -1001,7 +1016,12 @@ class InMemoryStorage:
         self.open()
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         self.close()
 
@@ -1160,8 +1180,8 @@ class InMemoryStorage:
         finally:
             try:
                 snap.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to close snapshot during close: {e}")
 
     @contextmanager
     def batch_write(self) -> Iterator[InMemoryWriteBatch]:

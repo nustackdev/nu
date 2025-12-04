@@ -1,3 +1,10 @@
+"""Literal value term implementation.
+
+Used to represent constant values in the term graph.
+This is similar to Python's own literal values, but wrapped in a term
+to participate in the EveryShape computation model.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

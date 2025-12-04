@@ -32,7 +32,7 @@ def test_storage_open_close(storage):
 
 def test_storage_context_manager(tmp_path, codec):
     """Test storage context manager auto open/close."""
-    from esstd.storage import RocksDBStorage
+    from esstd.adapters import RocksDBStorage
 
     db_path = tmp_path / "ctx_test_db"
 

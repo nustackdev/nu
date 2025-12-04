@@ -40,9 +40,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
-
-logger = getLogger(__name__)
-
 from everyshape.storage import (
     CallbackFn,
     CodecProtocol,
@@ -63,6 +60,7 @@ from everyshape.storage import (
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
+    from types import TracebackType
 
     from everyshape.loc.key import Key
     from everyshape.types import Value
@@ -76,6 +74,8 @@ __all__ = [
     "TextWriteBatch",
 ]
 
+
+logger = getLogger(__name__)
 
 # =============================================================================
 # Constants
@@ -509,7 +509,12 @@ class TextSnapshot(_TextContextBase, _ReadOperationsMixin, SnapshotProtocol):
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         self.close()
 
@@ -620,7 +625,12 @@ class TextTransaction(
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         if exc_type is not None:
             # Exception occurred, abort
@@ -726,7 +736,12 @@ class TextWriteBatch(_TextContextBase, _WriteOperationsMixin, WriteBatchProtocol
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         if exc_type is not None:
             # Exception occurred, abort
@@ -850,7 +865,7 @@ class TextStorage:
             return {}
 
         try:
-            with open(state_path) as f:
+            with state_path.open() as f:
                 data = json.load(f)
 
             # Validate version
@@ -887,15 +902,19 @@ class TextStorage:
             # Write to temp file
             temp_path = state_path.with_suffix(".tmp")
             try:
-                with open(temp_path, "w") as f:
+                with temp_path.open("w") as f:
                     json.dump(data, f, indent=2, sort_keys=True)
                     f.flush()
             except Exception as e:
                 # Clean up temp file
                 try:
                     temp_path.unlink(missing_ok=True)
-                except Exception:
-                    pass
+                except Exception as e_unlink:
+                    logger.error(
+                        "Failed to clean up temp state file",
+                        extra={"error": str(e_unlink)},
+                        exc_info=True,
+                    )
                 raise StorageError(f"Failed to write state file: {e}") from e
 
             # Atomic rename
@@ -905,8 +924,12 @@ class TextStorage:
                 # Clean up temp file
                 try:
                     temp_path.unlink(missing_ok=True)
-                except Exception:
-                    pass
+                except Exception as e_unlink:
+                    logger.error(
+                        "Failed to clean up temp state file",
+                        extra={"error": str(e_unlink)},
+                        exc_info=True,
+                    )
                 raise StorageError(f"Failed to replace state file: {e}") from e
 
             # Update in-memory state
@@ -943,12 +966,11 @@ class TextStorage:
 
         # Append to log file
         try:
-            with open(ops_path, "a") as f:
+            with ops_path.open("a") as f:
                 json.dump(entry, f, separators=(",", ":"))
                 f.write("\n")
-        except Exception:
-            # Best effort logging, don't fail operations
-            pass
+        except Exception as e:
+            logger.error("Failed to log operation", extra={"error": str(e)}, exc_info=True)
 
     def _untrack_transaction(self, txn: TextTransaction) -> None:
         """Remove transaction from active set.
@@ -1025,22 +1047,26 @@ class TextStorage:
             for txn in list(self._active_transactions):
                 try:
                     txn.abort()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error(
+                        "Failed to abort transaction", extra={"error": str(e)}, exc_info=True
+                    )
 
             # Close all active snapshots
             for snap in list(self._active_snapshots):
                 try:
                     snap.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error("Failed to close snapshot", extra={"error": str(e)}, exc_info=True)
 
             # Close all active write batches
             for batch in list(self._active_write_batches):
                 try:
                     batch.abort()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error(
+                        "Failed to abort write batch", extra={"error": str(e)}, exc_info=True
+                    )
 
             # Clear tracking sets
             self._active_transactions.clear()
@@ -1054,7 +1080,12 @@ class TextStorage:
         self.open()
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit context manager."""
         self.close()
 
@@ -1210,8 +1241,8 @@ class TextStorage:
         finally:
             try:
                 snap.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error("Failed to close snapshot", extra={"error": str(e)}, exc_info=True)
 
     @contextmanager
     def batch_write(self) -> Iterator[TextWriteBatch]:
