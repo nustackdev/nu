@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 from uuid import uuid4
 
-from esstd.lazy_import import lazy_import
 from everyshape.storage import (
     CodecProtocol,
     ObserverProtocol,
@@ -36,6 +35,7 @@ from everyshape.storage import (
     TransactionProtocol,
     WriteBatchProtocol,
 )
+from everyshape.utils.lazy_import import lazy_import
 
 
 if TYPE_CHECKING:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from esstd.lazy_import import lazy_import
+from everyshape.utils.lazy_import import lazy_import
 
 
 if TYPE_CHECKING:

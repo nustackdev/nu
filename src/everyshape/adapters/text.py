@@ -764,7 +764,7 @@ class TextStorage:
 
     Example - Basic usage:
         >>> from everyshape.storage import TextStorage
-        >>> from esstd.storage.codecs import TupleCodec
+        >>> from everyshape.adapters.codecs import TupleCodec
         >>>
         >>> storage = TextStorage("./debug", TupleCodec())
         >>> storage.open()

@@ -131,7 +131,7 @@ class LValue[PathTypeT: path.Path](Term[None]):
         └─────┬─────┘ └──┬──┘ └─┬─┘
            parent    parent  self
 
-    Concrete implementations (in esstd):
+    Concrete implementations (see in standard library or ecosystem repo):
     - ValueRef: primitive values (int, str, float)
     - ShapeRef: nested structures
     - MapRef: mapping containers
@@ -186,7 +186,7 @@ class RValue[ResultT](Term[ResultT], ErgonomicsMixin[ResultT]):
     - Other RValues (nested expressions)
     - LValues (refs for read/write operations)
 
-    Concrete implementations (in esstd):
+    Concrete implementations (see in standard library or ecosystem repo):
     - Operations: GetOp, AddOp, SubOp, MulOp, DivOp, etc., UnaryOp, LiteralValue
     - Commands: SetCmd, DeleteCmd, UpdateCmd
     """
@@ -246,7 +246,7 @@ class Operation[OperationResultT](RValue[OperationResultT]):
         Operation[bool]  → returns bool
         Operation[list[str]] → returns list of strings
 
-    Examples (concrete implementations in esstd):
+    Examples (concrete implementations see in standard library or ecosystem repo):
         GetOp(price_ref)              → Operation[float]
         BinaryOp("gt", price, 100)    → Operation[bool]
         UnaryOp("neg", balance)       → Operation[float]
@@ -302,7 +302,7 @@ class Command[CommandResultT](RValue[CommandResultT]):
 
     Must execute in transactional context for atomicity.
 
-    Examples (concrete implementations in esstd):
+    Examples (concrete implementations see in standard library or ecosystem repo):
         SetCmd(price_ref, 150.0)           → Command[float]
         DeleteCmd(orders_ref, "AAPL")      → Command[Order]
         UpdateCmd(balance_ref, lambda x: x * 1.1) → Command[float]
@@ -364,7 +364,7 @@ class Ref[PathTypeT: path.Path](LValue[PathTypeT], ABC):
         Ref[str]   → location holding string
         Ref[Order] → location holding Order shape
 
-    Concrete implementations (in esstd):
+    Concrete implementations (see in standard library or ecosystem repo):
         ValueRef[T]     - primitive values
         ShapeRef[T]     - nested structures
         MapRef[K,V]     - mapping containers

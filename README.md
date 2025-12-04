@@ -1,3 +1,3 @@
 # EveryShape
 
-Persistent reactive trees for Python.
+Persistent reactive shapes for Python.

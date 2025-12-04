@@ -37,6 +37,9 @@ recursive-include src/esrocks/include *.h
 # Python type stubs
 recursive-include src/esrocks *.pyi
 
+# Python files
+recursive-include src/esrocks *.py
+
 # ============================================================================
 # estup Package Files
 # ============================================================================
@@ -51,13 +54,14 @@ recursive-include src/estup/include *.h
 # Python type stubs
 recursive-include src/estup *.pyi
 
+# Python files
+recursive-include src/estup *.py
+
 # ============================================================================
-# Other Packages (Pure Python)
+# Pure Python
 # ============================================================================
 # These are automatically included by setuptools, but we can be explicit
 recursive-include src/everyshape *.py
-recursive-include src/estup *.py
-recursive-include src/esstd *.py
 
 # ============================================================================
 # Tests (optional - include if you want tests in sdist)
@@ -80,7 +84,7 @@ global-exclude *.cpp
 exclude src/esrocks/*.c
 exclude src/esrocks/*.cpp
 
-# Exclude build artifacts
+# Exclude build artifacts (TODO: double check)
 global-exclude *.so
 global-exclude *.dylib
 global-exclude *.dll

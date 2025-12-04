@@ -1,4 +1,4 @@
-"""Collection of adapters for EveryShape Standard Library (esstd)."""
+"""Collection of adapters for storage layer."""
 
 from __future__ import annotations
 

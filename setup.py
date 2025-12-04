@@ -3,14 +3,13 @@ Setup script for everyshape package.
 
 This setup.py handles:
 - Cython compilation for the esrocks package, which provides Python bindings to RocksDB,
-- Cython compilation for the esstd package, which provides tuple to binary codec,
-- Other packages (everyshape, esstd) are pure Python and don't need special build handling.
+- Cython compilation for the estup package, which provides tuple to binary codec,
+- Pure python packages (e.g. everyshape).
 
 Package structure:
     src/
     ├── everyshape/     (pure Python - main package)
     ├── estup/       (Cython - tuple to binary codec)
-    ├── esstd/       (pure Python)
     └── esrocks/     (Cython + C++ - RocksDB bindings)
 
 Build environments:

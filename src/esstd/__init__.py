@@ -1,1 +1,0 @@
-"""EveryShape Standard Library."""

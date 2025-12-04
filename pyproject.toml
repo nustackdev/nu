@@ -98,7 +98,7 @@ zip-safe = false
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["everyshape*", "estup*", "esrocks*", "esstd*"]
+include = ["everyshape*", "estup*", "esrocks*"]
 namespaces = false
 
 [tool.setuptools.package-data]
@@ -116,9 +116,6 @@ esrocks = [
     "**/*.pyx",
     "**/*.pxd",
     "**/*.hpp",
-    "py.typed",
-]
-esstd = [
     "py.typed",
 ]
 
@@ -235,7 +232,6 @@ markers = [
     # Package markers
     "everyshape: Tests for core everyshape package",
     "esrocks: Tests for RocksDB bindings",
-    "esstd: Tests for standard library utils",
     "estup: Tests for tuple codec",
     # Backend markers (for parametrized storage tests)
     "rocksdb: RocksDB backend tests",
@@ -350,7 +346,7 @@ convention = "google"  # Use Google style format
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everyshape", "estup", "esrocks", "esstd"]
+known-first-party = ["everyshape", "estup", "esrocks"]
 force-single-line = false
 lines-after-imports = 2
 

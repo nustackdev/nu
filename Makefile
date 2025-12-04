@@ -137,18 +137,18 @@ quick: build test-fast
 
 lint:
 	@echo "$(BLUE)Running linters...$(NC)"
-	ruff check $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
+	ruff check $(SRC_DIR)/everyshape $(TEST_DIR)
 
 format:
 	@echo "$(BLUE)Formatting code...$(NC)"
-	ruff format $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
-	ruff check --fix $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
+	ruff format $(SRC_DIR)/everyshape $(TEST_DIR)
+	ruff check --fix $(SRC_DIR)/everyshape $(TEST_DIR)
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking code format...$(NC)"
-	ruff format --check $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
-	ruff check $(SRC_DIR)/everyshape $(SRC_DIR)/esstd $(TEST_DIR)
+	ruff format --check $(SRC_DIR)/everyshape $(TEST_DIR)
+	ruff check $(SRC_DIR)/everyshape $(TEST_DIR)
 
 pre-commit: format lint test-fast
 	@echo ""
