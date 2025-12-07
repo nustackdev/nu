@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from esstd.adapters import TextCodec, TextStorage
-from esstd.collections import DictView
-from esstd.shapes import (
+from everyverse.shapes import (
     MappingShapeSlot,
     MappingSlot,
     PrimitiveSlot,
@@ -23,7 +21,10 @@ from esstd.shapes import (
     Shape,
     ShapeSlot,
 )
+from everyverse.views import DictView
+
 from everyshape import Context
+from everyshape.adapters import TextCodec, TextStorage
 
 
 # =============================================================================

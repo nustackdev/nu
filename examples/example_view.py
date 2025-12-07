@@ -3,8 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from esstd.adapters import BinaryCodec, RocksDBStorage
-from esstd.collections import DictView, ListView
+from everyverse.views import DictView, ListView
+
+from everyshape.adapters import BinaryCodec, RocksDBStorage
 
 
 def example_basic_usage() -> None:

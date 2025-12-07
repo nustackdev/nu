@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
 
 if TYPE_CHECKING:
+    from everyshape.storage import CallbackFn, StorageProtocol, SubscriptionProtocol
     from everyshape.view import View
 
     from .special import Empty
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
 __all__ = [
     "Appendable",
     "Assignable",
+    "ChildWatchable",
     "Clearable",
     "Containable",
     "Convertible",
@@ -26,8 +28,10 @@ __all__ = [
     "Nestable",
     "Sizeable",
     "Subscriptable",
+    "Watchable",
     "is_appendable",
     "is_assignable",
+    "is_child_watchable",
     "is_clearable",
     "is_containable",
     "is_convertible",
@@ -36,6 +40,7 @@ __all__ = [
     "is_nestable",
     "is_sizeable",
     "is_subscriptable",
+    "is_watchable",
 ]
 
 
@@ -310,6 +315,141 @@ class Appendable[V](Protocol):
         ...
 
 
+@runtime_checkable
+class Watchable(Protocol):
+    """Protocol for containers that support watching for changes.
+
+    Watchable containers implement watch() to subscribe to changes on the
+    container and its descendants, and unwatch() to cancel subscriptions.
+
+    Example:
+        >>> if isinstance(container, Watchable):
+        ...     sub = container.watch(storage, my_callback)
+        ...     # ... later
+        ...     container.unwatch(storage, sub)
+    """
+
+    def watch(
+        self,
+        storage: StorageProtocol,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to this container and its descendants.
+
+        Args:
+            storage: Storage instance for subscriptions
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire tree, 0=exact, N=depth)
+
+        Returns:
+            Subscription handle
+
+        Raises:
+            StorageOperationError: If subscription fails
+        """
+        ...
+
+    def unwatch(
+        self,
+        storage: StorageProtocol,
+        subscription: SubscriptionProtocol,
+    ) -> None:
+        """Unsubscribe from changes.
+
+        Args:
+            storage: Storage instance
+            subscription: Subscription to cancel
+
+        Raises:
+            StorageOperationError: If unsubscribe fails
+        """
+        ...
+
+
+@runtime_checkable
+class ChildWatchable[A](Protocol):
+    """Protocol for containers that support watching individual children.
+
+    ChildWatchable containers implement watch_child() to subscribe to changes
+    on a specific child and watch_children() to subscribe to multiple children.
+
+    Type Parameters:
+        A: The type of address/key for children
+
+    Example:
+        >>> if isinstance(container, ChildWatchable):
+        ...     sub = container.watch_child(storage, "alice", my_callback)
+        ...     subs = container.watch_children(
+        ...         storage, "alice", "bob", callback=my_callback
+        ...     )
+        ...     # ... later
+        ...     container.unwatch(storage, sub)
+    """
+
+    def watch_child(
+        self,
+        storage: StorageProtocol,
+        address: A,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> SubscriptionProtocol:
+        """Watch changes to a specific child and its subtree.
+
+        Args:
+            storage: Storage instance for subscriptions
+            address: Child address to watch
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
+
+        Returns:
+            Subscription handle
+
+        Raises:
+            StorageOperationError: If subscription fails
+        """
+        ...
+
+    def watch_children(
+        self,
+        storage: StorageProtocol,
+        *addresses: A,
+        callback: CallbackFn,
+        depth: int = -1,
+    ) -> tuple[SubscriptionProtocol, ...]:
+        """Watch changes to multiple children and their subtrees.
+
+        Args:
+            storage: Storage instance for subscriptions
+            *addresses: Child addresses to watch
+            callback: Function called on changes
+            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
+
+        Returns:
+            Tuple of subscription handles
+
+        Raises:
+            StorageOperationError: If subscription fails
+        """
+        ...
+
+    def unwatch(
+        self,
+        storage: StorageProtocol,
+        subscription: SubscriptionProtocol,
+    ) -> None:
+        """Unsubscribe from changes.
+
+        Args:
+            storage: Storage instance
+            subscription: Subscription to cancel
+
+        Raises:
+            StorageOperationError: If unsubscribe fails
+        """
+        ...
+
+
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
@@ -433,3 +573,27 @@ def is_appendable(obj: object) -> TypeGuard[Appendable]:
         True if object implements Appendable protocol
     """
     return isinstance(obj, Appendable)
+
+
+def is_watchable(obj: object) -> TypeGuard[Watchable]:
+    """Check if object supports watching for changes.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Watchable protocol
+    """
+    return isinstance(obj, Watchable)
+
+
+def is_child_watchable(obj: object) -> TypeGuard[ChildWatchable]:
+    """Check if object supports watching individual children.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements ChildWatchable protocol
+    """
+    return isinstance(obj, ChildWatchable)
