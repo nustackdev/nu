@@ -9,6 +9,7 @@ from __future__ import annotations
 from .capabilities import (
     Appendable,
     Assignable,
+    ChildWatchable,
     Clearable,
     Containable,
     Convertible,
@@ -17,8 +18,10 @@ from .capabilities import (
     Nestable,
     Sizeable,
     Subscriptable,
+    Watchable,
     is_appendable,
     is_assignable,
+    is_child_watchable,
     is_clearable,
     is_containable,
     is_convertible,
@@ -27,6 +30,7 @@ from .capabilities import (
     is_nestable,
     is_sizeable,
     is_subscriptable,
+    is_watchable,
 )
 from .collections import (
     Collection,
@@ -78,6 +82,7 @@ __all__ = [  # noqa: RUF022
     # Capabilities
     "Appendable",
     "Assignable",
+    "ChildWatchable",
     "Clearable",
     "Containable",
     "Convertible",
@@ -86,8 +91,10 @@ __all__ = [  # noqa: RUF022
     "Nestable",
     "Sizeable",
     "Subscriptable",
+    "Watchable",
     "is_appendable",
     "is_assignable",
+    "is_child_watchable",
     "is_clearable",
     "is_containable",
     "is_convertible",
@@ -96,6 +103,7 @@ __all__ = [  # noqa: RUF022
     "is_nestable",
     "is_sizeable",
     "is_subscriptable",
+    "is_watchable",
     # Collection protocols
     "Collection",
     "Container",
