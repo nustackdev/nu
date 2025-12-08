@@ -109,6 +109,27 @@ class Term[ResultT](ABC):
         """
         ...
 
+    @property
+    @abstractmethod
+    def is_pure(self) -> bool:
+        """Whether this term has side effects.
+
+        Pure expressions (Operations):
+        - Deterministic: same input → same output
+        - No mutations: doesn't change tree state
+        - Cacheable: can memoize results
+        - Reorderable: execution order doesn't matter
+
+        Impure expressions (Commands):
+        - Side effects: modifies tree state
+        - Order-dependent: sequence matters
+        - Transactional: needs transaction context
+
+        Returns:
+            True if pure (no side effects), False if impure
+        """
+        ...
+
 
 # =============================================================================
 # LVALUE - ADDRESSABLE LOCATIONS
@@ -201,27 +222,6 @@ class RValue[ResultT](Term[ResultT], ErgonomicsMixin[ResultT]):
 
     Empty tuple for leaf terms (literals, some refs).
     """
-
-    @property
-    @abstractmethod
-    def is_pure(self) -> bool:
-        """Whether this expression has side effects.
-
-        Pure expressions (Operations):
-        - Deterministic: same input → same output
-        - No mutations: doesn't change tree state
-        - Cacheable: can memoize results
-        - Reorderable: execution order doesn't matter
-
-        Impure expressions (Commands):
-        - Side effects: modifies tree state
-        - Order-dependent: sequence matters
-        - Transactional: needs transaction context
-
-        Returns:
-            True if pure (no side effects), False if impure
-        """
-        ...
 
 
 # =============================================================================
@@ -379,6 +379,15 @@ class Ref[PathTypeT: path.Path](LValue[PathTypeT], ABC):
     def __init__(self, parent_ref: Ref | None) -> None:
         """Init Ref."""
         self.parent_ref = parent_ref
+
+    @property
+    def is_pure(self) -> bool:
+        """Refs are always pure.
+
+        Returns:
+            True - refs never have side effects
+        """
+        return True
 
     @property
     def parent(self) -> Ref | None:
