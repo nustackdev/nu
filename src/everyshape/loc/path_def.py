@@ -47,7 +47,7 @@ Examples:
     hash("user:alice")   # Custom HashMapView key
 """
 
-type PathSegmentType = Value | type[View]
+type PathSegmentType = type[Value] | type[View]
 """Second component in a path segment (address, type).
 
 Can be either a View type or a Value (str, int, dict, etc):
@@ -70,7 +70,7 @@ Examples:
 """
 
 
-type PathValueSegment = tuple[PathAddress, Value]
+type PathValueSegment = tuple[PathAddress, type[Value]]
 """Single navigation step to a primitive value.
 
 A ValueSegment specifies:

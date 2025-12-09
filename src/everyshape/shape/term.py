@@ -418,13 +418,11 @@ class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, Con
         raise NotImplementedError("Refs are not executables.")
 
 
-class ViewRefBase[ViewT: type[View], ContextT: ContextProtocol](
-    Ref[path.PathToView, ContextT], ABC
-):
+class ViewRefBase[ViewT: View, ContextT: ContextProtocol](Ref[path.PathToView, ContextT], ABC):
     def __init__(
         self,
         address: path.PathAddress | RValue,
-        view_type: ViewT,
+        view_type: type[ViewT],
         parent_ref: Ref | None = None,
     ) -> None:
         """Init ViewRef."""
@@ -467,23 +465,21 @@ class ViewRefBase[ViewT: type[View], ContextT: ContextProtocol](
     def __repr__(self) -> str:
         """ViewRef representation in machine-friendly format."""
         if self.parent_ref:
-            return f"{self.parent_ref!r} -> {self.address!r}"
-        return f"{self.address!r}"
+            return f"<ViewRef: {self.parent_ref!r} -> {self.address!r}>"
+        return f"<ViewRef: {self.address!r}>"
 
     def __str__(self) -> str:
         """ViewRef representation in human-friendly format."""
         if self.parent_ref:
-            return f"{self.parent_ref!s} -> {self.address!s}"
-        return str(self.address)
+            return f"ViewRef({self.parent_ref!s} -> {self.address!s})"
+        return f"ViewRef({self.address!r})"
 
 
-class PrimitiveRefBase[ValueT: Value, ContextT: ContextProtocol](
-    Ref[path.PathToValue, ContextT], ABC
-):
+class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue, ContextT], ABC):
     def __init__(
         self,
         address: path.PathAddress | RValue,
-        value_type: ValueT,
+        value_type: type[T],
         parent_ref: Ref | None,
     ) -> None:
         """Init ValueRef."""
@@ -525,11 +521,11 @@ class PrimitiveRefBase[ValueT: Value, ContextT: ContextProtocol](
     def __repr__(self) -> str:
         """PrimitiveRef representation in machine-friendly format."""
         if self.parent_ref:
-            return f"{self.parent_ref!r} -> {self.address!r}"
-        return f"{self.address!r}"
+            return f"<PrimitiveRef: {self.parent_ref!r} -> {self.address!r}>"
+        return f"<PrimitiveRef: {self.address!r}>"
 
     def __str__(self) -> str:
         """PrimitiveRef representation in human-friendly format."""
         if self.parent_ref:
-            return f"{self.parent_ref!s} -> {self.address!s}"
-        return str(self.address)
+            return f"PrimitiveRef({self.parent_ref!s} -> {self.address!s})"
+        return f"PrimitiveRef({self.address!r})"
