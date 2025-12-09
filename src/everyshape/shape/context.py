@@ -1,30 +1,23 @@
-"""Core type definitions.
-
-Provides type aliases and shared data structures used across all layers.
-"""
+"""Terms execution context defintion."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 
-if TYPE_CHECKING:
-    from everyshape.storage import StorageContextType
-    from everyshape.view import View
+__all__ = [
+    "ContextProtocol",
+]
 
 
 @dataclass(frozen=True)
-class Context:
+class ContextProtocol(Protocol):
     """Execution context for operations and commands.
 
-    Bundles together the tree instance and storage context needed
-    for executing operations.
+    Bundles together the tree instance and storage context needed for executing operations.
 
-    Attributes:
-        tree: Tree instance for navigation
-        storage_context: Context for data access (transaction or snapshot)
+    TODO: Implement interface.
     """
 
-    root_view: View
-    storage_context: StorageContextType
+    pass

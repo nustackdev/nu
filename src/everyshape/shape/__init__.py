@@ -1,6 +1,6 @@
 """Layer 4 - declarative access."""
 
-from .context import Context
+from .context import ContextProtocol
 from .core.binary_ops import BinaryOp
 from .core.literal_value import LiteralValue, literal
 from .core.unary_ops import UnaryOp
@@ -25,7 +25,7 @@ from .term import (
 __all__ = [
     "BinaryOp",
     "Command",
-    "Context",
+    "ContextProtocol",
     "LValue",
     "LiteralValue",
     "Operation",

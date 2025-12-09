@@ -52,6 +52,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from ..context import ContextProtocol
     from ..term import RValue
     from .binary_ops import (
         AddOp,
@@ -76,7 +77,7 @@ if TYPE_CHECKING:
     from .unary_ops import AbsOp, BitwiseNotOp, NegOp, NotOp, PosOp
 
 
-class ErgonomicsMixin[T]:
+class ErgonomicsMixin[T, ContextT: ContextProtocol]:
     """Operator overloading mixin for RValue expressions."""
 
     def _operand(self, other: object) -> RValue:
@@ -127,7 +128,7 @@ class ErgonomicsMixin[T]:
         """
         raise TypeError("Cannot use != directly on expressions. Use .ne(other) method instead.")
 
-    def __and__(self, other: object) -> AndOp[T]:  # type: ignore[override]
+    def __and__(self, other: object) -> AndOp[T, ContextT]:  # type: ignore[override]
         """Bitwise AND is unsafe; use and_() method instead.
 
         Raises:
@@ -138,7 +139,7 @@ class ErgonomicsMixin[T]:
             "This prevents accidental use of Python's short-circuit semantics."
         )
 
-    def __rand__(self, other: object) -> AndOp[T]:  # type: ignore[override]
+    def __rand__(self, other: object) -> AndOp[T, ContextT]:  # type: ignore[override]
         """Right bitwise AND is unsafe; use and_() method instead.
 
         Raises:
@@ -146,7 +147,7 @@ class ErgonomicsMixin[T]:
         """
         raise TypeError("Cannot use & operator on expressions. Use .and_(other) method instead.")
 
-    def __or__(self, other: object) -> OrOp[T]:  # type: ignore[override]
+    def __or__(self, other: object) -> OrOp[T, ContextT]:  # type: ignore[override]
         """Bitwise OR is unsafe; use or_() method instead.
 
         Raises:
@@ -157,7 +158,7 @@ class ErgonomicsMixin[T]:
             "This prevents accidental use of Python's short-circuit semantics."
         )
 
-    def __ror__(self, other: object) -> OrOp[T]:  # type: ignore[override]
+    def __ror__(self, other: object) -> OrOp[T, ContextT]:  # type: ignore[override]
         """Right bitwise OR is unsafe; use or_() method instead.
 
         Raises:
@@ -179,19 +180,19 @@ class ErgonomicsMixin[T]:
     # UNARY OPERATIONS
     # =========================================================================
 
-    def __neg__(self) -> NegOp[T]:
+    def __neg__(self) -> NegOp[T, ContextT]:
         """Negation: -self."""
         from .unary_ops import NegOp
 
         return NegOp(self)
 
-    def __abs__(self) -> AbsOp[T]:
+    def __abs__(self) -> AbsOp[T, ContextT]:
         """Absolute value: abs(self)."""
         from .unary_ops import AbsOp
 
         return AbsOp(self)
 
-    def __pos__(self) -> PosOp[T]:
+    def __pos__(self) -> PosOp[T, ContextT]:
         """Unary plus: +self."""
         from .unary_ops import PosOp
 
@@ -201,85 +202,85 @@ class ErgonomicsMixin[T]:
     # ARITHMETIC OPERATIONS
     # =========================================================================
 
-    def __add__(self, other: object) -> AddOp[T]:
+    def __add__(self, other: object) -> AddOp[T, ContextT]:
         """Addition: self + other."""
         from .binary_ops import AddOp
 
         return AddOp(self, self._operand(other))
 
-    def __radd__(self, other: object) -> AddOp[T]:
+    def __radd__(self, other: object) -> AddOp[T, ContextT]:
         """Right addition: other + self."""
         from .binary_ops import AddOp
 
         return AddOp(self._operand(other), self)
 
-    def __sub__(self, other: object) -> SubOp[T]:
+    def __sub__(self, other: object) -> SubOp[T, ContextT]:
         """Subtraction: self - other."""
         from .binary_ops import SubOp
 
         return SubOp(self, self._operand(other))
 
-    def __rsub__(self, other: object) -> SubOp[T]:
+    def __rsub__(self, other: object) -> SubOp[T, ContextT]:
         """Right subtraction: other - self."""
         from .binary_ops import SubOp
 
         return SubOp(self._operand(other), self)
 
-    def __mul__(self, other: object) -> MulOp[T]:
+    def __mul__(self, other: object) -> MulOp[T, ContextT]:
         """Multiplication: self * other."""
         from .binary_ops import MulOp
 
         return MulOp(self, self._operand(other))
 
-    def __rmul__(self, other: object) -> MulOp[T]:
+    def __rmul__(self, other: object) -> MulOp[T, ContextT]:
         """Right multiplication: other * self."""
         from .binary_ops import MulOp
 
         return MulOp(self._operand(other), self)
 
-    def __truediv__(self, other: object) -> DivOp[T]:
+    def __truediv__(self, other: object) -> DivOp[T, ContextT]:
         """Division: self / other."""
         from .binary_ops import DivOp
 
         return DivOp(self, self._operand(other))
 
-    def __rtruediv__(self, other: object) -> DivOp[T]:
+    def __rtruediv__(self, other: object) -> DivOp[T, ContextT]:
         """Right division: other / self."""
         from .binary_ops import DivOp
 
         return DivOp(self._operand(other), self)
 
-    def __floordiv__(self, other: object) -> FloorDivOp[T]:
+    def __floordiv__(self, other: object) -> FloorDivOp[T, ContextT]:
         """Floor division: self // other."""
         from .binary_ops import FloorDivOp
 
         return FloorDivOp(self, self._operand(other))
 
-    def __rfloordiv__(self, other: object) -> FloorDivOp[T]:
+    def __rfloordiv__(self, other: object) -> FloorDivOp[T, ContextT]:
         """Right floor division: other // self."""
         from .binary_ops import FloorDivOp
 
         return FloorDivOp(self._operand(other), self)
 
-    def __mod__(self, other: object) -> ModOp[T]:
+    def __mod__(self, other: object) -> ModOp[T, ContextT]:
         """Modulo: self % other."""
         from .binary_ops import ModOp
 
         return ModOp(self, self._operand(other))
 
-    def __rmod__(self, other: object) -> ModOp[T]:
+    def __rmod__(self, other: object) -> ModOp[T, ContextT]:
         """Right modulo: other % self."""
         from .binary_ops import ModOp
 
         return ModOp(self._operand(other), self)
 
-    def __pow__(self, other: object) -> PowOp[T]:
+    def __pow__(self, other: object) -> PowOp[T, ContextT]:
         """Power: self ** other."""
         from .binary_ops import PowOp
 
         return PowOp(self, self._operand(other))
 
-    def __rpow__(self, other: object) -> PowOp[T]:
+    def __rpow__(self, other: object) -> PowOp[T, ContextT]:
         """Right power: other ** self."""
         from .binary_ops import PowOp
 
@@ -289,31 +290,31 @@ class ErgonomicsMixin[T]:
     # COMPARISON OPERATIONS
     # =========================================================================
 
-    def __gt__(self, other: object) -> GtOp[bool]:
+    def __gt__(self, other: object) -> GtOp[bool, ContextT]:
         """Greater than: self > other."""
         from .binary_ops import GtOp
 
         return GtOp(self, self._operand(other))
 
-    def __lt__(self, other: object) -> LtOp[bool]:
+    def __lt__(self, other: object) -> LtOp[bool, ContextT]:
         """Less than: self < other."""
         from .binary_ops import LtOp
 
         return LtOp(self, self._operand(other))
 
-    def __ge__(self, other: object) -> GeOp[bool]:
+    def __ge__(self, other: object) -> GeOp[bool, ContextT]:
         """Greater than or equal: self >= other."""
         from .binary_ops import GeOp
 
         return GeOp(self, self._operand(other))
 
-    def __le__(self, other: object) -> LeOp[bool]:
+    def __le__(self, other: object) -> LeOp[bool, ContextT]:
         """Less than or equal: self <= other."""
         from .binary_ops import LeOp
 
         return LeOp(self, self._operand(other))
 
-    def eq(self, other: object) -> EqOp[bool]:
+    def eq(self, other: object) -> EqOp[bool, ContextT]:
         """Equality: self == other (safe method).
 
         Use this instead of == operator to avoid Python's default comparison semantics.
@@ -328,7 +329,7 @@ class ErgonomicsMixin[T]:
 
         return EqOp(self, self._operand(other))
 
-    def ne(self, other: object) -> NeOp[bool]:
+    def ne(self, other: object) -> NeOp[bool, ContextT]:
         """Not-equal: self != other (safe method).
 
         Use this instead of != operator to avoid Python's default comparison semantics.
@@ -347,7 +348,7 @@ class ErgonomicsMixin[T]:
     # LOGICAL OPERATIONS (Safe methods: and_(), or_())
     # =========================================================================
 
-    def and_(self, other: object) -> AndOp[T]:
+    def and_(self, other: object) -> AndOp[T, ContextT]:
         """Logical AND (safe method).
 
         Use this method instead of & operator to avoid Python's short-circuit semantics
@@ -363,7 +364,7 @@ class ErgonomicsMixin[T]:
 
         return AndOp(self, self._operand(other))
 
-    def or_(self, other: object) -> OrOp[T]:
+    def or_(self, other: object) -> OrOp[T, ContextT]:
         """Logical OR (safe method).
 
         Use this method instead of | operator to avoid Python's short-circuit semantics
@@ -379,7 +380,7 @@ class ErgonomicsMixin[T]:
 
         return OrOp(self, self._operand(other))
 
-    def not_(self) -> NotOp[T]:
+    def not_(self) -> NotOp[T, ContextT]:
         """Logical NOT (safe method).
 
         Use this instead of Python's 'not' keyword which cannot be overloaded.
@@ -395,43 +396,43 @@ class ErgonomicsMixin[T]:
     # BITWISE OPERATIONS
     # =========================================================================
 
-    def __xor__(self, other: object) -> XorOp[T]:
+    def __xor__(self, other: object) -> XorOp[T, ContextT]:
         """Bitwise XOR: self ^ other."""
         from .binary_ops import XorOp
 
         return XorOp(self, self._operand(other))
 
-    def __rxor__(self, other: object) -> XorOp[T]:
+    def __rxor__(self, other: object) -> XorOp[T, ContextT]:
         """Right bitwise XOR: other ^ self."""
         from .binary_ops import XorOp
 
         return XorOp(self._operand(other), self)
 
-    def __lshift__(self, other: object) -> LShiftOp[T]:
+    def __lshift__(self, other: object) -> LShiftOp[T, ContextT]:
         """Left shift: self << other."""
         from .binary_ops import LShiftOp
 
         return LShiftOp(self, self._operand(other))
 
-    def __rlshift__(self, other: object) -> LShiftOp[T]:
+    def __rlshift__(self, other: object) -> LShiftOp[T, ContextT]:
         """Right left shift: other << self."""
         from .binary_ops import LShiftOp
 
         return LShiftOp(self._operand(other), self)
 
-    def __rshift__(self, other: object) -> RShiftOp[T]:
+    def __rshift__(self, other: object) -> RShiftOp[T, ContextT]:
         """Right shift: self >> other."""
         from .binary_ops import RShiftOp
 
         return RShiftOp(self, self._operand(other))
 
-    def __rrshift__(self, other: object) -> RShiftOp[T]:
+    def __rrshift__(self, other: object) -> RShiftOp[T, ContextT]:
         """Right right shift: other >> self."""
         from .binary_ops import RShiftOp
 
         return RShiftOp(self._operand(other), self)
 
-    def bitnot(self) -> BitwiseNotOp[T]:
+    def bitnot(self) -> BitwiseNotOp[T, ContextT]:
         """Bitwise NOT: ~self (safe method).
 
         Use this instead of ~ operator which is blocked.

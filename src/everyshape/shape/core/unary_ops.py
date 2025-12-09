@@ -36,7 +36,7 @@ from ..term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import Context
+    from ..context import ContextProtocol
     from ..term import RValue
     from .ergonomics import ErgonomicsMixin
 
@@ -56,7 +56,7 @@ __all__ = [
 type OpArgument = RValue | ErgonomicsMixin
 
 
-class UnaryOp[T](Operation[T]):
+class UnaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT]):
     """Base class for unary operations.
 
     Defines execution pattern: evaluate operand → handle special values →
@@ -74,7 +74,7 @@ class UnaryOp[T](Operation[T]):
         """
         self.children = (cast("RValue", operand),)
 
-    def execute(self, context: Context) -> T | SpecialValue:
+    def execute(self, context: ContextT) -> T | SpecialValue:
         """Execute unary operation.
 
         Args:
@@ -117,7 +117,7 @@ class UnaryOp[T](Operation[T]):
 # =============================================================================
 
 
-class NegOp[T](UnaryOp[T]):
+class NegOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
     """Negation: -operand."""
 
     def _apply_op(self, operand: object) -> T | SpecialValue:
@@ -127,7 +127,7 @@ class NegOp[T](UnaryOp[T]):
             return NAN
 
 
-class AbsOp[T](UnaryOp[T]):
+class AbsOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
     """Absolute value: abs(operand)."""
 
     def _apply_op(self, operand: object) -> T | SpecialValue:
@@ -142,7 +142,7 @@ class AbsOp[T](UnaryOp[T]):
 # =============================================================================
 
 
-class NotOp[T](UnaryOp[T]):
+class NotOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
     """Logical NOT: not operand.
 
     Python's 'not' keyword cannot be overloaded.
@@ -153,7 +153,7 @@ class NotOp[T](UnaryOp[T]):
         return not operand  # type: ignore
 
 
-class BitwiseNotOp[T](UnaryOp[T]):
+class BitwiseNotOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
     """Bitwise NOT: ~operand (two's complement).
 
     Note: Python's ~ operator is blocked in ergonomics.
@@ -167,7 +167,7 @@ class BitwiseNotOp[T](UnaryOp[T]):
             return NAN
 
 
-class PosOp[T](UnaryOp[T]):
+class PosOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
     """Unary plus: +operand."""
 
     def _apply_op(self, operand: object) -> T | SpecialValue:

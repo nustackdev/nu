@@ -13,10 +13,10 @@ from ..term import Operation, RValue
 
 
 if TYPE_CHECKING:
-    from ..context import Context
+    from ..context import ContextProtocol
 
 
-class LiteralValue[T](Operation[T]):
+class LiteralValue[T, ContextT: ContextProtocol](Operation[T, ContextT]):
     """Constant literal value.
 
     Represents compile-time constants: numbers, strings, booleans, etc.
@@ -38,7 +38,7 @@ class LiteralValue[T](Operation[T]):
         self.value = value
         self.children = ()
 
-    def execute(self, context: Context) -> T:
+    def execute(self, context: ContextT) -> T:
         """Return the constant value.
 
         Args:
