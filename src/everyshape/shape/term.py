@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from everyshape.types import SpecialValue, Value
 
     from .context import ContextProtocol
+    from .shape import Shape
 
 
 __all__ = [
@@ -378,9 +379,10 @@ class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, Con
     - Available operations (get/set for values, keys/items for maps)
     """
 
-    def __init__(self, parent_ref: Ref | None) -> None:
+    def __init__(self, parent_ref: Ref | None, owner_shape: type[Shape] | None) -> None:
         """Init Ref."""
         self.parent_ref = parent_ref
+        self.owner_shape = owner_shape
 
     @property
     def is_pure(self) -> bool:
@@ -417,6 +419,15 @@ class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, Con
         """
         raise NotImplementedError("Refs are not executables.")
 
+    def get_owner_shape(self) -> type[Shape] | None:
+        """Get the Shape class this Ref was created by."""
+        if self.owner_shape is not None:
+            return self.owner_shape
+        elif self.parent_ref is not None:
+            return self.parent_ref.owner_shape
+        else:
+            return None
+
 
 class ViewRefBase[ViewT: View, ContextT: ContextProtocol](Ref[path.PathToView, ContextT], ABC):
     def __init__(
@@ -424,9 +435,10 @@ class ViewRefBase[ViewT: View, ContextT: ContextProtocol](Ref[path.PathToView, C
         address: path.PathAddress | RValue,
         view_type: type[ViewT],
         parent_ref: Ref | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Init ViewRef."""
-        super().__init__(parent_ref)
+        super().__init__(parent_ref, owner_shape)
 
         self.address = address
         self.view_type = view_type
@@ -472,7 +484,7 @@ class ViewRefBase[ViewT: View, ContextT: ContextProtocol](Ref[path.PathToView, C
         """ViewRef representation in human-friendly format."""
         if self.parent_ref:
             return f"ViewRef({self.parent_ref!s} -> {self.address!s})"
-        return f"ViewRef({self.address!r})"
+        return f"ViewRef({self.address!s})"
 
 
 class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue, ContextT], ABC):
@@ -481,9 +493,10 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue
         address: path.PathAddress | RValue,
         value_type: type[T],
         parent_ref: Ref | None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Init ValueRef."""
-        super().__init__(parent_ref)
+        super().__init__(parent_ref, owner_shape)
         self.address = address
         self.value_type = value_type
 
@@ -528,4 +541,4 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue
         """PrimitiveRef representation in human-friendly format."""
         if self.parent_ref:
             return f"PrimitiveRef({self.parent_ref!s} -> {self.address!s})"
-        return f"PrimitiveRef({self.address!r})"
+        return f"PrimitiveRef({self.address!s})"
