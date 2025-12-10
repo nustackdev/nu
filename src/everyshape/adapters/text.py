@@ -37,7 +37,7 @@ from datetime import UTC, datetime
 from enum import Enum, auto
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 from uuid import uuid4
 
 from everyshape.storage import (
@@ -1124,6 +1124,17 @@ class TextStorage:
     # =========================================================================
     # Transaction Management
     # =========================================================================
+
+    @overload
+    def begin(self, *, read_only: Literal[True]) -> SnapshotProtocol: ...
+
+    @overload
+    def begin(self, *, write_only: Literal[True]) -> WriteBatchProtocol: ...
+
+    @overload
+    def begin(
+        self, *, read_only: Literal[False], write_only: Literal[False]
+    ) -> TransactionProtocol: ...
 
     def begin(
         self,

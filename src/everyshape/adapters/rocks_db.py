@@ -1291,23 +1291,44 @@ class RocksDBStorage:
         except Exception as e:
             raise StorageOperationError(f"Failed to unsubscribe: {e}") from e
 
-    def begin(self, *, write: bool = False) -> TransactionProtocol | SnapshotProtocol:
+    @overload
+    def begin(self, *, read_only: Literal[True]) -> SnapshotProtocol: ...
+
+    @overload
+    def begin(self, *, write_only: Literal[True]) -> WriteBatchProtocol: ...
+
+    @overload
+    def begin(
+        self, *, read_only: Literal[False], write_only: Literal[False]
+    ) -> TransactionProtocol: ...
+
+    def begin(
+        self,
+        *,
+        read_only: bool = False,
+        write_only: bool = False,
+    ) -> WriteBatchProtocol | SnapshotProtocol | TransactionProtocol:
         """Begin transaction or snapshot.
 
         Args:
-            write: If True, begin read-write transaction; else read-only snapshot
+            read_only: If True, creates a read-only snapshot
+            write_only: If True, creates a write-only batch
 
         Returns:
-            Transaction if write=True, Snapshot if write=False
+            SnapshotProtocol if read_only=True
+            WriteBatchProtocol if write_only=True
+            TransactionProtocol otherwise
 
         Raises:
             StorageError: If begin fails
             StorageClosedError: If storage is not open
         """
-        if write:
-            return self.begin_transaction()
-        else:
+        if read_only:
             return self.begin_snapshot()
+        elif write_only:
+            return self.begin_write_batch()
+        else:
+            return self.begin_transaction()
 
     def begin_snapshot(self) -> RocksDBSnapshot:
         """Begin read-only snapshot.
@@ -1446,21 +1467,21 @@ class RocksDBStorage:
                 )
 
     @contextmanager
-    def write_batch(self) -> Iterator[WriteBatchProtocol]:
+    def batch_write(self) -> Iterator[WriteBatchProtocol]:
         """Context manager providing a write-batch-like interface.
 
         RocksDB write-batch is not implemented separately; use a transaction as a
         write batch. Commits on successful exit, aborts on exception.
         """
         # Use a transaction as a write-batch
-        batch = self.begin_transaction()
+        batch = self.begin_write_batch()
         try:
             yield batch
-            if not batch._committed and not batch._aborted:
-                batch.commit()
+            if not batch._written and not batch._aborted:
+                batch.write()
         except Exception:
             try:
-                if not batch._committed and not batch._aborted:
+                if not batch._written and not batch._aborted:
                     batch.abort()
             except Exception as e:
                 logger.error(
