@@ -412,7 +412,10 @@ class TextScan(ScanProtocol):
             # Decode key and value
             try:
                 key = codec.decode_key(key_str)
-                value = codec.decode_value(state[key_str])
+                if iterator_type != IteratorType.KEYS:
+                    value = codec.decode_value(state[key_str])
+                else:
+                    value = None
             except Exception as e:
                 raise StorageOperationError(f"Failed to decode key/value {key_str}: {e}") from e
 
