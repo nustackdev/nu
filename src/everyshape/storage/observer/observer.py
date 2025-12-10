@@ -63,24 +63,24 @@ class ObserverProtocol[EncodedKeyT](Protocol):
             ObserverError: If notification fails
         """
 
-    def __hash__(self) -> int:
-        """Get hash of the observer.
+    # def __hash__(self) -> int:
+    #     """Get hash of the observer.
 
-        Returns:
-            Hash value of the observer
-        """
-        ...
+    #     Returns:
+    #         Hash value of the observer
+    #     """
+    #     ...
 
-    def __eq__(self, other: object) -> bool:
-        """Check equality of the observer.
+    # def __eq__(self, other: object) -> bool:
+    #     """Check equality of the observer.
 
-        Args:
-            other: Observer to compare with
+    #     Args:
+    #         other: Observer to compare with
 
-        Returns:
-            True if equal, False otherwise
-        """
-        ...
+    #     Returns:
+    #         True if equal, False otherwise
+    #     """
+    #     ...
 
 
 class SubscriptionProtocol(Protocol):

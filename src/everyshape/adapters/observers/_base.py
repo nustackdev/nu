@@ -51,14 +51,10 @@ class BaseObserver[EncodedKeyT](ABC):
         self._codec = codec
         self._connected: bool = False
 
-    def setup(self) -> None:
-        """Setup implementation."""
-        self._connected = False
-        self.connect()
-
-    def cleanup(self) -> None:
-        """Cleanup implementation."""
-        self.disconnect()
+    @property
+    def codec(self) -> CodecProtocol[EncodedKeyT, Any]:
+        """Codec."""
+        return self._codec
 
     def _ensure_connected(self) -> None:
         """Verify connection state.

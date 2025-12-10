@@ -43,6 +43,7 @@ from uuid import uuid4
 from everyshape.storage import (
     CallbackFn,
     CodecProtocol,
+    ObserverProtocol,
     ScanProtocol,
     SnapshotProtocol,
     StorageClosedError,
@@ -583,7 +584,13 @@ class TextTransaction(
 
             self._committed = True
             self._mark_closed()
+
+            # Notify observers
+            for key in self._modified_keys:
+                self._storage._notify(key)
+
             self._storage._untrack_transaction(self)
+
         except Exception as e:
             logger.error(
                 "Transaction commit failed",
@@ -699,6 +706,11 @@ class TextWriteBatch(_TextContextBase, _WriteOperationsMixin, WriteBatchProtocol
 
             self._written = True
             self._mark_closed()
+
+            # Notify observers
+            for key in self._modified_keys:
+                self._storage._notify(key)
+
             self._storage._untrack_write_batch(self)
         except Exception as e:
             logger.error(
@@ -816,6 +828,7 @@ class TextStorage:
         self,
         path: str | Path,
         codec: CodecProtocol,
+        observer: ObserverProtocol[str] | None = None,
         log_operations: bool = False,
     ) -> None:
         """Initialize text storage.
@@ -823,10 +836,12 @@ class TextStorage:
         Args:
             path: Directory path for storage files
             codec: Codec for key/value encoding
+            observer: Observer instance for managing update notifications
             log_operations: Enable operation logging (default: False)
         """
         self.path = Path(path)
         self.codec = codec
+        self.observer = observer
         self._log_operations = log_operations
 
         # State
@@ -1016,6 +1031,18 @@ class TextStorage:
                     # Lock may already be released or not held; ignore
                     pass
 
+    def _notify(self, key: Key) -> None:
+        """Notify observer of key change.
+
+        Args:
+            key: Key that changed
+        """
+        if self.observer is not None:
+            try:
+                self.observer.notify(key)
+            except Exception:
+                logger.error("Observer notification failed")
+
     # =========================================================================
     # Lifecycle
     # =========================================================================
@@ -1104,22 +1131,41 @@ class TextStorage:
     ) -> SubscriptionProtocol:
         """Subscribe to key pattern changes.
 
-        Not implemented for text storage.
+        Args:
+            pattern: Key prefix pattern to match
+            callback: Function called on matching mutations
+            depth: Depth of pattern matching (0=exact, 1=prefix, -1=all subkeys)
+
+        Returns:
+            Subscription handle for unsubscribing
 
         Raises:
-            NotImplementedError: Always
+            StorageOperationError: If subscription fails
         """
-        raise NotImplementedError("Subscriptions not supported by text storage")
+        if self.observer is None:
+            raise StorageOperationError("Observer not configured for this storage")
+
+        try:
+            return self.observer.subscribe(pattern, callback, depth)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to subscribe: {e}") from e
 
     def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
         """Unsubscribe from changes.
 
-        Not implemented for text storage.
+        Args:
+            subscription: Subscription from subscribe()
 
         Raises:
-            NotImplementedError: Always
+            StorageOperationError: If unsubscribe fails
         """
-        raise NotImplementedError("Subscriptions not supported by text storage")
+        if self.observer is None:
+            raise StorageOperationError("Observer not configured for this storage")
+
+        try:
+            self.observer.unsubscribe(subscription)
+        except Exception as e:
+            raise StorageOperationError(f"Failed to unsubscribe: {e}") from e
 
     # =========================================================================
     # Transaction Management
