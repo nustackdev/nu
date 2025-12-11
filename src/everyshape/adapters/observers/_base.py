@@ -5,12 +5,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, Self, final
 
 from everyshape.storage import ObserverConnectionError
 
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from everyshape.loc import key
     from everyshape.storage import (
         CallbackFn,
@@ -172,6 +174,20 @@ class BaseObserver[EncodedKeyT](ABC):
     def _unsubscribe_impl(self, subscription: SubscriptionProtocol) -> None:
         """Implementation-specific unsubscribe logic."""
         raise NotImplementedError
+
+    def __enter__(self) -> Self:
+        """Enter context manager."""
+        self.connect()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Exit context manager."""
+        self.disconnect()
 
 
 @dataclass
