@@ -56,7 +56,7 @@ __all__ = [
 type OpArgument = RValue | ErgonomicsMixin
 
 
-class UnaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT]):
+class UnaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT | SpecialValue, ContextT]):
     """Base class for unary operations.
 
     Defines execution pattern: evaluate operand → handle special values →
@@ -74,7 +74,7 @@ class UnaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT]):
         """
         self.children = (cast("RValue", operand),)
 
-    def execute(self, context: ContextT) -> T | SpecialValue:
+    def execute(self, context: ContextT) -> ResultT | SpecialValue:
         """Execute unary operation.
 
         Args:
@@ -94,7 +94,7 @@ class UnaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT]):
         # Apply operator-specific logic
         return self._apply_op(operand_val)  # type: ignore[return-value]
 
-    def _apply_op(self, operand: object) -> T | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
         """Apply the operator to operand.
 
         Subclasses override with operator-specific logic.
@@ -117,20 +117,20 @@ class UnaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT]):
 # =============================================================================
 
 
-class NegOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
+class NegOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT, ContextT]):
     """Negation: -operand."""
 
-    def _apply_op(self, operand: object) -> T | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
         try:
             return -operand  # type: ignore
         except TypeError:
             return NAN
 
 
-class AbsOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
+class AbsOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT, ContextT]):
     """Absolute value: abs(operand)."""
 
-    def _apply_op(self, operand: object) -> T | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
         try:
             return abs(operand)  # type: ignore
         except TypeError:
@@ -142,35 +142,35 @@ class AbsOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
 # =============================================================================
 
 
-class NotOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
+class NotOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
     """Logical NOT: not operand.
 
     Python's 'not' keyword cannot be overloaded.
     Use .not_() method in ergonomics instead.
     """
 
-    def _apply_op(self, operand: object) -> T | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
         return not operand  # type: ignore
 
 
-class BitwiseNotOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
+class BitwiseNotOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
     """Bitwise NOT: ~operand (two's complement).
 
     Note: Python's ~ operator is blocked in ergonomics.
     Use .bitnot() method instead.
     """
 
-    def _apply_op(self, operand: object) -> T | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
         try:
             return ~operand  # type: ignore
         except TypeError:
             return NAN
 
 
-class PosOp[T, ContextT: ContextProtocol](UnaryOp[T, ContextT]):
+class PosOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
     """Unary plus: +operand."""
 
-    def _apply_op(self, operand: object) -> T | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
         try:
             return +operand  # type: ignore
         except TypeError:

@@ -58,7 +58,7 @@ from .core.ergonomics import ErgonomicsMixin
 
 
 if TYPE_CHECKING:
-    from everyshape.types import SpecialValue, Value
+    from everyshape.types import Value
 
     from .context import ContextProtocol
     from .shape import Shape
@@ -81,7 +81,7 @@ logger = getLogger(__name__)
 # =============================================================================
 
 
-class Term[ResultT, ContextT: ContextProtocol](ABC):
+class Term[ResultT: object, ContextT: ContextProtocol](ABC):
     """Base contract for all executable semantic nodes.
 
     Everything in the Shape system is a Term:
@@ -94,7 +94,7 @@ class Term[ResultT, ContextT: ContextProtocol](ABC):
     """
 
     @abstractmethod
-    def execute(self, context: ContextT) -> ResultT | SpecialValue:
+    def execute(self, context: ContextT) -> ResultT:
         """Execute this term within a context.
 
         Semantics depend on term type:
@@ -178,13 +178,24 @@ class LValue[PathTypeT: path.Path, ContextT: ContextProtocol](Term[None, Context
         """
         ...
 
+    def execute(self, context: ContextT) -> None:
+        """Execute does not make sense for LValues (LValues are locations not computations).
+
+        Args:
+            context: Unused - LValues don't compute
+
+        Raises:
+            NotImplementedErrors
+        """
+        raise NotImplementedError("LValues are not executables.")
+
 
 # =============================================================================
 # RVALUE - EVALUABLE EXPRESSIONS
 # =============================================================================
 
 
-class RValue[ResultT, ContextT: ContextProtocol](
+class RValue[ResultT: object, ContextT: ContextProtocol](
     Term[ResultT, ContextT], ErgonomicsMixin[ResultT, ContextT]
 ):
     """Evaluable expression that produces a value.
@@ -232,7 +243,9 @@ class RValue[ResultT, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class Operation[OperationResultT, ContextT: ContextProtocol](RValue[OperationResultT, ContextT]):
+class Operation[OperationResultT: object, ContextT: ContextProtocol](
+    RValue[OperationResultT, ContextT]
+):
     """Pure computation that returns a value of type T.
 
     Operations are deterministic expressions with no side effects:
@@ -268,7 +281,7 @@ class Operation[OperationResultT, ContextT: ContextProtocol](RValue[OperationRes
         return all(child.is_pure for child in self.children if isinstance(child, RValue))
 
     @abstractmethod
-    def execute(self, context: ContextT) -> OperationResultT | SpecialValue:
+    def execute(self, context: ContextT) -> OperationResultT:
         """Execute pure computation and return typed result.
 
         Typical execution pattern:
@@ -290,7 +303,7 @@ class Operation[OperationResultT, ContextT: ContextProtocol](RValue[OperationRes
 # =============================================================================
 
 
-class Command[CommandResultT, ContextT: ContextProtocol](RValue[CommandResultT, ContextT]):
+class Command[CommandResultT: object, ContextT: ContextProtocol](RValue[CommandResultT, ContextT]):
     """Impure mutation that returns a result of type T.
 
     Commands modify tree state with explicit side effects:
@@ -321,7 +334,7 @@ class Command[CommandResultT, ContextT: ContextProtocol](RValue[CommandResultT, 
         return False
 
     @abstractmethod
-    def execute(self, context: ContextT) -> CommandResultT | SpecialValue:
+    def execute(self, context: ContextT) -> CommandResultT:
         """Execute mutation and return result.
 
         Typical execution pattern:
@@ -404,20 +417,6 @@ class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, Con
             Parent Ref, or None if this is root
         """
         return self.parent_ref
-
-    def execute(self, context: ContextT) -> None:
-        """Execute returns self - refs are locations, not computations.
-
-        This enables refs to be used uniformly in expression trees
-        while maintaining their identity as locations.
-
-        Args:
-            context: Unused - refs don't compute
-
-        Returns:
-            Self (the location reference)
-        """
-        raise NotImplementedError("Refs are not executables.")
 
     def get_owner_shape(self) -> type[Shape] | None:
         """Get the Shape class this Ref was created by."""

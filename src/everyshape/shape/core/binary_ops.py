@@ -74,7 +74,9 @@ __all__ = [
 type OpArgument = RValue | ErgonomicsMixin
 
 
-class BinaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
+class BinaryOp[ResultT, ContextT: ContextProtocol](
+    Operation[ResultT | SpecialValue, ContextT], ABC
+):
     """Base class for binary operations.
 
     Defines execution pattern: evaluate operands → handle special values →
@@ -93,7 +95,7 @@ class BinaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
         """
         self.children = (cast("RValue", left), cast("RValue", right))
 
-    def execute(self, context: ContextT) -> T | SpecialValue:
+    def execute(self, context: ContextT) -> ResultT | SpecialValue:
         """Execute binary operation.
 
         Args:
@@ -112,10 +114,10 @@ class BinaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
             return special
 
         # Apply operator-specific logic
-        return self._apply_op(left_val, right_val)  # type: ignore[return-value]
+        return self._apply_op(left_val, right_val)
 
     @abstractmethod
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         """Apply the operator to operands.
 
         Subclasses override with operator-specific logic.
@@ -139,40 +141,40 @@ class BinaryOp[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
 # =============================================================================
 
 
-class AddOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class AddOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Addition: left + right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left + right  # type: ignore
         except TypeError:
             return NAN
 
 
-class SubOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class SubOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Subtraction: left - right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left - right  # type: ignore
         except TypeError:
             return NAN
 
 
-class MulOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class MulOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Multiplication: left * right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left * right  # type: ignore
         except TypeError:
             return NAN
 
 
-class DivOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class DivOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Division: left / right. Returns NaN on division by zero."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Explicit zero check before division
         if right == 0:
             return NAN
@@ -182,10 +184,10 @@ class DivOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
             return NAN
 
 
-class FloorDivOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class FloorDivOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Floor division: left // right. Returns NaN on division by zero."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Explicit zero check before division
         if right == 0:
             return NAN
@@ -195,10 +197,10 @@ class FloorDivOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
             return NAN
 
 
-class ModOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class ModOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Modulo: left % right. Returns NaN on division by zero."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Explicit zero check before modulo
         if right == 0:
             return NAN
@@ -208,10 +210,10 @@ class ModOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
             return NAN
 
 
-class PowOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class PowOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Power: left ** right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left**right  # type: ignore
         except (TypeError, OverflowError):
@@ -223,60 +225,60 @@ class PowOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
 # =============================================================================
 
 
-class GtOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class GtOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
     """Greater than: left > right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
         try:
             return left > right  # type: ignore
         except TypeError:
             return NAN
 
 
-class LtOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class LtOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
     """Less than: left < right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
         try:
             return left < right  # type: ignore
         except TypeError:
             return NAN
 
 
-class EqOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class EqOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
     """Equality: left == right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
         try:
             return left == right  # type: ignore
         except TypeError:
             return NAN
 
 
-class NeOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class NeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
     """Not equal: left != right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
         try:
             return left != right  # type: ignore
         except TypeError:
             return NAN
 
 
-class GeOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class GeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
     """Greater than or equal: left >= right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
         try:
             return left >= right  # type: ignore
         except TypeError:
             return NAN
 
 
-class LeOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class LeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
     """Less than or equal: left <= right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
         try:
             return left <= right  # type: ignore
         except TypeError:
@@ -288,10 +290,10 @@ class LeOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
 # =============================================================================
 
 
-class AndOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class AndOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Logical AND: left and right. Short-circuits at Python level."""
 
-    def execute(self, context: ContextT) -> T | SpecialValue:
+    def execute(self, context: ContextT) -> ResultT | SpecialValue:
         """Execute AND with short-circuit evaluation.
 
         Evaluates left, and only if truthy, evaluates right.
@@ -323,15 +325,15 @@ class AndOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
 
         return left_val and right_val
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Unreachable code, added for type checkers
         raise NotImplementedError
 
 
-class OrOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class OrOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Logical OR: left or right. Short-circuits at Python level."""
 
-    def execute(self, context: ContextT) -> T | SpecialValue:
+    def execute(self, context: ContextT) -> ResultT | SpecialValue:
         """Execute OR with short-circuit evaluation.
 
         Evaluates left, and only if falsy, evaluates right.
@@ -363,7 +365,7 @@ class OrOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
 
         return left_val or right_val  # type: ignore[return-value]
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Unreachable code, added for type checkers
         raise NotImplementedError
 
@@ -373,30 +375,30 @@ class OrOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
 # =============================================================================
 
 
-class XorOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class XorOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Bitwise XOR: left ^ right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left ^ right  # type: ignore
         except TypeError:
             return NAN
 
 
-class LShiftOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class LShiftOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Left shift: left << right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left << right  # type: ignore
         except TypeError:
             return NAN
 
 
-class RShiftOp[T, ContextT: ContextProtocol](BinaryOp[T, ContextT]):
+class RShiftOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     """Right shift: left >> right."""
 
-    def _apply_op(self, left: object, right: object) -> T | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left >> right  # type: ignore
         except TypeError:

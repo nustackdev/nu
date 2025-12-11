@@ -290,31 +290,31 @@ class ErgonomicsMixin[T, ContextT: ContextProtocol]:
     # COMPARISON OPERATIONS
     # =========================================================================
 
-    def __gt__(self, other: object) -> GtOp[bool, ContextT]:
+    def __gt__(self, other: object) -> GtOp[ContextT]:
         """Greater than: self > other."""
         from .binary_ops import GtOp
 
         return GtOp(self, self._operand(other))
 
-    def __lt__(self, other: object) -> LtOp[bool, ContextT]:
+    def __lt__(self, other: object) -> LtOp[ContextT]:
         """Less than: self < other."""
         from .binary_ops import LtOp
 
         return LtOp(self, self._operand(other))
 
-    def __ge__(self, other: object) -> GeOp[bool, ContextT]:
+    def __ge__(self, other: object) -> GeOp[ContextT]:
         """Greater than or equal: self >= other."""
         from .binary_ops import GeOp
 
         return GeOp(self, self._operand(other))
 
-    def __le__(self, other: object) -> LeOp[bool, ContextT]:
+    def __le__(self, other: object) -> LeOp[ContextT]:
         """Less than or equal: self <= other."""
         from .binary_ops import LeOp
 
         return LeOp(self, self._operand(other))
 
-    def eq(self, other: object) -> EqOp[bool, ContextT]:
+    def eq(self, other: object) -> EqOp[ContextT]:
         """Equality: self == other (safe method).
 
         Use this instead of == operator to avoid Python's default comparison semantics.
@@ -329,7 +329,7 @@ class ErgonomicsMixin[T, ContextT: ContextProtocol]:
 
         return EqOp(self, self._operand(other))
 
-    def ne(self, other: object) -> NeOp[bool, ContextT]:
+    def ne(self, other: object) -> NeOp[ContextT]:
         """Not-equal: self != other (safe method).
 
         Use this instead of != operator to avoid Python's default comparison semantics.
