@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyshape.types import is_nestable
-
 
 if TYPE_CHECKING:
     from everyshape.view import View
@@ -145,6 +143,8 @@ def open_child_view(
         >>> tags = open_child_view(alice, "tags", ListView)
         >>> last = open_child_view(tags, -1, DictView)  # Negative index!
     """
+    from everyshape.collections import is_nestable
+
     if not is_nestable(parent_view):
         raise TypeError(
             f"{type(parent_view).__name__} is not Nestable. Cannot navigate to children."

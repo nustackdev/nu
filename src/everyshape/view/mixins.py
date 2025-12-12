@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import key as key_
 from everyshape.tree import Container, ContainerStructure, NodeType
-from everyshape.types import Convertible, Empty, Initializable, is_empty
+from everyshape.types import Empty, is_empty
 
 
 if TYPE_CHECKING:
@@ -251,6 +251,8 @@ class ChildNestedGetMixin:
             ValueError: If child has no structure ID
             TypeError: If child view doesn't support extraction
         """
+        from everyshape.collections import Convertible
+
         # Get child container
         child_path = (*self.container.path, key)
         child_container = Container(ctx=self.container.ctx, path=child_path)
@@ -340,6 +342,8 @@ class ChildNestedSetMixin:
         Raises:
             TypeError: If child view doesn't support initialization
         """
+        from everyshape.collections import Initializable
+
         # Get view class and structure for this value type
         value_type = type(value)
         view_class = self.registry.get_view_for_type(value_type)

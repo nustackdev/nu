@@ -10,6 +10,9 @@ Protocol Hierarchy:
 
 from __future__ import annotations
 
+from collections.abc import Iterator as PyIterator
+from collections.abc import Mapping as PyMapping
+from collections.abc import Set as PySet
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from .capabilities import (
@@ -17,18 +20,16 @@ from .capabilities import (
     Assignable,
     Clearable,
     Containable,
+    Convertible,
     Deletable,
+    Initializable,
     Sizeable,
     Subscriptable,
 )
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator as PyIterator
-    from collections.abc import Mapping as PyMapping
-    from collections.abc import Set as PySet
-
-    from .special import Empty
+    from everyshape.types import Empty
 
 
 __all__ = [
@@ -49,7 +50,10 @@ __all__ = [
 
 
 @runtime_checkable
-class Container[V](Containable[V], Protocol):
+class Container[V](
+    Containable[V],
+    Protocol,
+):
     """Protocol for containers with membership testing.
 
     Base protocol for all collections. Supports checking if an item exists.
@@ -67,7 +71,11 @@ class Container[V](Containable[V], Protocol):
 
 
 @runtime_checkable
-class Collection[V](Container[V], Sizeable, Protocol):
+class Collection[V](
+    Container[V],
+    Sizeable,
+    Protocol,
+):
     """Protocol for sized iterable containers.
 
     Foundation protocol for all sized collections. Supports membership testing,
@@ -98,7 +106,12 @@ class Collection[V](Container[V], Sizeable, Protocol):
 
 
 @runtime_checkable
-class Sequence[V](Collection[int], Subscriptable[int, V], Protocol):
+class Sequence[V](
+    Collection[int],
+    Subscriptable[int, V],
+    Convertible[PyIterator[V]],
+    Protocol,
+):
     """Protocol for read-only sequences.
 
     Sequences are indexed collections accessed by integer positions.
@@ -155,6 +168,7 @@ class MutableSequence[V](
     Deletable[int],
     Appendable[V],
     Clearable,
+    Initializable[PyIterator[V]],
     Protocol,
 ):
     """Protocol for mutable sequences.
@@ -226,7 +240,12 @@ class MutableSequence[V](
 
 
 @runtime_checkable
-class Mapping[K, V](Collection[K], Subscriptable[K, V], Protocol):
+class Mapping[K, V](
+    Collection[K],
+    Subscriptable[K, V],
+    Convertible[PyMapping[K, V]],
+    Protocol,
+):
     """Protocol for read-only mappings.
 
     Mappings are key-value collections accessed by keys.
@@ -287,6 +306,7 @@ class MutableMapping[K, V](
     Assignable[K, V],
     Deletable[K],
     Clearable,
+    Initializable[PyMapping[K, V]],
     Protocol,
 ):
     """Protocol for mutable mappings.
@@ -359,7 +379,11 @@ class MutableMapping[K, V](
 
 
 @runtime_checkable
-class Set[V](Collection[V], Protocol):
+class Set[V](
+    Collection[V],
+    Convertible[PySet[V]],
+    Protocol,
+):
     """Protocol for read-only sets.
 
     Sets are unordered collections of unique values.
@@ -413,6 +437,7 @@ class Set[V](Collection[V], Protocol):
 class MutableSet[V](
     Set[V],
     Clearable,
+    Initializable[PySet[V]],
     Protocol,
 ):
     """Protocol for mutable sets.

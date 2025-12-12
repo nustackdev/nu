@@ -49,18 +49,18 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from everyshape.loc import path
-from everyshape.view import View
 
+from .context import ContextProtocol
 from .core.ergonomics import ErgonomicsMixin
 
 
 if TYPE_CHECKING:
     from everyshape.types import Value
+    from everyshape.view import View
 
-    from .context import ContextProtocol
     from .shape import Shape
 
 
@@ -68,10 +68,15 @@ __all__ = [
     "Command",
     "LValue",
     "Operation",
+    "PrimitiveRef",
     "RValue",
     "Ref",
     "Term",
+    "ViewRef",
 ]
+
+ViewT_co = TypeVar("ViewT_co", covariant=True, bound="View")
+ContextT = TypeVar("ContextT", bound=ContextProtocol)
 
 
 logger = getLogger(__name__)
@@ -428,11 +433,13 @@ class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, Con
             return None
 
 
-class ViewRefBase[ViewT: View, ContextT: ContextProtocol](Ref[path.PathToView, ContextT], ABC):
+class ViewRef(Generic[ViewT_co, ContextT], Ref[path.PathToView, ContextT], ABC):  # noqa: UP046
+    """Ref that points to a View (container in the tree)."""
+
     def __init__(
         self,
         address: path.PathAddress | RValue,
-        view_type: type[ViewT],
+        view_type: type[ViewT_co],
         parent_ref: Ref | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -486,7 +493,9 @@ class ViewRefBase[ViewT: View, ContextT: ContextProtocol](Ref[path.PathToView, C
         return f"ViewRef({self.address!s})"
 
 
-class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue, ContextT], ABC):
+class PrimitiveRef[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue, ContextT], ABC):
+    """Ref that points to a primtive value in the tree (leaf node)."""
+
     def __init__(
         self,
         address: path.PathAddress | RValue,

@@ -26,6 +26,7 @@ Example:
 
 from __future__ import annotations
 
+from .base import ViewBase
 from .exceptions import RegistryError, ViewError, ViewOperationError
 from .mixins import (
     ChildNavigationMixin,
@@ -47,6 +48,7 @@ __all__ = [
     "MetadataBasedChildrenCountMixin",
     "RegistryError",
     "View",
+    "ViewBase",
     "ViewError",
     "ViewOperationError",
     "ViewRegistry",
