@@ -13,8 +13,7 @@ from everyshape.view import View
 
 if TYPE_CHECKING:
     from everyshape.storage import CallbackFn, StorageProtocol, SubscriptionProtocol
-
-    from .special import Empty
+    from everyshape.types import Empty
 
 
 __all__ = [

@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from .capabilities import (
     Appendable,
     Assignable,
+    ChildWatchable,
     Clearable,
     Containable,
     Convertible,
@@ -25,6 +26,7 @@ from .capabilities import (
     Initializable,
     Sizeable,
     Subscriptable,
+    Watchable,
 )
 
 
@@ -169,6 +171,8 @@ class MutableSequence[V](
     Appendable[V],
     Clearable,
     Initializable[PyIterator[V]],
+    Watchable,
+    ChildWatchable[int],
     Protocol,
 ):
     """Protocol for mutable sequences.
@@ -307,6 +311,8 @@ class MutableMapping[K, V](
     Deletable[K],
     Clearable,
     Initializable[PyMapping[K, V]],
+    Watchable,
+    ChildWatchable[K],
     Protocol,
 ):
     """Protocol for mutable mappings.
@@ -438,6 +444,7 @@ class MutableSet[V](
     Set[V],
     Clearable,
     Initializable[PySet[V]],
+    Watchable,
     Protocol,
 ):
     """Protocol for mutable sets.
