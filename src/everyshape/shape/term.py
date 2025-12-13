@@ -427,10 +427,21 @@ class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, Con
         """Get the Shape class this Ref was created by."""
         if self.owner_shape is not None:
             return self.owner_shape
-        elif self.parent_ref is not None:
-            return self.parent_ref.owner_shape
-        else:
-            return None
+
+        if self.parent is not None:
+            return self.parent.owner_shape
+
+        return None
+
+    def get_root_shape(self) -> type[Shape] | None:
+        """Get the Shape class this Ref was originated from."""
+        if self.parent is not None:
+            return self.parent.get_root_shape()
+
+        if self.owner_shape is not None:
+            return self.owner_shape
+
+        return None
 
 
 class ViewRef(Generic[ViewT_co, ContextT], Ref[path.PathToView, ContextT], ABC):  # noqa: UP046
