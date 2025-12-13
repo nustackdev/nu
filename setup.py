@@ -217,6 +217,9 @@ def get_link_args() -> list[str]:
                 ]
             )
     elif IS_LINUX:
+        # Force linking of all specified libraries (prevents linker from dropping unused deps)
+        args.append("-Wl,--no-as-needed")
+
         # Add rpath for bundled libraries
         if DEP_DIR:
             args.extend(

@@ -1,6 +1,6 @@
 #!/bin/bash
-set -e  # Exit on error
-set -x  # Print commands (for debugging)
+set -euo pipefail
+set -x
 
 # ==============================================================================
 # BUILD ROCKSDB AND DEPENDENCIES FOR LINUX
@@ -19,171 +19,168 @@ set -x  # Print commands (for debugging)
 # All libraries are installed to $ESROCKS_DEP_DIR
 # ==============================================================================
 
-# Configuration
-ROCKSDB_VERSION="${ROCKSDB_VERSION:-9.7.3}"
+ROCKSDB_VERSION="${ROCKSDB_VERSION:-6.29.5}"
 ESROCKS_DEP_DIR="${ESROCKS_DEP_DIR:-/tmp/esrocks_deps}"
 
-# Create directories
 mkdir -p "$ESROCKS_DEP_DIR"/{lib,include}
 cd /tmp
 
 echo "========================================="
-echo "Building dependencies in: $ESROCKS_DEP_DIR"
+echo "Building dependencies for Linux"
+echo "Architecture: $(uname -m)"
 echo "RocksDB version: $ROCKSDB_VERSION"
+echo "Prefix: $ESROCKS_DEP_DIR"
 echo "========================================="
 
 # ==============================================================================
 # Install build tools (if not present)
 # ==============================================================================
 if command -v yum &> /dev/null; then
-    # RHEL/CentOS based (manylinux)
-    yum install -y wget gcc gcc-c++ make cmake3 || true
+    yum install -y curl gcc gcc-c++ make cmake3 patchelf || true
     ln -sf /usr/bin/cmake3 /usr/bin/cmake || true
 elif command -v apt-get &> /dev/null; then
-    # Debian/Ubuntu based
-    apt-get update
-    apt-get install -y wget gcc g++ make cmake
+    apt-get update || true
+    apt-get install -y curl gcc g++ make cmake patchelf || true
 fi
 
-# Common compiler flags
+# Compiler flags
 export CFLAGS="-fPIC -O3"
 export CXXFLAGS="-fPIC -O3"
+export LDFLAGS="-Wl,-rpath,'\$ORIGIN'"
 export PREFIX="$ESROCKS_DEP_DIR"
 
 # ==============================================================================
-# Build zlib (compression library)
+# Build zlib
 # ==============================================================================
 echo "Building zlib..."
 ZLIB_VERSION="1.3.1"
-wget -q "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.gz"
+curl -L "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.gz" -o "zlib-${ZLIB_VERSION}.tar.gz"
 tar xzf "zlib-${ZLIB_VERSION}.tar.gz"
 cd "zlib-${ZLIB_VERSION}"
-
-./configure --prefix="$PREFIX" --static
+./configure --prefix="$PREFIX"
 make -j$(nproc)
 make install
-
-cd /tmp
-rm -rf "zlib-${ZLIB_VERSION}" "zlib-${ZLIB_VERSION}.tar.gz"
-echo "✓ zlib built successfully"
+cd /tmp && rm -rf "zlib-${ZLIB_VERSION}"*
+echo "✓ zlib built"
 
 # ==============================================================================
-# Build bzip2 (compression library)
+# Build bzip2
 # ==============================================================================
 echo "Building bzip2..."
 BZIP2_VERSION="1.0.8"
-wget -q "https://sourceware.org/pub/bzip2/bzip2-${BZIP2_VERSION}.tar.gz"
+curl -L "https://sourceware.org/pub/bzip2/bzip2-${BZIP2_VERSION}.tar.gz" -o "bzip2-${BZIP2_VERSION}.tar.gz"
 tar xzf "bzip2-${BZIP2_VERSION}.tar.gz"
 cd "bzip2-${BZIP2_VERSION}"
-
-# bzip2 doesn't have a configure script, edit Makefile
+make clean >/dev/null 2>&1 || true
+make CFLAGS="$CFLAGS"
 make -f Makefile-libbz2_so CFLAGS="$CFLAGS"
 make install PREFIX="$PREFIX"
-
-cd /tmp
-rm -rf "bzip2-${BZIP2_VERSION}" "bzip2-${BZIP2_VERSION}.tar.gz"
-echo "✓ bzip2 built successfully"
+cp -a libbz2.so* "$PREFIX/lib/" 2>/dev/null || true
+cd /tmp && rm -rf "bzip2-${BZIP2_VERSION}"*
+echo "✓ bzip2 built"
 
 # ==============================================================================
-# Build LZ4 (compression library)
+# Build LZ4
 # ==============================================================================
 echo "Building LZ4..."
 LZ4_VERSION="1.9.4"
-wget -q "https://github.com/lz4/lz4/archive/v${LZ4_VERSION}.tar.gz" -O "lz4-${LZ4_VERSION}.tar.gz"
+curl -L "https://github.com/lz4/lz4/archive/v${LZ4_VERSION}.tar.gz" -o "lz4-${LZ4_VERSION}.tar.gz"
 tar xzf "lz4-${LZ4_VERSION}.tar.gz"
 cd "lz4-${LZ4_VERSION}"
-
 make -j$(nproc) PREFIX="$PREFIX"
 make install PREFIX="$PREFIX"
-
-cd /tmp
-rm -rf "lz4-${LZ4_VERSION}" "lz4-${LZ4_VERSION}.tar.gz"
-echo "✓ LZ4 built successfully"
+cd /tmp && rm -rf "lz4-${LZ4_VERSION}"*
+echo "✓ LZ4 built"
 
 # ==============================================================================
-# Build Zstandard (compression library)
+# Build Zstandard
 # ==============================================================================
 echo "Building Zstandard..."
 ZSTD_VERSION="1.5.6"
-wget -q "https://github.com/facebook/zstd/releases/download/v${ZSTD_VERSION}/zstd-${ZSTD_VERSION}.tar.gz"
+curl -L "https://github.com/facebook/zstd/releases/download/v${ZSTD_VERSION}/zstd-${ZSTD_VERSION}.tar.gz" -o "zstd-${ZSTD_VERSION}.tar.gz"
 tar xzf "zstd-${ZSTD_VERSION}.tar.gz"
 cd "zstd-${ZSTD_VERSION}"
-
 make -j$(nproc) PREFIX="$PREFIX"
 make install PREFIX="$PREFIX"
-
-cd /tmp
-rm -rf "zstd-${ZSTD_VERSION}" "zstd-${ZSTD_VERSION}.tar.gz"
-echo "✓ Zstandard built successfully"
+cd /tmp && rm -rf "zstd-${ZSTD_VERSION}"*
+echo "✓ Zstandard built"
 
 # ==============================================================================
-# Build Snappy (compression library)
+# Build Snappy
 # ==============================================================================
 echo "Building Snappy..."
 SNAPPY_VERSION="1.2.1"
-wget -q "https://github.com/google/snappy/archive/refs/tags/${SNAPPY_VERSION}.tar.gz" -O "snappy-${SNAPPY_VERSION}.tar.gz"
+curl -L "https://github.com/google/snappy/archive/refs/tags/${SNAPPY_VERSION}.tar.gz" -o "snappy-${SNAPPY_VERSION}.tar.gz"
 tar xzf "snappy-${SNAPPY_VERSION}.tar.gz"
 cd "snappy-${SNAPPY_VERSION}"
-
-mkdir build && cd build
+rm -rf build
+mkdir build
+cd build
 cmake .. \
     -DCMAKE_INSTALL_PREFIX="$PREFIX" \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DSNAPPY_BUILD_TESTS=OFF \
-    -DSNAPPY_BUILD_BENCHMARKS=OFF
-
+    -DSNAPPY_BUILD_BENCHMARKS=OFF \
+    -DSNAPPY_REQUIRE_ZLIB=OFF \
+    -DSNAPPY_REQUIRE_LZO=OFF \
+    -DSNAPPY_REQUIRE_LZ4=OFF \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 make -j$(nproc)
 make install
-
-cd /tmp
-rm -rf "snappy-${SNAPPY_VERSION}" "snappy-${SNAPPY_VERSION}.tar.gz"
-echo "✓ Snappy built successfully"
+cd /tmp && rm -rf "snappy-${SNAPPY_VERSION}"*
+echo "✓ Snappy built"
 
 # ==============================================================================
-# Build RocksDB (main database library)
+# Build RocksDB
 # ==============================================================================
 echo "Building RocksDB ${ROCKSDB_VERSION}..."
-wget -q "https://github.com/facebook/rocksdb/archive/v${ROCKSDB_VERSION}.tar.gz" -O "rocksdb-${ROCKSDB_VERSION}.tar.gz"
+curl -L "https://github.com/facebook/rocksdb/archive/v${ROCKSDB_VERSION}.tar.gz" -o "rocksdb-${ROCKSDB_VERSION}.tar.gz"
 tar xzf "rocksdb-${ROCKSDB_VERSION}.tar.gz"
 cd "rocksdb-${ROCKSDB_VERSION}"
 
-# RocksDB build configuration
-# PORTABLE=1: Build for generic CPU (not optimized for build machine)
-# USE_RTTI=1: Enable RTTI (needed for some features)
-# DEBUG_LEVEL=0: Release build (optimized, no debug symbols)
 export LIBRARY_PATH="$PREFIX/lib"
 export CPLUS_INCLUDE_PATH="$PREFIX/include"
 
 make static_lib shared_lib -j$(nproc) \
     PORTABLE=1 \
     USE_RTTI=1 \
+    DISABLE_WARNING_AS_ERROR=1 \
     DEBUG_LEVEL=0 \
-    EXTRA_CXXFLAGS="-fPIC" \
-    EXTRA_CFLAGS="-fPIC"
+    EXTRA_CXXFLAGS="$CXXFLAGS" \
+    EXTRA_LDFLAGS="$LDFLAGS"
 
-# Install libraries and headers
+# Install
 cp librocksdb.a "$PREFIX/lib/"
 cp librocksdb.so* "$PREFIX/lib/" || true
 cp -r include/rocksdb "$PREFIX/include/"
 
-# Strip debug symbols to reduce size
-strip --strip-debug "$PREFIX/lib/librocksdb.so" || true
+# Fix rpath on shared library so it can find its dependencies
+# This makes the library self-contained without needing LD_LIBRARY_PATH
+if command -v patchelf &> /dev/null; then
+    echo "Setting rpath on librocksdb.so..."
+    for lib in "$PREFIX/lib"/librocksdb.so*; do
+        if [[ -f "$lib" && ! -L "$lib" ]]; then
+            patchelf --set-rpath '$ORIGIN' "$lib" || true
+        fi
+    done
+else
+    echo "Warning: patchelf not found, skipping rpath fix"
+    echo "Install with: yum install -y patchelf  OR  apt-get install -y patchelf"
+fi
 
-cd /tmp
-rm -rf "rocksdb-${ROCKSDB_VERSION}" "rocksdb-${ROCKSDB_VERSION}.tar.gz"
+# Strip debug symbols
+strip --strip-debug "$PREFIX/lib"/librocksdb.so* || true
+
+cd /tmp && rm -rf "rocksdb-${ROCKSDB_VERSION}"*
 echo "✓ RocksDB built successfully"
 
 # ==============================================================================
-# Verify build
+# Verify
 # ==============================================================================
 echo "========================================="
-echo "Build complete! Verifying..."
-echo "========================================="
-echo "Libraries in $PREFIX/lib:"
-ls -lh "$PREFIX/lib" | grep -E '\.(so|a)$'
-echo ""
-echo "Headers in $PREFIX/include:"
-ls -d "$PREFIX/include"/* 2>/dev/null || echo "No headers found"
+echo "Build complete!"
+echo "Libraries:"
+ls -lh "$PREFIX/lib"/*.{a,so}* 2>/dev/null || true
 echo "========================================="
