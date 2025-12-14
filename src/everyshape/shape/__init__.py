@@ -1,6 +1,7 @@
 """Layer 4 - declarative access."""
 
 from .context import ContextProtocol
+from .core import all_, and_, any_, none_, or_
 from .core.binary_ops import BinaryOp
 from .core.literal_value import LiteralValue, literal
 from .core.unary_ops import UnaryOp
@@ -39,5 +40,10 @@ __all__ = [
     "Term",
     "UnaryOp",
     "ViewRef",
+    "all_",
+    "and_",
+    "any_",
     "literal",
+    "none_",
+    "or_",
 ]
