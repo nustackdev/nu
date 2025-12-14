@@ -37,6 +37,7 @@ __all__ = [  # noqa: RUF022
     "split_value_path",
     "parent_view_path",
     "last_segment",
+    "split_path",
     # Navigation
     "open_child_view",
     "navigate_view",
@@ -91,6 +92,25 @@ def split_value_path(path: PathToValue) -> tuple[PathToView, PathValueSegment]:
         >>> # address = "name", type = str
     """
     return path[:-1], path[-1]
+
+
+def split_path(path: Path, index: int) -> tuple[Path, Path]:
+    """Split Path (both value and view) into parent Path and final value segment.
+
+    Args:
+        path: Path to split
+        index: Position to split
+
+    Returns:
+        (parent Path, value segment)
+
+    Example:
+        >>> path = (("users", DictView), ("alice", DictView), ("name", str))
+        >>> parent, (address, type) = split_value_path(path)
+        >>> # parent = (("users", DictView), ("alice", DictView))
+        >>> # address = "name", type = str
+    """
+    return path[:index], path[index:]  # type: ignore
 
 
 def parent_view_path(path: Path) -> PathToView:

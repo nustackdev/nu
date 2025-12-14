@@ -62,6 +62,7 @@ if TYPE_CHECKING:
         FloorDivOp,
         GeOp,
         GtOp,
+        IdCompOp,
         LeOp,
         LShiftOp,
         LtOp,
@@ -74,7 +75,18 @@ if TYPE_CHECKING:
         SubOp,
         XorOp,
     )
-    from .unary_ops import AbsOp, BitwiseNotOp, NegOp, NotOp, PosOp
+    from .unary_ops import (
+        AbsOp,
+        BitwiseNotOp,
+        BoolOp,
+        IsEmptyOp,
+        IsNaNOp,
+        NegOp,
+        NotEmptyOp,
+        NotNaNOp,
+        NotOp,
+        PosOp,
+    )
 
 
 class ErgonomicsMixin[T, ContextT: ContextProtocol]:
@@ -343,6 +355,71 @@ class ErgonomicsMixin[T, ContextT: ContextProtocol]:
         from .binary_ops import NeOp
 
         return NeOp(self, self._operand(other))
+
+    def is_(self, other: object) -> IdCompOp[ContextT]:
+        """Identity comparison: self is other (safe method).
+
+        Args:
+            other: Value to compare id to (RValue or literal)
+
+        Returns:
+            IdCompOp expression
+        """
+        from .binary_ops import IdCompOp
+
+        return IdCompOp(self, self._operand(other))
+
+    def bool_(self) -> BoolOp[ContextT]:
+        """Bool vonersion: bool(self).
+
+        Returns:
+            BoolOp expression
+        """
+        from .unary_ops import BoolOp
+
+        return BoolOp(self)
+
+    # Convenience methods for working with special values
+
+    def is_empty(self) -> IsEmptyOp[ContextT]:
+        """Check if object is Empty.
+
+        Returns:
+            IsEmptyOp expression
+        """
+        from .unary_ops import IsEmptyOp
+
+        return IsEmptyOp(self)
+
+    def not_empty(self) -> NotEmptyOp[ContextT]:
+        """Check if object is not Empty.
+
+        Returns:
+            NotEmptyOp expression
+        """
+        from .unary_ops import NotEmptyOp
+
+        return NotEmptyOp(self)
+
+    def is_nan(self) -> IsNaNOp[ContextT]:
+        """Check if object is NaN.
+
+        Returns:
+            IsNaNOp expression
+        """
+        from .unary_ops import IsNaNOp
+
+        return IsNaNOp(self)
+
+    def not_nan(self) -> NotNaNOp[ContextT]:
+        """Check if object is not NaN.
+
+        Returns:
+            NotNaNOp expression
+        """
+        from .unary_ops import NotNaNOp
+
+        return NotNaNOp(self)
 
     # =========================================================================
     # LOGICAL OPERATIONS (Safe methods: and_(), or_())

@@ -53,6 +53,7 @@ __all__ = [
     "FloorDivOp",
     "GeOp",
     "GtOp",
+    "IdCompOp",
     "LShiftOp",
     "LeOp",
     "LtOp",
@@ -281,6 +282,16 @@ class LeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
         try:
             return left <= right  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class IdCompOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+    """Identity comparison: left is right."""
+
+    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+        try:
+            return left is right  # type: ignore
         except TypeError:
             return NAN
 
