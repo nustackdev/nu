@@ -828,7 +828,7 @@ class TextStorage:
         self,
         path: str | Path,
         codec: CodecProtocol,
-        observer: ObserverProtocol[str] | None = None,
+        observer: ObserverProtocol | None = None,
         log_operations: bool = False,
     ) -> None:
         """Initialize text storage.

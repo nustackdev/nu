@@ -1074,7 +1074,7 @@ class RocksDBStorage:
         self,
         path: Path | str,
         codec: CodecProtocol[bytes, bytes],
-        observer: ObserverProtocol[bytes] | None = None,
+        observer: ObserverProtocol | None = None,
         *,
         wal_path: Path | str | None = None,
         options: dict[str, Any] | None = None,
