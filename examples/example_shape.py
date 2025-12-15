@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from everyverse.shapes import (
+from everybase.shapes import (
+    Context,
     MappingShapeSlot,
     MappingSlot,
     PrimitiveSlot,
@@ -21,15 +22,9 @@ from everyverse.shapes import (
     Shape,
     ShapeSlot,
 )
-from everyverse.views import DictView
+from everybase.views import DictView
 
-from everyshape import Context
 from everyshape.adapters import TextCodec, TextStorage
-
-
-# =============================================================================
-# SHAPE DEFINITIONS
-# =============================================================================
 
 
 class SymbolInfo(Shape):
@@ -176,99 +171,24 @@ def example_sequence_shapes(ctx: Context) -> None:
     print(f"Order 0 Data: {order_0_data}")
 
 
-# =============================================================================
-# MAIN
-# =============================================================================
-
-
-def setup_logging() -> None:
-    """Setup logging."""
-    import logging
-
-    from rich.console import Console
-    from rich.logging import RichHandler
-    from rich.traceback import install
-
-    install()
-
-    console = Console()
-    # Create handler
-    console_handler = RichHandler(
-        console=console,
-        tracebacks_show_locals=True,
-        rich_tracebacks=True,
-        markup=True,
-        log_time_format="[%x %X.%f]",
-    )
-
-    # Option 2: Custom formatter that explicitly shows extra dict
-    class ExtraFormatter(logging.Formatter):
-        def format(self, record):
-            # Get standard formatted message
-            base_msg = super().format(record)
-
-            # Add extra fields if they exist
-            extra_fields = {
-                k: v
-                for k, v in record.__dict__.items()
-                if k
-                not in [
-                    "name",
-                    "msg",
-                    "args",
-                    "created",
-                    "filename",
-                    "funcName",
-                    "levelname",
-                    "levelno",
-                    "lineno",
-                    "module",
-                    "msecs",
-                    "message",
-                    "pathname",
-                    "process",
-                    "processName",
-                    "relativeCreated",
-                    "thread",
-                    "threadName",
-                    "exc_info",
-                    "exc_text",
-                    "stack_info",
-                    "taskName",
-                ]
-            }
-
-            if extra_fields:
-                base_msg += f" | extra={extra_fields}"
-
-            return base_msg
-
-    console_formatter = ExtraFormatter("[cyan]%(name)s[/cyan] - %(message)s")
-    console_handler.setFormatter(console_formatter)
-
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-    root_logger.addHandler(console_handler)
-
-
 if __name__ == "__main__":
-    setup_logging()
+    with (
+        TextStorage(path=Path(".db_shape"), codec=TextCodec()) as storage,
+        storage.transaction() as tx,
+    ):
+        root = DictView.open_root(tx)
+        ctx = Context.create(root_view=root, storage_context=tx)
 
-    with TextStorage(path=Path(".db_shape"), codec=TextCodec()) as storage:
-        with storage.transaction() as tx:
-            root = DictView.open_root(tx)
-            ctx = Context(root_view=root, storage_context=tx)
+        print("=" * 60)
+        print("Shape Collections Example")
+        print("=" * 60)
 
-            print("=" * 60)
-            print("Shape Collections Example")
-            print("=" * 60)
+        # Run examples
+        example_mapping_primitives(ctx)
+        example_sequence_primitives(ctx)
+        example_mapping_shapes(ctx)
+        example_sequence_shapes(ctx)
 
-            # Run examples
-            example_mapping_primitives(ctx)
-            example_sequence_primitives(ctx)
-            example_mapping_shapes(ctx)
-            example_sequence_shapes(ctx)
-
-            print("\n" + "=" * 60)
-            print("All examples completed successfully!")
-            print("=" * 60)
+        print("\n" + "=" * 60)
+        print("All examples completed successfully!")
+        print("=" * 60)
