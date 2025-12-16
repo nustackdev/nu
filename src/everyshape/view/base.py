@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, ClassVar, Self, cast
 
 import attrs
 
+from everyshape.container import Container, ContainerProtocol, ContainerStructure
 from everyshape.loc import key as key_
 from everyshape.loc import path as path_
-from everyshape.tree import Container, ContainerProtocol, ContainerStructure
 
 from .registry import ViewRegistry
 

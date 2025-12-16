@@ -13,8 +13,8 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
+from everyshape.container import Container, ContainerStructure, NodeType
 from everyshape.loc import key as key_
-from everyshape.tree import Container, ContainerStructure, NodeType
 from everyshape.types import Empty, is_empty
 
 

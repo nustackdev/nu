@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from everyshape.adapters import BinaryCodec, RocksDBStorage
-from everyshape.tree import Container, ContainerProtocol, ContainerStructure
+from everyshape.container import Container, ContainerProtocol, ContainerStructure
 
 
 def main() -> None:

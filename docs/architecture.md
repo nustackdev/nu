@@ -10,7 +10,7 @@ EveryShape is a layered data system. Each layer builds on the one below, adding 
 ├─────────────────────────────────────┤
 │ Layer 3: Views                      │  Data structures (Dict, List, Queue)
 ├─────────────────────────────────────┤
-│ Layer 2: Tree                       │  Hierarchical semantics, containers
+│ Layer 2: Container                  │  Hierarchical semantics, containers
 ├─────────────────────────────────────┤
 │ Layer 1:                            │  Flat tuple key-value store
 │ + KV Storage Interface              │
@@ -27,7 +27,7 @@ EveryShape is a layered data system. Each layer builds on the one below, adding 
 - Provides: point access, range scans, transactions
 - Example: `get(("users", "alice"))` returns a value, no concept of "parent" or "child"
 
-### Layer 2: Tree
+### Layer 2: Container
 
 - Interprets tuples as hierarchical paths
 - Introduces containers (can have children) vs primtivies (leaves)

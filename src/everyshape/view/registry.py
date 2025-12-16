@@ -12,13 +12,13 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, NamedTuple
 
-from everyshape.tree import ContainerStructure
+from everyshape.container import ContainerStructure
 
 from .exceptions import RegistryError
 
 
 if TYPE_CHECKING:
-    from everyshape.tree import ContainerStructure
+    from everyshape.container import ContainerStructure
 
     from .base import View
 

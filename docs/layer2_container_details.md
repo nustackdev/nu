@@ -1,4 +1,4 @@
-# Layer 2: Tree - Hierarchical Semantics
+# Layer 2: Container - Hierarchical Semantics
 
 ## Overview
 

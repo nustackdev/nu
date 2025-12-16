@@ -9,12 +9,12 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 
 if TYPE_CHECKING:
+    from everyshape.container import Container, ContainerProtocol, ContainerStructure
     from everyshape.loc import key as key_
     from everyshape.loc import path as path_
     from everyshape.storage import (
         StorageContextType,
     )
-    from everyshape.tree import Container, ContainerProtocol, ContainerStructure
 
     from .registry import ViewRegistry
 

@@ -6,8 +6,7 @@ safety guarantees.
 
 import pytest
 
-from everyshape.storage import TransactionProtocol
-from everyshape.tree import (
+from everyshape.container import (
     Container,
     ContainerProtocol,
     ContainerStructure,
@@ -17,6 +16,7 @@ from everyshape.tree import (
     PathNotFoundError,
     PathTypeError,
 )
+from everyshape.storage import TransactionProtocol
 from everyshape.types import EMPTY
 
 
@@ -124,7 +124,7 @@ def test_get_nonexistent_raises(tx: TransactionProtocol) -> None:
 
 def test_get_primitive_raises(tx: TransactionProtocol) -> None:
     """Test getting primitive as container raises error."""
-    from everyshape.tree import create_container, set_child_primitive
+    from everyshape.container import create_container, set_child_primitive
 
     # Create parent
     create_container(
@@ -167,7 +167,7 @@ def test_info_reflects_current_state(tx: TransactionProtocol) -> None:
     assert info1.structure == ContainerStructure(1)
 
     # External deletion
-    from everyshape.tree import delete_container
+    from everyshape.container import delete_container
 
     delete_container(("/", "users"), tx)
 
@@ -188,7 +188,7 @@ def test_exists_reflects_current_state(tx: TransactionProtocol) -> None:
     assert container.exists()
 
     # External deletion
-    from everyshape.tree import delete_container
+    from everyshape.container import delete_container
 
     delete_container(("/", "users"), tx)
 
@@ -721,7 +721,7 @@ def test_safety_no_stale_data_after_external_deletion(tx: TransactionProtocol) -
     b = a.create_child_container("B", ContainerStructure(1), ContainerProtocol.MUTABLE)
 
     # External deletion (simulates your scenario 1)
-    from everyshape.tree import delete_container
+    from everyshape.container import delete_container
 
     delete_container(("/", "A", "B"), tx)
 
@@ -743,7 +743,7 @@ def test_safety_parent_validation_prevents_orphans(tx: TransactionProtocol) -> N
     )
 
     # Delete container
-    from everyshape.tree import delete_container
+    from everyshape.container import delete_container
 
     delete_container(("/", "users"), tx)
 
@@ -856,7 +856,7 @@ def test_error_recovery_pattern(tx: TransactionProtocol) -> None:
         container.set_child_primitive("alice", {"name": "Alice"})
 
         # Delete container (simulating external deletion)
-        from everyshape.tree import delete_container
+        from everyshape.container import delete_container
 
         delete_container(("/", "users"), tx)
 
