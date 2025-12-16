@@ -34,12 +34,12 @@ from .bases import (
     LiveChildrenCountBase,
     MetadataBasedChildrenCountBase,
 )
-from .exceptions import RegistryError, ViewError, ViewOperationError
-from .reactive_bases import (
+from .bases_observable import (
     ChildObservableBase,
     DescendantsObservableBase,
     ObservableBase,
 )
+from .exceptions import RegistryError, ViewError, ViewOperationError
 from .registry import ViewRegistry
 from .view import View
 

@@ -10,7 +10,7 @@ Protocol Hierarchy:
 
 from __future__ import annotations
 
-from collections.abc import Iterator as PyIterator
+from collections.abc import Iterable as PyIterable
 from collections.abc import Mapping as PyMapping
 from collections.abc import Set as PySet
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
@@ -18,15 +18,15 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from .capabilities import (
     Appendable,
     Assignable,
-    ChildWatchable,
+    ChildObservable,
     Clearable,
     Containable,
     Convertible,
     Deletable,
     Initializable,
+    Observable,
     Sizeable,
     Subscriptable,
-    Watchable,
 )
 
 
@@ -93,7 +93,7 @@ class Collection[V](
         ...         print(item)
     """
 
-    # def __iter__(self) -> PyIterator[V]:
+    # def __iter__(self) -> PyIterable[V]:
     #     """Iterate over items.
 
     #     Returns:
@@ -111,7 +111,7 @@ class Collection[V](
 class Sequence[V](
     Collection[int],
     Subscriptable[int, V],
-    Convertible[PyIterator[V]],
+    Convertible[PyIterable[V]],
     Protocol,
 ):
     """Protocol for read-only sequences.
@@ -129,7 +129,7 @@ class Sequence[V](
         ...         index = view.index(value)
     """
 
-    # def __reversed__(self) -> PyIterator[V]:
+    # def __reversed__(self) -> PyIterable[V]:
     #     """Iterate in reverse order.
 
     #     Returns:
@@ -170,9 +170,9 @@ class MutableSequence[V](
     Deletable[int],
     Appendable[V],
     Clearable,
-    Initializable[PyIterator[V]],
-    Watchable,
-    ChildWatchable[int],
+    Initializable[PyIterable[V]],
+    Observable,
+    ChildObservable[int],
     Protocol,
 ):
     """Protocol for mutable sequences.
@@ -204,7 +204,7 @@ class MutableSequence[V](
     #     """Reverse the sequence in-place."""
     #     ...
 
-    # def extend(self, values: PyIterator[V]) -> None:
+    # def extend(self, values: PyIterable[V]) -> None:
     #     """Extend sequence with values from iterable.
 
     #     Args:
@@ -267,7 +267,7 @@ class Mapping[K, V](
         ...         keys = list(view.keys())
     """
 
-    def keys(self) -> PyIterator[K]:
+    def keys(self) -> PyIterable[K]:
         """Get all keys.
 
         Returns:
@@ -275,7 +275,7 @@ class Mapping[K, V](
         """
         ...
 
-    def values(self) -> PyIterator[V]:
+    def values(self) -> PyIterable[V]:
         """Get all values.
 
         Returns:
@@ -283,7 +283,7 @@ class Mapping[K, V](
         """
         ...
 
-    def items(self) -> PyIterator[tuple[K, V]]:
+    def items(self) -> PyIterable[tuple[K, V]]:
         """Get all key-value pairs.
 
         Returns:
@@ -311,8 +311,8 @@ class MutableMapping[K, V](
     Deletable[K],
     Clearable,
     Initializable[PyMapping[K, V]],
-    Watchable,
-    ChildWatchable[K],
+    Observable,
+    ChildObservable[K],
     Protocol,
 ):
     """Protocol for mutable mappings.
@@ -444,7 +444,7 @@ class MutableSet[V](
     Set[V],
     Clearable,
     Initializable[PySet[V]],
-    Watchable,
+    Observable,
     Protocol,
 ):
     """Protocol for mutable sets.

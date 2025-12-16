@@ -1,11 +1,9 @@
-"""View bases for composing custom view behaviors.
+"""View bases for composing custom observable behaviors.
 
-This module provides reusable bases that encapsulate common view patterns:
-- Metadata-based children counting
-- Live children counting
-- Child navigation with address normalization
-- Nested container extraction (get)
-- Nested container population (set)
+This module provides reusable bases for common patterns:
+- ChildObservableBase
+- DescendantsObservableBase
+- ObservableBase
 """
 
 from __future__ import annotations
