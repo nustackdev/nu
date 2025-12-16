@@ -13,11 +13,11 @@ from abc import ABC, abstractmethod
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, Self, final
 
-from everyshape.storage import ObserverConnectionError
-from everyshape.storage.observer.registry import SubscriptionRegistry
-from everyshape.storage.observer.subscription import (
+from everyshape.storage import (
+    ObserverConnectionError,
     Subscription,
     SubscriptionOptions,
+    SubscriptionRegistry,
 )
 
 

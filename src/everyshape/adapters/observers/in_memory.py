@@ -16,9 +16,7 @@ from ._base import BaseObserver
 if TYPE_CHECKING:
     from logging import Logger
 
-    from everyshape.storage import (
-        ObserverProtocol,
-    )
+    from everyshape.storage import ObserverProtocol
 
 
 logger: Logger = getLogger(__name__)

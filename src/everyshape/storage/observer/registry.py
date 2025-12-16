@@ -12,12 +12,11 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from .subscription import (
+from .options import (
     WILDCARD,
     CompositeFilter,
     LengthFilter,
     PrefixFilter,
-    Subscription,
     SubscriptionFilter,
     SuffixFilter,
     WildcardFilter,
@@ -26,6 +25,8 @@ from .subscription import (
 
 if TYPE_CHECKING:
     from everyshape.loc import key
+
+    from .subscription import Subscription
 
 
 __all__ = [
