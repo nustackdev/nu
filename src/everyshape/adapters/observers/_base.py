@@ -1,24 +1,31 @@
-"""Observer base."""
+"""Observer base implementation.
+
+Provides the base class for observer implementations with:
+- Connection management
+- Thread-safe subscription tracking
+- Efficient pattern matching via SubscriptionRegistry
+- Both new and legacy subscription APIs
+"""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, Self, final
 
 from everyshape.storage import ObserverConnectionError
+from everyshape.storage.observer.registry import SubscriptionRegistry
+from everyshape.storage.observer.subscription import (
+    Subscription,
+    SubscriptionOptions,
+)
 
 
 if TYPE_CHECKING:
     from types import TracebackType
 
     from everyshape.loc import key
-    from everyshape.storage import (
-        CallbackFn,
-        CodecProtocol,
-        SubscriptionProtocol,
-    )
+    from everyshape.storage import CodecProtocol
 
 
 logger = getLogger(__name__)
@@ -26,7 +33,6 @@ logger = getLogger(__name__)
 
 __all__ = [
     "BaseObserver",
-    "Subscription",
 ]
 
 
@@ -36,33 +42,34 @@ class BaseObserver[EncodedKeyT](ABC):
     Provides core functionality for state change observation with:
     - Connection management
     - Topic validation
-    - Thread-safe subscription tracking
+    - Thread-safe subscription tracking via SubscriptionRegistry
     - Sync notification delivery
+    - Support for both new and legacy subscription APIs
 
     Type Parameters:
-        Key: Topic type (tuple of strings)
-        ObserverEncodedKeyT: Encoded topic type
+        EncodedKeyT: Encoded topic type (e.g., str for in-memory, bytes for RocksDB)
     """
 
     def __init__(self, codec: CodecProtocol[EncodedKeyT, Any]) -> None:
         """Initialize observer.
 
         Args:
-            codec: Codec for encoding/decoding topics
+            codec: Codec for encoding/decoding topics.
         """
         self._codec = codec
         self._connected: bool = False
+        self._registry: SubscriptionRegistry | None = None
 
     @property
     def codec(self) -> CodecProtocol[EncodedKeyT, Any]:
-        """Codec."""
+        """Get codec for encoding/decoding topics."""
         return self._codec
 
     def _ensure_connected(self) -> None:
         """Verify connection state.
 
         Raises:
-            ObserverConnectionError: If observer not connected
+            ObserverConnectionError: If observer not connected.
         """
         if not self._connected:
             raise ObserverConnectionError("Observer not connected")
@@ -71,12 +78,15 @@ class BaseObserver[EncodedKeyT](ABC):
     def connect(self) -> None:
         """Connect to notification system.
 
+        Initializes the subscription registry.
+
         Raises:
-            ObserverConnectionError: If connection fails
+            ObserverConnectionError: If connection fails.
         """
         if self._connected:
             return
         try:
+            self._registry = SubscriptionRegistry()
             self._connect_impl()
             self._connected = True
         except Exception as e:
@@ -91,14 +101,19 @@ class BaseObserver[EncodedKeyT](ABC):
     def disconnect(self) -> None:
         """Disconnect from notification system.
 
+        Clears all subscriptions.
+
         Raises:
-            ObserverConnectionError: If disconnection fails
+            ObserverConnectionError: If disconnection fails.
         """
         if not self._connected:
             return
         try:
             self._disconnect_impl()
         finally:
+            if self._registry is not None:
+                self._registry.clear()
+                self._registry = None
             self._connected = False
 
     @abstractmethod
@@ -110,70 +125,65 @@ class BaseObserver[EncodedKeyT](ABC):
     def notify(self, topic: key.Key) -> None:
         """Notify subscribers of state change.
 
+        Uses the subscription registry for efficient matching.
+
         Args:
-            topic: Topic identifying changed state
+            topic: Topic identifying changed state.
         """
         self._ensure_connected()
         self._notify_impl(topic)
 
-    @abstractmethod
     def _notify_impl(self, topic: key.Key) -> None:
-        """Implementation-specific notify logic.
+        """Default notification implementation using registry.
+
+        Finds matching subscriptions and delivers notifications.
 
         Args:
-            topic: Topic identifying changed state
-            subscriptions: List of matching subscriptions
+            topic: Topic identifying changed state.
         """
-        raise NotImplementedError
+        if self._registry is None:
+            return
+
+        # Find matching subscriptions (thread-safe)
+        matching = self._registry.match(topic)
+
+        # Execute callbacks outside any locks
+        for subscription in matching:
+            for error in subscription.notify(topic):
+                logger.error("Callback failed for %s: %s", topic, error)
 
     @final
-    def subscribe(
-        self,
-        prefix: key.Key,
-        callback: CallbackFn,
-        prefix_depth: int = 0,
-    ) -> SubscriptionProtocol:
-        """Subscribe to topic pattern.
+    def subscribe(self, options: SubscriptionOptions) -> Subscription:
+        """Subscribe to key changes with flexible filtering.
 
         Args:
-            prefix: Topic pattern to match
-            callback: Sync callback for notifications
-            prefix_depth: Depth of topic pattern matching (default: 0 for exact match)
-                If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
+            options: Subscription options including filter specification.
 
         Returns:
-            New subscription instance
+            Subscription object for binding callbacks and managing lifecycle.
         """
         self._ensure_connected()
 
         subscription = Subscription(
-            prefix,
-            prefix_depth,
-            callback,
+            _options=options,
+            _observer=self,
         )
 
-        self._subscribe_impl(subscription)
+        if self._registry is not None:
+            self._registry.add(subscription)
+
         return subscription
 
-    @abstractmethod
-    def _subscribe_impl(self, subscription: SubscriptionProtocol) -> None:
-        """Implementation-specific subscribe logic."""
-        raise NotImplementedError
+    def _close_subscription(self, subscription: Subscription) -> None:
+        """Internal method to close a subscription.
 
-    @final
-    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """Remove subscription.
+        Called by Subscription.close() to remove subscription from registry.
 
         Args:
-            subscription: Subscription to remove
+            subscription: Subscription to close.
         """
-        self._ensure_connected()
-        self._unsubscribe_impl(subscription)
-
-    @abstractmethod
-    def _unsubscribe_impl(self, subscription: SubscriptionProtocol) -> None:
-        """Implementation-specific unsubscribe logic."""
-        raise NotImplementedError
+        if self._registry is not None:
+            self._registry.remove(subscription)
 
     def __enter__(self) -> Self:
         """Enter context manager."""
@@ -188,42 +198,3 @@ class BaseObserver[EncodedKeyT](ABC):
     ) -> None:
         """Exit context manager."""
         self.disconnect()
-
-
-@dataclass
-class Subscription:
-    """Represents a subscription to a topic pattern.
-
-    Attributes:
-        topic_pattern:
-            Topic pattern to match against notifications.
-            Must be a tuple of strings matching state keys.
-        depth:
-            Get depth of topic pattern matching.
-            If set to 0, matches exact topic; if set to 1, matches prefix; if set to -1, matches all subtopics.
-        callback:
-            Sync callable that will be invoked on matching notifications.
-            Must accept a single parameter of type ObserverKey.
-
-    Type Parameters:
-        ObserverKey: Topic type (tuple of strings)
-    """
-
-    _prefix: key.Key
-    _prefix_depth: int
-    _callback: CallbackFn
-
-    @property
-    def prefix(self) -> key.Key:
-        """Prefix access."""
-        return self._prefix
-
-    @property
-    def callback(self) -> CallbackFn:
-        """Callback access."""
-        return self._callback
-
-    @property
-    def prefix_depth(self) -> int:
-        """prefix_depth access."""
-        return self._prefix_depth

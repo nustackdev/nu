@@ -1,15 +1,30 @@
-"""Backend."""
+"""Storage layer with subscriptions support.
+
+Provides storage protocols, observer patterns, and subscription capabilities.
+"""
 
 from __future__ import annotations
 
 from .codec import Codec, CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
 from .observer import (
+    WILDCARD,
+    CompositeFilter,
+    LengthFilter,
     ObserverConnectionError,
     ObserverError,
     ObserverProtocol,
     ObserverSubscriptionError,
     ObserverValidationError,
+    PrefixFilter,
+    Subscription,
+    SubscriptionCallback,
+    SubscriptionFilter,
+    SubscriptionOptions,
     SubscriptionProtocol,
+    SubscriptionReceiver,
+    SubscriptionRegistry,
+    SuffixFilter,
+    WildcardFilter,
 )
 from .storage import (
     BaseContextProtocol,
@@ -72,6 +87,20 @@ __all__ = [  # noqa: RUF022
     # Observer
     "ObserverProtocol",
     "SubscriptionProtocol",
+    ## Subscription types
+    "Subscription",
+    "SubscriptionOptions",
+    "SubscriptionCallback",
+    "SubscriptionReceiver",
+    "SubscriptionRegistry",
+    ## Filter types
+    "SubscriptionFilter",
+    "PrefixFilter",
+    "SuffixFilter",
+    "WildcardFilter",
+    "LengthFilter",
+    "CompositeFilter",
+    "WILDCARD",
     ## Errors
     "ObserverError",
     "ObserverConnectionError",

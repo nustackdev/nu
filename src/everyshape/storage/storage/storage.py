@@ -12,8 +12,7 @@ from .transaction import TransactionalStorageProtocol
 
 
 if TYPE_CHECKING:
-    from everyshape.loc import key
-    from everyshape.storage import CallbackFn, SubscriptionProtocol
+    from everyshape.storage.observer.subscription import Subscription, SubscriptionOptions
 
 
 @runtime_checkable
@@ -50,35 +49,42 @@ class StorageProtocol(TransactionalStorageProtocol, Protocol):
     # Subscriptions
     # ========================================================================
 
-    def subscribe(
-        self,
-        pattern: key.Key,
-        callback: CallbackFn,
-        depth: int = 0,
-    ) -> SubscriptionProtocol:
-        """Subscribe to key pattern changes.
+    def subscribe(self, options: SubscriptionOptions) -> Subscription:
+        """Subscribe to key changes with flexible filtering.
+
+        This is the new subscription API that provides:
+        - Flexible filtering (prefix, suffix, wildcard, length, composite)
+        - Decoupled subscriptions from callbacks
+        - Efficient pattern matching
 
         Args:
-            pattern: Key prefix pattern to match.
-            callback: Function called on matching mutations.
-            depth: Depth of pattern matching (0=exact, 1=prefix, -1=all subkeys).
+            options: Subscription options including filter specification.
 
         Returns:
-            Handle for unsubscribing.
+            Subscription object for binding callbacks and managing lifecycle.
 
         Raises:
             StorageOperationError: If subscription fails.
-        """
-        ...
 
-    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """Unsubscribe from changes.
+        Examples:
+            >>> from everyshape.storage.observer.subscription import (
+            ...     PrefixFilter,
+            ...     SubscriptionOptions,
+            ... )
 
-        Args:
-            subscription: Subscription object from subscribe().
+            >>> # Subscribe to all keys under "users"
+            >>> sub = storage.subscribe(
+            ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+            ... )
+            >>> sub.bind(lambda key: print(f"Changed: {key}"))
 
-        Raises:
-            StorageOperationError: If subscription is invalid or unsubscribe fails.
+            >>> # Use context manager for temporary binding
+            >>> with sub(my_callback):
+            ...     # Callback is bound during this block
+            ...     pass
+
+            >>> # Close when done
+            >>> sub.close()
         """
         ...
 

@@ -1,8 +1,12 @@
-"""In-memory observer implementation with thread-safe subscription management."""
+"""In-memory observer implementation with thread-safe subscription management.
+
+The InMemoryObserver provides efficient pattern matching using the
+SubscriptionRegistry from the base class. All subscription logic is
+handled by BaseObserver - this class only provides connection management.
+"""
 
 from __future__ import annotations
 
-import threading
 from logging import getLogger
 from typing import TYPE_CHECKING
 
@@ -12,10 +16,8 @@ from ._base import BaseObserver
 if TYPE_CHECKING:
     from logging import Logger
 
-    from everyshape.loc import key
     from everyshape.storage import (
         ObserverProtocol,
-        SubscriptionProtocol,
     )
 
 
@@ -28,66 +30,55 @@ __all__ = [
 
 
 class InMemoryObserver(BaseObserver[str]):
-    """In-memory observer with thread-safe subscription management."""
+    """In-memory observer with thread-safe subscription management.
+
+    Uses the SubscriptionRegistry from BaseObserver for efficient O(key_length)
+    pattern matching instead of O(n) iteration over all subscriptions.
+
+    Supports both the new API (subscribe with options + bind/unbind) and
+    the legacy API (subscribe with prefix and callback).
+
+    Examples:
+        >>> from everyshape.storage.observer.subscription import (
+        ...     PrefixFilter,
+        ...     SubscriptionOptions,
+        ... )
+
+        >>> # New API
+        >>> observer = InMemoryObserver(codec)
+        >>> observer.connect()
+        >>> sub = observer.subscribe(
+        ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        ... )
+        >>> sub.bind(lambda key: print(f"Changed: {key}"))
+        >>> observer.notify(("users", "alice"))  # Prints: Changed: ('users', 'alice')
+        >>> sub.close()
+        >>> observer.disconnect()
+
+        >>> # Legacy API
+        >>> with InMemoryObserver(codec) as observer:
+        ...     sub = observer.subscribe_legacy(
+        ...         prefix=("users",),
+        ...         callback=lambda key: print(f"Changed: {key}"),
+        ...         prefix_depth=-1,
+        ...     )
+        ...     observer.notify(("users", "alice"))
+        ...     sub.close()
+    """
 
     def _connect_impl(self) -> None:
-        if not hasattr(self, "_data_lock"):
-            self._data_lock: threading.Lock = threading.Lock()
+        """Initialize connection state.
 
-        self._subscriptions: dict[key.Key, list[SubscriptionProtocol]] = {}
+        The SubscriptionRegistry is created by the base class.
+        """
+        pass
 
     def _disconnect_impl(self) -> None:
-        with self._data_lock:
-            self._subscriptions.clear()
+        """Clean up connection state.
 
-    def _matches_pattern(
-        self,
-        topic: key.Key,
-        pattern: key.Key,
-        depth: int,
-    ) -> bool:
-        if len(topic) < len(pattern):
-            return False
-
-        if depth != -1 and len(topic) - len(pattern) != depth:
-            return False
-
-        return all(p == "*" or t == p for t, p in zip(topic, pattern, strict=False))
-
-    def _notify_impl(self, topic: key.Key) -> None:
-        with self._data_lock:
-            matching_subs = []
-            for pattern, subs in self._subscriptions.items():
-                if self._matches_pattern(topic, pattern, -1):
-                    matching_subs.extend(subs)
-
-        # Execute callbacks outside lock
-        for sub in matching_subs:
-            # Check if the subscription matches the topic with the specified depth
-            if not self._matches_pattern(topic, sub.prefix, sub.prefix_depth):
-                continue
-
-            try:
-                sub.callback(topic)
-            except Exception as e:
-                logger.error(f"Callback failed for {topic}: {e}")
-
-    def _subscribe_impl(self, subscription: SubscriptionProtocol) -> None:
-        prefix = subscription.prefix
-        with self._data_lock:
-            if prefix not in self._subscriptions:
-                self._subscriptions[prefix] = []
-            self._subscriptions[prefix].append(subscription)
-
-    def _unsubscribe_impl(self, subscription: SubscriptionProtocol) -> None:
-        with self._data_lock:
-            if subscription.prefix in self._subscriptions:
-                subs = self._subscriptions[subscription.prefix]
-                subs = [s for s in subs if s != subscription]
-                if subs:
-                    self._subscriptions[subscription.prefix] = subs
-                else:
-                    del self._subscriptions[subscription.prefix]
+        The SubscriptionRegistry is cleared by the base class.
+        """
+        pass
 
 
 if TYPE_CHECKING:

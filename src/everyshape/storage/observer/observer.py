@@ -1,13 +1,26 @@
-"""Protocol definitions for coddec, storage, and observer."""
+"""Protocol definitions for observer system.
+
+Defines the abstract interfaces for observers and subscriptions.
+The new subscription system provides:
+- Flexible filtering (prefix, suffix, wildcard, length, composite)
+- Decoupled subscription from callbacks (subscribe once, bind/unbind callbacks)
+- Efficient pattern matching with hash-based indexing
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
     from everyshape.loc import key
     from everyshape.storage import CallbackFn, CodecProtocol
+
+    from .subscription import (
+        Subscription,
+        SubscriptionCallback,
+        SubscriptionOptions,
+    )
 
 
 __all__ = [
@@ -16,40 +29,201 @@ __all__ = [
 ]
 
 
+@runtime_checkable
+class SubscriptionProtocol(Protocol):
+    """Protocol for subscriptions.
+
+    Subscriptions are decoupled from callbacks - create a subscription once,
+    then bind/unbind callbacks as needed.
+
+    The subscription provides:
+    - `bind(receiver)`: Bind a callback to receive notifications
+    - `unbind(receiver)`: Unbind a previously bound callback
+    - `bind_context(receiver)`: Context manager for temporary binding
+    - `close()`: Close the subscription and remove from observer
+
+    Examples:
+        >>> # Create subscription
+        >>> sub = observer.subscribe(
+        ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        ... )
+
+        >>> # Bind callbacks
+        >>> sub.bind(lambda key: print(f"Changed: {key}"))
+
+        >>> # Use as context manager
+        >>> with sub.bind_context(my_callback):
+        ...     # my_callback is bound here
+        ...     pass
+        >>> # my_callback is automatically unbound
+
+        >>> # Or use shorthand
+        >>> with sub(my_callback):
+        ...     pass
+
+        >>> # Close subscription when done
+        >>> sub.close()
+    """
+
+    @property
+    def options(self) -> SubscriptionOptions:
+        """Get subscription options."""
+        ...
+
+    @property
+    def receivers(self) -> tuple[SubscriptionCallback, ...]:
+        """Get bound receivers (immutable copy)."""
+        ...
+
+    @property
+    def is_closed(self) -> bool:
+        """Check if subscription is closed."""
+        ...
+
+    def bind(self, receiver: SubscriptionCallback) -> None:
+        """Bind a receiver callback to this subscription.
+
+        Args:
+            receiver: Callback function that receives key notifications.
+
+        Raises:
+            ValueError: If subscription is closed.
+        """
+        ...
+
+    def unbind(self, receiver: SubscriptionCallback) -> None:
+        """Unbind a receiver callback from this subscription.
+
+        Args:
+            receiver: Callback function to unbind.
+
+        Raises:
+            ValueError: If receiver is not bound.
+        """
+        ...
+
+    def bind_context(self, receiver: SubscriptionCallback) -> _SubscriptionContextProtocol:
+        """Return a context manager that binds/unbinds a receiver.
+
+        Args:
+            receiver: Callback function to bind.
+
+        Returns:
+            Context manager that binds on enter and unbinds on exit.
+        """
+        ...
+
+    def __call__(self, receiver: SubscriptionCallback) -> _SubscriptionContextProtocol:
+        """Shorthand for bind_context."""
+        ...
+
+    def close(self) -> None:
+        """Close this subscription and remove it from the observer."""
+        ...
+
+    # Legacy properties for backward compatibility
+    @property
+    def prefix(self) -> key.Key:
+        """Get topic pattern for subscription (legacy).
+
+        Deprecated:
+            Use `options.filter` instead.
+        """
+        ...
+
+    @property
+    def callback(self) -> CallbackFn:
+        """Get first callback for subscription (legacy).
+
+        Deprecated:
+            Use `receivers` instead.
+        """
+        ...
+
+    @property
+    def prefix_depth(self) -> int:
+        """Get depth for subscription (legacy).
+
+        Deprecated:
+            Use `options.filter` instead.
+        """
+        ...
+
+
+class _SubscriptionContextProtocol(Protocol):
+    """Protocol for subscription context managers."""
+
+    def __enter__(self) -> SubscriptionProtocol:
+        """Bind receiver on entry."""
+        ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        """Unbind receiver on exit."""
+        ...
+
+
 class ObserverProtocol[EncodedKeyT](Protocol):
-    """Protocol for observable adapters."""
+    """Protocol for observable adapters.
+
+    Observers provide subscription capabilities for storage changes, such as:
+    - Flexible filtering (prefix, suffix, wildcard, length, composite)
+    - Decoupled subscriptions from callbacks
+    - Efficient pattern matching
+
+    Examples:
+        >>> # Subscribe with options
+        >>> sub = observer.subscribe(
+        ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        ... )
+        >>> sub.bind(lambda key: print(f"Changed: {key}"))
+    """
 
     @property
     def codec(self) -> CodecProtocol[EncodedKeyT, Any]:
         """Get key codec for encoding topics."""
         ...
 
-    def subscribe(
-        self, prefix: key.Key, callback: CallbackFn, prefix_depth: int = 0
-    ) -> SubscriptionProtocol:
-        """Subscribe to changes under key prefix.
+    def subscribe(self, options: SubscriptionOptions) -> Subscription:
+        """Subscribe to key changes with flexible filtering.
 
         Args:
-            prefix: Key prefix to subscribe to
-            callback: Callback function for notifications
-            prefix_depth: Depth of topic pattern matching (default: 0 for exact match, 1 for prefix, -1 for all subkeys)
+            options: Subscription options including filter specification.
 
         Returns:
-            Subscription object for unsubscribing
+            Subscription object for binding callbacks and managing lifecycle.
 
         Raises:
-            ObserverError: If subscription fails
-        """
-        ...
+            ObserverError: If subscription fails.
 
-    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """Unsubscribe from changes under key prefix.
+        Examples:
+            >>> # Subscribe to all keys under "users"
+            >>> sub = observer.subscribe(
+            ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+            ... )
 
-        Args:
-            subscription: Subscription to cancel
+            >>> # Subscribe with wildcard pattern
+            >>> sub = observer.subscribe(
+            ...     SubscriptionOptions(
+            ...         filter=WildcardFilter(pattern=("users", "*", "profile"))
+            ...     )
+            ... )
 
-        Raises:
-            ObserverError: If unsubscribe fails
+            >>> # Subscribe to keys with specific prefix AND length
+            >>> sub = observer.subscribe(
+            ...     SubscriptionOptions(
+            ...         filter=CompositeFilter(
+            ...             filters=(
+            ...                 PrefixFilter(prefix=("users",)),
+            ...                 LengthFilter(length=3),
+            ...             )
+            ...         )
+            ...     )
+            ... )
         """
         ...
 
@@ -57,58 +231,19 @@ class ObserverProtocol[EncodedKeyT](Protocol):
         """Notify observers of a change at the specified topic.
 
         Args:
-            topic: Topic identifying changed state
+            topic: Topic identifying changed state.
 
         Raises:
-            ObserverError: If notification fails
+            ObserverError: If notification fails.
         """
-
-    # def __hash__(self) -> int:
-    #     """Get hash of the observer.
-
-    #     Returns:
-    #         Hash value of the observer
-    #     """
-    #     ...
-
-    # def __eq__(self, other: object) -> bool:
-    #     """Check equality of the observer.
-
-    #     Args:
-    #         other: Observer to compare with
-
-    #     Returns:
-    #         True if equal, False otherwise
-    #     """
-    #     ...
-
-
-class SubscriptionProtocol(Protocol):
-    """Represents a subscription to a topic pattern.
-
-    Attributes:
-        prefix:
-            Topic pattern to match against notifications.
-            Must be a tuple of strings matching state keys.
-        callback:
-            Callable that will be invoked on matching notifications.
-            Must accept a single parameter of type StorageValue.
-        prefix_depth:
-            Depth of topic pattern matching.
-            0 = exact match, 1 = prefix match, -1 = all subkeys
-    """
-
-    @property
-    def prefix(self) -> key.Key:
-        """Get topic pattern for subscription."""
         ...
 
-    @property
-    def callback(self) -> CallbackFn:
-        """Get callback for subscription."""
-        ...
+    def _close_subscription(self, subscription: Subscription) -> None:
+        """Internal method to close a subscription.
 
-    @property
-    def prefix_depth(self) -> int:
-        """Get depth for subscription."""
+        Called by Subscription.close() to remove subscription from observer.
+
+        Args:
+            subscription: Subscription to close.
+        """
         ...
