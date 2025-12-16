@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from everyshape.storage import (
         CallbackFn,
         StorageProtocol,
-        SubscriptionProtocol,
+        Subscription,
     )
     from everyshape.view import View, ViewRegistry
 
@@ -405,7 +405,7 @@ class WatchMixin[A](AddressMappingMixin[A]):
         address: A,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> SubscriptionProtocol:
+    ) -> Subscription:
         """Watch changes to a specific child and its subtree."""
         key = self.normalize_address(address)
         return self.container.watch_child(storage, key, callback, depth)
@@ -416,7 +416,7 @@ class WatchMixin[A](AddressMappingMixin[A]):
         *addresses: A,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> tuple[SubscriptionProtocol, ...]:
+    ) -> tuple[Subscription, ...]:
         """Watch changes to multiple children and their subtrees."""
         keys = tuple(self.normalize_address(address) for address in addresses)
         return self.container.watch_children(storage, *keys, callback=callback, depth=depth)
@@ -426,14 +426,14 @@ class WatchMixin[A](AddressMappingMixin[A]):
         storage: StorageProtocol,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> SubscriptionProtocol:
+    ) -> Subscription:
         """Watch changes to this view's container and its descendants."""
         return self.container.watch(storage, callback, depth)
 
     def unwatch(
         self,
         storage: StorageProtocol,
-        subscription: SubscriptionProtocol,
+        subscription: Subscription,
     ) -> None:
         """Unsubscribe from changes."""
         self.container.unwatch(storage, subscription)

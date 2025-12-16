@@ -14,159 +14,20 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from everyshape.loc import key
-    from everyshape.storage import CallbackFn, CodecProtocol
+    from everyshape.storage import CodecProtocol
 
     from .subscription import (
         Subscription,
-        SubscriptionCallback,
         SubscriptionOptions,
     )
 
 
 __all__ = [
     "ObserverProtocol",
-    "SubscriptionProtocol",
 ]
 
 
 @runtime_checkable
-class SubscriptionProtocol(Protocol):
-    """Protocol for subscriptions.
-
-    Subscriptions are decoupled from callbacks - create a subscription once,
-    then bind/unbind callbacks as needed.
-
-    The subscription provides:
-    - `bind(receiver)`: Bind a callback to receive notifications
-    - `unbind(receiver)`: Unbind a previously bound callback
-    - `bind_context(receiver)`: Context manager for temporary binding
-    - `close()`: Close the subscription and remove from observer
-
-    Examples:
-        >>> # Create subscription
-        >>> sub = observer.subscribe(
-        ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
-        ... )
-
-        >>> # Bind callbacks
-        >>> sub.bind(lambda key: print(f"Changed: {key}"))
-
-        >>> # Use as context manager
-        >>> with sub.bind_context(my_callback):
-        ...     # my_callback is bound here
-        ...     pass
-        >>> # my_callback is automatically unbound
-
-        >>> # Or use shorthand
-        >>> with sub(my_callback):
-        ...     pass
-
-        >>> # Close subscription when done
-        >>> sub.close()
-    """
-
-    @property
-    def options(self) -> SubscriptionOptions:
-        """Get subscription options."""
-        ...
-
-    @property
-    def receivers(self) -> tuple[SubscriptionCallback, ...]:
-        """Get bound receivers (immutable copy)."""
-        ...
-
-    @property
-    def is_closed(self) -> bool:
-        """Check if subscription is closed."""
-        ...
-
-    def bind(self, receiver: SubscriptionCallback) -> None:
-        """Bind a receiver callback to this subscription.
-
-        Args:
-            receiver: Callback function that receives key notifications.
-
-        Raises:
-            ValueError: If subscription is closed.
-        """
-        ...
-
-    def unbind(self, receiver: SubscriptionCallback) -> None:
-        """Unbind a receiver callback from this subscription.
-
-        Args:
-            receiver: Callback function to unbind.
-
-        Raises:
-            ValueError: If receiver is not bound.
-        """
-        ...
-
-    def bind_context(self, receiver: SubscriptionCallback) -> _SubscriptionContextProtocol:
-        """Return a context manager that binds/unbinds a receiver.
-
-        Args:
-            receiver: Callback function to bind.
-
-        Returns:
-            Context manager that binds on enter and unbinds on exit.
-        """
-        ...
-
-    def __call__(self, receiver: SubscriptionCallback) -> _SubscriptionContextProtocol:
-        """Shorthand for bind_context."""
-        ...
-
-    def close(self) -> None:
-        """Close this subscription and remove it from the observer."""
-        ...
-
-    # Legacy properties for backward compatibility
-    @property
-    def prefix(self) -> key.Key:
-        """Get topic pattern for subscription (legacy).
-
-        Deprecated:
-            Use `options.filter` instead.
-        """
-        ...
-
-    @property
-    def callback(self) -> CallbackFn:
-        """Get first callback for subscription (legacy).
-
-        Deprecated:
-            Use `receivers` instead.
-        """
-        ...
-
-    @property
-    def prefix_depth(self) -> int:
-        """Get depth for subscription (legacy).
-
-        Deprecated:
-            Use `options.filter` instead.
-        """
-        ...
-
-
-class _SubscriptionContextProtocol(Protocol):
-    """Protocol for subscription context managers."""
-
-    def __enter__(self) -> SubscriptionProtocol:
-        """Bind receiver on entry."""
-        ...
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: object,
-    ) -> None:
-        """Unbind receiver on exit."""
-        ...
-
-
 class ObserverProtocol[EncodedKeyT](Protocol):
     """Protocol for observable adapters.
 

@@ -31,7 +31,7 @@ from everyshape.storage import (
     StorageScanOptions,
     StorageTransactionAbortedError,
     StorageTransactionError,
-    SubscriptionProtocol,
+    Subscription,
     TransactionProtocol,
     WriteBatchProtocol,
 )
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
     import esrocks as _esrocks  # type: ignore[import]
     from everyshape.loc.key import Key
-    from everyshape.storage import CallbackFn
+    from everyshape.storage import SubscriptionOptions
     from everyshape.types import Value
 
 
@@ -1247,49 +1247,44 @@ class RocksDBStorage:
 
             self._opened = False
 
-    def subscribe(
-        self,
-        pattern: Key,
-        callback: CallbackFn,
-        depth: int = 0,
-    ) -> SubscriptionProtocol:
-        """Subscribe to key pattern changes.
+    # =========================================================================
+    # Subscriptions
+    # =========================================================================
+
+    def subscribe(self, options: SubscriptionOptions) -> Subscription:
+        """Subscribe to key changes with flexible filtering.
 
         Args:
-            pattern: Key prefix pattern to match
-            callback: Function called on matching mutations
-            depth: Depth of pattern matching (0=exact, 1=prefix, -1=all subkeys)
+            options: Subscription options including filter specification (prefix, suffix, wildcard, length, composite)
 
         Returns:
-            Subscription handle for unsubscribing
+            Subscription object for binding callbacks and managing lifecycle.
 
         Raises:
-            StorageOperationError: If subscription fails
+            StorageOperationError: If subscription fails or observer not configured.
+
+        Examples:
+            >>> from everyshape.storage.observer.subscription import (
+            ...     PrefixFilter,
+            ...     SubscriptionOptions,
+            ... )
+            >>> sub = storage.subscribe(
+            ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+            ... )
+            >>> sub.bind(lambda key: print(f"Changed: {key}"))
+            >>> sub.close()
         """
         if self._observer is None:
             raise StorageOperationError("Observer not configured for this storage")
 
         try:
-            return self._observer.subscribe(pattern, callback, depth)
+            return self._observer.subscribe(options)
         except Exception as e:
             raise StorageOperationError(f"Failed to subscribe: {e}") from e
 
-    def unsubscribe(self, subscription: SubscriptionProtocol) -> None:
-        """Unsubscribe from changes.
-
-        Args:
-            subscription: Subscription from subscribe()
-
-        Raises:
-            StorageOperationError: If unsubscribe fails
-        """
-        if self._observer is None:
-            raise StorageOperationError("Observer not configured for this storage")
-
-        try:
-            self._observer.unsubscribe(subscription)
-        except Exception as e:
-            raise StorageOperationError(f"Failed to unsubscribe: {e}") from e
+    # =========================================================================
+    # Transaction Management
+    # =========================================================================
 
     @overload
     def begin(self, *, read_only: Literal[True]) -> SnapshotProtocol: ...

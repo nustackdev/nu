@@ -61,7 +61,7 @@ if TYPE_CHECKING:
         CallbackFn,
         StorageContextType,
         StorageProtocol,
-        SubscriptionProtocol,
+        Subscription,
     )
     from everyshape.types import Empty, Value
 
@@ -750,7 +750,7 @@ class Container(NamedTuple):
         key: key_.KeySegment,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> SubscriptionProtocol:
+    ) -> Subscription:
         """Watch changes to a specific child and its subtree.
 
         Args:
@@ -778,7 +778,7 @@ class Container(NamedTuple):
         *keys: key_.KeySegment,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> tuple[SubscriptionProtocol, ...]:
+    ) -> tuple[Subscription, ...]:
         """Watch changes to multiple children and their subtrees.
 
         Args:
@@ -806,7 +806,7 @@ class Container(NamedTuple):
         storage: StorageProtocol,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> SubscriptionProtocol:
+    ) -> Subscription:
         """Watch changes to this container and its descendants.
 
         Args:
@@ -829,7 +829,7 @@ class Container(NamedTuple):
     def unwatch(
         self,
         storage: StorageProtocol,
-        subscription: SubscriptionProtocol,
+        subscription: Subscription,
     ) -> None:
         """Unsubscribe from changes.
 

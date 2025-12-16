@@ -20,7 +20,6 @@ from .observer import (
     SubscriptionCallback,
     SubscriptionFilter,
     SubscriptionOptions,
-    SubscriptionProtocol,
     SubscriptionReceiver,
     SubscriptionRegistry,
     SuffixFilter,
@@ -86,7 +85,7 @@ __all__ = [  # noqa: RUF022
     "StorageContextType",
     # Observer
     "ObserverProtocol",
-    "SubscriptionProtocol",
+    "Subscription",
     ## Subscription types
     "Subscription",
     "SubscriptionOptions",

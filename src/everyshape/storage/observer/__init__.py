@@ -14,7 +14,7 @@ from .exceptions import (
     ObserverSubscriptionError,
     ObserverValidationError,
 )
-from .observer import ObserverProtocol, SubscriptionProtocol
+from .observer import ObserverProtocol
 from .registry import SubscriptionRegistry
 from .subscription import (
     WILDCARD,
@@ -34,7 +34,6 @@ from .subscription import (
 __all__ = [  # noqa: RUF022
     # Protocols
     "ObserverProtocol",
-    "SubscriptionProtocol",
     # Subscription types
     "Subscription",
     "SubscriptionOptions",

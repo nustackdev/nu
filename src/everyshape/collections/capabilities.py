@@ -12,7 +12,7 @@ from everyshape.view import View
 
 
 if TYPE_CHECKING:
-    from everyshape.storage import CallbackFn, StorageProtocol, SubscriptionProtocol
+    from everyshape.storage import CallbackFn, StorageProtocol, Subscription
     from everyshape.types import Empty
 
 
@@ -334,7 +334,7 @@ class Watchable(View, Protocol):
         storage: StorageProtocol,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> SubscriptionProtocol:
+    ) -> Subscription:
         """Watch changes to this container and its descendants.
 
         Args:
@@ -353,7 +353,7 @@ class Watchable(View, Protocol):
     def unwatch(
         self,
         storage: StorageProtocol,
-        subscription: SubscriptionProtocol,
+        subscription: Subscription,
     ) -> None:
         """Unsubscribe from changes.
 
@@ -393,7 +393,7 @@ class ChildWatchable[A](View, Protocol):
         address: A,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> SubscriptionProtocol:
+    ) -> Subscription:
         """Watch changes to a specific child and its subtree.
 
         Args:
@@ -416,7 +416,7 @@ class ChildWatchable[A](View, Protocol):
         *addresses: A,
         callback: CallbackFn,
         depth: int = -1,
-    ) -> tuple[SubscriptionProtocol, ...]:
+    ) -> tuple[Subscription, ...]:
         """Watch changes to multiple children and their subtrees.
 
         Args:
@@ -436,7 +436,7 @@ class ChildWatchable[A](View, Protocol):
     def unwatch(
         self,
         storage: StorageProtocol,
-        subscription: SubscriptionProtocol,
+        subscription: Subscription,
     ) -> None:
         """Unsubscribe from changes.
 

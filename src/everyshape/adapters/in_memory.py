@@ -1031,13 +1031,8 @@ class InMemoryStorage:
     def subscribe(self, options: SubscriptionOptions) -> Subscription:
         """Subscribe to key changes with flexible filtering.
 
-        This is the new subscription API that provides:
-        - Flexible filtering (prefix, suffix, wildcard, length, composite)
-        - Decoupled subscriptions from callbacks (bind/unbind)
-        - Efficient pattern matching
-
         Args:
-            options: Subscription options including filter specification.
+            options: Subscription options including filter specification (prefix, suffix, wildcard, length, composite)
 
         Returns:
             Subscription object for binding callbacks and managing lifecycle.
