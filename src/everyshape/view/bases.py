@@ -1,6 +1,6 @@
-"""View mixins for composing custom view behaviors.
+"""View bases for composing custom view behaviors.
 
-This module provides reusable mixins that encapsulate common view patterns:
+This module provides reusable bases that encapsulate common view patterns:
 - Metadata-based children counting
 - Live children counting
 - Child navigation with address normalization
@@ -19,28 +19,22 @@ from everyshape.types import Empty, is_empty
 
 
 if TYPE_CHECKING:
-    from everyshape.storage import (
-        CallbackFn,
-        StorageProtocol,
-        Subscription,
-    )
     from everyshape.view import View, ViewRegistry
 
 
 __all__ = [
-    "ChildNavigationMixin",
-    "ChildNestedGetMixin",
-    "ChildNestedSetMixin",
-    "LiveChildrenCountMixin",
-    "MetadataBasedChildrenCountMixin",
-    "WatchMixin",
+    "ChildNavigationBase",
+    "ChildNestedGetBase",
+    "ChildNestedSetBase",
+    "LiveChildrenCountBase",
+    "MetadataBasedChildrenCountBase",
 ]
 
 logger = getLogger(__name__)
 
 
-class MetadataBasedChildrenCountMixin:
-    """Mixin for views that track children count via metadata.
+class MetadataBasedChildrenCountBase:
+    """Base for views that track children count via metadata.
 
     Provides __len__ implementation and helper methods for maintaining
     the "__len__" metadata field efficiently.
@@ -50,7 +44,7 @@ class MetadataBasedChildrenCountMixin:
         V: Value type for children
 
     Example:
-        >>> class MyView(MetadataBasedChildrenCountMixin[str, int], View):
+        >>> class MyView(MetadataBasedChildrenCountBase[str, int], View):
         ...     def add_item(self, key: str, value: int):
         ...         self.container.set_child_primitive(key, value)
         ...         self._increment_length()
@@ -99,8 +93,8 @@ class MetadataBasedChildrenCountMixin:
         self._set_length(count)
 
 
-class LiveChildrenCountMixin:
-    """Mixin for views that count children on-the-fly.
+class LiveChildrenCountBase:
+    """Base for views that count children on-the-fly.
 
     Provides __len__ implementation that counts children in real-time
     without relying on metadata. Less efficient but always accurate.
@@ -110,7 +104,7 @@ class LiveChildrenCountMixin:
         V: Value type for children
 
     Example:
-        >>> class MyView(LiveChildrenCountMixin[str, int], View):
+        >>> class MyView(LiveChildrenCountBase[str, int], View):
         ...     # No need to track length manually
         ...     def add_item(self, key: str, value: int):
         ...         self.container.set_child_primitive(key, value)
@@ -127,8 +121,8 @@ class LiveChildrenCountMixin:
         return sum(1 for _ in self.container.list_child_keys())
 
 
-class AddressMappingMixin[A]:
-    """Mixin for converting view-level addresses to container keys.
+class AddressMappingBase[A]:
+    """Base for converting view-level addresses to container keys.
 
     Provides a single hook normalize_address() that defines how a view's
     address type A maps onto the underlying Container key space.
@@ -144,8 +138,8 @@ class AddressMappingMixin[A]:
         raise NotImplementedError
 
 
-class ChildNavigationMixin[A](AddressMappingMixin[A]):
-    """Mixin for typed child view access with address normalization.
+class ChildNavigationBase[A](AddressMappingBase[A]):
+    """Base for typed child view access with address normalization.
 
     Provides open_child() method that creates a child view with proper
     address normalization. Subclasses implement normalize_address()
@@ -156,7 +150,7 @@ class ChildNavigationMixin[A](AddressMappingMixin[A]):
         V: Value type for children
 
     Example:
-        >>> class MyListView(ChildNavigationMixin[int, str], View):
+        >>> class MyListView(ChildNavigationBase[int, str], View):
         ...     def normalize_address(self, address: int) -> int:
         ...         # Support negative indices
         ...         if address < 0:
@@ -190,8 +184,8 @@ class ChildNavigationMixin[A](AddressMappingMixin[A]):
         return view(child_container, self.registry)
 
 
-class ChildNestedGetMixin:
-    """Mixin for getting child values with automatic container extraction.
+class ChildNestedGetBase:
+    """Base for getting child values with automatic container extraction.
 
     Provides methods to get child values that automatically extract nested
     containers using the registry. Primitives are returned directly.
@@ -201,7 +195,7 @@ class ChildNestedGetMixin:
         V: Value type for children
 
     Example:
-        >>> class MyView(ChildNestedGetMixin[str, dict], View):
+        >>> class MyView(ChildNestedGetBase[str, dict], View):
         ...     def get_item(self, key: str) -> dict:
         ...         return self._get_child_value(key)
     """
@@ -294,8 +288,8 @@ class ChildNestedGetMixin:
         return child_view.extract()
 
 
-class ChildNestedSetMixin:
-    """Mixin for setting child values with automatic container population.
+class ChildNestedSetBase:
+    """Base for setting child values with automatic container population.
 
     Provides methods to set child values that automatically populate nested
     containers using the registry. Primitives are stored directly.
@@ -305,7 +299,7 @@ class ChildNestedSetMixin:
         V: Value type for children
 
     Example:
-        >>> class MyView(ChildNestedSetMixin[str, dict], View):
+        >>> class MyView(ChildNestedSetBase[str, dict], View):
         ...     def set_item(self, key: str, value: dict):
         ...         self._set_child_value(key, value)
     """
@@ -384,56 +378,3 @@ class ChildNestedSetMixin:
             raise TypeError(f"Child view {view_class.__name__} does not support initialization")
 
         child_view.store(value)
-
-
-class WatchMixin[A](AddressMappingMixin[A]):
-    """Mixin providing subscription-based watch methods for views.
-
-    Delegates all watch operations to the underlying container, using
-    address normalization when available to convert from view-level
-    addresses to storage keys.
-
-    Example:
-        >>> class MyView(WatchMixin[int], View): ...
-        >>> sub = view.watch_child(storage, 0, callback)
-        >>> view.unwatch(storage, sub)
-    """
-
-    def watch_child(
-        self,
-        storage: StorageProtocol,
-        address: A,
-        callback: CallbackFn,
-        depth: int = -1,
-    ) -> Subscription:
-        """Watch changes to a specific child and its subtree."""
-        key = self.normalize_address(address)
-        return self.container.watch_child(storage, key, callback, depth)
-
-    def watch_children(
-        self,
-        storage: StorageProtocol,
-        *addresses: A,
-        callback: CallbackFn,
-        depth: int = -1,
-    ) -> tuple[Subscription, ...]:
-        """Watch changes to multiple children and their subtrees."""
-        keys = tuple(self.normalize_address(address) for address in addresses)
-        return self.container.watch_children(storage, *keys, callback=callback, depth=depth)
-
-    def watch(
-        self,
-        storage: StorageProtocol,
-        callback: CallbackFn,
-        depth: int = -1,
-    ) -> Subscription:
-        """Watch changes to this view's container and its descendants."""
-        return self.container.watch(storage, callback, depth)
-
-    def unwatch(
-        self,
-        storage: StorageProtocol,
-        subscription: Subscription,
-    ) -> None:
-        """Unsubscribe from changes."""
-        self.container.unwatch(storage, subscription)

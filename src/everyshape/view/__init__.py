@@ -27,30 +27,36 @@ Example:
 from __future__ import annotations
 
 from .base import ViewBase
+from .bases import (
+    ChildNavigationBase,
+    ChildNestedGetBase,
+    ChildNestedSetBase,
+    LiveChildrenCountBase,
+    MetadataBasedChildrenCountBase,
+)
 from .exceptions import RegistryError, ViewError, ViewOperationError
-from .mixins import (
-    ChildNavigationMixin,
-    ChildNestedGetMixin,
-    ChildNestedSetMixin,
-    LiveChildrenCountMixin,
-    MetadataBasedChildrenCountMixin,
-    WatchMixin,
+from .reactive_bases import (
+    ChildObservableBase,
+    DescendantsObservableBase,
+    ObservableBase,
 )
 from .registry import ViewRegistry
 from .view import View
 
 
 __all__ = [
-    "ChildNavigationMixin",
-    "ChildNestedGetMixin",
-    "ChildNestedSetMixin",
-    "LiveChildrenCountMixin",
-    "MetadataBasedChildrenCountMixin",
+    "ChildNavigationBase",
+    "ChildNestedGetBase",
+    "ChildNestedSetBase",
+    "ChildObservableBase",
+    "DescendantsObservableBase",
+    "LiveChildrenCountBase",
+    "MetadataBasedChildrenCountBase",
+    "ObservableBase",
     "RegistryError",
     "View",
     "ViewBase",
     "ViewError",
     "ViewOperationError",
     "ViewRegistry",
-    "WatchMixin",
 ]

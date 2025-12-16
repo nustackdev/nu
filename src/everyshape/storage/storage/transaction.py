@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from everyshape.types import Value
 
     from .scan import ScanProtocol
+    from .storage import StorageProtocol
     from .types import StorageScanOptions
 
 __all__ = [  # noqa: RUF022
@@ -65,6 +66,15 @@ class BaseContextProtocol(Protocol):
 
         Returns:
             True if active and not closed, False otherwise.
+        """
+        ...
+
+    @property
+    def storage(self) -> StorageProtocol:
+        """Get the storage instance.
+
+        Returns:
+            Storage this context was initiated from.
         """
         ...
 

@@ -124,6 +124,15 @@ class _TextContextBase:
         self._closed = False
         self._uuid = uuid4()
 
+    @property
+    def storage(self) -> TextStorage:
+        """Get the storage instance.
+
+        Returns:
+            Storage this context was initiated from.
+        """
+        return self._storage
+
     def _require_active(self) -> dict[str, Any]:
         """Validate context is active and return state.
 

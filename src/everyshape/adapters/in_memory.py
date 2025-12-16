@@ -180,6 +180,15 @@ class _InMemoryContextBase:
         self._closed = False
         self._uuid = uuid4()
 
+    @property
+    def storage(self) -> InMemoryStorage:
+        """Get the storage instance.
+
+        Returns:
+            Storage this context was initiated from.
+        """
+        return self._storage
+
     def _require_active(self) -> dict[str, Any] | _TransactionState:
         """Validate context is active and return state.
 

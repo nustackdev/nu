@@ -57,21 +57,10 @@ from .types import DEFAULT_PARENT_PROTOCOL, DEFAULT_PARENT_STRUCTURE
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from everyshape.storage import (
-        CallbackFn,
-        StorageContextType,
-        StorageProtocol,
-        Subscription,
-    )
+    from everyshape.storage import StorageContextType, Subscription, SubscriptionOptions
     from everyshape.types import Empty, Value
 
-    from .types import (
-        ContainerProtocol,
-        ContainerStructure,
-        NodeInfo,
-        NodeType,
-        ParentChainInfo,
-    )
+    from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, ParentChainInfo
 
 __all__ = [
     "Container",
@@ -741,112 +730,35 @@ class Container(NamedTuple):
         yield from meta_ops.list_metadata_keys(self.path, self.ctx)
 
     # ========================================================================
-    # SUBSCRIPTIONS: WATCH CONTAINER CHANGES
+    # SUBSCRIPTIONS: CONTAINER CHANGES
     # ========================================================================
 
-    def watch_child(
-        self,
-        storage: StorageProtocol,
-        key: key_.KeySegment,
-        callback: CallbackFn,
-        depth: int = -1,
-    ) -> Subscription:
-        """Watch changes to a specific child and its subtree.
+    def subscribe(self, options: SubscriptionOptions) -> Subscription:
+        """Subscribe to key changes with flexible filtering.
 
         Args:
-            storage: Storage instance for subscriptions
-            key: Child key to watch
-            callback: Function called on changes
-            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
+            options: Subscription options including filter specification (prefix, suffix, wildcard, length, composite)
 
         Returns:
-            Subscription handle
+            Subscription object for binding callbacks and managing lifecycle.
 
         Raises:
-            StorageOperationError: If subscription fails
+            StorageOperationError: If subscription fails or observer not configured.
 
-        Example:
-            >>> sub = container.watch_child(storage, "alice", my_callback)
-            >>> # Callback fires on changes to /users/alice/**
+        Examples:
+            >>> from everyshape.storage.observer.subscription import (
+            ...     PrefixFilter,
+            ...     SubscriptionOptions,
+            ... )
+            >>> sub = storage.subscribe(
+            ...     SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+            ... )
+            >>> sub.bind(lambda key: print(f"Changed: {key}"))
+            >>> sub.close()
         """
-        child_path = key_.join_segment(self.path, key)
-        return storage.subscribe(child_path, callback, depth)
+        return self.ctx.storage.subscribe(options)
 
-    def watch_children(
-        self,
-        storage: StorageProtocol,
-        *keys: key_.KeySegment,
-        callback: CallbackFn,
-        depth: int = -1,
-    ) -> tuple[Subscription, ...]:
-        """Watch changes to multiple children and their subtrees.
-
-        Args:
-            storage: Storage instance for subscriptions
-            *keys: Child keys to watch
-            callback: Function called on changes
-            depth: Subscription depth (-1=entire subtree, 0=exact, N=depth)
-
-        Returns:
-            Tuple of subscription handles
-
-        Raises:
-            StorageOperationError: If subscription fails
-
-        Example:
-            >>> subs = container.watch_children(storage, "alice", "bob", callback=my_callback)
-            >>> # subs is (sub1, sub2)
-        """
-        return tuple(
-            storage.subscribe(key_.join_segment(self.path, key), callback, depth) for key in keys
-        )
-
-    def watch(
-        self,
-        storage: StorageProtocol,
-        callback: CallbackFn,
-        depth: int = -1,
-    ) -> Subscription:
-        """Watch changes to this container and its descendants.
-
-        Args:
-            storage: Storage instance for subscriptions
-            callback: Function called on changes
-            depth: Subscription depth (-1=entire tree, 0=exact, N=depth)
-
-        Returns:
-            Subscription handle
-
-        Raises:
-            StorageOperationError: If subscription fails
-
-        Example:
-            >>> sub = container.watch(storage, my_callback)
-            >>> # Callback fires on any change at or under this container
-        """
-        return storage.subscribe(self.path, callback, depth)
-
-    def unwatch(
-        self,
-        storage: StorageProtocol,
-        subscription: Subscription,
-    ) -> None:
-        """Unsubscribe from changes.
-
-        Convenience wrapper for storage.unsubscribe().
-
-        Args:
-            storage: Storage instance
-            subscription: Subscription to cancel
-
-        Raises:
-            StorageOperationError: If unsubscribe fails
-
-        Example:
-            >>> sub = container.watch_child(storage, "alice", callback)
-            >>> container.unwatch(storage, sub)
-        """
-        storage.unsubscribe(subscription)
+    # TODO: add convenience functions like watch_children, watch_child, etc
 
     # ========================================================================
     # UTILITY METHODS

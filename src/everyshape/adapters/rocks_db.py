@@ -104,6 +104,15 @@ class _RocksDBContextBase:
         self._closed = False
         self._uuid = uuid4()
 
+    @property
+    def storage(self) -> RocksDBStorage:
+        """Get the storage instance.
+
+        Returns:
+            Storage this context was initiated from.
+        """
+        return self._storage
+
     def _require_active(self) -> object:
         """Validate context is active and return transaction handle.
 
