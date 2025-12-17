@@ -112,6 +112,7 @@ class Sequence[V](
     Collection[int],
     Subscriptable[int, V],
     Convertible[PyIterable[V]],
+    Sizeable,
     Protocol,
 ):
     """Protocol for read-only sequences.
@@ -248,6 +249,7 @@ class Mapping[K, V](
     Collection[K],
     Subscriptable[K, V],
     Convertible[PyMapping[K, V]],
+    Sizeable,
     Protocol,
 ):
     """Protocol for read-only mappings.
@@ -388,6 +390,7 @@ class MutableMapping[K, V](
 class Set[V](
     Collection[V],
     Convertible[PySet[V]],
+    Sizeable,
     Protocol,
 ):
     """Protocol for read-only sets.

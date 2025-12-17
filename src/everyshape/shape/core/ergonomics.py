@@ -75,6 +75,7 @@ if TYPE_CHECKING:
         SubOp,
         XorOp,
     )
+    from .ternary_ops import ConditionalOp
     from .unary_ops import (
         AbsOp,
         BitwiseNotOp,
@@ -520,3 +521,25 @@ class ErgonomicsMixin[T, ContextT: ContextProtocol]:
         from .unary_ops import BitwiseNotOp
 
         return BitwiseNotOp(self)
+
+    # =========================================================================
+    # BITWISE OPERATIONS
+    # =========================================================================
+
+    def ifelse(self, condition: object, else_: object) -> ConditionalOp[T, ContextT]:
+        """Conditional ternary up: a concise, single-op way to perform an if-else check and return a value based on the result.
+
+        Args:
+            condition: Condition to check (RValue or literal)
+            else_: What to do if condition fails
+
+        Returns:
+            ConditionalOp expression
+        """
+        from .ternary_ops import ConditionalOp
+
+        return ConditionalOp(
+            self,
+            self._operand(condition),
+            self._operand(condition),
+        )
