@@ -394,6 +394,10 @@ class RocksDBSnapshot(
         if self._closed:
             return
 
+        if self.storage._is_secondary:
+            return
+            # FIXME
+
         if self._esrocks_txn is not None:
             try:
                 # Rollback to release the snapshot
@@ -1085,6 +1089,7 @@ class RocksDBStorage:
         codec: CodecProtocol[bytes, bytes],
         observer: ObserverProtocol | None = None,
         *,
+        secondary_path: Path | str | None = None,
         wal_path: Path | str | None = None,
         options: dict[str, Any] | None = None,
         txn_db_options: dict[str, Any] | None = None,
@@ -1099,6 +1104,8 @@ class RocksDBStorage:
             path: Database directory path
             codec: Codec for key/value encoding
             observer: Optional observer for change notifications
+            secondary_path: Path tp open db via "rocksdb::DB::OpenAsSecondary"
+                (allows multiple parallel readers)
             wal_path: Optional separate WAL directory
             options: RocksDB options dict
             txn_db_options: TransactionDB options dict
@@ -1110,6 +1117,15 @@ class RocksDBStorage:
         # Core dependencies
         self._codec = codec
         self._observer = observer
+
+        # Open options
+        self._is_secondary = bool(secondary_path)
+        if secondary_path is not None:
+            self._secondary_path = (
+                Path(secondary_path) if isinstance(secondary_path, str) else secondary_path
+            )
+        else:
+            self._secondary_path = None
 
         # Paths
         self._path = Path(path) if isinstance(path, str) else path
@@ -1124,7 +1140,7 @@ class RocksDBStorage:
         self._disable_wal = disable_wal
 
         # State
-        self._db: esrocks.TransactionDB | None = None
+        self._db: esrocks.TransactionDB | esrocks.DB | None = None
         self._db_lock = threading.RLock()
         self._active_transactions: set[RocksDBTransaction] = set()
         self._active_write_batches: set[RocksDBWriteBatch] = set()
@@ -1144,8 +1160,93 @@ class RocksDBStorage:
         """Get codec for key/value encoding."""
         return self._codec
 
+    def _build_options(self) -> esrocks.Options:
+        """Build RocksDB options from configuration.
+
+        Returns:
+            Configured Options object
+
+        Raises:
+            StorageError: If options are invalid
+        """
+        options_dict = dict(self._options_dict)
+        if "create_if_missing" not in options_dict:
+            options_dict["create_if_missing"] = self._create_if_missing
+
+        try:
+            options = esrocks.Options(**options_dict)
+        except Exception as e:
+            raise StorageError(f"Invalid RocksDB options: {e}") from e
+
+        if self._wal_path is not None:
+            options.wal_dir = str(self._wal_path)
+
+        return options
+
+    def _open_transaction_db(self, options: esrocks.Options) -> None:
+        """Open database as TransactionDB for read-write access.
+
+        Args:
+            options: RocksDB options
+
+        Raises:
+            StorageError: If database cannot be opened
+        """
+        txn_db_options = None
+        if self._txn_db_options_dict:
+            try:
+                txn_db_options = esrocks.TransactionDBOptions(**self._txn_db_options_dict)
+            except Exception as e:
+                raise StorageError(f"Invalid TransactionDB options: {e}") from e
+
+        try:
+            self._db = esrocks.TransactionDB(
+                str(self._path),
+                options,
+                txn_db_options,
+            )
+        except Exception as e:
+            raise StorageError(f"Failed to open RocksDB TransactionDB: {e}") from e
+
+    def _open_secondary_db(self, options: esrocks.Options) -> None:
+        """Open database as secondary TransactionDB for parallel reads.
+
+        Uses TransactionDB in secondary mode for parallel reads while a primary
+        writer is active. The secondary has its own log directory.
+
+        Args:
+            options: RocksDB options
+
+        Raises:
+            StorageError: If database cannot be opened
+        """
+        if not self._is_secondary:
+            raise StorageError("Trying to open regular db as secondary db")
+
+        # Secondary DB needs a separate path for its logs
+        try:
+            self._secondary_path.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            raise StorageError(f"Failed to create secondary path: {e}") from e
+
+        try:
+            # Open TransactionDB as secondary
+            self._db = esrocks.DB(
+                str(self._path),
+                options,
+                read_only=True,
+                secondary_path=str(self._secondary_path),
+            )
+        except Exception as e:
+            raise StorageError(f"Failed to open RocksDB as secondary: {e}") from e
+
     def open(self) -> None:
         """Open RocksDB database and initialize resources.
+
+        Opens in one of three modes based on configuration:
+        - TransactionDB: Full read-write with transactions (default)
+        - Read-only DB: Read-only access via regular DB
+        - Secondary DB: Parallel read while primary is active
 
         Raises:
             StorageError: If database cannot be opened
@@ -1162,36 +1263,13 @@ class RocksDBStorage:
             except Exception as e:
                 raise StorageError(f"Failed to create database directories: {e}") from e
 
-            # Configure RocksDB options
-            options_dict = dict(self._options_dict)
-            if "create_if_missing" not in options_dict:
-                options_dict["create_if_missing"] = self._create_if_missing
+            options = self._build_options()
 
-            try:
-                options = esrocks.Options(**options_dict)
-            except Exception as e:
-                raise StorageError(f"Invalid RocksDB options: {e}") from e
-
-            if self._wal_path is not None:
-                options.wal_dir = str(self._wal_path)
-
-            # Configure TransactionDB options
-            txn_db_options = None
-            if self._txn_db_options_dict:
-                try:
-                    txn_db_options = esrocks.TransactionDBOptions(**self._txn_db_options_dict)
-                except Exception as e:
-                    raise StorageError(f"Invalid TransactionDB options: {e}") from e
-
-            # Open database
-            try:
-                self._db = esrocks.TransactionDB(
-                    str(self._path),
-                    options,
-                    txn_db_options,
-                )
-            except Exception as e:
-                raise StorageError(f"Failed to open RocksDB database: {e}") from e
+            # Open in appropriate mode
+            if self._is_secondary:
+                self._open_secondary_db(options)
+            else:
+                self._open_transaction_db(options)
 
             self._opened = True
 
@@ -1248,7 +1326,9 @@ class RocksDBStorage:
             # Close database
             if self._db is not None:
                 try:
-                    self._db.close()
+                    if not self._is_secondary:
+                        # FIXME: TERRIBLE WORKAROUND. silence segfault on DB close.
+                        self._db.close()
                 except Exception as e:
                     raise StorageError(f"Failed to close database: {e}") from e
                 finally:
@@ -1345,6 +1425,58 @@ class RocksDBStorage:
             StorageClosedError: If storage is not open
         """
         self._require_open()
+
+        if self._is_secondary:
+            return self._begin_snapshot_on_secdb()
+        else:
+            return self._begin_snapshot_on_txdb()
+
+    def _begin_snapshot_on_secdb(self) -> RocksDBSnapshot:
+        """Begin read-only snapshot on a secondary db instance.
+
+        Returns:
+            New snapshot instance
+
+        Raises:
+            StorageError: If snapshot creation fails
+            StorageClosedError: If storage is not open
+        """
+        self._require_open()
+
+        if not self._is_secondary:
+            raise StorageError("Invalid snapshot creation")
+
+        with self._db_lock:
+            try:
+                self._db.try_catch_up_with_primary()
+            except Exception as e:
+                raise StorageError(f"Failed to catch up with primary: {e}") from e
+
+            # Different snapshot creation based on DB type
+            try:
+                snapshot = RocksDBSnapshot(self, self._db)
+
+                # FIXME
+                # self._active_snapshots.add(snapshot)
+
+                return snapshot
+            except Exception as e:
+                raise StorageError(f"Failed to begin snapshot: {e}") from e
+
+    def _begin_snapshot_on_txdb(self) -> RocksDBSnapshot:
+        """Begin read-only snapshot on TransactionDB instance.
+
+        Returns:
+            New snapshot instance
+
+        Raises:
+            StorageError: If snapshot creation fails
+            StorageClosedError: If storage is not open
+        """
+        self._require_open()
+
+        if self._is_secondary:
+            raise StorageError("Invalid snapshot creation")
 
         with self._db_lock:
             # Create transaction options with snapshot

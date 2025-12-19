@@ -927,6 +927,7 @@ class DB:
         opts: Options,
         column_families: dict | None = None,
         read_only: bool = False,
+        secondary_path: str | None = None,
     ) -> None:
         ...
         self.opts = opts

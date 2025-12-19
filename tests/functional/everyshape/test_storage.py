@@ -4,6 +4,9 @@ Tests storage operations, transactions, snapshots, and scans across all
 storage backends (parametrized via conftest.py fixtures).
 """
 
+import threading
+import time
+
 from everyshape.storage import (
     StorageClosedError,
     StorageKeyError,
@@ -651,3 +654,141 @@ def test_write_batch_bulk_writes(storage):
         for i, key in enumerate(keys):
             result = txn.get(key)
             assert result["index"] == i
+
+
+# ============================================================================
+# PARALLEL ACCESS - PRIMARY AND SECONDARY DB
+# ============================================================================
+
+
+def test_parallel_transactiondb_and_secondary_db(tmp_path, codec):
+    """Test parallel access with TransactionDB (writer) and secondary DB (reader).
+
+    This test demonstrates:
+    1. Primary TransactionDB for write operations
+    2. Secondary DB for parallel read access
+    3. Secondary catching up with primary updates
+    4. Thread-safe parallel operations
+    """
+    import pytest
+
+    pytest.importorskip("esrocks")
+
+    from everyshape.adapters import RocksDBStorage
+
+    db_path = tmp_path / "parallel_test_db"
+
+    # Open primary storage (TransactionDB for writes)
+    primary = RocksDBStorage(path=db_path, codec=codec)
+    primary.open()
+
+    # Open secondary storage (for parallel reads)
+    secondary = RocksDBStorage(path=db_path, codec=codec, secondary_path=db_path / ".sec")
+    secondary.open()
+
+    try:
+        # Shared state for coordination
+        writer_done = threading.Event()
+        reader_values_seen = []
+        reader_errors = []
+
+        def writer_thread():
+            """Write data to primary DB."""
+            try:
+                for i in range(10):
+                    key = ("parallel", f"item_{i:02d}")
+                    value = {"index": i, "timestamp": time.time()}
+
+                    with primary.transaction() as txn:
+                        txn.put(key, value)
+
+                    # Small delay to allow secondary to catch up
+                    time.sleep(0.01)
+            except Exception as e:
+                reader_errors.append(f"Writer error: {e}")
+            finally:
+                writer_done.set()
+
+        def reader_thread():
+            """Read data from secondary DB."""
+            try:
+                seen_indices = set()
+                max_attempts = 50  # Prevent infinite loop
+
+                for attempt in range(max_attempts):
+                    # Secondary snapshots automatically catch up with primary
+                    with secondary.snapshot() as snap:
+                        # Scan for all parallel keys
+                        scan = snap.scan(
+                            StorageScanOptions(
+                                start=("parallel",),
+                                end=("parallel", "\xff"),
+                                start_inclusive=True,
+                                end_inclusive=True,
+                            )
+                        )
+
+                        for key, value in scan.items():
+                            idx = value["index"]
+                            if idx not in seen_indices:
+                                seen_indices.add(idx)
+                                reader_values_seen.append(value)
+
+                    # If we've seen all 10 items, we're done
+                    if len(seen_indices) >= 10:
+                        break
+
+                    # Check if writer is done
+                    if writer_done.is_set() and len(seen_indices) < 10:
+                        # Writer finished but we haven't seen all items
+                        # Try a few more times
+                        time.sleep(0.02)
+                    else:
+                        time.sleep(0.01)
+
+            except Exception as e:
+                reader_errors.append(f"Reader error: {e}")
+
+        # Start both threads
+        writer = threading.Thread(target=writer_thread, daemon=True)
+        reader = threading.Thread(target=reader_thread, daemon=True)
+
+        writer.start()
+        reader.start()
+
+        # Wait for both threads to complete (with timeout)
+        writer.join(timeout=5.0)
+        reader.join(timeout=5.0)
+
+        # Check for errors
+        assert len(reader_errors) == 0, f"Errors occurred: {reader_errors}"
+
+        # Verify reader saw all values eventually
+        # Note: Due to timing, reader might not see all 10 in strict order
+        # but should see at least most of them
+        assert len(reader_values_seen) >= 8, (
+            f"Secondary should have seen at least 8/10 updates, "
+            f"but only saw {len(reader_values_seen)}"
+        )
+
+        # Verify data integrity - all seen values should be valid
+        seen_indices = {v["index"] for v in reader_values_seen}
+        for idx in seen_indices:
+            assert 0 <= idx < 10, f"Invalid index: {idx}"
+
+        # Final verification: all data should be readable from both primary and secondary
+        with primary.snapshot() as snap:
+            for i in range(10):
+                key = ("parallel", f"item_{i:02d}")
+                assert snap.has(key), f"Primary missing key {key}"
+
+        with secondary.snapshot() as snap:
+            # Secondary should eventually catch up
+            for i in range(10):
+                key = ("parallel", f"item_{i:02d}")
+                assert snap.has(key), f"Secondary missing key {key} after writer finished"
+
+    finally:
+        # Cleanup
+        primary.close()
+        secondary.close()
