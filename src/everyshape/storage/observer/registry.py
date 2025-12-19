@@ -186,8 +186,8 @@ class SubscriptionRegistry:
         with self._lock:
             matches: set[Subscription] = set()
 
-            # Match prefix filters: check all prefixes of the key
-            for i in range(1, len(key) + 1):
+            # Match prefix filters: check all prefixes of the key (including empty)
+            for i in range(len(key) + 1):
                 prefix = key[:i]
                 if prefix in self._prefix_index:
                     matches.update(self._prefix_index[prefix])

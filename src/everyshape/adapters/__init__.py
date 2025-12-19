@@ -15,7 +15,7 @@ from .codecs import (
     TextCodec,
 )
 from .in_memory import InMemoryStorage
-from .observers import InMemoryObserver
+from .observers import InMemoryObserver, RedisObserver
 from .rocks_db import RocksDBStorage
 from .text import TextStorage
 
@@ -31,6 +31,7 @@ __all__ = [
     "NoOpCodec",
     "PassthroughCodec",
     "PickleCodec",
+    "RedisObserver",
     "RocksDBStorage",
     "StringKeyCodec",
     "TextCodec",
