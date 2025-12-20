@@ -839,6 +839,7 @@ class TextStorage:
         codec: CodecProtocol,
         observer: ObserverProtocol | None = None,
         log_operations: bool = False,
+        read_only: bool = False,
     ) -> None:
         """Initialize text storage.
 
@@ -847,11 +848,13 @@ class TextStorage:
             codec: Codec for key/value encoding
             observer: Observer instance for managing update notifications
             log_operations: Enable operation logging (default: False)
+            read_only: Mode
         """
         self.path = Path(path)
         self.codec = codec
         self.observer = observer
         self._log_operations = log_operations
+        self._read_only = read_only
 
         # State
         self._state: dict[str, Any] = {}  # key_str -> value
@@ -867,6 +870,11 @@ class TextStorage:
         self._active_transactions: set[TextTransaction] = set()
         self._active_snapshots: set[TextSnapshot] = set()
         self._active_write_batches: set[TextWriteBatch] = set()
+
+    @property
+    def read_only(self) -> bool:
+        """Storage access."""
+        return self._read_only
 
     def _require_open(self) -> None:
         """Validate storage is open.

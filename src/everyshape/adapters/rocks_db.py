@@ -1089,6 +1089,7 @@ class RocksDBStorage:
         codec: CodecProtocol[bytes, bytes],
         observer: ObserverProtocol | None = None,
         *,
+        read_only: bool = False,
         secondary_path: Path | str | None = None,
         wal_path: Path | str | None = None,
         options: dict[str, Any] | None = None,
@@ -1119,13 +1120,16 @@ class RocksDBStorage:
         self._observer = observer
 
         # Open options
+        self._read_only = read_only
         self._is_secondary = bool(secondary_path)
-        if secondary_path is not None:
+        self._secondary_path = None
+        if secondary_path:
             self._secondary_path = (
                 Path(secondary_path) if isinstance(secondary_path, str) else secondary_path
             )
-        else:
-            self._secondary_path = None
+
+        if not self._read_only and self._is_secondary:
+            raise ValueError("Secondary dbs can only be opened in readonly mode.")
 
         # Paths
         self._path = Path(path) if isinstance(path, str) else path
@@ -1148,6 +1152,11 @@ class RocksDBStorage:
         self._opened = False
 
         self._uuid = uuid4()
+
+    @property
+    def read_only(self) -> bool:
+        """Storage access."""
+        return self._read_only
 
     def __hash__(self) -> int:
         return hash(self._uuid)
@@ -1232,10 +1241,10 @@ class RocksDBStorage:
         try:
             # Open TransactionDB as secondary
             self._db = esrocks.DB(
-                str(self._path),
+                str(self._path.resolve()),
                 options,
                 read_only=True,
-                secondary_path=str(self._secondary_path),
+                secondary_path=str(self._secondary_path.resolve()),
             )
         except Exception as e:
             raise StorageError(f"Failed to open RocksDB as secondary: {e}") from e
@@ -1509,6 +1518,9 @@ class RocksDBStorage:
             StorageError: If transaction creation fails
             StorageClosedError: If storage is not open
         """
+        if self._read_only:
+            raise StorageError("Can not start transaction in read only mode.")
+
         self._require_open()
 
         with self._db_lock:
@@ -1545,6 +1557,9 @@ class RocksDBStorage:
             StorageOperationError: If batch creation fails
             StorageClosedError: If storage is closed
         """
+        if self._read_only:
+            raise StorageError("Can not start transaction in read only mode.")
+
         self._require_open()
 
         with self._db_lock:

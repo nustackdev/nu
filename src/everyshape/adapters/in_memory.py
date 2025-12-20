@@ -888,15 +888,19 @@ class InMemoryStorage:
         self,
         codec: CodecProtocol,
         observer: ObserverProtocol | None = None,
+        read_only: bool = False,
     ) -> None:
         """Initialize in-memory storage.
 
         Args:
             codec: Codec for key/value encoding
             observer: Optional observer for change notifications
+            read_only: Mode
         """
         self.codec = codec
         self._observer = observer
+
+        self._read_only = read_only
 
         # State
         self._state: dict[str, Any] = {}  # key_str -> value
@@ -909,6 +913,11 @@ class InMemoryStorage:
         self._active_transactions: set[InMemoryTransaction] = set()
         self._active_snapshots: set[InMemorySnapshot] = set()
         self._active_write_batches: set[InMemoryWriteBatch] = set()
+
+    @property
+    def read_only(self) -> bool:
+        """Storage access."""
+        return self._read_only
 
     def _require_open(self) -> None:
         """Validate storage is open.
