@@ -48,8 +48,12 @@ __all__ = [
     "AllOp",
     "AnyOp",
     "AtOp",
+    "CountOp",
     "FilterOp",
+    "FindIndexOp",
+    "FindOp",
     "FirstOp",
+    "IndexOfOp",
     "JoinOp",
     "LastOp",
     "LenOp",
@@ -440,3 +444,137 @@ class ReduceOp[T, T2, ContextT: ContextProtocol](Operation[T2 | SpecialValue, Co
 
     def __repr__(self) -> str:
         return f"ReduceOp({self.children[0]!r}, {self._fn!r}, {self._initial!r})"
+
+
+# =============================================================================
+# SEARCH OPERATIONS
+# =============================================================================
+
+
+class IndexOfOp[T, ContextT: ContextProtocol](Operation[int | SpecialValue, ContextT]):
+    """Find index of value in sequence: seq.index(value).
+
+    Returns NaN if value not found (unlike Python which raises ValueError).
+
+    Example:
+        >>> items.extract().index_("apple")
+    """
+
+    def __init__(self, operand: OpArgument, value: OpArgument) -> None:
+        """Init.
+
+        Args:
+            operand: RValue that produces a sequence
+            value: Value to search for
+        """
+        self.children = (cast("RValue", operand), cast("RValue", value))
+
+    def execute(self, context: ContextT) -> int | SpecialValue:
+        """Execute index search."""
+        seq_val = self.children[0].execute(context)
+        value_val = self.children[1].execute(context)
+
+        if not isinstance(seq_val, (list, tuple)):
+            raise TypeError(f"index_() requires list or tuple, got {type(seq_val).__name__}")
+
+        try:
+            return list(seq_val).index(value_val)
+        except ValueError:
+            return NAN
+
+    def __repr__(self) -> str:
+        return f"IndexOfOp({self.children[0]!r}, {self.children[1]!r})"
+
+
+class CountOp[ContextT: ContextProtocol](Operation[int, ContextT]):
+    """Count occurrences of value in sequence: seq.count(value).
+
+    Example:
+        >>> items.extract().count_("apple")
+    """
+
+    def __init__(self, operand: OpArgument, value: OpArgument) -> None:
+        """Init.
+
+        Args:
+            operand: RValue that produces a sequence
+            value: Value to count
+        """
+        self.children = (cast("RValue", operand), cast("RValue", value))
+
+    def execute(self, context: ContextT) -> int:
+        """Execute count."""
+        seq_val = self.children[0].execute(context)
+        value_val = self.children[1].execute(context)
+
+        if not isinstance(seq_val, (list, tuple)):
+            raise TypeError(f"count_() requires list or tuple, got {type(seq_val).__name__}")
+
+        return list(seq_val).count(value_val)
+
+    def __repr__(self) -> str:
+        return f"CountOp({self.children[0]!r}, {self.children[1]!r})"
+
+
+class FindOp[T, ContextT: ContextProtocol](SequenceOp[T | SpecialValue, ContextT]):
+    """Find first element matching predicate.
+
+    Returns NaN if no element matches.
+
+    Example:
+        >>> items.extract().find(lambda x: x > 100)
+    """
+
+    def __init__(self, operand: OpArgument, fn: Callable[[T], bool]) -> None:
+        """Init.
+
+        Args:
+            operand: RValue that produces a sequence
+            fn: Predicate function
+        """
+        super().__init__(operand)
+        self._fn = fn
+
+    def _apply_op(self, operand: object) -> T | SpecialValue:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"find() requires list or tuple, got {type(operand).__name__}")
+
+        for item in operand:
+            if self._fn(item):
+                return item  # type: ignore
+        return NAN
+
+    def __repr__(self) -> str:
+        return f"FindOp({self.children[0]!r}, {self._fn!r})"
+
+
+class FindIndexOp[T, ContextT: ContextProtocol](SequenceOp[int | SpecialValue, ContextT]):
+    """Find index of first element matching predicate.
+
+    Returns NaN if no element matches.
+
+    Example:
+        >>> items.extract().find_index(lambda x: x > 100)
+    """
+
+    def __init__(self, operand: OpArgument, fn: Callable[[T], bool]) -> None:
+        """Init.
+
+        Args:
+            operand: RValue that produces a sequence
+            fn: Predicate function
+        """
+        super().__init__(operand)
+        self._fn = fn
+
+    def _apply_op(self, operand: object) -> int | SpecialValue:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"find_index() requires list or tuple, got {type(operand).__name__}")
+
+        for i, item in enumerate(operand):
+            if self._fn(item):
+                return i
+        return NAN
+
+    def __repr__(self) -> str:
+        return f"FindIndexOp({self.children[0]!r}, {self._fn!r})"

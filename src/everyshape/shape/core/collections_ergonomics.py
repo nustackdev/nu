@@ -39,8 +39,12 @@ if TYPE_CHECKING:
         AllOp,
         AnyOp,
         AtOp,
+        CountOp,
         FilterOp,
+        FindIndexOp,
+        FindOp,
         FirstOp,
+        IndexOfOp,
         JoinOp,
         LastOp,
         LenOp,
@@ -65,6 +69,8 @@ class CollectionsMixin[T, ContextT: ContextProtocol]:
                          first, last, any_, all_, join, at, slice_
 
     Functional operations: map_, filter_, reduce_
+
+    Search operations: index_, count_, find, find_index
 
     Mapping operations: keys_, values_, items_, get_, contains_
     """
@@ -306,6 +312,68 @@ class CollectionsMixin[T, ContextT: ContextProtocol]:
         from .sequence_ops import ReduceOp
 
         return ReduceOp(self, fn, initial)
+
+    # =========================================================================
+    # SEARCH OPERATIONS
+    # =========================================================================
+
+    def index_(self, value: object) -> IndexOfOp[T, ContextT]:
+        """Find index of value in sequence: self.index(value).
+
+        Returns NaN if value not found (unlike Python which raises ValueError).
+
+        Args:
+            value: Value to search for
+
+        Example:
+            >>> items.extract().index_("apple")
+        """
+        from .sequence_ops import IndexOfOp
+
+        return IndexOfOp(self, self._operand(value))
+
+    def count_(self, value: object) -> CountOp[ContextT]:
+        """Count occurrences of value in sequence: self.count(value).
+
+        Args:
+            value: Value to count
+
+        Example:
+            >>> items.extract().count_("apple")
+        """
+        from .sequence_ops import CountOp
+
+        return CountOp(self, self._operand(value))
+
+    def find(self, fn: Callable[[T], bool]) -> FindOp[T, ContextT]:
+        """Find first element matching predicate.
+
+        Returns NaN if no element matches.
+
+        Args:
+            fn: Predicate function
+
+        Example:
+            >>> items.extract().find(lambda x: x > 100)
+        """
+        from .sequence_ops import FindOp
+
+        return FindOp(self, fn)
+
+    def find_index(self, fn: Callable[[T], bool]) -> FindIndexOp[T, ContextT]:
+        """Find index of first element matching predicate.
+
+        Returns NaN if no element matches.
+
+        Args:
+            fn: Predicate function
+
+        Example:
+            >>> items.extract().find_index(lambda x: x > 100)
+        """
+        from .sequence_ops import FindIndexOp
+
+        return FindIndexOp(self, fn)
 
     # =========================================================================
     # MAPPING OPERATIONS
