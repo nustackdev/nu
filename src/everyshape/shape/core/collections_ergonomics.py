@@ -25,6 +25,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ..context import ContextProtocol
     from .mapping_ops import (
         ContainsOp,
@@ -37,12 +39,15 @@ if TYPE_CHECKING:
         AllOp,
         AnyOp,
         AtOp,
+        FilterOp,
         FirstOp,
         JoinOp,
         LastOp,
         LenOp,
+        MapOp,
         MaxOp,
         MinOp,
+        ReduceOp,
         ReversedOp,
         SliceOp,
         SortedOp,
@@ -58,6 +63,8 @@ class CollectionsMixin[T, ContextT: ContextProtocol]:
 
     Sequence operations: sum_, min_, max_, len_, sorted_, reversed_,
                          first, last, any_, all_, join, at, slice_
+
+    Functional operations: map_, filter_, reduce_
 
     Mapping operations: keys_, values_, items_, get_, contains_
     """
@@ -250,6 +257,55 @@ class CollectionsMixin[T, ContextT: ContextProtocol]:
         from .sequence_ops import JoinOp
 
         return JoinOp(self, self._operand(sep))
+
+    # =========================================================================
+    # FUNCTIONAL OPERATIONS
+    # =========================================================================
+
+    def map_(self, fn: Callable[[T], object]) -> MapOp[T, object, ContextT]:
+        """Map function over sequence: list(map(fn, self)).
+
+        Args:
+            fn: Function to apply to each element
+
+        Example:
+            >>> prices.extract().map_(lambda x: x * 2)
+            >>> items.extract().map_(str)
+        """
+        from .sequence_ops import MapOp
+
+        return MapOp(self, fn)
+
+    def filter_(self, fn: Callable[[T], bool]) -> FilterOp[T, ContextT]:
+        """Filter sequence by predicate: list(filter(fn, self)).
+
+        Args:
+            fn: Predicate function - keep element if returns truthy
+
+        Example:
+            >>> prices.extract().filter_(lambda x: x > 100)
+            >>> items.extract().filter_(bool)  # remove falsy values
+        """
+        from .sequence_ops import FilterOp
+
+        return FilterOp(self, fn)
+
+    def reduce_(
+        self, fn: Callable[[object, T], object], initial: object
+    ) -> ReduceOp[T, object, ContextT]:
+        """Reduce sequence to single value: functools.reduce(fn, self, initial).
+
+        Args:
+            fn: Reducer function (accumulator, element) -> new_accumulator
+            initial: Initial accumulator value
+
+        Example:
+            >>> prices.extract().reduce_(lambda acc, x: acc + x, 0)
+            >>> items.extract().reduce_(lambda acc, x: acc * x, 1)
+        """
+        from .sequence_ops import ReduceOp
+
+        return ReduceOp(self, fn, initial)
 
     # =========================================================================
     # MAPPING OPERATIONS

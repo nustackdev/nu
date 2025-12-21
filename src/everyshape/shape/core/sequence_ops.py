@@ -3,10 +3,11 @@
 This module provides type-safe operations on sequence RValues:
 
 Aggregation: SumOp, MinOp, MaxOp, LenOp
-Transformation: SortedOp, ReversedOp
+Transformation: SortedOp, ReversedOp, MapOp, FilterOp
 Access: FirstOp, LastOp, AtOp, SliceOp
 Boolean: AnyOp, AllOp
 String: JoinOp
+Functional: ReduceOp
 
 Design principles:
 1. Atomic classes: one operation = one class
@@ -26,6 +27,7 @@ Usage:
 
 from __future__ import annotations
 
+from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, cast
 
 from everyshape.types import NAN, SpecialValue
@@ -34,6 +36,8 @@ from ..term import Operation
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ..context import ContextProtocol
     from ..term import RValue
     from .collections_ergonomics import CollectionsMixin
@@ -44,12 +48,15 @@ __all__ = [
     "AllOp",
     "AnyOp",
     "AtOp",
+    "FilterOp",
     "FirstOp",
     "JoinOp",
     "LastOp",
     "LenOp",
+    "MapOp",
     "MaxOp",
     "MinOp",
+    "ReduceOp",
     "ReversedOp",
     "SliceOp",
     "SortedOp",
@@ -338,3 +345,98 @@ class JoinOp[ContextT: ContextProtocol](Operation[str | SpecialValue, ContextT])
 
     def __repr__(self) -> str:
         return f"JoinOp({self.children[0]!r}, {self.children[1]!r})"
+
+
+# =============================================================================
+# FUNCTIONAL OPERATIONS
+# =============================================================================
+
+
+class MapOp[T, T2, ContextT: ContextProtocol](SequenceOp[list[T2], ContextT]):
+    """Map function over sequence: list(map(fn, seq)).
+
+    Example:
+        >>> prices.extract().map_(lambda x: x * 2)
+        >>> items.extract().map_(str)
+    """
+
+    def __init__(self, operand: OpArgument, fn: Callable[[T], T2]) -> None:
+        """Init.
+
+        Args:
+            operand: RValue that produces a sequence
+            fn: Function to apply to each element
+        """
+        super().__init__(operand)
+        self._fn = fn
+
+    def _apply_op(self, operand: object) -> list[T2]:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"map_() requires list or tuple, got {type(operand).__name__}")
+        return list(map(self._fn, operand))
+
+    def __repr__(self) -> str:
+        return f"MapOp({self.children[0]!r}, {self._fn!r})"
+
+
+class FilterOp[T, ContextT: ContextProtocol](SequenceOp[list[T], ContextT]):
+    """Filter sequence by predicate: list(filter(fn, seq)).
+
+    Example:
+        >>> prices.extract().filter_(lambda x: x > 100)
+        >>> items.extract().filter_(bool)  # remove falsy values
+    """
+
+    def __init__(self, operand: OpArgument, fn: Callable[[T], bool]) -> None:
+        """Init.
+
+        Args:
+            operand: RValue that produces a sequence
+            fn: Predicate function - keep element if returns truthy
+        """
+        super().__init__(operand)
+        self._fn = fn
+
+    def _apply_op(self, operand: object) -> list[T]:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"filter_() requires list or tuple, got {type(operand).__name__}")
+        return list(filter(self._fn, operand))  # type: ignore
+
+    def __repr__(self) -> str:
+        return f"FilterOp({self.children[0]!r}, {self._fn!r})"
+
+
+class ReduceOp[T, T2, ContextT: ContextProtocol](Operation[T2 | SpecialValue, ContextT]):
+    """Reduce sequence to single value: functools.reduce(fn, seq, initial).
+
+    Example:
+        >>> prices.extract().reduce_(lambda acc, x: acc + x, 0)
+        >>> items.extract().reduce_(lambda acc, x: acc * x, 1)
+    """
+
+    def __init__(self, operand: OpArgument, fn: Callable[[T2, T], T2], initial: T2) -> None:
+        """Init.
+
+        Args:
+            operand: RValue that produces a sequence
+            fn: Reducer function (accumulator, element) -> new_accumulator
+            initial: Initial accumulator value
+        """
+        self.children = (cast("RValue", operand),)
+        self._fn = fn
+        self._initial = initial
+
+    def execute(self, context: ContextT) -> T2 | SpecialValue:
+        """Execute reduce operation."""
+        operand_val = self.children[0].execute(context)
+
+        if not isinstance(operand_val, (list, tuple)):
+            raise TypeError(f"reduce_() requires list or tuple, got {type(operand_val).__name__}")
+
+        try:
+            return functools_reduce(self._fn, operand_val, self._initial)
+        except Exception:
+            return NAN
+
+    def __repr__(self) -> str:
+        return f"ReduceOp({self.children[0]!r}, {self._fn!r}, {self._initial!r})"
