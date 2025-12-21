@@ -14,6 +14,7 @@ from ..term import Operation
 if TYPE_CHECKING:
     from ..context import ContextProtocol
     from ..term import RValue
+    from .collections_ergonomics import CollectionsMixin
     from .ergonomics import ErgonomicsMixin
 
 __all__ = [
@@ -25,7 +26,7 @@ __all__ = [
 # ABSTRACT UNARY OPERATION
 # =============================================================================
 
-type OpArgument = RValue | ErgonomicsMixin
+type OpArgument = RValue | ErgonomicsMixin | CollectionsMixin
 
 
 class TernaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT], ABC):

@@ -54,6 +54,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from everyshape.loc import path
 
 from .context import ContextProtocol
+from .core.collections_ergonomics import CollectionsMixin
 from .core.ergonomics import ErgonomicsMixin
 
 
@@ -201,7 +202,9 @@ class LValue[PathTypeT: path.Path, ContextT: ContextProtocol](Term[None, Context
 
 
 class RValue[ResultT: object, ContextT: ContextProtocol](
-    Term[ResultT, ContextT], ErgonomicsMixin[ResultT, ContextT]
+    Term[ResultT, ContextT],
+    ErgonomicsMixin[ResultT, ContextT],
+    CollectionsMixin[ResultT, ContextT],
 ):
     """Evaluable expression that produces a value.
 
