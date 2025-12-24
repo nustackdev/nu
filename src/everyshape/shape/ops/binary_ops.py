@@ -41,7 +41,6 @@ from ..term import Operation
 if TYPE_CHECKING:
     from ..context import ContextProtocol
     from ..term import RValue
-    from .ergonomics import ErgonomicsMixin
 
 
 __all__ = [
@@ -74,7 +73,7 @@ __all__ = [
 # ABSTRACT BINARY OPERATION
 # =============================================================================
 
-type OpArgument = RValue | ErgonomicsMixin
+type OpArgument = RValue
 
 
 class BinaryOp[ResultT, ContextT: ContextProtocol](

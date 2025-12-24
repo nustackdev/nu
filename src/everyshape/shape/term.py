@@ -54,8 +54,6 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from everyshape.loc import path
 
 from .context import ContextProtocol
-from .core.collections_ergonomics import CollectionsMixin
-from .core.ergonomics import ErgonomicsMixin
 
 
 if TYPE_CHECKING:
@@ -87,7 +85,7 @@ logger = getLogger(__name__)
 # =============================================================================
 
 
-class Term[ResultT: object, ContextT: ContextProtocol](ABC):
+class Term[ResultT, ContextT: ContextProtocol](ABC):
     """Base contract for all executable semantic nodes.
 
     Everything in the Shape system is a Term:
@@ -201,11 +199,7 @@ class LValue[PathTypeT: path.Path, ContextT: ContextProtocol](Term[None, Context
 # =============================================================================
 
 
-class RValue[ResultT: object, ContextT: ContextProtocol](
-    Term[ResultT, ContextT],
-    ErgonomicsMixin[ResultT, ContextT],
-    CollectionsMixin[ResultT, ContextT],
-):
+class RValue[ResultT, ContextT: ContextProtocol](Term[ResultT, ContextT]):
     """Evaluable expression that produces a value.
 
     RValues represent computations - both pure (operations) and
@@ -251,9 +245,7 @@ class RValue[ResultT: object, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class Operation[OperationResultT: object, ContextT: ContextProtocol](
-    RValue[OperationResultT, ContextT]
-):
+class Operation[OperationResultT, ContextT: ContextProtocol](RValue[OperationResultT, ContextT]):
     """Pure computation that returns a value of type T.
 
     Operations are deterministic expressions with no side effects:
@@ -311,7 +303,7 @@ class Operation[OperationResultT: object, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class Command[CommandResultT: object, ContextT: ContextProtocol](RValue[CommandResultT, ContextT]):
+class Command[CommandResultT, ContextT: ContextProtocol](RValue[CommandResultT, ContextT]):
     """Impure mutation that returns a result of type T.
 
     Commands modify tree state with explicit side effects:

@@ -163,7 +163,7 @@ def open_child_view(
         >>> tags = open_child_view(alice, "tags", ListView)
         >>> last = open_child_view(tags, -1, DictView)  # Negative index!
     """
-    from everyshape.collections import is_nestable
+    from everyshape.view import is_nestable
 
     if not is_nestable(parent_view):
         raise TypeError(

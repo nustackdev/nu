@@ -33,8 +33,6 @@ from ..term import Operation
 if TYPE_CHECKING:
     from ..context import ContextProtocol
     from ..term import RValue
-    from .collections_ergonomics import CollectionsMixin
-    from .ergonomics import ErgonomicsMixin
 
 
 __all__ = [
@@ -50,7 +48,7 @@ __all__ = [
 # ABSTRACT MAPPING OPERATION
 # =============================================================================
 
-type OpArgument = RValue | ErgonomicsMixin | CollectionsMixin
+type OpArgument = RValue
 
 
 class MappingOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):

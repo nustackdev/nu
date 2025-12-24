@@ -38,8 +38,6 @@ from ..term import Operation
 if TYPE_CHECKING:
     from ..context import ContextProtocol
     from ..term import RValue
-    from .collections_ergonomics import CollectionsMixin
-    from .ergonomics import ErgonomicsMixin
 
 __all__ = [
     "AbsOp",
@@ -59,7 +57,7 @@ __all__ = [
 # ABSTRACT UNARY OPERATION
 # =============================================================================
 
-type OpArgument = RValue | ErgonomicsMixin | CollectionsMixin
+type OpArgument = RValue
 
 
 class UnaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):

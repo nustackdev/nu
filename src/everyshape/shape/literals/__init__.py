@@ -22,7 +22,6 @@ Example:
     >>> from everyshape.rvalue.capabilities import is_addable
 """
 
-# Capabilities
 # Base
 from .base import (
     LiteralBase,
@@ -39,6 +38,8 @@ from .bases import (
     SequenceBase,
     StringBase,
 )
+
+# Capabilities
 from .capabilities import (
     Absoluteable,
     Addable,
@@ -82,6 +83,15 @@ from .capabilities import (
     is_subtractable,
 )
 
+# Collections impl
+from .collection_values import (
+    DictValue,
+    FrozenSetValue,
+    ListValue,
+    SetValue,
+    TupleValue,
+)
+
 # Collections
 from .collections import (
     Collection,
@@ -92,6 +102,19 @@ from .collections import (
     MutableSet,
     Sequence,
     Set,
+)
+
+# Literal conversion
+from .conversion import literal
+
+# Primitives impl
+from .primitive_values import (
+    BoolValue,
+    BytesValue,
+    FloatValue,
+    IntValue,
+    NoneValue,
+    StrValue,
 )
 
 # Primitives
@@ -175,4 +198,19 @@ __all__ = [  # noqa: RUF022
     "MappingBase",
     "SequenceBase",
     "StringBase",
+    # Primitives
+    "IntValue",
+    "FloatValue",
+    "BoolValue",
+    "StrValue",
+    "BytesValue",
+    "NoneValue",
+    # Collections
+    "ListValue",
+    "DictValue",
+    "TupleValue",
+    "SetValue",
+    "FrozenSetValue",
+    # Conversion
+    "literal",
 ]

@@ -245,7 +245,7 @@ class ChildNestedGetBase:
             ValueError: If child has no structure ID
             TypeError: If child view doesn't support extraction
         """
-        from everyshape.collections import Convertible
+        from .capabilities import Convertible
 
         # Get child container
         child_path = (*self.container.path, key)
@@ -336,7 +336,7 @@ class ChildNestedSetBase:
         Raises:
             TypeError: If child view doesn't support initialization
         """
-        from everyshape.collections import Initializable
+        from .capabilities import Initializable
 
         # Get view class and structure for this value type
         value_type = type(value)
