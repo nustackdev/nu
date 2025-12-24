@@ -48,6 +48,8 @@ __all__ = [
     "AddOp",
     "AndOp",
     "BinaryOp",
+    "BitwiseAndOp",
+    "BitwiseOrOp",
     "DivOp",
     "EqOp",
     "FloorDivOp",
@@ -412,5 +414,33 @@ class RShiftOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         try:
             return left >> right  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class BitwiseAndOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+    """Bitwise AND: left & right.
+
+    Note: This is distinct from AndOp (logical AND).
+    Use .bitand() method to create this operation.
+    """
+
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+        try:
+            return left & right  # type: ignore
+        except TypeError:
+            return NAN
+
+
+class BitwiseOrOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+    """Bitwise OR: left | right.
+
+    Note: This is distinct from OrOp (logical OR).
+    Use .bitor() method to create this operation.
+    """
+
+    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+        try:
+            return left | right  # type: ignore
         except TypeError:
             return NAN
