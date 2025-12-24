@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from ..context import ContextProtocol
-from .base import LiteralBase
+from .base import Literal
 from .bases import (
     ArithmeticBase,
     BitwiseBase,
@@ -68,7 +68,7 @@ class IntValue[ContextT: ContextProtocol](
     ArithmeticBase[int, "IntValue", ContextT],
     ComparisonBase[int, "BoolValue", ContextT],
     BitwiseBase[int, "IntValue", ContextT],
-    LiteralBase[int, ContextT],
+    Literal[int, ContextT],
 ):
     """RValue representing an integer.
 
@@ -260,7 +260,7 @@ class IntValue[ContextT: ContextProtocol](
 class FloatValue[ContextT: ContextProtocol](
     ArithmeticBase[float, "FloatValue", ContextT],
     ComparisonBase[float, "BoolValue", ContextT],
-    LiteralBase[float, ContextT],
+    Literal[float, ContextT],
 ):
     """RValue representing a floating-point number.
 
@@ -292,7 +292,7 @@ class FloatValue[ContextT: ContextProtocol](
 class BoolValue[ContextT: ContextProtocol](
     LogicalBase[bool, "BoolValue", ContextT],
     ComparisonBase[bool, "BoolValue", ContextT],
-    LiteralBase[bool, ContextT],
+    Literal[bool, ContextT],
 ):
     """RValue representing a boolean.
 
@@ -323,7 +323,7 @@ class BoolValue[ContextT: ContextProtocol](
 class StrValue[ContextT: ContextProtocol](
     StringBase["StrValue", ContextT],
     ComparisonBase[str, "BoolValue", ContextT],
-    LiteralBase[str, ContextT],
+    Literal[str, ContextT],
 ):
     """RValue representing a string.
 
@@ -354,7 +354,7 @@ class StrValue[ContextT: ContextProtocol](
 
 class BytesValue[ContextT: ContextProtocol](
     ComparisonBase[bytes, "BoolValue", ContextT],
-    LiteralBase[bytes, ContextT],
+    Literal[bytes, ContextT],
 ):
     """RValue representing bytes.
 
@@ -415,7 +415,7 @@ class BytesValue[ContextT: ContextProtocol](
 # =============================================================================
 
 
-class NoneValue[ContextT: ContextProtocol](LiteralBase[None, ContextT]):
+class NoneValue[ContextT: ContextProtocol](Literal[None, ContextT]):
     """RValue representing None.
 
     Useful for representing absence of value in expressions.

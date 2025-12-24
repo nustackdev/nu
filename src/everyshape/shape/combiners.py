@@ -72,7 +72,7 @@ def and_(left: object, right: object) -> RValue:
     Example:
         >>> and_(price > 0, price < 100)
     """
-    from .literals.conversion import literal
+    from .values.conversion import literal
 
     return literal(left).and_(literal(right))
 
@@ -92,7 +92,7 @@ def or_(left: object, right: object) -> RValue:
     Example:
         >>> or_(status.eq("ready"), status.eq("pending"))
     """
-    from .literals.conversion import literal
+    from .values.conversion import literal
 
     return literal(left).or_(literal(right))
 
@@ -117,7 +117,7 @@ def all_(*conditions: object) -> RValue:
     if not conditions:
         raise ValueError("all_() requires at least one condition")
 
-    from .literals.conversion import literal
+    from .values.conversion import literal
 
     # Convert all to RValues
     rvalues = [literal(c) for c in conditions]
@@ -146,7 +146,7 @@ def any_(*conditions: object) -> RValue:
     if not conditions:
         raise ValueError("any_() requires at least one condition")
 
-    from .literals.conversion import literal
+    from .values.conversion import literal
 
     # Convert all to RValues
     rvalues = [literal(c) for c in conditions]

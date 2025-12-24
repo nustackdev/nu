@@ -24,7 +24,9 @@ Example:
 
 # Base
 from .base import (
-    LiteralBase,
+    Computed,
+    Literal,
+    ValueBase,
 )
 
 # Bases (mixins)
@@ -187,7 +189,9 @@ __all__ = [  # noqa: RUF022
     "Sequence",
     "Set",
     # Base
-    "LiteralBase",
+    "ValueBase",
+    "Literal",
+    "Computed",
     # Bases (mixins)
     "ArithmeticBase",
     "BitwiseBase",

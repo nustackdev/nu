@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from ..context import ContextProtocol
-from .base import LiteralBase
+from .base import Literal
 from .bases import (
     ComparisonBase,
     MappingBase,
@@ -74,7 +74,7 @@ __all__ = [
 class ListValue[T, ContextT: ContextProtocol](
     SequenceBase[T, "ListValue[T]", ContextT],
     ComparisonBase[list[T], "BoolValue", ContextT],
-    LiteralBase[list[T], ContextT],
+    Literal[list[T], ContextT],
 ):
     """RValue representing a list.
 
@@ -354,7 +354,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
 class TupleValue[*Ts, ContextT: ContextProtocol](
     ComparisonBase[tuple, "BoolValue", ContextT],
-    LiteralBase[tuple[*Ts], ContextT],
+    Literal[tuple[*Ts], ContextT],
 ):
     """RValue representing a tuple.
 
@@ -439,7 +439,7 @@ class TupleValue[*Ts, ContextT: ContextProtocol](
 class DictValue[K, V, ContextT: ContextProtocol](
     MappingBase[K, V, "DictValue[K, V]", ContextT],
     ComparisonBase[dict[K, V], "BoolValue", ContextT],
-    LiteralBase[dict[K, V], ContextT],
+    Literal[dict[K, V], ContextT],
 ):
     """RValue representing a dictionary.
 
@@ -547,7 +547,7 @@ class DictValue[K, V, ContextT: ContextProtocol](
 
 class SetValue[T, ContextT: ContextProtocol](
     ComparisonBase[set[T], "BoolValue", ContextT],
-    LiteralBase[set[T], ContextT],
+    Literal[set[T], ContextT],
 ):
     """RValue representing a set.
 
@@ -602,7 +602,7 @@ class SetValue[T, ContextT: ContextProtocol](
 
 class FrozenSetValue[T, ContextT: ContextProtocol](
     ComparisonBase[frozenset[T], "BoolValue", ContextT],
-    LiteralBase[frozenset[T], ContextT],
+    Literal[frozenset[T], ContextT],
 ):
     """RValue representing a frozenset.
 

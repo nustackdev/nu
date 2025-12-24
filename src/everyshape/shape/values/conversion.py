@@ -26,6 +26,7 @@ def literal(value: object) -> RValue:
         >>> literal(price.get())  # → price.get() (unchanged)
     """
     from ..term import RValue
+    from .collection_values import DictValue, FrozenSetValue, ListValue, SetValue, TupleValue
     from .primitive_values import BoolValue, BytesValue, FloatValue, IntValue, NoneValue, StrValue
 
     if isinstance(value, RValue):
@@ -42,5 +43,15 @@ def literal(value: object) -> RValue:
         return BytesValue(value)
     elif value is None:
         return NoneValue()
+    elif isinstance(value, dict):
+        return DictValue(value)
+    elif isinstance(value, set):
+        return SetValue(value)
+    elif isinstance(value, list):
+        return ListValue(value)
+    elif isinstance(value, tuple):
+        return TupleValue(value)
+    elif isinstance(value, frozenset):
+        return FrozenSetValue(value)
     else:
         raise TypeError(f"Not supported type {value.__class__.__name__}")
