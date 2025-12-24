@@ -9,37 +9,39 @@ Hierarchy:
     └── RefBase
         ├── PrimitiveRefBase (leaf value refs)
         └── ViewRefBase (container refs)
+            ├── SequenceRefBase / MutableSequenceRefBase
+            ├── MappingRefBase / MutableMappingRefBase
+            └── SetRefBase / MutableSetRefBase
 
 Key components:
     - capabilities: Atomic capability protocols (Gettable, Settable, etc.)
     - refs: Reference type protocols (ValueRef, SequenceRef, MappingRef)
-    - base: LValueBase, RefBase, PrimitiveRefBase, ViewRefBase
-    - bases: Reusable behavior mixins (GettableBase, ExtractableBase, etc.)
+    - bases: Complete ref implementations (PrimitiveRefBase, MappingRefBase, etc.)
+    - operations: Concrete operation classes (GetOp, ExtractOp, MapOp, etc.)
+    - commands: Concrete command classes (SetCmd, DeleteCmd, AppendCmd, etc.)
 
 Key difference from RValues:
     - LValues are LOCATIONS in storage (lazy access)
     - RValues are ALREADY COMPUTED values in memory
 
 Example:
-    >>> from everyshape.lvalue import PrimitiveRefBase, ViewRefBase
-    >>> from everyshape.lvalue.refs import ValueRefProtocol
-    >>> from everyshape.lvalue.capabilities import is_gettable
+    >>> from everyshape.shape.refs import PrimitiveRefBase, MappingRefBase
+    >>> from everyshape.shape.refs.refs import ValueRefProtocol
+    >>> from everyshape.shape.refs.capabilities import is_gettable
+    >>> from everyshape.shape.refs.operations import GetOp
+    >>> from everyshape.shape.refs.commands import SetCmd
 """
 
-# Bases (mixins)
+# Bases (complete ref implementations)
 from .bases import (
-    ChildObservableBase,
-    ClearableBase,
-    DeletableBase,
-    ExistableBase,
-    ExtractableBase,
-    GettableBase,
-    LengthableBase,
-    MappingOpsBase,
-    ObservableBase,
-    SequenceOpsBase,
-    SettableBase,
-    StorableBase,
+    MappingRefBase,
+    MutableMappingRefBase,
+    MutableSequenceRefBase,
+    MutableSetRefBase,
+    PrimitiveRefBase,
+    SequenceRefBase,
+    SetRefBase,
+    ViewRefBase,
 )
 
 # Capabilities
@@ -76,6 +78,46 @@ from .capabilities import (
     is_storable,
 )
 
+# Commands
+from .commands import (
+    AddCmd,
+    AppendCmd,
+    ClearCmd,
+    DeleteCmd,
+    DiscardCmd,
+    InsertCmd,
+    PopCmd,
+    RemoveCmd,
+    SetCmd,
+    StoreCmd,
+)
+
+# Operations
+from .operations import (
+    CountOp,
+    ExistsOp,
+    ExtractOp,
+    FilterItemsOp,
+    FilterOp,
+    FindIndexOp,
+    FindItemOp,
+    FindKeyOp,
+    FindOp,
+    FindValueOp,
+    GetOp,
+    IndexOp,
+    ItemsOp,
+    KeysOp,
+    LengthOp,
+    MapItemsOp,
+    MapOp,
+    MapValuesOp,
+    MissingOp,
+    ReduceItemsOp,
+    ReduceOp,
+    ValuesOp,
+)
+
 # Refs protocols
 from .refs import (
     MappingRefProtocol,
@@ -92,7 +134,9 @@ from .refs import (
 
 
 __all__ = [  # noqa: RUF022
-    # Capabilities
+    # ==========================================================================
+    # CAPABILITY PROTOCOLS
+    # ==========================================================================
     "Appendable",
     "Clearable",
     "Deletable",
@@ -124,7 +168,9 @@ __all__ = [  # noqa: RUF022
     "is_ref_observable",
     "is_settable",
     "is_storable",
-    # Ref protocols
+    # ==========================================================================
+    # REF TYPE PROTOCOLS
+    # ==========================================================================
     "RefProtocol",
     "PrimitiveRefProtocol",
     "ValueRefProtocol",
@@ -135,22 +181,59 @@ __all__ = [  # noqa: RUF022
     "MutableMappingRefProtocol",
     "SetRefProtocol",
     "MutableSetRefProtocol",
-    # Base
-    "LValueBase",
-    "RefBase",
+    # ==========================================================================
+    # REF BASES (complete implementations)
+    # ==========================================================================
     "PrimitiveRefBase",
     "ViewRefBase",
-    # Bases (mixins)
-    "GettableBase",
-    "SettableBase",
-    "DeletableBase",
-    "ExtractableBase",
-    "StorableBase",
-    "ClearableBase",
-    "ExistableBase",
-    "ObservableBase",
-    "ChildObservableBase",
-    "LengthableBase",
-    "SequenceOpsBase",
-    "MappingOpsBase",
+    "SequenceRefBase",
+    "MutableSequenceRefBase",
+    "MappingRefBase",
+    "MutableMappingRefBase",
+    "SetRefBase",
+    "MutableSetRefBase",
+    # ==========================================================================
+    # OPERATIONS (pure computations)
+    # ==========================================================================
+    # Core operations
+    "GetOp",
+    "ExtractOp",
+    "ExistsOp",
+    "MissingOp",
+    "LengthOp",
+    # Sequence operations
+    "MapOp",
+    "FilterOp",
+    "ReduceOp",
+    "IndexOp",
+    "CountOp",
+    "FindOp",
+    "FindIndexOp",
+    # Mapping operations
+    "KeysOp",
+    "ValuesOp",
+    "ItemsOp",
+    "MapValuesOp",
+    "MapItemsOp",
+    "FilterItemsOp",
+    "ReduceItemsOp",
+    "FindKeyOp",
+    "FindValueOp",
+    "FindItemOp",
+    # ==========================================================================
+    # COMMANDS (impure mutations)
+    # ==========================================================================
+    # Core commands
+    "SetCmd",
+    "DeleteCmd",
+    "StoreCmd",
+    "ClearCmd",
+    # Sequence commands
+    "AppendCmd",
+    "InsertCmd",
+    "PopCmd",
+    # Set commands
+    "AddCmd",
+    "RemoveCmd",
+    "DiscardCmd",
 ]

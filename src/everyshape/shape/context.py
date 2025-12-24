@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+
+if TYPE_CHECKING:
+    from .shape import Shape
 
 
 __all__ = [
@@ -17,7 +21,8 @@ class ContextProtocol(Protocol):
 
     Bundles together the tree instance and storage context needed for executing operations.
 
-    TODO: Implement interface.
     """
 
-    pass
+    def get_context_for_shape(self, shape_type: type[Shape] | None) -> Any:  # noqa: ANN401
+        """Get context for shape."""
+        ...
