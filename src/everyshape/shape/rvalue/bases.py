@@ -84,105 +84,105 @@ class ArithmeticBase[T, R, ContextT: ContextProtocol]:
 
     def __add__(self, other: T) -> R:
         """Addition: self + other."""
-        from everyshape.shape.core.binary_ops import AddOp
+        from ..ops.binary_ops import AddOp
 
-        return AddOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return AddOp(self, self._get_operand(other))
 
     def __radd__(self, other: T) -> R:
         """Right addition: other + self."""
-        from everyshape.shape.core.binary_ops import AddOp
+        from ..ops.binary_ops import AddOp
 
-        return AddOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return AddOp(self._get_operand(other), self)
 
     def __sub__(self, other: T) -> R:
         """Subtraction: self - other."""
-        from everyshape.shape.core.binary_ops import SubOp
+        from ..ops.binary_ops import SubOp
 
-        return SubOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return SubOp(self, self._get_operand(other))
 
     def __rsub__(self, other: T) -> R:
         """Right subtraction: other - self."""
-        from everyshape.shape.core.binary_ops import SubOp
+        from ..ops.binary_ops import SubOp
 
-        return SubOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return SubOp(self._get_operand(other), self)
 
     def __mul__(self, other: T) -> R:
         """Multiplication: self * other."""
-        from everyshape.shape.core.binary_ops import MulOp
+        from ..ops.binary_ops import MulOp
 
-        return MulOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return MulOp(self, self._get_operand(other))
 
     def __rmul__(self, other: T) -> R:
         """Right multiplication: other * self."""
-        from everyshape.shape.core.binary_ops import MulOp
+        from ..ops.binary_ops import MulOp
 
-        return MulOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return MulOp(self._get_operand(other), self)
 
     def __truediv__(self, other: T) -> R:
         """Division: self / other."""
-        from everyshape.shape.core.binary_ops import DivOp
+        from ..ops.binary_ops import DivOp
 
-        return DivOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return DivOp(self, self._get_operand(other))
 
     def __rtruediv__(self, other: T) -> R:
         """Right division: other / self."""
-        from everyshape.shape.core.binary_ops import DivOp
+        from ..ops.binary_ops import DivOp
 
-        return DivOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return DivOp(self._get_operand(other), self)
 
     def __floordiv__(self, other: T) -> R:
         """Floor division: self // other."""
-        from everyshape.shape.core.binary_ops import FloorDivOp
+        from ..ops.binary_ops import FloorDivOp
 
-        return FloorDivOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return FloorDivOp(self, self._get_operand(other))
 
     def __rfloordiv__(self, other: T) -> R:
         """Right floor division: other // self."""
-        from everyshape.shape.core.binary_ops import FloorDivOp
+        from ..ops.binary_ops import FloorDivOp
 
-        return FloorDivOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return FloorDivOp(self._get_operand(other), self)
 
     def __mod__(self, other: T) -> R:
         """Modulo: self % other."""
-        from everyshape.shape.core.binary_ops import ModOp
+        from ..ops.binary_ops import ModOp
 
-        return ModOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return ModOp(self, self._get_operand(other))
 
     def __rmod__(self, other: T) -> R:
         """Right modulo: other % self."""
-        from everyshape.shape.core.binary_ops import ModOp
+        from ..ops.binary_ops import ModOp
 
-        return ModOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return ModOp(self._get_operand(other), self)
 
     def __pow__(self, other: T) -> R:
         """Power: self ** other."""
-        from everyshape.shape.core.binary_ops import PowOp
+        from ..ops.binary_ops import PowOp
 
-        return PowOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return PowOp(self, self._get_operand(other))
 
     def __rpow__(self, other: T) -> R:
         """Right power: other ** self."""
-        from everyshape.shape.core.binary_ops import PowOp
+        from ..ops.binary_ops import PowOp
 
-        return PowOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return PowOp(self._get_operand(other), self)
 
     def __neg__(self) -> R:
         """Negation: -self."""
-        from everyshape.shape.core.unary_ops import NegOp
+        from ..ops.unary_ops import NegOp
 
-        return NegOp(self)  # type: ignore[return-value]
+        return NegOp(self)
 
     def __pos__(self) -> R:
         """Positive: +self."""
-        from everyshape.shape.core.unary_ops import PosOp
+        from ..ops.unary_ops import PosOp
 
-        return PosOp(self)  # type: ignore[return-value]
+        return PosOp(self)
 
     def __abs__(self) -> R:
         """Absolute value: abs(self)."""
-        from everyshape.shape.core.unary_ops import AbsOp
+        from ..ops.unary_ops import AbsOp
 
-        return AbsOp(self)  # type: ignore[return-value]
+        return AbsOp(self)
 
 
 # =============================================================================
@@ -215,27 +215,27 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
 
     def __gt__(self, other: T) -> R:
         """Greater than: self > other."""
-        from everyshape.shape.core.binary_ops import GtOp
+        from ..ops.binary_ops import GtOp
 
-        return GtOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return GtOp(self, self._get_operand(other))
 
     def __lt__(self, other: T) -> R:
         """Less than: self < other."""
-        from everyshape.shape.core.binary_ops import LtOp
+        from ..ops.binary_ops import LtOp
 
-        return LtOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return LtOp(self, self._get_operand(other))
 
     def __ge__(self, other: T) -> R:
         """Greater than or equal: self >= other."""
-        from everyshape.shape.core.binary_ops import GeOp
+        from ..ops.binary_ops import GeOp
 
-        return GeOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return GeOp(self, self._get_operand(other))
 
     def __le__(self, other: T) -> R:
         """Less than or equal: self <= other."""
-        from everyshape.shape.core.binary_ops import LeOp
+        from ..ops.binary_ops import LeOp
 
-        return LeOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return LeOp(self, self._get_operand(other))
 
     def __eq__(self, other: object) -> bool:  # type: ignore[override]
         """Equality is blocked in DSL context.
@@ -262,9 +262,9 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
         Returns:
             Comparison result
         """
-        from everyshape.shape.core.binary_ops import EqOp
+        from ..ops.binary_ops import EqOp
 
-        return EqOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return EqOp(self, self._get_operand(other))
 
     def ne(self, other: T) -> R:
         """Inequality: self != other (safe method).
@@ -275,9 +275,9 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
         Returns:
             Comparison result
         """
-        from everyshape.shape.core.binary_ops import NeOp
+        from ..ops.binary_ops import NeOp
 
-        return NeOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return NeOp(self, self._get_operand(other))
 
 
 # =============================================================================
@@ -343,9 +343,9 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         Returns:
             AND result
         """
-        from everyshape.shape.core.binary_ops import AndOp
+        from ..ops.binary_ops import AndOp
 
-        return AndOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return AndOp(self, self._get_operand(other))
 
     def or_(self, other: T) -> R:
         """Logical OR: self OR other (safe method).
@@ -356,9 +356,9 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         Returns:
             OR result
         """
-        from everyshape.shape.core.binary_ops import OrOp
+        from ..ops.binary_ops import OrOp
 
-        return OrOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return OrOp(self, self._get_operand(other))
 
     def not_(self) -> R:
         """Logical NOT: NOT self (safe method).
@@ -366,9 +366,9 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         Returns:
             NOT result
         """
-        from everyshape.shape.core.unary_ops import NotOp
+        from ..ops.unary_ops import NotOp
 
-        return NotOp(self)  # type: ignore[return-value]
+        return NotOp(self)
 
     def bool_(self) -> R:
         """Convert to boolean value.
@@ -376,9 +376,9 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         Returns:
             Boolean result
         """
-        from everyshape.shape.core.unary_ops import BoolOp
+        from ..ops.unary_ops import BoolOp
 
-        return BoolOp(self)  # type: ignore[return-value]
+        return BoolOp(self)
 
 
 # =============================================================================
@@ -410,39 +410,39 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
 
     def __xor__(self, other: T) -> R:
         """Bitwise XOR: self ^ other."""
-        from everyshape.shape.core.binary_ops import XorOp
+        from ..ops.binary_ops import XorOp
 
-        return XorOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return XorOp(self, self._get_operand(other))
 
     def __rxor__(self, other: T) -> R:
         """Right XOR: other ^ self."""
-        from everyshape.shape.core.binary_ops import XorOp
+        from ..ops.binary_ops import XorOp
 
-        return XorOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return XorOp(self._get_operand(other), self)
 
     def __lshift__(self, other: T) -> R:
         """Left shift: self << other."""
-        from everyshape.shape.core.binary_ops import LShiftOp
+        from ..ops.binary_ops import LShiftOp
 
-        return LShiftOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return LShiftOp(self, self._get_operand(other))
 
     def __rlshift__(self, other: T) -> R:
         """Right left shift: other << self."""
-        from everyshape.shape.core.binary_ops import LShiftOp
+        from ..ops.binary_ops import LShiftOp
 
-        return LShiftOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return LShiftOp(self._get_operand(other), self)
 
     def __rshift__(self, other: T) -> R:
         """Right shift: self >> other."""
-        from everyshape.shape.core.binary_ops import RShiftOp
+        from ..ops.binary_ops import RShiftOp
 
-        return RShiftOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return RShiftOp(self, self._get_operand(other))
 
     def __rrshift__(self, other: T) -> R:
         """Right right shift: other >> self."""
-        from everyshape.shape.core.binary_ops import RShiftOp
+        from ..ops.binary_ops import RShiftOp
 
-        return RShiftOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return RShiftOp(self._get_operand(other), self)
 
     def bitnot(self) -> R:
         """Bitwise NOT: ~self (safe method).
@@ -450,9 +450,9 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
         Returns:
             Inverted value
         """
-        from everyshape.shape.core.unary_ops import BitwiseNotOp
+        from ..ops.unary_ops import BitwiseNotOp
 
-        return BitwiseNotOp(self)  # type: ignore[return-value]
+        return BitwiseNotOp(self)
 
     def bitand(self, other: T) -> R:
         """Bitwise AND: self & other (safe method).
@@ -464,9 +464,9 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
             AND result
         """
         # We use a custom op for bitand since & is blocked for logical AND
-        from everyshape.shape.core.binary_ops import BitwiseAndOp
+        from ..ops.binary_ops import BitwiseAndOp
 
-        return BitwiseAndOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return BitwiseAndOp(self, self._get_operand(other))
 
     def bitor(self, other: T) -> R:
         """Bitwise OR: self | other (safe method).
@@ -477,9 +477,9 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
         Returns:
             OR result
         """
-        from everyshape.shape.core.binary_ops import BitwiseOrOp
+        from ..ops.binary_ops import BitwiseOrOp
 
-        return BitwiseOrOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return BitwiseOrOp(self, self._get_operand(other))
 
 
 # =============================================================================
@@ -512,13 +512,13 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
     def __getitem__(self, key: int | slice) -> R:
         """Get item or slice."""
         if isinstance(key, slice):
-            from everyshape.shape.core.sequence_ops import SliceOp
+            from ..ops.sequence_ops import SliceOp
 
-            return SliceOp(self, key.start, key.stop, key.step)  # type: ignore[return-value]
+            return SliceOp(self, key.start, key.stop, key.step)
 
-        from everyshape.shape.core.sequence_ops import AtOp
+        from ..ops.sequence_ops import AtOp
 
-        return AtOp(self, self._get_operand(key))  # type: ignore[return-value]
+        return AtOp(self, self._get_operand(key))
 
     def len_(self) -> R:
         """Get length of sequence.
@@ -526,9 +526,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Length value
         """
-        from everyshape.shape.core.sequence_ops import LenOp
+        from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)  # type: ignore[return-value]
+        return LenOp(self)
 
     def contains(self, item: V) -> R:
         """Check if item is in sequence.
@@ -539,9 +539,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Boolean result
         """
-        from everyshape.shape.core.mapping_ops import ContainsOp
+        from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(item))  # type: ignore[return-value]
+        return ContainsOp(self, self._get_operand(item))
 
     def slice_(self, start: int | None, stop: int | None, step: int | None = None) -> R:
         """Get slice of sequence.
@@ -554,9 +554,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Sliced sequence
         """
-        from everyshape.shape.core.sequence_ops import SliceOp
+        from ..ops.sequence_ops import SliceOp
 
-        return SliceOp(self, start, stop, step)  # type: ignore[return-value]
+        return SliceOp(self, start, stop, step)
 
     def first(self) -> R:
         """Get first element.
@@ -564,9 +564,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             First element
         """
-        from everyshape.shape.core.sequence_ops import FirstOp
+        from ..ops.sequence_ops import FirstOp
 
-        return FirstOp(self)  # type: ignore[return-value]
+        return FirstOp(self)
 
     def last(self) -> R:
         """Get last element.
@@ -574,9 +574,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Last element
         """
-        from everyshape.shape.core.sequence_ops import LastOp
+        from ..ops.sequence_ops import LastOp
 
-        return LastOp(self)  # type: ignore[return-value]
+        return LastOp(self)
 
     def reversed_(self) -> R:
         """Get reversed sequence.
@@ -584,11 +584,11 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Reversed sequence
         """
-        from everyshape.shape.core.sequence_ops import ReversedOp
+        from ..ops.sequence_ops import ReversedOp
 
-        return ReversedOp(self)  # type: ignore[return-value]
+        return ReversedOp(self)
 
-    def sorted_(self, key: Callable[[V], object] | None = None, reverse: bool = False) -> R:
+    def sorted_(self, reverse: bool = False) -> R:
         """Get sorted sequence.
 
         Args:
@@ -598,9 +598,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Sorted sequence
         """
-        from everyshape.shape.core.sequence_ops import SortedOp
+        from ..ops.sequence_ops import SortedOp
 
-        return SortedOp(self, key, reverse)  # type: ignore[return-value]
+        return SortedOp(self, reverse=reverse)
 
     def map_[T](self, func: Callable[[V], T]) -> R:
         """Apply function to each element.
@@ -611,9 +611,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Mapped sequence
         """
-        from everyshape.shape.core.sequence_ops import MapOp
+        from ..ops.sequence_ops import MapOp
 
-        return MapOp(self, func)  # type: ignore[return-value]
+        return MapOp(self, func)
 
     def filter_(self, predicate: Callable[[V], bool]) -> R:
         """Filter elements by predicate.
@@ -624,9 +624,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Filtered sequence
         """
-        from everyshape.shape.core.sequence_ops import FilterOp
+        from ..ops.sequence_ops import FilterOp
 
-        return FilterOp(self, predicate)  # type: ignore[return-value]
+        return FilterOp(self, predicate)
 
     def reduce_[T](self, func: Callable[[T, V], T], initial: T) -> R:
         """Reduce sequence to single value.
@@ -638,9 +638,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Reduced value
         """
-        from everyshape.shape.core.sequence_ops import ReduceOp
+        from ..ops.sequence_ops import ReduceOp
 
-        return ReduceOp(self, func, initial)  # type: ignore[return-value]
+        return ReduceOp(self, func, initial)
 
     def sum_(self) -> R:
         """Sum all elements.
@@ -648,9 +648,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Sum
         """
-        from everyshape.shape.core.sequence_ops import SumOp
+        from ..ops.sequence_ops import SumOp
 
-        return SumOp(self)  # type: ignore[return-value]
+        return SumOp(self)
 
     def min_(self) -> R:
         """Get minimum element.
@@ -658,9 +658,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Minimum
         """
-        from everyshape.shape.core.sequence_ops import MinOp
+        from ..ops.sequence_ops import MinOp
 
-        return MinOp(self)  # type: ignore[return-value]
+        return MinOp(self)
 
     def max_(self) -> R:
         """Get maximum element.
@@ -668,9 +668,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Maximum
         """
-        from everyshape.shape.core.sequence_ops import MaxOp
+        from ..ops.sequence_ops import MaxOp
 
-        return MaxOp(self)  # type: ignore[return-value]
+        return MaxOp(self)
 
     def any_(self) -> R:
         """Check if any element is truthy.
@@ -678,9 +678,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Boolean result
         """
-        from everyshape.shape.core.sequence_ops import AnyOp
+        from ..ops.sequence_ops import AnyOp
 
-        return AnyOp(self)  # type: ignore[return-value]
+        return AnyOp(self)
 
     def all_(self) -> R:
         """Check if all elements are truthy.
@@ -688,9 +688,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Boolean result
         """
-        from everyshape.shape.core.sequence_ops import AllOp
+        from ..ops.sequence_ops import AllOp
 
-        return AllOp(self)  # type: ignore[return-value]
+        return AllOp(self)
 
     def join(self, separator: str) -> R:
         """Join string elements.
@@ -701,9 +701,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Joined string
         """
-        from everyshape.shape.core.sequence_ops import JoinOp
+        from ..ops.sequence_ops import JoinOp
 
-        return JoinOp(self, separator)  # type: ignore[return-value]
+        return JoinOp(self, separator)
 
     def index(self, value: V) -> R:
         """Find index of value.
@@ -714,9 +714,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Index
         """
-        from everyshape.shape.core.sequence_ops import IndexOfOp
+        from ..ops.sequence_ops import IndexOfOp
 
-        return IndexOfOp(self, self._get_operand(value))  # type: ignore[return-value]
+        return IndexOfOp(self, self._get_operand(value))
 
     def count(self, value: V) -> R:
         """Count occurrences of value.
@@ -727,9 +727,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         Returns:
             Count
         """
-        from everyshape.shape.core.sequence_ops import CountOp
+        from ..ops.sequence_ops import CountOp
 
-        return CountOp(self, self._get_operand(value))  # type: ignore[return-value]
+        return CountOp(self, self._get_operand(value))
 
 
 # =============================================================================
@@ -762,9 +762,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
 
     def __getitem__(self, key: K) -> R:
         """Get value for key."""
-        from everyshape.shape.core.sequence_ops import AtOp
+        from ..ops.sequence_ops import AtOp
 
-        return AtOp(self, self._get_operand(key))  # type: ignore[return-value]
+        return AtOp(self, self._get_operand(key))
 
     def len_(self) -> R:
         """Get number of items.
@@ -772,9 +772,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         Returns:
             Length value
         """
-        from everyshape.shape.core.sequence_ops import LenOp
+        from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)  # type: ignore[return-value]
+        return LenOp(self)
 
     def contains(self, key: K) -> R:
         """Check if key exists.
@@ -785,9 +785,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         Returns:
             Boolean result
         """
-        from everyshape.shape.core.mapping_ops import ContainsOp
+        from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(key))  # type: ignore[return-value]
+        return ContainsOp(self, self._get_operand(key))
 
     def keys_(self) -> R:
         """Get all keys.
@@ -795,9 +795,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         Returns:
             Keys sequence
         """
-        from everyshape.shape.core.mapping_ops import DictKeysOp
+        from ..ops.mapping_ops import DictKeysOp
 
-        return DictKeysOp(self)  # type: ignore[return-value]
+        return DictKeysOp(self)
 
     def values_(self) -> R:
         """Get all values.
@@ -805,9 +805,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         Returns:
             Values sequence
         """
-        from everyshape.shape.core.mapping_ops import DictValuesOp
+        from ..ops.mapping_ops import DictValuesOp
 
-        return DictValuesOp(self)  # type: ignore[return-value]
+        return DictValuesOp(self)
 
     def items_(self) -> R:
         """Get all key-value pairs.
@@ -815,9 +815,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         Returns:
             Items sequence
         """
-        from everyshape.shape.core.mapping_ops import DictItemsOp
+        from ..ops.mapping_ops import DictItemsOp
 
-        return DictItemsOp(self)  # type: ignore[return-value]
+        return DictItemsOp(self)
 
     def get_(self, key: K, default: V | None = None) -> R:
         """Get value with default.
@@ -829,9 +829,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         Returns:
             Value or default
         """
-        from everyshape.shape.core.mapping_ops import DictGetOp
+        from ..ops.mapping_ops import DictGetOp
 
-        return DictGetOp(self, self._get_operand(key), default)  # type: ignore[return-value]
+        return DictGetOp(self, self._get_operand(key), default)
 
 
 # =============================================================================
@@ -867,26 +867,26 @@ class StringBase[R, ContextT: ContextProtocol]:
 
     def __add__(self, other: str) -> R:
         """Concatenate strings."""
-        from everyshape.shape.core.binary_ops import AddOp
+        from ..ops.binary_ops import AddOp
 
-        return AddOp(self, self._get_operand(other))  # type: ignore[return-value]
+        return AddOp(self, self._get_operand(other))
 
     def __radd__(self, other: str) -> R:
         """Right concatenate strings."""
-        from everyshape.shape.core.binary_ops import AddOp
+        from ..ops.binary_ops import AddOp
 
-        return AddOp(self._get_operand(other), self)  # type: ignore[return-value]
+        return AddOp(self._get_operand(other), self)
 
     def __getitem__(self, key: int | slice) -> R:
         """Get character or substring."""
         if isinstance(key, slice):
-            from everyshape.shape.core.sequence_ops import SliceOp
+            from ..ops.sequence_ops import SliceOp
 
-            return SliceOp(self, key.start, key.stop, key.step)  # type: ignore[return-value]
+            return SliceOp(self, key.start, key.stop, key.step)
 
-        from everyshape.shape.core.sequence_ops import AtOp
+        from ..ops.sequence_ops import AtOp
 
-        return AtOp(self, self._get_operand(key))  # type: ignore[return-value]
+        return AtOp(self, self._get_operand(key))
 
     def len_(self) -> R:
         """Get string length.
@@ -894,9 +894,9 @@ class StringBase[R, ContextT: ContextProtocol]:
         Returns:
             Length value
         """
-        from everyshape.shape.core.sequence_ops import LenOp
+        from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)  # type: ignore[return-value]
+        return LenOp(self)
 
     def contains(self, substring: str) -> R:
         """Check if contains substring.
@@ -907,9 +907,9 @@ class StringBase[R, ContextT: ContextProtocol]:
         Returns:
             Boolean result
         """
-        from everyshape.shape.core.mapping_ops import ContainsOp
+        from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(substring))  # type: ignore[return-value]
+        return ContainsOp(self, self._get_operand(substring))
 
     # String-specific methods would need custom Ops
     # These are placeholders for the interface

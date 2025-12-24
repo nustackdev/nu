@@ -18,7 +18,6 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
 from everyshape.shape.context import ContextProtocol
-from everyshape.shape.core.ergonomics import ErgonomicsMixin
 
 
 if TYPE_CHECKING:
@@ -30,7 +29,7 @@ __all__ = [
 ]
 
 
-class RValueBase[T, ContextT: ContextProtocol](ErgonomicsMixin[T, ContextT], ABC):
+class RValueBase[T, ContextT: ContextProtocol](ABC):
     """Base class for all RValue implementations.
 
     RValueBase provides the foundation for concrete value types:
