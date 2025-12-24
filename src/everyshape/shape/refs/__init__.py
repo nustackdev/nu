@@ -26,15 +26,6 @@ Example:
     >>> from everyshape.lvalue.capabilities import is_gettable
 """
 
-# Capabilities
-# Base
-from .base import (
-    LValueBase,
-    PrimitiveRefBase,
-    RefBase,
-    ViewRefBase,
-)
-
 # Bases (mixins)
 from .bases import (
     ChildObservableBase,
@@ -50,6 +41,8 @@ from .bases import (
     SettableBase,
     StorableBase,
 )
+
+# Capabilities
 from .capabilities import (
     Appendable,
     Clearable,

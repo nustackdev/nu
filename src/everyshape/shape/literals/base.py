@@ -14,111 +14,18 @@ support operator overloading via ergonomics mixins.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from abc import ABC
 
-from everyshape.shape.context import ContextProtocol
-
-
-if TYPE_CHECKING:
-    from everyshape.shape.term import Term
+from ..context import ContextProtocol
+from ..term import Operation
 
 
 __all__ = [
-    "RValueBase",
+    "LiteralBase",
 ]
 
 
-class RValueBase[T, ContextT: ContextProtocol](ABC):
-    """Base class for all RValue implementations.
-
-    RValueBase provides the foundation for concrete value types:
-    - IntValue, FloatValue, BoolValue, StrValue (primitives)
-    - ListValue, DictValue, SetValue, TupleValue (collections)
-
-    RValues represent computed/literal values that are available
-    during expression building. They participate in the Term tree
-    and can be executed to produce their value.
-
-    Type Parameters:
-        T: The native Python type this RValue wraps
-        ContextT: The execution context type
-
-    Attributes:
-        children: Tuple of child terms this RValue depends on
-        is_pure: Whether this RValue has side effects (always True for values)
-
-    Design Principles:
-        - Immutable: RValue instances don't change after creation
-        - Composable: Can be combined via operators to form expressions
-        - Type-safe: Generic type parameter ensures type consistency
-        - Lazy-friendly: Can be evaluated lazily through execute()
-
-    Example:
-        >>> # Direct value creation
-        >>> price = FloatValue(99.99)
-        >>> # Operations produce new RValues
-        >>> total = price * quantity  # Returns Operation
-    """
-
-    # Class-level type hint for the wrapped value type
-    VALUE_TYPE: ClassVar[type]
-
-    @property
-    def children(self) -> tuple[Term, ...]:
-        """Terms this RValue depends on.
-
-        For literal values, this is empty. For computed RValues
-        (like operation results), this includes the operands.
-
-        Returns:
-            Tuple of dependent terms
-        """
-        return ()
-
-    @property
-    def is_pure(self) -> bool:
-        """Whether this RValue has side effects.
-
-        RValues are always pure - they represent values, not mutations.
-
-        Returns:
-            True (always pure)
-        """
-        return True
-
-    @abstractmethod
-    def execute(self, context: ContextT) -> T:
-        """Execute this RValue to produce its native Python value.
-
-        For literal values, this simply returns the wrapped value.
-        For computed RValues, this evaluates the expression tree.
-
-        Args:
-            context: Execution context (may be unused for literals)
-
-        Returns:
-            The native Python value of type T
-        """
-        ...
-
-    @abstractmethod
-    def unwrap(self) -> T:
-        """Get the raw wrapped value without execution context.
-
-        This is useful for literal values where execution context
-        is not needed. Computed RValues may raise an error.
-
-        Returns:
-            The native Python value of type T
-
-        Raises:
-            RuntimeError: If the value requires execution context
-        """
-        ...
-
-
-class LiteralBase[T, ContextT: ContextProtocol](RValueBase[T, ContextT], ABC):
+class LiteralBase[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
     """Base class for literal (constant) RValues.
 
     Literal values wrap native Python values directly and don't

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.shape.context import ContextProtocol
+    from ..context import ContextProtocol
 
 
 __all__ = [

@@ -25,7 +25,6 @@ Example:
 # Base
 from .base import (
     LiteralBase,
-    RValueBase,
 )
 
 # Bases (mixins)
@@ -189,7 +188,6 @@ __all__ = [  # noqa: RUF022
     "Set",
     # Base
     "LiteralBase",
-    "RValueBase",
     # Bases (mixins)
     "ArithmeticBase",
     "BitwiseBase",

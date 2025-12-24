@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
-from everyshape.view import View
+from .view import View
 
 
 if TYPE_CHECKING:

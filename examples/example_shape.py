@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from everybase.shapes import (
+from everybase.shape import (
     Context,
+    DictView,
     MappingShapeSlot,
     MappingSlot,
     PrimitiveSlot,
@@ -22,7 +23,6 @@ from everybase.shapes import (
     Shape,
     ShapeSlot,
 )
-from everybase.views import DictView
 
 from everyshape.adapters import TextCodec, TextStorage
 

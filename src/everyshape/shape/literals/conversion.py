@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .base import RValueBase
+    from ..term import RValue
 
 
-def literal(value: object) -> RValueBase:
+def literal(value: object) -> RValue:
     """Wrap value in LiteralValue if not already an RValue.
 
     Helper for operator overloading - converts Python literals
@@ -25,10 +25,10 @@ def literal(value: object) -> RValueBase:
         >>> literal(42)  # → LiteralValue(42)
         >>> literal(price.get())  # → price.get() (unchanged)
     """
-    from .base import RValueBase
+    from ..term import RValue
     from .primitive_values import BoolValue, BytesValue, FloatValue, IntValue, NoneValue, StrValue
 
-    if isinstance(value, RValueBase):
+    if isinstance(value, RValue):
         return value
     elif isinstance(value, int):
         return IntValue(value)

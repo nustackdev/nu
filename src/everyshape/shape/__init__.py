@@ -2,6 +2,7 @@
 
 from .combiners import all_, and_, any_, none_, or_
 from .context import ContextProtocol
+from .literals import LiteralBase, literal
 from .shape import (
     Shape,
     ShapeMeta,
@@ -21,13 +22,12 @@ from .term import (
 
 
 # from .refs import
-# from .literals import
-
 
 __all__ = [
     "Command",
     "ContextProtocol",
     "LValue",
+    "LiteralBase",
     "Operation",
     "PrimitiveRef",
     "RValue",
@@ -41,6 +41,7 @@ __all__ = [
     "all_",
     "and_",
     "any_",
+    "literal",
     "none_",
     "or_",
 ]
