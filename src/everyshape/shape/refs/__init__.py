@@ -32,6 +32,8 @@ Example:
     >>> from everyshape.shape.refs.commands import SetCmd
 """
 
+from __future__ import annotations
+
 # Bases (complete ref implementations)
 from .bases import (
     MappingRefBase,
@@ -116,6 +118,16 @@ from .operations import (
     ReduceItemsOp,
     ReduceOp,
     ValuesOp,
+)
+
+# Reactive operations
+from .operations_reactive import (
+    ChangeOp,
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
 )
 
 # Refs protocols
@@ -220,6 +232,13 @@ __all__ = [  # noqa: RUF022
     "FindKeyOp",
     "FindValueOp",
     "FindItemOp",
+    # Reactive
+    "ChangeOp",
+    "OnChangeOp",
+    "OnChildChangeOp",
+    "OnChildrenChangeOp",
+    "OnDescendantsChangeOp",
+    "OnPrimitiveChangeOp",
     # ==========================================================================
     # COMMANDS (impure mutations)
     # ==========================================================================
