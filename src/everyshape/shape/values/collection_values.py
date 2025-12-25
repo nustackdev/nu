@@ -11,7 +11,7 @@ These wrap native Python collections and enable DSL operations.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, overload
 
 from .base import Literal
 from .bases import (
@@ -25,35 +25,7 @@ from .conversion import literal
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..ops.mapping_ops import (
-        ContainsOp,
-        DictGetOp,
-        DictItemsOp,
-        DictKeysOp,
-        DictValuesOp,
-    )
-    from ..ops.sequence_ops import (
-        AllOp,
-        AnyOp,
-        AtOp,
-        CountOp,
-        FilterOp,
-        FindIndexOp,
-        FindOp,
-        FirstOp,
-        IndexOfOp,
-        JoinOp,
-        LastOp,
-        LenOp,
-        MapOp,
-        MaxOp,
-        MinOp,
-        ReduceOp,
-        ReversedOp,
-        SliceOp,
-        SortedOp,
-        SumOp,
-    )
+    from ..term import RValue
 
 
 __all__ = [
@@ -85,138 +57,142 @@ class ListValue[T](
 
     Example:
         >>> val = ListValue([1, 2, 3])
-        >>> first = val[0]  # Returns AtOp
-        >>> doubled = val.map_(lambda x: x * 2)  # Returns MapOp
-        >>> total = val.sum_()  # Returns SumOp
+        >>> first = val[0]  # Returns IntValue (for list of ints)
+        >>> doubled = val.map_(lambda x: x * 2)  # Returns ListValue
+        >>> total = val.sum_()  # Returns IntValue/FloatValue
     """
 
     VALUE_TYPE: ClassVar[type] = list
 
-    def _wrap_result(self, value: object) -> ListValue[T]:
-        """Wrap result in ListValue."""
-        return ListValue(list(value))  # type: ignore[arg-type]
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
-
-    def __add__(self, other: list[T] | ListValue[T]) -> object:
+    def __add__(self, other: list[T] | ListValue[T]) -> ListValue[T]:
         """Concatenate lists."""
         from ..ops.binary_ops import AddOp
 
-        return AddOp(self, self._get_operand(other))
+        return ListValue(AddOp(self, literal(other)))
 
-    def __radd__(self, other: list[T]) -> object:
+    def __radd__(self, other: list[T]) -> ListValue[T]:
         """Right concatenate lists."""
         from ..ops.binary_ops import AddOp
 
-        return AddOp(self._get_operand(other), self)
+        return ListValue(AddOp(literal(other), self))
 
-    def __getitem__(self, key: int | slice) -> AtOp[T] | SliceOp[T]:
+    @overload
+    def __getitem__(self, key: int) -> object: ...
+
+    @overload
+    def __getitem__(self, key: slice) -> ListValue[T]: ...
+
+    def __getitem__(self, key: int | slice) -> object:
         """Get item or slice."""
         if isinstance(key, slice):
             from ..ops.sequence_ops import SliceOp
 
-            return SliceOp(self, key.start, key.stop, key.step)
+            return ListValue(SliceOp(self, key.start, key.stop, key.step))
 
         from ..ops.sequence_ops import AtOp
+        from .conversion import result
 
-        return AtOp(self, self._get_operand(key))
+        # FIXME: should be unknown value
+        return result(type(self._value[0]) if self._value else object, AtOp(self, literal(key)))
 
-    def len_(self) -> LenOp:
+    def len_(self) -> IntValue:
         """Get list length.
 
         Returns:
-            Length operation
+            IntValue containing length
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return IntValue(LenOp(self))
 
-    def contains(self, item: T) -> ContainsOp:
+    def contains(self, item: T) -> BoolValue:
         """Check if item is in list.
 
         Args:
             item: Item to check
 
         Returns:
-            Contains operation
+            BoolValue result
         """
         from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(item))
+        return BoolValue(ContainsOp(self, literal(item)))
 
-    def first(self) -> FirstOp[T]:
-        """Get first element.
-
-        Returns:
-            First operation
-        """
-        from ..ops.sequence_ops import FirstOp
-
-        return FirstOp(self)
-
-    def last(self) -> LastOp[T]:
-        """Get last element.
-
-        Returns:
-            Last operation
-        """
-        from ..ops.sequence_ops import LastOp
-
-        return LastOp(self)
-
-    def reversed_(self) -> ReversedOp[T]:
+    def reversed_(self) -> ListValue[T]:
         """Get reversed list.
 
         Returns:
-            Reversed operation
+            ListValue with reversed elements
         """
         from ..ops.sequence_ops import ReversedOp
 
-        return ReversedOp(self)
+        return ListValue(ReversedOp(self))
 
-    def sorted_(self, reverse: bool = False) -> SortedOp[T]:
+    def sorted_(self, reverse: bool = False) -> ListValue[T]:
         """Get sorted list.
 
         Args:
-            key: Key function
             reverse: Sort descending
 
         Returns:
-            Sorted operation
+            ListValue with sorted elements
         """
         from ..ops.sequence_ops import SortedOp
 
-        return SortedOp(self, reverse=reverse)
+        return ListValue(SortedOp(self, reverse=reverse))
 
-    def map_[R](self, func: Callable[[T], R]) -> MapOp[T, R]:
+    def map_[R](self, func: Callable[[T], R]) -> ListValue[R]:
         """Map function over elements.
 
         Args:
             func: Function to apply
 
         Returns:
-            Map operation
+            ListValue with mapped elements
         """
         from ..ops.sequence_ops import MapOp
 
-        return MapOp(self, func)
+        return ListValue(MapOp(self, func))
 
-    def filter_(self, predicate: Callable[[T], bool]) -> FilterOp[T]:
+    def filter_(self, predicate: Callable[[T], bool]) -> ListValue[T]:
         """Filter elements.
 
         Args:
             predicate: Filter function
 
         Returns:
-            Filter operation
+            ListValue with filtered elements
         """
         from ..ops.sequence_ops import FilterOp
 
-        return FilterOp(self, predicate)
+        return ListValue(FilterOp(self, predicate))
 
-    def reduce_[R](self, func: Callable[[R, T], R], initial: R) -> ReduceOp[T, R]:
+    @overload
+    def reduce_(self, func: Callable[[int, T], int], initial: int) -> IntValue: ...
+
+    @overload
+    def reduce_(self, func: Callable[[float, T], float], initial: float) -> FloatValue: ...
+
+    @overload
+    def reduce_(self, func: Callable[[str, T], str], initial: str) -> StrValue: ...
+
+    @overload
+    def reduce_(self, func: Callable[[bool, T], bool], initial: bool) -> BoolValue: ...
+
+    @overload
+    def reduce_[V](
+        self, func: Callable[[list[V], T], list[V]], initial: list[V]
+    ) -> ListValue[V]: ...
+
+    @overload
+    def reduce_[K, V](
+        self, func: Callable[[dict[K, V], T], dict[K, V]], initial: dict[K, V]
+    ) -> DictValue[K, V]: ...
+
+    def reduce_[R](self, func: Callable[[R, T], R], initial: R) -> object:
         """Reduce to single value.
 
         Args:
@@ -224,126 +200,94 @@ class ListValue[T](
             initial: Initial value
 
         Returns:
-            Reduce operation
+            Typed value wrapper containing reduced result
         """
         from ..ops.sequence_ops import ReduceOp
+        from .conversion import result
 
-        return ReduceOp(self, func, initial)
+        return result(type(initial), ReduceOp(self, func, initial))
 
-    def sum_(self) -> SumOp[T]:
+    def sum_(self) -> IntValue | FloatValue:
         """Sum elements.
 
         Returns:
-            Sum operation
+            IntValue or FloatValue containing sum
         """
         from ..ops.sequence_ops import SumOp
 
-        return SumOp(self)
+        return IntValue(SumOp(self))
 
-    def min_(self) -> MinOp[T]:
-        """Get minimum.
-
-        Returns:
-            Min operation
-        """
-        from ..ops.sequence_ops import MinOp
-
-        return MinOp(self)
-
-    def max_(self) -> MaxOp[T]:
-        """Get maximum.
-
-        Returns:
-            Max operation
-        """
-        from ..ops.sequence_ops import MaxOp
-
-        return MaxOp(self)
-
-    def any_(self) -> AnyOp:
+    def any_(self) -> BoolValue:
         """Check if any truthy.
 
         Returns:
-            Any operation
+            BoolValue result
         """
         from ..ops.sequence_ops import AnyOp
 
-        return AnyOp(self)
+        return BoolValue(AnyOp(self))
 
-    def all_(self) -> AllOp:
+    def all_(self) -> BoolValue:
         """Check if all truthy.
 
         Returns:
-            All operation
+            BoolValue result
         """
         from ..ops.sequence_ops import AllOp
 
-        return AllOp(self)
+        return BoolValue(AllOp(self))
 
-    def join(self, separator: str) -> JoinOp:
+    def join(self, separator: str) -> StrValue:
         """Join string elements.
 
         Args:
             separator: Separator string
 
         Returns:
-            Join operation
+            StrValue with joined result
         """
         from ..ops.sequence_ops import JoinOp
 
-        return JoinOp(self, separator)
+        return StrValue(JoinOp(self, separator))
 
-    def index(self, value: T) -> IndexOfOp[T]:
+    def index(self, value: T) -> IntValue:
         """Find index of value.
 
         Args:
             value: Value to find
 
         Returns:
-            IndexOf operation
+            IntValue containing index
         """
         from ..ops.sequence_ops import IndexOfOp
 
-        return IndexOfOp(self, self._get_operand(value))
+        return IntValue(IndexOfOp(self, literal(value)))
 
-    def count(self, value: T) -> CountOp:
+    def count(self, value: T) -> IntValue:
         """Count occurrences.
 
         Args:
             value: Value to count
 
         Returns:
-            Count operation
+            IntValue containing count
         """
         from ..ops.sequence_ops import CountOp
 
-        return CountOp(self, self._get_operand(value))
+        return IntValue(CountOp(self, literal(value)))
 
-    def find(self, predicate: Callable[[T], bool]) -> FindOp[T]:
-        """Find first matching element.
-
-        Args:
-            predicate: Match function
-
-        Returns:
-            Find operation
-        """
-        from ..ops.sequence_ops import FindOp
-
-        return FindOp(self, predicate)
-
-    def find_index(self, predicate: Callable[[T], bool]) -> FindIndexOp[T]:
+    def find_index(self, predicate: Callable[[T], bool]) -> IntValue:
         """Find index of first match.
 
         Args:
             predicate: Match function
 
         Returns:
-            FindIndex operation
+            IntValue containing index
         """
         from ..ops.sequence_ops import FindIndexOp
 
-        return FindIndexOp(self, predicate)
+        return IntValue(FindIndexOp(self, predicate))
 
 
 # =============================================================================
@@ -365,69 +309,55 @@ class TupleValue[*Ts](
 
     Example:
         >>> val = TupleValue((1, "hello", 3.14))
-        >>> first = val[0]  # Returns AtOp
-        >>> length = val.len_()  # Returns LenOp
+        >>> first = val[0]  # Returns typed value
+        >>> length = val.len_()  # Returns IntValue
     """
 
     VALUE_TYPE: ClassVar[type] = tuple
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
+
+    @overload
+    def __getitem__(self, key: int) -> object: ...
+
+    @overload
+    def __getitem__(self, key: slice) -> TupleValue: ...
 
     def __getitem__(self, key: int | slice) -> object:
         """Get item or slice."""
         if isinstance(key, slice):
             from ..ops.sequence_ops import SliceOp
 
-            return SliceOp(self, key.start, key.stop, key.step)
+            return TupleValue(SliceOp(self, key.start, key.stop, key.step))
 
         from ..ops.sequence_ops import AtOp
+        from .conversion import result
 
-        return AtOp(self, self._get_operand(key))
+        return result(type(self._value[key]) if self._value else object, AtOp(self, literal(key)))
 
-    def len_(self) -> LenOp:
+    def len_(self) -> IntValue:
         """Get tuple length.
 
         Returns:
-            Length operation
+            IntValue containing length
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return IntValue(LenOp(self))
 
-    def contains(self, item: object) -> ContainsOp:
+    def contains(self, item: object) -> BoolValue:
         """Check if item is in tuple.
 
         Args:
             item: Item to check
 
         Returns:
-            Contains operation
+            BoolValue result
         """
         from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(item))
-
-    def first(self) -> FirstOp[object]:
-        """Get first element.
-
-        Returns:
-            First operation
-        """
-        from ..ops.sequence_ops import FirstOp
-
-        return FirstOp(self)
-
-    def last(self) -> LastOp[object]:
-        """Get last element.
-
-        Returns:
-            Last operation
-        """
-        from ..ops.sequence_ops import LastOp
-
-        return LastOp(self)
+        return BoolValue(ContainsOp(self, literal(item)))
 
 
 # =============================================================================
@@ -450,93 +380,77 @@ class DictValue[K, V](
 
     Example:
         >>> val = DictValue({"a": 1, "b": 2})
-        >>> a_val = val["a"]  # Returns AtOp
-        >>> all_keys = val.keys_()  # Returns DictKeysOp
-        >>> doubled = val.map_values(lambda x: x * 2)  # Returns MapValuesOp
+        >>> a_val = val["a"]  # Returns typed value
+        >>> all_keys = val.keys_()  # Returns ListValue[K]
+        >>> doubled = val.map_values(lambda x: x * 2)  # Returns DictValue
     """
 
     VALUE_TYPE: ClassVar[type] = dict
 
-    def _wrap_result(self, value: object) -> DictValue[K, V]:
-        """Wrap result in DictValue."""
-        return DictValue(dict(value))  # type: ignore[arg-type]
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
-
-    def __getitem__(self, key: K) -> AtOp[V]:
+    def __getitem__(self, key: K) -> object:
         """Get value for key."""
         from ..ops.sequence_ops import AtOp
+        from .conversion import result
 
-        return AtOp(self, self._get_operand(key))
+        # Get value type from first value if available
+        value_type = type(next(iter(self._value.values()))) if self._value else object
+        return result(value_type, AtOp(self, literal(key)))
 
-    def len_(self) -> LenOp:
+    def len_(self) -> IntValue:
         """Get number of items.
 
         Returns:
-            Length operation
+            IntValue containing length
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return IntValue(LenOp(self))
 
-    def contains(self, key: K) -> ContainsOp:
+    def contains(self, key: K) -> BoolValue:
         """Check if key exists.
 
         Args:
             key: Key to check
 
         Returns:
-            Contains operation
+            BoolValue result
         """
         from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(key))
+        return BoolValue(ContainsOp(self, literal(key)))
 
-    def keys_(self) -> DictKeysOp[K]:
+    def keys_(self) -> ListValue[K]:
         """Get all keys.
 
         Returns:
-            Keys operation
+            ListValue containing all keys
         """
         from ..ops.mapping_ops import DictKeysOp
 
-        return DictKeysOp(self)
+        return ListValue(DictKeysOp(self))
 
-    def values_(self) -> DictValuesOp[V]:
+    def values_(self) -> ListValue[V]:
         """Get all values.
 
         Returns:
-            Values operation
+            ListValue containing all values
         """
         from ..ops.mapping_ops import DictValuesOp
 
-        return DictValuesOp(self)
+        return ListValue(DictValuesOp(self))
 
-    def items_(self) -> DictItemsOp[K, V]:
+    def items_(self) -> ListValue[tuple[K, V]]:
         """Get all key-value pairs.
 
         Returns:
-            Items operation
+            ListValue containing all (key, value) tuples
         """
         from ..ops.mapping_ops import DictItemsOp
 
-        return DictItemsOp(self)
-
-    def get_(self, key: K, default: V | None = None) -> DictGetOp[V]:
-        """Get value with default.
-
-        Args:
-            key: Key to get
-            default: Default if not found
-
-        Returns:
-            Get operation
-        """
-        from ..ops.mapping_ops import DictGetOp
-
-        return DictGetOp(self, self._get_operand(key), default)
+        return ListValue(DictItemsOp(self))
 
 
 # =============================================================================
@@ -557,41 +471,36 @@ class SetValue[T](
 
     Example:
         >>> val = SetValue({1, 2, 3})
-        >>> exists = val.contains(2)  # Returns ContainsOp
-        >>> combined = val.union_(other)  # Returns UnionOp
+        >>> exists = val.contains(2)  # Returns BoolValue
     """
 
     VALUE_TYPE: ClassVar[type] = set
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
 
-    def len_(self) -> LenOp:
+    def len_(self) -> IntValue:
         """Get set size.
 
         Returns:
-            Length operation
+            IntValue containing length
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return IntValue(LenOp(self))
 
-    def contains(self, item: T) -> ContainsOp:
+    def contains(self, item: T) -> BoolValue:
         """Check if item is in set.
 
         Args:
             item: Item to check
 
         Returns:
-            Contains operation
+            BoolValue result
         """
         from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(item))
-
-    # Set-specific operations would need custom Ops
-    # These are interface placeholders
+        return BoolValue(ContainsOp(self, literal(item)))
 
 
 # =============================================================================
@@ -613,38 +522,37 @@ class FrozenSetValue[T](
 
     Example:
         >>> val = FrozenSetValue(frozenset({1, 2, 3}))
-        >>> exists = val.contains(2)  # Returns ContainsOp
+        >>> exists = val.contains(2)  # Returns BoolValue
     """
 
     VALUE_TYPE: ClassVar[type] = frozenset
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
 
-    def len_(self) -> LenOp:
+    def len_(self) -> IntValue:
         """Get set size.
 
         Returns:
-            Length operation
+            IntValue containing length
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return IntValue(LenOp(self))
 
-    def contains(self, item: T) -> ContainsOp:
+    def contains(self, item: T) -> BoolValue:
         """Check if item is in set.
 
         Args:
             item: Item to check
 
         Returns:
-            Contains operation
+            BoolValue result
         """
         from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(item))
+        return BoolValue(ContainsOp(self, literal(item)))
 
 
-# Import BoolValue for type annotations
-from .primitive_values import BoolValue  # noqa: E402, F401
+# Import primitive values for use in this module
+from .primitive_values import BoolValue, FloatValue, IntValue, StrValue  # noqa: E402
