@@ -123,4 +123,6 @@ class Literal[T, ContextT: ContextProtocol](ValueBase[T, ContextT], ABC):
         Returns:
             The wrapped value
         """
+        if isinstance(self._value, RValue):
+            return self._value.execute(context)
         return self._value

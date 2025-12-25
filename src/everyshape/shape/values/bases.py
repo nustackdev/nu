@@ -14,14 +14,17 @@ These bases use composition to build complete RValue types.
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+
+from .base import Literal
+from .conversion import literal
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from ..context import ContextProtocol
+    from ..term import RValue
 
 
 __all__ = [
@@ -40,15 +43,15 @@ __all__ = [
 # =============================================================================
 
 
-class ArithmeticBase[T, R, ContextT: ContextProtocol]:
+class ArithmeticBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
     """Base for RValues supporting arithmetic operations.
 
     Provides default implementations for arithmetic operators
     that create appropriate operation RValues.
 
     Type Parameters:
-        T: Type of operands
-        R: Type of result RValue
+        OperandT: Type of operands
+        ReturnLiteralT: Type of result value wrapped in Literal to expose right ergonomics
         ContextT: Execution context type
 
     Example:
@@ -58,131 +61,113 @@ class ArithmeticBase[T, R, ContextT: ContextProtocol]:
         >>> b = a + 3  # Creates AddOp
     """
 
-    @abstractmethod
-    def _wrap_result(self, value: object) -> R:
-        """Wrap a result value in the appropriate RValue type.
+    def _wrap_arithmetic_result(self, operand: RValue) -> RValue: ...
 
-        Args:
-            value: Raw value to wrap
-
-        Returns:
-            Wrapped RValue
-        """
-        ...
-
-    @abstractmethod
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to appropriate form for operation.
-
-        Args:
-            other: Raw operand value
-
-        Returns:
-            Prepared operand
-        """
-        ...
-
-    def __add__(self, other: T) -> R:
+    def __add__(self, other: OperandT) -> ReturnLiteralT:
         """Addition: self + other."""
         from ..ops.binary_ops import AddOp
 
-        return AddOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(AddOp(self, literal(other))))
 
-    def __radd__(self, other: T) -> R:
+    def __radd__(self, other: OperandT) -> ReturnLiteralT:
         """Right addition: other + self."""
         from ..ops.binary_ops import AddOp
 
-        return AddOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(AddOp(literal(other), self)))
 
-    def __sub__(self, other: T) -> R:
+    def __sub__(self, other: OperandT) -> ReturnLiteralT:
         """Subtraction: self - other."""
         from ..ops.binary_ops import SubOp
 
-        return SubOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(SubOp(self, literal(other))))
 
-    def __rsub__(self, other: T) -> R:
+    def __rsub__(self, other: OperandT) -> ReturnLiteralT:
         """Right subtraction: other - self."""
         from ..ops.binary_ops import SubOp
 
-        return SubOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(SubOp(literal(other), self)))
 
-    def __mul__(self, other: T) -> R:
+    def __mul__(self, other: OperandT) -> ReturnLiteralT:
         """Multiplication: self * other."""
         from ..ops.binary_ops import MulOp
 
-        return MulOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(MulOp(self, literal(other))))
 
-    def __rmul__(self, other: T) -> R:
+    def __rmul__(self, other: OperandT) -> ReturnLiteralT:
         """Right multiplication: other * self."""
         from ..ops.binary_ops import MulOp
 
-        return MulOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(MulOp(literal(other), self)))
 
-    def __truediv__(self, other: T) -> R:
+    def __truediv__(self, other: OperandT) -> ReturnLiteralT:
         """Division: self / other."""
         from ..ops.binary_ops import DivOp
 
-        return DivOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(DivOp(self, literal(other))))
 
-    def __rtruediv__(self, other: T) -> R:
+    def __rtruediv__(self, other: OperandT) -> ReturnLiteralT:
         """Right division: other / self."""
         from ..ops.binary_ops import DivOp
 
-        return DivOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(DivOp(literal(other), self)))
 
-    def __floordiv__(self, other: T) -> R:
+    def __floordiv__(self, other: OperandT) -> ReturnLiteralT:
         """Floor division: self // other."""
         from ..ops.binary_ops import FloorDivOp
 
-        return FloorDivOp(self, self._get_operand(other))
+        return cast(
+            "ReturnLiteralT", self._wrap_arithmetic_result(FloorDivOp(self, literal(other)))
+        )
 
-    def __rfloordiv__(self, other: T) -> R:
+    def __rfloordiv__(self, other: OperandT) -> ReturnLiteralT:
         """Right floor division: other // self."""
         from ..ops.binary_ops import FloorDivOp
 
-        return FloorDivOp(self._get_operand(other), self)
+        return cast(
+            "ReturnLiteralT", self._wrap_arithmetic_result(FloorDivOp(literal(other), self))
+        )
 
-    def __mod__(self, other: T) -> R:
+    def __mod__(self, other: OperandT) -> ReturnLiteralT:
         """Modulo: self % other."""
         from ..ops.binary_ops import ModOp
 
-        return ModOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(ModOp(self, literal(other))))
 
-    def __rmod__(self, other: T) -> R:
+    def __rmod__(self, other: OperandT) -> ReturnLiteralT:
         """Right modulo: other % self."""
         from ..ops.binary_ops import ModOp
 
-        return ModOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(ModOp(literal(other), self)))
 
-    def __pow__(self, other: T) -> R:
+    def __pow__(self, other: OperandT) -> ReturnLiteralT:
         """Power: self ** other."""
         from ..ops.binary_ops import PowOp
 
-        return PowOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(PowOp(self, literal(other))))
 
-    def __rpow__(self, other: T) -> R:
+    def __rpow__(self, other: OperandT) -> ReturnLiteralT:
         """Right power: other ** self."""
         from ..ops.binary_ops import PowOp
 
-        return PowOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(PowOp(literal(other), self)))
 
-    def __neg__(self) -> R:
+    def __neg__(self) -> ReturnLiteralT:
         """Negation: -self."""
         from ..ops.unary_ops import NegOp
 
-        return NegOp(self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(NegOp(self)))
 
-    def __pos__(self) -> R:
+    def __pos__(self) -> ReturnLiteralT:
         """Positive: +self."""
         from ..ops.unary_ops import PosOp
 
-        return PosOp(self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(PosOp(self)))
 
-    def __abs__(self) -> R:
+    def __abs__(self) -> ReturnLiteralT:
         """Absolute value: abs(self)."""
         from ..ops.unary_ops import AbsOp
 
-        return AbsOp(self)
+        return cast("ReturnLiteralT", self._wrap_arithmetic_result(AbsOp(self)))
 
 
 # =============================================================================
@@ -190,15 +175,15 @@ class ArithmeticBase[T, R, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class ComparisonBase[T, R, ContextT: ContextProtocol]:
+class ComparisonBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
     """Base for RValues supporting comparison operations.
 
     Provides default implementations for comparison operators.
     Note: == and != are blocked; use eq() and ne() methods.
 
     Type Parameters:
-        T: Type of operands
-        R: Type of result RValue (typically BoolValue)
+        OperandT: Type of operands
+        ReturnLiteralT: Type of result value wrapped in Literal (typically BoolValue)
         ContextT: Execution context type
 
     Example:
@@ -208,36 +193,33 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
         >>> result = a > 3  # Creates GtOp
     """
 
-    @abstractmethod
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to appropriate form."""
-        ...
+    def _wrap_comparison_result(self, operand: RValue) -> RValue: ...
 
-    def __gt__(self, other: T) -> R:
+    def __gt__(self, other: OperandT) -> ReturnLiteralT:
         """Greater than: self > other."""
         from ..ops.binary_ops import GtOp
 
-        return GtOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_comparison_result(GtOp(self, literal(other))))
 
-    def __lt__(self, other: T) -> R:
+    def __lt__(self, other: OperandT) -> ReturnLiteralT:
         """Less than: self < other."""
         from ..ops.binary_ops import LtOp
 
-        return LtOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_comparison_result(LtOp(self, literal(other))))
 
-    def __ge__(self, other: T) -> R:
+    def __ge__(self, other: OperandT) -> ReturnLiteralT:
         """Greater than or equal: self >= other."""
         from ..ops.binary_ops import GeOp
 
-        return GeOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_comparison_result(GeOp(self, literal(other))))
 
-    def __le__(self, other: T) -> R:
+    def __le__(self, other: OperandT) -> ReturnLiteralT:
         """Less than or equal: self <= other."""
         from ..ops.binary_ops import LeOp
 
-        return LeOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_comparison_result(LeOp(self, literal(other))))
 
-    def __eq__(self, other: object) -> bool:  # type: ignore[override]
+    def __eq__(self, other: object) -> bool:
         """Equality is blocked in DSL context.
 
         Raises:
@@ -245,7 +227,7 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
         """
         raise TypeError("Cannot use == directly on RValues. Use .eq(other) method instead.")
 
-    def __ne__(self, other: object) -> bool:  # type: ignore[override]
+    def __ne__(self, other: object) -> bool:
         """Inequality is blocked in DSL context.
 
         Raises:
@@ -253,7 +235,7 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
         """
         raise TypeError("Cannot use != directly on RValues. Use .ne(other) method instead.")
 
-    def eq(self, other: T) -> R:
+    def eq(self, other: OperandT) -> ReturnLiteralT:
         """Equality: self == other (safe method).
 
         Args:
@@ -264,9 +246,9 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.binary_ops import EqOp
 
-        return EqOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_comparison_result(EqOp(self, literal(other))))
 
-    def ne(self, other: T) -> R:
+    def ne(self, other: OperandT) -> ReturnLiteralT:
         """Inequality: self != other (safe method).
 
         Args:
@@ -277,7 +259,72 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.binary_ops import NeOp
 
-        return NeOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_comparison_result(NeOp(self, literal(other))))
+
+    def is_(self, other: object) -> ReturnLiteralT:
+        """Identity comparison: self is other (safe method).
+
+        Args:
+            other: Value to compare id to (RValue or literal)
+
+        Returns:
+            IdCompOp expression
+        """
+        from ..ops.binary_ops import IdCompOp
+
+        return cast("ReturnLiteralT", self._wrap_comparison_result(IdCompOp(self, literal(other))))
+
+    def bool_(self) -> ReturnLiteralT:
+        """Bool vonersion: bool(self).
+
+        Returns:
+            BoolOp expression
+        """
+        from ..ops.unary_ops import BoolOp
+
+        return cast("ReturnLiteralT", BoolOp(self))
+
+    # Convenience methods for working with special values
+
+    def is_empty(self) -> ReturnLiteralT:
+        """Check if object is Empty.
+
+        Returns:
+            IsEmptyOp expression
+        """
+        from ..ops.unary_ops import IsEmptyOp
+
+        return cast("ReturnLiteralT", IsEmptyOp(self))
+
+    def not_empty(self) -> ReturnLiteralT:
+        """Check if object is not Empty.
+
+        Returns:
+            NotEmptyOp expression
+        """
+        from ..ops.unary_ops import NotEmptyOp
+
+        return cast("ReturnLiteralT", NotEmptyOp(self))
+
+    def is_nan(self) -> ReturnLiteralT:
+        """Check if object is NaN.
+
+        Returns:
+            IsNaNOp expression
+        """
+        from ..ops.unary_ops import IsNaNOp
+
+        return cast("ReturnLiteralT", IsNaNOp(self))
+
+    def not_nan(self) -> ReturnLiteralT:
+        """Check if object is not NaN.
+
+        Returns:
+            NotNaNOp expression
+        """
+        from ..ops.unary_ops import NotNaNOp
+
+        return cast("ReturnLiteralT", NotNaNOp(self))
 
 
 # =============================================================================
@@ -285,15 +332,15 @@ class ComparisonBase[T, R, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class LogicalBase[T, R, ContextT: ContextProtocol]:
+class LogicalBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
     """Base for RValues supporting logical operations.
 
     Provides default implementations for logical operators.
     Note: & and | are blocked; use and_() and or_() methods.
 
     Type Parameters:
-        T: Type of operands
-        R: Type of result RValue
+        OperandT: Type of operands
+        ReturnLiteralT: Type of result value wrapped in Literal
         ContextT: Execution context type
 
     Example:
@@ -303,10 +350,7 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         >>> result = a.and_(other)  # Creates AndOp
     """
 
-    @abstractmethod
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to appropriate form."""
-        ...
+    def _wrap_logical_result(self, operand: RValue) -> RValue: ...
 
     def __bool__(self) -> bool:
         """Bool conversion is blocked in DSL context.
@@ -318,7 +362,7 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
             "Cannot convert RValue to bool directly. Use .bool_() method or explicit comparisons."
         )
 
-    def __and__(self, other: T) -> R:
+    def __and__(self, other: OperandT) -> ReturnLiteralT:
         """Bitwise AND is blocked; use and_() method.
 
         Raises:
@@ -326,7 +370,7 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         """
         raise TypeError("Cannot use & operator on RValues. Use .and_(other) method instead.")
 
-    def __or__(self, other: T) -> R:
+    def __or__(self, other: OperandT) -> ReturnLiteralT:
         """Bitwise OR is blocked; use or_() method.
 
         Raises:
@@ -334,7 +378,7 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         """
         raise TypeError("Cannot use | operator on RValues. Use .or_(other) method instead.")
 
-    def and_(self, other: T) -> R:
+    def and_(self, other: OperandT) -> ReturnLiteralT:
         """Logical AND: self AND other (safe method).
 
         Args:
@@ -345,9 +389,9 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.binary_ops import AndOp
 
-        return AndOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_logical_result(AndOp(self, literal(other))))
 
-    def or_(self, other: T) -> R:
+    def or_(self, other: OperandT) -> ReturnLiteralT:
         """Logical OR: self OR other (safe method).
 
         Args:
@@ -358,9 +402,9 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.binary_ops import OrOp
 
-        return OrOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_logical_result(OrOp(self, literal(other))))
 
-    def not_(self) -> R:
+    def not_(self) -> ReturnLiteralT:
         """Logical NOT: NOT self (safe method).
 
         Returns:
@@ -368,9 +412,9 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.unary_ops import NotOp
 
-        return NotOp(self)
+        return cast("ReturnLiteralT", self._wrap_logical_result(NotOp(self)))
 
-    def bool_(self) -> R:
+    def bool_(self) -> ReturnLiteralT:
         """Convert to boolean value.
 
         Returns:
@@ -378,7 +422,7 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.unary_ops import BoolOp
 
-        return BoolOp(self)
+        return cast("ReturnLiteralT", self._wrap_logical_result(BoolOp(self)))
 
 
 # =============================================================================
@@ -386,14 +430,14 @@ class LogicalBase[T, R, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class BitwiseBase[T, R, ContextT: ContextProtocol]:
+class BitwiseBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
     """Base for RValues supporting bitwise operations.
 
     Provides implementations for bitwise operators.
 
     Type Parameters:
-        T: Type of operands
-        R: Type of result RValue
+        OperandT: Type of operands
+        ReturnLiteralT: Type of result value wrapped in Literal
         ContextT: Execution context type
 
     Example:
@@ -403,48 +447,45 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
         >>> result = a ^ 0x0F  # Creates XorOp
     """
 
-    @abstractmethod
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to appropriate form."""
-        ...
+    def _wrap_bitwise_result(self, operand: RValue) -> RValue: ...
 
-    def __xor__(self, other: T) -> R:
+    def __xor__(self, other: OperandT) -> ReturnLiteralT:
         """Bitwise XOR: self ^ other."""
         from ..ops.binary_ops import XorOp
 
-        return XorOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(XorOp(self, literal(other))))
 
-    def __rxor__(self, other: T) -> R:
+    def __rxor__(self, other: OperandT) -> ReturnLiteralT:
         """Right XOR: other ^ self."""
         from ..ops.binary_ops import XorOp
 
-        return XorOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(XorOp(literal(other), self)))
 
-    def __lshift__(self, other: T) -> R:
+    def __lshift__(self, other: OperandT) -> ReturnLiteralT:
         """Left shift: self << other."""
         from ..ops.binary_ops import LShiftOp
 
-        return LShiftOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(LShiftOp(self, literal(other))))
 
-    def __rlshift__(self, other: T) -> R:
+    def __rlshift__(self, other: OperandT) -> ReturnLiteralT:
         """Right left shift: other << self."""
         from ..ops.binary_ops import LShiftOp
 
-        return LShiftOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(LShiftOp(literal(other), self)))
 
-    def __rshift__(self, other: T) -> R:
+    def __rshift__(self, other: OperandT) -> ReturnLiteralT:
         """Right shift: self >> other."""
         from ..ops.binary_ops import RShiftOp
 
-        return RShiftOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(RShiftOp(self, literal(other))))
 
-    def __rrshift__(self, other: T) -> R:
+    def __rrshift__(self, other: OperandT) -> ReturnLiteralT:
         """Right right shift: other >> self."""
         from ..ops.binary_ops import RShiftOp
 
-        return RShiftOp(self._get_operand(other), self)
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(RShiftOp(literal(other), self)))
 
-    def bitnot(self) -> R:
+    def bitnot(self) -> ReturnLiteralT:
         """Bitwise NOT: ~self (safe method).
 
         Returns:
@@ -452,9 +493,9 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.unary_ops import BitwiseNotOp
 
-        return BitwiseNotOp(self)
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(BitwiseNotOp(self)))
 
-    def bitand(self, other: T) -> R:
+    def bitand(self, other: OperandT) -> ReturnLiteralT:
         """Bitwise AND: self & other (safe method).
 
         Args:
@@ -463,12 +504,11 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
         Returns:
             AND result
         """
-        # We use a custom op for bitand since & is blocked for logical AND
         from ..ops.binary_ops import BitwiseAndOp
 
-        return BitwiseAndOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(BitwiseAndOp(self, literal(other))))
 
-    def bitor(self, other: T) -> R:
+    def bitor(self, other: OperandT) -> ReturnLiteralT:
         """Bitwise OR: self | other (safe method).
 
         Args:
@@ -479,7 +519,7 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
         """
         from ..ops.binary_ops import BitwiseOrOp
 
-        return BitwiseOrOp(self, self._get_operand(other))
+        return cast("ReturnLiteralT", self._wrap_bitwise_result(BitwiseOrOp(self, literal(other))))
 
 
 # =============================================================================
@@ -487,14 +527,14 @@ class BitwiseBase[T, R, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class SequenceBase[V, R, ContextT: ContextProtocol]:
+class SequenceBase[ElementT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
     """Base for RValues with sequence-like behavior.
 
     Provides implementations for sequence operations.
 
     Type Parameters:
-        V: Type of elements
-        R: Type of result RValue
+        ElementT: Type of elements
+        ReturnLiteralT: Type of result value wrapped in Literal
         ContextT: Execution context type
 
     Example:
@@ -504,23 +544,18 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         >>> first = lst[0]
     """
 
-    @abstractmethod
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to appropriate form."""
-        ...
-
-    def __getitem__(self, key: int | slice) -> R:
+    def __getitem__(self, key: int | slice) -> ReturnLiteralT:
         """Get item or slice."""
         if isinstance(key, slice):
             from ..ops.sequence_ops import SliceOp
 
-            return SliceOp(self, key.start, key.stop, key.step)
+            return cast("ReturnLiteralT", literal(SliceOp(self, key.start, key.stop, key.step)))
 
         from ..ops.sequence_ops import AtOp
 
-        return AtOp(self, self._get_operand(key))
+        return cast("ReturnLiteralT", literal(AtOp(self, literal(key))))
 
-    def len_(self) -> R:
+    def len_(self) -> ReturnLiteralT:
         """Get length of sequence.
 
         Returns:
@@ -528,9 +563,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return cast("ReturnLiteralT", literal(LenOp(self)))
 
-    def contains(self, item: V) -> R:
+    def contains(self, item: ElementT) -> ReturnLiteralT:
         """Check if item is in sequence.
 
         Args:
@@ -541,9 +576,11 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(item))
+        return cast("ReturnLiteralT", literal(ContainsOp(self, literal(item))))
 
-    def slice_(self, start: int | None, stop: int | None, step: int | None = None) -> R:
+    def slice_(
+        self, start: int | None, stop: int | None, step: int | None = None
+    ) -> ReturnLiteralT:
         """Get slice of sequence.
 
         Args:
@@ -556,9 +593,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import SliceOp
 
-        return SliceOp(self, start, stop, step)
+        return cast("ReturnLiteralT", literal(SliceOp(self, start, stop, step)))
 
-    def first(self) -> R:
+    def first(self) -> ReturnLiteralT:
         """Get first element.
 
         Returns:
@@ -566,9 +603,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import FirstOp
 
-        return FirstOp(self)
+        return cast("ReturnLiteralT", literal(FirstOp(self)))
 
-    def last(self) -> R:
+    def last(self) -> ReturnLiteralT:
         """Get last element.
 
         Returns:
@@ -576,9 +613,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import LastOp
 
-        return LastOp(self)
+        return cast("ReturnLiteralT", literal(LastOp(self)))
 
-    def reversed_(self) -> R:
+    def reversed_(self) -> ReturnLiteralT:
         """Get reversed sequence.
 
         Returns:
@@ -586,9 +623,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import ReversedOp
 
-        return ReversedOp(self)
+        return cast("ReturnLiteralT", literal(ReversedOp(self)))
 
-    def sorted_(self, reverse: bool = False) -> R:
+    def sorted_(self, reverse: bool = False) -> ReturnLiteralT:
         """Get sorted sequence.
 
         Args:
@@ -600,9 +637,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import SortedOp
 
-        return SortedOp(self, reverse=reverse)
+        return cast("ReturnLiteralT", literal(SortedOp(self, reverse=reverse)))
 
-    def map_[T](self, func: Callable[[V], T]) -> R:
+    def map_[T](self, func: Callable[[ElementT], T]) -> ReturnLiteralT:
         """Apply function to each element.
 
         Args:
@@ -613,9 +650,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import MapOp
 
-        return MapOp(self, func)
+        return cast("ReturnLiteralT", literal(MapOp(self, func)))
 
-    def filter_(self, predicate: Callable[[V], bool]) -> R:
+    def filter_(self, predicate: Callable[[ElementT], bool]) -> ReturnLiteralT:
         """Filter elements by predicate.
 
         Args:
@@ -626,9 +663,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import FilterOp
 
-        return FilterOp(self, predicate)
+        return cast("ReturnLiteralT", literal(FilterOp(self, predicate)))
 
-    def reduce_[T](self, func: Callable[[T, V], T], initial: T) -> R:
+    def reduce_[T](self, func: Callable[[T, ElementT], T], initial: T) -> ReturnLiteralT:
         """Reduce sequence to single value.
 
         Args:
@@ -640,9 +677,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import ReduceOp
 
-        return ReduceOp(self, func, initial)
+        return cast("ReturnLiteralT", literal(ReduceOp(self, func, initial)))
 
-    def sum_(self) -> R:
+    def sum_(self) -> ReturnLiteralT:
         """Sum all elements.
 
         Returns:
@@ -650,9 +687,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import SumOp
 
-        return SumOp(self)
+        return cast("ReturnLiteralT", literal(SumOp(self)))
 
-    def min_(self) -> R:
+    def min_(self) -> ReturnLiteralT:
         """Get minimum element.
 
         Returns:
@@ -660,9 +697,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import MinOp
 
-        return MinOp(self)
+        return cast("ReturnLiteralT", literal(MinOp(self)))
 
-    def max_(self) -> R:
+    def max_(self) -> ReturnLiteralT:
         """Get maximum element.
 
         Returns:
@@ -670,9 +707,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import MaxOp
 
-        return MaxOp(self)
+        return cast("ReturnLiteralT", literal(MaxOp(self)))
 
-    def any_(self) -> R:
+    def any_(self) -> ReturnLiteralT:
         """Check if any element is truthy.
 
         Returns:
@@ -680,9 +717,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import AnyOp
 
-        return AnyOp(self)
+        return cast("ReturnLiteralT", literal(AnyOp(self)))
 
-    def all_(self) -> R:
+    def all_(self) -> ReturnLiteralT:
         """Check if all elements are truthy.
 
         Returns:
@@ -690,9 +727,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import AllOp
 
-        return AllOp(self)
+        return cast("ReturnLiteralT", literal(AllOp(self)))
 
-    def join(self, separator: str) -> R:
+    def join(self, separator: str) -> ReturnLiteralT:
         """Join string elements.
 
         Args:
@@ -703,9 +740,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import JoinOp
 
-        return JoinOp(self, separator)
+        return cast("ReturnLiteralT", literal(JoinOp(self, literal(separator))))
 
-    def index(self, value: V) -> R:
+    def index(self, value: ElementT) -> ReturnLiteralT:
         """Find index of value.
 
         Args:
@@ -716,9 +753,9 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import IndexOfOp
 
-        return IndexOfOp(self, self._get_operand(value))
+        return cast("ReturnLiteralT", literal(IndexOfOp(self, literal(value))))
 
-    def count(self, value: V) -> R:
+    def count(self, value: ElementT) -> ReturnLiteralT:
         """Count occurrences of value.
 
         Args:
@@ -729,7 +766,7 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import CountOp
 
-        return CountOp(self, self._get_operand(value))
+        return cast("ReturnLiteralT", literal(CountOp(self, literal(value))))
 
 
 # =============================================================================
@@ -737,15 +774,15 @@ class SequenceBase[V, R, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class MappingBase[K, V, R, ContextT: ContextProtocol]:
+class MappingBase[KeyT, ValueT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
     """Base for RValues with mapping-like behavior.
 
     Provides implementations for mapping operations.
 
     Type Parameters:
-        K: Type of keys
-        V: Type of values
-        R: Type of result RValue
+        KeyT: Type of keys
+        ValueT: Type of values
+        ReturnLiteralT: Type of result value wrapped in Literal
         ContextT: Execution context type
 
     Example:
@@ -755,18 +792,13 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         >>> val = dct["a"]
     """
 
-    @abstractmethod
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to appropriate form."""
-        ...
-
-    def __getitem__(self, key: K) -> R:
+    def __getitem__(self, key: KeyT) -> ReturnLiteralT:
         """Get value for key."""
         from ..ops.sequence_ops import AtOp
 
-        return AtOp(self, self._get_operand(key))
+        return cast("ReturnLiteralT", literal(AtOp(self, literal(key))))
 
-    def len_(self) -> R:
+    def len_(self) -> ReturnLiteralT:
         """Get number of items.
 
         Returns:
@@ -774,9 +806,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return cast("ReturnLiteralT", literal(LenOp(self)))
 
-    def contains(self, key: K) -> R:
+    def contains(self, key: KeyT) -> ReturnLiteralT:
         """Check if key exists.
 
         Args:
@@ -787,9 +819,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         """
         from ..ops.mapping_ops import ContainsOp
 
-        return ContainsOp(self, self._get_operand(key))
+        return cast("ReturnLiteralT", literal(ContainsOp(self, literal(key))))
 
-    def keys_(self) -> R:
+    def keys_(self) -> ReturnLiteralT:
         """Get all keys.
 
         Returns:
@@ -797,9 +829,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         """
         from ..ops.mapping_ops import DictKeysOp
 
-        return DictKeysOp(self)
+        return cast("ReturnLiteralT", literal(DictKeysOp(self)))
 
-    def values_(self) -> R:
+    def values_(self) -> ReturnLiteralT:
         """Get all values.
 
         Returns:
@@ -807,9 +839,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         """
         from ..ops.mapping_ops import DictValuesOp
 
-        return DictValuesOp(self)
+        return cast("ReturnLiteralT", literal(DictValuesOp(self)))
 
-    def items_(self) -> R:
+    def items_(self) -> ReturnLiteralT:
         """Get all key-value pairs.
 
         Returns:
@@ -817,9 +849,9 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         """
         from ..ops.mapping_ops import DictItemsOp
 
-        return DictItemsOp(self)
+        return cast("ReturnLiteralT", literal(DictItemsOp(self)))
 
-    def get_(self, key: K, default: V | None = None) -> R:
+    def get_(self, key: KeyT, default: ValueT | None = None) -> ReturnLiteralT:
         """Get value with default.
 
         Args:
@@ -831,7 +863,7 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
         """
         from ..ops.mapping_ops import DictGetOp
 
-        return DictGetOp(self, self._get_operand(key), default)
+        return cast("ReturnLiteralT", literal(DictGetOp(self, literal(key), literal(default))))
 
 
 # =============================================================================
@@ -839,13 +871,13 @@ class MappingBase[K, V, R, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class StringBase[R, ContextT: ContextProtocol]:
+class StringBase[ReturnLiteralT: Literal, ContextT: ContextProtocol]:
     """Base for RValues with string-like behavior.
 
     Provides implementations for string operations.
 
     Type Parameters:
-        R: Type of result RValue
+        ReturnLiteralT: Type of result value wrapped in Literal
         ContextT: Execution context type
 
     Example:
@@ -854,63 +886,3 @@ class StringBase[R, ContextT: ContextProtocol]:
         >>> s = StrValue("hello")
         >>> upper = s.upper()
     """
-
-    @abstractmethod
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to appropriate form."""
-        ...
-
-    @abstractmethod
-    def _wrap_result(self, value: object) -> R:
-        """Wrap result in appropriate RValue."""
-        ...
-
-    def __add__(self, other: str) -> R:
-        """Concatenate strings."""
-        from ..ops.binary_ops import AddOp
-
-        return AddOp(self, self._get_operand(other))
-
-    def __radd__(self, other: str) -> R:
-        """Right concatenate strings."""
-        from ..ops.binary_ops import AddOp
-
-        return AddOp(self._get_operand(other), self)
-
-    def __getitem__(self, key: int | slice) -> R:
-        """Get character or substring."""
-        if isinstance(key, slice):
-            from ..ops.sequence_ops import SliceOp
-
-            return SliceOp(self, key.start, key.stop, key.step)
-
-        from ..ops.sequence_ops import AtOp
-
-        return AtOp(self, self._get_operand(key))
-
-    def len_(self) -> R:
-        """Get string length.
-
-        Returns:
-            Length value
-        """
-        from ..ops.sequence_ops import LenOp
-
-        return LenOp(self)
-
-    def contains(self, substring: str) -> R:
-        """Check if contains substring.
-
-        Args:
-            substring: Substring to find
-
-        Returns:
-            Boolean result
-        """
-        from ..ops.mapping_ops import ContainsOp
-
-        return ContainsOp(self, self._get_operand(substring))
-
-    # String-specific methods would need custom Ops
-    # These are placeholders for the interface
-    # Actual implementations would define StringUpperOp, etc.

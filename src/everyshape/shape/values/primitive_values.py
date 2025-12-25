@@ -13,7 +13,7 @@ These wrap native Python values and enable DSL operations.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, overload
 
 from ..context import ContextProtocol
 from .base import Literal
@@ -22,31 +22,12 @@ from .bases import (
     BitwiseBase,
     ComparisonBase,
     LogicalBase,
-    StringBase,
 )
 from .conversion import literal
 
 
 if TYPE_CHECKING:
-    from ..ops.binary_ops import (
-        AddOp,
-        DivOp,
-        EqOp,
-        FloorDivOp,
-        GeOp,
-        GtOp,
-        LeOp,
-        LShiftOp,
-        LtOp,
-        ModOp,
-        MulOp,
-        NeOp,
-        PowOp,
-        RShiftOp,
-        SubOp,
-        XorOp,
-    )
-    from ..ops.unary_ops import AbsOp, NegOp, PosOp
+    from ..term import RValue
 
 
 __all__ = [
@@ -65,191 +46,41 @@ __all__ = [
 
 
 class IntValue[ContextT: ContextProtocol](
-    ArithmeticBase[int, "IntValue", ContextT],
-    ComparisonBase[int, "BoolValue", ContextT],
-    BitwiseBase[int, "IntValue", ContextT],
+    ArithmeticBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
+        "FloatValue[ContextT] | IntValue[ContextT]",
+        ContextT,
+    ],
+    ComparisonBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
+    ],
+    LogicalBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
+    ],
+    BitwiseBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
+        "FloatValue[ContextT] | IntValue[ContextT]",
+        ContextT,
+    ],
     Literal[int, ContextT],
 ):
     """RValue representing an integer.
 
     Supports full arithmetic, comparison, and bitwise operations.
     Operations return appropriate RValue types.
-
-    Example:
-        >>> val = IntValue(42)
-        >>> doubled = val * 2  # Returns MulOp
-        >>> is_even = (val % 2).eq(0)  # Returns EqOp
-        >>> masked = val.bitand(0xFF)  # Returns BitwiseAndOp
     """
 
-    VALUE_TYPE: ClassVar[type] = int
+    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+        return FloatValue(operand)
 
-    def _wrap_result(self, value: object) -> IntValue:
-        """Wrap result in IntValue."""
-        return IntValue(int(value))  # type: ignore[arg-type]
+    def _wrap_bitwise_result(self, operand: RValue) -> RValue:
+        return FloatValue(operand)
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+    def _wrap_comparison_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
-    # Override arithmetic to return more specific types
-    def __add__(self, other: int | IntValue) -> AddOp[int, ContextT]:
-        """Addition: self + other."""
-        from ..ops.binary_ops import AddOp
-
-        return AddOp(self, self._get_operand(other))
-
-    def __radd__(self, other: int) -> AddOp[int, ContextT]:
-        """Right addition: other + self."""
-        from ..ops.binary_ops import AddOp
-
-        return AddOp(self._get_operand(other), self)
-
-    def __sub__(self, other: int | IntValue) -> SubOp[int, ContextT]:
-        """Subtraction: self - other."""
-        from ..ops.binary_ops import SubOp
-
-        return SubOp(self, self._get_operand(other))
-
-    def __rsub__(self, other: int) -> SubOp[int, ContextT]:
-        """Right subtraction: other - self."""
-        from ..ops.binary_ops import SubOp
-
-        return SubOp(self._get_operand(other), self)
-
-    def __mul__(self, other: int | IntValue) -> MulOp[int, ContextT]:
-        """Multiplication: self * other."""
-        from ..ops.binary_ops import MulOp
-
-        return MulOp(self, self._get_operand(other))
-
-    def __rmul__(self, other: int) -> MulOp[int, ContextT]:
-        """Right multiplication: other * self."""
-        from ..ops.binary_ops import MulOp
-
-        return MulOp(self._get_operand(other), self)
-
-    def __truediv__(self, other: int | IntValue) -> DivOp[float, ContextT]:
-        """Division: self / other."""
-        from ..ops.binary_ops import DivOp
-
-        return DivOp(self, self._get_operand(other))
-
-    def __rtruediv__(self, other: int) -> DivOp[float, ContextT]:
-        """Right division: other / self."""
-        from ..ops.binary_ops import DivOp
-
-        return DivOp(self._get_operand(other), self)
-
-    def __floordiv__(self, other: int | IntValue) -> FloorDivOp[int, ContextT]:
-        """Floor division: self // other."""
-        from ..ops.binary_ops import FloorDivOp
-
-        return FloorDivOp(self, self._get_operand(other))
-
-    def __rfloordiv__(self, other: int) -> FloorDivOp[int, ContextT]:
-        """Right floor division: other // self."""
-        from ..ops.binary_ops import FloorDivOp
-
-        return FloorDivOp(self._get_operand(other), self)
-
-    def __mod__(self, other: int | IntValue) -> ModOp[int, ContextT]:
-        """Modulo: self % other."""
-        from ..ops.binary_ops import ModOp
-
-        return ModOp(self, self._get_operand(other))
-
-    def __rmod__(self, other: int) -> ModOp[int, ContextT]:
-        """Right modulo: other % self."""
-        from ..ops.binary_ops import ModOp
-
-        return ModOp(self._get_operand(other), self)
-
-    def __pow__(self, other: int | IntValue) -> PowOp[int, ContextT]:
-        """Power: self ** other."""
-        from ..ops.binary_ops import PowOp
-
-        return PowOp(self, self._get_operand(other))
-
-    def __rpow__(self, other: int) -> PowOp[int, ContextT]:
-        """Right power: other ** self."""
-        from ..ops.binary_ops import PowOp
-
-        return PowOp(self._get_operand(other), self)
-
-    def __neg__(self) -> NegOp[int, ContextT]:
-        """Negation: -self."""
-        from ..ops.unary_ops import NegOp
-
-        return NegOp(self)
-
-    def __pos__(self) -> PosOp[int, ContextT]:
-        """Positive: +self."""
-        from ..ops.unary_ops import PosOp
-
-        return PosOp(self)
-
-    def __abs__(self) -> AbsOp[int, ContextT]:
-        """Absolute value: abs(self)."""
-        from ..ops.unary_ops import AbsOp
-
-        return AbsOp(self)
-
-    # Comparison operations
-    def __gt__(self, other: int | IntValue) -> GtOp[ContextT]:
-        """Greater than: self > other."""
-        from ..ops.binary_ops import GtOp
-
-        return GtOp(self, self._get_operand(other))
-
-    def __lt__(self, other: int | IntValue) -> LtOp[ContextT]:
-        """Less than: self < other."""
-        from ..ops.binary_ops import LtOp
-
-        return LtOp(self, self._get_operand(other))
-
-    def __ge__(self, other: int | IntValue) -> GeOp[ContextT]:
-        """Greater or equal: self >= other."""
-        from ..ops.binary_ops import GeOp
-
-        return GeOp(self, self._get_operand(other))
-
-    def __le__(self, other: int | IntValue) -> LeOp[ContextT]:
-        """Less or equal: self <= other."""
-        from ..ops.binary_ops import LeOp
-
-        return LeOp(self, self._get_operand(other))
-
-    def eq(self, other: int | IntValue) -> EqOp[ContextT]:
-        """Equality: self == other."""
-        from ..ops.binary_ops import EqOp
-
-        return EqOp(self, self._get_operand(other))
-
-    def ne(self, other: int | IntValue) -> NeOp[ContextT]:
-        """Inequality: self != other."""
-        from ..ops.binary_ops import NeOp
-
-        return NeOp(self, self._get_operand(other))
-
-    # Bitwise operations
-    def __xor__(self, other: int | IntValue) -> XorOp[int, ContextT]:
-        """XOR: self ^ other."""
-        from ..ops.binary_ops import XorOp
-
-        return XorOp(self, self._get_operand(other))
-
-    def __lshift__(self, other: int | IntValue) -> LShiftOp[int, ContextT]:
-        """Left shift: self << other."""
-        from ..ops.binary_ops import LShiftOp
-
-        return LShiftOp(self, self._get_operand(other))
-
-    def __rshift__(self, other: int | IntValue) -> RShiftOp[int, ContextT]:
-        """Right shift: self >> other."""
-        from ..ops.binary_ops import RShiftOp
-
-        return RShiftOp(self, self._get_operand(other))
+    def _wrap_logical_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
 
 # =============================================================================
@@ -258,8 +89,22 @@ class IntValue[ContextT: ContextProtocol](
 
 
 class FloatValue[ContextT: ContextProtocol](
-    ArithmeticBase[float, "FloatValue", ContextT],
-    ComparisonBase[float, "BoolValue", ContextT],
+    ArithmeticBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
+        "FloatValue[ContextT] | IntValue[ContextT]",
+        ContextT,
+    ],
+    ComparisonBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
+    ],
+    LogicalBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
+    ],
+    BitwiseBase[
+        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
+        "FloatValue[ContextT] | IntValue[ContextT]",
+        ContextT,
+    ],
     Literal[float, ContextT],
 ):
     """RValue representing a floating-point number.
@@ -273,15 +118,17 @@ class FloatValue[ContextT: ContextProtocol](
         >>> is_positive = val > 0  # Returns GtOp
     """
 
-    VALUE_TYPE: ClassVar[type] = float
+    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+        return FloatValue(operand)
 
-    def _wrap_result(self, value: object) -> FloatValue:
-        """Wrap result in FloatValue."""
-        return FloatValue(float(value))  # type: ignore[arg-type]
+    def _wrap_bitwise_result(self, operand: RValue) -> RValue:
+        return FloatValue(operand)
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+    def _wrap_comparison_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
+
+    def _wrap_logical_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
 
 # =============================================================================
@@ -290,8 +137,8 @@ class FloatValue[ContextT: ContextProtocol](
 
 
 class BoolValue[ContextT: ContextProtocol](
-    LogicalBase[bool, "BoolValue", ContextT],
-    ComparisonBase[bool, "BoolValue", ContextT],
+    LogicalBase["bool | BoolValue[ContextT]", "BoolValue[ContextT]", ContextT],
+    ComparisonBase["bool | BoolValue[ContextT]", "BoolValue[ContextT]", ContextT],
     Literal[bool, ContextT],
 ):
     """RValue representing a boolean.
@@ -304,15 +151,11 @@ class BoolValue[ContextT: ContextProtocol](
         >>> negated = val.not_()  # Returns NotOp
     """
 
-    VALUE_TYPE: ClassVar[type] = bool
+    def _wrap_logical_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
-    def _wrap_result(self, value: object) -> BoolValue:
-        """Wrap result in BoolValue."""
-        return BoolValue(bool(value))
-
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+    def _wrap_comparison_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
 
 # =============================================================================
@@ -321,8 +164,8 @@ class BoolValue[ContextT: ContextProtocol](
 
 
 class StrValue[ContextT: ContextProtocol](
-    StringBase["StrValue", ContextT],
-    ComparisonBase[str, "BoolValue", ContextT],
+    ComparisonBase["str | StrValue[ContextT]", "BoolValue[ContextT]", ContextT],
+    LogicalBase["str | StrValue[ContextT]", "BoolValue[ContextT]", ContextT],
     Literal[str, ContextT],
 ):
     """RValue representing a string.
@@ -336,15 +179,57 @@ class StrValue[ContextT: ContextProtocol](
         >>> length = val.len_()  # Returns LenOp
     """
 
-    VALUE_TYPE: ClassVar[type] = str
+    def _wrap_logical_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
-    def _wrap_result(self, value: object) -> StrValue:
-        """Wrap result in StrValue."""
-        return StrValue(str(value))
+    def _wrap_comparison_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+    def __add__(self, other: str) -> StrValue[ContextT]:
+        """Concatenate strings."""
+        from ..ops.binary_ops import AddOp
+
+        return StrValue(AddOp(self, literal(other)))
+
+    def __radd__(self, other: str) -> StrValue[ContextT]:
+        """Right concatenate strings."""
+        from ..ops.binary_ops import AddOp
+
+        return StrValue(AddOp(literal(other), self))
+
+    def __getitem__(self, key: int | slice) -> StrValue[ContextT]:
+        """Get character or substring."""
+        if isinstance(key, slice):
+            from ..ops.sequence_ops import SliceOp
+
+            return StrValue(SliceOp(self, key.start, key.stop, key.step))
+
+        from ..ops.sequence_ops import AtOp
+
+        return StrValue(AtOp(self, literal(key)))
+
+    def len_(self) -> IntValue[ContextT]:
+        """Get string length.
+
+        Returns:
+            Length value
+        """
+        from ..ops.sequence_ops import LenOp
+
+        return IntValue(LenOp(self))
+
+    def contains(self, substring: str) -> BoolValue[ContextT]:
+        """Check if contains substring.
+
+        Args:
+            substring: Substring to find
+
+        Returns:
+            Boolean result
+        """
+        from ..ops.mapping_ops import ContainsOp
+
+        return BoolValue(ContainsOp(self, literal(substring)))
 
 
 # =============================================================================
@@ -353,7 +238,8 @@ class StrValue[ContextT: ContextProtocol](
 
 
 class BytesValue[ContextT: ContextProtocol](
-    ComparisonBase[bytes, "BoolValue", ContextT],
+    ComparisonBase["bytes | BytesValue[ContextT]", "BoolValue[ContextT]", ContextT],
+    LogicalBase["bytes | BytesValue[ContextT]", "BoolValue[ContextT]", ContextT],
     Literal[bytes, ContextT],
 ):
     """RValue representing bytes.
@@ -366,40 +252,42 @@ class BytesValue[ContextT: ContextProtocol](
         >>> first = val[0]  # Returns AtOp
     """
 
-    VALUE_TYPE: ClassVar[type] = bytes
+    def _wrap_logical_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
-    def _wrap_result(self, value: object) -> BytesValue:
-        """Wrap result in BytesValue."""
-        return BytesValue(bytes(value))  # type: ignore[arg-type]
+    def _wrap_comparison_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
-
-    def __add__(self, other: bytes | BytesValue) -> object:
+    def __add__(self, other: bytes | BytesValue) -> BytesValue[ContextT]:
         """Concatenate bytes."""
         from ..ops.binary_ops import AddOp
 
-        return AddOp(self, self._get_operand(other))
+        return BytesValue(AddOp(self, literal(other)))
 
-    def __radd__(self, other: bytes) -> object:
+    def __radd__(self, other: bytes) -> BytesValue[ContextT]:
         """Right concatenate bytes."""
         from ..ops.binary_ops import AddOp
 
-        return AddOp(self._get_operand(other), self)
+        return BytesValue(AddOp(literal(other), self))
 
-    def __getitem__(self, key: int | slice) -> object:
+    @overload
+    def __getitem__(self, key: int) -> IntValue[ContextT]: ...
+
+    @overload
+    def __getitem__(self, key: slice) -> BytesValue[ContextT]: ...
+
+    def __getitem__(self, key: int | slice) -> BytesValue[ContextT] | IntValue[ContextT]:
         """Get byte or slice."""
         if isinstance(key, slice):
             from ..ops.sequence_ops import SliceOp
 
-            return SliceOp(self, key.start, key.stop, key.step)
+            return BytesValue(SliceOp(self, key.start, key.stop, key.step))
 
         from ..ops.sequence_ops import AtOp
 
-        return AtOp(self, self._get_operand(key))
+        return IntValue(AtOp(self, literal(key)))
 
-    def len_(self) -> object:
+    def len_(self) -> IntValue[ContextT]:
         """Get length of bytes.
 
         Returns:
@@ -407,7 +295,7 @@ class BytesValue[ContextT: ContextProtocol](
         """
         from ..ops.sequence_ops import LenOp
 
-        return LenOp(self)
+        return IntValue(LenOp(self))
 
 
 # =============================================================================
@@ -415,7 +303,10 @@ class BytesValue[ContextT: ContextProtocol](
 # =============================================================================
 
 
-class NoneValue[ContextT: ContextProtocol](Literal[None, ContextT]):
+class NoneValue[ContextT: ContextProtocol](
+    LogicalBase["None | NoneValue[ContextT]", "BoolValue[ContextT]", ContextT],
+    Literal[None, ContextT],
+):
     """RValue representing None.
 
     Useful for representing absence of value in expressions.
@@ -425,24 +316,13 @@ class NoneValue[ContextT: ContextProtocol](Literal[None, ContextT]):
         >>> is_none = val.eq(None)  # Returns EqOp
     """
 
-    VALUE_TYPE: ClassVar[type] = type(None)
-
     def __init__(self) -> None:
-        """Initialize NoneValue."""
-        super().__init__(None)
+        """Initialize literal with value.
 
-    def _get_operand(self, other: object) -> object:
-        """Convert operand to RValue if needed."""
-        return literal(other)
+        Args:
+            value: The native Python value to wrap
+        """
+        self._value = None
 
-    def eq(self, other: object) -> object:
-        """Check equality with None."""
-        from ..ops.binary_ops import EqOp
-
-        return EqOp(self, self._get_operand(other))
-
-    def ne(self, other: object) -> object:
-        """Check inequality with None."""
-        from ..ops.binary_ops import NeOp
-
-        return NeOp(self, self._get_operand(other))
+    def _wrap_logical_result(self, operand: RValue) -> RValue:
+        return BoolValue(operand)

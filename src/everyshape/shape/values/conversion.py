@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..term import RValue
+    from .base import Literal
 
 
-def literal(value: object) -> RValue:
+def literal(value: object) -> Literal:
     """Wrap value in LiteralValue if not already an RValue.
 
     Helper for operator overloading - converts Python literals

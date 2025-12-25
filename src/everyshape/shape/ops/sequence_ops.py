@@ -40,7 +40,15 @@ if TYPE_CHECKING:
 
     from ..context import ContextProtocol
     from ..term import RValue
-
+    from ..values.bases import (
+        ArithmeticBase,
+        BitwiseBase,
+        ComparisonBase,
+        LogicalBase,
+        MappingBase,
+        SequenceBase,
+        StringBase,
+    )
 
 __all__ = [
     "AllOp",
@@ -70,7 +78,16 @@ __all__ = [
 # ABSTRACT SEQUENCE OPERATION
 # =============================================================================
 
-type OpArgument = RValue
+type OpArgument = (
+    RValue
+    | ArithmeticBase
+    | SequenceBase
+    | StringBase
+    | BitwiseBase
+    | LogicalBase
+    | MappingBase
+    | ComparisonBase
+)
 
 
 class SequenceOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):
@@ -263,7 +280,12 @@ class AtOp[ResultT, ContextT: ContextProtocol](Operation[ResultT | SpecialValue,
                 return NAN
             return seq_val[key_val]  # type: ignore
         else:
-            raise TypeError(f"at() requires list, tuple, or dict, got {type(seq_val).__name__}")
+            try:
+                return seq_val[key_val]  # type: ignore
+            except TypeError:
+                raise TypeError(
+                    f"at() requires subscriptable object, got {type(seq_val).__name__}"
+                ) from None
 
     def __repr__(self) -> str:
         return f"AtOp({self.children[0]!r}, {self.children[1]!r})"
@@ -286,10 +308,12 @@ class SliceOp[ResultT, ContextT: ContextProtocol](SequenceOp[list[ResultT], Cont
         self._step = step
 
     def _apply_op(self, operand: object) -> list[ResultT]:
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"slice_() requires list or tuple, got {type(operand).__name__}")
-        sliced = operand[self._start : self._stop : self._step]
-        return list(sliced)  # type: ignore
+        try:
+            return operand[self._start : self._stop : self._step]  # type: ignore
+        except TypeError:
+            raise TypeError(
+                "slice() requires subscriptable object, got {type(seq_val).__name__}"
+            ) from None
 
     def __repr__(self) -> str:
         return f"SliceOp({self.children[0]!r}, {self._start}:{self._stop}:{self._step})"

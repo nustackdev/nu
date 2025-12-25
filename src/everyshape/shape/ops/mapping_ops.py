@@ -33,7 +33,15 @@ from ..term import Operation
 if TYPE_CHECKING:
     from ..context import ContextProtocol
     from ..term import RValue
-
+    from ..values.bases import (
+        ArithmeticBase,
+        BitwiseBase,
+        ComparisonBase,
+        LogicalBase,
+        MappingBase,
+        SequenceBase,
+        StringBase,
+    )
 
 __all__ = [
     "ContainsOp",
@@ -48,7 +56,17 @@ __all__ = [
 # ABSTRACT MAPPING OPERATION
 # =============================================================================
 
-type OpArgument = RValue
+
+type OpArgument = (
+    RValue
+    | ArithmeticBase
+    | SequenceBase
+    | StringBase
+    | BitwiseBase
+    | LogicalBase
+    | MappingBase
+    | ComparisonBase
+)
 
 
 class MappingOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):
