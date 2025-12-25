@@ -38,10 +38,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from everyshape.shape.term import PrimitiveRef, RValue, ViewRef
-from everyshape.shape.values.conversion import literal
 from everyshape.types import SpecialValue, Value
 
+from ..term import PrimitiveRef, RValue, ViewRef
+from ..values import (
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    FrozenSetValue,
+    IntValue,
+    ListValue,
+    NoneValue,
+    SetValue,
+    StrValue,
+    TupleValue,
+)
+from ..values.conversion import literal
 from .commands import (
     AddCmd,
     AppendCmd,
@@ -78,10 +91,19 @@ from .operations import (
     ReduceOp,
     ValuesOp,
 )
+from .operations_reactive import (
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
+)
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from everyshape.loc import key
 
 
 __all__ = [
@@ -136,16 +158,79 @@ class PrimitiveRefBase[T: Value](PrimitiveRef[T]):
             return value
         return literal(value)
 
-    def get(self) -> GetOp[T]:
-        """Create a get operation for this location.
+    # Primitives
+    @overload
+    def get(self: PrimitiveRefBase[int]) -> IntValue: ...
 
-        Returns:
-            GetOp that reads the value when executed
+    @overload
+    def get(self: PrimitiveRefBase[str]) -> StrValue: ...
 
-        Example:
-            >>> value = ref.get().execute(ctx)
-        """
-        return GetOp(self)
+    @overload
+    def get(self: PrimitiveRefBase[bool]) -> BoolValue: ...
+
+    @overload
+    def get(self: PrimitiveRefBase[float]) -> FloatValue: ...
+
+    @overload
+    def get(self: PrimitiveRefBase[bytes]) -> BytesValue: ...
+
+    @overload
+    def get(self: PrimitiveRefBase[None]) -> NoneValue: ...
+
+    # Collections
+    @overload
+    def get[V](self: PrimitiveRefBase[list[V]]) -> ListValue[V]: ...
+
+    @overload
+    def get[K, V](self: PrimitiveRefBase[dict[K, V]]) -> DictValue[K, V]: ...
+
+    @overload
+    def get[V](self: PrimitiveRefBase[set[V]]) -> SetValue[V]: ...
+
+    # @overload
+    # def get[*Ts](self: ValueRef[tuple[*Ts]]) -> TupleValue[*Ts, Context]: ...
+
+    # @overload
+    # def get[V](self: ValueRef[frozenset[V]]) -> FrozenSetValue[V, Context]: ...
+
+    # Fallback
+    def get(self) -> object:
+        """Create read operation."""
+        if self.value_type is int:
+            return IntValue(GetOp(self))
+        elif self.value_type is str:
+            return StrValue(GetOp(self))
+        elif self.value_type is bool:
+            return BoolValue(GetOp(self))
+        elif self.value_type is float:
+            return FloatValue(GetOp(self))
+        elif self.value_type is bytes:
+            return BytesValue(GetOp(self))
+        elif self.value_type is None:
+            return NoneValue(GetOp(self))
+        elif self.value_type is dict:
+            return DictValue(GetOp(self))
+        elif self.value_type is set:
+            return SetValue(GetOp(self))
+        elif self.value_type is list:
+            return ListValue(GetOp(self))
+        elif self.value_type is tuple:
+            return TupleValue(GetOp(self))
+        elif self.value_type is frozenset:
+            return FrozenSetValue(GetOp(self))
+        else:
+            raise TypeError(f"Unknown type passed to ValueRef.get method {self.value_type}")
+
+    # def get(self) -> GetOp[T]:
+    #     """Create a get operation for this location.
+
+    #     Returns:
+    #         GetOp that reads the value when executed
+
+    #     Example:
+    #         >>> value = ref.get().execute(ctx)
+    #     """
+    #     return GetOp(self)
 
     def set(self, value: T | RValue[T | SpecialValue]) -> SetCmd[T]:
         """Create a set command for this location.
@@ -196,6 +281,59 @@ class PrimitiveRefBase[T: Value](PrimitiveRef[T]):
             ...     ref.set(default_value).execute(ctx)
         """
         return MissingOp(self)
+
+    def on_change(self) -> OnPrimitiveChangeOp:
+        """Create change subscription operation for this value.
+
+        Returns a ChangeOp that subscribes to changes on this primitive value
+        via the parent view's ChildObservable protocol.
+
+        Returns:
+            OnPrimitiveChangeOp that creates subscription when executed
+
+        Example:
+            >>> Once(User.name.on_change(), HandleNameChange())
+            >>> OnChange(Config.value.on_change(), SyncConfig())
+        """
+        return OnPrimitiveChangeOp(self)
+
+
+class SequenceValueRefBase[T: Value](PrimitiveRefBase[T]):
+    """Reference to a primitive value location.
+
+    Points to leaf nodes in the tree: int, str, float, bool, etc.
+    Supports read (get) and write (set) operations.
+
+    Example:
+        class User(Shape):
+            name: ValueRef[str] = ValueSlot(str)
+            age: ValueRef[int] = ValueSlot(int)
+
+        # Create operations
+        User.name.get()         # GetOp[str]
+        User.name.set("Alice")  # SetCmd[str]
+    """
+
+    pass
+
+
+class MappingValueRefBase[T: Value](PrimitiveRefBase[T]):
+    """Reference to a primitive value location.
+
+    Points to leaf nodes in the tree: int, str, float, bool, etc.
+    Supports read (get) and write (set) operations.
+
+    Example:
+        class User(Shape):
+            name: ValueRef[str] = ValueSlot(str)
+            age: ValueRef[int] = ValueSlot(int)
+
+        # Create operations
+        User.name.get()         # GetOp[str]
+        User.name.set("Alice")  # SetCmd[str]
+    """
+
+    pass
 
 
 # =============================================================================
@@ -287,6 +425,56 @@ class ViewRefBase[T: Value](ViewRef):
             MissingOp that returns True if container doesn't exist
         """
         return MissingOp(self)
+
+    def on_change(self) -> OnChangeOp:
+        """Subscribe to all changes in this view.
+
+        Returns:
+            OnChangeOp that creates subscription when executed
+
+        Example:
+            >>> OnChange(User.profile.on_change(), SyncProfile())
+        """
+        return OnChangeOp(self)
+
+    def on_child_change(self, address: str | RValue[str]) -> OnChildChangeOp:
+        """Subscribe to changes on a specific child.
+
+        Args:
+            address: Child address to watch
+
+        Returns:
+            OnChildChangeOp that creates subscription when executed
+
+        Example:
+            >>> OnChange(User.profile.on_child_change("email"), HandleEmailChange())
+        """
+        return OnChildChangeOp(self, address)
+
+    def on_children_change(self) -> OnChildrenChangeOp:
+        """Subscribe to changes on all children.
+
+        Returns:
+            OnChildrenChangeOp that creates subscription when executed
+
+        Example:
+            >>> OnChange(Users.on_children_change(), SyncUsers())
+        """
+        return OnChildrenChangeOp(self)
+
+    def on_descendants_change(self, *pattern: key.KeySegment) -> OnDescendantsChangeOp:
+        """Subscribe to changes on descendants matching a pattern.
+
+        Args:
+            *pattern: Key segments pattern (use "*" for wildcards)
+
+        Returns:
+            OnDescendantsChangeOp that creates subscription when executed
+
+        Example:
+            >>> OnChange(Users.on_descendants_change("*", "status"), HandleStatusChanges())
+        """
+        return OnDescendantsChangeOp(self, *pattern)
 
 
 # =============================================================================
