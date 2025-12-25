@@ -15,9 +15,13 @@ support operator overloading via ergonomics mixins.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from ..context import ContextProtocol
 from ..term import Operation, RValue
+
+
+if TYPE_CHECKING:
+    from ..context import Context
 
 
 __all__ = [
@@ -27,7 +31,7 @@ __all__ = [
 ]
 
 
-class ValueBase[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
+class ValueBase[T](Operation[T], ABC):
     """Base class for value types (literal value - LiteralValue and computable values).
 
     Literal values wrap native Python values directly and don't
@@ -52,7 +56,7 @@ class ValueBase[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
         self._value = value
 
     @abstractmethod
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute returns the wrapped value.
 
         Args:
@@ -72,7 +76,7 @@ class ValueBase[T, ContextT: ContextProtocol](Operation[T, ContextT], ABC):
         return str(self._value)
 
 
-class Computed[T: RValue, ContextT: ContextProtocol](ValueBase[T, ContextT]):
+class Computed[T: RValue](ValueBase[T]):
     """Base class for literal (constant) RValues.
 
     Literal values wrap native Python values directly and don't
@@ -87,7 +91,7 @@ class Computed[T: RValue, ContextT: ContextProtocol](ValueBase[T, ContextT]):
         >>> lit.execute(ctx)  # Returns 42
     """
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute returns the wrapped value.
 
         Args:
@@ -99,7 +103,7 @@ class Computed[T: RValue, ContextT: ContextProtocol](ValueBase[T, ContextT]):
         return self._value.execute(context)
 
 
-class Literal[T, ContextT: ContextProtocol](ValueBase[T, ContextT], ABC):
+class Literal[T](ValueBase[T], ABC):
     """Base class for literal (constant) RValues.
 
     Literal values wrap native Python values directly and don't
@@ -114,7 +118,7 @@ class Literal[T, ContextT: ContextProtocol](ValueBase[T, ContextT], ABC):
         >>> lit.execute(ctx)  # Returns 42
     """
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute returns the wrapped value.
 
         Args:

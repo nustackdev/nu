@@ -38,7 +38,7 @@ from ..term import Operation
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..context import ContextProtocol
+    from ..context import Context
     from ..term import RValue
     from ..values.bases import (
         ArithmeticBase,
@@ -90,7 +90,7 @@ type OpArgument = (
 )
 
 
-class SequenceOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):
+class SequenceOp[ResultT](Operation[ResultT]):
     """Base class for sequence operations.
 
     Defines execution pattern: evaluate operand → validate sequence →
@@ -105,7 +105,7 @@ class SequenceOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT
         """
         self.children = (cast("RValue", operand),)
 
-    def execute(self, context: ContextT) -> ResultT:
+    def execute(self, context: Context) -> ResultT:
         """Execute sequence operation.
 
         Args:
@@ -143,7 +143,7 @@ class SequenceOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT
 # =============================================================================
 
 
-class SumOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValue, ContextT]):
+class SumOp[ResultT](SequenceOp[ResultT | SpecialValue]):
     """Sum of sequence elements: sum(seq)."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -155,7 +155,7 @@ class SumOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValu
             return NAN
 
 
-class MinOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValue, ContextT]):
+class MinOp[ResultT](SequenceOp[ResultT | SpecialValue]):
     """Minimum element: min(seq)."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -169,7 +169,7 @@ class MinOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValu
             return NAN
 
 
-class MaxOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValue, ContextT]):
+class MaxOp[ResultT](SequenceOp[ResultT | SpecialValue]):
     """Maximum element: max(seq)."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -183,7 +183,7 @@ class MaxOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValu
             return NAN
 
 
-class LenOp[ContextT: ContextProtocol](SequenceOp[int, ContextT]):
+class LenOp(SequenceOp[int]):
     """Length of sequence or mapping: len(obj)."""
 
     def _apply_op(self, operand: object) -> int:
@@ -197,9 +197,7 @@ class LenOp[ContextT: ContextProtocol](SequenceOp[int, ContextT]):
 # =============================================================================
 
 
-class SortedOp[ResultT, ContextT: ContextProtocol](
-    SequenceOp[list[ResultT] | SpecialValue, ContextT]
-):
+class SortedOp[ResultT](SequenceOp[list[ResultT] | SpecialValue]):
     """Sorted list: sorted(seq, reverse=reverse)."""
 
     def __init__(self, operand: OpArgument, *, reverse: bool = False) -> None:
@@ -219,7 +217,7 @@ class SortedOp[ResultT, ContextT: ContextProtocol](
         return f"SortedOp({self.children[0]!r}, reverse={self._reverse})"
 
 
-class ReversedOp[ResultT, ContextT: ContextProtocol](SequenceOp[list[ResultT], ContextT]):
+class ReversedOp[ResultT](SequenceOp[list[ResultT]]):
     """Reversed list: list(reversed(seq))."""
 
     def _apply_op(self, operand: object) -> list[ResultT]:
@@ -233,7 +231,7 @@ class ReversedOp[ResultT, ContextT: ContextProtocol](SequenceOp[list[ResultT], C
 # =============================================================================
 
 
-class FirstOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValue, ContextT]):
+class FirstOp[ResultT](SequenceOp[ResultT | SpecialValue]):
     """First element: seq[0]."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -244,7 +242,7 @@ class FirstOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialVa
         return operand[0]  # type: ignore
 
 
-class LastOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialValue, ContextT]):
+class LastOp[ResultT](SequenceOp[ResultT | SpecialValue]):
     """Last element: seq[-1]."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -255,14 +253,14 @@ class LastOp[ResultT, ContextT: ContextProtocol](SequenceOp[ResultT | SpecialVal
         return operand[-1]  # type: ignore
 
 
-class AtOp[ResultT, ContextT: ContextProtocol](Operation[ResultT | SpecialValue, ContextT]):
+class AtOp[ResultT](Operation[ResultT | SpecialValue]):
     """Subscript access: seq[key] or dict[key]."""
 
     def __init__(self, operand: OpArgument, key: OpArgument) -> None:
         """Init."""
         self.children = (cast("RValue", operand), cast("RValue", key))
 
-    def execute(self, context: ContextT) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | SpecialValue:
         """Execute."""
         seq_val = self.children[0].execute(context)
         key_val = self.children[1].execute(context)
@@ -291,7 +289,7 @@ class AtOp[ResultT, ContextT: ContextProtocol](Operation[ResultT | SpecialValue,
         return f"AtOp({self.children[0]!r}, {self.children[1]!r})"
 
 
-class SliceOp[ResultT, ContextT: ContextProtocol](SequenceOp[list[ResultT], ContextT]):
+class SliceOp[ResultT](SequenceOp[list[ResultT]]):
     """Slice access: seq[start:stop:step]."""
 
     def __init__(
@@ -324,7 +322,7 @@ class SliceOp[ResultT, ContextT: ContextProtocol](SequenceOp[list[ResultT], Cont
 # =============================================================================
 
 
-class AnyOp[ContextT: ContextProtocol](SequenceOp[bool, ContextT]):
+class AnyOp(SequenceOp[bool]):
     """Any truthy: any(seq)."""
 
     def _apply_op(self, operand: object) -> bool:
@@ -333,7 +331,7 @@ class AnyOp[ContextT: ContextProtocol](SequenceOp[bool, ContextT]):
         return any(operand)
 
 
-class AllOp[ContextT: ContextProtocol](SequenceOp[bool, ContextT]):
+class AllOp(SequenceOp[bool]):
     """All truthy: all(seq)."""
 
     def _apply_op(self, operand: object) -> bool:
@@ -347,14 +345,14 @@ class AllOp[ContextT: ContextProtocol](SequenceOp[bool, ContextT]):
 # =============================================================================
 
 
-class JoinOp[ContextT: ContextProtocol](Operation[str | SpecialValue, ContextT]):
+class JoinOp(Operation[str | SpecialValue]):
     """Join strings: sep.join(seq)."""
 
     def __init__(self, operand: OpArgument, sep: OpArgument) -> None:
         """Init."""
         self.children = (cast("RValue", operand), cast("RValue", sep))
 
-    def execute(self, context: ContextT) -> str | SpecialValue:
+    def execute(self, context: Context) -> str | SpecialValue:
         """Execute."""
         seq_val = self.children[0].execute(context)
         sep_val = self.children[1].execute(context)
@@ -378,7 +376,7 @@ class JoinOp[ContextT: ContextProtocol](Operation[str | SpecialValue, ContextT])
 # =============================================================================
 
 
-class MapOp[T, T2, ContextT: ContextProtocol](SequenceOp[list[T2], ContextT]):
+class MapOp[T, T2](SequenceOp[list[T2]]):
     """Map function over sequence: list(map(fn, seq)).
 
     Example:
@@ -405,7 +403,7 @@ class MapOp[T, T2, ContextT: ContextProtocol](SequenceOp[list[T2], ContextT]):
         return f"MapOp({self.children[0]!r}, {self._fn!r})"
 
 
-class FilterOp[T, ContextT: ContextProtocol](SequenceOp[list[T], ContextT]):
+class FilterOp[T](SequenceOp[list[T]]):
     """Filter sequence by predicate: list(filter(fn, seq)).
 
     Example:
@@ -432,7 +430,7 @@ class FilterOp[T, ContextT: ContextProtocol](SequenceOp[list[T], ContextT]):
         return f"FilterOp({self.children[0]!r}, {self._fn!r})"
 
 
-class ReduceOp[T, T2, ContextT: ContextProtocol](Operation[T2 | SpecialValue, ContextT]):
+class ReduceOp[T, T2](Operation[T2 | SpecialValue]):
     """Reduce sequence to single value: functools.reduce(fn, seq, initial).
 
     Example:
@@ -452,7 +450,7 @@ class ReduceOp[T, T2, ContextT: ContextProtocol](Operation[T2 | SpecialValue, Co
         self._fn = fn
         self._initial = initial
 
-    def execute(self, context: ContextT) -> T2 | SpecialValue:
+    def execute(self, context: Context) -> T2 | SpecialValue:
         """Execute reduce operation."""
         operand_val = self.children[0].execute(context)
 
@@ -473,7 +471,7 @@ class ReduceOp[T, T2, ContextT: ContextProtocol](Operation[T2 | SpecialValue, Co
 # =============================================================================
 
 
-class IndexOfOp[T, ContextT: ContextProtocol](Operation[int | SpecialValue, ContextT]):
+class IndexOfOp[T](Operation[int | SpecialValue]):
     """Find index of value in sequence: seq.index(value).
 
     Returns NaN if value not found (unlike Python which raises ValueError).
@@ -491,7 +489,7 @@ class IndexOfOp[T, ContextT: ContextProtocol](Operation[int | SpecialValue, Cont
         """
         self.children = (cast("RValue", operand), cast("RValue", value))
 
-    def execute(self, context: ContextT) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | SpecialValue:
         """Execute index search."""
         seq_val = self.children[0].execute(context)
         value_val = self.children[1].execute(context)
@@ -508,7 +506,7 @@ class IndexOfOp[T, ContextT: ContextProtocol](Operation[int | SpecialValue, Cont
         return f"IndexOfOp({self.children[0]!r}, {self.children[1]!r})"
 
 
-class CountOp[ContextT: ContextProtocol](Operation[int, ContextT]):
+class CountOp(Operation[int]):
     """Count occurrences of value in sequence: seq.count(value).
 
     Example:
@@ -524,7 +522,7 @@ class CountOp[ContextT: ContextProtocol](Operation[int, ContextT]):
         """
         self.children = (cast("RValue", operand), cast("RValue", value))
 
-    def execute(self, context: ContextT) -> int:
+    def execute(self, context: Context) -> int:
         """Execute count."""
         seq_val = self.children[0].execute(context)
         value_val = self.children[1].execute(context)
@@ -538,7 +536,7 @@ class CountOp[ContextT: ContextProtocol](Operation[int, ContextT]):
         return f"CountOp({self.children[0]!r}, {self.children[1]!r})"
 
 
-class FindOp[T, ContextT: ContextProtocol](SequenceOp[T | SpecialValue, ContextT]):
+class FindOp[T](SequenceOp[T | SpecialValue]):
     """Find first element matching predicate.
 
     Returns NaN if no element matches.
@@ -570,7 +568,7 @@ class FindOp[T, ContextT: ContextProtocol](SequenceOp[T | SpecialValue, ContextT
         return f"FindOp({self.children[0]!r}, {self._fn!r})"
 
 
-class FindIndexOp[T, ContextT: ContextProtocol](SequenceOp[int | SpecialValue, ContextT]):
+class FindIndexOp[T](SequenceOp[int | SpecialValue]):
     """Find index of first element matching predicate.
 
     Returns NaN if no element matches.

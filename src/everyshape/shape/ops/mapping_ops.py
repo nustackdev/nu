@@ -31,7 +31,7 @@ from ..term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import ContextProtocol
+    from ..context import Context
     from ..term import RValue
     from ..values.bases import (
         ArithmeticBase,
@@ -69,7 +69,7 @@ type OpArgument = (
 )
 
 
-class MappingOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):
+class MappingOp[ResultT](Operation[ResultT]):
     """Base class for mapping operations.
 
     Defines execution pattern: evaluate operand → validate mapping →
@@ -84,7 +84,7 @@ class MappingOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]
         """
         self.children = (cast("RValue", operand),)
 
-    def execute(self, context: ContextT) -> ResultT:
+    def execute(self, context: Context) -> ResultT:
         """Execute mapping operation.
 
         Args:
@@ -122,7 +122,7 @@ class MappingOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]
 # =============================================================================
 
 
-class DictKeysOp[K, ContextT: ContextProtocol](MappingOp[list[K], ContextT]):
+class DictKeysOp[K](MappingOp[list[K]]):
     """Get keys from dict: list(dict.keys())."""
 
     def _apply_op(self, operand: object) -> list[K]:
@@ -131,7 +131,7 @@ class DictKeysOp[K, ContextT: ContextProtocol](MappingOp[list[K], ContextT]):
         return list(operand.keys())  # type: ignore
 
 
-class DictValuesOp[V, ContextT: ContextProtocol](MappingOp[list[V], ContextT]):
+class DictValuesOp[V](MappingOp[list[V]]):
     """Get values from dict: list(dict.values())."""
 
     def _apply_op(self, operand: object) -> list[V]:
@@ -140,7 +140,7 @@ class DictValuesOp[V, ContextT: ContextProtocol](MappingOp[list[V], ContextT]):
         return list(operand.values())  # type: ignore
 
 
-class DictItemsOp[K, V, ContextT: ContextProtocol](MappingOp[list[tuple[K, V]], ContextT]):
+class DictItemsOp[K, V](MappingOp[list[tuple[K, V]]]):
     """Get items from dict: list(dict.items())."""
 
     def _apply_op(self, operand: object) -> list[tuple[K, V]]:
@@ -149,7 +149,7 @@ class DictItemsOp[K, V, ContextT: ContextProtocol](MappingOp[list[tuple[K, V]], 
         return list(operand.items())  # type: ignore
 
 
-class DictGetOp[V, ContextT: ContextProtocol](Operation[V | SpecialValue, ContextT]):
+class DictGetOp[V](Operation[V | SpecialValue]):
     """Get value from dict with default: dict.get(key, default)."""
 
     def __init__(self, operand: OpArgument, key: OpArgument, default: OpArgument) -> None:
@@ -160,7 +160,7 @@ class DictGetOp[V, ContextT: ContextProtocol](Operation[V | SpecialValue, Contex
             cast("RValue", default),
         )
 
-    def execute(self, context: ContextT) -> V | SpecialValue:
+    def execute(self, context: Context) -> V | SpecialValue:
         """Execute."""
         dict_val = self.children[0].execute(context)
         key_val = self.children[1].execute(context)
@@ -180,7 +180,7 @@ class DictGetOp[V, ContextT: ContextProtocol](Operation[V | SpecialValue, Contex
 # =============================================================================
 
 
-class ContainsOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
+class ContainsOp(Operation[bool]):
     """Containment check: item in container.
 
     Works for:
@@ -194,7 +194,7 @@ class ContainsOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
         """Init."""
         self.children = (cast("RValue", operand), cast("RValue", item))
 
-    def execute(self, context: ContextT) -> bool:
+    def execute(self, context: Context) -> bool:
         """Execute."""
         container_val = self.children[0].execute(context)
         item_val = self.children[1].execute(context)

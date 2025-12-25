@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from ..context import ContextProtocol
 from .base import Literal
 from .bases import (
     ComparisonBase,
@@ -71,10 +70,10 @@ __all__ = [
 # =============================================================================
 
 
-class ListValue[T, ContextT: ContextProtocol](
-    SequenceBase[T, "ListValue[T]", ContextT],
-    ComparisonBase[list[T], "BoolValue", ContextT],
-    Literal[list[T], ContextT],
+class ListValue[T](
+    SequenceBase[T, "ListValue[T]"],
+    ComparisonBase[list[T], "BoolValue"],
+    Literal[list[T]],
 ):
     """RValue representing a list.
 
@@ -93,7 +92,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
     VALUE_TYPE: ClassVar[type] = list
 
-    def _wrap_result(self, value: object) -> ListValue[T, ContextT]:
+    def _wrap_result(self, value: object) -> ListValue[T]:
         """Wrap result in ListValue."""
         return ListValue(list(value))  # type: ignore[arg-type]
 
@@ -101,7 +100,7 @@ class ListValue[T, ContextT: ContextProtocol](
         """Convert operand to RValue if needed."""
         return literal(other)
 
-    def __add__(self, other: list[T] | ListValue[T, ContextT]) -> object:
+    def __add__(self, other: list[T] | ListValue[T]) -> object:
         """Concatenate lists."""
         from ..ops.binary_ops import AddOp
 
@@ -113,7 +112,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return AddOp(self._get_operand(other), self)
 
-    def __getitem__(self, key: int | slice) -> AtOp[T, ContextT] | SliceOp[T, ContextT]:
+    def __getitem__(self, key: int | slice) -> AtOp[T] | SliceOp[T]:
         """Get item or slice."""
         if isinstance(key, slice):
             from ..ops.sequence_ops import SliceOp
@@ -124,7 +123,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return AtOp(self, self._get_operand(key))
 
-    def len_(self) -> LenOp[ContextT]:
+    def len_(self) -> LenOp:
         """Get list length.
 
         Returns:
@@ -134,7 +133,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return LenOp(self)
 
-    def contains(self, item: T) -> ContainsOp[ContextT]:
+    def contains(self, item: T) -> ContainsOp:
         """Check if item is in list.
 
         Args:
@@ -147,7 +146,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return ContainsOp(self, self._get_operand(item))
 
-    def first(self) -> FirstOp[T, ContextT]:
+    def first(self) -> FirstOp[T]:
         """Get first element.
 
         Returns:
@@ -157,7 +156,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return FirstOp(self)
 
-    def last(self) -> LastOp[T, ContextT]:
+    def last(self) -> LastOp[T]:
         """Get last element.
 
         Returns:
@@ -167,7 +166,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return LastOp(self)
 
-    def reversed_(self) -> ReversedOp[T, ContextT]:
+    def reversed_(self) -> ReversedOp[T]:
         """Get reversed list.
 
         Returns:
@@ -177,7 +176,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return ReversedOp(self)
 
-    def sorted_(self, reverse: bool = False) -> SortedOp[T, ContextT]:
+    def sorted_(self, reverse: bool = False) -> SortedOp[T]:
         """Get sorted list.
 
         Args:
@@ -191,7 +190,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return SortedOp(self, reverse=reverse)
 
-    def map_[R](self, func: Callable[[T], R]) -> MapOp[T, R, ContextT]:
+    def map_[R](self, func: Callable[[T], R]) -> MapOp[T, R]:
         """Map function over elements.
 
         Args:
@@ -204,7 +203,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return MapOp(self, func)
 
-    def filter_(self, predicate: Callable[[T], bool]) -> FilterOp[T, ContextT]:
+    def filter_(self, predicate: Callable[[T], bool]) -> FilterOp[T]:
         """Filter elements.
 
         Args:
@@ -217,7 +216,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return FilterOp(self, predicate)
 
-    def reduce_[R](self, func: Callable[[R, T], R], initial: R) -> ReduceOp[T, R, ContextT]:
+    def reduce_[R](self, func: Callable[[R, T], R], initial: R) -> ReduceOp[T, R]:
         """Reduce to single value.
 
         Args:
@@ -231,7 +230,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return ReduceOp(self, func, initial)
 
-    def sum_(self) -> SumOp[T, ContextT]:
+    def sum_(self) -> SumOp[T]:
         """Sum elements.
 
         Returns:
@@ -241,7 +240,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return SumOp(self)
 
-    def min_(self) -> MinOp[T, ContextT]:
+    def min_(self) -> MinOp[T]:
         """Get minimum.
 
         Returns:
@@ -251,7 +250,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return MinOp(self)
 
-    def max_(self) -> MaxOp[T, ContextT]:
+    def max_(self) -> MaxOp[T]:
         """Get maximum.
 
         Returns:
@@ -261,7 +260,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return MaxOp(self)
 
-    def any_(self) -> AnyOp[ContextT]:
+    def any_(self) -> AnyOp:
         """Check if any truthy.
 
         Returns:
@@ -271,7 +270,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return AnyOp(self)
 
-    def all_(self) -> AllOp[ContextT]:
+    def all_(self) -> AllOp:
         """Check if all truthy.
 
         Returns:
@@ -281,7 +280,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return AllOp(self)
 
-    def join(self, separator: str) -> JoinOp[ContextT]:
+    def join(self, separator: str) -> JoinOp:
         """Join string elements.
 
         Args:
@@ -294,7 +293,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return JoinOp(self, separator)
 
-    def index(self, value: T) -> IndexOfOp[T, ContextT]:
+    def index(self, value: T) -> IndexOfOp[T]:
         """Find index of value.
 
         Args:
@@ -307,7 +306,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return IndexOfOp(self, self._get_operand(value))
 
-    def count(self, value: T) -> CountOp[ContextT]:
+    def count(self, value: T) -> CountOp:
         """Count occurrences.
 
         Args:
@@ -320,7 +319,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return CountOp(self, self._get_operand(value))
 
-    def find(self, predicate: Callable[[T], bool]) -> FindOp[T, ContextT]:
+    def find(self, predicate: Callable[[T], bool]) -> FindOp[T]:
         """Find first matching element.
 
         Args:
@@ -333,7 +332,7 @@ class ListValue[T, ContextT: ContextProtocol](
 
         return FindOp(self, predicate)
 
-    def find_index(self, predicate: Callable[[T], bool]) -> FindIndexOp[T, ContextT]:
+    def find_index(self, predicate: Callable[[T], bool]) -> FindIndexOp[T]:
         """Find index of first match.
 
         Args:
@@ -352,9 +351,9 @@ class ListValue[T, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class TupleValue[*Ts, ContextT: ContextProtocol](
-    ComparisonBase[tuple, "BoolValue", ContextT],
-    Literal[tuple[*Ts], ContextT],
+class TupleValue[*Ts](
+    ComparisonBase[tuple, "BoolValue"],
+    Literal[tuple[*Ts]],
 ):
     """RValue representing a tuple.
 
@@ -387,7 +386,7 @@ class TupleValue[*Ts, ContextT: ContextProtocol](
 
         return AtOp(self, self._get_operand(key))
 
-    def len_(self) -> LenOp[ContextT]:
+    def len_(self) -> LenOp:
         """Get tuple length.
 
         Returns:
@@ -397,7 +396,7 @@ class TupleValue[*Ts, ContextT: ContextProtocol](
 
         return LenOp(self)
 
-    def contains(self, item: object) -> ContainsOp[ContextT]:
+    def contains(self, item: object) -> ContainsOp:
         """Check if item is in tuple.
 
         Args:
@@ -410,7 +409,7 @@ class TupleValue[*Ts, ContextT: ContextProtocol](
 
         return ContainsOp(self, self._get_operand(item))
 
-    def first(self) -> FirstOp[object, ContextT]:
+    def first(self) -> FirstOp[object]:
         """Get first element.
 
         Returns:
@@ -420,7 +419,7 @@ class TupleValue[*Ts, ContextT: ContextProtocol](
 
         return FirstOp(self)
 
-    def last(self) -> LastOp[object, ContextT]:
+    def last(self) -> LastOp[object]:
         """Get last element.
 
         Returns:
@@ -436,10 +435,10 @@ class TupleValue[*Ts, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class DictValue[K, V, ContextT: ContextProtocol](
-    MappingBase[K, V, "DictValue[K, V]", ContextT],
-    ComparisonBase[dict[K, V], "BoolValue", ContextT],
-    Literal[dict[K, V], ContextT],
+class DictValue[K, V](
+    MappingBase[K, V, "DictValue[K, V]"],
+    ComparisonBase[dict[K, V], "BoolValue"],
+    Literal[dict[K, V]],
 ):
     """RValue representing a dictionary.
 
@@ -458,7 +457,7 @@ class DictValue[K, V, ContextT: ContextProtocol](
 
     VALUE_TYPE: ClassVar[type] = dict
 
-    def _wrap_result(self, value: object) -> DictValue[K, V, ContextT]:
+    def _wrap_result(self, value: object) -> DictValue[K, V]:
         """Wrap result in DictValue."""
         return DictValue(dict(value))  # type: ignore[arg-type]
 
@@ -466,13 +465,13 @@ class DictValue[K, V, ContextT: ContextProtocol](
         """Convert operand to RValue if needed."""
         return literal(other)
 
-    def __getitem__(self, key: K) -> AtOp[V, ContextT]:
+    def __getitem__(self, key: K) -> AtOp[V]:
         """Get value for key."""
         from ..ops.sequence_ops import AtOp
 
         return AtOp(self, self._get_operand(key))
 
-    def len_(self) -> LenOp[ContextT]:
+    def len_(self) -> LenOp:
         """Get number of items.
 
         Returns:
@@ -482,7 +481,7 @@ class DictValue[K, V, ContextT: ContextProtocol](
 
         return LenOp(self)
 
-    def contains(self, key: K) -> ContainsOp[ContextT]:
+    def contains(self, key: K) -> ContainsOp:
         """Check if key exists.
 
         Args:
@@ -495,7 +494,7 @@ class DictValue[K, V, ContextT: ContextProtocol](
 
         return ContainsOp(self, self._get_operand(key))
 
-    def keys_(self) -> DictKeysOp[K, ContextT]:
+    def keys_(self) -> DictKeysOp[K]:
         """Get all keys.
 
         Returns:
@@ -505,7 +504,7 @@ class DictValue[K, V, ContextT: ContextProtocol](
 
         return DictKeysOp(self)
 
-    def values_(self) -> DictValuesOp[V, ContextT]:
+    def values_(self) -> DictValuesOp[V]:
         """Get all values.
 
         Returns:
@@ -515,7 +514,7 @@ class DictValue[K, V, ContextT: ContextProtocol](
 
         return DictValuesOp(self)
 
-    def items_(self) -> DictItemsOp[K, V, ContextT]:
+    def items_(self) -> DictItemsOp[K, V]:
         """Get all key-value pairs.
 
         Returns:
@@ -525,7 +524,7 @@ class DictValue[K, V, ContextT: ContextProtocol](
 
         return DictItemsOp(self)
 
-    def get_(self, key: K, default: V | None = None) -> DictGetOp[V, ContextT]:
+    def get_(self, key: K, default: V | None = None) -> DictGetOp[V]:
         """Get value with default.
 
         Args:
@@ -545,9 +544,9 @@ class DictValue[K, V, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class SetValue[T, ContextT: ContextProtocol](
-    ComparisonBase[set[T], "BoolValue", ContextT],
-    Literal[set[T], ContextT],
+class SetValue[T](
+    ComparisonBase[set[T], "BoolValue"],
+    Literal[set[T]],
 ):
     """RValue representing a set.
 
@@ -568,7 +567,7 @@ class SetValue[T, ContextT: ContextProtocol](
         """Convert operand to RValue if needed."""
         return literal(other)
 
-    def len_(self) -> LenOp[ContextT]:
+    def len_(self) -> LenOp:
         """Get set size.
 
         Returns:
@@ -578,7 +577,7 @@ class SetValue[T, ContextT: ContextProtocol](
 
         return LenOp(self)
 
-    def contains(self, item: T) -> ContainsOp[ContextT]:
+    def contains(self, item: T) -> ContainsOp:
         """Check if item is in set.
 
         Args:
@@ -600,9 +599,9 @@ class SetValue[T, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class FrozenSetValue[T, ContextT: ContextProtocol](
-    ComparisonBase[frozenset[T], "BoolValue", ContextT],
-    Literal[frozenset[T], ContextT],
+class FrozenSetValue[T](
+    ComparisonBase[frozenset[T], "BoolValue"],
+    Literal[frozenset[T]],
 ):
     """RValue representing a frozenset.
 
@@ -623,7 +622,7 @@ class FrozenSetValue[T, ContextT: ContextProtocol](
         """Convert operand to RValue if needed."""
         return literal(other)
 
-    def len_(self) -> LenOp[ContextT]:
+    def len_(self) -> LenOp:
         """Get set size.
 
         Returns:
@@ -633,7 +632,7 @@ class FrozenSetValue[T, ContextT: ContextProtocol](
 
         return LenOp(self)
 
-    def contains(self, item: T) -> ContainsOp[ContextT]:
+    def contains(self, item: T) -> ContainsOp:
         """Check if item is in set.
 
         Args:

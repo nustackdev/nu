@@ -36,7 +36,7 @@ from ..term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import ContextProtocol
+    from ..context import Context
     from ..term import RValue
     from ..values.bases import (
         ArithmeticBase,
@@ -79,7 +79,7 @@ type OpArgument = (
 )
 
 
-class UnaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):
+class UnaryOp[ResultT](Operation[ResultT]):
     """Base class for unary operations.
 
     Defines execution pattern: evaluate operand → handle special values →
@@ -97,7 +97,7 @@ class UnaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):
         """
         self.children = (cast("RValue", operand),)
 
-    def execute(self, context: ContextT) -> ResultT:
+    def execute(self, context: Context) -> ResultT:
         """Execute unary operation.
 
         Args:
@@ -135,7 +135,7 @@ class UnaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]):
 # =============================================================================
 
 
-class NegOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
+class NegOp[ResultT](UnaryOp[ResultT | SpecialValue]):
     """Negation: -operand."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -145,7 +145,7 @@ class NegOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, 
             return NAN
 
 
-class AbsOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
+class AbsOp[ResultT](UnaryOp[ResultT | SpecialValue]):
     """Absolute value: abs(operand)."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -160,7 +160,7 @@ class AbsOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, 
 # =============================================================================
 
 
-class NotOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
+class NotOp[ResultT](UnaryOp[ResultT | SpecialValue]):
     """Logical NOT: not operand.
 
     Python's 'not' keyword cannot be overloaded.
@@ -171,7 +171,7 @@ class NotOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, 
         return not operand  # type: ignore
 
 
-class BitwiseNotOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
+class BitwiseNotOp[ResultT](UnaryOp[ResultT | SpecialValue]):
     """Bitwise NOT: ~operand (two's complement).
 
     Note: Python's ~ operator is blocked in ergonomics.
@@ -185,7 +185,7 @@ class BitwiseNotOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | Special
             return NAN
 
 
-class PosOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, ContextT]):
+class PosOp[ResultT](UnaryOp[ResultT | SpecialValue]):
     """Unary plus: +operand."""
 
     def _apply_op(self, operand: object) -> ResultT | SpecialValue:
@@ -195,7 +195,7 @@ class PosOp[ResultT, ContextT: ContextProtocol](UnaryOp[ResultT | SpecialValue, 
             return NAN
 
 
-class BoolOp[ContextT: ContextProtocol](UnaryOp[bool, ContextT]):
+class BoolOp(UnaryOp[bool]):
     """Operand is not of NaN type."""
 
     def _apply_op(self, operand: object) -> bool:
@@ -207,28 +207,28 @@ class BoolOp[ContextT: ContextProtocol](UnaryOp[bool, ContextT]):
 # =============================================================================
 
 
-class IsEmptyOp[ContextT: ContextProtocol](UnaryOp[bool, ContextT]):
+class IsEmptyOp(UnaryOp[bool]):
     """Operand is of Empty type."""
 
     def _apply_op(self, operand: object) -> bool:
         return is_empty(operand)
 
 
-class NotEmptyOp[ContextT: ContextProtocol](UnaryOp[bool, ContextT]):
+class NotEmptyOp(UnaryOp[bool]):
     """Operand is not of Empty type."""
 
     def _apply_op(self, operand: object) -> bool:
         return not is_empty(operand)
 
 
-class IsNaNOp[ContextT: ContextProtocol](UnaryOp[bool, ContextT]):
+class IsNaNOp(UnaryOp[bool]):
     """Operand is of NaN type."""
 
     def _apply_op(self, operand: object) -> bool:
         return is_nan(operand)
 
 
-class NotNaNOp[ContextT: ContextProtocol](UnaryOp[bool, ContextT]):
+class NotNaNOp(UnaryOp[bool]):
     """Operand is not of NaN type."""
 
     def _apply_op(self, operand: object) -> bool:

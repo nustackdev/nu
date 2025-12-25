@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from ..context import ContextProtocol
 from .base import Literal
 from .bases import (
     ArithmeticBase,
@@ -45,24 +44,18 @@ __all__ = [
 # =============================================================================
 
 
-class IntValue[ContextT: ContextProtocol](
+class IntValue(
     ArithmeticBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
-        "FloatValue[ContextT] | IntValue[ContextT]",
-        ContextT,
+        "int | float | FloatValue | IntValue",
+        "FloatValue | IntValue",
     ],
-    ComparisonBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
-    ],
-    LogicalBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
-    ],
+    ComparisonBase["int | float | FloatValue | IntValue", "BoolValue"],
+    LogicalBase["int | float | FloatValue | IntValue", "BoolValue"],
     BitwiseBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
-        "FloatValue[ContextT] | IntValue[ContextT]",
-        ContextT,
+        "int | float | FloatValue | IntValue",
+        "FloatValue | IntValue",
     ],
-    Literal[int, ContextT],
+    Literal[int],
 ):
     """RValue representing an integer.
 
@@ -88,24 +81,18 @@ class IntValue[ContextT: ContextProtocol](
 # =============================================================================
 
 
-class FloatValue[ContextT: ContextProtocol](
+class FloatValue(
     ArithmeticBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
-        "FloatValue[ContextT] | IntValue[ContextT]",
-        ContextT,
+        "int | float | FloatValue | IntValue",
+        "FloatValue | IntValue",
     ],
-    ComparisonBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
-    ],
-    LogicalBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]", "BoolValue[ContextT]", ContextT
-    ],
+    ComparisonBase["int | float | FloatValue | IntValue", "BoolValue"],
+    LogicalBase["int | float | FloatValue | IntValue", "BoolValue"],
     BitwiseBase[
-        "int | float | FloatValue[ContextT] | IntValue[ContextT]",
-        "FloatValue[ContextT] | IntValue[ContextT]",
-        ContextT,
+        "int | float | FloatValue | IntValue",
+        "FloatValue | IntValue",
     ],
-    Literal[float, ContextT],
+    Literal[float],
 ):
     """RValue representing a floating-point number.
 
@@ -136,10 +123,10 @@ class FloatValue[ContextT: ContextProtocol](
 # =============================================================================
 
 
-class BoolValue[ContextT: ContextProtocol](
-    LogicalBase["bool | BoolValue[ContextT]", "BoolValue[ContextT]", ContextT],
-    ComparisonBase["bool | BoolValue[ContextT]", "BoolValue[ContextT]", ContextT],
-    Literal[bool, ContextT],
+class BoolValue(
+    LogicalBase["bool | BoolValue", "BoolValue"],
+    ComparisonBase["bool | BoolValue", "BoolValue"],
+    Literal[bool],
 ):
     """RValue representing a boolean.
 
@@ -163,10 +150,10 @@ class BoolValue[ContextT: ContextProtocol](
 # =============================================================================
 
 
-class StrValue[ContextT: ContextProtocol](
-    ComparisonBase["str | StrValue[ContextT]", "BoolValue[ContextT]", ContextT],
-    LogicalBase["str | StrValue[ContextT]", "BoolValue[ContextT]", ContextT],
-    Literal[str, ContextT],
+class StrValue(
+    ComparisonBase["str | StrValue", "BoolValue"],
+    LogicalBase["str | StrValue", "BoolValue"],
+    Literal[str],
 ):
     """RValue representing a string.
 
@@ -185,19 +172,19 @@ class StrValue[ContextT: ContextProtocol](
     def _wrap_comparison_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)
 
-    def __add__(self, other: str) -> StrValue[ContextT]:
+    def __add__(self, other: str) -> StrValue:
         """Concatenate strings."""
         from ..ops.binary_ops import AddOp
 
         return StrValue(AddOp(self, literal(other)))
 
-    def __radd__(self, other: str) -> StrValue[ContextT]:
+    def __radd__(self, other: str) -> StrValue:
         """Right concatenate strings."""
         from ..ops.binary_ops import AddOp
 
         return StrValue(AddOp(literal(other), self))
 
-    def __getitem__(self, key: int | slice) -> StrValue[ContextT]:
+    def __getitem__(self, key: int | slice) -> StrValue:
         """Get character or substring."""
         if isinstance(key, slice):
             from ..ops.sequence_ops import SliceOp
@@ -208,7 +195,7 @@ class StrValue[ContextT: ContextProtocol](
 
         return StrValue(AtOp(self, literal(key)))
 
-    def len_(self) -> IntValue[ContextT]:
+    def len_(self) -> IntValue:
         """Get string length.
 
         Returns:
@@ -218,7 +205,7 @@ class StrValue[ContextT: ContextProtocol](
 
         return IntValue(LenOp(self))
 
-    def contains(self, substring: str) -> BoolValue[ContextT]:
+    def contains(self, substring: str) -> BoolValue:
         """Check if contains substring.
 
         Args:
@@ -237,10 +224,10 @@ class StrValue[ContextT: ContextProtocol](
 # =============================================================================
 
 
-class BytesValue[ContextT: ContextProtocol](
-    ComparisonBase["bytes | BytesValue[ContextT]", "BoolValue[ContextT]", ContextT],
-    LogicalBase["bytes | BytesValue[ContextT]", "BoolValue[ContextT]", ContextT],
-    Literal[bytes, ContextT],
+class BytesValue(
+    ComparisonBase["bytes | BytesValue", "BoolValue"],
+    LogicalBase["bytes | BytesValue", "BoolValue"],
+    Literal[bytes],
 ):
     """RValue representing bytes.
 
@@ -258,25 +245,25 @@ class BytesValue[ContextT: ContextProtocol](
     def _wrap_comparison_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)
 
-    def __add__(self, other: bytes | BytesValue) -> BytesValue[ContextT]:
+    def __add__(self, other: bytes | BytesValue) -> BytesValue:
         """Concatenate bytes."""
         from ..ops.binary_ops import AddOp
 
         return BytesValue(AddOp(self, literal(other)))
 
-    def __radd__(self, other: bytes) -> BytesValue[ContextT]:
+    def __radd__(self, other: bytes) -> BytesValue:
         """Right concatenate bytes."""
         from ..ops.binary_ops import AddOp
 
         return BytesValue(AddOp(literal(other), self))
 
     @overload
-    def __getitem__(self, key: int) -> IntValue[ContextT]: ...
+    def __getitem__(self, key: int) -> IntValue: ...
 
     @overload
-    def __getitem__(self, key: slice) -> BytesValue[ContextT]: ...
+    def __getitem__(self, key: slice) -> BytesValue: ...
 
-    def __getitem__(self, key: int | slice) -> BytesValue[ContextT] | IntValue[ContextT]:
+    def __getitem__(self, key: int | slice) -> BytesValue | IntValue:
         """Get byte or slice."""
         if isinstance(key, slice):
             from ..ops.sequence_ops import SliceOp
@@ -287,7 +274,7 @@ class BytesValue[ContextT: ContextProtocol](
 
         return IntValue(AtOp(self, literal(key)))
 
-    def len_(self) -> IntValue[ContextT]:
+    def len_(self) -> IntValue:
         """Get length of bytes.
 
         Returns:
@@ -303,9 +290,9 @@ class BytesValue[ContextT: ContextProtocol](
 # =============================================================================
 
 
-class NoneValue[ContextT: ContextProtocol](
-    LogicalBase["None | NoneValue[ContextT]", "BoolValue[ContextT]", ContextT],
-    Literal[None, ContextT],
+class NoneValue(
+    LogicalBase["None | NoneValue", "BoolValue"],
+    Literal[None],
 ):
     """RValue representing None.
 

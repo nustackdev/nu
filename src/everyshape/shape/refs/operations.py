@@ -38,7 +38,6 @@ from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
 from everyshape.loc import path
-from everyshape.shape.context import ContextProtocol
 from everyshape.shape.term import Operation, PrimitiveRef, ViewRef
 from everyshape.types import Empty, SpecialValue, Value
 from everyshape.view import capabilities as view_capabilities
@@ -47,6 +46,7 @@ from everyshape.view import capabilities as view_capabilities
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from everyshape.shape.context import Context
     from everyshape.view.view import View
 
 
@@ -84,7 +84,7 @@ __all__ = [  # noqa: RUF022
 # =============================================================================
 
 
-class GetOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue, ContextT]):
+class GetOp[T: Value](Operation[T | SpecialValue]):
     """Read operation for primitive values.
 
     Pure operation that navigates to a location and reads the value.
@@ -99,7 +99,7 @@ class GetOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue, Con
         >>> value = get_op.execute(ctx)  # Returns T | SpecialValue
     """
 
-    def __init__(self, ref: PrimitiveRef[T, ContextT]) -> None:
+    def __init__(self, ref: PrimitiveRef[T]) -> None:
         """Initialize get operation.
 
         Args:
@@ -108,7 +108,7 @@ class GetOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue, Con
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> T | SpecialValue:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute read operation.
 
         Args:
@@ -136,7 +136,7 @@ class GetOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue, Con
         return f"GetOp({self.ref!r})"
 
 
-class ExtractOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue, ContextT]):
+class ExtractOp[T: Value](Operation[T | SpecialValue]):
     """Extract operation for container structures.
 
     Pure operation that reads an entire container structure.
@@ -151,7 +151,7 @@ class ExtractOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue,
         >>> data = extract_op.execute(ctx)  # Returns dict/list/etc
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Convertible[T], ContextT]) -> None:
+    def __init__(self, ref: ViewRef[view_capabilities.Convertible[T]]) -> None:
         """Initialize extract operation.
 
         Args:
@@ -160,7 +160,7 @@ class ExtractOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue,
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> T | SpecialValue:
+    def execute(self, context: Context) -> T | SpecialValue:
         """Execute extract operation.
 
         Args:
@@ -193,7 +193,7 @@ class ExtractOp[T: Value, ContextT: ContextProtocol](Operation[T | SpecialValue,
         return f"ExtractOp({self.ref!r})"
 
 
-class ExistsOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
+class ExistsOp(Operation[bool]):
     """Existence check operation.
 
     Pure operation that checks if a location exists in storage.
@@ -206,7 +206,7 @@ class ExistsOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
         >>> exists = exists_op.execute(ctx)  # Returns bool
     """
 
-    def __init__(self, ref: PrimitiveRef[Value, ContextT] | ViewRef[View, ContextT]) -> None:
+    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View]) -> None:
         """Initialize exists operation.
 
         Args:
@@ -215,7 +215,7 @@ class ExistsOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> bool:
+    def execute(self, context: Context) -> bool:
         """Execute existence check.
 
         Args:
@@ -249,7 +249,7 @@ class ExistsOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
         return f"ExistsOp({self.ref!r})"
 
 
-class MissingOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
+class MissingOp(Operation[bool]):
     """Missing check operation (inverse of exists).
 
     Pure operation that checks if a location is missing from storage.
@@ -262,7 +262,7 @@ class MissingOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
         >>> is_missing = missing_op.execute(ctx)  # Returns bool
     """
 
-    def __init__(self, ref: PrimitiveRef[Value, ContextT] | ViewRef[View, ContextT]) -> None:
+    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View]) -> None:
         """Initialize missing operation.
 
         Args:
@@ -271,7 +271,7 @@ class MissingOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> bool:
+    def execute(self, context: Context) -> bool:
         """Execute missing check.
 
         Args:
@@ -287,7 +287,7 @@ class MissingOp[ContextT: ContextProtocol](Operation[bool, ContextT]):
         return f"MissingOp({self.ref!r})"
 
 
-class LengthOp[ContextT: ContextProtocol](Operation[int | SpecialValue, ContextT]):
+class LengthOp(Operation[int | SpecialValue]):
     """Length query operation for containers.
 
     Pure operation that returns the length of a container.
@@ -300,7 +300,7 @@ class LengthOp[ContextT: ContextProtocol](Operation[int | SpecialValue, ContextT
         >>> length = len_op.execute(ctx)  # Returns int
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Sizeable, ContextT]) -> None:
+    def __init__(self, ref: ViewRef[view_capabilities.Sizeable]) -> None:
         """Initialize length operation.
 
         Args:
@@ -309,7 +309,7 @@ class LengthOp[ContextT: ContextProtocol](Operation[int | SpecialValue, ContextT
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | SpecialValue:
         """Execute length query.
 
         Args:
@@ -343,9 +343,7 @@ class LengthOp[ContextT: ContextProtocol](Operation[int | SpecialValue, ContextT
 # =============================================================================
 
 
-class MapOp[T: Value, R: Value, ContextT: ContextProtocol](
-    Operation[list[R] | SpecialValue, ContextT]
-):
+class MapOp[T: Value, R: Value](Operation[list[R] | SpecialValue]):
     """Map operation for sequences.
 
     Applies a function to each element of a sequence.
@@ -362,7 +360,7 @@ class MapOp[T: Value, R: Value, ContextT: ContextProtocol](
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]],
         func: Callable[[T], R],
     ) -> None:
         """Initialize map operation.
@@ -375,7 +373,7 @@ class MapOp[T: Value, R: Value, ContextT: ContextProtocol](
         self.func = func
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> list[R] | SpecialValue:
+    def execute(self, context: Context) -> list[R] | SpecialValue:
         """Execute map operation.
 
         Args:
@@ -405,7 +403,7 @@ class MapOp[T: Value, R: Value, ContextT: ContextProtocol](
         return f"MapOp({self.ref!r}, {self.func!r})"
 
 
-class FilterOp[T: Value, ContextT: ContextProtocol](Operation[list[T] | SpecialValue, ContextT]):
+class FilterOp[T: Value](Operation[list[T] | SpecialValue]):
     """Filter operation for sequences.
 
     Filters elements based on a predicate.
@@ -421,7 +419,7 @@ class FilterOp[T: Value, ContextT: ContextProtocol](Operation[list[T] | SpecialV
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]],
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize filter operation.
@@ -434,7 +432,7 @@ class FilterOp[T: Value, ContextT: ContextProtocol](Operation[list[T] | SpecialV
         self.predicate = predicate
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> list[T] | SpecialValue:
+    def execute(self, context: Context) -> list[T] | SpecialValue:
         """Execute filter operation.
 
         Args:
@@ -464,7 +462,7 @@ class FilterOp[T: Value, ContextT: ContextProtocol](Operation[list[T] | SpecialV
         return f"FilterOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceOp[T: Value, R, ContextT: ContextProtocol](Operation[R | SpecialValue, ContextT]):
+class ReduceOp[T: Value, R](Operation[R | SpecialValue]):
     """Reduce operation for sequences.
 
     Reduces a sequence to a single value using a reducer function.
@@ -481,7 +479,7 @@ class ReduceOp[T: Value, R, ContextT: ContextProtocol](Operation[R | SpecialValu
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]],
         func: Callable[[R, T], R],
         initial: R,
     ) -> None:
@@ -497,7 +495,7 @@ class ReduceOp[T: Value, R, ContextT: ContextProtocol](Operation[R | SpecialValu
         self.initial = initial
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> R | SpecialValue:
+    def execute(self, context: Context) -> R | SpecialValue:
         """Execute reduce operation.
 
         Args:
@@ -527,7 +525,7 @@ class ReduceOp[T: Value, R, ContextT: ContextProtocol](Operation[R | SpecialValu
         return f"ReduceOp({self.ref!r}, {self.func!r}, {self.initial!r})"
 
 
-class IndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT]):
+class IndexOp[T: Value](Operation[int]):
     """Index operation for sequences.
 
     Finds the index of a value in a sequence.
@@ -544,7 +542,7 @@ class IndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]],
         value: T,
     ) -> None:
         """Initialize index operation.
@@ -557,7 +555,7 @@ class IndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT]):
         self.value = value
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> int:
+    def execute(self, context: Context) -> int:
         """Execute index operation.
 
         Args:
@@ -587,7 +585,7 @@ class IndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT]):
         return f"IndexOp({self.ref!r}, {self.value!r})"
 
 
-class CountOp[T: Value, ContextT: ContextProtocol](Operation[int | SpecialValue, ContextT]):
+class CountOp[T: Value](Operation[int | SpecialValue]):
     """Count operation for sequences.
 
     Counts occurrences of a value in a sequence.
@@ -603,7 +601,7 @@ class CountOp[T: Value, ContextT: ContextProtocol](Operation[int | SpecialValue,
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]],
         value: T,
     ) -> None:
         """Initialize count operation.
@@ -616,7 +614,7 @@ class CountOp[T: Value, ContextT: ContextProtocol](Operation[int | SpecialValue,
         self.value = value
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | SpecialValue:
         """Execute count operation.
 
         Args:
@@ -646,7 +644,7 @@ class CountOp[T: Value, ContextT: ContextProtocol](Operation[int | SpecialValue,
         return f"CountOp({self.ref!r}, {self.value!r})"
 
 
-class FindOp[T: Value, ContextT: ContextProtocol](Operation[T, ContextT]):
+class FindOp[T: Value](Operation[T]):
     """Find operation for sequences.
 
     Finds the first element matching a predicate.
@@ -663,7 +661,7 @@ class FindOp[T: Value, ContextT: ContextProtocol](Operation[T, ContextT]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]],
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find operation.
@@ -676,7 +674,7 @@ class FindOp[T: Value, ContextT: ContextProtocol](Operation[T, ContextT]):
         self.predicate = predicate
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute find operation.
 
         Args:
@@ -709,7 +707,7 @@ class FindOp[T: Value, ContextT: ContextProtocol](Operation[T, ContextT]):
         return f"FindOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindIndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT]):
+class FindIndexOp[T: Value](Operation[int]):
     """Find index operation for sequences.
 
     Finds the index of the first element matching a predicate.
@@ -726,7 +724,7 @@ class FindIndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT])
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]],
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find index operation.
@@ -739,7 +737,7 @@ class FindIndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT])
         self.predicate = predicate
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> int:
+    def execute(self, context: Context) -> int:
         """Execute find index operation.
 
         Args:
@@ -777,7 +775,7 @@ class FindIndexOp[T: Value, ContextT: ContextProtocol](Operation[int, ContextT])
 # =============================================================================
 
 
-class KeysOp[K, ContextT: ContextProtocol](Operation[list[K] | SpecialValue, ContextT]):
+class KeysOp[K](Operation[list[K] | SpecialValue]):
     """Keys operation for mappings.
 
     Returns all keys of a mapping.
@@ -791,9 +789,7 @@ class KeysOp[K, ContextT: ContextProtocol](Operation[list[K] | SpecialValue, Con
         >>> keys = keys_op.execute(ctx)  # Returns list[K]
     """
 
-    def __init__(
-        self, ref: ViewRef[view_capabilities.Convertible[dict[K, object]], ContextT]
-    ) -> None:
+    def __init__(self, ref: ViewRef[view_capabilities.Convertible[dict[K, object]]]) -> None:
         """Initialize keys operation.
 
         Args:
@@ -802,7 +798,7 @@ class KeysOp[K, ContextT: ContextProtocol](Operation[list[K] | SpecialValue, Con
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> list[K] | SpecialValue:
+    def execute(self, context: Context) -> list[K] | SpecialValue:
         """Execute keys operation.
 
         Args:
@@ -834,7 +830,7 @@ class KeysOp[K, ContextT: ContextProtocol](Operation[list[K] | SpecialValue, Con
         return f"KeysOp({self.ref!r})"
 
 
-class ValuesOp[V: Value, ContextT: ContextProtocol](Operation[list[V] | SpecialValue, ContextT]):
+class ValuesOp[V: Value](Operation[list[V] | SpecialValue]):
     """Values operation for mappings.
 
     Returns all values of a mapping.
@@ -848,9 +844,7 @@ class ValuesOp[V: Value, ContextT: ContextProtocol](Operation[list[V] | SpecialV
         >>> values = values_op.execute(ctx)  # Returns list[V]
     """
 
-    def __init__(
-        self, ref: ViewRef[view_capabilities.Convertible[dict[object, V]], ContextT]
-    ) -> None:
+    def __init__(self, ref: ViewRef[view_capabilities.Convertible[dict[object, V]]]) -> None:
         """Initialize values operation.
 
         Args:
@@ -859,7 +853,7 @@ class ValuesOp[V: Value, ContextT: ContextProtocol](Operation[list[V] | SpecialV
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> list[V] | SpecialValue:
+    def execute(self, context: Context) -> list[V] | SpecialValue:
         """Execute values operation.
 
         Args:
@@ -891,9 +885,7 @@ class ValuesOp[V: Value, ContextT: ContextProtocol](Operation[list[V] | SpecialV
         return f"ValuesOp({self.ref!r})"
 
 
-class ItemsOp[K, V: Value, ContextT: ContextProtocol](
-    Operation[list[tuple[K, V]] | SpecialValue, ContextT]
-):
+class ItemsOp[K, V: Value](Operation[list[tuple[K, V]] | SpecialValue]):
     """Items operation for mappings.
 
     Returns all key-value pairs of a mapping.
@@ -908,7 +900,7 @@ class ItemsOp[K, V: Value, ContextT: ContextProtocol](
         >>> items = items_op.execute(ctx)  # Returns list[tuple[K, V]]
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Convertible[dict[K, V]], ContextT]) -> None:
+    def __init__(self, ref: ViewRef[view_capabilities.Convertible[dict[K, V]]]) -> None:
         """Initialize items operation.
 
         Args:
@@ -917,7 +909,7 @@ class ItemsOp[K, V: Value, ContextT: ContextProtocol](
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> list[tuple[K, V]] | SpecialValue:
+    def execute(self, context: Context) -> list[tuple[K, V]] | SpecialValue:
         """Execute items operation.
 
         Args:
@@ -949,9 +941,7 @@ class ItemsOp[K, V: Value, ContextT: ContextProtocol](
         return f"ItemsOp({self.ref!r})"
 
 
-class MapValuesOp[K, V: Value, R: Value, ContextT: ContextProtocol](
-    Operation[dict[K, R] | SpecialValue, ContextT]
-):
+class MapValuesOp[K, V: Value, R: Value](Operation[dict[K, R] | SpecialValue]):
     """Map values operation for mappings.
 
     Applies a function to each value in a mapping.
@@ -969,7 +959,7 @@ class MapValuesOp[K, V: Value, R: Value, ContextT: ContextProtocol](
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
         func: Callable[[V], R],
     ) -> None:
         """Initialize map values operation.
@@ -982,7 +972,7 @@ class MapValuesOp[K, V: Value, R: Value, ContextT: ContextProtocol](
         self.func = func
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> dict[K, R] | SpecialValue:
+    def execute(self, context: Context) -> dict[K, R] | SpecialValue:
         """Execute map values operation.
 
         Args:
@@ -1014,9 +1004,7 @@ class MapValuesOp[K, V: Value, R: Value, ContextT: ContextProtocol](
         return f"MapValuesOp({self.ref!r}, {self.func!r})"
 
 
-class MapItemsOp[K, V: Value, K2, V2: Value, ContextT: ContextProtocol](
-    Operation[dict[K2, V2] | SpecialValue, ContextT]
-):
+class MapItemsOp[K, V: Value, K2, V2: Value](Operation[dict[K2, V2] | SpecialValue]):
     """Map items operation for mappings.
 
     Applies a function to each (key, value) pair.
@@ -1035,7 +1023,7 @@ class MapItemsOp[K, V: Value, K2, V2: Value, ContextT: ContextProtocol](
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
         func: Callable[[K, V], tuple[K2, V2]],
     ) -> None:
         """Initialize map items operation.
@@ -1048,7 +1036,7 @@ class MapItemsOp[K, V: Value, K2, V2: Value, ContextT: ContextProtocol](
         self.func = func
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> dict[K2, V2] | SpecialValue:
+    def execute(self, context: Context) -> dict[K2, V2] | SpecialValue:
         """Execute map items operation.
 
         Args:
@@ -1080,9 +1068,7 @@ class MapItemsOp[K, V: Value, K2, V2: Value, ContextT: ContextProtocol](
         return f"MapItemsOp({self.ref!r}, {self.func!r})"
 
 
-class FilterItemsOp[K, V: Value, ContextT: ContextProtocol](
-    Operation[dict[K, V] | SpecialValue, ContextT]
-):
+class FilterItemsOp[K, V: Value](Operation[dict[K, V] | SpecialValue]):
     """Filter items operation for mappings.
 
     Filters items based on a predicate.
@@ -1099,7 +1085,7 @@ class FilterItemsOp[K, V: Value, ContextT: ContextProtocol](
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
         predicate: Callable[[K, V], bool],
     ) -> None:
         """Initialize filter items operation.
@@ -1112,7 +1098,7 @@ class FilterItemsOp[K, V: Value, ContextT: ContextProtocol](
         self.predicate = predicate
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> dict[K, V] | SpecialValue:
+    def execute(self, context: Context) -> dict[K, V] | SpecialValue:
         """Execute filter items operation.
 
         Args:
@@ -1144,9 +1130,7 @@ class FilterItemsOp[K, V: Value, ContextT: ContextProtocol](
         return f"FilterItemsOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceItemsOp[K, V: Value, R, ContextT: ContextProtocol](
-    Operation[R | SpecialValue, ContextT]
-):
+class ReduceItemsOp[K, V: Value, R](Operation[R | SpecialValue]):
     """Reduce items operation for mappings.
 
     Reduces a mapping to a single value.
@@ -1164,7 +1148,7 @@ class ReduceItemsOp[K, V: Value, R, ContextT: ContextProtocol](
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
         func: Callable[[R, K, V], R],
         initial: R,
     ) -> None:
@@ -1180,7 +1164,7 @@ class ReduceItemsOp[K, V: Value, R, ContextT: ContextProtocol](
         self.initial = initial
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> R | SpecialValue:
+    def execute(self, context: Context) -> R | SpecialValue:
         """Execute reduce items operation.
 
         Args:
@@ -1215,7 +1199,7 @@ class ReduceItemsOp[K, V: Value, R, ContextT: ContextProtocol](
         return f"ReduceItemsOp({self.ref!r}, {self.func!r}, {self.initial!r})"
 
 
-class FindKeyOp[K, V: Value, ContextT: ContextProtocol](Operation[K, ContextT]):
+class FindKeyOp[K, V: Value](Operation[K]):
     """Find key operation for mappings.
 
     Finds the first key whose value matches a predicate.
@@ -1233,7 +1217,7 @@ class FindKeyOp[K, V: Value, ContextT: ContextProtocol](Operation[K, ContextT]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
         predicate: Callable[[V], bool],
     ) -> None:
         """Initialize find key operation.
@@ -1246,7 +1230,7 @@ class FindKeyOp[K, V: Value, ContextT: ContextProtocol](Operation[K, ContextT]):
         self.predicate = predicate
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> K:
+    def execute(self, context: Context) -> K:
         """Execute find key operation.
 
         Args:
@@ -1281,7 +1265,7 @@ class FindKeyOp[K, V: Value, ContextT: ContextProtocol](Operation[K, ContextT]):
         return f"FindKeyOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindValueOp[V: Value, ContextT: ContextProtocol](Operation[V, ContextT]):
+class FindValueOp[V: Value](Operation[V]):
     """Find value operation for mappings.
 
     Finds the first value matching a predicate.
@@ -1298,7 +1282,7 @@ class FindValueOp[V: Value, ContextT: ContextProtocol](Operation[V, ContextT]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[object, V]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[dict[object, V]]],
         predicate: Callable[[V], bool],
     ) -> None:
         """Initialize find value operation.
@@ -1311,7 +1295,7 @@ class FindValueOp[V: Value, ContextT: ContextProtocol](Operation[V, ContextT]):
         self.predicate = predicate
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> V:
+    def execute(self, context: Context) -> V:
         """Execute find value operation.
 
         Args:
@@ -1346,7 +1330,7 @@ class FindValueOp[V: Value, ContextT: ContextProtocol](Operation[V, ContextT]):
         return f"FindValueOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindItemOp[K, V: Value, ContextT: ContextProtocol](Operation[tuple[K, V], ContextT]):
+class FindItemOp[K, V: Value](Operation[tuple[K, V]]):
     """Find item operation for mappings.
 
     Finds the first (key, value) pair matching a predicate.
@@ -1364,7 +1348,7 @@ class FindItemOp[K, V: Value, ContextT: ContextProtocol](Operation[tuple[K, V], 
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]], ContextT],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
         predicate: Callable[[K, V], bool],
     ) -> None:
         """Initialize find item operation.
@@ -1377,7 +1361,7 @@ class FindItemOp[K, V: Value, ContextT: ContextProtocol](Operation[tuple[K, V], 
         self.predicate = predicate
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> tuple[K, V]:
+    def execute(self, context: Context) -> tuple[K, V]:
         """Execute find item operation.
 
         Args:

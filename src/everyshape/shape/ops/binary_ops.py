@@ -39,7 +39,7 @@ from ..term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import ContextProtocol
+    from ..context import Context
     from ..term import RValue
     from ..values.bases import (
         ArithmeticBase,
@@ -94,9 +94,7 @@ type OpArgument = (
 )
 
 
-class BinaryOp[ResultT, ContextT: ContextProtocol](
-    Operation[ResultT | SpecialValue, ContextT], ABC
-):
+class BinaryOp[ResultT](Operation[ResultT | SpecialValue], ABC):
     """Base class for binary operations.
 
     Defines execution pattern: evaluate operands → handle special values →
@@ -115,7 +113,7 @@ class BinaryOp[ResultT, ContextT: ContextProtocol](
         """
         self.children = (cast("RValue", left), cast("RValue", right))
 
-    def execute(self, context: ContextT) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | SpecialValue:
         """Execute binary operation.
 
         Args:
@@ -161,7 +159,7 @@ class BinaryOp[ResultT, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class AddOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class AddOp[ResultT](BinaryOp[ResultT]):
     """Addition: left + right."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -171,7 +169,7 @@ class AddOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class SubOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class SubOp[ResultT](BinaryOp[ResultT]):
     """Subtraction: left - right."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -181,7 +179,7 @@ class SubOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class MulOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class MulOp[ResultT](BinaryOp[ResultT]):
     """Multiplication: left * right."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -191,7 +189,7 @@ class MulOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class DivOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class DivOp[ResultT](BinaryOp[ResultT]):
     """Division: left / right. Returns NaN on division by zero."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -204,7 +202,7 @@ class DivOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class FloorDivOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class FloorDivOp[ResultT](BinaryOp[ResultT]):
     """Floor division: left // right. Returns NaN on division by zero."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -217,7 +215,7 @@ class FloorDivOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]
             return NAN
 
 
-class ModOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class ModOp[ResultT](BinaryOp[ResultT]):
     """Modulo: left % right. Returns NaN on division by zero."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -230,7 +228,7 @@ class ModOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class PowOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class PowOp[ResultT](BinaryOp[ResultT]):
     """Power: left ** right."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -245,7 +243,7 @@ class PowOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
 # =============================================================================
 
 
-class GtOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+class GtOp(BinaryOp[bool | SpecialValue]):
     """Greater than: left > right."""
 
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
@@ -255,7 +253,7 @@ class GtOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
             return NAN
 
 
-class LtOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+class LtOp(BinaryOp[bool | SpecialValue]):
     """Less than: left < right."""
 
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
@@ -265,7 +263,7 @@ class LtOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
             return NAN
 
 
-class EqOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+class EqOp(BinaryOp[bool | SpecialValue]):
     """Equality: left == right."""
 
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
@@ -275,7 +273,7 @@ class EqOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
             return NAN
 
 
-class NeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+class NeOp(BinaryOp[bool | SpecialValue]):
     """Not equal: left != right."""
 
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
@@ -285,7 +283,7 @@ class NeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
             return NAN
 
 
-class GeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+class GeOp(BinaryOp[bool | SpecialValue]):
     """Greater than or equal: left >= right."""
 
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
@@ -295,7 +293,7 @@ class GeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
             return NAN
 
 
-class LeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+class LeOp(BinaryOp[bool | SpecialValue]):
     """Less than or equal: left <= right."""
 
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
@@ -305,7 +303,7 @@ class LeOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
             return NAN
 
 
-class IdCompOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT]):
+class IdCompOp(BinaryOp[bool | SpecialValue]):
     """Identity comparison: left is right."""
 
     def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
@@ -320,10 +318,10 @@ class IdCompOp[ContextT: ContextProtocol](BinaryOp[bool | SpecialValue, ContextT
 # =============================================================================
 
 
-class AndOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class AndOp[ResultT](BinaryOp[ResultT]):
     """Logical AND: left and right. Short-circuits at Python level."""
 
-    def execute(self, context: ContextT) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | SpecialValue:
         """Execute AND with short-circuit evaluation.
 
         Evaluates left, and only if truthy, evaluates right.
@@ -360,10 +358,10 @@ class AndOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
         raise NotImplementedError
 
 
-class OrOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class OrOp[ResultT](BinaryOp[ResultT]):
     """Logical OR: left or right. Short-circuits at Python level."""
 
-    def execute(self, context: ContextT) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | SpecialValue:
         """Execute OR with short-circuit evaluation.
 
         Evaluates left, and only if falsy, evaluates right.
@@ -405,7 +403,7 @@ class OrOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
 # =============================================================================
 
 
-class XorOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class XorOp[ResultT](BinaryOp[ResultT]):
     """Bitwise XOR: left ^ right."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -415,7 +413,7 @@ class XorOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class LShiftOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class LShiftOp[ResultT](BinaryOp[ResultT]):
     """Left shift: left << right."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -425,7 +423,7 @@ class LShiftOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class RShiftOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class RShiftOp[ResultT](BinaryOp[ResultT]):
     """Right shift: left >> right."""
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
@@ -435,7 +433,7 @@ class RShiftOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
             return NAN
 
 
-class BitwiseAndOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class BitwiseAndOp[ResultT](BinaryOp[ResultT]):
     """Bitwise AND: left & right.
 
     Note: This is distinct from AndOp (logical AND).
@@ -449,7 +447,7 @@ class BitwiseAndOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, Context
             return NAN
 
 
-class BitwiseOrOp[ResultT, ContextT: ContextProtocol](BinaryOp[ResultT, ContextT]):
+class BitwiseOrOp[ResultT](BinaryOp[ResultT]):
     """Bitwise OR: left | right.
 
     Note: This is distinct from OrOp (logical OR).

@@ -18,11 +18,16 @@ Commands (impure mutations):
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from everyshape.loc import path
-from everyshape.shape.context import ContextProtocol
 from everyshape.shape.term import Command, PrimitiveRef, RValue, ViewRef
 from everyshape.types import SpecialValue, Value
 from everyshape.view import Appendable, Assignable, Clearable, Deletable, Initializable
+
+
+if TYPE_CHECKING:
+    from everyshape.shape.context import Context
 
 
 __all__ = [  # noqa: RUF022
@@ -47,7 +52,7 @@ __all__ = [  # noqa: RUF022
 # =============================================================================
 
 
-class SetCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
+class SetCmd[T: Value](Command[T]):
     """Write command for primitive values.
 
     Impure command that writes a value to a storage location.
@@ -64,8 +69,8 @@ class SetCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
 
     def __init__(
         self,
-        ref: PrimitiveRef[T, ContextT],
-        value: RValue[T | SpecialValue, ContextT],
+        ref: PrimitiveRef[T],
+        value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize set command.
 
@@ -77,7 +82,7 @@ class SetCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         self.value_expr = value
         self.children = (ref, value)
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute write command.
 
         Args:
@@ -115,7 +120,7 @@ class SetCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         return f"SetCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class DeleteCmd[ContextT: ContextProtocol](Command[None, ContextT]):
+class DeleteCmd(Command[None]):
     """Delete command for removing items.
 
     Impure command that deletes a value from storage.
@@ -138,7 +143,7 @@ class DeleteCmd[ContextT: ContextProtocol](Command[None, ContextT]):
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> None:
+    def execute(self, context: Context) -> None:
         """Execute delete command.
 
         Args:
@@ -169,7 +174,7 @@ class DeleteCmd[ContextT: ContextProtocol](Command[None, ContextT]):
         return f"DeleteCmd({self.ref!r})"
 
 
-class StoreCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
+class StoreCmd[T: Value](Command[T]):
     """Store command for container structures.
 
     Impure command that writes an entire structure to a container.
@@ -186,8 +191,8 @@ class StoreCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
 
     def __init__(
         self,
-        ref: ViewRef[Initializable, ContextT],
-        data: RValue[T | SpecialValue, ContextT],
+        ref: ViewRef[Initializable],
+        data: RValue[T | SpecialValue],
     ) -> None:
         """Initialize store command.
 
@@ -199,7 +204,7 @@ class StoreCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         self.data_expr = data
         self.children = (ref, data)
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute store command.
 
         Args:
@@ -239,7 +244,7 @@ class StoreCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         return f"StoreCmd({self.ref!r}, {self.data_expr!r})"
 
 
-class ClearCmd[ContextT: ContextProtocol](Command[None, ContextT]):
+class ClearCmd(Command[None]):
     """Clear command for containers.
 
     Impure command that removes all items from a container.
@@ -253,7 +258,7 @@ class ClearCmd[ContextT: ContextProtocol](Command[None, ContextT]):
         >>> clear_cmd.execute(ctx)  # Returns None
     """
 
-    def __init__(self, ref: ViewRef[Clearable, ContextT]) -> None:
+    def __init__(self, ref: ViewRef[Clearable]) -> None:
         """Initialize clear command.
 
         Args:
@@ -262,7 +267,7 @@ class ClearCmd[ContextT: ContextProtocol](Command[None, ContextT]):
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> None:
+    def execute(self, context: Context) -> None:
         """Execute clear command.
 
         Args:
@@ -301,7 +306,7 @@ class ClearCmd[ContextT: ContextProtocol](Command[None, ContextT]):
 # =============================================================================
 
 
-class AppendCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
+class AppendCmd[T: Value](Command[T]):
     """Append command for sequences.
 
     Impure command that appends an item to a sequence.
@@ -318,8 +323,8 @@ class AppendCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
 
     def __init__(
         self,
-        ref: ViewRef[Appendable, ContextT],
-        value: RValue[T | SpecialValue, ContextT],
+        ref: ViewRef[Appendable],
+        value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize append command.
 
@@ -331,7 +336,7 @@ class AppendCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         self.value_expr = value
         self.children = (ref, value)
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute append command.
 
         Args:
@@ -371,7 +376,7 @@ class AppendCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         return f"AppendCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class InsertCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
+class InsertCmd[T: Value](Command[T]):
     """Insert command for sequences.
 
     Impure command that inserts an item at a specific index.
@@ -389,8 +394,8 @@ class InsertCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
     def __init__(
         self,
         ref: ViewRef,
-        index: RValue[int | SpecialValue, ContextT],
-        value: RValue[T | SpecialValue, ContextT],
+        index: RValue[int | SpecialValue],
+        value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize insert command.
 
@@ -404,7 +409,7 @@ class InsertCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         self.value_expr = value
         self.children = (ref, index, value)
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute insert command.
 
         Args:
@@ -448,7 +453,7 @@ class InsertCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         return f"InsertCmd({self.ref!r}, {self.index_expr!r}, {self.value_expr!r})"
 
 
-class PopCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
+class PopCmd[T: Value](Command[T]):
     """Pop command for sequences.
 
     Impure command that removes and returns an item from a sequence.
@@ -466,7 +471,7 @@ class PopCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
     def __init__(
         self,
         ref: ViewRef,
-        index: RValue[int | SpecialValue, ContextT] | None = None,
+        index: RValue[int | SpecialValue] | None = None,
     ) -> None:
         """Initialize pop command.
 
@@ -478,7 +483,7 @@ class PopCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
         self.index_expr = index
         self.children = (ref, index) if index is not None else (ref,)
 
-    def execute(self, context: ContextT) -> T:
+    def execute(self, context: Context) -> T:
         """Execute pop command.
 
         Args:
@@ -522,7 +527,7 @@ class PopCmd[T: Value, ContextT: ContextProtocol](Command[T, ContextT]):
 # =============================================================================
 
 
-class AddCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
+class AddCmd[T: Value](Command[None]):
     """Add command for sets.
 
     Impure command that adds an item to a set.
@@ -540,7 +545,7 @@ class AddCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
     def __init__(
         self,
         ref: ViewRef,
-        value: RValue[T | SpecialValue, ContextT],
+        value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize add command.
 
@@ -552,7 +557,7 @@ class AddCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
         self.value_expr = value
         self.children = (ref, value)
 
-    def execute(self, context: ContextT) -> None:
+    def execute(self, context: Context) -> None:
         """Execute add command.
 
         Args:
@@ -590,7 +595,7 @@ class AddCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
         return f"AddCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class RemoveCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
+class RemoveCmd[T: Value](Command[None]):
     """Remove command for sets.
 
     Impure command that removes an item from a set.
@@ -609,7 +614,7 @@ class RemoveCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
     def __init__(
         self,
         ref: ViewRef,
-        value: RValue[T | SpecialValue, ContextT],
+        value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize remove command.
 
@@ -621,7 +626,7 @@ class RemoveCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
         self.value_expr = value
         self.children = (ref, value)
 
-    def execute(self, context: ContextT) -> None:
+    def execute(self, context: Context) -> None:
         """Execute remove command.
 
         Args:
@@ -662,7 +667,7 @@ class RemoveCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
         return f"RemoveCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class DiscardCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
+class DiscardCmd[T: Value](Command[None]):
     """Discard command for sets.
 
     Impure command that discards an item from a set.
@@ -681,7 +686,7 @@ class DiscardCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
     def __init__(
         self,
         ref: ViewRef,
-        value: RValue[T | SpecialValue, ContextT],
+        value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize discard command.
 
@@ -693,7 +698,7 @@ class DiscardCmd[T: Value, ContextT: ContextProtocol](Command[None, ContextT]):
         self.value_expr = value
         self.children = (ref, value)
 
-    def execute(self, context: ContextT) -> None:
+    def execute(self, context: Context) -> None:
         """Execute discard command.
 
         Args:

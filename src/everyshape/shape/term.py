@@ -53,13 +53,12 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from everyshape.loc import path
 
-from .context import ContextProtocol
-
 
 if TYPE_CHECKING:
     from everyshape.types import Value
     from everyshape.view import View
 
+    from .context import Context
     from .shape import Shape
 
 
@@ -75,8 +74,6 @@ __all__ = [
 ]
 
 ViewT_co = TypeVar("ViewT_co", covariant=True, bound="View")
-ContextT = TypeVar("ContextT", bound=ContextProtocol)
-
 
 logger = getLogger(__name__)
 
@@ -85,7 +82,7 @@ logger = getLogger(__name__)
 # =============================================================================
 
 
-class Term[ResultT, ContextT: ContextProtocol](ABC):
+class Term[ResultT](ABC):
     """Base contract for all executable semantic nodes.
 
     Everything in the Shape system is a Term:
@@ -98,7 +95,7 @@ class Term[ResultT, ContextT: ContextProtocol](ABC):
     """
 
     @abstractmethod
-    def execute(self, context: ContextT) -> ResultT:
+    def execute(self, context: Context) -> ResultT:
         """Execute this term within a context.
 
         Semantics depend on term type:
@@ -141,7 +138,7 @@ class Term[ResultT, ContextT: ContextProtocol](ABC):
 # =============================================================================
 
 
-class LValue[PathTypeT: path.Path, ContextT: ContextProtocol](Term[None, ContextT]):
+class LValue[PathTypeT: path.Path](Term[None]):
     """Addressable location in the data tree.
 
     LValues represent positions where data lives.
@@ -165,7 +162,7 @@ class LValue[PathTypeT: path.Path, ContextT: ContextProtocol](Term[None, Context
     """
 
     @abstractmethod
-    def resolve(self, context: ContextT) -> PathTypeT:
+    def resolve(self, context: Context) -> PathTypeT:
         """Resolve to concrete Path.
 
         Args:
@@ -182,7 +179,7 @@ class LValue[PathTypeT: path.Path, ContextT: ContextProtocol](Term[None, Context
         """
         ...
 
-    def execute(self, context: ContextT) -> None:
+    def execute(self, context: Context) -> None:
         """Execute does not make sense for LValues (LValues are locations not computations).
 
         Args:
@@ -199,7 +196,7 @@ class LValue[PathTypeT: path.Path, ContextT: ContextProtocol](Term[None, Context
 # =============================================================================
 
 
-class RValue[ResultT, ContextT: ContextProtocol](Term[ResultT, ContextT]):
+class RValue[ResultT](Term[ResultT]):
     """Evaluable expression that produces a value.
 
     RValues represent computations - both pure (operations) and
@@ -245,7 +242,7 @@ class RValue[ResultT, ContextT: ContextProtocol](Term[ResultT, ContextT]):
 # =============================================================================
 
 
-class Operation[OperationResultT, ContextT: ContextProtocol](RValue[OperationResultT, ContextT]):
+class Operation[OperationResultT](RValue[OperationResultT]):
     """Pure computation that returns a value of type T.
 
     Operations are deterministic expressions with no side effects:
@@ -281,7 +278,7 @@ class Operation[OperationResultT, ContextT: ContextProtocol](RValue[OperationRes
         return all(child.is_pure for child in self.children if isinstance(child, RValue))
 
     @abstractmethod
-    def execute(self, context: ContextT) -> OperationResultT:
+    def execute(self, context: Context) -> OperationResultT:
         """Execute pure computation and return typed result.
 
         Typical execution pattern:
@@ -303,7 +300,7 @@ class Operation[OperationResultT, ContextT: ContextProtocol](RValue[OperationRes
 # =============================================================================
 
 
-class Command[CommandResultT, ContextT: ContextProtocol](RValue[CommandResultT, ContextT]):
+class Command[CommandResultT](RValue[CommandResultT]):
     """Impure mutation that returns a result of type T.
 
     Commands modify tree state with explicit side effects:
@@ -334,7 +331,7 @@ class Command[CommandResultT, ContextT: ContextProtocol](RValue[CommandResultT, 
         return False
 
     @abstractmethod
-    def execute(self, context: ContextT) -> CommandResultT:
+    def execute(self, context: Context) -> CommandResultT:
         """Execute mutation and return result.
 
         Typical execution pattern:
@@ -361,7 +358,7 @@ class Command[CommandResultT, ContextT: ContextProtocol](RValue[CommandResultT, 
 # =============================================================================
 
 
-class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, ContextT], ABC):
+class Ref[PathTypeT: path.Path](LValue[PathTypeT], ABC):
     """Typed reference to a location in the tree.
 
     Combines addressability (LValue) with type information.
@@ -439,7 +436,7 @@ class Ref[PathTypeT: path.Path, ContextT: ContextProtocol](LValue[PathTypeT, Con
         return None
 
 
-class ViewRef(Generic[ViewT_co, ContextT], Ref[path.PathToView, ContextT], ABC):  # noqa: UP046
+class ViewRef(Generic[ViewT_co], Ref[path.PathToView], ABC):  # noqa: UP046
     """Ref that points to a View (container in the tree)."""
 
     def __init__(
@@ -455,7 +452,7 @@ class ViewRef(Generic[ViewT_co, ContextT], Ref[path.PathToView, ContextT], ABC):
         self.address = address
         self.view_type = view_type
 
-    def resolve(self, context: ContextT) -> path.PathToView:
+    def resolve(self, context: Context) -> path.PathToView:
         """Resolve to path ending at this shape's view.
 
         Args:
@@ -499,7 +496,7 @@ class ViewRef(Generic[ViewT_co, ContextT], Ref[path.PathToView, ContextT], ABC):
         return f"ViewRef({self.address!s})"
 
 
-class PrimitiveRef[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue, ContextT], ABC):
+class PrimitiveRef[T: Value](Ref[path.PathToValue], ABC):
     """Ref that points to a primtive value in the tree (leaf node)."""
 
     def __init__(
@@ -514,7 +511,7 @@ class PrimitiveRef[T: Value, ContextT: ContextProtocol](Ref[path.PathToValue, Co
         self.address = address
         self.value_type = value_type
 
-    def resolve(self, context: ContextT) -> path.PathToValue:
+    def resolve(self, context: Context) -> path.PathToValue:
         """Resolve to complete path ending at value.
 
         Args:

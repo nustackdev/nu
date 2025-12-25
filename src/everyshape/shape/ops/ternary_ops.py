@@ -12,7 +12,7 @@ from ..term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import ContextProtocol
+    from ..context import Context
     from ..term import RValue
     from ..values.bases import (
         ArithmeticBase,
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
         SequenceBase,
         StringBase,
     )
+
 __all__ = [
     "ConditionalOp",
     "TernaryOp",
@@ -45,7 +46,7 @@ type OpArgument = (
 )
 
 
-class TernaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT], ABC):
+class TernaryOp[ResultT](Operation[ResultT], ABC):
     """Base class for ternary operations.
 
     Defines execution pattern: evaluate operand → handle special values →
@@ -66,7 +67,7 @@ class TernaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]
         self.children = (cast("RValue", first), cast("RValue", second), cast("RValue", third))
 
     @abstractmethod
-    def execute(self, context: ContextT) -> ResultT:
+    def execute(self, context: Context) -> ResultT:
         """Execute ternary operation.
 
         Args:
@@ -87,13 +88,13 @@ class TernaryOp[ResultT, ContextT: ContextProtocol](Operation[ResultT, ContextT]
 # =============================================================================
 
 
-class ConditionalOp[ResultT, ContextT: ContextProtocol](TernaryOp[ResultT, ContextT]):
+class ConditionalOp[ResultT](TernaryOp[ResultT]):
     """Conditional ternary up: a concise, single-op way to perform an if-else check and return a value based on the result."""
 
     def _apply_op(self, first: object, second: object, third: object) -> ResultT:
         return first if second else third  # type: ignore
 
-    def execute(self, context: ContextT) -> ResultT:
+    def execute(self, context: Context) -> ResultT:
         """Execute conditional operation.
 
         Args:

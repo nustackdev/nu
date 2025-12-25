@@ -45,7 +45,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..term import RValue
+    from .term import RValue
 
 
 __all__ = [

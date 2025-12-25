@@ -11,12 +11,13 @@ from everyshape.shape import Operation, PrimitiveRef, ViewRef
 from everyshape.storage import Subscription
 from everyshape.view import ChildObservable, DescendantsObservable, Observable
 
-from ..context import ContextProtocol
 from ..term import RValue
 
 
 if TYPE_CHECKING:
     from everyshape.loc import key
+
+    from ..context import Context
 
 
 __all__ = [
@@ -32,7 +33,7 @@ __all__ = [
 logger = getLogger(__name__)
 
 
-class ChangeOp[ContextT: ContextProtocol](Operation[Subscription, ContextT]):
+class ChangeOp(Operation[Subscription]):
     """Base class for all change subscription operations.
 
     All change operations return a Subscription that can be used to
@@ -47,12 +48,12 @@ class ChangeOp[ContextT: ContextProtocol](Operation[Subscription, ContextT]):
     """
 
     @abstractmethod
-    def execute(self, context: ContextT) -> Subscription:
+    def execute(self, context: Context) -> Subscription:
         """Execute the change operation and return a subscription."""
         ...
 
 
-class OnChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
+class OnChangeOp(ChangeOp):
     """Subscribe to all changes on a view.
 
     Uses the Observable protocol to watch all changes within the view's scope.
@@ -72,7 +73,7 @@ class OnChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> Subscription:
+    def execute(self, context: Context) -> Subscription:
         """Execute on_change operation.
 
         Args:
@@ -109,7 +110,7 @@ class OnChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
         return f"OnChangeOp({self.ref!r})"
 
 
-class OnPrimitiveChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
+class OnPrimitiveChangeOp(ChangeOp):
     """Subscribe to changes on a primitive value.
 
     Uses the parent view's ChildObservable protocol to watch changes
@@ -130,7 +131,7 @@ class OnPrimitiveChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> Subscription:
+    def execute(self, context: Context) -> Subscription:
         """Execute on_primitive_change operation.
 
         Args:
@@ -164,7 +165,7 @@ class OnPrimitiveChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
         return f"OnPrimitiveChangeOp({self.ref!r})"
 
 
-class OnChildChangeOp[A, ContextT: ContextProtocol](ChangeOp[ContextT]):
+class OnChildChangeOp[A](ChangeOp):
     """Subscribe to changes on a specific child of a view.
 
     Uses the ChildObservable protocol to watch changes on a specific child
@@ -176,7 +177,7 @@ class OnChildChangeOp[A, ContextT: ContextProtocol](ChangeOp[ContextT]):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef, address: A | RValue[A, ContextT]) -> None:
+    def __init__(self, ref: ViewRef, address: A | RValue[A]) -> None:
         """Initialize on_child_change operation.
 
         Args:
@@ -187,7 +188,7 @@ class OnChildChangeOp[A, ContextT: ContextProtocol](ChangeOp[ContextT]):
         self.address = address
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> Subscription:
+    def execute(self, context: Context) -> Subscription:
         """Execute on_child_change operation.
 
         Args:
@@ -226,7 +227,7 @@ class OnChildChangeOp[A, ContextT: ContextProtocol](ChangeOp[ContextT]):
         return f"OnChildChangeOp({self.ref!r}, {self.address!r})"
 
 
-class OnChildrenChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
+class OnChildrenChangeOp(ChangeOp):
     """Subscribe to changes on all children of a view.
 
     Uses the ChildObservable protocol to watch changes on all immediate
@@ -247,7 +248,7 @@ class OnChildrenChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
         self.ref = ref
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> Subscription:
+    def execute(self, context: Context) -> Subscription:
         """Execute on_children_change operation.
 
         Args:
@@ -284,7 +285,7 @@ class OnChildrenChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
         return f"OnChildrenChangeOp({self.ref!r})"
 
 
-class OnDescendantsChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
+class OnDescendantsChangeOp(ChangeOp):
     """Subscribe to changes on descendants matching a pattern.
 
     Uses the DescendantsObservable protocol to watch changes on descendants
@@ -307,7 +308,7 @@ class OnDescendantsChangeOp[ContextT: ContextProtocol](ChangeOp[ContextT]):
         self.pattern = pattern
         self.children = (ref,)
 
-    def execute(self, context: ContextT) -> Subscription:
+    def execute(self, context: Context) -> Subscription:
         """Execute on_descendants_change operation.
 
         Args:

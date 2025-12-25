@@ -38,7 +38,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from everyshape.shape.context import ContextProtocol
 from everyshape.shape.term import PrimitiveRef, RValue, ViewRef
 from everyshape.shape.values.conversion import literal
 from everyshape.types import SpecialValue, Value
@@ -102,7 +101,7 @@ __all__ = [
 # =============================================================================
 
 
-class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, ContextT]):
+class PrimitiveRefBase[T: Value](PrimitiveRef[T]):
     """Complete base for primitive (leaf) value references.
 
     Provides all standard operations for primitive values:
@@ -124,9 +123,7 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, Cont
         >>> set_cmd = ref.set(42)  # Creates SetCmd
     """
 
-    def _wrap_value(
-        self, value: T | RValue[T | SpecialValue, ContextT]
-    ) -> RValue[T | SpecialValue, ContextT]:
+    def _wrap_value(self, value: T | RValue[T | SpecialValue]) -> RValue[T | SpecialValue]:
         """Wrap a raw value in a Literal if needed.
 
         Args:
@@ -139,7 +136,7 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, Cont
             return value
         return literal(value)
 
-    def get(self) -> GetOp[T, ContextT]:
+    def get(self) -> GetOp[T]:
         """Create a get operation for this location.
 
         Returns:
@@ -150,7 +147,7 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, Cont
         """
         return GetOp(self)
 
-    def set(self, value: T | RValue[T | SpecialValue, ContextT]) -> SetCmd[T, ContextT]:
+    def set(self, value: T | RValue[T | SpecialValue]) -> SetCmd[T]:
         """Create a set command for this location.
 
         Args:
@@ -165,7 +162,7 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, Cont
         """
         return SetCmd(self, self._wrap_value(value))
 
-    def remove(self) -> DeleteCmd[ContextT]:
+    def remove(self) -> DeleteCmd:
         """Create a delete command for this location.
 
         Returns:
@@ -176,7 +173,7 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, Cont
         """
         return DeleteCmd(self)
 
-    def exists(self) -> ExistsOp[ContextT]:
+    def exists(self) -> ExistsOp:
         """Create an existence check operation.
 
         Returns:
@@ -188,7 +185,7 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, Cont
         """
         return ExistsOp(self)
 
-    def missing(self) -> MissingOp[ContextT]:
+    def missing(self) -> MissingOp:
         """Create a missing check operation.
 
         Returns:
@@ -206,7 +203,7 @@ class PrimitiveRefBase[T: Value, ContextT: ContextProtocol](PrimitiveRef[T, Cont
 # =============================================================================
 
 
-class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]):
+class ViewRefBase[T: Value](ViewRef):
     """Complete base for container (view) references.
 
     Provides all standard operations for containers:
@@ -222,15 +219,13 @@ class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]
         ContextT: Execution context type
     """
 
-    def _wrap_value(
-        self, value: T | RValue[T | SpecialValue, ContextT]
-    ) -> RValue[T | SpecialValue, ContextT]:
+    def _wrap_value(self, value: T | RValue[T | SpecialValue]) -> RValue[T | SpecialValue]:
         """Wrap a raw value in a Literal if needed."""
         if isinstance(value, RValue):
             return value
         return literal(value)
 
-    def extract(self) -> ExtractOp[T, ContextT]:
+    def extract(self) -> ExtractOp[T]:
         """Create an extract operation for this container.
 
         Returns:
@@ -241,7 +236,7 @@ class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]
         """
         return ExtractOp(self)
 
-    def store(self, value: T | RValue[T | SpecialValue, ContextT]) -> StoreCmd[T, ContextT]:
+    def store(self, value: T | RValue[T | SpecialValue]) -> StoreCmd[T]:
         """Create a store command for this container.
 
         Args:
@@ -255,7 +250,7 @@ class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]
         """
         return StoreCmd(self, self._wrap_value(value))
 
-    def clear(self) -> ClearCmd[ContextT]:
+    def clear(self) -> ClearCmd:
         """Create a clear command for this container.
 
         Returns:
@@ -266,7 +261,7 @@ class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]
         """
         return ClearCmd(self)
 
-    def length(self) -> LengthOp[ContextT]:
+    def length(self) -> LengthOp:
         """Create a length query operation.
 
         Returns:
@@ -277,7 +272,7 @@ class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]
         """
         return LengthOp(self)
 
-    def exists(self) -> ExistsOp[ContextT]:
+    def exists(self) -> ExistsOp:
         """Create an existence check operation.
 
         Returns:
@@ -285,7 +280,7 @@ class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]
         """
         return ExistsOp(self)
 
-    def missing(self) -> MissingOp[ContextT]:
+    def missing(self) -> MissingOp:
         """Create a missing check operation.
 
         Returns:
@@ -299,9 +294,7 @@ class ViewRefBase[T: Value, ContextT: ContextProtocol](ViewRef[object, ContextT]
 # =============================================================================
 
 
-class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
-    ViewRefBase[list[T], ContextT]
-):
+class SequenceRefBase[T: Value, ItemRefT, SliceRefT](ViewRefBase[list[T]]):
     """Complete base for read-only sequence references.
 
     Extends ViewRefBase with sequence capabilities:
@@ -322,7 +315,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         ContextT: Execution context type
     """
 
-    def _create_item_ref(self, index: int | RValue[int, ContextT]) -> ItemRefT:
+    def _create_item_ref(self, index: int | RValue[int]) -> ItemRefT:
         """Create a reference to an item. Override in subclass.
 
         Args:
@@ -351,9 +344,9 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
     def __getitem__(self, key: slice) -> SliceRefT: ...
 
     @overload
-    def __getitem__(self, key: RValue[int, ContextT]) -> ItemRefT: ...
+    def __getitem__(self, key: RValue[int]) -> ItemRefT: ...
 
-    def __getitem__(self, key: int | slice | RValue[int, ContextT]) -> ItemRefT | SliceRefT:
+    def __getitem__(self, key: int | slice | RValue[int]) -> ItemRefT | SliceRefT:
         """Get item or slice reference.
 
         Args:
@@ -370,7 +363,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
             return self._create_slice_ref(key)
         return self._create_item_ref(key)
 
-    def map[R: Value](self, func: Callable[[T], R]) -> MapOp[T, R, ContextT]:
+    def map[R: Value](self, func: Callable[[T], R]) -> MapOp[T, R]:
         """Map a function over sequence elements.
 
         Args:
@@ -384,7 +377,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         """
         return MapOp(self, func)
 
-    def filter(self, predicate: Callable[[T], bool]) -> FilterOp[T, ContextT]:
+    def filter(self, predicate: Callable[[T], bool]) -> FilterOp[T]:
         """Filter sequence elements by predicate.
 
         Args:
@@ -398,7 +391,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         """
         return FilterOp(self, predicate)
 
-    def reduce[R](self, func: Callable[[R, T], R], initial: R) -> ReduceOp[T, R, ContextT]:
+    def reduce[R](self, func: Callable[[R, T], R], initial: R) -> ReduceOp[T, R]:
         """Reduce sequence to single value.
 
         Args:
@@ -413,7 +406,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         """
         return ReduceOp(self, func, initial)
 
-    def find(self, predicate: Callable[[T], bool]) -> FindOp[T, ContextT]:
+    def find(self, predicate: Callable[[T], bool]) -> FindOp[T]:
         """Find first element matching predicate.
 
         Args:
@@ -427,7 +420,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         """
         return FindOp(self, predicate)
 
-    def find_index(self, predicate: Callable[[T], bool]) -> FindIndexOp[T, ContextT]:
+    def find_index(self, predicate: Callable[[T], bool]) -> FindIndexOp[T]:
         """Find index of first element matching predicate.
 
         Args:
@@ -441,7 +434,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         """
         return FindIndexOp(self, predicate)
 
-    def index(self, value: T) -> IndexOp[T, ContextT]:
+    def index(self, value: T) -> IndexOp[T]:
         """Find index of value in sequence.
 
         Args:
@@ -455,7 +448,7 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         """
         return IndexOp(self, value)
 
-    def count(self, value: T) -> CountOp[T, ContextT]:
+    def count(self, value: T) -> CountOp[T]:
         """Count occurrences of value in sequence.
 
         Args:
@@ -470,8 +463,8 @@ class SequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
         return CountOp(self, value)
 
 
-class MutableSequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextProtocol](
-    SequenceRefBase[T, ItemRefT, SliceRefT, ContextT]
+class MutableSequenceRefBase[T: Value, ItemRefT, SliceRefT](
+    SequenceRefBase[T, ItemRefT, SliceRefT]
 ):
     """Complete base for mutable sequence references.
 
@@ -487,15 +480,7 @@ class MutableSequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextPro
         ContextT: Execution context type
     """
 
-    def _wrap_index(
-        self, index: int | RValue[int | SpecialValue, ContextT]
-    ) -> RValue[int | SpecialValue, ContextT]:
-        """Wrap an index in a Literal if needed."""
-        if isinstance(index, RValue):
-            return index
-        return literal(index)
-
-    def append(self, value: T | RValue[T | SpecialValue, ContextT]) -> AppendCmd[T, ContextT]:
+    def append(self, value: T | RValue[T | SpecialValue]) -> AppendCmd[T]:
         """Create an append command.
 
         Args:
@@ -507,13 +492,13 @@ class MutableSequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextPro
         Example:
             >>> list_ref.append(42).execute(ctx)
         """
-        return AppendCmd(self, self._wrap_value(value))
+        return AppendCmd(self, literal(value))
 
     def insert(
         self,
-        index: int | RValue[int | SpecialValue, ContextT],
-        value: T | RValue[T | SpecialValue, ContextT],
-    ) -> InsertCmd[T, ContextT]:
+        index: int | RValue[int | SpecialValue],
+        value: T | RValue[T | SpecialValue],
+    ) -> InsertCmd[T]:
         """Create an insert command.
 
         Args:
@@ -526,11 +511,9 @@ class MutableSequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextPro
         Example:
             >>> list_ref.insert(0, "first").execute(ctx)
         """
-        return InsertCmd(self, self._wrap_index(index), self._wrap_value(value))
+        return InsertCmd(self, literal(index), literal(value))
 
-    def pop(
-        self, index: int | RValue[int | SpecialValue, ContextT] | None = None
-    ) -> PopCmd[T, ContextT]:
+    def pop(self, index: int | RValue[int | SpecialValue] | None = None) -> PopCmd[T]:
         """Create a pop command.
 
         Args:
@@ -543,7 +526,7 @@ class MutableSequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextPro
             >>> last = list_ref.pop().execute(ctx)
             >>> first = list_ref.pop(0).execute(ctx)
         """
-        wrapped_index = self._wrap_index(index) if index is not None else None
+        wrapped_index = literal(index) if index is not None else None
         return PopCmd(self, wrapped_index)
 
 
@@ -552,9 +535,7 @@ class MutableSequenceRefBase[T: Value, ItemRefT, SliceRefT, ContextT: ContextPro
 # =============================================================================
 
 
-class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
-    ViewRefBase[dict[K, V], ContextT]
-):
+class MappingRefBase[K, V: Value, ChildRefT](ViewRefBase[dict[K, V]]):
     """Complete base for read-only mapping references.
 
     Extends ViewRefBase with mapping capabilities:
@@ -577,7 +558,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         ContextT: Execution context type
     """
 
-    def _create_child_ref(self, key: K | RValue[K, ContextT]) -> ChildRefT:
+    def _create_child_ref(self, key: K | RValue[K]) -> ChildRefT:
         """Create a reference to a child. Override in subclass.
 
         Args:
@@ -588,7 +569,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         raise NotImplementedError("Subclass must implement _create_child_ref")
 
-    def __getitem__(self, key: K | RValue[K, ContextT]) -> ChildRefT:
+    def __getitem__(self, key: K | RValue[K]) -> ChildRefT:
         """Get child reference by key.
 
         Args:
@@ -602,7 +583,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return self._create_child_ref(key)
 
-    def keys(self) -> KeysOp[K, ContextT]:
+    def keys(self) -> KeysOp[K]:
         """Create a keys query operation.
 
         Returns:
@@ -613,7 +594,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return KeysOp(self)
 
-    def values(self) -> ValuesOp[V, ContextT]:
+    def values(self) -> ValuesOp[V]:
         """Create a values query operation.
 
         Returns:
@@ -624,7 +605,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return ValuesOp(self)
 
-    def items(self) -> ItemsOp[K, V, ContextT]:
+    def items(self) -> ItemsOp[K, V]:
         """Create an items query operation.
 
         Returns:
@@ -635,7 +616,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return ItemsOp(self)
 
-    def map_values[R: Value](self, func: Callable[[V], R]) -> MapValuesOp[K, V, R, ContextT]:
+    def map_values[R: Value](self, func: Callable[[V], R]) -> MapValuesOp[K, V, R]:
         """Map function over mapping values.
 
         Args:
@@ -651,7 +632,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
 
     def map_items[K2, V2: Value](
         self, func: Callable[[K, V], tuple[K2, V2]]
-    ) -> MapItemsOp[K, V, K2, V2, ContextT]:
+    ) -> MapItemsOp[K, V, K2, V2]:
         """Map function over mapping items.
 
         Args:
@@ -665,7 +646,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return MapItemsOp(self, func)
 
-    def filter(self, predicate: Callable[[K, V], bool]) -> FilterItemsOp[K, V, ContextT]:
+    def filter(self, predicate: Callable[[K, V], bool]) -> FilterItemsOp[K, V]:
         """Filter mapping items by predicate.
 
         Args:
@@ -679,9 +660,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return FilterItemsOp(self, predicate)
 
-    def reduce[R](
-        self, func: Callable[[R, K, V], R], initial: R
-    ) -> ReduceItemsOp[K, V, R, ContextT]:
+    def reduce[R](self, func: Callable[[R, K, V], R], initial: R) -> ReduceItemsOp[K, V, R]:
         """Reduce mapping to single value.
 
         Args:
@@ -696,7 +675,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return ReduceItemsOp(self, func, initial)
 
-    def find_key(self, predicate: Callable[[V], bool]) -> FindKeyOp[K, V, ContextT]:
+    def find_key(self, predicate: Callable[[V], bool]) -> FindKeyOp[K, V]:
         """Find first key whose value matches predicate.
 
         Args:
@@ -710,7 +689,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return FindKeyOp(self, predicate)
 
-    def find_value(self, predicate: Callable[[V], bool]) -> FindValueOp[K, V, ContextT]:
+    def find_value(self, predicate: Callable[[V], bool]) -> FindValueOp[V]:
         """Find first value matching predicate.
 
         Args:
@@ -724,7 +703,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         """
         return FindValueOp(self, predicate)
 
-    def find_item(self, predicate: Callable[[K, V], bool]) -> FindItemOp[K, V, ContextT]:
+    def find_item(self, predicate: Callable[[K, V], bool]) -> FindItemOp[K, V]:
         """Find first item (key, value) matching predicate.
 
         Args:
@@ -739,9 +718,7 @@ class MappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
         return FindItemOp(self, predicate)
 
 
-class MutableMappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
-    MappingRefBase[K, V, ChildRefT, ContextT]
-):
+class MutableMappingRefBase[K, V: Value, ChildRefT](MappingRefBase[K, V, ChildRefT]):
     """Complete base for mutable mapping references.
 
     Same as MappingRefBase - mutations happen through child refs.
@@ -761,7 +738,7 @@ class MutableMappingRefBase[K, V: Value, ChildRefT, ContextT: ContextProtocol](
 # =============================================================================
 
 
-class SetRefBase[T: Value, ContextT: ContextProtocol](ViewRefBase[set[T], ContextT]):
+class SetRefBase[T: Value](ViewRefBase[set[T]]):
     """Complete base for read-only set references.
 
     Extends ViewRefBase for set semantics.
@@ -774,7 +751,7 @@ class SetRefBase[T: Value, ContextT: ContextProtocol](ViewRefBase[set[T], Contex
     pass
 
 
-class MutableSetRefBase[T: Value, ContextT: ContextProtocol](SetRefBase[T, ContextT]):
+class MutableSetRefBase[T: Value](SetRefBase[T]):
     """Complete base for mutable set references.
 
     Extends SetRefBase with mutation capabilities:
@@ -787,7 +764,7 @@ class MutableSetRefBase[T: Value, ContextT: ContextProtocol](SetRefBase[T, Conte
         ContextT: Execution context type
     """
 
-    def add(self, value: T | RValue[T | SpecialValue, ContextT]) -> AddCmd[T, ContextT]:
+    def add(self, value: T | RValue[T | SpecialValue]) -> AddCmd[T]:
         """Create an add command.
 
         Args:
@@ -799,9 +776,9 @@ class MutableSetRefBase[T: Value, ContextT: ContextProtocol](SetRefBase[T, Conte
         Example:
             >>> set_ref.add("item").execute(ctx)
         """
-        return AddCmd(self, self._wrap_value(value))
+        return AddCmd(self, literal(value))
 
-    def remove(self, value: T | RValue[T | SpecialValue, ContextT]) -> RemoveCmd[T, ContextT]:
+    def remove(self, value: T | RValue[T | SpecialValue]) -> RemoveCmd[T]:
         """Create a remove command.
 
         Args:
@@ -816,9 +793,9 @@ class MutableSetRefBase[T: Value, ContextT: ContextProtocol](SetRefBase[T, Conte
         Example:
             >>> set_ref.remove("item").execute(ctx)
         """
-        return RemoveCmd(self, self._wrap_value(value))
+        return RemoveCmd(self, literal(value))
 
-    def discard(self, value: T | RValue[T | SpecialValue, ContextT]) -> DiscardCmd[T, ContextT]:
+    def discard(self, value: T | RValue[T | SpecialValue]) -> DiscardCmd[T]:
         """Create a discard command.
 
         Args:
@@ -830,4 +807,4 @@ class MutableSetRefBase[T: Value, ContextT: ContextProtocol](SetRefBase[T, Conte
         Example:
             >>> set_ref.discard("item").execute(ctx)  # No error if missing
         """
-        return DiscardCmd(self, self._wrap_value(value))
+        return DiscardCmd(self, literal(value))

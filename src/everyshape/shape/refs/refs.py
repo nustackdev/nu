@@ -20,7 +20,7 @@ Each protocol composes relevant capabilities:
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from .capabilities import (
     Appendable,
@@ -43,6 +43,10 @@ from .capabilities import (
     Storable,
     ValuesQueryable,
 )
+
+
+if TYPE_CHECKING:
+    from ..context import Context
 
 
 __all__ = [  # noqa: RUF022
@@ -68,7 +72,7 @@ __all__ = [  # noqa: RUF022
 
 
 @runtime_checkable
-class RefProtocol[PathT, ContextT](
+class RefProtocol[PathT](
     Existable[object],
     Protocol,
 ):
@@ -98,7 +102,7 @@ class RefProtocol[PathT, ContextT](
         """
         ...
 
-    def resolve(self, context: ContextT) -> PathT:
+    def resolve(self, context: Context) -> PathT:
         """Resolve this reference to a concrete storage path.
 
         Args:
@@ -116,8 +120,8 @@ class RefProtocol[PathT, ContextT](
 
 
 @runtime_checkable
-class PrimitiveRefProtocol[T, PathT, ContextT](
-    RefProtocol[PathT, ContextT],
+class PrimitiveRefProtocol[T, PathT](
+    RefProtocol[PathT],
     Gettable[T, object],
     Settable[T, object],
     Deletable[object],
@@ -145,8 +149,8 @@ class PrimitiveRefProtocol[T, PathT, ContextT](
 
 
 @runtime_checkable
-class ValueRefProtocol[T, PathT, ContextT](
-    PrimitiveRefProtocol[T, PathT, ContextT],
+class ValueRefProtocol[T, PathT](
+    PrimitiveRefProtocol[T, PathT],
     Protocol,
 ):
     """Protocol for typed value references.
@@ -179,8 +183,8 @@ class ValueRefProtocol[T, PathT, ContextT](
 
 
 @runtime_checkable
-class ViewRefProtocol[ViewT, PathT, ContextT](
-    RefProtocol[PathT, ContextT],
+class ViewRefProtocol[ViewT, PathT](
+    RefProtocol[PathT],
     Extractable[object, object],
     Storable[object, object],
     Clearable[object],
@@ -223,8 +227,8 @@ class ViewRefProtocol[ViewT, PathT, ContextT](
 
 
 @runtime_checkable
-class SequenceRefProtocol[T, PathT, ContextT](
-    ViewRefProtocol[object, PathT, ContextT],
+class SequenceRefProtocol[T, PathT](
+    ViewRefProtocol[object, PathT],
     RefIndexable[int, object],
     RefSliceable[object],
     Protocol,
@@ -257,8 +261,8 @@ class SequenceRefProtocol[T, PathT, ContextT](
 
 
 @runtime_checkable
-class MutableSequenceRefProtocol[T, PathT, ContextT](
-    SequenceRefProtocol[T, PathT, ContextT],
+class MutableSequenceRefProtocol[T, PathT](
+    SequenceRefProtocol[T, PathT],
     Appendable[T, object],
     Poppable[T, object],
     Protocol,
@@ -287,8 +291,8 @@ class MutableSequenceRefProtocol[T, PathT, ContextT](
 
 
 @runtime_checkable
-class MappingRefProtocol[K, V, PathT, ContextT](
-    ViewRefProtocol[object, PathT, ContextT],
+class MappingRefProtocol[K, V, PathT](
+    ViewRefProtocol[object, PathT],
     Nestable[K, object],
     KeysQueryable[object],
     ValuesQueryable[object],
@@ -324,8 +328,8 @@ class MappingRefProtocol[K, V, PathT, ContextT](
 
 
 @runtime_checkable
-class MutableMappingRefProtocol[K, V, PathT, ContextT](
-    MappingRefProtocol[K, V, PathT, ContextT],
+class MutableMappingRefProtocol[K, V, PathT](
+    MappingRefProtocol[K, V, PathT],
     Protocol,
 ):
     """Protocol for mutable mapping references.
@@ -353,8 +357,8 @@ class MutableMappingRefProtocol[K, V, PathT, ContextT](
 
 
 @runtime_checkable
-class SetRefProtocol[T, PathT, ContextT](
-    ViewRefProtocol[object, PathT, ContextT],
+class SetRefProtocol[T, PathT](
+    ViewRefProtocol[object, PathT],
     Protocol,
 ):
     """Protocol for read-only set references.
@@ -384,8 +388,8 @@ class SetRefProtocol[T, PathT, ContextT](
 
 
 @runtime_checkable
-class MutableSetRefProtocol[T, PathT, ContextT](
-    SetRefProtocol[T, PathT, ContextT],
+class MutableSetRefProtocol[T, PathT](
+    SetRefProtocol[T, PathT],
     Protocol,
 ):
     """Protocol for mutable set references.

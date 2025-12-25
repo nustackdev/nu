@@ -23,7 +23,6 @@ from .conversion import literal
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..context import ContextProtocol
     from ..term import RValue
 
 
@@ -43,7 +42,7 @@ __all__ = [
 # =============================================================================
 
 
-class ArithmeticBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
+class ArithmeticBase[OperandT, ReturnLiteralT: Literal]:
     """Base for RValues supporting arithmetic operations.
 
     Provides default implementations for arithmetic operators
@@ -175,7 +174,7 @@ class ArithmeticBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtoco
 # =============================================================================
 
 
-class ComparisonBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
+class ComparisonBase[OperandT, ReturnLiteralT: Literal]:
     """Base for RValues supporting comparison operations.
 
     Provides default implementations for comparison operators.
@@ -332,7 +331,7 @@ class ComparisonBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtoco
 # =============================================================================
 
 
-class LogicalBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
+class LogicalBase[OperandT, ReturnLiteralT: Literal]:
     """Base for RValues supporting logical operations.
 
     Provides default implementations for logical operators.
@@ -430,7 +429,7 @@ class LogicalBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class BitwiseBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
+class BitwiseBase[OperandT, ReturnLiteralT: Literal]:
     """Base for RValues supporting bitwise operations.
 
     Provides implementations for bitwise operators.
@@ -527,7 +526,7 @@ class BitwiseBase[OperandT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
 # =============================================================================
 
 
-class SequenceBase[ElementT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
+class SequenceBase[ElementT, ReturnLiteralT: Literal]:
     """Base for RValues with sequence-like behavior.
 
     Provides implementations for sequence operations.
@@ -774,7 +773,7 @@ class SequenceBase[ElementT, ReturnLiteralT: Literal, ContextT: ContextProtocol]
 # =============================================================================
 
 
-class MappingBase[KeyT, ValueT, ReturnLiteralT: Literal, ContextT: ContextProtocol]:
+class MappingBase[KeyT, ValueT, ReturnLiteralT: Literal]:
     """Base for RValues with mapping-like behavior.
 
     Provides implementations for mapping operations.
@@ -871,7 +870,7 @@ class MappingBase[KeyT, ValueT, ReturnLiteralT: Literal, ContextT: ContextProtoc
 # =============================================================================
 
 
-class StringBase[ReturnLiteralT: Literal, ContextT: ContextProtocol]:
+class StringBase[ReturnLiteralT: Literal]:
     """Base for RValues with string-like behavior.
 
     Provides implementations for string operations.

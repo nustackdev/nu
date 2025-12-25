@@ -1,7 +1,7 @@
 """Layer 4 - declarative access."""
 
 from .combiners import all_, and_, any_, none_, or_
-from .context import ContextProtocol
+from .context import Context
 from .shape import (
     Shape,
     ShapeMeta,
@@ -26,7 +26,7 @@ from .values import Computed, Literal, literal
 __all__ = [
     "Command",
     "Computed",
-    "ContextProtocol",
+    "Context",
     "LValue",
     "Literal",
     "Operation",
