@@ -303,13 +303,13 @@ class NoneValue(
         >>> is_none = val.eq(None)  # Returns EqOp
     """
 
-    def __init__(self) -> None:
+    def __init__(self, value: None | RValue = None) -> None:
         """Initialize literal with value.
 
         Args:
-            value: The native Python value to wrap
+            value: The native Python value to wrap (or an RValue that computes to None)
         """
-        self._value = None
+        self._value = value
 
     def _wrap_logical_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)

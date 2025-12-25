@@ -6,7 +6,13 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from ..term import RValue
     from .base import Literal
+
+__all__ = [
+    "literal",
+    "result",
+]
 
 
 def literal(value: object) -> Literal:
@@ -55,3 +61,34 @@ def literal(value: object) -> Literal:
         return FrozenSetValue(value)
     else:
         raise TypeError(f"Not supported type {value.__class__.__name__}")
+
+
+def result(reslut_type: object, op: RValue) -> Literal:
+    """Return wrapped compted value for an op."""
+    from .collection_values import DictValue, FrozenSetValue, ListValue, SetValue, TupleValue
+    from .primitive_values import BoolValue, BytesValue, FloatValue, IntValue, NoneValue, StrValue
+
+    if reslut_type is int:
+        return IntValue(op)
+    elif reslut_type is str:
+        return StrValue(op)
+    elif reslut_type is bool:
+        return BoolValue(op)
+    elif reslut_type is float:
+        return FloatValue(op)
+    elif reslut_type is bytes:
+        return BytesValue(op)
+    elif reslut_type is None:
+        return NoneValue(op)
+    elif reslut_type is dict:
+        return DictValue(op)
+    elif reslut_type is set:
+        return SetValue(op)
+    elif reslut_type is list:
+        return ListValue(op)
+    elif reslut_type is tuple:
+        return TupleValue(op)
+    elif reslut_type is frozenset:
+        return FrozenSetValue(op)
+    else:
+        raise TypeError(f"Unknown type {type(op).__name__}")
