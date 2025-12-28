@@ -63,32 +63,32 @@ def literal(value: object) -> Literal:
         raise TypeError(f"Not supported type {value.__class__.__name__}")
 
 
-def result(reslut_type: object, op: RValue) -> Literal:
+def result(result_type: object, op: RValue) -> Literal:
     """Return wrapped compted value for an op."""
     from .collection_values import DictValue, FrozenSetValue, ListValue, SetValue, TupleValue
     from .primitive_values import BoolValue, BytesValue, FloatValue, IntValue, NoneValue, StrValue
 
-    if reslut_type is int:
+    if result_type is int:
         return IntValue(op)
-    elif reslut_type is str:
+    elif result_type is str:
         return StrValue(op)
-    elif reslut_type is bool:
+    elif result_type is bool:
         return BoolValue(op)
-    elif reslut_type is float:
+    elif result_type is float:
         return FloatValue(op)
-    elif reslut_type is bytes:
+    elif result_type is bytes:
         return BytesValue(op)
-    elif reslut_type is None:
+    elif result_type is None:
         return NoneValue(op)
-    elif reslut_type is dict:
+    elif result_type is dict:
         return DictValue(op)
-    elif reslut_type is set:
+    elif result_type is set:
         return SetValue(op)
-    elif reslut_type is list:
+    elif result_type is list:
         return ListValue(op)
-    elif reslut_type is tuple:
+    elif result_type is tuple:
         return TupleValue(op)
-    elif reslut_type is frozenset:
+    elif result_type is frozenset:
         return FrozenSetValue(op)
     else:
-        raise TypeError(f"Unknown type {type(op).__name__}")
+        raise TypeError(f"Unknown type `{result_type.__class__.__name__}`")
