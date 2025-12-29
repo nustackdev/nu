@@ -675,20 +675,20 @@ class ViewRef(Generic[ViewT_co], Ref[path.PathToView], ABC):  # noqa: UP046
         return f"ViewRef({self.address!s})"
 
 
-class PrimitiveRef[T: Value](Ref[path.PathToValue], ABC):
+class PrimitiveRef(Ref[path.PathToValue], ABC):
     """Ref that points to a primtive value in the tree (leaf node)."""
 
     def __init__(
         self,
         address: path.PathAddress | RValue,
-        value_type: type[T],
+        value_type: type[Value],  # TODO: to accept arbitraty types too (?)
         parent_ref: Ref | None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Init ValueRef."""
         super().__init__(parent_ref, owner_shape)
         self.address = address
-        self.value_type = value_type
+        self.value_type: type[Value] = value_type
 
     def resolve(self, context: Context) -> path.PathToValue:
         """Resolve to complete path ending at value.

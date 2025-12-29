@@ -11,32 +11,32 @@ Implementation Hierarchy:
     PrimitiveRef combines:
         ExistableBase + GettableBase + SettableBase + DeletableBase + PrimitiveObservableBase
 
-    SequenceRefImpl combines:
+    SequenceRef combines:
         ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
         ViewObservableBase + SequenceIndexableBase + SequenceIterableBase
 
-    MutableSequenceRefImpl adds:
+    MutableSequenceRef adds:
         AppendableBase + InsertableBase + PoppableBase
 
-    MappingRefImpl combines:
+    MappingRef combines:
         ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
         ViewObservableBase + MappingNestableBase + KeysQueryableBase + ValuesQueryableBase +
         ItemsQueryableBase + MappingIterableBase
 
-    SetRefImpl combines:
+    SetRef combines:
         ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
         ViewObservableBase
 
-    MutableSetRefImpl adds:
+    MutableSetRef adds:
         SetAddableBase + SetRemovableBase
 
 Usage:
     # Use directly
-    class MyListRef(MutableSequenceRefImpl[int, ItemRef, SliceRef]):
+    class MyListRef(MutableSequenceRef[int, ItemRef, SliceRef]):
         ...
 
     # Or extend with custom behavior
-    class SpecialListRef(SequenceRefImpl[str, StrRef, SliceRef]):
+    class SpecialListRef(SequenceRef[str, StrRef, SliceRef]):
         def custom_method(self): ...
 """
 
@@ -47,114 +47,50 @@ from collections.abc import Mapping as PyMapping
 from collections.abc import Sequence as PySequence
 from collections.abc import Set as PySet
 
-from everyshape.types import Value
-
-from ..term import PrimitiveRef, RValue, ViewRef
+from ..term import RValue, ViewRef
 from ..values import DictValue, ListValue, SetValue
 from .bases import (
     AppendableBase,
     ClearableBase,
-    DeletableBase,
-    # Core capability bases
     ExistableBase,
     ExtractableBase,
-    GettableBase,
     InsertableBase,
     ItemsQueryableBase,
-    # Query bases
     KeysQueryableBase,
     LengthableBase,
     MappingIterableBase,
-    # Mapping capability bases
     MappingNestableBase,
     PoppableBase,
-    # Observable bases
-    PrimitiveObservableBase,
-    # Sequence capability bases
     SequenceIndexableBase,
     SequenceIterableBase,
-    # Set capability bases
     SetAddableBase,
     SetRemovableBase,
-    SettableBase,
     StorableBase,
     ValuesQueryableBase,
     ViewObservableBase,
 )
 
 
-__all__ = [  # noqa: RUF022
-    # Primitive ref implementation
-    "PrimitiveRefImpl",
-    # Sequence ref implementations
-    "SequenceRefImpl",
-    "MutableSequenceRefImpl",
-    # Mapping ref implementations
-    "MappingRefImpl",
-    "MutableMappingRefImpl",
-    # Set ref implementations
-    "SetRefImpl",
-    "MutableSetRefImpl",
+__all__ = [
+    "MappingRef",
+    "MutableMappingRef",
+    "MutableSequenceRef",
+    "MutableSetRef",
+    "SequenceRef",
+    "SetRef",
 ]
-
-
-# =============================================================================
-# PRIMITIVE REF IMPLEMENTATION
-# =============================================================================
-
-
-class PrimitiveRefImpl[T: Value](
-    ExistableBase,
-    GettableBase[T],
-    SettableBase[T],
-    DeletableBase,
-    PrimitiveObservableBase,
-    PrimitiveRef[T],
-):
-    """Complete implementation for primitive (leaf) value references.
-
-    Combines all capability bases needed for a full-featured primitive ref:
-    - exists(), missing() from ExistableBase
-    - get() from GettableBase
-    - set() from SettableBase
-    - remove() from DeletableBase
-    - on_change() from PrimitiveObservableBase
-
-    Implements PrimitiveRefProtocol from collections.py.
-
-    Type Parameters:
-        T: Type of value at this location
-
-    Example:
-        class NameRef(PrimitiveRefImpl[str]):
-            def __init__(self, parent: ViewRef, address: str):
-                self._parent = parent
-                self._address = address
-                self.value_type = str
-
-            @property
-            def parent(self) -> ViewRef:
-                return self._parent
-
-            def resolve(self, context):
-                return self._parent.resolve(context) / self._address
-    """
-
-    pass
-
 
 # =============================================================================
 # SEQUENCE REF IMPLEMENTATIONS
 # =============================================================================
 
 
-class SequenceRefImpl[T: Value, ItemRefT, SliceRefT](
+class SequenceRef[T, ItemRefT, SliceRefT](
     ExistableBase,
-    ExtractableBase[ListValue[T], PySequence[T]],
+    ExtractableBase[ListValue[T]],
     StorableBase[ListValue[T], PySequence[T]],
     ClearableBase,
     LengthableBase,
-    ViewObservableBase,
     SequenceIndexableBase[T, ItemRefT, SliceRefT],
     SequenceIterableBase[T],
     ViewRef,
@@ -186,7 +122,7 @@ class SequenceRefImpl[T: Value, ItemRefT, SliceRefT](
         - item_type property
 
     Example:
-        class ListRef(SequenceRefImpl[int, ItemRef, SliceRef]):
+        class ListRef(SequenceRef[int, ItemRef, SliceRef]):
             item_type = int
 
             def _create_item_ref(self, index):
@@ -207,16 +143,17 @@ class SequenceRefImpl[T: Value, ItemRefT, SliceRefT](
         ...
 
 
-class MutableSequenceRefImpl[T: Value, ItemRefT, SliceRefT](
-    SequenceRefImpl[T, ItemRefT, SliceRefT],
+class MutableSequenceRef[T, ItemRefT, SliceRefT](
+    SequenceRef[T, ItemRefT, SliceRefT],
     AppendableBase[T],
     InsertableBase[T],
     PoppableBase[T],
+    ViewObservableBase,
     ABC,
 ):
     """Complete implementation for mutable sequence references.
 
-    Extends SequenceRefImpl with mutation capabilities:
+    Extends SequenceRef with mutation capabilities:
     - append() from AppendableBase
     - insert() from InsertableBase
     - pop() from PoppableBase
@@ -229,7 +166,7 @@ class MutableSequenceRefImpl[T: Value, ItemRefT, SliceRefT](
         SliceRefT: Type of reference returned for slices
 
     Example:
-        class MutableListRef(MutableSequenceRefImpl[str, ItemRef, SliceRef]):
+        class MutableListRef(MutableSequenceRef[str, ItemRef, SliceRef]):
             item_type = str
 
             def _create_item_ref(self, index):
@@ -250,13 +187,12 @@ class MutableSequenceRefImpl[T: Value, ItemRefT, SliceRefT](
 # =============================================================================
 
 
-class MappingRefImpl[K, V: Value, ChildRefT](
+class MappingRef[K, V, ChildRefT](
     ExistableBase,
-    ExtractableBase[DictValue[K, V], PyMapping[K, V]],
+    ExtractableBase[DictValue[K, V]],
     StorableBase[DictValue[K, V], PyMapping[K, V]],
     ClearableBase,
     LengthableBase,
-    ViewObservableBase,
     MappingNestableBase[K, ChildRefT],
     KeysQueryableBase[K],
     ValuesQueryableBase[V],
@@ -294,7 +230,7 @@ class MappingRefImpl[K, V: Value, ChildRefT](
         - value_type property
 
     Example:
-        class DictRef(MappingRefImpl[str, int, ValueRef]):
+        class DictRef(MappingRef[str, int, ValueRef]):
             key_type = str
             value_type = int
 
@@ -314,13 +250,14 @@ class MappingRefImpl[K, V: Value, ChildRefT](
         ...
 
 
-class MutableMappingRefImpl[K, V: Value, ChildRefT](
-    MappingRefImpl[K, V, ChildRefT],
+class MutableMappingRef[K, V, ChildRefT](
+    MappingRef[K, V, ChildRefT],
+    ViewObservableBase,
     ABC,
 ):
     """Complete implementation for mutable mapping references.
 
-    Same capabilities as MappingRefImpl - mutations happen through child refs.
+    Same capabilities as MappingRef - mutations happen through child refs.
 
     Implements MutableMappingRefProtocol from collections.py.
 
@@ -330,7 +267,7 @@ class MutableMappingRefImpl[K, V: Value, ChildRefT](
         ChildRefT: Type of reference returned for child items
 
     Example:
-        class MutableDictRef(MutableMappingRefImpl[str, int, ValueRef]):
+        class MutableDictRef(MutableMappingRef[str, int, ValueRef]):
             key_type = str
             value_type = int
 
@@ -349,13 +286,12 @@ class MutableMappingRefImpl[K, V: Value, ChildRefT](
 # =============================================================================
 
 
-class SetRefImpl[T: Value](
+class SetRef[T](
     ExistableBase,
-    ExtractableBase[SetValue[T], PySet[T]],
+    ExtractableBase[SetValue[T]],
     StorableBase[SetValue[T], PySet[T]],
     ClearableBase,
     LengthableBase,
-    ViewObservableBase,
     ViewRef,
     ABC,
 ):
@@ -379,7 +315,7 @@ class SetRefImpl[T: Value](
         - item_type property
 
     Example:
-        class TagsRef(SetRefImpl[str]):
+        class TagsRef(SetRef[str]):
             item_type = str
 
             def result(self, op):
@@ -394,15 +330,16 @@ class SetRefImpl[T: Value](
         ...
 
 
-class MutableSetRefImpl[T: Value](
-    SetRefImpl[T],
+class MutableSetRef[T](
+    SetRef[T],
     SetAddableBase[T],
     SetRemovableBase[T],
+    ViewObservableBase,
     ABC,
 ):
     """Complete implementation for mutable set references.
 
-    Extends SetRefImpl with mutation capabilities:
+    Extends SetRef with mutation capabilities:
     - add() from SetAddableBase
     - remove(), discard() from SetRemovableBase
 
@@ -412,7 +349,7 @@ class MutableSetRefImpl[T: Value](
         T: Type of items in the set
 
     Example:
-        class MutableTagsRef(MutableSetRefImpl[str]):
+        class MutableTagsRef(MutableSetRef[str]):
             item_type = str
 
             def result(self, op):

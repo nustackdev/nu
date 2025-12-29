@@ -24,8 +24,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, overload
 
-from everyshape.types import SpecialValue, Value
-
 from ..computations.commands import (
     AddCmd,
     AppendCmd,
@@ -88,6 +86,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from everyshape.loc import key
+    from everyshape.types import SpecialValue
 
     from ..term import RValue
 
@@ -163,7 +162,7 @@ class ExistableBase:
 # =============================================================================
 
 
-class GettableBase[T: Value]:
+class GettableBase[T]:
     """Implementation base for getting primitive values.
 
     Implements the Gettable protocol with get() method.
@@ -213,7 +212,7 @@ class GettableBase[T: Value]:
         return result(self.value_type, GetOp(self))
 
 
-class ExtractableBase[W, T: Value](ABC):
+class ExtractableBase[W](ABC):
     """Implementation base for extracting container contents.
 
     Implements the Extractable protocol with extract() method.
@@ -241,7 +240,7 @@ class ExtractableBase[W, T: Value](ABC):
 # =============================================================================
 
 
-class SettableBase[T: Value]:
+class SettableBase[T]:
     """Implementation base for setting primitive values.
 
     Implements the Settable protocol with set() method.
@@ -298,7 +297,7 @@ class SettableBase[T: Value]:
         return result(self.value_type, SetCmd(self, literal(value)))
 
 
-class StorableBase[W, T: Value](ABC):
+class StorableBase[W, T](ABC):
     """Implementation base for storing container contents.
 
     Implements the Storable protocol with store() method.
@@ -491,7 +490,7 @@ class KeysQueryableBase[K]:
         return ListValue(KeysOp(self))
 
 
-class ValuesQueryableBase[V: Value]:
+class ValuesQueryableBase[V]:
     """Implementation base for values queries.
 
     Implements the ValuesQueryable protocol with values() method.
@@ -509,7 +508,7 @@ class ValuesQueryableBase[V: Value]:
         return ListValue(ValuesOp(self))
 
 
-class ItemsQueryableBase[K, V: Value]:
+class ItemsQueryableBase[K, V]:
     """Implementation base for items queries.
 
     Implements the ItemsQueryable protocol with items() method.
@@ -532,7 +531,7 @@ class ItemsQueryableBase[K, V: Value]:
 # =============================================================================
 
 
-class SequenceIndexableBase[T: Value, ItemRefT, SliceRefT]:
+class SequenceIndexableBase[T, ItemRefT, SliceRefT]:
     """Implementation base for sequence indexing.
 
     Provides __getitem__ for integer and slice access.
@@ -588,7 +587,7 @@ class SequenceIndexableBase[T: Value, ItemRefT, SliceRefT]:
         return self._create_item_ref(key)
 
 
-class SequenceIterableBase[T: Value]:
+class SequenceIterableBase[T]:
     """Implementation base for sequence iteration operations.
 
     Provides map(), filter(), reduce(), find(), find_index(), index(), count().
@@ -597,7 +596,7 @@ class SequenceIterableBase[T: Value]:
 
     item_type: type[T]
 
-    def map[R: Value](self, func: Callable[[T], R]) -> ListValue[R]:
+    def map[R](self, func: Callable[[T], R]) -> ListValue[R]:
         """Map a function over sequence elements.
 
         Args:
@@ -744,7 +743,7 @@ class SequenceIterableBase[T: Value]:
         return IntValue(CountOp(self, value))
 
 
-class AppendableBase[T: Value]:
+class AppendableBase[T]:
     """Implementation base for appending to sequences.
 
     Implements the Appendable protocol with append() method.
@@ -765,7 +764,7 @@ class AppendableBase[T: Value]:
         return NoneValue(AppendCmd(self, literal(value)))
 
 
-class InsertableBase[T: Value]:
+class InsertableBase[T]:
     """Implementation base for inserting into sequences.
 
     Implements the Insertable protocol with insert() method.
@@ -791,7 +790,7 @@ class InsertableBase[T: Value]:
         return NoneValue(InsertCmd(self, literal(index), literal(value)))
 
 
-class PoppableBase[T: Value]:
+class PoppableBase[T]:
     """Implementation base for popping from sequences.
 
     Implements the Poppable protocol with pop() method.
@@ -891,7 +890,7 @@ class MappingNestableBase[K, ChildRefT]:
         return self._create_child_ref(key)
 
 
-class MappingIterableBase[K, V: Value]:
+class MappingIterableBase[K, V]:
     """Implementation base for mapping iteration operations.
 
     Provides map_values(), map_items(), filter(), reduce(),
@@ -902,7 +901,7 @@ class MappingIterableBase[K, V: Value]:
     key_type: type[K]
     value_type: type[V]
 
-    def map_values[R: Value](self, func: Callable[[V], R]) -> DictValue[K, R]:
+    def map_values[R](self, func: Callable[[V], R]) -> DictValue[K, R]:
         """Map function over mapping values.
 
         Args:
@@ -916,7 +915,7 @@ class MappingIterableBase[K, V: Value]:
         """
         return DictValue(MapValuesOp(self, func))
 
-    def map_items[K2, V2: Value](self, func: Callable[[K, V], tuple[K2, V2]]) -> DictValue[K2, V2]:
+    def map_items[K2, V2](self, func: Callable[[K, V], tuple[K2, V2]]) -> DictValue[K2, V2]:
         """Map function over mapping items.
 
         Args:
@@ -1076,7 +1075,7 @@ class MappingIterableBase[K, V: Value]:
 # =============================================================================
 
 
-class SetAddableBase[T: Value]:
+class SetAddableBase[T]:
     """Implementation base for adding to sets.
 
     Implements add() method for sets.
@@ -1097,7 +1096,7 @@ class SetAddableBase[T: Value]:
         return NoneValue(AddCmd(self, literal(value)))
 
 
-class SetRemovableBase[T: Value]:
+class SetRemovableBase[T]:
     """Implementation base for removing from sets.
 
     Implements remove() and discard() methods for sets.
