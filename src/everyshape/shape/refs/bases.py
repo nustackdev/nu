@@ -1,65 +1,32 @@
-"""Comprehensive behavior bases for LValue implementations.
+"""Capability implementation bases for LValue references.
 
-This module provides mixin classes that encapsulate LValue behaviors.
-Each base provides concrete methods that create operations/commands directly.
+This module provides mixin classes that IMPLEMENT capability protocols.
+These are the building blocks that get combined in refs.py to create
+complete ref implementations.
 
-Hierarchy:
-    PrimitiveRefBase - leaf value references
-        Methods: get(), set(), remove(), exists(), missing()
+Each base implements methods from the corresponding capability protocol:
+- ExistableBase implements Existable (exists(), missing())
+- GettableBase implements Gettable (get())
+- SettableBase implements Settable (set())
+- etc.
 
-    ViewRefBase - container references
-        Methods: extract(), store(), clear(), length(), exists(), missing()
-
-    SequenceRefBase(ViewRefBase) - list-like containers
-        Adds: __getitem__ (int/slice), map(), filter(), reduce(), find(), etc.
-
-    MutableSequenceRefBase(SequenceRefBase) - mutable lists
-        Adds: append(), insert(), pop()
-
-    MappingRefBase(ViewRefBase) - dict-like containers
-        Adds: __getitem__ (key), keys(), values(), items(), map_values(), filter(), etc.
-
-    SetRefBase(ViewRefBase) - set-like containers
-
-    MutableSetRefBase(SetRefBase) - mutable sets
-        Adds: add(), remove(), discard()
+These are NOT protocols - they are concrete implementations that can be
+mixed into ref classes.
 
 Usage:
-    class MyValueRef(PrimitiveRefBase[int, MyContext]):
-        # Just inherit - all methods work automatically
+    class MyRef(ExistableBase, GettableBase, SettableBase, PrimitiveRef):
+        # Gets exists(), missing(), get(), set() implementations
         pass
-
-    >>> ref = MyValueRef(...)
-    >>> get_op = ref.get()  # Returns GetOp
-    >>> set_cmd = ref.set(42)  # Returns SetCmd
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
-from collections.abc import Mapping as PyMapping
-from collections.abc import Sequence as PySequence
-from collections.abc import Set as PySet
 from typing import TYPE_CHECKING, overload
 
 from everyshape.types import SpecialValue, Value
 
-from ..term import PrimitiveRef, RValue, ViewRef
-from ..values import (
-    BoolValue,
-    BytesValue,
-    DictValue,
-    FloatValue,
-    IntValue,
-    ListValue,
-    NoneValue,
-    SetValue,
-    StrValue,
-    TupleValue,
-)
-from ..values.conversion import literal, result
-from .commands import (
+from ..computations.commands import (
     AddCmd,
     AppendCmd,
     ClearCmd,
@@ -71,7 +38,14 @@ from .commands import (
     SetCmd,
     StoreCmd,
 )
-from .operations import (
+from ..computations.reactive_ops import (
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
+)
+from ..computations.ref_ops import (
     CountOp,
     ExistsOp,
     ExtractOp,
@@ -95,163 +69,69 @@ from .operations import (
     ReduceOp,
     ValuesOp,
 )
-from .operations_reactive import (
-    OnChangeOp,
-    OnChildChangeOp,
-    OnChildrenChangeOp,
-    OnDescendantsChangeOp,
-    OnPrimitiveChangeOp,
+from ..values import (
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    IntValue,
+    ListValue,
+    NoneValue,
+    SetValue,
+    StrValue,
+    TupleValue,
 )
+from ..values.conversion import literal, result
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from everyshape.loc import key
 
+    from ..term import RValue
 
-__all__ = [
-    "MappingRefBase",
-    "MutableMappingRefBase",
-    "MutableSequenceRefBase",
-    "MutableSetRefBase",
-    "PrimitiveRefBase",
-    "SequenceRefBase",
-    "SetRefBase",
-    "ViewRefBase",
+
+__all__ = [  # noqa: RUF022
+    # Core capability bases
+    "ExistableBase",
+    "GettableBase",
+    "SettableBase",
+    "DeletableBase",
+    "ExtractableBase",
+    "StorableBase",
+    "ClearableBase",
+    "LengthableBase",
+    # Observable bases
+    "PrimitiveObservableBase",
+    "ViewObservableBase",
+    # Query bases
+    "KeysQueryableBase",
+    "ValuesQueryableBase",
+    "ItemsQueryableBase",
+    # Sequence capability bases
+    "SequenceIndexableBase",
+    "SequenceIterableBase",
+    "AppendableBase",
+    "InsertableBase",
+    "PoppableBase",
+    # Set capability bases
+    "SetAddableBase",
+    "SetRemovableBase",
 ]
 
 
 # =============================================================================
-# PRIMITIVE REF BASE
+# EXISTENCE CAPABILITY BASE
 # =============================================================================
 
 
-class PrimitiveRefBase[T: Value](PrimitiveRef[T]):
-    """Complete base for primitive (leaf) value references.
+class ExistableBase:
+    """Implementation base for existence checking.
 
-    Provides all standard operations for primitive values:
-    - get() -> GetOp (read value)
-    - set(value) -> SetCmd (write value)
-    - remove() -> DeleteCmd (delete value)
-    - exists() -> ExistsOp (check existence)
-    - missing() -> MissingOp (check non-existence)
-
-    Type Parameters:
-        T: Type of value at this location
-        ContextT: Execution context type
-
-    Example:
-        >>> class ValueRef(PrimitiveRefBase[int, Context]):
-        ...     pass
-        >>> ref = ValueRef(...)
-        >>> get_op = ref.get()  # Creates GetOp
-        >>> set_cmd = ref.set(42)  # Creates SetCmd
+    Implements the Existable protocol with exists() and missing() methods.
+    Requires self to have resolve() method.
     """
-
-    # Primitives
-    @overload
-    def get(self: PrimitiveRefBase[int]) -> IntValue: ...
-
-    @overload
-    def get(self: PrimitiveRefBase[str]) -> StrValue: ...
-
-    @overload
-    def get(self: PrimitiveRefBase[bool]) -> BoolValue: ...
-
-    @overload
-    def get(self: PrimitiveRefBase[float]) -> FloatValue: ...
-
-    @overload
-    def get(self: PrimitiveRefBase[bytes]) -> BytesValue: ...
-
-    @overload
-    def get(self: PrimitiveRefBase[None]) -> NoneValue: ...
-
-    # Collections
-    @overload
-    def get[V](self: PrimitiveRefBase[list[V]]) -> ListValue[V]: ...
-
-    @overload
-    def get[K, V](self: PrimitiveRefBase[dict[K, V]]) -> DictValue[K, V]: ...
-
-    @overload
-    def get[V](self: PrimitiveRefBase[set[V]]) -> SetValue[V]: ...
-
-    # @overload
-    # def get[*Ts](self: ValueRef[tuple[*Ts]]) -> TupleValue[*Ts, Context]: ...
-
-    # @overload
-    # def get[V](self: ValueRef[frozenset[V]]) -> FrozenSetValue[V, Context]: ...
-
-    def get(self) -> object:
-        """Create a get operation for this location.
-
-        Returns:
-            GetOp that reads the value when executed
-
-        Example:
-            >>> value = ref.get().execute(ctx)
-        """
-        return result(self.value_type, GetOp(self))
-
-    @overload
-    def set(self: PrimitiveRefBase[int], value: T | RValue[T | SpecialValue]) -> IntValue: ...
-
-    @overload
-    def set(self: PrimitiveRefBase[str], value: T | RValue[T | SpecialValue]) -> StrValue: ...
-
-    @overload
-    def set(self: PrimitiveRefBase[bool], value: T | RValue[T | SpecialValue]) -> BoolValue: ...
-
-    @overload
-    def set(self: PrimitiveRefBase[float], value: T | RValue[T | SpecialValue]) -> FloatValue: ...
-
-    @overload
-    def set(self: PrimitiveRefBase[bytes], value: T | RValue[T | SpecialValue]) -> BytesValue: ...
-
-    @overload
-    def set(self: PrimitiveRefBase[None], value: T | RValue[T | SpecialValue]) -> NoneValue: ...
-
-    # Collections
-    @overload
-    def set[V](
-        self: PrimitiveRefBase[list[V]], value: T | RValue[T | SpecialValue]
-    ) -> ListValue[V]: ...
-
-    @overload
-    def set[K, V](
-        self: PrimitiveRefBase[dict[K, V]], value: T | RValue[T | SpecialValue]
-    ) -> DictValue[K, V]: ...
-
-    @overload
-    def set[V](
-        self: PrimitiveRefBase[set[V]], value: T | RValue[T | SpecialValue]
-    ) -> SetValue[V]: ...
-
-    def set(self, value: T | RValue[T | SpecialValue]) -> object:
-        """Create a set command for this location.
-
-        Args:
-            value: Value to write (literal or RValue)
-
-        Returns:
-            SetCmd that writes the value when executed
-
-        Example:
-            >>> ref.set(42).execute(ctx)
-            >>> ref.set(other_ref.get()).execute(ctx)  # Chain refs
-        """
-        return result(self.value_type, SetCmd(self, literal(value)))
-
-    def remove(self) -> BoolValue:
-        """Create a delete command for this location.
-
-        Returns:
-            DeleteCmd that removes the value when executed
-
-        Example:
-            >>> ref.remove().execute(ctx)
-        """
-        return BoolValue(DeleteCmd(self))
 
     def exists(self) -> BoolValue:
         """Create an existence check operation.
@@ -277,85 +157,71 @@ class PrimitiveRefBase[T: Value](PrimitiveRef[T]):
         """
         return BoolValue(MissingOp(self))
 
-    def on_change(self) -> OnPrimitiveChangeOp:
-        """Create change subscription operation for this value.
 
-        Returns a ChangeOp that subscribes to changes on this primitive value
-        via the parent view's ChildObservable protocol.
+# =============================================================================
+# READ CAPABILITY BASES
+# =============================================================================
+
+
+class GettableBase[T: Value]:
+    """Implementation base for getting primitive values.
+
+    Implements the Gettable protocol with get() method.
+    Requires self to have value_type attribute.
+    """
+
+    value_type: type[T]
+
+    # Primitives
+    @overload
+    def get(self: GettableBase[int]) -> IntValue: ...
+
+    @overload
+    def get(self: GettableBase[str]) -> StrValue: ...
+
+    @overload
+    def get(self: GettableBase[bool]) -> BoolValue: ...
+
+    @overload
+    def get(self: GettableBase[float]) -> FloatValue: ...
+
+    @overload
+    def get(self: GettableBase[bytes]) -> BytesValue: ...
+
+    @overload
+    def get(self: GettableBase[None]) -> NoneValue: ...
+
+    # Collections
+    @overload
+    def get[V](self: GettableBase[list[V]]) -> ListValue[V]: ...
+
+    @overload
+    def get[K, V](self: GettableBase[dict[K, V]]) -> DictValue[K, V]: ...
+
+    @overload
+    def get[V](self: GettableBase[set[V]]) -> SetValue[V]: ...
+
+    def get(self) -> object:
+        """Create a get operation for this location.
 
         Returns:
-            OnPrimitiveChangeOp that creates subscription when executed
+            GetOp that reads the value when executed
 
         Example:
-            >>> Once(User.name.on_change(), HandleNameChange())
-            >>> OnChange(Config.value.on_change(), SyncConfig())
+            >>> value = ref.get().execute(ctx)
         """
-        return OnPrimitiveChangeOp(self)
+        return result(self.value_type, GetOp(self))
 
 
-class SequenceValueRefBase[T: Value](PrimitiveRefBase[T]):
-    """Reference to a primitive value location.
+class ExtractableBase[W, T: Value](ABC):
+    """Implementation base for extracting container contents.
 
-    Points to leaf nodes in the tree: int, str, float, bool, etc.
-    Supports read (get) and write (set) operations.
-
-    Example:
-        class User(Shape):
-            name: ValueRef[str] = ValueSlot(str)
-            age: ValueRef[int] = ValueSlot(int)
-
-        # Create operations
-        User.name.get()         # GetOp[str]
-        User.name.set("Alice")  # SetCmd[str]
-    """
-
-    pass
-
-
-class MappingValueRefBase[T: Value](PrimitiveRefBase[T]):
-    """Reference to a primitive value location.
-
-    Points to leaf nodes in the tree: int, str, float, bool, etc.
-    Supports read (get) and write (set) operations.
-
-    Example:
-        class User(Shape):
-            name: ValueRef[str] = ValueSlot(str)
-            age: ValueRef[int] = ValueSlot(int)
-
-        # Create operations
-        User.name.get()         # GetOp[str]
-        User.name.set("Alice")  # SetCmd[str]
-    """
-
-    pass
-
-
-# =============================================================================
-# VIEW REF BASE
-# =============================================================================
-
-
-class ViewRefBase[W, T: Value](ViewRef, ABC):
-    """Complete base for container (view) references.
-
-    Provides all standard operations for containers:
-    - extract() -> ExtractOp (read entire structure)
-    - store(value) -> StoreCmd (write entire structure)
-    - clear() -> ClearCmd (remove all items)
-    - length() -> LengthOp (query size)
-    - exists() -> ExistsOp (check existence)
-    - missing() -> MissingOp (check non-existence)
-
-    Type Parameters:
-        W: Type of wrapper value (DictValue, ListValue, etc.)
-        T: Type of extracted value (dict, list, etc.)
-        ContextT: Execution context type
+    Implements the Extractable protocol with extract() method.
     """
 
     @abstractmethod
     def result(self, op: RValue) -> W:
-        """Convert operations result with corresponding containr."""
+        """Convert operation result with corresponding wrapper."""
         ...
 
     def extract(self) -> W:
@@ -368,6 +234,80 @@ class ViewRefBase[W, T: Value](ViewRef, ABC):
             >>> data = dict_ref.extract().execute(ctx)  # Returns dict
         """
         return self.result(ExtractOp(self))
+
+
+# =============================================================================
+# WRITE CAPABILITY BASES
+# =============================================================================
+
+
+class SettableBase[T: Value]:
+    """Implementation base for setting primitive values.
+
+    Implements the Settable protocol with set() method.
+    Requires self to have value_type attribute.
+    """
+
+    value_type: type[T]
+
+    @overload
+    def set(self: SettableBase[int], value: T | RValue[T | SpecialValue]) -> IntValue: ...
+
+    @overload
+    def set(self: SettableBase[str], value: T | RValue[T | SpecialValue]) -> StrValue: ...
+
+    @overload
+    def set(self: SettableBase[bool], value: T | RValue[T | SpecialValue]) -> BoolValue: ...
+
+    @overload
+    def set(self: SettableBase[float], value: T | RValue[T | SpecialValue]) -> FloatValue: ...
+
+    @overload
+    def set(self: SettableBase[bytes], value: T | RValue[T | SpecialValue]) -> BytesValue: ...
+
+    @overload
+    def set(self: SettableBase[None], value: T | RValue[T | SpecialValue]) -> NoneValue: ...
+
+    # Collections
+    @overload
+    def set[V](
+        self: SettableBase[list[V]], value: T | RValue[T | SpecialValue]
+    ) -> ListValue[V]: ...
+
+    @overload
+    def set[K, V](
+        self: SettableBase[dict[K, V]], value: T | RValue[T | SpecialValue]
+    ) -> DictValue[K, V]: ...
+
+    @overload
+    def set[V](self: SettableBase[set[V]], value: T | RValue[T | SpecialValue]) -> SetValue[V]: ...
+
+    def set(self, value: T | RValue[T | SpecialValue]) -> object:
+        """Create a set command for this location.
+
+        Args:
+            value: Value to write (literal or RValue)
+
+        Returns:
+            SetCmd that writes the value when executed
+
+        Example:
+            >>> ref.set(42).execute(ctx)
+            >>> ref.set(other_ref.get()).execute(ctx)  # Chain refs
+        """
+        return result(self.value_type, SetCmd(self, literal(value)))
+
+
+class StorableBase[W, T: Value](ABC):
+    """Implementation base for storing container contents.
+
+    Implements the Storable protocol with store() method.
+    """
+
+    @abstractmethod
+    def result(self, op: RValue) -> W:
+        """Convert operation result with corresponding wrapper."""
+        ...
 
     def store(self, value: T | RValue[T | SpecialValue]) -> W:
         """Create a store command for this container.
@@ -383,6 +323,36 @@ class ViewRefBase[W, T: Value](ViewRef, ABC):
         """
         return self.result(StoreCmd(self, literal(value)))
 
+
+# =============================================================================
+# DELETE CAPABILITY BASES
+# =============================================================================
+
+
+class DeletableBase:
+    """Implementation base for deleting values.
+
+    Implements the Deletable protocol with remove() method.
+    """
+
+    def remove(self) -> BoolValue:
+        """Create a delete command for this location.
+
+        Returns:
+            DeleteCmd that removes the value when executed
+
+        Example:
+            >>> ref.remove().execute(ctx)
+        """
+        return BoolValue(DeleteCmd(self))
+
+
+class ClearableBase:
+    """Implementation base for clearing containers.
+
+    Implements the Clearable protocol with clear() method.
+    """
+
     def clear(self) -> NoneValue:
         """Create a clear command for this container.
 
@@ -393,6 +363,18 @@ class ViewRefBase[W, T: Value](ViewRef, ABC):
             >>> list_ref.clear().execute(ctx)
         """
         return NoneValue(ClearCmd(self))
+
+
+# =============================================================================
+# LENGTH CAPABILITY BASE
+# =============================================================================
+
+
+class LengthableBase:
+    """Implementation base for length queries.
+
+    Implements the Lengthable protocol with length() method.
+    """
 
     def length(self) -> IntValue:
         """Create a length query operation.
@@ -405,21 +387,35 @@ class ViewRefBase[W, T: Value](ViewRef, ABC):
         """
         return IntValue(LengthOp(self))
 
-    def exists(self) -> BoolValue:
-        """Create an existence check operation.
+
+# =============================================================================
+# OBSERVABLE CAPABILITY BASES
+# =============================================================================
+
+
+class PrimitiveObservableBase:
+    """Implementation base for primitive value observation.
+
+    Implements observation for leaf values via parent view's ChildObservable.
+    """
+
+    def on_change(self) -> OnPrimitiveChangeOp:
+        """Create change subscription operation for this value.
 
         Returns:
-            ExistsOp that returns True if container exists
-        """
-        return BoolValue(ExistsOp(self))
+            OnPrimitiveChangeOp that creates subscription when executed
 
-    def missing(self) -> BoolValue:
-        """Create a missing check operation.
-
-        Returns:
-            MissingOp that returns True if container doesn't exist
+        Example:
+            >>> Once(User.name.on_change(), HandleNameChange())
         """
-        return BoolValue(MissingOp(self))
+        return OnPrimitiveChangeOp(self)
+
+
+class ViewObservableBase:
+    """Implementation base for container observation.
+
+    Implements observation for containers via Observable and ChildObservable protocols.
+    """
 
     def on_change(self) -> OnChangeOp:
         """Subscribe to all changes in this view.
@@ -473,29 +469,74 @@ class ViewRefBase[W, T: Value](ViewRef, ABC):
 
 
 # =============================================================================
-# SEQUENCE REF BASE
+# QUERY CAPABILITY BASES
 # =============================================================================
 
 
-class SequenceRefBase[W, T: Value, ItemRefT, SliceRefT](ViewRefBase[ListValue, PySequence]):
-    """Complete base for read-only sequence references.
+class KeysQueryableBase[K]:
+    """Implementation base for keys queries.
 
-    Extends ViewRefBase with sequence capabilities:
-    - __getitem__(int) -> item reference
-    - __getitem__(slice) -> slice reference
-    - map(func) -> MapOp
-    - filter(predicate) -> FilterOp
-    - reduce(func, initial) -> ReduceOp
-    - find(predicate) -> FindOp
-    - find_index(predicate) -> FindIndexOp
-    - index(value) -> IndexOp
-    - count(value) -> CountOp
+    Implements the KeysQueryable protocol with keys() method.
+    """
 
-    Type Parameters:
-        T: Type of items in the sequence
-        ItemRefT: Type of reference returned for single items
-        SliceRefT: Type of reference returned for slices
-        ContextT: Execution context type
+    def keys(self) -> ListValue[K]:
+        """Create a keys query operation.
+
+        Returns:
+            ListValue containing all keys when executed
+
+        Example:
+            >>> all_keys = dict_ref.keys().execute(ctx)
+        """
+        return ListValue(KeysOp(self))
+
+
+class ValuesQueryableBase[V: Value]:
+    """Implementation base for values queries.
+
+    Implements the ValuesQueryable protocol with values() method.
+    """
+
+    def values(self) -> ListValue[V]:
+        """Create a values query operation.
+
+        Returns:
+            ListValue containing all values when executed
+
+        Example:
+            >>> all_values = dict_ref.values().execute(ctx)
+        """
+        return ListValue(ValuesOp(self))
+
+
+class ItemsQueryableBase[K, V: Value]:
+    """Implementation base for items queries.
+
+    Implements the ItemsQueryable protocol with items() method.
+    """
+
+    def items(self) -> ListValue[tuple[K, V]]:
+        """Create an items query operation.
+
+        Returns:
+            ListValue containing all (key, value) pairs when executed
+
+        Example:
+            >>> all_items = dict_ref.items().execute(ctx)
+        """
+        return ListValue(ItemsOp(self))
+
+
+# =============================================================================
+# SEQUENCE CAPABILITY BASES
+# =============================================================================
+
+
+class SequenceIndexableBase[T: Value, ItemRefT, SliceRefT]:
+    """Implementation base for sequence indexing.
+
+    Provides __getitem__ for integer and slice access.
+    Subclasses must implement _create_item_ref and _create_slice_ref.
     """
 
     def _create_item_ref(self, index: int | RValue[int]) -> ItemRefT:
@@ -546,7 +587,17 @@ class SequenceRefBase[W, T: Value, ItemRefT, SliceRefT](ViewRefBase[ListValue, P
             return self._create_slice_ref(key)
         return self._create_item_ref(key)
 
-    def map[R: Value](self, func: Callable[[T], R]) -> ListValue[ItemRefT]:
+
+class SequenceIterableBase[T: Value]:
+    """Implementation base for sequence iteration operations.
+
+    Provides map(), filter(), reduce(), find(), find_index(), index(), count().
+    Requires self to have item_type attribute.
+    """
+
+    item_type: type[T]
+
+    def map[R: Value](self, func: Callable[[T], R]) -> ListValue[R]:
         """Map a function over sequence elements.
 
         Args:
@@ -612,33 +663,27 @@ class SequenceRefBase[W, T: Value, ItemRefT, SliceRefT](ViewRefBase[ListValue, P
         return result(type(initial), ReduceOp(self, func, initial))
 
     @overload
-    def find(
-        self: SequenceRefBase[W, int, ItemRefT, SliceRefT], predicate: Callable[[int], bool]
-    ) -> IntValue: ...
+    def find(self: SequenceIterableBase[int], predicate: Callable[[int], bool]) -> IntValue: ...
+
+    @overload
+    def find(self: SequenceIterableBase[str], predicate: Callable[[str], bool]) -> StrValue: ...
 
     @overload
     def find(
-        self: SequenceRefBase[W, str, ItemRefT, SliceRefT], predicate: Callable[[str], bool]
-    ) -> StrValue: ...
-
-    @overload
-    def find(
-        self: SequenceRefBase[W, float, ItemRefT, SliceRefT], predicate: Callable[[float], bool]
+        self: SequenceIterableBase[float], predicate: Callable[[float], bool]
     ) -> FloatValue: ...
 
     @overload
-    def find(
-        self: SequenceRefBase[W, bool, ItemRefT, SliceRefT], predicate: Callable[[bool], bool]
-    ) -> BoolValue: ...
+    def find(self: SequenceIterableBase[bool], predicate: Callable[[bool], bool]) -> BoolValue: ...
 
     @overload
     def find[V](
-        self: SequenceRefBase[W, list[V], ItemRefT, SliceRefT], predicate: Callable[[list[V]], bool]
+        self: SequenceIterableBase[list[V]], predicate: Callable[[list[V]], bool]
     ) -> ListValue[V]: ...
 
     @overload
     def find[K, V](
-        self: SequenceRefBase[W, dict[K, V], ItemRefT, SliceRefT],
+        self: SequenceIterableBase[dict[K, V]],
         predicate: Callable[[dict[K, V]], bool],
     ) -> DictValue[K, V]: ...
 
@@ -699,21 +744,10 @@ class SequenceRefBase[W, T: Value, ItemRefT, SliceRefT](ViewRefBase[ListValue, P
         return IntValue(CountOp(self, value))
 
 
-class MutableSequenceRefBase[W, T: Value, ItemRefT, SliceRefT](
-    SequenceRefBase[W, T, ItemRefT, SliceRefT]
-):
-    """Complete base for mutable sequence references.
+class AppendableBase[T: Value]:
+    """Implementation base for appending to sequences.
 
-    Extends SequenceRefBase with mutation capabilities:
-    - append(value) -> AppendCmd
-    - insert(index, value) -> InsertCmd
-    - pop(index?) -> PopCmd
-
-    Type Parameters:
-        T: Type of items in the sequence
-        ItemRefT: Type of reference returned for single items
-        SliceRefT: Type of reference returned for slices
-        ContextT: Execution context type
+    Implements the Appendable protocol with append() method.
     """
 
     def append(self, value: T | RValue[T | SpecialValue]) -> NoneValue:
@@ -729,6 +763,13 @@ class MutableSequenceRefBase[W, T: Value, ItemRefT, SliceRefT](
             >>> list_ref.append(42).execute(ctx)
         """
         return NoneValue(AppendCmd(self, literal(value)))
+
+
+class InsertableBase[T: Value]:
+    """Implementation base for inserting into sequences.
+
+    Implements the Insertable protocol with insert() method.
+    """
 
     def insert(
         self,
@@ -749,39 +790,49 @@ class MutableSequenceRefBase[W, T: Value, ItemRefT, SliceRefT](
         """
         return NoneValue(InsertCmd(self, literal(index), literal(value)))
 
+
+class PoppableBase[T: Value]:
+    """Implementation base for popping from sequences.
+
+    Implements the Poppable protocol with pop() method.
+    Requires self to have item_type attribute.
+    """
+
+    item_type: type[T]
+
     @overload
     def pop(
-        self: MutableSequenceRefBase[W, int, ItemRefT, SliceRefT],
+        self: PoppableBase[int],
         index: int | RValue[int | SpecialValue] | None = None,
     ) -> IntValue: ...
 
     @overload
     def pop(
-        self: MutableSequenceRefBase[W, str, ItemRefT, SliceRefT],
+        self: PoppableBase[str],
         index: int | RValue[int | SpecialValue] | None = None,
     ) -> StrValue: ...
 
     @overload
     def pop(
-        self: MutableSequenceRefBase[W, float, ItemRefT, SliceRefT],
+        self: PoppableBase[float],
         index: int | RValue[int | SpecialValue] | None = None,
     ) -> FloatValue: ...
 
     @overload
     def pop(
-        self: MutableSequenceRefBase[W, bool, ItemRefT, SliceRefT],
+        self: PoppableBase[bool],
         index: int | RValue[int | SpecialValue] | None = None,
     ) -> BoolValue: ...
 
     @overload
     def pop[V](
-        self: MutableSequenceRefBase[W, list[V], ItemRefT, SliceRefT],
+        self: PoppableBase[list[V]],
         index: int | RValue[int | SpecialValue] | None = None,
     ) -> ListValue[V]: ...
 
     @overload
     def pop[K, V](
-        self: MutableSequenceRefBase[W, dict[K, V], ItemRefT, SliceRefT],
+        self: PoppableBase[dict[K, V]],
         index: int | RValue[int | SpecialValue] | None = None,
     ) -> DictValue[K, V]: ...
 
@@ -803,31 +854,15 @@ class MutableSequenceRefBase[W, T: Value, ItemRefT, SliceRefT](
 
 
 # =============================================================================
-# MAPPING REF BASE
+# MAPPING CAPABILITY BASES
 # =============================================================================
 
 
-class MappingRefBase[W, K, V: Value, ChildRefT](ViewRefBase[W, PyMapping[K, V]]):
-    """Complete base for read-only mapping references.
+class MappingNestableBase[K, ChildRefT]:
+    """Implementation base for mapping navigation.
 
-    Extends ViewRefBase with mapping capabilities:
-    - __getitem__(key) -> child reference
-    - keys() -> KeysOp
-    - values() -> ValuesOp
-    - items() -> ItemsOp
-    - map_values(func) -> MapValuesOp
-    - map_items(func) -> MapItemsOp
-    - filter(predicate) -> FilterItemsOp
-    - reduce(func, initial) -> ReduceItemsOp
-    - find_key(predicate) -> FindKeyOp
-    - find_value(predicate) -> FindValueOp
-    - find_item(predicate) -> FindItemOp
-
-    Type Parameters:
-        K: Type of keys
-        V: Type of values
-        ChildRefT: Type of reference returned for child items
-        ContextT: Execution context type
+    Provides __getitem__ for key-based child access.
+    Subclasses must implement _create_child_ref.
     """
 
     def _create_child_ref(self, key: K | RValue[K]) -> ChildRefT:
@@ -855,38 +890,17 @@ class MappingRefBase[W, K, V: Value, ChildRefT](ViewRefBase[W, PyMapping[K, V]])
         """
         return self._create_child_ref(key)
 
-    def keys(self) -> ListValue[K]:
-        """Create a keys query operation.
 
-        Returns:
-            ListValue containing all keys when executed
+class MappingIterableBase[K, V: Value]:
+    """Implementation base for mapping iteration operations.
 
-        Example:
-            >>> all_keys = dict_ref.keys().execute(ctx)
-        """
-        return ListValue(KeysOp(self))
+    Provides map_values(), map_items(), filter(), reduce(),
+    find_key(), find_value(), find_item().
+    Requires self to have key_type and value_type attributes.
+    """
 
-    def values(self) -> ListValue[V]:
-        """Create a values query operation.
-
-        Returns:
-            ListValue containing all values when executed
-
-        Example:
-            >>> all_values = dict_ref.values().execute(ctx)
-        """
-        return ListValue(ValuesOp(self))
-
-    def items(self) -> ListValue[tuple[K, V]]:
-        """Create an items query operation.
-
-        Returns:
-            ListValue containing all (key, value) pairs when executed
-
-        Example:
-            >>> all_items = dict_ref.items().execute(ctx)
-        """
-        return ListValue(ItemsOp(self))
+    key_type: type[K]
+    value_type: type[V]
 
     def map_values[R: Value](self, func: Callable[[V], R]) -> DictValue[K, R]:
         """Map function over mapping values.
@@ -968,23 +982,19 @@ class MappingRefBase[W, K, V: Value, ChildRefT](ViewRefBase[W, PyMapping[K, V]])
         return result(type(initial), ReduceItemsOp(self, func, initial))
 
     @overload
-    def find_key(
-        self: MappingRefBase[W, int, V, ChildRefT], predicate: Callable[[V], bool]
-    ) -> IntValue: ...
+    def find_key(self: MappingIterableBase[int, V], predicate: Callable[[V], bool]) -> IntValue: ...
+
+    @overload
+    def find_key(self: MappingIterableBase[str, V], predicate: Callable[[V], bool]) -> StrValue: ...
 
     @overload
     def find_key(
-        self: MappingRefBase[W, str, V, ChildRefT], predicate: Callable[[V], bool]
-    ) -> StrValue: ...
-
-    @overload
-    def find_key(
-        self: MappingRefBase[W, float, V, ChildRefT], predicate: Callable[[V], bool]
+        self: MappingIterableBase[float, V], predicate: Callable[[V], bool]
     ) -> FloatValue: ...
 
     @overload
     def find_key(
-        self: MappingRefBase[W, bool, V, ChildRefT], predicate: Callable[[V], bool]
+        self: MappingIterableBase[bool, V], predicate: Callable[[V], bool]
     ) -> BoolValue: ...
 
     def find_key(self, predicate: Callable[[V], bool]) -> object:
@@ -1003,32 +1013,32 @@ class MappingRefBase[W, K, V: Value, ChildRefT](ViewRefBase[W, PyMapping[K, V]])
 
     @overload
     def find_value(
-        self: MappingRefBase[W, K, int, ChildRefT], predicate: Callable[[int], bool]
+        self: MappingIterableBase[K, int], predicate: Callable[[int], bool]
     ) -> IntValue: ...
 
     @overload
     def find_value(
-        self: MappingRefBase[W, K, str, ChildRefT], predicate: Callable[[str], bool]
+        self: MappingIterableBase[K, str], predicate: Callable[[str], bool]
     ) -> StrValue: ...
 
     @overload
     def find_value(
-        self: MappingRefBase[W, K, float, ChildRefT], predicate: Callable[[float], bool]
+        self: MappingIterableBase[K, float], predicate: Callable[[float], bool]
     ) -> FloatValue: ...
 
     @overload
     def find_value(
-        self: MappingRefBase[W, K, bool, ChildRefT], predicate: Callable[[bool], bool]
+        self: MappingIterableBase[K, bool], predicate: Callable[[bool], bool]
     ) -> BoolValue: ...
 
     @overload
     def find_value[V2](
-        self: MappingRefBase[W, K, list[V2], ChildRefT], predicate: Callable[[list[V2]], bool]
+        self: MappingIterableBase[K, list[V2]], predicate: Callable[[list[V2]], bool]
     ) -> ListValue[V2]: ...
 
     @overload
     def find_value[K2, V2](
-        self: MappingRefBase[W, K, dict[K2, V2], ChildRefT],
+        self: MappingIterableBase[K, dict[K2, V2]],
         predicate: Callable[[dict[K2, V2]], bool],
     ) -> DictValue[K2, V2]: ...
 
@@ -1061,50 +1071,15 @@ class MappingRefBase[W, K, V: Value, ChildRefT](ViewRefBase[W, PyMapping[K, V]])
         return TupleValue(FindItemOp(self, predicate))
 
 
-class MutableMappingRefBase[W, K, V: Value, ChildRefT](MappingRefBase[W, K, V, ChildRefT]):
-    """Complete base for mutable mapping references.
-
-    Same as MappingRefBase - mutations happen through child refs.
-
-    Type Parameters:
-        K: Type of keys
-        V: Type of values
-        ChildRefT: Type of reference returned for child items
-        ContextT: Execution context type
-    """
-
-    pass
-
-
 # =============================================================================
-# SET REF BASE
+# SET CAPABILITY BASES
 # =============================================================================
 
 
-class SetRefBase[T: Value](ViewRefBase[SetValue, PySet[T]]):
-    """Complete base for read-only set references.
+class SetAddableBase[T: Value]:
+    """Implementation base for adding to sets.
 
-    Extends ViewRefBase for set semantics.
-
-    Type Parameters:
-        T: Type of items in the set
-        ContextT: Execution context type
-    """
-
-    pass
-
-
-class MutableSetRefBase[T: Value](SetRefBase[T]):
-    """Complete base for mutable set references.
-
-    Extends SetRefBase with mutation capabilities:
-    - add(value) -> AddCmd
-    - remove(value) -> RemoveCmd (raises error if missing)
-    - discard(value) -> DiscardCmd (no error if missing)
-
-    Type Parameters:
-        T: Type of items in the set
-        ContextT: Execution context type
+    Implements add() method for sets.
     """
 
     def add(self, value: T | RValue[T | SpecialValue]) -> NoneValue:
@@ -1120,6 +1095,13 @@ class MutableSetRefBase[T: Value](SetRefBase[T]):
             >>> set_ref.add("item").execute(ctx)
         """
         return NoneValue(AddCmd(self, literal(value)))
+
+
+class SetRemovableBase[T: Value]:
+    """Implementation base for removing from sets.
+
+    Implements remove() and discard() methods for sets.
+    """
 
     def remove(self, value: T | RValue[T | SpecialValue]) -> NoneValue:
         """Create a remove command.

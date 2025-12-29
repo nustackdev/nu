@@ -2,12 +2,18 @@
 
 This module defines the execution model through a minimal type hierarchy:
 
-    Term                    - executable node
-    ├── LValue              - addressable location (has path)
-    │   └── Ref[T]          - typed reference
-    └── RValue              - evaluable expression (has children)
-        ├── Operation[T]    - pure computation → T
-        └── Command[T]      - impure mutation → T
+    Term                        - executable node
+    ├── LValue                  - addressable location (has path)
+    │   └── Ref                 - typed reference to storage location
+    │       ├── ViewRef         - reference to container (dict, list, set)
+    │       └── PrimitiveRef    - reference to leaf value (int, str, etc.)
+    └── RValue                  - evaluable expression (has children)
+        ├── Value               - represents a value (literal or computed)
+        │   ├── LiteralValue    - fixed value (e.g. 42, "hello")
+        │   └── ComputedValue   - result of computation (wraps Operation)
+        └── Computation         - computes or mutates
+            ├── Operation       - pure computation (e.g. get, add)
+            └── Command         - impure mutation (e.g. set, delete)
 
 Design principles:
     - Minimal contracts: only essential methods
@@ -24,7 +30,11 @@ LValue vs RValue:
     price + 100             → RValue (computes)
     price.set(150)          → RValue (writes to location)
 
-Pure vs Impure:
+Value types:
+    LiteralValue = fixed, known value (e.g. 42, "hello", [1, 2, 3])
+    ComputedValue = result wrapper around an Operation
+
+Computation types (pure vs impure):
     Operation = deterministic, no side effects, cacheable
     Command   = modifies state, transactional, explicit effects
 
@@ -62,15 +72,24 @@ if TYPE_CHECKING:
     from .shape import Shape
 
 
-__all__ = [
-    "Command",
-    "LValue",
-    "Operation",
-    "PrimitiveRef",
-    "RValue",
-    "Ref",
+__all__ = [  # noqa: RUF022
+    # Core terms
     "Term",
+    # LValues
+    "LValue",
+    "Ref",
     "ViewRef",
+    "PrimitiveRef",
+    # RValues
+    "RValue",
+    # Values
+    "ValueTerm",
+    "LiteralValue",
+    "ComputedValue",
+    # Computations
+    "Computation",
+    "Operation",
+    "Command",
 ]
 
 ViewT_co = TypeVar("ViewT_co", covariant=True, bound="View")
@@ -238,11 +257,171 @@ class RValue[ResultT](Term[ResultT]):
 
 
 # =============================================================================
+# VALUE - REPRESENTS A VALUE (LITERAL OR COMPUTED)
+# =============================================================================
+
+
+class ValueTerm[ValueResultT](RValue[ValueResultT], ABC):
+    """Base class for values - both literal and computed.
+
+    Values represent data that can be executed to produce a result.
+    Unlike Computations, Values focus on representing data rather than
+    computing transformations.
+
+    Two types of values:
+    - LiteralValue: Fixed, known value (e.g. 42, "hello")
+    - ComputedValue: Result of a computation (wraps an Operation)
+
+    Type Parameters:
+        ValueResultT: The type of value this represents
+
+    Example:
+        >>> lit = LiteralValue(42)
+        >>> lit.execute(ctx)  # Returns 42
+    """
+
+    @property
+    def is_pure(self) -> bool:
+        """Values are always pure (no side effects).
+
+        Returns:
+            True - values never have side effects
+        """
+        return True
+
+
+class LiteralValue[LiteralT](ValueTerm[LiteralT]):
+    """A fixed, known value.
+
+    Represents a literal value that is known at definition time.
+    Execution simply returns the stored value.
+
+    Type Parameters:
+        LiteralT: The type of the literal value
+
+    Example:
+        >>> lit = LiteralValue(42)
+        >>> lit.execute(ctx)  # Returns 42
+        >>> str_lit = LiteralValue("hello")
+        >>> str_lit.execute(ctx)  # Returns "hello"
+    """
+
+    children: tuple[()] = ()
+
+    def __init__(self, value: LiteralT) -> None:
+        """Initialize with a literal value.
+
+        Args:
+            value: The fixed value to store
+        """
+        self._value = value
+
+    @property
+    def value(self) -> LiteralT:
+        """Get the literal value.
+
+        Returns:
+            The stored literal value
+        """
+        return self._value
+
+    def execute(self, context: Context) -> LiteralT:
+        """Execute returns the literal value.
+
+        Args:
+            context: Execution context (unused for literals)
+
+        Returns:
+            The stored literal value
+        """
+        return self._value
+
+    def __repr__(self) -> str:
+        """Return machine-friendly representation."""
+        return f"LiteralValue({self._value!r})"
+
+
+class ComputedValue[ComputedT](ValueTerm[ComputedT]):
+    """A value computed from an operation.
+
+    Wraps an Operation to provide a value-like interface.
+    Execution delegates to the wrapped operation.
+
+    Type Parameters:
+        ComputedT: The type of the computed value
+
+    Example:
+        >>> get_op = GetOp(price_ref)
+        >>> computed = ComputedValue(get_op)
+        >>> computed.execute(ctx)  # Executes get_op
+    """
+
+    def __init__(self, operation: Operation[ComputedT]) -> None:
+        """Initialize with an operation to compute the value.
+
+        Args:
+            operation: The operation that computes this value
+        """
+        self._operation = operation
+        self.children = (operation,)
+
+    @property
+    def operation(self) -> Operation[ComputedT]:
+        """Get the underlying operation.
+
+        Returns:
+            The operation that computes this value
+        """
+        return self._operation
+
+    def execute(self, context: Context) -> ComputedT:
+        """Execute the underlying operation.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            The computed value
+        """
+        return self._operation.execute(context)
+
+    def __repr__(self) -> str:
+        """Return machine-friendly representation."""
+        return f"ComputedValue({self._operation!r})"
+
+
+# =============================================================================
+# CALCULATION - COMPUTES OR MUTATES
+# =============================================================================
+
+
+class Computation[ComputationResultT](RValue[ComputationResultT], ABC):
+    """Base class for computations - both pure and impure.
+
+    Computations perform computations or mutations on data.
+    Unlike Values, Computations focus on transformation logic.
+
+    Two types of computations:
+    - Operation: Pure computation (no side effects)
+    - Command: Impure mutation (has side effects)
+
+    Type Parameters:
+        ComputationResultT: The type of result this computation produces
+
+    Example:
+        >>> add_op = AddOp(a, b)  # Pure computation
+        >>> set_cmd = SetCmd(ref, value)  # Impure computation
+    """
+
+    pass
+
+
+# =============================================================================
 # OPERATION - PURE COMPUTATIONS
 # =============================================================================
 
 
-class Operation[OperationResultT](RValue[OperationResultT]):
+class Operation[OperationResultT](Computation[OperationResultT]):
     """Pure computation that returns a value of type T.
 
     Operations are deterministic expressions with no side effects:
@@ -300,7 +479,7 @@ class Operation[OperationResultT](RValue[OperationResultT]):
 # =============================================================================
 
 
-class Command[CommandResultT](RValue[CommandResultT]):
+class Command[CommandResultT](Computation[CommandResultT]):
     """Impure mutation that returns a result of type T.
 
     Commands modify tree state with explicit side effects:

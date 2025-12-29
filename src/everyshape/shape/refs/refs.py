@@ -1,441 +1,422 @@
-"""LValue reference type protocols.
+"""Complete reference implementations.
 
-This module defines protocols for reference types composed from
-atomic capabilities. These form the type hierarchy for LValues.
+This module provides ready-to-use ref classes that combine:
+- Base classes from base.py (PrimitiveRefBase, ViewRefBase)
+- Capability implementation mixins from bases.py
 
-Protocol Hierarchy:
-    Ref (base)
-    ├── PrimitiveRef (leaf value references)
-    │   └── ValueRef[T] (typed primitive value)
-    └── ViewRef (container references)
-        ├── SequenceRef[T] (list-like)
-        ├── MappingRef[K,V] (dict-like)
-        └── SetRef[T] (set-like)
+These are the actual ref classes users will work with or extend.
+Each implements the corresponding protocol from collections.py.
 
-Each protocol composes relevant capabilities:
-- PrimitiveRef: Gettable, Settable, Deletable, Existable, RefObservable
-- SequenceRef: Extractable, Storable, RefIndexable, Appendable, Lengthable
-- MappingRef: Extractable, Storable, Nestable, KeysQueryable, ValuesQueryable
+Implementation Hierarchy:
+    PrimitiveRef combines:
+        ExistableBase + GettableBase + SettableBase + DeletableBase + PrimitiveObservableBase
+
+    SequenceRefImpl combines:
+        ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
+        ViewObservableBase + SequenceIndexableBase + SequenceIterableBase
+
+    MutableSequenceRefImpl adds:
+        AppendableBase + InsertableBase + PoppableBase
+
+    MappingRefImpl combines:
+        ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
+        ViewObservableBase + MappingNestableBase + KeysQueryableBase + ValuesQueryableBase +
+        ItemsQueryableBase + MappingIterableBase
+
+    SetRefImpl combines:
+        ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
+        ViewObservableBase
+
+    MutableSetRefImpl adds:
+        SetAddableBase + SetRemovableBase
+
+Usage:
+    # Use directly
+    class MyListRef(MutableSequenceRefImpl[int, ItemRef, SliceRef]):
+        ...
+
+    # Or extend with custom behavior
+    class SpecialListRef(SequenceRefImpl[str, StrRef, SliceRef]):
+        def custom_method(self): ...
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from abc import ABC, abstractmethod
+from collections.abc import Mapping as PyMapping
+from collections.abc import Sequence as PySequence
+from collections.abc import Set as PySet
 
-from .capabilities import (
-    Appendable,
-    Clearable,
-    Deletable,
-    Existable,
-    Extractable,
-    Gettable,
-    ItemsQueryable,
-    KeysQueryable,
-    Lengthable,
-    Nestable,
-    Poppable,
-    RefChildObservable,
-    RefDescendantsObservable,
-    RefIndexable,
-    RefObservable,
-    RefSliceable,
-    Settable,
-    Storable,
-    ValuesQueryable,
+from everyshape.types import Value
+
+from ..term import PrimitiveRef, RValue, ViewRef
+from ..values import DictValue, ListValue, SetValue
+from .bases import (
+    AppendableBase,
+    ClearableBase,
+    DeletableBase,
+    # Core capability bases
+    ExistableBase,
+    ExtractableBase,
+    GettableBase,
+    InsertableBase,
+    ItemsQueryableBase,
+    # Query bases
+    KeysQueryableBase,
+    LengthableBase,
+    MappingIterableBase,
+    # Mapping capability bases
+    MappingNestableBase,
+    PoppableBase,
+    # Observable bases
+    PrimitiveObservableBase,
+    # Sequence capability bases
+    SequenceIndexableBase,
+    SequenceIterableBase,
+    # Set capability bases
+    SetAddableBase,
+    SetRemovableBase,
+    SettableBase,
+    StorableBase,
+    ValuesQueryableBase,
+    ViewObservableBase,
 )
 
 
-if TYPE_CHECKING:
-    from ..context import Context
-
-
 __all__ = [  # noqa: RUF022
-    # Base protocols
-    "RefProtocol",
-    # Primitive ref protocols
-    "PrimitiveRefProtocol",
-    "ValueRefProtocol",
-    # View ref protocols
-    "ViewRefProtocol",
-    "SequenceRefProtocol",
-    "MutableSequenceRefProtocol",
-    "MappingRefProtocol",
-    "MutableMappingRefProtocol",
-    "SetRefProtocol",
-    "MutableSetRefProtocol",
+    # Primitive ref implementation
+    "PrimitiveRefImpl",
+    # Sequence ref implementations
+    "SequenceRefImpl",
+    "MutableSequenceRefImpl",
+    # Mapping ref implementations
+    "MappingRefImpl",
+    "MutableMappingRefImpl",
+    # Set ref implementations
+    "SetRefImpl",
+    "MutableSetRefImpl",
 ]
 
 
 # =============================================================================
-# BASE REF PROTOCOL
+# PRIMITIVE REF IMPLEMENTATION
 # =============================================================================
 
 
-@runtime_checkable
-class RefProtocol[PathT](
-    Existable[object],
-    Protocol,
+class PrimitiveRefImpl[T: Value](
+    ExistableBase,
+    GettableBase[T],
+    SettableBase[T],
+    DeletableBase,
+    PrimitiveObservableBase,
+    PrimitiveRef[T],
 ):
-    """Base protocol for all LValue references.
+    """Complete implementation for primitive (leaf) value references.
 
-    All refs support:
-    - Path resolution: resolve() to get storage path
-    - Existence checking: exists(), missing()
-    - Parent navigation: parent property
+    Combines all capability bases needed for a full-featured primitive ref:
+    - exists(), missing() from ExistableBase
+    - get() from GettableBase
+    - set() from SettableBase
+    - remove() from DeletableBase
+    - on_change() from PrimitiveObservableBase
+
+    Implements PrimitiveRefProtocol from collections.py.
 
     Type Parameters:
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
+        T: Type of value at this location
 
     Example:
-        >>> if isinstance(ref, RefProtocol):
-        ...     path = ref.resolve(ctx)
-        ...     exists = ref.exists().execute(ctx)
-    """
+        class NameRef(PrimitiveRefImpl[str]):
+            def __init__(self, parent: ViewRef, address: str):
+                self._parent = parent
+                self._address = address
+                self.value_type = str
 
-    @property
-    def parent(self) -> RefProtocol | None:
-        """Get parent reference in navigation chain.
+            @property
+            def parent(self) -> ViewRef:
+                return self._parent
 
-        Returns:
-            Parent ref or None if at root
-        """
-        ...
-
-    def resolve(self, context: Context) -> PathT:
-        """Resolve this reference to a concrete storage path.
-
-        Args:
-            context: Execution context
-
-        Returns:
-            Path to the location
-        """
-        ...
-
-
-# =============================================================================
-# PRIMITIVE REF PROTOCOLS
-# =============================================================================
-
-
-@runtime_checkable
-class PrimitiveRefProtocol[T, PathT](
-    RefProtocol[PathT],
-    Gettable[T, object],
-    Settable[T, object],
-    Deletable[object],
-    RefObservable[object],
-    Protocol,
-):
-    """Protocol for primitive (leaf) value references.
-
-    Primitive refs point to single values like int, str, float.
-    They support read, write, delete, and observation.
-
-    Type Parameters:
-        T: Type of the value at this location
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
-
-    Example:
-        >>> if isinstance(ref, PrimitiveRefProtocol):
-        ...     get_op = ref.get()
-        ...     set_cmd = ref.set(new_value)
-        ...     delete_cmd = ref.remove()
-    """
-
-    pass
-
-
-@runtime_checkable
-class ValueRefProtocol[T, PathT](
-    PrimitiveRefProtocol[T, PathT],
-    Protocol,
-):
-    """Protocol for typed value references.
-
-    Extends PrimitiveRefProtocol with value type information.
-
-    Type Parameters:
-        T: Type of the value at this location
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
-
-    Example:
-        >>> ref: ValueRefProtocol[int, Path, Context]
-        >>> val = ref.get().execute(ctx)  # Returns int
-    """
-
-    @property
-    def value_type(self) -> type[T]:
-        """Get the value type at this location.
-
-        Returns:
-            Type of value stored
-        """
-        ...
-
-
-# =============================================================================
-# VIEW REF PROTOCOLS
-# =============================================================================
-
-
-@runtime_checkable
-class ViewRefProtocol[ViewT, PathT](
-    RefProtocol[PathT],
-    Extractable[object, object],
-    Storable[object, object],
-    Clearable[object],
-    Lengthable[object],
-    RefObservable[object],
-    RefChildObservable[object, object],
-    RefDescendantsObservable[object],
-    Protocol,
-):
-    """Protocol for container (view) references.
-
-    View refs point to container nodes like dict, list, set.
-    They support extraction, storage, clearing, and observation.
-
-    Type Parameters:
-        ViewT: Type of the view at this location
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
-
-    Example:
-        >>> if isinstance(ref, ViewRefProtocol):
-        ...     extract_op = ref.extract()
-        ...     store_cmd = ref.store(data)
-        ...     clear_cmd = ref.clear()
-    """
-
-    @property
-    def view_type(self) -> type[ViewT]:
-        """Get the view type for this container.
-
-        Returns:
-            View class
-        """
-        ...
-
-
-# =============================================================================
-# SEQUENCE REF PROTOCOLS
-# =============================================================================
-
-
-@runtime_checkable
-class SequenceRefProtocol[T, PathT](
-    ViewRefProtocol[object, PathT],
-    RefIndexable[int, object],
-    RefSliceable[object],
-    Protocol,
-):
-    """Protocol for read-only sequence references.
-
-    Sequence refs point to list-like containers.
-    They support index access, slicing, length, and extraction.
-
-    Type Parameters:
-        T: Type of items in the sequence
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
-
-    Example:
-        >>> if isinstance(ref, SequenceRefProtocol):
-        ...     first = ref[0].get().execute(ctx)
-        ...     slice_ref = ref[1:5]
-        ...     all_items = ref.extract().execute(ctx)
-    """
-
-    @property
-    def item_type(self) -> type[T]:
-        """Get the item type for this sequence.
-
-        Returns:
-            Type of items
-        """
-        ...
-
-
-@runtime_checkable
-class MutableSequenceRefProtocol[T, PathT](
-    SequenceRefProtocol[T, PathT],
-    Appendable[T, object],
-    Poppable[T, object],
-    Protocol,
-):
-    """Protocol for mutable sequence references.
-
-    Extends SequenceRefProtocol with mutation operations.
-
-    Type Parameters:
-        T: Type of items in the sequence
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
-
-    Example:
-        >>> if isinstance(ref, MutableSequenceRefProtocol):
-        ...     append_cmd = ref.append(new_item)
-        ...     pop_cmd = ref.pop()
+            def resolve(self, context):
+                return self._parent.resolve(context) / self._address
     """
 
     pass
 
 
 # =============================================================================
-# MAPPING REF PROTOCOLS
+# SEQUENCE REF IMPLEMENTATIONS
 # =============================================================================
 
 
-@runtime_checkable
-class MappingRefProtocol[K, V, PathT](
-    ViewRefProtocol[object, PathT],
-    Nestable[K, object],
-    KeysQueryable[object],
-    ValuesQueryable[object],
-    ItemsQueryable[object],
-    Protocol,
+class SequenceRefImpl[T: Value, ItemRefT, SliceRefT](
+    ExistableBase,
+    ExtractableBase[ListValue[T], PySequence[T]],
+    StorableBase[ListValue[T], PySequence[T]],
+    ClearableBase,
+    LengthableBase,
+    ViewObservableBase,
+    SequenceIndexableBase[T, ItemRefT, SliceRefT],
+    SequenceIterableBase[T],
+    ViewRef,
+    ABC,
 ):
-    """Protocol for read-only mapping references.
+    """Complete implementation for read-only sequence references.
 
-    Mapping refs point to dict-like containers.
-    They support key access, keys/values/items queries, and extraction.
+    Combines all capability bases needed for a full-featured sequence ref:
+    - exists(), missing() from ExistableBase
+    - extract() from ExtractableBase
+    - store() from StorableBase
+    - clear() from ClearableBase
+    - length() from LengthableBase
+    - on_change(), on_child_change(), etc. from ViewObservableBase
+    - __getitem__ from SequenceIndexableBase
+    - map(), filter(), reduce(), find(), etc. from SequenceIterableBase
+
+    Implements SequenceRefProtocol from collections.py.
+
+    Type Parameters:
+        T: Type of items in the sequence
+        ItemRefT: Type of reference returned for single items
+        SliceRefT: Type of reference returned for slices
+
+    Subclasses must implement:
+        - _create_item_ref(index) -> ItemRefT
+        - _create_slice_ref(slice) -> SliceRefT
+        - result(op) -> ListValue[T]
+        - item_type property
+
+    Example:
+        class ListRef(SequenceRefImpl[int, ItemRef, SliceRef]):
+            item_type = int
+
+            def _create_item_ref(self, index):
+                return ItemRef(self, index)
+
+            def _create_slice_ref(self, key):
+                return SliceRef(self, key)
+
+            def result(self, op):
+                return ListValue(op)
+    """
+
+    item_type: type[T]
+
+    @abstractmethod
+    def result(self, op: RValue) -> ListValue[T]:
+        """Convert operation result to ListValue wrapper."""
+        ...
+
+
+class MutableSequenceRefImpl[T: Value, ItemRefT, SliceRefT](
+    SequenceRefImpl[T, ItemRefT, SliceRefT],
+    AppendableBase[T],
+    InsertableBase[T],
+    PoppableBase[T],
+    ABC,
+):
+    """Complete implementation for mutable sequence references.
+
+    Extends SequenceRefImpl with mutation capabilities:
+    - append() from AppendableBase
+    - insert() from InsertableBase
+    - pop() from PoppableBase
+
+    Implements MutableSequenceRefProtocol from collections.py.
+
+    Type Parameters:
+        T: Type of items in the sequence
+        ItemRefT: Type of reference returned for single items
+        SliceRefT: Type of reference returned for slices
+
+    Example:
+        class MutableListRef(MutableSequenceRefImpl[str, ItemRef, SliceRef]):
+            item_type = str
+
+            def _create_item_ref(self, index):
+                return ItemRef(self, index)
+
+            def _create_slice_ref(self, key):
+                return SliceRef(self, key)
+
+            def result(self, op):
+                return ListValue(op)
+    """
+
+    pass
+
+
+# =============================================================================
+# MAPPING REF IMPLEMENTATIONS
+# =============================================================================
+
+
+class MappingRefImpl[K, V: Value, ChildRefT](
+    ExistableBase,
+    ExtractableBase[DictValue[K, V], PyMapping[K, V]],
+    StorableBase[DictValue[K, V], PyMapping[K, V]],
+    ClearableBase,
+    LengthableBase,
+    ViewObservableBase,
+    MappingNestableBase[K, ChildRefT],
+    KeysQueryableBase[K],
+    ValuesQueryableBase[V],
+    ItemsQueryableBase[K, V],
+    MappingIterableBase[K, V],
+    ViewRef,
+    ABC,
+):
+    """Complete implementation for read-only mapping references.
+
+    Combines all capability bases needed for a full-featured mapping ref:
+    - exists(), missing() from ExistableBase
+    - extract() from ExtractableBase
+    - store() from StorableBase
+    - clear() from ClearableBase
+    - length() from LengthableBase
+    - on_change(), on_child_change(), etc. from ViewObservableBase
+    - __getitem__ from MappingNestableBase
+    - keys() from KeysQueryableBase
+    - values() from ValuesQueryableBase
+    - items() from ItemsQueryableBase
+    - map_values(), filter(), reduce(), find_key(), etc. from MappingIterableBase
+
+    Implements MappingRefProtocol from collections.py.
 
     Type Parameters:
         K: Type of keys
         V: Type of values
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
+        ChildRefT: Type of reference returned for child items
+
+    Subclasses must implement:
+        - _create_child_ref(key) -> ChildRefT
+        - result(op) -> DictValue[K, V]
+        - key_type property
+        - value_type property
 
     Example:
-        >>> if isinstance(ref, MappingRefProtocol):
-        ...     item_ref = ref["key"]
-        ...     all_keys = ref.keys().execute(ctx)
-        ...     all_items = ref.items().execute(ctx)
+        class DictRef(MappingRefImpl[str, int, ValueRef]):
+            key_type = str
+            value_type = int
+
+            def _create_child_ref(self, key):
+                return ValueRef(self, key)
+
+            def result(self, op):
+                return DictValue(op)
     """
 
-    @property
-    def value_type(self) -> type[V]:
-        """Get the value type for this mapping.
+    key_type: type[K]
+    value_type: type[V]
 
-        Returns:
-            Type of values
-        """
+    @abstractmethod
+    def result(self, op: RValue) -> DictValue[K, V]:
+        """Convert operation result to DictValue wrapper."""
         ...
 
 
-@runtime_checkable
-class MutableMappingRefProtocol[K, V, PathT](
-    MappingRefProtocol[K, V, PathT],
-    Protocol,
+class MutableMappingRefImpl[K, V: Value, ChildRefT](
+    MappingRefImpl[K, V, ChildRefT],
+    ABC,
 ):
-    """Protocol for mutable mapping references.
+    """Complete implementation for mutable mapping references.
 
-    Extends MappingRefProtocol with mutation operations.
+    Same capabilities as MappingRefImpl - mutations happen through child refs.
+
+    Implements MutableMappingRefProtocol from collections.py.
 
     Type Parameters:
         K: Type of keys
         V: Type of values
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
+        ChildRefT: Type of reference returned for child items
 
     Example:
-        >>> if isinstance(ref, MutableMappingRefProtocol):
-        ...     ref["new_key"].set(value)
-        ...     clear_cmd = ref.clear()
+        class MutableDictRef(MutableMappingRefImpl[str, int, ValueRef]):
+            key_type = str
+            value_type = int
+
+            def _create_child_ref(self, key):
+                return MutableValueRef(self, key)
+
+            def result(self, op):
+                return DictValue(op)
     """
 
     pass
 
 
 # =============================================================================
-# SET REF PROTOCOLS
+# SET REF IMPLEMENTATIONS
 # =============================================================================
 
 
-@runtime_checkable
-class SetRefProtocol[T, PathT](
-    ViewRefProtocol[object, PathT],
-    Protocol,
+class SetRefImpl[T: Value](
+    ExistableBase,
+    ExtractableBase[SetValue[T], PySet[T]],
+    StorableBase[SetValue[T], PySet[T]],
+    ClearableBase,
+    LengthableBase,
+    ViewObservableBase,
+    ViewRef,
+    ABC,
 ):
-    """Protocol for read-only set references.
+    """Complete implementation for read-only set references.
 
-    Set refs point to set-like containers.
-    They support containment checking, length, and extraction.
+    Combines all capability bases needed for a full-featured set ref:
+    - exists(), missing() from ExistableBase
+    - extract() from ExtractableBase
+    - store() from StorableBase
+    - clear() from ClearableBase
+    - length() from LengthableBase
+    - on_change(), on_child_change(), etc. from ViewObservableBase
+
+    Implements SetRefProtocol from collections.py.
 
     Type Parameters:
         T: Type of items in the set
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
+
+    Subclasses must implement:
+        - result(op) -> SetValue[T]
+        - item_type property
 
     Example:
-        >>> if isinstance(ref, SetRefProtocol):
-        ...     all_items = ref.extract().execute(ctx)
-        ...     size = ref.length().execute(ctx)
+        class TagsRef(SetRefImpl[str]):
+            item_type = str
+
+            def result(self, op):
+                return SetValue(op)
     """
 
-    @property
-    def item_type(self) -> type[T]:
-        """Get the item type for this set.
+    item_type: type[T]
 
-        Returns:
-            Type of items
-        """
+    @abstractmethod
+    def result(self, op: RValue) -> SetValue[T]:
+        """Convert operation result to SetValue wrapper."""
         ...
 
 
-@runtime_checkable
-class MutableSetRefProtocol[T, PathT](
-    SetRefProtocol[T, PathT],
-    Protocol,
+class MutableSetRefImpl[T: Value](
+    SetRefImpl[T],
+    SetAddableBase[T],
+    SetRemovableBase[T],
+    ABC,
 ):
-    """Protocol for mutable set references.
+    """Complete implementation for mutable set references.
 
-    Extends SetRefProtocol with mutation operations.
+    Extends SetRefImpl with mutation capabilities:
+    - add() from SetAddableBase
+    - remove(), discard() from SetRemovableBase
+
+    Implements MutableSetRefProtocol from collections.py.
 
     Type Parameters:
         T: Type of items in the set
-        PathT: Type of the resolved path
-        ContextT: Type of the execution context
 
     Example:
-        >>> if isinstance(ref, MutableSetRefProtocol):
-        ...     add_cmd = ref.add(item)
-        ...     remove_cmd = ref.remove(item)
+        class MutableTagsRef(MutableSetRefImpl[str]):
+            item_type = str
+
+            def result(self, op):
+                return SetValue(op)
     """
 
-    def add(self, value: T) -> object:
-        """Create an add command.
-
-        Args:
-            value: Item to add
-
-        Returns:
-            AddCmd that adds the item when executed
-        """
-        ...
-
-    def remove(self, value: T) -> object:
-        """Create a remove command.
-
-        Args:
-            value: Item to remove
-
-        Returns:
-            RemoveCmd that removes the item when executed
-        """
-        ...
-
-    def discard(self, value: T) -> object:
-        """Create a discard command.
-
-        Args:
-            value: Item to discard (no error if absent)
-
-        Returns:
-            DiscardCmd that discards the item when executed
-        """
-        ...
+    pass

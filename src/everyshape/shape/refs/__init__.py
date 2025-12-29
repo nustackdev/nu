@@ -4,49 +4,122 @@ This module provides the foundational LValue system for the everyshape
 data layer. LValues represent locations in storage that can be accessed
 lazily through operations.
 
-Hierarchy:
-    LValueBase
-    └── RefBase
-        ├── PrimitiveRefBase (leaf value refs)
-        └── ViewRefBase (container refs)
-            ├── SequenceRefBase / MutableSequenceRefBase
-            ├── MappingRefBase / MutableMappingRefBase
-            └── SetRefBase / MutableSetRefBase
+Module Structure:
+    capabilities.py     - Capability PROTOCOLS (Gettable, Settable, etc.)
+    collections.py      - Collection ref PROTOCOLS (SequenceRefProtocol, etc.)
+    base.py             - Base classes (PrimitiveRefBase, ViewRefBase)
+    bases.py            - Capability implementation MIXINS (GettableBase, etc.)
+    refs.py             - Complete ref IMPLEMENTATIONS (MappingRefImpl, etc.)
 
-Key components:
-    - capabilities: Atomic capability protocols (Gettable, Settable, etc.)
-    - refs: Reference type protocols (ValueRef, SequenceRef, MappingRef)
-    - bases: Complete ref implementations (PrimitiveRefBase, MappingRefBase, etc.)
-    - operations: Concrete operation classes (GetOp, ExtractOp, MapOp, etc.)
-    - commands: Concrete command classes (SetCmd, DeleteCmd, AppendCmd, etc.)
+Hierarchy:
+    PROTOCOLS (what things CAN do):
+        capabilities.py: Gettable, Settable, Existable, Extractable, ...
+        collections.py: RefProtocol, SequenceRefProtocol, MappingRefProtocol, ...
+
+    IMPLEMENTATIONS (HOW things do it):
+        base.py: PrimitiveRefBase, ViewRefBase
+        bases.py: GettableBase, SettableBase, ExistableBase, ...
+        refs.py: PrimitiveRefImpl, MappingRefImpl, SequenceRefImpl, ...
 
 Key difference from RValues:
     - LValues are LOCATIONS in storage (lazy access)
     - RValues are ALREADY COMPUTED values in memory
 
 Example:
-    >>> from everyshape.shape.refs import PrimitiveRefBase, MappingRefBase
-    >>> from everyshape.shape.refs.refs import ValueRefProtocol
-    >>> from everyshape.shape.refs.capabilities import is_gettable
-    >>> from everyshape.shape.refs.operations import GetOp
-    >>> from everyshape.shape.refs.commands import SetCmd
+    >>> from everyshape.shape.refs import MappingRefImpl, PrimitiveRefImpl
+    >>> from everyshape.shape.refs.collections import MappingRefProtocol
+    >>> from everyshape.shape.refs.capabilities import Gettable
+    >>> from everyshape.shape.refs.bases import GettableBase
 """
 
 from __future__ import annotations
 
-# Bases (complete ref implementations)
-from .bases import (
-    MappingRefBase,
-    MutableMappingRefBase,
-    MutableSequenceRefBase,
-    MutableSetRefBase,
+# Commands (from computations)
+from ..computations.commands import (
+    AddCmd,
+    AppendCmd,
+    ClearCmd,
+    DeleteCmd,
+    DiscardCmd,
+    InsertCmd,
+    PopCmd,
+    RemoveCmd,
+    SetCmd,
+    StoreCmd,
+)
+
+# Reactive operations (from computations)
+from ..computations.reactive_ops import (
+    ChangeOp,
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
+)
+
+# Operations (from computations)
+from ..computations.ref_ops import (
+    CountOp,
+    ExistsOp,
+    ExtractOp,
+    FilterItemsOp,
+    FilterOp,
+    FindIndexOp,
+    FindItemOp,
+    FindKeyOp,
+    FindOp,
+    FindValueOp,
+    GetOp,
+    IndexOp,
+    ItemsOp,
+    KeysOp,
+    LengthOp,
+    MapItemsOp,
+    MapOp,
+    MapValuesOp,
+    MissingOp,
+    ReduceItemsOp,
+    ReduceOp,
+    ValuesOp,
+)
+
+# Base classes (from base.py)
+from .base import (
     PrimitiveRefBase,
-    SequenceRefBase,
-    SetRefBase,
     ViewRefBase,
 )
 
-# Capabilities
+# Capability implementation mixins (from bases.py)
+from .bases import (
+    AppendableBase,
+    ClearableBase,
+    DeletableBase,
+    # Core capability bases
+    ExistableBase,
+    ExtractableBase,
+    GettableBase,
+    InsertableBase,
+    ItemsQueryableBase,
+    # Query bases
+    KeysQueryableBase,
+    LengthableBase,
+    PoppableBase,
+    # Observable bases
+    PrimitiveObservableBase,
+    # Sequence capability bases
+    SequenceIndexableBase,
+    SequenceIterableBase,
+    # Set capability bases
+    SetAddableBase,
+    SetRemovableBase,
+    SettableBase,
+    StorableBase,
+    ValuesQueryableBase,
+    ViewObservableBase,
+)
+
+# Capability protocols (from capabilities.py)
 from .capabilities import (
     Appendable,
     Clearable,
@@ -80,58 +153,8 @@ from .capabilities import (
     is_storable,
 )
 
-# Commands
-from .commands import (
-    AddCmd,
-    AppendCmd,
-    ClearCmd,
-    DeleteCmd,
-    DiscardCmd,
-    InsertCmd,
-    PopCmd,
-    RemoveCmd,
-    SetCmd,
-    StoreCmd,
-)
-
-# Operations
-from .operations import (
-    CountOp,
-    ExistsOp,
-    ExtractOp,
-    FilterItemsOp,
-    FilterOp,
-    FindIndexOp,
-    FindItemOp,
-    FindKeyOp,
-    FindOp,
-    FindValueOp,
-    GetOp,
-    IndexOp,
-    ItemsOp,
-    KeysOp,
-    LengthOp,
-    MapItemsOp,
-    MapOp,
-    MapValuesOp,
-    MissingOp,
-    ReduceItemsOp,
-    ReduceOp,
-    ValuesOp,
-)
-
-# Reactive operations
-from .operations_reactive import (
-    ChangeOp,
-    OnChangeOp,
-    OnChildChangeOp,
-    OnChildrenChangeOp,
-    OnDescendantsChangeOp,
-    OnPrimitiveChangeOp,
-)
-
-# Refs protocols
-from .refs import (
+# Collection ref protocols (from collections.py)
+from .collections import (
     MappingRefProtocol,
     MutableMappingRefProtocol,
     MutableSequenceRefProtocol,
@@ -144,10 +167,21 @@ from .refs import (
     ViewRefProtocol,
 )
 
+# Complete ref implementations (from refs.py)
+from .refs import (
+    MappingRefImpl,
+    MutableMappingRefImpl,
+    MutableSequenceRefImpl,
+    MutableSetRefImpl,
+    PrimitiveRefImpl,
+    SequenceRefImpl,
+    SetRefImpl,
+)
+
 
 __all__ = [  # noqa: RUF022
     # ==========================================================================
-    # CAPABILITY PROTOCOLS
+    # CAPABILITY PROTOCOLS (from capabilities.py)
     # ==========================================================================
     "Appendable",
     "Clearable",
@@ -181,7 +215,7 @@ __all__ = [  # noqa: RUF022
     "is_settable",
     "is_storable",
     # ==========================================================================
-    # REF TYPE PROTOCOLS
+    # COLLECTION REF PROTOCOLS (from collections.py)
     # ==========================================================================
     "RefProtocol",
     "PrimitiveRefProtocol",
@@ -194,18 +228,50 @@ __all__ = [  # noqa: RUF022
     "SetRefProtocol",
     "MutableSetRefProtocol",
     # ==========================================================================
-    # REF BASES (complete implementations)
+    # BASE CLASSES (from base.py)
     # ==========================================================================
     "PrimitiveRefBase",
     "ViewRefBase",
-    "SequenceRefBase",
-    "MutableSequenceRefBase",
-    "MappingRefBase",
-    "MutableMappingRefBase",
-    "SetRefBase",
-    "MutableSetRefBase",
     # ==========================================================================
-    # OPERATIONS (pure computations)
+    # CAPABILITY IMPLEMENTATION MIXINS (from bases.py)
+    # ==========================================================================
+    # Core capability bases
+    "ExistableBase",
+    "GettableBase",
+    "SettableBase",
+    "DeletableBase",
+    "ExtractableBase",
+    "StorableBase",
+    "ClearableBase",
+    "LengthableBase",
+    # Observable bases
+    "PrimitiveObservableBase",
+    "ViewObservableBase",
+    # Query bases
+    "KeysQueryableBase",
+    "ValuesQueryableBase",
+    "ItemsQueryableBase",
+    # Sequence capability bases
+    "SequenceIndexableBase",
+    "SequenceIterableBase",
+    "AppendableBase",
+    "InsertableBase",
+    "PoppableBase",
+    # Set capability bases
+    "SetAddableBase",
+    "SetRemovableBase",
+    # ==========================================================================
+    # COMPLETE REF IMPLEMENTATIONS (from refs.py)
+    # ==========================================================================
+    "PrimitiveRefImpl",
+    "SequenceRefImpl",
+    "MutableSequenceRefImpl",
+    "MappingRefImpl",
+    "MutableMappingRefImpl",
+    "SetRefImpl",
+    "MutableSetRefImpl",
+    # ==========================================================================
+    # OPERATIONS (from computations)
     # ==========================================================================
     # Core operations
     "GetOp",
@@ -240,7 +306,7 @@ __all__ = [  # noqa: RUF022
     "OnDescendantsChangeOp",
     "OnPrimitiveChangeOp",
     # ==========================================================================
-    # COMMANDS (impure mutations)
+    # COMMANDS (from computations)
     # ==========================================================================
     # Core commands
     "SetCmd",
