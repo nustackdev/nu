@@ -517,7 +517,7 @@ class CollectionItemRef[T, ValueT](
     RefObservable,
     Protocol,
 ):
-    """Protocol for primitive (leaf) value references.
+    """Protocol for primitive (leaf) item references.
 
     Primitive refs point to single values like int, str, float.
     They support read, write, delete, and observation.
@@ -527,7 +527,7 @@ class CollectionItemRef[T, ValueT](
         ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, etc)
 
     Example:
-        >>> if isinstance(ref, PrimitiveRef):
+        >>> if isinstance(ref, CollectionItemRef):
         ...     get_op = ref.get()
         ...     set_cmd = ref.set(new_value)
         ...     delete_cmd = ref.remove()
