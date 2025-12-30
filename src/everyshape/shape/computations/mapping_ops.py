@@ -34,13 +34,7 @@ if TYPE_CHECKING:
     from ..context import Context
     from ..term import RValue
     from ..values.bases import (
-        BitwiseBase,
-        ComparisonBase,
-        LogicalBase,
-        MappingBase,
-        NumericBase,
-        SequenceBase,
-        StringBase,
+        UnionBaseType,
     )
 
 __all__ = [
@@ -56,17 +50,7 @@ __all__ = [
 # ABSTRACT MAPPING OPERATION
 # =============================================================================
 
-
-type OpArgument = (
-    RValue
-    | NumericBase
-    | SequenceBase
-    | StringBase
-    | BitwiseBase
-    | LogicalBase
-    | MappingBase
-    | ComparisonBase
-)
+type OpArgument = RValue | UnionBaseType
 
 
 class MappingOp[ResultT](Operation[ResultT]):

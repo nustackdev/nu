@@ -45,6 +45,7 @@ from .bases import (
 
 if TYPE_CHECKING:
     from ..term import RValue
+    from .primitive_values import NoneValue  # noqa: F401
 
 
 __all__ = [  # noqa: RUF022

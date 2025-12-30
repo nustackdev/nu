@@ -78,8 +78,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [  # noqa: RUF022
-    # Core base (everyone needs)
+    # Core types
     "CoreBase",
+    "UnionBaseType",
     # Atomic arithmetic bases
     "AddableBase",
     "SubtractableBase",
@@ -130,6 +131,45 @@ __all__ = [  # noqa: RUF022
 # =============================================================================
 # CORE BASE - EVERYONE INHERITS THIS
 # =============================================================================
+
+type UnionBaseType = (
+    CoreBase
+    | AddableBase
+    | SubtractableBase
+    | NegatableBase
+    | MultiplyableBase
+    | DivisibleBase
+    | ModuloableBase
+    | PowerableBase
+    | AdditiveBase
+    | MultiplicativeBase
+    | NumericBase
+    | OrderableBase
+    | EqualableBase
+    | ComparisonBase
+    | AndableBase
+    | OrableBase
+    | NotableBase
+    | LogicalBase
+    | BitwiseAndableBase
+    | BitwiseOrableBase
+    | BitwiseXorableBase
+    | BitwiseNotableBase
+    | ShiftableBase
+    | BitwiseBase
+    | LengthableBase
+    | IndexableBase
+    | SliceableBase
+    | ContainableBase
+    | IterableBase
+    | SequenceBase
+    | MappingBase
+    | SetBase
+    | ConcatenableBase
+    | StringBase
+    | StringMethodsBase
+    | BytesMethodsBase
+)
 
 
 class CoreBase:

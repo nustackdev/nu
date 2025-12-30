@@ -38,15 +38,7 @@ from ..term import Operation
 if TYPE_CHECKING:
     from ..context import Context
     from ..term import RValue
-    from ..values.bases import (
-        BitwiseBase,
-        ComparisonBase,
-        LogicalBase,
-        MappingBase,
-        NumericBase,
-        SequenceBase,
-        StringBase,
-    )
+    from ..values.bases import UnionBaseType
 
 __all__ = [
     "BytesCountOp",
@@ -70,16 +62,7 @@ __all__ = [
 # =============================================================================
 
 
-type OpArgument = (
-    RValue
-    | NumericBase
-    | SequenceBase
-    | StringBase
-    | BitwiseBase
-    | LogicalBase
-    | MappingBase
-    | ComparisonBase
-)
+type OpArgument = RValue | UnionBaseType
 
 
 class BytesOp[ResultT](Operation[ResultT]):
