@@ -76,11 +76,11 @@ from .bases_collections import (
     SetRefBase,
 )
 from .bases_primitive import (
-    MappingValueRefBase,
-    MutableMappingValueRefBase,
-    MutableSequenceValueRefBase,
-    SequenceValueRefBase,
-    ValueRefBase,
+    CollectionItemRefBase,
+    MappingItemRefBase,
+    MutableMappingItemRefBase,
+    MutableSequenceItemRefBase,
+    SequenceItemRefBase,
 )
 
 # Capability protocols
@@ -119,17 +119,16 @@ from .capabilities import (
 
 # Collection ref protocols (from collections.py)
 from .collections import (
+    CollectionItemRef,
     CollectionRef,
     ContainerRef,
     MappingRef,
     MutableMappingRef,
     MutableSequenceRef,
     MutableSetRef,
-    PrimitiveRef,
     SequenceRef,
     SetRef,
 )
-from .collections import ValueRef as ValueRefProtocol
 
 
 __all__ = [  # noqa: RUF022
@@ -183,8 +182,7 @@ __all__ = [  # noqa: RUF022
     "SetRef",
     "MutableSetRef",
     # Primitive protocols
-    "PrimitiveRef",
-    "ValueRefProtocol",
+    "CollectionItemRef",
     # ==========================================================================
     # CAPABILITY IMPLEMENTATION MIXINS (from bases.py)
     # ==========================================================================
@@ -218,11 +216,11 @@ __all__ = [  # noqa: RUF022
     "SetAddableBase",
     "SetRemovableBase",
     # Combined primitive ref bases
-    "ValueRefBase",
-    "SequenceValueRefBase",
-    "MutableSequenceValueRefBase",
-    "MappingValueRefBase",
-    "MutableMappingValueRefBase",
+    "CollectionItemRefBase",
+    "MappingItemRefBase",
+    "MutableMappingItemRefBase",
+    "MutableSequenceItemRefBase",
+    "SequenceItemRefBase",
     # ==========================================================================
     # VIEW REF BASE IMPLEMENTATIONS (from refs.py)
     # ==========================================================================

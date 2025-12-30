@@ -15,15 +15,15 @@ from .bases import (
 
 
 __all__ = [
-    "MappingValueRefBase",
-    "MutableMappingValueRefBase",
-    "MutableSequenceValueRefBase",
-    "SequenceValueRefBase",
-    "ValueRefBase",
+    "CollectionItemRefBase",
+    "MappingItemRefBase",
+    "MutableMappingItemRefBase",
+    "MutableSequenceItemRefBase",
+    "SequenceItemRefBase",
 ]
 
 
-class ValueRefBase[T](
+class CollectionItemRefBase[T](
     ExistableBase,
     GettableBase[T],
     SettableBase[T],
@@ -50,7 +50,7 @@ class ValueRefBase[T](
     pass
 
 
-class SequenceValueRefBase[T](ValueRefBase[T]):
+class SequenceItemRefBase[T](CollectionItemRefBase[T]):
     """Base for primitive values that are children of sequences.
 
     Same capabilities as ValueRefBase. The distinction is semantic
@@ -60,17 +60,17 @@ class SequenceValueRefBase[T](ValueRefBase[T]):
         T: Type of value at this location
 
     Example:
-        class MySequenceItemRef(SequenceValueRefBase[int], PrimitiveRef, ABC):
+        class MySequenceItemRef(SequenceItemRefBase[int], PrimitiveRef, ABC):
             pass
     """
 
     pass
 
 
-class MutableSequenceValueRefBase[T](SequenceValueRefBase[T]):
+class MutableSequenceItemRefBase[T](SequenceItemRefBase[T]):
     """Mutable variant for sequence item refs.
 
-    Same operations as SequenceValueRefBase since primitive value operations
+    Same operations as SequenceItemRefBase since primitive value operations
     (get, set, remove) work through the parent view regardless of mutability.
 
     Type Parameters:
@@ -80,27 +80,27 @@ class MutableSequenceValueRefBase[T](SequenceValueRefBase[T]):
     pass
 
 
-class MappingValueRefBase[T](ValueRefBase[T]):
+class MappingItemRefBase[T](CollectionItemRefBase[T]):
     """Base for primitive values that are children of mappings.
 
-    Same capabilities as ValueRefBase. The distinction is semantic
+    Same capabilities as CollectionItemRefBase. The distinction is semantic
     and helps with type clarity when building refs for mapping values.
 
     Type Parameters:
         T: Type of value at this location
 
     Example:
-        class MyMappingValueRef(MappingValueRefBase[str], PrimitiveRef, ABC):
+        class MyMappingValueRef(MappingItemRefBase[str], PrimitiveRef, ABC):
             pass
     """
 
     pass
 
 
-class MutableMappingValueRefBase[T](MappingValueRefBase[T]):
+class MutableMappingItemRefBase[T](MappingItemRefBase[T]):
     """Mutable variant for mapping value refs.
 
-    Same operations as MappingValueRefBase since primitive value operations
+    Same operations as MappingItemRefBase since primitive value operations
     (get, set, remove) work through the parent view regardless of mutability.
 
     Type Parameters:

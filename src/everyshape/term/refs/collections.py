@@ -62,9 +62,8 @@ __all__ = [  # noqa: RUF022
     # Set protocols
     "SetRef",
     "MutableSetRef",
-    # Primitive protocols
-    "PrimitiveRef",
-    "ValueRef",
+    # item protocol
+    "CollectionItemRef",
 ]
 
 
@@ -510,7 +509,7 @@ class MutableSetRef[
 
 
 @runtime_checkable
-class PrimitiveRef[T, ValueT](
+class CollectionItemRef[T, ValueT](
     Existable[BoolValue],
     Gettable[T, ValueT],
     Settable[T, ValueT],
@@ -551,24 +550,3 @@ class PrimitiveRef[T, ValueT](
             Type of computed value (IntValue, StrValue, FloatValue, etc)
         """
         ...
-
-
-@runtime_checkable
-class ValueRef[T, ValueT](
-    PrimitiveRef[T, ValueT],
-    Protocol,
-):
-    """Protocol for typed value references.
-
-    Extends PrimitiveRef - same capabilities, exists for semantic clarity.
-
-    Type Parameters:
-        T: Type of the value at this location (int, str, float, etc)
-        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, etc)
-
-    Example:
-        >>> ref: ValueRef[int, IntValue]
-        >>> val = ref.get().execute(ctx)  # Returns int
-    """
-
-    pass
