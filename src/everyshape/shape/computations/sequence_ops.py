@@ -289,7 +289,7 @@ class AtOp[ResultT](Operation[ResultT | SpecialValue]):
         return f"AtOp({self.children[0]!r}, {self.children[1]!r})"
 
 
-class SliceOp[ResultT](SequenceOp[list[ResultT]]):
+class SliceOp[ResultT](SequenceOp[ResultT]):
     """Slice access: seq[start:stop:step]."""
 
     def __init__(
@@ -305,7 +305,7 @@ class SliceOp[ResultT](SequenceOp[list[ResultT]]):
         self._stop = stop
         self._step = step
 
-    def _apply_op(self, operand: object) -> list[ResultT]:
+    def _apply_op(self, operand: object) -> ResultT:
         try:
             return operand[self._start : self._stop : self._step]  # type: ignore
         except TypeError:

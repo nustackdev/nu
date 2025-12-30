@@ -4,43 +4,98 @@ This module provides the foundational RValue system for the everyshape
 data layer. RValues represent already computed/available values that
 can be used in expressions and operations.
 
-Hierarchy:
-    RValueBase
-    ├── LiteralBase (constant values)
-    └── [Domain-specific values in everyverse]
+Module Structure:
+    capabilities.py      - Atomic capability PROTOCOLS (Addable, Comparable, etc.)
+    bases.py             - Capability implementation MIXINS (NumericBase, etc.)
+    literals.py          - Literal value types (IntLiteral, StrLiteral, etc.)
+    primitive_values.py  - Computed primitive types (IntValue, StrValue, etc.)
+    collection_values.py - Computed collection types (ListValue, DictValue, etc.)
+    conversion.py        - Conversion utilities (literal, result)
 
-Key components:
-    - capabilities: Atomic capability protocols (Addable, Comparable, etc.)
-    - primitives: Primitive type protocols (Number, String, Boolean)
-    - collections: Collection protocols (Sequence, Mapping, Set)
-    - base: RValueBase and LiteralBase base classes
-    - bases: Reusable behavior mixins (ArithmeticBase, SequenceBase, etc.)
+Value Types:
+    Literal Values (wrap fixed Python values):
+        IntLiteral, FloatLiteral, BoolLiteral, StrLiteral, BytesLiteral, NoneLiteral
+        ListLiteral, DictLiteral, TupleLiteral, SetLiteral, FrozenSetLiteral
+
+    Computed Values (wrap Operations/RValues):
+        IntValue, FloatValue, BoolValue, StrValue, BytesValue, NoneValue
+        ListValue, DictValue, TupleValue, SetValue, FrozenSetValue
+
+    Special Values:
+        UnknownValue - Dynamic/unknown type
+        EmptyValue   - Absence of value
+        NaNValue     - Not-a-number
+
+Hierarchy:
+    CoreBase                    - Everyone inherits (ifelse, is_empty, is_nan)
+    ├── Arithmetic Bases
+    │   ├── NumericBase         - Full arithmetic (+, -, *, /, etc.)
+    │   ├── AdditiveBase        - Addition/subtraction only
+    │   └── MultiplicativeBase  - Multiplication family only
+    ├── ComparisonBase          - Ordering and equality
+    ├── LogicalBase             - and_(), or_(), not_()
+    ├── BitwiseBase             - Bit operations
+    ├── SequenceBase            - List/tuple operations
+    ├── MappingBase             - Dict operations
+    └── StringBase              - String operations
 
 Example:
-    >>> from everyshape.rvalue import RValueBase, LiteralBase
-    >>> from everyshape.rvalue.primitives import Integer
-    >>> from everyshape.rvalue.capabilities import is_addable
+    >>> from everyshape.shape.values import IntLiteral, literal
+    >>>
+    >>> # Create literal value
+    >>> lit = IntLiteral(42)
+    >>> lit.execute(ctx)  # Returns 42
+    >>>
+    >>> # Use literal() for automatic wrapping
+    >>> val = literal(42)  # Returns IntLiteral(42)
 """
 
-# Base
-from .base import (
-    Computed,
-    Literal,
-    ValueBase,
-)
-
-# Bases (mixins)
-from .bases import (
-    ArithmeticBase,
-    BitwiseBase,
+# Capability implementation mixins
+from .bases import (  # noqa: I001
+    # Core base (everyone needs)
+    CoreBase,
+    # Atomic arithmetic bases
+    AddableBase,
+    SubtractableBase,
+    NegatableBase,
+    MultiplyableBase,
+    DivisibleBase,
+    ModuloableBase,
+    PowerableBase,
+    # Combined arithmetic bases
+    AdditiveBase,
+    MultiplicativeBase,
+    NumericBase,
+    # Comparison bases
+    OrderableBase,
+    EqualableBase,
     ComparisonBase,
+    # Logical bases
+    AndableBase,
+    OrableBase,
+    NotableBase,
     LogicalBase,
-    MappingBase,
+    # Bitwise bases
+    BitwiseAndableBase,
+    BitwiseOrableBase,
+    BitwiseXorableBase,
+    BitwiseNotableBase,
+    ShiftableBase,
+    BitwiseBase,
+    # Collection bases
+    LengthableBase,
+    IndexableBase,
+    SliceableBase,
+    ContainableBase,
+    IterableBase,
     SequenceBase,
+    MappingBase,
+    # String bases
+    ConcatenableBase,
     StringBase,
 )
 
-# Capabilities
+# Capability protocols
 from .capabilities import (
     Absoluteable,
     Addable,
@@ -84,7 +139,7 @@ from .capabilities import (
     is_subtractable,
 )
 
-# Collections impl
+# Collection implementations
 from .collection_values import (
     DictValue,
     FrozenSetValue,
@@ -93,44 +148,86 @@ from .collection_values import (
     TupleValue,
 )
 
-# Collections
-from .collections import (
-    Collection,
-    Container,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    MutableSet,
-    Sequence,
-    Set,
+# Conversion utilities
+from .conversion import literal, computed
+
+# Literal types
+from .literals import (
+    BoolLiteral,
+    BytesLiteral,
+    DictLiteral,
+    FloatLiteral,
+    FrozenSetLiteral,
+    IntLiteral,
+    ListLiteral,
+    NoneLiteral,
+    SetLiteral,
+    StrLiteral,
+    TupleLiteral,
 )
 
-# Literal conversion
-from .conversion import literal
-
-# Primitives impl
+# Computed primitive types (including special values)
 from .primitive_values import (
     BoolValue,
     BytesValue,
+    EmptyValue,
     FloatValue,
     IntValue,
+    NaNValue,
     NoneValue,
     StrValue,
-)
-
-# Primitives
-from .primitives import (
-    Boolean,
-    Bytes,
-    Floating,
-    Integer,
-    Number,
-    String,
+    UnknownValue,
 )
 
 
 __all__ = [  # noqa: RUF022
-    # Capabilities
+    # ==========================================================================
+    # CAPABILITY IMPLEMENTATION MIXINS
+    # ==========================================================================
+    # Core base
+    "CoreBase",
+    # Atomic arithmetic
+    "AddableBase",
+    "SubtractableBase",
+    "NegatableBase",
+    "MultiplyableBase",
+    "DivisibleBase",
+    "ModuloableBase",
+    "PowerableBase",
+    # Combined arithmetic
+    "AdditiveBase",
+    "MultiplicativeBase",
+    "NumericBase",
+    # Comparison
+    "OrderableBase",
+    "EqualableBase",
+    "ComparisonBase",
+    # Logical
+    "AndableBase",
+    "OrableBase",
+    "NotableBase",
+    "LogicalBase",
+    # Bitwise
+    "BitwiseAndableBase",
+    "BitwiseOrableBase",
+    "BitwiseXorableBase",
+    "BitwiseNotableBase",
+    "ShiftableBase",
+    "BitwiseBase",
+    # Collection
+    "LengthableBase",
+    "IndexableBase",
+    "SliceableBase",
+    "ContainableBase",
+    "IterableBase",
+    "SequenceBase",
+    "MappingBase",
+    # String
+    "ConcatenableBase",
+    "StringBase",
+    # ==========================================================================
+    # CAPABILITY PROTOCOLS
+    # ==========================================================================
     "Absoluteable",
     "Addable",
     "Andable",
@@ -172,47 +269,46 @@ __all__ = [  # noqa: RUF022
     "is_orable",
     "is_sliceable",
     "is_subtractable",
-    # Primitives
-    "Boolean",
-    "Bytes",
-    "Floating",
-    "Integer",
-    "Number",
-    "String",
-    # Collections
-    "Collection",
-    "Container",
-    "Mapping",
-    "MutableMapping",
-    "MutableSequence",
-    "MutableSet",
-    "Sequence",
-    "Set",
-    # Base
-    "ValueBase",
-    "Literal",
-    "Computed",
-    # Bases (mixins)
-    "ArithmeticBase",
-    "BitwiseBase",
-    "ComparisonBase",
-    "LogicalBase",
-    "MappingBase",
-    "SequenceBase",
-    "StringBase",
-    # Primitives
+    # ==========================================================================
+    # LITERAL VALUE TYPES
+    # ==========================================================================
+    "IntLiteral",
+    "FloatLiteral",
+    "BoolLiteral",
+    "StrLiteral",
+    "BytesLiteral",
+    "NoneLiteral",
+    "ListLiteral",
+    "DictLiteral",
+    "TupleLiteral",
+    "SetLiteral",
+    "FrozenSetLiteral",
+    # ==========================================================================
+    # COMPUTED PRIMITIVE VALUE TYPES
+    # ==========================================================================
     "IntValue",
     "FloatValue",
     "BoolValue",
     "StrValue",
     "BytesValue",
     "NoneValue",
-    # Collections
+    # ==========================================================================
+    # SPECIAL VALUE TYPES
+    # ==========================================================================
+    "UnknownValue",
+    "EmptyValue",
+    "NaNValue",
+    # ==========================================================================
+    # COMPUTED COLLECTION VALUE TYPES
+    # ==========================================================================
     "ListValue",
     "DictValue",
     "TupleValue",
     "SetValue",
     "FrozenSetValue",
-    # Conversion
+    # ==========================================================================
+    # CONVERSION UTILITIES
+    # ==========================================================================
     "literal",
+    "computed",
 ]

@@ -12,12 +12,16 @@ Combiners provide a cleaner syntax:
     result = all_(cond1, cond2, cond3, cond4, cond5)
 
 Available combiners:
-    - all_(*conditions): Combines conditions with AND (all must be true)
-    - any_(*conditions): Combines conditions with OR (at least one must be true)
+    Logical combiners:
+    - and_(left, right): Combine two conditions with AND
+    - or_(left, right): Combine two conditions with OR
+    - all_(*conditions): All conditions must be true (AND)
+    - any_(*conditions): At least one condition must be true (OR)
     - none_(*conditions): None of the conditions should be true
-    - one_of(*conditions): Exactly one condition should be true
-    - at_least(n, *conditions): At least n conditions should be true
-    - at_most(n, *conditions): At most n conditions should be true
+
+    Conditional combiners:
+    - ifelse(condition, then_value, else_value): Ternary conditional
+    - coalesce(*values): First non-empty/non-nan value
 
 Example:
     >>> price = item.price.get()
@@ -32,10 +36,11 @@ Example:
     ...     status.eq("ready"), status.eq("pending"), status.eq("processing")
     ... )
     >>>
-    >>> # Exclusive conditions with one_of()
-    >>> payment_method = one_of(
-    ...     paid_with_card.eq(True), paid_with_cash.eq(True), paid_with_crypto.eq(True)
-    ... )
+    >>> # Conditional value selection
+    >>> display_price = ifelse(is_sale, sale_price, regular_price)
+    >>>
+    >>> # First non-empty value
+    >>> name = coalesce(preferred_name, display_name, username)
 """
 
 from __future__ import annotations
@@ -52,9 +57,16 @@ __all__ = [
     "all_",
     "and_",
     "any_",
+    "coalesce",
+    "ifelse",
     "none_",
     "or_",
 ]
+
+
+# =============================================================================
+# LOGICAL COMBINERS
+# =============================================================================
 
 
 def and_(left: object, right: object) -> RValue:
@@ -177,3 +189,71 @@ def none_(*conditions: object) -> RValue:
 
     # NOT(any_(...))
     return any_(*conditions).not_()
+
+
+# =============================================================================
+# CONDITIONAL COMBINERS
+# =============================================================================
+
+
+def ifelse(condition: object, then_value: object, else_value: object) -> RValue:
+    """Ternary conditional: if condition then then_value else else_value.
+
+    Similar to Python's ternary operator: `x if condition else y`
+
+    Args:
+        condition: Condition to evaluate
+        then_value: Value to return if condition is true
+        else_value: Value to return if condition is false
+
+    Returns:
+        RValue that evaluates to then_value or else_value based on condition
+
+    Example:
+        >>> display_price = ifelse(is_sale, sale_price, regular_price)
+        >>> status_text = ifelse(is_active, "Active", "Inactive")
+    """
+    from .values.conversion import literal
+
+    # Use the ifelse method from CoreBase via the then_value
+    # ifelse(cond, then, else) -> then.ifelse(cond, else)
+    return literal(then_value).ifelse(literal(condition), literal(else_value))
+
+
+def coalesce(*values: object) -> RValue:
+    """Return first non-empty/non-nan value.
+
+    Similar to SQL's COALESCE or nullish coalescing.
+    Checks each value in order, returning the first that is
+    neither empty nor NaN.
+
+    Args:
+        *values: Variable number of values to check
+
+    Returns:
+        RValue representing the first non-empty/non-nan value
+
+    Raises:
+        ValueError: If no values provided
+
+    Example:
+        >>> name = coalesce(preferred_name, display_name, username)
+        >>> price = coalesce(sale_price, regular_price, default_price)
+    """
+    if not values:
+        raise ValueError("coalesce() requires at least one value")
+
+    if len(values) == 1:
+        from .values.conversion import literal
+
+        return literal(values[0])
+
+    from .values.conversion import literal
+
+    # Build chain: v1.or_default(v2.or_default(v3...))
+    # Start from the end and work backwards
+    result = literal(values[-1])
+    for value in reversed(values[:-1]):
+        result = literal(value).or_default(result)
+
+    return result

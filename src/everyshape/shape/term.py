@@ -344,8 +344,8 @@ class LiteralValue[LiteralT](ValueTerm[LiteralT]):
 class ComputedValue[ComputedT](ValueTerm[ComputedT]):
     """A value computed from an operation.
 
-    Wraps an Operation to provide a value-like interface.
-    Execution delegates to the wrapped operation.
+    Wraps a Computation to provide a value-like interface.
+    Execution delegates to the wrapped computation.
 
     Type Parameters:
         ComputedT: The type of the computed value
@@ -356,23 +356,23 @@ class ComputedValue[ComputedT](ValueTerm[ComputedT]):
         >>> computed.execute(ctx)  # Executes get_op
     """
 
-    def __init__(self, operation: Operation[ComputedT]) -> None:
-        """Initialize with an operation to compute the value.
+    def __init__(self, comp: RValue[ComputedT]) -> None:
+        """Initialize with a computation to compute the value.
 
         Args:
-            operation: The operation that computes this value
+            comp: The computation that computes this value
         """
-        self._operation = operation
-        self.children = (operation,)
+        self._comp = comp
+        self.children = (comp,)
 
     @property
-    def operation(self) -> Operation[ComputedT]:
-        """Get the underlying operation.
+    def comp(self) -> RValue[ComputedT]:
+        """Get the underlying computation.
 
         Returns:
-            The operation that computes this value
+            The comp that computes this value
         """
-        return self._operation
+        return self._comp
 
     def execute(self, context: Context) -> ComputedT:
         """Execute the underlying operation.
@@ -383,11 +383,11 @@ class ComputedValue[ComputedT](ValueTerm[ComputedT]):
         Returns:
             The computed value
         """
-        return self._operation.execute(context)
+        return self._comp.execute(context)
 
     def __repr__(self) -> str:
         """Return machine-friendly representation."""
-        return f"ComputedValue({self._operation!r})"
+        return f"ComputedValue({self._comp!r})"
 
 
 # =============================================================================

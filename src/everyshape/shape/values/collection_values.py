@@ -5,6 +5,7 @@ This module provides concrete RValue types for Python collections:
 - DictValue: Dictionary values
 - TupleValue: Tuple values
 - SetValue: Set values
+- FrozenSetValue: Frozenset values
 
 These wrap native Python collections and enable DSL operations.
 """
@@ -13,9 +14,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, overload
 
-from .base import Literal
+from everyshape.types import SpecialValue
+
+from ..term import ComputedValue, RValue
 from .bases import (
     ComparisonBase,
+    CoreBase,
     MappingBase,
     SequenceBase,
 )
@@ -44,8 +48,9 @@ __all__ = [
 
 class ListValue[T](
     SequenceBase[T, "ListValue[T]"],
-    ComparisonBase[list[T], "BoolValue"],
-    Literal[list[T]],
+    ComparisonBase[list[T]],
+    CoreBase,
+    ComputedValue[list[T] | SpecialValue],
 ):
     """RValue representing a list.
 
@@ -57,7 +62,7 @@ class ListValue[T](
 
     Example:
         >>> val = ListValue([1, 2, 3])
-        >>> first = val[0]  # Returns IntValue (for list of ints)
+        >>> first = val[0]  # Returns typed value
         >>> doubled = val.map_(lambda x: x * 2)  # Returns ListValue
         >>> total = val.sum_()  # Returns IntValue/FloatValue
     """
@@ -67,36 +72,37 @@ class ListValue[T](
     def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
+
     def __add__(self, other: list[T] | ListValue[T]) -> ListValue[T]:
         """Concatenate lists."""
-        from ..ops.binary_ops import AddOp
+        from ..computations.binary_ops import AddOp
 
         return ListValue(AddOp(self, literal(other)))
 
     def __radd__(self, other: list[T]) -> ListValue[T]:
         """Right concatenate lists."""
-        from ..ops.binary_ops import AddOp
+        from ..computations.binary_ops import AddOp
 
         return ListValue(AddOp(literal(other), self))
 
     @overload
-    def __getitem__(self, key: int) -> object: ...
+    def __getitem__(self, key: int) -> UnknownValue: ...
 
     @overload
     def __getitem__(self, key: slice) -> ListValue[T]: ...
 
-    def __getitem__(self, key: int | slice) -> object:
+    def __getitem__(self, key: int | slice) -> UnknownValue | ListValue[T]:
         """Get item or slice."""
         if isinstance(key, slice):
-            from ..ops.sequence_ops import SliceOp
+            from ..computations.sequence_ops import SliceOp
 
             return ListValue(SliceOp(self, key.start, key.stop, key.step))
 
-        from ..ops.sequence_ops import AtOp
-        from .conversion import result
+        from ..computations.sequence_ops import AtOp
 
-        # FIXME: should be unknown value
-        return result(type(self._value[0]) if self._value else object, AtOp(self, literal(key)))
+        return UnknownValue(AtOp(self, literal(key)))
 
     def len_(self) -> IntValue:
         """Get list length.
@@ -104,7 +110,7 @@ class ListValue[T](
         Returns:
             IntValue containing length
         """
-        from ..ops.sequence_ops import LenOp
+        from ..computations.sequence_ops import LenOp
 
         return IntValue(LenOp(self))
 
@@ -117,7 +123,7 @@ class ListValue[T](
         Returns:
             BoolValue result
         """
-        from ..ops.mapping_ops import ContainsOp
+        from ..computations.mapping_ops import ContainsOp
 
         return BoolValue(ContainsOp(self, literal(item)))
 
@@ -127,7 +133,7 @@ class ListValue[T](
         Returns:
             ListValue with reversed elements
         """
-        from ..ops.sequence_ops import ReversedOp
+        from ..computations.sequence_ops import ReversedOp
 
         return ListValue(ReversedOp(self))
 
@@ -140,7 +146,7 @@ class ListValue[T](
         Returns:
             ListValue with sorted elements
         """
-        from ..ops.sequence_ops import SortedOp
+        from ..computations.sequence_ops import SortedOp
 
         return ListValue(SortedOp(self, reverse=reverse))
 
@@ -153,7 +159,7 @@ class ListValue[T](
         Returns:
             ListValue with mapped elements
         """
-        from ..ops.sequence_ops import MapOp
+        from ..computations.sequence_ops import MapOp
 
         return ListValue(MapOp(self, func))
 
@@ -166,7 +172,7 @@ class ListValue[T](
         Returns:
             ListValue with filtered elements
         """
-        from ..ops.sequence_ops import FilterOp
+        from ..computations.sequence_ops import FilterOp
 
         return ListValue(FilterOp(self, predicate))
 
@@ -192,7 +198,7 @@ class ListValue[T](
         self, func: Callable[[dict[K, V], T], dict[K, V]], initial: dict[K, V]
     ) -> DictValue[K, V]: ...
 
-    def reduce_[R](self, func: Callable[[R, T], R], initial: R) -> object:
+    def reduce_[R](self, func: Callable[[R, T], R], initial: R) -> UnknownValue:
         """Reduce to single value.
 
         Args:
@@ -202,10 +208,9 @@ class ListValue[T](
         Returns:
             Typed value wrapper containing reduced result
         """
-        from ..ops.sequence_ops import ReduceOp
-        from .conversion import result
+        from ..computations.sequence_ops import ReduceOp
 
-        return result(type(initial), ReduceOp(self, func, initial))
+        return UnknownValue(ReduceOp(self, func, initial))
 
     def sum_(self) -> IntValue | FloatValue:
         """Sum elements.
@@ -213,7 +218,7 @@ class ListValue[T](
         Returns:
             IntValue or FloatValue containing sum
         """
-        from ..ops.sequence_ops import SumOp
+        from ..computations.sequence_ops import SumOp
 
         return IntValue(SumOp(self))
 
@@ -223,7 +228,7 @@ class ListValue[T](
         Returns:
             BoolValue result
         """
-        from ..ops.sequence_ops import AnyOp
+        from ..computations.sequence_ops import AnyOp
 
         return BoolValue(AnyOp(self))
 
@@ -233,7 +238,7 @@ class ListValue[T](
         Returns:
             BoolValue result
         """
-        from ..ops.sequence_ops import AllOp
+        from ..computations.sequence_ops import AllOp
 
         return BoolValue(AllOp(self))
 
@@ -246,9 +251,29 @@ class ListValue[T](
         Returns:
             StrValue with joined result
         """
-        from ..ops.sequence_ops import JoinOp
+        from ..computations.sequence_ops import JoinOp
 
         return StrValue(JoinOp(self, separator))
+
+    def first(self) -> UnknownValue:
+        """Get first element.
+
+        Returns:
+            First element as UnknownValue
+        """
+        from ..computations.sequence_ops import FirstOp
+
+        return UnknownValue(FirstOp(self))
+
+    def last(self) -> UnknownValue:
+        """Get last element.
+
+        Returns:
+            Last element as UnknownValue
+        """
+        from ..computations.sequence_ops import LastOp
+
+        return UnknownValue(LastOp(self))
 
     def index(self, value: T) -> IntValue:
         """Find index of value.
@@ -259,7 +284,7 @@ class ListValue[T](
         Returns:
             IntValue containing index
         """
-        from ..ops.sequence_ops import IndexOfOp
+        from ..computations.sequence_ops import IndexOfOp
 
         return IntValue(IndexOfOp(self, literal(value)))
 
@@ -272,7 +297,7 @@ class ListValue[T](
         Returns:
             IntValue containing count
         """
-        from ..ops.sequence_ops import CountOp
+        from ..computations.sequence_ops import CountOp
 
         return IntValue(CountOp(self, literal(value)))
 
@@ -285,7 +310,7 @@ class ListValue[T](
         Returns:
             IntValue containing index
         """
-        from ..ops.sequence_ops import FindIndexOp
+        from ..computations.sequence_ops import FindIndexOp
 
         return IntValue(FindIndexOp(self, predicate))
 
@@ -296,8 +321,9 @@ class ListValue[T](
 
 
 class TupleValue[*Ts](
-    ComparisonBase[tuple, "BoolValue"],
-    Literal[tuple[*Ts]],
+    ComparisonBase[tuple],
+    CoreBase,
+    ComputedValue[tuple[*Ts]],
 ):
     """RValue representing a tuple.
 
@@ -318,23 +344,25 @@ class TupleValue[*Ts](
     def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
+
     @overload
-    def __getitem__(self, key: int) -> object: ...
+    def __getitem__(self, key: int) -> UnknownValue: ...
 
     @overload
     def __getitem__(self, key: slice) -> TupleValue: ...
 
-    def __getitem__(self, key: int | slice) -> object:
+    def __getitem__(self, key: int | slice) -> UnknownValue | TupleValue:
         """Get item or slice."""
         if isinstance(key, slice):
-            from ..ops.sequence_ops import SliceOp
+            from ..computations.sequence_ops import SliceOp
 
             return TupleValue(SliceOp(self, key.start, key.stop, key.step))
 
-        from ..ops.sequence_ops import AtOp
-        from .conversion import result
+        from ..computations.sequence_ops import AtOp
 
-        return result(type(self._value[key]) if self._value else object, AtOp(self, literal(key)))
+        return UnknownValue(AtOp(self, literal(key)))
 
     def len_(self) -> IntValue:
         """Get tuple length.
@@ -342,7 +370,7 @@ class TupleValue[*Ts](
         Returns:
             IntValue containing length
         """
-        from ..ops.sequence_ops import LenOp
+        from ..computations.sequence_ops import LenOp
 
         return IntValue(LenOp(self))
 
@@ -355,7 +383,7 @@ class TupleValue[*Ts](
         Returns:
             BoolValue result
         """
-        from ..ops.mapping_ops import ContainsOp
+        from ..computations.mapping_ops import ContainsOp
 
         return BoolValue(ContainsOp(self, literal(item)))
 
@@ -367,8 +395,9 @@ class TupleValue[*Ts](
 
 class DictValue[K, V](
     MappingBase[K, V, "DictValue[K, V]"],
-    ComparisonBase[dict[K, V], "BoolValue"],
-    Literal[dict[K, V]],
+    ComparisonBase[dict[K, V]],
+    CoreBase,
+    ComputedValue[dict[K, V]],
 ):
     """RValue representing a dictionary.
 
@@ -390,14 +419,14 @@ class DictValue[K, V](
     def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
-    def __getitem__(self, key: K) -> object:
-        """Get value for key."""
-        from ..ops.sequence_ops import AtOp
-        from .conversion import result
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
 
-        # Get value type from first value if available
-        value_type = type(next(iter(self._value.values()))) if self._value else object
-        return result(value_type, AtOp(self, literal(key)))
+    def __getitem__(self, key: K) -> UnknownValue:
+        """Get value for key."""
+        from ..computations.sequence_ops import AtOp
+
+        return UnknownValue(AtOp(self, literal(key)))
 
     def len_(self) -> IntValue:
         """Get number of items.
@@ -405,7 +434,7 @@ class DictValue[K, V](
         Returns:
             IntValue containing length
         """
-        from ..ops.sequence_ops import LenOp
+        from ..computations.sequence_ops import LenOp
 
         return IntValue(LenOp(self))
 
@@ -418,7 +447,7 @@ class DictValue[K, V](
         Returns:
             BoolValue result
         """
-        from ..ops.mapping_ops import ContainsOp
+        from ..computations.mapping_ops import ContainsOp
 
         return BoolValue(ContainsOp(self, literal(key)))
 
@@ -428,7 +457,7 @@ class DictValue[K, V](
         Returns:
             ListValue containing all keys
         """
-        from ..ops.mapping_ops import DictKeysOp
+        from ..computations.mapping_ops import DictKeysOp
 
         return ListValue(DictKeysOp(self))
 
@@ -438,7 +467,7 @@ class DictValue[K, V](
         Returns:
             ListValue containing all values
         """
-        from ..ops.mapping_ops import DictValuesOp
+        from ..computations.mapping_ops import DictValuesOp
 
         return ListValue(DictValuesOp(self))
 
@@ -448,9 +477,23 @@ class DictValue[K, V](
         Returns:
             ListValue containing all (key, value) tuples
         """
-        from ..ops.mapping_ops import DictItemsOp
+        from ..computations.mapping_ops import DictItemsOp
 
         return ListValue(DictItemsOp(self))
+
+    def get_(self, key: K, default: V | None = None) -> UnknownValue:
+        """Get value with default.
+
+        Args:
+            key: Key to get
+            default: Default if not found
+
+        Returns:
+            Value or default
+        """
+        from ..computations.mapping_ops import DictGetOp
+
+        return UnknownValue(DictGetOp(self, literal(key), literal(default)))
 
 
 # =============================================================================
@@ -459,8 +502,9 @@ class DictValue[K, V](
 
 
 class SetValue[T](
-    ComparisonBase[set[T], "BoolValue"],
-    Literal[set[T]],
+    ComparisonBase[set[T]],
+    CoreBase,
+    ComputedValue[set[T]],
 ):
     """RValue representing a set.
 
@@ -479,13 +523,16 @@ class SetValue[T](
     def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
+
     def len_(self) -> IntValue:
         """Get set size.
 
         Returns:
             IntValue containing length
         """
-        from ..ops.sequence_ops import LenOp
+        from ..computations.sequence_ops import LenOp
 
         return IntValue(LenOp(self))
 
@@ -498,7 +545,7 @@ class SetValue[T](
         Returns:
             BoolValue result
         """
-        from ..ops.mapping_ops import ContainsOp
+        from ..computations.mapping_ops import ContainsOp
 
         return BoolValue(ContainsOp(self, literal(item)))
 
@@ -509,8 +556,9 @@ class SetValue[T](
 
 
 class FrozenSetValue[T](
-    ComparisonBase[frozenset[T], "BoolValue"],
-    Literal[frozenset[T]],
+    ComparisonBase[frozenset[T]],
+    CoreBase,
+    ComputedValue[frozenset[T]],
 ):
     """RValue representing a frozenset.
 
@@ -530,13 +578,16 @@ class FrozenSetValue[T](
     def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        return BoolValue(operand)
+
     def len_(self) -> IntValue:
         """Get set size.
 
         Returns:
             IntValue containing length
         """
-        from ..ops.sequence_ops import LenOp
+        from ..computations.sequence_ops import LenOp
 
         return IntValue(LenOp(self))
 
@@ -549,10 +600,16 @@ class FrozenSetValue[T](
         Returns:
             BoolValue result
         """
-        from ..ops.mapping_ops import ContainsOp
+        from ..computations.mapping_ops import ContainsOp
 
         return BoolValue(ContainsOp(self, literal(item)))
 
 
 # Import primitive values for use in this module
-from .primitive_values import BoolValue, FloatValue, IntValue, StrValue  # noqa: E402
+from .primitive_values import (  # noqa: E402
+    BoolValue,
+    FloatValue,
+    IntValue,
+    StrValue,
+    UnknownValue,
+)

@@ -1,4 +1,4 @@
-"""Convert python objects to Literal values."""
+"""Convert python objects to Literal and Computed values."""
 
 from __future__ import annotations
 
@@ -6,16 +6,15 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..term import RValue
-    from .base import Literal
+    from ..term import ComputedValue, RValue
 
 __all__ = [
+    "computed",
     "literal",
-    "result",
 ]
 
 
-def literal(value: object) -> Literal:
+def literal(value: object) -> RValue:
     """Wrap value in LiteralValue if not already an RValue.
 
     Helper for operator overloading - converts Python literals
@@ -25,46 +24,65 @@ def literal(value: object) -> Literal:
         value: Value to wrap (can be RValue or literal)
 
     Returns:
-        RValue (unchanged if already RValue, wrapped otherwise)
+        LiteralValue (unchanged if already RValue, wrapped otherwise)
 
     Example:
-        >>> literal(42)  # → LiteralValue(42)
+        >>> literal(42)  # → IntLiteral(42)
         >>> literal(price.get())  # → price.get() (unchanged)
     """
     from ..term import RValue
-    from .collection_values import DictValue, FrozenSetValue, ListValue, SetValue, TupleValue
-    from .primitive_values import BoolValue, BytesValue, FloatValue, IntValue, NoneValue, StrValue
+    from .literals import (
+        BoolLiteral,
+        BytesLiteral,
+        DictLiteral,
+        FloatLiteral,
+        FrozenSetLiteral,
+        IntLiteral,
+        ListLiteral,
+        NoneLiteral,
+        SetLiteral,
+        StrLiteral,
+        TupleLiteral,
+    )
 
     if isinstance(value, RValue):
         return value
+    elif isinstance(value, bool):  # Must check bool before int (bool is subclass of int)
+        return BoolLiteral(value)
     elif isinstance(value, int):
-        return IntValue(value)
+        return IntLiteral(value)
     elif isinstance(value, str):
-        return StrValue(value)
-    elif isinstance(value, bool):
-        return BoolValue(value)
+        return StrLiteral(value)
     elif isinstance(value, float):
-        return FloatValue(value)
+        return FloatLiteral(value)
     elif isinstance(value, bytes):
-        return BytesValue(value)
+        return BytesLiteral(value)
     elif value is None:
-        return NoneValue()
+        return NoneLiteral()
     elif isinstance(value, dict):
-        return DictValue(value)
+        return DictLiteral(value)
     elif isinstance(value, set):
-        return SetValue(value)
+        return SetLiteral(value)
     elif isinstance(value, list):
-        return ListValue(value)
+        return ListLiteral(value)
     elif isinstance(value, tuple):
-        return TupleValue(value)
+        return TupleLiteral(value)
     elif isinstance(value, frozenset):
-        return FrozenSetValue(value)
+        return FrozenSetLiteral(value)
     else:
         raise TypeError(f"Not supported type {value.__class__.__name__}")
 
 
-def result(result_type: object, op: RValue) -> Literal:
-    """Return wrapped compted value for an op."""
+def computed(result_type: object, op: RValue) -> ComputedValue:
+    """Return wrapped computed value for an op.
+
+    Args:
+        result_type: Expected result type
+        op: Operation to wrap
+
+    Returns:
+        Typed computed value wrapper
+    """
     from .collection_values import DictValue, FrozenSetValue, ListValue, SetValue, TupleValue
     from .primitive_values import BoolValue, BytesValue, FloatValue, IntValue, NoneValue, StrValue
 
