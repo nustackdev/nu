@@ -7,8 +7,8 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
-from everyshape.shape import Operation, PrimitiveRef, ViewRef
 from everyshape.storage import Subscription
+from everyshape.term import Operation, PrimitiveRef, ViewRef
 from everyshape.view import ChildObservable, DescendantsObservable, Observable
 
 from ..term import RValue

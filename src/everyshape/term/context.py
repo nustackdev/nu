@@ -9,10 +9,9 @@ import attrs
 
 
 if TYPE_CHECKING:
+    from everyshape.shape import Shape
     from everyshape.storage import StorageContextType
     from everyshape.view import View
-
-    from .shape import Shape
 
 __all__ = [
     "Context",

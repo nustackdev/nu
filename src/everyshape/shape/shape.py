@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 
 if TYPE_CHECKING:
-    from .term import Ref
+    from ..term.term import Ref
 
 
 __all__ = [

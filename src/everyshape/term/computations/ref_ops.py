@@ -38,7 +38,7 @@ from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
-from everyshape.shape.term import Operation, PrimitiveRef, ViewRef
+from everyshape.term.term import Operation, PrimitiveRef, ViewRef
 from everyshape.types import Empty, SpecialValue, Value
 from everyshape.view import capabilities as view_capabilities
 

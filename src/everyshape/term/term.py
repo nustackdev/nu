@@ -65,11 +65,11 @@ from everyshape.loc import path
 
 
 if TYPE_CHECKING:
+    from everyshape.shape import Shape
     from everyshape.types import Value
     from everyshape.view import View
 
     from .context import Context
-    from .shape import Shape
 
 
 __all__ = [  # noqa: RUF022

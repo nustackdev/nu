@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from everyshape.shape.term import RValue
+    from everyshape.term.term import RValue
 
 
 __all__ = [  # noqa: RUF022
