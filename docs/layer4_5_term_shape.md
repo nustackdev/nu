@@ -1,31 +1,41 @@
-# Layer 4: Shapes (Shape System)
+# Layer 4, 5: Terms + Shapes
 
 ## Overview
 
-The Shapes layer turns declarative structure into executable meaning. It provides application-level abstractions where developers describe *what exists* (Shapes), *where it lives* (Slots), and *how to interact with it* (Refs, Operations, Commands).
+The Terms system turns declarative structure into executable meaning.
+It provides application-level abstractions where developers describe *what exists* (Shapes), *where it lives* (Slots),
+and *how to interact with it* (Terms: Refs, Operations, Commands).
 
 **Core Responsibility**: Provide type-safe, declarative data structures with semantic operations.
 
 ## Layer Position
 
+
 ```text
-┌─────────────────────────────────────────────┐
-│ Layer 4: Shapes (Application Logic)      ◄──│  THIS LAYER
-├─────────────────────────────────────────────┤
-│ Layer 3: Views (Data Structures)            │
-├─────────────────────────────────────────────┤
-│ Layer 2: Tree (Hierarchical Shapes)         │
-├─────────────────────────────────────────────┤
-│ Layer 1: Storage (Tuple-Key-Value)          │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ Layer 5: Shapes  <--- (this)        │  Models for term system (Market.symbols["AAPL"])
+├─────────────────────────────────────┤
+│ Layer 4: Terms   <--- (and this)    │  Declarative computation interface over data (Ref("symbols", "AAPL").get() + 12)
+├─────────────────────────────────────┤
+│ Layer 3: Views                      │  Data structures (Dict, List, Queue)
+├─────────────────────────────────────┤
+│ Layer 2: Container                  │  Hierarchical semantics, containers
+├─────────────────────────────────────┤
+│ Layer 1:                            │  Flat tuple key-value store
+│ + KV Storage Interface              │
+│ + Backend: LMDB/RocksDB/etc>        │
+└─────────────────────────────────────┘
 ```
 
 ## What It Is
 
-Shapes is a **cognitive model** for data:
+Terms and Shapes is a **cognitive model** for data:
 
+Shapes:
 - **Shape**: Blueprint defining structure
 - **Slot**: Position within structure (field definition)
+
+Terms:
 - **Ref**: Runtime address pointing to data (LValue)
 - **Operation**: Pure computation producing values (RValue)
 - **Command**: Impure mutation changing state (RValue)
@@ -37,22 +47,18 @@ Shapes is a **cognitive model** for data:
 ### Term Hierarchy
 
 ```text
-Term (AST base)
-├── LValue (addressable location)
-│   └── Ref
-│        ├── ValueRef (primitive values)
-│        ├── ShapeRef (nested structures)
-│        ├── MapRef (mapping containers)
-│        └── MapItemRef (map entries)
-└── RValue (evaluable expression)
-    ├── Operation (pure)
-    │     ├── GetOp (reads)
-    │     ├── BinaryOp (arithmetic, logic)
-    │     └── UnaryOp (negation, not)
-    └── Command (impure)
-          ├── SetCmd (writes)
-          ├── DeleteCmd (removes)
-          └── UpdateCmd (modifies)
+Term                        - executable node
+├── LValue                  - addressable location (has path)
+│   └── Ref                 - typed reference to storage location
+│       ├── ViewRef         - reference to container (dict, list, set)
+│       └── PrimitiveRef    - reference to leaf value (int, str, etc.)
+└── RValue                  - evaluable expression (has children)
+    ├── Value               - represents a value (literal or computed)
+    │   ├── LiteralValue    - fixed value (e.g. 42, "hello")
+    │   └── ComputedValue   - result of computation (wraps Operation)
+    └── Computation         - computes or mutates
+        ├── Operation       - pure computation (e.g. get, add)
+        └── Command         - impure mutation (e.g. set, delete)
 ```
 
 ### Shape - Declarative Structure
@@ -221,7 +227,7 @@ dict_view.store({...}, replace=True)
 # Then stores: orders/AAPL/price, orders/AAPL/volume, etc.
 ```
 
-## What Shapes Does
+## What It Does
 
 ✅ **Declarative Structure**
 
@@ -247,7 +253,7 @@ dict_view.store({...}, replace=True)
 - Custom operations and commands
 - Business logic encapsulation
 
-## What Shapes Does NOT Do
+## What It Does NOT Do
 
 ### No Direct Storage Access
 
@@ -281,7 +287,7 @@ These are View Layer 3 responsibilities.
 
 ## Summary
 
-Layer 4 provides the **cognitive model** for EveryShape:
+Layer 4, 5 provide the **cognitive model** for EveryShape:
 
 - **Shapes** define structure declaratively
 - **Slots** create Refs when accessed

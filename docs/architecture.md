@@ -6,7 +6,9 @@ EveryShape is a layered data system. Each layer builds on the one below, adding 
 
 ```text
 ┌─────────────────────────────────────┐
-│ Layer 4: Shapes                     │  Application logic, commands, queries
+│ Layer 5: Shapes                     │  Models for term system (Market.symbols["AAPL"])
+├─────────────────────────────────────┤
+│ Layer 4: Terms                      │  Declarative computation interface over data (Ref("symbols", "AAPL").get() + 12)
 ├─────────────────────────────────────┤
 │ Layer 3: Views                      │  Data structures (Dict, List, Queue)
 ├─────────────────────────────────────┤
@@ -41,11 +43,15 @@ EveryShape is a layered data system. Each layer builds on the one below, adding 
 - Auto-population and extraction of Python objects
 - Example: `users["alice"] = {"name": "Alice"}` stores as tree structure
 
-### Layer 4: Shapes
+### Layer 4: Terms
 
-- Application logic and domain models
 - Commands (mutations), queries (reads), refs (locations)
 - Built on Views
+- Example: `Ref("symbols", "AAPL").get() + 12`
+
+### Layer 5: Shapes
+
+- Native and domain models for terms
 - Example: `Market.orders["AAPL"].price.get()`
 
 ## Key Design Principles
@@ -55,16 +61,18 @@ EveryShape is a layered data system. Each layer builds on the one below, adding 
 Each layer knows ONLY its own concept:
 
 - KV Storage: doesn't know what "container" means
-- Tree: doesn't know what "DictView" means
+- Container: doesn't know what "DictView" means
 - Views: don't know about application semantics
-- Shapes: doesn't know about storage internals
+- Terms: don't know about underlying structure internals
+- Shapes: doen't know about storage internals
 
 ### One Concept Per Layer
 
 - Layer 1 adds: tuple keys + ordering
 - Layer 2 adds: hierarchy + containers
 - Layer 3 adds: data structures
-- Layer 4 adds: domain logic
+- Layer 4 adds: declarative computations
+- Layer 5 adds: models for terms
 
 ### Bottom-Up Composition
 
@@ -79,7 +87,7 @@ Higher layers use lower layer primitives:
 Storing a user:
 
 ```python
-# Layer 4 (Shapes)
+# Layer 4-5 (Shapes + Terms)
 users.alice.set({"name": "Alice", "age": 30})
 
 # ↓ uses Layer 3 (View)
@@ -104,7 +112,7 @@ lmdb.put(encode(("users", "alice", "age")), encode(30))
 Reading a user:
 
 ```python
-# Layer 4 (Shapes)
+# Layer 4-5 (Shapes + Terms)
 data = users.alice.get()
 
 # ↓ uses Layer 3 (View)
