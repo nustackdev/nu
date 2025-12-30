@@ -66,7 +66,6 @@ from everyshape.loc import path
 
 if TYPE_CHECKING:
     from everyshape.shape import Shape
-    from everyshape.types import Value
     from everyshape.view import View
 
     from .context import Context
@@ -675,20 +674,20 @@ class ViewRef(Generic[ViewT_co], Ref[path.PathToView], ABC):  # noqa: UP046
         return f"ViewRef({self.address!s})"
 
 
-class PrimitiveRef(Ref[path.PathToValue], ABC):
+class PrimitiveRef[T](Ref[path.PathToValue], ABC):
     """Ref that points to a primtive value in the tree (leaf node)."""
 
     def __init__(
         self,
         address: path.PathAddress | RValue,
-        value_type: type[Value],  # TODO: to accept arbitraty types too (?)
+        value_type: type[T],
         parent_ref: Ref | None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Init ValueRef."""
         super().__init__(parent_ref, owner_shape)
         self.address = address
-        self.value_type: type[Value] = value_type
+        self.value_type = value_type
 
     def resolve(self, context: Context) -> path.PathToValue:
         """Resolve to complete path ending at value.
@@ -719,7 +718,7 @@ class PrimitiveRef(Ref[path.PathToValue], ABC):
                 "resolved_path": resolved_path,
             },
         )
-        return resolved_path
+        return resolved_path  # type: ignore
 
     def __repr__(self) -> str:
         """PrimitiveRef representation in machine-friendly format."""

@@ -26,7 +26,9 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import RValue
+    from everyshape.types import SpecialValue
+
+    from ..term import Computation, RValue
 
 
 __all__ = [  # noqa: RUF022
@@ -377,7 +379,7 @@ class Existable[OpT](Protocol):
 
 
 @runtime_checkable
-class RefObservable[OpT](Protocol):
+class RefObservable(Protocol):
     """Protocol for LValues that support observing changes.
 
     Returns operations that create subscriptions to changes.
@@ -391,7 +393,7 @@ class RefObservable[OpT](Protocol):
         ...     subscription = change_op.execute(ctx)
     """
 
-    def on_change(self) -> OpT:
+    def on_change(self) -> Computation:
         """Create a change subscription operation.
 
         Returns:
@@ -401,7 +403,7 @@ class RefObservable[OpT](Protocol):
 
 
 @runtime_checkable
-class RefChildObservable[K, OpT](Protocol):
+class RefChildObservable[K](Protocol):
     """Protocol for LValues that support observing child changes.
 
     Type Parameters:
@@ -414,7 +416,7 @@ class RefChildObservable[K, OpT](Protocol):
         ...     subscription = child_op.execute(ctx)
     """
 
-    def on_child_change(self, address: K | RValue) -> OpT:
+    def on_child_change(self, address: K | RValue) -> Computation:
         """Create a child change subscription operation.
 
         Args:
@@ -425,7 +427,7 @@ class RefChildObservable[K, OpT](Protocol):
         """
         ...
 
-    def on_children_change(self) -> OpT:
+    def on_children_change(self) -> Computation:
         """Create a children change subscription operation.
 
         Returns:
@@ -435,7 +437,7 @@ class RefChildObservable[K, OpT](Protocol):
 
 
 @runtime_checkable
-class RefDescendantsObservable[OpT](Protocol):
+class RefDescendantsObservable(Protocol):
     """Protocol for LValues that support observing descendant changes.
 
     Type Parameters:
@@ -447,7 +449,7 @@ class RefDescendantsObservable[OpT](Protocol):
         ...     subscription = desc_op.execute(ctx)
     """
 
-    def on_descendants_change(self, *pattern: str | int) -> OpT:
+    def on_descendants_change(self, *pattern: str | int) -> Computation:
         """Create a descendants change subscription operation.
 
         Args:
@@ -492,11 +494,12 @@ class Nestable[K, RefT](Protocol):
 
 
 @runtime_checkable
-class RefIndexable[K, RefT](Protocol):
+class RefIndexable[I, IndexValueT, RefT](Protocol):
     """Protocol for LValues that support index-based access.
 
     Type Parameters:
-        K: Type of index (typically int)
+        I: Type of index (typically int)
+        IndexValueT: Value type for computed index (typically IntValue)
         RefT: Type of item reference returned
 
     Example:
@@ -504,7 +507,7 @@ class RefIndexable[K, RefT](Protocol):
         ...     item_ref = ref[0]  # Get first item reference
     """
 
-    def __getitem__(self, key: K | RValue) -> RefT:
+    def __getitem__(self, key: I | IndexValueT | RValue[I | SpecialValue]) -> RefT:
         """Get reference to item at index.
 
         Args:

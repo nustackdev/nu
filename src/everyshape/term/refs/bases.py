@@ -1,7 +1,7 @@
 """Capability implementation bases for LValue references.
 
 This module provides mixin classes that IMPLEMENT capability protocols.
-These are the building blocks that get combined in refs.py to create
+These are the building blocks that get combined to create
 complete ref implementations.
 
 Each base implements methods from the corresponding capability protocol:
@@ -115,6 +115,9 @@ __all__ = [  # noqa: RUF022
     "AppendableBase",
     "InsertableBase",
     "PoppableBase",
+    # Mapping capability bases
+    "MappingNestableBase",
+    "MappingIterableBase",
     # Set capability bases
     "SetAddableBase",
     "SetRemovableBase",
@@ -246,7 +249,21 @@ class ExtractableBase[W](ABC):
 
     @abstractmethod
     def result(self, op: RValue) -> W:
-        """Convert operation result with corresponding wrapper."""
+        """Wrap an operation result in the appropriate typed value container.
+
+        Args:
+            op: The operation to wrap
+
+        Returns:
+            Typed value wrapper (e.g., ListValue, DictValue, SetValue)
+
+        Note:
+            Subclasses must implement this to return the correct wrapper type.
+
+        Example:
+            def result(self, op: RValue) -> ListValue[T]:
+                return ListValue(op)
+        """
         ...
 
     def extract(self) -> W:
@@ -331,7 +348,21 @@ class StorableBase[W, T](ABC):
 
     @abstractmethod
     def result(self, op: RValue) -> W:
-        """Convert operation result with corresponding wrapper."""
+        """Wrap an operation result in the appropriate typed value container.
+
+        Args:
+            op: The operation to wrap
+
+        Returns:
+            Typed value wrapper (e.g., ListValue, DictValue, SetValue)
+
+        Note:
+            Subclasses must implement this to return the correct wrapper type.
+
+        Example:
+            def result(self, op: RValue) -> DictValue[K, V]:
+                return DictValue(op)
+        """
         ...
 
     def store(self, value: T | RValue[T | SpecialValue]) -> W:
@@ -557,34 +588,50 @@ class ItemsQueryableBase[K, V]:
 # =============================================================================
 
 
-class SequenceIndexableBase[T, ItemRefT, SliceRefT]:
+class SequenceIndexableBase[T, ItemRefT, SliceRefT](ABC):
     """Implementation base for sequence indexing.
 
     Provides __getitem__ for integer and slice access.
     Subclasses must implement _create_item_ref and _create_slice_ref.
     """
 
+    @abstractmethod
     def _create_item_ref(self, index: int | RValue[int]) -> ItemRefT:
-        """Create a reference to an item. Override in subclass.
+        """Create a reference to an item at the given index.
 
         Args:
-            index: Item index
+            index: Item index (int or RValue[int] for computed index)
 
         Returns:
-            Reference to item at index
-        """
-        raise NotImplementedError("Subclass must implement _create_item_ref")
+            Reference to item at the specified index
 
+        Note:
+            Subclasses must implement this to return the appropriate ref type.
+
+        Example:
+            def _create_item_ref(self, index: int | RValue[int]) -> ItemRef:
+                return ItemRef(self, index)
+        """
+        ...
+
+    @abstractmethod
     def _create_slice_ref(self, key: slice) -> SliceRefT:
-        """Create a reference to a slice. Override in subclass.
+        """Create a reference to a slice of the sequence.
 
         Args:
-            key: Slice specification
+            key: Slice specification (start:stop:step)
 
         Returns:
-            Reference to slice
+            Reference to the specified slice
+
+        Note:
+            Subclasses must implement this to return the appropriate ref type.
+
+        Example:
+            def _create_slice_ref(self, key: slice) -> SliceRef:
+                return SliceRef(self, key)
         """
-        raise NotImplementedError("Subclass must implement _create_slice_ref")
+        ...
 
     @overload
     def __getitem__(self, key: int) -> ItemRefT: ...
@@ -890,16 +937,24 @@ class MappingNestableBase[K, ChildRefT]:
     Subclasses must implement _create_child_ref.
     """
 
+    @abstractmethod
     def _create_child_ref(self, key: K | RValue[K]) -> ChildRefT:
-        """Create a reference to a child. Override in subclass.
+        """Create a reference to a child at the given key.
 
         Args:
-            key: Child key
+            key: Child key (literal or RValue[K] for computed key)
 
         Returns:
-            Reference to child at key
+            Reference to child at the specified key
+
+        Note:
+            Subclasses must implement this to return the appropriate ref type.
+
+        Example:
+            def _create_child_ref(self, key: K | RValue[K]) -> ChildRef:
+                return ChildRef(self, key)
         """
-        raise NotImplementedError("Subclass must implement _create_child_ref")
+        ...
 
     def __getitem__(self, key: K | RValue[K]) -> ChildRefT:
         """Get child reference by key.

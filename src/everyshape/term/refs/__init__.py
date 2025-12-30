@@ -6,35 +6,42 @@ lazily through operations.
 
 Module Structure:
     capabilities.py     - Capability PROTOCOLS (Gettable, Settable, etc.)
-    collections.py      - Collection ref PROTOCOLS (SequenceRefProtocol, etc.)
-    base.py             - Base classes (PrimitiveRefBase, ViewRefBase)
-    bases.py            - Capability implementation MIXINS (GettableBase, etc.)
-    refs.py             - Complete ref IMPLEMENTATIONS (MappingRefImpl, etc.)
+    collections.py      - Collection ref PROTOCOLS (SequenceRef, MappingRef, etc.)
+    bases.py            - Capability implementation MIXINS (GettableBase, ValueRefBase, etc.)
+    refs.py             - Complete ref BASE CLASSES (SequenceRefBase, MappingRefBase, etc.)
+    primitive_refs.py   - Primitive value refs (ValueRef, SequenceValueRef, etc.)
 
-Hierarchy:
-    PROTOCOLS (what things CAN do):
-        capabilities.py: Gettable, Settable, Existable, Extractable, ...
-        collections.py: RefProtocol, SequenceRefProtocol, MappingRefProtocol, ...
+Protocol Hierarchy (collections.py):
+    Ref (base)
+    ├── ContainerRef (existence checking)
+    │   └── CollectionRef (sized, extractable, storable)
+    │       ├── SequenceRef[T] (indexed access)
+    │       │   └── MutableSequenceRef[T]
+    │       ├── MappingRef[K,V] (key access)
+    │       │   └── MutableMappingRef[K,V]
+    │       └── SetRef[T] (containment)
+    │           └── MutableSetRef[T]
+    └── PrimitiveRef[T] (leaf value references)
+        └── ValueRef[T] (typed primitive value)
 
-    IMPLEMENTATIONS (HOW things do it):
-        base.py: PrimitiveRefBase, ViewRefBase
-        bases.py: GettableBase, SettableBase, ExistableBase, ...
-        refs.py: PrimitiveRefImpl, MappingRefImpl, SequenceRefImpl, ...
+Implementation Hierarchy:
+    bases.py: Atomic mixins (ExistableBase, GettableBase, etc.)
+              Combined primitive bases (ValueRefBase, SequenceValueRefBase, etc.)
+    refs.py:  View ref bases (SequenceRefBase, MappingRefBase, SetRefBase, etc.)
 
 Key difference from RValues:
     - LValues are LOCATIONS in storage (lazy access)
     - RValues are ALREADY COMPUTED values in memory
 
 Example:
-    >>> from everyshape.shape.refs import MappingRefImpl, PrimitiveRefImpl
-    >>> from everyshape.shape.refs.collections import MappingRefProtocol
-    >>> from everyshape.shape.refs.capabilities import Gettable
-    >>> from everyshape.shape.refs.bases import GettableBase
+    >>> from everyshape.term.refs import MappingRefBase, ValueRef
+    >>> from everyshape.term.refs import MappingRef  # Protocol
+    >>> from everyshape.term.refs import Gettable, GettableBase
 """
 
 from __future__ import annotations
 
-# Capability implementation mixins
+# Capability implementation mixins (atomic)
 from .bases import (
     AppendableBase,
     ClearableBase,
@@ -46,6 +53,8 @@ from .bases import (
     ItemsQueryableBase,
     KeysQueryableBase,
     LengthableBase,
+    MappingIterableBase,
+    MappingNestableBase,
     PoppableBase,
     PrimitiveObservableBase,
     SequenceIndexableBase,
@@ -57,6 +66,21 @@ from .bases import (
     UnionRefBases,
     ValuesQueryableBase,
     ViewObservableBase,
+)
+from .bases_collections import (
+    MappingRefBase,
+    MutableMappingRefBase,
+    MutableSequenceRefBase,
+    MutableSetRefBase,
+    SequenceRefBase,
+    SetRefBase,
+)
+from .bases_primitive import (
+    MappingValueRefBase,
+    MutableMappingValueRefBase,
+    MutableSequenceValueRefBase,
+    SequenceValueRefBase,
+    ValueRefBase,
 )
 
 # Capability protocols
@@ -95,36 +119,17 @@ from .capabilities import (
 
 # Collection ref protocols (from collections.py)
 from .collections import (
-    MappingRefProtocol,
-    MutableMappingRefProtocol,
-    MutableSequenceRefProtocol,
-    MutableSetRefProtocol,
-    PrimitiveRefProtocol,
-    RefProtocol,
-    SequenceRefProtocol,
-    SetRefProtocol,
-    ValueRefProtocol,
-    ViewRefProtocol,
-)
-
-# Primitive ref implementations (from primitive_refs.py)
-from .primitive_refs import (
-    MappingValueRef,
-    MutableMappingValueRef,
-    MutableSequenceValueRef,
-    SequenceValueRef,
-    ValueRef,
-)
-
-# Complete ref implementations (from refs.py)
-from .refs import (
+    CollectionRef,
+    ContainerRef,
     MappingRef,
     MutableMappingRef,
     MutableSequenceRef,
     MutableSetRef,
+    PrimitiveRef,
     SequenceRef,
     SetRef,
 )
+from .collections import ValueRef as ValueRefProtocol
 
 
 __all__ = [  # noqa: RUF022
@@ -163,25 +168,25 @@ __all__ = [  # noqa: RUF022
     "is_settable",
     "is_storable",
     # ==========================================================================
-    # COLLECTION REF PROTOCOLS
+    # COLLECTION REF PROTOCOLS (from collections.py)
     # ==========================================================================
-    "RefProtocol",
-    "PrimitiveRefProtocol",
+    # Base protocols
+    "ContainerRef",
+    "CollectionRef",
+    # Sequence protocols
+    "SequenceRef",
+    "MutableSequenceRef",
+    # Mapping protocols
+    "MappingRef",
+    "MutableMappingRef",
+    # Set protocols
+    "SetRef",
+    "MutableSetRef",
+    # Primitive protocols
+    "PrimitiveRef",
     "ValueRefProtocol",
-    "ViewRefProtocol",
-    "SequenceRefProtocol",
-    "MutableSequenceRefProtocol",
-    "MappingRefProtocol",
-    "MutableMappingRefProtocol",
-    "SetRefProtocol",
-    "MutableSetRefProtocol",
-    # # ==========================================================================
-    # # BASE CLASSES
-    # # ==========================================================================
-    # "PrimitiveRefBase",
-    # "ViewRefBase",
     # ==========================================================================
-    # CAPABILITY IMPLEMENTATION MIXINS
+    # CAPABILITY IMPLEMENTATION MIXINS (from bases.py)
     # ==========================================================================
     "UnionRefBases",
     # Core capability bases
@@ -206,24 +211,25 @@ __all__ = [  # noqa: RUF022
     "AppendableBase",
     "InsertableBase",
     "PoppableBase",
+    # Mapping capability bases
+    "MappingNestableBase",
+    "MappingIterableBase",
     # Set capability bases
     "SetAddableBase",
     "SetRemovableBase",
+    # Combined primitive ref bases
+    "ValueRefBase",
+    "SequenceValueRefBase",
+    "MutableSequenceValueRefBase",
+    "MappingValueRefBase",
+    "MutableMappingValueRefBase",
     # ==========================================================================
-    # PRIMITIVE REF IMPLEMENTATIONS
+    # VIEW REF BASE IMPLEMENTATIONS (from refs.py)
     # ==========================================================================
-    "ValueRef",
-    "SequenceValueRef",
-    "MutableSequenceValueRef",
-    "MappingValueRef",
-    "MutableMappingValueRef",
-    # ==========================================================================
-    # COMPLETE REF IMPLEMENTATIONS
-    # ==========================================================================
-    "SequenceRef",
-    "MutableSequenceRef",
-    "MappingRef",
-    "MutableMappingRef",
-    "SetRef",
-    "MutableSetRef",
+    "SequenceRefBase",
+    "MutableSequenceRefBase",
+    "MappingRefBase",
+    "MutableMappingRefBase",
+    "SetRefBase",
+    "MutableSetRefBase",
 ]

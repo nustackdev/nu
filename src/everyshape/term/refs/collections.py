@@ -4,27 +4,29 @@ This module defines collection ref protocols composed from atomic capabilities.
 Follows Python's collections.abc hierarchy while using EveryShape's capability system.
 
 These are PROTOCOLS (type contracts) that define what refs CAN do.
-Implementations live in base.py, bases.py, and refs.py.
+Implementations live in bases.py, refs.py, and primitive_refs.py.
 
 Protocol Hierarchy:
-    RefProtocol (base)
-    ├── PrimitiveRefProtocol (leaf value references)
-    │   └── ValueRefProtocol[T] (typed primitive value)
-    └── ViewRefProtocol (container references)
-        ├── SequenceRefProtocol[T] (list-like)
-        │   └── MutableSequenceRefProtocol[T]
-        ├── MappingRefProtocol[K,V] (dict-like)
-        │   └── MutableMappingRefProtocol[K,V]
-        └── SetRefProtocol[T] (set-like)
-            └── MutableSetRefProtocol[T]
+    Ref (base)
+    ├── ContainerRef (existence checking)
+    │   └── CollectionRef (sized, extractable, storable)
+    │       ├── SequenceRef[T] (indexed access)
+    │       │   └── MutableSequenceRef[T]
+    │       ├── MappingRef[K,V] (key access)
+    │       │   └── MutableMappingRef[K,V]
+    │       └── SetRef[T] (containment)
+    │           └── MutableSetRef[T]
+    └── PrimitiveRef[T] (leaf value references)
+        └── ValueRef[T] (typed primitive value)
 
 Similar to view/collections.py which composes view capabilities.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
+from ..values import IntValue, NoneValue
 from .capabilities import (
     Appendable,
     Clearable,
@@ -38,8 +40,6 @@ from .capabilities import (
     Lengthable,
     Nestable,
     Poppable,
-    RefChildObservable,
-    RefDescendantsObservable,
     RefIndexable,
     RefObservable,
     RefSliceable,
@@ -49,166 +49,45 @@ from .capabilities import (
 )
 
 
-if TYPE_CHECKING:
-    from ..context import Context
-
-
 __all__ = [  # noqa: RUF022
     # Base protocols
-    "RefProtocol",
-    # Primitive ref protocols
-    "PrimitiveRefProtocol",
-    "ValueRefProtocol",
-    # View ref protocols
-    "ViewRefProtocol",
-    "SequenceRefProtocol",
-    "MutableSequenceRefProtocol",
-    "MappingRefProtocol",
-    "MutableMappingRefProtocol",
-    "SetRefProtocol",
-    "MutableSetRefProtocol",
+    "ContainerRef",
+    "CollectionRef",
+    # Sequence protocols
+    "SequenceRef",
+    "MutableSequenceRef",
+    # Mapping protocols
+    "MappingRef",
+    "MutableMappingRef",
+    # Set protocols
+    "SetRef",
+    "MutableSetRef",
+    # Primitive protocols
+    "PrimitiveRef",
+    "ValueRef",
 ]
 
 
 # =============================================================================
-# BASE REF PROTOCOL
+# BASE REF PROTOCOLS
 # =============================================================================
 
 
 @runtime_checkable
-class RefProtocol[PathT](
+class ContainerRef[ViewT](
     Existable[object],
     Protocol,
 ):
-    """Base protocol for all LValue references.
+    """Protocol for refs with existence checking.
 
-    All refs support:
-    - Path resolution: resolve() to get storage path
-    - Existence checking: exists(), missing()
-    - Parent navigation: parent property
+    Base protocol for all container refs. Supports checking if the ref exists.
 
     Type Parameters:
-        PathT: Type of the resolved path
 
     Example:
-        >>> if isinstance(ref, RefProtocol):
-        ...     path = ref.resolve(ctx)
-        ...     exists = ref.exists().execute(ctx)
-    """
-
-    @property
-    def parent(self) -> RefProtocol | None:
-        """Get parent reference in navigation chain.
-
-        Returns:
-            Parent ref or None if at root
-        """
-        ...
-
-    def resolve(self, context: Context) -> PathT:
-        """Resolve this reference to a concrete storage path.
-
-        Args:
-            context: Execution context
-
-        Returns:
-            Path to the location
-        """
-        ...
-
-
-# =============================================================================
-# PRIMITIVE REF PROTOCOLS
-# =============================================================================
-
-
-@runtime_checkable
-class PrimitiveRefProtocol[T, PathT](
-    RefProtocol[PathT],
-    Gettable[T, object],
-    Settable[T, object],
-    Deletable[object],
-    RefObservable[object],
-    Protocol,
-):
-    """Protocol for primitive (leaf) value references.
-
-    Primitive refs point to single values like int, str, float.
-    They support read, write, delete, and observation.
-
-    Type Parameters:
-        T: Type of the value at this location
-        PathT: Type of the resolved path
-
-    Example:
-        >>> if isinstance(ref, PrimitiveRefProtocol):
-        ...     get_op = ref.get()
-        ...     set_cmd = ref.set(new_value)
-        ...     delete_cmd = ref.remove()
-    """
-
-    pass
-
-
-@runtime_checkable
-class ValueRefProtocol[T, PathT](
-    PrimitiveRefProtocol[T, PathT],
-    Protocol,
-):
-    """Protocol for typed value references.
-
-    Extends PrimitiveRefProtocol with value type information.
-
-    Type Parameters:
-        T: Type of the value at this location
-        PathT: Type of the resolved path
-
-    Example:
-        >>> ref: ValueRefProtocol[int, Path]
-        >>> val = ref.get().execute(ctx)  # Returns int
-    """
-
-    @property
-    def value_type(self) -> type[T]:
-        """Get the value type at this location.
-
-        Returns:
-            Type of value stored
-        """
-        ...
-
-
-# =============================================================================
-# VIEW REF PROTOCOLS
-# =============================================================================
-
-
-@runtime_checkable
-class ViewRefProtocol[ViewT, PathT](
-    RefProtocol[PathT],
-    Extractable[object, object],
-    Storable[object, object],
-    Clearable[object],
-    Lengthable[object],
-    RefObservable[object],
-    RefChildObservable[object, object],
-    RefDescendantsObservable[object],
-    Protocol,
-):
-    """Protocol for container (view) references.
-
-    View refs point to container nodes like dict, list, set.
-    They support extraction, storage, clearing, and observation.
-
-    Type Parameters:
-        ViewT: Type of the view at this location
-        PathT: Type of the resolved path
-
-    Example:
-        >>> if isinstance(ref, ViewRefProtocol):
-        ...     extract_op = ref.extract()
-        ...     store_cmd = ref.store(data)
-        ...     clear_cmd = ref.clear()
+        >>> if isinstance(ref, ContainerRef):
+        ...     if ref.exists().execute(ctx):
+        ...         print("Ref exists")
     """
 
     @property
@@ -221,16 +100,90 @@ class ViewRefProtocol[ViewT, PathT](
         ...
 
 
+@runtime_checkable
+class CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT](
+    ContainerRef[ViewT],
+    Extractable[CollectionT, CollectionValueT],
+    Storable[CollectionT, CollectionValueT],
+    Clearable[NoneValue],
+    Lengthable[IntValue],
+    Protocol,
+):
+    """Protocol for sized, observable collection refs.
+
+    Foundation protocol for all collection refs (sequences, mappings, sets).
+    Supports extraction, storage, clearing, length queries, and observation.
+
+    Type Parameters:
+        CollectionT: Type of this collection (dict, list, etc)
+        ItemT: Type of this collection's item (int, float, str, nested list, dict, etc)
+        CollectionValueT: ComputedValue type for this collection (ListValue, DictValue, etc)
+        ItemValueT: ComputedValue type for this collection's item (IntValue, FloatValue, UnknownValue, etc)
+        ViewT: Type of the view at this location
+
+    Example:
+        >>> if isinstance(ref, CollectionRef):
+        ...     data = ref.extract().execute(ctx)
+        ...     ref.store(new_data).execute(ctx)
+        ...     length = ref.length().execute(ctx)
+    """
+
+    @property
+    def item_type(self) -> type[ItemT]:
+        """Get the item type for this collection.
+
+        Returns:
+            Type of items (int, float, nested dict, list etc)
+        """
+        ...
+
+    @property
+    def collection_type(self) -> type[CollectionT]:
+        """Get the collection type.
+
+        Returns:
+            Type of collection (dict, list, etc)
+        """
+        ...
+
+    @property
+    def item_value_type(self) -> type[ItemValueT]:
+        """Get the ComputedValue type for this collection's items.
+
+        Returns:
+            Type of items (IntValue, FloatValue, UnknownValue, etc)
+        """
+        ...
+
+    @property
+    def collection_value_type(self) -> type[ItemValueT]:
+        """Get the ComputedValue type for this collection.
+
+        Returns:
+            Type of collection (DictValue, ListValue, etc)
+        """
+        ...
+
+
 # =============================================================================
-# SEQUENCE REF PROTOCOLS
+# SEQUENCE PROTOCOLS
 # =============================================================================
 
 
 @runtime_checkable
-class SequenceRefProtocol[T, PathT](
-    ViewRefProtocol[object, PathT],
-    RefIndexable[int, object],
-    RefSliceable[object],
+class SequenceRef[
+    CollectionT,
+    ItemT,
+    CollectionValueT,
+    ItemValueT,
+    ViewT,
+    IndexT,
+    IndexValueT,
+    SliceValueT,
+](
+    CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT],
+    RefIndexable[IndexT, IndexValueT, ItemValueT],
+    RefSliceable[SliceValueT],
     Protocol,
 ):
     """Protocol for read-only sequence references.
@@ -239,59 +192,68 @@ class SequenceRefProtocol[T, PathT](
     They support index access, slicing, length, and extraction.
 
     Type Parameters:
-        T: Type of items in the sequence
-        PathT: Type of the resolved path
+        IndexT: type of index
+        IndexValueT: type of computed value for index
+        SliceValueT: type of sliced value
 
     Example:
-        >>> if isinstance(ref, SequenceRefProtocol):
+        >>> if isinstance(ref, SequenceRef):
         ...     first = ref[0].get().execute(ctx)
         ...     slice_ref = ref[1:5]
         ...     all_items = ref.extract().execute(ctx)
     """
 
     @property
-    def item_type(self) -> type[T]:
-        """Get the item type for this sequence.
+    def index_type(self) -> type[IndexT]:
+        """Get the index type for this sequence.
 
         Returns:
-            Type of items
+            Type of index (commonly int)
+        """
+        ...
+
+    @property
+    def index_value_type(self) -> type[IndexValueT]:
+        """Get the computed value type for index of this sequence.
+
+        Returns:
+            Type of computed value for index (commonly IntValue)
         """
         ...
 
 
 @runtime_checkable
-class MutableSequenceRefProtocol[T, PathT](
-    SequenceRefProtocol[T, PathT],
-    Appendable[T, object],
-    Insertable[T, object],
-    Poppable[T, object],
+class MutableSequenceRef[IndexT, ItemT](
+    SequenceRef[IndexT, ItemT],
+    Appendable[ItemT, object],
+    Insertable[ItemT, object],
+    Poppable[ItemT, object],
     Protocol,
 ):
     """Protocol for mutable sequence references.
 
-    Extends SequenceRefProtocol with mutation operations.
+    Extends SequenceRef with mutation operations.
 
     Type Parameters:
         T: Type of items in the sequence
-        PathT: Type of the resolved path
 
     Example:
-        >>> if isinstance(ref, MutableSequenceRefProtocol):
-        ...     append_cmd = ref.append(new_item)
-        ...     pop_cmd = ref.pop()
+        >>> if isinstance(ref, MutableSequenceRef):
+        ...     ref.append(new_item).execute(ctx)
+        ...     ref.pop().execute(ctx)
     """
 
     pass
 
 
 # =============================================================================
-# MAPPING REF PROTOCOLS
+# MAPPING PROTOCOLS
 # =============================================================================
 
 
 @runtime_checkable
-class MappingRefProtocol[K, V, PathT](
-    ViewRefProtocol[object, PathT],
+class MappingRef[K, V](
+    CollectionRef[V, object],
     Nestable[K, object],
     KeysQueryable[object],
     ValuesQueryable[object],
@@ -306,10 +268,9 @@ class MappingRefProtocol[K, V, PathT](
     Type Parameters:
         K: Type of keys
         V: Type of values
-        PathT: Type of the resolved path
 
     Example:
-        >>> if isinstance(ref, MappingRefProtocol):
+        >>> if isinstance(ref, MappingRef):
         ...     item_ref = ref["key"]
         ...     all_keys = ref.keys().execute(ctx)
         ...     all_items = ref.items().execute(ctx)
@@ -335,37 +296,36 @@ class MappingRefProtocol[K, V, PathT](
 
 
 @runtime_checkable
-class MutableMappingRefProtocol[K, V, PathT](
-    MappingRefProtocol[K, V, PathT],
+class MutableMappingRef[K, V](
+    MappingRef[K, V],
     Protocol,
 ):
     """Protocol for mutable mapping references.
 
-    Extends MappingRefProtocol with mutation operations.
+    Extends MappingRef with mutation operations.
     Mutations happen through child refs obtained via __getitem__.
 
     Type Parameters:
         K: Type of keys
         V: Type of values
-        PathT: Type of the resolved path
 
     Example:
-        >>> if isinstance(ref, MutableMappingRefProtocol):
-        ...     ref["new_key"].set(value)
-        ...     clear_cmd = ref.clear()
+        >>> if isinstance(ref, MutableMappingRef):
+        ...     ref["new_key"].set(value).execute(ctx)
+        ...     ref.clear().execute(ctx)
     """
 
     pass
 
 
 # =============================================================================
-# SET REF PROTOCOLS
+# SET PROTOCOLS
 # =============================================================================
 
 
 @runtime_checkable
-class SetRefProtocol[T, PathT](
-    ViewRefProtocol[object, PathT],
+class SetRef[T](
+    CollectionRef[object],
     Protocol,
 ):
     """Protocol for read-only set references.
@@ -375,10 +335,9 @@ class SetRefProtocol[T, PathT](
 
     Type Parameters:
         T: Type of items in the set
-        PathT: Type of the resolved path
 
     Example:
-        >>> if isinstance(ref, SetRefProtocol):
+        >>> if isinstance(ref, SetRef):
         ...     all_items = ref.extract().execute(ctx)
         ...     size = ref.length().execute(ctx)
     """
@@ -394,22 +353,21 @@ class SetRefProtocol[T, PathT](
 
 
 @runtime_checkable
-class MutableSetRefProtocol[T, PathT](
-    SetRefProtocol[T, PathT],
+class MutableSetRef[T, PathT](
+    SetRef[T, PathT],
     Protocol,
 ):
     """Protocol for mutable set references.
 
-    Extends SetRefProtocol with mutation operations.
+    Extends SetRef with mutation operations.
 
     Type Parameters:
         T: Type of items in the set
-        PathT: Type of the resolved path
 
     Example:
-        >>> if isinstance(ref, MutableSetRefProtocol):
-        ...     add_cmd = ref.add(item)
-        ...     remove_cmd = ref.remove(item)
+        >>> if isinstance(ref, MutableSetRef):
+        ...     ref.add(item).execute(ctx)
+        ...     ref.remove(item).execute(ctx)
     """
 
     def add(self, value: T) -> object:
@@ -442,5 +400,64 @@ class MutableSetRefProtocol[T, PathT](
 
         Returns:
             DiscardCmd that discards the item when executed
+        """
+        ...
+
+
+# =============================================================================
+# PRIMITIVE REF PROTOCOLS
+# =============================================================================
+
+
+@runtime_checkable
+class PrimitiveRef[T, PathT](
+    Existable[object],
+    Gettable[T, object],
+    Settable[T, object],
+    Deletable[object],
+    RefObservable[object],
+    Protocol,
+):
+    """Protocol for primitive (leaf) value references.
+
+    Primitive refs point to single values like int, str, float.
+    They support read, write, delete, and observation.
+
+    Type Parameters:
+        T: Type of the value at this location
+
+    Example:
+        >>> if isinstance(ref, PrimitiveRef):
+        ...     get_op = ref.get()
+        ...     set_cmd = ref.set(new_value)
+        ...     delete_cmd = ref.remove()
+    """
+
+    pass
+
+
+@runtime_checkable
+class ValueRef[T, PathT](
+    PrimitiveRef[T, PathT],
+    Protocol,
+):
+    """Protocol for typed value references.
+
+    Extends PrimitiveRef with value type information.
+
+    Type Parameters:
+        T: Type of the value at this location
+
+    Example:
+        >>> ref: ValueRef[int, Path]
+        >>> val = ref.get().execute(ctx)  # Returns int
+    """
+
+    @property
+    def value_type(self) -> type[T]:
+        """Get the value type at this location.
+
+        Returns:
+            Type of value stored
         """
         ...
