@@ -683,7 +683,9 @@ def test_parallel_transactiondb_and_secondary_db(tmp_path, codec):
     primary.open()
 
     # Open secondary storage (for parallel reads)
-    secondary = RocksDBStorage(path=db_path, codec=codec, secondary_path=db_path / ".sec")
+    secondary = RocksDBStorage(
+        path=db_path, codec=codec, secondary_path=db_path / ".sec", read_only=True
+    )
     secondary.open()
 
     try:
@@ -715,7 +717,7 @@ def test_parallel_transactiondb_and_secondary_db(tmp_path, codec):
                 seen_indices = set()
                 max_attempts = 50  # Prevent infinite loop
 
-                for attempt in range(max_attempts):
+                for _attempt in range(max_attempts):
                     # Secondary snapshots automatically catch up with primary
                     with secondary.snapshot() as snap:
                         # Scan for all parallel keys
@@ -728,7 +730,7 @@ def test_parallel_transactiondb_and_secondary_db(tmp_path, codec):
                             )
                         )
 
-                        for key, value in scan.items():
+                        for _key, value in scan.items():
                             idx = value["index"]
                             if idx not in seen_indices:
                                 seen_indices.add(idx)
