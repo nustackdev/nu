@@ -34,12 +34,6 @@ Example:
 
 from __future__ import annotations
 
-# Base classes
-from .base import (
-    PrimitiveRefBase,
-    ViewRefBase,
-)
-
 # Capability implementation mixins
 from .bases import (
     AppendableBase,
@@ -113,6 +107,15 @@ from .collections import (
     ViewRefProtocol,
 )
 
+# Primitive ref implementations (from primitive_refs.py)
+from .primitive_refs import (
+    MappingValueRef,
+    MutableMappingValueRef,
+    MutableSequenceValueRef,
+    SequenceValueRef,
+    ValueRef,
+)
+
 # Complete ref implementations (from refs.py)
 from .refs import (
     MappingRef,
@@ -172,11 +175,11 @@ __all__ = [  # noqa: RUF022
     "MutableMappingRefProtocol",
     "SetRefProtocol",
     "MutableSetRefProtocol",
-    # ==========================================================================
-    # BASE CLASSES
-    # ==========================================================================
-    "PrimitiveRefBase",
-    "ViewRefBase",
+    # # ==========================================================================
+    # # BASE CLASSES
+    # # ==========================================================================
+    # "PrimitiveRefBase",
+    # "ViewRefBase",
     # ==========================================================================
     # CAPABILITY IMPLEMENTATION MIXINS
     # ==========================================================================
@@ -206,6 +209,14 @@ __all__ = [  # noqa: RUF022
     # Set capability bases
     "SetAddableBase",
     "SetRemovableBase",
+    # ==========================================================================
+    # PRIMITIVE REF IMPLEMENTATIONS
+    # ==========================================================================
+    "ValueRef",
+    "SequenceValueRef",
+    "MutableSequenceValueRef",
+    "MappingValueRef",
+    "MutableMappingValueRef",
     # ==========================================================================
     # COMPLETE REF IMPLEMENTATIONS
     # ==========================================================================

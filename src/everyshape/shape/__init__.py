@@ -1,6 +1,6 @@
 """Layer 4 - declarative access."""
 
-from .combiners import all_, and_, any_, none_, or_
+from .combiners import all_, and_, any_, coalesce, ifelse, none_, or_
 from .context import Context
 from .shape import (
     Shape,
@@ -10,25 +10,28 @@ from .shape import (
 )
 from .term import (
     Command,
+    Computation,
+    ComputedValue,
+    LiteralValue,
     LValue,
     Operation,
     PrimitiveRef,
     Ref,
     RValue,
     Term,
+    ValueTerm,
     ViewRef,
 )
-from .values import Computed, Literal, literal
+from .values import computed, literal
 
-
-# from .refs import
 
 __all__ = [
     "Command",
-    "Computed",
+    "Computation",
+    "ComputedValue",
     "Context",
     "LValue",
-    "Literal",
+    "LiteralValue",
     "Operation",
     "PrimitiveRef",
     "RValue",
@@ -38,10 +41,14 @@ __all__ = [
     "Slot",
     "SlotDescriptor",
     "Term",
+    "ValueTerm",
     "ViewRef",
     "all_",
     "and_",
     "any_",
+    "coalesce",
+    "computed",
+    "ifelse",
     "literal",
     "none_",
     "or_",

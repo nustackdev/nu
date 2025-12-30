@@ -21,15 +21,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
-from everyshape.shape.term import Command, PrimitiveRef, RValue, ViewRef
 from everyshape.types import SpecialValue, Value
 from everyshape.view import Appendable, Assignable, Clearable, Deletable, Initializable
 
+from ..term import Command, RValue, ViewRef
+
 
 if TYPE_CHECKING:
-    from everyshape.shape.context import Context
-
-    from ..refs import UnionRefBases
+    from ..context import Context
+    from ..refs import UnionRefBases, ValueRef
 
 
 __all__ = [  # noqa: RUF022
@@ -71,7 +71,7 @@ class SetCmd[T: Value](Command[T]):
 
     def __init__(
         self,
-        ref: PrimitiveRef[T] | UnionRefBases,
+        ref: ValueRef[T] | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize set command.
@@ -80,9 +80,9 @@ class SetCmd[T: Value](Command[T]):
             ref: Reference to write to
             value: Value to write (wrapped in RValue)
         """
-        self.ref = cast("PrimitiveRef[T]", ref)
+        self.ref = cast("ValueRef[T]", ref)
         self.value_expr = value
-        self.children = (cast("PrimitiveRef[T]", ref), value)
+        self.children = (cast("ValueRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute write command.
@@ -136,14 +136,14 @@ class DeleteCmd(Command[None]):
         >>> del_cmd.execute(ctx)  # Returns None
     """
 
-    def __init__(self, ref: PrimitiveRef | UnionRefBases) -> None:
+    def __init__(self, ref: ValueRef | UnionRefBases) -> None:
         """Initialize delete command.
 
         Args:
             ref: Reference to delete
         """
-        self.ref = cast("PrimitiveRef", ref)
-        self.children = (cast("PrimitiveRef", ref),)
+        self.ref = cast("ValueRef", ref)
+        self.children = (cast("ValueRef", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute delete command.

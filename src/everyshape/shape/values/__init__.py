@@ -147,9 +147,6 @@ from .capabilities import (
 # Conversion utilities
 from .conversion import literal, computed
 
-# Type aliases for convenience
-from ..term import ComputedValue as Computed, LiteralValue as Literal
-
 # Literal types
 from .literals import (
     BoolLiteral,
@@ -320,9 +317,4 @@ __all__ = [  # noqa: RUF022
     # ==========================================================================
     "literal",
     "computed",
-    # ==========================================================================
-    # TYPE ALIASES
-    # ==========================================================================
-    "Computed",
-    "Literal",
 ]
