@@ -25,10 +25,14 @@ from everyshape.types import SpecialValue
 from ..term import ComputedValue
 from .bases import (
     BitwiseBase,
+    BytesMethodsBase,
     ComparisonBase,
+    ContainableBase,
     CoreBase,
+    LengthableBase,
     LogicalBase,
     NumericBase,
+    SliceableBase,
     StringBase,
 )
 from .conversion import literal
@@ -201,6 +205,12 @@ class StrValue(
     def _wrap_core_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)
 
+    def _wrap_string_result(self, operand: RValue) -> RValue:
+        return StrValue(operand)
+
+    def _wrap_sliceable_result(self, operand: RValue) -> RValue:
+        return StrValue(operand)
+
     def __add__(self, other: str | StrValue) -> StrValue:
         """Concatenate strings."""
         from ..computations.binary_ops import AddOp
@@ -213,83 +223,6 @@ class StrValue(
 
         return StrValue(AddOp[str](literal(other), self))
 
-    # def __getitem__(self, key: int | slice) -> StrValue:
-    #     """Get character or substring."""
-    #     if isinstance(key, slice):
-    #         from ..ops.sequence_ops import SliceOp
-
-    #         return StrValue(SliceOp(self, key.start, key.stop, key.step))
-
-    #     from ..ops.sequence_ops import AtOp
-
-    #     return StrValue(AtOp(self, literal(key)))
-
-    # def len_(self) -> IntValue:
-    #     """Get string length.
-
-    #     Returns:
-    #         Length value
-    #     """
-    #     from ..computations.base_ops import LenOp
-
-    #     return IntValue(LenOp(self))
-
-    # def contains(self, substring: str | StrValue) -> BoolValue:
-    #     """Check if contains substring.
-
-    #     Args:
-    #         substring: Substring to find
-
-    #     Returns:
-    #         Boolean result
-    #     """
-    #     from ..ops.mapping_ops import ContainsOp
-
-    #     return BoolValue(ContainsOp(self, literal(substring)))
-
-    # def upper(self) -> StrValue:
-    #     """Convert to uppercase."""
-    #     from ..ops.string_ops import UpperOp
-
-    #     return StrValue(UpperOp(self))
-
-    # def lower(self) -> StrValue:
-    #     """Convert to lowercase."""
-    #     from ..ops.string_ops import LowerOp
-
-    #     return StrValue(LowerOp(self))
-
-    # def strip(self) -> StrValue:
-    #     """Strip whitespace."""
-    #     from ..ops.string_ops import StripOp
-
-    #     return StrValue(StripOp(self))
-
-    # def split(self, separator: str = " ") -> ListValue[str]:
-    #     """Split string."""
-    #     from ..ops.string_ops import SplitOp
-    #     from .collection_values import ListValue
-
-    #     return ListValue(SplitOp(self, literal(separator)))
-
-    # def replace(self, old: str, new: str) -> StrValue:
-    #     """Replace substring."""
-    #     from ..ops.string_ops import ReplaceOp
-
-    #     return StrValue(ReplaceOp(self, literal(old), literal(new)))
-
-    # def startswith(self, prefix: str | StrValue) -> BoolValue:
-    #     """Check if starts with prefix."""
-    #     from ..computations.string_ops import StartsWithOp
-
-    #     return BoolValue(StartsWithOp(self, literal(prefix)))
-
-    # def endswith(self, suffix: str | StrValue) -> BoolValue:
-    #     """Check if ends with suffix."""
-    #     from ..ops.string_ops import EndsWithOp
-
-    #     return BoolValue(EndsWithOp(self, literal(suffix)))
-
 
 # =============================================================================
 # BYTES VALUE
@@ -297,6 +230,10 @@ class StrValue(
 
 
 class BytesValue(
+    BytesMethodsBase["BytesValue"],
+    LengthableBase,
+    SliceableBase["BytesValue"],
+    ContainableBase["int | bytes"],
     ComparisonBase["bytes | BytesValue"],
     LogicalBase["bytes | BytesValue", "BoolValue"],
     CoreBase,
@@ -304,12 +241,13 @@ class BytesValue(
 ):
     """RValue representing bytes.
 
-    Supports concatenation, indexing, and slicing.
+    Supports concatenation, indexing, slicing, and bytes operations.
 
     Example:
         >>> val = BytesValue(b"hello")
         >>> combined = val + b" world"  # Returns BytesValue
         >>> first = val[0]  # Returns IntValue
+        >>> decoded = val.decode()  # Returns StrValue
     """
 
     def _wrap_logical_result(self, operand: RValue) -> RValue:
@@ -320,6 +258,12 @@ class BytesValue(
 
     def _wrap_core_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)
+
+    def _wrap_bytes_result(self, operand: RValue) -> RValue:
+        return BytesValue(operand)
+
+    def _wrap_sliceable_result(self, operand: RValue) -> RValue:
+        return BytesValue(operand)
 
     def __add__(self, other: bytes | BytesValue) -> BytesValue:
         """Concatenate bytes."""
@@ -349,16 +293,6 @@ class BytesValue(
         from ..computations.sequence_ops import AtOp
 
         return IntValue(AtOp[int](self, literal(key)))
-
-    def len_(self) -> IntValue:
-        """Get length of bytes.
-
-        Returns:
-            Length value
-        """
-        from ..computations.sequence_ops import LenOp
-
-        return IntValue(LenOp(self))
 
 
 # =============================================================================

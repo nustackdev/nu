@@ -90,9 +90,14 @@ from .bases import (  # noqa: I001
     IterableBase,
     SequenceBase,
     MappingBase,
+    # Set bases
+    SetBase,
     # String bases
     ConcatenableBase,
     StringBase,
+    StringMethodsBase,
+    # Bytes bases
+    BytesMethodsBase,
 )
 
 # Capability protocols
@@ -150,6 +155,9 @@ from .collection_values import (
 
 # Conversion utilities
 from .conversion import literal, computed
+
+# Type aliases for convenience
+from ..term import ComputedValue as Computed, LiteralValue as Literal
 
 # Literal types
 from .literals import (
@@ -222,9 +230,14 @@ __all__ = [  # noqa: RUF022
     "IterableBase",
     "SequenceBase",
     "MappingBase",
+    # Set
+    "SetBase",
     # String
     "ConcatenableBase",
     "StringBase",
+    "StringMethodsBase",
+    # Bytes
+    "BytesMethodsBase",
     # ==========================================================================
     # CAPABILITY PROTOCOLS
     # ==========================================================================
@@ -311,4 +324,9 @@ __all__ = [  # noqa: RUF022
     # ==========================================================================
     "literal",
     "computed",
+    # ==========================================================================
+    # TYPE ALIASES
+    # ==========================================================================
+    "Computed",
+    "Literal",
 ]

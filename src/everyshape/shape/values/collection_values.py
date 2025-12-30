@@ -20,8 +20,11 @@ from ..term import ComputedValue, RValue
 from .bases import (
     ComparisonBase,
     CoreBase,
+    LengthableBase,
     MappingBase,
     SequenceBase,
+    SetBase,
+    SliceableBase,
 )
 from .conversion import literal
 
@@ -321,13 +324,15 @@ class ListValue[T](
 
 
 class TupleValue[*Ts](
+    LengthableBase,
+    SliceableBase["TupleValue"],
     ComparisonBase[tuple],
     CoreBase,
     ComputedValue[tuple[*Ts]],
 ):
     """RValue representing a tuple.
 
-    Supports indexing and length operations.
+    Supports indexing, length, and containment operations.
     Tuples are immutable so no mutation operations.
 
     Type Parameters:
@@ -347,6 +352,9 @@ class TupleValue[*Ts](
     def _wrap_core_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
+    def _wrap_sliceable_result(self, operand: RValue) -> TupleValue:
+        return TupleValue(operand)
+
     @overload
     def __getitem__(self, key: int) -> UnknownValue: ...
 
@@ -364,16 +372,6 @@ class TupleValue[*Ts](
 
         return UnknownValue(AtOp(self, literal(key)))
 
-    def len_(self) -> IntValue:
-        """Get tuple length.
-
-        Returns:
-            IntValue containing length
-        """
-        from ..computations.sequence_ops import LenOp
-
-        return IntValue(LenOp(self))
-
     def contains(self, item: object) -> BoolValue:
         """Check if item is in tuple.
 
@@ -386,6 +384,52 @@ class TupleValue[*Ts](
         from ..computations.mapping_ops import ContainsOp
 
         return BoolValue(ContainsOp(self, literal(item)))
+
+    def first(self) -> UnknownValue:
+        """Get first element.
+
+        Returns:
+            First element as UnknownValue
+        """
+        from ..computations.sequence_ops import FirstOp
+
+        return UnknownValue(FirstOp(self))
+
+    def last(self) -> UnknownValue:
+        """Get last element.
+
+        Returns:
+            Last element as UnknownValue
+        """
+        from ..computations.sequence_ops import LastOp
+
+        return UnknownValue(LastOp(self))
+
+    def index(self, value: object) -> IntValue:
+        """Find index of value.
+
+        Args:
+            value: Value to find
+
+        Returns:
+            IntValue containing index
+        """
+        from ..computations.sequence_ops import IndexOfOp
+
+        return IntValue(IndexOfOp(self, literal(value)))
+
+    def count(self, value: object) -> IntValue:
+        """Count occurrences.
+
+        Args:
+            value: Value to count
+
+        Returns:
+            IntValue containing count
+        """
+        from ..computations.sequence_ops import CountOp
+
+        return IntValue(CountOp(self, literal(value)))
 
 
 # =============================================================================
@@ -502,6 +546,7 @@ class DictValue[K, V](
 
 
 class SetValue[T](
+    SetBase[T, "SetValue[T]"],
     ComparisonBase[set[T]],
     CoreBase,
     ComputedValue[set[T]],
@@ -516,6 +561,7 @@ class SetValue[T](
     Example:
         >>> val = SetValue({1, 2, 3})
         >>> exists = val.contains(2)  # Returns BoolValue
+        >>> union = val.union({4, 5})  # Returns SetValue
     """
 
     VALUE_TYPE: ClassVar[type] = set
@@ -526,28 +572,8 @@ class SetValue[T](
     def _wrap_core_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
-    def len_(self) -> IntValue:
-        """Get set size.
-
-        Returns:
-            IntValue containing length
-        """
-        from ..computations.sequence_ops import LenOp
-
-        return IntValue(LenOp(self))
-
-    def contains(self, item: T) -> BoolValue:
-        """Check if item is in set.
-
-        Args:
-            item: Item to check
-
-        Returns:
-            BoolValue result
-        """
-        from ..computations.mapping_ops import ContainsOp
-
-        return BoolValue(ContainsOp(self, literal(item)))
+    def _wrap_set_result(self, operand: RValue) -> SetValue[T]:
+        return SetValue(operand)
 
 
 # =============================================================================
@@ -556,6 +582,7 @@ class SetValue[T](
 
 
 class FrozenSetValue[T](
+    SetBase[T, "FrozenSetValue[T]"],
     ComparisonBase[frozenset[T]],
     CoreBase,
     ComputedValue[frozenset[T]],
@@ -571,6 +598,7 @@ class FrozenSetValue[T](
     Example:
         >>> val = FrozenSetValue(frozenset({1, 2, 3}))
         >>> exists = val.contains(2)  # Returns BoolValue
+        >>> union = val.union(frozenset({4, 5}))  # Returns FrozenSetValue
     """
 
     VALUE_TYPE: ClassVar[type] = frozenset
@@ -581,28 +609,8 @@ class FrozenSetValue[T](
     def _wrap_core_result(self, operand: RValue) -> BoolValue:
         return BoolValue(operand)
 
-    def len_(self) -> IntValue:
-        """Get set size.
-
-        Returns:
-            IntValue containing length
-        """
-        from ..computations.sequence_ops import LenOp
-
-        return IntValue(LenOp(self))
-
-    def contains(self, item: T) -> BoolValue:
-        """Check if item is in set.
-
-        Args:
-            item: Item to check
-
-        Returns:
-            BoolValue result
-        """
-        from ..computations.mapping_ops import ContainsOp
-
-        return BoolValue(ContainsOp(self, literal(item)))
+    def _wrap_set_result(self, operand: RValue) -> FrozenSetValue[T]:
+        return FrozenSetValue(operand)
 
 
 # Import primitive values for use in this module

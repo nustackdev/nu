@@ -2,7 +2,49 @@
 
 from __future__ import annotations
 
-# Commands (from computations)
+# Binary operations
+from .binary_ops import (
+    AddOp,
+    AndOp,
+    BitwiseAndOp,
+    BitwiseOrOp,
+    DivOp,
+    EqOp,
+    FloorDivOp,
+    GeOp,
+    GtOp,
+    IdCompOp,
+    LeOp,
+    LShiftOp,
+    LtOp,
+    ModOp,
+    MulOp,
+    NeOp,
+    OrOp,
+    PowOp,
+    RShiftOp,
+    SubOp,
+    XorOp,
+)
+
+# Bytes operations
+from .bytes_ops import (
+    BytesCountOp,
+    BytesEndsWithOp,
+    BytesFindOp,
+    BytesLowerOp,
+    BytesLStripOp,
+    BytesReplaceOp,
+    BytesRStripOp,
+    BytesSplitOp,
+    BytesStartsWithOp,
+    BytesStripOp,
+    BytesUpperOp,
+    DecodeOp,
+    HexOp,
+)
+
+# Commands
 from .commands import (
     AddCmd,
     AppendCmd,
@@ -16,7 +58,16 @@ from .commands import (
     StoreCmd,
 )
 
-# Reactive operations (from computations)
+# Mapping operations
+from .mapping_ops import (
+    ContainsOp,
+    DictGetOp,
+    DictItemsOp,
+    DictKeysOp,
+    DictValuesOp,
+)
+
+# Reactive operations
 from .reactive_ops import (
     ChangeOp,
     OnChangeOp,
@@ -26,7 +77,7 @@ from .reactive_ops import (
     OnPrimitiveChangeOp,
 )
 
-# Operations (from computations)
+# Ref operations
 from .ref_ops import (
     CountOp,
     ExistsOp,
@@ -52,18 +103,223 @@ from .ref_ops import (
     ValuesOp,
 )
 
+# Sequence operations
+from .sequence_ops import (
+    AllOp,
+    AnyOp,
+    AtOp,
+    FirstOp,
+    IndexOfOp,
+    JoinOp,
+    LastOp,
+    LenOp,
+    MaxOp,
+    MinOp,
+    ReversedOp,
+    SliceOp,
+    SortedOp,
+    SumOp,
+)
+from .sequence_ops import CountOp as SeqCountOp
+from .sequence_ops import FilterOp as SeqFilterOp
+from .sequence_ops import FindIndexOp as SeqFindIndexOp
+from .sequence_ops import MapOp as SeqMapOp
+from .sequence_ops import ReduceOp as SeqReduceOp
+
+# Set operations
+from .set_ops import (
+    DifferenceOp,
+    IntersectionOp,
+    IsDisjointOp,
+    IsSubsetOp,
+    IsSupersetOp,
+    SymmetricDifferenceOp,
+    UnionOp,
+)
+
+# String operations
+from .string_ops import (
+    CapitalizeOp,
+    CenterOp,
+    CountSubstringOp,
+    EncodeOp,
+    EndsWithOp,
+    IsAlnumOp,
+    IsAlphaOp,
+    IsDigitOp,
+    IsSpaceOp,
+    LJustOp,
+    LowerOp,
+    LStripOp,
+    ReplaceOp,
+    RFindOp,
+    RJustOp,
+    RSplitOp,
+    RStripOp,
+    SplitOp,
+    StartsWithOp,
+    StripOp,
+    SwapCaseOp,
+    TitleOp,
+    UpperOp,
+    ZFillOp,
+)
+from .string_ops import (
+    FindOp as StrFindOp,
+)
+
+# Ternary operations
+from .ternary_ops import ConditionalOp
+
+# Unary operations
+from .unary_ops import (
+    AbsOp,
+    BitwiseNotOp,
+    BoolOp,
+    IsEmptyOp,
+    IsNaNOp,
+    NegOp,
+    NotEmptyOp,
+    NotNaNOp,
+    NotOp,
+    PosOp,
+)
+
 
 __all__ = [  # noqa: RUF022
     # ==========================================================================
-    # OPERATIONS
+    # UNARY OPERATIONS
     # ==========================================================================
-    # Core operations
+    "NegOp",
+    "AbsOp",
+    "PosOp",
+    "NotOp",
+    "BitwiseNotOp",
+    "BoolOp",
+    "IsEmptyOp",
+    "NotEmptyOp",
+    "IsNaNOp",
+    "NotNaNOp",
+    # ==========================================================================
+    # BINARY OPERATIONS
+    # ==========================================================================
+    "AddOp",
+    "SubOp",
+    "MulOp",
+    "DivOp",
+    "FloorDivOp",
+    "ModOp",
+    "PowOp",
+    "GtOp",
+    "LtOp",
+    "GeOp",
+    "LeOp",
+    "EqOp",
+    "NeOp",
+    "IdCompOp",
+    "AndOp",
+    "OrOp",
+    "XorOp",
+    "LShiftOp",
+    "RShiftOp",
+    "BitwiseAndOp",
+    "BitwiseOrOp",
+    # ==========================================================================
+    # TERNARY OPERATIONS
+    # ==========================================================================
+    "ConditionalOp",
+    # ==========================================================================
+    # SEQUENCE OPERATIONS
+    # ==========================================================================
+    "LenOp",
+    "AtOp",
+    "SliceOp",
+    "FirstOp",
+    "LastOp",
+    "SumOp",
+    "MinOp",
+    "MaxOp",
+    "SortedOp",
+    "ReversedOp",
+    "AnyOp",
+    "AllOp",
+    "JoinOp",
+    "SeqMapOp",
+    "SeqFilterOp",
+    "SeqReduceOp",
+    "SeqCountOp",
+    "IndexOfOp",
+    "SeqFindIndexOp",
+    # ==========================================================================
+    # MAPPING OPERATIONS
+    # ==========================================================================
+    "ContainsOp",
+    "DictKeysOp",
+    "DictValuesOp",
+    "DictItemsOp",
+    "DictGetOp",
+    # ==========================================================================
+    # STRING OPERATIONS
+    # ==========================================================================
+    "UpperOp",
+    "LowerOp",
+    "TitleOp",
+    "CapitalizeOp",
+    "SwapCaseOp",
+    "StripOp",
+    "LStripOp",
+    "RStripOp",
+    "SplitOp",
+    "RSplitOp",
+    "StrFindOp",
+    "RFindOp",
+    "CountSubstringOp",
+    "StartsWithOp",
+    "EndsWithOp",
+    "IsDigitOp",
+    "IsAlphaOp",
+    "IsAlnumOp",
+    "IsSpaceOp",
+    "CenterOp",
+    "LJustOp",
+    "RJustOp",
+    "ZFillOp",
+    "ReplaceOp",
+    "EncodeOp",
+    # ==========================================================================
+    # BYTES OPERATIONS
+    # ==========================================================================
+    "DecodeOp",
+    "HexOp",
+    "BytesUpperOp",
+    "BytesLowerOp",
+    "BytesStripOp",
+    "BytesLStripOp",
+    "BytesRStripOp",
+    "BytesSplitOp",
+    "BytesFindOp",
+    "BytesCountOp",
+    "BytesStartsWithOp",
+    "BytesEndsWithOp",
+    "BytesReplaceOp",
+    # ==========================================================================
+    # SET OPERATIONS
+    # ==========================================================================
+    "UnionOp",
+    "IntersectionOp",
+    "DifferenceOp",
+    "SymmetricDifferenceOp",
+    "IsSubsetOp",
+    "IsSupersetOp",
+    "IsDisjointOp",
+    # ==========================================================================
+    # REF OPERATIONS
+    # ==========================================================================
     "GetOp",
     "ExtractOp",
     "ExistsOp",
     "MissingOp",
     "LengthOp",
-    # Sequence operations
     "MapOp",
     "FilterOp",
     "ReduceOp",
@@ -71,7 +327,6 @@ __all__ = [  # noqa: RUF022
     "CountOp",
     "FindOp",
     "FindIndexOp",
-    # Mapping operations
     "KeysOp",
     "ValuesOp",
     "ItemsOp",
@@ -82,7 +337,9 @@ __all__ = [  # noqa: RUF022
     "FindKeyOp",
     "FindValueOp",
     "FindItemOp",
-    # Reactive
+    # ==========================================================================
+    # REACTIVE OPERATIONS
+    # ==========================================================================
     "ChangeOp",
     "OnChangeOp",
     "OnChildChangeOp",
@@ -92,16 +349,13 @@ __all__ = [  # noqa: RUF022
     # ==========================================================================
     # COMMANDS
     # ==========================================================================
-    # Core commands
     "SetCmd",
     "DeleteCmd",
     "StoreCmd",
     "ClearCmd",
-    # Sequence commands
     "AppendCmd",
     "InsertCmd",
     "PopCmd",
-    # Set commands
     "AddCmd",
     "RemoveCmd",
     "DiscardCmd",

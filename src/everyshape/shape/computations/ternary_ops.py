@@ -15,11 +15,11 @@ if TYPE_CHECKING:
     from ..context import Context
     from ..term import RValue
     from ..values.bases import (
-        ArithmeticBase,
         BitwiseBase,
         ComparisonBase,
         LogicalBase,
         MappingBase,
+        NumericBase,
         SequenceBase,
         StringBase,
     )
@@ -36,7 +36,7 @@ __all__ = [
 
 type OpArgument = (
     RValue
-    | ArithmeticBase
+    | NumericBase
     | SequenceBase
     | StringBase
     | BitwiseBase

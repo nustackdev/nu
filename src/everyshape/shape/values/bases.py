@@ -67,7 +67,14 @@ if TYPE_CHECKING:
     from everyshape.types import SpecialValue
 
     from ..term import RValue
-    from .primitive_values import BoolValue, IntValue, StrValue, UnknownValue  # noqa: TC004
+    from .collection_values import ListValue
+    from .primitive_values import (  # noqa: TC004
+        BoolValue,
+        BytesValue,
+        IntValue,
+        StrValue,
+        UnknownValue,
+    )
 
 
 __all__ = [  # noqa: RUF022
@@ -109,9 +116,14 @@ __all__ = [  # noqa: RUF022
     "IterableBase",
     "SequenceBase",
     "MappingBase",
+    # Set bases
+    "SetBase",
     # String bases
     "ConcatenableBase",
     "StringBase",
+    "StringMethodsBase",
+    # Bytes bases
+    "BytesMethodsBase",
 ]
 
 
@@ -1128,6 +1140,120 @@ class MappingBase[KeyT, ValueT, ResultT](
 
 
 # =============================================================================
+# SET BASES
+# =============================================================================
+
+
+class SetBase[ElementT, ResultT](
+    LengthableBase,
+    ContainableBase[ElementT],
+):
+    """Combined base for set-like values.
+
+    Provides: len_(), contains(), union(), intersection(), difference(),
+    symmetric_difference(), issubset(), issuperset(), isdisjoint().
+    """
+
+    def _wrap_set_result(self, operand: RValue) -> RValue:
+        """Override in subclass to wrap result in appropriate set type."""
+        return operand
+
+    def union(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+        """Set union.
+
+        Args:
+            other: Set to union with
+
+        Returns:
+            Union set
+        """
+        from ..computations.set_ops import UnionOp
+
+        return cast("ResultT", self._wrap_set_result(UnionOp(self, literal(other))))
+
+    def intersection(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+        """Set intersection.
+
+        Args:
+            other: Set to intersect with
+
+        Returns:
+            Intersection set
+        """
+        from ..computations.set_ops import IntersectionOp
+
+        return cast("ResultT", self._wrap_set_result(IntersectionOp(self, literal(other))))
+
+    def difference(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+        """Set difference.
+
+        Args:
+            other: Set to diff with
+
+        Returns:
+            Difference set
+        """
+        from ..computations.set_ops import DifferenceOp
+
+        return cast("ResultT", self._wrap_set_result(DifferenceOp(self, literal(other))))
+
+    def symmetric_difference(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+        """Set symmetric difference.
+
+        Args:
+            other: Set to symmetric diff with
+
+        Returns:
+            Symmetric difference set
+        """
+        from ..computations.set_ops import SymmetricDifferenceOp
+
+        return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, literal(other))))
+
+    def issubset(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> BoolValue:
+        """Check if subset.
+
+        Args:
+            other: Set to check against
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.set_ops import IsSubsetOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(IsSubsetOp(self, literal(other)))
+
+    def issuperset(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> BoolValue:
+        """Check if superset.
+
+        Args:
+            other: Set to check against
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.set_ops import IsSupersetOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(IsSupersetOp(self, literal(other)))
+
+    def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> BoolValue:
+        """Check if disjoint.
+
+        Args:
+            other: Set to check against
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.set_ops import IsDisjointOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(IsDisjointOp(self, literal(other)))
+
+
+# =============================================================================
 # STRING BASES
 # =============================================================================
 
@@ -1141,120 +1267,582 @@ class ConcatenableBase[OperandT, ResultT](AddableBase[OperandT, ResultT]):
     pass
 
 
+class StringMethodsBase[ResultT]:
+    """Base providing string-specific methods.
+
+    Methods that return strings use _wrap_string_result() for subclass customization.
+    Methods that return bool/int use specific types.
+    """
+
+    def _wrap_string_result(self, operand: RValue) -> RValue:
+        """Override in subclass to wrap result in appropriate type."""
+        return operand
+
+    # Case transformation
+    def upper(self) -> ResultT:
+        """Convert to uppercase.
+
+        Returns:
+            Uppercase string
+        """
+        from ..computations.string_ops import UpperOp
+
+        return cast("ResultT", self._wrap_string_result(UpperOp(self)))
+
+    def lower(self) -> ResultT:
+        """Convert to lowercase.
+
+        Returns:
+            Lowercase string
+        """
+        from ..computations.string_ops import LowerOp
+
+        return cast("ResultT", self._wrap_string_result(LowerOp(self)))
+
+    def title(self) -> ResultT:
+        """Convert to title case.
+
+        Returns:
+            Title-cased string
+        """
+        from ..computations.string_ops import TitleOp
+
+        return cast("ResultT", self._wrap_string_result(TitleOp(self)))
+
+    def capitalize(self) -> ResultT:
+        """Capitalize first character.
+
+        Returns:
+            Capitalized string
+        """
+        from ..computations.string_ops import CapitalizeOp
+
+        return cast("ResultT", self._wrap_string_result(CapitalizeOp(self)))
+
+    def swapcase(self) -> ResultT:
+        """Swap case.
+
+        Returns:
+            Case-swapped string
+        """
+        from ..computations.string_ops import SwapCaseOp
+
+        return cast("ResultT", self._wrap_string_result(SwapCaseOp(self)))
+
+    # Stripping
+    def strip(self, chars: str | RValue | None = None) -> ResultT:
+        """Strip whitespace or chars.
+
+        Args:
+            chars: Characters to strip (None for whitespace)
+
+        Returns:
+            Stripped string
+        """
+        from ..computations.string_ops import StripOp
+
+        if chars is not None:
+            return cast("ResultT", self._wrap_string_result(StripOp(self, literal(chars))))
+        return cast("ResultT", self._wrap_string_result(StripOp(self)))
+
+    def lstrip(self, chars: str | RValue | None = None) -> ResultT:
+        """Strip leading whitespace or chars.
+
+        Args:
+            chars: Characters to strip (None for whitespace)
+
+        Returns:
+            Stripped string
+        """
+        from ..computations.string_ops import LStripOp
+
+        if chars is not None:
+            return cast("ResultT", self._wrap_string_result(LStripOp(self, literal(chars))))
+        return cast("ResultT", self._wrap_string_result(LStripOp(self)))
+
+    def rstrip(self, chars: str | RValue | None = None) -> ResultT:
+        """Strip trailing whitespace or chars.
+
+        Args:
+            chars: Characters to strip (None for whitespace)
+
+        Returns:
+            Stripped string
+        """
+        from ..computations.string_ops import RStripOp
+
+        if chars is not None:
+            return cast("ResultT", self._wrap_string_result(RStripOp(self, literal(chars))))
+        return cast("ResultT", self._wrap_string_result(RStripOp(self)))
+
+    # Splitting
+    def split(self, sep: str | RValue | None = None, maxsplit: int = -1) -> ListValue[str]:
+        """Split string.
+
+        Args:
+            sep: Separator (None for whitespace)
+            maxsplit: Maximum splits (-1 for unlimited)
+
+        Returns:
+            List of substrings
+        """
+        from ..computations.string_ops import SplitOp
+        from .collection_values import ListValue
+
+        if sep is not None:
+            return ListValue(SplitOp(self, literal(sep), maxsplit))
+        return ListValue(SplitOp(self, None, maxsplit))
+
+    def rsplit(self, sep: str | RValue | None = None, maxsplit: int = -1) -> ListValue[str]:
+        """Right split string.
+
+        Args:
+            sep: Separator (None for whitespace)
+            maxsplit: Maximum splits (-1 for unlimited)
+
+        Returns:
+            List of substrings
+        """
+        from ..computations.string_ops import RSplitOp
+        from .collection_values import ListValue
+
+        if sep is not None:
+            return ListValue(RSplitOp(self, literal(sep), maxsplit))
+        return ListValue(RSplitOp(self, None, maxsplit))
+
+    # Searching
+    def find(self, sub: str | RValue, start: int = 0, end: int | None = None) -> IntValue:
+        """Find substring.
+
+        Args:
+            sub: Substring to find
+            start: Start index
+            end: End index
+
+        Returns:
+            Index or -1 if not found
+        """
+        from ..computations.string_ops import FindOp
+        from .primitive_values import IntValue
+
+        return IntValue(FindOp(self, literal(sub), start, end))
+
+    def rfind(self, sub: str | RValue, start: int = 0, end: int | None = None) -> IntValue:
+        """Find substring from right.
+
+        Args:
+            sub: Substring to find
+            start: Start index
+            end: End index
+
+        Returns:
+            Index or -1 if not found
+        """
+        from ..computations.string_ops import RFindOp
+        from .primitive_values import IntValue
+
+        return IntValue(RFindOp(self, literal(sub), start, end))
+
+    def count_substring(self, sub: str | RValue) -> IntValue:
+        """Count substring occurrences.
+
+        Args:
+            sub: Substring to count
+
+        Returns:
+            Count
+        """
+        from ..computations.string_ops import CountSubstringOp
+        from .primitive_values import IntValue
+
+        return IntValue(CountSubstringOp(self, literal(sub)))
+
+    # Testing
+    def startswith(self, prefix: str | RValue) -> BoolValue:
+        """Check if starts with prefix.
+
+        Args:
+            prefix: Prefix to check
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.string_ops import StartsWithOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(StartsWithOp(self, literal(prefix)))
+
+    def endswith(self, suffix: str | RValue) -> BoolValue:
+        """Check if ends with suffix.
+
+        Args:
+            suffix: Suffix to check
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.string_ops import EndsWithOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(EndsWithOp(self, literal(suffix)))
+
+    def isdigit(self) -> BoolValue:
+        """Check if all digits.
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.string_ops import IsDigitOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(IsDigitOp(self))
+
+    def isalpha(self) -> BoolValue:
+        """Check if all alphabetic.
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.string_ops import IsAlphaOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(IsAlphaOp(self))
+
+    def isalnum(self) -> BoolValue:
+        """Check if alphanumeric.
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.string_ops import IsAlnumOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(IsAlnumOp(self))
+
+    def isspace(self) -> BoolValue:
+        """Check if all whitespace.
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.string_ops import IsSpaceOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(IsSpaceOp(self))
+
+    # Padding
+    def center(self, width: int | RValue, fillchar: str = " ") -> ResultT:
+        """Center in width.
+
+        Args:
+            width: Target width
+            fillchar: Fill character
+
+        Returns:
+            Centered string
+        """
+        from ..computations.string_ops import CenterOp
+
+        return cast("ResultT", self._wrap_string_result(CenterOp(self, literal(width), fillchar)))
+
+    def ljust(self, width: int | RValue, fillchar: str = " ") -> ResultT:
+        """Left justify.
+
+        Args:
+            width: Target width
+            fillchar: Fill character
+
+        Returns:
+            Left-justified string
+        """
+        from ..computations.string_ops import LJustOp
+
+        return cast("ResultT", self._wrap_string_result(LJustOp(self, literal(width), fillchar)))
+
+    def rjust(self, width: int | RValue, fillchar: str = " ") -> ResultT:
+        """Right justify.
+
+        Args:
+            width: Target width
+            fillchar: Fill character
+
+        Returns:
+            Right-justified string
+        """
+        from ..computations.string_ops import RJustOp
+
+        return cast("ResultT", self._wrap_string_result(RJustOp(self, literal(width), fillchar)))
+
+    def zfill(self, width: int | RValue) -> ResultT:
+        """Zero-fill.
+
+        Args:
+            width: Target width
+
+        Returns:
+            Zero-filled string
+        """
+        from ..computations.string_ops import ZFillOp
+
+        return cast("ResultT", self._wrap_string_result(ZFillOp(self, literal(width))))
+
+    # Replacing
+    def replace(self, old: str | RValue, new: str | RValue, count: int = -1) -> ResultT:
+        """Replace substring.
+
+        Args:
+            old: String to replace
+            new: Replacement string
+            count: Maximum replacements (-1 for all)
+
+        Returns:
+            Modified string
+        """
+        from ..computations.string_ops import ReplaceOp
+
+        return cast(
+            "ResultT",
+            self._wrap_string_result(ReplaceOp(self, literal(old), literal(new), count)),
+        )
+
+    # Encoding
+    def encode(self, encoding: str = "utf-8") -> BytesValue:
+        """Encode string to bytes.
+
+        Args:
+            encoding: Character encoding
+
+        Returns:
+            Encoded bytes
+        """
+        from ..computations.string_ops import EncodeOp
+        from .primitive_values import BytesValue
+
+        return BytesValue(EncodeOp(self, encoding))
+
+
 class StringBase[ResultT](
     ConcatenableBase[str, ResultT],
     LengthableBase,
     SliceableBase[ResultT],
     ContainableBase[str],
+    StringMethodsBase[ResultT],
 ):
     """Combined base for string-like values.
 
     Provides: + (concatenation), len_(), slice_(), contains(),
-    plus string-specific operations.
+    plus all string-specific operations from StringMethodsBase.
 
     Subclasses typically also implement __getitem__ for indexing.
     """
 
     pass
 
-    # def upper(self) -> ResultT:
-    #     """Convert to uppercase.
 
-    #     Returns:
-    #         Uppercase string
-    #     """
-    #     from ..computations.string_ops import UpperOp
+# =============================================================================
+# BYTES BASES
+# =============================================================================
 
-    #     return cast("ResultT", UpperOp(self))
 
-    # def lower(self) -> ResultT:
-    #     """Convert to lowercase.
+class BytesMethodsBase[ResultT]:
+    """Base providing bytes-specific methods.
 
-    #     Returns:
-    #         Lowercase string
-    #     """
-    #     from ..computations.string_ops import LowerOp
+    Methods that return bytes use _wrap_bytes_result() for subclass customization.
+    Methods that return str/bool/int use specific types.
+    """
 
-    #     return cast("ResultT", LowerOp(self))
+    def _wrap_bytes_result(self, operand: RValue) -> RValue:
+        """Override in subclass to wrap result in appropriate type."""
+        return operand
 
-    # def strip(self) -> ResultT:
-    #     """Strip whitespace.
+    # Decoding
+    def decode(self, encoding: str = "utf-8") -> StrValue:
+        """Decode bytes to string.
 
-    #     Returns:
-    #         Stripped string
-    #     """
-    #     from ..computations.string_ops import StripOp
+        Args:
+            encoding: Character encoding
 
-    #     return cast("ResultT", StripOp(self))
+        Returns:
+            Decoded string
+        """
+        from ..computations.bytes_ops import DecodeOp
+        from .primitive_values import StrValue
 
-    # def split(self, separator: str = " ") -> ResultT:
-    #     """Split string.
+        return StrValue(DecodeOp(self, encoding))
 
-    #     Args:
-    #         separator: Separator string
+    def hex_(self) -> StrValue:
+        """Convert to hex string.
 
-    #     Returns:
-    #         List of substrings
-    #     """
-    #     from ..computations.string_ops import SplitOp
+        Returns:
+            Hex string
+        """
+        from ..computations.bytes_ops import HexOp
+        from .primitive_values import StrValue
 
-    #     return cast("ResultT", SplitOp(self, literal(separator)))
+        return StrValue(HexOp(self))
 
-    # def replace(self, old: str, new: str) -> ResultT:
-    #     """Replace substring.
+    # Case transformation
+    def upper(self) -> ResultT:
+        """Convert to uppercase.
 
-    #     Args:
-    #         old: String to replace
-    #         new: Replacement string
+        Returns:
+            Uppercase bytes
+        """
+        from ..computations.bytes_ops import BytesUpperOp
 
-    #     Returns:
-    #         Modified string
-    #     """
-    #     from ..computations.string_ops import ReplaceOp
+        return cast("ResultT", self._wrap_bytes_result(BytesUpperOp(self)))
 
-    #     return cast("ResultT", ReplaceOp(self, literal(old), literal(new)))
+    def lower(self) -> ResultT:
+        """Convert to lowercase.
 
-    # def startswith(self, prefix: str) -> ResultT:
-    #     """Check if starts with prefix.
+        Returns:
+            Lowercase bytes
+        """
+        from ..computations.bytes_ops import BytesLowerOp
 
-    #     Args:
-    #         prefix: Prefix to check
+        return cast("ResultT", self._wrap_bytes_result(BytesLowerOp(self)))
 
-    #     Returns:
-    #         Boolean result
-    #     """
-    #     from ..computations.string_ops import StartsWithOp
+    # Stripping
+    def strip(self, chars: bytes | RValue | None = None) -> ResultT:
+        """Strip whitespace or chars.
 
-    #     return cast("ResultT", StartsWithOp(self, literal(prefix)))
+        Args:
+            chars: Characters to strip (None for whitespace)
 
-    # def endswith(self, suffix: str) -> ResultT:
-    #     """Check if ends with suffix.
+        Returns:
+            Stripped bytes
+        """
+        from ..computations.bytes_ops import BytesStripOp
 
-    #     Args:
-    #         suffix: Suffix to check
+        if chars is not None:
+            return cast("ResultT", self._wrap_bytes_result(BytesStripOp(self, literal(chars))))
+        return cast("ResultT", self._wrap_bytes_result(BytesStripOp(self)))
 
-    #     Returns:
-    #         Boolean result
-    #     """
-    #     from ..computations.string_ops import EndsWithOp
+    def lstrip(self, chars: bytes | RValue | None = None) -> ResultT:
+        """Strip leading whitespace or chars.
 
-    #     return cast("ResultT", EndsWithOp(self, literal(suffix)))
+        Args:
+            chars: Characters to strip (None for whitespace)
 
-    # def format_(self, *args: object, **kwargs: object) -> ResultT:
-    #     """Format string with arguments.
+        Returns:
+            Stripped bytes
+        """
+        from ..computations.bytes_ops import BytesLStripOp
 
-    #     Args:
-    #         *args: Positional arguments
-    #         **kwargs: Keyword arguments
+        if chars is not None:
+            return cast("ResultT", self._wrap_bytes_result(BytesLStripOp(self, literal(chars))))
+        return cast("ResultT", self._wrap_bytes_result(BytesLStripOp(self)))
 
-    #     Returns:
-    #         Formatted string
-    #     """
-    #     from ..computations.string_ops import FormatOp
+    def rstrip(self, chars: bytes | RValue | None = None) -> ResultT:
+        """Strip trailing whitespace or chars.
 
-    #     return cast(
-    #         "ResultT",
-    #         FormatOp(
-    #             self, *[literal(a) for a in args], **{k: literal(v) for k, v in kwargs.items()}
-    #         ),
-    #     )
+        Args:
+            chars: Characters to strip (None for whitespace)
+
+        Returns:
+            Stripped bytes
+        """
+        from ..computations.bytes_ops import BytesRStripOp
+
+        if chars is not None:
+            return cast("ResultT", self._wrap_bytes_result(BytesRStripOp(self, literal(chars))))
+        return cast("ResultT", self._wrap_bytes_result(BytesRStripOp(self)))
+
+    # Splitting
+    def split_bytes(
+        self, sep: bytes | RValue | None = None, maxsplit: int = -1
+    ) -> ListValue[bytes]:
+        """Split bytes.
+
+        Args:
+            sep: Separator (None for whitespace)
+            maxsplit: Maximum splits (-1 for unlimited)
+
+        Returns:
+            List of bytes
+        """
+        from ..computations.bytes_ops import BytesSplitOp
+        from .collection_values import ListValue
+
+        if sep is not None:
+            return ListValue(BytesSplitOp(self, literal(sep), maxsplit))
+        return ListValue(BytesSplitOp(self, None, maxsplit))
+
+    # Searching
+    def find_bytes(self, sub: bytes | RValue, start: int = 0, end: int | None = None) -> IntValue:
+        """Find sub-bytes.
+
+        Args:
+            sub: Sub-bytes to find
+            start: Start index
+            end: End index
+
+        Returns:
+            Index or -1 if not found
+        """
+        from ..computations.bytes_ops import BytesFindOp
+        from .primitive_values import IntValue
+
+        return IntValue(BytesFindOp(self, literal(sub), start, end))
+
+    def count_bytes(self, sub: bytes | RValue) -> IntValue:
+        """Count sub-bytes occurrences.
+
+        Args:
+            sub: Sub-bytes to count
+
+        Returns:
+            Count
+        """
+        from ..computations.bytes_ops import BytesCountOp
+        from .primitive_values import IntValue
+
+        return IntValue(BytesCountOp(self, literal(sub)))
+
+    # Testing
+    def startswith(self, prefix: bytes | RValue) -> BoolValue:
+        """Check if starts with prefix.
+
+        Args:
+            prefix: Prefix to check
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.bytes_ops import BytesStartsWithOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(BytesStartsWithOp(self, literal(prefix)))
+
+    def endswith(self, suffix: bytes | RValue) -> BoolValue:
+        """Check if ends with suffix.
+
+        Args:
+            suffix: Suffix to check
+
+        Returns:
+            Boolean result
+        """
+        from ..computations.bytes_ops import BytesEndsWithOp
+        from .primitive_values import BoolValue
+
+        return BoolValue(BytesEndsWithOp(self, literal(suffix)))
+
+    # Replacing
+    def replace(self, old: bytes | RValue, new: bytes | RValue, count: int = -1) -> ResultT:
+        """Replace sub-bytes.
+
+        Args:
+            old: Bytes to replace
+            new: Replacement bytes
+            count: Maximum replacements (-1 for all)
+
+        Returns:
+            Modified bytes
+        """
+        from ..computations.bytes_ops import BytesReplaceOp
+
+        return cast(
+            "ResultT",
+            self._wrap_bytes_result(BytesReplaceOp(self, literal(old), literal(new), count)),
+        )
