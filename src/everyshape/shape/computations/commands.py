@@ -18,7 +18,7 @@ Commands (impure mutations):
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.shape.term import Command, PrimitiveRef, RValue, ViewRef
@@ -28,6 +28,8 @@ from everyshape.view import Appendable, Assignable, Clearable, Deletable, Initia
 
 if TYPE_CHECKING:
     from everyshape.shape.context import Context
+
+    from ..refs import UnionRefBases
 
 
 __all__ = [  # noqa: RUF022
@@ -69,7 +71,7 @@ class SetCmd[T: Value](Command[T]):
 
     def __init__(
         self,
-        ref: PrimitiveRef[T],
+        ref: PrimitiveRef[T] | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize set command.
@@ -78,9 +80,9 @@ class SetCmd[T: Value](Command[T]):
             ref: Reference to write to
             value: Value to write (wrapped in RValue)
         """
-        self.ref = ref
+        self.ref = cast("PrimitiveRef[T]", ref)
         self.value_expr = value
-        self.children = (ref, value)
+        self.children = (cast("PrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute write command.
@@ -134,14 +136,14 @@ class DeleteCmd(Command[None]):
         >>> del_cmd.execute(ctx)  # Returns None
     """
 
-    def __init__(self, ref: PrimitiveRef) -> None:
+    def __init__(self, ref: PrimitiveRef | UnionRefBases) -> None:
         """Initialize delete command.
 
         Args:
             ref: Reference to delete
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("PrimitiveRef", ref)
+        self.children = (cast("PrimitiveRef", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute delete command.
@@ -191,7 +193,7 @@ class StoreCmd[T: Value](Command[T]):
 
     def __init__(
         self,
-        ref: ViewRef[Initializable],
+        ref: ViewRef[Initializable] | UnionRefBases,
         data: RValue[T | SpecialValue],
     ) -> None:
         """Initialize store command.
@@ -200,9 +202,9 @@ class StoreCmd[T: Value](Command[T]):
             ref: View reference to store to
             data: Data to store (wrapped in RValue)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[Initializable]", ref)
         self.data_expr = data
-        self.children = (ref, data)
+        self.children = (cast("ViewRef[Initializable]", ref), data)
 
     def execute(self, context: Context) -> T:
         """Execute store command.
@@ -258,14 +260,14 @@ class ClearCmd(Command[None]):
         >>> clear_cmd.execute(ctx)  # Returns None
     """
 
-    def __init__(self, ref: ViewRef[Clearable]) -> None:
+    def __init__(self, ref: ViewRef[Clearable] | UnionRefBases) -> None:
         """Initialize clear command.
 
         Args:
             ref: View reference to clear
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef[Clearable]", ref)
+        self.children = (cast("ViewRef[Clearable]", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute clear command.
@@ -323,7 +325,7 @@ class AppendCmd[T: Value](Command[T]):
 
     def __init__(
         self,
-        ref: ViewRef[Appendable],
+        ref: ViewRef[Appendable] | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize append command.
@@ -332,9 +334,9 @@ class AppendCmd[T: Value](Command[T]):
             ref: Sequence reference to append to
             value: Value to append (wrapped in RValue)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[Appendable]", ref)
         self.value_expr = value
-        self.children = (ref, value)
+        self.children = (cast("ViewRef[Appendable]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute append command.
@@ -393,7 +395,7 @@ class InsertCmd[T: Value](Command[T]):
 
     def __init__(
         self,
-        ref: ViewRef,
+        ref: ViewRef | UnionRefBases,
         index: RValue[int | SpecialValue],
         value: RValue[T | SpecialValue],
     ) -> None:
@@ -404,10 +406,10 @@ class InsertCmd[T: Value](Command[T]):
             index: Index to insert at (wrapped in RValue)
             value: Value to insert (wrapped in RValue)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef", ref)
         self.index_expr = index
         self.value_expr = value
-        self.children = (ref, index, value)
+        self.children = (cast("ViewRef", ref), index, value)
 
     def execute(self, context: Context) -> T:
         """Execute insert command.
@@ -470,7 +472,7 @@ class PopCmd[T: Value](Command[T]):
 
     def __init__(
         self,
-        ref: ViewRef,
+        ref: ViewRef | UnionRefBases,
         index: RValue[int | SpecialValue] | None = None,
     ) -> None:
         """Initialize pop command.
@@ -479,9 +481,11 @@ class PopCmd[T: Value](Command[T]):
             ref: Sequence reference to pop from
             index: Index to pop from (default: -1, last item)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef", ref)
         self.index_expr = index
-        self.children = (ref, index) if index is not None else (ref,)
+        self.children = (
+            (cast("ViewRef", ref), index) if index is not None else (cast("ViewRef", ref),)
+        )
 
     def execute(self, context: Context) -> T:
         """Execute pop command.
@@ -544,7 +548,7 @@ class AddCmd[T: Value](Command[None]):
 
     def __init__(
         self,
-        ref: ViewRef,
+        ref: ViewRef | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize add command.
@@ -553,9 +557,9 @@ class AddCmd[T: Value](Command[None]):
             ref: Set reference to add to
             value: Value to add (wrapped in RValue)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef", ref)
         self.value_expr = value
-        self.children = (ref, value)
+        self.children = (cast("ViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute add command.
@@ -613,7 +617,7 @@ class RemoveCmd[T: Value](Command[None]):
 
     def __init__(
         self,
-        ref: ViewRef,
+        ref: ViewRef | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize remove command.
@@ -622,9 +626,9 @@ class RemoveCmd[T: Value](Command[None]):
             ref: Set reference to remove from
             value: Value to remove (wrapped in RValue)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef", ref)
         self.value_expr = value
-        self.children = (ref, value)
+        self.children = (cast("ViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute remove command.
@@ -685,7 +689,7 @@ class DiscardCmd[T: Value](Command[None]):
 
     def __init__(
         self,
-        ref: ViewRef,
+        ref: ViewRef | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
         """Initialize discard command.
@@ -694,9 +698,9 @@ class DiscardCmd[T: Value](Command[None]):
             ref: Set reference to discard from
             value: Value to discard (wrapped in RValue)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef", ref)
         self.value_expr = value
-        self.children = (ref, value)
+        self.children = (cast("ViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute discard command.

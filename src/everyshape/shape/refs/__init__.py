@@ -45,26 +45,22 @@ from .bases import (
     AppendableBase,
     ClearableBase,
     DeletableBase,
-    # Core capability bases
     ExistableBase,
     ExtractableBase,
     GettableBase,
     InsertableBase,
     ItemsQueryableBase,
-    # Query bases
     KeysQueryableBase,
     LengthableBase,
     PoppableBase,
-    # Observable bases
     PrimitiveObservableBase,
-    # Sequence capability bases
     SequenceIndexableBase,
     SequenceIterableBase,
-    # Set capability bases
     SetAddableBase,
     SetRemovableBase,
     SettableBase,
     StorableBase,
+    UnionRefBases,
     ValuesQueryableBase,
     ViewObservableBase,
 )
@@ -184,6 +180,7 @@ __all__ = [  # noqa: RUF022
     # ==========================================================================
     # CAPABILITY IMPLEMENTATION MIXINS
     # ==========================================================================
+    "UnionRefBases",
     # Core capability bases
     "ExistableBase",
     "GettableBase",

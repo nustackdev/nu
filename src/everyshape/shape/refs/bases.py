@@ -79,7 +79,7 @@ from ..values import (
     StrValue,
     TupleValue,
 )
-from ..values.conversion import literal, result
+from ..values.conversion import computed, literal
 
 
 if TYPE_CHECKING:
@@ -92,6 +92,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [  # noqa: RUF022
+    "UnionRefBases",
     # Core capability bases
     "ExistableBase",
     "GettableBase",
@@ -118,6 +119,31 @@ __all__ = [  # noqa: RUF022
     "SetAddableBase",
     "SetRemovableBase",
 ]
+
+type UnionRefBases = (
+    ExistableBase
+    | GettableBase
+    | SettableBase
+    | DeletableBase
+    | ExtractableBase
+    | StorableBase
+    | ClearableBase
+    | LengthableBase
+    | PrimitiveObservableBase
+    | ViewObservableBase
+    | KeysQueryableBase
+    | ValuesQueryableBase
+    | ItemsQueryableBase
+    | SequenceIndexableBase
+    | SequenceIterableBase
+    | AppendableBase
+    | InsertableBase
+    | PoppableBase
+    | MappingNestableBase
+    | MappingIterableBase
+    | SetAddableBase
+    | SetRemovableBase
+)
 
 
 # =============================================================================
@@ -209,7 +235,7 @@ class GettableBase[T]:
         Example:
             >>> value = ref.get().execute(ctx)
         """
-        return result(self.value_type, GetOp(self))
+        return computed(self.value_type, GetOp(self))
 
 
 class ExtractableBase[W](ABC):
@@ -294,7 +320,7 @@ class SettableBase[T]:
             >>> ref.set(42).execute(ctx)
             >>> ref.set(other_ref.get()).execute(ctx)  # Chain refs
         """
-        return result(self.value_type, SetCmd(self, literal(value)))
+        return computed(self.value_type, SetCmd(self, literal(value)))
 
 
 class StorableBase[W, T](ABC):
@@ -334,7 +360,7 @@ class DeletableBase:
     Implements the Deletable protocol with remove() method.
     """
 
-    def remove(self) -> BoolValue:
+    def remove(self) -> NoneValue:
         """Create a delete command for this location.
 
         Returns:
@@ -343,7 +369,7 @@ class DeletableBase:
         Example:
             >>> ref.remove().execute(ctx)
         """
-        return BoolValue(DeleteCmd(self))
+        return NoneValue(DeleteCmd(self))
 
 
 class ClearableBase:
@@ -659,7 +685,7 @@ class SequenceIterableBase[T]:
         Example:
             >>> total = list_ref.reduce(lambda acc, x: acc + x, 0).execute(ctx)
         """
-        return result(type(initial), ReduceOp(self, func, initial))
+        return computed(type(initial), ReduceOp(self, func, initial))
 
     @overload
     def find(self: SequenceIterableBase[int], predicate: Callable[[int], bool]) -> IntValue: ...
@@ -686,7 +712,7 @@ class SequenceIterableBase[T]:
         predicate: Callable[[dict[K, V]], bool],
     ) -> DictValue[K, V]: ...
 
-    def find(self, predicate: Callable[[T], bool]) -> object:
+    def find(self, predicate: Callable) -> object:
         """Find first element matching predicate.
 
         Args:
@@ -698,7 +724,7 @@ class SequenceIterableBase[T]:
         Example:
             >>> first_even = list_ref.find(lambda x: x % 2 == 0).execute(ctx)
         """
-        return result(self.item_type, FindOp(self, predicate))
+        return computed(self.item_type, FindOp(self, predicate))
 
     def find_index(self, predicate: Callable[[T], bool]) -> IntValue:
         """Find index of first element matching predicate.
@@ -849,7 +875,7 @@ class PoppableBase[T]:
             >>> first = list_ref.pop(0).execute(ctx)
         """
         wrapped_index = literal(index) if index is not None else None
-        return result(self.item_type, PopCmd(self, wrapped_index))
+        return computed(self.item_type, PopCmd(self, wrapped_index))
 
 
 # =============================================================================
@@ -978,7 +1004,7 @@ class MappingIterableBase[K, V]:
         Example:
             >>> total = scores_ref.reduce(lambda acc, k, v: acc + v, 0).execute(ctx)
         """
-        return result(type(initial), ReduceItemsOp(self, func, initial))
+        return computed(type(initial), ReduceItemsOp(self, func, initial))
 
     @overload
     def find_key(self: MappingIterableBase[int, V], predicate: Callable[[V], bool]) -> IntValue: ...
@@ -1008,7 +1034,7 @@ class MappingIterableBase[K, V]:
         Example:
             >>> winner = scores_ref.find_key(lambda v: v >= 100).execute(ctx)
         """
-        return result(self.key_type, FindKeyOp(self, predicate))
+        return computed(self.key_type, FindKeyOp(self, predicate))
 
     @overload
     def find_value(
@@ -1041,7 +1067,7 @@ class MappingIterableBase[K, V]:
         predicate: Callable[[dict[K2, V2]], bool],
     ) -> DictValue[K2, V2]: ...
 
-    def find_value(self, predicate: Callable[[V], bool]) -> object:
+    def find_value(self, predicate: Callable) -> object:
         """Find first value matching predicate.
 
         Args:
@@ -1053,7 +1079,7 @@ class MappingIterableBase[K, V]:
         Example:
             >>> high_score = scores_ref.find_value(lambda v: v >= 100).execute(ctx)
         """
-        return result(self.value_type, FindValueOp(self, predicate))
+        return computed(self.value_type, FindValueOp(self, predicate))
 
     def find_item(self, predicate: Callable[[K, V], bool]) -> TupleValue[K, V]:
         """Find first item (key, value) matching predicate.

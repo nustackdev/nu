@@ -144,15 +144,6 @@ from .capabilities import (
     is_subtractable,
 )
 
-# Collection implementations
-from .collection_values import (
-    DictValue,
-    FrozenSetValue,
-    ListValue,
-    SetValue,
-    TupleValue,
-)
-
 # Conversion utilities
 from .conversion import literal, computed
 
@@ -174,8 +165,8 @@ from .literals import (
     TupleLiteral,
 )
 
-# Computed primitive types (including special values)
-from .primitive_values import (
+# Computed types
+from .values import (
     BoolValue,
     BytesValue,
     EmptyValue,
@@ -185,6 +176,11 @@ from .primitive_values import (
     NoneValue,
     StrValue,
     UnknownValue,
+    DictValue,
+    FrozenSetValue,
+    ListValue,
+    SetValue,
+    TupleValue,
 )
 
 

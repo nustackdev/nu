@@ -256,3 +256,11 @@ class Shape(metaclass=ShapeMeta):
 
     _slots: ClassVar[dict[str, Slot]] = {}
     """Mapping of field names to Slot definitions."""
+
+    def extract(self) -> object:
+        """Extracts Shape data."""
+        ...
+
+    def store(self, obj: object) -> None:
+        """Stores Shape data."""
+        ...

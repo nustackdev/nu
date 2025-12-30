@@ -83,8 +83,19 @@ def computed(result_type: object, op: RValue) -> ComputedValue:
     Returns:
         Typed computed value wrapper
     """
-    from .collection_values import DictValue, FrozenSetValue, ListValue, SetValue, TupleValue
-    from .primitive_values import BoolValue, BytesValue, FloatValue, IntValue, NoneValue, StrValue
+    from .values import (
+        BoolValue,
+        BytesValue,
+        DictValue,
+        FloatValue,
+        FrozenSetValue,
+        IntValue,
+        ListValue,
+        NoneValue,
+        SetValue,
+        StrValue,
+        TupleValue,
+    )
 
     if result_type is int:
         return IntValue(op)

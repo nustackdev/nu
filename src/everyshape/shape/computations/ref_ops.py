@@ -35,7 +35,7 @@ Mapping Operations:
 from __future__ import annotations
 
 from functools import reduce as functools_reduce
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.shape.term import Operation, PrimitiveRef, ViewRef
@@ -46,8 +46,10 @@ from everyshape.view import capabilities as view_capabilities
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.shape.context import Context
-    from everyshape.view.view import View
+    from everyshape.view import View
+
+    from ..context import Context
+    from ..refs import UnionRefBases
 
 
 __all__ = [  # noqa: RUF022
@@ -84,7 +86,7 @@ __all__ = [  # noqa: RUF022
 # =============================================================================
 
 
-class GetOp[T: Value](Operation[T | SpecialValue]):
+class GetOp[T](Operation[T | SpecialValue]):
     """Read operation for primitive values.
 
     Pure operation that navigates to a location and reads the value.
@@ -99,14 +101,14 @@ class GetOp[T: Value](Operation[T | SpecialValue]):
         >>> value = get_op.execute(ctx)  # Returns T | SpecialValue
     """
 
-    def __init__(self, ref: PrimitiveRef[T]) -> None:
+    def __init__(self, ref: PrimitiveRef[T] | UnionRefBases) -> None:
         """Initialize get operation.
 
         Args:
             ref: Reference to read from
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("PrimitiveRef", ref)
+        self.children = (cast("PrimitiveRef", ref),)
 
     def execute(self, context: Context) -> T | SpecialValue:
         """Execute read operation.
@@ -136,7 +138,7 @@ class GetOp[T: Value](Operation[T | SpecialValue]):
         return f"GetOp({self.ref!r})"
 
 
-class ExtractOp[T: Value](Operation[T | SpecialValue]):
+class ExtractOp[T](Operation[T | SpecialValue]):
     """Extract operation for container structures.
 
     Pure operation that reads an entire container structure.
@@ -151,14 +153,14 @@ class ExtractOp[T: Value](Operation[T | SpecialValue]):
         >>> data = extract_op.execute(ctx)  # Returns dict/list/etc
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Convertible[T]]) -> None:
+    def __init__(self, ref: ViewRef[view_capabilities.Convertible[T]] | UnionRefBases) -> None:
         """Initialize extract operation.
 
         Args:
             ref: View reference to extract from
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef[view_capabilities.Convertible[T]]", ref)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[T]]", ref),)
 
     def execute(self, context: Context) -> T | SpecialValue:
         """Execute extract operation.
@@ -206,14 +208,14 @@ class ExistsOp(Operation[bool]):
         >>> exists = exists_op.execute(ctx)  # Returns bool
     """
 
-    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View]) -> None:
+    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View] | UnionRefBases) -> None:
         """Initialize exists operation.
 
         Args:
             ref: Reference to check
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("PrimitiveRef[Value] | ViewRef[View]", ref)
+        self.children = (cast("PrimitiveRef[Value] | ViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute existence check.
@@ -262,14 +264,14 @@ class MissingOp(Operation[bool]):
         >>> is_missing = missing_op.execute(ctx)  # Returns bool
     """
 
-    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View]) -> None:
+    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View] | UnionRefBases) -> None:
         """Initialize missing operation.
 
         Args:
             ref: Reference to check
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("PrimitiveRef[Value] | ViewRef[View]", ref)
+        self.children = (cast("PrimitiveRef[Value] | ViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute missing check.
@@ -300,14 +302,14 @@ class LengthOp(Operation[int | SpecialValue]):
         >>> length = len_op.execute(ctx)  # Returns int
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Sizeable]) -> None:
+    def __init__(self, ref: ViewRef[view_capabilities.Sizeable] | UnionRefBases) -> None:
         """Initialize length operation.
 
         Args:
             ref: View reference to query
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef[view_capabilities.Sizeable]", ref)
+        self.children = (cast("ViewRef[view_capabilities.Sizeable]", ref),)
 
     def execute(self, context: Context) -> int | SpecialValue:
         """Execute length query.
@@ -343,7 +345,7 @@ class LengthOp(Operation[int | SpecialValue]):
 # =============================================================================
 
 
-class MapOp[T: Value, R: Value](Operation[list[R] | SpecialValue]):
+class MapOp[T, R](Operation[list[R] | SpecialValue]):
     """Map operation for sequences.
 
     Applies a function to each element of a sequence.
@@ -360,7 +362,7 @@ class MapOp[T: Value, R: Value](Operation[list[R] | SpecialValue]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         func: Callable[[T], R],
     ) -> None:
         """Initialize map operation.
@@ -369,9 +371,9 @@ class MapOp[T: Value, R: Value](Operation[list[R] | SpecialValue]):
             ref: Sequence reference to map over
             func: Function to apply to each element
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.func = func
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[R] | SpecialValue:
         """Execute map operation.
@@ -403,7 +405,7 @@ class MapOp[T: Value, R: Value](Operation[list[R] | SpecialValue]):
         return f"MapOp({self.ref!r}, {self.func!r})"
 
 
-class FilterOp[T: Value](Operation[list[T] | SpecialValue]):
+class FilterOp[T](Operation[list[T] | SpecialValue]):
     """Filter operation for sequences.
 
     Filters elements based on a predicate.
@@ -419,7 +421,7 @@ class FilterOp[T: Value](Operation[list[T] | SpecialValue]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize filter operation.
@@ -428,9 +430,9 @@ class FilterOp[T: Value](Operation[list[T] | SpecialValue]):
             ref: Sequence reference to filter
             predicate: Function that returns True for elements to keep
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[T] | SpecialValue:
         """Execute filter operation.
@@ -462,7 +464,7 @@ class FilterOp[T: Value](Operation[list[T] | SpecialValue]):
         return f"FilterOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceOp[T: Value, R](Operation[R | SpecialValue]):
+class ReduceOp[T, R](Operation[R | SpecialValue]):
     """Reduce operation for sequences.
 
     Reduces a sequence to a single value using a reducer function.
@@ -479,7 +481,7 @@ class ReduceOp[T: Value, R](Operation[R | SpecialValue]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         func: Callable[[R, T], R],
         initial: R,
     ) -> None:
@@ -490,10 +492,10 @@ class ReduceOp[T: Value, R](Operation[R | SpecialValue]):
             func: Reducer function (accumulator, element) -> accumulator
             initial: Initial accumulator value
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.func = func
         self.initial = initial
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> R | SpecialValue:
         """Execute reduce operation.
@@ -525,7 +527,7 @@ class ReduceOp[T: Value, R](Operation[R | SpecialValue]):
         return f"ReduceOp({self.ref!r}, {self.func!r}, {self.initial!r})"
 
 
-class IndexOp[T: Value](Operation[int]):
+class IndexOp[T](Operation[int]):
     """Index operation for sequences.
 
     Finds the index of a value in a sequence.
@@ -542,7 +544,7 @@ class IndexOp[T: Value](Operation[int]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         value: T,
     ) -> None:
         """Initialize index operation.
@@ -551,9 +553,9 @@ class IndexOp[T: Value](Operation[int]):
             ref: Sequence reference to search
             value: Value to find
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute index operation.
@@ -585,7 +587,7 @@ class IndexOp[T: Value](Operation[int]):
         return f"IndexOp({self.ref!r}, {self.value!r})"
 
 
-class CountOp[T: Value](Operation[int | SpecialValue]):
+class CountOp[T](Operation[int | SpecialValue]):
     """Count operation for sequences.
 
     Counts occurrences of a value in a sequence.
@@ -601,7 +603,7 @@ class CountOp[T: Value](Operation[int | SpecialValue]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         value: T,
     ) -> None:
         """Initialize count operation.
@@ -610,9 +612,9 @@ class CountOp[T: Value](Operation[int | SpecialValue]):
             ref: Sequence reference to count in
             value: Value to count
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int | SpecialValue:
         """Execute count operation.
@@ -644,7 +646,7 @@ class CountOp[T: Value](Operation[int | SpecialValue]):
         return f"CountOp({self.ref!r}, {self.value!r})"
 
 
-class FindOp[T: Value](Operation[T]):
+class FindOp[T](Operation[T]):
     """Find operation for sequences.
 
     Finds the first element matching a predicate.
@@ -661,7 +663,7 @@ class FindOp[T: Value](Operation[T]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find operation.
@@ -670,9 +672,9 @@ class FindOp[T: Value](Operation[T]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> T:
         """Execute find operation.
@@ -707,7 +709,7 @@ class FindOp[T: Value](Operation[T]):
         return f"FindOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindIndexOp[T: Value](Operation[int]):
+class FindIndexOp[T](Operation[int]):
     """Find index operation for sequences.
 
     Finds the index of the first element matching a predicate.
@@ -724,7 +726,7 @@ class FindIndexOp[T: Value](Operation[int]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]],
+        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find index operation.
@@ -733,9 +735,9 @@ class FindIndexOp[T: Value](Operation[int]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute find index operation.
@@ -789,14 +791,16 @@ class KeysOp[K](Operation[list[K] | SpecialValue]):
         >>> keys = keys_op.execute(ctx)  # Returns list[K]
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Convertible[dict[K, object]]]) -> None:
+    def __init__(
+        self, ref: ViewRef[view_capabilities.Convertible[dict[K, object]]] | UnionRefBases
+    ) -> None:
         """Initialize keys operation.
 
         Args:
             ref: Mapping reference to query
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, object]]]", ref)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, object]]]", ref),)
 
     def execute(self, context: Context) -> list[K] | SpecialValue:
         """Execute keys operation.
@@ -830,7 +834,7 @@ class KeysOp[K](Operation[list[K] | SpecialValue]):
         return f"KeysOp({self.ref!r})"
 
 
-class ValuesOp[V: Value](Operation[list[V] | SpecialValue]):
+class ValuesOp[V](Operation[list[V] | SpecialValue]):
     """Values operation for mappings.
 
     Returns all values of a mapping.
@@ -844,14 +848,16 @@ class ValuesOp[V: Value](Operation[list[V] | SpecialValue]):
         >>> values = values_op.execute(ctx)  # Returns list[V]
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Convertible[dict[object, V]]]) -> None:
+    def __init__(
+        self, ref: ViewRef[view_capabilities.Convertible[dict[object, V]]] | UnionRefBases
+    ) -> None:
         """Initialize values operation.
 
         Args:
             ref: Mapping reference to query
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[object, V]]]", ref)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[object, V]]]", ref),)
 
     def execute(self, context: Context) -> list[V] | SpecialValue:
         """Execute values operation.
@@ -885,7 +891,7 @@ class ValuesOp[V: Value](Operation[list[V] | SpecialValue]):
         return f"ValuesOp({self.ref!r})"
 
 
-class ItemsOp[K, V: Value](Operation[list[tuple[K, V]] | SpecialValue]):
+class ItemsOp[K, V](Operation[list[tuple[K, V]] | SpecialValue]):
     """Items operation for mappings.
 
     Returns all key-value pairs of a mapping.
@@ -900,14 +906,16 @@ class ItemsOp[K, V: Value](Operation[list[tuple[K, V]] | SpecialValue]):
         >>> items = items_op.execute(ctx)  # Returns list[tuple[K, V]]
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Convertible[dict[K, V]]]) -> None:
+    def __init__(
+        self, ref: ViewRef[view_capabilities.Convertible[dict[K, V]]] | UnionRefBases
+    ) -> None:
         """Initialize items operation.
 
         Args:
             ref: Mapping reference to query
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> list[tuple[K, V]] | SpecialValue:
         """Execute items operation.
@@ -941,7 +949,7 @@ class ItemsOp[K, V: Value](Operation[list[tuple[K, V]] | SpecialValue]):
         return f"ItemsOp({self.ref!r})"
 
 
-class MapValuesOp[K, V: Value, R: Value](Operation[dict[K, R] | SpecialValue]):
+class MapValuesOp[K, V, R](Operation[dict[K, R] | SpecialValue]):
     """Map values operation for mappings.
 
     Applies a function to each value in a mapping.
@@ -959,7 +967,7 @@ class MapValuesOp[K, V: Value, R: Value](Operation[dict[K, R] | SpecialValue]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]] | UnionRefBases,
         func: Callable[[V], R],
     ) -> None:
         """Initialize map values operation.
@@ -968,9 +976,9 @@ class MapValuesOp[K, V: Value, R: Value](Operation[dict[K, R] | SpecialValue]):
             ref: Mapping reference to map over
             func: Function to apply to each value
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
         self.func = func
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K, R] | SpecialValue:
         """Execute map values operation.
@@ -1004,7 +1012,7 @@ class MapValuesOp[K, V: Value, R: Value](Operation[dict[K, R] | SpecialValue]):
         return f"MapValuesOp({self.ref!r}, {self.func!r})"
 
 
-class MapItemsOp[K, V: Value, K2, V2: Value](Operation[dict[K2, V2] | SpecialValue]):
+class MapItemsOp[K, V, K2, V2](Operation[dict[K2, V2] | SpecialValue]):
     """Map items operation for mappings.
 
     Applies a function to each (key, value) pair.
@@ -1023,7 +1031,7 @@ class MapItemsOp[K, V: Value, K2, V2: Value](Operation[dict[K2, V2] | SpecialVal
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]] | UnionRefBases,
         func: Callable[[K, V], tuple[K2, V2]],
     ) -> None:
         """Initialize map items operation.
@@ -1032,9 +1040,9 @@ class MapItemsOp[K, V: Value, K2, V2: Value](Operation[dict[K2, V2] | SpecialVal
             ref: Mapping reference to map over
             func: Function taking (key, value) returning (new_key, new_value)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
         self.func = func
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K2, V2] | SpecialValue:
         """Execute map items operation.
@@ -1068,7 +1076,7 @@ class MapItemsOp[K, V: Value, K2, V2: Value](Operation[dict[K2, V2] | SpecialVal
         return f"MapItemsOp({self.ref!r}, {self.func!r})"
 
 
-class FilterItemsOp[K, V: Value](Operation[dict[K, V] | SpecialValue]):
+class FilterItemsOp[K, V](Operation[dict[K, V] | SpecialValue]):
     """Filter items operation for mappings.
 
     Filters items based on a predicate.
@@ -1085,7 +1093,7 @@ class FilterItemsOp[K, V: Value](Operation[dict[K, V] | SpecialValue]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]] | UnionRefBases,
         predicate: Callable[[K, V], bool],
     ) -> None:
         """Initialize filter items operation.
@@ -1094,9 +1102,9 @@ class FilterItemsOp[K, V: Value](Operation[dict[K, V] | SpecialValue]):
             ref: Mapping reference to filter
             predicate: Function (key, value) -> bool, keep if True
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K, V] | SpecialValue:
         """Execute filter items operation.
@@ -1130,7 +1138,7 @@ class FilterItemsOp[K, V: Value](Operation[dict[K, V] | SpecialValue]):
         return f"FilterItemsOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceItemsOp[K, V: Value, R](Operation[R | SpecialValue]):
+class ReduceItemsOp[K, V, R](Operation[R | SpecialValue]):
     """Reduce items operation for mappings.
 
     Reduces a mapping to a single value.
@@ -1148,7 +1156,7 @@ class ReduceItemsOp[K, V: Value, R](Operation[R | SpecialValue]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]] | UnionRefBases,
         func: Callable[[R, K, V], R],
         initial: R,
     ) -> None:
@@ -1159,10 +1167,10 @@ class ReduceItemsOp[K, V: Value, R](Operation[R | SpecialValue]):
             func: Reducer function (accumulator, key, value) -> accumulator
             initial: Initial accumulator value
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
         self.func = func
         self.initial = initial
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> R | SpecialValue:
         """Execute reduce items operation.
@@ -1199,7 +1207,7 @@ class ReduceItemsOp[K, V: Value, R](Operation[R | SpecialValue]):
         return f"ReduceItemsOp({self.ref!r}, {self.func!r}, {self.initial!r})"
 
 
-class FindKeyOp[K, V: Value](Operation[K]):
+class FindKeyOp[K, V](Operation[K]):
     """Find key operation for mappings.
 
     Finds the first key whose value matches a predicate.
@@ -1217,7 +1225,7 @@ class FindKeyOp[K, V: Value](Operation[K]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]] | UnionRefBases,
         predicate: Callable[[V], bool],
     ) -> None:
         """Initialize find key operation.
@@ -1226,9 +1234,9 @@ class FindKeyOp[K, V: Value](Operation[K]):
             ref: Mapping reference to search
             predicate: Function applied to values, return True to match
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> K:
         """Execute find key operation.
@@ -1265,7 +1273,7 @@ class FindKeyOp[K, V: Value](Operation[K]):
         return f"FindKeyOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindValueOp[V: Value](Operation[V]):
+class FindValueOp[V](Operation[V]):
     """Find value operation for mappings.
 
     Finds the first value matching a predicate.
@@ -1282,7 +1290,7 @@ class FindValueOp[V: Value](Operation[V]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[object, V]]],
+        ref: ViewRef[view_capabilities.Convertible[dict[object, V]]] | UnionRefBases,
         predicate: Callable[[V], bool],
     ) -> None:
         """Initialize find value operation.
@@ -1291,9 +1299,9 @@ class FindValueOp[V: Value](Operation[V]):
             ref: Mapping reference to search
             predicate: Function applied to values, return True to match
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[object, V]]]", ref)
         self.predicate = predicate
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[object, V]]]", ref),)
 
     def execute(self, context: Context) -> V:
         """Execute find value operation.
@@ -1330,7 +1338,7 @@ class FindValueOp[V: Value](Operation[V]):
         return f"FindValueOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindItemOp[K, V: Value](Operation[tuple[K, V]]):
+class FindItemOp[K, V](Operation[tuple[K, V]]):
     """Find item operation for mappings.
 
     Finds the first (key, value) pair matching a predicate.
@@ -1348,7 +1356,7 @@ class FindItemOp[K, V: Value](Operation[tuple[K, V]]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]],
+        ref: ViewRef[view_capabilities.Convertible[dict[K, V]]] | UnionRefBases,
         predicate: Callable[[K, V], bool],
     ) -> None:
         """Initialize find item operation.
@@ -1357,9 +1365,9 @@ class FindItemOp[K, V: Value](Operation[tuple[K, V]]):
             ref: Mapping reference to search
             predicate: Function (key, value) -> bool
         """
-        self.ref = ref
+        self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self.children = (ref,)
+        self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> tuple[K, V]:
         """Execute find item operation.

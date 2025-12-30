@@ -56,7 +56,7 @@ Usage:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, overload
 
 from .conversion import literal
 
@@ -67,13 +67,15 @@ if TYPE_CHECKING:
     from everyshape.types import SpecialValue
 
     from ..term import RValue
-    from .collection_values import ListValue
-    from .primitive_values import (  # noqa: TC004
+    from .values import (
         BoolValue,
         BytesValue,
-        IntValue,
+        DictValue,
+        FloatValue,
+        IntValue,  # noqa: TC004
+        ListValue,
         StrValue,
-        UnknownValue,
+        UnknownValue,  # noqa: TC004
     )
 
 
@@ -188,7 +190,7 @@ class CoreBase:
             BoolValue-like result
         """
         from ..computations.unary_ops import IsEmptyOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsEmptyOp(self))
 
@@ -199,7 +201,7 @@ class CoreBase:
             BoolValue-like result
         """
         from ..computations.unary_ops import IsNaNOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsNaNOp(self))
 
@@ -246,7 +248,7 @@ class CoreBase:
             >>> name.ifelse(name.not_empty(), "Unknown")
         """
         from ..computations.ternary_ops import ConditionalOp
-        from .primitive_values import UnknownValue
+        from .values import UnknownValue
 
         return UnknownValue(ConditionalOp(literal(condition), self, literal(otherwise)))
 
@@ -484,28 +486,28 @@ class OrderableBase[OperandT]:
     def __gt__(self, other: OperandT) -> BoolValue:
         """Greater than: self > other."""
         from ..computations.binary_ops import GtOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(GtOp(self, literal(other)))
 
     def __lt__(self, other: OperandT) -> BoolValue:
         """Less than: self < other."""
         from ..computations.binary_ops import LtOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(LtOp(self, literal(other)))
 
     def __ge__(self, other: OperandT) -> BoolValue:
         """Greater than or equal: self >= other."""
         from ..computations.binary_ops import GeOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(GeOp(self, literal(other)))
 
     def __le__(self, other: OperandT) -> BoolValue:
         """Less than or equal: self <= other."""
         from ..computations.binary_ops import LeOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(LeOp(self, literal(other)))
 
@@ -542,7 +544,7 @@ class EqualableBase[OperandT]:
             Comparison result
         """
         from ..computations.binary_ops import EqOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(EqOp(self, literal(other)))
 
@@ -556,7 +558,7 @@ class EqualableBase[OperandT]:
             Comparison result
         """
         from ..computations.binary_ops import NeOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(NeOp(self, literal(other)))
 
@@ -570,7 +572,7 @@ class EqualableBase[OperandT]:
             IdCompOp expression
         """
         from ..computations.binary_ops import IdCompOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IdCompOp(self, literal(other)))
 
@@ -840,7 +842,7 @@ class LengthableBase:
             Length value
         """
         from ..computations.sequence_ops import LenOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(LenOp(self))
 
@@ -895,7 +897,7 @@ class ContainableBase[ItemT]:
             Boolean result
         """
         from ..computations.mapping_ops import ContainsOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(ContainsOp(self, literal(item)))
 
@@ -937,7 +939,29 @@ class IterableBase[ElementT, ResultT]:
 
         return cast("ResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
 
-    def reduce_[R](self, func: Callable[[R, ElementT], R], initial: R) -> UnknownValue:
+    @overload
+    def reduce_(self, func: Callable[[int, ElementT], int], initial: int) -> IntValue: ...
+
+    @overload
+    def reduce_(self, func: Callable[[float, ElementT], float], initial: float) -> FloatValue: ...
+
+    @overload
+    def reduce_(self, func: Callable[[str, ElementT], str], initial: str) -> StrValue: ...
+
+    @overload
+    def reduce_(self, func: Callable[[bool, ElementT], bool], initial: bool) -> BoolValue: ...
+
+    @overload
+    def reduce_[V](
+        self, func: Callable[[list[V], ElementT], list[V]], initial: list[V]
+    ) -> ListValue[V]: ...
+
+    @overload
+    def reduce_[K, V](
+        self, func: Callable[[dict[K, V], ElementT], dict[K, V]], initial: dict[K, V]
+    ) -> DictValue[K, V]: ...
+
+    def reduce_[R](self, func: Callable[[R, ElementT], R], initial: R) -> object:
         """Reduce to single value.
 
         Args:
@@ -948,7 +972,7 @@ class IterableBase[ElementT, ResultT]:
             Reduced value
         """
         from ..computations.sequence_ops import ReduceOp
-        from .primitive_values import UnknownValue
+        from .values import UnknownValue
 
         return UnknownValue(ReduceOp(self, func, initial))
 
@@ -989,7 +1013,7 @@ class IterableBase[ElementT, ResultT]:
             Boolean result
         """
         from ..computations.sequence_ops import AnyOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(AnyOp(self))
 
@@ -1000,7 +1024,7 @@ class IterableBase[ElementT, ResultT]:
             Boolean result
         """
         from ..computations.sequence_ops import AllOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(AllOp(self))
 
@@ -1072,7 +1096,7 @@ class SequenceBase[ElementT, ResultT](
             Joined string
         """
         from ..computations.sequence_ops import JoinOp
-        from .primitive_values import StrValue
+        from .values import StrValue
 
         return StrValue(JoinOp(self, literal(separator)))
 
@@ -1086,9 +1110,22 @@ class SequenceBase[ElementT, ResultT](
             Index
         """
         from ..computations.sequence_ops import IndexOfOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(IndexOfOp(self, literal(value)))
+
+    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue:
+        """Find index of first match.
+
+        Args:
+            predicate: Match function
+
+        Returns:
+            IntValue containing index
+        """
+        from ..computations.sequence_ops import FindIndexOp
+
+        return IntValue(FindIndexOp(self, predicate))
 
     def count(self, value: ElementT) -> IntValue:
         """Count occurrences.
@@ -1100,7 +1137,7 @@ class SequenceBase[ElementT, ResultT](
             Count
         """
         from ..computations.sequence_ops import CountOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(CountOp(self, literal(value)))
 
@@ -1260,7 +1297,7 @@ class SetBase[ElementT, ResultT](
             Boolean result
         """
         from ..computations.set_ops import IsSubsetOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsSubsetOp(self, literal(other)))
 
@@ -1274,7 +1311,7 @@ class SetBase[ElementT, ResultT](
             Boolean result
         """
         from ..computations.set_ops import IsSupersetOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsSupersetOp(self, literal(other)))
 
@@ -1288,7 +1325,7 @@ class SetBase[ElementT, ResultT](
             Boolean result
         """
         from ..computations.set_ops import IsDisjointOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsDisjointOp(self, literal(other)))
 
@@ -1427,7 +1464,7 @@ class StringMethodsBase[ResultT]:
             List of substrings
         """
         from ..computations.string_ops import SplitOp
-        from .collection_values import ListValue
+        from .values import ListValue
 
         if sep is not None:
             return ListValue(SplitOp(self, literal(sep), maxsplit))
@@ -1444,7 +1481,7 @@ class StringMethodsBase[ResultT]:
             List of substrings
         """
         from ..computations.string_ops import RSplitOp
-        from .collection_values import ListValue
+        from .values import ListValue
 
         if sep is not None:
             return ListValue(RSplitOp(self, literal(sep), maxsplit))
@@ -1463,7 +1500,7 @@ class StringMethodsBase[ResultT]:
             Index or -1 if not found
         """
         from ..computations.string_ops import FindOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(FindOp(self, literal(sub), start, end))
 
@@ -1479,7 +1516,7 @@ class StringMethodsBase[ResultT]:
             Index or -1 if not found
         """
         from ..computations.string_ops import RFindOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(RFindOp(self, literal(sub), start, end))
 
@@ -1493,7 +1530,7 @@ class StringMethodsBase[ResultT]:
             Count
         """
         from ..computations.string_ops import CountSubstringOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(CountSubstringOp(self, literal(sub)))
 
@@ -1508,7 +1545,7 @@ class StringMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.string_ops import StartsWithOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(StartsWithOp(self, literal(prefix)))
 
@@ -1522,7 +1559,7 @@ class StringMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.string_ops import EndsWithOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(EndsWithOp(self, literal(suffix)))
 
@@ -1533,7 +1570,7 @@ class StringMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.string_ops import IsDigitOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsDigitOp(self))
 
@@ -1544,7 +1581,7 @@ class StringMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.string_ops import IsAlphaOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsAlphaOp(self))
 
@@ -1555,7 +1592,7 @@ class StringMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.string_ops import IsAlnumOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsAlnumOp(self))
 
@@ -1566,7 +1603,7 @@ class StringMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.string_ops import IsSpaceOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(IsSpaceOp(self))
 
@@ -1656,7 +1693,7 @@ class StringMethodsBase[ResultT]:
             Encoded bytes
         """
         from ..computations.string_ops import EncodeOp
-        from .primitive_values import BytesValue
+        from .values import BytesValue
 
         return BytesValue(EncodeOp(self, encoding))
 
@@ -1706,7 +1743,7 @@ class BytesMethodsBase[ResultT]:
             Decoded string
         """
         from ..computations.bytes_ops import DecodeOp
-        from .primitive_values import StrValue
+        from .values import StrValue
 
         return StrValue(DecodeOp(self, encoding))
 
@@ -1717,7 +1754,7 @@ class BytesMethodsBase[ResultT]:
             Hex string
         """
         from ..computations.bytes_ops import HexOp
-        from .primitive_values import StrValue
+        from .values import StrValue
 
         return StrValue(HexOp(self))
 
@@ -1802,7 +1839,7 @@ class BytesMethodsBase[ResultT]:
             List of bytes
         """
         from ..computations.bytes_ops import BytesSplitOp
-        from .collection_values import ListValue
+        from .values import ListValue
 
         if sep is not None:
             return ListValue(BytesSplitOp(self, literal(sep), maxsplit))
@@ -1821,7 +1858,7 @@ class BytesMethodsBase[ResultT]:
             Index or -1 if not found
         """
         from ..computations.bytes_ops import BytesFindOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(BytesFindOp(self, literal(sub), start, end))
 
@@ -1835,7 +1872,7 @@ class BytesMethodsBase[ResultT]:
             Count
         """
         from ..computations.bytes_ops import BytesCountOp
-        from .primitive_values import IntValue
+        from .values import IntValue
 
         return IntValue(BytesCountOp(self, literal(sub)))
 
@@ -1850,7 +1887,7 @@ class BytesMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.bytes_ops import BytesStartsWithOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(BytesStartsWithOp(self, literal(prefix)))
 
@@ -1864,7 +1901,7 @@ class BytesMethodsBase[ResultT]:
             Boolean result
         """
         from ..computations.bytes_ops import BytesEndsWithOp
-        from .primitive_values import BoolValue
+        from .values import BoolValue
 
         return BoolValue(BytesEndsWithOp(self, literal(suffix)))
 

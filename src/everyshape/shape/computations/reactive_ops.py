@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from everyshape.loc import key
 
     from ..context import Context
+    from ..refs import UnionRefBases
 
 
 __all__ = [
@@ -64,14 +65,14 @@ class OnChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef) -> None:
+    def __init__(self, ref: ViewRef | UnionRefBases) -> None:
         """Initialize on_change operation.
 
         Args:
             ref: View reference to watch
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef", ref)
+        self.children = (cast("ViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_change operation.
@@ -122,14 +123,14 @@ class OnPrimitiveChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: PrimitiveRef) -> None:
+    def __init__(self, ref: PrimitiveRef | UnionRefBases) -> None:
         """Initialize on_primitive_change operation.
 
         Args:
             ref: Primitive reference to watch
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("PrimitiveRef", ref)
+        self.children = (cast("PrimitiveRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_primitive_change operation.
@@ -177,16 +178,16 @@ class OnChildChangeOp[A](ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef, address: A | RValue[A]) -> None:
+    def __init__(self, ref: ViewRef | UnionRefBases, address: A | RValue[A]) -> None:
         """Initialize on_child_change operation.
 
         Args:
             ref: View reference containing the child
             address: Child address to watch
         """
-        self.ref = ref
+        self.ref = cast("ViewRef", ref)
         self.address = address
-        self.children = (ref,)
+        self.children = (cast("ViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_child_change operation.
@@ -239,14 +240,14 @@ class OnChildrenChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef) -> None:
+    def __init__(self, ref: ViewRef | UnionRefBases) -> None:
         """Initialize on_children_change operation.
 
         Args:
             ref: View reference to watch children of
         """
-        self.ref = ref
-        self.children = (ref,)
+        self.ref = cast("ViewRef", ref)
+        self.children = (cast("ViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_children_change operation.
@@ -297,16 +298,16 @@ class OnDescendantsChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef, *pattern: key.KeySegment) -> None:
+    def __init__(self, ref: ViewRef | UnionRefBases, *pattern: key.KeySegment) -> None:
         """Initialize on_descendants_change operation.
 
         Args:
             ref: View reference to watch descendants of
             *pattern: Key segments pattern (use "*" for wildcards)
         """
-        self.ref = ref
+        self.ref = cast("ViewRef", ref)
         self.pattern = pattern
-        self.children = (ref,)
+        self.children = (cast("ViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_descendants_change operation.

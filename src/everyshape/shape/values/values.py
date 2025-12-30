@@ -1,6 +1,8 @@
-"""Primitive RValue implementations.
+"""RValue implementations.
 
-This module provides concrete RValue types for Python primitives:
+This module provides concrete RValue types for:
+
+1. Python primitives:
 - IntValue: Integer values
 - FloatValue: Floating-point values
 - BoolValue: Boolean values
@@ -8,17 +10,24 @@ This module provides concrete RValue types for Python primitives:
 - BytesValue: Bytes values
 - NoneValue: None value
 
-Special value types:
+2. Special value types:
 - UnknownValue: Value of unknown type (can be any type)
 - EmptyValue: Represents absence of a value
 - NaNValue: Represents not-a-number
+
+3. Collections:
+- ListValue: List values
+- DictValue: Dictionary values
+- TupleValue: Tuple values
+- SetValue: Set values
+- FrozenSetValue: Frozenset values
 
 These wrap native Python values and enable DSL operations.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, ClassVar, overload
 
 from everyshape.types import SpecialValue
 
@@ -31,7 +40,10 @@ from .bases import (
     CoreBase,
     LengthableBase,
     LogicalBase,
+    MappingBase,
     NumericBase,
+    SequenceBase,
+    SetBase,
     SliceableBase,
     StringBase,
 )
@@ -45,12 +57,17 @@ if TYPE_CHECKING:
 __all__ = [
     "BoolValue",
     "BytesValue",
+    "DictValue",
     "EmptyValue",
     "FloatValue",
+    "FrozenSetValue",
     "IntValue",
+    "ListValue",
     "NaNValue",
     "NoneValue",
+    "SetValue",
     "StrValue",
+    "TupleValue",
     "UnknownValue",
 ]
 
@@ -468,3 +485,258 @@ class NaNValue(
     def __repr__(self) -> str:
         """Return machine-friendly representation."""
         return "NaNValue()"
+
+
+# =============================================================================
+# LIST VALUE
+# =============================================================================
+
+
+class ListValue[T](
+    SequenceBase[T, "ListValue[T]"],
+    ComparisonBase[list[T]],
+    CoreBase,
+    ComputedValue[list[T] | SpecialValue],
+):
+    """RValue representing a list.
+
+    Supports indexing, slicing, length, and functional operations
+    (map, filter, reduce, etc.).
+
+    Type Parameters:
+        T: Type of elements in the list
+
+    Example:
+        >>> val = ListValue([1, 2, 3])
+        >>> first = val[0]  # Returns typed value
+        >>> doubled = val.map_(lambda x: x * 2)  # Returns ListValue
+        >>> total = val.sum_()  # Returns IntValue/FloatValue
+    """
+
+    VALUE_TYPE: ClassVar[type] = list
+
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def __add__(self, other: list[T] | ListValue[T]) -> ListValue[T]:
+        """Concatenate lists."""
+        from ..computations.binary_ops import AddOp
+
+        return ListValue(AddOp(self, literal(other)))
+
+    def __radd__(self, other: list[T]) -> ListValue[T]:
+        """Right concatenate lists."""
+        from ..computations.binary_ops import AddOp
+
+        return ListValue(AddOp(literal(other), self))
+
+    @overload
+    def __getitem__(self, key: int) -> UnknownValue: ...
+
+    @overload
+    def __getitem__(self, key: slice) -> ListValue[T]: ...
+
+    def __getitem__(self, key: int | slice) -> UnknownValue | ListValue[T]:
+        """Get item or slice."""
+        if isinstance(key, slice):
+            from ..computations.sequence_ops import SliceOp
+
+            return ListValue(SliceOp(self, key.start, key.stop, key.step))
+
+        from ..computations.sequence_ops import AtOp
+        from .values import UnknownValue
+
+        return UnknownValue(AtOp(self, literal(key)))
+
+
+# =============================================================================
+# TUPLE VALUE
+# =============================================================================
+
+
+class TupleValue[*Ts](
+    SequenceBase[object, "ListValue[object]"],
+    ComparisonBase[tuple],
+    CoreBase,
+    ComputedValue[tuple[*Ts] | SpecialValue],
+):
+    """RValue representing a tuple.
+
+    Supports indexing, length, and containment operations.
+    Tuples are immutable so no mutation operations.
+
+    Type Parameters:
+        *Ts: Types of elements in the tuple
+
+    Example:
+        >>> val = TupleValue((1, "hello", 3.14))
+        >>> first = val[0]  # Returns typed value
+        >>> length = val.len_()  # Returns IntValue
+    """
+
+    VALUE_TYPE: ClassVar[type] = tuple
+
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_sliceable_result(self, operand: RValue) -> TupleValue:
+        return TupleValue(operand)
+
+    @overload
+    def __getitem__(self, key: int) -> UnknownValue: ...
+
+    @overload
+    def __getitem__(self, key: slice) -> TupleValue: ...
+
+    def __getitem__(self, key: int | slice) -> UnknownValue | TupleValue:
+        """Get item or slice."""
+        if isinstance(key, slice):
+            from ..computations.sequence_ops import SliceOp
+
+            return TupleValue(SliceOp(self, key.start, key.stop, key.step))
+
+        from ..computations.sequence_ops import AtOp
+        from .values import UnknownValue
+
+        return UnknownValue(AtOp(self, literal(key)))
+
+
+# =============================================================================
+# DICT VALUE
+# =============================================================================
+
+
+class DictValue[K, V](
+    MappingBase[K, V, "DictValue[K, V]"],
+    ComparisonBase[dict[K, V]],
+    CoreBase,
+    ComputedValue[dict[K, V] | SpecialValue],
+):
+    """RValue representing a dictionary.
+
+    Supports key access, keys/values/items, and functional operations.
+
+    Type Parameters:
+        K: Type of keys
+        V: Type of values
+
+    Example:
+        >>> val = DictValue({"a": 1, "b": 2})
+        >>> a_val = val["a"]  # Returns typed value
+        >>> all_keys = val.keys_()  # Returns ListValue[K]
+        >>> doubled = val.map_values(lambda x: x * 2)  # Returns DictValue
+    """
+
+    VALUE_TYPE: ClassVar[type] = dict
+
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def __getitem__(self, key: K) -> UnknownValue:
+        """Get value for key."""
+        from ..computations.sequence_ops import AtOp
+        from .values import UnknownValue
+
+        return UnknownValue(AtOp(self, literal(key)))
+
+
+# =============================================================================
+# SET VALUE
+# =============================================================================
+
+
+class SetValue[T](
+    SetBase[T, "SetValue[T]"],
+    ComparisonBase[set[T]],
+    CoreBase,
+    ComputedValue[set[T] | SpecialValue],
+):
+    """RValue representing a set.
+
+    Supports containment testing, length, and set operations.
+
+    Type Parameters:
+        T: Type of elements in the set
+
+    Example:
+        >>> val = SetValue({1, 2, 3})
+        >>> exists = val.contains(2)  # Returns BoolValue
+        >>> union = val.union({4, 5})  # Returns SetValue
+    """
+
+    VALUE_TYPE: ClassVar[type] = set
+
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_set_result(self, operand: RValue) -> SetValue[T]:
+        return SetValue(operand)
+
+
+# =============================================================================
+# FROZENSET VALUE
+# =============================================================================
+
+
+class FrozenSetValue[T](
+    SetBase[T, "FrozenSetValue[T]"],
+    ComparisonBase[frozenset[T]],
+    CoreBase,
+    ComputedValue[frozenset[T] | SpecialValue],
+):
+    """RValue representing a frozenset.
+
+    Supports containment testing, length, and set operations.
+    Immutable version of SetValue.
+
+    Type Parameters:
+        T: Type of elements in the set
+
+    Example:
+        >>> val = FrozenSetValue(frozenset({1, 2, 3}))
+        >>> exists = val.contains(2)  # Returns BoolValue
+        >>> union = val.union(frozenset({4, 5}))  # Returns FrozenSetValue
+    """
+
+    VALUE_TYPE: ClassVar[type] = frozenset
+
+    def _wrap_comparison_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_core_result(self, operand: RValue) -> BoolValue:
+        from .values import BoolValue
+
+        return BoolValue(operand)
+
+    def _wrap_set_result(self, operand: RValue) -> FrozenSetValue[T]:
+        return FrozenSetValue(operand)

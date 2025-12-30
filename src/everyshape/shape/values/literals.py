@@ -41,11 +41,24 @@ from .bases import (
     SliceableBase,
     StringBase,
 )
+from .values import (
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    FrozenSetValue,
+    IntValue,
+    ListValue,
+    NoneValue,  # noqa: F401
+    SetValue,
+    StrValue,
+    TupleValue,
+    UnknownValue,
+)
 
 
 if TYPE_CHECKING:
     from ..term import RValue
-    from .primitive_values import NoneValue  # noqa: F401
 
 
 __all__ = [  # noqa: RUF022
@@ -366,64 +379,9 @@ class ListLiteral[T](
 
         return UnknownValue(AtOp(self, literal(key)))
 
-    def len_(self) -> IntValue:
-        """Get list length."""
-        from ..computations.sequence_ops import LenOp
-
-        return IntValue(LenOp(self))
-
-    def contains(self, item: T) -> BoolValue:
-        """Check if item is in list."""
-        from ..computations.mapping_ops import ContainsOp
-        from .conversion import literal
-
-        return BoolValue(ContainsOp(self, literal(item)))
-
-    def reversed_(self) -> ListValue[T]:
-        """Get reversed list."""
-        from ..computations.sequence_ops import ReversedOp
-
-        return ListValue(ReversedOp(self))
-
-    def sorted_(self, reverse: bool = False) -> ListValue[T]:
-        """Get sorted list."""
-        from ..computations.sequence_ops import SortedOp
-
-        return ListValue(SortedOp(self, reverse=reverse))
-
-    def first(self) -> UnknownValue:
-        """Get first element."""
-        from ..computations.sequence_ops import FirstOp
-
-        return UnknownValue(FirstOp(self))
-
-    def last(self) -> UnknownValue:
-        """Get last element."""
-        from ..computations.sequence_ops import LastOp
-
-        return UnknownValue(LastOp(self))
-
-    def any_(self) -> BoolValue:
-        """Check if any truthy."""
-        from ..computations.sequence_ops import AnyOp
-
-        return BoolValue(AnyOp(self))
-
-    def all_(self) -> BoolValue:
-        """Check if all truthy."""
-        from ..computations.sequence_ops import AllOp
-
-        return BoolValue(AllOp(self))
-
-    def join(self, separator: str) -> StrValue:
-        """Join string elements."""
-        from ..computations.sequence_ops import JoinOp
-
-        return StrValue(JoinOp(self, separator))
-
 
 class DictLiteral[K, V](
-    MappingBase[K, V, "DictValue[K, V]"],
+    MappingBase[K, V, DictValue[K, V]],
     ComparisonBase[dict[K, V]],
     CoreBase,
     LiteralValue[dict[K, V]],
@@ -453,44 +411,6 @@ class DictLiteral[K, V](
         from .conversion import literal
 
         return UnknownValue(AtOp(self, literal(key)))
-
-    def len_(self) -> IntValue:
-        """Get number of items."""
-        from ..computations.sequence_ops import LenOp
-
-        return IntValue(LenOp(self))
-
-    def contains(self, key: K) -> BoolValue:
-        """Check if key exists."""
-        from ..computations.mapping_ops import ContainsOp
-        from .conversion import literal
-
-        return BoolValue(ContainsOp(self, literal(key)))
-
-    def keys_(self) -> ListValue[K]:
-        """Get all keys."""
-        from ..computations.mapping_ops import DictKeysOp
-
-        return ListValue(DictKeysOp(self))
-
-    def values_(self) -> ListValue[V]:
-        """Get all values."""
-        from ..computations.mapping_ops import DictValuesOp
-
-        return ListValue(DictValuesOp(self))
-
-    def items_(self) -> ListValue[tuple[K, V]]:
-        """Get all key-value pairs."""
-        from ..computations.mapping_ops import DictItemsOp
-
-        return ListValue(DictItemsOp(self))
-
-    def get_(self, key: K, default: V | None = None) -> UnknownValue:
-        """Get value with default."""
-        from ..computations.mapping_ops import DictGetOp
-        from .conversion import literal
-
-        return UnknownValue(DictGetOp(self, literal(key), literal(default)))
 
 
 class TupleLiteral[*Ts](
@@ -537,25 +457,6 @@ class TupleLiteral[*Ts](
         from ..computations.sequence_ops import AtOp
 
         return UnknownValue(AtOp(self, literal(key)))
-
-    def contains(self, item: object) -> BoolValue:
-        """Check if item is in tuple."""
-        from ..computations.mapping_ops import ContainsOp
-        from .conversion import literal
-
-        return BoolValue(ContainsOp(self, literal(item)))
-
-    def first(self) -> UnknownValue:
-        """Get first element."""
-        from ..computations.sequence_ops import FirstOp
-
-        return UnknownValue(FirstOp(self))
-
-    def last(self) -> UnknownValue:
-        """Get last element."""
-        from ..computations.sequence_ops import LastOp
-
-        return UnknownValue(LastOp(self))
 
 
 class SetLiteral[T](
@@ -608,20 +509,3 @@ class FrozenSetLiteral[T](
 
     def _wrap_set_result(self, operand: RValue) -> FrozenSetValue[T]:
         return FrozenSetValue(operand)
-
-
-# Import computed value types at the end to avoid circular imports
-from .collection_values import (  # noqa: E402
-    FrozenSetValue,
-    ListValue,
-    SetValue,
-    TupleValue,
-)
-from .primitive_values import (  # noqa: E402
-    BoolValue,
-    BytesValue,
-    FloatValue,
-    IntValue,
-    StrValue,
-    UnknownValue,
-)
