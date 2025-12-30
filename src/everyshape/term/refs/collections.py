@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from ..values import IntValue, NoneValue
+from ..values import BoolValue, IntValue, NoneValue
 from .capabilities import (
     Appendable,
     Clearable,
@@ -182,7 +182,7 @@ class SequenceRef[
     SliceValueT,
 ](
     CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT],
-    RefIndexable[IndexT, IndexValueT, ItemValueT],
+    RefIndexable[IndexT, ItemValueT],
     RefSliceable[SliceValueT],
     Protocol,
 ):
@@ -192,9 +192,14 @@ class SequenceRef[
     They support index access, slicing, length, and extraction.
 
     Type Parameters:
-        IndexT: type of index
-        IndexValueT: type of computed value for index
-        SliceValueT: type of sliced value
+        CollectionT: Type of this collection (list, tuple, etc)
+        ItemT: Type of this collection's item (int, float, str, nested list, dict, etc)
+        CollectionValueT: ComputedValue type for this collection (ListValue, TupleValue, etc)
+        ItemValueT: ComputedValue type for this collection's item (IntValue, FloatValue, etc)
+        ViewT: Type of the view at this location
+        IndexT: Type of index (commonly int)
+        IndexValueT: ComputedValue type for index (commonly IntValue)
+        SliceValueT: ComputedValue type for sliced result
 
     Example:
         >>> if isinstance(ref, SequenceRef):
@@ -223,11 +228,29 @@ class SequenceRef[
 
 
 @runtime_checkable
-class MutableSequenceRef[IndexT, ItemT](
-    SequenceRef[IndexT, ItemT],
-    Appendable[ItemT, object],
-    Insertable[ItemT, object],
-    Poppable[ItemT, object],
+class MutableSequenceRef[
+    CollectionT,
+    ItemT,
+    CollectionValueT,
+    ItemValueT,
+    ViewT,
+    IndexT,
+    IndexValueT,
+    SliceValueT,
+](
+    SequenceRef[
+        CollectionT,
+        ItemT,
+        CollectionValueT,
+        ItemValueT,
+        ViewT,
+        IndexT,
+        IndexValueT,
+        SliceValueT,
+    ],
+    Appendable[ItemT, ItemValueT],
+    Insertable[ItemT, ItemValueT],
+    Poppable[ItemT, ItemValueT],
     Protocol,
 ):
     """Protocol for mutable sequence references.
@@ -235,7 +258,14 @@ class MutableSequenceRef[IndexT, ItemT](
     Extends SequenceRef with mutation operations.
 
     Type Parameters:
-        T: Type of items in the sequence
+        CollectionT: Type of this collection (list, tuple, etc)
+        ItemT: Type of this collection's item (int, float, str, nested list, dict, etc)
+        CollectionValueT: ComputedValue type for this collection (ListValue, TupleValue, etc)
+        ItemValueT: ComputedValue type for this collection's item (IntValue, FloatValue, etc)
+        ViewT: Type of the view at this location
+        IndexT: Type of index (commonly int)
+        IndexValueT: ComputedValue type for index (commonly IntValue)
+        SliceValueT: ComputedValue type for sliced result
 
     Example:
         >>> if isinstance(ref, MutableSequenceRef):
@@ -252,9 +282,18 @@ class MutableSequenceRef[IndexT, ItemT](
 
 
 @runtime_checkable
-class MappingRef[K, V](
-    CollectionRef[V, object],
-    Nestable[K, object],
+class MappingRef[
+    CollectionT,
+    KeyT,
+    ValueT,
+    CollectionValueT,
+    KeyValueT,
+    ValueValueT,
+    ViewT,
+    ChildRefT,
+](
+    CollectionRef[CollectionT, ValueT, CollectionValueT, ValueValueT, ViewT],
+    Nestable[KeyT, ChildRefT],
     KeysQueryable[object],
     ValuesQueryable[object],
     ItemsQueryable[object],
@@ -266,8 +305,14 @@ class MappingRef[K, V](
     They support key access, keys/values/items queries, and extraction.
 
     Type Parameters:
-        K: Type of keys
-        V: Type of values
+        CollectionT: Type of this collection (dict, etc)
+        KeyT: Type of keys (str, int, etc)
+        ValueT: Type of values (int, float, nested dict, etc)
+        CollectionValueT: ComputedValue type for this collection (DictValue, etc)
+        KeyValueT: ComputedValue type for keys (StrValue, IntValue, etc)
+        ValueValueT: ComputedValue type for values (IntValue, FloatValue, UnknownValue, etc)
+        ViewT: Type of the view at this location
+        ChildRefT: Type of child reference returned by __getitem__
 
     Example:
         >>> if isinstance(ref, MappingRef):
@@ -277,27 +322,63 @@ class MappingRef[K, V](
     """
 
     @property
-    def key_type(self) -> type[K]:
+    def key_type(self) -> type[KeyT]:
         """Get the key type for this mapping.
 
         Returns:
-            Type of keys
+            Type of keys (str, int, etc)
         """
         ...
 
     @property
-    def value_type(self) -> type[V]:
+    def value_type(self) -> type[ValueT]:
         """Get the value type for this mapping.
 
         Returns:
-            Type of values
+            Type of values (int, float, nested dict, etc)
+        """
+        ...
+
+    @property
+    def key_value_type(self) -> type[KeyValueT]:
+        """Get the ComputedValue type for this mapping's keys.
+
+        Returns:
+            Type of key value (StrValue, IntValue, etc)
+        """
+        ...
+
+    @property
+    def value_value_type(self) -> type[ValueValueT]:
+        """Get the ComputedValue type for this mapping's values.
+
+        Returns:
+            Type of value value (IntValue, FloatValue, UnknownValue, etc)
         """
         ...
 
 
 @runtime_checkable
-class MutableMappingRef[K, V](
-    MappingRef[K, V],
+class MutableMappingRef[
+    CollectionT,
+    KeyT,
+    ValueT,
+    CollectionValueT,
+    KeyValueT,
+    ValueValueT,
+    ViewT,
+    ChildRefT,
+](
+    MappingRef[
+        CollectionT,
+        KeyT,
+        ValueT,
+        CollectionValueT,
+        KeyValueT,
+        ValueValueT,
+        ViewT,
+        ChildRefT,
+    ],
     Protocol,
 ):
     """Protocol for mutable mapping references.
@@ -306,8 +387,14 @@ class MutableMappingRef[K, V](
     Mutations happen through child refs obtained via __getitem__.
 
     Type Parameters:
-        K: Type of keys
-        V: Type of values
+        CollectionT: Type of this collection (dict, etc)
+        KeyT: Type of keys (str, int, etc)
+        ValueT: Type of values (int, float, nested dict, etc)
+        CollectionValueT: ComputedValue type for this collection (DictValue, etc)
+        KeyValueT: ComputedValue type for keys (StrValue, IntValue, etc)
+        ValueValueT: ComputedValue type for values (IntValue, FloatValue, UnknownValue, etc)
+        ViewT: Type of the view at this location
+        ChildRefT: Type of child reference returned by __getitem__
 
     Example:
         >>> if isinstance(ref, MutableMappingRef):
@@ -324,8 +411,14 @@ class MutableMappingRef[K, V](
 
 
 @runtime_checkable
-class SetRef[T](
-    CollectionRef[object],
+class SetRef[
+    CollectionT,
+    ItemT,
+    CollectionValueT,
+    ItemValueT,
+    ViewT,
+](
+    CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT],
     Protocol,
 ):
     """Protocol for read-only set references.
@@ -334,7 +427,11 @@ class SetRef[T](
     They support containment checking, length, and extraction.
 
     Type Parameters:
-        T: Type of items in the set
+        CollectionT: Type of this collection (set, frozenset, etc)
+        ItemT: Type of items in the set (int, str, etc)
+        CollectionValueT: ComputedValue type for this collection (SetValue, etc)
+        ItemValueT: ComputedValue type for items (IntValue, StrValue, etc)
+        ViewT: Type of the view at this location
 
     Example:
         >>> if isinstance(ref, SetRef):
@@ -342,19 +439,18 @@ class SetRef[T](
         ...     size = ref.length().execute(ctx)
     """
 
-    @property
-    def item_type(self) -> type[T]:
-        """Get the item type for this set.
-
-        Returns:
-            Type of items
-        """
-        ...
+    pass
 
 
 @runtime_checkable
-class MutableSetRef[T, PathT](
-    SetRef[T, PathT],
+class MutableSetRef[
+    CollectionT,
+    ItemT,
+    CollectionValueT,
+    ItemValueT,
+    ViewT,
+](
+    SetRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT],
     Protocol,
 ):
     """Protocol for mutable set references.
@@ -362,7 +458,11 @@ class MutableSetRef[T, PathT](
     Extends SetRef with mutation operations.
 
     Type Parameters:
-        T: Type of items in the set
+        CollectionT: Type of this collection (set, etc)
+        ItemT: Type of items in the set (int, str, etc)
+        CollectionValueT: ComputedValue type for this collection (SetValue, etc)
+        ItemValueT: ComputedValue type for items (IntValue, StrValue, etc)
+        ViewT: Type of the view at this location
 
     Example:
         >>> if isinstance(ref, MutableSetRef):
@@ -370,36 +470,36 @@ class MutableSetRef[T, PathT](
         ...     ref.remove(item).execute(ctx)
     """
 
-    def add(self, value: T) -> object:
+    def add(self, value: ItemT) -> NoneValue:
         """Create an add command.
 
         Args:
             value: Item to add
 
         Returns:
-            AddCmd that adds the item when executed
+            NoneValue (add returns None after execution)
         """
         ...
 
-    def remove(self, value: T) -> object:
+    def remove(self, value: ItemT) -> NoneValue:
         """Create a remove command.
 
         Args:
             value: Item to remove
 
         Returns:
-            RemoveCmd that removes the item when executed
+            NoneValue (remove returns None after execution)
         """
         ...
 
-    def discard(self, value: T) -> object:
+    def discard(self, value: ItemT) -> NoneValue:
         """Create a discard command.
 
         Args:
             value: Item to discard (no error if absent)
 
         Returns:
-            DiscardCmd that discards the item when executed
+            NoneValue (discard returns None after execution)
         """
         ...
 
@@ -410,12 +510,12 @@ class MutableSetRef[T, PathT](
 
 
 @runtime_checkable
-class PrimitiveRef[T, PathT](
-    Existable[object],
-    Gettable[T, object],
-    Settable[T, object],
-    Deletable[object],
-    RefObservable[object],
+class PrimitiveRef[T, ValueT](
+    Existable[BoolValue],
+    Gettable[T, ValueT],
+    Settable[T, ValueT],
+    Deletable[NoneValue],
+    RefObservable,
     Protocol,
 ):
     """Protocol for primitive (leaf) value references.
@@ -424,7 +524,8 @@ class PrimitiveRef[T, PathT](
     They support read, write, delete, and observation.
 
     Type Parameters:
-        T: Type of the value at this location
+        T: Type of the value at this location (int, str, float, etc)
+        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, etc)
 
     Example:
         >>> if isinstance(ref, PrimitiveRef):
@@ -433,31 +534,41 @@ class PrimitiveRef[T, PathT](
         ...     delete_cmd = ref.remove()
     """
 
-    pass
-
-
-@runtime_checkable
-class ValueRef[T, PathT](
-    PrimitiveRef[T, PathT],
-    Protocol,
-):
-    """Protocol for typed value references.
-
-    Extends PrimitiveRef with value type information.
-
-    Type Parameters:
-        T: Type of the value at this location
-
-    Example:
-        >>> ref: ValueRef[int, Path]
-        >>> val = ref.get().execute(ctx)  # Returns int
-    """
-
     @property
     def value_type(self) -> type[T]:
         """Get the value type at this location.
 
         Returns:
-            Type of value stored
+            Type of value stored (int, str, float, etc)
         """
         ...
+
+    @property
+    def value_value_type(self) -> type[ValueT]:
+        """Get the ComputedValue type for this value.
+
+        Returns:
+            Type of computed value (IntValue, StrValue, FloatValue, etc)
+        """
+        ...
+
+
+@runtime_checkable
+class ValueRef[T, ValueT](
+    PrimitiveRef[T, ValueT],
+    Protocol,
+):
+    """Protocol for typed value references.
+
+    Extends PrimitiveRef - same capabilities, exists for semantic clarity.
+
+    Type Parameters:
+        T: Type of the value at this location (int, str, float, etc)
+        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, etc)
+
+    Example:
+        >>> ref: ValueRef[int, IntValue]
+        >>> val = ref.get().execute(ctx)  # Returns int
+    """
+
+    pass

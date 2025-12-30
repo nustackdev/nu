@@ -494,12 +494,11 @@ class Nestable[K, RefT](Protocol):
 
 
 @runtime_checkable
-class RefIndexable[I, IndexValueT, RefT](Protocol):
+class RefIndexable[I, RefT](Protocol):
     """Protocol for LValues that support index-based access.
 
     Type Parameters:
         I: Type of index (typically int)
-        IndexValueT: Value type for computed index (typically IntValue)
         RefT: Type of item reference returned
 
     Example:
@@ -507,7 +506,7 @@ class RefIndexable[I, IndexValueT, RefT](Protocol):
         ...     item_ref = ref[0]  # Get first item reference
     """
 
-    def __getitem__(self, key: I | IndexValueT | RValue[I | SpecialValue]) -> RefT:
+    def __getitem__(self, key: I | RValue[I | SpecialValue]) -> RefT:
         """Get reference to item at index.
 
         Args:
