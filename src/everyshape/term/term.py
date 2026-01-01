@@ -66,6 +66,7 @@ from everyshape.loc import path
 
 if TYPE_CHECKING:
     from everyshape.shape import Shape
+    from everyshape.types import SpecialValue
     from everyshape.view import View
 
     from .context import Context
@@ -307,7 +308,7 @@ class LiteralValue[LiteralT](ValueTerm[LiteralT]):
 
     children: tuple[()] = ()
 
-    def __init__(self, value: LiteralT) -> None:
+    def __init__(self, value: LiteralT | SpecialValue) -> None:
         """Initialize with a literal value.
 
         Args:
@@ -355,7 +356,7 @@ class ComputedValue[ComputedT](ValueTerm[ComputedT]):
         >>> computed.execute(ctx)  # Executes get_op
     """
 
-    def __init__(self, comp: RValue[ComputedT]) -> None:
+    def __init__(self, comp: RValue[ComputedT | SpecialValue]) -> None:
         """Initialize with a computation to compute the value.
 
         Args:

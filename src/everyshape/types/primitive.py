@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from types import NoneType
 from typing import Any, cast
 
 
@@ -29,7 +30,7 @@ __all__ = [
 # ---------------------------------------------------------
 
 # Base primitive values
-type PrimitiveValue = None | bytes | bool | int | float | complex | str
+type PrimitiveValue = NoneType | bytes | bool | int | float | complex | str
 
 # Composite values.
 #
