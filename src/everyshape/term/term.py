@@ -86,6 +86,7 @@ __all__ = [  # noqa: RUF022
     "ValueTerm",
     "LiteralValue",
     "ComputedValue",
+    "TypedValue",
     # Computations
     "Computation",
     "Operation",
@@ -388,6 +389,72 @@ class ComputedValue[ComputedT](ValueTerm[ComputedT]):
     def __repr__(self) -> str:
         """Return machine-friendly representation."""
         return f"ComputedValue({self._comp!r})"
+
+
+class TypedValue[T](ValueTerm[T]):
+    """A typed value constructor for arbitrary types.
+
+    TypedValue provides a uniform interface for creating typed values from
+    either raw values or RValue expressions. This is useful for user-defined
+    types like Datetime where users want typed value semantics.
+
+    On execution:
+    - If the input is an RValue, executes it and returns the result
+    - If the input is a raw value, returns it directly
+
+    Type Parameters:
+        T: The type of the value
+
+    Example:
+        >>> # From literal
+        >>> dt = TypedValue[Datetime](datetime.now())
+        >>> dt.execute(ctx)  # Returns the datetime directly
+
+        >>> # From RValue
+        >>> dt = TypedValue[datetime](some_rvalue)
+        >>> dt.execute(ctx)  # Executes the RValue and returns result
+    """
+
+    def __init__(self, value: T | RValue[T]) -> None:
+        """Initialize with a value or RValue.
+
+        Args:
+            value: Either a raw value of type T, or an RValue that produces T
+        """
+        self._value = value
+        if isinstance(value, RValue):
+            self.children = (value,)
+        else:
+            self.children = ()
+
+    @property
+    def value(self) -> T | RValue[T]:
+        """Get the underlying value or RValue.
+
+        Returns:
+            The stored value or RValue
+        """
+        return self._value
+
+    def execute(self, context: Context) -> T:
+        """Execute and return the typed value.
+
+        If the stored value is an RValue, executes it.
+        Otherwise returns the value directly.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            The typed value of type T
+        """
+        if isinstance(self._value, RValue):
+            return self._value.execute(context)
+        return self._value
+
+    def __repr__(self) -> str:
+        """Return machine-friendly representation."""
+        return f"TypedValue({self._value!r})"
 
 
 # =============================================================================

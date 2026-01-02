@@ -266,6 +266,102 @@ class CoreBase:
         """
         return UnknownValue(self.ifelse(self.is_special(), literal(default)))
 
+    # =========================================================================
+    # TYPE CONVERSIONS
+    # =========================================================================
+
+    def to_int(self) -> IntValue:
+        """Convert this value to an integer.
+
+        Returns:
+            IntValue containing the converted integer
+
+        Example:
+            >>> float_val.to_int()  # 3.14 -> 3
+            >>> str_val.to_int()  # "42" -> 42
+        """
+        from ..computations.conversion_ops import ToIntOp
+        from .values import IntValue
+
+        return IntValue(ToIntOp(self))
+
+    def to_float(self) -> FloatValue:
+        """Convert this value to a float.
+
+        Returns:
+            FloatValue containing the converted float
+
+        Example:
+            >>> int_val.to_float()  # 42 -> 42.0
+            >>> str_val.to_float()  # "3.14" -> 3.14
+        """
+        from ..computations.conversion_ops import ToFloatOp
+        from .values import FloatValue
+
+        return FloatValue(ToFloatOp(self))
+
+    def to_bool(self) -> BoolValue:
+        """Convert this value to a boolean.
+
+        Returns:
+            BoolValue containing the converted boolean
+
+        Example:
+            >>> int_val.to_bool()  # 0 -> False, 1 -> True
+            >>> str_val.to_bool()  # "" -> False, "x" -> True
+        """
+        from ..computations.conversion_ops import ToBoolOp
+        from .values import BoolValue
+
+        return BoolValue(ToBoolOp(self))
+
+    def to_str(self) -> StrValue:
+        """Convert this value to a string.
+
+        Returns:
+            StrValue containing the converted string
+
+        Example:
+            >>> int_val.to_str()  # 42 -> "42"
+            >>> datetime_val.to_str()  # datetime -> "2024-01-15 10:30:00"
+        """
+        from ..computations.conversion_ops import ToStrOp
+        from .values import StrValue
+
+        return StrValue(ToStrOp(self))
+
+    def to_bytes(self, encoding: str = "utf-8") -> BytesValue:
+        """Convert this value to bytes.
+
+        Args:
+            encoding: Encoding to use for string conversion
+
+        Returns:
+            BytesValue containing the converted bytes
+
+        Example:
+            >>> str_val.to_bytes()  # "hello" -> b"hello"
+        """
+        from ..computations.conversion_ops import ToBytesOp
+        from .values import BytesValue
+
+        return BytesValue(ToBytesOp(self, encoding))
+
+    def to_list[T](self) -> ListValue[T]:
+        """Convert this value to a list.
+
+        Returns:
+            ListValue containing the converted list
+
+        Example:
+            >>> tuple_val.to_list()  # (1, 2, 3) -> [1, 2, 3]
+            >>> set_val.to_list()  # {1, 2, 3} -> [1, 2, 3]
+        """
+        from ..computations.conversion_ops import ToListOp
+        from .values import ListValue
+
+        return ListValue(ToListOp(self))
+
 
 # =============================================================================
 # ATOMIC ARITHMETIC BASES

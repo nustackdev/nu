@@ -58,6 +58,19 @@ from .commands import (
     StoreCmd,
 )
 
+# Conversion operations
+from .conversion_ops import (
+    ConversionOp,
+    ToBoolOp,
+    ToBytesOp,
+    ToFloatOp,
+    ToIntOp,
+    ToListOp,
+    ToSetOp,
+    ToStrOp,
+    ToTupleOp,
+)
+
 # Mapping operations
 from .mapping_ops import (
     ContainsOp,
@@ -171,6 +184,13 @@ from .string_ops import (
 # Ternary operations
 from .ternary_ops import ConditionalOp
 
+# TypedVar operations (function/method calls, typed commands)
+from .typedval_ops import (
+    FuncCallOp,
+    MethodCallOp,
+    TypedSetCmd,
+)
+
 # Unary operations
 from .unary_ops import (
     AbsOp,
@@ -200,6 +220,24 @@ __all__ = [  # noqa: RUF022
     "NotEmptyOp",
     "IsNaNOp",
     "NotNaNOp",
+    # ==========================================================================
+    # TYPEDVALUE OPERATIONS
+    # ==========================================================================
+    "FuncCallOp",
+    "MethodCallOp",
+    "TypedSetCmd",
+    # ==========================================================================
+    # CONVERSION OPERATIONS
+    # ==========================================================================
+    "ConversionOp",
+    "ToIntOp",
+    "ToFloatOp",
+    "ToBoolOp",
+    "ToStrOp",
+    "ToBytesOp",
+    "ToListOp",
+    "ToSetOp",
+    "ToTupleOp",
     # ==========================================================================
     # BINARY OPERATIONS
     # ==========================================================================

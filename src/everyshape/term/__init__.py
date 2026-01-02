@@ -13,6 +13,7 @@ from .term import (
     Ref,
     RValue,
     Term,
+    TypedValue,
     ValueTerm,
     ViewRef,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "RValue",
     "Ref",
     "Term",
+    "TypedValue",
     "ValueTerm",
     "ViewRef",
     "all_",
