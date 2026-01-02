@@ -35,14 +35,14 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Collection",
-    "Container",
-    "Mapping",
-    "MutableMapping",
-    "MutableSequence",
-    "MutableSet",
-    "Sequence",
-    "Set",
+    "CollectionView",
+    "ContainerView",
+    "MappingView",
+    "MutableMappingView",
+    "MutableSequenceView",
+    "MutableSetView",
+    "SequenceView",
+    "SetView",
 ]
 
 
@@ -52,7 +52,7 @@ __all__ = [
 
 
 @runtime_checkable
-class Container[V](
+class ContainerView[V](
     Containable[V],
     Protocol,
 ):
@@ -64,7 +64,7 @@ class Container[V](
         V: The type of values stored in the container
 
     Example:
-        >>> if isinstance(view, Container):
+        >>> if isinstance(view, ContainerView):
         ...     if value in view:
         ...         print("Value exists")
     """
@@ -73,8 +73,8 @@ class Container[V](
 
 
 @runtime_checkable
-class Collection[V](
-    Container[V],
+class CollectionView[V](
+    ContainerView[V],
     Sizeable,
     Protocol,
 ):
@@ -87,7 +87,7 @@ class Collection[V](
         V: The type of values yielded by iteration
 
     Example:
-        >>> if isinstance(view, Collection):
+        >>> if isinstance(view, CollectionView):
         ...     size = len(view)
         ...     for item in view:
         ...         print(item)
@@ -108,8 +108,8 @@ class Collection[V](
 
 
 @runtime_checkable
-class Sequence[V](
-    Collection[int],
+class SequenceView[V](
+    CollectionView[int],
     Subscriptable[int, V],
     Convertible[PyIterable[V]],
     Sizeable,
@@ -124,7 +124,7 @@ class Sequence[V](
         V: The type of values stored in the sequence
 
     Example:
-        >>> if isinstance(view, Sequence):
+        >>> if isinstance(view, SequenceView):
         ...     first = view[0]
         ...     if value in view:
         ...         index = view.index(value)
@@ -165,8 +165,8 @@ class Sequence[V](
 
 
 @runtime_checkable
-class MutableSequence[V](
-    Sequence[V],
+class MutableSequenceView[V](
+    SequenceView[V],
     Assignable[int, V],
     Deletable[int],
     Appendable[V],
@@ -178,14 +178,14 @@ class MutableSequence[V](
 ):
     """Protocol for mutable sequences.
 
-    Extends Sequence with mutation operations: assignment, deletion,
+    Extends SequenceView with mutation operations: assignment, deletion,
     insertion, and appending.
 
     Type Parameters:
         V: The type of values stored in the sequence
 
     Example:
-        >>> if isinstance(view, MutableSequence):
+        >>> if isinstance(view, MutableSequenceView):
         ...     view[0] = value
         ...     view.append(value)
         ...     view.insert(1, value)
@@ -245,8 +245,8 @@ class MutableSequence[V](
 
 
 @runtime_checkable
-class Mapping[K, V](
-    Collection[K],
+class MappingView[K, V](
+    CollectionView[K],
     Subscriptable[K, V],
     Convertible[PyMapping[K, V]],
     Sizeable,
@@ -263,7 +263,7 @@ class Mapping[K, V](
         V: The type of values
 
     Example:
-        >>> if isinstance(view, Mapping):
+        >>> if isinstance(view, MappingView):
         ...     value = view["key"]
         ...     if "key" in view:
         ...         keys = list(view.keys())
@@ -307,8 +307,8 @@ class Mapping[K, V](
 
 
 @runtime_checkable
-class MutableMapping[K, V](
-    Mapping[K, V],
+class MutableMappingView[K, V](
+    MappingView[K, V],
     Assignable[K, V],
     Deletable[K],
     Clearable,
@@ -319,7 +319,7 @@ class MutableMapping[K, V](
 ):
     """Protocol for mutable mappings.
 
-    Extends Mapping with mutation operations: assignment, deletion,
+    Extends MappingView with mutation operations: assignment, deletion,
     and updates.
 
     Type Parameters:
@@ -327,7 +327,7 @@ class MutableMapping[K, V](
         V: The type of values
 
     Example:
-        >>> if isinstance(view, MutableMapping):
+        >>> if isinstance(view, MutableMappingView):
         ...     view["key"] = value
         ...     del view["key"]
         ...     view.update({"key": value})
@@ -387,8 +387,8 @@ class MutableMapping[K, V](
 
 
 @runtime_checkable
-class Set[V](
-    Collection[V],
+class SetView[V](
+    CollectionView[V],
     Convertible[PySet[V]],
     Sizeable,
     Protocol,
@@ -402,7 +402,7 @@ class Set[V](
         V: The type of values in the set
 
     Example:
-        >>> if isinstance(view, Set):
+        >>> if isinstance(view, SetView):
         ...     if value in view:
         ...         if view.issubset(other):
         ...             print("Is subset")
@@ -443,8 +443,8 @@ class Set[V](
 
 
 @runtime_checkable
-class MutableSet[V](
-    Set[V],
+class MutableSetView[V](
+    SetView[V],
     Clearable,
     Initializable[PySet[V]],
     Observable,
@@ -452,7 +452,7 @@ class MutableSet[V](
 ):
     """Protocol for mutable sets.
 
-    Extends Set with mutation operations: adding, removing, and clearing.
+    Extends SetView with mutation operations: adding, removing, and clearing.
     Unlike sequences and mappings, sets do not support indexed access or
     appending - they use add() and discard() for value-based operations.
 
@@ -460,7 +460,7 @@ class MutableSet[V](
         V: The type of values in the set
 
     Example:
-        >>> if isinstance(view, MutableSet):
+        >>> if isinstance(view, MutableSetView):
         ...     view.add(value)
         ...     view.discard(value)
         ...     view.clear()

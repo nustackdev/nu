@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "Addable",
     "Appendable",
     "Assignable",
     "ChildObservable",
@@ -26,11 +27,16 @@ __all__ = [
     "Convertible",
     "Deletable",
     "DescendantsObservable",
+    "Discardable",
     "Initializable",
+    "Insertable",
     "Nestable",
     "Observable",
+    "Poppable",
+    "Removable",
     "Sizeable",
     "Subscriptable",
+    "is_addable",
     "is_appendable",
     "is_assignable",
     "is_child_observable",
@@ -39,9 +45,13 @@ __all__ = [
     "is_convertible",
     "is_deletable",
     "is_descendants_observable",
+    "is_discardable",
     "is_initializable",
+    "is_insertable",
     "is_nestable",
     "is_observable",
+    "is_poppable",
+    "is_removable",
     "is_sizeable",
     "is_subscriptable",
 ]
@@ -319,6 +329,134 @@ class Appendable[V](View, Protocol):
 
 
 @runtime_checkable
+class Insertable[V](View, Protocol):
+    """Protocol for containers that support inserting items at a specific index.
+
+    Insertable containers implement insert() to add items at a given position.
+
+    Type Parameters:
+        V: The type of value to insert
+
+    Example:
+        >>> if isinstance(container, Insertable):
+        ...     container.insert(0, value)
+    """
+
+    def insert(self, index: int, value: V) -> None:
+        """Insert value at index.
+
+        Args:
+            index: Position to insert at
+            value: Value to insert
+        """
+        ...
+
+
+@runtime_checkable
+class Poppable[V](View, Protocol):
+    """Protocol for containers that support popping items.
+
+    Poppable containers implement pop() to remove and return items.
+
+    Type Parameters:
+        V: The type of value to pop
+
+    Example:
+        >>> if isinstance(container, Poppable):
+        ...     value = container.pop()
+        ...     value = container.pop(0)  # Pop from specific index
+    """
+
+    def pop(self, index: int = -1) -> V | Empty:
+        """Remove and return item at index.
+
+        Args:
+            index: Position to remove from (default: last item)
+
+        Returns:
+            Removed value
+
+        Raises:
+            IndexError: If index out of range
+        """
+        ...
+
+
+@runtime_checkable
+class Addable[V](View, Protocol):
+    """Protocol for containers that support adding items (sets).
+
+    Addable containers implement add() to add items to a set.
+
+    Type Parameters:
+        V: The type of value to add
+
+    Example:
+        >>> if isinstance(container, Addable):
+        ...     container.add(value)
+    """
+
+    def add(self, value: V) -> None:
+        """Add value to container.
+
+        Args:
+            value: Value to add
+        """
+        ...
+
+
+@runtime_checkable
+class Removable[V](View, Protocol):
+    """Protocol for containers that support removing items by value.
+
+    Removable containers implement remove() to remove items by value.
+    Raises KeyError if the value is not present.
+
+    Type Parameters:
+        V: The type of value to remove
+
+    Example:
+        >>> if isinstance(container, Removable):
+        ...     container.remove(value)
+    """
+
+    def remove(self, value: V) -> None:
+        """Remove value from container.
+
+        Args:
+            value: Value to remove
+
+        Raises:
+            KeyError: If value not in container
+        """
+        ...
+
+
+@runtime_checkable
+class Discardable[V](View, Protocol):
+    """Protocol for containers that support discarding items by value.
+
+    Discardable containers implement discard() to remove items by value.
+    Unlike Removable, does not raise an error if value is not present.
+
+    Type Parameters:
+        V: The type of value to discard
+
+    Example:
+        >>> if isinstance(container, Discardable):
+        ...     container.discard(value)  # No error if missing
+    """
+
+    def discard(self, value: V) -> None:
+        """Discard value from container (no error if absent).
+
+        Args:
+            value: Value to discard
+        """
+        ...
+
+
+@runtime_checkable
 class Observable(View, Protocol):
     """Protocol for containers that support observing changes.
 
@@ -556,6 +694,66 @@ def is_appendable(obj: object) -> TypeGuard[Appendable]:
         True if object implements Appendable protocol
     """
     return isinstance(obj, Appendable)
+
+
+def is_insertable(obj: object) -> TypeGuard[Insertable]:
+    """Check if object supports inserting items at index.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Insertable protocol
+    """
+    return isinstance(obj, Insertable)
+
+
+def is_poppable(obj: object) -> TypeGuard[Poppable]:
+    """Check if object supports popping items.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Poppable protocol
+    """
+    return isinstance(obj, Poppable)
+
+
+def is_addable(obj: object) -> TypeGuard[Addable]:
+    """Check if object supports adding items (sets).
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Addable protocol
+    """
+    return isinstance(obj, Addable)
+
+
+def is_removable(obj: object) -> TypeGuard[Removable]:
+    """Check if object supports removing items by value.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Removable protocol
+    """
+    return isinstance(obj, Removable)
+
+
+def is_discardable(obj: object) -> TypeGuard[Discardable]:
+    """Check if object supports discarding items by value.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements Discardable protocol
+    """
+    return isinstance(obj, Discardable)
 
 
 def is_observable(obj: object) -> TypeGuard[Observable]:

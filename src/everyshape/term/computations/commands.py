@@ -22,7 +22,17 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.types import SpecialValue, Value
-from everyshape.view import Appendable, Assignable, Clearable, Deletable, Initializable
+from everyshape.view import (
+    Addable,
+    Appendable,
+    Assignable,
+    Clearable,
+    Deletable,
+    Discardable,
+    Initializable,
+    Poppable,
+    Removable,
+)
 
 from ..term import Command, PrimitiveRef, RValue, ViewRef
 
@@ -516,11 +526,11 @@ class PopCmd[T: Value](Command[T]):
         else:
             view = path.navigate_view(root_view, view_path)
 
-        # Pop through view - views should have pop method
-        if hasattr(view, "pop"):
-            return view.pop(index)
+        # Pop through view
+        if not isinstance(view, Poppable):
+            raise TypeError(f"View {view.__class__.__name__} does not implement Poppable protocol.")
 
-        raise TypeError(f"View {view.__class__.__name__} does not support pop operation.")
+        return view.pop(index)
 
     def __repr__(self) -> str:
         return f"PopCmd({self.ref!r}, {self.index_expr!r})"
@@ -589,11 +599,11 @@ class AddCmd[T: Value](Command[None]):
             view = path.navigate_view(root_view, view_path)
 
         # Add through view
-        if hasattr(view, "add"):
-            view.add(value)
-            return None
+        if not isinstance(view, Addable):
+            raise TypeError(f"View {view.__class__.__name__} does not implement Addable protocol.")
 
-        raise TypeError(f"View {view.__class__.__name__} does not support add operation.")
+        view.add(value)
+        return None
 
     def __repr__(self) -> str:
         return f"AddCmd({self.ref!r}, {self.value_expr!r})"
@@ -661,11 +671,13 @@ class RemoveCmd[T: Value](Command[None]):
             view = path.navigate_view(root_view, view_path)
 
         # Remove through view
-        if hasattr(view, "remove"):
-            view.remove(value)
-            return None
+        if not isinstance(view, Removable):
+            raise TypeError(
+                f"View {view.__class__.__name__} does not implement Removable protocol."
+            )
 
-        raise TypeError(f"View {view.__class__.__name__} does not support remove operation.")
+        view.remove(value)
+        return None
 
     def __repr__(self) -> str:
         return f"RemoveCmd({self.ref!r}, {self.value_expr!r})"
@@ -730,11 +742,13 @@ class DiscardCmd[T: Value](Command[None]):
             view = path.navigate_view(root_view, view_path)
 
         # Discard through view
-        if hasattr(view, "discard"):
-            view.discard(value)
-            return None
+        if not isinstance(view, Discardable):
+            raise TypeError(
+                f"View {view.__class__.__name__} does not implement Discardable protocol."
+            )
 
-        raise TypeError(f"View {view.__class__.__name__} does not support discard operation.")
+        view.discard(value)
+        return None
 
     def __repr__(self) -> str:
         return f"DiscardCmd({self.ref!r}, {self.value_expr!r})"
