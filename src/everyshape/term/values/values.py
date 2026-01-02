@@ -78,10 +78,6 @@ __all__ = [
 
 
 class IntValue(
-    NumericBase[
-        "int | float | FloatValue | IntValue",
-        "FloatValue | IntValue",
-    ],
     ComparisonBase["int | float | FloatValue | IntValue"],
     LogicalBase["bool | int | BoolValue | IntValue", "BoolValue"],
     BitwiseBase[
@@ -94,7 +90,11 @@ class IntValue(
     """RValue representing an integer.
 
     Supports full arithmetic, comparison, logical, and bitwise operations.
-    Operations return appropriate RValue types.
+    Operations return appropriate RValue types matching Python semantics:
+    - int + int → int
+    - int + float → float
+    - int / int → float (true division)
+    - int // int → int (floor division)
 
     Example:
         >>> val = IntValue(42)
@@ -102,9 +102,6 @@ class IntValue(
         >>> is_positive = val > 0  # Returns BoolValue
         >>> masked = val.bitand(0xFF)  # Returns IntValue
     """
-
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
-        return IntValue(operand)
 
     def _wrap_bitwise_result(self, operand: RValue) -> RValue:
         return IntValue(operand)
@@ -118,6 +115,176 @@ class IntValue(
     def _wrap_core_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)
 
+    # =========================================================================
+    # ARITHMETIC OPERATIONS WITH PROPER OVERLOADS
+    # Python semantics: int op int -> int, int op float -> float
+    # =========================================================================
+
+    # --- Addition ---
+    @overload
+    def __add__(self, other: int | IntValue) -> IntValue: ...
+    @overload
+    def __add__(self, other: float | FloatValue) -> FloatValue: ...
+    def __add__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+        from ..computations.binary_ops import AddOp
+
+        if isinstance(other, (float, FloatValue)):
+            return FloatValue(AddOp(self, literal(other)))
+        return IntValue(AddOp(self, literal(other)))
+
+    @overload
+    def __radd__(self, other: int) -> IntValue: ...
+    @overload
+    def __radd__(self, other: float) -> FloatValue: ...
+    def __radd__(self, other: int | float) -> IntValue | FloatValue:
+        from ..computations.binary_ops import AddOp
+
+        if isinstance(other, float):
+            return FloatValue(AddOp(literal(other), self))
+        return IntValue(AddOp(literal(other), self))
+
+    # --- Subtraction ---
+    @overload
+    def __sub__(self, other: int | IntValue) -> IntValue: ...
+    @overload
+    def __sub__(self, other: float | FloatValue) -> FloatValue: ...
+    def __sub__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+        from ..computations.binary_ops import SubOp
+
+        if isinstance(other, (float, FloatValue)):
+            return FloatValue(SubOp(self, literal(other)))
+        return IntValue(SubOp(self, literal(other)))
+
+    @overload
+    def __rsub__(self, other: int) -> IntValue: ...
+    @overload
+    def __rsub__(self, other: float) -> FloatValue: ...
+    def __rsub__(self, other: int | float) -> IntValue | FloatValue:
+        from ..computations.binary_ops import SubOp
+
+        if isinstance(other, float):
+            return FloatValue(SubOp(literal(other), self))
+        return IntValue(SubOp(literal(other), self))
+
+    # --- Multiplication ---
+    @overload
+    def __mul__(self, other: int | IntValue) -> IntValue: ...
+    @overload
+    def __mul__(self, other: float | FloatValue) -> FloatValue: ...
+    def __mul__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+        from ..computations.binary_ops import MulOp
+
+        if isinstance(other, (float, FloatValue)):
+            return FloatValue(MulOp(self, literal(other)))
+        return IntValue(MulOp(self, literal(other)))
+
+    @overload
+    def __rmul__(self, other: int) -> IntValue: ...
+    @overload
+    def __rmul__(self, other: float) -> FloatValue: ...
+    def __rmul__(self, other: int | float) -> IntValue | FloatValue:
+        from ..computations.binary_ops import MulOp
+
+        if isinstance(other, float):
+            return FloatValue(MulOp(literal(other), self))
+        return IntValue(MulOp(literal(other), self))
+
+    # --- True Division (always returns float in Python) ---
+    def __truediv__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import DivOp
+
+        return FloatValue(DivOp(self, literal(other)))
+
+    def __rtruediv__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import DivOp
+
+        return FloatValue(DivOp(literal(other), self))
+
+    # --- Floor Division ---
+    @overload
+    def __floordiv__(self, other: int | IntValue) -> IntValue: ...
+    @overload
+    def __floordiv__(self, other: float | FloatValue) -> FloatValue: ...
+    def __floordiv__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+        from ..computations.binary_ops import FloorDivOp
+
+        if isinstance(other, (float, FloatValue)):
+            return FloatValue(FloorDivOp(self, literal(other)))
+        return IntValue(FloorDivOp(self, literal(other)))
+
+    @overload
+    def __rfloordiv__(self, other: int) -> IntValue: ...
+    @overload
+    def __rfloordiv__(self, other: float) -> FloatValue: ...
+    def __rfloordiv__(self, other: int | float) -> IntValue | FloatValue:
+        from ..computations.binary_ops import FloorDivOp
+
+        if isinstance(other, float):
+            return FloatValue(FloorDivOp(literal(other), self))
+        return IntValue(FloorDivOp(literal(other), self))
+
+    # --- Modulo ---
+    @overload
+    def __mod__(self, other: int | IntValue) -> IntValue: ...
+    @overload
+    def __mod__(self, other: float | FloatValue) -> FloatValue: ...
+    def __mod__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+        from ..computations.binary_ops import ModOp
+
+        if isinstance(other, (float, FloatValue)):
+            return FloatValue(ModOp(self, literal(other)))
+        return IntValue(ModOp(self, literal(other)))
+
+    @overload
+    def __rmod__(self, other: int) -> IntValue: ...
+    @overload
+    def __rmod__(self, other: float) -> FloatValue: ...
+    def __rmod__(self, other: int | float) -> IntValue | FloatValue:
+        from ..computations.binary_ops import ModOp
+
+        if isinstance(other, float):
+            return FloatValue(ModOp(literal(other), self))
+        return IntValue(ModOp(literal(other), self))
+
+    # --- Power ---
+    @overload
+    def __pow__(self, other: int | IntValue) -> IntValue: ...
+    @overload
+    def __pow__(self, other: float | FloatValue) -> FloatValue: ...
+    def __pow__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+        from ..computations.binary_ops import PowOp
+
+        if isinstance(other, (float, FloatValue)):
+            return FloatValue(PowOp(self, literal(other)))
+        return IntValue(PowOp(self, literal(other)))
+
+    @overload
+    def __rpow__(self, other: int) -> IntValue: ...
+    @overload
+    def __rpow__(self, other: float) -> FloatValue: ...
+    def __rpow__(self, other: int | float) -> IntValue | FloatValue:
+        from ..computations.binary_ops import PowOp
+
+        if isinstance(other, float):
+            return FloatValue(PowOp(literal(other), self))
+        return IntValue(PowOp(literal(other), self))
+
+    # --- Unary Operations ---
+    def __neg__(self) -> IntValue:
+        from ..computations.unary_ops import NegOp
+
+        return IntValue(NegOp(self))
+
+    def __pos__(self) -> IntValue:
+        from ..computations.unary_ops import PosOp
+
+        return IntValue(PosOp(self))
+
+    def __abs__(self) -> IntValue:
+        from ..computations.unary_ops import AbsOp
+
+        return IntValue(AbsOp(self))
+
 
 # =============================================================================
 # FLOAT VALUE
@@ -125,10 +292,6 @@ class IntValue(
 
 
 class FloatValue(
-    NumericBase[
-        "int | float | FloatValue | IntValue",
-        "FloatValue",
-    ],
     ComparisonBase["int | float | FloatValue | IntValue"],
     LogicalBase["bool | float | BoolValue | FloatValue", "BoolValue"],
     CoreBase,
@@ -138,6 +301,7 @@ class FloatValue(
 
     Supports full arithmetic, comparison, and logical operations.
     Does not support bitwise operations.
+    All arithmetic operations return FloatValue (Python semantics).
 
     Example:
         >>> val = FloatValue(3.14)
@@ -145,9 +309,6 @@ class FloatValue(
         >>> is_positive = val > 0  # Returns BoolValue
         >>> safe = val.or_default(0.0)  # Returns FloatValue if not NaN
     """
-
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
-        return FloatValue(operand)
 
     def _wrap_comparison_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)
@@ -157,6 +318,103 @@ class FloatValue(
 
     def _wrap_core_result(self, operand: RValue) -> RValue:
         return BoolValue(operand)
+
+    # =========================================================================
+    # ARITHMETIC OPERATIONS - All return FloatValue (Python semantics)
+    # =========================================================================
+
+    # --- Addition ---
+    def __add__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import AddOp
+
+        return FloatValue(AddOp(self, literal(other)))
+
+    def __radd__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import AddOp
+
+        return FloatValue(AddOp(literal(other), self))
+
+    # --- Subtraction ---
+    def __sub__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import SubOp
+
+        return FloatValue(SubOp(self, literal(other)))
+
+    def __rsub__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import SubOp
+
+        return FloatValue(SubOp(literal(other), self))
+
+    # --- Multiplication ---
+    def __mul__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import MulOp
+
+        return FloatValue(MulOp(self, literal(other)))
+
+    def __rmul__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import MulOp
+
+        return FloatValue(MulOp(literal(other), self))
+
+    # --- True Division ---
+    def __truediv__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import DivOp
+
+        return FloatValue(DivOp(self, literal(other)))
+
+    def __rtruediv__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import DivOp
+
+        return FloatValue(DivOp(literal(other), self))
+
+    # --- Floor Division ---
+    def __floordiv__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import FloorDivOp
+
+        return FloatValue(FloorDivOp(self, literal(other)))
+
+    def __rfloordiv__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import FloorDivOp
+
+        return FloatValue(FloorDivOp(literal(other), self))
+
+    # --- Modulo ---
+    def __mod__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import ModOp
+
+        return FloatValue(ModOp(self, literal(other)))
+
+    def __rmod__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import ModOp
+
+        return FloatValue(ModOp(literal(other), self))
+
+    # --- Power ---
+    def __pow__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+        from ..computations.binary_ops import PowOp
+
+        return FloatValue(PowOp(self, literal(other)))
+
+    def __rpow__(self, other: int | float) -> FloatValue:
+        from ..computations.binary_ops import PowOp
+
+        return FloatValue(PowOp(literal(other), self))
+
+    # --- Unary Operations ---
+    def __neg__(self) -> FloatValue:
+        from ..computations.unary_ops import NegOp
+
+        return FloatValue(NegOp(self))
+
+    def __pos__(self) -> FloatValue:
+        from ..computations.unary_ops import PosOp
+
+        return FloatValue(PosOp(self))
+
+    def __abs__(self) -> FloatValue:
+        from ..computations.unary_ops import AbsOp
+
+        return FloatValue(AbsOp(self))
 
 
 # =============================================================================
