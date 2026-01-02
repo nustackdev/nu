@@ -293,38 +293,52 @@ class SettableBase[T]:
     value_type: type[T]
 
     @overload
-    def set(self: SettableBase[int], value: T | RValue[T | SpecialValue]) -> IntValue: ...
+    def set(
+        self: SettableBase[int], value: T | SpecialValue | RValue[T | SpecialValue]
+    ) -> IntValue: ...
 
     @overload
-    def set(self: SettableBase[str], value: T | RValue[T | SpecialValue]) -> StrValue: ...
+    def set(
+        self: SettableBase[str], value: T | SpecialValue | RValue[T | SpecialValue]
+    ) -> StrValue: ...
 
     @overload
-    def set(self: SettableBase[bool], value: T | RValue[T | SpecialValue]) -> BoolValue: ...
+    def set(
+        self: SettableBase[bool], value: T | SpecialValue | RValue[T | SpecialValue]
+    ) -> BoolValue: ...
 
     @overload
-    def set(self: SettableBase[float], value: T | RValue[T | SpecialValue]) -> FloatValue: ...
+    def set(
+        self: SettableBase[float], value: T | SpecialValue | RValue[T | SpecialValue]
+    ) -> FloatValue: ...
 
     @overload
-    def set(self: SettableBase[bytes], value: T | RValue[T | SpecialValue]) -> BytesValue: ...
+    def set(
+        self: SettableBase[bytes], value: T | SpecialValue | RValue[T | SpecialValue]
+    ) -> BytesValue: ...
 
     @overload
-    def set(self: SettableBase[None], value: T | RValue[T | SpecialValue]) -> NoneValue: ...
+    def set(
+        self: SettableBase[None], value: T | SpecialValue | RValue[T | SpecialValue]
+    ) -> NoneValue: ...
 
     # Collections
     @overload
     def set[V](
-        self: SettableBase[list[V]], value: T | RValue[T | SpecialValue]
+        self: SettableBase[list[V]], value: T | SpecialValue | RValue[T | SpecialValue]
     ) -> ListValue[V]: ...
 
     @overload
     def set[K, V](
-        self: SettableBase[dict[K, V]], value: T | RValue[T | SpecialValue]
+        self: SettableBase[dict[K, V]], value: T | SpecialValue | RValue[T | SpecialValue]
     ) -> DictValue[K, V]: ...
 
     @overload
-    def set[V](self: SettableBase[set[V]], value: T | RValue[T | SpecialValue]) -> SetValue[V]: ...
+    def set[V](
+        self: SettableBase[set[V]], value: T | SpecialValue | RValue[T | SpecialValue]
+    ) -> SetValue[V]: ...
 
-    def set(self, value: T | RValue[T | SpecialValue]) -> object:
+    def set(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> object:
         """Create a set command for this location.
 
         Args:
@@ -365,7 +379,7 @@ class StorableBase[W, T](ABC):
         """
         ...
 
-    def store(self, value: T | RValue[T | SpecialValue]) -> W:
+    def store(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> W:
         """Create a store command for this container.
 
         Args:
@@ -484,7 +498,9 @@ class ViewObservableBase:
         """
         return OnChangeOp(self)
 
-    def on_child_change(self, address: str | RValue[str]) -> OnChildChangeOp:
+    def on_child_change(
+        self, address: str | SpecialValue | RValue[str | SpecialValue]
+    ) -> OnChildChangeOp:
         """Subscribe to changes on a specific child.
 
         Args:
@@ -596,7 +612,7 @@ class SequenceIndexableBase[T, ItemRefT, SliceRefT](ABC):
     """
 
     @abstractmethod
-    def _create_item_ref(self, index: int | RValue[int]) -> ItemRefT:
+    def _create_item_ref(self, index: int | SpecialValue | RValue[int | SpecialValue]) -> ItemRefT:
         """Create a reference to an item at the given index.
 
         Args:
@@ -640,9 +656,11 @@ class SequenceIndexableBase[T, ItemRefT, SliceRefT](ABC):
     def __getitem__(self, key: slice) -> SliceRefT: ...
 
     @overload
-    def __getitem__(self, key: RValue[int]) -> ItemRefT: ...
+    def __getitem__(self, key: RValue[int | SpecialValue]) -> ItemRefT: ...
 
-    def __getitem__(self, key: int | slice | RValue[int]) -> ItemRefT | SliceRefT:
+    def __getitem__(
+        self, key: int | slice | SpecialValue | RValue[int | SpecialValue]
+    ) -> ItemRefT | SliceRefT:
         """Get item or slice reference.
 
         Args:
@@ -787,7 +805,7 @@ class SequenceIterableBase[T]:
         """
         return IntValue(FindIndexOp(self, predicate))
 
-    def index(self, value: T) -> IntValue:
+    def index(self, value: T | SpecialValue) -> IntValue:
         """Find index of value in sequence.
 
         Args:
@@ -801,7 +819,7 @@ class SequenceIterableBase[T]:
         """
         return IntValue(IndexOp(self, value))
 
-    def count(self, value: T) -> IntValue:
+    def count(self, value: T | SpecialValue) -> IntValue:
         """Count occurrences of value in sequence.
 
         Args:
@@ -822,7 +840,7 @@ class AppendableBase[T]:
     Implements the Appendable protocol with append() method.
     """
 
-    def append(self, value: T | RValue[T | SpecialValue]) -> NoneValue:
+    def append(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
         """Create an append command.
 
         Args:
@@ -845,8 +863,8 @@ class InsertableBase[T]:
 
     def insert(
         self,
-        index: int | RValue[int | SpecialValue],
-        value: T | RValue[T | SpecialValue],
+        index: int | SpecialValue | RValue[int | SpecialValue],
+        value: T | SpecialValue | RValue[T | SpecialValue],
     ) -> NoneValue:
         """Create an insert command.
 
@@ -875,40 +893,40 @@ class PoppableBase[T]:
     @overload
     def pop(
         self: PoppableBase[int],
-        index: int | RValue[int | SpecialValue] | None = None,
+        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
     ) -> IntValue: ...
 
     @overload
     def pop(
         self: PoppableBase[str],
-        index: int | RValue[int | SpecialValue] | None = None,
+        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
     ) -> StrValue: ...
 
     @overload
     def pop(
         self: PoppableBase[float],
-        index: int | RValue[int | SpecialValue] | None = None,
+        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
     ) -> FloatValue: ...
 
     @overload
     def pop(
         self: PoppableBase[bool],
-        index: int | RValue[int | SpecialValue] | None = None,
+        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
     ) -> BoolValue: ...
 
     @overload
     def pop[V](
         self: PoppableBase[list[V]],
-        index: int | RValue[int | SpecialValue] | None = None,
+        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
     ) -> ListValue[V]: ...
 
     @overload
     def pop[K, V](
         self: PoppableBase[dict[K, V]],
-        index: int | RValue[int | SpecialValue] | None = None,
+        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
     ) -> DictValue[K, V]: ...
 
-    def pop(self, index: int | RValue[int | SpecialValue] | None = None) -> object:
+    def pop(self, index: int | SpecialValue | RValue[int | SpecialValue] | None = None) -> object:
         """Create a pop command.
 
         Args:
@@ -938,7 +956,7 @@ class MappingNestableBase[K, ChildRefT]:
     """
 
     @abstractmethod
-    def _create_child_ref(self, key: K | RValue[K]) -> ChildRefT:
+    def _create_child_ref(self, key: K | SpecialValue | RValue[K | SpecialValue]) -> ChildRefT:
         """Create a reference to a child at the given key.
 
         Args:
@@ -956,7 +974,7 @@ class MappingNestableBase[K, ChildRefT]:
         """
         ...
 
-    def __getitem__(self, key: K | RValue[K]) -> ChildRefT:
+    def __getitem__(self, key: K | SpecialValue | RValue[K | SpecialValue]) -> ChildRefT:
         """Get child reference by key.
 
         Args:
@@ -1162,7 +1180,7 @@ class SetAddableBase[T]:
     Implements add() method for sets.
     """
 
-    def add(self, value: T | RValue[T | SpecialValue]) -> NoneValue:
+    def add(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
         """Create an add command.
 
         Args:
@@ -1183,7 +1201,7 @@ class SetRemovableBase[T]:
     Implements remove() and discard() methods for sets.
     """
 
-    def remove(self, value: T | RValue[T | SpecialValue]) -> NoneValue:
+    def remove(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
         """Create a remove command.
 
         Args:
@@ -1200,7 +1218,7 @@ class SetRemovableBase[T]:
         """
         return NoneValue(RemoveCmd(self, literal(value)))
 
-    def discard(self, value: T | RValue[T | SpecialValue]) -> NoneValue:
+    def discard(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
         """Create a discard command.
 
         Args:
