@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 
@@ -12,6 +13,8 @@ __all__ = [
     "computed",
     "literal",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def literal(value: object) -> RValue:
@@ -70,6 +73,7 @@ def literal(value: object) -> RValue:
     elif isinstance(value, frozenset):
         return FrozenSetLiteral(value)
     else:
+        logger.error(f"Not supported type {value.__class__.__name__}")
         raise TypeError(f"Not supported type {value.__class__.__name__}")
 
 
@@ -95,6 +99,7 @@ def computed(result_type: object, op: RValue) -> ComputedValue:
         SetValue,
         StrValue,
         TupleValue,
+        UnknownValue,
     )
 
     if result_type is int:
@@ -120,4 +125,5 @@ def computed(result_type: object, op: RValue) -> ComputedValue:
     elif result_type is frozenset:
         return FrozenSetValue(op)
     else:
-        raise TypeError(f"Unknown type `{result_type.__class__.__name__}`")
+        logger.debug(f"Unknown type `{result_type}` for term `{op}`")
+        return UnknownValue(op)
