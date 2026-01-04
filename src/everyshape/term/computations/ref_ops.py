@@ -30,6 +30,7 @@ Mapping Operations:
     - FindKeyOp: Find key by value predicate
     - FindValueOp: Find value by predicate
     - FindItemOp: Find item by predicate
+    - MappingGetOp: Get value by key with default
 """
 
 from __future__ import annotations
@@ -78,6 +79,7 @@ __all__ = [  # noqa: RUF022
     "FindKeyOp",
     "FindValueOp",
     "FindItemOp",
+    "MappingGetOp",
 ]
 
 
@@ -1402,3 +1404,68 @@ class FindItemOp[K, V](Operation[tuple[K, V]]):
 
     def __repr__(self) -> str:
         return f"FindItemOp({self.ref!r}, {self.predicate!r})"
+
+
+class MappingGetOp[K, V](Operation[V | SpecialValue]):
+    """Get operation for mapping containers.
+
+    Gets a value by key from a mapping, returning a default if not found.
+    This operates on the container level (ViewRef) rather than individual items.
+
+    Type Parameters:
+        K: Type of keys
+        V: Type of values
+
+    Example:
+        >>> get_op = MappingGetOp(dict_ref, "key", "default")
+        >>> value = get_op.execute(ctx)  # Returns V or default
+    """
+
+    def __init__(
+        self,
+        ref: ViewRef[view_capabilities.Subscriptable[K, V]] | UnionRefBases,
+        key: K,
+        default: V | SpecialValue | None = None,
+    ) -> None:
+        """Initialize mapping get operation.
+
+        Args:
+            ref: Mapping reference to get from
+            key: Key to look up
+            default: Value to return if key not found (default: Empty)
+        """
+        self.ref = cast("ViewRef[view_capabilities.Subscriptable[K, V]]", ref)
+        self.key = key
+        self.default: V | SpecialValue = default if default is not None else Empty()
+        self.children = (cast("ViewRef[view_capabilities.Subscriptable[K, V]]", ref),)
+
+    def execute(self, context: Context) -> V | SpecialValue:
+        """Execute get operation.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            Value at key, or default if not found
+        """
+        view_path = self.ref.resolve(context)
+        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+
+        try:
+            if not view_path:
+                view = root_view
+            else:
+                view = path.navigate_view(root_view, view_path)
+
+            if isinstance(view, view_capabilities.Subscriptable):
+                try:
+                    return view[self.key]
+                except (KeyError, IndexError):
+                    return self.default
+
+            raise TypeError(f"View {view.__class__.__name__} is not subscriptable")
+        except (KeyError, IndexError):
+            return self.default
+
+    def __repr__(self) -> str:
+        return f"MappingGetOp({self.ref!r}, {self.key!r}, {self.default!r})"

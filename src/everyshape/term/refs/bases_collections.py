@@ -86,6 +86,7 @@ from .bases import (
     ItemsQueryableBase,
     KeysQueryableBase,
     LengthableBase,
+    MappingAccessibleBase,
     MappingIterableBase,
     MappingNestableBase,
     PoppableBase,
@@ -311,6 +312,7 @@ class MappingRefBase[
     ValuesQueryableBase[ValueT],
     ItemsQueryableBase[KeyT, ValueT],
     MappingIterableBase[KeyT, ValueT],
+    MappingAccessibleBase[KeyT, ValueT],
     ViewRef,
     ABC,
 ):
@@ -327,6 +329,7 @@ class MappingRefBase[
     - values() from ValuesQueryableBase
     - items() from ItemsQueryableBase
     - map_values(), filter(), reduce(), find_key(), etc. from MappingIterableBase
+    - get(), set_item(), remove_item() from MappingAccessibleBase
 
     Implements MappingRef protocol from collections.py.
 

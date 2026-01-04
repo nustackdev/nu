@@ -31,8 +31,10 @@ Slots are declarative - they describe structure, not behavior.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
+
+from everyshape.term.refs.bases_collections import MutableMappingRefBase
 
 
 if TYPE_CHECKING:
@@ -158,7 +160,7 @@ class SlotDescriptor:
 # ============================================================================
 
 
-class ShapeMeta(type):
+class ShapeMeta(ABCMeta):
     """Metaclass that collects slot definitions into _slots dict.
 
     Processing steps:
@@ -220,7 +222,7 @@ class ShapeMeta(type):
 # ============================================================================
 
 
-class Shape(metaclass=ShapeMeta):
+class Shape(MutableMappingRefBase, metaclass=ShapeMeta):
     """Base class for declarative structure definitions.
 
     Shapes define what exists and where it lives, using Slots.
@@ -256,11 +258,3 @@ class Shape(metaclass=ShapeMeta):
 
     _slots: ClassVar[dict[str, Slot]] = {}
     """Mapping of field names to Slot definitions."""
-
-    def extract(self) -> object:
-        """Extracts Shape data."""
-        ...
-
-    def store(self, obj: object) -> None:
-        """Stores Shape data."""
-        ...

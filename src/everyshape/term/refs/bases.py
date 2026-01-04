@@ -31,6 +31,8 @@ from ..computations.commands import (
     DeleteCmd,
     DiscardCmd,
     InsertCmd,
+    MappingRemoveCmd,
+    MappingSetCmd,
     PopCmd,
     RemoveCmd,
     SetCmd,
@@ -61,6 +63,7 @@ from ..computations.ref_ops import (
     LengthOp,
     MapItemsOp,
     MapOp,
+    MappingGetOp,
     MapValuesOp,
     MissingOp,
     ReduceItemsOp,
@@ -118,6 +121,7 @@ __all__ = [  # noqa: RUF022
     # Mapping capability bases
     "MappingNestableBase",
     "MappingIterableBase",
+    "MappingAccessibleBase",
     # Set capability bases
     "SetAddableBase",
     "SetRemovableBase",
@@ -144,6 +148,7 @@ type UnionRefBases = (
     | PoppableBase
     | MappingNestableBase
     | MappingIterableBase
+    | MappingAccessibleBase
     | SetAddableBase
     | SetRemovableBase
 )
@@ -1177,6 +1182,197 @@ class MappingIterableBase[KeyT, ValueT]:
             >>> item = dict_ref.find_item(lambda k, v: k.startswith("admin")).execute(ctx)
         """
         return TupleValue(FindItemOp(self, predicate))
+
+
+class MappingAccessibleBase[KeyT, ValueT]:
+    """Implementation base for direct mapping container access.
+
+    Provides get(), set_item(), and remove_item() methods for accessing
+    mapping containers directly (without navigating to child refs).
+    """
+
+    value_type: type[ValueT]
+
+    @overload
+    def get(
+        self: MappingAccessibleBase[KeyT, int],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: int | SpecialValue | None = None,
+    ) -> IntValue: ...
+
+    @overload
+    def get(
+        self: MappingAccessibleBase[KeyT, str],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: str | SpecialValue | None = None,
+    ) -> StrValue: ...
+
+    @overload
+    def get(
+        self: MappingAccessibleBase[KeyT, bool],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: bool | SpecialValue | None = None,
+    ) -> BoolValue: ...
+
+    @overload
+    def get(
+        self: MappingAccessibleBase[KeyT, float],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: float | SpecialValue | None = None,
+    ) -> FloatValue: ...
+
+    @overload
+    def get(
+        self: MappingAccessibleBase[KeyT, bytes],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: bytes | SpecialValue | None = None,
+    ) -> BytesValue: ...
+
+    @overload
+    def get(
+        self: MappingAccessibleBase[KeyT, None],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: None | SpecialValue = None,
+    ) -> NoneValue: ...
+
+    @overload
+    def get[V](
+        self: MappingAccessibleBase[KeyT, list[V]],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: list[V] | SpecialValue | None = None,
+    ) -> ListValue[V]: ...
+
+    @overload
+    def get[K, V](
+        self: MappingAccessibleBase[KeyT, dict[K, V]],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: dict[K, V] | SpecialValue | None = None,
+    ) -> DictValue[K, V]: ...
+
+    @overload
+    def get[V](
+        self: MappingAccessibleBase[KeyT, set[V]],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: set[V] | SpecialValue | None = None,
+    ) -> SetValue[V]: ...
+
+    def get(
+        self,
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        default: ValueT | SpecialValue | None = None,
+    ) -> object:
+        """Get value by key with optional default.
+
+        Args:
+            key: Key to look up
+            default: Value to return if key not found (default: Empty)
+
+        Returns:
+            Typed value wrapper containing value at key or default
+
+        Example:
+            >>> value = dict_ref.get("key", "default").execute(ctx)
+        """
+        return computed(self.value_type, MappingGetOp(self, key, default))
+
+    @overload
+    def set_item(
+        self: MappingAccessibleBase[KeyT, int],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: int | SpecialValue | RValue[int | SpecialValue],
+    ) -> IntValue: ...
+
+    @overload
+    def set_item(
+        self: MappingAccessibleBase[KeyT, str],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: str | SpecialValue | RValue[str | SpecialValue],
+    ) -> StrValue: ...
+
+    @overload
+    def set_item(
+        self: MappingAccessibleBase[KeyT, bool],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: bool | SpecialValue | RValue[bool | SpecialValue],
+    ) -> BoolValue: ...
+
+    @overload
+    def set_item(
+        self: MappingAccessibleBase[KeyT, float],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: float | SpecialValue | RValue[float | SpecialValue],
+    ) -> FloatValue: ...
+
+    @overload
+    def set_item(
+        self: MappingAccessibleBase[KeyT, bytes],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: bytes | SpecialValue | RValue[bytes | SpecialValue],
+    ) -> BytesValue: ...
+
+    @overload
+    def set_item(
+        self: MappingAccessibleBase[KeyT, None],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: None | SpecialValue | RValue[None | SpecialValue],
+    ) -> NoneValue: ...
+
+    @overload
+    def set_item[V](
+        self: MappingAccessibleBase[KeyT, list[V]],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: list[V] | SpecialValue | RValue[list[V] | SpecialValue],
+    ) -> ListValue[V]: ...
+
+    @overload
+    def set_item[K, V](
+        self: MappingAccessibleBase[KeyT, dict[K, V]],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: dict[K, V] | SpecialValue | RValue[dict[K, V] | SpecialValue],
+    ) -> DictValue[K, V]: ...
+
+    @overload
+    def set_item[V](
+        self: MappingAccessibleBase[KeyT, set[V]],
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: set[V] | SpecialValue | RValue[set[V] | SpecialValue],
+    ) -> SetValue[V]: ...
+
+    def set_item(
+        self,
+        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
+        value: ValueT | SpecialValue | RValue[ValueT | SpecialValue],
+    ) -> object:
+        """Set value at key in mapping.
+
+        Args:
+            key: Key to set
+            value: Value to set (literal or RValue)
+
+        Returns:
+            Typed value wrapper containing the set value
+
+        Example:
+            >>> dict_ref.set_item("key", "value").execute(ctx)
+        """
+        return computed(self.value_type, MappingSetCmd(self, key, literal(value)))
+
+    def remove_item(self, key: KeyT | SpecialValue | RValue[KeyT | SpecialValue]) -> NoneValue:
+        """Remove key from mapping.
+
+        Args:
+            key: Key to remove
+
+        Returns:
+            NoneValue (remove returns None after execution)
+
+        Note:
+            Raises KeyError at execution if key not found.
+
+        Example:
+            >>> dict_ref.remove_item("key").execute(ctx)
+        """
+        return NoneValue(MappingRemoveCmd(self, key))
 
 
 # =============================================================================
