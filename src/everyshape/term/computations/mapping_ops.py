@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from everyshape import NOT_SET, NotSet, is_notset
 from everyshape.types import SpecialValue
 
 from ..term import Operation
@@ -136,7 +137,9 @@ class DictItemsOp[K, V](MappingOp[list[tuple[K, V]]]):
 class DictGetOp[V](Operation[V | SpecialValue]):
     """Get value from dict with default: dict.get(key, default)."""
 
-    def __init__(self, operand: OpArgument, key: OpArgument, default: OpArgument) -> None:
+    def __init__(
+        self, operand: OpArgument, key: OpArgument, default: OpArgument | NotSet = NOT_SET
+    ) -> None:
         """Init."""
         self.children = (
             cast("RValue", operand),
@@ -148,12 +151,18 @@ class DictGetOp[V](Operation[V | SpecialValue]):
         """Execute."""
         dict_val = self.children[0].execute(context)
         key_val = self.children[1].execute(context)
-        default_val = self.children[2].execute(context)
+
+        default_exists = False
+        if not is_notset(self.children[2]):
+            default_val = self.children[2].execute(context)
+            default_exists = True
 
         if not isinstance(dict_val, dict):
             raise TypeError(f"get_() requires dict, got {type(dict_val).__name__}")
 
-        return dict_val.get(key_val, default_val)  # type: ignore
+        if default_exists:
+            return dict_val.get(key_val, default_val)  # type: ignore
+        return dict_val[key_val]
 
     def __repr__(self) -> str:
         return f"DictGetOp({self.children[0]!r}, {self.children[1]!r}, {self.children[2]!r})"
