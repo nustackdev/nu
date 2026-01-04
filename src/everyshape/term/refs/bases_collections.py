@@ -193,33 +193,9 @@ class SequenceRefBase[
     item_type: type[ItemT]
     collection_value_type: type[CollectionValueT]
     item_value_type: type[ItemValueT]
-
-    @property
-    def view_type(self) -> type[ViewT]:
-        """Get the view type for this sequence.
-
-        Returns:
-            View class
-        """
-        ...
-
-    @property
-    def index_type(self) -> type[IndexT]:
-        """Get the index type for this sequence.
-
-        Returns:
-            Type of index (commonly int)
-        """
-        ...
-
-    @property
-    def index_value_type(self) -> type[IndexValueT]:
-        """Get the ComputedValue type for index of this sequence.
-
-        Returns:
-            Type of computed value for index (commonly IntValue)
-        """
-        ...
+    view_type: type[ViewT]
+    index_type: type[IndexT]
+    index_value_type: type[IndexValueT]
 
     @abstractmethod
     def result(self, op: RValue) -> CollectionValueT:
@@ -399,15 +375,7 @@ class MappingRefBase[
     collection_value_type: type[CollectionValueT]
     key_value_type: type[KeyValueT]
     value_value_type: type[ValueValueT]
-
-    @property
-    def view_type(self) -> type[ViewT]:
-        """Get the view type for this mapping.
-
-        Returns:
-            View class
-        """
-        ...
+    view_type: type[ViewT]
 
     @abstractmethod
     def result(self, op: RValue) -> CollectionValueT:
@@ -546,15 +514,7 @@ class SetRefBase[
     item_type: type[ItemT]
     collection_value_type: type[CollectionValueT]
     item_value_type: type[ItemValueT]
-
-    @property
-    def view_type(self) -> type[ViewT]:
-        """Get the view type for this set.
-
-        Returns:
-            View class
-        """
-        ...
+    view_type: type[ViewT]
 
     @abstractmethod
     def result(self, op: RValue) -> CollectionValueT:
