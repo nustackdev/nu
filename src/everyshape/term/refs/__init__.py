@@ -53,6 +53,7 @@ from .bases import (
     ItemsQueryableBase,
     KeysQueryableBase,
     LengthableBase,
+    MappingAccessibleBase,
     MappingIterableBase,
     MappingNestableBase,
     PoppableBase,
@@ -212,6 +213,7 @@ __all__ = [  # noqa: RUF022
     # Mapping capability bases
     "MappingNestableBase",
     "MappingIterableBase",
+    "MappingAccessibleBase",
     # Set capability bases
     "SetAddableBase",
     "SetRemovableBase",
