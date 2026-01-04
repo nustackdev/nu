@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from everyshape.types import SpecialValue
 
     from ..term import Computation, RValue
+    from ..values import BoolValue, IntValue, ListValue, NoneValue
 
 
 __all__ = [  # noqa: RUF022
@@ -79,41 +80,41 @@ __all__ = [  # noqa: RUF022
 
 
 @runtime_checkable
-class Gettable[T, OpT](Protocol):
+class Gettable[ValueT](Protocol):
     """Protocol for LValues that support reading a single value.
 
     Used for primitive value references (ValueRef).
-    Returns a GetOp that reads the value when executed.
+    Returns a ComputedValue that reads the value when executed.
 
     Type Parameters:
-        T: Type of value at this location
-        OpT: Type of the get operation returned
+        ValueT: Type of value at this location
 
     Example:
         >>> if isinstance(ref, Gettable):
-        ...     get_op = ref.get()
-        ...     value = get_op.execute(ctx)
+        ...     value_op = ref.get()
+        ...     value = value_op.execute(ctx)
     """
 
-    def get(self) -> OpT:
+    def get(
+        self,
+    ) -> object:  # Returns ComputedValue type based on ValueT (IntValue, StrValue, etc.)
         """Create a get operation for this location.
 
         Returns:
-            GetOp that reads the value when executed
+            ComputedValue that reads the value when executed
         """
         ...
 
 
 @runtime_checkable
-class Extractable[T, OpT](Protocol):
+class Extractable[CollectionValueT](Protocol):
     """Protocol for LValues that support extracting entire structures.
 
     Used for container references (ViewRef).
-    Returns an ExtractOp that reads the full structure when executed.
+    Returns a ComputedValue that reads the full structure when executed.
 
     Type Parameters:
-        T: Type of extracted value (dict, list, etc.)
-        OpT: Type of the extract operation returned
+        CollectionValueT: ComputedValue type for the collection (ListValue, DictValue, etc.)
 
     Example:
         >>> if isinstance(ref, Extractable):
@@ -121,11 +122,11 @@ class Extractable[T, OpT](Protocol):
         ...     data = extract_op.execute(ctx)  # Returns dict/list/etc
     """
 
-    def extract(self) -> OpT:
+    def extract(self) -> CollectionValueT:
         """Create an extract operation for this container.
 
         Returns:
-            ExtractOp that extracts entire structure when executed
+            ComputedValue that extracts entire structure when executed
         """
         ...
 
@@ -136,15 +137,14 @@ class Extractable[T, OpT](Protocol):
 
 
 @runtime_checkable
-class Settable[T, CmdT](Protocol):
+class Settable[ValueT](Protocol):
     """Protocol for LValues that support writing a single value.
 
     Used for primitive value references.
-    Returns a SetCmd that writes the value when executed.
+    Returns a ComputedValue that writes the value when executed.
 
     Type Parameters:
-        T: Type of value to write
-        CmdT: Type of the set command returned
+        ValueT: Type of value to write
 
     Example:
         >>> if isinstance(ref, Settable):
@@ -152,28 +152,30 @@ class Settable[T, CmdT](Protocol):
         ...     set_cmd.execute(ctx)
     """
 
-    def set(self, value: T | RValue) -> CmdT:
+    def set(
+        self, value: ValueT | RValue
+    ) -> object:  # Returns ComputedValue type based on ValueT (IntValue, StrValue, etc.)
         """Create a set command for this location.
 
         Args:
             value: Value to write (literal or RValue)
 
         Returns:
-            SetCmd that writes the value when executed
+            ComputedValue that writes the value when executed
         """
         ...
 
 
 @runtime_checkable
-class Storable[T, CmdT](Protocol):
+class Storable[CollectionT, CollectionValueT](Protocol):
     """Protocol for LValues that support storing entire structures.
 
     Used for container references.
-    Returns a StoreCmd that writes the entire structure when executed.
+    Returns a ComputedValue that writes the entire structure when executed.
 
     Type Parameters:
-        T: Type of value to store (dict, list, etc.)
-        CmdT: Type of the store command returned
+        CollectionT: Type of value to store (dict, list, etc.)
+        CollectionValueT: ComputedValue type for the collection (ListValue, DictValue, etc.)
 
     Example:
         >>> if isinstance(ref, Storable):
@@ -181,7 +183,7 @@ class Storable[T, CmdT](Protocol):
         ...     store_cmd.execute(ctx)
     """
 
-    def store(self, value: T | RValue) -> CmdT:
+    def store(self, value: CollectionT | RValue) -> CollectionValueT:
         """Create a store command for this container.
 
         Args:
@@ -194,15 +196,14 @@ class Storable[T, CmdT](Protocol):
 
 
 @runtime_checkable
-class Appendable[T, CmdT](Protocol):
+class Appendable[ItemT](Protocol):
     """Protocol for LValues that support appending items.
 
     Used for sequence references.
-    Returns an AppendCmd that appends the item when executed.
+    Returns a ComputedValue (NoneValue) that appends the item when executed.
 
     Type Parameters:
-        T: Type of item to append
-        CmdT: Type of the append command returned
+        ItemT: Type of item to append
 
     Example:
         >>> if isinstance(ref, Appendable):
@@ -210,7 +211,7 @@ class Appendable[T, CmdT](Protocol):
         ...     append_cmd.execute(ctx)
     """
 
-    def append(self, value: T | RValue) -> CmdT:
+    def append(self, value: ItemT | RValue) -> NoneValue:
         """Create an append command.
 
         Args:
@@ -223,15 +224,14 @@ class Appendable[T, CmdT](Protocol):
 
 
 @runtime_checkable
-class Insertable[T, CmdT](Protocol):
+class Insertable[ItemT](Protocol):
     """Protocol for LValues that support inserting items at index.
 
     Used for sequence references.
-    Returns an InsertCmd that inserts the item when executed.
+    Returns a ComputedValue (NoneValue) that inserts the item when executed.
 
     Type Parameters:
-        T: Type of item to insert
-        CmdT: Type of the insert command returned
+        ItemT: Type of item to insert
 
     Example:
         >>> if isinstance(ref, Insertable):
@@ -239,7 +239,7 @@ class Insertable[T, CmdT](Protocol):
         ...     insert_cmd.execute(ctx)
     """
 
-    def insert(self, index: int | RValue, value: T | RValue) -> CmdT:
+    def insert(self, index: int | RValue, value: ItemT | RValue) -> NoneValue:
         """Create an insert command.
 
         Args:
@@ -258,14 +258,11 @@ class Insertable[T, CmdT](Protocol):
 
 
 @runtime_checkable
-class Deletable[CmdT](Protocol):
+class Deletable(Protocol):
     """Protocol for LValues that support deletion.
 
     Used for primitive and container item references.
-    Returns a DeleteCmd that removes the value when executed.
-
-    Type Parameters:
-        CmdT: Type of the delete command returned
+    Returns a ComputedValue (NoneValue) that removes the value when executed.
 
     Example:
         >>> if isinstance(ref, Deletable):
@@ -273,7 +270,7 @@ class Deletable[CmdT](Protocol):
         ...     delete_cmd.execute(ctx)
     """
 
-    def remove(self) -> CmdT:
+    def remove(self) -> NoneValue:
         """Create a delete command for this location.
 
         Returns:
@@ -283,14 +280,11 @@ class Deletable[CmdT](Protocol):
 
 
 @runtime_checkable
-class Clearable[CmdT](Protocol):
+class Clearable(Protocol):
     """Protocol for LValues that support clearing all items.
 
     Used for container references.
-    Returns a ClearCmd that removes all items when executed.
-
-    Type Parameters:
-        CmdT: Type of the clear command returned
+    Returns a ComputedValue (NoneValue) that removes all items when executed.
 
     Example:
         >>> if isinstance(ref, Clearable):
@@ -298,7 +292,7 @@ class Clearable[CmdT](Protocol):
         ...     clear_cmd.execute(ctx)
     """
 
-    def clear(self) -> CmdT:
+    def clear(self) -> NoneValue:
         """Create a clear command for this container.
 
         Returns:
@@ -308,15 +302,14 @@ class Clearable[CmdT](Protocol):
 
 
 @runtime_checkable
-class Poppable[T, CmdT](Protocol):
+class Poppable[ItemT](Protocol):
     """Protocol for LValues that support popping items.
 
     Used for sequence references.
-    Returns a PopCmd that removes and returns an item when executed.
+    Returns a ComputedValue that removes and returns an item when executed.
 
     Type Parameters:
-        T: Type of item to pop
-        CmdT: Type of the pop command returned
+        ItemT: Type of item to pop
 
     Example:
         >>> if isinstance(ref, Poppable):
@@ -324,7 +317,7 @@ class Poppable[T, CmdT](Protocol):
         ...     removed = pop_cmd.execute(ctx)
     """
 
-    def pop(self, index: int | RValue = -1) -> CmdT:
+    def pop(self, index: int | RValue = -1) -> object:  # Return type depends on ItemT
         """Create a pop command.
 
         Args:
@@ -342,13 +335,10 @@ class Poppable[T, CmdT](Protocol):
 
 
 @runtime_checkable
-class Existable[OpT](Protocol):
+class Existable(Protocol):
     """Protocol for LValues that support existence checking.
 
-    Returns operations that check if the location exists.
-
-    Type Parameters:
-        OpT: Type of the operation returned
+    Returns ComputedValue (BoolValue) that checks if the location exists.
 
     Example:
         >>> if isinstance(ref, Existable):
@@ -356,15 +346,15 @@ class Existable[OpT](Protocol):
         ...     does_exist = exists_op.execute(ctx)
     """
 
-    def exists(self) -> OpT:
+    def exists(self) -> BoolValue:
         """Create an existence check operation.
 
         Returns:
-            ExistsOp that returns True if location exists
+            BoolValue that returns True if location exists
         """
         ...
 
-    def missing(self) -> OpT:
+    def missing(self) -> BoolValue:
         """Create a missing check operation.
 
         Returns:
@@ -403,11 +393,11 @@ class RefObservable(Protocol):
 
 
 @runtime_checkable
-class RefChildObservable[K](Protocol):
+class RefChildObservable[KeyT](Protocol):
     """Protocol for LValues that support observing child changes.
 
     Type Parameters:
-        K: Type of child address/key
+        KeyT: Type of child address/key
         OpT: Type of the operation returned
 
     Example:
@@ -416,7 +406,7 @@ class RefChildObservable[K](Protocol):
         ...     subscription = child_op.execute(ctx)
     """
 
-    def on_child_change(self, address: K | RValue) -> Computation:
+    def on_child_change(self, address: KeyT | RValue) -> Computation:
         """Create a child change subscription operation.
 
         Args:
@@ -467,13 +457,13 @@ class RefDescendantsObservable(Protocol):
 
 
 @runtime_checkable
-class Nestable[K, RefT](Protocol):
+class Nestable[KeyT, RefT](Protocol):
     """Protocol for LValues that support navigation to children.
 
     Used for container references to navigate to nested locations.
 
     Type Parameters:
-        K: Type of child address/key
+        KeyT: Type of child address/key
         RefT: Type of child reference returned
 
     Example:
@@ -481,7 +471,7 @@ class Nestable[K, RefT](Protocol):
         ...     child_ref = ref["key"]  # Navigate to child
     """
 
-    def __getitem__(self, key: K | RValue) -> RefT:
+    def __getitem__(self, key: KeyT | RValue) -> RefT:
         """Navigate to child location.
 
         Args:
@@ -494,11 +484,11 @@ class Nestable[K, RefT](Protocol):
 
 
 @runtime_checkable
-class RefIndexable[I, RefT](Protocol):
+class RefIndexable[IndexT, RefT](Protocol):
     """Protocol for LValues that support index-based access.
 
     Type Parameters:
-        I: Type of index (typically int)
+        IndexT: Type of index (typically int)
         RefT: Type of item reference returned
 
     Example:
@@ -506,7 +496,7 @@ class RefIndexable[I, RefT](Protocol):
         ...     item_ref = ref[0]  # Get first item reference
     """
 
-    def __getitem__(self, key: I | RValue[I | SpecialValue]) -> RefT:
+    def __getitem__(self, key: IndexT | RValue[IndexT | SpecialValue]) -> RefT:
         """Get reference to item at index.
 
         Args:
@@ -548,11 +538,8 @@ class RefSliceable[RefT](Protocol):
 
 
 @runtime_checkable
-class Lengthable[OpT](Protocol):
+class Lengthable(Protocol):
     """Protocol for LValues that support length queries.
-
-    Type Parameters:
-        OpT: Type of the length operation returned
 
     Example:
         >>> if isinstance(ref, Lengthable):
@@ -560,7 +547,7 @@ class Lengthable[OpT](Protocol):
         ...     size = len_op.execute(ctx)
     """
 
-    def length(self) -> OpT:
+    def length(self) -> IntValue:
         """Create a length query operation.
 
         Returns:
@@ -570,11 +557,11 @@ class Lengthable[OpT](Protocol):
 
 
 @runtime_checkable
-class KeysQueryable[OpT](Protocol):
+class KeysQueryable[KeyT](Protocol):
     """Protocol for LValues that support keys queries.
 
     Type Parameters:
-        OpT: Type of the keys operation returned
+        KeyT: Type of keys in the mapping
 
     Example:
         >>> if isinstance(ref, KeysQueryable):
@@ -582,21 +569,21 @@ class KeysQueryable[OpT](Protocol):
         ...     all_keys = keys_op.execute(ctx)
     """
 
-    def keys(self) -> OpT:
+    def keys(self) -> ListValue[KeyT]:
         """Create a keys query operation.
 
         Returns:
-            KeysOp that returns all keys when executed
+            ListValue that returns all keys when executed
         """
         ...
 
 
 @runtime_checkable
-class ValuesQueryable[OpT](Protocol):
+class ValuesQueryable[ValueT](Protocol):
     """Protocol for LValues that support values queries.
 
     Type Parameters:
-        OpT: Type of the values operation returned
+        ValueT: Type of values in the mapping
 
     Example:
         >>> if isinstance(ref, ValuesQueryable):
@@ -604,21 +591,22 @@ class ValuesQueryable[OpT](Protocol):
         ...     all_values = values_op.execute(ctx)
     """
 
-    def values(self) -> OpT:
+    def values(self) -> ListValue[ValueT]:
         """Create a values query operation.
 
         Returns:
-            ValuesOp that returns all values when executed
+            ListValue that returns all values when executed
         """
         ...
 
 
 @runtime_checkable
-class ItemsQueryable[OpT](Protocol):
+class ItemsQueryable[KeyT, ValueT](Protocol):
     """Protocol for LValues that support items queries.
 
     Type Parameters:
-        OpT: Type of the items operation returned
+        KeyT: Type of keys in the mapping
+        ValueT: Type of values in the mapping
 
     Example:
         >>> if isinstance(ref, ItemsQueryable):
@@ -626,7 +614,7 @@ class ItemsQueryable[OpT](Protocol):
         ...     all_items = items_op.execute(ctx)
     """
 
-    def items(self) -> OpT:
+    def items(self) -> ListValue[tuple[KeyT, ValueT]]:
         """Create an items query operation.
 
         Returns:

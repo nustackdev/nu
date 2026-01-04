@@ -191,14 +191,14 @@ class ExistableBase:
 # =============================================================================
 
 
-class GettableBase[T]:
+class GettableBase[ValueT]:
     """Implementation base for getting primitive values.
 
     Implements the Gettable protocol with get() method.
     Requires self to have value_type attribute.
     """
 
-    value_type: type[T]
+    value_type: type[ValueT]
 
     # Primitives
     @overload
@@ -241,14 +241,14 @@ class GettableBase[T]:
         return computed(self.value_type, GetOp(self))
 
 
-class ExtractableBase[W](ABC):
+class ExtractableBase[CollectionValueT](ABC):
     """Implementation base for extracting container contents.
 
     Implements the Extractable protocol with extract() method.
     """
 
     @abstractmethod
-    def result(self, op: RValue) -> W:
+    def result(self, op: RValue) -> CollectionValueT:
         """Wrap an operation result in the appropriate typed value container.
 
         Args:
@@ -266,7 +266,7 @@ class ExtractableBase[W](ABC):
         """
         ...
 
-    def extract(self) -> W:
+    def extract(self) -> CollectionValueT:
         """Create an extract operation for this container.
 
         Returns:
@@ -283,62 +283,62 @@ class ExtractableBase[W](ABC):
 # =============================================================================
 
 
-class SettableBase[T]:
+class SettableBase[ValueT]:
     """Implementation base for setting primitive values.
 
     Implements the Settable protocol with set() method.
     Requires self to have value_type attribute.
     """
 
-    value_type: type[T]
+    value_type: type[ValueT]
 
     @overload
     def set(
-        self: SettableBase[int], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[int], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> IntValue: ...
 
     @overload
     def set(
-        self: SettableBase[str], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[str], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> StrValue: ...
 
     @overload
     def set(
-        self: SettableBase[bool], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[bool], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> BoolValue: ...
 
     @overload
     def set(
-        self: SettableBase[float], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[float], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> FloatValue: ...
 
     @overload
     def set(
-        self: SettableBase[bytes], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[bytes], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> BytesValue: ...
 
     @overload
     def set(
-        self: SettableBase[None], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[None], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> NoneValue: ...
 
     # Collections
     @overload
     def set[V](
-        self: SettableBase[list[V]], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[list[V]], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> ListValue[V]: ...
 
     @overload
     def set[K, V](
-        self: SettableBase[dict[K, V]], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[dict[K, V]], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> DictValue[K, V]: ...
 
     @overload
     def set[V](
-        self: SettableBase[set[V]], value: T | SpecialValue | RValue[T | SpecialValue]
+        self: SettableBase[set[V]], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
     ) -> SetValue[V]: ...
 
-    def set(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> object:
+    def set(self, value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]) -> object:
         """Create a set command for this location.
 
         Args:
@@ -354,14 +354,14 @@ class SettableBase[T]:
         return computed(self.value_type, SetCmd(self, literal(value)))
 
 
-class StorableBase[W, T](ABC):
+class StorableBase[CollectionValueT, CollectionT](ABC):
     """Implementation base for storing container contents.
 
     Implements the Storable protocol with store() method.
     """
 
     @abstractmethod
-    def result(self, op: RValue) -> W:
+    def result(self, op: RValue) -> CollectionValueT:
         """Wrap an operation result in the appropriate typed value container.
 
         Args:
@@ -379,7 +379,9 @@ class StorableBase[W, T](ABC):
         """
         ...
 
-    def store(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> W:
+    def store(
+        self, value: CollectionT | SpecialValue | RValue[CollectionT | SpecialValue]
+    ) -> CollectionValueT:
         """Create a store command for this container.
 
         Args:
@@ -545,13 +547,13 @@ class ViewObservableBase:
 # =============================================================================
 
 
-class KeysQueryableBase[K]:
+class KeysQueryableBase[KeyT]:
     """Implementation base for keys queries.
 
     Implements the KeysQueryable protocol with keys() method.
     """
 
-    def keys(self) -> ListValue[K]:
+    def keys(self) -> ListValue[KeyT]:
         """Create a keys query operation.
 
         Returns:
@@ -563,13 +565,13 @@ class KeysQueryableBase[K]:
         return ListValue(KeysOp(self))
 
 
-class ValuesQueryableBase[V]:
+class ValuesQueryableBase[ValueT]:
     """Implementation base for values queries.
 
     Implements the ValuesQueryable protocol with values() method.
     """
 
-    def values(self) -> ListValue[V]:
+    def values(self) -> ListValue[ValueT]:
         """Create a values query operation.
 
         Returns:
@@ -581,13 +583,13 @@ class ValuesQueryableBase[V]:
         return ListValue(ValuesOp(self))
 
 
-class ItemsQueryableBase[K, V]:
+class ItemsQueryableBase[KeyT, ValueT]:
     """Implementation base for items queries.
 
     Implements the ItemsQueryable protocol with items() method.
     """
 
-    def items(self) -> ListValue[tuple[K, V]]:
+    def items(self) -> ListValue[tuple[KeyT, ValueT]]:
         """Create an items query operation.
 
         Returns:
@@ -604,7 +606,7 @@ class ItemsQueryableBase[K, V]:
 # =============================================================================
 
 
-class SequenceIndexableBase[T, ItemRefT, SliceRefT](ABC):
+class SequenceIndexableBase[ItemT, ItemRefT, SliceRefT](ABC):
     """Implementation base for sequence indexing.
 
     Provides __getitem__ for integer and slice access.
@@ -678,16 +680,16 @@ class SequenceIndexableBase[T, ItemRefT, SliceRefT](ABC):
         return self._create_item_ref(key)
 
 
-class SequenceIterableBase[T]:
+class SequenceIterableBase[ItemT]:
     """Implementation base for sequence iteration operations.
 
     Provides map(), filter(), reduce(), find(), find_index(), index(), count().
     Requires self to have item_type attribute.
     """
 
-    item_type: type[T]
+    item_type: type[ItemT]
 
-    def map[R](self, func: Callable[[T], R]) -> ListValue[R]:
+    def map[R](self, func: Callable[[ItemT], R]) -> ListValue[R]:
         """Map a function over sequence elements.
 
         Args:
@@ -701,7 +703,7 @@ class SequenceIterableBase[T]:
         """
         return ListValue(MapOp(self, func))
 
-    def filter(self, predicate: Callable[[T], bool]) -> ListValue[T]:
+    def filter(self, predicate: Callable[[ItemT], bool]) -> ListValue[ItemT]:
         """Filter sequence elements by predicate.
 
         Args:
@@ -716,28 +718,28 @@ class SequenceIterableBase[T]:
         return ListValue(FilterOp(self, predicate))
 
     @overload
-    def reduce(self, func: Callable[[int, T], int], initial: int) -> IntValue: ...
+    def reduce(self, func: Callable[[int, ItemT], int], initial: int) -> IntValue: ...
 
     @overload
-    def reduce(self, func: Callable[[str, T], str], initial: str) -> StrValue: ...
+    def reduce(self, func: Callable[[str, ItemT], str], initial: str) -> StrValue: ...
 
     @overload
-    def reduce(self, func: Callable[[float, T], float], initial: float) -> FloatValue: ...
+    def reduce(self, func: Callable[[float, ItemT], float], initial: float) -> FloatValue: ...
 
     @overload
-    def reduce(self, func: Callable[[bool, T], bool], initial: bool) -> BoolValue: ...
+    def reduce(self, func: Callable[[bool, ItemT], bool], initial: bool) -> BoolValue: ...
 
     @overload
     def reduce[V](
-        self, func: Callable[[list[V], T], list[V]], initial: list[V]
+        self, func: Callable[[list[V], ItemT], list[V]], initial: list[V]
     ) -> ListValue[V]: ...
 
     @overload
     def reduce[K, V](
-        self, func: Callable[[dict[K, V], T], dict[K, V]], initial: dict[K, V]
+        self, func: Callable[[dict[K, V], ItemT], dict[K, V]], initial: dict[K, V]
     ) -> DictValue[K, V]: ...
 
-    def reduce[R](self, func: Callable[[R, T], R], initial: R) -> object:
+    def reduce[R](self, func: Callable[[R, ItemT], R], initial: R) -> object:
         """Reduce sequence to single value.
 
         Args:
@@ -791,7 +793,7 @@ class SequenceIterableBase[T]:
         """
         return computed(self.item_type, FindOp(self, predicate))
 
-    def find_index(self, predicate: Callable[[T], bool]) -> IntValue:
+    def find_index(self, predicate: Callable[[ItemT], bool]) -> IntValue:
         """Find index of first element matching predicate.
 
         Args:
@@ -805,7 +807,7 @@ class SequenceIterableBase[T]:
         """
         return IntValue(FindIndexOp(self, predicate))
 
-    def index(self, value: T | SpecialValue) -> IntValue:
+    def index(self, value: ItemT | SpecialValue) -> IntValue:
         """Find index of value in sequence.
 
         Args:
@@ -819,7 +821,7 @@ class SequenceIterableBase[T]:
         """
         return IntValue(IndexOp(self, value))
 
-    def count(self, value: T | SpecialValue) -> IntValue:
+    def count(self, value: ItemT | SpecialValue) -> IntValue:
         """Count occurrences of value in sequence.
 
         Args:
@@ -834,13 +836,13 @@ class SequenceIterableBase[T]:
         return IntValue(CountOp(self, value))
 
 
-class AppendableBase[T]:
+class AppendableBase[ItemT]:
     """Implementation base for appending to sequences.
 
     Implements the Appendable protocol with append() method.
     """
 
-    def append(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
+    def append(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
         """Create an append command.
 
         Args:
@@ -855,7 +857,7 @@ class AppendableBase[T]:
         return NoneValue(AppendCmd(self, literal(value)))
 
 
-class InsertableBase[T]:
+class InsertableBase[ItemT]:
     """Implementation base for inserting into sequences.
 
     Implements the Insertable protocol with insert() method.
@@ -864,7 +866,7 @@ class InsertableBase[T]:
     def insert(
         self,
         index: int | SpecialValue | RValue[int | SpecialValue],
-        value: T | SpecialValue | RValue[T | SpecialValue],
+        value: ItemT | SpecialValue | RValue[ItemT | SpecialValue],
     ) -> NoneValue:
         """Create an insert command.
 
@@ -881,14 +883,14 @@ class InsertableBase[T]:
         return NoneValue(InsertCmd(self, literal(index), literal(value)))
 
 
-class PoppableBase[T]:
+class PoppableBase[ItemT]:
     """Implementation base for popping from sequences.
 
     Implements the Poppable protocol with pop() method.
     Requires self to have item_type attribute.
     """
 
-    item_type: type[T]
+    item_type: type[ItemT]
 
     @overload
     def pop(
@@ -948,7 +950,7 @@ class PoppableBase[T]:
 # =============================================================================
 
 
-class MappingNestableBase[K, ChildRefT]:
+class MappingNestableBase[KeyT, ChildRefT]:
     """Implementation base for mapping navigation.
 
     Provides __getitem__ for key-based child access.
@@ -956,11 +958,13 @@ class MappingNestableBase[K, ChildRefT]:
     """
 
     @abstractmethod
-    def _create_child_ref(self, key: K | SpecialValue | RValue[K | SpecialValue]) -> ChildRefT:
+    def _create_child_ref(
+        self, key: KeyT | SpecialValue | RValue[KeyT | SpecialValue]
+    ) -> ChildRefT:
         """Create a reference to a child at the given key.
 
         Args:
-            key: Child key (literal or RValue[K] for computed key)
+            key: Child key (literal or RValue[KeyT] for computed key)
 
         Returns:
             Reference to child at the specified key
@@ -969,12 +973,12 @@ class MappingNestableBase[K, ChildRefT]:
             Subclasses must implement this to return the appropriate ref type.
 
         Example:
-            def _create_child_ref(self, key: K | RValue[K]) -> ChildRef:
+            def _create_child_ref(self, key: KeyT | RValue[KeyT]) -> ChildRef:
                 return ChildRef(self, key)
         """
         ...
 
-    def __getitem__(self, key: K | SpecialValue | RValue[K | SpecialValue]) -> ChildRefT:
+    def __getitem__(self, key: KeyT | SpecialValue | RValue[KeyT | SpecialValue]) -> ChildRefT:
         """Get child reference by key.
 
         Args:
@@ -989,7 +993,7 @@ class MappingNestableBase[K, ChildRefT]:
         return self._create_child_ref(key)
 
 
-class MappingIterableBase[K, V]:
+class MappingIterableBase[KeyT, ValueT]:
     """Implementation base for mapping iteration operations.
 
     Provides map_values(), map_items(), filter(), reduce(),
@@ -997,10 +1001,10 @@ class MappingIterableBase[K, V]:
     Requires self to have key_type and value_type attributes.
     """
 
-    key_type: type[K]
-    value_type: type[V]
+    key_type: type[KeyT]
+    value_type: type[ValueT]
 
-    def map_values[R](self, func: Callable[[V], R]) -> DictValue[K, R]:
+    def map_values[R](self, func: Callable[[ValueT], R]) -> DictValue[KeyT, R]:
         """Map function over mapping values.
 
         Args:
@@ -1014,7 +1018,7 @@ class MappingIterableBase[K, V]:
         """
         return DictValue(MapValuesOp(self, func))
 
-    def map_items[K2, V2](self, func: Callable[[K, V], tuple[K2, V2]]) -> DictValue[K2, V2]:
+    def map_items[K2, V2](self, func: Callable[[KeyT, ValueT], tuple[K2, V2]]) -> DictValue[K2, V2]:
         """Map function over mapping items.
 
         Args:
@@ -1028,7 +1032,7 @@ class MappingIterableBase[K, V]:
         """
         return DictValue(MapItemsOp(self, func))
 
-    def filter(self, predicate: Callable[[K, V], bool]) -> DictValue[K, V]:
+    def filter(self, predicate: Callable[[KeyT, ValueT], bool]) -> DictValue[KeyT, ValueT]:
         """Filter mapping items by predicate.
 
         Args:
@@ -1043,28 +1047,30 @@ class MappingIterableBase[K, V]:
         return DictValue(FilterItemsOp(self, predicate))
 
     @overload
-    def reduce(self, func: Callable[[int, K, V], int], initial: int) -> IntValue: ...
+    def reduce(self, func: Callable[[int, KeyT, ValueT], int], initial: int) -> IntValue: ...
 
     @overload
-    def reduce(self, func: Callable[[str, K, V], str], initial: str) -> StrValue: ...
+    def reduce(self, func: Callable[[str, KeyT, ValueT], str], initial: str) -> StrValue: ...
 
     @overload
-    def reduce(self, func: Callable[[float, K, V], float], initial: float) -> FloatValue: ...
+    def reduce(
+        self, func: Callable[[float, KeyT, ValueT], float], initial: float
+    ) -> FloatValue: ...
 
     @overload
-    def reduce(self, func: Callable[[bool, K, V], bool], initial: bool) -> BoolValue: ...
+    def reduce(self, func: Callable[[bool, KeyT, ValueT], bool], initial: bool) -> BoolValue: ...
 
     @overload
     def reduce[V2](
-        self, func: Callable[[list[V2], K, V], list[V2]], initial: list[V2]
+        self, func: Callable[[list[V2], KeyT, ValueT], list[V2]], initial: list[V2]
     ) -> ListValue[V2]: ...
 
     @overload
     def reduce[K2, V2](
-        self, func: Callable[[dict[K2, V2], K, V], dict[K2, V2]], initial: dict[K2, V2]
+        self, func: Callable[[dict[K2, V2], KeyT, ValueT], dict[K2, V2]], initial: dict[K2, V2]
     ) -> DictValue[K2, V2]: ...
 
-    def reduce[R](self, func: Callable[[R, K, V], R], initial: R) -> object:
+    def reduce[R](self, func: Callable[[R, KeyT, ValueT], R], initial: R) -> object:
         """Reduce mapping to single value.
 
         Args:
@@ -1080,22 +1086,26 @@ class MappingIterableBase[K, V]:
         return computed(type(initial), ReduceItemsOp(self, func, initial))
 
     @overload
-    def find_key(self: MappingIterableBase[int, V], predicate: Callable[[V], bool]) -> IntValue: ...
-
-    @overload
-    def find_key(self: MappingIterableBase[str, V], predicate: Callable[[V], bool]) -> StrValue: ...
+    def find_key(
+        self: MappingIterableBase[int, ValueT], predicate: Callable[[ValueT], bool]
+    ) -> IntValue: ...
 
     @overload
     def find_key(
-        self: MappingIterableBase[float, V], predicate: Callable[[V], bool]
+        self: MappingIterableBase[str, ValueT], predicate: Callable[[ValueT], bool]
+    ) -> StrValue: ...
+
+    @overload
+    def find_key(
+        self: MappingIterableBase[float, ValueT], predicate: Callable[[ValueT], bool]
     ) -> FloatValue: ...
 
     @overload
     def find_key(
-        self: MappingIterableBase[bool, V], predicate: Callable[[V], bool]
+        self: MappingIterableBase[bool, ValueT], predicate: Callable[[ValueT], bool]
     ) -> BoolValue: ...
 
-    def find_key(self, predicate: Callable[[V], bool]) -> object:
+    def find_key(self, predicate: Callable[[ValueT], bool]) -> object:
         """Find first key whose value matches predicate.
 
         Args:
@@ -1111,32 +1121,32 @@ class MappingIterableBase[K, V]:
 
     @overload
     def find_value(
-        self: MappingIterableBase[K, int], predicate: Callable[[int], bool]
+        self: MappingIterableBase[KeyT, int], predicate: Callable[[int], bool]
     ) -> IntValue: ...
 
     @overload
     def find_value(
-        self: MappingIterableBase[K, str], predicate: Callable[[str], bool]
+        self: MappingIterableBase[KeyT, str], predicate: Callable[[str], bool]
     ) -> StrValue: ...
 
     @overload
     def find_value(
-        self: MappingIterableBase[K, float], predicate: Callable[[float], bool]
+        self: MappingIterableBase[KeyT, float], predicate: Callable[[float], bool]
     ) -> FloatValue: ...
 
     @overload
     def find_value(
-        self: MappingIterableBase[K, bool], predicate: Callable[[bool], bool]
+        self: MappingIterableBase[KeyT, bool], predicate: Callable[[bool], bool]
     ) -> BoolValue: ...
 
     @overload
     def find_value[V2](
-        self: MappingIterableBase[K, list[V2]], predicate: Callable[[list[V2]], bool]
+        self: MappingIterableBase[KeyT, list[V2]], predicate: Callable[[list[V2]], bool]
     ) -> ListValue[V2]: ...
 
     @overload
     def find_value[K2, V2](
-        self: MappingIterableBase[K, dict[K2, V2]],
+        self: MappingIterableBase[KeyT, dict[K2, V2]],
         predicate: Callable[[dict[K2, V2]], bool],
     ) -> DictValue[K2, V2]: ...
 
@@ -1154,7 +1164,7 @@ class MappingIterableBase[K, V]:
         """
         return computed(self.value_type, FindValueOp(self, predicate))
 
-    def find_item(self, predicate: Callable[[K, V], bool]) -> TupleValue[K, V]:
+    def find_item(self, predicate: Callable[[KeyT, ValueT], bool]) -> TupleValue[KeyT, ValueT]:
         """Find first item (key, value) matching predicate.
 
         Args:
@@ -1174,13 +1184,13 @@ class MappingIterableBase[K, V]:
 # =============================================================================
 
 
-class SetAddableBase[T]:
+class SetAddableBase[ItemT]:
     """Implementation base for adding to sets.
 
     Implements add() method for sets.
     """
 
-    def add(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
+    def add(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
         """Create an add command.
 
         Args:
@@ -1195,13 +1205,13 @@ class SetAddableBase[T]:
         return NoneValue(AddCmd(self, literal(value)))
 
 
-class SetRemovableBase[T]:
+class SetRemovableBase[ItemT]:
     """Implementation base for removing from sets.
 
     Implements remove() and discard() methods for sets.
     """
 
-    def remove(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
+    def remove(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
         """Create a remove command.
 
         Args:
@@ -1218,7 +1228,7 @@ class SetRemovableBase[T]:
         """
         return NoneValue(RemoveCmd(self, literal(value)))
 
-    def discard(self, value: T | SpecialValue | RValue[T | SpecialValue]) -> NoneValue:
+    def discard(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
         """Create a discard command.
 
         Args:

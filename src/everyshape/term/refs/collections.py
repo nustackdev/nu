@@ -24,9 +24,8 @@ Similar to view/collections.py which composes view capabilities.
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from ..values import BoolValue, IntValue, NoneValue
 from .capabilities import (
     Appendable,
     Clearable,
@@ -47,6 +46,10 @@ from .capabilities import (
     Storable,
     ValuesQueryable,
 )
+
+
+if TYPE_CHECKING:
+    from ..values import NoneValue
 
 
 __all__ = [  # noqa: RUF022
@@ -74,7 +77,7 @@ __all__ = [  # noqa: RUF022
 
 @runtime_checkable
 class ContainerRef[ViewT](
-    Existable[object],
+    Existable,
     Protocol,
 ):
     """Protocol for refs with existence checking.
@@ -102,10 +105,10 @@ class ContainerRef[ViewT](
 @runtime_checkable
 class CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT](
     ContainerRef[ViewT],
-    Extractable[CollectionT, CollectionValueT],
+    Extractable[CollectionValueT],
     Storable[CollectionT, CollectionValueT],
-    Clearable[NoneValue],
-    Lengthable[IntValue],
+    Clearable,
+    Lengthable,
     Protocol,
 ):
     """Protocol for sized, observable collection refs.
@@ -247,9 +250,9 @@ class MutableSequenceRef[
         IndexValueT,
         SliceValueT,
     ],
-    Appendable[ItemT, ItemValueT],
-    Insertable[ItemT, ItemValueT],
-    Poppable[ItemT, ItemValueT],
+    Appendable[ItemT],
+    Insertable[ItemT],
+    Poppable[ItemT],
     Protocol,
 ):
     """Protocol for mutable sequence references.
@@ -293,9 +296,9 @@ class MappingRef[
 ](
     CollectionRef[CollectionT, ValueT, CollectionValueT, ValueValueT, ViewT],
     Nestable[KeyT, ChildRefT],
-    KeysQueryable[object],
-    ValuesQueryable[object],
-    ItemsQueryable[object],
+    KeysQueryable[KeyT],
+    ValuesQueryable[ValueT],
+    ItemsQueryable[KeyT, ValueT],
     Protocol,
 ):
     """Protocol for read-only mapping references.
@@ -510,10 +513,10 @@ class MutableSetRef[
 
 @runtime_checkable
 class CollectionItemRef[T, ValueT](
-    Existable[BoolValue],
-    Gettable[T, ValueT],
-    Settable[T, ValueT],
-    Deletable[NoneValue],
+    Existable,
+    Gettable,
+    Settable,
+    Deletable,
     RefObservable,
     Protocol,
 ):
