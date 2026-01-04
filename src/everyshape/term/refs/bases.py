@@ -24,29 +24,15 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, overload
 
-from ..computations.commands import (
+from ..comps import (
+    # Commands
     AddCmd,
     AppendCmd,
     ClearCmd,
+    # Ref ops
+    CountOp,
     DeleteCmd,
     DiscardCmd,
-    InsertCmd,
-    MappingRemoveCmd,
-    MappingSetCmd,
-    PopCmd,
-    RemoveCmd,
-    SetCmd,
-    StoreCmd,
-)
-from ..computations.reactive_ops import (
-    OnChangeOp,
-    OnChildChangeOp,
-    OnChildrenChangeOp,
-    OnDescendantsChangeOp,
-    OnPrimitiveChangeOp,
-)
-from ..computations.ref_ops import (
-    CountOp,
     ExistsOp,
     ExtractOp,
     FilterItemsOp,
@@ -58,16 +44,29 @@ from ..computations.ref_ops import (
     FindValueOp,
     GetOp,
     IndexOp,
+    InsertCmd,
     ItemsOp,
     KeysOp,
     LengthOp,
     MapItemsOp,
     MapOp,
     MappingGetOp,
+    MappingRemoveCmd,
+    MappingSetCmd,
     MapValuesOp,
     MissingOp,
+    # Reactive ops
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
+    PopCmd,
     ReduceItemsOp,
     ReduceOp,
+    RemoveCmd,
+    SetCmd,
+    StoreCmd,
     ValuesOp,
 )
 from ..values import (

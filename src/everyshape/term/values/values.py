@@ -126,7 +126,7 @@ class IntValue(
     @overload
     def __add__(self, other: float | FloatValue) -> FloatValue: ...
     def __add__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         if isinstance(other, (float, FloatValue)):
             return FloatValue(AddOp(self, literal(other)))
@@ -137,7 +137,7 @@ class IntValue(
     @overload
     def __radd__(self, other: float) -> FloatValue: ...
     def __radd__(self, other: int | float) -> IntValue | FloatValue:
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         if isinstance(other, float):
             return FloatValue(AddOp(literal(other), self))
@@ -149,7 +149,7 @@ class IntValue(
     @overload
     def __sub__(self, other: float | FloatValue) -> FloatValue: ...
     def __sub__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
-        from ..computations.binary_ops import SubOp
+        from ..comps.value.binary_ops import SubOp
 
         if isinstance(other, (float, FloatValue)):
             return FloatValue(SubOp(self, literal(other)))
@@ -160,7 +160,7 @@ class IntValue(
     @overload
     def __rsub__(self, other: float) -> FloatValue: ...
     def __rsub__(self, other: int | float) -> IntValue | FloatValue:
-        from ..computations.binary_ops import SubOp
+        from ..comps.value.binary_ops import SubOp
 
         if isinstance(other, float):
             return FloatValue(SubOp(literal(other), self))
@@ -172,7 +172,7 @@ class IntValue(
     @overload
     def __mul__(self, other: float | FloatValue) -> FloatValue: ...
     def __mul__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
-        from ..computations.binary_ops import MulOp
+        from ..comps.value.binary_ops import MulOp
 
         if isinstance(other, (float, FloatValue)):
             return FloatValue(MulOp(self, literal(other)))
@@ -183,7 +183,7 @@ class IntValue(
     @overload
     def __rmul__(self, other: float) -> FloatValue: ...
     def __rmul__(self, other: int | float) -> IntValue | FloatValue:
-        from ..computations.binary_ops import MulOp
+        from ..comps.value.binary_ops import MulOp
 
         if isinstance(other, float):
             return FloatValue(MulOp(literal(other), self))
@@ -191,12 +191,12 @@ class IntValue(
 
     # --- True Division (always returns float in Python) ---
     def __truediv__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import DivOp
+        from ..comps.value.binary_ops import DivOp
 
         return FloatValue(DivOp(self, literal(other)))
 
     def __rtruediv__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import DivOp
+        from ..comps.value.binary_ops import DivOp
 
         return FloatValue(DivOp(literal(other), self))
 
@@ -206,7 +206,7 @@ class IntValue(
     @overload
     def __floordiv__(self, other: float | FloatValue) -> FloatValue: ...
     def __floordiv__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
-        from ..computations.binary_ops import FloorDivOp
+        from ..comps.value.binary_ops import FloorDivOp
 
         if isinstance(other, (float, FloatValue)):
             return FloatValue(FloorDivOp(self, literal(other)))
@@ -217,7 +217,7 @@ class IntValue(
     @overload
     def __rfloordiv__(self, other: float) -> FloatValue: ...
     def __rfloordiv__(self, other: int | float) -> IntValue | FloatValue:
-        from ..computations.binary_ops import FloorDivOp
+        from ..comps.value.binary_ops import FloorDivOp
 
         if isinstance(other, float):
             return FloatValue(FloorDivOp(literal(other), self))
@@ -229,7 +229,7 @@ class IntValue(
     @overload
     def __mod__(self, other: float | FloatValue) -> FloatValue: ...
     def __mod__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
-        from ..computations.binary_ops import ModOp
+        from ..comps.value.binary_ops import ModOp
 
         if isinstance(other, (float, FloatValue)):
             return FloatValue(ModOp(self, literal(other)))
@@ -240,7 +240,7 @@ class IntValue(
     @overload
     def __rmod__(self, other: float) -> FloatValue: ...
     def __rmod__(self, other: int | float) -> IntValue | FloatValue:
-        from ..computations.binary_ops import ModOp
+        from ..comps.value.binary_ops import ModOp
 
         if isinstance(other, float):
             return FloatValue(ModOp(literal(other), self))
@@ -252,7 +252,7 @@ class IntValue(
     @overload
     def __pow__(self, other: float | FloatValue) -> FloatValue: ...
     def __pow__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
-        from ..computations.binary_ops import PowOp
+        from ..comps.value.binary_ops import PowOp
 
         if isinstance(other, (float, FloatValue)):
             return FloatValue(PowOp(self, literal(other)))
@@ -263,7 +263,7 @@ class IntValue(
     @overload
     def __rpow__(self, other: float) -> FloatValue: ...
     def __rpow__(self, other: int | float) -> IntValue | FloatValue:
-        from ..computations.binary_ops import PowOp
+        from ..comps.value.binary_ops import PowOp
 
         if isinstance(other, float):
             return FloatValue(PowOp(literal(other), self))
@@ -271,17 +271,17 @@ class IntValue(
 
     # --- Unary Operations ---
     def __neg__(self) -> IntValue:
-        from ..computations.unary_ops import NegOp
+        from ..comps.value.unary_ops import NegOp
 
         return IntValue(NegOp(self))
 
     def __pos__(self) -> IntValue:
-        from ..computations.unary_ops import PosOp
+        from ..comps.value.unary_ops import PosOp
 
         return IntValue(PosOp(self))
 
     def __abs__(self) -> IntValue:
-        from ..computations.unary_ops import AbsOp
+        from ..comps.value.unary_ops import AbsOp
 
         return IntValue(AbsOp(self))
 
@@ -325,94 +325,94 @@ class FloatValue(
 
     # --- Addition ---
     def __add__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return FloatValue(AddOp(self, literal(other)))
 
     def __radd__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return FloatValue(AddOp(literal(other), self))
 
     # --- Subtraction ---
     def __sub__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import SubOp
+        from ..comps.value.binary_ops import SubOp
 
         return FloatValue(SubOp(self, literal(other)))
 
     def __rsub__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import SubOp
+        from ..comps.value.binary_ops import SubOp
 
         return FloatValue(SubOp(literal(other), self))
 
     # --- Multiplication ---
     def __mul__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import MulOp
+        from ..comps.value.binary_ops import MulOp
 
         return FloatValue(MulOp(self, literal(other)))
 
     def __rmul__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import MulOp
+        from ..comps.value.binary_ops import MulOp
 
         return FloatValue(MulOp(literal(other), self))
 
     # --- True Division ---
     def __truediv__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import DivOp
+        from ..comps.value.binary_ops import DivOp
 
         return FloatValue(DivOp(self, literal(other)))
 
     def __rtruediv__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import DivOp
+        from ..comps.value.binary_ops import DivOp
 
         return FloatValue(DivOp(literal(other), self))
 
     # --- Floor Division ---
     def __floordiv__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import FloorDivOp
+        from ..comps.value.binary_ops import FloorDivOp
 
         return FloatValue(FloorDivOp(self, literal(other)))
 
     def __rfloordiv__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import FloorDivOp
+        from ..comps.value.binary_ops import FloorDivOp
 
         return FloatValue(FloorDivOp(literal(other), self))
 
     # --- Modulo ---
     def __mod__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import ModOp
+        from ..comps.value.binary_ops import ModOp
 
         return FloatValue(ModOp(self, literal(other)))
 
     def __rmod__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import ModOp
+        from ..comps.value.binary_ops import ModOp
 
         return FloatValue(ModOp(literal(other), self))
 
     # --- Power ---
     def __pow__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
-        from ..computations.binary_ops import PowOp
+        from ..comps.value.binary_ops import PowOp
 
         return FloatValue(PowOp(self, literal(other)))
 
     def __rpow__(self, other: int | float) -> FloatValue:
-        from ..computations.binary_ops import PowOp
+        from ..comps.value.binary_ops import PowOp
 
         return FloatValue(PowOp(literal(other), self))
 
     # --- Unary Operations ---
     def __neg__(self) -> FloatValue:
-        from ..computations.unary_ops import NegOp
+        from ..comps.value.unary_ops import NegOp
 
         return FloatValue(NegOp(self))
 
     def __pos__(self) -> FloatValue:
-        from ..computations.unary_ops import PosOp
+        from ..comps.value.unary_ops import PosOp
 
         return FloatValue(PosOp(self))
 
     def __abs__(self) -> FloatValue:
-        from ..computations.unary_ops import AbsOp
+        from ..comps.value.unary_ops import AbsOp
 
         return FloatValue(AbsOp(self))
 
@@ -488,13 +488,13 @@ class StrValue(
 
     def __add__(self, other: str | StrValue) -> StrValue:
         """Concatenate strings."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return StrValue(AddOp(self, literal(other)))
 
     def __radd__(self, other: str) -> StrValue:
         """Right concatenate strings."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return StrValue(AddOp[str](literal(other), self))
 
@@ -542,13 +542,13 @@ class BytesValue(
 
     def __add__(self, other: bytes | BytesValue) -> BytesValue:
         """Concatenate bytes."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return BytesValue(AddOp(self, literal(other)))
 
     def __radd__(self, other: bytes) -> BytesValue:
         """Right concatenate bytes."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return BytesValue(AddOp(literal(other), self))
 
@@ -561,11 +561,11 @@ class BytesValue(
     def __getitem__(self, key: int | slice) -> BytesValue | IntValue:
         """Get byte or slice."""
         if isinstance(key, slice):
-            from ..computations.sequence_ops import SliceOp
+            from ..comps.types.sequence import SliceOp
 
             return BytesValue(SliceOp[bytes](self, key.start, key.stop, key.step))
 
-        from ..computations.sequence_ops import AtOp
+        from ..comps.types.sequence import AtOp
 
         return IntValue(AtOp[int](self, literal(key)))
 
@@ -777,13 +777,13 @@ class ListValue[T](
 
     def __add__(self, other: list[T] | ListValue[T]) -> ListValue[T]:
         """Concatenate lists."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return ListValue(AddOp(self, literal(other)))
 
     def __radd__(self, other: list[T]) -> ListValue[T]:
         """Right concatenate lists."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return ListValue(AddOp(literal(other), self))
 
@@ -796,11 +796,11 @@ class ListValue[T](
     def __getitem__(self, key: int | slice) -> UnknownValue | ListValue[T]:
         """Get item or slice."""
         if isinstance(key, slice):
-            from ..computations.sequence_ops import SliceOp
+            from ..comps.types.sequence import SliceOp
 
             return ListValue(SliceOp(self, key.start, key.stop, key.step))
 
-        from ..computations.sequence_ops import AtOp
+        from ..comps.types.sequence import AtOp
         from .values import UnknownValue
 
         return UnknownValue(AtOp(self, literal(key)))
@@ -855,11 +855,11 @@ class TupleValue[*Ts](
     def __getitem__(self, key: int | slice) -> UnknownValue | TupleValue:
         """Get item or slice."""
         if isinstance(key, slice):
-            from ..computations.sequence_ops import SliceOp
+            from ..comps.types.sequence import SliceOp
 
             return TupleValue(SliceOp(self, key.start, key.stop, key.step))
 
-        from ..computations.sequence_ops import AtOp
+        from ..comps.types.sequence import AtOp
         from .values import UnknownValue
 
         return UnknownValue(AtOp(self, literal(key)))
@@ -905,7 +905,7 @@ class DictValue[K, V](
 
     def __getitem__(self, key: K) -> UnknownValue:
         """Get value for key."""
-        from ..computations.sequence_ops import AtOp
+        from ..comps.types.sequence import AtOp
         from .values import UnknownValue
 
         return UnknownValue(AtOp(self, literal(key)))

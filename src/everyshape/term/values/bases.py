@@ -189,7 +189,7 @@ class CoreBase:
         Returns:
             BoolValue-like result
         """
-        from ..computations.unary_ops import IsEmptyOp
+        from ..comps.value.unary_ops import IsEmptyOp
         from .values import BoolValue
 
         return BoolValue(IsEmptyOp(self))
@@ -200,7 +200,7 @@ class CoreBase:
         Returns:
             BoolValue-like result
         """
-        from ..computations.unary_ops import IsNaNOp
+        from ..comps.value.unary_ops import IsNaNOp
         from .values import BoolValue
 
         return BoolValue(IsNaNOp(self))
@@ -247,7 +247,7 @@ class CoreBase:
             >>> price.ifelse(price > 0, default_price)
             >>> name.ifelse(name.not_empty(), "Unknown")
         """
-        from ..computations.ternary_ops import ConditionalOp
+        from ..comps.value.ternary_ops import ConditionalOp
         from .values import UnknownValue
 
         return UnknownValue(ConditionalOp(literal(condition), self, literal(otherwise)))
@@ -280,7 +280,7 @@ class CoreBase:
             >>> float_val.to_int()  # 3.14 -> 3
             >>> str_val.to_int()  # "42" -> 42
         """
-        from ..computations.conversion_ops import ToIntOp
+        from ..comps.value.conversion import ToIntOp
         from .values import IntValue
 
         return IntValue(ToIntOp(self))
@@ -295,7 +295,7 @@ class CoreBase:
             >>> int_val.to_float()  # 42 -> 42.0
             >>> str_val.to_float()  # "3.14" -> 3.14
         """
-        from ..computations.conversion_ops import ToFloatOp
+        from ..comps.value.conversion import ToFloatOp
         from .values import FloatValue
 
         return FloatValue(ToFloatOp(self))
@@ -310,7 +310,7 @@ class CoreBase:
             >>> int_val.to_bool()  # 0 -> False, 1 -> True
             >>> str_val.to_bool()  # "" -> False, "x" -> True
         """
-        from ..computations.conversion_ops import ToBoolOp
+        from ..comps.value.conversion import ToBoolOp
         from .values import BoolValue
 
         return BoolValue(ToBoolOp(self))
@@ -325,7 +325,7 @@ class CoreBase:
             >>> int_val.to_str()  # 42 -> "42"
             >>> datetime_val.to_str()  # datetime -> "2024-01-15 10:30:00"
         """
-        from ..computations.conversion_ops import ToStrOp
+        from ..comps.value.conversion import ToStrOp
         from .values import StrValue
 
         return StrValue(ToStrOp(self))
@@ -342,7 +342,7 @@ class CoreBase:
         Example:
             >>> str_val.to_bytes()  # "hello" -> b"hello"
         """
-        from ..computations.conversion_ops import ToBytesOp
+        from ..comps.value.conversion import ToBytesOp
         from .values import BytesValue
 
         return BytesValue(ToBytesOp(self, encoding))
@@ -357,7 +357,7 @@ class CoreBase:
             >>> tuple_val.to_list()  # (1, 2, 3) -> [1, 2, 3]
             >>> set_val.to_list()  # {1, 2, 3} -> [1, 2, 3]
         """
-        from ..computations.conversion_ops import ToListOp
+        from ..comps.value.conversion import ToListOp
         from .values import ListValue
 
         return ListValue(ToListOp(self))
@@ -377,13 +377,13 @@ class AddableBase[OperandT, ResultT]:
 
     def __add__(self, other: OperandT) -> ResultT:
         """Addition: self + other."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AddOp(self, literal(other))))
 
     def __radd__(self, other: OperandT) -> ResultT:
         """Right addition: other + self."""
-        from ..computations.binary_ops import AddOp
+        from ..comps.value.binary_ops import AddOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AddOp(literal(other), self)))
 
@@ -397,13 +397,13 @@ class SubtractableBase[OperandT, ResultT]:
 
     def __sub__(self, other: OperandT) -> ResultT:
         """Subtraction: self - other."""
-        from ..computations.binary_ops import SubOp
+        from ..comps.value.binary_ops import SubOp
 
         return cast("ResultT", self._wrap_arithmetic_result(SubOp(self, literal(other))))
 
     def __rsub__(self, other: OperandT) -> ResultT:
         """Right subtraction: other - self."""
-        from ..computations.binary_ops import SubOp
+        from ..comps.value.binary_ops import SubOp
 
         return cast("ResultT", self._wrap_arithmetic_result(SubOp(literal(other), self)))
 
@@ -417,19 +417,19 @@ class NegatableBase[ResultT]:
 
     def __neg__(self) -> ResultT:
         """Negation: -self."""
-        from ..computations.unary_ops import NegOp
+        from ..comps.value.unary_ops import NegOp
 
         return cast("ResultT", self._wrap_arithmetic_result(NegOp(self)))
 
     def __pos__(self) -> ResultT:
         """Positive: +self."""
-        from ..computations.unary_ops import PosOp
+        from ..comps.value.unary_ops import PosOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PosOp(self)))
 
     def __abs__(self) -> ResultT:
         """Absolute value: abs(self)."""
-        from ..computations.unary_ops import AbsOp
+        from ..comps.value.unary_ops import AbsOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AbsOp(self)))
 
@@ -443,13 +443,13 @@ class MultiplyableBase[OperandT, ResultT]:
 
     def __mul__(self, other: OperandT) -> ResultT:
         """Multiplication: self * other."""
-        from ..computations.binary_ops import MulOp
+        from ..comps.value.binary_ops import MulOp
 
         return cast("ResultT", self._wrap_arithmetic_result(MulOp(self, literal(other))))
 
     def __rmul__(self, other: OperandT) -> ResultT:
         """Right multiplication: other * self."""
-        from ..computations.binary_ops import MulOp
+        from ..comps.value.binary_ops import MulOp
 
         return cast("ResultT", self._wrap_arithmetic_result(MulOp(literal(other), self)))
 
@@ -463,25 +463,25 @@ class DivisibleBase[OperandT, ResultT]:
 
     def __truediv__(self, other: OperandT) -> ResultT:
         """Division: self / other."""
-        from ..computations.binary_ops import DivOp
+        from ..comps.value.binary_ops import DivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(DivOp(self, literal(other))))
 
     def __rtruediv__(self, other: OperandT) -> ResultT:
         """Right division: other / self."""
-        from ..computations.binary_ops import DivOp
+        from ..comps.value.binary_ops import DivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(DivOp(literal(other), self)))
 
     def __floordiv__(self, other: OperandT) -> ResultT:
         """Floor division: self // other."""
-        from ..computations.binary_ops import FloorDivOp
+        from ..comps.value.binary_ops import FloorDivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(self, literal(other))))
 
     def __rfloordiv__(self, other: OperandT) -> ResultT:
         """Right floor division: other // self."""
-        from ..computations.binary_ops import FloorDivOp
+        from ..comps.value.binary_ops import FloorDivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(literal(other), self)))
 
@@ -495,13 +495,13 @@ class ModuloableBase[OperandT, ResultT]:
 
     def __mod__(self, other: OperandT) -> ResultT:
         """Modulo: self % other."""
-        from ..computations.binary_ops import ModOp
+        from ..comps.value.binary_ops import ModOp
 
         return cast("ResultT", self._wrap_arithmetic_result(ModOp(self, literal(other))))
 
     def __rmod__(self, other: OperandT) -> ResultT:
         """Right modulo: other % self."""
-        from ..computations.binary_ops import ModOp
+        from ..comps.value.binary_ops import ModOp
 
         return cast("ResultT", self._wrap_arithmetic_result(ModOp(literal(other), self)))
 
@@ -515,13 +515,13 @@ class PowerableBase[OperandT, ResultT]:
 
     def __pow__(self, other: OperandT) -> ResultT:
         """Power: self ** other."""
-        from ..computations.binary_ops import PowOp
+        from ..comps.value.binary_ops import PowOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PowOp(self, literal(other))))
 
     def __rpow__(self, other: OperandT) -> ResultT:
         """Right power: other ** self."""
-        from ..computations.binary_ops import PowOp
+        from ..comps.value.binary_ops import PowOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PowOp(literal(other), self)))
 
@@ -581,28 +581,28 @@ class OrderableBase[OperandT]:
 
     def __gt__(self, other: OperandT) -> BoolValue:
         """Greater than: self > other."""
-        from ..computations.binary_ops import GtOp
+        from ..comps.value.binary_ops import GtOp
         from .values import BoolValue
 
         return BoolValue(GtOp(self, literal(other)))
 
     def __lt__(self, other: OperandT) -> BoolValue:
         """Less than: self < other."""
-        from ..computations.binary_ops import LtOp
+        from ..comps.value.binary_ops import LtOp
         from .values import BoolValue
 
         return BoolValue(LtOp(self, literal(other)))
 
     def __ge__(self, other: OperandT) -> BoolValue:
         """Greater than or equal: self >= other."""
-        from ..computations.binary_ops import GeOp
+        from ..comps.value.binary_ops import GeOp
         from .values import BoolValue
 
         return BoolValue(GeOp(self, literal(other)))
 
     def __le__(self, other: OperandT) -> BoolValue:
         """Less than or equal: self <= other."""
-        from ..computations.binary_ops import LeOp
+        from ..comps.value.binary_ops import LeOp
         from .values import BoolValue
 
         return BoolValue(LeOp(self, literal(other)))
@@ -639,7 +639,7 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ..computations.binary_ops import EqOp
+        from ..comps.value.binary_ops import EqOp
         from .values import BoolValue
 
         return BoolValue(EqOp(self, literal(other)))
@@ -653,7 +653,7 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ..computations.binary_ops import NeOp
+        from ..comps.value.binary_ops import NeOp
         from .values import BoolValue
 
         return BoolValue(NeOp(self, literal(other)))
@@ -667,7 +667,7 @@ class EqualableBase[OperandT]:
         Returns:
             IdCompOp expression
         """
-        from ..computations.binary_ops import IdCompOp
+        from ..comps.value.binary_ops import IdCompOp
         from .values import BoolValue
 
         return BoolValue(IdCompOp(self, literal(other)))
@@ -706,7 +706,7 @@ class AndableBase[OperandT, ResultT]:
         Returns:
             AND result
         """
-        from ..computations.binary_ops import AndOp
+        from ..comps.value.binary_ops import AndOp
 
         return cast("ResultT", self._wrap_logical_result(AndOp(self, literal(other))))
 
@@ -727,7 +727,7 @@ class OrableBase[OperandT, ResultT]:
         Returns:
             OR result
         """
-        from ..computations.binary_ops import OrOp
+        from ..comps.value.binary_ops import OrOp
 
         return cast("ResultT", self._wrap_logical_result(OrOp(self, literal(other))))
 
@@ -763,7 +763,7 @@ class NotableBase[ResultT]:
         Returns:
             NOT result
         """
-        from ..computations.unary_ops import NotOp
+        from ..comps.value.unary_ops import NotOp
 
         return cast("ResultT", self._wrap_logical_result(NotOp(self)))
 
@@ -773,7 +773,7 @@ class NotableBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.unary_ops import BoolOp
+        from ..comps.value.unary_ops import BoolOp
 
         return cast("ResultT", self._wrap_logical_result(BoolOp(self)))
 
@@ -812,7 +812,7 @@ class BitwiseAndableBase[OperandT, ResultT]:
         Returns:
             AND result
         """
-        from ..computations.binary_ops import BitwiseAndOp
+        from ..comps.value.binary_ops import BitwiseAndOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseAndOp(self, literal(other))))
 
@@ -833,7 +833,7 @@ class BitwiseOrableBase[OperandT, ResultT]:
         Returns:
             OR result
         """
-        from ..computations.binary_ops import BitwiseOrOp
+        from ..comps.value.binary_ops import BitwiseOrOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseOrOp(self, literal(other))))
 
@@ -847,13 +847,13 @@ class BitwiseXorableBase[OperandT, ResultT]:
 
     def __xor__(self, other: OperandT) -> ResultT:
         """Bitwise XOR: self ^ other."""
-        from ..computations.binary_ops import XorOp
+        from ..comps.value.binary_ops import XorOp
 
         return cast("ResultT", self._wrap_bitwise_result(XorOp(self, literal(other))))
 
     def __rxor__(self, other: OperandT) -> ResultT:
         """Right XOR: other ^ self."""
-        from ..computations.binary_ops import XorOp
+        from ..comps.value.binary_ops import XorOp
 
         return cast("ResultT", self._wrap_bitwise_result(XorOp(literal(other), self)))
 
@@ -871,7 +871,7 @@ class BitwiseNotableBase[ResultT]:
         Returns:
             Inverted value
         """
-        from ..computations.unary_ops import BitwiseNotOp
+        from ..comps.value.unary_ops import BitwiseNotOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseNotOp(self)))
 
@@ -885,25 +885,25 @@ class ShiftableBase[OperandT, ResultT]:
 
     def __lshift__(self, other: OperandT) -> ResultT:
         """Left shift: self << other."""
-        from ..computations.binary_ops import LShiftOp
+        from ..comps.value.binary_ops import LShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(LShiftOp(self, literal(other))))
 
     def __rlshift__(self, other: OperandT) -> ResultT:
         """Right left shift: other << self."""
-        from ..computations.binary_ops import LShiftOp
+        from ..comps.value.binary_ops import LShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(LShiftOp(literal(other), self)))
 
     def __rshift__(self, other: OperandT) -> ResultT:
         """Right shift: self >> other."""
-        from ..computations.binary_ops import RShiftOp
+        from ..comps.value.binary_ops import RShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(RShiftOp(self, literal(other))))
 
     def __rrshift__(self, other: OperandT) -> ResultT:
         """Right right shift: other >> self."""
-        from ..computations.binary_ops import RShiftOp
+        from ..comps.value.binary_ops import RShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(RShiftOp(literal(other), self)))
 
@@ -937,7 +937,7 @@ class LengthableBase:
         Returns:
             Length value
         """
-        from ..computations.sequence_ops import LenOp
+        from ..comps.types.sequence import LenOp
         from .values import IntValue
 
         return IntValue(LenOp(self))
@@ -952,7 +952,7 @@ class IndexableBase[KeyT, ResultValue]:
 
     def __getitem__(self, key: KeyT) -> ResultValue:
         """Get item at index/key."""
-        from ..computations.sequence_ops import AtOp
+        from ..comps.types.sequence import AtOp
 
         return cast("ResultValue", self._wrap_indexable_result(AtOp(self, literal(key))))
 
@@ -975,7 +975,7 @@ class SliceableBase[ResultT]:
         Returns:
             Sliced result
         """
-        from ..computations.sequence_ops import SliceOp
+        from ..comps.types.sequence import SliceOp
 
         return cast("ResultT", self._wrap_sliceable_result(SliceOp(self, start, stop, step)))
 
@@ -992,7 +992,7 @@ class ContainableBase[ItemT]:
         Returns:
             Boolean result
         """
-        from ..computations.mapping_ops import ContainsOp
+        from ..comps.types.mapping import ContainsOp
         from .values import BoolValue
 
         return BoolValue(ContainsOp(self, literal(item)))
@@ -1018,7 +1018,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Mapped result
         """
-        from ..computations.sequence_ops import MapOp
+        from ..comps.types.sequence import MapOp
 
         return cast("ResultT", self._wrap_iterable_result(MapOp(self, func)))
 
@@ -1031,7 +1031,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Filtered result
         """
-        from ..computations.sequence_ops import FilterOp
+        from ..comps.types.sequence import FilterOp
 
         return cast("ResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
 
@@ -1067,7 +1067,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Reduced value
         """
-        from ..computations.sequence_ops import ReduceOp
+        from ..comps.types.sequence import ReduceOp
         from .values import UnknownValue
 
         return UnknownValue(ReduceOp(self, func, initial))
@@ -1078,7 +1078,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Sum
         """
-        from ..computations.sequence_ops import SumOp
+        from ..comps.types.sequence import SumOp
 
         return cast("ResultT", self._wrap_element_result(SumOp(self)))
 
@@ -1088,7 +1088,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Minimum
         """
-        from ..computations.sequence_ops import MinOp
+        from ..comps.types.sequence import MinOp
 
         return cast("ResultT", self._wrap_element_result(MinOp(self)))
 
@@ -1098,7 +1098,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Maximum
         """
-        from ..computations.sequence_ops import MaxOp
+        from ..comps.types.sequence import MaxOp
 
         return cast("ResultT", self._wrap_element_result(MaxOp(self)))
 
@@ -1108,7 +1108,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.sequence_ops import AnyOp
+        from ..comps.types.sequence import AnyOp
         from .values import BoolValue
 
         return BoolValue(AnyOp(self))
@@ -1119,7 +1119,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.sequence_ops import AllOp
+        from ..comps.types.sequence import AllOp
         from .values import BoolValue
 
         return BoolValue(AllOp(self))
@@ -1145,7 +1145,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             First element
         """
-        from ..computations.sequence_ops import FirstOp
+        from ..comps.types.sequence import FirstOp
 
         return cast("ResultT", self._wrap_element_result(FirstOp(self)))
 
@@ -1155,7 +1155,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Last element
         """
-        from ..computations.sequence_ops import LastOp
+        from ..comps.types.sequence import LastOp
 
         return cast("ResultT", self._wrap_element_result(LastOp(self)))
 
@@ -1165,7 +1165,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Reversed sequence
         """
-        from ..computations.sequence_ops import ReversedOp
+        from ..comps.types.sequence import ReversedOp
 
         return cast("ResultT", self._wrap_sliceable_result(ReversedOp(self)))
 
@@ -1178,7 +1178,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Sorted sequence
         """
-        from ..computations.sequence_ops import SortedOp
+        from ..comps.types.sequence import SortedOp
 
         return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse=reverse)))
 
@@ -1191,7 +1191,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Joined string
         """
-        from ..computations.sequence_ops import JoinOp
+        from ..comps.types.sequence import JoinOp
         from .values import StrValue
 
         return StrValue(JoinOp(self, literal(separator)))
@@ -1205,7 +1205,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Index
         """
-        from ..computations.sequence_ops import IndexOfOp
+        from ..comps.types.sequence import IndexOfOp
         from .values import IntValue
 
         return IntValue(IndexOfOp(self, literal(value)))
@@ -1219,7 +1219,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             IntValue containing index
         """
-        from ..computations.sequence_ops import FindIndexOp
+        from ..comps.types.sequence import FindIndexOp
 
         return IntValue(FindIndexOp(self, predicate))
 
@@ -1232,7 +1232,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Count
         """
-        from ..computations.sequence_ops import CountOp
+        from ..comps.types.sequence import CountOp
         from .values import IntValue
 
         return IntValue(CountOp(self, literal(value)))
@@ -1271,7 +1271,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Keys sequence
         """
-        from ..computations.mapping_ops import DictKeysOp
+        from ..comps.types.mapping import DictKeysOp
 
         return cast("ResultT", self._wrap_keys_result(DictKeysOp(self)))
 
@@ -1281,7 +1281,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Values sequence
         """
-        from ..computations.mapping_ops import DictValuesOp
+        from ..comps.types.mapping import DictValuesOp
 
         return cast("ResultT", self._wrap_values_result(DictValuesOp(self)))
 
@@ -1291,7 +1291,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Items sequence
         """
-        from ..computations.mapping_ops import DictItemsOp
+        from ..comps.types.mapping import DictItemsOp
 
         return cast("ResultT", self._wrap_items_result(DictItemsOp(self)))
 
@@ -1305,7 +1305,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Value or default
         """
-        from ..computations.mapping_ops import DictGetOp
+        from ..comps.types.mapping import DictGetOp
 
         return cast(
             "ResultT", self._wrap_value_result(DictGetOp(self, literal(key), literal(default)))
@@ -1340,7 +1340,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Union set
         """
-        from ..computations.set_ops import UnionOp
+        from ..comps.types.set import UnionOp
 
         return cast("ResultT", self._wrap_set_result(UnionOp(self, literal(other))))
 
@@ -1353,7 +1353,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Intersection set
         """
-        from ..computations.set_ops import IntersectionOp
+        from ..comps.types.set import IntersectionOp
 
         return cast("ResultT", self._wrap_set_result(IntersectionOp(self, literal(other))))
 
@@ -1366,7 +1366,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Difference set
         """
-        from ..computations.set_ops import DifferenceOp
+        from ..comps.types.set import DifferenceOp
 
         return cast("ResultT", self._wrap_set_result(DifferenceOp(self, literal(other))))
 
@@ -1379,7 +1379,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Symmetric difference set
         """
-        from ..computations.set_ops import SymmetricDifferenceOp
+        from ..comps.types.set import SymmetricDifferenceOp
 
         return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, literal(other))))
 
@@ -1392,7 +1392,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..computations.set_ops import IsSubsetOp
+        from ..comps.types.set import IsSubsetOp
         from .values import BoolValue
 
         return BoolValue(IsSubsetOp(self, literal(other)))
@@ -1406,7 +1406,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..computations.set_ops import IsSupersetOp
+        from ..comps.types.set import IsSupersetOp
         from .values import BoolValue
 
         return BoolValue(IsSupersetOp(self, literal(other)))
@@ -1420,7 +1420,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..computations.set_ops import IsDisjointOp
+        from ..comps.types.set import IsDisjointOp
         from .values import BoolValue
 
         return BoolValue(IsDisjointOp(self, literal(other)))
@@ -1458,7 +1458,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Uppercase string
         """
-        from ..computations.string_ops import UpperOp
+        from ..comps.types.string import UpperOp
 
         return cast("ResultT", self._wrap_string_result(UpperOp(self)))
 
@@ -1468,7 +1468,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Lowercase string
         """
-        from ..computations.string_ops import LowerOp
+        from ..comps.types.string import LowerOp
 
         return cast("ResultT", self._wrap_string_result(LowerOp(self)))
 
@@ -1478,7 +1478,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Title-cased string
         """
-        from ..computations.string_ops import TitleOp
+        from ..comps.types.string import TitleOp
 
         return cast("ResultT", self._wrap_string_result(TitleOp(self)))
 
@@ -1488,7 +1488,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Capitalized string
         """
-        from ..computations.string_ops import CapitalizeOp
+        from ..comps.types.string import CapitalizeOp
 
         return cast("ResultT", self._wrap_string_result(CapitalizeOp(self)))
 
@@ -1498,7 +1498,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Case-swapped string
         """
-        from ..computations.string_ops import SwapCaseOp
+        from ..comps.types.string import SwapCaseOp
 
         return cast("ResultT", self._wrap_string_result(SwapCaseOp(self)))
 
@@ -1512,7 +1512,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ..computations.string_ops import StripOp
+        from ..comps.types.string import StripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(StripOp(self, literal(chars))))
@@ -1527,7 +1527,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ..computations.string_ops import LStripOp
+        from ..comps.types.string import LStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(LStripOp(self, literal(chars))))
@@ -1542,7 +1542,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ..computations.string_ops import RStripOp
+        from ..comps.types.string import RStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(RStripOp(self, literal(chars))))
@@ -1559,7 +1559,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             List of substrings
         """
-        from ..computations.string_ops import SplitOp
+        from ..comps.types.string import SplitOp
         from .values import ListValue
 
         if sep is not None:
@@ -1576,7 +1576,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             List of substrings
         """
-        from ..computations.string_ops import RSplitOp
+        from ..comps.types.string import RSplitOp
         from .values import ListValue
 
         if sep is not None:
@@ -1595,7 +1595,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ..computations.string_ops import FindOp
+        from ..comps.types.string import FindOp
         from .values import IntValue
 
         return IntValue(FindOp(self, literal(sub), start, end))
@@ -1611,7 +1611,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ..computations.string_ops import RFindOp
+        from ..comps.types.string import RFindOp
         from .values import IntValue
 
         return IntValue(RFindOp(self, literal(sub), start, end))
@@ -1625,7 +1625,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Count
         """
-        from ..computations.string_ops import CountSubstringOp
+        from ..comps.types.string import CountSubstringOp
         from .values import IntValue
 
         return IntValue(CountSubstringOp(self, literal(sub)))
@@ -1640,7 +1640,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.string_ops import StartsWithOp
+        from ..comps.types.string import StartsWithOp
         from .values import BoolValue
 
         return BoolValue(StartsWithOp(self, literal(prefix)))
@@ -1654,7 +1654,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.string_ops import EndsWithOp
+        from ..comps.types.string import EndsWithOp
         from .values import BoolValue
 
         return BoolValue(EndsWithOp(self, literal(suffix)))
@@ -1665,7 +1665,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.string_ops import IsDigitOp
+        from ..comps.types.string import IsDigitOp
         from .values import BoolValue
 
         return BoolValue(IsDigitOp(self))
@@ -1676,7 +1676,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.string_ops import IsAlphaOp
+        from ..comps.types.string import IsAlphaOp
         from .values import BoolValue
 
         return BoolValue(IsAlphaOp(self))
@@ -1687,7 +1687,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.string_ops import IsAlnumOp
+        from ..comps.types.string import IsAlnumOp
         from .values import BoolValue
 
         return BoolValue(IsAlnumOp(self))
@@ -1698,7 +1698,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.string_ops import IsSpaceOp
+        from ..comps.types.string import IsSpaceOp
         from .values import BoolValue
 
         return BoolValue(IsSpaceOp(self))
@@ -1714,7 +1714,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Centered string
         """
-        from ..computations.string_ops import CenterOp
+        from ..comps.types.string import CenterOp
 
         return cast("ResultT", self._wrap_string_result(CenterOp(self, literal(width), fillchar)))
 
@@ -1728,7 +1728,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Left-justified string
         """
-        from ..computations.string_ops import LJustOp
+        from ..comps.types.string import LJustOp
 
         return cast("ResultT", self._wrap_string_result(LJustOp(self, literal(width), fillchar)))
 
@@ -1742,7 +1742,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Right-justified string
         """
-        from ..computations.string_ops import RJustOp
+        from ..comps.types.string import RJustOp
 
         return cast("ResultT", self._wrap_string_result(RJustOp(self, literal(width), fillchar)))
 
@@ -1755,7 +1755,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Zero-filled string
         """
-        from ..computations.string_ops import ZFillOp
+        from ..comps.types.string import ZFillOp
 
         return cast("ResultT", self._wrap_string_result(ZFillOp(self, literal(width))))
 
@@ -1771,7 +1771,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Modified string
         """
-        from ..computations.string_ops import ReplaceOp
+        from ..comps.types.string import ReplaceOp
 
         return cast(
             "ResultT",
@@ -1788,7 +1788,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Encoded bytes
         """
-        from ..computations.string_ops import EncodeOp
+        from ..comps.types.string import EncodeOp
         from .values import BytesValue
 
         return BytesValue(EncodeOp(self, encoding))
@@ -1838,7 +1838,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Decoded string
         """
-        from ..computations.bytes_ops import DecodeOp
+        from ..comps.types.bytes import DecodeOp
         from .values import StrValue
 
         return StrValue(DecodeOp(self, encoding))
@@ -1849,7 +1849,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Hex string
         """
-        from ..computations.bytes_ops import HexOp
+        from ..comps.types.bytes import HexOp
         from .values import StrValue
 
         return StrValue(HexOp(self))
@@ -1861,7 +1861,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Uppercase bytes
         """
-        from ..computations.bytes_ops import BytesUpperOp
+        from ..comps.types.bytes import BytesUpperOp
 
         return cast("ResultT", self._wrap_bytes_result(BytesUpperOp(self)))
 
@@ -1871,7 +1871,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Lowercase bytes
         """
-        from ..computations.bytes_ops import BytesLowerOp
+        from ..comps.types.bytes import BytesLowerOp
 
         return cast("ResultT", self._wrap_bytes_result(BytesLowerOp(self)))
 
@@ -1885,7 +1885,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ..computations.bytes_ops import BytesStripOp
+        from ..comps.types.bytes import BytesStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesStripOp(self, literal(chars))))
@@ -1900,7 +1900,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ..computations.bytes_ops import BytesLStripOp
+        from ..comps.types.bytes import BytesLStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesLStripOp(self, literal(chars))))
@@ -1915,7 +1915,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ..computations.bytes_ops import BytesRStripOp
+        from ..comps.types.bytes import BytesRStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesRStripOp(self, literal(chars))))
@@ -1934,7 +1934,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             List of bytes
         """
-        from ..computations.bytes_ops import BytesSplitOp
+        from ..comps.types.bytes import BytesSplitOp
         from .values import ListValue
 
         if sep is not None:
@@ -1953,7 +1953,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ..computations.bytes_ops import BytesFindOp
+        from ..comps.types.bytes import BytesFindOp
         from .values import IntValue
 
         return IntValue(BytesFindOp(self, literal(sub), start, end))
@@ -1967,7 +1967,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Count
         """
-        from ..computations.bytes_ops import BytesCountOp
+        from ..comps.types.bytes import BytesCountOp
         from .values import IntValue
 
         return IntValue(BytesCountOp(self, literal(sub)))
@@ -1982,7 +1982,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.bytes_ops import BytesStartsWithOp
+        from ..comps.types.bytes import BytesStartsWithOp
         from .values import BoolValue
 
         return BoolValue(BytesStartsWithOp(self, literal(prefix)))
@@ -1996,7 +1996,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..computations.bytes_ops import BytesEndsWithOp
+        from ..comps.types.bytes import BytesEndsWithOp
         from .values import BoolValue
 
         return BoolValue(BytesEndsWithOp(self, literal(suffix)))
@@ -2013,7 +2013,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Modified bytes
         """
-        from ..computations.bytes_ops import BytesReplaceOp
+        from ..comps.types.bytes import BytesReplaceOp
 
         return cast(
             "ResultT",

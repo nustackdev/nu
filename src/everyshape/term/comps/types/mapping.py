@@ -28,13 +28,13 @@ from typing import TYPE_CHECKING, cast
 from everyshape import NOT_SET, NotSet, is_notset
 from everyshape.types import SpecialValue
 
-from ..term import Operation
+from ...term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import Context
-    from ..term import RValue
-    from ..values.bases import (
+    from ...context import Context
+    from ...term import RValue
+    from ...values.bases import (
         UnionBaseType,
     )
 

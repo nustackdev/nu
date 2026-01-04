@@ -32,13 +32,13 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.types import NAN, SpecialValue
 
-from ..term import Operation
+from ...term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import Context
-    from ..term import RValue
-    from ..values.bases import UnionBaseType
+    from ...context import Context
+    from ...term import RValue
+    from ...values.bases import UnionBaseType
 
 __all__ = [
     "BytesCountOp",
