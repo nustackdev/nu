@@ -1,6 +1,10 @@
 """Complete reference base implementations for primitives.
 
 This module provides ready-to-extend ref base classes for primitives.
+
+Type Parameters (matching protocol conventions):
+    T: Native Python type at this location (int, str, float, nested dict, etc.)
+    ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
 """
 
 from __future__ import annotations
@@ -23,7 +27,7 @@ __all__ = [
 ]
 
 
-class CollectionItemRefBase[T](
+class CollectionItemRefBase[T, ValueT](
     ExistableBase,
     GettableBase[T],
     SettableBase[T],
@@ -40,71 +44,82 @@ class CollectionItemRefBase[T](
     - on_change() from PrimitiveObservableBase
 
     Type Parameters:
-        T: Type of value at this location
+        T: Native Python type at this location (int, str, float, nested dict, etc.)
+        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
 
     Example:
-        class MyValueRef(ValueRefBase[str], PrimitiveRef, ABC):
-            pass
+        class MyValueRef(CollectionItemRefBase[str, StrValue], PrimitiveRef, ABC):
+            value_type = str
+            value_value_type = StrValue
     """
+
+    value_type: type[T]
+    value_value_type: type[ValueT]
 
     pass
 
 
-class SequenceItemRefBase[T](CollectionItemRefBase[T]):
+class SequenceItemRefBase[T, ValueT](CollectionItemRefBase[T, ValueT]):
     """Base for primitive values that are children of sequences.
 
-    Same capabilities as ValueRefBase. The distinction is semantic
+    Same capabilities as CollectionItemRefBase. The distinction is semantic
     and helps with type clarity when building refs for sequence items.
 
     Type Parameters:
-        T: Type of value at this location
+        T: Native Python type at this location (int, str, float, nested dict, etc.)
+        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
 
     Example:
-        class MySequenceItemRef(SequenceItemRefBase[int], PrimitiveRef, ABC):
-            pass
+        class MySequenceItemRef(SequenceItemRefBase[int, IntValue], PrimitiveRef, ABC):
+            value_type = int
+            value_value_type = IntValue
     """
 
     pass
 
 
-class MutableSequenceItemRefBase[T](SequenceItemRefBase[T]):
+class MutableSequenceItemRefBase[T, ValueT](SequenceItemRefBase[T, ValueT]):
     """Mutable variant for sequence item refs.
 
     Same operations as SequenceItemRefBase since primitive value operations
     (get, set, remove) work through the parent view regardless of mutability.
 
     Type Parameters:
-        T: Type of value at this location
+        T: Native Python type at this location (int, str, float, nested dict, etc.)
+        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
     """
 
     pass
 
 
-class MappingItemRefBase[T](CollectionItemRefBase[T]):
+class MappingItemRefBase[T, ValueT](CollectionItemRefBase[T, ValueT]):
     """Base for primitive values that are children of mappings.
 
     Same capabilities as CollectionItemRefBase. The distinction is semantic
     and helps with type clarity when building refs for mapping values.
 
     Type Parameters:
-        T: Type of value at this location
+        T: Native Python type at this location (int, str, float, nested dict, etc.)
+        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
 
     Example:
-        class MyMappingValueRef(MappingItemRefBase[str], PrimitiveRef, ABC):
-            pass
+        class MyMappingValueRef(MappingItemRefBase[str, StrValue], PrimitiveRef, ABC):
+            value_type = str
+            value_value_type = StrValue
     """
 
     pass
 
 
-class MutableMappingItemRefBase[T](MappingItemRefBase[T]):
+class MutableMappingItemRefBase[T, ValueT](MappingItemRefBase[T, ValueT]):
     """Mutable variant for mapping value refs.
 
     Same operations as MappingItemRefBase since primitive value operations
     (get, set, remove) work through the parent view regardless of mutability.
 
     Type Parameters:
-        T: Type of value at this location
+        T: Native Python type at this location (int, str, float, nested dict, etc.)
+        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
     """
 
     pass
