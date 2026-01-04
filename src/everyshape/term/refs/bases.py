@@ -1194,69 +1194,69 @@ class MappingAccessibleBase[KeyT, ValueT]:
     value_type: type[ValueT]
 
     @overload
-    def get(
+    def get_item(
         self: MappingAccessibleBase[KeyT, int],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: int | SpecialValue | None = None,
     ) -> IntValue: ...
 
     @overload
-    def get(
+    def get_item(
         self: MappingAccessibleBase[KeyT, str],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: str | SpecialValue | None = None,
     ) -> StrValue: ...
 
     @overload
-    def get(
+    def get_item(
         self: MappingAccessibleBase[KeyT, bool],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: bool | SpecialValue | None = None,
     ) -> BoolValue: ...
 
     @overload
-    def get(
+    def get_item(
         self: MappingAccessibleBase[KeyT, float],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: float | SpecialValue | None = None,
     ) -> FloatValue: ...
 
     @overload
-    def get(
+    def get_item(
         self: MappingAccessibleBase[KeyT, bytes],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: bytes | SpecialValue | None = None,
     ) -> BytesValue: ...
 
     @overload
-    def get(
+    def get_item(
         self: MappingAccessibleBase[KeyT, None],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: None | SpecialValue = None,
     ) -> NoneValue: ...
 
     @overload
-    def get[V](
+    def get_item[V](
         self: MappingAccessibleBase[KeyT, list[V]],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: list[V] | SpecialValue | None = None,
     ) -> ListValue[V]: ...
 
     @overload
-    def get[K, V](
+    def get_item[K, V](
         self: MappingAccessibleBase[KeyT, dict[K, V]],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: dict[K, V] | SpecialValue | None = None,
     ) -> DictValue[K, V]: ...
 
     @overload
-    def get[V](
+    def get_item[V](
         self: MappingAccessibleBase[KeyT, set[V]],
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: set[V] | SpecialValue | None = None,
     ) -> SetValue[V]: ...
 
-    def get(
+    def get_item(
         self,
         key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
         default: ValueT | SpecialValue | None = None,
@@ -1271,7 +1271,7 @@ class MappingAccessibleBase[KeyT, ValueT]:
             Typed value wrapper containing value at key or default
 
         Example:
-            >>> value = dict_ref.get("key", "default").execute(ctx)
+            >>> value = dict_ref.get_item("key", "default").execute(ctx)
         """
         return computed(self.value_type, MappingGetOp(self, key, default))
 

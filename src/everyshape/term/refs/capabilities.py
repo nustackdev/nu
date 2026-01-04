@@ -60,6 +60,8 @@ __all__ = [  # noqa: RUF022
     "KeysQueryable",
     "ValuesQueryable",
     "ItemsQueryable",
+    # Mapping access capabilities
+    "MappingAccessible",
     # Type guards
     "is_gettable",
     "is_extractable",
@@ -71,6 +73,7 @@ __all__ = [  # noqa: RUF022
     "is_ref_observable",
     "is_ref_indexable",
     "is_lengthable",
+    "is_mapping_accessible",
 ]
 
 
@@ -624,6 +627,76 @@ class ItemsQueryable[KeyT, ValueT](Protocol):
 
 
 # =============================================================================
+# MAPPING ACCESS CAPABILITY PROTOCOLS
+# =============================================================================
+
+
+@runtime_checkable
+class MappingAccessible[KeyT, ValueT](Protocol):
+    """Protocol for LValues that support direct mapping access operations.
+
+    Provides get(), set_item(), and remove_item() for accessing mapping
+    containers directly without navigating to child refs.
+
+    Type Parameters:
+        KeyT: Type of keys in the mapping
+        ValueT: Type of values in the mapping
+
+    Example:
+        >>> if isinstance(ref, MappingAccessible):
+        ...     value = ref.get_item("key", "default").execute(ctx)
+        ...     ref.set_item("key", "value").execute(ctx)
+        ...     ref.remove_item("key").execute(ctx)
+    """
+
+    def get_item(
+        self,
+        key: KeyT | RValue,
+        default: ValueT | SpecialValue | None = None,
+    ) -> object:  # Returns ComputedValue type based on ValueT
+        """Get value by key with optional default.
+
+        Args:
+            key: Key to look up
+            default: Value to return if key not found (default: Empty)
+
+        Returns:
+            ComputedValue containing value at key or default
+        """
+        ...
+
+    def set_item(
+        self,
+        key: KeyT | RValue,
+        value: ValueT | RValue,
+    ) -> object:  # Returns ComputedValue type based on ValueT
+        """Set value at key in mapping.
+
+        Args:
+            key: Key to set
+            value: Value to set (literal or RValue)
+
+        Returns:
+            ComputedValue containing the set value
+        """
+        ...
+
+    def remove_item(self, key: KeyT | RValue) -> NoneValue:
+        """Remove key from mapping.
+
+        Args:
+            key: Key to remove
+
+        Returns:
+            NoneValue (remove returns None after execution)
+
+        Note:
+            Raises KeyError at execution if key not found.
+        """
+        ...
+
+
+# =============================================================================
 # TYPE GUARDS
 # =============================================================================
 
@@ -746,3 +819,15 @@ def is_lengthable(obj: object) -> TypeGuard[Lengthable]:
         True if object implements Lengthable protocol
     """
     return isinstance(obj, Lengthable)
+
+
+def is_mapping_accessible(obj: object) -> TypeGuard[MappingAccessible]:
+    """Check if object supports direct mapping access operations.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object implements MappingAccessible protocol
+    """
+    return isinstance(obj, MappingAccessible)

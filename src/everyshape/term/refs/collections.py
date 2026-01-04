@@ -37,6 +37,7 @@ from .capabilities import (
     ItemsQueryable,
     KeysQueryable,
     Lengthable,
+    MappingAccessible,
     Nestable,
     Poppable,
     RefIndexable,
@@ -299,12 +300,14 @@ class MappingRef[
     KeysQueryable[KeyT],
     ValuesQueryable[ValueT],
     ItemsQueryable[KeyT, ValueT],
+    MappingAccessible[KeyT, ValueT],
     Protocol,
 ):
     """Protocol for read-only mapping references.
 
     Mapping refs point to dict-like containers.
-    They support key access, keys/values/items queries, and extraction.
+    They support key access, keys/values/items queries, extraction, and direct
+    container-level get/set/remove operations.
 
     Type Parameters:
         CollectionT: Type of this collection (dict, etc)
@@ -321,6 +324,9 @@ class MappingRef[
         ...     item_ref = ref["key"]
         ...     all_keys = ref.keys().execute(ctx)
         ...     all_items = ref.items().execute(ctx)
+        ...     value = ref.get_item("key", "default").execute(ctx)
+        ...     ref.set_item("key", "value").execute(ctx)
+        ...     ref.remove_item("key").execute(ctx)
     """
 
     @property
