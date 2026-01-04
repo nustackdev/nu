@@ -77,19 +77,19 @@ __all__ = [  # noqa: RUF022
 
 
 @runtime_checkable
-class Addable[T, R](Protocol):
+class Addable[OtherT, ResultT](Protocol):
     """Protocol for values that support addition.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Addable):
         ...     result = value + 10
     """
 
-    def __add__(self, other: T) -> R:
+    def __add__(self, other: OtherT) -> ResultT:
         """Add other to this value.
 
         Args:
@@ -100,7 +100,7 @@ class Addable[T, R](Protocol):
         """
         ...
 
-    def __radd__(self, other: T) -> R:
+    def __radd__(self, other: OtherT) -> ResultT:
         """Add this value to other (reverse).
 
         Args:
@@ -113,19 +113,19 @@ class Addable[T, R](Protocol):
 
 
 @runtime_checkable
-class Subtractable[T, R](Protocol):
+class Subtractable[OtherT, ResultT](Protocol):
     """Protocol for values that support subtraction.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Subtractable):
         ...     result = value - 10
     """
 
-    def __sub__(self, other: T) -> R:
+    def __sub__(self, other: OtherT) -> ResultT:
         """Subtract other from this value.
 
         Args:
@@ -136,7 +136,7 @@ class Subtractable[T, R](Protocol):
         """
         ...
 
-    def __rsub__(self, other: T) -> R:
+    def __rsub__(self, other: OtherT) -> ResultT:
         """Subtract this value from other (reverse).
 
         Args:
@@ -149,19 +149,19 @@ class Subtractable[T, R](Protocol):
 
 
 @runtime_checkable
-class Multipliable[T, R](Protocol):
+class Multipliable[OtherT, ResultT](Protocol):
     """Protocol for values that support multiplication.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Multipliable):
         ...     result = value * 2
     """
 
-    def __mul__(self, other: T) -> R:
+    def __mul__(self, other: OtherT) -> ResultT:
         """Multiply this value by other.
 
         Args:
@@ -172,7 +172,7 @@ class Multipliable[T, R](Protocol):
         """
         ...
 
-    def __rmul__(self, other: T) -> R:
+    def __rmul__(self, other: OtherT) -> ResultT:
         """Multiply other by this value (reverse).
 
         Args:
@@ -185,19 +185,19 @@ class Multipliable[T, R](Protocol):
 
 
 @runtime_checkable
-class Divisible[T, R](Protocol):
+class Divisible[OtherT, ResultT](Protocol):
     """Protocol for values that support true division.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Divisible):
         ...     result = value / 2
     """
 
-    def __truediv__(self, other: T) -> R:
+    def __truediv__(self, other: OtherT) -> ResultT:
         """Divide this value by other.
 
         Args:
@@ -208,7 +208,7 @@ class Divisible[T, R](Protocol):
         """
         ...
 
-    def __rtruediv__(self, other: T) -> R:
+    def __rtruediv__(self, other: OtherT) -> ResultT:
         """Divide other by this value (reverse).
 
         Args:
@@ -221,19 +221,19 @@ class Divisible[T, R](Protocol):
 
 
 @runtime_checkable
-class FloorDivisible[T, R](Protocol):
+class FloorDivisible[OtherT, ResultT](Protocol):
     """Protocol for values that support floor division.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, FloorDivisible):
         ...     result = value // 2
     """
 
-    def __floordiv__(self, other: T) -> R:
+    def __floordiv__(self, other: OtherT) -> ResultT:
         """Floor divide this value by other.
 
         Args:
@@ -244,7 +244,7 @@ class FloorDivisible[T, R](Protocol):
         """
         ...
 
-    def __rfloordiv__(self, other: T) -> R:
+    def __rfloordiv__(self, other: OtherT) -> ResultT:
         """Floor divide other by this value (reverse).
 
         Args:
@@ -257,19 +257,19 @@ class FloorDivisible[T, R](Protocol):
 
 
 @runtime_checkable
-class Modulable[T, R](Protocol):
+class Modulable[OtherT, ResultT](Protocol):
     """Protocol for values that support modulo operation.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Modulable):
         ...     result = value % 2
     """
 
-    def __mod__(self, other: T) -> R:
+    def __mod__(self, other: OtherT) -> ResultT:
         """Compute modulo of this value by other.
 
         Args:
@@ -280,7 +280,7 @@ class Modulable[T, R](Protocol):
         """
         ...
 
-    def __rmod__(self, other: T) -> R:
+    def __rmod__(self, other: OtherT) -> ResultT:
         """Compute modulo of other by this value (reverse).
 
         Args:
@@ -293,19 +293,19 @@ class Modulable[T, R](Protocol):
 
 
 @runtime_checkable
-class Powerable[T, R](Protocol):
+class Powerable[OtherT, ResultT](Protocol):
     """Protocol for values that support exponentiation.
 
     Type Parameters:
-        T: Type of the exponent
-        R: Type of the result
+        OtherT: Type of the exponent
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Powerable):
         ...     result = value**2
     """
 
-    def __pow__(self, other: T) -> R:
+    def __pow__(self, other: OtherT) -> ResultT:
         """Raise this value to the power of other.
 
         Args:
@@ -316,7 +316,7 @@ class Powerable[T, R](Protocol):
         """
         ...
 
-    def __rpow__(self, other: T) -> R:
+    def __rpow__(self, other: OtherT) -> ResultT:
         """Raise other to the power of this value (reverse).
 
         Args:
@@ -329,18 +329,18 @@ class Powerable[T, R](Protocol):
 
 
 @runtime_checkable
-class Negatable[R](Protocol):
+class Negatable[ResultT](Protocol):
     """Protocol for values that support unary negation.
 
     Type Parameters:
-        R: Type of the result
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Negatable):
         ...     result = -value
     """
 
-    def __neg__(self) -> R:
+    def __neg__(self) -> ResultT:
         """Negate this value.
 
         Returns:
@@ -350,18 +350,18 @@ class Negatable[R](Protocol):
 
 
 @runtime_checkable
-class Absoluteable[R](Protocol):
+class Absoluteable[ResultT](Protocol):
     """Protocol for values that support absolute value.
 
     Type Parameters:
-        R: Type of the result
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Absoluteable):
         ...     result = abs(value)
     """
 
-    def __abs__(self) -> R:
+    def __abs__(self) -> ResultT:
         """Get absolute value.
 
         Returns:
@@ -376,19 +376,19 @@ class Absoluteable[R](Protocol):
 
 
 @runtime_checkable
-class Comparable[T, R](Protocol):
+class Comparable[OtherT, ResultT](Protocol):
     """Protocol for values that support ordering comparisons.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result (typically bool or BoolValue)
+        OtherT: Type of the other operand
+        ResultT: Type of the result (typically bool or BoolValue)
 
     Example:
         >>> if isinstance(value, Comparable):
         ...     is_greater = value > 100
     """
 
-    def __gt__(self, other: T) -> R:
+    def __gt__(self, other: OtherT) -> ResultT:
         """Check if this value is greater than other.
 
         Args:
@@ -399,7 +399,7 @@ class Comparable[T, R](Protocol):
         """
         ...
 
-    def __lt__(self, other: T) -> R:
+    def __lt__(self, other: OtherT) -> ResultT:
         """Check if this value is less than other.
 
         Args:
@@ -410,7 +410,7 @@ class Comparable[T, R](Protocol):
         """
         ...
 
-    def __ge__(self, other: T) -> R:
+    def __ge__(self, other: OtherT) -> ResultT:
         """Check if this value is greater than or equal to other.
 
         Args:
@@ -421,7 +421,7 @@ class Comparable[T, R](Protocol):
         """
         ...
 
-    def __le__(self, other: T) -> R:
+    def __le__(self, other: OtherT) -> ResultT:
         """Check if this value is less than or equal to other.
 
         Args:
@@ -434,22 +434,22 @@ class Comparable[T, R](Protocol):
 
 
 @runtime_checkable
-class Equalable[T, R](Protocol):
+class Equalable[OtherT, ResultT](Protocol):
     """Protocol for values that support equality comparison.
 
     Note: We use .eq() and .ne() methods instead of == and != operators
     to avoid Python's default comparison semantics in the DSL context.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result (typically bool or BoolValue)
+        OtherT: Type of the other operand
+        ResultT: Type of the result (typically bool or BoolValue)
 
     Example:
         >>> if isinstance(value, Equalable):
         ...     is_equal = value.eq(100)
     """
 
-    def eq(self, other: T) -> R:
+    def eq(self, other: OtherT) -> ResultT:
         """Check if this value equals other.
 
         Args:
@@ -460,7 +460,7 @@ class Equalable[T, R](Protocol):
         """
         ...
 
-    def ne(self, other: T) -> R:
+    def ne(self, other: OtherT) -> ResultT:
         """Check if this value does not equal other.
 
         Args:
@@ -478,22 +478,22 @@ class Equalable[T, R](Protocol):
 
 
 @runtime_checkable
-class Andable[T, R](Protocol):
+class Andable[OtherT, ResultT](Protocol):
     """Protocol for values that support logical AND.
 
     Note: We use .and_() method instead of & operator to avoid
     confusion with bitwise operations and Python's short-circuit semantics.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Andable):
         ...     result = value.and_(other)
     """
 
-    def and_(self, other: T) -> R:
+    def and_(self, other: OtherT) -> ResultT:
         """Logical AND with other.
 
         Args:
@@ -506,22 +506,22 @@ class Andable[T, R](Protocol):
 
 
 @runtime_checkable
-class Orable[T, R](Protocol):
+class Orable[OtherT, ResultT](Protocol):
     """Protocol for values that support logical OR.
 
     Note: We use .or_() method instead of | operator to avoid
     confusion with bitwise operations and Python's short-circuit semantics.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Orable):
         ...     result = value.or_(other)
     """
 
-    def or_(self, other: T) -> R:
+    def or_(self, other: OtherT) -> ResultT:
         """Logical OR with other.
 
         Args:
@@ -534,20 +534,20 @@ class Orable[T, R](Protocol):
 
 
 @runtime_checkable
-class Invertible[R](Protocol):
+class Invertible[ResultT](Protocol):
     """Protocol for values that support logical NOT.
 
     Note: We use .not_() method instead of ~ operator.
 
     Type Parameters:
-        R: Type of the result
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Invertible):
         ...     result = value.not_()
     """
 
-    def not_(self) -> R:
+    def not_(self) -> ResultT:
         """Logical NOT.
 
         Returns:
@@ -562,19 +562,19 @@ class Invertible[R](Protocol):
 
 
 @runtime_checkable
-class BitwiseAndable[T, R](Protocol):
+class BitwiseAndable[OtherT, ResultT](Protocol):
     """Protocol for values that support bitwise AND.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, BitwiseAndable):
         ...     result = value.bitand(other)
     """
 
-    def bitand(self, other: T) -> R:
+    def bitand(self, other: OtherT) -> ResultT:
         """Bitwise AND with other.
 
         Args:
@@ -587,19 +587,19 @@ class BitwiseAndable[T, R](Protocol):
 
 
 @runtime_checkable
-class BitwiseOrable[T, R](Protocol):
+class BitwiseOrable[OtherT, ResultT](Protocol):
     """Protocol for values that support bitwise OR.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, BitwiseOrable):
         ...     result = value.bitor(other)
     """
 
-    def bitor(self, other: T) -> R:
+    def bitor(self, other: OtherT) -> ResultT:
         """Bitwise OR with other.
 
         Args:
@@ -612,19 +612,19 @@ class BitwiseOrable[T, R](Protocol):
 
 
 @runtime_checkable
-class BitwiseXorable[T, R](Protocol):
+class BitwiseXorable[OtherT, ResultT](Protocol):
     """Protocol for values that support bitwise XOR.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, BitwiseXorable):
         ...     result = value ^ other
     """
 
-    def __xor__(self, other: T) -> R:
+    def __xor__(self, other: OtherT) -> ResultT:
         """Bitwise XOR with other.
 
         Args:
@@ -637,18 +637,18 @@ class BitwiseXorable[T, R](Protocol):
 
 
 @runtime_checkable
-class BitwiseInvertible[R](Protocol):
+class BitwiseInvertible[ResultT](Protocol):
     """Protocol for values that support bitwise NOT.
 
     Type Parameters:
-        R: Type of the result
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, BitwiseInvertible):
         ...     result = value.bitnot()
     """
 
-    def bitnot(self) -> R:
+    def bitnot(self) -> ResultT:
         """Bitwise NOT.
 
         Returns:
@@ -658,19 +658,19 @@ class BitwiseInvertible[R](Protocol):
 
 
 @runtime_checkable
-class LeftShiftable[T, R](Protocol):
+class LeftShiftable[OtherT, ResultT](Protocol):
     """Protocol for values that support left shift.
 
     Type Parameters:
-        T: Type of the shift amount
-        R: Type of the result
+        OtherT: Type of the shift amount
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, LeftShiftable):
         ...     result = value << 2
     """
 
-    def __lshift__(self, other: T) -> R:
+    def __lshift__(self, other: OtherT) -> ResultT:
         """Left shift by other.
 
         Args:
@@ -683,19 +683,19 @@ class LeftShiftable[T, R](Protocol):
 
 
 @runtime_checkable
-class RightShiftable[T, R](Protocol):
+class RightShiftable[OtherT, ResultT](Protocol):
     """Protocol for values that support right shift.
 
     Type Parameters:
-        T: Type of the shift amount
-        R: Type of the result
+        OtherT: Type of the shift amount
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, RightShiftable):
         ...     result = value >> 2
     """
 
-    def __rshift__(self, other: T) -> R:
+    def __rshift__(self, other: OtherT) -> ResultT:
         """Right shift by other.
 
         Args:
@@ -713,19 +713,19 @@ class RightShiftable[T, R](Protocol):
 
 
 @runtime_checkable
-class Indexable[K, V](Protocol):
+class Indexable[KeyT, ValueT](Protocol):
     """Protocol for values that support index access.
 
     Type Parameters:
-        K: Type of the index/key
-        V: Type of the value
+        KeyT: Type of the index/key
+        ValueT: Type of the value
 
     Example:
         >>> if isinstance(value, Indexable):
         ...     item = value[0]
     """
 
-    def __getitem__(self, key: K) -> V:
+    def __getitem__(self, key: KeyT) -> ValueT:
         """Get item at index/key.
 
         Args:
@@ -738,18 +738,18 @@ class Indexable[K, V](Protocol):
 
 
 @runtime_checkable
-class Sliceable[R](Protocol):
+class Sliceable[ResultT](Protocol):
     """Protocol for values that support slicing.
 
     Type Parameters:
-        R: Type of the slice result
+        ResultT: Type of the slice result
 
     Example:
         >>> if isinstance(value, Sliceable):
         ...     subseq = value[1:5]
     """
 
-    def slice_(self, start: int | None, stop: int | None, step: int | None = None) -> R:
+    def slice_(self, start: int | None, stop: int | None, step: int | None = None) -> ResultT:
         """Get a slice of the value.
 
         Args:
@@ -764,18 +764,18 @@ class Sliceable[R](Protocol):
 
 
 @runtime_checkable
-class Lengthable[R](Protocol):
+class Lengthable[ResultT](Protocol):
     """Protocol for values that have a length.
 
     Type Parameters:
-        R: Type of the length result (typically int or IntValue)
+        ResultT: Type of the length result (typically int or IntValue)
 
     Example:
         >>> if isinstance(value, Lengthable):
         ...     size = value.len_()
     """
 
-    def len_(self) -> R:
+    def len_(self) -> ResultT:
         """Get the length of this value.
 
         Returns:
@@ -785,19 +785,19 @@ class Lengthable[R](Protocol):
 
 
 @runtime_checkable
-class Containable[T, R](Protocol):
+class Containable[OtherT, ResultT](Protocol):
     """Protocol for values that support containment testing.
 
     Type Parameters:
-        T: Type of the item to check
-        R: Type of the result (typically bool or BoolValue)
+        OtherT: Type of the item to check
+        ResultT: Type of the result (typically bool or BoolValue)
 
     Example:
         >>> if isinstance(value, Containable):
         ...     exists = value.contains(item)
     """
 
-    def contains(self, item: T) -> R:
+    def contains(self, item: OtherT) -> ResultT:
         """Check if item is in this value.
 
         Args:
@@ -810,14 +810,14 @@ class Containable[T, R](Protocol):
 
 
 @runtime_checkable
-class Iterable[T](Protocol):
+class Iterable[ItemT](Protocol):
     """Protocol for values that can be iterated.
 
     Note: In the DSL context, we use .iter_() method to return
     an operation that produces the iterable at execution time.
 
     Type Parameters:
-        T: Type of the items
+        ItemT: Type of the items
 
     Example:
         >>> if isinstance(value, Iterable):
@@ -825,7 +825,7 @@ class Iterable[T](Protocol):
         ...         process(item)
     """
 
-    def iter_(self) -> T:
+    def iter_(self) -> ItemT:
         """Get an iterable over this value.
 
         Returns:
@@ -840,19 +840,19 @@ class Iterable[T](Protocol):
 
 
 @runtime_checkable
-class Concatenable[T, R](Protocol):
+class Concatenable[OtherT, ResultT](Protocol):
     """Protocol for values that support concatenation.
 
     Type Parameters:
-        T: Type of the other operand
-        R: Type of the result
+        OtherT: Type of the other operand
+        ResultT: Type of the result
 
     Example:
         >>> if isinstance(value, Concatenable):
         ...     result = value + " suffix"
     """
 
-    def concat(self, other: T) -> R:
+    def concat(self, other: OtherT) -> ResultT:
         """Concatenate with other.
 
         Args:
@@ -865,18 +865,18 @@ class Concatenable[T, R](Protocol):
 
 
 @runtime_checkable
-class Formattable[R](Protocol):
+class Formattable[ResultT](Protocol):
     """Protocol for values that support string formatting.
 
     Type Parameters:
-        R: Type of the result (typically str or StrValue)
+        ResultT: Type of the result (typically str or StrValue)
 
     Example:
         >>> if isinstance(value, Formattable):
         ...     formatted = value.format_("Price: {}")
     """
 
-    def format_(self, template: str) -> R:
+    def format_(self, template: str) -> ResultT:
         """Format this value using template.
 
         Args:
