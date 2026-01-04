@@ -5,6 +5,9 @@ This module provides operations for working with custom typed values:
 Operations:
     - FuncCallOp: Call a function with arguments (for constructors)
     - MethodCallOp: Call an instance method (for value methods)
+    - GetAttrOp: Get an attribute from an instance
+    - SetAttrOp: Set an attribute on an instance
+    - DelAttrOp: Delete an attribute from an instance
 
 Commands:
     - TypedSetCmd: Set command that calls __to_storage__ before storing
@@ -45,8 +48,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "DelAttrOp",
     "FuncCallOp",
+    "GetAttrOp",
     "MethodCallOp",
+    "SetAttrOp",
     "TypedSetCmd",
 ]
 
@@ -286,6 +292,206 @@ class MethodCallOp[ResultT](Operation[ResultT]):
         if all_args:
             return f"MethodCallOp({self._instance!r}, {self._method_name!r}, {all_args})"
         return f"MethodCallOp({self._instance!r}, {self._method_name!r})"
+
+
+# =============================================================================
+# ATTRIBUTE OPERATIONS
+# =============================================================================
+
+
+class GetAttrOp[ResultT](Operation[ResultT]):
+    """Operation that gets an attribute from an instance.
+
+    GetAttrOp enables getting instance attributes within the term system.
+    The instance can be an RValue - it is executed before the attribute
+    is retrieved.
+
+    Type Parameters:
+        ResultT: The type of the attribute value
+
+    Example:
+        >>> # Get datetime.year attribute
+        >>> GetAttrOp(datetime_value, "year")
+
+        >>> # Used in TypedValue subclass
+        >>> class DatetimeValue(TypedValue[datetime]):
+        ...     @property
+        ...     def year(self) -> IntValue:
+        ...         return IntValue(GetAttrOp(self, "year"))
+    """
+
+    def __init__(self, instance: OpArgument, attr_name: str) -> None:
+        """Initialize get attribute operation.
+
+        Args:
+            instance: The instance to get the attribute from (can be RValue)
+            attr_name: Name of the attribute to get
+        """
+        self._instance = instance
+        self._attr_name = attr_name
+        self.children = (instance,) if isinstance(instance, RValue) else ()
+
+    @property
+    def is_pure(self) -> bool:
+        """Attribute access is pure if the instance is pure.
+
+        Returns:
+            True if the instance is pure
+        """
+        if isinstance(self._instance, RValue):
+            return self._instance.is_pure
+        return True
+
+    def execute(self, context: Context) -> ResultT:
+        """Execute the attribute access.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            The attribute value
+        """
+        # Resolve instance
+        if isinstance(self._instance, RValue):
+            instance = self._instance.execute(context)
+        else:
+            instance = self._instance
+
+        return getattr(instance, self._attr_name)
+
+    def __repr__(self) -> str:
+        """String representation."""
+        return f"GetAttrOp({self._instance!r}, {self._attr_name!r})"
+
+
+class SetAttrOp[ResultT](Operation[ResultT]):
+    """Operation that sets an attribute on an instance.
+
+    SetAttrOp enables setting instance attributes within the term system.
+    The instance and value can be RValues - they are executed before
+    the attribute is set.
+
+    Type Parameters:
+        ResultT: The type of the value being set
+
+    Example:
+        >>> # Set an attribute
+        >>> SetAttrOp(obj, "name", "value")
+
+        >>> # With RValue
+        >>> SetAttrOp(obj_ref, "count", count_ref)
+    """
+
+    def __init__(self, instance: OpArgument, attr_name: str, value: object) -> None:
+        """Initialize set attribute operation.
+
+        Args:
+            instance: The instance to set the attribute on (can be RValue)
+            attr_name: Name of the attribute to set
+            value: Value to set (can be RValue or raw value)
+        """
+        self._instance = instance
+        self._attr_name = attr_name
+        self._value = value
+
+        # Collect RValue children for dependency tracking
+        children = []
+        if isinstance(instance, RValue):
+            children.append(instance)
+        if isinstance(value, RValue):
+            children.append(value)
+        self.children = tuple(children)
+
+    @property
+    def is_pure(self) -> bool:
+        """SetAttr is never pure as it mutates state.
+
+        Returns:
+            Always False
+        """
+        return False
+
+    def execute(self, context: Context) -> ResultT:
+        """Execute the attribute set.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            The value that was set
+        """
+        # Resolve instance
+        if isinstance(self._instance, RValue):
+            instance = self._instance.execute(context)
+        else:
+            instance = self._instance
+
+        # Resolve value
+        if isinstance(self._value, RValue):
+            value = self._value.execute(context)
+        else:
+            value = self._value
+
+        setattr(instance, self._attr_name, value)
+        return value
+
+    def __repr__(self) -> str:
+        """String representation."""
+        return f"SetAttrOp({self._instance!r}, {self._attr_name!r}, {self._value!r})"
+
+
+class DelAttrOp(Operation[None]):
+    """Operation that deletes an attribute from an instance.
+
+    DelAttrOp enables deleting instance attributes within the term system.
+    The instance can be an RValue - it is executed before the attribute
+    is deleted.
+
+    Example:
+        >>> # Delete an attribute
+        >>> DelAttrOp(obj, "cached_value")
+    """
+
+    def __init__(self, instance: OpArgument, attr_name: str) -> None:
+        """Initialize delete attribute operation.
+
+        Args:
+            instance: The instance to delete the attribute from (can be RValue)
+            attr_name: Name of the attribute to delete
+        """
+        self._instance = instance
+        self._attr_name = attr_name
+        self.children = (instance,) if isinstance(instance, RValue) else ()
+
+    @property
+    def is_pure(self) -> bool:
+        """DelAttr is never pure as it mutates state.
+
+        Returns:
+            Always False
+        """
+        return False
+
+    def execute(self, context: Context) -> None:
+        """Execute the attribute deletion.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            None
+        """
+        # Resolve instance
+        if isinstance(self._instance, RValue):
+            instance = self._instance.execute(context)
+        else:
+            instance = self._instance
+
+        delattr(instance, self._attr_name)
+
+    def __repr__(self) -> str:
+        """String representation."""
+        return f"DelAttrOp({self._instance!r}, {self._attr_name!r})"
 
 
 # =============================================================================
