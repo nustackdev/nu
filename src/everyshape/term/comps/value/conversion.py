@@ -17,17 +17,17 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from everyshape.types import NAN, SpecialValue
 
-from ..term import Operation
+from ...term import Operation
 
 
 if TYPE_CHECKING:
-    from ..context import Context
-    from ..term import RValue
-    from ..values.bases import UnionBaseType
+    from ...context import Context
+    from ...term import RValue
+    from ...values.bases import UnionBaseType
 
 
 __all__ = [
@@ -66,8 +66,6 @@ class ConversionOp[ResultT](Operation[ResultT | SpecialValue]):
         Args:
             operand: Value to convert
         """
-        from typing import cast
-
         self.children = (cast("RValue", operand),)
 
     def execute(self, context: Context) -> ResultT | SpecialValue:
@@ -80,7 +78,7 @@ class ConversionOp[ResultT](Operation[ResultT | SpecialValue]):
             Converted value, or NaN if conversion fails
         """
         operand_val = self.children[0].execute(context)
-        return self._convert(operand_val)
+        return self._convert(value=operand_val)
 
     def _convert(self, value: object) -> ResultT | SpecialValue:
         """Apply the conversion to value.
