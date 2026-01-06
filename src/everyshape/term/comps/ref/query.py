@@ -13,8 +13,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from everyshape import NOT_SET, NotSet
 from everyshape.loc import path
-from everyshape.term.term import Operation, ViewRef
+from everyshape.storage import StorageKeyError
+from everyshape.term import Operation, RValue, ViewRef
 from everyshape.types import Empty, SpecialValue
 from everyshape.view import capabilities as view_capabilities
 
@@ -222,8 +224,8 @@ class MappingGetOp[K, V](Operation[V | SpecialValue]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Subscriptable[K, V]] | UnionRefBases,
-        key: K,
-        default: V | SpecialValue | None = None,
+        key: RValue[K | SpecialValue],
+        default: RValue[V | SpecialValue] | NotSet = NOT_SET,
     ) -> None:
         """Initialize mapping get operation.
 
@@ -234,7 +236,7 @@ class MappingGetOp[K, V](Operation[V | SpecialValue]):
         """
         self.ref = cast("ViewRef[view_capabilities.Subscriptable[K, V]]", ref)
         self.key = key
-        self.default: V | SpecialValue = default if default is not None else Empty()
+        self.default = default
         self.children = (cast("ViewRef[view_capabilities.Subscriptable[K, V]]", ref),)
 
     def execute(self, context: Context) -> V | SpecialValue:
@@ -249,21 +251,22 @@ class MappingGetOp[K, V](Operation[V | SpecialValue]):
         view_path = self.ref.resolve(context)
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
 
-        try:
-            if not view_path:
-                view = root_view
-            else:
-                view = path.navigate_view(root_view, view_path)
+        key = self.key.execute(context)
 
-            if isinstance(view, view_capabilities.Subscriptable):
-                try:
-                    return view[self.key]
-                except (KeyError, IndexError):
-                    return self.default
+        if not view_path:
+            view = root_view
+        else:
+            view = path.navigate_view(root_view, view_path)
 
-            raise TypeError(f"View {view.__class__.__name__} is not subscriptable")
-        except (KeyError, IndexError):
-            return self.default
+        if isinstance(view, view_capabilities.Subscriptable):
+            try:
+                return view[key]
+            except (KeyError, IndexError, StorageKeyError) as e:
+                if not isinstance(self.default, NotSet):
+                    return self.default.execute(context)
+                raise e
+
+        raise TypeError(f"View {view.__class__.__name__} is not subscriptable")
 
     def __repr__(self) -> str:
         return f"MappingGetOp({self.ref!r}, {self.key!r}, {self.default!r})"

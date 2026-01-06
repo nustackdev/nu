@@ -47,14 +47,14 @@ class MappingSetCmd[K, V: Value](Command[V]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Assignable[K, V]] | UnionRefBases,
-        key: K,
+        key: RValue[K | SpecialValue],
         value: RValue[V | SpecialValue],
     ) -> None:
         """Initialize mapping set command.
 
         Args:
             ref: Mapping reference to set value in
-            key: Key to set
+            key: Key to set (wrapped in RValue)
             value: Value to set (wrapped in RValue)
         """
         self.ref = cast("ViewRef[view_capabilities.Assignable[K, V]]", ref)
@@ -74,7 +74,8 @@ class MappingSetCmd[K, V: Value](Command[V]):
         # Resolve ref to Path
         view_path = self.ref.resolve(context)
 
-        # Evaluate value expression
+        # Evaluate key and value expressions
+        key = self.key.execute(context)
         value = self.value_expr.execute(context)
 
         if isinstance(value, SpecialValue):
@@ -95,7 +96,7 @@ class MappingSetCmd[K, V: Value](Command[V]):
                 f"View {view.__class__.__name__} does not implement Assignable protocol."
             )
 
-        view[self.key] = value
+        view[key] = value
         return value
 
     def __repr__(self) -> str:
@@ -120,13 +121,13 @@ class MappingRemoveCmd[K](Command[None]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Deletable[K]] | UnionRefBases,
-        key: K,
+        key: RValue[K | SpecialValue],
     ) -> None:
         """Initialize mapping remove command.
 
         Args:
             ref: Mapping reference to remove key from
-            key: Key to remove
+            key: Key to remove (wrapped in RValue)
         """
         self.ref = cast("ViewRef[view_capabilities.Deletable[K]]", ref)
         self.key = key
@@ -147,6 +148,9 @@ class MappingRemoveCmd[K](Command[None]):
         # Resolve ref to Path
         view_path = self.ref.resolve(context)
 
+        # Evaluate key expression
+        key = self.key.execute(context)
+
         # Get root view from context
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
 
@@ -162,7 +166,7 @@ class MappingRemoveCmd[K](Command[None]):
                 f"View {view.__class__.__name__} does not implement Deletable protocol."
             )
 
-        del view[self.key]
+        del view[key]
         return None
 
     def __repr__(self) -> str:

@@ -106,7 +106,7 @@ class EqualableBase[OperandT]:
 
         return BoolValue(NeOp(self, literal(other)))
 
-    def is_(self, other: object) -> BoolValue:
+    def is_(self, other: OperandT) -> BoolValue:
         """Identity comparison: self is other (safe method).
 
         Args:

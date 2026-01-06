@@ -51,6 +51,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .term import RValue
+    from .values import BoolValue
 
 
 __all__ = [
@@ -69,7 +70,7 @@ __all__ = [
 # =============================================================================
 
 
-def and_(left: object, right: object) -> RValue:
+def and_(left: object, right: object) -> BoolValue:
     """Combine exactly two conditions with AND.
 
     Both conditions must be true for the result to be true.
@@ -84,12 +85,17 @@ def and_(left: object, right: object) -> RValue:
     Example:
         >>> and_(price > 0, price < 100)
     """
+    from .values.capabilities import Andable
     from .values.conversion import literal
 
-    return literal(left).and_(literal(right))
+    left_op = literal(left)
+    if not isinstance(left_op, Andable):
+        raise TypeError(f"Operand {type(left).__name__} does not support AND logical operation")
+
+    return left_op.and_(literal(right))
 
 
-def or_(left: object, right: object) -> RValue:
+def or_(left: object, right: object) -> BoolValue:
     """Combine exactly two conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -104,12 +110,17 @@ def or_(left: object, right: object) -> RValue:
     Example:
         >>> or_(status.eq("ready"), status.eq("pending"))
     """
+    from .values.capabilities import Orable
     from .values.conversion import literal
 
-    return literal(left).or_(literal(right))
+    left_op = literal(left)
+    if not isinstance(left_op, Orable):
+        raise TypeError(f"Operand {type(left).__name__} does not support OR logical operation")
+
+    return left_op.or_(literal(right))
 
 
-def all_(*conditions: object) -> RValue:
+def all_(*conditions: object) -> BoolValue:
     """Combine multiple conditions with AND.
 
     All conditions must be true for the result to be true.
@@ -135,10 +146,10 @@ def all_(*conditions: object) -> RValue:
     rvalues = [literal(c) for c in conditions]
 
     # Reduce with and_()
-    return reduce(lambda a, b: a.and_(b), rvalues)
+    return reduce(lambda a, b: a.and_(b), rvalues)  # type: ignore
 
 
-def any_(*conditions: object) -> RValue:
+def any_(*conditions: object) -> BoolValue:
     """Combine multiple conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -164,10 +175,10 @@ def any_(*conditions: object) -> RValue:
     rvalues = [literal(c) for c in conditions]
 
     # Reduce with or_()
-    return reduce(lambda a, b: a.or_(b), rvalues)
+    return reduce(lambda a, b: a.or_(b), rvalues)  # type: ignore
 
 
-def none_(*conditions: object) -> RValue:
+def none_(*conditions: object) -> BoolValue:
     """None of the conditions should be true.
 
     This is equivalent to NOT(any_(...)).
@@ -187,7 +198,6 @@ def none_(*conditions: object) -> RValue:
     if not conditions:
         raise ValueError("none_() requires at least one condition")
 
-    # NOT(any_(...))
     return any_(*conditions).not_()
 
 
