@@ -11,17 +11,17 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, overload
 
-from ...comps import (
+from ...comps.ref import (
     FilterItemsOp,
-    FindItemOp,
-    FindKeyOp,
-    FindValueOp,
+    FindItemByPredicateOp,
+    FindKeyByPredicateOp,
+    FindValueByPredicateOp,
+    GetByKeyOp,
     MapItemsOp,
-    MappingGetOp,
-    MappingRemoveCmd,
-    MappingSetCmd,
     MapValuesOp,
     ReduceItemsOp,
+    RemoveByKeyCmd,
+    SetByKeyCmd,
 )
 from ...values import (
     BoolValue,
@@ -225,7 +225,7 @@ class MappingIterableBase[KeyT, ValueT]:
         Example:
             >>> winner = scores_ref.find_key(lambda v: v >= 100).execute(ctx)
         """
-        return computed(self.key_type, FindKeyOp(self, predicate))
+        return computed(self.key_type, FindKeyByPredicateOp(self, predicate))
 
     @overload
     def find_value(
@@ -270,7 +270,7 @@ class MappingIterableBase[KeyT, ValueT]:
         Example:
             >>> high_score = scores_ref.find_value(lambda v: v >= 100).execute(ctx)
         """
-        return computed(self.value_type, FindValueOp(self, predicate))
+        return computed(self.value_type, FindValueByPredicateOp(self, predicate))
 
     def find_item(self, predicate: Callable[[KeyT, ValueT], bool]) -> TupleValue[KeyT, ValueT]:
         """Find first item (key, value) matching predicate.
@@ -284,7 +284,7 @@ class MappingIterableBase[KeyT, ValueT]:
         Example:
             >>> item = dict_ref.find_item(lambda k, v: k.startswith("admin")).execute(ctx)
         """
-        return TupleValue(FindItemOp(self, predicate))
+        return TupleValue(FindItemByPredicateOp(self, predicate))
 
 
 class MappingAccessibleBase[KeyT, ValueT]:
@@ -376,7 +376,7 @@ class MappingAccessibleBase[KeyT, ValueT]:
         Example:
             >>> value = dict_ref.get_item("key", "default").execute(ctx)
         """
-        return computed(self.value_type, MappingGetOp(self, key, default))
+        return computed(self.value_type, GetByKeyOp(self, key, default))
 
     @overload
     def set_item(
@@ -458,7 +458,7 @@ class MappingAccessibleBase[KeyT, ValueT]:
         Example:
             >>> dict_ref.set_item("key", "value").execute(ctx)
         """
-        return computed(self.value_type, MappingSetCmd(self, key, literal(value)))
+        return computed(self.value_type, SetByKeyCmd(self, key, literal(value)))
 
     def remove_item(self, key: KeyT | SpecialValue | RValue[KeyT | SpecialValue]) -> NoneValue:
         """Remove key from mapping.
@@ -475,4 +475,4 @@ class MappingAccessibleBase[KeyT, ValueT]:
         Example:
             >>> dict_ref.remove_item("key").execute(ctx)
         """
-        return NoneValue(MappingRemoveCmd(self, key))
+        return NoneValue(RemoveByKeyCmd(self, key))

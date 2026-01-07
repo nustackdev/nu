@@ -775,6 +775,9 @@ class ListValue[T](
 
         return BoolValue(operand)
 
+    def _wrap_iterable_result(self, operand: RValue) -> ListValue:
+        return ListValue(operand)
+
     def __add__(self, other: list[T] | ListValue[T]) -> ListValue[T]:
         """Concatenate lists."""
         from ..comps.value.binary_ops import AddOp

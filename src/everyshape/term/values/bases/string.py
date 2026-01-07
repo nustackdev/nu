@@ -45,7 +45,7 @@ class StringMethodsBase[ResultT]:
 
     def _wrap_string_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     # Case transformation
     def upper(self) -> ResultT:

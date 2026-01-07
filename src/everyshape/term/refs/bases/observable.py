@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...comps import (
+from ...comps.reactive import (
     OnChangeOp,
     OnChildChangeOp,
     OnChildrenChangeOp,

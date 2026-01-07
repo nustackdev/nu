@@ -38,7 +38,7 @@ class AddableBase[OperandT, ResultT]:
 
     def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __add__(self, other: OperandT) -> ResultT:
         """Addition: self + other."""
@@ -58,7 +58,7 @@ class SubtractableBase[OperandT, ResultT]:
 
     def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __sub__(self, other: OperandT) -> ResultT:
         """Subtraction: self - other."""
@@ -78,7 +78,7 @@ class NegatableBase[ResultT]:
 
     def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __neg__(self) -> ResultT:
         """Negation: -self."""
@@ -104,7 +104,7 @@ class MultiplyableBase[OperandT, ResultT]:
 
     def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __mul__(self, other: OperandT) -> ResultT:
         """Multiplication: self * other."""
@@ -124,7 +124,7 @@ class DivisibleBase[OperandT, ResultT]:
 
     def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __truediv__(self, other: OperandT) -> ResultT:
         """Division: self / other."""
@@ -156,7 +156,7 @@ class ModuloableBase[OperandT, ResultT]:
 
     def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __mod__(self, other: OperandT) -> ResultT:
         """Modulo: self % other."""
@@ -176,7 +176,7 @@ class PowerableBase[OperandT, ResultT]:
 
     def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __pow__(self, other: OperandT) -> ResultT:
         """Power: self ** other."""

@@ -64,7 +64,7 @@ class IndexableBase[KeyT, ResultValue]:
 
     def _wrap_indexable_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __getitem__(self, key: KeyT) -> ResultValue:
         """Get item at index/key."""
@@ -78,7 +78,7 @@ class SliceableBase[ResultT]:
 
     def _wrap_sliceable_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def slice_(self, start: int | None, stop: int | None, step: int | None = None) -> ResultT:
         """Get slice of this value.
@@ -119,11 +119,11 @@ class IterableBase[ElementT, ResultT]:
 
     def _wrap_iterable_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate collection type."""
-        return operand
+        raise NotImplementedError()
 
     def _wrap_element_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate element type."""
-        return operand
+        raise NotImplementedError()
 
     def map_[R](self, func: Callable[[ElementT], R]) -> ResultT:
         """Map function over elements.
@@ -368,19 +368,19 @@ class MappingBase[KeyT, ValueT, ResultT](
 
     def _wrap_keys_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap keys sequence result."""
-        return operand
+        raise NotImplementedError()
 
     def _wrap_values_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap values sequence result."""
-        return operand
+        raise NotImplementedError()
 
     def _wrap_items_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap items sequence result."""
-        return operand
+        raise NotImplementedError()
 
     def _wrap_value_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap single value result."""
-        return operand
+        raise NotImplementedError()
 
     def keys_(self) -> ResultT:
         """Get all keys.
@@ -446,7 +446,7 @@ class SetBase[ElementT, ResultT](
 
     def _wrap_set_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate set type."""
-        return operand
+        raise NotImplementedError()
 
     def union(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
         """Set union.

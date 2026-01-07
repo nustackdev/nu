@@ -30,7 +30,7 @@ class BytesMethodsBase[ResultT]:
 
     def _wrap_bytes_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     # Decoding
     def decode(self, encoding: str = "utf-8") -> StrValue:

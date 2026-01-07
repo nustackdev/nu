@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from everybase.views import DictView, ListView
+from everybase.view import DictView, ListView
 
 from everyshape.adapters import BinaryCodec, RocksDBStorage
 

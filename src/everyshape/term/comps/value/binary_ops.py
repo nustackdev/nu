@@ -177,11 +177,9 @@ class DivOp[ResultT](BinaryOp[ResultT]):
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Explicit zero check before division
-        if right == 0:
-            return NAN
         try:
             return left / right  # type: ignore
-        except TypeError:
+        except (TypeError, ZeroDivisionError):
             return NAN
 
 
@@ -190,11 +188,9 @@ class FloorDivOp[ResultT](BinaryOp[ResultT]):
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Explicit zero check before division
-        if right == 0:
-            return NAN
         try:
             return left // right  # type: ignore
-        except TypeError:
+        except (TypeError, ZeroDivisionError):
             return NAN
 
 
@@ -203,11 +199,9 @@ class ModOp[ResultT](BinaryOp[ResultT]):
 
     def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
         # Explicit zero check before modulo
-        if right == 0:
-            return NAN
         try:
             return left % right  # type: ignore
-        except TypeError:
+        except (TypeError, ZeroDivisionError):
             return NAN
 
 

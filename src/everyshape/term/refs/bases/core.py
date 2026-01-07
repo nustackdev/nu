@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, overload
 
-from ...comps import (
+from ...comps.ref import (
     ClearCmd,
     DeleteCmd,
     ExistsOp,

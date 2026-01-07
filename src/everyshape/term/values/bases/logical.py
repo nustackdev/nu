@@ -31,7 +31,7 @@ class AndableBase[OperandT, ResultT]:
 
     def _wrap_logical_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def and_(self, other: OperandT) -> ResultT:
         """Logical AND: self AND other.
@@ -52,7 +52,7 @@ class OrableBase[OperandT, ResultT]:
 
     def _wrap_logical_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def or_(self, other: OperandT) -> ResultT:
         """Logical OR: self OR other.
@@ -73,7 +73,7 @@ class NotableBase[ResultT]:
 
     def _wrap_logical_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __bool__(self) -> bool:
         """Bool conversion is blocked in DSL context.

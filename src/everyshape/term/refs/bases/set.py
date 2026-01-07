@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...comps import (
-    AddCmd,
-    DiscardCmd,
-    RemoveCmd,
+from ...comps.ref import (
+    AddValueCmd,
+    DiscardValueCmd,
+    RemoveValueCmd,
 )
 from ...values import NoneValue
 from ...values.conversion import literal
@@ -53,7 +53,7 @@ class SetAddableBase[ItemT]:
         Example:
             >>> set_ref.add("item").execute(ctx)
         """
-        return NoneValue(AddCmd(self, literal(value)))
+        return NoneValue(AddValueCmd(self, literal(value)))
 
 
 class SetRemovableBase[ItemT]:
@@ -77,7 +77,7 @@ class SetRemovableBase[ItemT]:
         Example:
             >>> set_ref.remove("item").execute(ctx)
         """
-        return NoneValue(RemoveCmd(self, literal(value)))
+        return NoneValue(RemoveValueCmd(self, literal(value)))
 
     def discard(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
         """Create a discard command.
@@ -91,4 +91,4 @@ class SetRemovableBase[ItemT]:
         Example:
             >>> set_ref.discard("item").execute(ctx)  # No error if missing
         """
-        return NoneValue(DiscardCmd(self, literal(value)))
+        return NoneValue(DiscardValueCmd(self, literal(value)))

@@ -13,16 +13,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, overload
 
-from ...comps import (
-    AppendCmd,
-    CountOp,
+from ...comps.ref import (
+    AppendValueCmd,
+    CountOfValueOp,
     FilterOp,
-    FindIndexOp,
-    FindOp,
-    IndexOp,
-    InsertCmd,
+    FindIndexByPredicateOp,
+    FindValueByPredicateOp,
+    IndexOfValueOp,
+    InsertAtIndexCmd,
     MapOp,
-    PopCmd,
+    PopByIndexCmd,
     ReduceOp,
 )
 from ...values import (
@@ -244,7 +244,7 @@ class SequenceIterableBase[ItemT]:
         Example:
             >>> first_even = list_ref.find(lambda x: x % 2 == 0).execute(ctx)
         """
-        return computed(self.item_type, FindOp(self, predicate))
+        return computed(self.item_type, FindValueByPredicateOp(self, predicate))
 
     def find_index(self, predicate: Callable[[ItemT], bool]) -> IntValue:
         """Find index of first element matching predicate.
@@ -258,7 +258,7 @@ class SequenceIterableBase[ItemT]:
         Example:
             >>> idx = list_ref.find_index(lambda x: x > 10).execute(ctx)
         """
-        return IntValue(FindIndexOp(self, predicate))
+        return IntValue(FindIndexByPredicateOp(self, predicate))
 
     def index(self, value: ItemT | SpecialValue) -> IntValue:
         """Find index of value in sequence.
@@ -272,7 +272,7 @@ class SequenceIterableBase[ItemT]:
         Example:
             >>> idx = list_ref.index("apple").execute(ctx)
         """
-        return IntValue(IndexOp(self, value))
+        return IntValue(IndexOfValueOp(self, value))
 
     def count(self, value: ItemT | SpecialValue) -> IntValue:
         """Count occurrences of value in sequence.
@@ -286,7 +286,7 @@ class SequenceIterableBase[ItemT]:
         Example:
             >>> n = list_ref.count("apple").execute(ctx)
         """
-        return IntValue(CountOp(self, value))
+        return IntValue(CountOfValueOp(self, value))
 
 
 class AppendableBase[ItemT]:
@@ -307,7 +307,7 @@ class AppendableBase[ItemT]:
         Example:
             >>> list_ref.append(42).execute(ctx)
         """
-        return NoneValue(AppendCmd(self, literal(value)))
+        return NoneValue(AppendValueCmd(self, literal(value)))
 
 
 class InsertableBase[ItemT]:
@@ -333,7 +333,7 @@ class InsertableBase[ItemT]:
         Example:
             >>> list_ref.insert(0, "first").execute(ctx)
         """
-        return NoneValue(InsertCmd(self, literal(index), literal(value)))
+        return NoneValue(InsertAtIndexCmd(self, literal(index), literal(value)))
 
 
 class PoppableBase[ItemT]:
@@ -395,4 +395,4 @@ class PoppableBase[ItemT]:
             >>> first = list_ref.pop(0).execute(ctx)
         """
         wrapped_index = literal(index) if index is not None else None
-        return computed(self.item_type, PopCmd(self, wrapped_index))
+        return computed(self.item_type, PopByIndexCmd(self, wrapped_index))

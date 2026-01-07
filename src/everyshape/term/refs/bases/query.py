@@ -8,7 +8,7 @@ This module provides query-related capability bases:
 
 from __future__ import annotations
 
-from ...comps import (
+from ...comps.ref import (
     ItemsOp,
     KeysOp,
     ValuesOp,

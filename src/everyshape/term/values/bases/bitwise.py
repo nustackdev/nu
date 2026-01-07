@@ -35,7 +35,7 @@ class BitwiseAndableBase[OperandT, ResultT]:
 
     def _wrap_bitwise_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def bitand(self, other: OperandT) -> ResultT:
         """Bitwise AND: self & other (safe method).
@@ -56,7 +56,7 @@ class BitwiseOrableBase[OperandT, ResultT]:
 
     def _wrap_bitwise_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def bitor(self, other: OperandT) -> ResultT:
         """Bitwise OR: self | other (safe method).
@@ -77,7 +77,7 @@ class BitwiseXorableBase[OperandT, ResultT]:
 
     def _wrap_bitwise_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __xor__(self, other: OperandT) -> ResultT:
         """Bitwise XOR: self ^ other."""
@@ -97,7 +97,7 @@ class BitwiseNotableBase[ResultT]:
 
     def _wrap_bitwise_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def bitnot(self) -> ResultT:
         """Bitwise NOT: ~self (safe method).
@@ -115,7 +115,7 @@ class ShiftableBase[OperandT, ResultT]:
 
     def _wrap_bitwise_result(self, operand: RValue) -> RValue:
         """Override in subclass to wrap result in appropriate type."""
-        return operand
+        raise NotImplementedError()
 
     def __lshift__(self, other: OperandT) -> ResultT:
         """Left shift: self << other."""
