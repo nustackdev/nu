@@ -1,11 +1,11 @@
-"""Set mutation command classes for LValue references.
+"""Set operations for LValue references.
 
-This module provides set mutation commands:
+This module provides operations for set containers.
 
-Commands (impure mutations):
-    - AddCmd: Add item to set
-    - RemoveCmd: Remove item from set
-    - DiscardCmd: Discard item from set (no error if absent)
+Commands (mutations):
+    - AddValueCmd: Add value to set (no-op if exists)
+    - RemoveValueCmd: Remove value from set (error if missing)
+    - DiscardValueCmd: Remove value from set (no error if missing)
 """
 
 from __future__ import annotations
@@ -14,11 +14,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.types import SpecialValue, Value
-from everyshape.view import (
-    Addable,
-    Discardable,
-    Removable,
-)
+from everyshape.view import Addable, Discardable, Removable
 
 from ...term import Command, RValue, ViewRef
 
@@ -29,24 +25,23 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "AddCmd",
-    "DiscardCmd",
-    "RemoveCmd",
+    "AddValueCmd",
+    "DiscardValueCmd",
+    "RemoveValueCmd",
 ]
 
 
-class AddCmd[T: Value](Command[None]):
-    """Add command for sets.
+class AddValueCmd[T: Value](Command[None]):
+    """Add a value to a set.
 
     Impure command that adds an item to a set.
-    Returns None.
+    Returns None. Adding an existing value is a no-op.
 
     Type Parameters:
         T: Type of item to add
-        ContextT: Execution context type
 
     Example:
-        >>> add_cmd = AddCmd(set_ref, literal("item"))
+        >>> add_cmd = AddValueCmd(set_ref, literal("item"))
         >>> add_cmd.execute(ctx)  # Returns None
     """
 
@@ -55,7 +50,7 @@ class AddCmd[T: Value](Command[None]):
         ref: ViewRef | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
-        """Initialize add command.
+        """Initialize add value command.
 
         Args:
             ref: Set reference to add to
@@ -66,7 +61,7 @@ class AddCmd[T: Value](Command[None]):
         self.children = (cast("ViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
-        """Execute add command.
+        """Execute add value command.
 
         Args:
             context: Execution context with transaction
@@ -74,25 +69,19 @@ class AddCmd[T: Value](Command[None]):
         Returns:
             None
         """
-        # Resolve ref to Path
         view_path = self.ref.resolve(context)
-
-        # Evaluate value expression
         value = self.value_expr.execute(context)
 
         if isinstance(value, SpecialValue):
             raise ValueError(f"Cannot add special values (Empty, NaN, etc): {value}")
 
-        # Get root view from context
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
 
-        # Navigate to the view
         if not view_path:
             view = root_view
         else:
             view = path.navigate_view(root_view, view_path)
 
-        # Add through view
         if not isinstance(view, Addable):
             raise TypeError(f"View {view.__class__.__name__} does not implement Addable protocol.")
 
@@ -100,23 +89,22 @@ class AddCmd[T: Value](Command[None]):
         return None
 
     def __repr__(self) -> str:
-        return f"AddCmd({self.ref!r}, {self.value_expr!r})"
+        return f"AddValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class RemoveCmd[T: Value](Command[None]):
-    """Remove command for sets.
+class RemoveValueCmd[T: Value](Command[None]):
+    """Remove a value from a set.
 
-    Impure command that removes an item from a set.
+    Impure command that removes an item by value from a set.
     Raises KeyError if item not found.
     Returns None.
 
     Type Parameters:
         T: Type of item to remove
-        ContextT: Execution context type
 
     Example:
-        >>> remove_cmd = RemoveCmd(set_ref, literal("item"))
-        >>> remove_cmd.execute(ctx)  # Returns None
+        >>> remove_cmd = RemoveValueCmd(set_ref, literal("item"))
+        >>> remove_cmd.execute(ctx)  # Returns None, raises KeyError if missing
     """
 
     def __init__(
@@ -124,7 +112,7 @@ class RemoveCmd[T: Value](Command[None]):
         ref: ViewRef | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
-        """Initialize remove command.
+        """Initialize remove value command.
 
         Args:
             ref: Set reference to remove from
@@ -135,7 +123,7 @@ class RemoveCmd[T: Value](Command[None]):
         self.children = (cast("ViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
-        """Execute remove command.
+        """Execute remove value command.
 
         Args:
             context: Execution context with transaction
@@ -144,27 +132,21 @@ class RemoveCmd[T: Value](Command[None]):
             None
 
         Raises:
-            KeyError: If item not in set
+            KeyError: If value not in set
         """
-        # Resolve ref to Path
         view_path = self.ref.resolve(context)
-
-        # Evaluate value expression
         value = self.value_expr.execute(context)
 
         if isinstance(value, SpecialValue):
             raise ValueError(f"Cannot remove special values (Empty, NaN, etc): {value}")
 
-        # Get root view from context
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
 
-        # Navigate to the view
         if not view_path:
             view = root_view
         else:
             view = path.navigate_view(root_view, view_path)
 
-        # Remove through view
         if not isinstance(view, Removable):
             raise TypeError(
                 f"View {view.__class__.__name__} does not implement Removable protocol."
@@ -174,22 +156,21 @@ class RemoveCmd[T: Value](Command[None]):
         return None
 
     def __repr__(self) -> str:
-        return f"RemoveCmd({self.ref!r}, {self.value_expr!r})"
+        return f"RemoveValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class DiscardCmd[T: Value](Command[None]):
-    """Discard command for sets.
+class DiscardValueCmd[T: Value](Command[None]):
+    """Discard a value from a set (no error if missing).
 
-    Impure command that discards an item from a set.
-    No error if item not found (unlike RemoveCmd).
+    Impure command that discards an item by value from a set.
+    Unlike RemoveValueCmd, does not raise an error if item not found.
     Returns None.
 
     Type Parameters:
         T: Type of item to discard
-        ContextT: Execution context type
 
     Example:
-        >>> discard_cmd = DiscardCmd(set_ref, literal("item"))
+        >>> discard_cmd = DiscardValueCmd(set_ref, literal("item"))
         >>> discard_cmd.execute(ctx)  # Returns None (no error if missing)
     """
 
@@ -198,7 +179,7 @@ class DiscardCmd[T: Value](Command[None]):
         ref: ViewRef | UnionRefBases,
         value: RValue[T | SpecialValue],
     ) -> None:
-        """Initialize discard command.
+        """Initialize discard value command.
 
         Args:
             ref: Set reference to discard from
@@ -209,7 +190,7 @@ class DiscardCmd[T: Value](Command[None]):
         self.children = (cast("ViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
-        """Execute discard command.
+        """Execute discard value command.
 
         Args:
             context: Execution context with transaction
@@ -217,25 +198,19 @@ class DiscardCmd[T: Value](Command[None]):
         Returns:
             None
         """
-        # Resolve ref to Path
         view_path = self.ref.resolve(context)
-
-        # Evaluate value expression
         value = self.value_expr.execute(context)
 
         if isinstance(value, SpecialValue):
             raise ValueError(f"Cannot discard special values (Empty, NaN, etc): {value}")
 
-        # Get root view from context
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
 
-        # Navigate to the view
         if not view_path:
             view = root_view
         else:
             view = path.navigate_view(root_view, view_path)
 
-        # Discard through view
         if not isinstance(view, Discardable):
             raise TypeError(
                 f"View {view.__class__.__name__} does not implement Discardable protocol."
@@ -245,4 +220,4 @@ class DiscardCmd[T: Value](Command[None]):
         return None
 
     def __repr__(self) -> str:
-        return f"DiscardCmd({self.ref!r}, {self.value_expr!r})"
+        return f"DiscardValueCmd({self.ref!r}, {self.value_expr!r})"

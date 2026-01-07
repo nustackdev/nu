@@ -305,14 +305,14 @@ class Clearable(Protocol):
 
 
 @runtime_checkable
-class Poppable[ItemT](Protocol):
+class Poppable[ItemValueT](Protocol):
     """Protocol for LValues that support popping items.
 
     Used for sequence references.
     Returns a ComputedValue that removes and returns an item when executed.
 
     Type Parameters:
-        ItemT: Type of item to pop
+        ItemValueT: Type value of item to pop
 
     Example:
         >>> if isinstance(ref, Poppable):
@@ -320,7 +320,9 @@ class Poppable[ItemT](Protocol):
         ...     removed = pop_cmd.execute(ctx)
     """
 
-    def pop(self, index: int | RValue = -1) -> object:  # Return type depends on ItemT
+    def pop(
+        self, index: int | RValue[int | SpecialValue] = -1
+    ) -> ItemValueT:  # Return type depends on ItemT
         """Create a pop command.
 
         Args:

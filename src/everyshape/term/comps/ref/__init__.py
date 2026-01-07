@@ -1,71 +1,101 @@
 """Reference operations module.
 
+This module provides operations and commands for working with refs (LValues).
+
 Re-exports from:
-- access: Core access operations (GetOp, ExtractOp, etc.)
-- query: Mapping query operations (KeysOp, ValuesOp, etc.)
-- functional: Higher-order/functional operations (MapOp, FilterOp, etc.)
-- search: Search operations (IndexOp, CountOp, FindOp, etc.)
+- core_access: Core read operations (GetOp, ExtractOp, etc.)
+- core_mutate: Core mutations (SetCmd, DeleteCmd, etc.)
+- sequence: Sequence operations (AppendValueCmd, MapOp, FilterOp, etc.)
+- mapping: Mapping operations (SetByKeyCmd, KeysOp, MapValuesOp, etc.)
+- set: Set operations (AddValueCmd, RemoveValueCmd, DiscardValueCmd)
 """
 
-from .access import (
+from .core_access import (
     ExistsOp,
     ExtractOp,
     GetOp,
     LengthOp,
     MissingOp,
 )
-from .functional import (
-    FilterItemsOp,
-    FilterOp,
-    MapItemsOp,
-    MapOp,
-    MapValuesOp,
-    ReduceItemsOp,
-    ReduceOp,
+from .core_mutate import (
+    ClearCmd,
+    DeleteCmd,
+    SetCmd,
+    StoreCmd,
 )
-from .query import (
+from .mapping import (
+    FilterItemsOp,
+    FindItemByPredicateOp,
+    FindKeyByPredicateOp,
+    FindValueByPredicateOp,
+    GetByKeyOp,
     ItemsOp,
     KeysOp,
-    MappingGetOp,
+    MapItemsOp,
+    MapValuesOp,
+    ReduceItemsOp,
+    RemoveByKeyCmd,
+    SetByKeyCmd,
     ValuesOp,
 )
-from .search import (
-    CountOp,
-    FindIndexOp,
-    FindItemOp,
-    FindKeyOp,
-    FindOp,
-    FindValueOp,
-    IndexOp,
+from .sequence import (
+    AppendValueCmd,
+    CountOfValueOp,
+    FilterOp,
+    FindByPredicateOp,
+    FindIndexByPredicateOp,
+    IndexOfValueOp,
+    InsertAtIndexCmd,
+    MapOp,
+    PopByIndexCmd,
+    ReduceOp,
+)
+from .set import (
+    AddValueCmd,
+    DiscardValueCmd,
+    RemoveValueCmd,
 )
 
 
-__all__ = [
-    "CountOp",
+__all__ = [  # noqa: RUF022
+    # Core access
     "ExistsOp",
     "ExtractOp",
-    "FilterItemsOp",
-    "FilterOp",
-    "FindIndexOp",
-    "FindItemOp",
-    "FindKeyOp",
-    "FindOp",
-    "FindValueOp",
-    # Access ops
     "GetOp",
-    # Search ops
-    "IndexOp",
-    "ItemsOp",
-    # Query ops
-    "KeysOp",
     "LengthOp",
-    "MapItemsOp",
-    # Functional ops
-    "MapOp",
-    "MapValuesOp",
-    "MappingGetOp",
     "MissingOp",
-    "ReduceItemsOp",
+    # Core mutate
+    "ClearCmd",
+    "DeleteCmd",
+    "SetCmd",
+    "StoreCmd",
+    # Sequence
+    "AppendValueCmd",
+    "CountOfValueOp",
+    "FilterOp",
+    "FindByPredicateOp",
+    "FindIndexByPredicateOp",
+    "IndexOfValueOp",
+    "InsertAtIndexCmd",
+    "MapOp",
+    "PopByIndexCmd",
     "ReduceOp",
+    # Mapping
+    "FilterItemsOp",
+    "FindItemByPredicateOp",
+    "FindKeyByPredicateOp",
+    "FindValueByPredicateOp",
+    "GetByKeyOp",
+    "ItemsOp",
+    "KeysOp",
+    "MapItemsOp",
+    "MapValuesOp",
+    "ReduceItemsOp",
+    "RemoveByKeyCmd",
+    "SetByKeyCmd",
     "ValuesOp",
+    # Set
+    "AddValueCmd",
+    "DiscardValueCmd",
+    "RemoveValueCmd",
 ]
