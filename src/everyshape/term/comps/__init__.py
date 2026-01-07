@@ -6,8 +6,7 @@ Submodules:
 - bases: Foundation tier (UnaryOp, BinaryOp, TernaryOp base classes)
 - value: Value operations (arithmetic, comparison, logical, conversion)
 - types: Type-specific operations (string, bytes, sequence, mapping, set)
-- ref: Reference operations (access, query, functional, search)
-- command: Command operations (core, sequence, mapping, set)
+- ref: Reference operations (access, mutate, sequence, mapping, set)
 - reactive: Reactive operations (OnChangeOp, etc.)
 - typed: TypedValue operations (FuncCallOp, MethodCallOp, etc.)
 
@@ -23,21 +22,7 @@ Note on duplicate names:
     from everyshape.term.comps.types.sequence import MapOp as SeqMapOp
 """
 
-from . import bases, command, ref, types, value
-from .command import (
-    AddCmd,
-    AppendCmd,
-    ClearCmd,
-    DeleteCmd,
-    DiscardCmd,
-    InsertCmd,
-    MappingRemoveCmd,
-    MappingSetCmd,
-    PopCmd,
-    RemoveCmd,
-    SetCmd,
-    StoreCmd,
-)
+from . import bases, ref, types, value
 from .reactive import (
     ChangeOp,
     OnChangeOp,
@@ -47,28 +32,39 @@ from .reactive import (
     OnPrimitiveChangeOp,
 )
 from .ref import (
-    CountOp,
+    AddValueCmd,
+    AppendValueCmd,
+    ClearCmd,
+    CountOfValueOp,
+    DeleteCmd,
+    DiscardValueCmd,
     ExistsOp,
     ExtractOp,
     FilterItemsOp,
     FilterOp,
-    FindIndexOp,
-    FindItemOp,
-    FindKeyOp,
-    FindOp,
-    FindValueOp,
+    FindByPredicateOp,
+    FindIndexByPredicateOp,
+    FindItemByPredicateOp,
+    FindKeyByPredicateOp,
+    FindValueByPredicateOp,
+    GetByKeyOp,
     GetOp,
-    IndexOp,
+    IndexOfValueOp,
+    InsertAtIndexCmd,
     ItemsOp,
     KeysOp,
     LengthOp,
     MapItemsOp,
     MapOp,
-    MappingGetOp,
     MapValuesOp,
     MissingOp,
     ReduceItemsOp,
     ReduceOp,
+    RemoveByKeyCmd,
+    RemoveValueCmd,
+    SetByKeyCmd,
+    SetCmd,
+    StoreCmd,
     ValuesOp,
 )
 from .typed import (
@@ -193,17 +189,17 @@ from .value import (
 )
 
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # Value ops
     "AbsOp",
-    # Command ops
-    "AddCmd",
+    # Ref command ops
+    "AddValueCmd",
     "AddOp",
     # Type-specific ops
     "AllOp",
     "AndOp",
     "AnyOp",
-    "AppendCmd",
+    "AppendValueCmd",
     "AtOp",
     "BinaryOp",
     "BitwiseAndOp",
@@ -230,7 +226,7 @@ __all__ = [
     "ContainsOp",
     "ConversionOp",
     # Ref ops
-    "CountOp",
+    "CountOfValueOp",
     "CountSubstringOp",
     "DecodeOp",
     # Typed ops
@@ -241,7 +237,7 @@ __all__ = [
     "DictKeysOp",
     "DictValuesOp",
     "DifferenceOp",
-    "DiscardCmd",
+    "DiscardValueCmd",
     "DivOp",
     "EncodeOp",
     "EndsWithOp",
@@ -250,23 +246,24 @@ __all__ = [
     "ExtractOp",
     "FilterItemsOp",
     "FilterOp",
-    "FindIndexOp",
-    "FindItemOp",
-    "FindKeyOp",
-    "FindOp",
-    "FindValueOp",
+    "FindByPredicateOp",
+    "FindIndexByPredicateOp",
+    "FindItemByPredicateOp",
+    "FindKeyByPredicateOp",
+    "FindValueByPredicateOp",
     "FirstOp",
     "FloorDivOp",
     "FuncCallOp",
     "GeOp",
     "GetAttrOp",
+    "GetByKeyOp",
     "GetOp",
     "GtOp",
     "HexOp",
     "IdCompOp",
+    "IndexOfValueOp",
     "IndexOfOp",
-    "IndexOp",
-    "InsertCmd",
+    "InsertAtIndexCmd",
     "IntersectionOp",
     "IsAlnumOp",
     "IsAlphaOp",
@@ -292,9 +289,6 @@ __all__ = [
     "MapItemsOp",
     "MapOp",
     "MapValuesOp",
-    "MappingGetOp",
-    "MappingRemoveCmd",
-    "MappingSetCmd",
     "MaxOp",
     "MethodCallOp",
     "MinOp",
@@ -312,7 +306,6 @@ __all__ = [
     "OnDescendantsChangeOp",
     "OnPrimitiveChangeOp",
     "OrOp",
-    "PopCmd",
     "PosOp",
     "PowOp",
     "RFindOp",
@@ -322,10 +315,12 @@ __all__ = [
     "RStripOp",
     "ReduceItemsOp",
     "ReduceOp",
-    "RemoveCmd",
+    "RemoveByKeyCmd",
+    "RemoveValueCmd",
     "ReplaceOp",
     "ReversedOp",
     "SetAttrOp",
+    "SetByKeyCmd",
     "SetCmd",
     "SliceOp",
     "SortedOp",
@@ -357,7 +352,6 @@ __all__ = [
     "ZFillOp",
     # Submodules
     "bases",
-    "command",
     "ref",
     "types",
     "value",
