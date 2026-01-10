@@ -1,113 +1,42 @@
-# """Functional test configuration and shared fixtures."""
+"""Functional test configuration and shared fixtures."""
 
-# import pathlib
-# from collections.abc import Generator
+from collections.abc import Generator
 
-# import pytest
+import pytest
 
-# from everyshape.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
-
-
-# # ============================================================================
-# # Backend Parametrization (future-proof)
-# # ============================================================================
+from everyshape.storage import SnapshotProtocol, TransactionProtocol
+from tests.support.mem_storage import MemoryStorage
 
 
-# @pytest.fixture(
-#     params=[
-#         pytest.param("rocksdb", marks=pytest.mark.rocksdb),
-#         pytest.param("inmemory", marks=pytest.mark.inmemory),
-#         # pytest.param("text", marks=pytest.mark.text), # TODO: fix locking issues, enable testing
-#         # Future backends (currently commented out in codebase):
-#         # pytest.param("lmdb", marks=[pytest.mark.lmdb, pytest.mark.skip("not implemented")]),
-#     ],
-#     scope="session",
-# )
-# def backend_type(request: pytest.FixtureRequest) -> str:
-#     """Storage backend type for parametrization.
+@pytest.fixture
+def storage() -> Generator[MemoryStorage, None, None]:
+    """Memory storage instance for functional tests.
 
-#     Currently active: RocksDB, Text (debug storage), and InMemory (fast ephemeral).
-#     LMDB implementation is commented out in the codebase.
-#     """
-#     return request.param
+    Provides a clean storage instance for each test with automatic cleanup.
+    """
+    storage = MemoryStorage()
+    storage.open()
+    try:
+        yield storage
+    finally:
+        storage.close()
 
 
-# # ============================================================================
-# # Codec Parametrization
-# # ============================================================================
+@pytest.fixture
+def tx(storage: MemoryStorage) -> Generator[TransactionProtocol, None, None]:
+    """Read-write transaction context.
+
+    Auto-commits on successful completion, rolls back on exception.
+    """
+    with storage.transaction() as transaction:
+        yield transaction
 
 
-# @pytest.fixture(scope="session")
-# def codec(backend_type: str):
-#     """Codec matched to backend type."""
-#     from everyshape.adapters.codecs import BinaryCodec, TextCodec
+@pytest.fixture
+def snapshot(storage: MemoryStorage) -> Generator[SnapshotProtocol, None, None]:
+    """Read-only snapshot context.
 
-#     if backend_type == "rocksdb":
-#         return BinaryCodec()
-#     elif backend_type == "text":
-#         return TextCodec()
-#     elif backend_type == "inmemory":
-#         return BinaryCodec()
-#     else:
-#         raise ValueError(f"No codec for backend: {backend_type}")
-
-
-# # ============================================================================
-# # Storage Backend
-# # ============================================================================
-
-
-# @pytest.fixture
-# def storage(
-#     tmp_path: pathlib.Path,
-#     codec,
-#     backend_type: str,
-# ) -> Generator[StorageProtocol, None, None]:
-#     """Storage backend instance (function-scoped for test isolation).
-
-#     Dependency chain: codec (session) → backend_type (session) → storage (function)
-
-#     Uses tmp_path for ephemeral test databases. Each test gets a clean storage instance.
-#     """
-#     if backend_type == "rocksdb":
-#         from everyshape.adapters import RocksDBStorage
-
-#         storage = RocksDBStorage(path=tmp_path / "test_db", codec=codec)
-#     elif backend_type == "text":
-#         from everyshape.adapters import TextStorage
-
-#         storage = TextStorage(path=tmp_path / "test_db", codec=codec, log_operations=True)
-#     elif backend_type == "inmemory":
-#         from everyshape.adapters import InMemoryStorage
-
-#         storage = InMemoryStorage(codec=codec)
-#     else:
-#         raise ValueError(f"Backend not implemented: {backend_type}")
-
-#     with storage:
-#         yield storage
-
-
-# # ============================================================================
-# # Storage Contexts
-# # ============================================================================
-
-
-# @pytest.fixture
-# def tx(storage: StorageProtocol) -> Generator[TransactionProtocol, None, None]:
-#     """Read-write transaction context.
-
-#     Auto-commits on successful completion, rolls back on exception.
-#     """
-#     with storage.transaction() as tx:
-#         yield tx
-
-
-# @pytest.fixture
-# def snapshot(storage: StorageProtocol) -> Generator[SnapshotProtocol, None, None]:
-#     """Read-only snapshot context.
-
-#     Useful for testing isolation and concurrent read scenarios.
-#     """
-#     with storage.snapshot() as snap:
-#         yield snap
+    Useful for testing isolation and concurrent read scenarios.
+    """
+    with storage.snapshot() as snap:
+        yield snap
