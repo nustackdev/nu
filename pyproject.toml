@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 # ============================================================================
 [project]
 name = "everyshape"
-version = "1.0.0"
+version = "1.1.0"
 description = "Persistent reactive trees for Python with multiple storage backends"
 readme = "README.md"
 license = "MIT"
@@ -170,6 +170,8 @@ convention = "google"  # Use Google style format
     "S101",   # assert allowed in tests
     "T20",    # print allowed in tests
     "D",      # docstrings not required in tests
+    "E711",
+    "E712",
     "ANN",    # type annotations not required in tests
     "N806",   # disable variable name checks like `User = collection_shapes["User"]`
 ]
