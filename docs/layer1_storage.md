@@ -203,7 +203,7 @@ Encoding must preserve lexicographic order:
 encode(("a",)) < encode(("a", "b"))  # Must be true
 ```
 
-Custom ecnoder used: estup (src /src/estup).
+Custom ecnoder used.
 
 ### Backend Requirements
 

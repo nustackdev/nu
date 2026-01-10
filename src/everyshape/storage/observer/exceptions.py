@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from everyshape._rw_exception import EveryShapeError
+from everyshape._exception import EveryShapeError
 
 
 __all__ = [

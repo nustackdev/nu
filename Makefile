@@ -21,13 +21,11 @@ help:
 	@echo "$(GREEN)Setup:$(NC)"
 	@echo "  make install-uv      - Install uv package manager"
 	@echo "  make install         - Create venv + install dependencies"
-	@echo "  make dev             - Full dev setup (install + build + test)"
+	@echo "  make dev             - Full dev setup (install + test)"
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
-	@echo "  make build           - Build Cython extensions"
 	@echo "  make test            - Run all tests"
 	@echo "  make test-cov        - Run tests with coverage report"
-	@echo "  make quick           - Quick cycle: build + test"
 	@echo ""
 	@echo "$(GREEN)Code Quality:$(NC)"
 	@echo "  make format          - Format code with ruff"
@@ -73,7 +71,7 @@ install: check-uv
 	@echo "$(BLUE)Creating virtual environment...$(NC)"
 	uv venv
 	@echo "$(BLUE)Installing dependencies...$(NC)"
-	uv pip install -e ".[dev,test,cython]"
+	uv pip install -e ".[dev,test]"
 	@echo "$(GREEN)✓ Installation complete$(NC)"
 	@echo ""
 	@echo "Activate with: source .venv/bin/activate"
@@ -86,20 +84,6 @@ dev: install build test
 	@echo "  1. source .venv/bin/activate"
 	@echo "  2. pre-commit install"
 	@echo "  3. make lock"
-
-# ============================================================================
-# Build
-# ============================================================================
-
-build: clean
-	@echo "$(BLUE)Building Cython extensions...$(NC)"
-	$(PYTHON) setup.py build_ext --inplace
-	@echo "$(GREEN)✓ Build complete$(NC)"
-
-build-debug:
-	@echo "$(BLUE)Building Cython extensions with debug symbols...$(NC)"
-	CFLAGS="-O0 -g" $(PYTHON) setup.py build_ext --inplace
-	@echo "$(GREEN)✓ Debug build complete$(NC)"
 
 # ============================================================================
 # Testing
@@ -128,8 +112,6 @@ test-cov:
 test-watch:
 	@echo "$(BLUE)Running tests in watch mode...$(NC)"
 	pytest-watch $(TEST_DIR)
-
-quick: build test-fast
 
 # ============================================================================
 # Code Quality
@@ -171,7 +153,7 @@ sync: check-uv
 
 update: check-uv
 	@echo "$(BLUE)Updating dependencies...$(NC)"
-	uv pip install --upgrade -e ".[dev,test,cython]"
+	uv pip install --upgrade -e ".[dev,test]"
 	@$(MAKE) lock
 	@echo "$(GREEN)✓ Dependencies updated and locked$(NC)"
 

@@ -46,7 +46,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Database",
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "attrs",
 ]
@@ -59,8 +59,6 @@ Issues = "https://github.com/everyabc/everyshape/issues"
 Changelog = "https://github.com/everyabc/everyshape/releases"
 
 [project.optional-dependencies]
-# RocksDB backend support (binary wheels available)
-rocksdb = []  # esrocks is included in main package
 
 # Development tools
 dev = [
@@ -78,176 +76,20 @@ test = [
     "hypothesis>=6.0.0",
 ]
 
-# Cython build dependencies (for building from source)
-cython = [
-    "Cython>=3.0.0",
-    "setuptools>=68.0",
-]
-
 # All development dependencies
 all = [
-    "everyshape[dev,test,cython]",
+    "everyshape[dev,test]",
 ]
 
 # ============================================================================
 # Package Discovery
 # ============================================================================
-[tool.setuptools]
-# Let setuptools find packages automatically
-zip-safe = false
-
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["everyshape*", "estup*", "esrocks*"]
+include = ["everyshape*"]
 namespaces = false
 
-[tool.setuptools.package-data]
-# Include all necessary files for each package
-everyshape = [
-    "py.typed",
-]
-estup = [
-    "**/*.pyx",
-    "**/*.pxd",
-    "**/*.hpp",
-    "py.typed",
-]
-esrocks = [
-    "**/*.pyx",
-    "**/*.pxd",
-    "**/*.hpp",
-    "py.typed",
-]
-
-# Include C++ headers for esrocks in source distributions
-[tool.setuptools.exclude-package-data]
-"*" = ["*.c", "*.cpp"]  # Exclude generated C/C++ files
-
-# ============================================================================
-# CI/CD - cibuildwheel configuration
-# ============================================================================
-[tool.cibuildwheel]
-# Build wheels for Python 3.9-3.13
-build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*"]
-
-# Skip builds we don't need
-skip = [
-    "*-musllinux_*",      # Alpine Linux (different libc)
-    "*-win32",            # 32-bit Windows
-    "*-manylinux_i686",   # 32-bit Linux
-]
-
-# Build verbosity
-build-verbosity = 1
-
-# Test the wheels after building
-test-command = "python -c \"import esrocks; print('esrocks version:', esrocks.__version__)\""
-test-requires = ["pytest"]
-
-# ============================================================================
-# Linux-specific cibuildwheel settings
-# ============================================================================
-[tool.cibuildwheel.linux]
-# Use manylinux2014 for broad compatibility
-manylinux-x86_64-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
-
-# Build RocksDB and dependencies before building wheels
-before-all = [
-    "yum install -y wget gcc gcc-c++ make",
-    "bash {project}/scripts/build-rocksdb-linux.sh"
-]
-
-# Set environment variables for the build
-environment = { ESROCKS_DEP_DIR="/tmp/esrocks_deps", LD_LIBRARY_PATH="/tmp/esrocks_deps/lib:$LD_LIBRARY_PATH" }
-
-# Additional test command to verify RocksDB functionality
-test-command = [
-    "python -c \"import esrocks; print('esrocks imported successfully')\"",
-    "python -c \"import esrocks; db = esrocks.DB('/tmp/test.db', esrocks.Options(create_if_missing=True)); db.put(b'key', b'value'); assert db.get(b'key') == b'value'; print('RocksDB basic test passed')\""
-]
-
-# ============================================================================
-# macOS-specific cibuildwheel settings
-# ============================================================================
-[tool.cibuildwheel.macos]
-# Build for both Intel and Apple Silicon
-archs = ["x86_64", "arm64"]
-
-# Minimum macOS version to support
-environment = { MACOSX_DEPLOYMENT_TARGET="10.14", ESROCKS_DEP_DIR="/tmp/esrocks_deps", DYLD_LIBRARY_PATH="/tmp/esrocks_deps/lib:$DYLD_LIBRARY_PATH" }
-
-# Build RocksDB and dependencies before building wheels
-before-all = [
-    "bash {project}/scripts/build-rocksdb-macos.sh"
-]
-
-# Repair wheel command (bundle dylibs)
-repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
-
-# Test the wheels
-test-command = [
-    "python -c \"import esrocks; print('esrocks imported successfully')\"",
-    "python -c \"import esrocks; db = esrocks.DB('/tmp/test_macos.db', esrocks.Options(create_if_missing=True)); db.put(b'key', b'value'); assert db.get(b'key') == b'value'; print('RocksDB basic test passed')\""
-]
-
-# ============================================================================
-# Windows-specific cibuildwheel settings
-# ============================================================================
-[tool.cibuildwheel.windows]
-# Build RocksDB using vcpkg (Windows is more complex)
-before-all = [
-    "powershell -File {project}/scripts/build-rocksdb-windows.ps1"
-]
-
-# Set environment for Windows builds
-environment = { ESROCKS_DEP_DIR="C:\\esrocks_deps" }
-
-# Test the wheels
-test-command = [
-    "python -c \"import esrocks; print('esrocks imported successfully')\"",
-]
-
-# ============================================================================
-# Testing - pytest
-# ============================================================================
-[tool.pytest.ini_options]
-minversion = "7.0"
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--tb=short",
-    "--durations=10",
-]
-markers = [
-    # Test type markers
-    "unit: Unit tests - fast, isolated",
-    "functional: Functional end-to-end tests",
-    "integration: Integration tests - cross-component",
-    "performance: Performance benchmarks",
-    # Package markers
-    "everyshape: Tests for core everyshape package",
-    "esrocks: Tests for RocksDB bindings",
-    "estup: Tests for tuple codec",
-    # Backend markers (for parametrized storage tests)
-    "rocksdb: RocksDB backend tests",
-    "text: TextStorage backend tests",
-    "inmemory: InMemoryStorage backend tests",
-    # Legacy/specific markers
-    "codec: Codec-specific tests",
-    "slow: Slow-running tests",
-]
-filterwarnings = [
-    "error",
-    "ignore::UserWarning",
-    "ignore::DeprecationWarning",
-]
-
-# ============================================================================
+# =============================================================
 # Coverage
 # ============================================================================
 [tool.coverage.run]
@@ -341,12 +183,9 @@ convention = "google"  # Use Google style format
     "T20",    # print allowed in setup
     "D",      # docstrings not required in setup
 ]
-"src/esrocks/**/*.py" = [
-    "D",      # Some docstrings may be in .pyx files
-]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everyshape", "estup", "esrocks"]
+known-first-party = ["everyshape"]
 force-single-line = false
 lines-after-imports = 2
 
@@ -374,7 +213,8 @@ exclude = [
     ".*\\.pyx$",  # Ignore Cython files
 ]
 
-# Per-module options
-[[tool.mypy.overrides]]
-module = "esrocks.*"
-ignore_errors = true  # Cython modules have type stubs but may not be perfect
+# ============================================================================
+# Security
+# ============================================================================
+[tool.bandit]
+exclude_dirs = ["tests/", "examples/", "docs/"]

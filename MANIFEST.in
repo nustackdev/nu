@@ -17,47 +17,6 @@ include setup.py
 recursive-include src py.typed
 
 # ============================================================================
-# Build Scripts (for users building from source)
-# ============================================================================
-include scripts/build-rocksdb-linux.sh
-include scripts/build-rocksdb-macos.sh
-include scripts/build-rocksdb-windows.ps1
-
-# ============================================================================
-# esrocks Package Files
-# ============================================================================
-# Cython source files (.pyx, .pxd)
-recursive-include src/esrocks *.pyx
-recursive-include src/esrocks *.pxd
-
-# C++ wrapper headers
-recursive-include src/esrocks/include *.hpp
-recursive-include src/esrocks/include *.h
-
-# Python type stubs
-recursive-include src/esrocks *.pyi
-
-# Python files
-recursive-include src/esrocks *.py
-
-# ============================================================================
-# estup Package Files
-# ============================================================================
-# Cython source files (.pyx, .pxd)
-recursive-include src/estup *.pyx
-recursive-include src/estup *.pxd
-
-# C++ wrapper headers
-recursive-include src/estup/include *.hpp
-recursive-include src/estup/include *.h
-
-# Python type stubs
-recursive-include src/estup *.pyi
-
-# Python files
-recursive-include src/estup *.py
-
-# ============================================================================
 # Pure Python
 # ============================================================================
 # These are automatically included by setuptools, but we can be explicit
@@ -81,8 +40,6 @@ global-exclude __pycache__
 # Exclude Cython-generated C/C++ files (they'll be regenerated)
 global-exclude *.c
 global-exclude *.cpp
-exclude src/esrocks/*.c
-exclude src/esrocks/*.cpp
 
 # Exclude build artifacts (TODO: double check)
 global-exclude *.so

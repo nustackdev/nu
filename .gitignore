@@ -207,4 +207,3 @@ repomix*.txt
 *.dylib
 *.so
 lib*.so.*
-src/esrocks/include/rocksdb

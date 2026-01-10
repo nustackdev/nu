@@ -6,7 +6,7 @@ Exceptions are designed to be backend-agnostic and composable.
 
 from __future__ import annotations
 
-from everyshape._rw_exception import EveryShapeError
+from everyshape._exception import EveryShapeError
 
 
 class StorageError(EveryShapeError):

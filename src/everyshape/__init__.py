@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ._rw_exception import EveryShapeError
+from ._exception import EveryShapeError
 from ._types import NOT_SET, NotSet, is_notset
 from .container import Container
 from .shape import Shape, Slot
