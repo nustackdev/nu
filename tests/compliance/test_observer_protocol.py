@@ -5,26 +5,41 @@ correctly implement the ObserverProtocol interface. These are compliance tests
 that verify the subscription and notification system works correctly.
 
 Usage:
-    Inherit from ObserverProtocolCompliance and override the observer fixture:
+    Inherit from compliance classes and override the required fixtures:
 
     ```python
-    from tests.compliance.test_observer_protocol import ObserverProtocolCompliance
+    from tests.compliance.test_observer_protocol import (
+        RegistryCompliance,
+        ObserverCompliance,
+    )
 
 
-    class TestMyObserver(ObserverProtocolCompliance):
+    class TestMyRegistry(RegistryCompliance):
         @pytest.fixture
-        def observer(self):
-            return MyObserver()
+        def registry(self):
+            return MyRegistry()
+
+
+    class TestMyObserver(ObserverCompliance):
+        @pytest.fixture
+        def observable_storage(self):
+            return MyObservableStorage()
     ```
 
 Test Coverage:
-    - Subscription creation with various filter types
-    - Callback binding and unbinding
-    - Notification delivery (matching and non-matching)
-    - Subscription lifecycle (close)
-    - Filter types: Prefix, Suffix, Length, Wildcard, And, Or
-    - Custom filter support
-    - Registry operations (add, remove, match)
+    RegistryCompliance:
+        - Registry operations (add, remove, match, clear)
+        - Filter types: Prefix, Suffix, Length, Wildcard, And, Or
+        - Custom filter support
+        - Multiple subscriptions matching
+
+    ObserverCompliance:
+        - Subscription creation and notification flow
+        - Callback binding and unbinding
+        - Notification delivery (matching and non-matching)
+        - Subscription lifecycle (close)
+        - Multiple subscriptions
+        - Aborted transactions don't notify
 """
 
 from __future__ import annotations
@@ -456,6 +471,233 @@ class ContainsSegmentFilter(Filter):
         if not isinstance(other, ContainsSegmentFilter):
             return NotImplemented
         return self.segment == other.segment
+
+
+# =============================================================================
+# Observer Protocol Compliance Tests
+# =============================================================================
+
+
+class ObserverCompliance:
+    """Compliance tests for ObserverProtocol implementations.
+
+    Tests the full observer integration: subscribe, notify, bind, unbind, close.
+
+    Usage:
+        Inherit and provide an `observable_storage` fixture that returns a storage
+        implementing both StorageProtocol and ObserverProtocol.
+
+        ```python
+        class TestMyObserver(ObserverCompliance):
+            @pytest.fixture
+            def observable_storage(self):
+                return MyObservableStorage()
+        ```
+    """
+
+    @pytest.fixture
+    def observable_storage(self):
+        """Override to provide storage with observer support."""
+        raise NotImplementedError("Subclass must provide observable_storage fixture")
+
+    def test_subscribe_and_notify(self, observable_storage) -> None:
+        """Test basic subscription and notification flow."""
+        notifications: list = []
+
+        def callback(key):
+            notifications.append(key)
+
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback)
+
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "alice"), b"data")
+
+        assert len(notifications) == 1
+        assert notifications[0] == ("users", "alice")
+
+    def test_subscribe_filter_matching(self, observable_storage) -> None:
+        """Test subscription only notifies for matching keys."""
+        notifications: list = []
+
+        def callback(key):
+            notifications.append(key)
+
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback)
+
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "alice"), b"data")
+            tx.put(("posts", "123"), b"post")  # Should NOT notify
+            tx.put(("users", "bob"), b"data")
+
+        assert len(notifications) == 2
+        assert ("users", "alice") in notifications
+        assert ("users", "bob") in notifications
+        assert ("posts", "123") not in notifications
+
+    def test_subscribe_delete_notifies(self, observable_storage) -> None:
+        """Test deletion also triggers notification."""
+        # First create a key
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "alice"), b"data")
+
+        notifications: list = []
+
+        def callback(key):
+            notifications.append(key)
+
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback)
+
+        # Delete the key
+        with observable_storage.transaction() as tx:
+            tx.delete(("users", "alice"))
+
+        assert len(notifications) == 1
+        assert notifications[0] == ("users", "alice")
+
+    def test_subscription_close_stops_notifications(self, observable_storage) -> None:
+        """Test closed subscription stops receiving notifications."""
+        notifications: list = []
+
+        def callback(key):
+            notifications.append(key)
+
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback)
+        sub.close()
+
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "alice"), b"data")
+
+        assert len(notifications) == 0
+
+    def test_multiple_subscriptions(self, observable_storage) -> None:
+        """Test multiple subscriptions receive appropriate notifications."""
+        user_notifications: list = []
+        length_notifications: list = []
+
+        def user_callback(key):
+            user_notifications.append(key)
+
+        def length_callback(key):
+            length_notifications.append(key)
+
+        sub1 = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub1.bind(user_callback)
+
+        sub2 = observable_storage.subscribe(SubscriptionOptions(filter=LengthFilter(length=2)))
+        sub2.bind(length_callback)
+
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "alice"), b"data")  # Matches both (prefix + length 2)
+            tx.put(("users", "alice", "profile"), b"p")  # Matches only prefix
+            tx.put(("posts", "123"), b"post")  # Matches only length
+
+        assert len(user_notifications) == 2
+        assert len(length_notifications) == 2
+        assert ("users", "alice") in user_notifications
+        assert ("users", "alice", "profile") in user_notifications
+        assert ("users", "alice") in length_notifications
+        assert ("posts", "123") in length_notifications
+
+    def test_subscription_bind_unbind(self, observable_storage) -> None:
+        """Test binding and unbinding callbacks."""
+        notifications: list = []
+
+        def callback(key):
+            notifications.append(key)
+
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback)
+
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "alice"), b"data")
+
+        assert len(notifications) == 1
+
+        sub.unbind(callback)
+
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "bob"), b"data")
+
+        # Should still be 1 - callback was unbound
+        assert len(notifications) == 1
+
+    def test_subscription_multiple_callbacks(self, observable_storage) -> None:
+        """Test subscription with multiple callbacks."""
+        notifications1: list = []
+        notifications2: list = []
+
+        def callback1(key):
+            notifications1.append(key)
+
+        def callback2(key):
+            notifications2.append(key)
+
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback1)
+        sub.bind(callback2)
+
+        with observable_storage.transaction() as tx:
+            tx.put(("users", "alice"), b"data")
+
+        assert len(notifications1) == 1
+        assert len(notifications2) == 1
+
+    def test_or_filter_subscription(self, observable_storage) -> None:
+        """Test Or filter subscription (verifies the Or indexing fix)."""
+        notifications: list = []
+
+        def callback(key):
+            notifications.append(key)
+
+        # LengthFilter(2) | PrefixFilter("users") - should match via second filter
+        # even though first filter is indexed
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=LengthFilter(length=2) | PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback)
+
+        with observable_storage.transaction() as tx:
+            # Length 3 but has "users" prefix - should match via Or's second filter
+            tx.put(("users", "alice", "profile"), b"data")
+
+        assert len(notifications) == 1
+        assert notifications[0] == ("users", "alice", "profile")
+
+    def test_aborted_transaction_no_notify(self, observable_storage) -> None:
+        """Test aborted transaction does not trigger notifications."""
+        notifications: list = []
+
+        def callback(key):
+            notifications.append(key)
+
+        sub = observable_storage.subscribe(
+            SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
+        )
+        sub.bind(callback)
+
+        tx = observable_storage.begin_transaction()
+        tx.put(("users", "alice"), b"data")
+        tx.abort()  # Abort instead of commit
+
+        assert len(notifications) == 0
 
 
 # =============================================================================

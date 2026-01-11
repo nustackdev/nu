@@ -2,7 +2,7 @@
 
 This is a lightweight storage implementation used exclusively for testing
 everyshape's container and view operations. It implements the StorageProtocol
-with just enough functionality to verify behavior.
+and ObserverProtocol with just enough functionality to verify behavior.
 
 NOT intended for production use - use everybase adapters for real storage.
 """
@@ -10,6 +10,7 @@ NOT intended for production use - use everybase adapters for real storage.
 from __future__ import annotations
 
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from everyshape.storage import (
@@ -17,6 +18,8 @@ from everyshape.storage import (
     StorageScanOptions,
     StorageTransactionAbortedError,
 )
+from everyshape.storage.observer.registry import SubscriptionRegistry
+from everyshape.storage.storage.exceptions import StorageInterfaceError
 from everyshape.types import EMPTY, Empty
 
 
@@ -29,6 +32,8 @@ if TYPE_CHECKING:
         TransactionProtocol,
         WriteBatchProtocol,
     )
+    from everyshape.storage.observer.options import SubscriptionOptions
+    from everyshape.storage.observer.types import SubscriptionCallback
     from everyshape.storage.storage.scan import ScanProtocol
     from everyshape.types import Value
 
@@ -58,16 +63,98 @@ class MemoryScan:
             yield v
 
 
+@dataclass(eq=False)
+class MemorySubscription:
+    """In-memory subscription implementation."""
+
+    _options: SubscriptionOptions
+    _observer: MemoryObserver
+    _receivers: list[SubscriptionCallback] = field(default_factory=list, init=False)
+    _closed: bool = field(default=False, init=False)
+
+    def __hash__(self) -> int:
+        return id(self)
+
+    @property
+    def options(self) -> SubscriptionOptions:
+        return self._options
+
+    @property
+    def filter(self):
+        return self._options.filter
+
+    @property
+    def receivers(self) -> tuple[SubscriptionCallback, ...]:
+        return tuple(self._receivers)
+
+    @property
+    def is_closed(self) -> bool:
+        return self._closed
+
+    def bind(self, receiver: SubscriptionCallback) -> None:
+        if self._closed:
+            raise ValueError("Cannot bind to a closed subscription")
+        if receiver not in self._receivers:
+            self._receivers.append(receiver)
+
+    def unbind(self, receiver: SubscriptionCallback) -> None:
+        try:
+            self._receivers.remove(receiver)
+        except ValueError as e:
+            raise ValueError("Receiver is not bound to this subscription") from e
+
+    def close(self) -> None:
+        if not self._closed:
+            self._closed = True
+            self._receivers.clear()
+            self._observer._close_subscription(self)
+
+    def notify(self, key: key.Key) -> Generator[Exception, None, None]:
+        for receiver in self._receivers:
+            try:
+                receiver(key)
+            except Exception as e:
+                yield e
+
+
+class MemoryObserver:
+    """In-memory observer implementation."""
+
+    def __init__(self) -> None:
+        self._registry = SubscriptionRegistry()
+        self._codec = None  # Not needed for tests
+
+    @property
+    def codec(self):
+        return self._codec
+
+    def subscribe(self, options: SubscriptionOptions) -> MemorySubscription:
+        sub = MemorySubscription(_options=options, _observer=self)
+        self._registry.add(sub)
+        return sub
+
+    def notify(self, topic: key.Key) -> None:
+        matches = self._registry.match(topic)
+        for sub in matches:
+            # Collect errors but don't stop notification
+            list(sub.notify(topic))
+
+    def _close_subscription(self, subscription: MemorySubscription) -> None:
+        self._registry.remove(subscription)
+
+
 class MemoryTransaction:
     """In-memory transaction with basic isolation."""
 
     def __init__(
         self,
         data: dict[key.Key, Value],
+        observer: MemoryObserver | None = None,
         read_only: bool = False,
         write_only: bool = False,
     ) -> None:
         self._storage_data = data
+        self._observer = observer
         self._read_only = read_only
         self._write_only = write_only
         self._writes: dict[key.Key, Value] = {}
@@ -94,11 +181,11 @@ class MemoryTransaction:
         Returns:
             Value at key, or EMPTY if not found.
         """
-        if self._write_only:
-            raise StorageClosedError("Cannot read from write-only batch")
-
         if self._closed:
             raise StorageClosedError("Transaction is closed")
+
+        if self._write_only:
+            raise StorageInterfaceError("Cannot read from write-only batch")
 
         # Check writes first (read your own writes)
         if key in self._writes:
@@ -116,9 +203,7 @@ class MemoryTransaction:
 
     def exists(self, key: key.Key) -> bool:
         """Check if key exists."""
-        if self._write_only:
-            raise StorageClosedError("Cannot read from write-only batch")
-
+        # get() handles closed and write_only checks
         return self.get(key) is not EMPTY
 
     def multiget(self, keys: list[key.Key]) -> dict[key.Key, Value]:
@@ -132,22 +217,22 @@ class MemoryTransaction:
 
     def put(self, key: key.Key, value: Value) -> None:
         """Put value at key."""
-        if self._read_only:
-            raise StorageClosedError("Cannot write to read-only snapshot")
-
         if self._closed:
             raise StorageClosedError("Transaction is closed")
+
+        if self._read_only:
+            raise StorageInterfaceError("Cannot write to read-only snapshot")
 
         self._writes[key] = value
         self._deletes.discard(key)
 
     def delete(self, key: key.Key) -> None:
         """Delete key (idempotent). Silent if key doesn't exist."""
-        if self._read_only:
-            raise StorageClosedError("Cannot write to read-only snapshot")
-
         if self._closed:
             raise StorageClosedError("Transaction is closed")
+
+        if self._read_only:
+            raise StorageInterfaceError("Cannot write to read-only snapshot")
 
         self._deletes.add(key)
         self._writes.pop(key, None)
@@ -161,11 +246,11 @@ class MemoryTransaction:
         Returns:
             ScanProtocol instance for iteration.
         """
-        if self._write_only:
-            raise StorageClosedError("Cannot read from write-only batch")
-
         if self._closed:
             raise StorageClosedError("Transaction is closed")
+
+        if self._write_only:
+            raise StorageInterfaceError("Cannot read from write-only batch")
 
         # Build effective data view (storage + writes - deletes)
         effective: dict[key.Key, Value] = {}
@@ -215,14 +300,17 @@ class MemoryTransaction:
 
     def commit(self) -> None:
         """Commit transaction."""
-        if self._read_only:
-            raise StorageClosedError("Cannot commit read-only snapshot")
-
         if self._closed:
             raise StorageClosedError("Transaction already closed")
 
+        if self._read_only:
+            raise StorageInterfaceError("Cannot commit read-only snapshot")
+
         if self._aborted:
             raise StorageTransactionAbortedError("Transaction was aborted")
+
+        # Collect changed keys for notification
+        changed_keys = set(self._writes.keys()) | self._deletes
 
         # Apply writes
         for k, v in self._writes.items():
@@ -234,6 +322,11 @@ class MemoryTransaction:
 
         self._committed = True
         self._closed = True
+
+        # Notify observer of all changes
+        if self._observer is not None:
+            for k in changed_keys:
+                self._observer.notify(k)
 
     def write(self) -> None:
         """Commit write batch (alias for commit)."""
@@ -267,10 +360,10 @@ class MemoryTransaction:
 
 
 class MemoryStorage:
-    """Minimal in-memory storage implementing StorageProtocol.
+    """Minimal in-memory storage implementing StorageProtocol and ObserverProtocol.
 
     This is a simple dict-based storage for testing. It provides basic
-    transaction support with snapshot isolation.
+    transaction support with snapshot isolation and observer notifications.
 
     Example:
         >>> storage = MemoryStorage()
@@ -281,11 +374,17 @@ class MemoryStorage:
 
     def __init__(self) -> None:
         self._data: dict[key.Key, Value] = {}
+        self._observer = MemoryObserver()
         self._closed = False
 
     @property
     def read_only(self) -> bool:
         return False
+
+    @property
+    def codec(self):
+        """Get key codec (not used in memory storage)."""
+        return self._observer.codec
 
     def open(self) -> None:
         """Open storage (no-op for memory storage)."""
@@ -295,6 +394,7 @@ class MemoryStorage:
         """Close storage."""
         self._closed = True
         self._data.clear()
+        self._observer._registry.clear()
 
     def begin(
         self,
@@ -306,7 +406,12 @@ class MemoryStorage:
         if self._closed:
             raise StorageClosedError("Storage is closed")
 
-        return MemoryTransaction(self._data, read_only, write_only)
+        return MemoryTransaction(
+            self._data,
+            observer=self._observer,
+            read_only=read_only,
+            write_only=write_only,
+        )
 
     def begin_snapshot(self) -> SnapshotProtocol:
         """Begin read-only snapshot."""
@@ -356,6 +461,23 @@ class MemoryStorage:
                 batch.abort()
             raise
 
-    def subscribe(self, options):
-        """Subscribe not implemented for test storage."""
-        raise NotImplementedError("Subscribe not implemented in test storage")
+    def subscribe(self, options: SubscriptionOptions) -> MemorySubscription:
+        """Subscribe to key changes with flexible filtering.
+
+        Args:
+            options: Subscription options including filter specification.
+
+        Returns:
+            Subscription object for binding callbacks and managing lifecycle.
+        """
+        if self._closed:
+            raise StorageClosedError("Storage is closed")
+        return self._observer.subscribe(options)
+
+    def notify(self, topic: key.Key) -> None:
+        """Notify observers of a change at the specified topic.
+
+        Args:
+            topic: Topic identifying changed state.
+        """
+        self._observer.notify(topic)

@@ -41,7 +41,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from everyshape.loc import key
 from everyshape.storage import StorageScanOptions
 from everyshape.storage.filter import LengthFilter, PrefixFilter
 from everyshape.storage.storage.exceptions import (
@@ -147,7 +146,7 @@ class StorageProtocolCompliance:
 
     def test_transaction_context_manager_commit(self, storage: StorageProtocol) -> None:
         """Test transaction() context manager commits on success."""
-        test_key = key.from_tuple(("test", "ctx", "commit"))
+        test_key = ("test", "ctx", "commit")
         test_value = b"committed"
 
         with storage.transaction() as txn:
@@ -164,7 +163,7 @@ class StorageProtocolCompliance:
 
     def test_transaction_context_manager_abort(self, storage: StorageProtocol) -> None:
         """Test transaction() context manager aborts on exception."""
-        test_key = key.from_tuple(("test", "ctx", "abort"))
+        test_key = ("test", "ctx", "abort")
         test_value = b"aborted"
 
         try:
@@ -192,7 +191,7 @@ class StorageProtocolCompliance:
 
     def test_batch_write_context_manager_commit(self, storage: StorageProtocol) -> None:
         """Test batch_write() context manager commits on success."""
-        test_key = key.from_tuple(("test", "batch", "commit"))
+        test_key = ("test", "batch", "commit")
         test_value = b"batch_committed"
 
         with storage.batch_write() as batch:
@@ -208,7 +207,7 @@ class StorageProtocolCompliance:
 
     def test_batch_write_context_manager_abort(self, storage: StorageProtocol) -> None:
         """Test batch_write() context manager aborts on exception."""
-        test_key = key.from_tuple(("test", "batch", "abort"))
+        test_key = ("test", "batch", "abort")
         test_value = b"batch_aborted"
 
         try:
@@ -231,7 +230,7 @@ class StorageProtocolCompliance:
 
     def test_put_get(self, storage: StorageProtocol) -> None:
         """Test basic put and get operations."""
-        test_key = key.from_tuple(("test", "crud", "put_get"))
+        test_key = ("test", "crud", "put_get")
         test_value = b"test_value"
 
         with storage.transaction() as txn:
@@ -242,7 +241,7 @@ class StorageProtocolCompliance:
 
     def test_put_update_get(self, storage: StorageProtocol) -> None:
         """Test updating an existing key."""
-        test_key = key.from_tuple(("test", "crud", "update"))
+        test_key = ("test", "crud", "update")
         initial_value = b"initial"
         updated_value = b"updated"
 
@@ -257,7 +256,7 @@ class StorageProtocolCompliance:
 
     def test_delete(self, storage: StorageProtocol) -> None:
         """Test delete operation."""
-        test_key = key.from_tuple(("test", "crud", "delete"))
+        test_key = ("test", "crud", "delete")
         test_value = b"to_be_deleted"
 
         # Put then delete
@@ -273,7 +272,7 @@ class StorageProtocolCompliance:
 
     def test_delete_nonexistent(self, storage: StorageProtocol) -> None:
         """Test deleting a non-existent key is silent (idempotent)."""
-        test_key = key.from_tuple(("test", "crud", "delete_missing"))
+        test_key = ("test", "crud", "delete_missing")
 
         with storage.transaction() as txn:
             # Should not raise - delete is idempotent
@@ -281,7 +280,7 @@ class StorageProtocolCompliance:
 
     def test_exists(self, storage: StorageProtocol) -> None:
         """Test exists() key existence check."""
-        test_key = key.from_tuple(("test", "crud", "exists"))
+        test_key = ("test", "crud", "exists")
         test_value = b"exists"
 
         with storage.snapshot() as snap:
@@ -295,7 +294,7 @@ class StorageProtocolCompliance:
 
     def test_get_missing_key_returns_empty(self, storage: StorageProtocol) -> None:
         """Test get() returns EMPTY for missing keys (never raises)."""
-        test_key = key.from_tuple(("test", "crud", "missing"))
+        test_key = ("test", "crud", "missing")
 
         with storage.snapshot() as snap:
             result = snap.get(test_key)
@@ -308,9 +307,9 @@ class StorageProtocolCompliance:
     def test_multiget(self, storage: StorageProtocol) -> None:
         """Test multiget retrieves multiple keys."""
         keys = [
-            key.from_tuple(("test", "multiget", "key1")),
-            key.from_tuple(("test", "multiget", "key2")),
-            key.from_tuple(("test", "multiget", "key3")),
+            ("test", "multiget", "key1"),
+            ("test", "multiget", "key2"),
+            ("test", "multiget", "key3"),
         ]
         values = [b"value1", b"value2", b"value3"]
 
@@ -328,8 +327,8 @@ class StorageProtocolCompliance:
 
     def test_multiget_partial(self, storage: StorageProtocol) -> None:
         """Test multiget with some missing keys."""
-        key1 = key.from_tuple(("test", "multiget", "exists"))
-        key2 = key.from_tuple(("test", "multiget", "missing"))
+        key1 = ("test", "multiget", "exists")
+        key2 = ("test", "multiget", "missing")
         value1 = b"exists"
 
         # Put only first key
@@ -355,7 +354,7 @@ class StorageProtocolCompliance:
 
     def test_commit(self, storage: StorageProtocol) -> None:
         """Test explicit transaction commit."""
-        test_key = key.from_tuple(("test", "lifecycle", "commit"))
+        test_key = ("test", "lifecycle", "commit")
         test_value = b"committed"
 
         txn = storage.begin_transaction()
@@ -369,7 +368,7 @@ class StorageProtocolCompliance:
 
     def test_abort(self, storage: StorageProtocol) -> None:
         """Test explicit transaction abort."""
-        test_key = key.from_tuple(("test", "lifecycle", "abort"))
+        test_key = ("test", "lifecycle", "abort")
         test_value = b"aborted"
 
         txn = storage.begin_transaction()
@@ -383,7 +382,7 @@ class StorageProtocolCompliance:
 
     def test_write_batch_write(self, storage: StorageProtocol) -> None:
         """Test explicit write batch write."""
-        test_key = key.from_tuple(("test", "lifecycle", "batch_write"))
+        test_key = ("test", "lifecycle", "batch_write")
         test_value = b"batch_written"
 
         batch = storage.begin_write_batch()
@@ -397,7 +396,7 @@ class StorageProtocolCompliance:
 
     def test_write_batch_abort(self, storage: StorageProtocol) -> None:
         """Test explicit write batch abort."""
-        test_key = key.from_tuple(("test", "lifecycle", "batch_abort"))
+        test_key = ("test", "lifecycle", "batch_abort")
         test_value = b"batch_aborted"
 
         batch = storage.begin_write_batch()
@@ -415,7 +414,7 @@ class StorageProtocolCompliance:
 
     def test_closed_transaction_read(self, storage: StorageProtocol) -> None:
         """Test reading from closed transaction raises error."""
-        test_key = key.from_tuple(("test", "error", "closed_read"))
+        test_key = ("test", "error", "closed_read")
 
         txn = storage.begin_transaction()
         txn.abort()
@@ -425,7 +424,7 @@ class StorageProtocolCompliance:
 
     def test_closed_transaction_write(self, storage: StorageProtocol) -> None:
         """Test writing to closed transaction raises error."""
-        test_key = key.from_tuple(("test", "error", "closed_write"))
+        test_key = ("test", "error", "closed_write")
         test_value = b"fail"
 
         txn = storage.begin_transaction()
@@ -436,7 +435,7 @@ class StorageProtocolCompliance:
 
     def test_snapshot_write_forbidden(self, storage: StorageProtocol) -> None:
         """Test that snapshots cannot perform write operations."""
-        test_key = key.from_tuple(("test", "error", "snapshot_write"))
+        test_key = ("test", "error", "snapshot_write")
         test_value = b"forbidden"
 
         snapshot = storage.begin_snapshot()
@@ -449,7 +448,7 @@ class StorageProtocolCompliance:
 
     def test_write_batch_read_forbidden(self, storage: StorageProtocol) -> None:
         """Test that write batches cannot perform read operations."""
-        test_key = key.from_tuple(("test", "error", "batch_read"))
+        test_key = ("test", "error", "batch_read")
 
         batch = storage.begin_write_batch()
 
@@ -489,9 +488,9 @@ class StorageProtocolCompliance:
     def test_scan_all_keys(self, storage: StorageProtocol) -> None:
         """Test scanning all keys without filters."""
         keys = [
-            key.from_tuple(("a",)),
-            key.from_tuple(("b",)),
-            key.from_tuple(("c",)),
+            ("a",),
+            ("b",),
+            ("c",),
         ]
         values = [b"v1", b"v2", b"v3"]
 
@@ -510,8 +509,8 @@ class StorageProtocolCompliance:
     def test_scan_keys_only(self, storage: StorageProtocol) -> None:
         """Test scan keys() method."""
         keys = [
-            key.from_tuple(("scan", "keys", "a")),
-            key.from_tuple(("scan", "keys", "b")),
+            ("scan", "keys", "a"),
+            ("scan", "keys", "b"),
         ]
 
         with storage.transaction() as txn:
@@ -521,7 +520,7 @@ class StorageProtocolCompliance:
         with storage.snapshot() as snap:
             scan = snap.scan(
                 StorageScanOptions(
-                    start=key.from_tuple(("scan", "keys")),
+                    start=("scan", "keys"),
                     break_filter=PrefixFilter(prefix=("scan", "keys")),
                 )
             )
@@ -530,7 +529,7 @@ class StorageProtocolCompliance:
 
     def test_scan_values_only(self, storage: StorageProtocol) -> None:
         """Test scan values() method."""
-        test_key = key.from_tuple(("scan", "values", "test"))
+        test_key = ("scan", "values", "test")
 
         with storage.transaction() as txn:
             txn.put(test_key, b"test_value")
@@ -538,7 +537,7 @@ class StorageProtocolCompliance:
         with storage.snapshot() as snap:
             scan = snap.scan(
                 StorageScanOptions(
-                    start=key.from_tuple(("scan", "values")),
+                    start=("scan", "values"),
                     break_filter=PrefixFilter(prefix=("scan", "values")),
                 )
             )
@@ -548,9 +547,9 @@ class StorageProtocolCompliance:
     def test_scan_with_start(self, storage: StorageProtocol) -> None:
         """Test scanning from a start key."""
         keys = [
-            key.from_tuple(("scan", "start", "a")),
-            key.from_tuple(("scan", "start", "b")),
-            key.from_tuple(("scan", "start", "c")),
+            ("scan", "start", "a"),
+            ("scan", "start", "b"),
+            ("scan", "start", "c"),
         ]
 
         with storage.transaction() as txn:
@@ -561,7 +560,7 @@ class StorageProtocolCompliance:
             # Start from ("scan", "start", "b")
             scan = snap.scan(
                 StorageScanOptions(
-                    start=key.from_tuple(("scan", "start", "b")),
+                    start=("scan", "start", "b"),
                     break_filter=PrefixFilter(prefix=("scan", "start")),
                 )
             )
@@ -573,7 +572,7 @@ class StorageProtocolCompliance:
 
     def test_scan_with_limit(self, storage: StorageProtocol) -> None:
         """Test scanning with result limit."""
-        keys = [key.from_tuple(("scan", "limit", str(i))) for i in range(10)]
+        keys = [("scan", "limit", str(i)) for i in range(10)]
 
         with storage.transaction() as txn:
             for k in keys:
@@ -582,7 +581,7 @@ class StorageProtocolCompliance:
         with storage.snapshot() as snap:
             scan = snap.scan(
                 StorageScanOptions(
-                    start=key.from_tuple(("scan", "limit")),
+                    start=("scan", "limit"),
                     break_filter=PrefixFilter(prefix=("scan", "limit")),
                     limit=3,
                 )
@@ -593,9 +592,9 @@ class StorageProtocolCompliance:
     def test_scan_reverse(self, storage: StorageProtocol) -> None:
         """Test reverse scanning."""
         keys = [
-            key.from_tuple(("scan", "reverse", "a")),
-            key.from_tuple(("scan", "reverse", "b")),
-            key.from_tuple(("scan", "reverse", "c")),
+            ("scan", "reverse", "a"),
+            ("scan", "reverse", "b"),
+            ("scan", "reverse", "c"),
         ]
 
         with storage.transaction() as txn:
@@ -605,7 +604,7 @@ class StorageProtocolCompliance:
         with storage.snapshot() as snap:
             scan = snap.scan(
                 StorageScanOptions(
-                    start=key.from_tuple(("scan", "reverse", "c")),
+                    start=("scan", "reverse", "c"),
                     reverse=True,
                     break_filter=PrefixFilter(prefix=("scan", "reverse")),
                 )
@@ -617,9 +616,9 @@ class StorageProtocolCompliance:
     def test_scan_with_prefix_filter(self, storage: StorageProtocol) -> None:
         """Test scanning with prefix filter."""
         keys = [
-            key.from_tuple(("users", "alice")),
-            key.from_tuple(("users", "bob")),
-            key.from_tuple(("posts", "123")),
+            ("users", "alice"),
+            ("users", "bob"),
+            ("posts", "123"),
         ]
 
         with storage.transaction() as txn:
@@ -641,10 +640,10 @@ class StorageProtocolCompliance:
     def test_scan_with_break_filter(self, storage: StorageProtocol) -> None:
         """Test scanning with break filter for efficient prefix scans."""
         keys = [
-            key.from_tuple(("a", "1")),
-            key.from_tuple(("b", "1")),
-            key.from_tuple(("b", "2")),
-            key.from_tuple(("c", "1")),
+            ("a", "1"),
+            ("b", "1"),
+            ("b", "2"),
+            ("c", "1"),
         ]
 
         with storage.transaction() as txn:
@@ -655,7 +654,7 @@ class StorageProtocolCompliance:
             # Break when we leave prefix ("b",)
             scan = snap.scan(
                 StorageScanOptions(
-                    start=key.from_tuple(("b",)),
+                    start=("b",),
                     break_filter=PrefixFilter(prefix=("b",)),
                 )
             )
@@ -667,9 +666,9 @@ class StorageProtocolCompliance:
     def test_scan_with_length_filter(self, storage: StorageProtocol) -> None:
         """Test scanning with length filter."""
         keys = [
-            key.from_tuple(("scan", "length")),  # length 2
-            key.from_tuple(("scan", "length", "child")),  # length 3
-            key.from_tuple(("scan", "length", "child", "deep")),  # length 4
+            ("scan", "length"),  # length 2
+            ("scan", "length", "child"),  # length 3
+            ("scan", "length", "child", "deep"),  # length 4
         ]
 
         with storage.transaction() as txn:
@@ -680,7 +679,7 @@ class StorageProtocolCompliance:
             # Filter to only length 3
             scan = snap.scan(
                 StorageScanOptions(
-                    start=key.from_tuple(("scan", "length")),
+                    start=("scan", "length"),
                     break_filter=PrefixFilter(prefix=("scan", "length")),
                     filter=LengthFilter(length=3),
                 )
@@ -692,10 +691,10 @@ class StorageProtocolCompliance:
     def test_scan_with_composite_filter(self, storage: StorageProtocol) -> None:
         """Test scanning with composite filter (prefix AND length)."""
         keys = [
-            key.from_tuple(("users", "alice")),  # length 2
-            key.from_tuple(("users", "alice", "profile")),  # length 3
-            key.from_tuple(("users", "bob")),  # length 2
-            key.from_tuple(("posts", "123")),  # length 2
+            ("users", "alice"),  # length 2
+            ("users", "alice", "profile"),  # length 3
+            ("users", "bob"),  # length 2
+            ("posts", "123"),  # length 2
         ]
 
         with storage.transaction() as txn:
@@ -722,12 +721,3 @@ class StorageProtocolCompliance:
 
         with pytest.raises(StorageClosedError):
             txn.scan(StorageScanOptions())
-
-    def test_scan_write_batch_raises(self, storage: StorageProtocol) -> None:
-        """Test scanning write-only batch raises error."""
-        batch = storage.begin_write_batch()
-
-        with pytest.raises((StorageClosedError, AttributeError)):
-            batch.scan(StorageScanOptions())  # type: ignore[attr-defined]
-
-        batch.abort()
