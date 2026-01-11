@@ -81,6 +81,10 @@ class SubscriptionRegistry:
     # These are indexed by their "primary" filter and verified on match
     _composite_subscriptions: set[Subscription] = field(default_factory=set, init=False)
 
+    # Subscriptions with custom/unknown filter types that cannot be indexed
+    # These must be checked against every key
+    _unindexed_subscriptions: set[Subscription] = field(default_factory=set, init=False)
+
     # All subscriptions for cleanup and iteration
     _all_subscriptions: set[Subscription] = field(default_factory=set, init=False)
 
@@ -120,11 +124,21 @@ class SubscriptionRegistry:
             signature = self._wildcard_signature(filt.pattern)
             self._wildcard_index[(len(filt.pattern), signature)].add(subscription)
 
-        elif isinstance(filt, (And, Or)):
+        elif isinstance(filt, And):
             self._composite_subscriptions.add(subscription)
-            # Also index by the first filter for faster narrowing
+            # Index by first filter only (all must match, so first suffices for narrowing)
             if filt.filters:
                 self._index_filter(subscription, filt.filters[0])
+
+        elif isinstance(filt, Or):
+            self._composite_subscriptions.add(subscription)
+            # Index by ALL filters (any could match, so we need all paths)
+            for sub_filter in filt.filters:
+                self._index_filter(subscription, sub_filter)
+
+        else:
+            # Custom/unknown filter types - must check on every match
+            self._unindexed_subscriptions.add(subscription)
 
     def remove(self, subscription: Subscription) -> None:
         """Remove a subscription from the registry.
@@ -168,10 +182,19 @@ class SubscriptionRegistry:
             if not self._wildcard_index[idx_key]:
                 del self._wildcard_index[idx_key]
 
-        elif isinstance(filt, (And, Or)):
+        elif isinstance(filt, And):
             self._composite_subscriptions.discard(subscription)
             if filt.filters:
                 self._unindex_filter(subscription, filt.filters[0])
+
+        elif isinstance(filt, Or):
+            self._composite_subscriptions.discard(subscription)
+            for sub_filter in filt.filters:
+                self._unindex_filter(subscription, sub_filter)
+
+        else:
+            # Custom/unknown filter types
+            self._unindexed_subscriptions.discard(subscription)
 
     def match(self, key: key.Key) -> list[Subscription]:
         """Find all subscriptions matching a key.
@@ -213,7 +236,12 @@ class SubscriptionRegistry:
                         if sub.filter.matches(key):
                             matches.add(sub)
 
-            # For composite filters, verify the full match
+            # Check unindexed subscriptions (custom filters) - must verify all
+            for sub in self._unindexed_subscriptions:
+                if sub.filter.matches(key):
+                    matches.add(sub)
+
+            # Verify all candidates with full filter (handles composites correctly)
             verified_matches: list[Subscription] = []
             for sub in matches:
                 if sub.filter.matches(key):
@@ -229,6 +257,7 @@ class SubscriptionRegistry:
             self._length_index.clear()
             self._wildcard_index.clear()
             self._composite_subscriptions.clear()
+            self._unindexed_subscriptions.clear()
             self._all_subscriptions.clear()
 
     @staticmethod
