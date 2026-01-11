@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everyshape.loc import key
-from everyshape.storage import StorageKeyError
+from everyshape.types import EMPTY
 
 from .types import (
     require_read_context,
@@ -73,10 +73,10 @@ def get_metadata(
         StorageInterfaceError: If context doesn't support reads
     """
     meta_path = key.join_segment(key.to_meta(path), key_segment)
-    try:
-        return require_read_context(ctx).get(meta_path)
-    except StorageKeyError:
+    value = require_read_context(ctx).get(meta_path)
+    if value is EMPTY:
         return default
+    return value
 
 
 def has_metadata(path: key.Key, key_segment: key.KeySegment, ctx: StorageContextType) -> bool:
@@ -94,7 +94,7 @@ def has_metadata(path: key.Key, key_segment: key.KeySegment, ctx: StorageContext
         StorageInterfaceError: If context doesn't support reads
     """
     meta_path = key.join_segment(key.to_meta(path), key_segment)
-    return require_read_context(ctx).has(meta_path)
+    return require_read_context(ctx).exists(meta_path)
 
 
 def delete_metadata(path: key.Key, key_segment: key.KeySegment, ctx: StorageContextType) -> bool:
@@ -112,7 +112,10 @@ def delete_metadata(path: key.Key, key_segment: key.KeySegment, ctx: StorageCont
         StorageInterfaceError: If context doesn't support writes
     """
     meta_path = key.join_segment(key.to_meta(path), key_segment)
-    return require_write_context(ctx).delete(meta_path)
+    wctx = require_write_context(ctx)
+    existed = wctx.exists(meta_path)
+    wctx.delete(meta_path)
+    return existed
 
 
 def list_metadata_keys(
@@ -130,14 +133,16 @@ def list_metadata_keys(
     Raises:
         StorageInterfaceError: If context doesn't support reads
     """
-    from everyshape.storage import StorageScanOptions
+    from everyshape.storage import LengthFilter, PrefixFilter, StorageScanOptions
 
     meta_path = key.to_meta(path)
     # Scan immediate children of metadata path only (length = meta_path + 1)
+    prefix = PrefixFilter(prefix=meta_path)
+    child_len = LengthFilter(length=len(meta_path) + 1)
     options = StorageScanOptions(
-        start=key.join_segment(meta_path, ""),
-        end=key.join_segment(meta_path, "\uffff"),
-        length=len(meta_path) + 1,
+        start=(*meta_path, ""),  # Start after meta_path itself
+        break_filter=prefix,
+        filter=prefix & child_len,
     )
     for meta_key in require_read_context(ctx).scan(options).keys():
         # Extract last segment (metadata key)

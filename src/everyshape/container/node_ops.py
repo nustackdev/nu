@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape._types import NOT_SET, NotSet, is_notset
 from everyshape.loc import key
-from everyshape.storage import StorageKeyError
+from everyshape.types import EMPTY
 
 from .marker import extract_marker
 from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read_context
@@ -49,10 +49,7 @@ def node_exists(path: key.Key, ctx: StorageContextType) -> bool:
         >>> node_exists(("users", "alice"), tx)
         True
     """
-    try:
-        return require_read_context(ctx).has(path)
-    except StorageKeyError:
-        return False
+    return require_read_context(ctx).exists(path)
 
 
 def get_node_type(
@@ -75,11 +72,10 @@ def get_node_type(
         <NodeType.CONTAINER>
     """
     if is_notset(raw_value):
-        try:
-            raw_value = require_read_context(ctx).get(path)
-            return NodeType.CONTAINER if extract_marker(raw_value) else NodeType.PRIMITIVE
-        except StorageKeyError:
+        raw_value = require_read_context(ctx).get(path)
+        if raw_value is EMPTY:
             return NodeType.NOT_FOUND
+        return NodeType.CONTAINER if extract_marker(raw_value) else NodeType.PRIMITIVE
     else:
         return (
             NodeType.CONTAINER if extract_marker(cast("Value", raw_value)) else NodeType.PRIMITIVE
@@ -110,40 +106,40 @@ def get_node_info(
         >>> if info.node_type == NodeType.CONTAINER:
         ...     print(f"Container with structure {info.structure}")
     """
-    try:
-        raw_value = cast(
-            "Value", require_read_context(ctx).get(path) if is_notset(raw_value) else raw_value
-        )
+    if is_notset(raw_value):
+        raw_value = require_read_context(ctx).get(path)
 
-        # Try to parse as container marker
-        marker_info = extract_marker(raw_value)
-        if marker_info is not None:
-            structure, protocol = marker_info
-            return NodeInfo(
-                path=path,
-                exists=True,
-                node_type=NodeType.CONTAINER,
-                raw_value=raw_value,
-                structure=structure,
-                protocol=protocol,
-            )
-
-        # It's a primitive value
-        return NodeInfo(
-            path=path,
-            exists=True,
-            node_type=NodeType.PRIMITIVE,
-            raw_value=raw_value,
-            primitive_value=raw_value,
-        )
-
-    except StorageKeyError:
-        # Path doesn't exist
+    # Path doesn't exist
+    if raw_value is EMPTY:
         return NodeInfo(
             path=path,
             exists=False,
             node_type=NodeType.NOT_FOUND,
         )
+
+    raw_value = cast("Value", raw_value)
+
+    # Try to parse as container marker
+    marker_info = extract_marker(raw_value)
+    if marker_info is not None:
+        structure, protocol = marker_info
+        return NodeInfo(
+            path=path,
+            exists=True,
+            node_type=NodeType.CONTAINER,
+            raw_value=raw_value,
+            structure=structure,
+            protocol=protocol,
+        )
+
+    # It's a primitive value
+    return NodeInfo(
+        path=path,
+        exists=True,
+        node_type=NodeType.PRIMITIVE,
+        raw_value=raw_value,
+        primitive_value=raw_value,
+    )
 
 
 def gather_parent_info(path: key.Key, ctx: StorageContextType) -> ParentChainInfo:

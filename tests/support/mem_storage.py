@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING
 
 from everyshape.storage import (
     StorageClosedError,
-    StorageKeyError,
     StorageScanOptions,
     StorageTransactionAbortedError,
 )
+from everyshape.types import EMPTY, Empty
 
 
 if TYPE_CHECKING:
@@ -62,8 +62,12 @@ class MemoryTransaction:
     def storage(self):
         return None  # Not needed for tests
 
-    def get(self, key: key.Key) -> Value:
-        """Get value at key."""
+    def get(self, key: key.Key) -> Value | Empty:
+        """Get value at key.
+
+        Returns:
+            Value at key, or EMPTY if not found.
+        """
         if self._write_only:
             raise StorageClosedError("Cannot read from write-only batch")
 
@@ -76,33 +80,28 @@ class MemoryTransaction:
 
         # Check if deleted
         if key in self._deletes:
-            raise StorageKeyError(f"Key not found: {key}")
+            return EMPTY
 
         # Check storage
         if key in self._storage_data:
             return self._storage_data[key]
 
-        raise StorageKeyError(f"Key not found: {key}")
+        return EMPTY
 
-    def has(self, key: key.Key) -> bool:
+    def exists(self, key: key.Key) -> bool:
         """Check if key exists."""
         if self._write_only:
             raise StorageClosedError("Cannot read from write-only batch")
 
-        try:
-            self.get(key)
-            return True
-        except StorageKeyError:
-            return False
+        return self.get(key) is not EMPTY
 
     def multiget(self, keys: list[key.Key]) -> dict[key.Key, Value]:
-        """Get multiple keys."""
+        """Get multiple keys. Missing keys are omitted."""
         result = {}
         for k in keys:
-            try:
-                result[k] = self.get(k)
-            except StorageKeyError:
-                pass
+            value = self.get(k)
+            if value is not EMPTY:
+                result[k] = value
         return result
 
     def put(self, key: key.Key, value: Value) -> None:
@@ -116,18 +115,16 @@ class MemoryTransaction:
         self._writes[key] = value
         self._deletes.discard(key)
 
-    def delete(self, key: key.Key) -> bool:
-        """Delete key."""
+    def delete(self, key: key.Key) -> None:
+        """Delete key (idempotent). Silent if key doesn't exist."""
         if self._read_only:
             raise StorageClosedError("Cannot write to read-only snapshot")
 
         if self._closed:
             raise StorageClosedError("Transaction is closed")
 
-        existed = key in self._storage_data or key in self._writes
         self._deletes.add(key)
         self._writes.pop(key, None)
-        return existed
 
     def scan(self, options: StorageScanOptions):
         """Scan is not implemented for minimal test storage."""

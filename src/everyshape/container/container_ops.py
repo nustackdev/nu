@@ -11,7 +11,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import key as key_
-from everyshape.storage import StorageKeyError, StorageScanOptions
+from everyshape.storage import LengthFilter, PrefixFilter, StorageScanOptions
 from everyshape.types import EMPTY, Empty, Value
 
 from .exceptions import InvalidDepthError, PathExistsError, PathTypeError
@@ -221,21 +221,18 @@ def delete_subtree(path: key_.Key, ctx: StorageContextType) -> int:
     """
     rwctx = require_readwrite_context(ctx)
 
-    # Scan all descendants
+    # Scan all descendants (including path itself)
+    prefix = PrefixFilter(prefix=path)
     scan_opts = StorageScanOptions(
         start=path,
-        start_inclusive=True,
-        end=(*path, "\uffff"),
-        length=-1,
+        break_filter=prefix,
+        filter=prefix,
     )
 
     deleted_count = 0
     for key in rwctx.scan(scan_opts).keys():
-        try:
-            rwctx.delete(key)
-            deleted_count += 1
-        except StorageKeyError:
-            pass
+        rwctx.delete(key)
+        deleted_count += 1
 
     logger.info("Subtree deleted", extra={"path": path, "deleted_count": deleted_count})
     return deleted_count
@@ -316,11 +313,13 @@ def list_child_keys(
     """
     validate_is_container(path, ctx)
 
+    # Direct children: prefix match + length = parent + 1
+    prefix = PrefixFilter(prefix=path)
+    child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
-        start_inclusive=False,
-        end=(*path, "\uffff"),
-        length=len(path) + 1,
+        start=(*path, ""),  # Start after path itself
+        break_filter=prefix,
+        filter=prefix & child_len,
     )
 
     for key in require_read_context(ctx).scan(scan_opts).keys():
@@ -344,11 +343,13 @@ def list_child_values(path: key_.Key, ctx: StorageContextType) -> Generator[Node
     """
     validate_is_container(path, ctx)
 
+    # Direct children: prefix match + length = parent + 1
+    prefix = PrefixFilter(prefix=path)
+    child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
-        start_inclusive=False,
-        end=(*path, "\uffff"),
-        length=len(path) + 1,
+        start=(*path, ""),  # Start after path itself
+        break_filter=prefix,
+        filter=prefix & child_len,
     )
 
     for key, value in require_read_context(ctx).scan(scan_opts).items():
@@ -379,11 +380,13 @@ def list_children(
     """
     validate_is_container(path, ctx)
 
+    # Direct children: prefix match + length = parent + 1
+    prefix = PrefixFilter(prefix=path)
+    child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
-        start_inclusive=False,
-        end=(*path, "\uffff"),
-        length=len(path) + 1,
+        start=(*path, ""),  # Start after path itself
+        break_filter=prefix,
+        filter=prefix & child_len,
     )
 
     for key, value in require_read_context(ctx).scan(scan_opts).items():
@@ -411,11 +414,13 @@ def count_children(path: key_.Key, ctx: StorageContextType) -> int:
     """
     validate_is_container(path, ctx)
 
+    # Direct children: prefix match + length = parent + 1
+    prefix = PrefixFilter(prefix=path)
+    child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
-        start_inclusive=False,
-        end=(*path, "\uffff"),
-        length=len(path) + 1,
+        start=(*path, ""),  # Start after path itself
+        break_filter=prefix,
+        filter=prefix & child_len,
     )
     counter = 0
     for _ in require_read_context(ctx).scan(scan_opts).keys():
@@ -579,11 +584,8 @@ def delete_child(
     if info.node_type == NodeType.CONTAINER:
         deleted = delete_container(child_path, ctx)
     else:
-        try:
-            require_write_context(ctx).delete(child_path)
-            deleted = True
-        except StorageKeyError:
-            deleted = False
+        require_write_context(ctx).delete(child_path)
+        deleted = True
 
     if deleted:
         logger.debug(
@@ -663,11 +665,23 @@ def list_descendants(
     rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
-    scan_opts = StorageScanOptions(
-        start=path,
-        end=(*path, "\uffff"),
-        length=-1 if depth == -1 else len(path) + depth,
-    )
+    # Descendants: prefix match, optionally filter by exact depth
+    prefix = PrefixFilter(prefix=path)
+    if depth == -1:
+        # All descendants at any depth
+        scan_opts = StorageScanOptions(
+            start=(*path, ""),  # Start after path itself
+            break_filter=prefix,
+            filter=prefix,
+        )
+    else:
+        # Exact depth match
+        depth_len = LengthFilter(length=len(path) + depth)
+        scan_opts = StorageScanOptions(
+            start=(*path, ""),  # Start after path itself
+            break_filter=prefix,
+            filter=prefix & depth_len,
+        )
 
     yield from rctx.scan(scan_opts).keys()
 
@@ -697,7 +711,13 @@ def walk_tree(
     rctx = require_read_context(ctx)
     validate_is_container(path, ctx)
 
-    scan_opts = StorageScanOptions(start=path, end=(*path, "\uffff"), length=-1)
+    # All descendants including path itself
+    prefix = PrefixFilter(prefix=path)
+    scan_opts = StorageScanOptions(
+        start=path,
+        break_filter=prefix,
+        filter=prefix,
+    )
 
     for key, value in rctx.scan(scan_opts).items():
         node_type = NodeType.CONTAINER if is_marker(value) else NodeType.PRIMITIVE

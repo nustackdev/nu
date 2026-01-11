@@ -6,24 +6,31 @@ Provides storage protocols, observer patterns, and subscription capabilities.
 from __future__ import annotations
 
 from .codec import Codec, CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
-from .observer import (
+from .filter import (
     WILDCARD,
-    CompositeFilter,
+    And,
+    Filter,
     LengthFilter,
+    Or,
+    PassAll,
+    PassNone,
+    PrefixFilter,
+    SuffixFilter,
+    WildcardFilter,
+)
+from .observer import (
+    CompositeFilter,
     ObserverConnectionError,
     ObserverError,
     ObserverProtocol,
     ObserverSubscriptionError,
     ObserverValidationError,
-    PrefixFilter,
     Subscription,
     SubscriptionCallback,
     SubscriptionFilter,
     SubscriptionOptions,
     SubscriptionReceiver,
     SubscriptionRegistry,
-    SuffixFilter,
-    WildcardFilter,
 )
 from .storage import (
     BaseContextProtocol,
@@ -92,14 +99,20 @@ __all__ = [  # noqa: RUF022
     "SubscriptionCallback",
     "SubscriptionReceiver",
     "SubscriptionRegistry",
-    ## Filter types
-    "SubscriptionFilter",
+    ## Filter types (from storage.filter)
+    "Filter",
+    "And",
+    "Or",
     "PrefixFilter",
     "SuffixFilter",
     "WildcardFilter",
     "LengthFilter",
-    "CompositeFilter",
+    "PassAll",
+    "PassNone",
     "WILDCARD",
+    ## Filter aliases (backward compatibility)
+    "SubscriptionFilter",
+    "CompositeFilter",
     ## Errors
     "ObserverError",
     "ObserverConnectionError",

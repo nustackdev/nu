@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from everyshape.loc import key
 
+    from ..filter import Filter
     from .transaction import SnapshotProtocol, TransactionProtocol, WriteBatchProtocol
 
 
@@ -19,28 +20,46 @@ if TYPE_CHECKING:
 class StorageScanOptions:
     """Options for range scan operations.
 
-    Defines the bounds, direction, and limits for iterating over key ranges.
+    Defines the starting position, direction, limits, and filtering
+    for iterating over key ranges.
 
     Attributes:
-        start: Starting key (inclusive by default). None means from beginning.
-        end: Ending key (exclusive by default). None means to end.
-        start_inclusive: Whether start key is inclusive.
-        end_inclusive: Whether end key is inclusive.
-        direction: Direction to scan (forward or reverse).
+        start: Starting key (inclusive). None means from beginning.
+        reverse: If True, scan in reverse order.
         limit: Maximum number of results. None means unlimited.
-        length: Filter by tuple key length.
-            -1: no filtering (all lengths)
-             0: invalid (will raise)
-            >0: exact match on key tuple length
+        filter: Filter to include keys (skip if not matched).
+        break_filter: Filter to break iteration (stop when not matched).
+            Used for efficient prefix scans - break when past prefix range.
+
+    Filter vs break_filter:
+        - filter: If key doesn't match, SKIP it (continue to next)
+        - break_filter: If key doesn't match, STOP iteration entirely
+
+    Examples:
+        >>> # Scan all keys starting from ("users",)
+        >>> options = StorageScanOptions(start=("users",))
+
+        >>> # Scan with prefix filter (efficient - breaks when past prefix)
+        >>> from everyshape.storage.filter import PrefixFilter, LengthFilter
+        >>> options = StorageScanOptions(
+        ...     start=("users",),
+        ...     break_filter=PrefixFilter(prefix=("users",)),
+        ...     filter=LengthFilter(length=3),  # only length-3 keys
+        ... )
+
+        >>> # Scan children: prefix + length filter
+        >>> options = StorageScanOptions(
+        ...     start=("users",),
+        ...     break_filter=PrefixFilter(prefix=("users",)),
+        ...     filter=PrefixFilter(prefix=("users",)) & LengthFilter(length=2),
+        ... )
     """
 
     start: key.Key | None = None
-    end: key.Key | None = None
-    start_inclusive: bool = True
-    end_inclusive: bool = False
     reverse: bool = False
     limit: int | None = None
-    length: int = -1
+    filter: Filter | None = None
+    break_filter: Filter | None = None
 
 
 type StorageContextType = SnapshotProtocol | WriteBatchProtocol | TransactionProtocol

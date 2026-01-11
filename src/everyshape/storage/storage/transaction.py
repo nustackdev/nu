@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from everyshape.loc import key
-    from everyshape.types import Value
+    from everyshape.types import Empty, Value
 
     from .scan import ScanProtocol
     from .storage import StorageProtocol
@@ -106,22 +106,21 @@ class ReadAccessProtocol(Protocol):
     """
 
     # Point access
-    def get(self, key: key.Key) -> Value:
+    def get(self, key: key.Key) -> Value | Empty:
         """Get value at key.
 
         Args:
             key: Key to retrieve.
 
         Returns:
-            Value at key.
+            Value at key, or EMPTY if key not found.
 
         Raises:
-            StorageKeyError: If key not found.
             StorageOperationError: If operation fails.
         """
         ...
 
-    def has(self, key: key.Key) -> bool:
+    def exists(self, key: key.Key) -> bool:
         """Check if key exists.
 
         Args:
@@ -189,14 +188,13 @@ class WriteAccessProtocol(Protocol):
         """
         ...
 
-    def delete(self, key: key.Key) -> bool:
-        """Delete key.
+    def delete(self, key: key.Key) -> None:
+        """Delete key (idempotent).
+
+        Silent if key doesn't exist.
 
         Args:
             key: Key to delete.
-
-        Returns:
-            True if key was deleted, False if key didn't exist.
 
         Raises:
             StorageDeleteError: If deletion fails.
