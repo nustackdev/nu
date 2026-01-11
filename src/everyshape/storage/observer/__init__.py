@@ -1,7 +1,7 @@
 """Observer module.
 
 Provides subscription capabilities for storage changes with:
-- Flexible filtering (prefix, suffix, wildcard, length, composite)
+- Flexible filtering (import from storage.filter)
 - Decoupled subscriptions from callbacks (subscribe once, bind/unbind)
 - Efficient pattern matching via SubscriptionRegistry
 """
@@ -15,16 +15,7 @@ from .exceptions import (
     ObserverValidationError,
 )
 from .observer import ObserverProtocol
-from .options import (
-    WILDCARD,
-    CompositeFilter,
-    LengthFilter,
-    PrefixFilter,
-    SubscriptionFilter,
-    SubscriptionOptions,
-    SuffixFilter,
-    WildcardFilter,
-)
+from .options import SubscriptionOptions
 from .registry import SubscriptionRegistry
 from .subscription import (
     Subscription,
@@ -35,26 +26,15 @@ from .types import (
 )
 
 
-__all__ = [  # noqa: RUF022
-    # Protocols
-    "ObserverProtocol",
-    # Subscription types
-    "Subscription",
-    "SubscriptionOptions",
-    "SubscriptionCallback",
-    "SubscriptionReceiver",
-    "SubscriptionRegistry",
-    # Filter types
-    "SubscriptionFilter",
-    "PrefixFilter",
-    "SuffixFilter",
-    "WildcardFilter",
-    "LengthFilter",
-    "CompositeFilter",
-    "WILDCARD",
-    # Errors
-    "ObserverError",
+__all__ = [
     "ObserverConnectionError",
+    "ObserverError",
+    "ObserverProtocol",
     "ObserverSubscriptionError",
     "ObserverValidationError",
+    "Subscription",
+    "SubscriptionCallback",
+    "SubscriptionOptions",
+    "SubscriptionReceiver",
+    "SubscriptionRegistry",
 ]

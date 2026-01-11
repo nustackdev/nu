@@ -137,6 +137,8 @@ class SuffixFilter(Filter):
         """Check if key ends with the suffix."""
         if len(key) < len(self.suffix):
             return False
+        if not self.suffix:  # Empty suffix matches everything
+            return True
         return key[-len(self.suffix) :] == self.suffix
 
     def __hash__(self) -> int:

@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from everyshape.storage.observer.options import PrefixFilter, SubscriptionOptions
+from everyshape.storage import PrefixFilter, SubscriptionOptions
 from everyshape.storage.observer.subscription import Subscription, _SubscriptionContext
 
 

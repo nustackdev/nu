@@ -19,7 +19,6 @@ from .filter import (
     WildcardFilter,
 )
 from .observer import (
-    CompositeFilter,
     ObserverConnectionError,
     ObserverError,
     ObserverProtocol,
@@ -27,7 +26,6 @@ from .observer import (
     ObserverValidationError,
     Subscription,
     SubscriptionCallback,
-    SubscriptionFilter,
     SubscriptionOptions,
     SubscriptionReceiver,
     SubscriptionRegistry,
@@ -93,13 +91,16 @@ __all__ = [  # noqa: RUF022
     # Observer
     "ObserverProtocol",
     "Subscription",
-    ## Subscription types
-    "Subscription",
     "SubscriptionOptions",
     "SubscriptionCallback",
     "SubscriptionReceiver",
     "SubscriptionRegistry",
-    ## Filter types (from storage.filter)
+    ## Errors
+    "ObserverError",
+    "ObserverConnectionError",
+    "ObserverSubscriptionError",
+    "ObserverValidationError",
+    # Filter types
     "Filter",
     "And",
     "Or",
@@ -110,14 +111,6 @@ __all__ = [  # noqa: RUF022
     "PassAll",
     "PassNone",
     "WILDCARD",
-    ## Filter aliases (backward compatibility)
-    "SubscriptionFilter",
-    "CompositeFilter",
-    ## Errors
-    "ObserverError",
-    "ObserverConnectionError",
-    "ObserverSubscriptionError",
-    "ObserverValidationError",
     # Codec
     "CodecProtocol",
     "KeyCodecProtocol",

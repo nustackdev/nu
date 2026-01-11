@@ -1,15 +1,18 @@
-"""Unit tests for subscription filters in everyshape.storage.observer.options."""
+"""Unit tests for storage filters in everyshape.storage.filter."""
 
 from __future__ import annotations
 
 import pytest
 
-from everyshape.storage.observer.options import (
+from everyshape.storage.filter import (
     WILDCARD,
-    CompositeFilter,
+    And,
+    Filter,
     LengthFilter,
+    Or,
+    PassAll,
+    PassNone,
     PrefixFilter,
-    SubscriptionOptions,
     SuffixFilter,
     WildcardFilter,
 )
@@ -94,7 +97,7 @@ class TestPrefixFilter:
         f = PrefixFilter(prefix=("users",))
         assert f != "prefix_users"
         assert f != ("users",)
-        assert NotImplemented == f.__eq__(None)
+        assert f.__eq__(None) == NotImplemented
 
     def test_prefix_filter_in_set(self) -> None:
         """Test prefix filter can be used in sets."""
@@ -144,12 +147,12 @@ class TestSuffixFilter:
         assert not f.matches(("profile",))
         assert not f.matches(())
 
-    def test_empty_suffix_matches_only_empty_key(self) -> None:
-        """Test empty suffix only matches empty key."""
+    def test_empty_suffix_matches_all(self) -> None:
+        """Test empty suffix matches all keys."""
         f = SuffixFilter(suffix=())
         assert f.matches(())
-        # Empty suffix is only a suffix of the empty key
-        assert not f.matches(("users",))
+        assert f.matches(("users",))
+        assert f.matches(("a", "b", "c"))
 
     def test_multi_segment_suffix(self) -> None:
         """Test suffix with multiple segments."""
@@ -157,7 +160,6 @@ class TestSuffixFilter:
         assert f.matches(("alice", "profile"))
         assert f.matches(("users", "alice", "profile"))
         assert not f.matches(("users", "alice"))
-        # suffix just checks if key ends with the suffix pattern, regardless of prefix
         assert f.matches(("bob", "alice", "profile"))
 
     def test_integer_segments_in_key(self) -> None:
@@ -191,7 +193,7 @@ class TestSuffixFilter:
         f = SuffixFilter(suffix=("profile",))
         assert f != "profile"
         assert f != ("profile",)
-        assert NotImplemented == f.__eq__(None)
+        assert f.__eq__(None) == NotImplemented
 
     def test_suffix_filter_in_set(self) -> None:
         """Test suffix filter can be used in sets."""
@@ -299,7 +301,7 @@ class TestWildcardFilter:
         """Test filter not equal to other types."""
         f = WildcardFilter(pattern=("users", WILDCARD))
         assert f != ("users", WILDCARD)
-        assert NotImplemented == f.__eq__(None)
+        assert f.__eq__(None) == NotImplemented
 
     def test_wildcard_filter_in_set(self) -> None:
         """Test wildcard filter can be used in sets."""
@@ -391,7 +393,7 @@ class TestLengthFilter:
         """Test filter not equal to other types."""
         f = LengthFilter(length=3)
         assert f != 3
-        assert NotImplemented == f.__eq__(None)
+        assert f.__eq__(None) == NotImplemented
 
     def test_length_filter_in_set(self) -> None:
         """Test length filter can be used in sets."""
@@ -410,16 +412,16 @@ class TestLengthFilter:
 
 
 # =============================================================================
-# CompositeFilter Tests
+# And Filter Tests
 # =============================================================================
 
 
-class TestCompositeFilter:
-    """Tests for CompositeFilter."""
+class TestAndFilter:
+    """Tests for And filter."""
 
     def test_matches_all_filters_true(self) -> None:
         """Test matching when all filters match."""
-        f = CompositeFilter(
+        f = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 LengthFilter(length=3),
@@ -429,7 +431,7 @@ class TestCompositeFilter:
 
     def test_no_match_first_filter_fails(self) -> None:
         """Test non-matching when first filter fails."""
-        f = CompositeFilter(
+        f = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 LengthFilter(length=3),
@@ -439,7 +441,7 @@ class TestCompositeFilter:
 
     def test_no_match_second_filter_fails(self) -> None:
         """Test non-matching when second filter fails."""
-        f = CompositeFilter(
+        f = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 LengthFilter(length=3),
@@ -449,7 +451,7 @@ class TestCompositeFilter:
 
     def test_no_match_multiple_filters_fail(self) -> None:
         """Test non-matching when multiple filters fail."""
-        f = CompositeFilter(
+        f = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 LengthFilter(length=3),
@@ -459,7 +461,7 @@ class TestCompositeFilter:
 
     def test_three_filters_all_match(self) -> None:
         """Test with three filters all matching."""
-        f = CompositeFilter(
+        f = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 SuffixFilter(suffix=("profile",)),
@@ -472,20 +474,20 @@ class TestCompositeFilter:
 
     def test_empty_filters_matches_all(self) -> None:
         """Test empty filters tuple matches all keys."""
-        f = CompositeFilter(filters=())
+        f = And(filters=())
         assert f.matches(())
         assert f.matches(("a",))
         assert f.matches(("a", "b", "c"))
 
-    def test_single_filter_in_composite(self) -> None:
-        """Test composite with single filter."""
-        f = CompositeFilter(filters=(PrefixFilter(prefix=("users",)),))
+    def test_single_filter_in_and(self) -> None:
+        """Test And with single filter."""
+        f = And(filters=(PrefixFilter(prefix=("users",)),))
         assert f.matches(("users", "alice"))
         assert not f.matches(("posts",))
 
-    def test_wildcard_in_composite(self) -> None:
-        """Test composite with wildcard filter."""
-        f = CompositeFilter(
+    def test_wildcard_in_and(self) -> None:
+        """Test And with wildcard filter."""
+        f = And(
             filters=(
                 WildcardFilter(pattern=("users", WILDCARD, "profile")),
                 LengthFilter(length=3),
@@ -496,9 +498,9 @@ class TestCompositeFilter:
         assert not f.matches(("users", "alice", "settings"))
         assert not f.matches(("users", "alice", "profile", "extra"))
 
-    def test_composite_filter_hash_consistent(self) -> None:
+    def test_and_filter_hash_consistent(self) -> None:
         """Test hash is consistent for same filters."""
-        f1 = CompositeFilter(
+        f1 = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 LengthFilter(length=3),
@@ -508,15 +510,15 @@ class TestCompositeFilter:
         h2 = hash(f1)
         assert h1 == h2
 
-    def test_composite_filter_equality_same_filters(self) -> None:
-        """Test equality for composites with same filters."""
-        f1 = CompositeFilter(
+    def test_and_filter_equality_same_filters(self) -> None:
+        """Test equality for And with same filters."""
+        f1 = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 LengthFilter(length=3),
             )
         )
-        f2 = CompositeFilter(
+        f2 = And(
             filters=(
                 PrefixFilter(prefix=("users",)),
                 LengthFilter(length=3),
@@ -524,137 +526,388 @@ class TestCompositeFilter:
         )
         assert f1 == f2
 
-    def test_composite_filter_inequality_different_filters(self) -> None:
-        """Test inequality for composites with different filters."""
-        f1 = CompositeFilter(filters=(PrefixFilter(prefix=("users",)), LengthFilter(length=3)))
-        f2 = CompositeFilter(filters=(PrefixFilter(prefix=("posts",)), LengthFilter(length=3)))
+    def test_and_filter_inequality_different_filters(self) -> None:
+        """Test inequality for And with different filters."""
+        f1 = And(filters=(PrefixFilter(prefix=("users",)), LengthFilter(length=3)))
+        f2 = And(filters=(PrefixFilter(prefix=("posts",)), LengthFilter(length=3)))
         assert f1 != f2
 
-    def test_composite_filter_inequality_different_order(self) -> None:
+    def test_and_filter_inequality_different_order(self) -> None:
         """Test inequality when filter order differs."""
         pf = PrefixFilter(prefix=("users",))
         lf = LengthFilter(length=3)
-        f1 = CompositeFilter(filters=(pf, lf))
-        f2 = CompositeFilter(filters=(lf, pf))
+        f1 = And(filters=(pf, lf))
+        f2 = And(filters=(lf, pf))
         assert f1 != f2
 
-    def test_composite_filter_not_equal_to_other_types(self) -> None:
+    def test_and_filter_not_equal_to_other_types(self) -> None:
         """Test filter not equal to other types."""
-        f = CompositeFilter(filters=(PrefixFilter(prefix=("users",)),))
+        f = And(filters=(PrefixFilter(prefix=("users",)),))
         assert f != (PrefixFilter(prefix=("users",)),)
-        # CompositeFilter.__eq__ returns False (not NotImplemented) for non-CompositeFilter types
-        assert f != None
+        assert f.__eq__(None) == NotImplemented
 
-    def test_composite_filter_in_set(self) -> None:
-        """Test composite filter can be used in sets."""
-        f1 = CompositeFilter(filters=(PrefixFilter(prefix=("users",)),))
-        f2 = CompositeFilter(filters=(PrefixFilter(prefix=("posts",)),))
-        f3 = CompositeFilter(filters=(PrefixFilter(prefix=("users",)),))
+    def test_and_filter_in_set(self) -> None:
+        """Test And filter can be used in sets."""
+        f1 = And(filters=(PrefixFilter(prefix=("users",)),))
+        f2 = And(filters=(PrefixFilter(prefix=("posts",)),))
+        f3 = And(filters=(PrefixFilter(prefix=("users",)),))
         filters = {f1, f2, f3}
         assert len(filters) == 2
 
-    def test_composite_filter_as_dict_key(self) -> None:
-        """Test composite filter can be used as dict key."""
-        f1 = CompositeFilter(filters=(PrefixFilter(prefix=("users",)),))
-        f2 = CompositeFilter(filters=(PrefixFilter(prefix=("users",)),))
+    def test_and_filter_as_dict_key(self) -> None:
+        """Test And filter can be used as dict key."""
+        f1 = And(filters=(PrefixFilter(prefix=("users",)),))
+        f2 = And(filters=(PrefixFilter(prefix=("users",)),))
         d = {f1: "value"}
         assert d[f2] == "value"
 
 
 # =============================================================================
-# SubscriptionOptions Tests
+# Or Filter Tests
 # =============================================================================
 
 
-class TestSubscriptionOptions:
-    """Tests for SubscriptionOptions."""
+class TestOrFilter:
+    """Tests for Or filter."""
 
-    def test_initialization_with_prefix_filter(self) -> None:
-        """Test initializing options with prefix filter."""
-        f = PrefixFilter(prefix=("users",))
-        opts = SubscriptionOptions(filter=f)
-        assert opts.filter == f
-
-    def test_initialization_with_wildcard_filter(self) -> None:
-        """Test initializing options with wildcard filter."""
-        f = WildcardFilter(pattern=("users", WILDCARD, "profile"))
-        opts = SubscriptionOptions(filter=f)
-        assert opts.filter == f
-
-    def test_initialization_with_composite_filter(self) -> None:
-        """Test initializing options with composite filter."""
-        f = CompositeFilter(
+    def test_matches_when_first_filter_matches(self) -> None:
+        """Test matching when first filter matches."""
+        f = Or(
             filters=(
                 PrefixFilter(prefix=("users",)),
-                LengthFilter(length=3),
+                PrefixFilter(prefix=("posts",)),
             )
         )
-        opts = SubscriptionOptions(filter=f)
-        assert opts.filter == f
+        assert f.matches(("users", "alice"))
 
-    def test_options_hash_consistent(self) -> None:
-        """Test hash is consistent for options."""
-        f = PrefixFilter(prefix=("users",))
-        opts = SubscriptionOptions(filter=f)
-        h1 = hash(opts)
-        h2 = hash(opts)
+    def test_matches_when_second_filter_matches(self) -> None:
+        """Test matching when second filter matches."""
+        f = Or(
+            filters=(
+                PrefixFilter(prefix=("users",)),
+                PrefixFilter(prefix=("posts",)),
+            )
+        )
+        assert f.matches(("posts", "123"))
+
+    def test_matches_when_both_filters_match(self) -> None:
+        """Test matching when both filters match."""
+        f = Or(
+            filters=(
+                PrefixFilter(prefix=("data",)),
+                LengthFilter(length=2),
+            )
+        )
+        assert f.matches(("data", "value"))
+
+    def test_no_match_when_no_filters_match(self) -> None:
+        """Test non-matching when no filters match."""
+        f = Or(
+            filters=(
+                PrefixFilter(prefix=("users",)),
+                PrefixFilter(prefix=("posts",)),
+            )
+        )
+        assert not f.matches(("comments", "1"))
+
+    def test_empty_filters_matches_none(self) -> None:
+        """Test empty Or filters matches nothing."""
+        f = Or(filters=())
+        assert not f.matches(())
+        assert not f.matches(("a",))
+        assert not f.matches(("a", "b", "c"))
+
+    def test_single_filter_in_or(self) -> None:
+        """Test Or with single filter."""
+        f = Or(filters=(PrefixFilter(prefix=("users",)),))
+        assert f.matches(("users", "alice"))
+        assert not f.matches(("posts",))
+
+    def test_three_filters_one_matches(self) -> None:
+        """Test with three filters where one matches."""
+        f = Or(
+            filters=(
+                PrefixFilter(prefix=("users",)),
+                PrefixFilter(prefix=("posts",)),
+                PrefixFilter(prefix=("comments",)),
+            )
+        )
+        assert f.matches(("comments", "123"))
+        assert not f.matches(("admin",))
+
+    def test_or_filter_hash_consistent(self) -> None:
+        """Test hash is consistent for same filters."""
+        f1 = Or(
+            filters=(
+                PrefixFilter(prefix=("users",)),
+                PrefixFilter(prefix=("posts",)),
+            )
+        )
+        h1 = hash(f1)
+        h2 = hash(f1)
         assert h1 == h2
 
-    def test_options_equality_same_filter(self) -> None:
-        """Test equality for options with same filter."""
-        f = PrefixFilter(prefix=("users",))
-        opts1 = SubscriptionOptions(filter=f)
-        opts2 = SubscriptionOptions(filter=f)
-        assert opts1 == opts2
+    def test_or_filter_equality_same_filters(self) -> None:
+        """Test equality for Or with same filters."""
+        f1 = Or(
+            filters=(
+                PrefixFilter(prefix=("users",)),
+                PrefixFilter(prefix=("posts",)),
+            )
+        )
+        f2 = Or(
+            filters=(
+                PrefixFilter(prefix=("users",)),
+                PrefixFilter(prefix=("posts",)),
+            )
+        )
+        assert f1 == f2
 
-    def test_options_equality_equivalent_filters(self) -> None:
-        """Test equality when filters are equivalent."""
+    def test_or_filter_inequality_different_filters(self) -> None:
+        """Test inequality for Or with different filters."""
+        f1 = Or(filters=(PrefixFilter(prefix=("users",)),))
+        f2 = Or(filters=(PrefixFilter(prefix=("posts",)),))
+        assert f1 != f2
+
+    def test_or_filter_not_equal_to_other_types(self) -> None:
+        """Test filter not equal to other types."""
+        f = Or(filters=(PrefixFilter(prefix=("users",)),))
+        assert f != (PrefixFilter(prefix=("users",)),)
+        assert f.__eq__(None) == NotImplemented
+
+
+# =============================================================================
+# PassAll and PassNone Tests
+# =============================================================================
+
+
+class TestPassAll:
+    """Tests for PassAll filter."""
+
+    def test_matches_empty_key(self) -> None:
+        """Test PassAll matches empty key."""
+        f = PassAll()
+        assert f.matches(())
+
+    def test_matches_any_key(self) -> None:
+        """Test PassAll matches any key."""
+        f = PassAll()
+        assert f.matches(("users",))
+        assert f.matches(("users", "alice", "profile"))
+        assert f.matches((1, 2, 3, 4, 5))
+
+    def test_passall_hash_consistent(self) -> None:
+        """Test hash is consistent."""
+        f1 = PassAll()
+        f2 = PassAll()
+        assert hash(f1) == hash(f2)
+
+    def test_passall_equality(self) -> None:
+        """Test equality."""
+        f1 = PassAll()
+        f2 = PassAll()
+        assert f1 == f2
+
+    def test_passall_not_equal_to_other_types(self) -> None:
+        """Test not equal to other types."""
+        f = PassAll()
+        assert f != True
+        assert f.__eq__(None) == NotImplemented
+
+
+class TestPassNone:
+    """Tests for PassNone filter."""
+
+    def test_no_match_empty_key(self) -> None:
+        """Test PassNone does not match empty key."""
+        f = PassNone()
+        assert not f.matches(())
+
+    def test_no_match_any_key(self) -> None:
+        """Test PassNone does not match any key."""
+        f = PassNone()
+        assert not f.matches(("users",))
+        assert not f.matches(("users", "alice", "profile"))
+        assert not f.matches((1, 2, 3, 4, 5))
+
+    def test_passnone_hash_consistent(self) -> None:
+        """Test hash is consistent."""
+        f1 = PassNone()
+        f2 = PassNone()
+        assert hash(f1) == hash(f2)
+
+    def test_passnone_equality(self) -> None:
+        """Test equality."""
+        f1 = PassNone()
+        f2 = PassNone()
+        assert f1 == f2
+
+    def test_passnone_not_equal_to_other_types(self) -> None:
+        """Test not equal to other types."""
+        f = PassNone()
+        assert f != False
+        assert f.__eq__(None) == NotImplemented
+
+
+# =============================================================================
+# Operator Composition Tests
+# =============================================================================
+
+
+class TestOperatorComposition:
+    """Tests for & and | operator composition."""
+
+    def test_and_operator_creates_and_filter(self) -> None:
+        """Test & operator creates And filter."""
         f1 = PrefixFilter(prefix=("users",))
-        f2 = PrefixFilter(prefix=("users",))
-        opts1 = SubscriptionOptions(filter=f1)
-        opts2 = SubscriptionOptions(filter=f2)
-        assert opts1 == opts2
+        f2 = LengthFilter(length=3)
+        composed = f1 & f2
+        assert isinstance(composed, And)
+        assert composed.filters == (f1, f2)
 
-    def test_options_inequality_different_filters(self) -> None:
-        """Test inequality for options with different filters."""
+    def test_or_operator_creates_or_filter(self) -> None:
+        """Test | operator creates Or filter."""
         f1 = PrefixFilter(prefix=("users",))
         f2 = PrefixFilter(prefix=("posts",))
-        opts1 = SubscriptionOptions(filter=f1)
-        opts2 = SubscriptionOptions(filter=f2)
-        assert opts1 != opts2
+        composed = f1 | f2
+        assert isinstance(composed, Or)
+        assert composed.filters == (f1, f2)
 
-    def test_options_not_equal_to_other_types(self) -> None:
-        """Test options not equal to other types."""
-        f = PrefixFilter(prefix=("users",))
-        opts = SubscriptionOptions(filter=f)
-        assert opts != f
-        assert opts != "options"
-        assert NotImplemented == opts.__eq__(None)
+    def test_and_operator_matches_correctly(self) -> None:
+        """Test & operator result matches correctly."""
+        composed = PrefixFilter(prefix=("users",)) & LengthFilter(length=3)
+        assert composed.matches(("users", "alice", "profile"))
+        assert not composed.matches(("users", "alice"))
+        assert not composed.matches(("posts", "123", "title"))
 
-    def test_options_in_set(self) -> None:
-        """Test options can be used in sets."""
+    def test_or_operator_matches_correctly(self) -> None:
+        """Test | operator result matches correctly."""
+        composed = PrefixFilter(prefix=("users",)) | PrefixFilter(prefix=("posts",))
+        assert composed.matches(("users", "alice"))
+        assert composed.matches(("posts", "123"))
+        assert not composed.matches(("comments",))
+
+    def test_chained_and_operators(self) -> None:
+        """Test chaining multiple & operators."""
+        composed = (
+            PrefixFilter(prefix=("users",))
+            & LengthFilter(length=3)
+            & SuffixFilter(suffix=("profile",))
+        )
+        assert composed.matches(("users", "alice", "profile"))
+        assert not composed.matches(("users", "alice", "settings"))
+
+    def test_chained_or_operators(self) -> None:
+        """Test chaining multiple | operators."""
+        composed = (
+            PrefixFilter(prefix=("users",))
+            | PrefixFilter(prefix=("posts",))
+            | PrefixFilter(prefix=("comments",))
+        )
+        assert composed.matches(("users",))
+        assert composed.matches(("posts",))
+        assert composed.matches(("comments",))
+        assert not composed.matches(("admin",))
+
+    def test_mixed_and_or_operators(self) -> None:
+        """Test mixing & and | operators."""
+        # (users prefix AND length 2) OR (posts prefix)
+        composed = (PrefixFilter(prefix=("users",)) & LengthFilter(length=2)) | PrefixFilter(
+            prefix=("posts",)
+        )
+        assert composed.matches(("users", "alice"))
+        assert composed.matches(("posts", "123", "title"))
+        assert not composed.matches(("users", "alice", "profile"))
+        assert not composed.matches(("comments",))
+
+
+# =============================================================================
+# Flattening Tests
+# =============================================================================
+
+
+class TestAndFlattening:
+    """Tests for And filter flattening."""
+
+    def test_and_with_and_flattens(self) -> None:
+        """Test And & And flattens to single And."""
+        f1 = PrefixFilter(prefix=("users",))
+        f2 = LengthFilter(length=3)
+        f3 = SuffixFilter(suffix=("profile",))
+
+        and1 = And(filters=(f1, f2))
+        result = and1 & f3
+
+        assert isinstance(result, And)
+        assert result.filters == (f1, f2, f3)
+
+    def test_nested_and_flattening(self) -> None:
+        """Test nested And flattening."""
+        f1 = PrefixFilter(prefix=("users",))
+        f2 = LengthFilter(length=3)
+        f3 = SuffixFilter(suffix=("profile",))
+        f4 = WildcardFilter(pattern=("users", WILDCARD, "profile"))
+
+        and1 = And(filters=(f1, f2))
+        and2 = And(filters=(f3, f4))
+        result = and1 & and2
+
+        assert isinstance(result, And)
+        assert result.filters == (f1, f2, f3, f4)
+
+    def test_chained_and_operator_flattening(self) -> None:
+        """Test chained & operators flatten."""
+        f1 = PrefixFilter(prefix=("users",))
+        f2 = LengthFilter(length=3)
+        f3 = SuffixFilter(suffix=("profile",))
+
+        result = f1 & f2 & f3
+
+        assert isinstance(result, And)
+        assert len(result.filters) == 3
+        assert result.filters == (f1, f2, f3)
+
+
+class TestOrFlattening:
+    """Tests for Or filter flattening."""
+
+    def test_or_with_or_flattens(self) -> None:
+        """Test Or | Or flattens to single Or."""
         f1 = PrefixFilter(prefix=("users",))
         f2 = PrefixFilter(prefix=("posts",))
-        opts1 = SubscriptionOptions(filter=f1)
-        opts2 = SubscriptionOptions(filter=f2)
-        opts3 = SubscriptionOptions(filter=f1)
-        options = {opts1, opts2, opts3}
-        assert len(options) == 2
+        f3 = PrefixFilter(prefix=("comments",))
 
-    def test_options_as_dict_key(self) -> None:
-        """Test options can be used as dict key."""
-        f = PrefixFilter(prefix=("users",))
-        opts1 = SubscriptionOptions(filter=f)
-        opts2 = SubscriptionOptions(filter=f)
-        d = {opts1: "subscription"}
-        assert d[opts2] == "subscription"
+        or1 = Or(filters=(f1, f2))
+        result = or1 | f3
 
-    def test_options_is_frozen(self) -> None:
-        """Test that options cannot be modified (frozen dataclass)."""
-        f = PrefixFilter(prefix=("users",))
-        opts = SubscriptionOptions(filter=f)
-        with pytest.raises(AttributeError):
-            opts.filter = PrefixFilter(prefix=("posts",))
+        assert isinstance(result, Or)
+        assert result.filters == (f1, f2, f3)
+
+    def test_nested_or_flattening(self) -> None:
+        """Test nested Or flattening."""
+        f1 = PrefixFilter(prefix=("users",))
+        f2 = PrefixFilter(prefix=("posts",))
+        f3 = PrefixFilter(prefix=("comments",))
+        f4 = PrefixFilter(prefix=("admin",))
+
+        or1 = Or(filters=(f1, f2))
+        or2 = Or(filters=(f3, f4))
+        result = or1 | or2
+
+        assert isinstance(result, Or)
+        assert result.filters == (f1, f2, f3, f4)
+
+    def test_chained_or_operator_flattening(self) -> None:
+        """Test chained | operators flatten."""
+        f1 = PrefixFilter(prefix=("users",))
+        f2 = PrefixFilter(prefix=("posts",))
+        f3 = PrefixFilter(prefix=("comments",))
+
+        result = f1 | f2 | f3
+
+        assert isinstance(result, Or)
+        assert len(result.filters) == 3
+        assert result.filters == (f1, f2, f3)
 
 
 # =============================================================================
@@ -716,3 +969,28 @@ class TestWildcardConstant:
         """Test using string literal '*' in pattern."""
         f = WildcardFilter(pattern=("users", "*", "profile"))
         assert f.matches(("users", "alice", "profile"))
+
+
+# =============================================================================
+# Filter ABC Tests
+# =============================================================================
+
+
+class TestFilterABC:
+    """Tests for Filter abstract base class."""
+
+    def test_filter_is_abstract(self) -> None:
+        """Test Filter cannot be instantiated directly."""
+        with pytest.raises(TypeError):
+            Filter()  # type: ignore
+
+    def test_all_concrete_filters_inherit_from_filter(self) -> None:
+        """Test all concrete filters inherit from Filter."""
+        assert issubclass(PrefixFilter, Filter)
+        assert issubclass(SuffixFilter, Filter)
+        assert issubclass(LengthFilter, Filter)
+        assert issubclass(WildcardFilter, Filter)
+        assert issubclass(And, Filter)
+        assert issubclass(Or, Filter)
+        assert issubclass(PassAll, Filter)
+        assert issubclass(PassNone, Filter)

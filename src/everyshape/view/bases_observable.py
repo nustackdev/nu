@@ -12,7 +12,6 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from everyshape.storage import (
-    CompositeFilter,
     LengthFilter,
     PrefixFilter,
     SubscriptionOptions,
@@ -106,12 +105,8 @@ class ChildObservableBase[A](AddressMappingBase[A]):
         child_full_path = (*self.container.path, key)
         return self.container.subscribe(
             SubscriptionOptions(
-                CompositeFilter(
-                    filters=(
-                        PrefixFilter(prefix=child_full_path),
-                        LengthFilter(length=len(child_full_path)),
-                    )
-                )
+                filter=PrefixFilter(prefix=child_full_path)
+                & LengthFilter(length=len(child_full_path))
             )
         )
 

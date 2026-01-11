@@ -1,42 +1,18 @@
-"""Subscription options.
-
-Implements SubscriptionOptions class.
-Filter types are imported from the shared filter module.
-"""
+"""Subscription options."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from everyshape.storage.filter import (
-    WILDCARD,
-    And,
-    Filter,
-    LengthFilter,
-    PrefixFilter,
-    SuffixFilter,
-    WildcardFilter,
-)
+
+if TYPE_CHECKING:
+    from everyshape.storage.filter import Filter
 
 
 __all__ = [
-    "WILDCARD",
-    "CompositeFilter",
-    "LengthFilter",
-    "PrefixFilter",
-    "SubscriptionFilter",
     "SubscriptionOptions",
-    "SuffixFilter",
-    "WildcardFilter",
 ]
-
-
-# Aliases for backward compatibility
-SubscriptionFilter = Filter
-"""Alias for Filter. Use Filter directly for new code."""
-
-CompositeFilter = And
-"""Alias for And. Use And directly for new code."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +23,13 @@ class SubscriptionOptions:
         filter: Filter that determines which keys trigger notifications.
 
     Examples:
+        >>> from everyshape.storage.filter import (
+        ...     PrefixFilter,
+        ...     LengthFilter,
+        ...     WildcardFilter,
+        ...     WILDCARD,
+        ... )
+
         >>> # Subscribe to all keys under "users"
         >>> opts = SubscriptionOptions(filter=PrefixFilter(prefix=("users",)))
 

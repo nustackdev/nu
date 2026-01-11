@@ -12,12 +12,13 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from .options import (
+from ..filter import (
     WILDCARD,
-    CompositeFilter,
+    And,
+    Filter,
     LengthFilter,
+    Or,
     PrefixFilter,
-    SubscriptionFilter,
     SuffixFilter,
     WildcardFilter,
 )
@@ -99,7 +100,7 @@ class SubscriptionRegistry:
             self._all_subscriptions.add(subscription)
             self._index_filter(subscription, subscription.filter)
 
-    def _index_filter(self, subscription: Subscription, filt: SubscriptionFilter) -> None:
+    def _index_filter(self, subscription: Subscription, filt: Filter) -> None:
         """Index a subscription by its filter type.
 
         Args:
@@ -119,7 +120,7 @@ class SubscriptionRegistry:
             signature = self._wildcard_signature(filt.pattern)
             self._wildcard_index[(len(filt.pattern), signature)].add(subscription)
 
-        elif isinstance(filt, CompositeFilter):
+        elif isinstance(filt, (And, Or)):
             self._composite_subscriptions.add(subscription)
             # Also index by the first filter for faster narrowing
             if filt.filters:
@@ -138,7 +139,7 @@ class SubscriptionRegistry:
             self._all_subscriptions.discard(subscription)
             self._unindex_filter(subscription, subscription.filter)
 
-    def _unindex_filter(self, subscription: Subscription, filt: SubscriptionFilter) -> None:
+    def _unindex_filter(self, subscription: Subscription, filt: Filter) -> None:
         """Remove subscription from filter index.
 
         Args:
@@ -167,7 +168,7 @@ class SubscriptionRegistry:
             if not self._wildcard_index[idx_key]:
                 del self._wildcard_index[idx_key]
 
-        elif isinstance(filt, CompositeFilter):
+        elif isinstance(filt, (And, Or)):
             self._composite_subscriptions.discard(subscription)
             if filt.filters:
                 self._unindex_filter(subscription, filt.filters[0])

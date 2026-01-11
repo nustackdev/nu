@@ -20,8 +20,9 @@ if TYPE_CHECKING:
 
     from everyshape.loc import key
 
+    from ..filter import Filter
     from .observer import ObserverProtocol
-    from .options import SubscriptionFilter, SubscriptionOptions
+    from .options import SubscriptionOptions
     from .types import SubscriptionCallback
 
 
@@ -71,7 +72,7 @@ class Subscription:
         return self._options
 
     @property
-    def filter(self) -> SubscriptionFilter:
+    def filter(self) -> Filter:
         """Get subscription filter."""
         return self._options.filter
 

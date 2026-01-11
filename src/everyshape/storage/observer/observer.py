@@ -77,12 +77,7 @@ class ObserverProtocol[EncodedKeyT](Protocol):
             >>> # Subscribe to keys with specific prefix AND length
             >>> sub = observer.subscribe(
             ...     SubscriptionOptions(
-            ...         filter=CompositeFilter(
-            ...             filters=(
-            ...                 PrefixFilter(prefix=("users",)),
-            ...                 LengthFilter(length=3),
-            ...             )
-            ...         )
+            ...         filter=PrefixFilter(prefix=("users",)) & LengthFilter(length=3)
             ...     )
             ... )
         """
