@@ -8,8 +8,11 @@ from __future__ import annotations
 
 import pytest
 
-from tests.compliance.test_observer_protocol import ObserverCompliance, RegistryCompliance
-from tests.compliance.test_storage_protocol import StorageProtocolCompliance
+from everyshape.testing import (
+    ObserverCompliance,
+    RegistryCompliance,
+    StorageProtocolCompliance,
+)
 
 from .mem_storage import MemoryStorage
 

@@ -8,7 +8,7 @@ Usage:
     Inherit from compliance classes and override the required fixtures:
 
     ```python
-    from tests.compliance.test_observer_protocol import (
+    from everyshape.testing import (
         RegistryCompliance,
         ObserverCompliance,
     )
@@ -32,6 +32,9 @@ Test Coverage:
         - Filter types: Prefix, Suffix, Length, Wildcard, And, Or
         - Custom filter support
         - Multiple subscriptions matching
+
+    SubscriptionCompliance:
+        - Subscription options hashability and equality
 
     ObserverCompliance:
         - Subscription creation and notification flow
@@ -65,6 +68,39 @@ from everyshape.storage.observer.registry import SubscriptionRegistry
 
 if TYPE_CHECKING:
     from everyshape.loc import key
+
+
+# =============================================================================
+# Test Helpers
+# =============================================================================
+
+
+@dataclass
+class MockSubscription:
+    """Mock subscription for testing registry."""
+
+    filter: Filter
+
+    def __hash__(self) -> int:
+        return id(self)
+
+
+@dataclass(frozen=True, slots=True)
+class ContainsSegmentFilter(Filter):
+    """Custom filter that matches keys containing a specific segment."""
+
+    segment: str
+
+    def matches(self, key: key.Key) -> bool:
+        return self.segment in key
+
+    def __hash__(self) -> int:
+        return hash(("contains", self.segment))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ContainsSegmentFilter):
+            return NotImplemented
+        return self.segment == other.segment
 
 
 # =============================================================================
@@ -441,39 +477,6 @@ class SubscriptionCompliance:
 
 
 # =============================================================================
-# Test Helpers
-# =============================================================================
-
-
-@dataclass
-class MockSubscription:
-    """Mock subscription for testing registry."""
-
-    filter: Filter
-
-    def __hash__(self) -> int:
-        return id(self)
-
-
-@dataclass(frozen=True, slots=True)
-class ContainsSegmentFilter(Filter):
-    """Custom filter that matches keys containing a specific segment."""
-
-    segment: str
-
-    def matches(self, key: key.Key) -> bool:
-        return self.segment in key
-
-    def __hash__(self) -> int:
-        return hash(("contains", self.segment))
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ContainsSegmentFilter):
-            return NotImplemented
-        return self.segment == other.segment
-
-
-# =============================================================================
 # Observer Protocol Compliance Tests
 # =============================================================================
 
@@ -698,20 +701,3 @@ class ObserverCompliance:
         tx.abort()  # Abort instead of commit
 
         assert len(notifications) == 0
-
-
-# =============================================================================
-# Concrete Test Classes
-# =============================================================================
-
-
-class TestRegistryCompliance(RegistryCompliance):
-    """Run registry compliance tests against SubscriptionRegistry."""
-
-    pass
-
-
-class TestSubscriptionCompliance(SubscriptionCompliance):
-    """Run subscription compliance tests."""
-
-    pass

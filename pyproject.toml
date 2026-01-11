@@ -175,6 +175,16 @@ convention = "google"  # Use Google style format
     "ANN",    # type annotations not required in tests
     "N806",   # disable variable name checks like `User = collection_shapes["User"]`
 ]
+"src/everyshape/testing/**/*.py" = [
+    "S101",   # assert allowed in tests
+    "T20",    # print allowed in tests
+    "D",      # docstrings not required in tests
+    "E711",
+    "E712",
+    "ANN",    # type annotations not required in tests
+    "N806",   # disable variable name checks like `User = collection_shapes["User"]`
+    "B017",   # FIXME: blind exception pass; fix, remove this later
+]
 "examples/**/*.py" = [
     "S101",   # assert allowed in examples
     "T20",    # print allowed in examples

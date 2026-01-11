@@ -1,6 +1,6 @@
 """Abstract compliance test suite for StorageProtocol implementations.
 
-This module provides a thin test framework for verifying that storage adapters
+This module provides a reusable test framework for verifying that storage adapters
 correctly implement the StorageProtocol interface. These are "smoke tests" -
 basic checks that verify protocol compliance without exercising advanced features
 like parallelism, isolation levels, or performance characteristics.
@@ -9,7 +9,7 @@ Usage:
     Inherit from StorageProtocolCompliance and override the storage fixture:
 
     ```python
-    from tests.compliance.test_storage_protocol import StorageProtocolCompliance
+    from everyshape.testing import StorageProtocolCompliance
 
 
     class TestMyStorageAdapter(StorageProtocolCompliance):
