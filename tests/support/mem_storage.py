@@ -21,7 +21,7 @@ from everyshape.types import EMPTY, Empty
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator, Iterator
 
     from everyshape.loc import key
     from everyshape.storage import (
@@ -29,7 +29,33 @@ if TYPE_CHECKING:
         TransactionProtocol,
         WriteBatchProtocol,
     )
+    from everyshape.storage.storage.scan import ScanProtocol
     from everyshape.types import Value
+
+
+class MemoryScan:
+    """In-memory scan implementation."""
+
+    def __init__(
+        self,
+        data: list[tuple[key.Key, Value]],
+    ) -> None:
+        self._data = data
+        self._index = 0
+
+    def items(self) -> Generator[tuple[key.Key, Value], None, None]:
+        """Iterate over (key, value) tuples."""
+        yield from self._data
+
+    def keys(self) -> Generator[key.Key, None, None]:
+        """Iterate over keys only."""
+        for k, _ in self._data:
+            yield k
+
+    def values(self) -> Generator[Value, None, None]:
+        """Iterate over values only."""
+        for _, v in self._data:
+            yield v
 
 
 class MemoryTransaction:
@@ -126,9 +152,66 @@ class MemoryTransaction:
         self._deletes.add(key)
         self._writes.pop(key, None)
 
-    def scan(self, options: StorageScanOptions):
-        """Scan is not implemented for minimal test storage."""
-        raise NotImplementedError("Scan not implemented in test storage")
+    def scan(self, options: StorageScanOptions) -> ScanProtocol:
+        """Scan keys with filtering support.
+
+        Args:
+            options: Scan options including start, reverse, limit, filter, break_filter.
+
+        Returns:
+            ScanProtocol instance for iteration.
+        """
+        if self._write_only:
+            raise StorageClosedError("Cannot read from write-only batch")
+
+        if self._closed:
+            raise StorageClosedError("Transaction is closed")
+
+        # Build effective data view (storage + writes - deletes)
+        effective: dict[key.Key, Value] = {}
+        for k, v in self._storage_data.items():
+            if k not in self._deletes:
+                effective[k] = v
+        for k, v in self._writes.items():
+            effective[k] = v
+
+        # Sort keys
+        all_keys = sorted(effective.keys())
+        if options.reverse:
+            all_keys = list(reversed(all_keys))
+
+        # Find start position
+        if options.start is not None:
+            if options.reverse:
+                # For reverse, start from keys <= start
+                all_keys = [k for k in all_keys if k <= options.start]
+            else:
+                # For forward, start from keys >= start
+                all_keys = [k for k in all_keys if k >= options.start]
+
+        # Apply filters and collect results
+        results: list[tuple[key.Key, Value]] = []
+        count = 0
+
+        for k in all_keys:
+            # Check break_filter first - stop if key doesn't match
+            if options.break_filter is not None:
+                if not options.break_filter.matches(k):
+                    break
+
+            # Check filter - skip if key doesn't match
+            if options.filter is not None:
+                if not options.filter.matches(k):
+                    continue
+
+            # Check limit
+            if options.limit is not None and count >= options.limit:
+                break
+
+            results.append((k, effective[k]))
+            count += 1
+
+        return MemoryScan(results)
 
     def commit(self) -> None:
         """Commit transaction."""

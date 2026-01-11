@@ -28,8 +28,9 @@ Usage:
 Test Coverage:
     - Transaction creation methods (begin, begin_transaction, begin_snapshot, begin_write_batch)
     - Context managers (transaction(), snapshot(), batch_write())
-    - Basic CRUD operations (put, get, delete, has)
+    - Basic CRUD operations (put, get, delete, exists)
     - Multiget operations
+    - Scan operations with filters
     - Transaction lifecycle (commit, abort)
     - Error cases (closed transactions, read-only violations)
 """
@@ -41,11 +42,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from everyshape.loc import key
+from everyshape.storage import StorageScanOptions
+from everyshape.storage.filter import LengthFilter, PrefixFilter
 from everyshape.storage.storage.exceptions import (
     StorageClosedError,
     StorageInterfaceError,
-    StorageKeyError,
 )
+from everyshape.types import EMPTY
 
 
 if TYPE_CHECKING:
@@ -176,7 +179,7 @@ class StorageProtocolCompliance:
 
         # Verify data was not committed
         with storage.snapshot() as snap:
-            assert not snap.has(test_key)
+            assert not snap.exists(test_key)
 
     def test_snapshot_context_manager(self, storage: StorageProtocol) -> None:
         """Test snapshot() context manager closes on exit."""
@@ -220,7 +223,7 @@ class StorageProtocolCompliance:
 
         # Verify data was not committed
         with storage.snapshot() as snap:
-            assert not snap.has(test_key)
+            assert not snap.exists(test_key)
 
     # ========================================================================
     # Basic CRUD Operations
@@ -262,42 +265,41 @@ class StorageProtocolCompliance:
             txn.put(test_key, test_value)
 
         with storage.transaction() as txn:
-            result = txn.delete(test_key)
-            assert result is True  # Key existed and was deleted
+            txn.delete(test_key)  # Returns None, silent and idempotent
 
         # Verify key is gone
         with storage.snapshot() as snap:
-            assert not snap.has(test_key)
+            assert not snap.exists(test_key)
 
     def test_delete_nonexistent(self, storage: StorageProtocol) -> None:
-        """Test deleting a non-existent key."""
+        """Test deleting a non-existent key is silent (idempotent)."""
         test_key = key.from_tuple(("test", "crud", "delete_missing"))
 
         with storage.transaction() as txn:
-            result = txn.delete(test_key)
-            assert result is False  # Key didn't exist
+            # Should not raise - delete is idempotent
+            txn.delete(test_key)
 
-    def test_has(self, storage: StorageProtocol) -> None:
-        """Test has() key existence check."""
-        test_key = key.from_tuple(("test", "crud", "has"))
+    def test_exists(self, storage: StorageProtocol) -> None:
+        """Test exists() key existence check."""
+        test_key = key.from_tuple(("test", "crud", "exists"))
         test_value = b"exists"
 
         with storage.snapshot() as snap:
-            assert not snap.has(test_key)
+            assert not snap.exists(test_key)
 
         with storage.transaction() as txn:
             txn.put(test_key, test_value)
 
         with storage.snapshot() as snap:
-            assert snap.has(test_key)
+            assert snap.exists(test_key)
 
-    def test_get_missing_key(self, storage: StorageProtocol) -> None:
-        """Test get() raises StorageKeyError for missing keys."""
+    def test_get_missing_key_returns_empty(self, storage: StorageProtocol) -> None:
+        """Test get() returns EMPTY for missing keys (never raises)."""
         test_key = key.from_tuple(("test", "crud", "missing"))
 
         with storage.snapshot() as snap:
-            with pytest.raises(StorageKeyError):
-                snap.get(test_key)
+            result = snap.get(test_key)
+            assert result is EMPTY
 
     # ========================================================================
     # Multiget Operations
@@ -377,7 +379,7 @@ class StorageProtocolCompliance:
         assert txn.is_closed
 
         with storage.snapshot() as snap:
-            assert not snap.has(test_key)
+            assert not snap.exists(test_key)
 
     def test_write_batch_write(self, storage: StorageProtocol) -> None:
         """Test explicit write batch write."""
@@ -405,7 +407,7 @@ class StorageProtocolCompliance:
         assert batch.is_closed
 
         with storage.snapshot() as snap:
-            assert not snap.has(test_key)
+            assert not snap.exists(test_key)
 
     # ========================================================================
     # Error Cases
@@ -472,3 +474,260 @@ class StorageProtocolCompliance:
 
         with pytest.raises(StorageClosedError):
             txn.commit()
+
+    # ========================================================================
+    # Scan Operations
+    # ========================================================================
+
+    def test_scan_empty_storage(self, storage: StorageProtocol) -> None:
+        """Test scanning empty storage returns no results."""
+        with storage.snapshot() as snap:
+            scan = snap.scan(StorageScanOptions())
+            results = list(scan.items())
+            assert results == []
+
+    def test_scan_all_keys(self, storage: StorageProtocol) -> None:
+        """Test scanning all keys without filters."""
+        keys = [
+            key.from_tuple(("a",)),
+            key.from_tuple(("b",)),
+            key.from_tuple(("c",)),
+        ]
+        values = [b"v1", b"v2", b"v3"]
+
+        with storage.transaction() as txn:
+            for k, v in zip(keys, values, strict=True):
+                txn.put(k, v)
+
+        with storage.snapshot() as snap:
+            scan = snap.scan(StorageScanOptions())
+            results = list(scan.items())
+            assert len(results) == 3
+            # Results should be sorted
+            result_keys = [k for k, _ in results]
+            assert result_keys == sorted(result_keys)
+
+    def test_scan_keys_only(self, storage: StorageProtocol) -> None:
+        """Test scan keys() method."""
+        keys = [
+            key.from_tuple(("scan", "keys", "a")),
+            key.from_tuple(("scan", "keys", "b")),
+        ]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            scan = snap.scan(
+                StorageScanOptions(
+                    start=key.from_tuple(("scan", "keys")),
+                    break_filter=PrefixFilter(prefix=("scan", "keys")),
+                )
+            )
+            result_keys = list(scan.keys())
+            assert len(result_keys) == 2
+
+    def test_scan_values_only(self, storage: StorageProtocol) -> None:
+        """Test scan values() method."""
+        test_key = key.from_tuple(("scan", "values", "test"))
+
+        with storage.transaction() as txn:
+            txn.put(test_key, b"test_value")
+
+        with storage.snapshot() as snap:
+            scan = snap.scan(
+                StorageScanOptions(
+                    start=key.from_tuple(("scan", "values")),
+                    break_filter=PrefixFilter(prefix=("scan", "values")),
+                )
+            )
+            result_values = list(scan.values())
+            assert b"test_value" in result_values
+
+    def test_scan_with_start(self, storage: StorageProtocol) -> None:
+        """Test scanning from a start key."""
+        keys = [
+            key.from_tuple(("scan", "start", "a")),
+            key.from_tuple(("scan", "start", "b")),
+            key.from_tuple(("scan", "start", "c")),
+        ]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            # Start from ("scan", "start", "b")
+            scan = snap.scan(
+                StorageScanOptions(
+                    start=key.from_tuple(("scan", "start", "b")),
+                    break_filter=PrefixFilter(prefix=("scan", "start")),
+                )
+            )
+            result_keys = list(scan.keys())
+            assert len(result_keys) == 2
+            assert keys[0] not in result_keys
+            assert keys[1] in result_keys
+            assert keys[2] in result_keys
+
+    def test_scan_with_limit(self, storage: StorageProtocol) -> None:
+        """Test scanning with result limit."""
+        keys = [key.from_tuple(("scan", "limit", str(i))) for i in range(10)]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            scan = snap.scan(
+                StorageScanOptions(
+                    start=key.from_tuple(("scan", "limit")),
+                    break_filter=PrefixFilter(prefix=("scan", "limit")),
+                    limit=3,
+                )
+            )
+            result_keys = list(scan.keys())
+            assert len(result_keys) == 3
+
+    def test_scan_reverse(self, storage: StorageProtocol) -> None:
+        """Test reverse scanning."""
+        keys = [
+            key.from_tuple(("scan", "reverse", "a")),
+            key.from_tuple(("scan", "reverse", "b")),
+            key.from_tuple(("scan", "reverse", "c")),
+        ]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            scan = snap.scan(
+                StorageScanOptions(
+                    start=key.from_tuple(("scan", "reverse", "c")),
+                    reverse=True,
+                    break_filter=PrefixFilter(prefix=("scan", "reverse")),
+                )
+            )
+            result_keys = list(scan.keys())
+            # Should be in reverse order
+            assert result_keys == sorted(result_keys, reverse=True)
+
+    def test_scan_with_prefix_filter(self, storage: StorageProtocol) -> None:
+        """Test scanning with prefix filter."""
+        keys = [
+            key.from_tuple(("users", "alice")),
+            key.from_tuple(("users", "bob")),
+            key.from_tuple(("posts", "123")),
+        ]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            # Filter to only users
+            scan = snap.scan(
+                StorageScanOptions(
+                    filter=PrefixFilter(prefix=("users",)),
+                )
+            )
+            result_keys = list(scan.keys())
+            assert len(result_keys) == 2
+            for k in result_keys:
+                assert k[0] == "users"
+
+    def test_scan_with_break_filter(self, storage: StorageProtocol) -> None:
+        """Test scanning with break filter for efficient prefix scans."""
+        keys = [
+            key.from_tuple(("a", "1")),
+            key.from_tuple(("b", "1")),
+            key.from_tuple(("b", "2")),
+            key.from_tuple(("c", "1")),
+        ]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            # Break when we leave prefix ("b",)
+            scan = snap.scan(
+                StorageScanOptions(
+                    start=key.from_tuple(("b",)),
+                    break_filter=PrefixFilter(prefix=("b",)),
+                )
+            )
+            result_keys = list(scan.keys())
+            assert len(result_keys) == 2
+            for k in result_keys:
+                assert k[0] == "b"
+
+    def test_scan_with_length_filter(self, storage: StorageProtocol) -> None:
+        """Test scanning with length filter."""
+        keys = [
+            key.from_tuple(("scan", "length")),  # length 2
+            key.from_tuple(("scan", "length", "child")),  # length 3
+            key.from_tuple(("scan", "length", "child", "deep")),  # length 4
+        ]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            # Filter to only length 3
+            scan = snap.scan(
+                StorageScanOptions(
+                    start=key.from_tuple(("scan", "length")),
+                    break_filter=PrefixFilter(prefix=("scan", "length")),
+                    filter=LengthFilter(length=3),
+                )
+            )
+            result_keys = list(scan.keys())
+            assert len(result_keys) == 1
+            assert len(result_keys[0]) == 3
+
+    def test_scan_with_composite_filter(self, storage: StorageProtocol) -> None:
+        """Test scanning with composite filter (prefix AND length)."""
+        keys = [
+            key.from_tuple(("users", "alice")),  # length 2
+            key.from_tuple(("users", "alice", "profile")),  # length 3
+            key.from_tuple(("users", "bob")),  # length 2
+            key.from_tuple(("posts", "123")),  # length 2
+        ]
+
+        with storage.transaction() as txn:
+            for k in keys:
+                txn.put(k, b"value")
+
+        with storage.snapshot() as snap:
+            # Filter to users with length 2 (direct children of users)
+            scan = snap.scan(
+                StorageScanOptions(
+                    filter=PrefixFilter(prefix=("users",)) & LengthFilter(length=2),
+                )
+            )
+            result_keys = list(scan.keys())
+            assert len(result_keys) == 2
+            for k in result_keys:
+                assert k[0] == "users"
+                assert len(k) == 2
+
+    def test_scan_closed_transaction_raises(self, storage: StorageProtocol) -> None:
+        """Test scanning closed transaction raises error."""
+        txn = storage.begin_transaction()
+        txn.abort()
+
+        with pytest.raises(StorageClosedError):
+            txn.scan(StorageScanOptions())
+
+    def test_scan_write_batch_raises(self, storage: StorageProtocol) -> None:
+        """Test scanning write-only batch raises error."""
+        batch = storage.begin_write_batch()
+
+        with pytest.raises((StorageClosedError, AttributeError)):
+            batch.scan(StorageScanOptions())  # type: ignore[attr-defined]
+
+        batch.abort()

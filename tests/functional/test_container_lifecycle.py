@@ -363,7 +363,6 @@ def test_create_parents_root_level(tx: TransactionProtocol) -> None:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_container_basic(tx: TransactionProtocol) -> None:
     """Test basic container deletion."""
     create_container(
@@ -380,7 +379,6 @@ def test_delete_container_basic(tx: TransactionProtocol) -> None:
     assert not node_exists(("users",), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_container_nonexistent(tx: TransactionProtocol) -> None:
     """Test deleting nonexistent container returns False."""
     deleted = delete_container(("users",), tx)
@@ -388,7 +386,6 @@ def test_delete_container_nonexistent(tx: TransactionProtocol) -> None:
     assert deleted is False
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_container_primitive_raises(tx: TransactionProtocol) -> None:
     """Test deleting primitive as container raises error."""
     create_container(
@@ -404,7 +401,6 @@ def test_delete_container_primitive_raises(tx: TransactionProtocol) -> None:
         delete_container(("data", "value"), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_container_with_children(tx: TransactionProtocol) -> None:
     """Test deleting container with children deletes entire subtree."""
     create_container(
@@ -425,7 +421,6 @@ def test_delete_container_with_children(tx: TransactionProtocol) -> None:
     assert not node_exists(("users", "bob"), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_container_deep_hierarchy(tx: TransactionProtocol) -> None:
     """Test deleting container with deep nested children."""
     create_container(
@@ -454,7 +449,6 @@ def test_delete_container_deep_hierarchy(tx: TransactionProtocol) -> None:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_subtree_basic(tx: TransactionProtocol) -> None:
     """Test basic subtree deletion."""
     create_container(
@@ -471,7 +465,6 @@ def test_delete_subtree_basic(tx: TransactionProtocol) -> None:
     assert not node_exists(("users",), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_subtree_with_children(tx: TransactionProtocol) -> None:
     """Test delete_subtree counts all deleted nodes."""
     create_container(
@@ -490,7 +483,6 @@ def test_delete_subtree_with_children(tx: TransactionProtocol) -> None:
     assert not node_exists(("users",), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_subtree_deep_hierarchy(tx: TransactionProtocol) -> None:
     """Test delete_subtree with deeply nested structure."""
     # Create: users -> alice -> profile -> settings
@@ -511,7 +503,6 @@ def test_delete_subtree_deep_hierarchy(tx: TransactionProtocol) -> None:
     assert not node_exists(("users", "alice"), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_subtree_mixed_children(tx: TransactionProtocol) -> None:
     """Test delete_subtree with mixed containers and primitives."""
     create_container(
@@ -543,7 +534,6 @@ def test_delete_subtree_mixed_children(tx: TransactionProtocol) -> None:
     assert not node_exists(("root",), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_subtree_nonexistent(tx: TransactionProtocol) -> None:
     """Test delete_subtree on nonexistent path returns 0."""
     count = delete_subtree(("nonexistent",), tx)
@@ -556,7 +546,6 @@ def test_delete_subtree_nonexistent(tx: TransactionProtocol) -> None:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_create_delete_create_cycle(tx: TransactionProtocol) -> None:
     """Test creating, deleting, then recreating container works correctly."""
     # Create
@@ -584,7 +573,6 @@ def test_create_delete_create_cycle(tx: TransactionProtocol) -> None:
     assert node_exists(("users",), tx)
 
 
-@pytest.mark.skip(reason="Requires scan operation not implemented in MemoryStorage")
 def test_delete_preserves_siblings(tx: TransactionProtocol) -> None:
     """Test deleting container preserves sibling containers."""
     create_container(
