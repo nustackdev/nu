@@ -317,7 +317,7 @@ def list_child_keys(
     prefix = PrefixFilter(prefix=path)
     child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=(*path, ""),  # Start after path itself
+        start=path,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -347,7 +347,7 @@ def list_child_values(path: key_.Key, ctx: StorageContextType) -> Generator[Node
     prefix = PrefixFilter(prefix=path)
     child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=(*path, ""),  # Start after path itself
+        start=path,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -384,7 +384,7 @@ def list_children(
     prefix = PrefixFilter(prefix=path)
     child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=(*path, ""),  # Start after path itself
+        start=path,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -418,7 +418,7 @@ def count_children(path: key_.Key, ctx: StorageContextType) -> int:
     prefix = PrefixFilter(prefix=path)
     child_len = LengthFilter(length=len(path) + 1)
     scan_opts = StorageScanOptions(
-        start=(*path, ""),  # Start after path itself
+        start=path,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -670,7 +670,7 @@ def list_descendants(
     if depth == -1:
         # All descendants at any depth
         scan_opts = StorageScanOptions(
-            start=(*path, ""),  # Start after path itself
+            start=path,
             break_filter=prefix,
             filter=prefix,
         )
@@ -678,7 +678,7 @@ def list_descendants(
         # Exact depth match
         depth_len = LengthFilter(length=len(path) + depth)
         scan_opts = StorageScanOptions(
-            start=(*path, ""),  # Start after path itself
+            start=path,
             break_filter=prefix,
             filter=prefix & depth_len,
         )
