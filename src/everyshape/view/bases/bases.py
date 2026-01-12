@@ -65,9 +65,7 @@ class MetadataBasedChildrenCountBase:
     def _increment_length(self) -> None:
         """Increment children count by 1."""
         current_len = cast("int", self.container.get_metadata("__len__", default=0))
-        self.container.put_metadata(
-            "__len__", int(current_len) + 1 if current_len is not None else 1
-        )
+        self.container.put_metadata("__len__", int(current_len) + 1)
 
     def _decrement_length(self) -> None:
         """Decrement children count by 1."""

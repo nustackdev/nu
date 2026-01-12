@@ -122,6 +122,8 @@ from .node_ops import (
 # Types and Data Structures
 # ============================================================================
 from .types import (
+    DEFAULT_PARENT_PROTOCOL,
+    DEFAULT_PARENT_STRUCTURE,
     ContainerProtocol,
     ContainerStructure,
     NodeInfo,
@@ -157,6 +159,8 @@ __all__ = [  # noqa: RUF022
     "NodeInfo",
     "ParentInfo",
     "ParentChainInfo",
+    "DEFAULT_PARENT_STRUCTURE",
+    "DEFAULT_PARENT_PROTOCOL",
     # Exceptions
     "ContainerError",
     "ContainerNotFoundError",

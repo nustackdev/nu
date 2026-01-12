@@ -445,7 +445,7 @@ def test_iter_child_keys_mixed(tx: TransactionProtocol) -> None:
 def test_iter_child_keys_parent_not_found_raises(tx: TransactionProtocol) -> None:
     """Test iterating child keys when parent doesn't exist raises error."""
     with pytest.raises(ContainerNotFoundError):
-        list(iter_child_keys(("users",), tx))
+        list(iter_child_keys(("users",), tx, True))
 
 
 def test_iter_child_keys_parent_not_container_raises(tx: TransactionProtocol) -> None:
@@ -460,7 +460,7 @@ def test_iter_child_keys_parent_not_container_raises(tx: TransactionProtocol) ->
     put_child_primitive(("data",), "value", 42, tx)
 
     with pytest.raises(ContainerTypeError):
-        list(iter_child_keys(("data", "value"), tx))
+        list(iter_child_keys(("data", "value"), tx, True))
 
 
 def test_iter_children_empty(tx: TransactionProtocol) -> None:

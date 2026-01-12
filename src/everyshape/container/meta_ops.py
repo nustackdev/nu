@@ -34,7 +34,7 @@ __all__ = [
 
 
 def put_metadata(
-    site: site_.Site, key_segment: site_.SiteSegment, value: Value, ctx: StorageContextType
+    site: site_.Site, key: site_.SiteSegment, value: Value, ctx: StorageContextType
 ) -> None:
     """Put metadata for container at site.
 
@@ -42,20 +42,20 @@ def put_metadata(
 
     Args:
         site: Container site
-        key_segment: Metadata key
+        key: Metadata key
         value: Primitive value to store
         ctx: Storage context
 
     Raises:
         StorageInterfaceError: If context doesn't support writes
     """
-    meta_site = (METADATA_ROOT, *site[1:], key_segment)
+    meta_site = (METADATA_ROOT, *site[1:], key)
     require_write_context(ctx).put(meta_site, value)
 
 
 def get_metadata(
     site: site_.Site,
-    key_segment: site_.SiteSegment,
+    key: site_.SiteSegment,
     ctx: StorageContextType,
     default: Value | Empty = None,
 ) -> Value | Empty:
@@ -63,7 +63,7 @@ def get_metadata(
 
     Args:
         site: Container site
-        key_segment: Metadata key
+        key: Metadata key
         ctx: Storage context
         default: Default value if not found
 
@@ -73,21 +73,19 @@ def get_metadata(
     Raises:
         StorageInterfaceError: If context doesn't support reads
     """
-    meta_site = (METADATA_ROOT, *site[1:], key_segment)
+    meta_site = (METADATA_ROOT, *site[1:], key)
     value = require_read_context(ctx).get(meta_site)
     if value is EMPTY:
         return default
     return value
 
 
-def exists_metadata(
-    site: site_.Site, key_segment: site_.SiteSegment, ctx: StorageContextType
-) -> bool:
+def exists_metadata(site: site_.Site, key: site_.SiteSegment, ctx: StorageContextType) -> bool:
     """Check if metadata key exists for container at site.
 
     Args:
         site: Container site
-        key_segment: Metadata key
+        key: Metadata key
         ctx: Storage context
 
     Returns:
@@ -96,26 +94,24 @@ def exists_metadata(
     Raises:
         StorageInterfaceError: If context doesn't support reads
     """
-    meta_site = (METADATA_ROOT, *site[1:], key_segment)
+    meta_site = (METADATA_ROOT, *site[1:], key)
     return require_read_context(ctx).exists(meta_site)
 
 
-def delete_metadata(
-    site: site_.Site, key_segment: site_.SiteSegment, ctx: StorageContextType
-) -> None:
+def delete_metadata(site: site_.Site, key: site_.SiteSegment, ctx: StorageContextType) -> None:
     """Delete metadata key for container at site.
 
     Idempotent: silent if metadata doesn't exist.
 
     Args:
         site: Container site
-        key_segment: Metadata key
+        key: Metadata key
         ctx: Storage context
 
     Raises:
         StorageInterfaceError: If context doesn't support writes
     """
-    meta_site = (METADATA_ROOT, *site[1:], key_segment)
+    meta_site = (METADATA_ROOT, *site[1:], key)
     require_write_context(ctx).delete(meta_site)
 
 

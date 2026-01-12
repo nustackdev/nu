@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from everyshape._types import NOT_SET
-from everyshape.container.types import (
+from everyshape.container import (
     DEFAULT_PARENT_PROTOCOL,
     DEFAULT_PARENT_STRUCTURE,
     ContainerProtocol,
