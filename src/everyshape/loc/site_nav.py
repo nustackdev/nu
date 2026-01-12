@@ -89,7 +89,7 @@ def get_ancestors(site: Site) -> list[Site]:
 
     while current:  # Stop when current is empty tuple (root)
         ancestors.append(current)
-        current = current[:1] if current else None
+        current = current[:-1] if current else None
 
     return list(reversed(ancestors))
 
