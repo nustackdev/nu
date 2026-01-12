@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape._types import NOT_SET, NotSet, is_notset
 from everyshape.loc import key
-from everyshape.types import EMPTY
+from everyshape.types import Empty
 
 from .marker import extract_marker
 from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read_context
@@ -53,7 +53,7 @@ def node_exists(path: key.Key, ctx: StorageContextType) -> bool:
 
 
 def get_node_type(
-    path: key.Key, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
+    path: key.Key, ctx: StorageContextType, *, raw_value: Value | Empty | NotSet = NOT_SET
 ) -> NodeType:
     """Get node type without full information gathering.
 
@@ -73,9 +73,11 @@ def get_node_type(
     """
     if is_notset(raw_value):
         raw_value = require_read_context(ctx).get(path)
-        if raw_value is EMPTY:
+        if isinstance(raw_value, Empty):
             return NodeType.NOT_FOUND
         return NodeType.CONTAINER if extract_marker(raw_value) else NodeType.PRIMITIVE
+    elif isinstance(raw_value, Empty):
+        return NodeType.NOT_FOUND
     else:
         return (
             NodeType.CONTAINER if extract_marker(cast("Value", raw_value)) else NodeType.PRIMITIVE
@@ -83,7 +85,7 @@ def get_node_type(
 
 
 def get_node_info(
-    path: key.Key, ctx: StorageContextType, *, raw_value: Value | NotSet = NOT_SET
+    path: key.Key, ctx: StorageContextType, *, raw_value: Value | Empty | NotSet = NOT_SET
 ) -> NodeInfo:
     """Get complete node information.
 
@@ -110,7 +112,7 @@ def get_node_info(
         raw_value = require_read_context(ctx).get(path)
 
     # Path doesn't exist
-    if raw_value is EMPTY:
+    if isinstance(raw_value, Empty):
         return NodeInfo(
             path=path,
             exists=False,
