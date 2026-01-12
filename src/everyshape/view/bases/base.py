@@ -268,7 +268,7 @@ class ViewBase(ABC):
         Raises:
             ValueError: If already at root (no parent)
         """
-        parent_site = self.container.site[:-1] if len(self.container.site) > 1 else None
+        parent_site = self.container.site[:-1] if self.container.site else None
         if parent_site is None:
             raise ValueError("Cannot navigate to parent - already at root")
 
