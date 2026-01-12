@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from everyshape.loc import key
 
     from ..filter import Filter
-    from .transaction import SnapshotProtocol, TransactionProtocol, WriteBatchProtocol
+    from .context import SnapshotProtocol, TransactionProtocol, WriteBatchProtocol
 
 
 @dataclass(frozen=True, kw_only=True)

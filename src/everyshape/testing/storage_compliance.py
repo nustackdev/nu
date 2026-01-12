@@ -43,7 +43,7 @@ import pytest
 
 from everyshape.storage import StorageScanOptions
 from everyshape.storage.filter import LengthFilter, PrefixFilter
-from everyshape.storage.storage.exceptions import (
+from everyshape.storage.storage import (
     StorageClosedError,
     StorageInterfaceError,
 )
@@ -51,7 +51,7 @@ from everyshape.types import EMPTY
 
 
 if TYPE_CHECKING:
-    from everyshape.storage.storage.storage import StorageProtocol
+    from everyshape.storage.storage import StorageProtocol
 
 
 class StorageProtocolCompliance:

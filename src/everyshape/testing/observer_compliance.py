@@ -62,8 +62,7 @@ from everyshape.storage.filter import (
     SuffixFilter,
     WildcardFilter,
 )
-from everyshape.storage.observer.options import SubscriptionOptions
-from everyshape.storage.observer.registry import SubscriptionRegistry
+from everyshape.storage.observer import SubscriptionOptions, SubscriptionRegistry
 
 
 if TYPE_CHECKING:

@@ -15,13 +15,13 @@ from .exceptions import (
     ObserverValidationError,
 )
 from .observer import ObserverProtocol
-from .options import SubscriptionOptions
 from .registry import SubscriptionRegistry
 from .subscription import (
     Subscription,
 )
 from .types import (
     SubscriptionCallback,
+    SubscriptionOptions,
     SubscriptionReceiver,
 )
 

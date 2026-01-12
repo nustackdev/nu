@@ -24,6 +24,16 @@ The storage layer is organized around three orthogonal concerns:
 
 from __future__ import annotations
 
+from .context import (
+    BaseContextProtocol,
+    ReadAccessProtocol,
+    ReadWriteAccessProtocol,
+    SnapshotProtocol,
+    TransactionalStorageProtocol,
+    TransactionProtocol,
+    WriteAccessProtocol,
+    WriteBatchProtocol,
+)
 from .exceptions import (
     StorageClosedError,
     StorageDeleteError,
@@ -41,16 +51,6 @@ from .exceptions import (
 from .scan import ScanProtocol
 from .storage import (
     StorageProtocol,
-)
-from .transaction import (
-    BaseContextProtocol,
-    ReadAccessProtocol,
-    ReadWriteAccessProtocol,
-    SnapshotProtocol,
-    TransactionalStorageProtocol,
-    TransactionProtocol,
-    WriteAccessProtocol,
-    WriteBatchProtocol,
 )
 from .types import (
     StorageContextType,

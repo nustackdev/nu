@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from .transaction import TransactionalStorageProtocol
+from .context import TransactionalStorageProtocol
 
 
 if TYPE_CHECKING:
-    from everyshape.storage.observer.subscription import Subscription, SubscriptionOptions
+    from everyshape.storage.observer import Subscription, SubscriptionOptions
 
 
 @runtime_checkable
