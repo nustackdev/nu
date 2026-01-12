@@ -20,7 +20,7 @@ from .exceptions import ViewRegistryError
 if TYPE_CHECKING:
     from everyshape.container import ContainerStructure
 
-    from .base import View
+    from .view import View
 
 __all__ = [
     "ViewRegistration",
