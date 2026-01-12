@@ -23,7 +23,7 @@ from .bases import AddressMappingBase
 
 if TYPE_CHECKING:
     from everyshape.container import Container
-    from everyshape.loc import key
+    from everyshape.loc import site as site_
     from everyshape.storage import (
         Subscription,
     )
@@ -147,8 +147,8 @@ class DescendantsObservableBase:
 
     def on_descendents_change(
         self,
-        address: key.KeySegment,
-        *addresses: key.KeySegment,
+        address: site_.SiteSegment,
+        *addresses: site_.SiteSegment,
     ) -> Subscription:
         """Watch changes of descendants for a given pattern.
 

@@ -14,11 +14,11 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from everyshape.container import Container, ContainerStructure, NodeType
+from everyshape.loc import site as site_
 from everyshape.types import Empty, is_empty
 
 
 if TYPE_CHECKING:
-    from everyshape.loc import key as key_
     from everyshape.view import View, ViewRegistry
 
 
@@ -133,7 +133,7 @@ class AddressMappingBase[A]:
 
     container: Container
 
-    def normalize_address(self, address: A) -> key_.KeySegment:
+    def normalize_address(self, address: A) -> site_.SiteSegment:
         """Normalize view address to a storage key."""
         raise NotImplementedError
 
@@ -175,7 +175,12 @@ class ChildNavigationBase[A](AddressMappingBase[A]):
             IndexError, KeyError: If address invalid after normalization
         """
         normalized_address = self.normalize_address(address)
-        child_container = self.container.get_child_container(normalized_address)
+        child_container = Container.create(
+            site_.join_segment(self.container.site, normalized_address),
+            self.container.ctx,
+            view.get_structure(),
+            view.get_protocol(),
+        )
         return view(child_container, self.registry)
 
 
@@ -198,7 +203,7 @@ class ChildNestedGetBase:
     container: Container
     registry: ViewRegistry
 
-    def _get_child_value(self, address: key_.KeySegment) -> object | Empty:
+    def _get_child_value(self, address: site_.SiteSegment) -> object | Empty:
         """Get child value, auto-extracting containers.
 
         Helper for subclasses implementing dict-like or list-like access.
@@ -227,7 +232,7 @@ class ChildNestedGetBase:
         # Child is container - extract it
         return self._extract_child_container(address)
 
-    def _extract_child_container(self, address: key_.KeySegment) -> object:
+    def _extract_child_container(self, address: site_.SiteSegment) -> object:
         """Extract child container contents using registry.
 
         Args:
@@ -302,7 +307,7 @@ class ChildNestedSetBase:
     container: Container
     registry: ViewRegistry
 
-    def _set_child_value(self, address: key_.KeySegment, value: object) -> None:
+    def _set_child_value(self, address: site_.SiteSegment, value: object) -> None:
         """Set child value, auto-creating containers for complex types.
 
         Helper for subclasses implementing dict-like or list-like mutation.
@@ -321,7 +326,7 @@ class ChildNestedSetBase:
 
             self.container.put_child_primitive(address, cast("Value", value))
 
-    def _populate_child_container(self, address: key_.KeySegment, value: object) -> None:
+    def _populate_child_container(self, address: site_.SiteSegment, value: object) -> None:
         """Populate child container from Python value using registry.
 
         Args:

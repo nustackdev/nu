@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, ClassVar, Self, cast
 import attrs
 
 from everyshape.container import Container, ContainerProtocol, ContainerStructure
-from everyshape.loc import key as key_
+from everyshape.loc import DATA_ROOT
 from everyshape.loc import path as path_
 from everyshape.loc import site as site_
 
@@ -126,7 +126,7 @@ class ViewBase(ABC):
             )
 
         container = Container.create(
-            site=(key_.DATA_ROOT,),
+            site=(DATA_ROOT,),
             ctx=ctx,
             structure=cls.get_structure(),
             protocol=cls.get_protocol(),
@@ -193,22 +193,22 @@ class ViewBase(ABC):
         return cast("Self", path_.navigate_view(root_view, full_path))
 
     @classmethod
-    def open_at_key(
+    def open_at_site(
         cls,
-        key: key_.Key,
+        site: site_.Site,
         ctx: StorageContextType,
         *,
         views: tuple[type[View], ...] = (),
         default_parent_view: type[View] | None = None,
     ) -> Self:
-        """Create a View at the specified container key.
+        """Create a View at the specified container site.
 
-        Creates all necessary intermediate containers along the key path and
+        Creates all necessary intermediate containers along the site path and
         returns the View instance at the final container location.
 
         Args:
             ctx: Storage context (transaction, snapshot or write batch)
-            key: Container key tuple (raw storage path)
+            site: Container site tuple (raw storage path)
             views: Tuple of available views
             default_parent_view: View type for intermediate parent containers
 
@@ -216,18 +216,18 @@ class ViewBase(ABC):
             View instance at the final container location
 
         Raises:
-            ValueError: If key is empty or only root
+            ValueError: If site is empty or only root
             TypeError: If default_parent_view cannot provide structure/protocol
 
         Example:
-            >>> key = ("/", "users", "alice")
-            >>> alice_view = DictView.create_at_key(tx, key, DictView)
+            >>> site = ("/", "users", "alice")
+            >>> alice_view = DictView.create_at_site(tx, site, DictView)
         """
-        if not key:
-            raise ValueError("Key is empty, provide a complete key")
+        if not site:
+            raise ValueError("Site is empty, provide a complete location")
 
-        if key[0] != key_.DATA_ROOT:
-            raise ValueError("Key must start with DATA_ROOT ('/')")
+        if site[0] != DATA_ROOT:
+            raise ValueError("Site must start with DATA_ROOT ('/')")
 
         if default_parent_view is None:
             default_parent_view = cls.get_default_parent_view()
@@ -239,7 +239,7 @@ class ViewBase(ABC):
 
         # Create the target container with proper structure and protocol
         container = Container.create(
-            site=key,
+            site=site,
             ctx=ctx,
             structure=cls.get_structure(),
             protocol=cls.get_protocol(),

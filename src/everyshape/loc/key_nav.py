@@ -18,24 +18,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .constants import DATA_ROOT, METADATA_ROOT
+
 
 if TYPE_CHECKING:
     from .key_def import Key, KeySegment
 
 __all__ = [
-    "DATA_ROOT",
-    "METADATA_ROOT",
     "create_key",
     "get_depth",
     "join_key",
     "join_segment",
     "to_meta",
 ]
-
-# Root marker for the root data segment (stores actual data)
-DATA_ROOT: str = "/"
-# Root marker for the metadata segment (stores metadata)
-METADATA_ROOT: str = "/m"
 
 
 def create_key(*segments: KeySegment) -> Key:

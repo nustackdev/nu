@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple
 
+from everyshape.loc import DATA_ROOT
 from everyshape.loc import key as key_
 
 from . import container_ops, meta_ops, node_ops, validation_ops
@@ -112,7 +113,7 @@ class Container(NamedTuple):
             ContainerParentMalformedError: If parent chain has corrupted data
             StorageInterfaceError: If context doesn't support writes
         """
-        if not site or site[0] != key_.DATA_ROOT:
+        if not site or site[0] != DATA_ROOT:
             raise ContainerInvalidSiteError(
                 "Site is either empty or it doesn't start with ROOT segment"
             )
@@ -147,7 +148,7 @@ class Container(NamedTuple):
             ContainerNotFoundError: If container doesn't exist
             ContainerTypeError: If site exists but isn't a container
         """
-        if not site or site[0] != key_.DATA_ROOT:
+        if not site or site[0] != DATA_ROOT:
             raise ContainerInvalidSiteError(
                 "Site is either empty or it doesn't start with ROOT segment"
             )
