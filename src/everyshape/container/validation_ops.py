@@ -41,7 +41,7 @@ def validate_exists(
 
     Args:
         site: Site to validate
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         node_type: Prefetched node type (optional)
 
     Raises:
@@ -60,7 +60,7 @@ def validate_not_exists(
 
     Args:
         site: Site to validate
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         node_type: Prefetched node type (optional)
 
     Raises:
@@ -82,7 +82,7 @@ def validate_is_container(
 
     Args:
         site: Site to validate
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         node_type: Prefetched node type (optional)
 
     Raises:
@@ -108,7 +108,7 @@ def validate_is_primitive(
 
     Args:
         site: Site to validate
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         node_type: Prefetched node type (optional)
 
     Raises:
@@ -134,7 +134,7 @@ def validate_parents_exist(
 
     Args:
         site: Site to validate parents for
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         parent_info: Prefetched parent chain info (optional)
 
     Raises:
@@ -156,7 +156,7 @@ def validate_parents_healthy(
 
     Args:
         site: Site to validate parents for
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         parent_info: Prefetched parent chain info (optional)
 
     Raises:
@@ -181,7 +181,7 @@ def validate_parents_chain(
 
     Args:
         site: Site to validate parents for
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         parent_info: Prefetched parent chain info (optional)
 
     Raises:
@@ -223,7 +223,7 @@ def validate_compatible(
         site: Container site to validate
         expected_structure: Required structure ID
         expected_protocol: Required protocol flags (bitwise match)
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         node_info: Prefetched node info (optional)
 
     Raises:

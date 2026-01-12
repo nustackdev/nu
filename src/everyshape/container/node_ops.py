@@ -40,7 +40,7 @@ def node_exists(site: site_.Site, ctx: StorageContextType) -> bool:
 
     Args:
         site: Site to check
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Returns:
         True if node exists, False otherwise
@@ -57,7 +57,7 @@ def get_node_type(
 
     Args:
         site: Site to check
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         raw_value: Prefetched value to parse info from
 
     Returns:
@@ -86,7 +86,7 @@ def get_node_info(
 
     Args:
         site: Site to gather information about
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         raw_value: Prefetched value to parse info from
 
     Returns:
@@ -140,7 +140,7 @@ def gather_parent_info(site: site_.Site, ctx: StorageContextType) -> ParentChain
 
     Args:
         site: Site to gather parent information for
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Returns:
         ParentChainInfo with raw data about parent chain:

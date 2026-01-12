@@ -243,7 +243,7 @@ def exists_child(site: site_.Site, key: site_.SiteSegment, ctx: StorageContextTy
     Args:
         site: Container site
         key: Child key
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Returns:
         True if child exists
@@ -268,7 +268,7 @@ def get_child_type(site: site_.Site, key: site_.SiteSegment, ctx: StorageContext
     Args:
         site: Container site
         key: Child key
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Returns:
         NodeType of child (CONTAINER, PRIMITIVE, or NOT_FOUND)
@@ -287,7 +287,7 @@ def iter_child_keys(
 
     Args:
         site: Container site
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Yields:
         Child keys (last segment of each child site)
@@ -321,7 +321,7 @@ def iter_child_values(site: site_.Site, ctx: StorageContextType) -> Generator[No
 
     Args:
         site: Container site
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Yields:
         NodeInfo for each direct child
@@ -353,7 +353,7 @@ def iter_children(
 
     Args:
         site: Container site
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Yields:
         Tuples of (child_key, NodeInfo)
@@ -383,7 +383,7 @@ def count_children(site: site_.Site, ctx: StorageContextType) -> int:
 
     Args:
         site: Container site
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Returns:
         Number of direct children
@@ -499,7 +499,7 @@ def get_child_primitive(
     Args:
         parent_site: Parent container site
         key: Child key
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Returns:
         Primitive value or EMPTY if child doesn't exist
@@ -604,7 +604,7 @@ def iter_descendants(
 
     Args:
         site: Container site
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         depth: Depth to traverse (-1=unlimited, 1=children, >1 exact depth match)
 
     Yields:
@@ -661,7 +661,7 @@ def walk_descendants(
 
     Args:
         site: Container site
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
 
     Yields:
         Tuples of (site, NodeType) for each descendant

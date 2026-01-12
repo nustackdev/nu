@@ -115,7 +115,7 @@ class View(Protocol):
         Args:
             parent_path: ViewPath to navigate - sequence of (address, ViewType) pairs
             address: Address in the parent path view
-            ctx: Storage context (transaction or snapshot)
+            ctx: Storage context (transaction, snapshot or write batch)
             views: Tuple of available views
             default_parent_view: View type to use for default parent containers
 
@@ -147,7 +147,7 @@ class View(Protocol):
         returns the View instance at the final container location.
 
         Args:
-            ctx: Storage context (transaction or snapshot)
+            ctx: Storage context (transaction, snapshot or write batch)
             key: Container key tuple (raw storage path)
             views: Tuple of available views
             default_parent_view: View type for intermediate parent containers

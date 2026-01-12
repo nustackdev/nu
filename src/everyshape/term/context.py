@@ -29,7 +29,7 @@ class SingularContext:
 
     Attributes:
         tree: Tree instance for navigation
-        storage_context: Context for data access (transaction or snapshot)
+        storage_context: Context for data access (transaction, snapshot or write batch)
     """
 
     root_view: View

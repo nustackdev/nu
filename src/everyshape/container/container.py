@@ -52,7 +52,7 @@ class Container(NamedTuple):
     storage state, preventing stale data bugs.
 
     Attributes:
-        ctx: Storage context (transaction or snapshot)
+        ctx: Storage context (transaction, snapshot or write batch)
         site: Site of this container
 
     Safety guarantees:
@@ -65,7 +65,7 @@ class Container(NamedTuple):
     """
 
     ctx: StorageContextType
-    """Storage context (transaction or snapshot)."""
+    """Storage context (transaction, snapshot, write batch)."""
 
     site: site_.Site
     """Site of this container."""
