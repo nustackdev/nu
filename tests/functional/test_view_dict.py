@@ -10,6 +10,8 @@ Covers:
 - Navigation
 """
 
+from typing import cast
+
 import pytest
 
 from everyshape.storage import TransactionProtocol
@@ -371,7 +373,7 @@ class TestDictViewNestedContainers:
     def test_set_nested_dict_deep(self, view: DictView) -> None:
         """Test setting deeply nested dicts."""
         view["data"] = {"level1": {"level2": {"value": "deep"}}}
-        result = view["data"]
+        result = cast("dict", view["data"])
         assert result["level1"]["level2"]["value"] == "deep"
 
     def test_extract_with_nested(self, view: DictView) -> None:
@@ -389,8 +391,8 @@ class TestDictViewNestedContainers:
             }
         }
         view.store(data)
-        assert view["users"]["alice"]["name"] == "Alice"
-        assert view["users"]["bob"]["name"] == "Bob"
+        assert cast("dict", view["users"])["alice"]["name"] == "Alice"
+        assert cast("dict", view["users"])["bob"]["name"] == "Bob"
 
 
 # =============================================================================
@@ -406,7 +408,7 @@ class TestDictViewNavigation:
         view["users"] = {"alice": {"name": "Alice"}}
         users = view.open_child("users", DictView)
         assert "alice" in users
-        assert users["alice"]["name"] == "Alice"
+        assert cast("dict", users["alice"])["name"] == "Alice"
 
     def test_open_child_modify(self, view: DictView) -> None:
         """Test modifying through child view affects parent."""
@@ -415,7 +417,7 @@ class TestDictViewNavigation:
         users["bob"] = {"name": "Bob"}
 
         # Verify through parent view
-        assert view["users"]["bob"]["name"] == "Bob"
+        assert cast("dict", view["users"])["bob"]["name"] == "Bob"
 
 
 # =============================================================================
@@ -573,10 +575,10 @@ class TestDictViewIntegration:
 
         # Verify final state
         extracted = view.extract()
-        assert "alice" in extracted["users"]
-        assert "charlie" in extracted["users"]
-        assert "bob" not in extracted["users"]
-        assert extracted["settings"]["theme"] == "dark"
+        assert "alice" in cast("dict", extracted["users"])
+        assert "charlie" in cast("dict", extracted["users"])
+        assert "bob" not in cast("dict", extracted["users"])
+        assert cast("dict", extracted["settings"])["theme"] == "dark"
 
     def test_nested_modification_persistence(self, view: DictView) -> None:
         """Test that nested modifications persist correctly."""
@@ -593,5 +595,5 @@ class TestDictViewIntegration:
 
         # Verify from root
         result = view.extract()
-        assert result["level1"]["level2"]["level3"]["value"] == "modified"
-        assert result["level1"]["level2"]["level3"]["new"] == "added"
+        assert cast("dict", result["level1"])["level2"]["level3"]["value"] == "modified"
+        assert cast("dict", result["level1"])["level2"]["level3"]["new"] == "added"

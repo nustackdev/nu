@@ -89,7 +89,7 @@ class DictView(
         """
         return address
 
-    def __getitem__(self, address: str | int) -> object | Empty:
+    def __getitem__(self, address: str | int) -> object:
         """Get value for key.
 
         Args:
@@ -102,9 +102,13 @@ class DictView(
             KeyError: If key not found
         """
         try:
-            return self._get_child_value(address)
+            val = self._get_child_value(address)
         except ContainerNotFoundError as e:
             raise KeyError(address) from e
+
+        if isinstance(val, Empty):
+            raise KeyError(f"{address} not found")
+        return val
 
     def __setitem__(self, address: str | int, value: object) -> None:
         """Set value for key.
@@ -246,7 +250,7 @@ class DictView(
         """
         return dict(self.items())
 
-    def store(self, value: PyMapping[str | int, object]) -> None:
+    def store(self, value: PyMapping) -> None:
         """Store dict contents.
 
         Args:

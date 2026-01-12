@@ -339,8 +339,7 @@ class Container(NamedTuple):
 
         Raises:
             ContainerNotFoundError: If this container doesn't exist
-            ContainerTypeError: If this is not a container, or if child
-                exists as a container
+            ContainerTypeError: If this is not a container, or if child exists as a container
             StorageInterfaceError: If context doesn't support writes
         """
         container_ops.put_child_primitive(self.site, key, value, self.ctx)
@@ -356,8 +355,7 @@ class Container(NamedTuple):
 
         Raises:
             ContainerNotFoundError: If this container doesn't exist
-            ContainerTypeError: If this is not a container, or if child
-                is a container
+            ContainerTypeError: If this is not a container, or if child is a container
             StorageInterfaceError: If context doesn't support reads
         """
         return container_ops.get_child_primitive(self.site, key, self.ctx)
