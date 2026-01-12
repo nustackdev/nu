@@ -13,11 +13,12 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
-from everyshape.container import Container, ContainerStructure, NodeType
+from everyshape.container import Container, ContainerStructure, NodeType, node_ops
 from everyshape.types import Empty, is_empty
 
 
 if TYPE_CHECKING:
+    from everyshape.container.types import NodeInfo
     from everyshape.loc import site as site_
     from everyshape.view import View, ViewRegistry
 
@@ -203,7 +204,12 @@ class ChildNestedGetBase:
     container: Container
     registry: ViewRegistry
 
-    def _get_child_value(self, address: site_.SiteSegment) -> object | Empty:
+    def _get_child_value(
+        self,
+        address: site_.SiteSegment,
+        *,
+        node_info: NodeInfo | None = None,
+    ) -> object | Empty:
         """Get child value, auto-extracting containers.
 
         Helper for subclasses implementing dict-like or list-like access.
@@ -211,6 +217,7 @@ class ChildNestedGetBase:
 
         Args:
             address: Child address
+            node_info: Pre-fetched node info to avoid redundant storage read
 
         Returns:
             Primitive value or extracted container contents
@@ -218,25 +225,34 @@ class ChildNestedGetBase:
         Raises:
             KeyError: If child doesn't exist
         """
-        child_type = self.container.get_child_type(address)
+        # Use pre-fetched info or fetch it
+        if node_info is None:
+            child_site = (*self.container.site, address)
+            node_info = node_ops.get_node_info(child_site, self.container.ctx)
 
-        if child_type == NodeType.NOT_FOUND:
+        if not node_info.exists or node_info.node_type == NodeType.NOT_FOUND:
             raise KeyError(address)
 
-        if child_type == NodeType.PRIMITIVE:
-            value = self.container.get_child_primitive(address)
-            if is_empty(value):
+        if node_info.node_type == NodeType.PRIMITIVE:
+            # Primitive value is already in node_info
+            if is_empty(node_info.primitive_value):
                 raise KeyError(address)
-            return value
+            return node_info.primitive_value
 
-        # Child is container - extract it
-        return self._extract_child_container(address)
+        # Child is container - extract it (pass info to avoid re-read)
+        return self._extract_child_container(address, node_info=node_info)
 
-    def _extract_child_container(self, address: site_.SiteSegment) -> object:
+    def _extract_child_container(
+        self,
+        address: site_.SiteSegment,
+        *,
+        node_info: NodeInfo | None = None,
+    ) -> object:
         """Extract child container contents using registry.
 
         Args:
             address: Child address
+            node_info: Pre-fetched node info to avoid redundant storage read
 
         Returns:
             Extracted Python value
@@ -251,8 +267,12 @@ class ChildNestedGetBase:
         child_site = (*self.container.site, address)
         child_container = Container(ctx=self.container.ctx, site=child_site)
 
-        # Get structure ID
-        child_info = child_container.info()
+        # Use pre-fetched info or get it
+        if node_info is None:
+            child_info = child_container.info()
+        else:
+            child_info = node_info
+
         if child_info.structure is None:
             logger.error(
                 "Child container has no structure ID",

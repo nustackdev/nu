@@ -5,6 +5,8 @@ traversal functionality. All operations work directly with storage and
 delegate validation to the validation module.
 
 All mutations are silent (return None) and idempotent.
+
+Validation is by default enabled for mutation commands and disabled for reads.
 """
 
 from __future__ import annotations
@@ -15,6 +17,11 @@ from typing import TYPE_CHECKING, cast
 from everyshape.storage import LengthFilter, PrefixFilter, StorageScanOptions
 from everyshape.types import EMPTY, Empty, Value
 
+from .context import (
+    require_read_context,
+    require_readwrite_context,
+    require_write_context,
+)
 from .exceptions import ContainerExistsError, ContainerInvalidDepthError, ContainerTypeError
 from .marker import create_marker, is_marker
 from .node_ops import get_node_info, get_node_type
@@ -25,9 +32,6 @@ from .types import (
     ContainerStructure,
     NodeInfo,
     NodeType,
-    require_read_context,
-    require_readwrite_context,
-    require_write_context,
 )
 from .validation_ops import (
     gather_parent_info,
@@ -173,10 +177,7 @@ def create_container(
     )
 
 
-def delete_container(
-    site: site_.Site,
-    ctx: StorageContextType,
-) -> None:
+def delete_container(site: site_.Site, ctx: StorageContextType) -> None:
     """Delete container and all descendants.
 
     Idempotent: silent if container doesn't exist.
@@ -281,27 +282,31 @@ def get_child_type(site: site_.Site, key: site_.SiteSegment, ctx: StorageContext
 
 
 def iter_child_keys(
-    site: site_.Site, ctx: StorageContextType
+    site: site_.Site,
+    ctx: StorageContextType,
+    validate: bool = False,
 ) -> Generator[site_.SiteSegment, None, None]:
     """Iterate over direct child keys.
 
     Args:
         site: Container site
         ctx: Storage context (transaction, snapshot or write batch)
+        validate: If True, validate site is a container (default False)
 
     Yields:
         Child keys (last segment of each child site)
 
     Raises:
-        ContainerNotFoundError: If container doesn't exist
-        ContainerTypeError: If site is not a container
+        ContainerNotFoundError: If container doesn't exist (when validate=True)
+        ContainerTypeError: If site is not a container (when validate=True)
         StorageInterfaceError: If context doesn't support read access
 
     Example:
         >>> list(iter_child_keys(("users",), tx))
         ["alice", "bob", "charlie"]
     """
-    validate_is_container(site, ctx)
+    if validate:
+        validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
     prefix = PrefixFilter(prefix=site)
@@ -316,22 +321,28 @@ def iter_child_keys(
         yield key[-1]
 
 
-def iter_child_values(site: site_.Site, ctx: StorageContextType) -> Generator[NodeInfo, None, None]:
+def iter_child_values(
+    site: site_.Site,
+    ctx: StorageContextType,
+    validate: bool = False,
+) -> Generator[NodeInfo, None, None]:
     """Iterate over direct child node info.
 
     Args:
         site: Container site
         ctx: Storage context (transaction, snapshot or write batch)
+        validate: If True, validate site is a container (default False)
 
     Yields:
         NodeInfo for each direct child
 
     Raises:
-        ContainerNotFoundError: If container doesn't exist
-        ContainerTypeError: If site is not a container
+        ContainerNotFoundError: If container doesn't exist (when validate=True)
+        ContainerTypeError: If site is not a container (when validate=True)
         StorageInterfaceError: If context doesn't support read access
     """
-    validate_is_container(site, ctx)
+    if validate:
+        validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
     prefix = PrefixFilter(prefix=site)
@@ -347,23 +358,27 @@ def iter_child_values(site: site_.Site, ctx: StorageContextType) -> Generator[No
 
 
 def iter_children(
-    site: site_.Site, ctx: StorageContextType
+    site: site_.Site,
+    ctx: StorageContextType,
+    validate: bool = False,
 ) -> Generator[tuple[site_.SiteSegment, NodeInfo], None, None]:
     """Iterate over direct children with their info.
 
     Args:
         site: Container site
         ctx: Storage context (transaction, snapshot or write batch)
+        validate: If True, validate site is a container (default False)
 
     Yields:
         Tuples of (child_key, NodeInfo)
 
     Raises:
-        ContainerNotFoundError: If container doesn't exist
-        ContainerTypeError: If site is not a container
+        ContainerNotFoundError: If container doesn't exist (when validate=True)
+        ContainerTypeError: If site is not a container (when validate=True)
         StorageInterfaceError: If context doesn't support read access
     """
-    validate_is_container(site, ctx)
+    if validate:
+        validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
     prefix = PrefixFilter(prefix=site)
@@ -378,22 +393,28 @@ def iter_children(
         yield (key[-1], get_node_info(key, ctx, raw_value=value))
 
 
-def count_children(site: site_.Site, ctx: StorageContextType) -> int:
+def count_children(
+    site: site_.Site,
+    ctx: StorageContextType,
+    validate: bool = False,
+) -> int:
     """Count direct children.
 
     Args:
         site: Container site
         ctx: Storage context (transaction, snapshot or write batch)
+        validate: If True, validate site is a container (default False)
 
     Returns:
         Number of direct children
 
     Raises:
-        ContainerNotFoundError: If container doesn't exist
-        ContainerTypeError: If site is not a container
+        ContainerNotFoundError: If container doesn't exist (when validate=True)
+        ContainerTypeError: If site is not a container (when validate=True)
         StorageInterfaceError: If context doesn't support read access
     """
-    validate_is_container(site, ctx)
+    if validate:
+        validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
     prefix = PrefixFilter(prefix=site)
@@ -420,6 +441,7 @@ def create_child_container(
     structure: ContainerStructure,
     protocol: ContainerProtocol,
     ctx: StorageContextType,
+    validate: bool = True,
 ) -> None:
     """Create child container.
 
@@ -431,13 +453,15 @@ def create_child_container(
         structure: Container structure ID
         protocol: Container protocol flags
         ctx: Storage context (transaction)
+        validate: If True, validate parent is a container (default True)
 
     Raises:
-        ContainerNotFoundError: If parent doesn't exist
-        ContainerTypeError: If parent is not a container
+        ContainerNotFoundError: If parent doesn't exist (when validate=True)
+        ContainerTypeError: If parent is not a container (when validate=True)
         StorageInterfaceError: If context doesn't support required operations
     """
-    validate_is_container(parent_site, ctx)
+    if validate:
+        validate_is_container(parent_site, ctx)
 
     child_site = (*parent_site, key)
     create_container(child_site, structure, protocol, ctx, ensure_healthy_parents=False)
@@ -448,6 +472,7 @@ def put_child_primitive(
     key: site_.SiteSegment,
     value: Value,
     ctx: StorageContextType,
+    validate: bool = True,
 ) -> None:
     """Put primitive child value.
 
@@ -458,6 +483,7 @@ def put_child_primitive(
         key: Child key
         value: Primitive value
         ctx: Storage context (transaction)
+        validate: If True, validate parent is a container (default True)
 
     Raises:
         ContainerNotFoundError: If parent doesn't exist
@@ -469,14 +495,16 @@ def put_child_primitive(
         >>> get_child_primitive(("users",), "alice", tx)
         {"name": "Alice", "age": 30}
     """
-    validate_is_container(parent_site, ctx)
+    if validate:
+        validate_is_container(parent_site, ctx)
+
+        child_site = (*parent_site, key)
+        child_node_info = get_node_info(child_site, ctx)
+
+        if child_node_info.exists:
+            validate_is_primitive(child_site, ctx, node_type=child_node_info.node_type)
 
     child_site = (*parent_site, key)
-    child_node_info = get_node_info(child_site, ctx)
-
-    if child_node_info.exists:
-        validate_is_primitive(child_site, ctx, node_type=child_node_info.node_type)
-
     require_write_context(ctx).put(child_site, value)
 
     logger.debug(
@@ -493,6 +521,7 @@ def get_child_primitive(
     parent_site: site_.Site,
     key: site_.SiteSegment,
     ctx: StorageContextType,
+    validate: bool = False,
 ) -> Value | Empty:
     """Get primitive child value.
 
@@ -500,6 +529,7 @@ def get_child_primitive(
         parent_site: Parent container site
         key: Child key
         ctx: Storage context (transaction, snapshot or write batch)
+        validate: If True, validate parent is a container (default False)
 
     Returns:
         Primitive value or EMPTY if child doesn't exist
@@ -509,7 +539,8 @@ def get_child_primitive(
         ContainerTypeError: If parent is not a container or child is a container
         StorageInterfaceError: If context doesn't support read access
     """
-    validate_is_container(parent_site, ctx)
+    if validate:
+        validate_is_container(parent_site, ctx)
 
     child_site = (*parent_site, key)
     child_node_info = get_node_info(child_site, ctx)
@@ -569,7 +600,11 @@ def delete_child(
     )
 
 
-def clear_children(site: site_.Site, ctx: StorageContextType) -> None:
+def clear_children(
+    site: site_.Site,
+    ctx: StorageContextType,
+    validate: bool = True,
+) -> None:
     """Delete all direct children.
 
     Idempotent: silent if no children exist.
@@ -577,13 +612,18 @@ def clear_children(site: site_.Site, ctx: StorageContextType) -> None:
     Args:
         site: Container site
         ctx: Storage context (transaction)
+        validate: If True, validate site is a container (default True)
 
     Raises:
-        ContainerNotFoundError: If container doesn't exist
-        ContainerTypeError: If site is not a container
+        ContainerNotFoundError: If container doesn't exist (when validate=True)
+        ContainerTypeError: If site is not a container (when validate=True)
         StorageInterfaceError: If context doesn't support required operations
     """
-    for key in iter_child_keys(site, ctx):
+    # Pass validate=False to iter_child_keys since we validate once here
+    if validate:
+        validate_is_container(site, ctx)
+
+    for key in iter_child_keys(site, ctx, validate=False):
         delete_child(site, key, ctx)
 
     logger.debug("Children cleared", extra={"site": site})

@@ -14,10 +14,7 @@ from typing import TYPE_CHECKING
 from everyshape.loc.constants import METADATA_ROOT
 from everyshape.types import EMPTY
 
-from .types import (
-    require_read_context,
-    require_write_context,
-)
+from .context import require_read_context, require_write_context
 
 
 if TYPE_CHECKING:

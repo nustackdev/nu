@@ -60,6 +60,8 @@ class ViewRegistry:
         """Initialize registry."""
         self._structure_to_view: dict[ContainerStructure, type[View]] = {}
         self._type_to_registration: dict[type, ViewRegistration] = {}
+        # Cache for is_container_type lookups (type -> bool)
+        self._container_type_cache: dict[type, bool] = {}
 
     def register(
         self,
@@ -113,6 +115,8 @@ class ViewRegistry:
                 container_type=container_type,
             )
             self._type_to_registration[container_type] = registration
+            # Invalidate cache when new type is registered
+            self._container_type_cache.clear()
 
         logger.debug(
             "View registered",
@@ -217,7 +221,19 @@ class ViewRegistry:
         Returns:
             True if value matches a registered container type
         """
+        value_type = type(value)
+
+        # Check cache first
+        if value_type in self._container_type_cache:
+            return self._container_type_cache[value_type]
+
+        # Check if value matches any registered container type
+        result = False
         for container_type in self._type_to_registration:
             if isinstance(value, container_type):
-                return True
-        return False
+                result = True
+                break
+
+        # Cache the result for this type
+        self._container_type_cache[value_type] = result
+        return result

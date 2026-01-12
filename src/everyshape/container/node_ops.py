@@ -17,8 +17,9 @@ from everyshape._types import NOT_SET, NotSet, is_notset
 from everyshape.loc import site as site_
 from everyshape.types import Empty
 
+from .context import require_read_context
 from .marker import extract_marker
-from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo, require_read_context
+from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo
 
 
 if TYPE_CHECKING:

@@ -60,6 +60,18 @@ from .container_ops import (
 )
 
 # ============================================================================
+# Context
+# ============================================================================
+from .context import (
+    require_read_context,
+    require_readwrite_context,
+    require_snapshot,
+    require_transaction,
+    require_write_batch,
+    require_write_context,
+)
+
+# ============================================================================
 # Exceptions
 # ============================================================================
 from .exceptions import (
@@ -201,4 +213,11 @@ __all__ = [  # noqa: RUF022
     "iter_metadata_keys",
     # Main interface
     "Container",
+    # Context
+    "require_read_context",
+    "require_readwrite_context",
+    "require_snapshot",
+    "require_transaction",
+    "require_write_batch",
+    "require_write_context",
 ]

@@ -240,44 +240,57 @@ class Container(NamedTuple):
         """
         return container_ops.get_child_type(self.site, key, self.ctx)
 
-    def iter_child_keys(self) -> Generator[site_.SiteSegment, None, None]:
+    def iter_child_keys(
+        self, *, validate: bool = False
+    ) -> Generator[site_.SiteSegment, None, None]:
         """Iterate over direct child keys.
+
+        Args:
+            validate: If True, validate this is a container (default False)
 
         Yields:
             Child keys
 
         Raises:
-            ContainerNotFoundError: If this container doesn't exist
-            ContainerTypeError: If site is not a container
+            ContainerNotFoundError: If this container doesn't exist (when validate=True)
+            ContainerTypeError: If site is not a container (when validate=True)
             StorageInterfaceError: If context doesn't support reads
         """
-        yield from container_ops.iter_child_keys(self.site, self.ctx)
+        yield from container_ops.iter_child_keys(self.site, self.ctx, validate=validate)
 
-    def iter_children(self) -> Generator[tuple[site_.SiteSegment, NodeInfo], None, None]:
+    def iter_children(
+        self, *, validate: bool = False
+    ) -> Generator[tuple[site_.SiteSegment, NodeInfo], None, None]:
         """Iterate over direct children with their info.
+
+        Args:
+            validate: If True, validate this is a container (default False)
 
         Yields:
             Tuples of (child_key, NodeInfo)
 
         Raises:
-            ContainerNotFoundError: If this container doesn't exist
-            ContainerTypeError: If site is not a container
+            ContainerNotFoundError: If this container doesn't exist (when validate=True)
+            ContainerTypeError: If site is not a container (when validate=True)
             StorageInterfaceError: If context doesn't support reads
         """
-        yield from container_ops.iter_children(self.site, self.ctx)
+        yield from container_ops.iter_children(self.site, self.ctx, validate=validate)
 
-    def count_children(self) -> int:
+    def count_children(self, *, validate: bool = False) -> int:
         """Count direct children.
+
+        Args:
+            validate: If True, validate this is a container (default False)
 
         Returns:
             Number of direct children
 
         Raises:
-            ContainerNotFoundError: If this container doesn't exist
-            ContainerTypeError: If site is not a container
+            ContainerNotFoundError: If this container doesn't exist (when validate=True)
+            ContainerTypeError: If site is not a container (when validate=True)
             StorageInterfaceError: If context doesn't support reads
         """
-        return container_ops.count_children(self.site, self.ctx)
+        return container_ops.count_children(self.site, self.ctx, validate=validate)
 
     # ========================================================================
     # CHILDREN: CREATE (Write operations)
@@ -288,6 +301,8 @@ class Container(NamedTuple):
         key: site_.SiteSegment,
         structure: ContainerStructure,
         protocol: ContainerProtocol,
+        *,
+        validate: bool = True,
     ) -> Container:
         """Create child container and return Container for it.
 
@@ -300,14 +315,15 @@ class Container(NamedTuple):
             key: Child key
             structure: Container structure ID
             protocol: Container protocol flags
+            validate: If True, validate this is a container (default True)
 
         Returns:
             Container instance for the child
 
         Raises:
             ContainerExistsError: If child exists with incompatible type
-            ContainerNotFoundError: If this container doesn't exist
-            ContainerTypeError: If this is not a container
+            ContainerNotFoundError: If this container doesn't exist (when validate=True)
+            ContainerTypeError: If this is not a container (when validate=True)
             StorageInterfaceError: If context doesn't support writes
         """
         container_ops.create_child_container(
@@ -316,6 +332,7 @@ class Container(NamedTuple):
             structure,
             protocol,
             self.ctx,
+            validate=validate,
         )
 
         child_site = (*self.site, key)
@@ -382,7 +399,7 @@ class Container(NamedTuple):
         """
         container_ops.delete_child(self.site, key, self.ctx)
 
-    def clear_children(self) -> None:
+    def clear_children(self, *, validate: bool = True) -> None:
         """Delete all direct children.
 
         Removes all children of this container. Container children are
@@ -390,12 +407,15 @@ class Container(NamedTuple):
 
         Idempotent: silent if no children exist.
 
+        Args:
+            validate: If True, validate this is a container (default True)
+
         Raises:
-            ContainerNotFoundError: If this container doesn't exist
-            ContainerTypeError: If this is not a container
+            ContainerNotFoundError: If this container doesn't exist (when validate=True)
+            ContainerTypeError: If this is not a container (when validate=True)
             StorageInterfaceError: If context doesn't support writes
         """
-        container_ops.clear_children(self.site, self.ctx)
+        container_ops.clear_children(self.site, self.ctx, validate=validate)
 
     # ========================================================================
     # DESCENDANTS: RECURSIVE READ-ONLY OPERATIONS
