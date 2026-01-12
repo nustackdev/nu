@@ -88,12 +88,12 @@ class TestNodeInfo:
         """Test creating NodeInfo with minimal required fields."""
         key = Mock()
         node_info = NodeInfo(
-            path=key,
+            site=key,
             exists=True,
             node_type=NodeType.PRIMITIVE,
         )
 
-        assert node_info.path is key
+        assert node_info.site is key
         assert node_info.exists is True
         assert node_info.node_type == NodeType.PRIMITIVE
 
@@ -106,7 +106,7 @@ class TestNodeInfo:
         primitive_value = "test_primitive"
 
         node_info = NodeInfo(
-            path=key,
+            site=key,
             exists=True,
             node_type=NodeType.CONTAINER,
             raw_value=raw_value,
@@ -115,7 +115,7 @@ class TestNodeInfo:
             primitive_value=primitive_value,
         )
 
-        assert node_info.path is key
+        assert node_info.site is key
         assert node_info.exists is True
         assert node_info.node_type == NodeType.CONTAINER
         assert node_info.raw_value == raw_value
@@ -127,7 +127,7 @@ class TestNodeInfo:
         """Test that default values are NOT_SET."""
         key = Mock()
         node_info = NodeInfo(
-            path=key,
+            site=key,
             exists=False,
             node_type=NodeType.NOT_FOUND,
         )
@@ -141,13 +141,13 @@ class TestNodeInfo:
         """Test accessing NodeInfo fields by index and name."""
         key = Mock()
         node_info = NodeInfo(
-            path=key,
+            site=key,
             exists=True,
             node_type=NodeType.PRIMITIVE,
         )
 
         # Access by name
-        assert node_info.path is key
+        assert node_info.site is key
         assert node_info.exists is True
         assert node_info.node_type == NodeType.PRIMITIVE
 
@@ -160,7 +160,7 @@ class TestNodeInfo:
         """Test that NodeInfo is immutable."""
         key = Mock()
         node_info = NodeInfo(
-            path=key,
+            site=key,
             exists=True,
             node_type=NodeType.PRIMITIVE,
         )
@@ -181,11 +181,11 @@ class TestParentInfo:
         """Test creating ParentInfo with minimal required fields."""
         key = Mock()
         parent_info = ParentInfo(
-            path=key,
+            site=key,
             exists=True,
         )
 
-        assert parent_info.path is key
+        assert parent_info.site is key
         assert parent_info.exists is True
 
     def test_parent_info_with_all_fields(self) -> None:
@@ -196,14 +196,14 @@ class TestParentInfo:
         raw_type_data = {"type": "dict"}
 
         parent_info = ParentInfo(
-            path=key,
+            site=key,
             exists=True,
             structure=container_structure,
             protocol=container_protocol,
             raw_type_data=raw_type_data,
         )
 
-        assert parent_info.path is key
+        assert parent_info.site is key
         assert parent_info.exists is True
         assert parent_info.structure == container_structure
         assert parent_info.protocol == container_protocol
@@ -213,7 +213,7 @@ class TestParentInfo:
         """Test that default values for optional fields are None or NOT_SET."""
         key = Mock()
         parent_info = ParentInfo(
-            path=key,
+            site=key,
             exists=False,
         )
 
@@ -225,7 +225,7 @@ class TestParentInfo:
         """Test ParentInfo for non-existent parent."""
         key = Mock()
         parent_info = ParentInfo(
-            path=key,
+            site=key,
             exists=False,
         )
 
@@ -237,12 +237,12 @@ class TestParentInfo:
         """Test accessing ParentInfo fields by index and name."""
         key = Mock()
         parent_info = ParentInfo(
-            path=key,
+            site=key,
             exists=True,
         )
 
         # Access by name
-        assert parent_info.path is key
+        assert parent_info.site is key
         assert parent_info.exists is True
 
         # Access by index
@@ -262,13 +262,13 @@ class TestParentChainInfo:
         """Test creating ParentChainInfo with empty chain."""
         chain_info = ParentChainInfo(
             chain=(),
-            missing_paths=(),
-            malformed_paths=(),
+            missing_sites=(),
+            malformed_sites=(),
         )
 
         assert chain_info.chain == ()
-        assert chain_info.missing_paths == ()
-        assert chain_info.malformed_paths == ()
+        assert chain_info.missing_sites == ()
+        assert chain_info.malformed_sites == ()
 
     def test_parent_chain_info_with_parents(self) -> None:
         """Test creating ParentChainInfo with multiple parents."""
@@ -276,99 +276,99 @@ class TestParentChainInfo:
         key2 = Mock()
         key3 = Mock()
 
-        parent1 = ParentInfo(path=key1, exists=True)
-        parent2 = ParentInfo(path=key2, exists=True)
-        parent3 = ParentInfo(path=key3, exists=False)
+        parent1 = ParentInfo(site=key1, exists=True)
+        parent2 = ParentInfo(site=key2, exists=True)
+        parent3 = ParentInfo(site=key3, exists=False)
 
         chain_info = ParentChainInfo(
             chain=(parent1, parent2, parent3),
-            missing_paths=(key3,),
-            malformed_paths=(),
+            missing_sites=(key3,),
+            malformed_sites=(),
         )
 
         assert len(chain_info.chain) == 3
-        assert chain_info.chain[0].path is key1
-        assert chain_info.chain[1].path is key2
-        assert chain_info.chain[2].path is key3
+        assert chain_info.chain[0].site is key1
+        assert chain_info.chain[1].site is key2
+        assert chain_info.chain[2].site is key3
 
     def test_parent_chain_all_exist_true_when_no_missing(self) -> None:
-        """Test all_exist property returns True when no missing paths."""
+        """Test all_exist property returns True when no missing sites."""
         key1 = Mock()
         key2 = Mock()
 
-        parent1 = ParentInfo(path=key1, exists=True)
-        parent2 = ParentInfo(path=key2, exists=True)
+        parent1 = ParentInfo(site=key1, exists=True)
+        parent2 = ParentInfo(site=key2, exists=True)
 
         chain_info = ParentChainInfo(
             chain=(parent1, parent2),
-            missing_paths=(),
-            malformed_paths=(),
+            missing_sites=(),
+            malformed_sites=(),
         )
 
         assert chain_info.all_exist is True
 
     def test_parent_chain_all_exist_false_when_missing(self) -> None:
-        """Test all_exist property returns False when missing paths."""
+        """Test all_exist property returns False when missing sites."""
         key1 = Mock()
         key2 = Mock()
 
-        parent1 = ParentInfo(path=key1, exists=True)
-        parent2 = ParentInfo(path=key2, exists=False)
+        parent1 = ParentInfo(site=key1, exists=True)
+        parent2 = ParentInfo(site=key2, exists=False)
 
         chain_info = ParentChainInfo(
             chain=(parent1, parent2),
-            missing_paths=(key2,),
-            malformed_paths=(),
+            missing_sites=(key2,),
+            malformed_sites=(),
         )
 
         assert chain_info.all_exist is False
 
     def test_parent_chain_all_healthy_true_when_no_malformed(self) -> None:
-        """Test all_healthy property returns True when no malformed paths."""
+        """Test all_healthy property returns True when no malformed sites."""
         key1 = Mock()
         key2 = Mock()
 
-        parent1 = ParentInfo(path=key1, exists=True)
-        parent2 = ParentInfo(path=key2, exists=True)
+        parent1 = ParentInfo(site=key1, exists=True)
+        parent2 = ParentInfo(site=key2, exists=True)
 
         chain_info = ParentChainInfo(
             chain=(parent1, parent2),
-            missing_paths=(),
-            malformed_paths=(),
+            missing_sites=(),
+            malformed_sites=(),
         )
 
         assert chain_info.all_healthy is True
 
     def test_parent_chain_all_healthy_false_when_malformed(self) -> None:
-        """Test all_healthy property returns False when malformed paths."""
+        """Test all_healthy property returns False when malformed sites."""
         key1 = Mock()
         key2 = Mock()
 
-        parent1 = ParentInfo(path=key1, exists=True)
-        parent2 = ParentInfo(path=key2, exists=True)
+        parent1 = ParentInfo(site=key1, exists=True)
+        parent2 = ParentInfo(site=key2, exists=True)
 
         chain_info = ParentChainInfo(
             chain=(parent1, parent2),
-            missing_paths=(),
-            malformed_paths=(key2,),
+            missing_sites=(),
+            malformed_sites=(key2,),
         )
 
         assert chain_info.all_healthy is False
 
     def test_parent_chain_properties_both_false(self) -> None:
-        """Test properties when both missing and malformed paths exist."""
+        """Test properties when both missing and malformed sites exist."""
         key1 = Mock()
         key2 = Mock()
         key3 = Mock()
 
-        parent1 = ParentInfo(path=key1, exists=True)
-        parent2 = ParentInfo(path=key2, exists=False)
-        parent3 = ParentInfo(path=key3, exists=True)
+        parent1 = ParentInfo(site=key1, exists=True)
+        parent2 = ParentInfo(site=key2, exists=False)
+        parent3 = ParentInfo(site=key3, exists=True)
 
         chain_info = ParentChainInfo(
             chain=(parent1, parent2, parent3),
-            missing_paths=(key2,),
-            malformed_paths=(key3,),
+            missing_sites=(key2,),
+            malformed_sites=(key3,),
         )
 
         assert chain_info.all_exist is False
@@ -377,18 +377,18 @@ class TestParentChainInfo:
     def test_parent_chain_info_field_access(self) -> None:
         """Test accessing ParentChainInfo fields by index and name."""
         key = Mock()
-        parent = ParentInfo(path=key, exists=True)
+        parent = ParentInfo(site=key, exists=True)
 
         chain_info = ParentChainInfo(
             chain=(parent,),
-            missing_paths=(),
-            malformed_paths=(),
+            missing_sites=(),
+            malformed_sites=(),
         )
 
         # Access by name
         assert chain_info.chain == (parent,)
-        assert chain_info.missing_paths == ()
-        assert chain_info.malformed_paths == ()
+        assert chain_info.missing_sites == ()
+        assert chain_info.malformed_sites == ()
 
         # Access by index
         assert chain_info[0] == (parent,)
@@ -721,7 +721,7 @@ class TestIntegration:
         protocol = ContainerProtocol.MUTABLE | ContainerProtocol.SIZED
 
         node_info = NodeInfo(
-            path=key,
+            site=key,
             exists=True,
             node_type=NodeType.CONTAINER,
             structure=structure,
@@ -744,27 +744,27 @@ class TestIntegration:
         protocol = ContainerProtocol.INDEXED
 
         parent1 = ParentInfo(
-            path=key1,
+            site=key1,
             exists=True,
             structure=structure,
             protocol=protocol,
         )
         parent2 = ParentInfo(
-            path=key2,
+            site=key2,
             exists=True,
             structure=structure,
             protocol=protocol,
         )
-        parent3 = ParentInfo(path=key3, exists=True)
+        parent3 = ParentInfo(site=key3, exists=True)
         parent4 = ParentInfo(
-            path=key4,
+            site=key4,
             exists=False,
         )
 
         chain_info = ParentChainInfo(
             chain=(parent1, parent2, parent3, parent4),
-            missing_paths=(key4,),
-            malformed_paths=(),
+            missing_sites=(key4,),
+            malformed_sites=(),
         )
 
         assert chain_info.all_exist is False

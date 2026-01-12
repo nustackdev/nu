@@ -1,6 +1,6 @@
-"""Validation layer for tree operations.
+"""Validation layer for container operations.
 
-This module enforces tree rules and constraints, providing both information
+This module enforces container rules and constraints, providing both information
 gathering and validation functions. Information functions gather data without
 making validation decisions, while validation functions check conditions and
 raise exceptions on failure.
@@ -11,13 +11,13 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from .exceptions import PathExistsError, PathNotFoundError, PathTypeError
+from .exceptions import ContainerExistsError, ContainerNotFoundError, ContainerTypeError
 from .node_ops import gather_parent_info, get_node_info, get_node_type
 from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, ParentChainInfo
 
 
 if TYPE_CHECKING:
-    from everyshape.loc import key
+    from everyshape.loc import site as site_
     from everyshape.storage import StorageContextType
 
 __all__ = [
@@ -35,162 +35,144 @@ logger = getLogger(__name__)
 
 
 def validate_exists(
-    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
+    site: site_.Site, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
-    """Validate that node exists at path.
+    """Validate that node exists at site.
 
     Args:
-        path: Path to validate
+        site: Site to validate
         ctx: Storage context (transaction or snapshot)
         node_type: Prefetched node type (optional)
 
     Raises:
-        PathNotFoundError: If node does not exist
-
-    Example:
-        >>> validate_exists(("users", "alice"), tx)  # Raises if not found
+        ContainerNotFoundError: If node does not exist
     """
-    node_type = get_node_type(path, ctx) if node_type is None else node_type
+    node_type = get_node_type(site, ctx) if node_type is None else node_type
     if node_type == NodeType.NOT_FOUND:
-        logger.warning("Validation failed: path does not exist", extra={"path": path})
-        raise PathNotFoundError(f"Path does not exist: {path}")
+        logger.warning("Validation failed: site does not exist", extra={"site": site})
+        raise ContainerNotFoundError(f"Site does not exist: {site}")
 
 
 def validate_not_exists(
-    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
+    site: site_.Site, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
-    """Validate that node does not exist at path.
+    """Validate that node does not exist at site.
 
     Args:
-        path: Path to validate
+        site: Site to validate
         ctx: Storage context (transaction or snapshot)
         node_type: Prefetched node type (optional)
 
     Raises:
-        PathExistsError: If node already exists
-
-    Example:
-        >>> validate_not_exists(("users", "new_user"), tx)  # Raises if exists
+        ContainerExistsError: If node already exists
     """
-    node_type = get_node_type(path, ctx) if node_type is None else node_type
+    node_type = get_node_type(site, ctx) if node_type is None else node_type
     if node_type != NodeType.NOT_FOUND:
         logger.warning(
-            "Validation failed: path already exists",
-            extra={"path": path, "node_type": node_type.name},
+            "Validation failed: site already exists",
+            extra={"site": site, "node_type": node_type.name},
         )
-        raise PathExistsError(f"Path already exists: {path}")
+        raise ContainerExistsError(f"Site already exists: {site}")
 
 
 def validate_is_container(
-    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
+    site: site_.Site, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
-    """Validate that path is a container.
+    """Validate that site is a container.
 
     Args:
-        path: Path to validate
+        site: Site to validate
         ctx: Storage context (transaction or snapshot)
         node_type: Prefetched node type (optional)
 
     Raises:
-        PathNotFoundError: If path does not exist
-        PathTypeError: If path is not a container
-
-    Example:
-        >>> validate_is_container(("users",), tx)  # Raises if not container
+        ContainerNotFoundError: If site does not exist
+        ContainerTypeError: If site is not a container
     """
-    node_type = get_node_type(path, ctx) if node_type is None else node_type
+    node_type = get_node_type(site, ctx) if node_type is None else node_type
     if node_type == NodeType.NOT_FOUND:
-        logger.warning("Validation failed: path does not exist", extra={"path": path})
-        raise PathNotFoundError(f"Path does not exist: {path}")
+        logger.warning("Validation failed: site does not exist", extra={"site": site})
+        raise ContainerNotFoundError(f"Site does not exist: {site}")
     if node_type != NodeType.CONTAINER:
         logger.warning(
-            "Validation failed: path is not a container",
-            extra={"path": path, "actual_type": node_type.name},
+            "Validation failed: site is not a container",
+            extra={"site": site, "actual_type": node_type.name},
         )
-        raise PathTypeError(f"Path is not a container: {path}")
+        raise ContainerTypeError(f"Site is not a container: {site}")
 
 
 def validate_is_primitive(
-    path: key.Key, ctx: StorageContextType, *, node_type: NodeType | None = None
+    site: site_.Site, ctx: StorageContextType, *, node_type: NodeType | None = None
 ) -> None:
-    """Validate that path is a primitive value.
+    """Validate that site is a primitive value.
 
     Args:
-        path: Path to validate
+        site: Site to validate
         ctx: Storage context (transaction or snapshot)
         node_type: Prefetched node type (optional)
 
     Raises:
-        PathNotFoundError: If path does not exist
-        PathTypeError: If path is not a primitive
-
-    Example:
-        >>> validate_is_primitive(("users", "alice", "name"), tx)  # Raises if not primitive
+        ContainerNotFoundError: If site does not exist
+        ContainerTypeError: If site is not a primitive
     """
-    node_type = get_node_type(path, ctx) if node_type is None else node_type
+    node_type = get_node_type(site, ctx) if node_type is None else node_type
     if node_type == NodeType.NOT_FOUND:
-        logger.warning("Validation failed: path does not exist", extra={"path": path})
-        raise PathNotFoundError(f"Path does not exist: {path}")
+        logger.warning("Validation failed: site does not exist", extra={"site": site})
+        raise ContainerNotFoundError(f"Site does not exist: {site}")
     if node_type != NodeType.PRIMITIVE:
         logger.warning(
-            "Validation failed: path is not a primitive",
-            extra={"path": path, "actual_type": node_type.name},
+            "Validation failed: site is not a primitive",
+            extra={"site": site, "actual_type": node_type.name},
         )
-        raise PathTypeError(f"Path is not a primitive: {path}")
+        raise ContainerTypeError(f"Site is not a primitive: {site}")
 
 
 def validate_parents_exist(
-    path: key.Key, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
+    site: site_.Site, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
 ) -> None:
     """Validate that all parent containers exist.
 
     Args:
-        path: Path to validate parents for
+        site: Site to validate parents for
         ctx: Storage context (transaction or snapshot)
         parent_info: Prefetched parent chain info (optional)
 
     Raises:
-        PathNotFoundError: If any parent containers are missing
-
-    Example:
-        >>> validate_parents_exist(("users", "alice", "profile"), tx)
+        ContainerNotFoundError: If any parent containers are missing
     """
-    parent_info = gather_parent_info(path, ctx) if parent_info is None else parent_info
+    parent_info = gather_parent_info(site, ctx) if parent_info is None else parent_info
     if not parent_info.all_exist:
         logger.warning(
             "Validation failed: missing parent containers",
-            extra={"path": path, "missing_paths": parent_info.missing_paths},
+            extra={"site": site, "missing_sites": parent_info.missing_sites},
         )
-        raise PathNotFoundError(f"Missing parent containers: {parent_info.missing_paths}")
+        raise ContainerNotFoundError(f"Missing parent containers: {parent_info.missing_sites}")
 
 
 def validate_parents_healthy(
-    path: key.Key, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
+    site: site_.Site, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
 ) -> None:
     """Validate that all parent containers have well-formed markers.
 
     Args:
-        path: Path to validate parents for
+        site: Site to validate parents for
         ctx: Storage context (transaction or snapshot)
         parent_info: Prefetched parent chain info (optional)
 
     Raises:
-        PathTypeError: If any parent containers have malformed data
-
-    Example:
-        >>> validate_parents_healthy(("users", "alice", "profile"), tx)
+        ContainerTypeError: If any parent containers have malformed data
     """
-    parent_info = gather_parent_info(path, ctx) if parent_info is None else parent_info
+    parent_info = gather_parent_info(site, ctx) if parent_info is None else parent_info
     if not parent_info.all_healthy:
         logger.error(
             "Validation failed: malformed parent containers",
-            extra={"path": path, "malformed_paths": parent_info.malformed_paths},
+            extra={"site": site, "malformed_sites": parent_info.malformed_sites},
         )
-        raise PathTypeError(f"Malformed parent containers: {parent_info.malformed_paths}")
+        raise ContainerTypeError(f"Malformed parent containers: {parent_info.malformed_sites}")
 
 
 def validate_parents_chain(
-    path: key.Key, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
+    site: site_.Site, ctx: StorageContextType, *, parent_info: ParentChainInfo | None = None
 ) -> None:
     """Validate complete parent chain (existence + health).
 
@@ -198,36 +180,33 @@ def validate_parents_chain(
     and have well-formed data.
 
     Args:
-        path: Path to validate parents for
+        site: Site to validate parents for
         ctx: Storage context (transaction or snapshot)
         parent_info: Prefetched parent chain info (optional)
 
     Raises:
-        PathNotFoundError: If any parent containers are missing
-        PathTypeError: If any parent containers have malformed data
-
-    Example:
-        >>> validate_parents_chain(("users", "alice", "profile"), tx)
+        ContainerNotFoundError: If any parent containers are missing
+        ContainerTypeError: If any parent containers have malformed data
     """
-    parent_info = gather_parent_info(path, ctx) if parent_info is None else parent_info
+    parent_info = gather_parent_info(site, ctx) if parent_info is None else parent_info
 
     if not parent_info.all_exist:
         logger.warning(
             "Validation failed: parent chain broken, missing containers",
-            extra={"path": path, "missing_paths": parent_info.missing_paths},
+            extra={"site": site, "missing_sites": parent_info.missing_sites},
         )
-        raise PathNotFoundError(f"Missing parent containers: {parent_info.missing_paths}")
+        raise ContainerNotFoundError(f"Missing parent containers: {parent_info.missing_sites}")
 
     if not parent_info.all_healthy:
         logger.error(
             "Validation failed: parent chain broken, malformed containers",
-            extra={"path": path, "malformed_paths": parent_info.malformed_paths},
+            extra={"site": site, "malformed_sites": parent_info.malformed_sites},
         )
-        raise PathTypeError(f"Malformed parent containers: {parent_info.malformed_paths}")
+        raise ContainerTypeError(f"Malformed parent containers: {parent_info.malformed_sites}")
 
 
 def validate_compatible(
-    path: key.Key,
+    site: site_.Site,
     expected_structure: ContainerStructure,
     expected_protocol: ContainerProtocol,
     ctx: StorageContextType,
@@ -241,53 +220,48 @@ def validate_compatible(
     to allow subset matching.
 
     Args:
-        path: Container path to validate
+        site: Container site to validate
         expected_structure: Required structure ID
         expected_protocol: Required protocol flags (bitwise match)
         ctx: Storage context (transaction or snapshot)
         node_info: Prefetched node info (optional)
 
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If type mismatch or malformed data
-
-    Example:
-        >>> validate_compatible(
-        ...     ("users",), ContainerStructure(1), ContainerProtocol.MUTABLE, tx
-        ... )
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If type mismatch or malformed data
     """
-    node_info = get_node_info(path, ctx) if node_info is None else node_info
+    node_info = get_node_info(site, ctx) if node_info is None else node_info
 
     if not node_info.exists:
-        logger.warning("Validation failed: container does not exist", extra={"path": path})
-        raise PathNotFoundError(f"Container does not exist: {path}")
+        logger.warning("Validation failed: container does not exist", extra={"site": site})
+        raise ContainerNotFoundError(f"Container does not exist: {site}")
 
     if node_info.node_type != NodeType.CONTAINER:
         logger.warning(
-            "Validation failed: path is not a container",
-            extra={"path": path, "actual_type": node_info.node_type.name},
+            "Validation failed: site is not a container",
+            extra={"site": site, "actual_type": node_info.node_type.name},
         )
-        raise PathTypeError(f"Path is not a container: {path}")
+        raise ContainerTypeError(f"Site is not a container: {site}")
 
     if node_info.structure is None or node_info.protocol is None:
         logger.error(
             "Validation failed: container has malformed data",
-            extra={"path": path, "structure": node_info.structure, "protocol": node_info.protocol},
+            extra={"site": site, "structure": node_info.structure, "protocol": node_info.protocol},
         )
-        raise PathTypeError(f"Container has malformed data: {path}")
+        raise ContainerTypeError(f"Container has malformed data: {site}")
 
     # Structure must match exactly
     if node_info.structure != expected_structure:
         logger.warning(
             "Validation failed: structure mismatch",
             extra={
-                "path": path,
+                "site": site,
                 "expected_structure": expected_structure,
                 "actual_structure": node_info.structure,
             },
         )
-        raise PathTypeError(
-            f"Structure mismatch at {path}: expected {expected_structure}, got {node_info.structure}"
+        raise ContainerTypeError(
+            f"Structure mismatch at {site}: expected {expected_structure}, got {node_info.structure}"
         )
 
     # Protocol must have at least one common flag
@@ -295,11 +269,11 @@ def validate_compatible(
         logger.warning(
             "Validation failed: protocol mismatch",
             extra={
-                "path": path,
+                "site": site,
                 "expected_protocol": expected_protocol,
                 "actual_protocol": node_info.protocol,
             },
         )
-        raise PathTypeError(
-            f"Protocol mismatch at {path}: expected {expected_protocol}, got {node_info.protocol}"
+        raise ContainerTypeError(
+            f"Protocol mismatch at {site}: expected {expected_protocol}, got {node_info.protocol}"
         )

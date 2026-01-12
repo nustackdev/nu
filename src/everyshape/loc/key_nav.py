@@ -1,12 +1,17 @@
-"""Key traversal and navigation operations.
+"""Key construction and flat operations.
 
-This module provides pure key manipulation functions with no storage access.
-All functions are stateless and can be safely cached or memoized.
+This module provides pure key manipulation functions for the Storage layer.
+Keys are raw tuple coordinates without hierarchical semantics.
+
+For hierarchical operations (ancestors, descendants, etc.), use the site module.
+
+Key vs Site semantics:
+    - Key: flat storage coordinates, construction and join operations
+    - Site: hierarchical place, ancestor/descendant relationships
 
 Performance notes:
-- All operations are pure functions on tuples
-- Heavy use of tuple slicing which is highly optimized in CPython
-- Short-circuit evaluation for boolean checks
+    - All operations are pure functions on tuples
+    - Highly optimized tuple operations in CPython
 """
 
 from __future__ import annotations
@@ -21,14 +26,7 @@ __all__ = [
     "DATA_ROOT",
     "METADATA_ROOT",
     "create_key",
-    "get_ancestors",
-    "get_common_ancestor",
     "get_depth",
-    "get_key_chain",
-    "get_parent",
-    "is_ancestor",
-    "is_descendant",
-    "is_sibling",
     "join_key",
     "join_segment",
     "to_meta",
@@ -41,17 +39,19 @@ METADATA_ROOT: str = "/m"
 
 
 def create_key(*segments: KeySegment) -> Key:
-    """Creata a key from given segments.
+    """Create a key from given segments with data root.
 
     Args:
         *segments: Key segments
 
     Returns:
-        Single key (includes tree root </>)
+        Key tuple with DATA_ROOT prefix
 
     Example:
-        >>> get_parent(("users", "alice"))
+        >>> create_key("users", "alice")
         ("/", "users", "alice")
+        >>> create_key()
+        ("/",)
     """
     return (DATA_ROOT, *segments)
 
@@ -59,11 +59,13 @@ def create_key(*segments: KeySegment) -> Key:
 def to_meta(key: Key) -> Key:
     """Convert a key to its metadata equivalent.
 
+    Replaces the root marker with METADATA_ROOT.
+
     Args:
-        key: Key tuple
+        key: Key tuple (must start with DATA_ROOT)
 
     Returns:
-        tuple: New key with metadata root marker
+        Key with metadata root marker
 
     Example:
         >>> key = create_key("users", "alice")
@@ -71,163 +73,24 @@ def to_meta(key: Key) -> Key:
         ("/", "users", "alice")
         >>> to_meta(key)
         ("/m", "users", "alice")
-        ```
     """
     return (METADATA_ROOT, *key[1:])
 
 
-def get_parent(key: Key) -> Key | None:
-    """Get parent key.
-
-    Args:
-        key: Key to get parent of
-
-    Returns:
-        Parent key, or None for empty key
-
-    Example:
-        >>> get_parent(("users", "alice"))
-        ("users",)
-        >>> get_parent(())
-        None
-    """
-    if len(key) <= 1:
-        return None
-
-    return key[:-1]
-
-
-def get_ancestors(key: Key) -> list[Key]:
-    """Get all ancestors from root to immediate parent.
-
-    Returns ancestors in order from root (empty tuple) to immediate parent.
-    Does not include the key itself.
-
-    Args:
-        key: Key to get ancestors of
-
-    Returns:
-        List of ancestor keys, empty list for root
-
-    Example:
-        >>> get_ancestors(("users", "alice", "profile"))
-        [(), ("users",), ("users", "alice")]
-    """
-    if len(key) <= 1:
-        return []
-
-    ancestors = []
-    current = key[:-1]  # Start with immediate parent
-
-    while current is not None:
-        ancestors.append(current)
-        current = get_parent(current)
-
-    return list(reversed(ancestors))
-
-
-def get_key_chain(key: Key) -> list[Key]:
-    """Get complete key chain from root to target.
-
-    Returns all keys from root to target, including the target itself.
-
-    Args:
-        key: Target key
-
-    Returns:
-        List of keys from root to target (inclusive)
-
-    Example:
-        >>> get_key_chain(("users", "alice"))
-        [(), ("users",), ("users", "alice")]
-    """
-    chain = get_ancestors(key)
-    chain.append(key)
-    return chain
-
-
-def is_ancestor(parent: Key, child: Key) -> bool:
-    """Check if parent is ancestor of child.
-
-    A key is considered an ancestor if it's a prefix of the child key
-    and strictly shorter.
-
-    Args:
-        parent: Potential ancestor key
-        child: Potential descendant key
-
-    Returns:
-        True if parent is ancestor of child
-
-    Example:
-        >>> is_ancestor(("users",), ("users", "alice"))
-        True
-        >>> is_ancestor(("users", "alice"), ("users",))
-        False
-    """
-    # Hot key optimization: check length first (cheap), then slice (more expensive)
-    return len(parent) < len(child) and child[: len(parent)] == parent
-
-
-def is_descendant(child: Key, parent: Key) -> bool:
-    """Check if child is descendant of parent.
-
-    Convenience wrapper around is_ancestor with reversed arguments.
-
-    Args:
-        child: Potential descendant key
-        parent: Potential ancestor key
-
-    Returns:
-        True if child is descendant of parent
-
-    Example:
-        >>> is_descendant(("users", "alice"), ("users",))
-        True
-    """
-    return is_ancestor(parent, child)
-
-
-def is_sibling(key1: Key, key2: Key) -> bool:
-    """Check if two keys are siblings.
-
-    Siblings share the same parent key and are at the same depth.
-
-    Args:
-        key1: First key
-        key2: Second key
-
-    Returns:
-        True if keys are siblings
-
-    Example:
-        >>> is_sibling(("users", "alice"), ("users", "bob"))
-        True
-        >>> is_sibling(("users", "alice"), ("posts", "1"))
-        False
-    """
-    # Must be same depth (non-zero) and same parent
-    if not key1 or not key2:
-        return False
-    if len(key1) != len(key2):
-        return False
-    return key1[:-1] == key2[:-1]
-
-
 def get_depth(key: Key) -> int:
-    """Get depth of key.
-
-    Depth is the number of segments in the key. Root (empty tuple) has depth 0.
+    """Get depth (length) of key.
 
     Args:
         key: Key to measure
 
     Returns:
-        Depth (length) of key
+        Number of segments in the key
 
     Example:
         >>> get_depth(())
         0
+        >>> get_depth(("users",))
+        1
         >>> get_depth(("users", "alice"))
         2
     """
@@ -251,6 +114,8 @@ def join_key(*segments: KeySegment | Key) -> Key:
         ("users", "alice")
         >>> join_key(("users",), "alice", "profile")
         ("users", "alice", "profile")
+        >>> join_key(("a", "b"), ("c", "d"))
+        ("a", "b", "c", "d")
     """
     result = []
     for segment in segments:
@@ -262,46 +127,19 @@ def join_key(*segments: KeySegment | Key) -> Key:
 
 
 def join_segment(key: Key, *segments: KeySegment) -> Key:
-    """Join key segments into a single key.
-
-    Adds new segments to the original key.
+    """Append segments to a key.
 
     Args:
-        key: Original key
-        *segments: Components to join
+        key: Base key
+        *segments: Segments to append
 
     Returns:
-        Combined key as tuple
-    """
-    return key + segments
-
-
-def get_common_ancestor(key1: Key, key2: Key) -> Key:
-    """Find lowest common ancestor of two keys.
-
-    Returns the deepest key that is an ancestor of both input keys.
-
-    Args:
-        key1: First key
-        key2: Second key
-
-    Returns:
-        Common ancestor key (may be empty tuple for root)
+        Key with segments appended
 
     Example:
-        >>> get_common_ancestor(("users", "alice", "posts"), ("users", "bob"))
-        ("users",)
-        >>> get_common_ancestor(("users", "alice"), ("posts", "1"))
-        ()
+        >>> join_segment(("users",), "alice")
+        ("users", "alice")
+        >>> join_segment(("/",), "users", "alice")
+        ("/", "users", "alice")
     """
-    # Find common prefix
-    min_len = min(len(key1), len(key2))
-    common_len = 0
-
-    for i in range(min_len):
-        if key1[i] == key2[i]:
-            common_len = i + 1
-        else:
-            break
-
-    return key1[:common_len]
+    return key + segments

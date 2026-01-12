@@ -1,7 +1,7 @@
-"""Tree layer type definitions and data structures.
+"""Container layer type definitions and data structures.
 
 This module defines the core types, enums, and data structures used throughout
-the tree layer. All data structures are immutable to ensure thread safety and enable safe caching.
+the container layer. All data structures are immutable to ensure thread safety and enable safe caching.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from everyshape.storage import (
 
 
 if TYPE_CHECKING:
-    from everyshape.loc import key
+    from everyshape.loc import site as site_
     from everyshape.types import Value
 
 
@@ -51,12 +51,12 @@ __all__ = [
 
 
 class NodeType(Enum):
-    """Node type classification in the tree hierarchy.
+    """Node type classification in the container hierarchy.
 
     Attributes:
         CONTAINER: Node that can have children (internal node)
         PRIMITIVE: Leaf node with a value
-        NOT_FOUND: Path does not exist in storage
+        NOT_FOUND: Site does not exist in storage
     """
 
     PRIMITIVE = auto()
@@ -68,13 +68,13 @@ class NodeType(Enum):
 
 
 class NodeInfo(NamedTuple):
-    """Complete information about a node in the tree.
+    """Complete information about a node at a site.
 
     This data structure contains all available information about a node,
     including its existence, type, and type-specific attributes.
 
     Attributes:
-        path: Location of the node in the tree
+        site: Location of the node
         exists: Whether the node exists in storage
         node_type: Classification of the node (container/primitive/not_found)
         raw_value: Raw value from storage (may be marker or primitive)
@@ -83,7 +83,7 @@ class NodeInfo(NamedTuple):
         primitive_value: Actual value for primitives (None for containers)
     """
 
-    path: key.Key
+    site: site_.Site
     exists: bool
     node_type: NodeType
     raw_value: Value | NotSet = NOT_SET
@@ -97,19 +97,19 @@ class NodeInfo(NamedTuple):
 
 
 class ParentInfo(NamedTuple):
-    """Information about a parent node in the tree hierarchy.
+    """Information about a parent node in the container hierarchy.
 
     Used when gathering information about the parent chain of a node.
 
     Attributes:
-        path: Location of the parent node
+        site: Location of the parent node
         exists: Whether the parent exists in storage
         structure: Container structure type (None if malformed or missing)
         protocol: Container protocol flags (None if malformed or missing)
         raw_type_data: Raw value from storage (for debugging malformed data)
     """
 
-    path: key.Key
+    site: site_.Site
     exists: bool
     structure: ContainerStructure | None = None
     protocol: ContainerProtocol | None = None
@@ -124,27 +124,27 @@ class ParentChainInfo(NamedTuple):
 
     Attributes:
         chain: Complete parent chain from root to immediate parent
-        missing_paths: Paths that don't exist in storage
-        malformed_paths: Paths with corrupted or invalid data
+        missing_sites: Sites that don't exist in storage
+        malformed_sites: Sites with corrupted or invalid data
     """
 
     chain: tuple[ParentInfo, ...]
-    missing_paths: tuple[key.Key, ...]
-    malformed_paths: tuple[key.Key, ...]
+    missing_sites: tuple[site_.Site, ...]
+    malformed_sites: tuple[site_.Site, ...]
 
     @property
     def all_exist(self) -> bool:
         """Check if all parents exist in storage."""
-        return len(self.missing_paths) == 0
+        return len(self.missing_sites) == 0
 
     @property
     def all_healthy(self) -> bool:
         """Check if all parents have well-formed data."""
-        return len(self.malformed_paths) == 0
+        return len(self.malformed_sites) == 0
 
 
 # ========================================================
-# Continer-related types
+# Container-related types
 # ========================================================
 
 ContainerStructure = NewType("ContainerStructure", int)  # Container structure type: dict, list, etc
@@ -205,10 +205,6 @@ def require_read_context(ctx: object) -> ReadAccessProtocol:
 
     Raises:
         StorageInterfaceError: If context doesn't support read operations
-
-    Example:
-        ctx = require_read_context(self.ctx)
-        value = ctx.get(path)
     """
     if not isinstance(ctx, ReadAccessProtocol):
         raise StorageInterfaceError(
@@ -230,10 +226,6 @@ def require_write_context(ctx: object) -> WriteAccessProtocol:
 
     Raises:
         StorageInterfaceError: If context doesn't support write operations
-
-    Example:
-        ctx = require_write_context(self.ctx)
-        ctx.put(path, value)
     """
     if not isinstance(ctx, WriteAccessProtocol):
         raise StorageInterfaceError(
@@ -255,11 +247,6 @@ def require_readwrite_context(ctx: object) -> ReadWriteAccessProtocol:
 
     Raises:
         StorageInterfaceError: If context doesn't support both protocols
-
-    Example:
-        ctx = require_readwrite_context(self.ctx)
-        old_value = ctx.get(path)
-        ctx.put(path, new_value)
     """
     if not isinstance(ctx, ReadWriteAccessProtocol):
         raise StorageInterfaceError(
@@ -281,10 +268,6 @@ def require_transaction(ctx: object) -> TransactionProtocol:
 
     Raises:
         StorageInterfaceError: If context is not a transaction
-
-    Example:
-        ctx = require_transaction(self.ctx)
-        ctx.commit()
     """
     if not isinstance(ctx, TransactionProtocol):
         raise StorageInterfaceError(
@@ -306,10 +289,6 @@ def require_snapshot(ctx: object) -> SnapshotProtocol:
 
     Raises:
         StorageInterfaceError: If context is not a snapshot
-
-    Example:
-        ctx = require_snapshot(self.ctx)
-        # Use snapshot-specific operations
     """
     if not isinstance(ctx, SnapshotProtocol):
         raise StorageInterfaceError(
@@ -331,10 +310,6 @@ def require_write_batch(ctx: object) -> WriteBatchProtocol:
 
     Raises:
         StorageInterfaceError: If context is not a write batch
-
-    Example:
-        ctx = require_write_batch(self.ctx)
-        ctx.apply()
     """
     if not isinstance(ctx, WriteBatchProtocol):
         raise StorageInterfaceError(

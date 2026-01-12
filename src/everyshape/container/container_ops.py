@@ -1,8 +1,10 @@
-"""Container operations for tree layer.
+"""Container operations for container layer.
 
 This module provides container lifecycle management, child operations, and
-tree traversal functionality. All operations work directly with storage and
+traversal functionality. All operations work directly with storage and
 delegate validation to the validation module.
+
+All mutations are silent (return None) and idempotent.
 """
 
 from __future__ import annotations
@@ -10,11 +12,11 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
-from everyshape.loc import key as key_
+from everyshape.loc import site as site_
 from everyshape.storage import LengthFilter, PrefixFilter, StorageScanOptions
 from everyshape.types import EMPTY, Empty, Value
 
-from .exceptions import InvalidDepthError, PathExistsError, PathTypeError
+from .exceptions import ContainerExistsError, ContainerInvalidDepthError, ContainerTypeError
 from .marker import create_marker, is_marker
 from .node_ops import get_node_info, get_node_type
 from .types import (
@@ -50,14 +52,16 @@ __all__ = [
     "create_parents",
     "delete_child",
     "delete_container",
-    "delete_subtree",
+    "delete_descendants",
+    "exists_child",
+    "get_child_primitive",
     "get_child_type",
-    "has_child",
-    "list_child_keys",
-    "list_children",
-    "list_descendants",
-    "set_child_primitive",
-    "walk_tree",
+    "iter_child_keys",
+    "iter_child_values",
+    "iter_children",
+    "iter_descendants",
+    "put_child_primitive",
+    "walk_descendants",
 ]
 
 
@@ -69,7 +73,7 @@ logger = getLogger(__name__)
 
 
 def create_container(
-    path: key_.Key,
+    site: site_.Site,
     structure: ContainerStructure,
     protocol: ContainerProtocol,
     ctx: StorageContextType,
@@ -77,11 +81,13 @@ def create_container(
     default_parent_structure: ContainerStructure = DEFAULT_PARENT_STRUCTURE,
     default_parent_protocol: ContainerProtocol = DEFAULT_PARENT_PROTOCOL,
     ensure_healthy_parents: bool = True,
-) -> bool:
-    """Create container at path.
+) -> None:
+    """Create container at site.
+
+    Idempotent: silent if container already exists with compatible type.
 
     Args:
-        path: Container path
+        site: Container site
         structure: Container structure ID
         protocol: Container protocol flags
         ctx: Storage context (transaction)
@@ -89,64 +95,67 @@ def create_container(
         default_parent_protocol: Container protocol for parent containers
         ensure_healthy_parents: Validate parents chain, create non-existent parents
 
-    Returns:
-        True if created, False if already exists with compatible type
-
     Raises:
-        PathExistsError: If exists with incompatible type
-        PathNotFoundError: If parents missing and create_parents=False
-        PathTypeError: If type conflicts prevent creation
+        ContainerExistsError: If exists with incompatible type
+        ContainerNotFoundError: If parents missing and ensure_healthy_parents=False
+        ContainerTypeError: If type conflicts prevent creation
         StorageInterfaceError: If context doesn't support required operations
 
     Example:
+        >>> from everyshape.container import (
+        ...     create_container,
+        ...     ContainerStructure,
+        ...     ContainerProtocol,
+        ... )
+        >>> # Create a root container with parents auto-created
         >>> create_container(
         ...     ("users", "alice"),
         ...     ContainerStructure(1),
         ...     ContainerProtocol.MUTABLE,
         ...     tx,
-        ...     create_parents=True,
+        ...     ensure_healthy_parents=True,
         ... )
-        True
+        >>> # Container at ("users",) is auto-created as parent
     """
     # Check if already exists
-    node_info = get_node_info(path, ctx)
+    node_info = get_node_info(site, ctx)
 
     # Validate type consistency if node already exists
     if node_info.exists:
         # Primitive check
         if node_info.node_type != NodeType.CONTAINER:
             logger.error(
-                "Path exists as primitive, cannot create container",
-                extra={"path": path, "node_type": node_info.node_type.name},
+                "Site exists as primitive, cannot create container",
+                extra={"site": site, "node_type": node_info.node_type.name},
             )
-            raise PathTypeError(f"Path exists as primitive: {path}")
+            raise ContainerTypeError(f"Site exists as primitive: {site}")
 
         # Existing container type compatibility
         try:
-            validate_compatible(path, structure, protocol, ctx, node_info=node_info)
+            validate_compatible(site, structure, protocol, ctx, node_info=node_info)
             logger.debug(
                 "Container already exists with compatible type",
-                extra={"path": path, "structure": structure, "protocol": protocol},
+                extra={"site": site, "structure": structure, "protocol": protocol},
             )
-            return False  # Already exists with compatible type
-        except PathTypeError:
+            return  # Already exists with compatible type
+        except ContainerTypeError:
             logger.error(
                 "Container exists with incompatible type",
-                extra={"path": path, "structure": structure, "protocol": protocol},
+                extra={"site": site, "structure": structure, "protocol": protocol},
             )
-            raise PathExistsError(f"Container exists with incompatible type: {path}") from None
+            raise ContainerExistsError(f"Container exists with incompatible type: {site}") from None
 
     # Ensure parents chain is healthy
     if ensure_healthy_parents:
-        parent_info = gather_parent_info(path, ctx)
+        parent_info = gather_parent_info(site, ctx)
 
         # Validate existing parents are healthy
-        validate_parents_healthy(path, ctx, parent_info=parent_info)
+        validate_parents_healthy(site, ctx, parent_info=parent_info)
 
         # Create missing parents
-        if parent_info.missing_paths:
+        if parent_info.missing_sites:
             create_parents(
-                path,
+                site,
                 default_parent_structure,
                 default_parent_protocol,
                 ctx,
@@ -156,86 +165,71 @@ def create_container(
     marker = create_marker(structure, protocol)
 
     wctx = require_write_context(ctx)
-    wctx.put(path, marker)
+    wctx.put(site, marker)
 
     logger.info(
         "Container created",
-        extra={"path": path, "structure": structure, "protocol": protocol},
+        extra={"site": site, "structure": structure, "protocol": protocol},
     )
-    return True
 
 
 def delete_container(
-    path: key_.Key,
+    site: site_.Site,
     ctx: StorageContextType,
-) -> bool:
-    """Delete container.
+) -> None:
+    """Delete container and all descendants.
+
+    Idempotent: silent if container doesn't exist.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction)
-        recursive: If True, delete all children first
-
-    Returns:
-        True if deleted, False if didn't exist
 
     Raises:
-        PathTypeError: If path is not a container
+        ContainerTypeError: If site exists but is not a container
         StorageInterfaceError: If context doesn't support required operations
-
-    Example:
-        >>> delete_container(("users", "alice"), tx, recursive=True)
-        True
     """
-    info = get_node_info(path, ctx)
+    info = get_node_info(site, ctx)
     if not info.exists:
-        logger.debug("Cannot delete container, path does not exist", extra={"path": path})
-        return False
+        logger.debug("Container does not exist, nothing to delete", extra={"site": site})
+        return
 
     if info.node_type != NodeType.CONTAINER:
         logger.error(
-            "Cannot delete container, path is not a container",
-            extra={"path": path, "node_type": info.node_type.name},
+            "Cannot delete container, site is not a container",
+            extra={"site": site, "node_type": info.node_type.name},
         )
-        raise PathTypeError(f"Path is not a container: {path}")
+        raise ContainerTypeError(f"Site is not a container: {site}")
 
-    return delete_subtree(path, ctx) > 0
+    delete_descendants(site, ctx)
 
 
-def delete_subtree(path: key_.Key, ctx: StorageContextType) -> int:
-    """Delete container and all descendants.
+def delete_descendants(site: site_.Site, ctx: StorageContextType) -> None:
+    """Delete site and all descendants.
+
+    Idempotent: silent if nothing exists at site.
 
     Args:
-        path: Container path
+        site: Site to delete (with all descendants)
         ctx: Storage context (transaction)
-
-    Returns:
-        Number of nodes deleted
 
     Raises:
         StorageInterfaceError: If context doesn't support required operations
-
-    Example:
-        >>> count = delete_subtree(("users", "alice"), tx)
-        >>> print(f"Deleted {count} nodes")
     """
     rwctx = require_readwrite_context(ctx)
 
-    # Scan all descendants (including path itself)
-    prefix = PrefixFilter(prefix=path)
+    # Scan all descendants (including site itself)
+    prefix = PrefixFilter(prefix=site)
     scan_opts = StorageScanOptions(
-        start=path,
+        start=site,
         break_filter=prefix,
         filter=prefix,
     )
 
-    deleted_count = 0
     for key in rwctx.scan(scan_opts).keys():
         rwctx.delete(key)
-        deleted_count += 1
 
-    logger.info("Subtree deleted", extra={"path": path, "deleted_count": deleted_count})
-    return deleted_count
+    logger.debug("Descendants deleted", extra={"site": site})
 
 
 # ============================================================================
@@ -243,11 +237,11 @@ def delete_subtree(path: key_.Key, ctx: StorageContextType) -> int:
 # ============================================================================
 
 
-def has_child(path: key_.Key, key: key_.KeySegment, ctx: StorageContextType) -> bool:
+def exists_child(site: site_.Site, key: site_.SiteSegment, ctx: StorageContextType) -> bool:
     """Check if direct child exists.
 
     Args:
-        path: Container path
+        site: Container site
         key: Child key
         ctx: Storage context (transaction or snapshot)
 
@@ -258,66 +252,62 @@ def has_child(path: key_.Key, key: key_.KeySegment, ctx: StorageContextType) -> 
         StorageInterfaceError: If context doesn't support read access
 
     Example:
-        >>> has_child(("users", "alice"), "profile", tx)
+        >>> exists_child(("users",), "alice", tx)
         True
+        >>> exists_child(("users",), "unknown", tx)
+        False
     """
-    child_path = key_.join_segment(path, key)
-    child_type = get_node_type(child_path, ctx)
+    child_site = site_.join_segment(site, key)
+    child_type = get_node_type(child_site, ctx)
     return child_type != NodeType.NOT_FOUND
 
 
-def get_child_type(path: key_.Key, key: key_.KeySegment, ctx: StorageContextType) -> NodeType:
+def get_child_type(site: site_.Site, key: site_.SiteSegment, ctx: StorageContextType) -> NodeType:
     """Get type of direct child.
 
     Args:
-        path: Container path
+        site: Container site
         key: Child key
         ctx: Storage context (transaction or snapshot)
 
     Returns:
-        NodeType of child
+        NodeType of child (CONTAINER, PRIMITIVE, or NOT_FOUND)
 
     Raises:
         StorageInterfaceError: If context doesn't support read access
-
-    Example:
-        >>> child_type = get_child_type(("users", "alice"), "profile", tx)
-        >>> if child_type == NodeType.CONTAINER:
-        ...     print("Child is a container")
     """
-    child_path = key_.join_segment(path, key)
-    return get_node_type(child_path, ctx)
+    child_site = site_.join_segment(site, key)
+    return get_node_type(child_site, ctx)
 
 
-def list_child_keys(
-    path: key_.Key, ctx: StorageContextType
-) -> Generator[key_.KeySegment, None, None]:
-    """List direct child keys only.
+def iter_child_keys(
+    site: site_.Site, ctx: StorageContextType
+) -> Generator[site_.SiteSegment, None, None]:
+    """Iterate over direct child keys.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction or snapshot)
 
-    Returns:
-        List of child keys
+    Yields:
+        Child keys (last segment of each child site)
 
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If path is not a container
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If site is not a container
         StorageInterfaceError: If context doesn't support read access
 
     Example:
-        >>> keys = list_child_keys(("users", "alice"), tx)
-        >>> print(keys)
-        ["profile", "settings", "posts"]
+        >>> list(iter_child_keys(("users",), tx))
+        ["alice", "bob", "charlie"]
     """
-    validate_is_container(path, ctx)
+    validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
-    prefix = PrefixFilter(prefix=path)
-    child_len = LengthFilter(length=len(path) + 1)
+    prefix = PrefixFilter(prefix=site)
+    child_len = LengthFilter(length=len(site) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
+        start=site,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -326,28 +316,28 @@ def list_child_keys(
         yield key[-1]
 
 
-def list_child_values(path: key_.Key, ctx: StorageContextType) -> Generator[NodeInfo, None, None]:
-    """List direct child values only.
+def iter_child_values(site: site_.Site, ctx: StorageContextType) -> Generator[NodeInfo, None, None]:
+    """Iterate over direct child node info.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction or snapshot)
 
-    Returns:
-        List of child values
+    Yields:
+        NodeInfo for each direct child
 
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If path is not a container
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If site is not a container
         StorageInterfaceError: If context doesn't support read access
     """
-    validate_is_container(path, ctx)
+    validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
-    prefix = PrefixFilter(prefix=path)
-    child_len = LengthFilter(length=len(path) + 1)
+    prefix = PrefixFilter(prefix=site)
+    child_len = LengthFilter(length=len(site) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
+        start=site,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -356,35 +346,30 @@ def list_child_values(path: key_.Key, ctx: StorageContextType) -> Generator[Node
         yield get_node_info(key, ctx, raw_value=value)
 
 
-def list_children(
-    path: key_.Key, ctx: StorageContextType
-) -> Generator[tuple[key_.KeySegment, NodeInfo], None, None]:
-    """List all direct children with types.
+def iter_children(
+    site: site_.Site, ctx: StorageContextType
+) -> Generator[tuple[site_.SiteSegment, NodeInfo], None, None]:
+    """Iterate over direct children with their info.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction or snapshot)
 
-    Returns:
-        List of (child_path, node_type) tuples
+    Yields:
+        Tuples of (child_key, NodeInfo)
 
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If path is not a container
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If site is not a container
         StorageInterfaceError: If context doesn't support read access
-
-    Example:
-        >>> children = list_children(("users", "alice"), tx)
-        >>> for child_path, node_type in children:
-        ...     print(f"{child_path}: {node_type}")
     """
-    validate_is_container(path, ctx)
+    validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
-    prefix = PrefixFilter(prefix=path)
-    child_len = LengthFilter(length=len(path) + 1)
+    prefix = PrefixFilter(prefix=site)
+    child_len = LengthFilter(length=len(site) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
+        start=site,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -393,32 +378,28 @@ def list_children(
         yield (key[-1], get_node_info(key, ctx, raw_value=value))
 
 
-def count_children(path: key_.Key, ctx: StorageContextType) -> int:
+def count_children(site: site_.Site, ctx: StorageContextType) -> int:
     """Count direct children.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction or snapshot)
 
     Returns:
         Number of direct children
 
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If path is not a container
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If site is not a container
         StorageInterfaceError: If context doesn't support read access
-
-    Example:
-        >>> count = count_children(("users", "alice"), tx)
-        >>> print(f"Container has {count} children")
     """
-    validate_is_container(path, ctx)
+    validate_is_container(site, ctx)
 
     # Direct children: prefix match + length = parent + 1
-    prefix = PrefixFilter(prefix=path)
-    child_len = LengthFilter(length=len(path) + 1)
+    prefix = PrefixFilter(prefix=site)
+    child_len = LengthFilter(length=len(site) + 1)
     scan_opts = StorageScanOptions(
-        start=path,
+        start=site,
         break_filter=prefix,
         filter=prefix & child_len,
     )
@@ -434,198 +415,178 @@ def count_children(path: key_.Key, ctx: StorageContextType) -> int:
 
 
 def create_child_container(
-    parent_path: key_.Key,
-    key: key_.KeySegment,
+    parent_site: site_.Site,
+    key: site_.SiteSegment,
     structure: ContainerStructure,
     protocol: ContainerProtocol,
     ctx: StorageContextType,
-) -> bool:
+) -> None:
     """Create child container.
 
+    Idempotent: silent if child container already exists with compatible type.
+
     Args:
-        parent_path: Parent container path
+        parent_site: Parent container site
         key: Child key
         structure: Container structure ID
         protocol: Container protocol flags
         ctx: Storage context (transaction)
 
-    Returns:
-        True if created, False if already exists
-
     Raises:
-        PathNotFoundError: If parent doesn't exist
-        PathTypeError: If parent is not a container
+        ContainerNotFoundError: If parent doesn't exist
+        ContainerTypeError: If parent is not a container
         StorageInterfaceError: If context doesn't support required operations
-
-    Example:
-        >>> create_child_container(
-        ...     ("users", "alice"),
-        ...     "posts",
-        ...     ContainerStructure(2),
-        ...     ContainerProtocol.MUTABLE,
-        ...     tx,
-        ... )
-        True
     """
-    validate_is_container(parent_path, ctx)
+    validate_is_container(parent_site, ctx)
 
-    child_path = key_.join_segment(parent_path, key)
-    return create_container(child_path, structure, protocol, ctx, ensure_healthy_parents=False)
+    child_site = site_.join_segment(parent_site, key)
+    create_container(child_site, structure, protocol, ctx, ensure_healthy_parents=False)
 
 
-def set_child_primitive(
-    parent_path: key_.Key,
-    key: key_.KeySegment,
+def put_child_primitive(
+    parent_site: site_.Site,
+    key: site_.SiteSegment,
     value: Value,
     ctx: StorageContextType,
 ) -> None:
-    """Set primitive child value.
+    """Put primitive child value.
+
+    Idempotent: overwrites if already exists.
 
     Args:
-        parent_path: Parent container path
+        parent_site: Parent container site
         key: Child key
         value: Primitive value
         ctx: Storage context (transaction)
 
     Raises:
-        PathNotFoundError: If parent doesn't exist
-        PathTypeError: If parent is not a container
+        ContainerNotFoundError: If parent doesn't exist
+        ContainerTypeError: If parent is not a container or child is a container
         StorageInterfaceError: If context doesn't support required operations
 
     Example:
-        >>> set_child_primitive(("users", "alice"), "name", "Alice Smith", tx)
+        >>> put_child_primitive(("users",), "alice", {"name": "Alice", "age": 30}, tx)
+        >>> get_child_primitive(("users",), "alice", tx)
+        {"name": "Alice", "age": 30}
     """
-    validate_is_container(parent_path, ctx)
+    validate_is_container(parent_site, ctx)
 
-    child_path = key_.join_segment(parent_path, key)
-    child_node_info = get_node_info(child_path, ctx)
+    child_site = site_.join_segment(parent_site, key)
+    child_node_info = get_node_info(child_site, ctx)
 
     if child_node_info.exists:
-        validate_is_primitive(child_path, ctx, node_type=child_node_info.node_type)
+        validate_is_primitive(child_site, ctx, node_type=child_node_info.node_type)
 
-    require_write_context(ctx).put(child_path, value)
+    require_write_context(ctx).put(child_site, value)
 
     logger.debug(
         "Child primitive set",
         extra={
-            "parent_path": parent_path,
+            "parent_site": parent_site,
             "key": key,
             "value_type": type(value).__name__,
-            "existed": child_node_info.exists,
         },
     )
 
 
 def get_child_primitive(
-    parent_path: key_.Key,
-    key: key_.KeySegment,
+    parent_site: site_.Site,
+    key: site_.SiteSegment,
     ctx: StorageContextType,
 ) -> Value | Empty:
     """Get primitive child value.
 
-    Returns the stored primitive value for the given child key, or None if the
-    child doesn't exist.
+    Args:
+        parent_site: Parent container site
+        key: Child key
+        ctx: Storage context (transaction or snapshot)
+
+    Returns:
+        Primitive value or EMPTY if child doesn't exist
 
     Raises:
-        PathNotFoundError: If parent doesn't exist
-        PathTypeError: If parent is not a container or child is a container
+        ContainerNotFoundError: If parent doesn't exist
+        ContainerTypeError: If parent is not a container or child is a container
         StorageInterfaceError: If context doesn't support read access
     """
-    validate_is_container(parent_path, ctx)
+    validate_is_container(parent_site, ctx)
 
-    child_path = key_.join_segment(parent_path, key)
-    child_node_info = get_node_info(child_path, ctx)
+    child_site = site_.join_segment(parent_site, key)
+    child_node_info = get_node_info(child_site, ctx)
 
     if not child_node_info.exists:
         return EMPTY
 
-    validate_is_primitive(child_path, ctx, node_type=child_node_info.node_type)
+    validate_is_primitive(child_site, ctx, node_type=child_node_info.node_type)
 
     return cast("Value", child_node_info.primitive_value)
 
 
 def delete_child(
-    parent_path: key_.Key,
-    key: key_.KeySegment,
+    parent_site: site_.Site,
+    key: site_.SiteSegment,
     ctx: StorageContextType,
-) -> bool:
+) -> None:
     """Delete direct child.
 
+    Idempotent: silent if child doesn't exist.
+    If child is a container, deletes all its descendants too.
+
     Args:
-        parent_path: Parent container path
+        parent_site: Parent container site
         key: Child key
         ctx: Storage context (transaction)
-        recursive: If True and child is container, delete subtree
-
-    Returns:
-        True if deleted, False if didn't exist
 
     Raises:
-        PathNotFoundError: If parent doesn't exist
-        PathTypeError: If parent is not a container
+        ContainerNotFoundError: If parent doesn't exist
+        ContainerTypeError: If parent is not a container
         StorageInterfaceError: If context doesn't support required operations
-
-    Example:
-        >>> delete_child(("users", "alice"), "old_profile", tx, recursive=True)
-        True
     """
-    validate_is_container(parent_path, ctx)
+    validate_is_container(parent_site, ctx)
 
-    child_path = key_.join_segment(parent_path, key)
-    info = get_node_info(child_path, ctx)
+    child_site = site_.join_segment(parent_site, key)
+    info = get_node_info(child_site, ctx)
 
     if not info.exists:
         logger.debug(
-            "Cannot delete child, does not exist",
-            extra={"parent_path": parent_path, "key": key},
+            "Child does not exist, nothing to delete",
+            extra={"parent_site": parent_site, "key": key},
         )
-        return False
+        return
 
     if info.node_type == NodeType.CONTAINER:
-        deleted = delete_container(child_path, ctx)
+        delete_descendants(child_site, ctx)
     else:
-        require_write_context(ctx).delete(child_path)
-        deleted = True
+        require_write_context(ctx).delete(child_site)
 
-    if deleted:
-        logger.debug(
-            "Child deleted",
-            extra={
-                "parent_path": parent_path,
-                "key": key,
-                "node_type": info.node_type.name,
-            },
-        )
-
-    return deleted
+    logger.debug(
+        "Child deleted",
+        extra={
+            "parent_site": parent_site,
+            "key": key,
+            "node_type": info.node_type.name,
+        },
+    )
 
 
-def clear_children(path: key_.Key, ctx: StorageContextType) -> int:
+def clear_children(site: site_.Site, ctx: StorageContextType) -> None:
     """Delete all direct children.
 
+    Idempotent: silent if no children exist.
+
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction)
 
-    Returns:
-        Number of children deleted
-
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If path is not a container
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If site is not a container
         StorageInterfaceError: If context doesn't support required operations
-
-    Example:
-        >>> count = clear_children(("users", "alice", "temp"), tx)
-        >>> print(f"Cleared {count} children")
     """
-    count = 0
-    for key in list_child_keys(path, ctx):
-        if delete_child(path, key, ctx):
-            count += 1
+    for key in iter_child_keys(site, ctx):
+        delete_child(site, key, ctx)
 
-    logger.info("Children cleared", extra={"path": path, "cleared_count": count})
-    return count
+    logger.debug("Children cleared", extra={"site": site})
 
 
 # ============================================================================
@@ -633,52 +594,58 @@ def clear_children(path: key_.Key, ctx: StorageContextType) -> int:
 # ============================================================================
 
 
-def list_descendants(
-    path: key_.Key,
+def iter_descendants(
+    site: site_.Site,
     ctx: StorageContextType,
     *,
     depth: int = -1,
-) -> Generator[key_.Key, None, None]:
-    """List all descendants recursively.
+) -> Generator[site_.Site, None, None]:
+    """Iterate over all descendants.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction or snapshot)
         depth: Depth to traverse (-1=unlimited, 1=children, >1 exact depth match)
 
-    Returns:
-        List of descendant paths
+    Yields:
+        Descendant sites
 
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If path is not a container
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If site is not a container
         StorageInterfaceError: If context doesn't support read access
-        InvalidDepthError: If depth arguments is invalid
+        ContainerInvalidDepthError: If depth argument is invalid
 
     Example:
-        >>> descendants = list_descendants(("users", "alice"), tx, depth=2)
-        >>> print(f"Found {len(descendants)} descendants at level 2")
+        >>> # Get all descendants at any depth
+        >>> list(iter_descendants(("users",), tx))
+        [("users",), ("users", "alice"), ("users", "alice", "profile"), ("users", "bob")]
+        >>> # Get only direct children (depth=1)
+        >>> list(iter_descendants(("users",), tx, depth=1))
+        [("users", "alice"), ("users", "bob")]
     """
     if depth < -2 or depth == 0:
-        raise InvalidDepthError(f"Depth argument shoild be either -1 or >= 1. {depth} given")
+        raise ContainerInvalidDepthError(
+            f"Depth argument should be either -1 or >= 1. {depth} given"
+        )
 
     rctx = require_read_context(ctx)
-    validate_is_container(path, ctx)
+    validate_is_container(site, ctx)
 
     # Descendants: prefix match, optionally filter by exact depth
-    prefix = PrefixFilter(prefix=path)
+    prefix = PrefixFilter(prefix=site)
     if depth == -1:
         # All descendants at any depth
         scan_opts = StorageScanOptions(
-            start=path,
+            start=site,
             break_filter=prefix,
             filter=prefix,
         )
     else:
         # Exact depth match
-        depth_len = LengthFilter(length=len(path) + depth)
+        depth_len = LengthFilter(length=len(site) + depth)
         scan_opts = StorageScanOptions(
-            start=path,
+            start=site,
             break_filter=prefix,
             filter=prefix & depth_len,
         )
@@ -686,35 +653,31 @@ def list_descendants(
     yield from rctx.scan(scan_opts).keys()
 
 
-def walk_tree(
-    path: key_.Key,
+def walk_descendants(
+    site: site_.Site,
     ctx: StorageContextType,
-) -> Generator[tuple[key_.Key, NodeType], None, None]:
-    """Iterate over tree structure.
+) -> Generator[tuple[site_.Site, NodeType], None, None]:
+    """Walk over descendant structure.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context (transaction or snapshot)
 
     Yields:
-        (path, node_type) tuples for each descendant
+        Tuples of (site, NodeType) for each descendant
 
     Raises:
-        PathNotFoundError: If container doesn't exist
-        PathTypeError: If path is not a container
+        ContainerNotFoundError: If container doesn't exist
+        ContainerTypeError: If site is not a container
         StorageInterfaceError: If context doesn't support read access
-
-    Example:
-        >>> for child_path, node_type in walk_tree(("users", "alice"), tx):
-        ...     print(f"{child_path}: {node_type}")
     """
     rctx = require_read_context(ctx)
-    validate_is_container(path, ctx)
+    validate_is_container(site, ctx)
 
-    # All descendants including path itself
-    prefix = PrefixFilter(prefix=path)
+    # All descendants including site itself
+    prefix = PrefixFilter(prefix=site)
     scan_opts = StorageScanOptions(
-        start=path,
+        start=site,
         break_filter=prefix,
         filter=prefix,
     )
@@ -730,62 +693,46 @@ def walk_tree(
 
 
 def create_parents(
-    path: key_.Key,
+    site: site_.Site,
     default_structure: ContainerStructure,
     default_protocol: ContainerProtocol,
     ctx: StorageContextType,
-) -> list[key_.Key]:
+) -> None:
     """Create all missing parents.
 
-    Creates parent containers for the given path using the specified
+    Creates parent containers for the given site using the specified
     default structure and protocol. Only creates parents that are missing;
     existing parents are left unchanged.
 
+    Idempotent: silent if all parents already exist.
+
     Args:
-        path: Target path
+        site: Target site
         default_structure: Structure ID for created parents
         default_protocol: Protocol flags for created parents
         ctx: Storage context (transaction)
 
-    Returns:
-        List of created parent paths (empty if all existed)
-
     Raises:
-        PathTypeError: If existing parents have malformed data
+        ContainerTypeError: If existing parents have malformed data
         StorageInterfaceError: If context doesn't support required operations
-
-    Example:
-        >>> created = create_parents(
-        ...     ("users", "alice", "profile"),
-        ...     ContainerStructure(1),
-        ...     ContainerProtocol.MUTABLE,
-        ...     tx,
-        ... )
-        >>> print(f"Created {len(created)} parents: {created}")
     """
     wctx = require_write_context(ctx)
 
-    parent_info = gather_parent_info(path, ctx)
+    parent_info = gather_parent_info(site, ctx)
 
-    validate_parents_healthy(path, ctx, parent_info=parent_info)
+    validate_parents_healthy(site, ctx, parent_info=parent_info)
 
-    if not parent_info.missing_paths:
-        return []
+    if not parent_info.missing_sites:
+        return
 
-    created = []
-    for missing_path in parent_info.missing_paths:
+    for missing_site in parent_info.missing_sites:
         marker = create_marker(default_structure, default_protocol)
-        wctx.put(missing_path, marker)
-        created.append(missing_path)
+        wctx.put(missing_site, marker)
 
-    if created:
-        logger.info(
-            "Missing parents created",
-            extra={
-                "target_path": path,
-                "created_count": len(created),
-                "created_paths": created,
-            },
-        )
-
-    return created
+    logger.debug(
+        "Missing parents created",
+        extra={
+            "target_site": site,
+            "created_sites": parent_info.missing_sites,
+        },
+    )

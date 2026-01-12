@@ -106,11 +106,13 @@ Note: Avoid `list_*` for generators — it implies returning a list. Use `iter_*
 ### Words to Avoid
 
 Location terms from other layers:
+
 - ~~key~~ → use `site` (key is storage layer)
 - ~~path~~ → use `site` (path is view layer)
 - ~~ref~~ → use `site` (ref is shape layer)
 
 Structural terms:
+
 - ~~tree~~ → use `container` (less is more, no extra concepts)
 - ~~subtree~~ → use `descendants` (explicit about what it means)
 

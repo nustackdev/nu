@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from everyshape._types import NOT_SET, NotSet, is_notset
-from everyshape.loc import key
+from everyshape.loc import site as site_
 from everyshape.types import Empty
 
 from .marker import extract_marker
@@ -33,46 +33,38 @@ __all__ = [
 ]
 
 
-def node_exists(path: key.Key, ctx: StorageContextType) -> bool:
-    """Check if node exists at path.
+def node_exists(site: site_.Site, ctx: StorageContextType) -> bool:
+    """Check if node exists at site.
 
     Optimized hot path - performs minimal work to determine existence.
 
     Args:
-        path: Path to check
+        site: Site to check
         ctx: Storage context (transaction or snapshot)
 
     Returns:
         True if node exists, False otherwise
-
-    Example:
-        >>> node_exists(("users", "alice"), tx)
-        True
     """
-    return require_read_context(ctx).exists(path)
+    return require_read_context(ctx).exists(site)
 
 
 def get_node_type(
-    path: key.Key, ctx: StorageContextType, *, raw_value: Value | Empty | NotSet = NOT_SET
+    site: site_.Site, ctx: StorageContextType, *, raw_value: Value | Empty | NotSet = NOT_SET
 ) -> NodeType:
     """Get node type without full information gathering.
 
     Optimized for hot path - determines type without creating full NodeInfo.
 
     Args:
-        path: Path to check
+        site: Site to check
         ctx: Storage context (transaction or snapshot)
         raw_value: Prefetched value to parse info from
 
     Returns:
         NodeType: CONTAINER, PRIMITIVE, or NOT_FOUND
-
-    Example:
-        >>> get_node_type(("users", "alice"), tx)
-        <NodeType.CONTAINER>
     """
     if is_notset(raw_value):
-        raw_value = require_read_context(ctx).get(path)
+        raw_value = require_read_context(ctx).get(site)
         if isinstance(raw_value, Empty):
             return NodeType.NOT_FOUND
         return NodeType.CONTAINER if extract_marker(raw_value) else NodeType.PRIMITIVE
@@ -85,7 +77,7 @@ def get_node_type(
 
 
 def get_node_info(
-    path: key.Key, ctx: StorageContextType, *, raw_value: Value | Empty | NotSet = NOT_SET
+    site: site_.Site, ctx: StorageContextType, *, raw_value: Value | Empty | NotSet = NOT_SET
 ) -> NodeInfo:
     """Get complete node information.
 
@@ -93,28 +85,23 @@ def get_node_info(
     attributes. This is the comprehensive version used when full data is needed.
 
     Args:
-        path: Path to gather information about
+        site: Site to gather information about
         ctx: Storage context (transaction or snapshot)
         raw_value: Prefetched value to parse info from
 
     Returns:
         NodeInfo with all available data:
-        - For containers: path, exists=True, node_type=CONTAINER, structure, protocol
-        - For primitives: path, exists=True, node_type=PRIMITIVE, primitive_value
-        - For missing: path, exists=False, node_type=NOT_FOUND
-
-    Example:
-        >>> info = get_node_info(("users", "alice"), tx)
-        >>> if info.node_type == NodeType.CONTAINER:
-        ...     print(f"Container with structure {info.structure}")
+        - For containers: site, exists=True, node_type=CONTAINER, structure, protocol
+        - For primitives: site, exists=True, node_type=PRIMITIVE, primitive_value
+        - For missing: site, exists=False, node_type=NOT_FOUND
     """
     if is_notset(raw_value):
-        raw_value = require_read_context(ctx).get(path)
+        raw_value = require_read_context(ctx).get(site)
 
-    # Path doesn't exist
+    # Site doesn't exist
     if isinstance(raw_value, Empty):
         return NodeInfo(
-            path=path,
+            site=site,
             exists=False,
             node_type=NodeType.NOT_FOUND,
         )
@@ -126,7 +113,7 @@ def get_node_info(
     if marker_info is not None:
         structure, protocol = marker_info
         return NodeInfo(
-            path=path,
+            site=site,
             exists=True,
             node_type=NodeType.CONTAINER,
             raw_value=raw_value,
@@ -136,7 +123,7 @@ def get_node_info(
 
     # It's a primitive value
     return NodeInfo(
-        path=path,
+        site=site,
         exists=True,
         node_type=NodeType.PRIMITIVE,
         raw_value=raw_value,
@@ -144,67 +131,62 @@ def get_node_info(
     )
 
 
-def gather_parent_info(path: key.Key, ctx: StorageContextType) -> ParentChainInfo:
+def gather_parent_info(site: site_.Site, ctx: StorageContextType) -> ParentChainInfo:
     """Gather parent chain information without validation.
 
-    Pure information collection - traverses the path hierarchy from root to
-    immediate parent, collecting raw storage data and categorizing paths based
+    Pure information collection - traverses the site hierarchy from root to
+    immediate parent, collecting raw storage data and categorizing sites based
     on existence and data format. Does not make validation decisions.
 
     Args:
-        path: Path to gather parent information for
+        site: Site to gather parent information for
         ctx: Storage context (transaction or snapshot)
 
     Returns:
         ParentChainInfo with raw data about parent chain:
         - chain: All parent infos from root to immediate parent
-        - missing_paths: Paths that don't exist in storage
-        - malformed_paths: Paths with corrupted markers
-
-    Example:
-        >>> info = gather_parent_info(("users", "alice", "profile"), tx)
-        >>> if info.all_exist and info.all_healthy:
-        ...     print("Parent chain is complete and healthy")
+        - missing_sites: Sites that don't exist in storage
+        - malformed_sites: Sites with corrupted markers
     """
-    ancestors = key.get_ancestors(path)
+    ancestors = site_.get_ancestors(site)
     if not ancestors:
         # Root level - no parents
         return ParentChainInfo(
             chain=(),
-            missing_paths=(),
-            malformed_paths=(),
+            missing_sites=(),
+            malformed_sites=(),
         )
 
     parent_infos = []
-    missing_paths = []
-    malformed_paths = []
+    missing_sites = []
+    malformed_sites = []
 
-    for ancestor_path in ancestors:
-        info = get_node_info(ancestor_path, ctx)
+    for ancestor_site in ancestors:
+        info = get_node_info(ancestor_site, ctx)
 
         if not info.exists:
             parent_info = ParentInfo(
-                path=ancestor_path,
+                site=ancestor_site,
                 exists=False,
             )
             parent_infos.append(parent_info)
-            missing_paths.append(ancestor_path)
+            missing_sites.append(ancestor_site)
 
         elif info.node_type == NodeType.CONTAINER:
             # Check if marker is well-formed
             if info.structure is None or info.protocol is None:
                 parent_info = ParentInfo(
-                    path=ancestor_path,
+                    site=ancestor_site,
                     exists=True,
                     structure=None,
                     protocol=None,
                     raw_type_data=None,  # Malformed
                 )
                 parent_infos.append(parent_info)
-                malformed_paths.append(ancestor_path)
+                malformed_sites.append(ancestor_site)
             else:
                 parent_info = ParentInfo(
-                    path=ancestor_path,
+                    site=ancestor_site,
                     exists=True,
                     structure=info.structure,
                     protocol=info.protocol,
@@ -215,17 +197,17 @@ def gather_parent_info(path: key.Key, ctx: StorageContextType) -> ParentChainInf
         else:
             # Primitive at parent location - malformed
             parent_info = ParentInfo(
-                path=ancestor_path,
+                site=ancestor_site,
                 exists=True,
                 structure=None,
                 protocol=None,
                 raw_type_data=info.primitive_value,
             )
             parent_infos.append(parent_info)
-            malformed_paths.append(ancestor_path)
+            malformed_sites.append(ancestor_site)
 
     return ParentChainInfo(
         chain=tuple(parent_infos),
-        missing_paths=tuple(missing_paths),
-        malformed_paths=tuple(malformed_paths),
+        missing_sites=tuple(missing_sites),
+        malformed_sites=tuple(malformed_sites),
     )

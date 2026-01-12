@@ -15,7 +15,7 @@ from everyshape.container import (
     get_node_info,
     get_node_type,
     node_exists,
-    set_child_primitive,
+    put_child_primitive,
 )
 from everyshape.container.types import NodeType
 from everyshape.storage import TransactionProtocol
@@ -27,7 +27,7 @@ from everyshape.storage import TransactionProtocol
 
 
 def test_node_exists_nonexistent(tx: TransactionProtocol) -> None:
-    """Test node_exists returns False for nonexistent path."""
+    """Test node_exists returns False for nonexistent site."""
     assert not node_exists(("users",), tx)
     assert not node_exists(("users", "alice"), tx)
 
@@ -54,7 +54,7 @@ def test_node_exists_primitive(tx: TransactionProtocol) -> None:
         tx,
         ensure_healthy_parents=False,
     )
-    set_child_primitive(("users",), "name", "Alice", tx)
+    put_child_primitive(("users",), "name", "Alice", tx)
 
     assert node_exists(("users", "name"), tx)
 
@@ -65,7 +65,7 @@ def test_node_exists_primitive(tx: TransactionProtocol) -> None:
 
 
 def test_get_node_type_nonexistent(tx: TransactionProtocol) -> None:
-    """Test get_node_type returns NOT_FOUND for nonexistent path."""
+    """Test get_node_type returns NOT_FOUND for nonexistent site."""
     assert get_node_type(("users",), tx) == NodeType.NOT_FOUND
 
 
@@ -91,7 +91,7 @@ def test_get_node_type_primitive(tx: TransactionProtocol) -> None:
         tx,
         ensure_healthy_parents=False,
     )
-    set_child_primitive(("users",), "name", "Alice", tx)
+    put_child_primitive(("users",), "name", "Alice", tx)
 
     assert get_node_type(("users", "name"), tx) == NodeType.PRIMITIVE
 
@@ -107,11 +107,11 @@ def test_get_node_type_various_primitives(tx: TransactionProtocol) -> None:
     )
 
     # Different primitive types
-    set_child_primitive(("data",), "string", "hello", tx)
-    set_child_primitive(("data",), "number", 42, tx)
-    set_child_primitive(("data",), "float", 3.14, tx)
-    set_child_primitive(("data",), "bool", True, tx)
-    set_child_primitive(("data",), "none", None, tx)
+    put_child_primitive(("data",), "string", "hello", tx)
+    put_child_primitive(("data",), "number", 42, tx)
+    put_child_primitive(("data",), "float", 3.14, tx)
+    put_child_primitive(("data",), "bool", True, tx)
+    put_child_primitive(("data",), "none", None, tx)
 
     # All should be PRIMITIVE
     assert get_node_type(("data", "string"), tx) == NodeType.PRIMITIVE
@@ -127,10 +127,10 @@ def test_get_node_type_various_primitives(tx: TransactionProtocol) -> None:
 
 
 def test_get_node_info_nonexistent(tx: TransactionProtocol) -> None:
-    """Test get_node_info for nonexistent path."""
+    """Test get_node_info for nonexistent site."""
     info = get_node_info(("users",), tx)
 
-    assert info.path == ("users",)
+    assert info.site == ("users",)
     assert not info.exists
     assert info.node_type == NodeType.NOT_FOUND
     assert info.structure is None
@@ -149,7 +149,7 @@ def test_get_node_info_container(tx: TransactionProtocol) -> None:
 
     info = get_node_info(("users",), tx)
 
-    assert info.path == ("users",)
+    assert info.site == ("users",)
     assert info.exists
     assert info.node_type == NodeType.CONTAINER
     assert info.structure == ContainerStructure(1)
@@ -165,11 +165,11 @@ def test_get_node_info_primitive(tx: TransactionProtocol) -> None:
         tx,
         ensure_healthy_parents=False,
     )
-    set_child_primitive(("users",), "name", "Alice", tx)
+    put_child_primitive(("users",), "name", "Alice", tx)
 
     info = get_node_info(("users", "name"), tx)
 
-    assert info.path == ("users", "name")
+    assert info.site == ("users", "name")
     assert info.exists
     assert info.node_type == NodeType.PRIMITIVE
     assert info.primitive_value == "Alice"
@@ -220,12 +220,12 @@ def test_get_node_info_various_container_protocols(tx: TransactionProtocol) -> N
 
 
 def test_gather_parent_info_root_level(tx: TransactionProtocol) -> None:
-    """Test gather_parent_info for root-level path has no parents."""
+    """Test gather_parent_info for root-level site has no parents."""
     parent_info = gather_parent_info(("users",), tx)
 
     assert len(parent_info.chain) == 0
-    assert len(parent_info.missing_paths) == 0
-    assert len(parent_info.malformed_paths) == 0
+    assert len(parent_info.missing_sites) == 0
+    assert len(parent_info.malformed_sites) == 0
     assert parent_info.all_exist
     assert parent_info.all_healthy
 
@@ -251,18 +251,18 @@ def test_gather_parent_info_all_exist(tx: TransactionProtocol) -> None:
     parent_info = gather_parent_info(("a", "b", "c"), tx)
 
     assert len(parent_info.chain) == 2
-    assert len(parent_info.missing_paths) == 0
-    assert len(parent_info.malformed_paths) == 0
+    assert len(parent_info.missing_sites) == 0
+    assert len(parent_info.malformed_sites) == 0
     assert parent_info.all_exist
     assert parent_info.all_healthy
 
     # Check parent chain details
-    assert parent_info.chain[0].path == ("a",)
+    assert parent_info.chain[0].site == ("a",)
     assert parent_info.chain[0].exists
     assert parent_info.chain[0].structure == ContainerStructure(1)
     assert parent_info.chain[0].protocol == ContainerProtocol.MUTABLE
 
-    assert parent_info.chain[1].path == ("a", "b")
+    assert parent_info.chain[1].site == ("a", "b")
     assert parent_info.chain[1].exists
 
 
@@ -271,13 +271,13 @@ def test_gather_parent_info_missing_parent(tx: TransactionProtocol) -> None:
     parent_info = gather_parent_info(("a", "b", "c"), tx)
 
     assert len(parent_info.chain) == 2
-    assert len(parent_info.missing_paths) == 2
+    assert len(parent_info.missing_sites) == 2
     assert not parent_info.all_exist
     assert parent_info.all_healthy
 
     # Both parents should be missing
-    assert ("a",) in parent_info.missing_paths
-    assert ("a", "b") in parent_info.missing_paths
+    assert ("a",) in parent_info.missing_sites
+    assert ("a", "b") in parent_info.missing_sites
 
 
 def test_gather_parent_info_partially_missing(tx: TransactionProtocol) -> None:
@@ -294,12 +294,12 @@ def test_gather_parent_info_partially_missing(tx: TransactionProtocol) -> None:
     parent_info = gather_parent_info(("a", "b", "c"), tx)
 
     assert len(parent_info.chain) == 2
-    assert len(parent_info.missing_paths) == 1
+    assert len(parent_info.missing_sites) == 1
     assert not parent_info.all_exist
 
     # Only ("a", "b") should be missing
-    assert ("a", "b") in parent_info.missing_paths
-    assert ("a",) not in parent_info.missing_paths
+    assert ("a", "b") in parent_info.missing_sites
+    assert ("a",) not in parent_info.missing_sites
 
 
 def test_gather_parent_info_malformed_parent(tx: TransactionProtocol) -> None:
@@ -312,20 +312,20 @@ def test_gather_parent_info_malformed_parent(tx: TransactionProtocol) -> None:
         tx,
         ensure_healthy_parents=False,
     )
-    set_child_primitive(("a",), "b", "wrong", tx)
+    put_child_primitive(("a",), "b", "wrong", tx)
 
     parent_info = gather_parent_info(("a", "b", "c"), tx)
 
     assert len(parent_info.chain) == 2
-    assert len(parent_info.malformed_paths) == 1
+    assert len(parent_info.malformed_sites) == 1
     assert not parent_info.all_healthy
 
     # ("a", "b") should be malformed (it's a primitive, not a container)
-    assert ("a", "b") in parent_info.malformed_paths
+    assert ("a", "b") in parent_info.malformed_sites
 
 
 def test_gather_parent_info_deep_hierarchy(tx: TransactionProtocol) -> None:
-    """Test gather_parent_info with deep path hierarchy."""
+    """Test gather_parent_info with deep site hierarchy."""
     # Create deep chain: a -> b -> c -> d -> e
     create_container(
         ("a",),
@@ -363,10 +363,10 @@ def test_gather_parent_info_deep_hierarchy(tx: TransactionProtocol) -> None:
     assert parent_info.all_healthy
 
     # Verify parent chain is in correct order (root to immediate parent)
-    assert parent_info.chain[0].path == ("a",)
-    assert parent_info.chain[1].path == ("a", "b")
-    assert parent_info.chain[2].path == ("a", "b", "c")
-    assert parent_info.chain[3].path == ("a", "b", "c", "d")
+    assert parent_info.chain[0].site == ("a",)
+    assert parent_info.chain[1].site == ("a", "b")
+    assert parent_info.chain[2].site == ("a", "b", "c")
+    assert parent_info.chain[3].site == ("a", "b", "c", "d")
 
 
 def test_gather_parent_info_multiple_malformed(tx: TransactionProtocol) -> None:
@@ -379,14 +379,14 @@ def test_gather_parent_info_multiple_malformed(tx: TransactionProtocol) -> None:
         tx,
         ensure_healthy_parents=False,
     )
-    set_child_primitive(("root",), "a", "wrong1", tx)
+    put_child_primitive(("root",), "a", "wrong1", tx)
 
     # Can't create ("root", "a", "b") as primitive because parent is primitive
     # So we'll test with what we can create
     parent_info = gather_parent_info(("root", "a", "b", "c"), tx)
 
     assert not parent_info.all_healthy
-    assert ("root", "a") in parent_info.malformed_paths
+    assert ("root", "a") in parent_info.malformed_sites
 
 
 # ============================================================================

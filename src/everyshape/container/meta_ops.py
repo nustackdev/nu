@@ -3,7 +3,8 @@
 This module provides metadata management operations. Metadata is stored in
 the /m parallel tree and must be flat primitive values (no containers).
 
-All operations are stateless functions that operate on paths and contexts.
+All operations are stateless functions that operate on sites and contexts.
+All mutations are silent (return None) and idempotent.
 """
 
 from __future__ import annotations
@@ -22,25 +23,28 @@ from .types import (
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from everyshape.loc import site as site_
     from everyshape.storage import StorageContextType
     from everyshape.types import Empty, Value
 
 __all__ = [
     "delete_metadata",
+    "exists_metadata",
     "get_metadata",
-    "has_metadata",
-    "list_metadata_keys",
-    "set_metadata",
+    "iter_metadata_keys",
+    "put_metadata",
 ]
 
 
-def set_metadata(
-    path: key.Key, key_segment: key.KeySegment, value: Value, ctx: StorageContextType
+def put_metadata(
+    site: site_.Site, key_segment: key.KeySegment, value: Value, ctx: StorageContextType
 ) -> None:
-    """Set metadata for container at path.
+    """Put metadata for container at site.
+
+    Idempotent: overwrites if already exists.
 
     Args:
-        path: Container path
+        site: Container site
         key_segment: Metadata key
         value: Primitive value to store
         ctx: Storage context
@@ -48,20 +52,20 @@ def set_metadata(
     Raises:
         StorageInterfaceError: If context doesn't support writes
     """
-    meta_path = key.join_segment(key.to_meta(path), key_segment)
-    require_write_context(ctx).put(meta_path, value)
+    meta_site = key.join_segment(key.to_meta(site), key_segment)
+    require_write_context(ctx).put(meta_site, value)
 
 
 def get_metadata(
-    path: key.Key,
+    site: site_.Site,
     key_segment: key.KeySegment,
     ctx: StorageContextType,
     default: Value | Empty = None,
 ) -> Value | Empty:
-    """Get metadata value for container at path.
+    """Get metadata value for container at site.
 
     Args:
-        path: Container path
+        site: Container site
         key_segment: Metadata key
         ctx: Storage context
         default: Default value if not found
@@ -72,18 +76,18 @@ def get_metadata(
     Raises:
         StorageInterfaceError: If context doesn't support reads
     """
-    meta_path = key.join_segment(key.to_meta(path), key_segment)
-    value = require_read_context(ctx).get(meta_path)
+    meta_site = key.join_segment(key.to_meta(site), key_segment)
+    value = require_read_context(ctx).get(meta_site)
     if value is EMPTY:
         return default
     return value
 
 
-def has_metadata(path: key.Key, key_segment: key.KeySegment, ctx: StorageContextType) -> bool:
-    """Check if metadata key exists for container at path.
+def exists_metadata(site: site_.Site, key_segment: key.KeySegment, ctx: StorageContextType) -> bool:
+    """Check if metadata key exists for container at site.
 
     Args:
-        path: Container path
+        site: Container site
         key_segment: Metadata key
         ctx: Storage context
 
@@ -93,38 +97,34 @@ def has_metadata(path: key.Key, key_segment: key.KeySegment, ctx: StorageContext
     Raises:
         StorageInterfaceError: If context doesn't support reads
     """
-    meta_path = key.join_segment(key.to_meta(path), key_segment)
-    return require_read_context(ctx).exists(meta_path)
+    meta_site = key.join_segment(key.to_meta(site), key_segment)
+    return require_read_context(ctx).exists(meta_site)
 
 
-def delete_metadata(path: key.Key, key_segment: key.KeySegment, ctx: StorageContextType) -> bool:
-    """Delete metadata key for container at path.
+def delete_metadata(site: site_.Site, key_segment: key.KeySegment, ctx: StorageContextType) -> None:
+    """Delete metadata key for container at site.
+
+    Idempotent: silent if metadata doesn't exist.
 
     Args:
-        path: Container path
+        site: Container site
         key_segment: Metadata key
         ctx: Storage context
-
-    Returns:
-        True if deleted, False if didn't exist
 
     Raises:
         StorageInterfaceError: If context doesn't support writes
     """
-    meta_path = key.join_segment(key.to_meta(path), key_segment)
-    wctx = require_write_context(ctx)
-    existed = wctx.exists(meta_path)
-    wctx.delete(meta_path)
-    return existed
+    meta_site = key.join_segment(key.to_meta(site), key_segment)
+    require_write_context(ctx).delete(meta_site)
 
 
-def list_metadata_keys(
-    path: key.Key, ctx: StorageContextType
+def iter_metadata_keys(
+    site: site_.Site, ctx: StorageContextType
 ) -> Generator[key.KeySegment, None, None]:
-    """List all metadata keys for container at path.
+    """Iterate over metadata keys for container at site.
 
     Args:
-        path: Container path
+        site: Container site
         ctx: Storage context
 
     Yields:
@@ -135,12 +135,12 @@ def list_metadata_keys(
     """
     from everyshape.storage import LengthFilter, PrefixFilter, StorageScanOptions
 
-    meta_path = key.to_meta(path)
-    # Scan immediate children of metadata path only (length = meta_path + 1)
-    prefix = PrefixFilter(prefix=meta_path)
-    child_len = LengthFilter(length=len(meta_path) + 1)
+    meta_site = key.to_meta(site)
+    # Scan immediate children of metadata site only (length = meta_site + 1)
+    prefix = PrefixFilter(prefix=meta_site)
+    child_len = LengthFilter(length=len(meta_site) + 1)
     options = StorageScanOptions(
-        start=(*meta_path, ""),  # Start after meta_path itself
+        start=(*meta_site, ""),  # Start after meta_site itself
         break_filter=prefix,
         filter=prefix & child_len,
     )

@@ -1,7 +1,7 @@
-"""Tree layer exception hierarchy.
+"""Container layer exception hierarchy.
 
-This module defines all tree-specific exceptions with a clear hierarchy
-that reflects the different error categories in tree operations.
+This module defines all container-specific exceptions with a clear hierarchy
+that reflects the different error categories in container operations.
 """
 
 from __future__ import annotations
@@ -10,88 +10,89 @@ from everyshape._exception import EveryShapeError
 
 
 __all__ = [
-    "InvalidDepthError",
-    "ParentMalformedError",
-    "ParentNotFoundError",
-    "PathCollisionError",
-    "PathExistsError",
-    "PathNotFoundError",
-    "PathTypeError",
-    "TreeError",
+    "ContainerCollisionError",
+    "ContainerError",
+    "ContainerExistsError",
+    "ContainerInvalidDepthError",
+    "ContainerInvalidSiteError",
+    "ContainerNotFoundError",
+    "ContainerParentMalformedError",
+    "ContainerParentNotFoundError",
+    "ContainerTypeError",
 ]
 
 
-class TreeError(EveryShapeError):
-    """Base exception for all tree layer errors.
+class ContainerError(EveryShapeError):
+    """Base exception for all container layer errors.
 
-    All tree-specific exceptions inherit from this base class,
+    All container-specific exceptions inherit from this base class,
     allowing for broad exception handling when needed.
     """
 
 
-class PathNotFoundError(TreeError):
-    """Path does not exist in storage.
+class ContainerNotFoundError(ContainerError):
+    """Site does not exist in storage.
 
-    Raised when attempting to access or validate a path that
+    Raised when attempting to access or validate a site that
     doesn't exist in the underlying storage.
     """
 
 
-class PathExistsError(TreeError):
-    """Path already exists in storage.
+class ContainerExistsError(ContainerError):
+    """Site already exists in storage.
 
-    Raised when attempting to create a node at a path that
+    Raised when attempting to create a node at a site that
     already contains data, typically with incompatible type.
     """
 
 
-class InvalidPathError(TreeError):
-    """Invalid path.
+class ContainerInvalidSiteError(ContainerError):
+    """Invalid site.
 
     Raised when:
-    - Path is empty tuple
-    - Path root segment is neither of / and /m
+    - Site is empty tuple
+    - Site root segment is neither of / and /m
     """
 
 
-class PathTypeError(TreeError):
-    """Type mismatch or malformed data at path.
+class ContainerTypeError(ContainerError):
+    """Type mismatch or malformed data at site.
 
     Raised when:
     - Expected type doesn't match actual type
-    - Data at path is corrupted or malformed
+    - Data at site is corrupted or malformed
     - Type information cannot be parsed
     """
 
 
-class PathCollisionError(PathTypeError):
-    """Primitive value collides with container path.
+class ContainerCollisionError(ContainerTypeError):
+    """Primitive value collides with container site.
 
-    Raised when a primitive value exists at a path where a
+    Raised when a primitive value exists at a site where a
     container is expected, or vice versa. This is a specific
-    type of PathTypeError.
+    type of ContainerTypeError.
     """
 
 
-class ParentNotFoundError(PathNotFoundError):
-    """Parent path is missing from storage.
+class ContainerParentNotFoundError(ContainerNotFoundError):
+    """Parent site is missing from storage.
 
     Raised when parent containers required for an operation
-    don't exist. This is a specific case of PathNotFoundError
+    don't exist. This is a specific case of ContainerNotFoundError
     focused on parent chain issues.
     """
 
 
-class ParentMalformedError(PathTypeError):
+class ContainerParentMalformedError(ContainerTypeError):
     """Parent has corrupted or invalid data.
 
     Raised when parent containers exist but have malformed
     type markers or corrupted data. This is a specific case
-    of PathTypeError focused on parent chain issues.
+    of ContainerTypeError focused on parent chain issues.
     """
 
 
-class InvalidDepthError(TreeError):
+class ContainerInvalidDepthError(ContainerError):
     """Invalid depth parameter provided.
 
     Raised when a depth parameter is invalid (e.g., negative

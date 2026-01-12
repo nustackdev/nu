@@ -1,16 +1,16 @@
-"""Tree layer - hierarchical semantics over flat tuple-key-value storage.
+"""Container layer - hierarchical semantics over flat tuple-key-value storage.
 
-The tree layer (Layer 2) provides hierarchical organization over the flat
-key-value storage (Layer 1). It interprets tuple keys as parent-child paths
+The container layer (Layer 2) provides hierarchical organization over the flat
+key-value storage (Layer 1). It interprets tuple keys as parent-child sites
 and distinguishes containers (nodes with children) from primitives (leaf values).
 
 Core Responsibilities:
-    - Interpret tuple keys as hierarchical paths
+    - Interpret tuple keys as hierarchical sites
     - Distinguish containers from primitives using markers
     - Enforce parent-must-exist-before-child rule
     - Provide container type markers for View reconstruction
 
-The tree layer does NOT:
+The container layer does NOT:
     - Implement data structures (that's Views Layer 3)
     - Handle application logic (that's Semantics Layer 4)
     - Know about dict/list/queue semantics
@@ -18,31 +18,15 @@ The tree layer does NOT:
 Architecture:
     The module is organized into focused, composable components:
     - types: Type definitions and data structures
-    - exceptions: Tree-specific error hierarchy
+    - exceptions: Container-specific error hierarchy
     - marker: Container type marker system
-    - node: Node identification and information
-    - navigation: Path traversal (pure functions)
-    - validation: Rule enforcement
-    - container: Container operations and children management
-    - tree: Main convenience interface
+    - node_ops: Node identification and information
+    - validation_ops: Rule enforcement
+    - container_ops: Container operations and children management
+    - meta_ops: Metadata operations
+    - container: Container convenience class
 
-Usage:
-    Direct functional API (recommended for library code):
-        >>> from everyshape.tree import create_container, get_node_info
-        >>> with storage.transaction() as tx:
-        ...     create_container(
-        ...         ("users",), ContainerStructure(1), ContainerProtocol.MUTABLE, tx
-        ...     )
-        ...     info = get_node_info(("users",), tx)
-
-    Object-oriented API (convenient for application code):
-        >>> from everyshape.tree import Tree
-        >>> with storage.transaction() as tx:
-        ...     tree = Tree(ctx=tx)
-        ...     tree.create_container(
-        ...         ("users",), ContainerStructure(1), ContainerProtocol.MUTABLE
-        ...     )
-        ...     info = tree.get_node_info(("users",))
+All mutations are silent (return None) and idempotent.
 """
 
 from __future__ import annotations
@@ -63,29 +47,31 @@ from .container_ops import (
     create_parents,
     delete_child,
     delete_container,
-    delete_subtree,
+    delete_descendants,
+    exists_child,
+    get_child_primitive,
     get_child_type,
-    has_child,
-    list_child_keys,
-    list_children,
-    list_descendants,
-    set_child_primitive,
-    walk_tree,
+    iter_child_keys,
+    iter_child_values,
+    iter_children,
+    iter_descendants,
+    put_child_primitive,
+    walk_descendants,
 )
 
 # ============================================================================
 # Exceptions
 # ============================================================================
 from .exceptions import (
-    InvalidDepthError,
-    InvalidPathError,
-    ParentMalformedError,
-    ParentNotFoundError,
-    PathCollisionError,
-    PathExistsError,
-    PathNotFoundError,
-    PathTypeError,
-    TreeError,
+    ContainerCollisionError,
+    ContainerError,
+    ContainerExistsError,
+    ContainerInvalidDepthError,
+    ContainerInvalidSiteError,
+    ContainerNotFoundError,
+    ContainerParentMalformedError,
+    ContainerParentNotFoundError,
+    ContainerTypeError,
 )
 
 # ============================================================================
@@ -97,6 +83,17 @@ from .marker import (
     extract_marker,
     is_marker,
     validate_marker_compatibility,
+)
+
+# ============================================================================
+# Metadata Operations
+# ============================================================================
+from .meta_ops import (
+    delete_metadata,
+    exists_metadata,
+    get_metadata,
+    iter_metadata_keys,
+    put_metadata,
 )
 
 # ============================================================================
@@ -149,15 +146,15 @@ __all__ = [  # noqa: RUF022
     "ParentInfo",
     "ParentChainInfo",
     # Exceptions
-    "TreeError",
-    "PathNotFoundError",
-    "PathExistsError",
-    "PathTypeError",
-    "PathCollisionError",
-    "ParentNotFoundError",
-    "ParentMalformedError",
-    "InvalidDepthError",
-    "InvalidPathError",
+    "ContainerError",
+    "ContainerNotFoundError",
+    "ContainerExistsError",
+    "ContainerInvalidSiteError",
+    "ContainerTypeError",
+    "ContainerCollisionError",
+    "ContainerParentNotFoundError",
+    "ContainerParentMalformedError",
+    "ContainerInvalidDepthError",
     # Marker system
     "MARKER_SENTINEL",
     "create_marker",
@@ -181,19 +178,27 @@ __all__ = [  # noqa: RUF022
     # Container operations
     "create_container",
     "delete_container",
-    "delete_subtree",
-    "has_child",
+    "delete_descendants",
+    "exists_child",
     "get_child_type",
-    "list_child_keys",
-    "list_children",
+    "get_child_primitive",
+    "iter_child_keys",
+    "iter_child_values",
+    "iter_children",
     "count_children",
     "create_child_container",
-    "set_child_primitive",
+    "put_child_primitive",
     "delete_child",
     "clear_children",
-    "list_descendants",
-    "walk_tree",
+    "iter_descendants",
+    "walk_descendants",
     "create_parents",
-    # Main interfaces
+    # Metadata operations
+    "put_metadata",
+    "get_metadata",
+    "exists_metadata",
+    "delete_metadata",
+    "iter_metadata_keys",
+    # Main interface
     "Container",
 ]
