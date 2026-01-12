@@ -6,47 +6,47 @@ Views are defined by their capabilities, not inheritance.
 
 ### Conversion
 
-| Protocol | Method | Purpose |
-|----------|--------|---------|
-| `Convertible` | `extract()` | Container → Python value |
-| `Initializable` | `store(value)` | Python value → Container |
+| Protocol        | Method          | Purpose                       |
+| --------------- | --------------- | ----------------------------- |
+| `Convertible`   | `extract()`     | Container → Python value      |
+| `Initializable` | `store(value)`  | Python value → Container      |
 
 These enable bidirectional serialization. A view might support one, both, or neither.
 
 ### Access
 
-| Protocol | Method | Purpose |
-|----------|--------|---------|
-| `Subscriptable` | `__getitem__` | Read by address |
-| `Assignable` | `__setitem__` | Write by address |
-| `Containable` | `__contains__` | Membership test |
-| `Sizeable` | `__len__` | Item count |
-| `Deletable` | `__delitem__` | Remove by address |
+| Protocol        | Method         | Purpose           |
+| --------------- | -------------- | ----------------- |
+| `Subscriptable` | `__getitem__`  | Read by address   |
+| `Assignable`    | `__setitem__`  | Write by address  |
+| `Containable`   | `__contains__` | Membership test   |
+| `Sizeable`      | `__len__`      | Item count        |
+| `Deletable`     | `__delitem__`  | Remove by address |
 
 ### Mutation
 
-| Protocol | Method | Purpose |
-|----------|--------|---------|
-| `Appendable` | `append(value)` | Add to end |
-| `Insertable` | `insert(index, value)` | Add at position |
-| `Poppable` | `pop(index)` | Remove and return |
-| `Addable` | `add(value)` | Set-like add |
-| `Removable` | `remove(value)` | Remove by value (raises) |
-| `Discardable` | `discard(value)` | Remove by value (silent) |
-| `Clearable` | `clear()` | Remove all |
+| Protocol      | Method              | Purpose                     |
+| ------------- | ------------------- | --------------------------- |
+| `Appendable`  | `append(value)`     | Add to end                  |
+| `Insertable`  | `insert(index, value)` | Add at position             |
+| `Poppable`    | `pop(index)`        | Remove and return           |
+| `Addable`     | `add(value)`        | Set-like add                |
+| `Removable`   | `remove(value)`     | Remove by value (raises)    |
+| `Discardable` | `discard(value)`    | Remove by value (silent)    |
+| `Clearable`   | `clear()`           | Remove all                  |
 
 ### Navigation
 
-| Protocol | Method | Purpose |
-|----------|--------|---------|
+| Protocol  | Method                       | Purpose               |
+| --------- | ---------------------------- | --------------------- |
 | `Nestable` | `open_child(address, view)` | Navigate to child view |
 
 ### Observation
 
-| Protocol | Method | Purpose |
-|----------|--------|---------|
-| `Observable` | `on_change()` | Watch all changes |
-| `ChildObservable` | `on_child_change(address)` | Watch specific child |
+| Protocol               | Method                          | Purpose                         |
+| --------------------- | ------------------------------- | ------------------------------- |
+| `Observable`          | `on_change()`                   | Watch all changes               |
+| `ChildObservable`     | `on_child_change(address)`      | Watch specific child            |
 | `DescendantsObservable` | `on_descendents_change(*pattern)` | Watch pattern-matched descendants |
 
 ## Type Guards
@@ -80,16 +80,16 @@ class DictView(
 
 Each base is single-purpose:
 
-| Base | Provides |
-|------|----------|
+| Base                             | Provides                                       |
+| -------------------------------- | ---------------------------------------------- |
 | `MetadataBasedChildrenCountBase` | `__len__`, `_increment_length`, `_decrement_length` |
-| `LiveChildrenCountBase` | `__len__` (computed on demand) |
-| `AddressMappingBase` | `normalize_address()` hook |
-| `ChildNavigationBase` | `open_child()` with address normalization |
-| `ChildNestedGetBase` | `_get_child_value()` with auto-extraction |
-| `ChildNestedSetBase` | `_set_child_value()` with auto-population |
-| `ObservableBase` | `on_change()` subscription |
-| `ChildObservableBase` | `on_child_change()`, `on_children_change()` |
+| `LiveChildrenCountBase`          | `__len__` (computed on demand)                  |
+| `AddressMappingBase`             | `normalize_address()` hook                      |
+| `ChildNavigationBase`            | `open_child()` with address normalization       |
+| `ChildNestedGetBase`             | `_get_child_value()` with auto-extraction       |
+| `ChildNestedSetBase`             | `_set_child_value()` with auto-population       |
+| `ObservableBase`                 | `on_change()` subscription                      |
+| `ChildObservableBase`            | `on_child_change()`, `on_children_change()`     |
 
 ## View Capability Matrix
 

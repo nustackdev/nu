@@ -159,7 +159,7 @@ class Subscriptable[A, V](View, Protocol):
     """Protocol for containers that support item access via subscript notation.
 
     Subscriptable containers implement __getitem__ to retrieve values by
-    address, key, or index using bracket notation.
+    address using bracket notation.
 
     Example:
         >>> if isinstance(container, Subscriptable):
@@ -171,7 +171,7 @@ class Subscriptable[A, V](View, Protocol):
         """Get item by address.
 
         Args:
-            address: Item address (key, index, or other identifier)
+            address: Item address (index or other identifier)
 
         Returns:
             Value at the given address
@@ -188,7 +188,7 @@ class Assignable[A, V](View, Protocol):
     """Protocol for containers that support item assignment via subscript notation.
 
     Assignable containers implement __setitem__ to store values by
-    address, key, or index using bracket notation.
+    address using bracket notation.
 
     Example:
         >>> if isinstance(container, Assignable):
@@ -200,7 +200,7 @@ class Assignable[A, V](View, Protocol):
         """Set item at address.
 
         Args:
-            address: Item address (key, index, or other identifier)
+            address: Item address (index or other identifier)
             value: Value to store
 
         Raises:
@@ -494,7 +494,7 @@ class ChildObservable[A](View, Protocol):
     to all children changes.
 
     Type Parameters:
-        A: The type of address/key for children
+        A: The type of address for children
 
     Example:
         >>> if isinstance(container, ChildObservable):
@@ -551,14 +551,14 @@ class DescendantsObservable(View, Protocol):
 
     def on_descendents_change(
         self,
-        key: key.KeySegment,
-        *keys: key.KeySegment,
+        address: key.KeySegment,
+        *addresses: key.KeySegment,
     ) -> Subscription:
         """Watch changes of descendants for a given pattern.
 
         Args:
-            key: First key segment in the pattern
-            *keys: Additional key segments (use "*" for wildcards)
+            address: First address segment in the pattern
+            *addresses: Additional address segments (use "*" for wildcards)
 
         Returns:
             Subscription handle that can be bound to callbacks

@@ -66,7 +66,7 @@ class ObservableBase:
             >>> sub.close()
         """
         return self.container.subscribe(
-            SubscriptionOptions(PrefixFilter(prefix=(self.container.path)))
+            SubscriptionOptions(PrefixFilter(prefix=(self.container.site)))
         )
 
 
@@ -77,7 +77,7 @@ class ChildObservableBase[A](AddressMappingBase[A]):
     or all children at once.
 
     Type Parameters:
-        A: The type of address/key for children
+        A: The type of address for children
 
     Example:
         >>> class MyView(ChildObservableBase[int], View): ...
@@ -101,12 +101,12 @@ class ChildObservableBase[A](AddressMappingBase[A]):
             >>> sub.bind(callback)
             >>> sub.close()
         """
-        key = self.normalize_address(address)
-        child_full_path = (*self.container.path, key)
+        normalized = self.normalize_address(address)
+        child_full_site = (*self.container.site, normalized)
         return self.container.subscribe(
             SubscriptionOptions(
-                filter=PrefixFilter(prefix=child_full_path)
-                & LengthFilter(length=len(child_full_path))
+                filter=PrefixFilter(prefix=child_full_site)
+                & LengthFilter(length=len(child_full_site))
             )
         )
 
@@ -121,10 +121,10 @@ class ChildObservableBase[A](AddressMappingBase[A]):
             >>> sub.bind(callback)
             >>> sub.close()
         """
-        child_full_path = (*self.container.path, "*")
+        child_full_site = (*self.container.site, "*")
         return self.container.subscribe(
             SubscriptionOptions(
-                WildcardFilter(pattern=child_full_path),
+                WildcardFilter(pattern=child_full_site),
             )
         )
 
@@ -133,7 +133,7 @@ class DescendantsObservableBase:
     """Base providing subscription-based observability for view's descendants.
 
     This base enables views to observe changes on descendants matching
-    a pattern, using wildcards to match any key at specific levels.
+    a pattern, using wildcards to match any address at specific levels.
 
     Example:
         >>> class MyView(DescendantsObservableBase, View): ...
@@ -147,14 +147,14 @@ class DescendantsObservableBase:
 
     def on_descendents_change(
         self,
-        key: key.KeySegment,
-        *keys: key.KeySegment,
+        address: key.KeySegment,
+        *addresses: key.KeySegment,
     ) -> Subscription:
         """Watch changes of descendants for a given pattern.
 
         Args:
-            key: First key segment in the pattern
-            *keys: Additional key segments (use "*" for wildcards)
+            address: First address segment in the pattern
+            *addresses: Additional address segments (use "*" for wildcards)
 
         Returns:
             Subscription handle that can be bound to callbacks
@@ -164,6 +164,6 @@ class DescendantsObservableBase:
             >>> sub.bind(callback)
             >>> sub.close()
         """
-        keys = (key, *keys)
-        wildcard_path = (*self.container.path, *keys)
-        return self.container.subscribe(SubscriptionOptions(WildcardFilter(pattern=wildcard_path)))
+        pattern = (address, *addresses)
+        wildcard_site = (*self.container.site, *pattern)
+        return self.container.subscribe(SubscriptionOptions(WildcardFilter(pattern=wildcard_site)))

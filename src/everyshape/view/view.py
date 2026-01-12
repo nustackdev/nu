@@ -50,15 +50,15 @@ class View(Protocol):
         >>> class DictView[K, V](View[K, V]):
         ...     def extract(self) -> dict[K, V]:
         ...         return {
-        ...             key: self._get_child_value(key)
-        ...             for key in self.container.list_child_keys()
+        ...             address: self._get_child_value(address)
+        ...             for address in self.container.iter_child_keys()
         ...         }
         ...
         ...     def store(self, value: dict[K, V], /, *, replace: bool = False) -> None:
         ...         if replace:
         ...             self.container.clear_children()
-        ...         for k, v in value.items():
-        ...             self._set_child_value(k, v)
+        ...         for address, v in value.items():
+        ...             self._set_child_value(address, v)
     """
 
     @classmethod

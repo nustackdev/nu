@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from everyshape.container import ContainerStructure
 
-from .exceptions import RegistryError
+from .exceptions import ViewRegistryError
 
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ class ViewRegistry:
         Args:
             view_class: View class to register
         Raises:
-            RegistryError: If structure_id or container_type already registered
+            ViewRegistryError: If structure_id or container_type already registered
         """
         structure_id: ContainerStructure = view_class.get_structure()
         container_type: type | None = view_class.get_container_cls()
@@ -86,7 +86,7 @@ class ViewRegistry:
                     "attempted_view": view_class.__name__,
                 },
             )
-            raise RegistryError(
+            raise ViewRegistryError(
                 f"Structure ID {structure_id} already registered to {existing.__name__}"
             )
         self._structure_to_view[structure_id] = view_class
@@ -103,7 +103,7 @@ class ViewRegistry:
                         "attempted_view": view_class.__name__,
                     },
                 )
-                raise RegistryError(
+                raise ViewRegistryError(
                     f"Container type {container_type.__name__} already registered to "
                     f"{existing.view_class.__name__}"
                 )
@@ -133,14 +133,14 @@ class ViewRegistry:
             View class for this structure
 
         Raises:
-            RegistryError: If structure_id not registered
+            ViewRegistryError: If structure_id not registered
         """
         if structure_id not in self._structure_to_view:
             logger.warning(
                 "No view registered for structure ID",
                 extra={"structure_id": structure_id},
             )
-            raise RegistryError(f"No view registered for structure ID {structure_id}")
+            raise ViewRegistryError(f"No view registered for structure ID {structure_id}")
 
         view_class = self._structure_to_view[structure_id]
         logger.debug(
@@ -159,7 +159,7 @@ class ViewRegistry:
             View class for this type
 
         Raises:
-            RegistryError: If type not registered
+            ViewRegistryError: If type not registered
         """
         # Try exact match first
         if container_type in self._type_to_registration:
@@ -190,7 +190,7 @@ class ViewRegistry:
             "No view registered for type",
             extra={"container_type": container_type.__name__},
         )
-        raise RegistryError(f"No view registered for type {container_type.__name__}")
+        raise ViewRegistryError(f"No view registered for type {container_type.__name__}")
 
     def get_structure_for_type(self, container_type: type) -> int:
         """Get structure ID for Python type.
@@ -202,10 +202,10 @@ class ViewRegistry:
             Structure ID for this type
 
         Raises:
-            RegistryError: If type not registered
+            ViewRegistryError: If type not registered
         """
         if container_type not in self._type_to_registration:
-            raise RegistryError(f"No registration for type {container_type.__name__}")
+            raise ViewRegistryError(f"No registration for type {container_type.__name__}")
         return self._type_to_registration[container_type].structure_id
 
     def is_container_type(self, value: object) -> bool:

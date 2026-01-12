@@ -14,11 +14,11 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from everyshape.container import Container, ContainerStructure, NodeType
-from everyshape.loc import key as key_
 from everyshape.types import Empty, is_empty
 
 
 if TYPE_CHECKING:
+    from everyshape.loc import key as key_
     from everyshape.view import View, ViewRegistry
 
 
@@ -40,13 +40,13 @@ class MetadataBasedChildrenCountBase:
     the "__len__" metadata field efficiently.
 
     Type Parameters:
-        A: Address/key type for children
+        A: Address type for children
         V: Value type for children
 
     Example:
         >>> class MyView(MetadataBasedChildrenCountBase[str, int], View):
-        ...     def add_item(self, key: str, value: int):
-        ...         self.container.set_child_primitive(key, value)
+        ...     def add_item(self, address: str, value: int):
+        ...         self.container.put_child_primitive(address, value)
         ...         self._increment_length()
     """
 
@@ -64,7 +64,7 @@ class MetadataBasedChildrenCountBase:
     def _increment_length(self) -> None:
         """Increment children count by 1."""
         current_len = cast("int", self.container.get_metadata("__len__", default=0))
-        self.container.set_metadata(
+        self.container.put_metadata(
             "__len__", int(current_len) + 1 if current_len is not None else 1
         )
 
@@ -72,7 +72,7 @@ class MetadataBasedChildrenCountBase:
         """Decrement children count by 1."""
         current_len = cast("int", self.container.get_metadata("__len__", default=0))
         if current_len and int(current_len) > 0:
-            self.container.set_metadata("__len__", int(current_len) - 1)
+            self.container.put_metadata("__len__", int(current_len) - 1)
 
     def _set_length(self, n: int) -> None:
         """Set children count to specific value.
@@ -80,7 +80,7 @@ class MetadataBasedChildrenCountBase:
         Args:
             n: New length value
         """
-        self.container.set_metadata("__len__", n)
+        self.container.put_metadata("__len__", n)
 
     def _update_count(self) -> None:
         """Update length metadata by counting direct children.
@@ -89,7 +89,7 @@ class MetadataBasedChildrenCountBase:
         Useful for ensuring consistency or recovering from operations that
         bypass the increment/decrement helpers.
         """
-        count = sum(1 for _ in self.container.list_child_keys())
+        count = sum(1 for _ in self.container.iter_child_keys())
         self._set_length(count)
 
 
@@ -100,14 +100,14 @@ class LiveChildrenCountBase:
     without relying on metadata. Less efficient but always accurate.
 
     Type Parameters:
-        A: Address/key type for children
+        A: Address type for children
         V: Value type for children
 
     Example:
         >>> class MyView(LiveChildrenCountBase[str, int], View):
         ...     # No need to track length manually
-        ...     def add_item(self, key: str, value: int):
-        ...         self.container.set_child_primitive(key, value)
+        ...     def add_item(self, address: str, value: int):
+        ...         self.container.put_child_primitive(address, value)
     """
 
     container: Container
@@ -118,7 +118,7 @@ class LiveChildrenCountBase:
         Returns:
             Number of children (counted on each call)
         """
-        return sum(1 for _ in self.container.list_child_keys())
+        return sum(1 for _ in self.container.iter_child_keys())
 
 
 class AddressMappingBase[A]:
@@ -146,7 +146,7 @@ class ChildNavigationBase[A](AddressMappingBase[A]):
     to customize address handling (e.g., negative index support).
 
     Type Parameters:
-        A: Address/key type for children
+        A: Address type for children
         V: Value type for children
 
     Example:
@@ -175,12 +175,7 @@ class ChildNavigationBase[A](AddressMappingBase[A]):
             IndexError, KeyError: If address invalid after normalization
         """
         normalized_address = self.normalize_address(address)
-        child_container = Container.create(
-            key_.join_segment(self.container.path, normalized_address),
-            self.container.ctx,
-            view.get_structure(),
-            view.get_protocol(),
-        )
+        child_container = self.container.get_child_container(normalized_address)
         return view(child_container, self.registry)
 
 
@@ -191,26 +186,26 @@ class ChildNestedGetBase:
     containers using the registry. Primitives are returned directly.
 
     Type Parameters:
-        A: Address/key type for children
+        A: Address type for children
         V: Value type for children
 
     Example:
         >>> class MyView(ChildNestedGetBase[str, dict], View):
-        ...     def get_item(self, key: str) -> dict:
-        ...         return self._get_child_value(key)
+        ...     def get_item(self, address: str) -> dict:
+        ...         return self._get_child_value(address)
     """
 
     container: Container
     registry: ViewRegistry
 
-    def _get_child_value(self, key: key_.KeySegment) -> object | Empty:
+    def _get_child_value(self, address: key_.KeySegment) -> object | Empty:
         """Get child value, auto-extracting containers.
 
         Helper for subclasses implementing dict-like or list-like access.
         Automatically extracts nested containers using registry.
 
         Args:
-            key: Child key
+            address: Child address
 
         Returns:
             Primitive value or extracted container contents
@@ -218,25 +213,25 @@ class ChildNestedGetBase:
         Raises:
             KeyError: If child doesn't exist
         """
-        child_type = self.container.get_child_type(key)
+        child_type = self.container.get_child_type(address)
 
         if child_type == NodeType.NOT_FOUND:
-            raise KeyError(key)
+            raise KeyError(address)
 
         if child_type == NodeType.PRIMITIVE:
-            value = self.container.get_child_primitive(key)
+            value = self.container.get_child_primitive(address)
             if is_empty(value):
-                raise KeyError(key)
+                raise KeyError(address)
             return value
 
         # Child is container - extract it
-        return self._extract_child_container(key)
+        return self._extract_child_container(address)
 
-    def _extract_child_container(self, key: key_.KeySegment) -> object:
+    def _extract_child_container(self, address: key_.KeySegment) -> object:
         """Extract child container contents using registry.
 
         Args:
-            key: Child key
+            address: Child address
 
         Returns:
             Extracted Python value
@@ -245,20 +240,20 @@ class ChildNestedGetBase:
             ValueError: If child has no structure ID
             TypeError: If child view doesn't support extraction
         """
-        from .capabilities import Convertible
+        from ..capabilities import Convertible
 
         # Get child container
-        child_path = (*self.container.path, key)
-        child_container = Container(ctx=self.container.ctx, path=child_path)
+        child_site = (*self.container.site, address)
+        child_container = Container(ctx=self.container.ctx, site=child_site)
 
         # Get structure ID
         child_info = child_container.info()
         if child_info.structure is None:
             logger.error(
                 "Child container has no structure ID",
-                extra={"parent_path": self.container.path, "child_key": key},
+                extra={"parent_site": self.container.site, "child_address": address},
             )
-            raise ValueError(f"Child container '{key}' has no structure ID")
+            raise ValueError(f"Child container '{address}' has no structure ID")
 
         # Find appropriate view
         view_class = self.registry.get_view_for_structure(child_info.structure)
@@ -269,8 +264,8 @@ class ChildNestedGetBase:
             logger.error(
                 "Child view does not support extraction",
                 extra={
-                    "parent_path": self.container.path,
-                    "child_key": key,
+                    "parent_site": self.container.site,
+                    "child_address": address,
                     "view_class": view_class.__name__,
                 },
             )
@@ -279,8 +274,8 @@ class ChildNestedGetBase:
         logger.debug(
             "Extracting child container",
             extra={
-                "parent_path": self.container.path,
-                "child_key": key,
+                "parent_site": self.container.site,
+                "child_address": address,
                 "view_class": view_class.__name__,
                 "structure": child_info.structure,
             },
@@ -295,48 +290,48 @@ class ChildNestedSetBase:
     containers using the registry. Primitives are stored directly.
 
     Type Parameters:
-        A: Address/key type for children
+        A: Address type for children
         V: Value type for children
 
     Example:
         >>> class MyView(ChildNestedSetBase[str, dict], View):
-        ...     def set_item(self, key: str, value: dict):
-        ...         self._set_child_value(key, value)
+        ...     def set_item(self, address: str, value: dict):
+        ...         self._set_child_value(address, value)
     """
 
     container: Container
     registry: ViewRegistry
 
-    def _set_child_value(self, key: key_.KeySegment, value: object) -> None:
+    def _set_child_value(self, address: key_.KeySegment, value: object) -> None:
         """Set child value, auto-creating containers for complex types.
 
         Helper for subclasses implementing dict-like or list-like mutation.
         Automatically populates nested containers using registry.
 
         Args:
-            key: Child key
+            address: Child address
             value: Value to store (primitive or container)
         """
         if self.registry.is_container_type(value):
             # Value is a container type - populate it
-            self._populate_child_container(key, value)
+            self._populate_child_container(address, value)
         else:
             # Primitive value - store directly
             from everyshape.types import Value
 
-            self.container.set_child_primitive(key, cast("Value", value))
+            self.container.put_child_primitive(address, cast("Value", value))
 
-    def _populate_child_container(self, key: key_.KeySegment, value: object) -> None:
+    def _populate_child_container(self, address: key_.KeySegment, value: object) -> None:
         """Populate child container from Python value using registry.
 
         Args:
-            key: Child key
+            address: Child address
             value: Container value to store
 
         Raises:
             TypeError: If child view doesn't support initialization
         """
-        from .capabilities import Initializable
+        from ..capabilities import Initializable
 
         # Get view class and structure for this value type
         value_type = type(value)
@@ -347,8 +342,8 @@ class ChildNestedSetBase:
         logger.debug(
             "Populating child container",
             extra={
-                "parent_path": self.container.path,
-                "child_key": key,
+                "parent_site": self.container.site,
+                "child_address": address,
                 "value_type": value_type.__name__,
                 "view_class": view_class.__name__,
                 "structure": structure_id,
@@ -357,7 +352,7 @@ class ChildNestedSetBase:
 
         # Create child container
         child_container = self.container.create_child_container(
-            key=key,
+            address,
             structure=ContainerStructure(structure_id),
             protocol=protocol_hints,
         )
@@ -370,8 +365,8 @@ class ChildNestedSetBase:
             logger.error(
                 "Child view does not support initialization",
                 extra={
-                    "parent_path": self.container.path,
-                    "child_key": key,
+                    "parent_site": self.container.site,
+                    "child_address": address,
                     "view_class": view_class.__name__,
                 },
             )

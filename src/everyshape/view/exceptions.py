@@ -9,9 +9,9 @@ from everyshape._exception import EveryShapeError
 
 
 __all__ = [
-    "RegistryError",
     "ViewError",
     "ViewOperationError",
+    "ViewRegistryError",
 ]
 
 
@@ -19,7 +19,7 @@ class ViewError(EveryShapeError):
     """Base exception for view-related errors."""
 
 
-class RegistryError(ViewError):
+class ViewRegistryError(ViewError):
     """Raised when registry operations fail."""
 
 

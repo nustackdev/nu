@@ -13,14 +13,15 @@ import attrs
 from everyshape.container import Container, ContainerProtocol, ContainerStructure
 from everyshape.loc import key as key_
 from everyshape.loc import path as path_
+from everyshape.loc import site as site_
 
-from .registry import ViewRegistry
+from ..registry import ViewRegistry
 
 
 if TYPE_CHECKING:
     from everyshape.storage import StorageContextType
 
-    from .view import View
+    from ..view import View
 
 __all__ = [
     "ViewBase",
@@ -54,15 +55,15 @@ class ViewBase(ABC):
         >>> class DictView[K, V](View[K, V]):
         ...     def extract(self) -> dict[K, V]:
         ...         return {
-        ...             key: self._get_child_value(key)
-        ...             for key in self.container.list_child_keys()
+        ...             address: self._get_child_value(address)
+        ...             for address in self.container.iter_child_keys()
         ...         }
         ...
         ...     def store(self, value: dict[K, V], /, *, replace: bool = False) -> None:
         ...         if replace:
         ...             self.container.clear_children()
-        ...         for k, v in value.items():
-        ...             self._set_child_value(k, v)
+        ...         for address, v in value.items():
+        ...             self._set_child_value(address, v)
     """
 
     container: Container
@@ -125,10 +126,10 @@ class ViewBase(ABC):
             )
 
         container = Container.create(
-            (key_.DATA_ROOT,),
-            ctx,
-            cls.get_structure(),
-            cls.get_protocol(),
+            site=(key_.DATA_ROOT,),
+            ctx=ctx,
+            structure=cls.get_structure(),
+            protocol=cls.get_protocol(),
             default_parent_structure=default_parent_view.get_structure(),
             default_parent_protocol=default_parent_view.get_protocol(),
             ensure_healthy_parents=True,
@@ -238,10 +239,10 @@ class ViewBase(ABC):
 
         # Create the target container with proper structure and protocol
         container = Container.create(
-            key,
-            ctx,
-            cls.get_structure(),
-            cls.get_protocol(),
+            site=key,
+            ctx=ctx,
+            structure=cls.get_structure(),
+            protocol=cls.get_protocol(),
             default_parent_structure=default_parent_view.get_structure(),
             default_parent_protocol=default_parent_view.get_protocol(),
             ensure_healthy_parents=True,
@@ -267,17 +268,17 @@ class ViewBase(ABC):
         Raises:
             ValueError: If already at root (no parent)
         """
-        parent_path = key_.get_parent(self.container.path)
-        if parent_path is None:
+        parent_site = site_.get_parent(self.container.site)
+        if parent_site is None:
             raise ValueError("Cannot navigate to parent - already at root")
 
         # Create parent container
-        parent_container = Container(ctx=self.container.ctx, path=parent_path)
+        parent_container = Container(ctx=self.container.ctx, site=parent_site)
 
         # Get parent's structure ID to find correct view type
         parent_info = parent_container.info()
         if parent_info.structure is None:
-            raise ValueError(f"Parent container at {parent_path} has no structure ID")
+            raise ValueError(f"Parent container at {parent_site} has no structure ID")
 
         # Use registry to create appropriate view
         view_class = self.registry.get_view_for_structure(parent_info.structure)

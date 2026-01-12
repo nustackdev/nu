@@ -156,7 +156,7 @@ class MetadataBasedChildrenCountBase:
 ```python
 class LiveChildrenCountBase:
     def __len__(self) -> int:
-        return sum(1 for _ in self.container.list_child_keys())
+        return sum(1 for _ in self.container.iter_child_keys())
 ```
 
 Choose based on access pattern. Frequent length checks → metadata. Rare checks → live.
