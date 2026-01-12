@@ -12,7 +12,6 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
-from everyshape.loc import site as site_
 from everyshape.storage import LengthFilter, PrefixFilter, StorageScanOptions
 from everyshape.types import EMPTY, Empty, Value
 
@@ -42,6 +41,7 @@ from .validation_ops import (
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from everyshape.loc import site as site_
     from everyshape.storage import StorageContextType
 
 __all__ = [
@@ -257,7 +257,7 @@ def exists_child(site: site_.Site, key: site_.SiteSegment, ctx: StorageContextTy
         >>> exists_child(("users",), "unknown", tx)
         False
     """
-    child_site = site_.join_segment(site, key)
+    child_site = (*site, key)
     child_type = get_node_type(child_site, ctx)
     return child_type != NodeType.NOT_FOUND
 
@@ -276,7 +276,7 @@ def get_child_type(site: site_.Site, key: site_.SiteSegment, ctx: StorageContext
     Raises:
         StorageInterfaceError: If context doesn't support read access
     """
-    child_site = site_.join_segment(site, key)
+    child_site = (*site, key)
     return get_node_type(child_site, ctx)
 
 
@@ -439,7 +439,7 @@ def create_child_container(
     """
     validate_is_container(parent_site, ctx)
 
-    child_site = site_.join_segment(parent_site, key)
+    child_site = (*parent_site, key)
     create_container(child_site, structure, protocol, ctx, ensure_healthy_parents=False)
 
 
@@ -471,7 +471,7 @@ def put_child_primitive(
     """
     validate_is_container(parent_site, ctx)
 
-    child_site = site_.join_segment(parent_site, key)
+    child_site = (*parent_site, key)
     child_node_info = get_node_info(child_site, ctx)
 
     if child_node_info.exists:
@@ -511,7 +511,7 @@ def get_child_primitive(
     """
     validate_is_container(parent_site, ctx)
 
-    child_site = site_.join_segment(parent_site, key)
+    child_site = (*parent_site, key)
     child_node_info = get_node_info(child_site, ctx)
 
     if not child_node_info.exists:
@@ -544,7 +544,7 @@ def delete_child(
     """
     validate_is_container(parent_site, ctx)
 
-    child_site = site_.join_segment(parent_site, key)
+    child_site = (*parent_site, key)
     info = get_node_info(child_site, ctx)
 
     if not info.exists:

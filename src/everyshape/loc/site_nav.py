@@ -34,6 +34,7 @@ __all__ = [
     "is_root",
     "is_sibling",
     "join_segment",
+    "to_child",
 ]
 
 
@@ -88,7 +89,7 @@ def get_ancestors(site: Site) -> list[Site]:
 
     while current:  # Stop when current is empty tuple (root)
         ancestors.append(current)
-        current = get_parent(current)
+        current = current[:1] if len(current) > 1 else None
 
     return list(reversed(ancestors))
 
@@ -276,22 +277,29 @@ def get_common_ancestor(site1: Site, site2: Site) -> Site:
     return site1[:common_len]
 
 
-def join_segment(site: Site, *segments: SiteSegment) -> Site:
-    """Append segments to create a child site.
+def to_child(site: Site, *segments: SiteSegment) -> Site:
+    """Navigate to child site by appending segments.
+
+    Creates a child site by appending one or more segments to the parent site.
+    This is a hierarchical navigation operation.
 
     Args:
         site: Parent site
-        *segments: Child segments to append
+        *segments: Child segments to navigate to
 
     Returns:
-        New site with segments appended
+        Child site with segments appended
 
     Example:
-        >>> join_segment(("users",), "alice")
+        >>> to_child(("users",), "alice")
         ("users", "alice")
-        >>> join_segment(("users", "alice"), "profile", "settings")
+        >>> to_child(("users", "alice"), "profile", "settings")
         ("users", "alice", "profile", "settings")
-        >>> join_segment((), "users")
+        >>> to_child((), "users")
         ("users",)
     """
     return site + segments
+
+
+# Backward-compatible alias
+join_segment = to_child

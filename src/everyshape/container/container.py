@@ -18,7 +18,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
 
 from everyshape.loc import DATA_ROOT
-from everyshape.loc import key as key_
 
 from . import container_ops, meta_ops, node_ops, validation_ops
 from .exceptions import ContainerInvalidSiteError
@@ -211,7 +210,7 @@ class Container(NamedTuple):
     # CHILDREN: QUERY (Read operations)
     # ========================================================================
 
-    def exists_child(self, key: key_.KeySegment) -> bool:
+    def exists_child(self, key: site_.SiteSegment) -> bool:
         """Check if direct child exists.
 
         Args:
@@ -226,7 +225,7 @@ class Container(NamedTuple):
         """
         return container_ops.exists_child(self.site, key, self.ctx)
 
-    def get_child_type(self, key: key_.KeySegment) -> NodeType:
+    def get_child_type(self, key: site_.SiteSegment) -> NodeType:
         """Get child node type.
 
         Args:
@@ -241,7 +240,7 @@ class Container(NamedTuple):
         """
         return container_ops.get_child_type(self.site, key, self.ctx)
 
-    def iter_child_keys(self) -> Generator[key_.KeySegment, None, None]:
+    def iter_child_keys(self) -> Generator[site_.SiteSegment, None, None]:
         """Iterate over direct child keys.
 
         Yields:
@@ -254,7 +253,7 @@ class Container(NamedTuple):
         """
         yield from container_ops.iter_child_keys(self.site, self.ctx)
 
-    def iter_children(self) -> Generator[tuple[key_.KeySegment, NodeInfo], None, None]:
+    def iter_children(self) -> Generator[tuple[site_.SiteSegment, NodeInfo], None, None]:
         """Iterate over direct children with their info.
 
         Yields:
@@ -286,7 +285,7 @@ class Container(NamedTuple):
 
     def create_child_container(
         self,
-        key: key_.KeySegment,
+        key: site_.SiteSegment,
         structure: ContainerStructure,
         protocol: ContainerProtocol,
     ) -> Container:
@@ -319,12 +318,12 @@ class Container(NamedTuple):
             self.ctx,
         )
 
-        child_site = key_.join_segment(self.site, key)
+        child_site = (*self.site, key)
         return Container(ctx=self.ctx, site=child_site)
 
     def put_child_primitive(
         self,
-        key: key_.KeySegment,
+        key: site_.SiteSegment,
         value: Value,
     ) -> None:
         """Put primitive child value.
@@ -345,7 +344,7 @@ class Container(NamedTuple):
         """
         container_ops.put_child_primitive(self.site, key, value, self.ctx)
 
-    def get_child_primitive(self, key: key_.KeySegment) -> Value | Empty:
+    def get_child_primitive(self, key: site_.SiteSegment) -> Value | Empty:
         """Get primitive child value.
 
         Args:
@@ -367,7 +366,7 @@ class Container(NamedTuple):
 
     def delete_child(
         self,
-        key: key_.KeySegment,
+        key: site_.SiteSegment,
     ) -> None:
         """Delete direct child.
 
@@ -488,7 +487,7 @@ class Container(NamedTuple):
     # METADATA: FLAT KEY-VALUE STORAGE AT /m TREE
     # ========================================================================
 
-    def put_metadata(self, key: key_.KeySegment, value: Value) -> None:
+    def put_metadata(self, key: site_.SiteSegment, value: Value) -> None:
         """Put metadata for this container.
 
         Metadata is stored in the /m tree parallel to the data tree.
@@ -506,7 +505,7 @@ class Container(NamedTuple):
         """
         meta_ops.put_metadata(self.site, key, value, self.ctx)
 
-    def get_metadata(self, key: key_.KeySegment, default: Value | Empty = None) -> Value | Empty:
+    def get_metadata(self, key: site_.SiteSegment, default: Value | Empty = None) -> Value | Empty:
         """Get metadata value.
 
         Args:
@@ -522,7 +521,7 @@ class Container(NamedTuple):
         """
         return meta_ops.get_metadata(self.site, key, self.ctx, default)
 
-    def exists_metadata(self, key: key_.KeySegment) -> bool:
+    def exists_metadata(self, key: site_.SiteSegment) -> bool:
         """Check if metadata key exists.
 
         Args:
@@ -537,7 +536,7 @@ class Container(NamedTuple):
         """
         return meta_ops.exists_metadata(self.site, key, self.ctx)
 
-    def delete_metadata(self, key: key_.KeySegment) -> None:
+    def delete_metadata(self, key: site_.SiteSegment) -> None:
         """Delete metadata key.
 
         Idempotent: silent if metadata doesn't exist.
@@ -551,7 +550,7 @@ class Container(NamedTuple):
         """
         meta_ops.delete_metadata(self.site, key, self.ctx)
 
-    def iter_metadata_keys(self) -> Generator[key_.KeySegment, None, None]:
+    def iter_metadata_keys(self) -> Generator[site_.SiteSegment, None, None]:
         """Iterate over metadata keys for this container.
 
         Yields:
@@ -585,7 +584,7 @@ class Container(NamedTuple):
     # UTILITY METHODS
     # ========================================================================
 
-    def get_child_container(self, key: key_.KeySegment) -> Container:
+    def get_child_container(self, key: site_.SiteSegment) -> Container:
         """Get Container instance for child container.
 
         Convenience method that combines validation and Container creation.
@@ -600,7 +599,7 @@ class Container(NamedTuple):
             ContainerNotFoundError: If this container or child doesn't exist
             ContainerTypeError: If child is not a container
         """
-        child_site = key_.join_segment(self.site, key)
+        child_site = (*self.site, key)
         validation_ops.validate_is_container(child_site, self.ctx)
         return Container(ctx=self.ctx, site=child_site)
 

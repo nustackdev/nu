@@ -14,11 +14,11 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from everyshape.container import Container, ContainerStructure, NodeType
-from everyshape.loc import site as site_
 from everyshape.types import Empty, is_empty
 
 
 if TYPE_CHECKING:
+    from everyshape.loc import site as site_
     from everyshape.view import View, ViewRegistry
 
 
@@ -176,7 +176,7 @@ class ChildNavigationBase[A](AddressMappingBase[A]):
         """
         normalized_address = self.normalize_address(address)
         child_container = Container.create(
-            site_.join_segment(self.container.site, normalized_address),
+            (*self.container.site, normalized_address),
             self.container.ctx,
             view.get_structure(),
             view.get_protocol(),
