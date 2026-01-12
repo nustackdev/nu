@@ -152,11 +152,13 @@ class MemoryTransaction:
         observer: MemoryObserver | None = None,
         read_only: bool = False,
         write_only: bool = False,
+        storage: MemoryStorage | None = None,
     ) -> None:
         self._storage_data = data
         self._observer = observer
         self._read_only = read_only
         self._write_only = write_only
+        self._storage = storage
         self._writes: dict[key.Key, Value] = {}
         self._deletes: set[key.Key] = set()
         self._committed = False
@@ -173,7 +175,7 @@ class MemoryTransaction:
 
     @property
     def storage(self):
-        return None  # Not needed for tests
+        return self._storage
 
     def get(self, key: key.Key) -> Value | Empty:
         """Get value at key.
@@ -411,6 +413,7 @@ class MemoryStorage:
             observer=self._observer,
             read_only=read_only,
             write_only=write_only,
+            storage=self,
         )
 
     def begin_snapshot(self) -> SnapshotProtocol:
