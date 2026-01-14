@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.typing import Sentinel
-from everyshape.view import Addable, Discardable, Removable
+from everyshape.typing.view import Addable, Discardable, Removable
 
 from ...term import Command, Term, ViewRef
 

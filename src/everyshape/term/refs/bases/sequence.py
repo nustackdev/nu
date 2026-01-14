@@ -25,16 +25,10 @@ from ...comps.ref import (
     PopByIndexCmd,
     ReduceOp,
 )
-from ...types import (
-    BoolType,
-    DictType,
-    FloatType,
-    IntType,
-    ListType,
-    NilType,
-    StrType,
-)
-from ...types.conversion import computed, literal
+from ...conversion import computed, literal
+from ...type.int_type import IntType
+from ...type.list_type import ListType
+from ...type.none_type import NilType
 
 
 if TYPE_CHECKING:
@@ -43,6 +37,10 @@ if TYPE_CHECKING:
     from everyshape.typing import Sentinel
 
     from ...term import Term
+    from ...type.bool_type import BoolType
+    from ...type.dict_type import DictType
+    from ...type.float_type import FloatType
+    from ...type.str_type import StrType
 
 
 __all__ = [

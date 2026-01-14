@@ -15,7 +15,7 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from ...term import Term
+    from .. import Term
 
 
 __all__ = [
@@ -42,7 +42,7 @@ class AndableBase[OperandT, ResultT]:
         Returns:
             AND result
         """
-        from ...comps.core.binary_ops import AndOp
+        from ..comps.core.binary_ops import AndOp
 
         return cast("ResultT", self._wrap_logical_result(AndOp(self, literal(other))))
 
@@ -63,7 +63,7 @@ class OrableBase[OperandT, ResultT]:
         Returns:
             OR result
         """
-        from ...comps.core.binary_ops import OrOp
+        from ..comps.core.binary_ops import OrOp
 
         return cast("ResultT", self._wrap_logical_result(OrOp(self, literal(other))))
 
@@ -99,7 +99,7 @@ class NotableBase[ResultT]:
         Returns:
             NOT result
         """
-        from ...comps.core.unary_ops import NotOp
+        from ..comps.core.unary_ops import NotOp
 
         return cast("ResultT", self._wrap_logical_result(NotOp(self)))
 
@@ -109,7 +109,7 @@ class NotableBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.core.unary_ops import BoolOp
+        from ..comps.core.unary_ops import BoolOp
 
         return cast("ResultT", self._wrap_logical_result(BoolOp(self)))
 

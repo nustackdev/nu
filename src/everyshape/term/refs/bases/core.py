@@ -28,8 +28,7 @@ from ...comps.ref import (
     SetCmd,
     StoreCmd,
 )
-from ...types.conversion import computed, literal
-from ...types.definitions import (
+from ...types.collections import (
     BoolType,
     BytesType,
     DictType,
@@ -40,6 +39,7 @@ from ...types.definitions import (
     SetType,
     StrType,
 )
+from ...types.conversion import computed, literal
 
 
 if TYPE_CHECKING:

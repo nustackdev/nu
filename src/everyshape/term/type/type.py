@@ -9,29 +9,29 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..conversion import literal
+from ..term import Type as BaseType
 
 
 if TYPE_CHECKING:
     from everyshape.typing import Sentinel
 
-    from ...term import Term
-    from ..definitions import (
-        AnyType,
-        BoolType,
-        BytesType,
-        FloatType,
-        IntType,
-        ListType,
-        StrType,
-    )
+    from ..args import BoolArg
+    from ..term import Term
+    from .any_type import AnyType
+    from .bool_type import BoolType
+    from .bytes_type import BytesType
+    from .float_type import FloatType
+    from .int_type import IntType
+    from .list_type import ListType
+    from .str_type import StrType
 
 
 __all__ = [
-    "CoreBase",
+    "Type",
 ]
 
 
-class CoreBase:
+class Type[T](BaseType[T]):
     """Core base that all values should inherit.
 
     Provides:
@@ -46,8 +46,8 @@ class CoreBase:
         Returns:
             BoolType-like result
         """
-        from ...comps.core.unary_ops import IsEmptyOp
-        from ..definitions import BoolType
+        from ..comps.core.unary_ops import IsEmptyOp
+        from .bool_type import BoolType
 
         return BoolType(IsEmptyOp(self))
 
@@ -57,8 +57,8 @@ class CoreBase:
         Returns:
             BoolType-like result
         """
-        from ...comps.core.unary_ops import IsNaNOp
-        from ..definitions import BoolType
+        from ..comps.core.unary_ops import IsNaNOp
+        from .bool_type import BoolType
 
         return BoolType(IsNaNOp(self))
 
@@ -88,7 +88,7 @@ class CoreBase:
 
     def ifelse[ElseT](
         self,
-        condition: bool | Term[bool | Sentinel],
+        condition: BoolArg,
         otherwise: ElseT | Term[ElseT | Sentinel],
     ) -> AnyType:
         """Conditional/ternary operation: if condition then self else otherwise.
@@ -104,8 +104,8 @@ class CoreBase:
             >>> price.ifelse(price > 0, default_price)
             >>> name.ifelse(name.not_empty(), "Unknown")
         """
-        from ...comps.core.ternary_ops import ConditionalOp
-        from ..definitions import AnyType
+        from ..comps.core.ternary_ops import ConditionalOp
+        from .any_type import AnyType
 
         return AnyType(ConditionalOp(literal(condition), self, literal(otherwise)))
 
@@ -121,7 +121,7 @@ class CoreBase:
         Example:
             >>> value.or_default(0)  # Returns 0 if value is Empty
         """
-        from ..definitions import AnyType
+        from .any_type import AnyType
 
         return AnyType(self.ifelse(self.is_sentinel(), literal(default)))
 
@@ -139,8 +139,8 @@ class CoreBase:
             >>> float_val.to_int()  # 3.14 -> 3
             >>> str_val.to_int()  # "42" -> 42
         """
-        from ...comps.core.conversion import ToIntOp
-        from ..definitions import IntType
+        from ..comps.core.conversion import ToIntOp
+        from .int_type import IntType
 
         return IntType(ToIntOp(self))
 
@@ -154,8 +154,8 @@ class CoreBase:
             >>> int_val.to_float()  # 42 -> 42.0
             >>> str_val.to_float()  # "3.14" -> 3.14
         """
-        from ...comps.core.conversion import ToFloatOp
-        from ..definitions import FloatType
+        from ..comps.core.conversion import ToFloatOp
+        from .float_type import FloatType
 
         return FloatType(ToFloatOp(self))
 
@@ -169,8 +169,8 @@ class CoreBase:
             >>> int_val.to_bool()  # 0 -> False, 1 -> True
             >>> str_val.to_bool()  # "" -> False, "x" -> True
         """
-        from ...comps.core.conversion import ToBoolOp
-        from ..definitions import BoolType
+        from ..comps.core.conversion import ToBoolOp
+        from .bool_type import BoolType
 
         return BoolType(ToBoolOp(self))
 
@@ -184,8 +184,8 @@ class CoreBase:
             >>> int_val.to_str()  # 42 -> "42"
             >>> datetime_val.to_str()  # datetime -> "2024-01-15 10:30:00"
         """
-        from ...comps.core.conversion import ToStrOp
-        from ..definitions import StrType
+        from ..comps.core.conversion import ToStrOp
+        from .str_type import StrType
 
         return StrType(ToStrOp(self))
 
@@ -201,12 +201,12 @@ class CoreBase:
         Example:
             >>> str_val.to_bytes()  # "hello" -> b"hello"
         """
-        from ...comps.core.conversion import ToBytesOp
-        from ..definitions import BytesType
+        from ..comps.core.conversion import ToBytesOp
+        from .bytes_type import BytesType
 
         return BytesType(ToBytesOp(self, encoding))
 
-    def to_list[T](self) -> ListType[T]:
+    def to_list(self) -> ListType:
         """Convert this value to a list.
 
         Returns:
@@ -216,7 +216,7 @@ class CoreBase:
             >>> tuple_val.to_list()  # (1, 2, 3) -> [1, 2, 3]
             >>> set_val.to_list()  # {1, 2, 3} -> [1, 2, 3]
         """
-        from ...comps.core.conversion import ToListOp
-        from ..definitions import ListType
+        from ..comps.core.conversion import ToListOp
+        from .list_type import ListType
 
         return ListType(ToListOp(self))

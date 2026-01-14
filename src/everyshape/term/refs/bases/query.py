@@ -13,7 +13,7 @@ from ...comps.ref import (
     KeysOp,
     ValuesOp,
 )
-from ...types import ListType
+from ...type.list_type import ListType
 
 
 __all__ = [

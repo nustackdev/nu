@@ -41,7 +41,7 @@ from ...term import Operation
 if TYPE_CHECKING:
     from ...context import Context
     from ...term import Term
-    from ...types.bases import UnionBaseType
+    from ...type import UnionBaseType
 
 
 __all__ = [

@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
     from ..context import Context
     from ..refs import UnionRefBases
-    from ..types.bases import UnionBaseType
+    from ..types.__init__1 import UnionBaseType
 
 
 __all__ = [

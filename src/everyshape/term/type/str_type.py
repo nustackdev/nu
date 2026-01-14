@@ -1,9 +1,10 @@
-"""String base classes for Term types.
+"""String types for Term expressions.
 
-This module provides string operation mixins including:
+This module provides string operation mixins and StrType including:
 - ConcatenableBase - __add__ for strings
 - StringMethodsBase - String-specific methods
 - StringBase - Combined base for string-like values
+- StrType - String type for Term expressions
 """
 
 from __future__ import annotations
@@ -11,17 +12,24 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from ..conversion import literal
-from .arithmetic import AddableBase
-from .collection import ContainableBase, LengthableBase, SliceableBase
+from .base_arithmetic import AddableBase
+from .base_collections import ContainableBase, LengthableBase, SliceableBase
+from .base_comparison import ComparisonBase
+from .base_logical import LogicalBase
+from .type import Type
 
 
 if TYPE_CHECKING:
-    from ...term import Term
-    from ..definitions import BoolType, BytesType, IntType, ListType
+    from ..term import Term
+    from .bool_type import BoolType
+    from .bytes_type import BytesType
+    from .int_type import IntType
+    from .list_type import ListType
 
 
 __all__ = [
     "ConcatenableBase",
+    "StrType",
     "StringBase",
     "StringMethodsBase",
 ]
@@ -54,7 +62,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Uppercase string
         """
-        from ...comps.typed.string import UpperOp
+        from ..comps.typed.string import UpperOp
 
         return cast("ResultT", self._wrap_string_result(UpperOp(self)))
 
@@ -64,7 +72,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Lowercase string
         """
-        from ...comps.typed.string import LowerOp
+        from ..comps.typed.string import LowerOp
 
         return cast("ResultT", self._wrap_string_result(LowerOp(self)))
 
@@ -74,7 +82,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Title-cased string
         """
-        from ...comps.typed.string import TitleOp
+        from ..comps.typed.string import TitleOp
 
         return cast("ResultT", self._wrap_string_result(TitleOp(self)))
 
@@ -84,7 +92,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Capitalized string
         """
-        from ...comps.typed.string import CapitalizeOp
+        from ..comps.typed.string import CapitalizeOp
 
         return cast("ResultT", self._wrap_string_result(CapitalizeOp(self)))
 
@@ -94,7 +102,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Case-swapped string
         """
-        from ...comps.typed.string import SwapCaseOp
+        from ..comps.typed.string import SwapCaseOp
 
         return cast("ResultT", self._wrap_string_result(SwapCaseOp(self)))
 
@@ -108,7 +116,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ...comps.typed.string import StripOp
+        from ..comps.typed.string import StripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(StripOp(self, literal(chars))))
@@ -123,7 +131,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ...comps.typed.string import LStripOp
+        from ..comps.typed.string import LStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(LStripOp(self, literal(chars))))
@@ -138,7 +146,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ...comps.typed.string import RStripOp
+        from ..comps.typed.string import RStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(RStripOp(self, literal(chars))))
@@ -155,8 +163,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             List of substrings
         """
-        from ...comps.typed.string import SplitOp
-        from ..definitions import ListType
+        from ..comps.typed.string import SplitOp
+        from .list_type import ListType
 
         if sep is not None:
             return ListType(SplitOp(self, literal(sep), maxsplit))
@@ -172,8 +180,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             List of substrings
         """
-        from ...comps.typed.string import RSplitOp
-        from ..definitions import ListType
+        from ..comps.typed.string import RSplitOp
+        from .list_type import ListType
 
         if sep is not None:
             return ListType(RSplitOp(self, literal(sep), maxsplit))
@@ -191,8 +199,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ...comps.typed.string import FindOp
-        from ..definitions import IntType
+        from ..comps.typed.string import FindOp
+        from .int_type import IntType
 
         return IntType(FindOp(self, literal(sub), start, end))
 
@@ -207,8 +215,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ...comps.typed.string import RFindOp
-        from ..definitions import IntType
+        from ..comps.typed.string import RFindOp
+        from .int_type import IntType
 
         return IntType(RFindOp(self, literal(sub), start, end))
 
@@ -221,8 +229,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Count
         """
-        from ...comps.typed.string import CountSubstringOp
-        from ..definitions import IntType
+        from ..comps.typed.string import CountSubstringOp
+        from .int_type import IntType
 
         return IntType(CountSubstringOp(self, literal(sub)))
 
@@ -236,8 +244,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.typed.string import StartsWithOp
-        from ..definitions import BoolType
+        from ..comps.typed.string import StartsWithOp
+        from .bool_type import BoolType
 
         return BoolType(StartsWithOp(self, literal(prefix)))
 
@@ -250,8 +258,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.typed.string import EndsWithOp
-        from ..definitions import BoolType
+        from ..comps.typed.string import EndsWithOp
+        from .bool_type import BoolType
 
         return BoolType(EndsWithOp(self, literal(suffix)))
 
@@ -261,8 +269,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.typed.string import IsDigitOp
-        from ..definitions import BoolType
+        from ..comps.typed.string import IsDigitOp
+        from .bool_type import BoolType
 
         return BoolType(IsDigitOp(self))
 
@@ -272,8 +280,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.typed.string import IsAlphaOp
-        from ..definitions import BoolType
+        from ..comps.typed.string import IsAlphaOp
+        from .bool_type import BoolType
 
         return BoolType(IsAlphaOp(self))
 
@@ -283,8 +291,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.typed.string import IsAlnumOp
-        from ..definitions import BoolType
+        from ..comps.typed.string import IsAlnumOp
+        from .bool_type import BoolType
 
         return BoolType(IsAlnumOp(self))
 
@@ -294,8 +302,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.typed.string import IsSpaceOp
-        from ..definitions import BoolType
+        from ..comps.typed.string import IsSpaceOp
+        from .bool_type import BoolType
 
         return BoolType(IsSpaceOp(self))
 
@@ -310,7 +318,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Centered string
         """
-        from ...comps.typed.string import CenterOp
+        from ..comps.typed.string import CenterOp
 
         return cast("ResultT", self._wrap_string_result(CenterOp(self, literal(width), fillchar)))
 
@@ -324,7 +332,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Left-justified string
         """
-        from ...comps.typed.string import LJustOp
+        from ..comps.typed.string import LJustOp
 
         return cast("ResultT", self._wrap_string_result(LJustOp(self, literal(width), fillchar)))
 
@@ -338,7 +346,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Right-justified string
         """
-        from ...comps.typed.string import RJustOp
+        from ..comps.typed.string import RJustOp
 
         return cast("ResultT", self._wrap_string_result(RJustOp(self, literal(width), fillchar)))
 
@@ -351,7 +359,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Zero-filled string
         """
-        from ...comps.typed.string import ZFillOp
+        from ..comps.typed.string import ZFillOp
 
         return cast("ResultT", self._wrap_string_result(ZFillOp(self, literal(width))))
 
@@ -367,7 +375,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Modified string
         """
-        from ...comps.typed.string import ReplaceOp
+        from ..comps.typed.string import ReplaceOp
 
         return cast(
             "ResultT",
@@ -384,8 +392,8 @@ class StringMethodsBase[ResultT]:
         Returns:
             Encoded bytes
         """
-        from ...comps.typed.string import EncodeOp
-        from ..definitions import BytesType
+        from ..comps.typed.string import EncodeOp
+        from .bytes_type import BytesType
 
         return BytesType(EncodeOp(self, encoding))
 
@@ -406,3 +414,46 @@ class StringBase[ResultT](
     """
 
     pass
+
+
+class StrType(
+    StringBase["StrType"],
+    ComparisonBase["str | StrType"],
+    LogicalBase["str | StrType", "BoolType"],
+    Type[str],
+):
+    """String type - represents str expressions (literal or computed).
+
+    Supports concatenation, string operations, comparison, and logical operations.
+
+    Example:
+        >>> x = StrType("hello")
+        >>> y = x + " world"  # Returns StrType
+        >>> z = x.upper()  # Returns StrType
+    """
+
+    def _wrap_logical_result(self, operand: Term) -> Term:
+        from .bool_type import BoolType
+
+        return BoolType(operand)
+
+    def _wrap_comparison_result(self, operand: Term) -> Term:
+        from .bool_type import BoolType
+
+        return BoolType(operand)
+
+    def _wrap_string_result(self, operand: Term) -> Term:
+        return StrType(operand)
+
+    def _wrap_sliceable_result(self, operand: Term) -> Term:
+        return StrType(operand)
+
+    def __add__(self, other: str | StrType) -> StrType:
+        from ..comps.core.binary_ops import AddOp
+
+        return StrType(AddOp(self, literal(other)))
+
+    def __radd__(self, other: str) -> StrType:
+        from ..comps.core.binary_ops import AddOp
+
+        return StrType(AddOp(literal(other), self))

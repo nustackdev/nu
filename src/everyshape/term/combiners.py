@@ -48,10 +48,12 @@ from __future__ import annotations
 from functools import reduce
 from typing import TYPE_CHECKING
 
+from everyshape.typing.type import capabilities as cap
+
 
 if TYPE_CHECKING:
-    from .term import RValue
-    from .types import BoolType
+    from .term import Term
+    from .type.bool_type import BoolType
 
 
 __all__ = [
@@ -85,11 +87,10 @@ def and_(left: object, right: object) -> BoolType:
     Example:
         >>> and_(price > 0, price < 100)
     """
-    from .types.capabilities import Andable
-    from .types.conversion import literal
+    from .conversion import literal
 
     left_op = literal(left)
-    if not isinstance(left_op, Andable):
+    if not isinstance(left_op, cap.Andable):
         raise TypeError(f"Operand {type(left).__name__} does not support AND logical operation")
 
     return left_op.and_(literal(right))
@@ -110,11 +111,10 @@ def or_(left: object, right: object) -> BoolType:
     Example:
         >>> or_(status.eq("ready"), status.eq("pending"))
     """
-    from .types.capabilities import Orable
-    from .types.conversion import literal
+    from .conversion import literal
 
     left_op = literal(left)
-    if not isinstance(left_op, Orable):
+    if not isinstance(left_op, cap.Orable):
         raise TypeError(f"Operand {type(left).__name__} does not support OR logical operation")
 
     return left_op.or_(literal(right))
@@ -140,7 +140,7 @@ def all_(*conditions: object) -> BoolType:
     if not conditions:
         raise ValueError("all_() requires at least one condition")
 
-    from .types.conversion import literal
+    from .conversion import literal
 
     # Convert all to RValues
     rvalues = [literal(c) for c in conditions]
@@ -169,7 +169,7 @@ def any_(*conditions: object) -> BoolType:
     if not conditions:
         raise ValueError("any_() requires at least one condition")
 
-    from .types.conversion import literal
+    from .conversion import literal
 
     # Convert all to RValues
     rvalues = [literal(c) for c in conditions]
@@ -206,7 +206,7 @@ def none_(*conditions: object) -> BoolType:
 # =============================================================================
 
 
-def ifelse(condition: object, then_value: object, else_value: object) -> RValue:
+def ifelse(condition: object, then_value: object, else_value: object) -> Term:
     """Ternary conditional: if condition then then_value else else_value.
 
     Similar to Python's ternary operator: `x if condition else y`
@@ -223,14 +223,14 @@ def ifelse(condition: object, then_value: object, else_value: object) -> RValue:
         >>> display_price = ifelse(is_sale, sale_price, regular_price)
         >>> status_text = ifelse(is_active, "Active", "Inactive")
     """
-    from .types.conversion import literal
+    from .conversion import literal
 
     # Use the ifelse method from CoreBase via the then_value
     # ifelse(cond, then, else) -> then.ifelse(cond, else)
     return literal(then_value).ifelse(literal(condition), literal(else_value))
 
 
-def coalesce(*values: object) -> RValue:
+def coalesce(*values: object) -> Term:
     """Return first non-empty/non-nan value.
 
     Similar to SQL's COALESCE or nullish coalescing.
@@ -254,11 +254,11 @@ def coalesce(*values: object) -> RValue:
         raise ValueError("coalesce() requires at least one value")
 
     if len(values) == 1:
-        from .types.conversion import literal
+        from .conversion import literal
 
         return literal(values[0])
 
-    from .types.conversion import literal
+    from .conversion import literal
 
     # Build chain: v1.or_default(v2.or_default(v3...))
     # Start from the end and work backwards

@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
     from ...context import Context
     from ...term import Term
-    from ...types.bases import UnionBaseType
+    from ...types.__init__1 import UnionBaseType
 
 __all__ = [
     "AllOp",

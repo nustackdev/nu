@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..term import Term, Type
+    from .term import Term, Type
 
 __all__ = [
     "computed",
@@ -39,8 +39,8 @@ def literal(value: object) -> Term:
         >>> literal("hello")  # → StrType("hello")
         >>> literal(price.get())  # → price.get() (unchanged)
     """
-    from ..term import Term
-    from .definitions import (
+    from .term import Term
+    from .types.collections import (
         BoolType,
         BytesType,
         DictType,
@@ -97,7 +97,7 @@ def computed(result_type: object, op: Term) -> Type:
         >>> computed(int, GetOp(ref))  # → IntType(GetOp(ref))
         >>> computed(str, some_op)  # → StrType(some_op)
     """
-    from .definitions import (
+    from .types.collections import (
         AnyType,
         BoolType,
         BytesType,

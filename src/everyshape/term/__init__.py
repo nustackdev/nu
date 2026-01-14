@@ -21,6 +21,7 @@ from .args import (
 )
 from .combiners import all_, and_, any_, coalesce, ifelse, none_, or_
 from .context import Context
+from .conversion import computed, literal
 from .term import (
     Command,
     Computation,
@@ -33,14 +34,6 @@ from .term import (
     Type,
     ViewRef,
 )
-from .types import computed, literal
-
-
-# Backwards compatibility aliases (deprecated)
-ValueTerm = Type
-TypedValue = Type
-LiteralValue = Type
-ComputedValue = Type
 
 
 __all__ = [
@@ -49,7 +42,6 @@ __all__ = [
     "BytesArg",
     "Command",
     "Computation",
-    "ComputedValue",
     "Context",
     "DictArg",
     "FloatArg",

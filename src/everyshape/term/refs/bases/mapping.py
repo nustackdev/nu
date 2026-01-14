@@ -23,19 +23,11 @@ from ...comps.ref import (
     RemoveByKeyCmd,
     SetByKeyCmd,
 )
-from ...types import (
-    BoolType,
-    BytesType,
-    DictType,
-    FloatType,
-    IntType,
-    ListType,
-    NilType,
-    SetType,
-    StrType,
-    TupleType,
-)
-from ...types.conversion import computed, literal
+from ...conversion import computed, literal
+from ...term import Term
+from ...type.dict_type import DictType
+from ...type.none_type import NilType
+from ...type.tuple_type import TupleType
 
 
 if TYPE_CHECKING:
@@ -44,6 +36,13 @@ if TYPE_CHECKING:
     from everyshape.typing import Sentinel
 
     from ...term import Term
+    from ...type.bool_type import BoolType
+    from ...type.bytes_type import BytesType
+    from ...type.float_type import FloatType
+    from ...type.int_type import IntType
+    from ...type.list_type import ListType
+    from ...type.set_type import SetType
+    from ...type.str_type import StrType
 
 
 __all__ = [
