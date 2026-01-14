@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from everyshape import NOT_SET, NotSet, is_notset
-from everyshape.types import SpecialValue
+from everyshape.typing import Sentinel
 
 from ...term import Operation
 
@@ -134,7 +134,7 @@ class DictItemsOp[K, V](MappingOp[list[tuple[K, V]]]):
         return list(operand.items())  # type: ignore
 
 
-class DictGetOp[V](Operation[V | SpecialValue]):
+class DictGetOp[V](Operation[V | Sentinel]):
     """Get value from dict with default: dict.get(key, default)."""
 
     def __init__(
@@ -147,7 +147,7 @@ class DictGetOp[V](Operation[V | SpecialValue]):
             cast("RValue", default),
         )
 
-    def execute(self, context: Context) -> V | SpecialValue:
+    def execute(self, context: Context) -> V | Sentinel:
         """Execute."""
         dict_val = self.children[0].execute(context)
         key_val = self.children[1].execute(context)

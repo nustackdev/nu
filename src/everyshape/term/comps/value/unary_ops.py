@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.types import NAN, SpecialValue, is_empty, is_nan
+from everyshape.typing import NAN, Sentinel, is_empty, is_nan
 
 from ...term import Operation
 
@@ -118,20 +118,20 @@ class UnaryOp[ResultT](Operation[ResultT]):
 # =============================================================================
 
 
-class NegOp[ResultT](UnaryOp[ResultT | SpecialValue]):
+class NegOp[ResultT](UnaryOp[ResultT | Sentinel]):
     """Negation: -operand."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         try:
             return -operand  # type: ignore
         except TypeError:
             return NAN
 
 
-class AbsOp[ResultT](UnaryOp[ResultT | SpecialValue]):
+class AbsOp[ResultT](UnaryOp[ResultT | Sentinel]):
     """Absolute value: abs(operand)."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         try:
             return abs(operand)  # type: ignore
         except TypeError:
@@ -143,35 +143,35 @@ class AbsOp[ResultT](UnaryOp[ResultT | SpecialValue]):
 # =============================================================================
 
 
-class NotOp[ResultT](UnaryOp[ResultT | SpecialValue]):
+class NotOp[ResultT](UnaryOp[ResultT | Sentinel]):
     """Logical NOT: not operand.
 
     Python's 'not' keyword cannot be overloaded.
     Use .not_() method in ergonomics instead.
     """
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         return not operand  # type: ignore
 
 
-class BitwiseNotOp[ResultT](UnaryOp[ResultT | SpecialValue]):
+class BitwiseNotOp[ResultT](UnaryOp[ResultT | Sentinel]):
     """Bitwise NOT: ~operand (two's complement).
 
     Note: Python's ~ operator is blocked in ergonomics.
     Use .bitnot() method instead.
     """
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         try:
             return ~operand  # type: ignore
         except TypeError:
             return NAN
 
 
-class PosOp[ResultT](UnaryOp[ResultT | SpecialValue]):
+class PosOp[ResultT](UnaryOp[ResultT | Sentinel]):
     """Unary plus: +operand."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         try:
             return +operand  # type: ignore
         except TypeError:

@@ -10,7 +10,7 @@ __all__ = [
     "NAN",
     "Empty",
     "NaN",
-    "SpecialValue",
+    "Sentinel",
     "is_empty",
     "is_nan",
     "is_special",
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class SpecialValue:
+class Sentinel:
     """Sentinel values for semantics evaluation.
 
     - Empty: Value doesn't exist
@@ -28,7 +28,7 @@ class SpecialValue:
     pass
 
 
-class Empty(SpecialValue):
+class Empty(Sentinel):
     """Sentinel for non-existent values."""
 
     def __repr__(self) -> str:
@@ -50,7 +50,7 @@ class Empty(SpecialValue):
         return hash("Empty")
 
 
-class NaN(SpecialValue):
+class NaN(Sentinel):
     """Sentinel for invalid operations."""
 
     def __repr__(self) -> str:
@@ -87,9 +87,9 @@ def is_nan(value: object) -> TypeGuard[NaN]:
     return isinstance(value, NaN)
 
 
-def is_special(value: object) -> TypeGuard[SpecialValue]:
+def is_special(value: object) -> TypeGuard[Sentinel]:
     """Check if value is any special sentinel."""
-    return isinstance(value, SpecialValue)
+    return isinstance(value, Sentinel)
 
 
 def propagate_special(*values: object) -> NaN | Empty | None:

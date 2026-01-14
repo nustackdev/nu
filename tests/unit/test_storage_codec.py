@@ -10,7 +10,7 @@ from everyshape.storage.codec import Codec
 
 
 if TYPE_CHECKING:
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
 
 # Test constants

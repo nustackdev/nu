@@ -30,7 +30,7 @@ from __future__ import annotations
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, cast
 
-from everyshape.types import NAN, SpecialValue
+from everyshape.typing import NAN, Sentinel
 
 from ...term import Operation
 
@@ -126,10 +126,10 @@ class SequenceOp[ResultT](Operation[ResultT]):
 # =============================================================================
 
 
-class SumOp[ResultT](SequenceOp[ResultT | SpecialValue]):
+class SumOp[ResultT](SequenceOp[ResultT | Sentinel]):
     """Sum of sequence elements: sum(seq)."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"sum_() requires list or tuple, got {type(operand).__name__}")
         try:
@@ -138,10 +138,10 @@ class SumOp[ResultT](SequenceOp[ResultT | SpecialValue]):
             return NAN
 
 
-class MinOp[ResultT](SequenceOp[ResultT | SpecialValue]):
+class MinOp[ResultT](SequenceOp[ResultT | Sentinel]):
     """Minimum element: min(seq)."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"min_() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -152,10 +152,10 @@ class MinOp[ResultT](SequenceOp[ResultT | SpecialValue]):
             return NAN
 
 
-class MaxOp[ResultT](SequenceOp[ResultT | SpecialValue]):
+class MaxOp[ResultT](SequenceOp[ResultT | Sentinel]):
     """Maximum element: max(seq)."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"max_() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -180,7 +180,7 @@ class LenOp(SequenceOp[int]):
 # =============================================================================
 
 
-class SortedOp[ResultT](SequenceOp[list[ResultT] | SpecialValue]):
+class SortedOp[ResultT](SequenceOp[list[ResultT] | Sentinel]):
     """Sorted list: sorted(seq, reverse=reverse)."""
 
     def __init__(self, operand: OpArgument, *, reverse: bool = False) -> None:
@@ -188,7 +188,7 @@ class SortedOp[ResultT](SequenceOp[list[ResultT] | SpecialValue]):
         super().__init__(operand)
         self._reverse = reverse
 
-    def _apply_op(self, operand: object) -> list[ResultT] | SpecialValue:
+    def _apply_op(self, operand: object) -> list[ResultT] | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"sorted_() requires list or tuple, got {type(operand).__name__}")
         try:
@@ -214,10 +214,10 @@ class ReversedOp[ResultT](SequenceOp[list[ResultT]]):
 # =============================================================================
 
 
-class FirstOp[ResultT](SequenceOp[ResultT | SpecialValue]):
+class FirstOp[ResultT](SequenceOp[ResultT | Sentinel]):
     """First element: seq[0]."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"first() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -225,10 +225,10 @@ class FirstOp[ResultT](SequenceOp[ResultT | SpecialValue]):
         return operand[0]  # type: ignore
 
 
-class LastOp[ResultT](SequenceOp[ResultT | SpecialValue]):
+class LastOp[ResultT](SequenceOp[ResultT | Sentinel]):
     """Last element: seq[-1]."""
 
-    def _apply_op(self, operand: object) -> ResultT | SpecialValue:
+    def _apply_op(self, operand: object) -> ResultT | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"last() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -236,14 +236,14 @@ class LastOp[ResultT](SequenceOp[ResultT | SpecialValue]):
         return operand[-1]  # type: ignore
 
 
-class AtOp[ResultT](Operation[ResultT | SpecialValue]):
+class AtOp[ResultT](Operation[ResultT | Sentinel]):
     """Subscript access: seq[key] or dict[key]."""
 
     def __init__(self, operand: OpArgument, key: OpArgument) -> None:
         """Init."""
         self.children = (cast("RValue", operand), cast("RValue", key))
 
-    def execute(self, context: Context) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute."""
         seq_val = self.children[0].execute(context)
         key_val = self.children[1].execute(context)
@@ -328,14 +328,14 @@ class AllOp(SequenceOp[bool]):
 # =============================================================================
 
 
-class JoinOp(Operation[str | SpecialValue]):
+class JoinOp(Operation[str | Sentinel]):
     """Join strings: sep.join(seq)."""
 
     def __init__(self, operand: OpArgument, sep: OpArgument) -> None:
         """Init."""
         self.children = (cast("RValue", operand), cast("RValue", sep))
 
-    def execute(self, context: Context) -> str | SpecialValue:
+    def execute(self, context: Context) -> str | Sentinel:
         """Execute."""
         seq_val = self.children[0].execute(context)
         sep_val = self.children[1].execute(context)
@@ -413,7 +413,7 @@ class FilterOp[T](SequenceOp[list[T]]):
         return f"FilterOp({self.children[0]!r}, {self._fn!r})"
 
 
-class ReduceOp[T, T2](Operation[T2 | SpecialValue]):
+class ReduceOp[T, T2](Operation[T2 | Sentinel]):
     """Reduce sequence to single value: functools.reduce(fn, seq, initial).
 
     Example:
@@ -433,7 +433,7 @@ class ReduceOp[T, T2](Operation[T2 | SpecialValue]):
         self._fn = fn
         self._initial = initial
 
-    def execute(self, context: Context) -> T2 | SpecialValue:
+    def execute(self, context: Context) -> T2 | Sentinel:
         """Execute reduce operation."""
         operand_val = self.children[0].execute(context)
 
@@ -454,7 +454,7 @@ class ReduceOp[T, T2](Operation[T2 | SpecialValue]):
 # =============================================================================
 
 
-class IndexOfOp[T](Operation[int | SpecialValue]):
+class IndexOfOp[T](Operation[int | Sentinel]):
     """Find index of value in sequence: seq.index(value).
 
     Returns NaN if value not found (unlike Python which raises ValueError).
@@ -472,7 +472,7 @@ class IndexOfOp[T](Operation[int | SpecialValue]):
         """
         self.children = (cast("RValue", operand), cast("RValue", value))
 
-    def execute(self, context: Context) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | Sentinel:
         """Execute index search."""
         seq_val = self.children[0].execute(context)
         value_val = self.children[1].execute(context)
@@ -519,7 +519,7 @@ class CountOp(Operation[int]):
         return f"CountOp({self.children[0]!r}, {self.children[1]!r})"
 
 
-class FindOp[T](SequenceOp[T | SpecialValue]):
+class FindOp[T](SequenceOp[T | Sentinel]):
     """Find first element matching predicate.
 
     Returns NaN if no element matches.
@@ -538,7 +538,7 @@ class FindOp[T](SequenceOp[T | SpecialValue]):
         super().__init__(operand)
         self._fn = fn
 
-    def _apply_op(self, operand: object) -> T | SpecialValue:
+    def _apply_op(self, operand: object) -> T | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"find() requires list or tuple, got {type(operand).__name__}")
 
@@ -551,7 +551,7 @@ class FindOp[T](SequenceOp[T | SpecialValue]):
         return f"FindOp({self.children[0]!r}, {self._fn!r})"
 
 
-class FindIndexOp[T](SequenceOp[int | SpecialValue]):
+class FindIndexOp[T](SequenceOp[int | Sentinel]):
     """Find index of first element matching predicate.
 
     Returns NaN if no element matches.
@@ -570,7 +570,7 @@ class FindIndexOp[T](SequenceOp[int | SpecialValue]):
         super().__init__(operand)
         self._fn = fn
 
-    def _apply_op(self, operand: object) -> int | SpecialValue:
+    def _apply_op(self, operand: object) -> int | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"find_index() requires list or tuple, got {type(operand).__name__}")
 

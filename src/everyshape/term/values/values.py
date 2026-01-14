@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, overload
 
-from everyshape.types import SpecialValue
+from everyshape.typing import Sentinel
 
 from ..term import ComputedValue
 from .bases import (
@@ -85,7 +85,7 @@ class IntValue(
         "IntValue",
     ],
     CoreBase,
-    ComputedValue[int | SpecialValue],
+    ComputedValue[int | Sentinel],
 ):
     """RValue representing an integer.
 
@@ -295,7 +295,7 @@ class FloatValue(
     ComparisonBase["int | float | FloatValue | IntValue"],
     LogicalBase["bool | float | BoolValue | FloatValue", "BoolValue"],
     CoreBase,
-    ComputedValue[float | SpecialValue],
+    ComputedValue[float | Sentinel],
 ):
     """RValue representing a floating-point number.
 
@@ -426,7 +426,7 @@ class BoolValue(
     LogicalBase["bool | BoolValue", "BoolValue"],
     ComparisonBase["bool | BoolValue"],
     CoreBase,
-    ComputedValue[bool | SpecialValue],
+    ComputedValue[bool | Sentinel],
 ):
     """RValue representing a boolean.
 
@@ -458,7 +458,7 @@ class StrValue(
     ComparisonBase["str | StrValue"],
     LogicalBase["str | StrValue", "BoolValue"],
     CoreBase,
-    ComputedValue[str | SpecialValue],
+    ComputedValue[str | Sentinel],
 ):
     """RValue representing a string.
 
@@ -512,7 +512,7 @@ class BytesValue(
     ComparisonBase["bytes | BytesValue"],
     LogicalBase["bytes | BytesValue", "BoolValue"],
     CoreBase,
-    ComputedValue[bytes | SpecialValue],
+    ComputedValue[bytes | Sentinel],
 ):
     """RValue representing bytes.
 
@@ -578,7 +578,7 @@ class BytesValue(
 class NoneValue(
     LogicalBase["None | NoneValue", "BoolValue"],
     CoreBase,
-    ComputedValue[None | SpecialValue],
+    ComputedValue[None | Sentinel],
 ):
     """RValue representing None.
 
@@ -746,7 +746,7 @@ class ListValue[T](
     SequenceBase[T, "ListValue[T]"],
     ComparisonBase[list[T]],
     CoreBase,
-    ComputedValue[list[T] | SpecialValue],
+    ComputedValue[list[T] | Sentinel],
 ):
     """RValue representing a list.
 
@@ -818,7 +818,7 @@ class TupleValue[*Ts](
     SequenceBase[object, "ListValue[object]"],
     ComparisonBase[tuple],
     CoreBase,
-    ComputedValue[tuple[*Ts] | SpecialValue],
+    ComputedValue[tuple[*Ts] | Sentinel],
 ):
     """RValue representing a tuple.
 
@@ -877,7 +877,7 @@ class DictValue[K, V](
     MappingBase[K, V, "DictValue[K, V]"],
     ComparisonBase[dict[K, V]],
     CoreBase,
-    ComputedValue[dict[K, V] | SpecialValue],
+    ComputedValue[dict[K, V] | Sentinel],
 ):
     """RValue representing a dictionary.
 
@@ -923,7 +923,7 @@ class SetValue[T](
     SetBase[T, "SetValue[T]"],
     ComparisonBase[set[T]],
     CoreBase,
-    ComputedValue[set[T] | SpecialValue],
+    ComputedValue[set[T] | Sentinel],
 ):
     """RValue representing a set.
 
@@ -963,7 +963,7 @@ class FrozenSetValue[T](
     SetBase[T, "FrozenSetValue[T]"],
     ComparisonBase[frozenset[T]],
     CoreBase,
-    ComputedValue[frozenset[T] | SpecialValue],
+    ComputedValue[frozenset[T] | Sentinel],
 ):
     """RValue representing a frozenset.
 

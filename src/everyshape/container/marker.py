@@ -84,7 +84,7 @@ from .types import ContainerProtocol, ContainerStructure
 
 
 if TYPE_CHECKING:
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
 
 __all__ = [

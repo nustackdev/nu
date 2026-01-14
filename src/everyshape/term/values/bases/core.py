@@ -12,7 +12,7 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from everyshape.types import SpecialValue
+    from everyshape.typing import Sentinel
 
     from ...term import RValue
     from ..values import (
@@ -88,8 +88,8 @@ class CoreBase:
 
     def ifelse[ElseT](
         self,
-        condition: bool | RValue[bool | SpecialValue],
-        otherwise: ElseT | RValue[ElseT | SpecialValue],
+        condition: bool | RValue[bool | Sentinel],
+        otherwise: ElseT | RValue[ElseT | Sentinel],
     ) -> UnknownValue:
         """Conditional/ternary operation: if condition then self else otherwise.
 

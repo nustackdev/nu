@@ -41,7 +41,7 @@ from ...values.conversion import computed, literal
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.types import SpecialValue
+    from everyshape.typing import Sentinel
 
     from ...term import RValue
 
@@ -66,9 +66,7 @@ class MappingNestableBase[KeyT, ChildRefT]:
     """
 
     @abstractmethod
-    def _create_child_ref(
-        self, key: KeyT | SpecialValue | RValue[KeyT | SpecialValue]
-    ) -> ChildRefT:
+    def _create_child_ref(self, key: KeyT | Sentinel | RValue[KeyT | Sentinel]) -> ChildRefT:
         """Create a reference to a child at the given key.
 
         Args:
@@ -86,7 +84,7 @@ class MappingNestableBase[KeyT, ChildRefT]:
         """
         ...
 
-    def __getitem__(self, key: KeyT | SpecialValue | RValue[KeyT | SpecialValue]) -> ChildRefT:
+    def __getitem__(self, key: KeyT | Sentinel | RValue[KeyT | Sentinel]) -> ChildRefT:
         """Get child reference by key.
 
         Args:
@@ -299,70 +297,70 @@ class MappingAccessibleBase[KeyT, ValueT]:
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, int],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: int | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: int | Sentinel | None = None,
     ) -> IntValue: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, str],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: str | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: str | Sentinel | None = None,
     ) -> StrValue: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, bool],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: bool | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: bool | Sentinel | None = None,
     ) -> BoolValue: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, float],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: float | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: float | Sentinel | None = None,
     ) -> FloatValue: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, bytes],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: bytes | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: bytes | Sentinel | None = None,
     ) -> BytesValue: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, None],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: None | SpecialValue = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: None | Sentinel = None,
     ) -> NoneValue: ...
 
     @overload
     def get_item[V](
         self: MappingAccessibleBase[KeyT, list[V]],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: list[V] | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: list[V] | Sentinel | None = None,
     ) -> ListValue[V]: ...
 
     @overload
     def get_item[K, V](
         self: MappingAccessibleBase[KeyT, dict[K, V]],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: dict[K, V] | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: dict[K, V] | Sentinel | None = None,
     ) -> DictValue[K, V]: ...
 
     @overload
     def get_item[V](
         self: MappingAccessibleBase[KeyT, set[V]],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: set[V] | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: set[V] | Sentinel | None = None,
     ) -> SetValue[V]: ...
 
     def get_item(
         self,
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        default: ValueT | SpecialValue | None = None,
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        default: ValueT | Sentinel | None = None,
     ) -> object:
         """Get value by key with optional default.
 
@@ -381,70 +379,70 @@ class MappingAccessibleBase[KeyT, ValueT]:
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, int],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: int | SpecialValue | RValue[int | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: int | Sentinel | RValue[int | Sentinel],
     ) -> IntValue: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, str],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: str | SpecialValue | RValue[str | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: str | Sentinel | RValue[str | Sentinel],
     ) -> StrValue: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, bool],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: bool | SpecialValue | RValue[bool | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: bool | Sentinel | RValue[bool | Sentinel],
     ) -> BoolValue: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, float],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: float | SpecialValue | RValue[float | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: float | Sentinel | RValue[float | Sentinel],
     ) -> FloatValue: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, bytes],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: bytes | SpecialValue | RValue[bytes | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: bytes | Sentinel | RValue[bytes | Sentinel],
     ) -> BytesValue: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, None],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: None | SpecialValue | RValue[None | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: None | Sentinel | RValue[None | Sentinel],
     ) -> NoneValue: ...
 
     @overload
     def set_item[V](
         self: MappingAccessibleBase[KeyT, list[V]],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: list[V] | SpecialValue | RValue[list[V] | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: list[V] | Sentinel | RValue[list[V] | Sentinel],
     ) -> ListValue[V]: ...
 
     @overload
     def set_item[K, V](
         self: MappingAccessibleBase[KeyT, dict[K, V]],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: dict[K, V] | SpecialValue | RValue[dict[K, V] | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: dict[K, V] | Sentinel | RValue[dict[K, V] | Sentinel],
     ) -> DictValue[K, V]: ...
 
     @overload
     def set_item[V](
         self: MappingAccessibleBase[KeyT, set[V]],
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: set[V] | SpecialValue | RValue[set[V] | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: set[V] | Sentinel | RValue[set[V] | Sentinel],
     ) -> SetValue[V]: ...
 
     def set_item(
         self,
-        key: KeyT | SpecialValue | RValue[KeyT | SpecialValue],
-        value: ValueT | SpecialValue | RValue[ValueT | SpecialValue],
+        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        value: ValueT | Sentinel | RValue[ValueT | Sentinel],
     ) -> object:
         """Set value at key in mapping.
 
@@ -460,7 +458,7 @@ class MappingAccessibleBase[KeyT, ValueT]:
         """
         return computed(self.value_type, SetByKeyCmd(self, key, literal(value)))
 
-    def remove_item(self, key: KeyT | SpecialValue | RValue[KeyT | SpecialValue]) -> NoneValue:
+    def remove_item(self, key: KeyT | Sentinel | RValue[KeyT | Sentinel]) -> NoneValue:
         """Remove key from mapping.
 
         Args:

@@ -58,7 +58,7 @@ class TernaryOp[ResultT](Operation[ResultT], ABC):
             context: Execution context
 
         Returns:
-            Operation result or SpecialValue
+            Operation result or Sentinel
         """
         ...
 
@@ -85,7 +85,7 @@ class ConditionalOp[ResultT](TernaryOp[ResultT]):
             context: Execution context
 
         Returns:
-            Operation result or SpecialValue
+            Operation result or Sentinel
         """
         second_val = self.children[1].execute(context)
 

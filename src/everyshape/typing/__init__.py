@@ -5,41 +5,42 @@ This module defines the primitive types and special values.
 
 from __future__ import annotations
 
-from .primitive import (
-    CompositeValue,
-    IterableValues,
-    PrimitiveValue,
-    Value,
-    cast_value,
-)
-from .special import (
+from .not_set import NOT_SET, NotSet, is_notset
+from .sentinel import (
     EMPTY,
     NAN,
     Empty,
     NaN,
-    SpecialValue,
+    Sentinel,
     is_empty,
     is_nan,
     is_special,
     propagate_special,
 )
+from .storage import (
+    CompositeValue,
+    PrimitiveValue,
+    Value,
+)
 
 
 __all__ = [  # noqa: RUF022
-    # Base types
+    # Storage types
     "CompositeValue",
     "PrimitiveValue",
     "Value",
-    "IterableValues",
-    "cast_value",
     # Special sentinels
     "EMPTY",
     "NAN",
     "Empty",
     "NaN",
-    "SpecialValue",
+    "Sentinel",
     "is_empty",
     "is_nan",
     "is_special",
     "propagate_special",
+    # Not set
+    "NotSet",
+    "NOT_SET",
+    "is_notset",
 ]

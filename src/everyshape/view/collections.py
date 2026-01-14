@@ -31,7 +31,7 @@ from .capabilities import (
 
 
 if TYPE_CHECKING:
-    from everyshape.types import Empty
+    from everyshape.typing import Empty
 
 
 __all__ = [

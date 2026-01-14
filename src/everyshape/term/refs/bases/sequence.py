@@ -40,7 +40,7 @@ from ...values.conversion import computed, literal
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.types import SpecialValue
+    from everyshape.typing import Sentinel
 
     from ...term import RValue
 
@@ -67,7 +67,7 @@ class SequenceIndexableBase[ItemT, ItemRefT, SliceRefT](ABC):
     """
 
     @abstractmethod
-    def _create_item_ref(self, index: int | SpecialValue | RValue[int | SpecialValue]) -> ItemRefT:
+    def _create_item_ref(self, index: int | Sentinel | RValue[int | Sentinel]) -> ItemRefT:
         """Create a reference to an item at the given index.
 
         Args:
@@ -111,10 +111,10 @@ class SequenceIndexableBase[ItemT, ItemRefT, SliceRefT](ABC):
     def __getitem__(self, key: slice) -> SliceRefT: ...
 
     @overload
-    def __getitem__(self, key: RValue[int | SpecialValue]) -> ItemRefT: ...
+    def __getitem__(self, key: RValue[int | Sentinel]) -> ItemRefT: ...
 
     def __getitem__(
-        self, key: int | slice | SpecialValue | RValue[int | SpecialValue]
+        self, key: int | slice | Sentinel | RValue[int | Sentinel]
     ) -> ItemRefT | SliceRefT:
         """Get item or slice reference.
 
@@ -260,7 +260,7 @@ class SequenceIterableBase[ItemT]:
         """
         return IntValue(FindIndexByPredicateOp(self, predicate))
 
-    def index(self, value: ItemT | SpecialValue) -> IntValue:
+    def index(self, value: ItemT | Sentinel) -> IntValue:
         """Find index of value in sequence.
 
         Args:
@@ -274,7 +274,7 @@ class SequenceIterableBase[ItemT]:
         """
         return IntValue(IndexOfValueOp(self, value))
 
-    def count(self, value: ItemT | SpecialValue) -> IntValue:
+    def count(self, value: ItemT | Sentinel) -> IntValue:
         """Count occurrences of value in sequence.
 
         Args:
@@ -295,7 +295,7 @@ class AppendableBase[ItemT]:
     Implements the Appendable protocol with append() method.
     """
 
-    def append(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
+    def append(self, value: ItemT | Sentinel | RValue[ItemT | Sentinel]) -> NoneValue:
         """Create an append command.
 
         Args:
@@ -318,8 +318,8 @@ class InsertableBase[ItemT]:
 
     def insert(
         self,
-        index: int | SpecialValue | RValue[int | SpecialValue],
-        value: ItemT | SpecialValue | RValue[ItemT | SpecialValue],
+        index: int | Sentinel | RValue[int | Sentinel],
+        value: ItemT | Sentinel | RValue[ItemT | Sentinel],
     ) -> NoneValue:
         """Create an insert command.
 
@@ -348,40 +348,40 @@ class PoppableBase[ItemT]:
     @overload
     def pop(
         self: PoppableBase[int],
-        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
+        index: int | Sentinel | RValue[int | Sentinel] | None = None,
     ) -> IntValue: ...
 
     @overload
     def pop(
         self: PoppableBase[str],
-        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
+        index: int | Sentinel | RValue[int | Sentinel] | None = None,
     ) -> StrValue: ...
 
     @overload
     def pop(
         self: PoppableBase[float],
-        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
+        index: int | Sentinel | RValue[int | Sentinel] | None = None,
     ) -> FloatValue: ...
 
     @overload
     def pop(
         self: PoppableBase[bool],
-        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
+        index: int | Sentinel | RValue[int | Sentinel] | None = None,
     ) -> BoolValue: ...
 
     @overload
     def pop[V](
         self: PoppableBase[list[V]],
-        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
+        index: int | Sentinel | RValue[int | Sentinel] | None = None,
     ) -> ListValue[V]: ...
 
     @overload
     def pop[K, V](
         self: PoppableBase[dict[K, V]],
-        index: int | SpecialValue | RValue[int | SpecialValue] | None = None,
+        index: int | Sentinel | RValue[int | Sentinel] | None = None,
     ) -> DictValue[K, V]: ...
 
-    def pop(self, index: int | SpecialValue | RValue[int | SpecialValue] | None = None) -> object:
+    def pop(self, index: int | Sentinel | RValue[int | Sentinel] | None = None) -> object:
         """Create a pop command.
 
         Args:

@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
-from everyshape.types import SpecialValue, Value
+from everyshape.typing import Sentinel
 from everyshape.view import Addable, Discardable, Removable
 
 from ...term import Command, RValue, ViewRef
@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 
-class AddValueCmd[T: Value](Command[None]):
+class AddValueCmd[T](Command[None]):
     """Add a value to a set.
 
     Impure command that adds an item to a set.
@@ -48,7 +48,7 @@ class AddValueCmd[T: Value](Command[None]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        value: RValue[T | SpecialValue],
+        value: RValue[T | Sentinel],
     ) -> None:
         """Initialize add value command.
 
@@ -72,7 +72,7 @@ class AddValueCmd[T: Value](Command[None]):
         view_path = self.ref.resolve(context)
         value = self.value_expr.execute(context)
 
-        if isinstance(value, SpecialValue):
+        if isinstance(value, Sentinel):
             raise ValueError(f"Cannot add special values (Empty, NaN, etc): {value}")
 
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
@@ -92,7 +92,7 @@ class AddValueCmd[T: Value](Command[None]):
         return f"AddValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class RemoveValueCmd[T: Value](Command[None]):
+class RemoveValueCmd[T](Command[None]):
     """Remove a value from a set.
 
     Impure command that removes an item by value from a set.
@@ -110,7 +110,7 @@ class RemoveValueCmd[T: Value](Command[None]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        value: RValue[T | SpecialValue],
+        value: RValue[T | Sentinel],
     ) -> None:
         """Initialize remove value command.
 
@@ -137,7 +137,7 @@ class RemoveValueCmd[T: Value](Command[None]):
         view_path = self.ref.resolve(context)
         value = self.value_expr.execute(context)
 
-        if isinstance(value, SpecialValue):
+        if isinstance(value, Sentinel):
             raise ValueError(f"Cannot remove special values (Empty, NaN, etc): {value}")
 
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
@@ -159,7 +159,7 @@ class RemoveValueCmd[T: Value](Command[None]):
         return f"RemoveValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class DiscardValueCmd[T: Value](Command[None]):
+class DiscardValueCmd[T](Command[None]):
     """Discard a value from a set (no error if missing).
 
     Impure command that discards an item by value from a set.
@@ -177,7 +177,7 @@ class DiscardValueCmd[T: Value](Command[None]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        value: RValue[T | SpecialValue],
+        value: RValue[T | Sentinel],
     ) -> None:
         """Initialize discard value command.
 
@@ -201,7 +201,7 @@ class DiscardValueCmd[T: Value](Command[None]):
         view_path = self.ref.resolve(context)
         value = self.value_expr.execute(context)
 
-        if isinstance(value, SpecialValue):
+        if isinstance(value, Sentinel):
             raise ValueError(f"Cannot discard special values (Empty, NaN, etc): {value}")
 
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view

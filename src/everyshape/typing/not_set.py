@@ -1,3 +1,5 @@
+"""Used to indicate defaults arguments with "not set" semantics."""
+
 from __future__ import annotations
 
 from typing import TypeGuard

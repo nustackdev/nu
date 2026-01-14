@@ -19,7 +19,7 @@ from ...values.conversion import literal
 
 
 if TYPE_CHECKING:
-    from everyshape.types import SpecialValue
+    from everyshape.typing import Sentinel
 
     from ...term import RValue
 
@@ -41,7 +41,7 @@ class SetAddableBase[ItemT]:
     Implements add() method for sets.
     """
 
-    def add(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
+    def add(self, value: ItemT | Sentinel | RValue[ItemT | Sentinel]) -> NoneValue:
         """Create an add command.
 
         Args:
@@ -62,7 +62,7 @@ class SetRemovableBase[ItemT]:
     Implements remove() and discard() methods for sets.
     """
 
-    def remove(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
+    def remove(self, value: ItemT | Sentinel | RValue[ItemT | Sentinel]) -> NoneValue:
         """Create a remove command.
 
         Args:
@@ -79,7 +79,7 @@ class SetRemovableBase[ItemT]:
         """
         return NoneValue(RemoveValueCmd(self, literal(value)))
 
-    def discard(self, value: ItemT | SpecialValue | RValue[ItemT | SpecialValue]) -> NoneValue:
+    def discard(self, value: ItemT | Sentinel | RValue[ItemT | Sentinel]) -> NoneValue:
         """Create a discard command.
 
         Args:

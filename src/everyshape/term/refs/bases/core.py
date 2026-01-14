@@ -42,7 +42,7 @@ from ...values.conversion import computed, literal
 
 
 if TYPE_CHECKING:
-    from everyshape.types import SpecialValue
+    from everyshape.typing import Sentinel
 
     from ...term import RValue
 
@@ -204,51 +204,51 @@ class SettableBase[ValueT]:
 
     @overload
     def set(
-        self: SettableBase[int], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[int], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> IntValue: ...
 
     @overload
     def set(
-        self: SettableBase[str], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[str], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> StrValue: ...
 
     @overload
     def set(
-        self: SettableBase[bool], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[bool], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> BoolValue: ...
 
     @overload
     def set(
-        self: SettableBase[float], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[float], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> FloatValue: ...
 
     @overload
     def set(
-        self: SettableBase[bytes], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[bytes], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> BytesValue: ...
 
     @overload
     def set(
-        self: SettableBase[None], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[None], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> NoneValue: ...
 
     # Collections
     @overload
     def set[V](
-        self: SettableBase[list[V]], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[list[V]], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> ListValue[V]: ...
 
     @overload
     def set[K, V](
-        self: SettableBase[dict[K, V]], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[dict[K, V]], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> DictValue[K, V]: ...
 
     @overload
     def set[V](
-        self: SettableBase[set[V]], value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]
+        self: SettableBase[set[V]], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
     ) -> SetValue[V]: ...
 
-    def set(self, value: ValueT | SpecialValue | RValue[ValueT | SpecialValue]) -> object:
+    def set(self, value: ValueT | Sentinel | RValue[ValueT | Sentinel]) -> object:
         """Create a set command for this location.
 
         Args:
@@ -290,7 +290,7 @@ class StorableBase[CollectionValueT, CollectionT](ABC):
         ...
 
     def store(
-        self, value: CollectionT | SpecialValue | RValue[CollectionT | SpecialValue]
+        self, value: CollectionT | Sentinel | RValue[CollectionT | Sentinel]
     ) -> CollectionValueT:
         """Create a store command for this container.
 

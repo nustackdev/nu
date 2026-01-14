@@ -14,7 +14,7 @@ from .view import View
 if TYPE_CHECKING:
     from everyshape.loc import key
     from everyshape.storage import Subscription
-    from everyshape.types import Empty
+    from everyshape.typing import Empty
 
 
 __all__ = [

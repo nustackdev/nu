@@ -20,7 +20,7 @@ from ...comps.reactive import (
 
 if TYPE_CHECKING:
     from everyshape.loc import key
-    from everyshape.types import SpecialValue
+    from everyshape.typing import Sentinel
 
     from ...term import RValue
 
@@ -71,9 +71,7 @@ class ViewObservableBase:
         """
         return OnChangeOp(self)
 
-    def on_child_change(
-        self, address: str | SpecialValue | RValue[str | SpecialValue]
-    ) -> OnChildChangeOp:
+    def on_child_change(self, address: str | Sentinel | RValue[str | Sentinel]) -> OnChildChangeOp:
         """Subscribe to changes on a specific child.
 
         Args:

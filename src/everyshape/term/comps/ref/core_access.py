@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.term.term import Operation, PrimitiveRef, ViewRef
-from everyshape.types import Empty, SpecialValue, Value
+from everyshape.typing import Empty, Sentinel, Value
 from everyshape.view import capabilities as view_capabilities
 
 
@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-class GetOp[T](Operation[T | SpecialValue]):
+class GetOp[T](Operation[T | Sentinel]):
     """Read operation for primitive values.
 
     Pure operation that navigates to a location and reads the value.
@@ -48,7 +48,7 @@ class GetOp[T](Operation[T | SpecialValue]):
 
     Example:
         >>> get_op = GetOp(value_ref)
-        >>> value = get_op.execute(ctx)  # Returns T | SpecialValue
+        >>> value = get_op.execute(ctx)  # Returns T | Sentinel
     """
 
     def __init__(self, ref: PrimitiveRef[T] | UnionRefBases) -> None:
@@ -60,7 +60,7 @@ class GetOp[T](Operation[T | SpecialValue]):
         self.ref = cast("PrimitiveRef", ref)
         self.children = (cast("PrimitiveRef", ref),)
 
-    def execute(self, context: Context) -> T | SpecialValue:
+    def execute(self, context: Context) -> T | Sentinel:
         """Execute read operation.
 
         Args:
@@ -88,7 +88,7 @@ class GetOp[T](Operation[T | SpecialValue]):
         return f"GetOp({self.ref!r})"
 
 
-class ExtractOp[T](Operation[T | SpecialValue]):
+class ExtractOp[T](Operation[T | Sentinel]):
     """Extract operation for container structures.
 
     Pure operation that reads an entire container structure.
@@ -112,7 +112,7 @@ class ExtractOp[T](Operation[T | SpecialValue]):
         self.ref = cast("ViewRef[view_capabilities.Convertible[T]]", ref)
         self.children = (cast("ViewRef[view_capabilities.Convertible[T]]", ref),)
 
-    def execute(self, context: Context) -> T | SpecialValue:
+    def execute(self, context: Context) -> T | Sentinel:
         """Execute extract operation.
 
         Args:
@@ -239,7 +239,7 @@ class MissingOp(Operation[bool]):
         return f"MissingOp({self.ref!r})"
 
 
-class LengthOp(Operation[int | SpecialValue]):
+class LengthOp(Operation[int | Sentinel]):
     """Length query operation for containers.
 
     Pure operation that returns the length of a container.
@@ -261,7 +261,7 @@ class LengthOp(Operation[int | SpecialValue]):
         self.ref = cast("ViewRef[view_capabilities.Sizeable]", ref)
         self.children = (cast("ViewRef[view_capabilities.Sizeable]", ref),)
 
-    def execute(self, context: Context) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | Sentinel:
         """Execute length query.
 
         Args:

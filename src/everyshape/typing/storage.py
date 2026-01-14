@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from types import NoneType
-from typing import Any, cast
+from typing import Any
 
 
 __all__ = [
     "CompositeValue",
     "PrimitiveValue",
     "Value",
-    "cast_value",
 ]
 
 # =========================================================
@@ -52,16 +50,3 @@ type CompositeValue = (
 
 # A union of all supported value types
 type Value = PrimitiveValue | CompositeValue
-
-# Iterable of values. Used in type hints for functions that process collections of values.
-type IterableValues = Iterable[Value]
-
-
-# ---------------------------------------------------------
-# Type guards
-# ---------------------------------------------------------
-
-
-def cast_value(value: object) -> Value:
-    """Convenience function to cast given object to Value."""
-    return cast("Value", value)

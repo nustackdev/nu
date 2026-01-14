@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from everyshape.loc import key
-    from everyshape.types import Empty, Value
+    from everyshape.typing import Empty, Value
 
     from .scan import ScanProtocol
     from .storage import StorageProtocol

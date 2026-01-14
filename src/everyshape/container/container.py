@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
     from everyshape.loc import site as site_
     from everyshape.storage import StorageContextType, Subscription, SubscriptionOptions
-    from everyshape.types import Empty, Value
+    from everyshape.typing import Empty, Value
 
     from .types import ContainerProtocol, ContainerStructure, NodeInfo, NodeType, ParentChainInfo
 

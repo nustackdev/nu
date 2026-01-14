@@ -6,12 +6,12 @@ Tests for special sentinel values used in ABC modules:
 - Type guard functions and propagation logic
 """
 
-from everyshape.types.special import (
+from everyshape.typing import (
     EMPTY,
     NAN,
     Empty,
     NaN,
-    SpecialValue,
+    Sentinel,
     is_empty,
     is_nan,
     is_special,
@@ -37,9 +37,9 @@ def test_nan_singleton_exists() -> None:
 
 
 def test_singletons_are_special_values() -> None:
-    """Test that singletons are instances of SpecialValue."""
-    assert isinstance(EMPTY, SpecialValue)
-    assert isinstance(NAN, SpecialValue)
+    """Test that singletons are instances of Sentinel."""
+    assert isinstance(EMPTY, Sentinel)
+    assert isinstance(NAN, Sentinel)
 
 
 # ============================================================================

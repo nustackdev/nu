@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
-from everyshape.types import SpecialValue, Value
+from everyshape.typing import Sentinel
 from everyshape.view import (
     Assignable,
     Clearable,
@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 
-class SetCmd[T: Value](Command[T]):
+class SetCmd[T](Command[T]):
     """Write command for primitive values.
 
     Impure command that writes a value to a storage location.
@@ -57,7 +57,7 @@ class SetCmd[T: Value](Command[T]):
     def __init__(
         self,
         ref: PrimitiveRef[T] | UnionRefBases,
-        value: RValue[T | SpecialValue],
+        value: RValue[T | Sentinel],
     ) -> None:
         """Initialize set command.
 
@@ -84,7 +84,7 @@ class SetCmd[T: Value](Command[T]):
         # Evaluate value expression
         value = self.value_expr.execute(context)
 
-        if isinstance(value, SpecialValue):
+        if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, NaN, etc): {value}")
 
         # Get root view from context
@@ -161,7 +161,7 @@ class DeleteCmd(Command[None]):
         return f"DeleteCmd({self.ref!r})"
 
 
-class StoreCmd[T: Value](Command[T]):
+class StoreCmd[T](Command[T]):
     """Store command for container structures.
 
     Impure command that writes an entire structure to a container.
@@ -179,7 +179,7 @@ class StoreCmd[T: Value](Command[T]):
     def __init__(
         self,
         ref: ViewRef[Initializable] | UnionRefBases,
-        data: RValue[T | SpecialValue],
+        data: RValue[T | Sentinel],
     ) -> None:
         """Initialize store command.
 
@@ -206,7 +206,7 @@ class StoreCmd[T: Value](Command[T]):
         # Evaluate data expression
         data = self.data_expr.execute(context)
 
-        if isinstance(data, SpecialValue):
+        if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, NaN, etc): {data}")
 
         # Get root view from context

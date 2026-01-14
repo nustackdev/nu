@@ -15,7 +15,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from everyshape.storage import LengthFilter, PrefixFilter, StorageScanOptions
-from everyshape.types import EMPTY, Empty, Value
+from everyshape.typing import EMPTY, Empty, Value
 
 from .context import (
     require_read_context,

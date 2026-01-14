@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.types import NAN, SpecialValue
+from everyshape.typing import NAN, Sentinel
 
 from ...term import Operation
 
@@ -107,10 +107,10 @@ class SetBinaryOp[ResultT](Operation[ResultT]):
 # =============================================================================
 
 
-class UnionOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]):
+class UnionOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set union: set.union(other) or set | other."""
 
-    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | SpecialValue:
+    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return NAN
@@ -122,10 +122,10 @@ class UnionOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]):
         return NAN
 
 
-class IntersectionOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]):
+class IntersectionOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set intersection: set.intersection(other) or set & other."""
 
-    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | SpecialValue:
+    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return NAN
@@ -137,10 +137,10 @@ class IntersectionOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]):
         return NAN
 
 
-class DifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]):
+class DifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set difference: set.difference(other) or set - other."""
 
-    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | SpecialValue:
+    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return NAN
@@ -152,10 +152,10 @@ class DifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]):
         return NAN
 
 
-class SymmetricDifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]):
+class SymmetricDifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set symmetric difference: set.symmetric_difference(other) or set ^ other."""
 
-    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | SpecialValue:
+    def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return NAN
@@ -172,10 +172,10 @@ class SymmetricDifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | SpecialValue]
 # =============================================================================
 
 
-class IsSubsetOp(SetBinaryOp[bool | SpecialValue]):
+class IsSubsetOp(SetBinaryOp[bool | Sentinel]):
     """Test if subset: set.issubset(other) or set <= other."""
 
-    def _apply_op(self, operand: object, other: object) -> bool | SpecialValue:
+    def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
         if not isinstance(operand, (set, frozenset)):
             return NAN
         if not isinstance(other, (set, frozenset)):
@@ -183,10 +183,10 @@ class IsSubsetOp(SetBinaryOp[bool | SpecialValue]):
         return operand.issubset(other)
 
 
-class IsSupersetOp(SetBinaryOp[bool | SpecialValue]):
+class IsSupersetOp(SetBinaryOp[bool | Sentinel]):
     """Test if superset: set.issuperset(other) or set >= other."""
 
-    def _apply_op(self, operand: object, other: object) -> bool | SpecialValue:
+    def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
         if not isinstance(operand, (set, frozenset)):
             return NAN
         if not isinstance(other, (set, frozenset)):
@@ -194,10 +194,10 @@ class IsSupersetOp(SetBinaryOp[bool | SpecialValue]):
         return operand.issuperset(other)
 
 
-class IsDisjointOp(SetBinaryOp[bool | SpecialValue]):
+class IsDisjointOp(SetBinaryOp[bool | Sentinel]):
     """Test if disjoint: set.isdisjoint(other)."""
 
-    def _apply_op(self, operand: object, other: object) -> bool | SpecialValue:
+    def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
         if not isinstance(operand, (set, frozenset)):
             return NAN
         if not isinstance(other, (set, frozenset)):

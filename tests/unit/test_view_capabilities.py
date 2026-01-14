@@ -9,7 +9,7 @@ Tests:
 from typing import ClassVar
 
 from everyshape.container import ContainerProtocol, ContainerStructure
-from everyshape.types import EMPTY, Empty
+from everyshape.typing import EMPTY, Empty
 from everyshape.view import (
     ViewBase,
     is_addable,

@@ -6,7 +6,6 @@ from unittest.mock import Mock
 
 import pytest
 
-from everyshape._types import NOT_SET
 from everyshape.container import (
     DEFAULT_PARENT_PROTOCOL,
     DEFAULT_PARENT_STRUCTURE,
@@ -32,6 +31,7 @@ from everyshape.storage import (
     WriteAccessProtocol,
     WriteBatchProtocol,
 )
+from everyshape.typing import NOT_SET
 
 
 # ========================================================

@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.types import NAN, SpecialValue
+from everyshape.typing import NAN, Sentinel
 
 from ...term import Operation
 
@@ -115,7 +115,7 @@ class BytesOp[ResultT](Operation[ResultT]):
 # =============================================================================
 
 
-class DecodeOp(BytesOp[str | SpecialValue]):
+class DecodeOp(BytesOp[str | Sentinel]):
     """Decode bytes to string: bytes.decode(encoding)."""
 
     def __init__(self, operand: OpArgument, encoding: str = "utf-8") -> None:
@@ -128,7 +128,7 @@ class DecodeOp(BytesOp[str | SpecialValue]):
         super().__init__(operand)
         self._encoding = encoding
 
-    def _apply_op(self, operand: object) -> str | SpecialValue:
+    def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, bytes):
             return NAN
         try:
@@ -140,10 +140,10 @@ class DecodeOp(BytesOp[str | SpecialValue]):
         return f"DecodeOp({self.children[0]!r}, encoding={self._encoding!r})"
 
 
-class HexOp(BytesOp[str | SpecialValue]):
+class HexOp(BytesOp[str | Sentinel]):
     """Convert to hex string: bytes.hex()."""
 
-    def _apply_op(self, operand: object) -> str | SpecialValue:
+    def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, bytes):
             return NAN
         return operand.hex()
@@ -154,19 +154,19 @@ class HexOp(BytesOp[str | SpecialValue]):
 # =============================================================================
 
 
-class BytesUpperOp(BytesOp[bytes | SpecialValue]):
+class BytesUpperOp(BytesOp[bytes | Sentinel]):
     """Convert to uppercase: bytes.upper()."""
 
-    def _apply_op(self, operand: object) -> bytes | SpecialValue:
+    def _apply_op(self, operand: object) -> bytes | Sentinel:
         if not isinstance(operand, bytes):
             return NAN
         return operand.upper()
 
 
-class BytesLowerOp(BytesOp[bytes | SpecialValue]):
+class BytesLowerOp(BytesOp[bytes | Sentinel]):
     """Convert to lowercase: bytes.lower()."""
 
-    def _apply_op(self, operand: object) -> bytes | SpecialValue:
+    def _apply_op(self, operand: object) -> bytes | Sentinel:
         if not isinstance(operand, bytes):
             return NAN
         return operand.lower()
@@ -177,7 +177,7 @@ class BytesLowerOp(BytesOp[bytes | SpecialValue]):
 # =============================================================================
 
 
-class BytesStripOp(BytesOp[bytes | SpecialValue]):
+class BytesStripOp(BytesOp[bytes | Sentinel]):
     """Strip bytes: bytes.strip(chars)."""
 
     def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
@@ -192,7 +192,7 @@ class BytesStripOp(BytesOp[bytes | SpecialValue]):
         else:
             self.children = (cast("RValue", operand),)
 
-    def execute(self, context: Context) -> bytes | SpecialValue:
+    def execute(self, context: Context) -> bytes | Sentinel:
         """Execute strip operation."""
         operand_val = self.children[0].execute(context)
         if not isinstance(operand_val, bytes):
@@ -205,11 +205,11 @@ class BytesStripOp(BytesOp[bytes | SpecialValue]):
             return operand_val.strip(chars_val)
         return operand_val.strip()
 
-    def _apply_op(self, operand: object) -> bytes | SpecialValue:
+    def _apply_op(self, operand: object) -> bytes | Sentinel:
         raise NotImplementedError
 
 
-class BytesLStripOp(BytesOp[bytes | SpecialValue]):
+class BytesLStripOp(BytesOp[bytes | Sentinel]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
     def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
@@ -219,7 +219,7 @@ class BytesLStripOp(BytesOp[bytes | SpecialValue]):
         else:
             self.children = (cast("RValue", operand),)
 
-    def execute(self, context: Context) -> bytes | SpecialValue:
+    def execute(self, context: Context) -> bytes | Sentinel:
         """Execute lstrip operation."""
         operand_val = self.children[0].execute(context)
         if not isinstance(operand_val, bytes):
@@ -232,11 +232,11 @@ class BytesLStripOp(BytesOp[bytes | SpecialValue]):
             return operand_val.lstrip(chars_val)
         return operand_val.lstrip()
 
-    def _apply_op(self, operand: object) -> bytes | SpecialValue:
+    def _apply_op(self, operand: object) -> bytes | Sentinel:
         raise NotImplementedError
 
 
-class BytesRStripOp(BytesOp[bytes | SpecialValue]):
+class BytesRStripOp(BytesOp[bytes | Sentinel]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
     def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
@@ -246,7 +246,7 @@ class BytesRStripOp(BytesOp[bytes | SpecialValue]):
         else:
             self.children = (cast("RValue", operand),)
 
-    def execute(self, context: Context) -> bytes | SpecialValue:
+    def execute(self, context: Context) -> bytes | Sentinel:
         """Execute rstrip operation."""
         operand_val = self.children[0].execute(context)
         if not isinstance(operand_val, bytes):
@@ -259,7 +259,7 @@ class BytesRStripOp(BytesOp[bytes | SpecialValue]):
             return operand_val.rstrip(chars_val)
         return operand_val.rstrip()
 
-    def _apply_op(self, operand: object) -> bytes | SpecialValue:
+    def _apply_op(self, operand: object) -> bytes | Sentinel:
         raise NotImplementedError
 
 
@@ -268,7 +268,7 @@ class BytesRStripOp(BytesOp[bytes | SpecialValue]):
 # =============================================================================
 
 
-class BytesSplitOp(Operation[list[bytes] | SpecialValue]):
+class BytesSplitOp(Operation[list[bytes] | Sentinel]):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
     def __init__(
@@ -290,7 +290,7 @@ class BytesSplitOp(Operation[list[bytes] | SpecialValue]):
             self.children = (cast("RValue", operand),)
         self._maxsplit = maxsplit
 
-    def execute(self, context: Context) -> list[bytes] | SpecialValue:
+    def execute(self, context: Context) -> list[bytes] | Sentinel:
         """Execute split operation."""
         operand_val = self.children[0].execute(context)
         if not isinstance(operand_val, bytes):
@@ -313,7 +313,7 @@ class BytesSplitOp(Operation[list[bytes] | SpecialValue]):
 # =============================================================================
 
 
-class BytesFindOp(Operation[int | SpecialValue]):
+class BytesFindOp(Operation[int | Sentinel]):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
     def __init__(
@@ -328,7 +328,7 @@ class BytesFindOp(Operation[int | SpecialValue]):
         self._start = start
         self._end = end
 
-    def execute(self, context: Context) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | Sentinel:
         """Execute find operation."""
         operand_val = self.children[0].execute(context)
         sub_val = self.children[1].execute(context)
@@ -344,14 +344,14 @@ class BytesFindOp(Operation[int | SpecialValue]):
         return f"BytesFindOp({self.children[0]!r}, {self.children[1]!r})"
 
 
-class BytesCountOp(Operation[int | SpecialValue]):
+class BytesCountOp(Operation[int | Sentinel]):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
     def __init__(self, operand: OpArgument, sub: OpArgument) -> None:
         """Initialize count operation."""
         self.children = (cast("RValue", operand), cast("RValue", sub))
 
-    def execute(self, context: Context) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | Sentinel:
         """Execute count operation."""
         operand_val = self.children[0].execute(context)
         sub_val = self.children[1].execute(context)
@@ -370,14 +370,14 @@ class BytesCountOp(Operation[int | SpecialValue]):
 # =============================================================================
 
 
-class BytesStartsWithOp(Operation[bool | SpecialValue]):
+class BytesStartsWithOp(Operation[bool | Sentinel]):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
     def __init__(self, operand: OpArgument, prefix: OpArgument) -> None:
         """Initialize startswith operation."""
         self.children = (cast("RValue", operand), cast("RValue", prefix))
 
-    def execute(self, context: Context) -> bool | SpecialValue:
+    def execute(self, context: Context) -> bool | Sentinel:
         """Execute startswith operation."""
         operand_val = self.children[0].execute(context)
         prefix_val = self.children[1].execute(context)
@@ -391,14 +391,14 @@ class BytesStartsWithOp(Operation[bool | SpecialValue]):
         return f"BytesStartsWithOp({self.children[0]!r}, {self.children[1]!r})"
 
 
-class BytesEndsWithOp(Operation[bool | SpecialValue]):
+class BytesEndsWithOp(Operation[bool | Sentinel]):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
     def __init__(self, operand: OpArgument, suffix: OpArgument) -> None:
         """Initialize endswith operation."""
         self.children = (cast("RValue", operand), cast("RValue", suffix))
 
-    def execute(self, context: Context) -> bool | SpecialValue:
+    def execute(self, context: Context) -> bool | Sentinel:
         """Execute endswith operation."""
         operand_val = self.children[0].execute(context)
         suffix_val = self.children[1].execute(context)
@@ -417,7 +417,7 @@ class BytesEndsWithOp(Operation[bool | SpecialValue]):
 # =============================================================================
 
 
-class BytesReplaceOp(Operation[bytes | SpecialValue]):
+class BytesReplaceOp(Operation[bytes | Sentinel]):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
 
     def __init__(
@@ -435,7 +435,7 @@ class BytesReplaceOp(Operation[bytes | SpecialValue]):
         )
         self._count = count
 
-    def execute(self, context: Context) -> bytes | SpecialValue:
+    def execute(self, context: Context) -> bytes | Sentinel:
         """Execute replace operation."""
         operand_val = self.children[0].execute(context)
         old_val = self.children[1].execute(context)

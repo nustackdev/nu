@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from everyshape.types import SpecialValue
+    from everyshape.typing import Sentinel
 
     from ..term import Computation, RValue
     from ..values import BoolValue, IntValue, ListValue, NoneValue
@@ -321,7 +321,7 @@ class Poppable[ItemValueT](Protocol):
     """
 
     def pop(
-        self, index: int | RValue[int | SpecialValue] = -1
+        self, index: int | RValue[int | Sentinel] = -1
     ) -> ItemValueT:  # Return type depends on ItemT
         """Create a pop command.
 
@@ -501,7 +501,7 @@ class RefIndexable[IndexT, RefT](Protocol):
         ...     item_ref = ref[0]  # Get first item reference
     """
 
-    def __getitem__(self, key: IndexT | RValue[IndexT | SpecialValue]) -> RefT:
+    def __getitem__(self, key: IndexT | RValue[IndexT | Sentinel]) -> RefT:
         """Get reference to item at index.
 
         Args:
@@ -654,7 +654,7 @@ class MappingAccessible[KeyT, ValueT](Protocol):
     def get_item(
         self,
         key: KeyT | RValue,
-        default: ValueT | SpecialValue | None = None,
+        default: ValueT | Sentinel | None = None,
     ) -> object:  # Returns ComputedValue type based on ValueT
         """Get value by key with optional default.
 

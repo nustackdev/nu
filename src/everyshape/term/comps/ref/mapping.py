@@ -32,7 +32,7 @@ from everyshape import NOT_SET, NotSet
 from everyshape.loc import path
 from everyshape.storage import StorageKeyError
 from everyshape.term import Command, Operation, RValue, ViewRef
-from everyshape.types import Empty, SpecialValue, Value
+from everyshape.typing import Empty, Sentinel, Value
 from everyshape.view import capabilities as view_capabilities
 
 
@@ -83,8 +83,8 @@ class SetByKeyCmd[K, V: Value](Command[V]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Assignable[K, V]] | UnionRefBases,
-        key: RValue[K | SpecialValue],
-        value: RValue[V | SpecialValue],
+        key: RValue[K | Sentinel],
+        value: RValue[V | Sentinel],
     ) -> None:
         """Initialize set by key command.
 
@@ -112,7 +112,7 @@ class SetByKeyCmd[K, V: Value](Command[V]):
         key = self.key.execute(context)
         value = self.value_expr.execute(context)
 
-        if isinstance(value, SpecialValue):
+        if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, NaN, etc): {value}")
 
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
@@ -152,7 +152,7 @@ class RemoveByKeyCmd[K](Command[None]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Deletable[K]] | UnionRefBases,
-        key: RValue[K | SpecialValue],
+        key: RValue[K | Sentinel],
     ) -> None:
         """Initialize remove by key command.
 
@@ -203,7 +203,7 @@ class RemoveByKeyCmd[K](Command[None]):
 # =============================================================================
 
 
-class GetByKeyOp[K, V](Operation[V | SpecialValue]):
+class GetByKeyOp[K, V](Operation[V | Sentinel]):
     """Get a value by key from a mapping.
 
     Pure operation that gets a value by key, returning a default if not found.
@@ -221,8 +221,8 @@ class GetByKeyOp[K, V](Operation[V | SpecialValue]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Subscriptable[K, V]] | UnionRefBases,
-        key: RValue[K | SpecialValue],
-        default: RValue[V | SpecialValue] | NotSet = NOT_SET,
+        key: RValue[K | Sentinel],
+        default: RValue[V | Sentinel] | NotSet = NOT_SET,
     ) -> None:
         """Initialize get by key operation.
 
@@ -236,7 +236,7 @@ class GetByKeyOp[K, V](Operation[V | SpecialValue]):
         self.default = default
         self.children = (cast("ViewRef[view_capabilities.Subscriptable[K, V]]", ref),)
 
-    def execute(self, context: Context) -> V | SpecialValue:
+    def execute(self, context: Context) -> V | Sentinel:
         """Execute get by key operation.
 
         Args:
@@ -269,7 +269,7 @@ class GetByKeyOp[K, V](Operation[V | SpecialValue]):
         return f"GetByKeyOp({self.ref!r}, {self.key!r}, {self.default!r})"
 
 
-class KeysOp[K](Operation[list[K] | SpecialValue]):
+class KeysOp[K](Operation[list[K] | Sentinel]):
     """Get all keys from a mapping.
 
     Pure operation that returns all keys of a mapping as a list.
@@ -293,7 +293,7 @@ class KeysOp[K](Operation[list[K] | SpecialValue]):
         self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, object]]]", ref)
         self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, object]]]", ref),)
 
-    def execute(self, context: Context) -> list[K] | SpecialValue:
+    def execute(self, context: Context) -> list[K] | Sentinel:
         """Execute keys operation.
 
         Args:
@@ -325,7 +325,7 @@ class KeysOp[K](Operation[list[K] | SpecialValue]):
         return f"KeysOp({self.ref!r})"
 
 
-class ValuesOp[V](Operation[list[V] | SpecialValue]):
+class ValuesOp[V](Operation[list[V] | Sentinel]):
     """Get all values from a mapping.
 
     Pure operation that returns all values of a mapping as a list.
@@ -349,7 +349,7 @@ class ValuesOp[V](Operation[list[V] | SpecialValue]):
         self.ref = cast("ViewRef[view_capabilities.Convertible[dict[object, V]]]", ref)
         self.children = (cast("ViewRef[view_capabilities.Convertible[dict[object, V]]]", ref),)
 
-    def execute(self, context: Context) -> list[V] | SpecialValue:
+    def execute(self, context: Context) -> list[V] | Sentinel:
         """Execute values operation.
 
         Args:
@@ -381,7 +381,7 @@ class ValuesOp[V](Operation[list[V] | SpecialValue]):
         return f"ValuesOp({self.ref!r})"
 
 
-class ItemsOp[K, V](Operation[list[tuple[K, V]] | SpecialValue]):
+class ItemsOp[K, V](Operation[list[tuple[K, V]] | Sentinel]):
     """Get all key-value pairs from a mapping.
 
     Pure operation that returns all key-value pairs as a list of tuples.
@@ -406,7 +406,7 @@ class ItemsOp[K, V](Operation[list[tuple[K, V]] | SpecialValue]):
         self.ref = cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref)
         self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
-    def execute(self, context: Context) -> list[tuple[K, V]] | SpecialValue:
+    def execute(self, context: Context) -> list[tuple[K, V]] | Sentinel:
         """Execute items operation.
 
         Args:
@@ -647,7 +647,7 @@ class FindItemByPredicateOp[K, V](Operation[tuple[K, V]]):
 # =============================================================================
 
 
-class MapValuesOp[K, V, R](Operation[dict[K, R] | SpecialValue]):
+class MapValuesOp[K, V, R](Operation[dict[K, R] | Sentinel]):
     """Map a function over mapping values.
 
     Pure operation that applies a function to each value in a mapping.
@@ -677,7 +677,7 @@ class MapValuesOp[K, V, R](Operation[dict[K, R] | SpecialValue]):
         self.func = func
         self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
-    def execute(self, context: Context) -> dict[K, R] | SpecialValue:
+    def execute(self, context: Context) -> dict[K, R] | Sentinel:
         """Execute map values operation.
 
         Args:
@@ -709,7 +709,7 @@ class MapValuesOp[K, V, R](Operation[dict[K, R] | SpecialValue]):
         return f"MapValuesOp({self.ref!r}, {self.func!r})"
 
 
-class MapItemsOp[K, V, K2, V2](Operation[dict[K2, V2] | SpecialValue]):
+class MapItemsOp[K, V, K2, V2](Operation[dict[K2, V2] | Sentinel]):
     """Map a function over mapping items.
 
     Pure operation that applies a function to each (key, value) pair.
@@ -740,7 +740,7 @@ class MapItemsOp[K, V, K2, V2](Operation[dict[K2, V2] | SpecialValue]):
         self.func = func
         self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
-    def execute(self, context: Context) -> dict[K2, V2] | SpecialValue:
+    def execute(self, context: Context) -> dict[K2, V2] | Sentinel:
         """Execute map items operation.
 
         Args:
@@ -772,7 +772,7 @@ class MapItemsOp[K, V, K2, V2](Operation[dict[K2, V2] | SpecialValue]):
         return f"MapItemsOp({self.ref!r}, {self.func!r})"
 
 
-class FilterItemsOp[K, V](Operation[dict[K, V] | SpecialValue]):
+class FilterItemsOp[K, V](Operation[dict[K, V] | Sentinel]):
     """Filter mapping items by predicate.
 
     Pure operation that keeps items matching a predicate.
@@ -801,7 +801,7 @@ class FilterItemsOp[K, V](Operation[dict[K, V] | SpecialValue]):
         self.predicate = predicate
         self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
-    def execute(self, context: Context) -> dict[K, V] | SpecialValue:
+    def execute(self, context: Context) -> dict[K, V] | Sentinel:
         """Execute filter items operation.
 
         Args:
@@ -833,7 +833,7 @@ class FilterItemsOp[K, V](Operation[dict[K, V] | SpecialValue]):
         return f"FilterItemsOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceItemsOp[K, V, R](Operation[R | SpecialValue]):
+class ReduceItemsOp[K, V, R](Operation[R | Sentinel]):
     """Reduce mapping items to single value.
 
     Pure operation that reduces a mapping to a single value.
@@ -866,7 +866,7 @@ class ReduceItemsOp[K, V, R](Operation[R | SpecialValue]):
         self.initial = initial
         self.children = (cast("ViewRef[view_capabilities.Convertible[dict[K, V]]]", ref),)
 
-    def execute(self, context: Context) -> R | SpecialValue:
+    def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce items operation.
 
         Args:

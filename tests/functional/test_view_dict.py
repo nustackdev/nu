@@ -251,7 +251,7 @@ class TestDictViewGetPop:
 
     def test_get_missing_no_default(self, view: DictView) -> None:
         """Test get() returns EMPTY for missing key without default."""
-        from everyshape.types import EMPTY
+        from everyshape.typing import EMPTY
 
         result = view.get("missing")
         assert result is EMPTY

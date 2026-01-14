@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from everyshape.types import Value
+    from everyshape.typing import Value
     from everyshape.view import View
 
 __all__ = [

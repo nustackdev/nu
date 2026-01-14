@@ -14,7 +14,7 @@ from everyshape.container import (
     ContainerStructure,
     NodeType,
 )
-from everyshape.types import EMPTY, Empty, is_empty
+from everyshape.typing import EMPTY, Empty, is_empty
 from everyshape.view import (
     ChildNavigationBase,
     ChildNestedGetBase,

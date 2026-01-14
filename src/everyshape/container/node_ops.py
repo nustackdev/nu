@@ -13,9 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape._types import NOT_SET, NotSet, is_notset
 from everyshape.loc import site as site_
-from everyshape.types import Empty
+from everyshape.typing import NOT_SET, Empty, NotSet, is_notset
 
 from .context import require_read_context
 from .marker import extract_marker
@@ -24,7 +23,7 @@ from .types import NodeInfo, NodeType, ParentChainInfo, ParentInfo
 
 if TYPE_CHECKING:
     from everyshape.storage import StorageContextType
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
 __all__ = [
     "gather_parent_info",

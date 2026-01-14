@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everyshape.loc.constants import METADATA_ROOT
-from everyshape.types import EMPTY
+from everyshape.typing import EMPTY
 
 from .context import require_read_context, require_write_context
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from everyshape.loc import site as site_
     from everyshape.storage import StorageContextType
-    from everyshape.types import Empty, Value
+    from everyshape.typing import Empty, Value
 
 __all__ = [
     "delete_metadata",

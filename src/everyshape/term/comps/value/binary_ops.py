@@ -33,7 +33,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, cast
 
-from everyshape.types import NAN, SpecialValue, propagate_special
+from everyshape.typing import NAN, Sentinel, propagate_special
 
 from ...term import Operation
 
@@ -77,7 +77,7 @@ __all__ = [
 type OpArgument = RValue | UnionBaseType
 
 
-class BinaryOp[ResultT](Operation[ResultT | SpecialValue], ABC):
+class BinaryOp[ResultT](Operation[ResultT | Sentinel], ABC):
     """Base class for binary operations.
 
     Defines execution pattern: evaluate operands → handle special values →
@@ -96,7 +96,7 @@ class BinaryOp[ResultT](Operation[ResultT | SpecialValue], ABC):
         """
         self.children = (cast("RValue", left), cast("RValue", right))
 
-    def execute(self, context: Context) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute binary operation.
 
         Args:
@@ -118,7 +118,7 @@ class BinaryOp[ResultT](Operation[ResultT | SpecialValue], ABC):
         return self._apply_op(left_val, right_val)
 
     @abstractmethod
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         """Apply the operator to operands.
 
         Subclasses override with operator-specific logic.
@@ -145,7 +145,7 @@ class BinaryOp[ResultT](Operation[ResultT | SpecialValue], ABC):
 class AddOp[ResultT](BinaryOp[ResultT]):
     """Addition: left + right."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left + right  # type: ignore
         except TypeError:
@@ -155,7 +155,7 @@ class AddOp[ResultT](BinaryOp[ResultT]):
 class SubOp[ResultT](BinaryOp[ResultT]):
     """Subtraction: left - right."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left - right  # type: ignore
         except TypeError:
@@ -165,7 +165,7 @@ class SubOp[ResultT](BinaryOp[ResultT]):
 class MulOp[ResultT](BinaryOp[ResultT]):
     """Multiplication: left * right."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left * right  # type: ignore
         except TypeError:
@@ -175,7 +175,7 @@ class MulOp[ResultT](BinaryOp[ResultT]):
 class DivOp[ResultT](BinaryOp[ResultT]):
     """Division: left / right. Returns NaN on division by zero."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         # Explicit zero check before division
         try:
             return left / right  # type: ignore
@@ -186,7 +186,7 @@ class DivOp[ResultT](BinaryOp[ResultT]):
 class FloorDivOp[ResultT](BinaryOp[ResultT]):
     """Floor division: left // right. Returns NaN on division by zero."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         # Explicit zero check before division
         try:
             return left // right  # type: ignore
@@ -197,7 +197,7 @@ class FloorDivOp[ResultT](BinaryOp[ResultT]):
 class ModOp[ResultT](BinaryOp[ResultT]):
     """Modulo: left % right. Returns NaN on division by zero."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         # Explicit zero check before modulo
         try:
             return left % right  # type: ignore
@@ -208,7 +208,7 @@ class ModOp[ResultT](BinaryOp[ResultT]):
 class PowOp[ResultT](BinaryOp[ResultT]):
     """Power: left ** right."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left**right  # type: ignore
         except (TypeError, OverflowError):
@@ -220,70 +220,70 @@ class PowOp[ResultT](BinaryOp[ResultT]):
 # =============================================================================
 
 
-class GtOp(BinaryOp[bool | SpecialValue]):
+class GtOp(BinaryOp[bool | Sentinel]):
     """Greater than: left > right."""
 
-    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | Sentinel:
         try:
             return left > right  # type: ignore
         except TypeError:
             return NAN
 
 
-class LtOp(BinaryOp[bool | SpecialValue]):
+class LtOp(BinaryOp[bool | Sentinel]):
     """Less than: left < right."""
 
-    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | Sentinel:
         try:
             return left < right  # type: ignore
         except TypeError:
             return NAN
 
 
-class EqOp(BinaryOp[bool | SpecialValue]):
+class EqOp(BinaryOp[bool | Sentinel]):
     """Equality: left == right."""
 
-    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | Sentinel:
         try:
             return left == right  # type: ignore
         except TypeError:
             return NAN
 
 
-class NeOp(BinaryOp[bool | SpecialValue]):
+class NeOp(BinaryOp[bool | Sentinel]):
     """Not equal: left != right."""
 
-    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | Sentinel:
         try:
             return left != right  # type: ignore
         except TypeError:
             return NAN
 
 
-class GeOp(BinaryOp[bool | SpecialValue]):
+class GeOp(BinaryOp[bool | Sentinel]):
     """Greater than or equal: left >= right."""
 
-    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | Sentinel:
         try:
             return left >= right  # type: ignore
         except TypeError:
             return NAN
 
 
-class LeOp(BinaryOp[bool | SpecialValue]):
+class LeOp(BinaryOp[bool | Sentinel]):
     """Less than or equal: left <= right."""
 
-    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | Sentinel:
         try:
             return left <= right  # type: ignore
         except TypeError:
             return NAN
 
 
-class IdCompOp(BinaryOp[bool | SpecialValue]):
+class IdCompOp(BinaryOp[bool | Sentinel]):
     """Identity comparison: left is right."""
 
-    def _apply_op(self, left: object, right: object) -> bool | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> bool | Sentinel:
         try:
             return left is right  # type: ignore
         except TypeError:
@@ -298,7 +298,7 @@ class IdCompOp(BinaryOp[bool | SpecialValue]):
 class AndOp[ResultT](BinaryOp[ResultT]):
     """Logical AND: left and right. Short-circuits at Python level."""
 
-    def execute(self, context: Context) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute AND with short-circuit evaluation.
 
         Evaluates left, and only if truthy, evaluates right.
@@ -330,7 +330,7 @@ class AndOp[ResultT](BinaryOp[ResultT]):
 
         return left_val and right_val
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         # Unreachable code, added for type checkers
         raise NotImplementedError
 
@@ -338,7 +338,7 @@ class AndOp[ResultT](BinaryOp[ResultT]):
 class OrOp[ResultT](BinaryOp[ResultT]):
     """Logical OR: left or right. Short-circuits at Python level."""
 
-    def execute(self, context: Context) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute OR with short-circuit evaluation.
 
         Evaluates left, and only if falsy, evaluates right.
@@ -370,7 +370,7 @@ class OrOp[ResultT](BinaryOp[ResultT]):
 
         return left_val or right_val  # type: ignore[return-value]
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         # Unreachable code, added for type checkers
         raise NotImplementedError
 
@@ -383,7 +383,7 @@ class OrOp[ResultT](BinaryOp[ResultT]):
 class XorOp[ResultT](BinaryOp[ResultT]):
     """Bitwise XOR: left ^ right."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left ^ right  # type: ignore
         except TypeError:
@@ -393,7 +393,7 @@ class XorOp[ResultT](BinaryOp[ResultT]):
 class LShiftOp[ResultT](BinaryOp[ResultT]):
     """Left shift: left << right."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left << right  # type: ignore
         except TypeError:
@@ -403,7 +403,7 @@ class LShiftOp[ResultT](BinaryOp[ResultT]):
 class RShiftOp[ResultT](BinaryOp[ResultT]):
     """Right shift: left >> right."""
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left >> right  # type: ignore
         except TypeError:
@@ -417,7 +417,7 @@ class BitwiseAndOp[ResultT](BinaryOp[ResultT]):
     Use .bitand() method to create this operation.
     """
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left & right  # type: ignore
         except TypeError:
@@ -431,7 +431,7 @@ class BitwiseOrOp[ResultT](BinaryOp[ResultT]):
     Use .bitor() method to create this operation.
     """
 
-    def _apply_op(self, left: object, right: object) -> ResultT | SpecialValue:
+    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
         try:
             return left | right  # type: ignore
         except TypeError:

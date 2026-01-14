@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from everyshape.loc import key
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
 
 __all__ = [

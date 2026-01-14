@@ -47,7 +47,7 @@ from everyshape.storage.storage import (
     StorageClosedError,
     StorageInterfaceError,
 )
-from everyshape.types import EMPTY
+from everyshape.typing import EMPTY
 
 
 if TYPE_CHECKING:

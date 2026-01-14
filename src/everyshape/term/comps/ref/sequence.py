@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.term.term import Command, Operation, ViewRef
-from everyshape.types import Empty, SpecialValue, Value
+from everyshape.typing import Empty, Sentinel
 from everyshape.view import Appendable, Poppable
 from everyshape.view import capabilities as view_capabilities
 
@@ -60,7 +60,7 @@ __all__ = [
 # =============================================================================
 
 
-class AppendValueCmd[T: Value](Command[T]):
+class AppendValueCmd[T](Command[T]):
     """Append a value to the end of a sequence.
 
     Impure command that appends an item to a list or similar sequence.
@@ -77,7 +77,7 @@ class AppendValueCmd[T: Value](Command[T]):
     def __init__(
         self,
         ref: ViewRef[Appendable] | UnionRefBases,
-        value: RValue[T | SpecialValue],
+        value: RValue[T | Sentinel],
     ) -> None:
         """Initialize append value command.
 
@@ -101,7 +101,7 @@ class AppendValueCmd[T: Value](Command[T]):
         view_path = self.ref.resolve(context)
         value = self.value_expr.execute(context)
 
-        if isinstance(value, SpecialValue):
+        if isinstance(value, Sentinel):
             raise ValueError(f"Cannot append special values (Empty, NaN, etc): {value}")
 
         root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
@@ -123,7 +123,7 @@ class AppendValueCmd[T: Value](Command[T]):
         return f"AppendValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class InsertAtIndexCmd[T: Value](Command[T]):
+class InsertAtIndexCmd[T](Command[T]):
     """Insert a value at a specific index in a sequence.
 
     Impure command that inserts an item at a specific index.
@@ -140,8 +140,8 @@ class InsertAtIndexCmd[T: Value](Command[T]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        index: RValue[int | SpecialValue],
-        value: RValue[T | SpecialValue],
+        index: RValue[int | Sentinel],
+        value: RValue[T | Sentinel],
     ) -> None:
         """Initialize insert at index command.
 
@@ -170,7 +170,7 @@ class InsertAtIndexCmd[T: Value](Command[T]):
         return f"InsertAtIndexCmd({self.ref!r}, {self.index_expr!r}, {self.value_expr!r})"
 
 
-class PopByIndexCmd[T: Value](Command[T]):
+class PopByIndexCmd[T](Command[T]):
     """Pop a value from a sequence by index.
 
     Impure command that removes and returns an item by index.
@@ -190,7 +190,7 @@ class PopByIndexCmd[T: Value](Command[T]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        index: RValue[int | SpecialValue] | None = None,
+        index: RValue[int | Sentinel] | None = None,
     ) -> None:
         """Initialize pop by index command.
 
@@ -217,7 +217,7 @@ class PopByIndexCmd[T: Value](Command[T]):
 
         if self.index_expr is not None:
             index = self.index_expr.execute(context)
-            if isinstance(index, SpecialValue):
+            if isinstance(index, Sentinel):
                 raise ValueError(f"Cannot use special value as index: {index}")
         else:
             index = -1
@@ -302,7 +302,7 @@ class IndexOfValueOp[T](Operation[int]):
         return f"IndexOfValueOp({self.ref!r}, {self.value!r})"
 
 
-class CountOfValueOp[T](Operation[int | SpecialValue]):
+class CountOfValueOp[T](Operation[int | Sentinel]):
     """Count occurrences of a specific value in a sequence.
 
     Pure operation that counts how many times a value appears.
@@ -330,7 +330,7 @@ class CountOfValueOp[T](Operation[int | SpecialValue]):
         self.value = value
         self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
-    def execute(self, context: Context) -> int | SpecialValue:
+    def execute(self, context: Context) -> int | Sentinel:
         """Execute count of value operation.
 
         Args:
@@ -496,7 +496,7 @@ class FindIndexByPredicateOp[T](Operation[int]):
 # =============================================================================
 
 
-class MapOp[T, R](Operation[list[R] | SpecialValue]):
+class MapOp[T, R](Operation[list[R] | Sentinel]):
     """Map a function over sequence elements.
 
     Pure operation that applies a function to each element.
@@ -525,7 +525,7 @@ class MapOp[T, R](Operation[list[R] | SpecialValue]):
         self.func = func
         self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
-    def execute(self, context: Context) -> list[R] | SpecialValue:
+    def execute(self, context: Context) -> list[R] | Sentinel:
         """Execute map operation.
 
         Args:
@@ -555,7 +555,7 @@ class MapOp[T, R](Operation[list[R] | SpecialValue]):
         return f"MapOp({self.ref!r}, {self.func!r})"
 
 
-class FilterOp[T](Operation[list[T] | SpecialValue]):
+class FilterOp[T](Operation[list[T] | Sentinel]):
     """Filter sequence elements by predicate.
 
     Pure operation that keeps elements matching a predicate.
@@ -583,7 +583,7 @@ class FilterOp[T](Operation[list[T] | SpecialValue]):
         self.predicate = predicate
         self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
-    def execute(self, context: Context) -> list[T] | SpecialValue:
+    def execute(self, context: Context) -> list[T] | Sentinel:
         """Execute filter operation.
 
         Args:
@@ -613,7 +613,7 @@ class FilterOp[T](Operation[list[T] | SpecialValue]):
         return f"FilterOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceOp[T, R](Operation[R | SpecialValue]):
+class ReduceOp[T, R](Operation[R | Sentinel]):
     """Reduce sequence to single value.
 
     Pure operation that reduces a sequence using a reducer function.
@@ -645,7 +645,7 @@ class ReduceOp[T, R](Operation[R | SpecialValue]):
         self.initial = initial
         self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
-    def execute(self, context: Context) -> R | SpecialValue:
+    def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce operation.
 
         Args:

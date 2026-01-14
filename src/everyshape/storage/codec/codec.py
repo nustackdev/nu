@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from everyshape.loc import key
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
     from .protocol import CodecProtocol, KeyCodecProtocol, ValueCodecProtocol
 

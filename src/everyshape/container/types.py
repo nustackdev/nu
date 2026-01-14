@@ -9,12 +9,12 @@ from __future__ import annotations
 from enum import Enum, IntFlag, auto
 from typing import TYPE_CHECKING, NamedTuple, NewType
 
-from everyshape._types import NOT_SET, NotSet
+from everyshape.typing import NOT_SET, NotSet
 
 
 if TYPE_CHECKING:
     from everyshape.loc import site as site_
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
 
 __all__ = [

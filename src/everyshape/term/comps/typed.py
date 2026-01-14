@@ -33,7 +33,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 from everyshape.loc import path
-from everyshape.types import SpecialValue, Value
+from everyshape.typing import Sentinel
 from everyshape.view import Assignable
 
 from ..term import Command, Operation, PrimitiveRef, RValue
@@ -499,7 +499,7 @@ class DelAttrOp(Operation[None]):
 # =============================================================================
 
 
-class TypedSetCmd[T: Value](Command[T]):
+class TypedSetCmd[T](Command[T]):
     """Set command for TypedValue that calls __to_storage__ before storing.
 
     Like SetCmd, but before writing to storage, it checks if the value
@@ -524,7 +524,7 @@ class TypedSetCmd[T: Value](Command[T]):
     def __init__(
         self,
         ref: PrimitiveRef[T] | UnionRefBases,
-        value: RValue[T | SpecialValue],
+        value: RValue[T | Sentinel],
     ) -> None:
         """Initialize typed set command.
 
@@ -554,7 +554,7 @@ class TypedSetCmd[T: Value](Command[T]):
         # Evaluate value expression
         value = self.value_expr.execute(context)
 
-        if isinstance(value, SpecialValue):
+        if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, NaN, etc): {value}")
 
         # Check for __to_storage__ method and call it if present

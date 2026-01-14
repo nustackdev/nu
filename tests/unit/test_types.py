@@ -1,6 +1,6 @@
 """Unit tests for the _types module."""
 
-from everyshape._types import NOT_SET, NotSet, is_notset
+from everyshape.typing import NOT_SET, NotSet, is_notset
 
 
 class TestNotSet:

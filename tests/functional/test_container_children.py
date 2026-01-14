@@ -29,7 +29,7 @@ from everyshape.container import (
 from everyshape.container.container_ops import get_child_primitive
 from everyshape.container.types import NodeType
 from everyshape.storage import TransactionProtocol
-from everyshape.types import EMPTY
+from everyshape.typing import EMPTY
 
 
 # ============================================================================

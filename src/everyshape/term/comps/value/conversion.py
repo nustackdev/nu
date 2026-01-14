@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.types import NAN, SpecialValue
+from everyshape.typing import NAN, Sentinel
 
 from ...term import Operation
 
@@ -51,7 +51,7 @@ type OpArgument = RValue | UnionBaseType
 # =============================================================================
 
 
-class ConversionOp[ResultT](Operation[ResultT | SpecialValue]):
+class ConversionOp[ResultT](Operation[ResultT | Sentinel]):
     """Base class for type conversion operations.
 
     Defines execution pattern: evaluate operand → apply conversion → return result.
@@ -68,7 +68,7 @@ class ConversionOp[ResultT](Operation[ResultT | SpecialValue]):
         """
         self.children = (cast("RValue", operand),)
 
-    def execute(self, context: Context) -> ResultT | SpecialValue:
+    def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute conversion operation.
 
         Args:
@@ -80,7 +80,7 @@ class ConversionOp[ResultT](Operation[ResultT | SpecialValue]):
         operand_val = self.children[0].execute(context)
         return self._convert(value=operand_val)
 
-    def _convert(self, value: object) -> ResultT | SpecialValue:
+    def _convert(self, value: object) -> ResultT | Sentinel:
         """Apply the conversion to value.
 
         Subclasses override with conversion-specific logic.
@@ -106,7 +106,7 @@ class ConversionOp[ResultT](Operation[ResultT | SpecialValue]):
 class ToIntOp(ConversionOp[int]):
     """Convert value to integer."""
 
-    def _convert(self, value: object) -> int | SpecialValue:
+    def _convert(self, value: object) -> int | Sentinel:
         try:
             return int(value)  # type: ignore
         except (TypeError, ValueError):
@@ -116,7 +116,7 @@ class ToIntOp(ConversionOp[int]):
 class ToFloatOp(ConversionOp[float]):
     """Convert value to float."""
 
-    def _convert(self, value: object) -> float | SpecialValue:
+    def _convert(self, value: object) -> float | Sentinel:
         try:
             return float(value)  # type: ignore
         except (TypeError, ValueError):
@@ -126,7 +126,7 @@ class ToFloatOp(ConversionOp[float]):
 class ToBoolOp(ConversionOp[bool]):
     """Convert value to boolean."""
 
-    def _convert(self, value: object) -> bool | SpecialValue:
+    def _convert(self, value: object) -> bool | Sentinel:
         try:
             return bool(value)
         except (TypeError, ValueError):
@@ -136,7 +136,7 @@ class ToBoolOp(ConversionOp[bool]):
 class ToStrOp(ConversionOp[str]):
     """Convert value to string."""
 
-    def _convert(self, value: object) -> str | SpecialValue:
+    def _convert(self, value: object) -> str | Sentinel:
         try:
             return str(value)
         except (TypeError, ValueError):
@@ -163,7 +163,7 @@ class ToBytesOp(ConversionOp[bytes]):
         super().__init__(operand)
         self._encoding = encoding
 
-    def _convert(self, value: object) -> bytes | SpecialValue:
+    def _convert(self, value: object) -> bytes | Sentinel:
         try:
             if isinstance(value, bytes):
                 return value
@@ -184,7 +184,7 @@ class ToBytesOp(ConversionOp[bytes]):
 class ToListOp[T](ConversionOp[list[T]]):
     """Convert value to list."""
 
-    def _convert(self, value: object) -> list[T] | SpecialValue:
+    def _convert(self, value: object) -> list[T] | Sentinel:
         try:
             return list(value)  # type: ignore
         except TypeError:
@@ -194,7 +194,7 @@ class ToListOp[T](ConversionOp[list[T]]):
 class ToSetOp[T](ConversionOp[set[T]]):
     """Convert value to set."""
 
-    def _convert(self, value: object) -> set[T] | SpecialValue:
+    def _convert(self, value: object) -> set[T] | Sentinel:
         try:
             return set(value)  # type: ignore
         except TypeError:
@@ -204,7 +204,7 @@ class ToSetOp[T](ConversionOp[set[T]]):
 class ToTupleOp[*Ts](ConversionOp[tuple[*Ts]]):
     """Convert value to tuple."""
 
-    def _convert(self, value: object) -> tuple[*Ts] | SpecialValue:
+    def _convert(self, value: object) -> tuple[*Ts] | Sentinel:
         try:
             return tuple(value)  # type: ignore
         except TypeError:

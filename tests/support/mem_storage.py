@@ -20,7 +20,7 @@ from everyshape.storage import (
 )
 from everyshape.storage.observer.registry import SubscriptionRegistry
 from everyshape.storage.storage.exceptions import StorageInterfaceError
-from everyshape.types import EMPTY, Empty
+from everyshape.typing import EMPTY, Empty
 
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from everyshape.storage.observer.options import SubscriptionOptions
     from everyshape.storage.observer.types import SubscriptionCallback
     from everyshape.storage.storage.scan import ScanProtocol
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
 
 class MemoryScan:

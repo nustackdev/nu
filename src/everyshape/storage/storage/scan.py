@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from everyshape.loc import key
-    from everyshape.types import Value
+    from everyshape.typing import Value
 
 
 @runtime_checkable
