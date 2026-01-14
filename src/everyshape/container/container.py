@@ -15,7 +15,9 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING
+
+import attrs
 
 from everyshape.loc import DATA_ROOT
 
@@ -38,7 +40,8 @@ __all__ = [
 ]
 
 
-class Container(NamedTuple):
+@attrs.frozen
+class Container:
     """Container node interface for container operations.
 
     A Container represents a single container node and provides operations

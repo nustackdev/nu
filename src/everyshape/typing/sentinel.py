@@ -13,7 +13,7 @@ __all__ = [
     "Sentinel",
     "is_empty",
     "is_nan",
-    "is_special",
+    "is_sentinel",
     "propagate_special",
 ]
 
@@ -87,7 +87,7 @@ def is_nan(value: object) -> TypeGuard[NaN]:
     return isinstance(value, NaN)
 
 
-def is_special(value: object) -> TypeGuard[Sentinel]:
+def is_sentinel(value: object) -> TypeGuard[Sentinel]:
     """Check if value is any special sentinel."""
     return isinstance(value, Sentinel)
 

@@ -35,7 +35,7 @@ class CoreBase:
     """Core base that all values should inherit.
 
     Provides:
-    - is_empty(), is_nan(), is_special() - Special value checks
+    - is_empty(), is_nan(), is_sentinel() - Special value checks
     - ifelse() - Conditional/ternary operation
     - or_default() - Provide default if empty/nan
     """
@@ -62,7 +62,7 @@ class CoreBase:
 
         return BoolValue(IsNaNOp(self))
 
-    def is_special(self) -> BoolValue:
+    def is_sentinel(self) -> BoolValue:
         """Check if this value is a special value (Empty, NaN, etc.).
 
         Returns:
@@ -123,7 +123,7 @@ class CoreBase:
         """
         from ..values import UnknownValue
 
-        return UnknownValue(self.ifelse(self.is_special(), literal(default)))
+        return UnknownValue(self.ifelse(self.is_sentinel(), literal(default)))
 
     # =========================================================================
     # TYPE CONVERSIONS

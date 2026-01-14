@@ -28,11 +28,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape import NOT_SET, NotSet
 from everyshape.loc import path
 from everyshape.storage import StorageKeyError
 from everyshape.term import Command, Operation, RValue, ViewRef
-from everyshape.typing import Empty, Sentinel, Value
+from everyshape.typing import NOT_SET, Empty, NotSet, Sentinel, Value
 from everyshape.view import capabilities as view_capabilities
 
 

@@ -14,7 +14,7 @@ from .sentinel import (
     Sentinel,
     is_empty,
     is_nan,
-    is_special,
+    is_sentinel,
     propagate_special,
 )
 from .storage import (
@@ -37,7 +37,7 @@ __all__ = [  # noqa: RUF022
     "Sentinel",
     "is_empty",
     "is_nan",
-    "is_special",
+    "is_sentinel",
     "propagate_special",
     # Not set
     "NotSet",

@@ -14,7 +14,7 @@ from everyshape.typing import (
     Sentinel,
     is_empty,
     is_nan,
-    is_special,
+    is_sentinel,
     propagate_special,
 )
 
@@ -201,26 +201,26 @@ def test_is_nan_with_non_nan() -> None:
     assert is_nan([]) is False
 
 
-def test_is_special_with_empty() -> None:
-    """Test is_special() returns True for Empty instances."""
-    assert is_special(EMPTY) is True
-    assert is_special(Empty()) is True
+def test_is_sentinel_with_empty() -> None:
+    """Test is_sentinel() returns True for Empty instances."""
+    assert is_sentinel(EMPTY) is True
+    assert is_sentinel(Empty()) is True
 
 
-def test_is_special_with_nan() -> None:
-    """Test is_special() returns True for NaN instances."""
-    assert is_special(NAN) is True
-    assert is_special(NaN()) is True
+def test_is_sentinel_with_nan() -> None:
+    """Test is_sentinel() returns True for NaN instances."""
+    assert is_sentinel(NAN) is True
+    assert is_sentinel(NaN()) is True
 
 
-def test_is_special_with_non_special() -> None:
-    """Test is_special() returns False for non-special values."""
-    assert is_special(None) is False
-    assert is_special("") is False
-    assert is_special(0) is False
-    assert is_special(False) is False
-    assert is_special([]) is False
-    assert is_special({}) is False
+def test_is_sentinel_with_non_special() -> None:
+    """Test is_sentinel() returns False for non-special values."""
+    assert is_sentinel(None) is False
+    assert is_sentinel("") is False
+    assert is_sentinel(0) is False
+    assert is_sentinel(False) is False
+    assert is_sentinel([]) is False
+    assert is_sentinel({}) is False
 
 
 # ============================================================================

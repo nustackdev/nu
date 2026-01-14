@@ -652,7 +652,7 @@ class EmptyValue(
 
     Key properties:
     - is_empty() always returns True
-    - is_special() always returns True
+    - is_sentinel() always returns True
     - or_default(x) always returns x
 
     Example:
@@ -697,7 +697,7 @@ class NaNValue(
 
     Key properties:
     - is_nan() always returns True
-    - is_special() always returns True
+    - is_sentinel() always returns True
     - Comparisons with NaN return False (including self)
     - Arithmetic with NaN returns NaN
 

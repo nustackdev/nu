@@ -27,7 +27,7 @@ from .typing import (
     is_empty,
     is_nan,
     is_notset,
-    is_special,
+    is_sentinel,
 )
 from .view import View
 
@@ -57,5 +57,5 @@ __all__ = [
     "is_empty",
     "is_nan",
     "is_notset",
-    "is_special",
+    "is_sentinel",
 ]

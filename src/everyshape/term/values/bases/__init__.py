@@ -4,7 +4,7 @@ This module provides hierarchical mixin classes that implement value capabilitie
 The hierarchy allows fine-grained composition while providing convenient combined bases.
 
 Hierarchy:
-    CoreBase                    - Everyone inherits this (ifelse, is_empty, is_nan, is_special)
+    CoreBase                    - Everyone inherits this (ifelse, is_empty, is_nan, is_sentinel)
     +-- Arithmetic Bases
     |   +-- AddableBase         - __add__, __radd__
     |   +-- SubtractableBase    - __sub__, __rsub__
