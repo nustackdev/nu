@@ -25,8 +25,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape import NOT_SET, NotSet, is_notset
-from everyshape.typing import Sentinel
+from everyshape.typing import NOT_SET, NotSet, Sentinel, is_notset
 
 from ...term import Operation
 
