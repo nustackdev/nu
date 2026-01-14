@@ -1,6 +1,6 @@
-"""Set operations for RValue expressions.
+"""Set operations for Term expressions.
 
-This module provides type-safe operations on set RValues:
+This module provides type-safe operations on set Terms:
 
 Set operations: UnionOp, IntersectionOp, DifferenceOp, SymmetricDifferenceOp
 Set tests: IsSubsetOp, IsSupersetOp, IsDisjointOp
@@ -32,8 +32,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 __all__ = [
     "DifferenceOp",
@@ -51,7 +51,7 @@ __all__ = [
 # =============================================================================
 
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class SetBinaryOp[ResultT](Operation[ResultT]):
@@ -68,7 +68,7 @@ class SetBinaryOp[ResultT](Operation[ResultT]):
             operand: First set
             other: Second set
         """
-        self.children = (cast("RValue", operand), cast("RValue", other))
+        self.children = (cast("Term", operand), cast("Term", other))
 
     def execute(self, context: Context) -> ResultT:
         """Execute set operation.

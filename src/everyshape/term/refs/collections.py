@@ -50,7 +50,7 @@ from .capabilities import (
 
 
 if TYPE_CHECKING:
-    from ..values import NoneValue
+    from ..types import NilType
 
 
 __all__ = [  # noqa: RUF022
@@ -120,8 +120,8 @@ class CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT](
     Type Parameters:
         CollectionT: Type of this collection (dict, list, etc)
         ItemT: Type of this collection's item (int, float, str, nested list, dict, etc)
-        CollectionValueT: ComputedValue type for this collection (ListValue, DictValue, etc)
-        ItemValueT: ComputedValue type for this collection's item (IntValue, FloatValue, UnknownValue, etc)
+        CollectionValueT: ComputedValue type for this collection (ListType, DictType, etc)
+        ItemValueT: ComputedValue type for this collection's item (IntType, FloatType, AnyType, etc)
         ViewT: Type of the view at this location
 
     Example:
@@ -154,7 +154,7 @@ class CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT](
         """Get the ComputedValue type for this collection's items.
 
         Returns:
-            Type of items (IntValue, FloatValue, UnknownValue, etc)
+            Type of items (IntType, FloatType, AnyType, etc)
         """
         ...
 
@@ -163,7 +163,7 @@ class CollectionRef[CollectionT, ItemT, CollectionValueT, ItemValueT, ViewT](
         """Get the ComputedValue type for this collection.
 
         Returns:
-            Type of collection (DictValue, ListValue, etc)
+            Type of collection (DictType, ListType, etc)
         """
         ...
 
@@ -197,11 +197,11 @@ class SequenceRef[
     Type Parameters:
         CollectionT: Type of this collection (list, tuple, etc)
         ItemT: Type of this collection's item (int, float, str, nested list, dict, etc)
-        CollectionValueT: ComputedValue type for this collection (ListValue, TupleValue, etc)
-        ItemValueT: ComputedValue type for this collection's item (IntValue, FloatValue, etc)
+        CollectionValueT: ComputedValue type for this collection (ListType, TupleType, etc)
+        ItemValueT: ComputedValue type for this collection's item (IntType, FloatType, etc)
         ViewT: Type of the view at this location
         IndexT: Type of index (commonly int)
-        IndexValueT: ComputedValue type for index (commonly IntValue)
+        IndexValueT: ComputedValue type for index (commonly IntType)
         SliceValueT: ComputedValue type for sliced result
 
     Example:
@@ -225,7 +225,7 @@ class SequenceRef[
         """Get the computed value type for index of this sequence.
 
         Returns:
-            Type of computed value for index (commonly IntValue)
+            Type of computed value for index (commonly IntType)
         """
         ...
 
@@ -263,11 +263,11 @@ class MutableSequenceRef[
     Type Parameters:
         CollectionT: Type of this collection (list, tuple, etc)
         ItemT: Type of this collection's item (int, float, str, nested list, dict, etc)
-        CollectionValueT: ComputedValue type for this collection (ListValue, TupleValue, etc)
-        ItemValueT: ComputedValue type for this collection's item (IntValue, FloatValue, etc)
+        CollectionValueT: ComputedValue type for this collection (ListType, TupleType, etc)
+        ItemValueT: ComputedValue type for this collection's item (IntType, FloatType, etc)
         ViewT: Type of the view at this location
         IndexT: Type of index (commonly int)
-        IndexValueT: ComputedValue type for index (commonly IntValue)
+        IndexValueT: ComputedValue type for index (commonly IntType)
         SliceValueT: ComputedValue type for sliced result
 
     Example:
@@ -313,9 +313,9 @@ class MappingRef[
         CollectionT: Type of this collection (dict, etc)
         KeyT: Type of keys (str, int, etc)
         ValueT: Type of values (int, float, nested dict, etc)
-        CollectionValueT: ComputedValue type for this collection (DictValue, etc)
-        KeyValueT: ComputedValue type for keys (StrValue, IntValue, etc)
-        ValueValueT: ComputedValue type for values (IntValue, FloatValue, UnknownValue, etc)
+        CollectionValueT: ComputedValue type for this collection (DictType, etc)
+        KeyValueT: ComputedValue type for keys (StrType, IntType, etc)
+        ValueValueT: ComputedValue type for values (IntType, FloatType, AnyType, etc)
         ViewT: Type of the view at this location
         ChildRefT: Type of child reference returned by __getitem__
 
@@ -352,7 +352,7 @@ class MappingRef[
         """Get the ComputedValue type for this mapping's keys.
 
         Returns:
-            Type of key value (StrValue, IntValue, etc)
+            Type of key value (StrType, IntType, etc)
         """
         ...
 
@@ -361,7 +361,7 @@ class MappingRef[
         """Get the ComputedValue type for this mapping's values.
 
         Returns:
-            Type of value value (IntValue, FloatValue, UnknownValue, etc)
+            Type of value value (IntType, FloatType, AnyType, etc)
         """
         ...
 
@@ -398,9 +398,9 @@ class MutableMappingRef[
         CollectionT: Type of this collection (dict, etc)
         KeyT: Type of keys (str, int, etc)
         ValueT: Type of values (int, float, nested dict, etc)
-        CollectionValueT: ComputedValue type for this collection (DictValue, etc)
-        KeyValueT: ComputedValue type for keys (StrValue, IntValue, etc)
-        ValueValueT: ComputedValue type for values (IntValue, FloatValue, UnknownValue, etc)
+        CollectionValueT: ComputedValue type for this collection (DictType, etc)
+        KeyValueT: ComputedValue type for keys (StrType, IntType, etc)
+        ValueValueT: ComputedValue type for values (IntType, FloatType, AnyType, etc)
         ViewT: Type of the view at this location
         ChildRefT: Type of child reference returned by __getitem__
 
@@ -437,8 +437,8 @@ class SetRef[
     Type Parameters:
         CollectionT: Type of this collection (set, frozenset, etc)
         ItemT: Type of items in the set (int, str, etc)
-        CollectionValueT: ComputedValue type for this collection (SetValue, etc)
-        ItemValueT: ComputedValue type for items (IntValue, StrValue, etc)
+        CollectionValueT: ComputedValue type for this collection (SetType, etc)
+        ItemValueT: ComputedValue type for items (IntType, StrType, etc)
         ViewT: Type of the view at this location
 
     Example:
@@ -468,8 +468,8 @@ class MutableSetRef[
     Type Parameters:
         CollectionT: Type of this collection (set, etc)
         ItemT: Type of items in the set (int, str, etc)
-        CollectionValueT: ComputedValue type for this collection (SetValue, etc)
-        ItemValueT: ComputedValue type for items (IntValue, StrValue, etc)
+        CollectionValueT: ComputedValue type for this collection (SetType, etc)
+        ItemValueT: ComputedValue type for items (IntType, StrType, etc)
         ViewT: Type of the view at this location
 
     Example:
@@ -478,36 +478,36 @@ class MutableSetRef[
         ...     ref.remove(item).execute(ctx)
     """
 
-    def add(self, value: ItemT) -> NoneValue:
+    def add(self, value: ItemT) -> NilType:
         """Create an add command.
 
         Args:
             value: Item to add
 
         Returns:
-            NoneValue (add returns None after execution)
+            NilType (add returns None after execution)
         """
         ...
 
-    def remove(self, value: ItemT) -> NoneValue:
+    def remove(self, value: ItemT) -> NilType:
         """Create a remove command.
 
         Args:
             value: Item to remove
 
         Returns:
-            NoneValue (remove returns None after execution)
+            NilType (remove returns None after execution)
         """
         ...
 
-    def discard(self, value: ItemT) -> NoneValue:
+    def discard(self, value: ItemT) -> NilType:
         """Create a discard command.
 
         Args:
             value: Item to discard (no error if absent)
 
         Returns:
-            NoneValue (discard returns None after execution)
+            NilType (discard returns None after execution)
         """
         ...
 
@@ -533,7 +533,7 @@ class CollectionItemRef[T, ValueT](
 
     Type Parameters:
         T: Type of the value at this location (int, str, float, etc)
-        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, etc)
+        ValueT: ComputedValue type for this value (IntType, StrType, FloatType, etc)
 
     Example:
         >>> if isinstance(ref, CollectionItemRef):
@@ -556,6 +556,6 @@ class CollectionItemRef[T, ValueT](
         """Get the ComputedValue type for this value.
 
         Returns:
-            Type of computed value (IntValue, StrValue, FloatValue, etc)
+            Type of computed value (IntType, StrType, FloatType, etc)
         """
         ...

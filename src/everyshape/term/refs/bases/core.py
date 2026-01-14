@@ -2,13 +2,14 @@
 
 This module provides the fundamental capability bases:
 - ExistableBase - existence checking (exists(), missing())
-- GettableBase - reading values (get())
-- ExtractableBase - extracting container contents (extract())
+- GettableBase - reading values (get()) - for ALL refs
 - SettableBase - writing values (set())
 - StorableBase - storing container contents (store())
 - DeletableBase - deleting values (remove())
 - ClearableBase - clearing containers (clear())
 - LengthableBase - length queries (length())
+
+Note: .get() is now the unified read method for both primitives and containers.
 """
 
 from __future__ import annotations
@@ -27,31 +28,31 @@ from ...comps.ref import (
     SetCmd,
     StoreCmd,
 )
-from ...values import (
-    BoolValue,
-    BytesValue,
-    DictValue,
-    FloatValue,
-    IntValue,
-    ListValue,
-    NoneValue,
-    SetValue,
-    StrValue,
+from ...types.conversion import computed, literal
+from ...types.definitions import (
+    BoolType,
+    BytesType,
+    DictType,
+    FloatType,
+    IntType,
+    ListType,
+    NilType,
+    SetType,
+    StrType,
 )
-from ...values.conversion import computed, literal
 
 
 if TYPE_CHECKING:
     from everyshape.typing import Sentinel
 
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
     "ClearableBase",
+    "CollectionGettableBase",
     "DeletableBase",
     "ExistableBase",
-    "ExtractableBase",
     "GettableBase",
     "LengthableBase",
     "SettableBase",
@@ -71,7 +72,7 @@ class ExistableBase:
     Requires self to have resolve() method.
     """
 
-    def exists(self) -> BoolValue:
+    def exists(self) -> BoolType:
         """Create an existence check operation.
 
         Returns:
@@ -81,9 +82,9 @@ class ExistableBase:
             >>> if ref.exists().execute(ctx):
             ...     print("Value exists")
         """
-        return BoolValue(ExistsOp(self))
+        return BoolType(ExistsOp(self))
 
-    def missing(self) -> BoolValue:
+    def missing(self) -> BoolType:
         """Create a missing check operation.
 
         Returns:
@@ -93,7 +94,7 @@ class ExistableBase:
             >>> if ref.missing().execute(ctx):
             ...     ref.set(default_value).execute(ctx)
         """
-        return BoolValue(MissingOp(self))
+        return BoolType(MissingOp(self))
 
 
 # =============================================================================
@@ -112,32 +113,32 @@ class GettableBase[ValueT]:
 
     # Primitives
     @overload
-    def get(self: GettableBase[int]) -> IntValue: ...
+    def get(self: GettableBase[int]) -> IntType: ...
 
     @overload
-    def get(self: GettableBase[str]) -> StrValue: ...
+    def get(self: GettableBase[str]) -> StrType: ...
 
     @overload
-    def get(self: GettableBase[bool]) -> BoolValue: ...
+    def get(self: GettableBase[bool]) -> BoolType: ...
 
     @overload
-    def get(self: GettableBase[float]) -> FloatValue: ...
+    def get(self: GettableBase[float]) -> FloatType: ...
 
     @overload
-    def get(self: GettableBase[bytes]) -> BytesValue: ...
+    def get(self: GettableBase[bytes]) -> BytesType: ...
 
     @overload
-    def get(self: GettableBase[None]) -> NoneValue: ...
+    def get(self: GettableBase[None]) -> NilType: ...
 
     # Collections
     @overload
-    def get[V](self: GettableBase[list[V]]) -> ListValue[V]: ...
+    def get[V](self: GettableBase[list[V]]) -> ListType[V]: ...
 
     @overload
-    def get[K, V](self: GettableBase[dict[K, V]]) -> DictValue[K, V]: ...
+    def get[K, V](self: GettableBase[dict[K, V]]) -> DictType[K, V]: ...
 
     @overload
-    def get[V](self: GettableBase[set[V]]) -> SetValue[V]: ...
+    def get[V](self: GettableBase[set[V]]) -> SetType[V]: ...
 
     def get(self) -> object:
         """Create a get operation for this location.
@@ -151,41 +152,49 @@ class GettableBase[ValueT]:
         return computed(self.value_type, GetOp(self))
 
 
-class ExtractableBase[CollectionValueT](ABC):
-    """Implementation base for extracting container contents.
+class CollectionGettableBase[CollectionTypeT](ABC):
+    """Implementation base for getting container contents.
 
-    Implements the Extractable protocol with extract() method.
+    Implements get() for ViewRefs (containers).
+    Unified with GettableBase - all refs now use .get() for reading.
     """
 
     @abstractmethod
-    def result(self, op: RValue) -> CollectionValueT:
-        """Wrap an operation result in the appropriate typed value container.
+    def result(self, op: Term) -> CollectionTypeT:
+        """Wrap an operation result in the appropriate typed container.
 
         Args:
             op: The operation to wrap
 
         Returns:
-            Typed value wrapper (e.g., ListValue, DictValue, SetValue)
+            Typed wrapper (e.g., ListType, DictType, SetType)
 
         Note:
             Subclasses must implement this to return the correct wrapper type.
 
         Example:
-            def result(self, op: RValue) -> ListValue[T]:
-                return ListValue(op)
+            def result(self, op: Term) -> ListType[T]:
+                return ListType(op)
         """
         ...
 
-    def extract(self) -> CollectionValueT:
-        """Create an extract operation for this container.
+    def get(self) -> CollectionTypeT:
+        """Create a get operation for this container.
+
+        Returns the entire container contents as a typed expression.
 
         Returns:
             ExtractOp that extracts entire structure when executed
 
         Example:
-            >>> data = dict_ref.extract().execute(ctx)  # Returns dict
+            >>> data = dict_ref.get().execute(ctx)  # Returns dict
+            >>> items = list_ref.get().execute(ctx)  # Returns list
         """
         return self.result(ExtractOp(self))
+
+
+# Backwards compatibility alias
+ExtractableBase = CollectionGettableBase
 
 
 # =============================================================================
@@ -204,55 +213,55 @@ class SettableBase[ValueT]:
 
     @overload
     def set(
-        self: SettableBase[int], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> IntValue: ...
+        self: SettableBase[int], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> IntType: ...
 
     @overload
     def set(
-        self: SettableBase[str], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> StrValue: ...
+        self: SettableBase[str], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> StrType: ...
 
     @overload
     def set(
-        self: SettableBase[bool], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> BoolValue: ...
+        self: SettableBase[bool], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> BoolType: ...
 
     @overload
     def set(
-        self: SettableBase[float], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> FloatValue: ...
+        self: SettableBase[float], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> FloatType: ...
 
     @overload
     def set(
-        self: SettableBase[bytes], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> BytesValue: ...
+        self: SettableBase[bytes], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> BytesType: ...
 
     @overload
     def set(
-        self: SettableBase[None], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> NoneValue: ...
+        self: SettableBase[None], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> NilType: ...
 
     # Collections
     @overload
     def set[V](
-        self: SettableBase[list[V]], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> ListValue[V]: ...
+        self: SettableBase[list[V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> ListType[V]: ...
 
     @overload
     def set[K, V](
-        self: SettableBase[dict[K, V]], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> DictValue[K, V]: ...
+        self: SettableBase[dict[K, V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> DictType[K, V]: ...
 
     @overload
     def set[V](
-        self: SettableBase[set[V]], value: ValueT | Sentinel | RValue[ValueT | Sentinel]
-    ) -> SetValue[V]: ...
+        self: SettableBase[set[V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
+    ) -> SetType[V]: ...
 
-    def set(self, value: ValueT | Sentinel | RValue[ValueT | Sentinel]) -> object:
+    def set(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> object:
         """Create a set command for this location.
 
         Args:
-            value: Value to write (literal or RValue)
+            value: Value to write (literal or Term)
 
         Returns:
             SetCmd that writes the value when executed
@@ -264,38 +273,38 @@ class SettableBase[ValueT]:
         return computed(self.value_type, SetCmd(self, literal(value)))
 
 
-class StorableBase[CollectionValueT, CollectionT](ABC):
+class StorableBase[CollectionTypeT, CollectionT](ABC):
     """Implementation base for storing container contents.
 
     Implements the Storable protocol with store() method.
     """
 
     @abstractmethod
-    def result(self, op: RValue) -> CollectionValueT:
-        """Wrap an operation result in the appropriate typed value container.
+    def result(self, op: Term) -> CollectionTypeT:
+        """Wrap an operation result in the appropriate typed container.
 
         Args:
             op: The operation to wrap
 
         Returns:
-            Typed value wrapper (e.g., ListValue, DictValue, SetValue)
+            Typed wrapper (e.g., ListType, DictType, SetType)
 
         Note:
             Subclasses must implement this to return the correct wrapper type.
 
         Example:
-            def result(self, op: RValue) -> DictValue[K, V]:
-                return DictValue(op)
+            def result(self, op: Term) -> DictType[K, V]:
+                return DictType(op)
         """
         ...
 
     def store(
-        self, value: CollectionT | Sentinel | RValue[CollectionT | Sentinel]
-    ) -> CollectionValueT:
+        self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]
+    ) -> CollectionTypeT:
         """Create a store command for this container.
 
         Args:
-            value: Value to store (literal or RValue)
+            value: Value to store (literal or Term)
 
         Returns:
             StoreCmd that stores the value when executed
@@ -317,7 +326,7 @@ class DeletableBase:
     Implements the Deletable protocol with remove() method.
     """
 
-    def remove(self) -> NoneValue:
+    def remove(self) -> NilType:
         """Create a delete command for this location.
 
         Returns:
@@ -326,7 +335,7 @@ class DeletableBase:
         Example:
             >>> ref.remove().execute(ctx)
         """
-        return NoneValue(DeleteCmd(self))
+        return NilType(DeleteCmd(self))
 
 
 class ClearableBase:
@@ -335,7 +344,7 @@ class ClearableBase:
     Implements the Clearable protocol with clear() method.
     """
 
-    def clear(self) -> NoneValue:
+    def clear(self) -> NilType:
         """Create a clear command for this container.
 
         Returns:
@@ -344,7 +353,7 @@ class ClearableBase:
         Example:
             >>> list_ref.clear().execute(ctx)
         """
-        return NoneValue(ClearCmd(self))
+        return NilType(ClearCmd(self))
 
 
 # =============================================================================
@@ -358,7 +367,7 @@ class LengthableBase:
     Implements the Lengthable protocol with length() method.
     """
 
-    def length(self) -> IntValue:
+    def length(self) -> IntType:
         """Create a length query operation.
 
         Returns:
@@ -367,4 +376,4 @@ class LengthableBase:
         Example:
             >>> count = list_ref.length().execute(ctx)
         """
-        return IntValue(LengthOp(self))
+        return IntType(LengthOp(self))

@@ -45,7 +45,7 @@ Hierarchy:
         +-- StringBase          - String-specific operations
 
 Usage:
-    class MyIntValue(NumericBase, ComparisonBase, BitwiseBase, CoreBase, Literal[int]):
+    class MyIntType(NumericBase, ComparisonBase, BitwiseBase, CoreBase, Literal[int]):
         # Gets full numeric, comparison, and bitwise operations
         pass
 

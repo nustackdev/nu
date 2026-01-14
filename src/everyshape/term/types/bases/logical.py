@@ -1,4 +1,4 @@
-"""Logical base classes for RValue types.
+"""Logical base classes for Term types.
 
 This module provides logical operation mixins including:
 - AndableBase - and_()
@@ -15,7 +15,7 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
@@ -29,7 +29,7 @@ __all__ = [
 class AndableBase[OperandT, ResultT]:
     """Base for values that support logical AND."""
 
-    def _wrap_logical_result(self, operand: RValue) -> RValue:
+    def _wrap_logical_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -42,7 +42,7 @@ class AndableBase[OperandT, ResultT]:
         Returns:
             AND result
         """
-        from ...comps.value.binary_ops import AndOp
+        from ...comps.core.binary_ops import AndOp
 
         return cast("ResultT", self._wrap_logical_result(AndOp(self, literal(other))))
 
@@ -50,7 +50,7 @@ class AndableBase[OperandT, ResultT]:
 class OrableBase[OperandT, ResultT]:
     """Base for values that support logical OR."""
 
-    def _wrap_logical_result(self, operand: RValue) -> RValue:
+    def _wrap_logical_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -63,7 +63,7 @@ class OrableBase[OperandT, ResultT]:
         Returns:
             OR result
         """
-        from ...comps.value.binary_ops import OrOp
+        from ...comps.core.binary_ops import OrOp
 
         return cast("ResultT", self._wrap_logical_result(OrOp(self, literal(other))))
 
@@ -71,7 +71,7 @@ class OrableBase[OperandT, ResultT]:
 class NotableBase[ResultT]:
     """Base for values that support logical NOT and bool conversion."""
 
-    def _wrap_logical_result(self, operand: RValue) -> RValue:
+    def _wrap_logical_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -82,16 +82,16 @@ class NotableBase[ResultT]:
             TypeError: Cannot convert to bool directly
         """
         raise TypeError(
-            "Cannot convert RValue to bool directly. Use .bool_() method or explicit comparisons."
+            "Cannot convert Term to bool directly. Use .bool_() method or explicit comparisons."
         )
 
     def __and__(self, other: object) -> object:
         """Bitwise AND is blocked; use and_() method."""
-        raise TypeError("Cannot use & operator on RValues. Use .and_(other) method instead.")
+        raise TypeError("Cannot use & operator on Terms. Use .and_(other) method instead.")
 
     def __or__(self, other: object) -> object:
         """Bitwise OR is blocked; use or_() method."""
-        raise TypeError("Cannot use | operator on RValues. Use .or_(other) method instead.")
+        raise TypeError("Cannot use | operator on Terms. Use .or_(other) method instead.")
 
     def not_(self) -> ResultT:
         """Logical NOT: NOT self.
@@ -99,7 +99,7 @@ class NotableBase[ResultT]:
         Returns:
             NOT result
         """
-        from ...comps.value.unary_ops import NotOp
+        from ...comps.core.unary_ops import NotOp
 
         return cast("ResultT", self._wrap_logical_result(NotOp(self)))
 
@@ -109,7 +109,7 @@ class NotableBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.value.unary_ops import BoolOp
+        from ...comps.core.unary_ops import BoolOp
 
         return cast("ResultT", self._wrap_logical_result(BoolOp(self)))
 

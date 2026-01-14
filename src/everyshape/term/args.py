@@ -1,0 +1,71 @@
+"""Standardized argument types for Term inputs.
+
+This module provides the Arg type family for uniform method signatures.
+Any method accepting user input should use Arg types to accept both
+literal values and Term expressions.
+
+Usage:
+    from everyshape.term.args import IntArg, StrArg
+    from everyshape.term.values import literal
+
+    class MyRef:
+        def set(self, value: IntArg) -> IntType:
+            return IntType(SetCmd(self, literal(value)))
+
+    # Now works with both:
+    ref.set(42)              # Literal
+    ref.set(other_ref.get()) # Expression
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from everyshape.typing import Sentinel
+
+    from .term import Term
+
+
+__all__ = [
+    "Arg",
+    "BoolArg",
+    "BytesArg",
+    "DictArg",
+    "FloatArg",
+    "IntArg",
+    "ListArg",
+    "SetArg",
+    "StrArg",
+]
+
+
+# =============================================================================
+# GENERIC ARG TYPE
+# =============================================================================
+
+
+# Generic argument type - accepts literal or Term
+type Arg[T] = T | Term[T | Sentinel]
+
+
+# =============================================================================
+# PRIMITIVE ARG TYPES
+# =============================================================================
+
+type IntArg = int | Term[int | Sentinel]
+type FloatArg = float | Term[float | Sentinel]
+type StrArg = str | Term[str | Sentinel]
+type BoolArg = bool | Term[bool | Sentinel]
+type BytesArg = bytes | Term[bytes | Sentinel]
+
+
+# =============================================================================
+# COLLECTION ARG TYPES
+# =============================================================================
+
+type ListArg[V] = list[V] | Term[list[V] | Sentinel]
+type DictArg[K, V] = dict[K, V] | Term[dict[K, V] | Sentinel]
+type SetArg[T] = set[T] | Term[set[T] | Sentinel]
+type TupleArg[*Ts] = tuple[*Ts] | Term[tuple[*Ts] | Sentinel]

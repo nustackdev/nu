@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
     from ...context import Context
     from ...refs import UnionRefBases
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
@@ -77,13 +77,13 @@ class AppendValueCmd[T](Command[T]):
     def __init__(
         self,
         ref: ViewRef[Appendable] | UnionRefBases,
-        value: RValue[T | Sentinel],
+        value: Term[T | Sentinel],
     ) -> None:
         """Initialize append value command.
 
         Args:
             ref: Sequence reference to append to
-            value: Value to append (wrapped in RValue)
+            value: Value to append (wrapped in Term)
         """
         self.ref = cast("ViewRef[Appendable]", ref)
         self.value_expr = value
@@ -140,15 +140,15 @@ class InsertAtIndexCmd[T](Command[T]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        index: RValue[int | Sentinel],
-        value: RValue[T | Sentinel],
+        index: Term[int | Sentinel],
+        value: Term[T | Sentinel],
     ) -> None:
         """Initialize insert at index command.
 
         Args:
             ref: Sequence reference to insert into
-            index: Index to insert at (wrapped in RValue)
-            value: Value to insert (wrapped in RValue)
+            index: Index to insert at (wrapped in Term)
+            value: Value to insert (wrapped in Term)
         """
         self.ref = cast("ViewRef", ref)
         self.index_expr = index
@@ -190,7 +190,7 @@ class PopByIndexCmd[T](Command[T]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        index: RValue[int | Sentinel] | None = None,
+        index: Term[int | Sentinel] | None = None,
     ) -> None:
         """Initialize pop by index command.
 

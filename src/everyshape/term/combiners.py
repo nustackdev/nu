@@ -51,7 +51,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .term import RValue
-    from .values import BoolValue
+    from .types import BoolType
 
 
 __all__ = [
@@ -70,7 +70,7 @@ __all__ = [
 # =============================================================================
 
 
-def and_(left: object, right: object) -> BoolValue:
+def and_(left: object, right: object) -> BoolType:
     """Combine exactly two conditions with AND.
 
     Both conditions must be true for the result to be true.
@@ -85,8 +85,8 @@ def and_(left: object, right: object) -> BoolValue:
     Example:
         >>> and_(price > 0, price < 100)
     """
-    from .values.capabilities import Andable
-    from .values.conversion import literal
+    from .types.capabilities import Andable
+    from .types.conversion import literal
 
     left_op = literal(left)
     if not isinstance(left_op, Andable):
@@ -95,7 +95,7 @@ def and_(left: object, right: object) -> BoolValue:
     return left_op.and_(literal(right))
 
 
-def or_(left: object, right: object) -> BoolValue:
+def or_(left: object, right: object) -> BoolType:
     """Combine exactly two conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -110,8 +110,8 @@ def or_(left: object, right: object) -> BoolValue:
     Example:
         >>> or_(status.eq("ready"), status.eq("pending"))
     """
-    from .values.capabilities import Orable
-    from .values.conversion import literal
+    from .types.capabilities import Orable
+    from .types.conversion import literal
 
     left_op = literal(left)
     if not isinstance(left_op, Orable):
@@ -120,7 +120,7 @@ def or_(left: object, right: object) -> BoolValue:
     return left_op.or_(literal(right))
 
 
-def all_(*conditions: object) -> BoolValue:
+def all_(*conditions: object) -> BoolType:
     """Combine multiple conditions with AND.
 
     All conditions must be true for the result to be true.
@@ -140,7 +140,7 @@ def all_(*conditions: object) -> BoolValue:
     if not conditions:
         raise ValueError("all_() requires at least one condition")
 
-    from .values.conversion import literal
+    from .types.conversion import literal
 
     # Convert all to RValues
     rvalues = [literal(c) for c in conditions]
@@ -149,7 +149,7 @@ def all_(*conditions: object) -> BoolValue:
     return reduce(lambda a, b: a.and_(b), rvalues)  # type: ignore
 
 
-def any_(*conditions: object) -> BoolValue:
+def any_(*conditions: object) -> BoolType:
     """Combine multiple conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -169,7 +169,7 @@ def any_(*conditions: object) -> BoolValue:
     if not conditions:
         raise ValueError("any_() requires at least one condition")
 
-    from .values.conversion import literal
+    from .types.conversion import literal
 
     # Convert all to RValues
     rvalues = [literal(c) for c in conditions]
@@ -178,7 +178,7 @@ def any_(*conditions: object) -> BoolValue:
     return reduce(lambda a, b: a.or_(b), rvalues)  # type: ignore
 
 
-def none_(*conditions: object) -> BoolValue:
+def none_(*conditions: object) -> BoolType:
     """None of the conditions should be true.
 
     This is equivalent to NOT(any_(...)).
@@ -223,7 +223,7 @@ def ifelse(condition: object, then_value: object, else_value: object) -> RValue:
         >>> display_price = ifelse(is_sale, sale_price, regular_price)
         >>> status_text = ifelse(is_active, "Active", "Inactive")
     """
-    from .values.conversion import literal
+    from .types.conversion import literal
 
     # Use the ifelse method from CoreBase via the then_value
     # ifelse(cond, then, else) -> then.ifelse(cond, else)
@@ -254,11 +254,11 @@ def coalesce(*values: object) -> RValue:
         raise ValueError("coalesce() requires at least one value")
 
     if len(values) == 1:
-        from .values.conversion import literal
+        from .types.conversion import literal
 
         return literal(values[0])
 
-    from .values.conversion import literal
+    from .types.conversion import literal
 
     # Build chain: v1.or_default(v2.or_default(v3...))
     # Start from the end and work backwards

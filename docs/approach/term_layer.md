@@ -24,7 +24,7 @@ Term                        - executable node
 │       ├── ViewRef         - points to container
 │       └── PrimitiveRef    - points to leaf value
 └── RValue                  - evaluable expression
-    ├── TypedValue          - typed wrapper (IntValue, DatetimeValue, etc.)
+    ├── TypedValue          - typed wrapper (IntType, DatetimeValue, etc.)
     └── Computation         - logic
         ├── Operation       - pure (no side effects)
         └── Command         - impure (mutations)
@@ -73,8 +73,8 @@ Layer 4 defines protocols. You implement them.
 ```python
 # Custom type
 class MoneyValue(NumericBase, CoreBase, TypedValue[Money]):
-    def to_cents(self) -> IntValue:
-        return IntValue(MethodCallOp(self, "to_cents"))
+    def to_cents(self) -> IntType:
+        return IntType(MethodCallOp(self, "to_cents"))
 
 # Custom ref
 class MoneyRef(CollectionItemRefBase[Money, MoneyValue], PrimitiveRef):

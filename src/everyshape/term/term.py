@@ -8,9 +8,11 @@ This module defines the execution model through a minimal type hierarchy:
     │       ├── ViewRef         - reference to container (dict, list, set)
     │       └── PrimitiveRef    - reference to leaf value (int, str, etc.)
     └── RValue                  - evaluable expression (has children)
-        ├── Value               - represents a value (literal or computed)
-        │   ├── LiteralValue    - fixed value (e.g. 42, "hello")
-        │   └── ComputedValue   - result of computation (wraps Operation)
+        ├── Type                - typed value (literal or computed, unified)
+        │   ├── IntType, FloatType, StrType, BoolType, BytesType
+        │   ├── NilType, ListType, DictType, SetType, TupleType
+        │   ├── AnyType         - dynamic/unknown type
+        │   └── SentinelType    - special values (EmptyType, NAType)
         └── Computation         - computes or mutates
             ├── Operation       - pure computation (e.g. get, add)
             └── Command         - impure mutation (e.g. set, delete)
@@ -30,9 +32,10 @@ LValue vs RValue:
     price + 100             → RValue (computes)
     price.set(150)          → RValue (writes to location)
 
-Value types:
-    LiteralValue = fixed, known value (e.g. 42, "hello", [1, 2, 3])
-    ComputedValue = result wrapper around an Operation
+Type classes:
+    Type[T] = unified typed expression (literal or computed)
+    Accepts: T | Term[T] | Sentinel in constructor
+    Handles dispatch automatically based on input type
 
 Computation types (pure vs impure):
     Operation = deterministic, no side effects, cacheable
@@ -62,11 +65,11 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from everyshape.loc import path
+from everyshape.typing import Sentinel
 
 
 if TYPE_CHECKING:
     from everyshape.shape import Shape
-    from everyshape.typing import Sentinel
     from everyshape.view import View
 
     from .context import Context
@@ -82,12 +85,7 @@ __all__ = [  # noqa: RUF022
     "PrimitiveRef",
     # RValues
     "RValue",
-    # Values
-    "ValueTerm",
-    "LiteralValue",
-    "ComputedValue",
-    "TypedValue",
-    # Computations
+    "Type",
     "Computation",
     "Operation",
     "Command",
@@ -258,189 +256,88 @@ class RValue[ResultT](Term[ResultT]):
 
 
 # =============================================================================
-# VALUE - REPRESENTS A VALUE (LITERAL OR COMPUTED)
+# TYPE - UNIFIED TYPED EXPRESSION (LITERAL OR COMPUTED)
 # =============================================================================
 
 
-class ValueTerm[ValueResultT](RValue[ValueResultT], ABC):
-    """Base class for values - both literal and computed.
+class Type[T](RValue[T | Sentinel]):
+    """Unified typed expression - either literal or computed.
 
-    Values represent data that can be executed to produce a result.
-    Unlike Computations, Values focus on representing data rather than
-    computing transformations.
+    Type is the base for all typed values in the system. It handles
+    both literal values (known at definition time) and computed values
+    (wrapped operations) through a unified interface.
 
-    Two types of values:
-    - LiteralValue: Fixed, known value (e.g. 42, "hello")
-    - ComputedValue: Result of a computation (wraps an Operation)
-
-    Type Parameters:
-        ValueResultT: The type of value this represents
-
-    Example:
-        >>> lit = LiteralValue(42)
-        >>> lit.execute(ctx)  # Returns 42
-    """
-
-    @property
-    def is_pure(self) -> bool:
-        """Values are always pure (no side effects).
-
-        Returns:
-            True - values never have side effects
-        """
-        return True
-
-
-class LiteralValue[LiteralT](ValueTerm[LiteralT]):
-    """A fixed, known value.
-
-    Represents a literal value that is known at definition time.
-    Execution simply returns the stored value.
-
-    Type Parameters:
-        LiteralT: The type of the literal value
-
-    Example:
-        >>> lit = LiteralValue(42)
-        >>> lit.execute(ctx)  # Returns 42
-        >>> str_lit = LiteralValue("hello")
-        >>> str_lit.execute(ctx)  # Returns "hello"
-    """
-
-    children: tuple[()] = ()
-
-    def __init__(self, value: LiteralT | Sentinel) -> None:
-        """Initialize with a literal value.
-
-        Args:
-            value: The fixed value to store
-        """
-        self._value = value
-
-    @property
-    def value(self) -> LiteralT:
-        """Get the literal value.
-
-        Returns:
-            The stored literal value
-        """
-        return self._value
-
-    def execute(self, context: Context) -> LiteralT:
-        """Execute returns the literal value.
-
-        Args:
-            context: Execution context (unused for literals)
-
-        Returns:
-            The stored literal value
-        """
-        return self._value
-
-    def __repr__(self) -> str:
-        """Return machine-friendly representation."""
-        return f"LiteralValue({self._value!r})"
-
-
-class ComputedValue[ComputedT](ValueTerm[ComputedT]):
-    """A value computed from an operation.
-
-    Wraps a Computation to provide a value-like interface.
-    Execution delegates to the wrapped computation.
-
-    Type Parameters:
-        ComputedT: The type of the computed value
-
-    Example:
-        >>> get_op = GetOp(price_ref)
-        >>> computed = ComputedValue(get_op)
-        >>> computed.execute(ctx)  # Executes get_op
-    """
-
-    def __init__(self, comp: RValue[ComputedT | Sentinel]) -> None:
-        """Initialize with a computation to compute the value.
-
-        Args:
-            comp: The computation that computes this value
-        """
-        self._comp = comp
-        self.children = (comp,)
-
-    @property
-    def comp(self) -> RValue[ComputedT]:
-        """Get the underlying computation.
-
-        Returns:
-            The comp that computes this value
-        """
-        return self._comp
-
-    def execute(self, context: Context) -> ComputedT:
-        """Execute the underlying operation.
-
-        Args:
-            context: Execution context
-
-        Returns:
-            The computed value
-        """
-        return self._comp.execute(context)
-
-    def __repr__(self) -> str:
-        """Return machine-friendly representation."""
-        return f"ComputedValue({self._comp!r})"
-
-
-class TypedValue[T](ValueTerm[T]):
-    """A typed value constructor for arbitrary types.
-
-    TypedValue provides a uniform interface for creating typed values from
-    either raw values or RValue expressions. This is useful for user-defined
-    types like Datetime where users want typed value semantics.
+    Constructor accepts:
+        - Literal value: Type(42), Type("hello")
+        - RValue expression: Type(some_operation)
+        - Sentinel: Type(EMPTY), Type(NA)
 
     On execution:
-    - If the input is an RValue, executes it and returns the result
-    - If the input is a raw value, returns it directly
+        - If source is RValue: executes it and returns result
+        - If source is literal: returns value directly
 
     Type Parameters:
-        T: The type of the value
+        T: The type of value this represents
 
     Example:
         >>> # From literal
-        >>> dt = TypedValue[Datetime](datetime.now())
-        >>> dt.execute(ctx)  # Returns the datetime directly
+        >>> x = IntType(42)
+        >>> x.execute(ctx)  # Returns 42
 
-        >>> # From RValue
-        >>> dt = TypedValue[datetime](some_rvalue)
-        >>> dt.execute(ctx)  # Executes the RValue and returns result
+        >>> # From operation
+        >>> y = IntType(GetOp(price_ref))
+        >>> y.execute(ctx)  # Executes GetOp, returns result
+
+        >>> # Unified constructor
+        >>> IntType(42)  # Literal
+        >>> IntType(other.get())  # Computed
     """
 
-    def __init__(self, value: T | RValue[T]) -> None:
-        """Initialize with a value or RValue.
+    def __init__(self, source: T | Sentinel | Term[T | Sentinel]) -> None:
+        """Initialize with a literal value or Term expression.
 
         Args:
-            value: Either a raw value of type T, or an RValue that produces T
+            source: Either a raw value of type T, an Term that produces T,
+                    or a Sentinel value (EMPTY, NA)
         """
-        self._value = value
-        if isinstance(value, RValue):
-            self.children = (value,)
+        self._source = source
+        if isinstance(source, Term):
+            self.children = (source,)
         else:
             self.children = ()
 
     @property
-    def value(self) -> T | RValue[T]:
-        """Get the underlying value or RValue.
+    def source(self) -> T | Sentinel | Term[T | Sentinel]:
+        """Get the underlying source (literal or Term).
 
         Returns:
-            The stored value or RValue
+            The stored value, Term, or Sentinel
         """
-        return self._value
+        return self._source
 
-    def execute(self, context: Context) -> T:
+    @property
+    def is_literal(self) -> bool:
+        """Check if this is a literal (non-computed) value.
+
+        Returns:
+            True if source is a literal value, False if computed
+        """
+        return not isinstance(self._source, Term)
+
+    @property
+    def is_pure(self) -> bool:
+        """Types are pure if children Term's do not have impure component.
+
+        Returns:
+            Bool indicating whether term tree is pure or not
+        """
+        return all(child.is_pure for child in self.children if isinstance(child, Term))
+
+    def execute(self, context: Context) -> T | Sentinel:
         """Execute and return the typed value.
 
-        If the stored value is an RValue, executes it.
-        Otherwise returns the value directly.
+        If source is an RValue, executes it.
+        Otherwise returns the literal value directly.
 
         Args:
             context: Execution context
@@ -448,13 +345,13 @@ class TypedValue[T](ValueTerm[T]):
         Returns:
             The typed value of type T
         """
-        if isinstance(self._value, RValue):
-            return self._value.execute(context)
-        return self._value
+        if isinstance(self._source, Term):
+            return self._source.execute(context)
+        return self._source
 
     def __repr__(self) -> str:
         """Return machine-friendly representation."""
-        return f"TypedValue({self._value!r})"
+        return f"{self.__class__.__name__}({self._source!r})"
 
 
 # =============================================================================
@@ -521,7 +418,7 @@ class Operation[OperationResultT](Computation[OperationResultT]):
         Returns:
             True if all RValue children are pure
         """
-        return all(child.is_pure for child in self.children if isinstance(child, RValue))
+        return all(child.is_pure for child in self.children if isinstance(child, Term))
 
     @abstractmethod
     def execute(self, context: Context) -> OperationResultT:
@@ -687,7 +584,7 @@ class ViewRef(Generic[ViewT_co], Ref[path.PathToView], ABC):  # noqa: UP046
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
+        address: path.PathAddress | Term,
         view_type: type[ViewT_co],
         parent_ref: Ref | None = None,
         owner_shape: type[Shape] | None = None,
@@ -707,7 +604,7 @@ class ViewRef(Generic[ViewT_co], Ref[path.PathToView], ABC):  # noqa: UP046
         Returns:
             Path ending with view segment
         """
-        if isinstance(self.address, RValue):
+        if isinstance(self.address, Term):
             address = self.address.execute(context)
         else:
             address = self.address
@@ -747,7 +644,7 @@ class PrimitiveRef[T](Ref[path.PathToValue], ABC):
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
+        address: path.PathAddress | Term,
         value_type: type[T],
         parent_ref: Ref | None,
         owner_shape: type[Shape] | None = None,
@@ -766,7 +663,7 @@ class PrimitiveRef[T](Ref[path.PathToValue], ABC):
         Returns:
             Path ending with value segment
         """
-        if isinstance(self.address, RValue):
+        if isinstance(self.address, Term):
             address = self.address.execute(context)
         else:
             address = self.address

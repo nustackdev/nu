@@ -32,13 +32,13 @@ Type Parameters (matching protocol conventions):
     ItemT: Native Python item type for sequences/sets (int, str, nested dict, etc.)
     KeyT: Native Python key type for mappings (str, int, etc.)
     ValueT: Native Python value type for mappings (int, nested dict, etc.)
-    CollectionValueT: ComputedValue type for collection (ListValue, DictValue, SetValue)
-    ItemValueT: ComputedValue type for items (IntValue, StrValue, UnknownValue, etc.)
-    KeyValueT: ComputedValue type for keys (StrValue, IntValue, etc.)
-    ValueValueT: ComputedValue type for values (IntValue, UnknownValue, etc.)
+    CollectionValueT: ComputedValue type for collection (ListType, DictType, SetType)
+    ItemValueT: ComputedValue type for items (IntType, StrType, AnyType, etc.)
+    KeyValueT: ComputedValue type for keys (StrType, IntType, etc.)
+    ValueValueT: ComputedValue type for values (IntType, AnyType, etc.)
     ViewT: View type at this location
     IndexT: Index type for sequences (commonly int)
-    IndexValueT: ComputedValue type for index (commonly IntValue)
+    IndexValueT: ComputedValue type for index (commonly IntType)
     SliceValueT: ComputedValue type for sliced results
     ItemRefT: Reference type for individual items
     SliceRefT: Reference type for slices
@@ -48,19 +48,19 @@ Usage in everybase:
     class ListRef(MutableSequenceRefBase[
         list[int],           # CollectionT
         int,                 # ItemT
-        ListValue[int],      # CollectionValueT
-        IntValue,            # ItemValueT
+        ListType[int],      # CollectionValueT
+        IntType,            # ItemValueT
         ListView,            # ViewT
         int,                 # IndexT
-        IntValue,            # IndexValueT
-        ListValue[int],      # SliceValueT
+        IntType,            # IndexValueT
+        ListType[int],      # SliceValueT
         ItemRef,             # ItemRefT
         SliceRef,            # SliceRefT
     ]):
         collection_type = list
         item_type = int
-        collection_value_type = ListValue
-        item_value_type = IntValue
+        collection_value_type = ListType
+        item_value_type = IntType
 
         def _create_item_ref(self, index):
             return ItemRef(self, index)
@@ -69,14 +69,14 @@ Usage in everybase:
             return SliceRef(self, key)
 
         def result(self, op):
-            return ListValue(op)
+            return ListType(op)
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from ..term import RValue, ViewRef
+from ..term import Term, ViewRef
 from .bases import (
     AppendableBase,
     ClearableBase,
@@ -151,11 +151,11 @@ class SequenceRefBase[
     Type Parameters:
         CollectionT: Native Python collection type (list, tuple, etc.)
         ItemT: Native Python item type (int, str, nested dict, etc.)
-        CollectionValueT: ComputedValue type for collection (ListValue, TupleValue, etc.)
-        ItemValueT: ComputedValue type for items (IntValue, StrValue, UnknownValue, etc.)
+        CollectionValueT: ComputedValue type for collection (ListType, TupleType, etc.)
+        ItemValueT: ComputedValue type for items (IntType, StrType, AnyType, etc.)
         ViewT: View type at this location
         IndexT: Index type (commonly int)
-        IndexValueT: ComputedValue type for index (commonly IntValue)
+        IndexValueT: ComputedValue type for index (commonly IntType)
         SliceValueT: ComputedValue type for sliced results
         ItemRefT: Reference type for individual items
         SliceRefT: Reference type for slices
@@ -171,14 +171,14 @@ class SequenceRefBase[
 
     Example:
         class ListRef(SequenceRefBase[
-            list[int], int, ListValue[int], IntValue,
-            ListView, int, IntValue, ListValue[int],
+            list[int], int, ListType[int], IntType,
+            ListView, int, IntType, ListType[int],
             ItemRef, SliceRef
         ]):
             collection_type = list
             item_type = int
-            collection_value_type = ListValue
-            item_value_type = IntValue
+            collection_value_type = ListType
+            item_value_type = IntType
 
             def _create_item_ref(self, index):
                 return ItemRef(self, index)
@@ -187,7 +187,7 @@ class SequenceRefBase[
                 return SliceRef(self, key)
 
             def result(self, op):
-                return ListValue(op)
+                return ListType(op)
     """
 
     collection_type: type[CollectionT]
@@ -199,14 +199,14 @@ class SequenceRefBase[
     index_value_type: type[IndexValueT]
 
     @abstractmethod
-    def result(self, op: RValue) -> CollectionValueT:
+    def result(self, op: Term) -> CollectionValueT:
         """Wrap an operation result in the appropriate collection value container.
 
         Args:
             op: The operation to wrap
 
         Returns:
-            CollectionValueT wrapping the operation (e.g., ListValue)
+            CollectionValueT wrapping the operation (e.g., ListType)
         """
         ...
 
@@ -254,25 +254,25 @@ class MutableSequenceRefBase[
     Type Parameters:
         CollectionT: Native Python collection type (list, tuple, etc.)
         ItemT: Native Python item type (int, str, nested dict, etc.)
-        CollectionValueT: ComputedValue type for collection (ListValue, TupleValue, etc.)
-        ItemValueT: ComputedValue type for items (IntValue, StrValue, UnknownValue, etc.)
+        CollectionValueT: ComputedValue type for collection (ListType, TupleType, etc.)
+        ItemValueT: ComputedValue type for items (IntType, StrType, AnyType, etc.)
         ViewT: View type at this location
         IndexT: Index type (commonly int)
-        IndexValueT: ComputedValue type for index (commonly IntValue)
+        IndexValueT: ComputedValue type for index (commonly IntType)
         SliceValueT: ComputedValue type for sliced results
         ItemRefT: Reference type for individual items
         SliceRefT: Reference type for slices
 
     Example:
         class MutableListRef(MutableSequenceRefBase[
-            list[str], str, ListValue[str], StrValue,
-            ListView, int, IntValue, ListValue[str],
+            list[str], str, ListType[str], StrType,
+            ListView, int, IntType, ListType[str],
             ItemRef, SliceRef
         ]):
             collection_type = list
             item_type = str
-            collection_value_type = ListValue
-            item_value_type = StrValue
+            collection_value_type = ListType
+            item_value_type = StrType
 
             def _create_item_ref(self, index):
                 return ItemRef(self, index)
@@ -281,7 +281,7 @@ class MutableSequenceRefBase[
                 return SliceRef(self, key)
 
             def result(self, op):
-                return ListValue(op)
+                return ListType(op)
     """
 
     pass
@@ -337,9 +337,9 @@ class MappingRefBase[
         CollectionT: Native Python collection type (dict, etc.)
         KeyT: Native Python key type (str, int, etc.)
         ValueT: Native Python value type (int, nested dict, etc.)
-        CollectionValueT: ComputedValue type for collection (DictValue, etc.)
-        KeyValueT: ComputedValue type for keys (StrValue, IntValue, etc.)
-        ValueValueT: ComputedValue type for values (IntValue, UnknownValue, etc.)
+        CollectionValueT: ComputedValue type for collection (DictType, etc.)
+        KeyValueT: ComputedValue type for keys (StrType, IntType, etc.)
+        ValueValueT: ComputedValue type for values (IntType, AnyType, etc.)
         ViewT: View type at this location
         ChildRefT: Reference type for child items
 
@@ -355,21 +355,21 @@ class MappingRefBase[
 
     Example:
         class DictRef(MappingRefBase[
-            dict[str, int], str, int, DictValue[str, int],
-            StrValue, IntValue, DictView, ValueRef
+            dict[str, int], str, int, DictType[str, int],
+            StrType, IntType, DictView, ValueRef
         ]):
             collection_type = dict
             key_type = str
             value_type = int
-            collection_value_type = DictValue
-            key_value_type = StrValue
-            value_value_type = IntValue
+            collection_value_type = DictType
+            key_value_type = StrType
+            value_value_type = IntType
 
             def _create_child_ref(self, key):
                 return ValueRef(self, key)
 
             def result(self, op):
-                return DictValue(op)
+                return DictType(op)
     """
 
     collection_type: type[CollectionT]
@@ -381,14 +381,14 @@ class MappingRefBase[
     view_type: type[ViewT]
 
     @abstractmethod
-    def result(self, op: RValue) -> CollectionValueT:
+    def result(self, op: Term) -> CollectionValueT:
         """Wrap an operation result in the appropriate collection value container.
 
         Args:
             op: The operation to wrap
 
         Returns:
-            CollectionValueT wrapping the operation (e.g., DictValue)
+            CollectionValueT wrapping the operation (e.g., DictType)
         """
         ...
 
@@ -427,29 +427,29 @@ class MutableMappingRefBase[
         CollectionT: Native Python collection type (dict, etc.)
         KeyT: Native Python key type (str, int, etc.)
         ValueT: Native Python value type (int, nested dict, etc.)
-        CollectionValueT: ComputedValue type for collection (DictValue, etc.)
-        KeyValueT: ComputedValue type for keys (StrValue, IntValue, etc.)
-        ValueValueT: ComputedValue type for values (IntValue, UnknownValue, etc.)
+        CollectionValueT: ComputedValue type for collection (DictType, etc.)
+        KeyValueT: ComputedValue type for keys (StrType, IntType, etc.)
+        ValueValueT: ComputedValue type for values (IntType, AnyType, etc.)
         ViewT: View type at this location
         ChildRefT: Reference type for child items
 
     Example:
         class MutableDictRef(MutableMappingRefBase[
-            dict[str, int], str, int, DictValue[str, int],
-            StrValue, IntValue, DictView, MutableValueRef
+            dict[str, int], str, int, DictType[str, int],
+            StrType, IntType, DictView, MutableValueRef
         ]):
             collection_type = dict
             key_type = str
             value_type = int
-            collection_value_type = DictValue
-            key_value_type = StrValue
-            value_value_type = IntValue
+            collection_value_type = DictType
+            key_value_type = StrType
+            value_value_type = IntType
 
             def _create_child_ref(self, key):
                 return MutableValueRef(self, key)
 
             def result(self, op):
-                return DictValue(op)
+                return DictType(op)
     """
 
     pass
@@ -489,8 +489,8 @@ class SetRefBase[
     Type Parameters:
         CollectionT: Native Python collection type (set, frozenset, etc.)
         ItemT: Native Python item type (int, str, etc.)
-        CollectionValueT: ComputedValue type for collection (SetValue, etc.)
-        ItemValueT: ComputedValue type for items (IntValue, StrValue, etc.)
+        CollectionValueT: ComputedValue type for collection (SetType, etc.)
+        ItemValueT: ComputedValue type for items (IntType, StrType, etc.)
         ViewT: View type at this location
 
     Subclasses must implement:
@@ -502,15 +502,15 @@ class SetRefBase[
 
     Example:
         class TagsRef(SetRefBase[
-            set[str], str, SetValue[str], StrValue, SetView
+            set[str], str, SetType[str], StrType, SetView
         ]):
             collection_type = set
             item_type = str
-            collection_value_type = SetValue
-            item_value_type = StrValue
+            collection_value_type = SetType
+            item_value_type = StrType
 
             def result(self, op):
-                return SetValue(op)
+                return SetType(op)
     """
 
     collection_type: type[CollectionT]
@@ -520,14 +520,14 @@ class SetRefBase[
     view_type: type[ViewT]
 
     @abstractmethod
-    def result(self, op: RValue) -> CollectionValueT:
+    def result(self, op: Term) -> CollectionValueT:
         """Wrap an operation result in the appropriate collection value container.
 
         Args:
             op: The operation to wrap
 
         Returns:
-            CollectionValueT wrapping the operation (e.g., SetValue)
+            CollectionValueT wrapping the operation (e.g., SetType)
         """
         ...
 
@@ -557,21 +557,21 @@ class MutableSetRefBase[
     Type Parameters:
         CollectionT: Native Python collection type (set, etc.)
         ItemT: Native Python item type (int, str, etc.)
-        CollectionValueT: ComputedValue type for collection (SetValue, etc.)
-        ItemValueT: ComputedValue type for items (IntValue, StrValue, etc.)
+        CollectionValueT: ComputedValue type for collection (SetType, etc.)
+        ItemValueT: ComputedValue type for items (IntType, StrType, etc.)
         ViewT: View type at this location
 
     Example:
         class MutableTagsRef(MutableSetRefBase[
-            set[str], str, SetValue[str], StrValue, SetView
+            set[str], str, SetType[str], StrType, SetView
         ]):
             collection_type = set
             item_type = str
-            collection_value_type = SetValue
-            item_value_type = StrValue
+            collection_value_type = SetType
+            item_value_type = StrType
 
             def result(self, op):
-                return SetValue(op)
+                return SetType(op)
     """
 
     pass

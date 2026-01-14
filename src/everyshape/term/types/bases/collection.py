@@ -1,4 +1,4 @@
-"""Collection base classes for RValue types.
+"""Collection base classes for Term types.
 
 This module provides collection operation mixins including:
 - LengthableBase - len_()
@@ -21,14 +21,14 @@ from ..conversion import literal
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ...term import RValue
-    from ..values import (
-        BoolValue,
-        DictValue,
-        FloatValue,
-        IntValue,
-        ListValue,
-        StrValue,
+    from ...term import Term
+    from ..definitions import (
+        BoolType,
+        DictType,
+        FloatType,
+        IntType,
+        ListType,
+        StrType,
     )
 
 
@@ -47,28 +47,28 @@ __all__ = [
 class LengthableBase:
     """Base for values that have a length."""
 
-    def len_(self) -> IntValue:
+    def len_(self) -> IntType:
         """Get length of this value.
 
         Returns:
             Length value
         """
-        from ...comps.types.sequence import LenOp
-        from ..values import IntValue
+        from ...comps.typed.sequence import LenOp
+        from ..definitions import IntType
 
-        return IntValue(LenOp(self))
+        return IntType(LenOp(self))
 
 
 class IndexableBase[KeyT, ResultValue]:
     """Base for values that support index/key access."""
 
-    def _wrap_indexable_result(self, operand: RValue) -> RValue:
+    def _wrap_indexable_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __getitem__(self, key: KeyT) -> ResultValue:
         """Get item at index/key."""
-        from ...comps.types.sequence import AtOp
+        from ...comps.typed.sequence import AtOp
 
         return cast("ResultValue", self._wrap_indexable_result(AtOp(self, literal(key))))
 
@@ -76,7 +76,7 @@ class IndexableBase[KeyT, ResultValue]:
 class SliceableBase[ResultT]:
     """Base for values that support slicing."""
 
-    def _wrap_sliceable_result(self, operand: RValue) -> RValue:
+    def _wrap_sliceable_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -91,7 +91,7 @@ class SliceableBase[ResultT]:
         Returns:
             Sliced result
         """
-        from ...comps.types.sequence import SliceOp
+        from ...comps.typed.sequence import SliceOp
 
         return cast("ResultT", self._wrap_sliceable_result(SliceOp(self, start, stop, step)))
 
@@ -99,7 +99,7 @@ class SliceableBase[ResultT]:
 class ContainableBase[ItemT]:
     """Base for values that support containment testing."""
 
-    def contains(self, item: ItemT) -> BoolValue:
+    def contains(self, item: ItemT) -> BoolType:
         """Check if item is in this value.
 
         Args:
@@ -108,20 +108,20 @@ class ContainableBase[ItemT]:
         Returns:
             Boolean result
         """
-        from ...comps.types.mapping import ContainsOp
-        from ..values import BoolValue
+        from ...comps.typed.mapping import ContainsOp
+        from ..definitions import BoolType
 
-        return BoolValue(ContainsOp(self, literal(item)))
+        return BoolType(ContainsOp(self, literal(item)))
 
 
 class IterableBase[ElementT, ResultT]:
     """Base for values that support functional iteration operations."""
 
-    def _wrap_iterable_result(self, operand: RValue) -> RValue:
+    def _wrap_iterable_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate collection type."""
         raise NotImplementedError()
 
-    def _wrap_element_result(self, operand: RValue) -> RValue:
+    def _wrap_element_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate element type."""
         raise NotImplementedError()
 
@@ -134,7 +134,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Mapped result
         """
-        from ...comps.types.sequence import MapOp
+        from ...comps.typed.sequence import MapOp
 
         return cast("ResultT", self._wrap_iterable_result(MapOp(self, func)))
 
@@ -147,31 +147,31 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Filtered result
         """
-        from ...comps.types.sequence import FilterOp
+        from ...comps.typed.sequence import FilterOp
 
         return cast("ResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
 
     @overload
-    def reduce_(self, func: Callable[[int, ElementT], int], initial: int) -> IntValue: ...
+    def reduce_(self, func: Callable[[int, ElementT], int], initial: int) -> IntType: ...
 
     @overload
-    def reduce_(self, func: Callable[[float, ElementT], float], initial: float) -> FloatValue: ...
+    def reduce_(self, func: Callable[[float, ElementT], float], initial: float) -> FloatType: ...
 
     @overload
-    def reduce_(self, func: Callable[[str, ElementT], str], initial: str) -> StrValue: ...
+    def reduce_(self, func: Callable[[str, ElementT], str], initial: str) -> StrType: ...
 
     @overload
-    def reduce_(self, func: Callable[[bool, ElementT], bool], initial: bool) -> BoolValue: ...
+    def reduce_(self, func: Callable[[bool, ElementT], bool], initial: bool) -> BoolType: ...
 
     @overload
     def reduce_[V](
         self, func: Callable[[list[V], ElementT], list[V]], initial: list[V]
-    ) -> ListValue[V]: ...
+    ) -> ListType[V]: ...
 
     @overload
     def reduce_[K, V](
         self, func: Callable[[dict[K, V], ElementT], dict[K, V]], initial: dict[K, V]
-    ) -> DictValue[K, V]: ...
+    ) -> DictType[K, V]: ...
 
     def reduce_[R](self, func: Callable[[R, ElementT], R], initial: R) -> object:
         """Reduce to single value.
@@ -183,10 +183,10 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Reduced value
         """
-        from ...comps.types.sequence import ReduceOp
-        from ..values import UnknownValue
+        from ...comps.typed.sequence import ReduceOp
+        from ..definitions import AnyType
 
-        return UnknownValue(ReduceOp(self, func, initial))
+        return AnyType(ReduceOp(self, func, initial))
 
     def sum_(self) -> ResultT:
         """Sum all elements.
@@ -194,7 +194,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Sum
         """
-        from ...comps.types.sequence import SumOp
+        from ...comps.typed.sequence import SumOp
 
         return cast("ResultT", self._wrap_element_result(SumOp(self)))
 
@@ -204,7 +204,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Minimum
         """
-        from ...comps.types.sequence import MinOp
+        from ...comps.typed.sequence import MinOp
 
         return cast("ResultT", self._wrap_element_result(MinOp(self)))
 
@@ -214,31 +214,31 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Maximum
         """
-        from ...comps.types.sequence import MaxOp
+        from ...comps.typed.sequence import MaxOp
 
         return cast("ResultT", self._wrap_element_result(MaxOp(self)))
 
-    def any_(self) -> BoolValue:
+    def any_(self) -> BoolType:
         """Check if any element is truthy.
 
         Returns:
             Boolean result
         """
-        from ...comps.types.sequence import AnyOp
-        from ..values import BoolValue
+        from ...comps.typed.sequence import AnyOp
+        from ..definitions import BoolType
 
-        return BoolValue(AnyOp(self))
+        return BoolType(AnyOp(self))
 
-    def all_(self) -> BoolValue:
+    def all_(self) -> BoolType:
         """Check if all elements are truthy.
 
         Returns:
             Boolean result
         """
-        from ...comps.types.sequence import AllOp
-        from ..values import BoolValue
+        from ...comps.typed.sequence import AllOp
+        from ..definitions import BoolType
 
-        return BoolValue(AllOp(self))
+        return BoolType(AllOp(self))
 
 
 class SequenceBase[ElementT, ResultT](
@@ -261,7 +261,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             First element
         """
-        from ...comps.types.sequence import FirstOp
+        from ...comps.typed.sequence import FirstOp
 
         return cast("ResultT", self._wrap_element_result(FirstOp(self)))
 
@@ -271,7 +271,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Last element
         """
-        from ...comps.types.sequence import LastOp
+        from ...comps.typed.sequence import LastOp
 
         return cast("ResultT", self._wrap_element_result(LastOp(self)))
 
@@ -281,7 +281,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Reversed sequence
         """
-        from ...comps.types.sequence import ReversedOp
+        from ...comps.typed.sequence import ReversedOp
 
         return cast("ResultT", self._wrap_sliceable_result(ReversedOp(self)))
 
@@ -294,11 +294,11 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Sorted sequence
         """
-        from ...comps.types.sequence import SortedOp
+        from ...comps.typed.sequence import SortedOp
 
         return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse=reverse)))
 
-    def join(self, separator: str) -> StrValue:
+    def join(self, separator: str) -> StrType:
         """Join string elements.
 
         Args:
@@ -307,12 +307,12 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Joined string
         """
-        from ...comps.types.sequence import JoinOp
-        from ..values import StrValue
+        from ...comps.typed.sequence import JoinOp
+        from ..definitions import StrType
 
-        return StrValue(JoinOp(self, literal(separator)))
+        return StrType(JoinOp(self, literal(separator)))
 
-    def index(self, value: ElementT) -> IntValue:
+    def index(self, value: ElementT) -> IntType:
         """Find index of value.
 
         Args:
@@ -321,26 +321,26 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Index
         """
-        from ...comps.types.sequence import IndexOfOp
-        from ..values import IntValue
+        from ...comps.typed.sequence import IndexOfOp
+        from ..definitions import IntType
 
-        return IntValue(IndexOfOp(self, literal(value)))
+        return IntType(IndexOfOp(self, literal(value)))
 
-    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue:
+    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntType:
         """Find index of first match.
 
         Args:
             predicate: Match function
 
         Returns:
-            IntValue containing index
+            IntType containing index
         """
-        from ...comps.types.sequence import FindIndexOp
-        from ..values import IntValue
+        from ...comps.typed.sequence import FindIndexOp
+        from ..definitions import IntType
 
-        return IntValue(FindIndexOp(self, predicate))
+        return IntType(FindIndexOp(self, predicate))
 
-    def count(self, value: ElementT) -> IntValue:
+    def count(self, value: ElementT) -> IntType:
         """Count occurrences.
 
         Args:
@@ -349,10 +349,10 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Count
         """
-        from ...comps.types.sequence import CountOp
-        from ..values import IntValue
+        from ...comps.typed.sequence import CountOp
+        from ..definitions import IntType
 
-        return IntValue(CountOp(self, literal(value)))
+        return IntType(CountOp(self, literal(value)))
 
 
 class MappingBase[KeyT, ValueT, ResultT](
@@ -366,19 +366,19 @@ class MappingBase[KeyT, ValueT, ResultT](
     Subclasses typically also implement __getitem__ for key access.
     """
 
-    def _wrap_keys_result(self, operand: RValue) -> RValue:
+    def _wrap_keys_result(self, operand: Term) -> Term:
         """Override in subclass to wrap keys sequence result."""
         raise NotImplementedError()
 
-    def _wrap_values_result(self, operand: RValue) -> RValue:
+    def _wrap_values_result(self, operand: Term) -> Term:
         """Override in subclass to wrap values sequence result."""
         raise NotImplementedError()
 
-    def _wrap_items_result(self, operand: RValue) -> RValue:
+    def _wrap_items_result(self, operand: Term) -> Term:
         """Override in subclass to wrap items sequence result."""
         raise NotImplementedError()
 
-    def _wrap_value_result(self, operand: RValue) -> RValue:
+    def _wrap_value_result(self, operand: Term) -> Term:
         """Override in subclass to wrap single value result."""
         raise NotImplementedError()
 
@@ -388,7 +388,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Keys sequence
         """
-        from ...comps.types.mapping import DictKeysOp
+        from ...comps.typed.mapping import DictKeysOp
 
         return cast("ResultT", self._wrap_keys_result(DictKeysOp(self)))
 
@@ -398,9 +398,9 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Values sequence
         """
-        from ...comps.types.mapping import DictValuesOp
+        from ...comps.typed.mapping import DictTypesOp
 
-        return cast("ResultT", self._wrap_values_result(DictValuesOp(self)))
+        return cast("ResultT", self._wrap_values_result(DictTypesOp(self)))
 
     def items_(self) -> ResultT:
         """Get all key-value pairs.
@@ -408,7 +408,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Items sequence
         """
-        from ...comps.types.mapping import DictItemsOp
+        from ...comps.typed.mapping import DictItemsOp
 
         return cast("ResultT", self._wrap_items_result(DictItemsOp(self)))
 
@@ -422,7 +422,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Value or default
         """
-        from ...comps.types.mapping import DictGetOp
+        from ...comps.typed.mapping import DictGetOp
 
         return cast(
             "ResultT", self._wrap_value_result(DictGetOp(self, literal(key), literal(default)))
@@ -444,11 +444,11 @@ class SetBase[ElementT, ResultT](
     symmetric_difference(), issubset(), issuperset(), isdisjoint().
     """
 
-    def _wrap_set_result(self, operand: RValue) -> RValue:
+    def _wrap_set_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate set type."""
         raise NotImplementedError()
 
-    def union(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+    def union(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set union.
 
         Args:
@@ -457,11 +457,11 @@ class SetBase[ElementT, ResultT](
         Returns:
             Union set
         """
-        from ...comps.types.set import UnionOp
+        from ...comps.typed.set import UnionOp
 
         return cast("ResultT", self._wrap_set_result(UnionOp(self, literal(other))))
 
-    def intersection(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+    def intersection(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set intersection.
 
         Args:
@@ -470,11 +470,11 @@ class SetBase[ElementT, ResultT](
         Returns:
             Intersection set
         """
-        from ...comps.types.set import IntersectionOp
+        from ...comps.typed.set import IntersectionOp
 
         return cast("ResultT", self._wrap_set_result(IntersectionOp(self, literal(other))))
 
-    def difference(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+    def difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set difference.
 
         Args:
@@ -483,11 +483,11 @@ class SetBase[ElementT, ResultT](
         Returns:
             Difference set
         """
-        from ...comps.types.set import DifferenceOp
+        from ...comps.typed.set import DifferenceOp
 
         return cast("ResultT", self._wrap_set_result(DifferenceOp(self, literal(other))))
 
-    def symmetric_difference(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> ResultT:
+    def symmetric_difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set symmetric difference.
 
         Args:
@@ -496,11 +496,11 @@ class SetBase[ElementT, ResultT](
         Returns:
             Symmetric difference set
         """
-        from ...comps.types.set import SymmetricDifferenceOp
+        from ...comps.typed.set import SymmetricDifferenceOp
 
         return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, literal(other))))
 
-    def issubset(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> BoolValue:
+    def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolType:
         """Check if subset.
 
         Args:
@@ -509,12 +509,12 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ...comps.types.set import IsSubsetOp
-        from ..values import BoolValue
+        from ...comps.typed.set import IsSubsetOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsSubsetOp(self, literal(other)))
+        return BoolType(IsSubsetOp(self, literal(other)))
 
-    def issuperset(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> BoolValue:
+    def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolType:
         """Check if superset.
 
         Args:
@@ -523,12 +523,12 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ...comps.types.set import IsSupersetOp
-        from ..values import BoolValue
+        from ...comps.typed.set import IsSupersetOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsSupersetOp(self, literal(other)))
+        return BoolType(IsSupersetOp(self, literal(other)))
 
-    def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | RValue) -> BoolValue:
+    def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolType:
         """Check if disjoint.
 
         Args:
@@ -537,7 +537,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ...comps.types.set import IsDisjointOp
-        from ..values import BoolValue
+        from ...comps.typed.set import IsDisjointOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsDisjointOp(self, literal(other)))
+        return BoolType(IsDisjointOp(self, literal(other)))

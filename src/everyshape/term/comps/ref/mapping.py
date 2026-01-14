@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.loc import path
 from everyshape.storage import StorageKeyError
-from everyshape.term import Command, Operation, RValue, ViewRef
+from everyshape.term import Command, Operation, Term, ViewRef
 from everyshape.typing import NOT_SET, Empty, NotSet, Sentinel, Value
 from everyshape.view import capabilities as view_capabilities
 
@@ -82,15 +82,15 @@ class SetByKeyCmd[K, V: Value](Command[V]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Assignable[K, V]] | UnionRefBases,
-        key: RValue[K | Sentinel],
-        value: RValue[V | Sentinel],
+        key: Term[K | Sentinel],
+        value: Term[V | Sentinel],
     ) -> None:
         """Initialize set by key command.
 
         Args:
             ref: Mapping reference to set value in
-            key: Key to set (wrapped in RValue)
-            value: Value to set (wrapped in RValue)
+            key: Key to set (wrapped in Term)
+            value: Value to set (wrapped in Term)
         """
         self.ref = cast("ViewRef[view_capabilities.Assignable[K, V]]", ref)
         self.key = key
@@ -151,13 +151,13 @@ class RemoveByKeyCmd[K](Command[None]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Deletable[K]] | UnionRefBases,
-        key: RValue[K | Sentinel],
+        key: Term[K | Sentinel],
     ) -> None:
         """Initialize remove by key command.
 
         Args:
             ref: Mapping reference to remove key from
-            key: Key to remove (wrapped in RValue)
+            key: Key to remove (wrapped in Term)
         """
         self.ref = cast("ViewRef[view_capabilities.Deletable[K]]", ref)
         self.key = key
@@ -220,8 +220,8 @@ class GetByKeyOp[K, V](Operation[V | Sentinel]):
     def __init__(
         self,
         ref: ViewRef[view_capabilities.Subscriptable[K, V]] | UnionRefBases,
-        key: RValue[K | Sentinel],
-        default: RValue[V | Sentinel] | NotSet = NOT_SET,
+        key: Term[K | Sentinel],
+        default: Term[V | Sentinel] | NotSet = NOT_SET,
     ) -> None:
         """Initialize get by key operation.
 

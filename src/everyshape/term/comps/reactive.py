@@ -11,7 +11,7 @@ from everyshape.storage import Subscription
 from everyshape.term import Operation, PrimitiveRef, ViewRef
 from everyshape.view import ChildObservable, DescendantsObservable, Observable
 
-from ..term import RValue
+from ..term import Term
 
 
 if TYPE_CHECKING:
@@ -178,7 +178,7 @@ class OnChildChangeOp[A](ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef | UnionRefBases, address: A | RValue[A]) -> None:
+    def __init__(self, ref: ViewRef | UnionRefBases, address: A | Term[A]) -> None:
         """Initialize on_child_change operation.
 
         Args:
@@ -201,7 +201,7 @@ class OnChildChangeOp[A](ChangeOp):
         Raises:
             TypeError: If view doesn't support ChildObservable protocol
         """
-        if isinstance(self.address, RValue):
+        if isinstance(self.address, Term):
             address = self.address.execute(context)
         else:
             address = self.address

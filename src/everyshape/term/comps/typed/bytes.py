@@ -1,6 +1,6 @@
-"""Bytes operations for RValue expressions.
+"""Bytes operations for Term expressions.
 
-This module provides type-safe operations on bytes RValues:
+This module provides type-safe operations on bytes Terms:
 
 Decoding: DecodeOp, HexOp
 Case transformation: BytesUpperOp, BytesLowerOp
@@ -37,8 +37,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 __all__ = [
     "BytesCountOp",
@@ -62,7 +62,7 @@ __all__ = [
 # =============================================================================
 
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class BytesOp[ResultT](Operation[ResultT]):
@@ -76,9 +76,9 @@ class BytesOp[ResultT](Operation[ResultT]):
         """Initialize bytes operation.
 
         Args:
-            operand: RValue that should produce bytes
+            operand: Term that should produce bytes
         """
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> ResultT:
         """Execute bytes operation.
@@ -188,9 +188,9 @@ class BytesStripOp(BytesOp[bytes | Sentinel]):
             chars: Bytes to strip (None for whitespace)
         """
         if chars is not None:
-            self.children = (cast("RValue", operand), cast("RValue", chars))
+            self.children = (cast("Term", operand), cast("Term", chars))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> bytes | Sentinel:
         """Execute strip operation."""
@@ -215,9 +215,9 @@ class BytesLStripOp(BytesOp[bytes | Sentinel]):
     def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
         """Initialize lstrip operation."""
         if chars is not None:
-            self.children = (cast("RValue", operand), cast("RValue", chars))
+            self.children = (cast("Term", operand), cast("Term", chars))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> bytes | Sentinel:
         """Execute lstrip operation."""
@@ -242,9 +242,9 @@ class BytesRStripOp(BytesOp[bytes | Sentinel]):
     def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
         """Initialize rstrip operation."""
         if chars is not None:
-            self.children = (cast("RValue", operand), cast("RValue", chars))
+            self.children = (cast("Term", operand), cast("Term", chars))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> bytes | Sentinel:
         """Execute rstrip operation."""
@@ -285,9 +285,9 @@ class BytesSplitOp(Operation[list[bytes] | Sentinel]):
             maxsplit: Maximum splits (-1 for unlimited)
         """
         if sep is not None:
-            self.children = (cast("RValue", operand), cast("RValue", sep))
+            self.children = (cast("Term", operand), cast("Term", sep))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
         self._maxsplit = maxsplit
 
     def execute(self, context: Context) -> list[bytes] | Sentinel:
@@ -324,7 +324,7 @@ class BytesFindOp(Operation[int | Sentinel]):
         end: int | None = None,
     ) -> None:
         """Initialize find operation."""
-        self.children = (cast("RValue", operand), cast("RValue", sub))
+        self.children = (cast("Term", operand), cast("Term", sub))
         self._start = start
         self._end = end
 
@@ -349,7 +349,7 @@ class BytesCountOp(Operation[int | Sentinel]):
 
     def __init__(self, operand: OpArgument, sub: OpArgument) -> None:
         """Initialize count operation."""
-        self.children = (cast("RValue", operand), cast("RValue", sub))
+        self.children = (cast("Term", operand), cast("Term", sub))
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute count operation."""
@@ -375,7 +375,7 @@ class BytesStartsWithOp(Operation[bool | Sentinel]):
 
     def __init__(self, operand: OpArgument, prefix: OpArgument) -> None:
         """Initialize startswith operation."""
-        self.children = (cast("RValue", operand), cast("RValue", prefix))
+        self.children = (cast("Term", operand), cast("Term", prefix))
 
     def execute(self, context: Context) -> bool | Sentinel:
         """Execute startswith operation."""
@@ -396,7 +396,7 @@ class BytesEndsWithOp(Operation[bool | Sentinel]):
 
     def __init__(self, operand: OpArgument, suffix: OpArgument) -> None:
         """Initialize endswith operation."""
-        self.children = (cast("RValue", operand), cast("RValue", suffix))
+        self.children = (cast("Term", operand), cast("Term", suffix))
 
     def execute(self, context: Context) -> bool | Sentinel:
         """Execute endswith operation."""
@@ -429,9 +429,9 @@ class BytesReplaceOp(Operation[bytes | Sentinel]):
     ) -> None:
         """Initialize replace operation."""
         self.children = (
-            cast("RValue", operand),
-            cast("RValue", old),
-            cast("RValue", new),
+            cast("Term", operand),
+            cast("Term", old),
+            cast("Term", new),
         )
         self._count = count
 

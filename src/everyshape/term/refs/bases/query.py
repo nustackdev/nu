@@ -13,7 +13,7 @@ from ...comps.ref import (
     KeysOp,
     ValuesOp,
 )
-from ...values import ListValue
+from ...types import ListType
 
 
 __all__ = [
@@ -34,16 +34,16 @@ class KeysQueryableBase[KeyT]:
     Implements the KeysQueryable protocol with keys() method.
     """
 
-    def keys(self) -> ListValue[KeyT]:
+    def keys(self) -> ListType[KeyT]:
         """Create a keys query operation.
 
         Returns:
-            ListValue containing all keys when executed
+            ListType containing all keys when executed
 
         Example:
             >>> all_keys = dict_ref.keys().execute(ctx)
         """
-        return ListValue(KeysOp(self))
+        return ListType(KeysOp(self))
 
 
 class ValuesQueryableBase[ValueT]:
@@ -52,16 +52,16 @@ class ValuesQueryableBase[ValueT]:
     Implements the ValuesQueryable protocol with values() method.
     """
 
-    def values(self) -> ListValue[ValueT]:
+    def values(self) -> ListType[ValueT]:
         """Create a values query operation.
 
         Returns:
-            ListValue containing all values when executed
+            ListType containing all values when executed
 
         Example:
             >>> all_values = dict_ref.values().execute(ctx)
         """
-        return ListValue(ValuesOp(self))
+        return ListType(ValuesOp(self))
 
 
 class ItemsQueryableBase[KeyT, ValueT]:
@@ -70,13 +70,13 @@ class ItemsQueryableBase[KeyT, ValueT]:
     Implements the ItemsQueryable protocol with items() method.
     """
 
-    def items(self) -> ListValue[tuple[KeyT, ValueT]]:
+    def items(self) -> ListType[tuple[KeyT, ValueT]]:
         """Create an items query operation.
 
         Returns:
-            ListValue containing all (key, value) pairs when executed
+            ListType containing all (key, value) pairs when executed
 
         Example:
             >>> all_items = dict_ref.items().execute(ctx)
         """
-        return ListValue(ItemsOp(self))
+        return ListType(ItemsOp(self))

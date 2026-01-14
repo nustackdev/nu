@@ -26,8 +26,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 
 __all__ = [
@@ -43,7 +43,7 @@ __all__ = [
 ]
 
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 # =============================================================================
@@ -66,7 +66,7 @@ class ConversionOp[ResultT](Operation[ResultT | Sentinel]):
         Args:
             operand: Value to convert
         """
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute conversion operation.

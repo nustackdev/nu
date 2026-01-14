@@ -1,4 +1,4 @@
-"""Bytes base classes for RValue types.
+"""Bytes base classes for Term types.
 
 This module provides bytes-specific operation mixins including:
 - BytesMethodsBase - Bytes-specific methods like decode(), hex_(), etc.
@@ -12,8 +12,8 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from ...term import RValue
-    from ..values import BoolValue, IntValue, ListValue, StrValue
+    from ...term import Term
+    from ..definitions import BoolType, IntType, ListType, StrType
 
 
 __all__ = [
@@ -28,12 +28,12 @@ class BytesMethodsBase[ResultT]:
     Methods that return str/bool/int use specific types.
     """
 
-    def _wrap_bytes_result(self, operand: RValue) -> RValue:
+    def _wrap_bytes_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     # Decoding
-    def decode(self, encoding: str = "utf-8") -> StrValue:
+    def decode(self, encoding: str = "utf-8") -> StrType:
         """Decode bytes to string.
 
         Args:
@@ -42,21 +42,21 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Decoded string
         """
-        from ...comps.types.bytes import DecodeOp
-        from ..values import StrValue
+        from ...comps.typed.bytes import DecodeOp
+        from ..definitions import StrType
 
-        return StrValue(DecodeOp(self, encoding))
+        return StrType(DecodeOp(self, encoding))
 
-    def hex_(self) -> StrValue:
+    def hex_(self) -> StrType:
         """Convert to hex string.
 
         Returns:
             Hex string
         """
-        from ...comps.types.bytes import HexOp
-        from ..values import StrValue
+        from ...comps.typed.bytes import HexOp
+        from ..definitions import StrType
 
-        return StrValue(HexOp(self))
+        return StrType(HexOp(self))
 
     # Case transformation
     def upper(self) -> ResultT:
@@ -65,7 +65,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Uppercase bytes
         """
-        from ...comps.types.bytes import BytesUpperOp
+        from ...comps.typed.bytes import BytesUpperOp
 
         return cast("ResultT", self._wrap_bytes_result(BytesUpperOp(self)))
 
@@ -75,12 +75,12 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Lowercase bytes
         """
-        from ...comps.types.bytes import BytesLowerOp
+        from ...comps.typed.bytes import BytesLowerOp
 
         return cast("ResultT", self._wrap_bytes_result(BytesLowerOp(self)))
 
     # Stripping
-    def strip(self, chars: bytes | RValue | None = None) -> ResultT:
+    def strip(self, chars: bytes | Term | None = None) -> ResultT:
         """Strip whitespace or chars.
 
         Args:
@@ -89,13 +89,13 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ...comps.types.bytes import BytesStripOp
+        from ...comps.typed.bytes import BytesStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesStripOp(self, literal(chars))))
         return cast("ResultT", self._wrap_bytes_result(BytesStripOp(self)))
 
-    def lstrip(self, chars: bytes | RValue | None = None) -> ResultT:
+    def lstrip(self, chars: bytes | Term | None = None) -> ResultT:
         """Strip leading whitespace or chars.
 
         Args:
@@ -104,13 +104,13 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ...comps.types.bytes import BytesLStripOp
+        from ...comps.typed.bytes import BytesLStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesLStripOp(self, literal(chars))))
         return cast("ResultT", self._wrap_bytes_result(BytesLStripOp(self)))
 
-    def rstrip(self, chars: bytes | RValue | None = None) -> ResultT:
+    def rstrip(self, chars: bytes | Term | None = None) -> ResultT:
         """Strip trailing whitespace or chars.
 
         Args:
@@ -119,16 +119,14 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ...comps.types.bytes import BytesRStripOp
+        from ...comps.typed.bytes import BytesRStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesRStripOp(self, literal(chars))))
         return cast("ResultT", self._wrap_bytes_result(BytesRStripOp(self)))
 
     # Splitting
-    def split_bytes(
-        self, sep: bytes | RValue | None = None, maxsplit: int = -1
-    ) -> ListValue[bytes]:
+    def split_bytes(self, sep: bytes | Term | None = None, maxsplit: int = -1) -> ListType[bytes]:
         """Split bytes.
 
         Args:
@@ -138,15 +136,15 @@ class BytesMethodsBase[ResultT]:
         Returns:
             List of bytes
         """
-        from ...comps.types.bytes import BytesSplitOp
-        from ..values import ListValue
+        from ...comps.typed.bytes import BytesSplitOp
+        from ..definitions import ListType
 
         if sep is not None:
-            return ListValue(BytesSplitOp(self, literal(sep), maxsplit))
-        return ListValue(BytesSplitOp(self, None, maxsplit))
+            return ListType(BytesSplitOp(self, literal(sep), maxsplit))
+        return ListType(BytesSplitOp(self, None, maxsplit))
 
     # Searching
-    def find_bytes(self, sub: bytes | RValue, start: int = 0, end: int | None = None) -> IntValue:
+    def find_bytes(self, sub: bytes | Term, start: int = 0, end: int | None = None) -> IntType:
         """Find sub-bytes.
 
         Args:
@@ -157,12 +155,12 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ...comps.types.bytes import BytesFindOp
-        from ..values import IntValue
+        from ...comps.typed.bytes import BytesFindOp
+        from ..definitions import IntType
 
-        return IntValue(BytesFindOp(self, literal(sub), start, end))
+        return IntType(BytesFindOp(self, literal(sub), start, end))
 
-    def count_bytes(self, sub: bytes | RValue) -> IntValue:
+    def count_bytes(self, sub: bytes | Term) -> IntType:
         """Count sub-bytes occurrences.
 
         Args:
@@ -171,13 +169,13 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Count
         """
-        from ...comps.types.bytes import BytesCountOp
-        from ..values import IntValue
+        from ...comps.typed.bytes import BytesCountOp
+        from ..definitions import IntType
 
-        return IntValue(BytesCountOp(self, literal(sub)))
+        return IntType(BytesCountOp(self, literal(sub)))
 
     # Testing
-    def startswith(self, prefix: bytes | RValue) -> BoolValue:
+    def startswith(self, prefix: bytes | Term) -> BoolType:
         """Check if starts with prefix.
 
         Args:
@@ -186,12 +184,12 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.types.bytes import BytesStartsWithOp
-        from ..values import BoolValue
+        from ...comps.typed.bytes import BytesStartsWithOp
+        from ..definitions import BoolType
 
-        return BoolValue(BytesStartsWithOp(self, literal(prefix)))
+        return BoolType(BytesStartsWithOp(self, literal(prefix)))
 
-    def endswith(self, suffix: bytes | RValue) -> BoolValue:
+    def endswith(self, suffix: bytes | Term) -> BoolType:
         """Check if ends with suffix.
 
         Args:
@@ -200,13 +198,13 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.types.bytes import BytesEndsWithOp
-        from ..values import BoolValue
+        from ...comps.typed.bytes import BytesEndsWithOp
+        from ..definitions import BoolType
 
-        return BoolValue(BytesEndsWithOp(self, literal(suffix)))
+        return BoolType(BytesEndsWithOp(self, literal(suffix)))
 
     # Replacing
-    def replace(self, old: bytes | RValue, new: bytes | RValue, count: int = -1) -> ResultT:
+    def replace(self, old: bytes | Term, new: bytes | Term, count: int = -1) -> ResultT:
         """Replace sub-bytes.
 
         Args:
@@ -217,7 +215,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Modified bytes
         """
-        from ...comps.types.bytes import BytesReplaceOp
+        from ...comps.typed.bytes import BytesReplaceOp
 
         return cast(
             "ResultT",

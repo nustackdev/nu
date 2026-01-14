@@ -4,7 +4,7 @@ This module provides ready-to-extend ref base classes for primitives.
 
 Type Parameters (matching protocol conventions):
     T: Native Python type at this location (int, str, float, nested dict, etc.)
-    ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
+    ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
 """
 
 from __future__ import annotations
@@ -45,12 +45,12 @@ class CollectionItemRefBase[T, ValueT](
 
     Type Parameters:
         T: Native Python type at this location (int, str, float, nested dict, etc.)
-        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
+        ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
 
     Example:
-        class MyValueRef(CollectionItemRefBase[str, StrValue], PrimitiveRef, ABC):
+        class MyValueRef(CollectionItemRefBase[str, StrType], PrimitiveRef, ABC):
             value_type = str
-            value_value_type = StrValue
+            value_value_type = StrType
     """
 
     value_type: type[T]
@@ -67,12 +67,12 @@ class SequenceItemRefBase[T, ValueT](CollectionItemRefBase[T, ValueT]):
 
     Type Parameters:
         T: Native Python type at this location (int, str, float, nested dict, etc.)
-        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
+        ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
 
     Example:
-        class MySequenceItemRef(SequenceItemRefBase[int, IntValue], PrimitiveRef, ABC):
+        class MySequenceItemRef(SequenceItemRefBase[int, IntType], PrimitiveRef, ABC):
             value_type = int
-            value_value_type = IntValue
+            value_value_type = IntType
     """
 
     pass
@@ -86,7 +86,7 @@ class MutableSequenceItemRefBase[T, ValueT](SequenceItemRefBase[T, ValueT]):
 
     Type Parameters:
         T: Native Python type at this location (int, str, float, nested dict, etc.)
-        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
+        ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
     """
 
     pass
@@ -100,12 +100,12 @@ class MappingItemRefBase[T, ValueT](CollectionItemRefBase[T, ValueT]):
 
     Type Parameters:
         T: Native Python type at this location (int, str, float, nested dict, etc.)
-        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
+        ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
 
     Example:
-        class MyMappingValueRef(MappingItemRefBase[str, StrValue], PrimitiveRef, ABC):
+        class MyMappingValueRef(MappingItemRefBase[str, StrType], PrimitiveRef, ABC):
             value_type = str
-            value_value_type = StrValue
+            value_value_type = StrType
     """
 
     pass
@@ -119,7 +119,7 @@ class MutableMappingItemRefBase[T, ValueT](MappingItemRefBase[T, ValueT]):
 
     Type Parameters:
         T: Native Python type at this location (int, str, float, nested dict, etc.)
-        ValueT: ComputedValue type for this value (IntValue, StrValue, FloatValue, UnknownValue, etc.)
+        ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
     """
 
     pass

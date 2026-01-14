@@ -1,4 +1,4 @@
-"""Arithmetic base classes for RValue types.
+"""Arithmetic base classes for Term types.
 
 This module provides arithmetic operation mixins including:
 - AddableBase, SubtractableBase, NegatableBase
@@ -14,7 +14,7 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
@@ -36,19 +36,19 @@ __all__ = [
 class AddableBase[OperandT, ResultT]:
     """Base for values that support addition."""
 
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+    def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __add__(self, other: OperandT) -> ResultT:
         """Addition: self + other."""
-        from ...comps.value.binary_ops import AddOp
+        from ...comps.core.binary_ops import AddOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AddOp(self, literal(other))))
 
     def __radd__(self, other: OperandT) -> ResultT:
         """Right addition: other + self."""
-        from ...comps.value.binary_ops import AddOp
+        from ...comps.core.binary_ops import AddOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AddOp(literal(other), self)))
 
@@ -56,19 +56,19 @@ class AddableBase[OperandT, ResultT]:
 class SubtractableBase[OperandT, ResultT]:
     """Base for values that support subtraction."""
 
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+    def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __sub__(self, other: OperandT) -> ResultT:
         """Subtraction: self - other."""
-        from ...comps.value.binary_ops import SubOp
+        from ...comps.core.binary_ops import SubOp
 
         return cast("ResultT", self._wrap_arithmetic_result(SubOp(self, literal(other))))
 
     def __rsub__(self, other: OperandT) -> ResultT:
         """Right subtraction: other - self."""
-        from ...comps.value.binary_ops import SubOp
+        from ...comps.core.binary_ops import SubOp
 
         return cast("ResultT", self._wrap_arithmetic_result(SubOp(literal(other), self)))
 
@@ -76,25 +76,25 @@ class SubtractableBase[OperandT, ResultT]:
 class NegatableBase[ResultT]:
     """Base for values that support unary negation, positive, and abs."""
 
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+    def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __neg__(self) -> ResultT:
         """Negation: -self."""
-        from ...comps.value.unary_ops import NegOp
+        from ...comps.core.unary_ops import NegOp
 
         return cast("ResultT", self._wrap_arithmetic_result(NegOp(self)))
 
     def __pos__(self) -> ResultT:
         """Positive: +self."""
-        from ...comps.value.unary_ops import PosOp
+        from ...comps.core.unary_ops import PosOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PosOp(self)))
 
     def __abs__(self) -> ResultT:
         """Absolute value: abs(self)."""
-        from ...comps.value.unary_ops import AbsOp
+        from ...comps.core.unary_ops import AbsOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AbsOp(self)))
 
@@ -102,19 +102,19 @@ class NegatableBase[ResultT]:
 class MultiplyableBase[OperandT, ResultT]:
     """Base for values that support multiplication."""
 
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+    def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __mul__(self, other: OperandT) -> ResultT:
         """Multiplication: self * other."""
-        from ...comps.value.binary_ops import MulOp
+        from ...comps.core.binary_ops import MulOp
 
         return cast("ResultT", self._wrap_arithmetic_result(MulOp(self, literal(other))))
 
     def __rmul__(self, other: OperandT) -> ResultT:
         """Right multiplication: other * self."""
-        from ...comps.value.binary_ops import MulOp
+        from ...comps.core.binary_ops import MulOp
 
         return cast("ResultT", self._wrap_arithmetic_result(MulOp(literal(other), self)))
 
@@ -122,31 +122,31 @@ class MultiplyableBase[OperandT, ResultT]:
 class DivisibleBase[OperandT, ResultT]:
     """Base for values that support division (true and floor)."""
 
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+    def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __truediv__(self, other: OperandT) -> ResultT:
         """Division: self / other."""
-        from ...comps.value.binary_ops import DivOp
+        from ...comps.core.binary_ops import DivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(DivOp(self, literal(other))))
 
     def __rtruediv__(self, other: OperandT) -> ResultT:
         """Right division: other / self."""
-        from ...comps.value.binary_ops import DivOp
+        from ...comps.core.binary_ops import DivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(DivOp(literal(other), self)))
 
     def __floordiv__(self, other: OperandT) -> ResultT:
         """Floor division: self // other."""
-        from ...comps.value.binary_ops import FloorDivOp
+        from ...comps.core.binary_ops import FloorDivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(self, literal(other))))
 
     def __rfloordiv__(self, other: OperandT) -> ResultT:
         """Right floor division: other // self."""
-        from ...comps.value.binary_ops import FloorDivOp
+        from ...comps.core.binary_ops import FloorDivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(literal(other), self)))
 
@@ -154,19 +154,19 @@ class DivisibleBase[OperandT, ResultT]:
 class ModuloableBase[OperandT, ResultT]:
     """Base for values that support modulo operation."""
 
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+    def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __mod__(self, other: OperandT) -> ResultT:
         """Modulo: self % other."""
-        from ...comps.value.binary_ops import ModOp
+        from ...comps.core.binary_ops import ModOp
 
         return cast("ResultT", self._wrap_arithmetic_result(ModOp(self, literal(other))))
 
     def __rmod__(self, other: OperandT) -> ResultT:
         """Right modulo: other % self."""
-        from ...comps.value.binary_ops import ModOp
+        from ...comps.core.binary_ops import ModOp
 
         return cast("ResultT", self._wrap_arithmetic_result(ModOp(literal(other), self)))
 
@@ -174,19 +174,19 @@ class ModuloableBase[OperandT, ResultT]:
 class PowerableBase[OperandT, ResultT]:
     """Base for values that support exponentiation."""
 
-    def _wrap_arithmetic_result(self, operand: RValue) -> RValue:
+    def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __pow__(self, other: OperandT) -> ResultT:
         """Power: self ** other."""
-        from ...comps.value.binary_ops import PowOp
+        from ...comps.core.binary_ops import PowOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PowOp(self, literal(other))))
 
     def __rpow__(self, other: OperandT) -> ResultT:
         """Right power: other ** self."""
-        from ...comps.value.binary_ops import PowOp
+        from ...comps.core.binary_ops import PowOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PowOp(literal(other), self)))
 

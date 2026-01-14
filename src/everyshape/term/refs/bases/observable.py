@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from everyshape.loc import key
     from everyshape.typing import Sentinel
 
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
@@ -71,7 +71,7 @@ class ViewObservableBase:
         """
         return OnChangeOp(self)
 
-    def on_child_change(self, address: str | Sentinel | RValue[str | Sentinel]) -> OnChildChangeOp:
+    def on_child_change(self, address: str | Sentinel | Term[str | Sentinel]) -> OnChildChangeOp:
         """Subscribe to changes on a specific child.
 
         Args:

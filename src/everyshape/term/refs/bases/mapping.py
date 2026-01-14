@@ -23,19 +23,19 @@ from ...comps.ref import (
     RemoveByKeyCmd,
     SetByKeyCmd,
 )
-from ...values import (
-    BoolValue,
-    BytesValue,
-    DictValue,
-    FloatValue,
-    IntValue,
-    ListValue,
-    NoneValue,
-    SetValue,
-    StrValue,
-    TupleValue,
+from ...types import (
+    BoolType,
+    BytesType,
+    DictType,
+    FloatType,
+    IntType,
+    ListType,
+    NilType,
+    SetType,
+    StrType,
+    TupleType,
 )
-from ...values.conversion import computed, literal
+from ...types.conversion import computed, literal
 
 
 if TYPE_CHECKING:
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 
     from everyshape.typing import Sentinel
 
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
@@ -66,11 +66,11 @@ class MappingNestableBase[KeyT, ChildRefT]:
     """
 
     @abstractmethod
-    def _create_child_ref(self, key: KeyT | Sentinel | RValue[KeyT | Sentinel]) -> ChildRefT:
+    def _create_child_ref(self, key: KeyT | Sentinel | Term[KeyT | Sentinel]) -> ChildRefT:
         """Create a reference to a child at the given key.
 
         Args:
-            key: Child key (literal or RValue[KeyT] for computed key)
+            key: Child key (literal or Term[KeyT] for computed key)
 
         Returns:
             Reference to child at the specified key
@@ -79,12 +79,12 @@ class MappingNestableBase[KeyT, ChildRefT]:
             Subclasses must implement this to return the appropriate ref type.
 
         Example:
-            def _create_child_ref(self, key: KeyT | RValue[KeyT]) -> ChildRef:
+            def _create_child_ref(self, key: KeyT | Term[KeyT]) -> ChildRef:
                 return ChildRef(self, key)
         """
         ...
 
-    def __getitem__(self, key: KeyT | Sentinel | RValue[KeyT | Sentinel]) -> ChildRefT:
+    def __getitem__(self, key: KeyT | Sentinel | Term[KeyT | Sentinel]) -> ChildRefT:
         """Get child reference by key.
 
         Args:
@@ -110,71 +110,69 @@ class MappingIterableBase[KeyT, ValueT]:
     key_type: type[KeyT]
     value_type: type[ValueT]
 
-    def map_values[R](self, func: Callable[[ValueT], R]) -> DictValue[KeyT, R]:
+    def map_values[R](self, func: Callable[[ValueT], R]) -> DictType[KeyT, R]:
         """Map function over mapping values.
 
         Args:
             func: Function to apply to each value
 
         Returns:
-            DictValue containing transformed dict at execution time
+            DictType containing transformed dict at execution time
 
         Example:
             >>> doubled = scores_ref.map_values(lambda x: x * 2).execute(ctx)
         """
-        return DictValue(MapValuesOp(self, func))
+        return DictType(MapValuesOp(self, func))
 
-    def map_items[K2, V2](self, func: Callable[[KeyT, ValueT], tuple[K2, V2]]) -> DictValue[K2, V2]:
+    def map_items[K2, V2](self, func: Callable[[KeyT, ValueT], tuple[K2, V2]]) -> DictType[K2, V2]:
         """Map function over mapping items.
 
         Args:
             func: Function (key, value) -> (new_key, new_value)
 
         Returns:
-            DictValue containing transformed dict at execution time
+            DictType containing transformed dict at execution time
 
         Example:
             >>> upper_keys = dict_ref.map_items(lambda k, v: (k.upper(), v)).execute(ctx)
         """
-        return DictValue(MapItemsOp(self, func))
+        return DictType(MapItemsOp(self, func))
 
-    def filter(self, predicate: Callable[[KeyT, ValueT], bool]) -> DictValue[KeyT, ValueT]:
+    def filter(self, predicate: Callable[[KeyT, ValueT], bool]) -> DictType[KeyT, ValueT]:
         """Filter mapping items by predicate.
 
         Args:
             predicate: Function (key, value) -> bool, keep if True
 
         Returns:
-            DictValue containing filtered dict at execution time
+            DictType containing filtered dict at execution time
 
         Example:
             >>> high_scores = scores_ref.filter(lambda k, v: v > 100).execute(ctx)
         """
-        return DictValue(FilterItemsOp(self, predicate))
+        return DictType(FilterItemsOp(self, predicate))
 
     @overload
-    def reduce(self, func: Callable[[int, KeyT, ValueT], int], initial: int) -> IntValue: ...
+    def reduce(self, func: Callable[[int, KeyT, ValueT], int], initial: int) -> IntType: ...
 
     @overload
-    def reduce(self, func: Callable[[str, KeyT, ValueT], str], initial: str) -> StrValue: ...
+    def reduce(self, func: Callable[[str, KeyT, ValueT], str], initial: str) -> StrType: ...
 
     @overload
-    def reduce(
-        self, func: Callable[[float, KeyT, ValueT], float], initial: float
-    ) -> FloatValue: ...
+    def reduce(self, func: Callable[[float, KeyT, ValueT], float], initial: float) -> FloatType: ...
 
     @overload
-    def reduce(self, func: Callable[[bool, KeyT, ValueT], bool], initial: bool) -> BoolValue: ...
+    def reduce(self, func: Callable[[bool, KeyT, ValueT], bool], initial: bool) -> BoolType: ...
 
     @overload
     def reduce[V2](
         self, func: Callable[[list[V2], KeyT, ValueT], list[V2]], initial: list[V2]
-    ) -> ListValue[V2]: ...
+    ) -> ListType[V2]: ...
 
     @overload
     def reduce[K2, V2](
         self, func: Callable[[dict[K2, V2], KeyT, ValueT], dict[K2, V2]], initial: dict[K2, V2]
-    ) -> DictValue[K2, V2]: ...
+    ) -> DictType[K2, V2]: ...
 
     def reduce[R](self, func: Callable[[R, KeyT, ValueT], R], initial: R) -> object:
         """Reduce mapping to single value.
@@ -194,22 +192,22 @@ class MappingIterableBase[KeyT, ValueT]:
     @overload
     def find_key(
         self: MappingIterableBase[int, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> IntValue: ...
+    ) -> IntType: ...
 
     @overload
     def find_key(
         self: MappingIterableBase[str, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> StrValue: ...
+    ) -> StrType: ...
 
     @overload
     def find_key(
         self: MappingIterableBase[float, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> FloatValue: ...
+    ) -> FloatType: ...
 
     @overload
     def find_key(
         self: MappingIterableBase[bool, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> BoolValue: ...
+    ) -> BoolType: ...
 
     def find_key(self, predicate: Callable[[ValueT], bool]) -> object:
         """Find first key whose value matches predicate.
@@ -228,33 +226,33 @@ class MappingIterableBase[KeyT, ValueT]:
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, int], predicate: Callable[[int], bool]
-    ) -> IntValue: ...
+    ) -> IntType: ...
 
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, str], predicate: Callable[[str], bool]
-    ) -> StrValue: ...
+    ) -> StrType: ...
 
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, float], predicate: Callable[[float], bool]
-    ) -> FloatValue: ...
+    ) -> FloatType: ...
 
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, bool], predicate: Callable[[bool], bool]
-    ) -> BoolValue: ...
+    ) -> BoolType: ...
 
     @overload
     def find_value[V2](
         self: MappingIterableBase[KeyT, list[V2]], predicate: Callable[[list[V2]], bool]
-    ) -> ListValue[V2]: ...
+    ) -> ListType[V2]: ...
 
     @overload
     def find_value[K2, V2](
         self: MappingIterableBase[KeyT, dict[K2, V2]],
         predicate: Callable[[dict[K2, V2]], bool],
-    ) -> DictValue[K2, V2]: ...
+    ) -> DictType[K2, V2]: ...
 
     def find_value(self, predicate: Callable) -> object:
         """Find first value matching predicate.
@@ -270,19 +268,19 @@ class MappingIterableBase[KeyT, ValueT]:
         """
         return computed(self.value_type, FindValueByPredicateOp(self, predicate))
 
-    def find_item(self, predicate: Callable[[KeyT, ValueT], bool]) -> TupleValue[KeyT, ValueT]:
+    def find_item(self, predicate: Callable[[KeyT, ValueT], bool]) -> TupleType[KeyT, ValueT]:
         """Find first item (key, value) matching predicate.
 
         Args:
             predicate: Function (key, value) -> bool
 
         Returns:
-            TupleValue containing matching (key, value) tuple at execution time
+            TupleType containing matching (key, value) tuple at execution time
 
         Example:
             >>> item = dict_ref.find_item(lambda k, v: k.startswith("admin")).execute(ctx)
         """
-        return TupleValue(FindItemByPredicateOp(self, predicate))
+        return TupleType(FindItemByPredicateOp(self, predicate))
 
 
 class MappingAccessibleBase[KeyT, ValueT]:
@@ -297,69 +295,69 @@ class MappingAccessibleBase[KeyT, ValueT]:
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, int],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: int | Sentinel | None = None,
-    ) -> IntValue: ...
+    ) -> IntType: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, str],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: str | Sentinel | None = None,
-    ) -> StrValue: ...
+    ) -> StrType: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, bool],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: bool | Sentinel | None = None,
-    ) -> BoolValue: ...
+    ) -> BoolType: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, float],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: float | Sentinel | None = None,
-    ) -> FloatValue: ...
+    ) -> FloatType: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, bytes],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: bytes | Sentinel | None = None,
-    ) -> BytesValue: ...
+    ) -> BytesType: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, None],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: None | Sentinel = None,
-    ) -> NoneValue: ...
+    ) -> NilType: ...
 
     @overload
     def get_item[V](
         self: MappingAccessibleBase[KeyT, list[V]],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: list[V] | Sentinel | None = None,
-    ) -> ListValue[V]: ...
+    ) -> ListType[V]: ...
 
     @overload
     def get_item[K, V](
         self: MappingAccessibleBase[KeyT, dict[K, V]],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: dict[K, V] | Sentinel | None = None,
-    ) -> DictValue[K, V]: ...
+    ) -> DictType[K, V]: ...
 
     @overload
     def get_item[V](
         self: MappingAccessibleBase[KeyT, set[V]],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: set[V] | Sentinel | None = None,
-    ) -> SetValue[V]: ...
+    ) -> SetType[V]: ...
 
     def get_item(
         self,
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: ValueT | Sentinel | None = None,
     ) -> object:
         """Get value by key with optional default.
@@ -379,76 +377,76 @@ class MappingAccessibleBase[KeyT, ValueT]:
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, int],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: int | Sentinel | RValue[int | Sentinel],
-    ) -> IntValue: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: int | Sentinel | Term[int | Sentinel],
+    ) -> IntType: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, str],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: str | Sentinel | RValue[str | Sentinel],
-    ) -> StrValue: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: str | Sentinel | Term[str | Sentinel],
+    ) -> StrType: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, bool],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: bool | Sentinel | RValue[bool | Sentinel],
-    ) -> BoolValue: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: bool | Sentinel | Term[bool | Sentinel],
+    ) -> BoolType: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, float],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: float | Sentinel | RValue[float | Sentinel],
-    ) -> FloatValue: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: float | Sentinel | Term[float | Sentinel],
+    ) -> FloatType: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, bytes],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: bytes | Sentinel | RValue[bytes | Sentinel],
-    ) -> BytesValue: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: bytes | Sentinel | Term[bytes | Sentinel],
+    ) -> BytesType: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, None],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: None | Sentinel | RValue[None | Sentinel],
-    ) -> NoneValue: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: None | Sentinel | Term[None | Sentinel],
+    ) -> NilType: ...
 
     @overload
     def set_item[V](
         self: MappingAccessibleBase[KeyT, list[V]],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: list[V] | Sentinel | RValue[list[V] | Sentinel],
-    ) -> ListValue[V]: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: list[V] | Sentinel | Term[list[V] | Sentinel],
+    ) -> ListType[V]: ...
 
     @overload
     def set_item[K, V](
         self: MappingAccessibleBase[KeyT, dict[K, V]],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: dict[K, V] | Sentinel | RValue[dict[K, V] | Sentinel],
-    ) -> DictValue[K, V]: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: dict[K, V] | Sentinel | Term[dict[K, V] | Sentinel],
+    ) -> DictType[K, V]: ...
 
     @overload
     def set_item[V](
         self: MappingAccessibleBase[KeyT, set[V]],
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: set[V] | Sentinel | RValue[set[V] | Sentinel],
-    ) -> SetValue[V]: ...
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: set[V] | Sentinel | Term[set[V] | Sentinel],
+    ) -> SetType[V]: ...
 
     def set_item(
         self,
-        key: KeyT | Sentinel | RValue[KeyT | Sentinel],
-        value: ValueT | Sentinel | RValue[ValueT | Sentinel],
+        key: KeyT | Sentinel | Term[KeyT | Sentinel],
+        value: ValueT | Sentinel | Term[ValueT | Sentinel],
     ) -> object:
         """Set value at key in mapping.
 
         Args:
             key: Key to set
-            value: Value to set (literal or RValue)
+            value: Value to set (literal or Term)
 
         Returns:
             Typed value wrapper containing the set value
@@ -458,14 +456,14 @@ class MappingAccessibleBase[KeyT, ValueT]:
         """
         return computed(self.value_type, SetByKeyCmd(self, key, literal(value)))
 
-    def remove_item(self, key: KeyT | Sentinel | RValue[KeyT | Sentinel]) -> NoneValue:
+    def remove_item(self, key: KeyT | Sentinel | Term[KeyT | Sentinel]) -> NilType:
         """Remove key from mapping.
 
         Args:
             key: Key to remove
 
         Returns:
-            NoneValue (remove returns None after execution)
+            NilType (remove returns None after execution)
 
         Note:
             Raises KeyError at execution if key not found.
@@ -473,4 +471,4 @@ class MappingAccessibleBase[KeyT, ValueT]:
         Example:
             >>> dict_ref.remove_item("key").execute(ctx)
         """
-        return NoneValue(RemoveByKeyCmd(self, key))
+        return NilType(RemoveByKeyCmd(self, key))

@@ -14,14 +14,14 @@ from ...comps.ref import (
     DiscardValueCmd,
     RemoveValueCmd,
 )
-from ...values import NoneValue
-from ...values.conversion import literal
+from ...types import NilType
+from ...types.conversion import literal
 
 
 if TYPE_CHECKING:
     from everyshape.typing import Sentinel
 
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
@@ -41,19 +41,19 @@ class SetAddableBase[ItemT]:
     Implements add() method for sets.
     """
 
-    def add(self, value: ItemT | Sentinel | RValue[ItemT | Sentinel]) -> NoneValue:
+    def add(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NilType:
         """Create an add command.
 
         Args:
-            value: Item to add (literal or RValue)
+            value: Item to add (literal or Term)
 
         Returns:
-            NoneValue (add returns None after execution)
+            NilType (add returns None after execution)
 
         Example:
             >>> set_ref.add("item").execute(ctx)
         """
-        return NoneValue(AddValueCmd(self, literal(value)))
+        return NilType(AddValueCmd(self, literal(value)))
 
 
 class SetRemovableBase[ItemT]:
@@ -62,14 +62,14 @@ class SetRemovableBase[ItemT]:
     Implements remove() and discard() methods for sets.
     """
 
-    def remove(self, value: ItemT | Sentinel | RValue[ItemT | Sentinel]) -> NoneValue:
+    def remove(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NilType:
         """Create a remove command.
 
         Args:
-            value: Item to remove (literal or RValue)
+            value: Item to remove (literal or Term)
 
         Returns:
-            NoneValue (remove returns None after execution)
+            NilType (remove returns None after execution)
 
         Note:
             Raises KeyError at execution if item not found.
@@ -77,18 +77,18 @@ class SetRemovableBase[ItemT]:
         Example:
             >>> set_ref.remove("item").execute(ctx)
         """
-        return NoneValue(RemoveValueCmd(self, literal(value)))
+        return NilType(RemoveValueCmd(self, literal(value)))
 
-    def discard(self, value: ItemT | Sentinel | RValue[ItemT | Sentinel]) -> NoneValue:
+    def discard(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NilType:
         """Create a discard command.
 
         Args:
-            value: Item to discard (literal or RValue)
+            value: Item to discard (literal or Term)
 
         Returns:
-            NoneValue (discard returns None after execution, no error if missing)
+            NilType (discard returns None after execution, no error if missing)
 
         Example:
             >>> set_ref.discard("item").execute(ctx)  # No error if missing
         """
-        return NoneValue(DiscardValueCmd(self, literal(value)))
+        return NilType(DiscardValueCmd(self, literal(value)))

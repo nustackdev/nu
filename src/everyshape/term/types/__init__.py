@@ -1,33 +1,23 @@
-"""RValue system - computed values and expressions.
+"""Type system - unified typed expressions.
 
-This module provides the foundational RValue system for the everyshape
-data layer. RValues represent already computed/available values that
-can be used in expressions and operations.
+This module provides the unified Type system for everyshape.
+Types handle both literal and computed values through a single interface.
 
 Module Structure:
-    capabilities.py      - Atomic capability PROTOCOLS (Addable, Comparable, etc.)
-    bases.py             - Capability implementation MIXINS (NumericBase, etc.)
-    literals.py          - Literal value types (IntLiteral, StrLiteral, etc.)
-    primitive_values.py  - Computed primitive types (IntValue, StrValue, etc.)
-    collection_values.py - Computed collection types (ListValue, DictValue, etc.)
-    conversion.py        - Conversion utilities (literal, result)
+    types.py         - Unified Type classes (IntType, StrType, etc.)
+    bases.py         - Capability implementation mixins (NumericBase, etc.)
+    capabilities.py  - Atomic capability protocols (Addable, Comparable, etc.)
+    conversion.py    - Conversion utilities (literal, computed)
 
-Value Types:
-    Literal Values (wrap fixed Python values):
-        IntLiteral, FloatLiteral, BoolLiteral, StrLiteral, BytesLiteral, NoneLiteral
-        ListLiteral, DictLiteral, TupleLiteral, SetLiteral, FrozenSetLiteral
+Type Hierarchy:
+    Type[T] (unified typed expression)
+    ├── IntType, FloatType, StrType, BoolType, BytesType, NilType
+    ├── ListType[T], DictType[K, V], SetType[T], TupleType[*Ts], FrozenSetType[T]
+    ├── AnyType (dynamic/unknown)
+    └── SentinelType (EmptyType, NAType)
 
-    Computed Values (wrap Operations/RValues):
-        IntValue, FloatValue, BoolValue, StrValue, BytesValue, NoneValue
-        ListValue, DictValue, TupleValue, SetValue, FrozenSetValue
-
-    Special Values:
-        UnknownValue - Dynamic/unknown type
-        EmptyValue   - Absence of value
-        NaNValue     - Not-a-number
-
-Hierarchy:
-    CoreBase                    - Everyone inherits (ifelse, is_empty, is_nan)
+Capability Bases:
+    CoreBase                    - Everyone inherits (ifelse, is_empty, is_na)
     ├── Arithmetic Bases
     │   ├── NumericBase         - Full arithmetic (+, -, *, /, etc.)
     │   ├── AdditiveBase        - Addition/subtraction only
@@ -40,14 +30,14 @@ Hierarchy:
     └── StringBase              - String operations
 
 Example:
-    >>> from everyshape.shape.values import IntLiteral, literal
+    >>> from everyshape.term.types import IntType, literal
     >>>
-    >>> # Create literal value
-    >>> lit = IntLiteral(42)
-    >>> lit.execute(ctx)  # Returns 42
+    >>> # Create from literal value
+    >>> x = IntType(42)
+    >>> x.execute(ctx)  # Returns 42
     >>>
     >>> # Use literal() for automatic wrapping
-    >>> val = literal(42)  # Returns IntLiteral(42)
+    >>> val = literal(42)  # Returns IntType(42)
 """
 
 # Capability implementation mixins
@@ -145,40 +135,41 @@ from .capabilities import (
 )
 
 # Conversion utilities
-from .conversion import literal, computed
+from .conversion import computed, literal
 
-# Literal types
-from .literals import (
-    BoolLiteral,
-    BytesLiteral,
-    DictLiteral,
-    FloatLiteral,
-    FrozenSetLiteral,
-    IntLiteral,
-    ListLiteral,
-    NoneLiteral,
-    SetLiteral,
-    StrLiteral,
-    TupleLiteral,
+# Unified Type classes
+from .definitions import (
+    # Primitive types
+    SentinelType,
+    IntType,
+    FloatType,
+    StrType,
+    BoolType,
+    BytesType,
+    NilType,
+    ListType,
+    DictType,
+    TupleType,
+    SetType,
+    FrozenSetType,
+    AnyType,
+    EmptyType,
+    NAType,
 )
 
-# Computed types
-from .values import (
-    BoolValue,
-    BytesValue,
-    EmptyValue,
-    FloatValue,
-    IntValue,
-    NaNValue,
-    NoneValue,
-    StrValue,
-    UnknownValue,
-    DictValue,
-    FrozenSetValue,
-    ListValue,
-    SetValue,
-    TupleValue,
-)
+# Backwards compatibility - re-export literal types as aliases to unified types
+# These are DEPRECATED - use *Type classes directly
+IntLiteral = IntType
+FloatLiteral = FloatType
+StrLiteral = StrType
+BoolLiteral = BoolType
+BytesLiteral = BytesType
+NoneLiteral = NilType
+ListLiteral = ListType
+DictLiteral = DictType
+TupleLiteral = TupleType
+SetLiteral = SetType
+FrozenSetLiteral = FrozenSetType
 
 
 __all__ = [  # noqa: RUF022
@@ -276,8 +267,45 @@ __all__ = [  # noqa: RUF022
     "is_sliceable",
     "is_subtractable",
     # ==========================================================================
-    # LITERAL VALUE TYPES
+    # UNIFIED TYPE CLASSES (NEW - USE THESE)
     # ==========================================================================
+    # Primitive types
+    "IntType",
+    "FloatType",
+    "StrType",
+    "BoolType",
+    "BytesType",
+    "NilType",
+    # Collection types
+    "ListType",
+    "DictType",
+    "TupleType",
+    "SetType",
+    "FrozenSetType",
+    # Special types
+    "AnyType",
+    "SentinelType",
+    "EmptyType",
+    "NAType",
+    # ==========================================================================
+    # BACKWARDS COMPATIBILITY (DEPRECATED)
+    # ==========================================================================
+    # Old computed value names → now unified types
+    "IntType",
+    "FloatType",
+    "BoolType",
+    "StrType",
+    "BytesType",
+    "NilType",
+    "AnyType",
+    "EmptyType",
+    "NAType",
+    "ListType",
+    "DictType",
+    "TupleType",
+    "SetType",
+    "FrozenSetType",
+    # Old literal names → now unified types
     "IntLiteral",
     "FloatLiteral",
     "BoolLiteral",
@@ -289,29 +317,6 @@ __all__ = [  # noqa: RUF022
     "TupleLiteral",
     "SetLiteral",
     "FrozenSetLiteral",
-    # ==========================================================================
-    # COMPUTED PRIMITIVE VALUE TYPES
-    # ==========================================================================
-    "IntValue",
-    "FloatValue",
-    "BoolValue",
-    "StrValue",
-    "BytesValue",
-    "NoneValue",
-    # ==========================================================================
-    # SPECIAL VALUE TYPES
-    # ==========================================================================
-    "UnknownValue",
-    "EmptyValue",
-    "NaNValue",
-    # ==========================================================================
-    # COMPUTED COLLECTION VALUE TYPES
-    # ==========================================================================
-    "ListValue",
-    "DictValue",
-    "TupleValue",
-    "SetValue",
-    "FrozenSetValue",
     # ==========================================================================
     # CONVERSION UTILITIES
     # ==========================================================================

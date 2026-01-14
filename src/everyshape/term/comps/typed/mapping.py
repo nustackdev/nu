@@ -1,8 +1,8 @@
-"""Mapping (dict) operations for RValue expressions.
+"""Mapping (dict) operations for Term expressions.
 
-This module provides type-safe operations on dict RValues:
+This module provides type-safe operations on dict Terms:
 
-Access: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
+Access: DictKeysOp, DictTypesOp, DictItemsOp, DictGetOp
 Membership: ContainsOp
 
 Design principles:
@@ -32,8 +32,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import (
+    from ...term import Term
+    from ...types.bases import (
         UnionBaseType,
     )
 
@@ -42,7 +42,7 @@ __all__ = [
     "DictGetOp",
     "DictItemsOp",
     "DictKeysOp",
-    "DictValuesOp",
+    "DictTypesOp",
 ]
 
 
@@ -50,7 +50,7 @@ __all__ = [
 # ABSTRACT MAPPING OPERATION
 # =============================================================================
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class MappingOp[ResultT](Operation[ResultT]):
@@ -64,9 +64,9 @@ class MappingOp[ResultT](Operation[ResultT]):
         """Initialize mapping operation.
 
         Args:
-            operand: RValue that should produce a mapping
+            operand: Term that should produce a mapping
         """
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> ResultT:
         """Execute mapping operation.
@@ -115,7 +115,7 @@ class DictKeysOp[K](MappingOp[list[K]]):
         return list(operand.keys())  # type: ignore
 
 
-class DictValuesOp[V](MappingOp[list[V]]):
+class DictTypesOp[V](MappingOp[list[V]]):
     """Get values from dict: list(dict.values())."""
 
     def _apply_op(self, operand: object) -> list[V]:
@@ -141,9 +141,9 @@ class DictGetOp[V](Operation[V | Sentinel]):
     ) -> None:
         """Init."""
         self.children = (
-            cast("RValue", operand),
-            cast("RValue", key),
-            cast("RValue", default),
+            cast("Term", operand),
+            cast("Term", key),
+            cast("Term", default),
         )
 
     def execute(self, context: Context) -> V | Sentinel:
@@ -184,7 +184,7 @@ class ContainsOp(Operation[bool]):
 
     def __init__(self, operand: OpArgument, item: OpArgument) -> None:
         """Init."""
-        self.children = (cast("RValue", operand), cast("RValue", item))
+        self.children = (cast("Term", operand), cast("Term", item))
 
     def execute(self, context: Context) -> bool:
         """Execute."""

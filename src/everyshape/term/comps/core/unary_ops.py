@@ -37,8 +37,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 __all__ = [
     "AbsOp",
@@ -59,7 +59,7 @@ __all__ = [
 # =============================================================================
 
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class UnaryOp[ResultT](Operation[ResultT]):
@@ -78,7 +78,7 @@ class UnaryOp[ResultT](Operation[ResultT]):
             op: Operator name
             operand: Single operand
         """
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> ResultT:
         """Execute unary operation.

@@ -381,7 +381,7 @@ class Comparable[OtherT, ResultT](Protocol):
 
     Type Parameters:
         OtherT: Type of the other operand
-        ResultT: Type of the result (typically bool or BoolValue)
+        ResultT: Type of the result (typically bool or BoolType)
 
     Example:
         >>> if isinstance(value, Comparable):
@@ -442,7 +442,7 @@ class Equalable[OtherT, ResultT](Protocol):
 
     Type Parameters:
         OtherT: Type of the other operand
-        ResultT: Type of the result (typically bool or BoolValue)
+        ResultT: Type of the result (typically bool or BoolType)
 
     Example:
         >>> if isinstance(value, Equalable):
@@ -768,7 +768,7 @@ class Lengthable[ResultT](Protocol):
     """Protocol for values that have a length.
 
     Type Parameters:
-        ResultT: Type of the length result (typically int or IntValue)
+        ResultT: Type of the length result (typically int or IntType)
 
     Example:
         >>> if isinstance(value, Lengthable):
@@ -790,7 +790,7 @@ class Containable[OtherT, ResultT](Protocol):
 
     Type Parameters:
         OtherT: Type of the item to check
-        ResultT: Type of the result (typically bool or BoolValue)
+        ResultT: Type of the result (typically bool or BoolType)
 
     Example:
         >>> if isinstance(value, Containable):
@@ -869,7 +869,7 @@ class Formattable[ResultT](Protocol):
     """Protocol for values that support string formatting.
 
     Type Parameters:
-        ResultT: Type of the result (typically str or StrValue)
+        ResultT: Type of the result (typically str or StrType)
 
     Example:
         >>> if isinstance(value, Formattable):

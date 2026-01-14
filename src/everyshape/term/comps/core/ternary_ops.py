@@ -13,8 +13,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 
 __all__ = [
@@ -27,7 +27,7 @@ __all__ = [
 # =============================================================================
 
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class TernaryOp[ResultT](Operation[ResultT], ABC):
@@ -48,7 +48,7 @@ class TernaryOp[ResultT](Operation[ResultT], ABC):
             second: Second operand
             third: Third operand
         """
-        self.children = (cast("RValue", first), cast("RValue", second), cast("RValue", third))
+        self.children = (cast("Term", first), cast("Term", second), cast("Term", third))
 
     @abstractmethod
     def execute(self, context: Context) -> ResultT:

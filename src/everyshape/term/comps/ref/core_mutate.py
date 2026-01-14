@@ -23,7 +23,7 @@ from everyshape.view import (
     Initializable,
 )
 
-from ...term import Command, PrimitiveRef, RValue, ViewRef
+from ...term import Command, PrimitiveRef, Term, ViewRef
 
 
 if TYPE_CHECKING:
@@ -57,13 +57,13 @@ class SetCmd[T](Command[T]):
     def __init__(
         self,
         ref: PrimitiveRef[T] | UnionRefBases,
-        value: RValue[T | Sentinel],
+        value: Term[T | Sentinel],
     ) -> None:
         """Initialize set command.
 
         Args:
             ref: Reference to write to
-            value: Value to write (wrapped in RValue)
+            value: Value to write (wrapped in Term)
         """
         self.ref = cast("PrimitiveRef[T]", ref)
         self.value_expr = value
@@ -179,13 +179,13 @@ class StoreCmd[T](Command[T]):
     def __init__(
         self,
         ref: ViewRef[Initializable] | UnionRefBases,
-        data: RValue[T | Sentinel],
+        data: Term[T | Sentinel],
     ) -> None:
         """Initialize store command.
 
         Args:
             ref: View reference to store to
-            data: Data to store (wrapped in RValue)
+            data: Data to store (wrapped in Term)
         """
         self.ref = cast("ViewRef[Initializable]", ref)
         self.data_expr = data

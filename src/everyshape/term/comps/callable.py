@@ -21,8 +21,8 @@ Example:
     ...     def now(cls) -> DatetimeValue:
     ...         return DatetimeValue(FuncCallOp(datetime.now))
     ...
-    ...     def timestamp(self) -> FloatValue:
-    ...         return FloatValue(MethodCallOp(self, "timestamp"))
+    ...     def timestamp(self) -> FloatType:
+    ...         return FloatType(MethodCallOp(self, "timestamp"))
     ...
     ...     def __to_storage__(self) -> float:
     ...         return self.execute(ctx).timestamp()
@@ -36,7 +36,7 @@ from everyshape.loc import path
 from everyshape.typing import Sentinel
 from everyshape.view import Assignable
 
-from ..term import Command, Operation, PrimitiveRef, RValue
+from ..term import Command, Operation, PrimitiveRef, Term
 
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
     from ..context import Context
     from ..refs import UnionRefBases
-    from ..values.bases import UnionBaseType
+    from ..types.bases import UnionBaseType
 
 
 __all__ = [
@@ -57,7 +57,7 @@ __all__ = [
 ]
 
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 # =============================================================================
@@ -69,7 +69,7 @@ class FuncCallOp[ResultT](Operation[ResultT]):
     """Operation that calls a function/method with arguments.
 
     FuncCallOp enables calling arbitrary callables within the term system.
-    Arguments can be raw values or RValues - RValues are executed before
+    Arguments can be raw values or Terms - Terms are executed before
     the function is called.
 
     This is primarily used for creating TypedValue constructors, allowing
@@ -95,20 +95,20 @@ class FuncCallOp[ResultT](Operation[ResultT]):
 
         Args:
             func: The callable to invoke
-            *args: Positional arguments (can be RValues or raw values)
-            **kwargs: Keyword arguments (can be RValues or raw values)
+            *args: Positional arguments (can be Terms or raw values)
+            **kwargs: Keyword arguments (can be Terms or raw values)
         """
         self._func = func
         self._args = args
         self._kwargs = kwargs
 
-        # Collect RValue children for dependency tracking
+        # Collect Term children for dependency tracking
         children = []
         for arg in args:
-            if isinstance(arg, RValue):
+            if isinstance(arg, Term):
                 children.append(arg)
         for val in kwargs.values():
-            if isinstance(val, RValue):
+            if isinstance(val, Term):
                 children.append(val)
         self.children = tuple(children)
 
@@ -120,20 +120,20 @@ class FuncCallOp[ResultT](Operation[ResultT]):
         so we assume it is if all inputs are pure.
 
         Returns:
-            True if all RValue arguments are pure
+            True if all Term arguments are pure
         """
         for arg in self._args:
-            if isinstance(arg, RValue) and not arg.is_pure:
+            if isinstance(arg, Term) and not arg.is_pure:
                 return False
         for val in self._kwargs.values():
-            if isinstance(val, RValue) and not val.is_pure:
+            if isinstance(val, Term) and not val.is_pure:
                 return False
         return True
 
     def execute(self, context: Context) -> ResultT:
         """Execute the function call.
 
-        Resolves all RValue arguments by executing them, then calls
+        Resolves all Term arguments by executing them, then calls
         the function with the resolved values.
 
         Args:
@@ -145,7 +145,7 @@ class FuncCallOp[ResultT](Operation[ResultT]):
         # Resolve positional arguments
         resolved_args = []
         for arg in self._args:
-            if isinstance(arg, RValue):
+            if isinstance(arg, Term):
                 resolved_args.append(arg.execute(context))
             else:
                 resolved_args.append(arg)
@@ -153,7 +153,7 @@ class FuncCallOp[ResultT](Operation[ResultT]):
         # Resolve keyword arguments
         resolved_kwargs = {}
         for key, val in self._kwargs.items():
-            if isinstance(val, RValue):
+            if isinstance(val, Term):
                 resolved_kwargs[key] = val.execute(context)
             else:
                 resolved_kwargs[key] = val
@@ -178,7 +178,7 @@ class MethodCallOp[ResultT](Operation[ResultT]):
     """Operation that calls a method on an instance.
 
     MethodCallOp enables calling instance methods within the term system.
-    The instance and arguments can be RValues - they are executed before
+    The instance and arguments can be Terms - they are executed before
     the method is called.
 
     This is used for calling methods on TypedValue's underlying value,
@@ -196,8 +196,8 @@ class MethodCallOp[ResultT](Operation[ResultT]):
 
         >>> # Used in TypedValue subclass
         >>> class DatetimeValue(TypedValue[datetime]):
-        ...     def timestamp(self) -> FloatValue:
-        ...         return FloatValue(MethodCallOp(self, "timestamp"))
+        ...     def timestamp(self) -> FloatType:
+        ...         return FloatType(MethodCallOp(self, "timestamp"))
     """
 
     def __init__(
@@ -206,23 +206,23 @@ class MethodCallOp[ResultT](Operation[ResultT]):
         """Initialize method call operation.
 
         Args:
-            instance: The instance to call the method on (can be RValue)
+            instance: The instance to call the method on (can be Term)
             method_name: Name of the method to call
-            *args: Positional arguments (can be RValues or raw values)
-            **kwargs: Keyword arguments (can be RValues or raw values)
+            *args: Positional arguments (can be Terms or raw values)
+            **kwargs: Keyword arguments (can be Terms or raw values)
         """
         self._instance = instance
         self._method_name = method_name
         self._args = args
         self._kwargs = kwargs
 
-        # Collect RValue children for dependency tracking
-        children = [instance] if isinstance(instance, RValue) else []
+        # Collect Term children for dependency tracking
+        children = [instance] if isinstance(instance, Term) else []
         for arg in args:
-            if isinstance(arg, RValue):
+            if isinstance(arg, Term):
                 children.append(arg)
         for val in kwargs.values():
-            if isinstance(val, RValue):
+            if isinstance(val, Term):
                 children.append(val)
         self.children = tuple(children)
 
@@ -234,22 +234,22 @@ class MethodCallOp[ResultT](Operation[ResultT]):
         so we assume it is if all inputs are pure.
 
         Returns:
-            True if all RValue arguments are pure
+            True if all Term arguments are pure
         """
-        if isinstance(self._instance, RValue) and not self._instance.is_pure:
+        if isinstance(self._instance, Term) and not self._instance.is_pure:
             return False
         for arg in self._args:
-            if isinstance(arg, RValue) and not arg.is_pure:
+            if isinstance(arg, Term) and not arg.is_pure:
                 return False
         for val in self._kwargs.values():
-            if isinstance(val, RValue) and not val.is_pure:
+            if isinstance(val, Term) and not val.is_pure:
                 return False
         return True
 
     def execute(self, context: Context) -> ResultT:
         """Execute the method call.
 
-        Resolves the instance and all RValue arguments by executing them,
+        Resolves the instance and all Term arguments by executing them,
         then calls the method with the resolved values.
 
         Args:
@@ -259,7 +259,7 @@ class MethodCallOp[ResultT](Operation[ResultT]):
             The method's return value
         """
         # Resolve instance
-        if isinstance(self._instance, RValue):
+        if isinstance(self._instance, Term):
             instance = self._instance.execute(context)
         else:
             instance = self._instance
@@ -267,7 +267,7 @@ class MethodCallOp[ResultT](Operation[ResultT]):
         # Resolve positional arguments
         resolved_args = []
         for arg in self._args:
-            if isinstance(arg, RValue):
+            if isinstance(arg, Term):
                 resolved_args.append(arg.execute(context))
             else:
                 resolved_args.append(arg)
@@ -275,7 +275,7 @@ class MethodCallOp[ResultT](Operation[ResultT]):
         # Resolve keyword arguments
         resolved_kwargs = {}
         for key, val in self._kwargs.items():
-            if isinstance(val, RValue):
+            if isinstance(val, Term):
                 resolved_kwargs[key] = val.execute(context)
             else:
                 resolved_kwargs[key] = val
@@ -303,7 +303,7 @@ class GetAttrOp[ResultT](Operation[ResultT]):
     """Operation that gets an attribute from an instance.
 
     GetAttrOp enables getting instance attributes within the term system.
-    The instance can be an RValue - it is executed before the attribute
+    The instance can be an Term - it is executed before the attribute
     is retrieved.
 
     Type Parameters:
@@ -316,20 +316,20 @@ class GetAttrOp[ResultT](Operation[ResultT]):
         >>> # Used in TypedValue subclass
         >>> class DatetimeValue(TypedValue[datetime]):
         ...     @property
-        ...     def year(self) -> IntValue:
-        ...         return IntValue(GetAttrOp(self, "year"))
+        ...     def year(self) -> IntType:
+        ...         return IntType(GetAttrOp(self, "year"))
     """
 
     def __init__(self, instance: OpArgument, attr_name: str) -> None:
         """Initialize get attribute operation.
 
         Args:
-            instance: The instance to get the attribute from (can be RValue)
+            instance: The instance to get the attribute from (can be Term)
             attr_name: Name of the attribute to get
         """
         self._instance = instance
         self._attr_name = attr_name
-        self.children = (instance,) if isinstance(instance, RValue) else ()
+        self.children = (instance,) if isinstance(instance, Term) else ()
 
     @property
     def is_pure(self) -> bool:
@@ -338,7 +338,7 @@ class GetAttrOp[ResultT](Operation[ResultT]):
         Returns:
             True if the instance is pure
         """
-        if isinstance(self._instance, RValue):
+        if isinstance(self._instance, Term):
             return self._instance.is_pure
         return True
 
@@ -352,7 +352,7 @@ class GetAttrOp[ResultT](Operation[ResultT]):
             The attribute value
         """
         # Resolve instance
-        if isinstance(self._instance, RValue):
+        if isinstance(self._instance, Term):
             instance = self._instance.execute(context)
         else:
             instance = self._instance
@@ -368,7 +368,7 @@ class SetAttrOp[ResultT](Operation[ResultT]):
     """Operation that sets an attribute on an instance.
 
     SetAttrOp enables setting instance attributes within the term system.
-    The instance and value can be RValues - they are executed before
+    The instance and value can be Terms - they are executed before
     the attribute is set.
 
     Type Parameters:
@@ -378,7 +378,7 @@ class SetAttrOp[ResultT](Operation[ResultT]):
         >>> # Set an attribute
         >>> SetAttrOp(obj, "name", "value")
 
-        >>> # With RValue
+        >>> # With Term
         >>> SetAttrOp(obj_ref, "count", count_ref)
     """
 
@@ -386,19 +386,19 @@ class SetAttrOp[ResultT](Operation[ResultT]):
         """Initialize set attribute operation.
 
         Args:
-            instance: The instance to set the attribute on (can be RValue)
+            instance: The instance to set the attribute on (can be Term)
             attr_name: Name of the attribute to set
-            value: Value to set (can be RValue or raw value)
+            value: Value to set (can be Term or raw value)
         """
         self._instance = instance
         self._attr_name = attr_name
         self._value = value
 
-        # Collect RValue children for dependency tracking
+        # Collect Term children for dependency tracking
         children = []
-        if isinstance(instance, RValue):
+        if isinstance(instance, Term):
             children.append(instance)
-        if isinstance(value, RValue):
+        if isinstance(value, Term):
             children.append(value)
         self.children = tuple(children)
 
@@ -421,13 +421,13 @@ class SetAttrOp[ResultT](Operation[ResultT]):
             The value that was set
         """
         # Resolve instance
-        if isinstance(self._instance, RValue):
+        if isinstance(self._instance, Term):
             instance = self._instance.execute(context)
         else:
             instance = self._instance
 
         # Resolve value
-        if isinstance(self._value, RValue):
+        if isinstance(self._value, Term):
             value = self._value.execute(context)
         else:
             value = self._value
@@ -444,7 +444,7 @@ class DelAttrOp(Operation[None]):
     """Operation that deletes an attribute from an instance.
 
     DelAttrOp enables deleting instance attributes within the term system.
-    The instance can be an RValue - it is executed before the attribute
+    The instance can be an Term - it is executed before the attribute
     is deleted.
 
     Example:
@@ -456,12 +456,12 @@ class DelAttrOp(Operation[None]):
         """Initialize delete attribute operation.
 
         Args:
-            instance: The instance to delete the attribute from (can be RValue)
+            instance: The instance to delete the attribute from (can be Term)
             attr_name: Name of the attribute to delete
         """
         self._instance = instance
         self._attr_name = attr_name
-        self.children = (instance,) if isinstance(instance, RValue) else ()
+        self.children = (instance,) if isinstance(instance, Term) else ()
 
     @property
     def is_pure(self) -> bool:
@@ -482,7 +482,7 @@ class DelAttrOp(Operation[None]):
             None
         """
         # Resolve instance
-        if isinstance(self._instance, RValue):
+        if isinstance(self._instance, Term):
             instance = self._instance.execute(context)
         else:
             instance = self._instance
@@ -524,7 +524,7 @@ class TypedSetCmd[T](Command[T]):
     def __init__(
         self,
         ref: PrimitiveRef[T] | UnionRefBases,
-        value: RValue[T | Sentinel],
+        value: Term[T | Sentinel],
     ) -> None:
         """Initialize typed set command.
 

@@ -4,7 +4,7 @@ Re-exports from:
 - string: String operations (UpperOp, LowerOp, etc.)
 - bytes: Bytes operations (DecodeOp, HexOp, etc.)
 - sequence: Sequence operations (SumOp, MinOp, etc.)
-- mapping: Mapping operations (DictKeysOp, DictValuesOp, etc.)
+- mapping: Mapping operations (DictKeysOp, DictTypesOp, etc.)
 - set: Set operations (UnionOp, IntersectionOp, etc.)
 """
 
@@ -28,7 +28,7 @@ from .mapping import (
     DictGetOp,
     DictItemsOp,
     DictKeysOp,
-    DictValuesOp,
+    DictTypesOp,
 )
 from .sequence import (
     AllOp,
@@ -120,7 +120,7 @@ __all__ = [
     "DictGetOp",
     "DictItemsOp",
     "DictKeysOp",
-    "DictValuesOp",
+    "DictTypesOp",
     # Set ops
     "DifferenceOp",
     "EncodeOp",

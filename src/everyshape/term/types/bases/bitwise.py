@@ -1,4 +1,4 @@
-"""Bitwise base classes for RValue types.
+"""Bitwise base classes for Term types.
 
 This module provides bitwise operation mixins including:
 - BitwiseAndableBase - bitand()
@@ -17,7 +17,7 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from ...term import RValue
+    from ...term import Term
 
 
 __all__ = [
@@ -33,7 +33,7 @@ __all__ = [
 class BitwiseAndableBase[OperandT, ResultT]:
     """Base for values that support bitwise AND."""
 
-    def _wrap_bitwise_result(self, operand: RValue) -> RValue:
+    def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -46,7 +46,7 @@ class BitwiseAndableBase[OperandT, ResultT]:
         Returns:
             AND result
         """
-        from ...comps.value.binary_ops import BitwiseAndOp
+        from ...comps.core.binary_ops import BitwiseAndOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseAndOp(self, literal(other))))
 
@@ -54,7 +54,7 @@ class BitwiseAndableBase[OperandT, ResultT]:
 class BitwiseOrableBase[OperandT, ResultT]:
     """Base for values that support bitwise OR."""
 
-    def _wrap_bitwise_result(self, operand: RValue) -> RValue:
+    def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -67,7 +67,7 @@ class BitwiseOrableBase[OperandT, ResultT]:
         Returns:
             OR result
         """
-        from ...comps.value.binary_ops import BitwiseOrOp
+        from ...comps.core.binary_ops import BitwiseOrOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseOrOp(self, literal(other))))
 
@@ -75,19 +75,19 @@ class BitwiseOrableBase[OperandT, ResultT]:
 class BitwiseXorableBase[OperandT, ResultT]:
     """Base for values that support bitwise XOR."""
 
-    def _wrap_bitwise_result(self, operand: RValue) -> RValue:
+    def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __xor__(self, other: OperandT) -> ResultT:
         """Bitwise XOR: self ^ other."""
-        from ...comps.value.binary_ops import XorOp
+        from ...comps.core.binary_ops import XorOp
 
         return cast("ResultT", self._wrap_bitwise_result(XorOp(self, literal(other))))
 
     def __rxor__(self, other: OperandT) -> ResultT:
         """Right XOR: other ^ self."""
-        from ...comps.value.binary_ops import XorOp
+        from ...comps.core.binary_ops import XorOp
 
         return cast("ResultT", self._wrap_bitwise_result(XorOp(literal(other), self)))
 
@@ -95,7 +95,7 @@ class BitwiseXorableBase[OperandT, ResultT]:
 class BitwiseNotableBase[ResultT]:
     """Base for values that support bitwise NOT."""
 
-    def _wrap_bitwise_result(self, operand: RValue) -> RValue:
+    def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -105,7 +105,7 @@ class BitwiseNotableBase[ResultT]:
         Returns:
             Inverted value
         """
-        from ...comps.value.unary_ops import BitwiseNotOp
+        from ...comps.core.unary_ops import BitwiseNotOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseNotOp(self)))
 
@@ -113,31 +113,31 @@ class BitwiseNotableBase[ResultT]:
 class ShiftableBase[OperandT, ResultT]:
     """Base for values that support bit shifting."""
 
-    def _wrap_bitwise_result(self, operand: RValue) -> RValue:
+    def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
     def __lshift__(self, other: OperandT) -> ResultT:
         """Left shift: self << other."""
-        from ...comps.value.binary_ops import LShiftOp
+        from ...comps.core.binary_ops import LShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(LShiftOp(self, literal(other))))
 
     def __rlshift__(self, other: OperandT) -> ResultT:
         """Right left shift: other << self."""
-        from ...comps.value.binary_ops import LShiftOp
+        from ...comps.core.binary_ops import LShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(LShiftOp(literal(other), self)))
 
     def __rshift__(self, other: OperandT) -> ResultT:
         """Right shift: self >> other."""
-        from ...comps.value.binary_ops import RShiftOp
+        from ...comps.core.binary_ops import RShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(RShiftOp(self, literal(other))))
 
     def __rrshift__(self, other: OperandT) -> ResultT:
         """Right right shift: other >> self."""
-        from ...comps.value.binary_ops import RShiftOp
+        from ...comps.core.binary_ops import RShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(RShiftOp(literal(other), self)))
 

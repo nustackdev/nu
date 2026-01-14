@@ -1,6 +1,6 @@
-"""String operations for RValue expressions.
+"""String operations for Term expressions.
 
-This module provides type-safe operations on string RValues:
+This module provides type-safe operations on string Terms:
 
 Case transformation: UpperOp, LowerOp, TitleOp, CapitalizeOp, SwapCaseOp
 Stripping: StripOp, LStripOp, RStripOp
@@ -38,8 +38,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 
 __all__ = [
@@ -76,7 +76,7 @@ __all__ = [
 # =============================================================================
 
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class StringOp[ResultT](Operation[ResultT]):
@@ -90,9 +90,9 @@ class StringOp[ResultT](Operation[ResultT]):
         """Initialize string operation.
 
         Args:
-            operand: RValue that should produce a string
+            operand: Term that should produce a string
         """
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> ResultT:
         """Execute string operation.
@@ -190,9 +190,9 @@ class StripOp(StringOp[str | Sentinel]):
             chars: Characters to strip (None for whitespace)
         """
         if chars is not None:
-            self.children = (cast("RValue", operand), cast("RValue", chars))
+            self.children = (cast("Term", operand), cast("Term", chars))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> str | Sentinel:
         """Execute strip operation."""
@@ -218,9 +218,9 @@ class LStripOp(StringOp[str | Sentinel]):
     def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
         """Initialize lstrip operation."""
         if chars is not None:
-            self.children = (cast("RValue", operand), cast("RValue", chars))
+            self.children = (cast("Term", operand), cast("Term", chars))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> str | Sentinel:
         """Execute lstrip operation."""
@@ -245,9 +245,9 @@ class RStripOp(StringOp[str | Sentinel]):
     def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
         """Initialize rstrip operation."""
         if chars is not None:
-            self.children = (cast("RValue", operand), cast("RValue", chars))
+            self.children = (cast("Term", operand), cast("Term", chars))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> str | Sentinel:
         """Execute rstrip operation."""
@@ -288,9 +288,9 @@ class SplitOp(Operation[list[str] | Sentinel]):
             maxsplit: Maximum splits (-1 for unlimited)
         """
         if sep is not None:
-            self.children = (cast("RValue", operand), cast("RValue", sep))
+            self.children = (cast("Term", operand), cast("Term", sep))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
         self._maxsplit = maxsplit
 
     def execute(self, context: Context) -> list[str] | Sentinel:
@@ -322,9 +322,9 @@ class RSplitOp(Operation[list[str] | Sentinel]):
     ) -> None:
         """Initialize rsplit operation."""
         if sep is not None:
-            self.children = (cast("RValue", operand), cast("RValue", sep))
+            self.children = (cast("Term", operand), cast("Term", sep))
         else:
-            self.children = (cast("RValue", operand),)
+            self.children = (cast("Term", operand),)
         self._maxsplit = maxsplit
 
     def execute(self, context: Context) -> list[str] | Sentinel:
@@ -361,7 +361,7 @@ class FindOp(Operation[int | Sentinel]):
         end: int | None = None,
     ) -> None:
         """Initialize find operation."""
-        self.children = (cast("RValue", operand), cast("RValue", sub))
+        self.children = (cast("Term", operand), cast("Term", sub))
         self._start = start
         self._end = end
 
@@ -392,7 +392,7 @@ class RFindOp(Operation[int | Sentinel]):
         end: int | None = None,
     ) -> None:
         """Initialize rfind operation."""
-        self.children = (cast("RValue", operand), cast("RValue", sub))
+        self.children = (cast("Term", operand), cast("Term", sub))
         self._start = start
         self._end = end
 
@@ -417,7 +417,7 @@ class CountSubstringOp(Operation[int | Sentinel]):
 
     def __init__(self, operand: OpArgument, sub: OpArgument) -> None:
         """Initialize count substring operation."""
-        self.children = (cast("RValue", operand), cast("RValue", sub))
+        self.children = (cast("Term", operand), cast("Term", sub))
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute count operation."""
@@ -443,7 +443,7 @@ class StartsWithOp(Operation[bool | Sentinel]):
 
     def __init__(self, operand: OpArgument, prefix: OpArgument) -> None:
         """Initialize startswith operation."""
-        self.children = (cast("RValue", operand), cast("RValue", prefix))
+        self.children = (cast("Term", operand), cast("Term", prefix))
 
     def execute(self, context: Context) -> bool | Sentinel:
         """Execute startswith operation."""
@@ -464,7 +464,7 @@ class EndsWithOp(Operation[bool | Sentinel]):
 
     def __init__(self, operand: OpArgument, suffix: OpArgument) -> None:
         """Initialize endswith operation."""
-        self.children = (cast("RValue", operand), cast("RValue", suffix))
+        self.children = (cast("Term", operand), cast("Term", suffix))
 
     def execute(self, context: Context) -> bool | Sentinel:
         """Execute endswith operation."""
@@ -531,7 +531,7 @@ class CenterOp(Operation[str | Sentinel]):
         fillchar: str = " ",
     ) -> None:
         """Initialize center operation."""
-        self.children = (cast("RValue", operand), cast("RValue", width))
+        self.children = (cast("Term", operand), cast("Term", width))
         self._fillchar = fillchar
 
     def execute(self, context: Context) -> str | Sentinel:
@@ -558,7 +558,7 @@ class LJustOp(Operation[str | Sentinel]):
         fillchar: str = " ",
     ) -> None:
         """Initialize ljust operation."""
-        self.children = (cast("RValue", operand), cast("RValue", width))
+        self.children = (cast("Term", operand), cast("Term", width))
         self._fillchar = fillchar
 
     def execute(self, context: Context) -> str | Sentinel:
@@ -585,7 +585,7 @@ class RJustOp(Operation[str | Sentinel]):
         fillchar: str = " ",
     ) -> None:
         """Initialize rjust operation."""
-        self.children = (cast("RValue", operand), cast("RValue", width))
+        self.children = (cast("Term", operand), cast("Term", width))
         self._fillchar = fillchar
 
     def execute(self, context: Context) -> str | Sentinel:
@@ -607,7 +607,7 @@ class ZFillOp(Operation[str | Sentinel]):
 
     def __init__(self, operand: OpArgument, width: OpArgument) -> None:
         """Initialize zfill operation."""
-        self.children = (cast("RValue", operand), cast("RValue", width))
+        self.children = (cast("Term", operand), cast("Term", width))
 
     def execute(self, context: Context) -> str | Sentinel:
         """Execute zfill operation."""
@@ -640,9 +640,9 @@ class ReplaceOp(Operation[str | Sentinel]):
     ) -> None:
         """Initialize replace operation."""
         self.children = (
-            cast("RValue", operand),
-            cast("RValue", old),
-            cast("RValue", new),
+            cast("Term", operand),
+            cast("Term", old),
+            cast("Term", new),
         )
         self._count = count
 
@@ -677,7 +677,7 @@ class EncodeOp(Operation[bytes | Sentinel]):
 
     def __init__(self, operand: OpArgument, encoding: str = "utf-8") -> None:
         """Initialize encode operation."""
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
         self._encoding = encoding
 
     def execute(self, context: Context) -> bytes | Sentinel:

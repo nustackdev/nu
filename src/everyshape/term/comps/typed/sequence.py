@@ -1,6 +1,6 @@
-"""Sequence (list/tuple) operations for RValue expressions.
+"""Sequence (list/tuple) operations for Term expressions.
 
-This module provides type-safe operations on sequence RValues:
+This module provides type-safe operations on sequence Terms:
 
 Aggregation: SumOp, MinOp, MaxOp, LenOp
 Transformation: SortedOp, ReversedOp, MapOp, FilterOp
@@ -39,8 +39,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 __all__ = [
     "AllOp",
@@ -70,7 +70,7 @@ __all__ = [
 # ABSTRACT SEQUENCE OPERATION
 # =============================================================================
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class SequenceOp[ResultT](Operation[ResultT]):
@@ -84,9 +84,9 @@ class SequenceOp[ResultT](Operation[ResultT]):
         """Initialize sequence operation.
 
         Args:
-            operand: RValue that should produce a sequence
+            operand: Term that should produce a sequence
         """
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
 
     def execute(self, context: Context) -> ResultT:
         """Execute sequence operation.
@@ -241,7 +241,7 @@ class AtOp[ResultT](Operation[ResultT | Sentinel]):
 
     def __init__(self, operand: OpArgument, key: OpArgument) -> None:
         """Init."""
-        self.children = (cast("RValue", operand), cast("RValue", key))
+        self.children = (cast("Term", operand), cast("Term", key))
 
     def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute."""
@@ -333,7 +333,7 @@ class JoinOp(Operation[str | Sentinel]):
 
     def __init__(self, operand: OpArgument, sep: OpArgument) -> None:
         """Init."""
-        self.children = (cast("RValue", operand), cast("RValue", sep))
+        self.children = (cast("Term", operand), cast("Term", sep))
 
     def execute(self, context: Context) -> str | Sentinel:
         """Execute."""
@@ -371,7 +371,7 @@ class MapOp[T, T2](SequenceOp[list[T2]]):
         """Init.
 
         Args:
-            operand: RValue that produces a sequence
+            operand: Term that produces a sequence
             fn: Function to apply to each element
         """
         super().__init__(operand)
@@ -398,7 +398,7 @@ class FilterOp[T](SequenceOp[list[T]]):
         """Init.
 
         Args:
-            operand: RValue that produces a sequence
+            operand: Term that produces a sequence
             fn: Predicate function - keep element if returns truthy
         """
         super().__init__(operand)
@@ -425,11 +425,11 @@ class ReduceOp[T, T2](Operation[T2 | Sentinel]):
         """Init.
 
         Args:
-            operand: RValue that produces a sequence
+            operand: Term that produces a sequence
             fn: Reducer function (accumulator, element) -> new_accumulator
             initial: Initial accumulator value
         """
-        self.children = (cast("RValue", operand),)
+        self.children = (cast("Term", operand),)
         self._fn = fn
         self._initial = initial
 
@@ -467,10 +467,10 @@ class IndexOfOp[T](Operation[int | Sentinel]):
         """Init.
 
         Args:
-            operand: RValue that produces a sequence
+            operand: Term that produces a sequence
             value: Value to search for
         """
-        self.children = (cast("RValue", operand), cast("RValue", value))
+        self.children = (cast("Term", operand), cast("Term", value))
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute index search."""
@@ -500,10 +500,10 @@ class CountOp(Operation[int]):
         """Init.
 
         Args:
-            operand: RValue that produces a sequence
+            operand: Term that produces a sequence
             value: Value to count
         """
-        self.children = (cast("RValue", operand), cast("RValue", value))
+        self.children = (cast("Term", operand), cast("Term", value))
 
     def execute(self, context: Context) -> int:
         """Execute count."""
@@ -532,7 +532,7 @@ class FindOp[T](SequenceOp[T | Sentinel]):
         """Init.
 
         Args:
-            operand: RValue that produces a sequence
+            operand: Term that produces a sequence
             fn: Predicate function
         """
         super().__init__(operand)
@@ -564,7 +564,7 @@ class FindIndexOp[T](SequenceOp[int | Sentinel]):
         """Init.
 
         Args:
-            operand: RValue that produces a sequence
+            operand: Term that produces a sequence
             fn: Predicate function
         """
         super().__init__(operand)

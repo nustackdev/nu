@@ -1,4 +1,4 @@
-"""Core base class for RValue types.
+"""Core base class for Term types.
 
 This module provides the CoreBase mixin that all values should inherit.
 It provides fundamental operations like special value checks and conditional operations.
@@ -14,15 +14,15 @@ from ..conversion import literal
 if TYPE_CHECKING:
     from everyshape.typing import Sentinel
 
-    from ...term import RValue
-    from ..values import (
-        BoolValue,
-        BytesValue,
-        FloatValue,
-        IntValue,
-        ListValue,
-        StrValue,
-        UnknownValue,
+    from ...term import Term
+    from ..definitions import (
+        AnyType,
+        BoolType,
+        BytesType,
+        FloatType,
+        IntType,
+        ListType,
+        StrType,
     )
 
 
@@ -40,57 +40,57 @@ class CoreBase:
     - or_default() - Provide default if empty/nan
     """
 
-    def is_empty(self) -> BoolValue:
+    def is_empty(self) -> BoolType:
         """Check if this value is Empty.
 
         Returns:
-            BoolValue-like result
+            BoolType-like result
         """
-        from ...comps.value.unary_ops import IsEmptyOp
-        from ..values import BoolValue
+        from ...comps.core.unary_ops import IsEmptyOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsEmptyOp(self))
+        return BoolType(IsEmptyOp(self))
 
-    def is_nan(self) -> BoolValue:
+    def is_nan(self) -> BoolType:
         """Check if this value is NaN.
 
         Returns:
-            BoolValue-like result
+            BoolType-like result
         """
-        from ...comps.value.unary_ops import IsNaNOp
-        from ..values import BoolValue
+        from ...comps.core.unary_ops import IsNaNOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsNaNOp(self))
+        return BoolType(IsNaNOp(self))
 
-    def is_sentinel(self) -> BoolValue:
+    def is_sentinel(self) -> BoolType:
         """Check if this value is a special value (Empty, NaN, etc.).
 
         Returns:
-            BoolValue-like result
+            BoolType-like result
         """
         return self.is_empty().or_(self.is_nan())
 
-    def not_empty(self) -> BoolValue:
+    def not_empty(self) -> BoolType:
         """Check if this value is not Empty.
 
         Returns:
-            BoolValue result
+            BoolType result
         """
         return self.is_empty().not_()
 
-    def not_nan(self) -> BoolValue:
+    def not_nan(self) -> BoolType:
         """Check if this value is not NaN.
 
         Returns:
-            BoolValue result
+            BoolType result
         """
         return self.is_nan().not_()
 
     def ifelse[ElseT](
         self,
-        condition: bool | RValue[bool | Sentinel],
-        otherwise: ElseT | RValue[ElseT | Sentinel],
-    ) -> UnknownValue:
+        condition: bool | Term[bool | Sentinel],
+        otherwise: ElseT | Term[ElseT | Sentinel],
+    ) -> AnyType:
         """Conditional/ternary operation: if condition then self else otherwise.
 
         Args:
@@ -104,12 +104,12 @@ class CoreBase:
             >>> price.ifelse(price > 0, default_price)
             >>> name.ifelse(name.not_empty(), "Unknown")
         """
-        from ...comps.value.ternary_ops import ConditionalOp
-        from ..values import UnknownValue
+        from ...comps.core.ternary_ops import ConditionalOp
+        from ..definitions import AnyType
 
-        return UnknownValue(ConditionalOp(literal(condition), self, literal(otherwise)))
+        return AnyType(ConditionalOp(literal(condition), self, literal(otherwise)))
 
-    def or_default[DefaultT](self, default: DefaultT | RValue[DefaultT]) -> UnknownValue:
+    def or_default[DefaultT](self, default: DefaultT | Term[DefaultT]) -> AnyType:
         """Return self if not empty/nan, otherwise return default.
 
         Args:
@@ -121,102 +121,102 @@ class CoreBase:
         Example:
             >>> value.or_default(0)  # Returns 0 if value is Empty
         """
-        from ..values import UnknownValue
+        from ..definitions import AnyType
 
-        return UnknownValue(self.ifelse(self.is_sentinel(), literal(default)))
+        return AnyType(self.ifelse(self.is_sentinel(), literal(default)))
 
     # =========================================================================
     # TYPE CONVERSIONS
     # =========================================================================
 
-    def to_int(self) -> IntValue:
+    def to_int(self) -> IntType:
         """Convert this value to an integer.
 
         Returns:
-            IntValue containing the converted integer
+            IntType containing the converted integer
 
         Example:
             >>> float_val.to_int()  # 3.14 -> 3
             >>> str_val.to_int()  # "42" -> 42
         """
-        from ...comps.value.conversion import ToIntOp
-        from ..values import IntValue
+        from ...comps.core.conversion import ToIntOp
+        from ..definitions import IntType
 
-        return IntValue(ToIntOp(self))
+        return IntType(ToIntOp(self))
 
-    def to_float(self) -> FloatValue:
+    def to_float(self) -> FloatType:
         """Convert this value to a float.
 
         Returns:
-            FloatValue containing the converted float
+            FloatType containing the converted float
 
         Example:
             >>> int_val.to_float()  # 42 -> 42.0
             >>> str_val.to_float()  # "3.14" -> 3.14
         """
-        from ...comps.value.conversion import ToFloatOp
-        from ..values import FloatValue
+        from ...comps.core.conversion import ToFloatOp
+        from ..definitions import FloatType
 
-        return FloatValue(ToFloatOp(self))
+        return FloatType(ToFloatOp(self))
 
-    def to_bool(self) -> BoolValue:
+    def to_bool(self) -> BoolType:
         """Convert this value to a boolean.
 
         Returns:
-            BoolValue containing the converted boolean
+            BoolType containing the converted boolean
 
         Example:
             >>> int_val.to_bool()  # 0 -> False, 1 -> True
             >>> str_val.to_bool()  # "" -> False, "x" -> True
         """
-        from ...comps.value.conversion import ToBoolOp
-        from ..values import BoolValue
+        from ...comps.core.conversion import ToBoolOp
+        from ..definitions import BoolType
 
-        return BoolValue(ToBoolOp(self))
+        return BoolType(ToBoolOp(self))
 
-    def to_str(self) -> StrValue:
+    def to_str(self) -> StrType:
         """Convert this value to a string.
 
         Returns:
-            StrValue containing the converted string
+            StrType containing the converted string
 
         Example:
             >>> int_val.to_str()  # 42 -> "42"
             >>> datetime_val.to_str()  # datetime -> "2024-01-15 10:30:00"
         """
-        from ...comps.value.conversion import ToStrOp
-        from ..values import StrValue
+        from ...comps.core.conversion import ToStrOp
+        from ..definitions import StrType
 
-        return StrValue(ToStrOp(self))
+        return StrType(ToStrOp(self))
 
-    def to_bytes(self, encoding: str = "utf-8") -> BytesValue:
+    def to_bytes(self, encoding: str = "utf-8") -> BytesType:
         """Convert this value to bytes.
 
         Args:
             encoding: Encoding to use for string conversion
 
         Returns:
-            BytesValue containing the converted bytes
+            BytesType containing the converted bytes
 
         Example:
             >>> str_val.to_bytes()  # "hello" -> b"hello"
         """
-        from ...comps.value.conversion import ToBytesOp
-        from ..values import BytesValue
+        from ...comps.core.conversion import ToBytesOp
+        from ..definitions import BytesType
 
-        return BytesValue(ToBytesOp(self, encoding))
+        return BytesType(ToBytesOp(self, encoding))
 
-    def to_list[T](self) -> ListValue[T]:
+    def to_list[T](self) -> ListType[T]:
         """Convert this value to a list.
 
         Returns:
-            ListValue containing the converted list
+            ListType containing the converted list
 
         Example:
             >>> tuple_val.to_list()  # (1, 2, 3) -> [1, 2, 3]
             >>> set_val.to_list()  # {1, 2, 3} -> [1, 2, 3]
         """
-        from ...comps.value.conversion import ToListOp
-        from ..values import ListValue
+        from ...comps.core.conversion import ToListOp
+        from ..definitions import ListType
 
-        return ListValue(ToListOp(self))
+        return ListType(ToListOp(self))

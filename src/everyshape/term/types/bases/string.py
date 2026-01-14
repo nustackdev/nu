@@ -1,4 +1,4 @@
-"""String base classes for RValue types.
+"""String base classes for Term types.
 
 This module provides string operation mixins including:
 - ConcatenableBase - __add__ for strings
@@ -16,8 +16,8 @@ from .collection import ContainableBase, LengthableBase, SliceableBase
 
 
 if TYPE_CHECKING:
-    from ...term import RValue
-    from ..values import BoolValue, BytesValue, IntValue, ListValue
+    from ...term import Term
+    from ..definitions import BoolType, BytesType, IntType, ListType
 
 
 __all__ = [
@@ -43,7 +43,7 @@ class StringMethodsBase[ResultT]:
     Methods that return bool/int use specific types.
     """
 
-    def _wrap_string_result(self, operand: RValue) -> RValue:
+    def _wrap_string_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -54,7 +54,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Uppercase string
         """
-        from ...comps.types.string import UpperOp
+        from ...comps.typed.string import UpperOp
 
         return cast("ResultT", self._wrap_string_result(UpperOp(self)))
 
@@ -64,7 +64,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Lowercase string
         """
-        from ...comps.types.string import LowerOp
+        from ...comps.typed.string import LowerOp
 
         return cast("ResultT", self._wrap_string_result(LowerOp(self)))
 
@@ -74,7 +74,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Title-cased string
         """
-        from ...comps.types.string import TitleOp
+        from ...comps.typed.string import TitleOp
 
         return cast("ResultT", self._wrap_string_result(TitleOp(self)))
 
@@ -84,7 +84,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Capitalized string
         """
-        from ...comps.types.string import CapitalizeOp
+        from ...comps.typed.string import CapitalizeOp
 
         return cast("ResultT", self._wrap_string_result(CapitalizeOp(self)))
 
@@ -94,12 +94,12 @@ class StringMethodsBase[ResultT]:
         Returns:
             Case-swapped string
         """
-        from ...comps.types.string import SwapCaseOp
+        from ...comps.typed.string import SwapCaseOp
 
         return cast("ResultT", self._wrap_string_result(SwapCaseOp(self)))
 
     # Stripping
-    def strip(self, chars: str | RValue | None = None) -> ResultT:
+    def strip(self, chars: str | Term | None = None) -> ResultT:
         """Strip whitespace or chars.
 
         Args:
@@ -108,13 +108,13 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ...comps.types.string import StripOp
+        from ...comps.typed.string import StripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(StripOp(self, literal(chars))))
         return cast("ResultT", self._wrap_string_result(StripOp(self)))
 
-    def lstrip(self, chars: str | RValue | None = None) -> ResultT:
+    def lstrip(self, chars: str | Term | None = None) -> ResultT:
         """Strip leading whitespace or chars.
 
         Args:
@@ -123,13 +123,13 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ...comps.types.string import LStripOp
+        from ...comps.typed.string import LStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(LStripOp(self, literal(chars))))
         return cast("ResultT", self._wrap_string_result(LStripOp(self)))
 
-    def rstrip(self, chars: str | RValue | None = None) -> ResultT:
+    def rstrip(self, chars: str | Term | None = None) -> ResultT:
         """Strip trailing whitespace or chars.
 
         Args:
@@ -138,14 +138,14 @@ class StringMethodsBase[ResultT]:
         Returns:
             Stripped string
         """
-        from ...comps.types.string import RStripOp
+        from ...comps.typed.string import RStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_string_result(RStripOp(self, literal(chars))))
         return cast("ResultT", self._wrap_string_result(RStripOp(self)))
 
     # Splitting
-    def split(self, sep: str | RValue | None = None, maxsplit: int = -1) -> ListValue[str]:
+    def split(self, sep: str | Term | None = None, maxsplit: int = -1) -> ListType[str]:
         """Split string.
 
         Args:
@@ -155,14 +155,14 @@ class StringMethodsBase[ResultT]:
         Returns:
             List of substrings
         """
-        from ...comps.types.string import SplitOp
-        from ..values import ListValue
+        from ...comps.typed.string import SplitOp
+        from ..definitions import ListType
 
         if sep is not None:
-            return ListValue(SplitOp(self, literal(sep), maxsplit))
-        return ListValue(SplitOp(self, None, maxsplit))
+            return ListType(SplitOp(self, literal(sep), maxsplit))
+        return ListType(SplitOp(self, None, maxsplit))
 
-    def rsplit(self, sep: str | RValue | None = None, maxsplit: int = -1) -> ListValue[str]:
+    def rsplit(self, sep: str | Term | None = None, maxsplit: int = -1) -> ListType[str]:
         """Right split string.
 
         Args:
@@ -172,15 +172,15 @@ class StringMethodsBase[ResultT]:
         Returns:
             List of substrings
         """
-        from ...comps.types.string import RSplitOp
-        from ..values import ListValue
+        from ...comps.typed.string import RSplitOp
+        from ..definitions import ListType
 
         if sep is not None:
-            return ListValue(RSplitOp(self, literal(sep), maxsplit))
-        return ListValue(RSplitOp(self, None, maxsplit))
+            return ListType(RSplitOp(self, literal(sep), maxsplit))
+        return ListType(RSplitOp(self, None, maxsplit))
 
     # Searching
-    def find(self, sub: str | RValue, start: int = 0, end: int | None = None) -> IntValue:
+    def find(self, sub: str | Term, start: int = 0, end: int | None = None) -> IntType:
         """Find substring.
 
         Args:
@@ -191,12 +191,12 @@ class StringMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ...comps.types.string import FindOp
-        from ..values import IntValue
+        from ...comps.typed.string import FindOp
+        from ..definitions import IntType
 
-        return IntValue(FindOp(self, literal(sub), start, end))
+        return IntType(FindOp(self, literal(sub), start, end))
 
-    def rfind(self, sub: str | RValue, start: int = 0, end: int | None = None) -> IntValue:
+    def rfind(self, sub: str | Term, start: int = 0, end: int | None = None) -> IntType:
         """Find substring from right.
 
         Args:
@@ -207,12 +207,12 @@ class StringMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ...comps.types.string import RFindOp
-        from ..values import IntValue
+        from ...comps.typed.string import RFindOp
+        from ..definitions import IntType
 
-        return IntValue(RFindOp(self, literal(sub), start, end))
+        return IntType(RFindOp(self, literal(sub), start, end))
 
-    def count_substring(self, sub: str | RValue) -> IntValue:
+    def count_substring(self, sub: str | Term) -> IntType:
         """Count substring occurrences.
 
         Args:
@@ -221,13 +221,13 @@ class StringMethodsBase[ResultT]:
         Returns:
             Count
         """
-        from ...comps.types.string import CountSubstringOp
-        from ..values import IntValue
+        from ...comps.typed.string import CountSubstringOp
+        from ..definitions import IntType
 
-        return IntValue(CountSubstringOp(self, literal(sub)))
+        return IntType(CountSubstringOp(self, literal(sub)))
 
     # Testing
-    def startswith(self, prefix: str | RValue) -> BoolValue:
+    def startswith(self, prefix: str | Term) -> BoolType:
         """Check if starts with prefix.
 
         Args:
@@ -236,12 +236,12 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.types.string import StartsWithOp
-        from ..values import BoolValue
+        from ...comps.typed.string import StartsWithOp
+        from ..definitions import BoolType
 
-        return BoolValue(StartsWithOp(self, literal(prefix)))
+        return BoolType(StartsWithOp(self, literal(prefix)))
 
-    def endswith(self, suffix: str | RValue) -> BoolValue:
+    def endswith(self, suffix: str | Term) -> BoolType:
         """Check if ends with suffix.
 
         Args:
@@ -250,57 +250,57 @@ class StringMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ...comps.types.string import EndsWithOp
-        from ..values import BoolValue
+        from ...comps.typed.string import EndsWithOp
+        from ..definitions import BoolType
 
-        return BoolValue(EndsWithOp(self, literal(suffix)))
+        return BoolType(EndsWithOp(self, literal(suffix)))
 
-    def isdigit(self) -> BoolValue:
+    def isdigit(self) -> BoolType:
         """Check if all digits.
 
         Returns:
             Boolean result
         """
-        from ...comps.types.string import IsDigitOp
-        from ..values import BoolValue
+        from ...comps.typed.string import IsDigitOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsDigitOp(self))
+        return BoolType(IsDigitOp(self))
 
-    def isalpha(self) -> BoolValue:
+    def isalpha(self) -> BoolType:
         """Check if all alphabetic.
 
         Returns:
             Boolean result
         """
-        from ...comps.types.string import IsAlphaOp
-        from ..values import BoolValue
+        from ...comps.typed.string import IsAlphaOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsAlphaOp(self))
+        return BoolType(IsAlphaOp(self))
 
-    def isalnum(self) -> BoolValue:
+    def isalnum(self) -> BoolType:
         """Check if alphanumeric.
 
         Returns:
             Boolean result
         """
-        from ...comps.types.string import IsAlnumOp
-        from ..values import BoolValue
+        from ...comps.typed.string import IsAlnumOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsAlnumOp(self))
+        return BoolType(IsAlnumOp(self))
 
-    def isspace(self) -> BoolValue:
+    def isspace(self) -> BoolType:
         """Check if all whitespace.
 
         Returns:
             Boolean result
         """
-        from ...comps.types.string import IsSpaceOp
-        from ..values import BoolValue
+        from ...comps.typed.string import IsSpaceOp
+        from ..definitions import BoolType
 
-        return BoolValue(IsSpaceOp(self))
+        return BoolType(IsSpaceOp(self))
 
     # Padding
-    def center(self, width: int | RValue, fillchar: str = " ") -> ResultT:
+    def center(self, width: int | Term, fillchar: str = " ") -> ResultT:
         """Center in width.
 
         Args:
@@ -310,11 +310,11 @@ class StringMethodsBase[ResultT]:
         Returns:
             Centered string
         """
-        from ...comps.types.string import CenterOp
+        from ...comps.typed.string import CenterOp
 
         return cast("ResultT", self._wrap_string_result(CenterOp(self, literal(width), fillchar)))
 
-    def ljust(self, width: int | RValue, fillchar: str = " ") -> ResultT:
+    def ljust(self, width: int | Term, fillchar: str = " ") -> ResultT:
         """Left justify.
 
         Args:
@@ -324,11 +324,11 @@ class StringMethodsBase[ResultT]:
         Returns:
             Left-justified string
         """
-        from ...comps.types.string import LJustOp
+        from ...comps.typed.string import LJustOp
 
         return cast("ResultT", self._wrap_string_result(LJustOp(self, literal(width), fillchar)))
 
-    def rjust(self, width: int | RValue, fillchar: str = " ") -> ResultT:
+    def rjust(self, width: int | Term, fillchar: str = " ") -> ResultT:
         """Right justify.
 
         Args:
@@ -338,11 +338,11 @@ class StringMethodsBase[ResultT]:
         Returns:
             Right-justified string
         """
-        from ...comps.types.string import RJustOp
+        from ...comps.typed.string import RJustOp
 
         return cast("ResultT", self._wrap_string_result(RJustOp(self, literal(width), fillchar)))
 
-    def zfill(self, width: int | RValue) -> ResultT:
+    def zfill(self, width: int | Term) -> ResultT:
         """Zero-fill.
 
         Args:
@@ -351,12 +351,12 @@ class StringMethodsBase[ResultT]:
         Returns:
             Zero-filled string
         """
-        from ...comps.types.string import ZFillOp
+        from ...comps.typed.string import ZFillOp
 
         return cast("ResultT", self._wrap_string_result(ZFillOp(self, literal(width))))
 
     # Replacing
-    def replace(self, old: str | RValue, new: str | RValue, count: int = -1) -> ResultT:
+    def replace(self, old: str | Term, new: str | Term, count: int = -1) -> ResultT:
         """Replace substring.
 
         Args:
@@ -367,7 +367,7 @@ class StringMethodsBase[ResultT]:
         Returns:
             Modified string
         """
-        from ...comps.types.string import ReplaceOp
+        from ...comps.typed.string import ReplaceOp
 
         return cast(
             "ResultT",
@@ -375,7 +375,7 @@ class StringMethodsBase[ResultT]:
         )
 
     # Encoding
-    def encode(self, encoding: str = "utf-8") -> BytesValue:
+    def encode(self, encoding: str = "utf-8") -> BytesType:
         """Encode string to bytes.
 
         Args:
@@ -384,10 +384,10 @@ class StringMethodsBase[ResultT]:
         Returns:
             Encoded bytes
         """
-        from ...comps.types.string import EncodeOp
-        from ..values import BytesValue
+        from ...comps.typed.string import EncodeOp
+        from ..definitions import BytesType
 
-        return BytesValue(EncodeOp(self, encoding))
+        return BytesType(EncodeOp(self, encoding))
 
 
 class StringBase[ResultT](

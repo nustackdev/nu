@@ -11,9 +11,9 @@ The capability hierarchy enables composition:
 - Observable operations (observable, child-observable)
 - Navigation (nestable, indexable)
 
-LValues differ from RValues:
+LValues differ from Terms:
 - LValues are LOCATIONS in storage (lazy access)
-- RValues are ALREADY COMPUTED values in memory
+- Terms are ALREADY COMPUTED values in memory
 
 Example:
     >>> if isinstance(ref, Gettable):
@@ -28,8 +28,8 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 if TYPE_CHECKING:
     from everyshape.typing import Sentinel
 
-    from ..term import Computation, RValue
-    from ..values import BoolValue, IntValue, ListValue, NoneValue
+    from ..term import Computation, Term
+    from ..types import BoolType, IntType, ListType, NilType
 
 
 __all__ = [  # noqa: RUF022
@@ -100,7 +100,7 @@ class Gettable[ValueT](Protocol):
 
     def get(
         self,
-    ) -> object:  # Returns ComputedValue type based on ValueT (IntValue, StrValue, etc.)
+    ) -> object:  # Returns ComputedValue type based on ValueT (IntType, StrType, etc.)
         """Create a get operation for this location.
 
         Returns:
@@ -117,7 +117,7 @@ class Extractable[CollectionValueT](Protocol):
     Returns a ComputedValue that reads the full structure when executed.
 
     Type Parameters:
-        CollectionValueT: ComputedValue type for the collection (ListValue, DictValue, etc.)
+        CollectionValueT: ComputedValue type for the collection (ListType, DictType, etc.)
 
     Example:
         >>> if isinstance(ref, Extractable):
@@ -156,12 +156,12 @@ class Settable[ValueT](Protocol):
     """
 
     def set(
-        self, value: ValueT | RValue
-    ) -> object:  # Returns ComputedValue type based on ValueT (IntValue, StrValue, etc.)
+        self, value: ValueT | Term
+    ) -> object:  # Returns ComputedValue type based on ValueT (IntType, StrType, etc.)
         """Create a set command for this location.
 
         Args:
-            value: Value to write (literal or RValue)
+            value: Value to write (literal or Term)
 
         Returns:
             ComputedValue that writes the value when executed
@@ -178,7 +178,7 @@ class Storable[CollectionT, CollectionValueT](Protocol):
 
     Type Parameters:
         CollectionT: Type of value to store (dict, list, etc.)
-        CollectionValueT: ComputedValue type for the collection (ListValue, DictValue, etc.)
+        CollectionValueT: ComputedValue type for the collection (ListType, DictType, etc.)
 
     Example:
         >>> if isinstance(ref, Storable):
@@ -186,11 +186,11 @@ class Storable[CollectionT, CollectionValueT](Protocol):
         ...     store_cmd.execute(ctx)
     """
 
-    def store(self, value: CollectionT | RValue) -> CollectionValueT:
+    def store(self, value: CollectionT | Term) -> CollectionValueT:
         """Create a store command for this container.
 
         Args:
-            value: Value to store (literal or RValue)
+            value: Value to store (literal or Term)
 
         Returns:
             StoreCmd that stores the value when executed
@@ -203,7 +203,7 @@ class Appendable[ItemT](Protocol):
     """Protocol for LValues that support appending items.
 
     Used for sequence references.
-    Returns a ComputedValue (NoneValue) that appends the item when executed.
+    Returns a ComputedValue (NilType) that appends the item when executed.
 
     Type Parameters:
         ItemT: Type of item to append
@@ -214,11 +214,11 @@ class Appendable[ItemT](Protocol):
         ...     append_cmd.execute(ctx)
     """
 
-    def append(self, value: ItemT | RValue) -> NoneValue:
+    def append(self, value: ItemT | Term) -> NilType:
         """Create an append command.
 
         Args:
-            value: Item to append (literal or RValue)
+            value: Item to append (literal or Term)
 
         Returns:
             AppendCmd that appends the item when executed
@@ -231,7 +231,7 @@ class Insertable[ItemT](Protocol):
     """Protocol for LValues that support inserting items at index.
 
     Used for sequence references.
-    Returns a ComputedValue (NoneValue) that inserts the item when executed.
+    Returns a ComputedValue (NilType) that inserts the item when executed.
 
     Type Parameters:
         ItemT: Type of item to insert
@@ -242,12 +242,12 @@ class Insertable[ItemT](Protocol):
         ...     insert_cmd.execute(ctx)
     """
 
-    def insert(self, index: int | RValue, value: ItemT | RValue) -> NoneValue:
+    def insert(self, index: int | Term, value: ItemT | Term) -> NilType:
         """Create an insert command.
 
         Args:
             index: Position to insert at
-            value: Item to insert (literal or RValue)
+            value: Item to insert (literal or Term)
 
         Returns:
             InsertCmd that inserts the item when executed
@@ -265,7 +265,7 @@ class Deletable(Protocol):
     """Protocol for LValues that support deletion.
 
     Used for primitive and container item references.
-    Returns a ComputedValue (NoneValue) that removes the value when executed.
+    Returns a ComputedValue (NilType) that removes the value when executed.
 
     Example:
         >>> if isinstance(ref, Deletable):
@@ -273,7 +273,7 @@ class Deletable(Protocol):
         ...     delete_cmd.execute(ctx)
     """
 
-    def remove(self) -> NoneValue:
+    def remove(self) -> NilType:
         """Create a delete command for this location.
 
         Returns:
@@ -287,7 +287,7 @@ class Clearable(Protocol):
     """Protocol for LValues that support clearing all items.
 
     Used for container references.
-    Returns a ComputedValue (NoneValue) that removes all items when executed.
+    Returns a ComputedValue (NilType) that removes all items when executed.
 
     Example:
         >>> if isinstance(ref, Clearable):
@@ -295,7 +295,7 @@ class Clearable(Protocol):
         ...     clear_cmd.execute(ctx)
     """
 
-    def clear(self) -> NoneValue:
+    def clear(self) -> NilType:
         """Create a clear command for this container.
 
         Returns:
@@ -321,7 +321,7 @@ class Poppable[ItemValueT](Protocol):
     """
 
     def pop(
-        self, index: int | RValue[int | Sentinel] = -1
+        self, index: int | Term[int | Sentinel] = -1
     ) -> ItemValueT:  # Return type depends on ItemT
         """Create a pop command.
 
@@ -343,7 +343,7 @@ class Poppable[ItemValueT](Protocol):
 class Existable(Protocol):
     """Protocol for LValues that support existence checking.
 
-    Returns ComputedValue (BoolValue) that checks if the location exists.
+    Returns ComputedValue (BoolType) that checks if the location exists.
 
     Example:
         >>> if isinstance(ref, Existable):
@@ -351,15 +351,15 @@ class Existable(Protocol):
         ...     does_exist = exists_op.execute(ctx)
     """
 
-    def exists(self) -> BoolValue:
+    def exists(self) -> BoolType:
         """Create an existence check operation.
 
         Returns:
-            BoolValue that returns True if location exists
+            BoolType that returns True if location exists
         """
         ...
 
-    def missing(self) -> BoolValue:
+    def missing(self) -> BoolType:
         """Create a missing check operation.
 
         Returns:
@@ -411,7 +411,7 @@ class RefChildObservable[KeyT](Protocol):
         ...     subscription = child_op.execute(ctx)
     """
 
-    def on_child_change(self, address: KeyT | RValue) -> Computation:
+    def on_child_change(self, address: KeyT | Term) -> Computation:
         """Create a child change subscription operation.
 
         Args:
@@ -476,7 +476,7 @@ class Nestable[KeyT, RefT](Protocol):
         ...     child_ref = ref["key"]  # Navigate to child
     """
 
-    def __getitem__(self, key: KeyT | RValue) -> RefT:
+    def __getitem__(self, key: KeyT | Term) -> RefT:
         """Navigate to child location.
 
         Args:
@@ -501,7 +501,7 @@ class RefIndexable[IndexT, RefT](Protocol):
         ...     item_ref = ref[0]  # Get first item reference
     """
 
-    def __getitem__(self, key: IndexT | RValue[IndexT | Sentinel]) -> RefT:
+    def __getitem__(self, key: IndexT | Term[IndexT | Sentinel]) -> RefT:
         """Get reference to item at index.
 
         Args:
@@ -552,7 +552,7 @@ class Lengthable(Protocol):
         ...     size = len_op.execute(ctx)
     """
 
-    def length(self) -> IntValue:
+    def length(self) -> IntType:
         """Create a length query operation.
 
         Returns:
@@ -574,11 +574,11 @@ class KeysQueryable[KeyT](Protocol):
         ...     all_keys = keys_op.execute(ctx)
     """
 
-    def keys(self) -> ListValue[KeyT]:
+    def keys(self) -> ListType[KeyT]:
         """Create a keys query operation.
 
         Returns:
-            ListValue that returns all keys when executed
+            ListType that returns all keys when executed
         """
         ...
 
@@ -596,11 +596,11 @@ class ValuesQueryable[ValueT](Protocol):
         ...     all_values = values_op.execute(ctx)
     """
 
-    def values(self) -> ListValue[ValueT]:
+    def values(self) -> ListType[ValueT]:
         """Create a values query operation.
 
         Returns:
-            ListValue that returns all values when executed
+            ListType that returns all values when executed
         """
         ...
 
@@ -619,7 +619,7 @@ class ItemsQueryable[KeyT, ValueT](Protocol):
         ...     all_items = items_op.execute(ctx)
     """
 
-    def items(self) -> ListValue[tuple[KeyT, ValueT]]:
+    def items(self) -> ListType[tuple[KeyT, ValueT]]:
         """Create an items query operation.
 
         Returns:
@@ -653,7 +653,7 @@ class MappingAccessible[KeyT, ValueT](Protocol):
 
     def get_item(
         self,
-        key: KeyT | RValue,
+        key: KeyT | Term,
         default: ValueT | Sentinel | None = None,
     ) -> object:  # Returns ComputedValue type based on ValueT
         """Get value by key with optional default.
@@ -669,28 +669,28 @@ class MappingAccessible[KeyT, ValueT](Protocol):
 
     def set_item(
         self,
-        key: KeyT | RValue,
-        value: ValueT | RValue,
+        key: KeyT | Term,
+        value: ValueT | Term,
     ) -> object:  # Returns ComputedValue type based on ValueT
         """Set value at key in mapping.
 
         Args:
             key: Key to set
-            value: Value to set (literal or RValue)
+            value: Value to set (literal or Term)
 
         Returns:
             ComputedValue containing the set value
         """
         ...
 
-    def remove_item(self, key: KeyT | RValue) -> NoneValue:
+    def remove_item(self, key: KeyT | Term) -> NilType:
         """Remove key from mapping.
 
         Args:
             key: Key to remove
 
         Returns:
-            NoneValue (remove returns None after execution)
+            NilType (remove returns None after execution)
 
         Note:
             Raises KeyError at execution if key not found.

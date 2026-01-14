@@ -1,4 +1,4 @@
-"""Comparison base classes for RValue types.
+"""Comparison base classes for Term types.
 
 This module provides comparison operation mixins including:
 - OrderableBase - __gt__, __lt__, __ge__, __le__
@@ -14,7 +14,7 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from ..values import BoolValue
+    from ..definitions import BoolType
 
 
 __all__ = [
@@ -27,33 +27,33 @@ __all__ = [
 class OrderableBase[OperandT]:
     """Base for values that support ordering comparisons: >, <, >=, <=."""
 
-    def __gt__(self, other: OperandT) -> BoolValue:
+    def __gt__(self, other: OperandT) -> BoolType:
         """Greater than: self > other."""
-        from ...comps.value.binary_ops import GtOp
-        from ..values import BoolValue
+        from ...comps.core.binary_ops import GtOp
+        from ..definitions import BoolType
 
-        return BoolValue(GtOp(self, literal(other)))
+        return BoolType(GtOp(self, literal(other)))
 
-    def __lt__(self, other: OperandT) -> BoolValue:
+    def __lt__(self, other: OperandT) -> BoolType:
         """Less than: self < other."""
-        from ...comps.value.binary_ops import LtOp
-        from ..values import BoolValue
+        from ...comps.core.binary_ops import LtOp
+        from ..definitions import BoolType
 
-        return BoolValue(LtOp(self, literal(other)))
+        return BoolType(LtOp(self, literal(other)))
 
-    def __ge__(self, other: OperandT) -> BoolValue:
+    def __ge__(self, other: OperandT) -> BoolType:
         """Greater than or equal: self >= other."""
-        from ...comps.value.binary_ops import GeOp
-        from ..values import BoolValue
+        from ...comps.core.binary_ops import GeOp
+        from ..definitions import BoolType
 
-        return BoolValue(GeOp(self, literal(other)))
+        return BoolType(GeOp(self, literal(other)))
 
-    def __le__(self, other: OperandT) -> BoolValue:
+    def __le__(self, other: OperandT) -> BoolType:
         """Less than or equal: self <= other."""
-        from ...comps.value.binary_ops import LeOp
-        from ..values import BoolValue
+        from ...comps.core.binary_ops import LeOp
+        from ..definitions import BoolType
 
-        return BoolValue(LeOp(self, literal(other)))
+        return BoolType(LeOp(self, literal(other)))
 
 
 class EqualableBase[OperandT]:
@@ -68,7 +68,7 @@ class EqualableBase[OperandT]:
         Raises:
             TypeError: Use eq() method instead
         """
-        raise TypeError("Cannot use == directly on RValues. Use .eq(other) method instead.")
+        raise TypeError("Cannot use == directly on Terms. Use .eq(other) method instead.")
 
     def __ne__(self, other: object) -> bool:
         """Inequality is blocked in DSL context.
@@ -76,9 +76,9 @@ class EqualableBase[OperandT]:
         Raises:
             TypeError: Use ne() method instead
         """
-        raise TypeError("Cannot use != directly on RValues. Use .ne(other) method instead.")
+        raise TypeError("Cannot use != directly on Terms. Use .ne(other) method instead.")
 
-    def eq(self, other: OperandT) -> BoolValue:
+    def eq(self, other: OperandT) -> BoolType:
         """Equality: self == other (safe method).
 
         Args:
@@ -87,12 +87,12 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ...comps.value.binary_ops import EqOp
-        from ..values import BoolValue
+        from ...comps.core.binary_ops import EqOp
+        from ..definitions import BoolType
 
-        return BoolValue(EqOp(self, literal(other)))
+        return BoolType(EqOp(self, literal(other)))
 
-    def ne(self, other: OperandT) -> BoolValue:
+    def ne(self, other: OperandT) -> BoolType:
         """Inequality: self != other (safe method).
 
         Args:
@@ -101,12 +101,12 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ...comps.value.binary_ops import NeOp
-        from ..values import BoolValue
+        from ...comps.core.binary_ops import NeOp
+        from ..definitions import BoolType
 
-        return BoolValue(NeOp(self, literal(other)))
+        return BoolType(NeOp(self, literal(other)))
 
-    def is_(self, other: OperandT) -> BoolValue:
+    def is_(self, other: OperandT) -> BoolType:
         """Identity comparison: self is other (safe method).
 
         Args:
@@ -115,10 +115,10 @@ class EqualableBase[OperandT]:
         Returns:
             IdCompOp expression
         """
-        from ...comps.value.binary_ops import IdCompOp
-        from ..values import BoolValue
+        from ...comps.core.binary_ops import IdCompOp
+        from ..definitions import BoolType
 
-        return BoolValue(IdCompOp(self, literal(other)))
+        return BoolType(IdCompOp(self, literal(other)))
 
 
 class ComparisonBase[OperandT](

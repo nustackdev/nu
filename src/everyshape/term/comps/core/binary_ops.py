@@ -40,8 +40,8 @@ from ...term import Operation
 
 if TYPE_CHECKING:
     from ...context import Context
-    from ...term import RValue
-    from ...values.bases import UnionBaseType
+    from ...term import Term
+    from ...types.bases import UnionBaseType
 
 
 __all__ = [
@@ -74,7 +74,7 @@ __all__ = [
 # ABSTRACT BINARY OPERATION
 # =============================================================================
 
-type OpArgument = RValue | UnionBaseType
+type OpArgument = Term | UnionBaseType
 
 
 class BinaryOp[ResultT](Operation[ResultT | Sentinel], ABC):
@@ -94,7 +94,7 @@ class BinaryOp[ResultT](Operation[ResultT | Sentinel], ABC):
             left: Left operand
             right: Right operand
         """
-        self.children = (cast("RValue", left), cast("RValue", right))
+        self.children = (cast("Term", left), cast("Term", right))
 
     def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute binary operation.

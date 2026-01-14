@@ -117,7 +117,7 @@ class MoneyValue(
     CoreBase,          # ifelse, is_empty
     TypedValue[Money],
 ):
-    def to_cents(self) -> IntValue: ...
+    def to_cents(self) -> IntType: ...
 
 # Ref: use composite base
 class MoneyRef(

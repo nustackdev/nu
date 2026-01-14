@@ -37,7 +37,7 @@ Layer 4 is algebraic. It defines:
 
 These compose. Refs chain through navigation. Values chain through operators. Operations chain through application. The algebra is closed — combining terms produces terms.
 
-The specific types (IntValue, FloatRef, GetOp) are inhabitants. The layer defines the algebra. You populate it.
+The specific types (IntType, FloatRef, GetOp) are inhabitants. The layer defines the algebra. You populate it.
 
 ## Shapes as Declarations
 

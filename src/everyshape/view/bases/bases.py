@@ -14,7 +14,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from everyshape.container import Container, ContainerStructure, NodeType, node_ops
-from everyshape.typing import Empty, is_empty
+from everyshape.typing import Empty, Value, is_empty
 
 
 if TYPE_CHECKING:
@@ -340,8 +340,6 @@ class ChildNestedSetBase:
             self._populate_child_container(address, value)
         else:
             # Primitive value - store directly
-            from everyshape.typing import Value
-
             self.container.put_child_primitive(address, cast("Value", value))
 
     def _populate_child_container(self, address: site_.SiteSegment, value: object) -> None:

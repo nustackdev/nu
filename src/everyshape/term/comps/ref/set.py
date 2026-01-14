@@ -16,7 +16,7 @@ from everyshape.loc import path
 from everyshape.typing import Sentinel
 from everyshape.view import Addable, Discardable, Removable
 
-from ...term import Command, RValue, ViewRef
+from ...term import Command, Term, ViewRef
 
 
 if TYPE_CHECKING:
@@ -48,13 +48,13 @@ class AddValueCmd[T](Command[None]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        value: RValue[T | Sentinel],
+        value: Term[T | Sentinel],
     ) -> None:
         """Initialize add value command.
 
         Args:
             ref: Set reference to add to
-            value: Value to add (wrapped in RValue)
+            value: Value to add (wrapped in Term)
         """
         self.ref = cast("ViewRef", ref)
         self.value_expr = value
@@ -110,13 +110,13 @@ class RemoveValueCmd[T](Command[None]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        value: RValue[T | Sentinel],
+        value: Term[T | Sentinel],
     ) -> None:
         """Initialize remove value command.
 
         Args:
             ref: Set reference to remove from
-            value: Value to remove (wrapped in RValue)
+            value: Value to remove (wrapped in Term)
         """
         self.ref = cast("ViewRef", ref)
         self.value_expr = value
@@ -177,13 +177,13 @@ class DiscardValueCmd[T](Command[None]):
     def __init__(
         self,
         ref: ViewRef | UnionRefBases,
-        value: RValue[T | Sentinel],
+        value: Term[T | Sentinel],
     ) -> None:
         """Initialize discard value command.
 
         Args:
             ref: Set reference to discard from
-            value: Value to discard (wrapped in RValue)
+            value: Value to discard (wrapped in Term)
         """
         self.ref = cast("ViewRef", ref)
         self.value_expr = value
