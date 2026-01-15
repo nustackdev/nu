@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
     from .any import AnyType
     from .bool import BoolType
+    from .list import ListType
 
 
 __all__ = [
@@ -44,6 +45,26 @@ class DictType[K, V](
         from .bool import BoolType
 
         return BoolType(operand)
+
+    def _wrap_keys_result(self, operand: Term) -> ListType:
+        from .list import ListType
+
+        return ListType(operand)
+
+    def _wrap_values_result(self, operand: Term) -> ListType:
+        from .list import ListType
+
+        return ListType(operand)
+
+    def _wrap_items_result(self, operand: Term) -> ListType:
+        from .list import ListType
+
+        return ListType(operand)
+
+    def _wrap_value_result(self, operand: Term) -> AnyType:
+        from .any import AnyType
+
+        return AnyType(operand)
 
     def __getitem__(self, key: K) -> AnyType:
         from everyshape.ops import AtOp

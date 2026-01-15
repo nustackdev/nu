@@ -6,7 +6,7 @@ StringMethodsBase is merged directly into StrType.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, overload
 
 from everyshape.term import literal
 
@@ -79,6 +79,17 @@ class StrType(
         from everyshape.ops import AddOp
 
         return StrType(AddOp(literal(other), self))
+
+    @overload
+    def __getitem__(self, key: int) -> StrType: ...
+    @overload
+    def __getitem__(self, key: slice) -> StrType: ...
+    def __getitem__(self, key: int | slice) -> StrType:
+        from everyshape.ops import AtOp, SliceOp
+
+        if isinstance(key, slice):
+            return StrType(SliceOp(self, key.start, key.stop, key.step))
+        return StrType(AtOp(self, literal(key)))
 
     # =========================================================================
     # STRING-SPECIFIC METHODS (merged from StringMethodsBase)

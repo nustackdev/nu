@@ -381,7 +381,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Keys sequence
         """
-        from everyshape.types.dict.ops import DictKeysOp
+        from everyshape.types.dict_ops import DictKeysOp
 
         return cast("ResultT", self._wrap_keys_result(DictKeysOp(self)))
 
@@ -391,7 +391,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Values sequence
         """
-        from everyshape.types.dict import DictValuesOp
+        from everyshape.types.dict_ops import DictValuesOp
 
         return cast("ResultT", self._wrap_values_result(DictValuesOp(self)))
 
@@ -401,7 +401,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Items sequence
         """
-        from everyshape.types.dict.ops import DictItemsOp
+        from everyshape.types.dict_ops import DictItemsOp
 
         return cast("ResultT", self._wrap_items_result(DictItemsOp(self)))
 
@@ -415,7 +415,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Value or default
         """
-        from everyshape.types.dict.ops import DictGetOp
+        from everyshape.types.dict_ops import DictGetOp
 
         return cast(
             "ResultT", self._wrap_value_result(DictGetOp(self, literal(key), literal(default)))
@@ -450,7 +450,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Union set
         """
-        from everyshape.types.set.ops import UnionOp
+        from everyshape.types.set_ops import UnionOp
 
         return cast("ResultT", self._wrap_set_result(UnionOp(self, literal(other))))
 
@@ -463,7 +463,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Intersection set
         """
-        from everyshape.types.set.ops import IntersectionOp
+        from everyshape.types.set_ops import IntersectionOp
 
         return cast("ResultT", self._wrap_set_result(IntersectionOp(self, literal(other))))
 
@@ -476,7 +476,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Difference set
         """
-        from everyshape.types.set.ops import DifferenceOp
+        from everyshape.types.set_ops import DifferenceOp
 
         return cast("ResultT", self._wrap_set_result(DifferenceOp(self, literal(other))))
 
@@ -489,7 +489,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Symmetric difference set
         """
-        from everyshape.types.set.ops import SymmetricDifferenceOp
+        from everyshape.types.set_ops import SymmetricDifferenceOp
 
         return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, literal(other))))
 
@@ -503,7 +503,7 @@ class SetBase[ElementT, ResultT](
             Boolean result
         """
         from everyshape.types import BoolType
-        from everyshape.types.set.ops import IsSubsetOp
+        from everyshape.types.set_ops import IsSubsetOp
 
         return BoolType(IsSubsetOp(self, literal(other)))
 
@@ -517,7 +517,7 @@ class SetBase[ElementT, ResultT](
             Boolean result
         """
         from everyshape.types import BoolType
-        from everyshape.types.set.ops import IsSupersetOp
+        from everyshape.types.set_ops import IsSupersetOp
 
         return BoolType(IsSupersetOp(self, literal(other)))
 
@@ -531,6 +531,6 @@ class SetBase[ElementT, ResultT](
             Boolean result
         """
         from everyshape.types import BoolType
-        from everyshape.types.set.ops import IsDisjointOp
+        from everyshape.types.set_ops import IsDisjointOp
 
         return BoolType(IsDisjointOp(self, literal(other)))

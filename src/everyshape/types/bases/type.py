@@ -116,7 +116,9 @@ class Type[T](BaseType[T]):
         """
         from everyshape.types import AnyType
 
-        return AnyType(self.ifelse(self.is_sentinel(), literal(default)))
+        # ifelse returns self if condition is true, otherwise returns the alternative
+        # We want: return self if NOT sentinel, return default if sentinel
+        return AnyType(self.ifelse(self.is_sentinel().not_(), literal(default)))
 
     # =========================================================================
     # TYPE CONVERSIONS
