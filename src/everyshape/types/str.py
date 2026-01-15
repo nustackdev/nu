@@ -10,12 +10,12 @@ from typing import TYPE_CHECKING, cast, overload
 
 from .bases import (
     AddableBase,
+    BaseType,
     ComparisonBase,
     ContainableBase,
     LengthableBase,
     LogicalBase,
     SliceableBase,
-    Type,
 )
 
 
@@ -40,7 +40,7 @@ class StrType(
     ContainableBase[str],
     ComparisonBase["str | StrType"],
     LogicalBase["str | StrType", "BoolType"],
-    Type[str],
+    BaseType[str],
 ):
     """String type - represents str expressions (literal or computed).
 

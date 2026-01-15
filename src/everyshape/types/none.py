@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .bases import LogicalBase, Type
+from .bases import BaseType, LogicalBase
 
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ __all__ = [
 
 class NoneType(
     LogicalBase["None | NoneType", "BoolType"],
-    Type[None],
+    BaseType[None],
 ):
     """Nil type - represents None expressions (literal or computed).
 

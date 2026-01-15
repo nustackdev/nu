@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .core import TernaryOp
+from everyshape.term import TernaryOp
 
 
 if TYPE_CHECKING:

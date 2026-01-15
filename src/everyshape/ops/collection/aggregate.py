@@ -9,9 +9,8 @@ AllOp: All truthy (all(seq))
 
 from __future__ import annotations
 
+from everyshape.term import UnaryOp
 from everyshape.typing import NAN, Sentinel
-
-from ..core import UnaryOp
 
 
 __all__ = [

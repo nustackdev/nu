@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, overload
 
-from .bases import ComparisonBase, SequenceBase, Type
+from .bases import BaseType, ComparisonBase, SequenceBase
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ __all__ = [
 class ListType[T](
     SequenceBase[T, "ListType[T]"],
     ComparisonBase[list[T]],
-    Type[list[T]],
+    BaseType[list[T]],
 ):
     """List type - represents list expressions (literal or computed).
 

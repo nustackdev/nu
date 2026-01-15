@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
+from everyshape.term import BinaryOp, TernaryOp, UnaryOp
 from everyshape.typing import NAN, Sentinel
-
-from ..core import BinaryOp, TernaryOp, UnaryOp
 
 
 if TYPE_CHECKING:

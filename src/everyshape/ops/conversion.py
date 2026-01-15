@@ -9,9 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from everyshape.term import UnaryOp
 from everyshape.typing import NAN, Sentinel
-
-from .core import UnaryOp
 
 
 if TYPE_CHECKING:

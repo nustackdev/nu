@@ -101,11 +101,11 @@ from .base_comparison import ComparisonBase, EqualableBase, OrderableBase
 from .base_logical import AndableBase, LogicalBase, NotableBase, OrableBase
 
 # Core Type class
-from .type import Type
+from .type import BaseType
 
 
 type UnionBaseType = (
-    Type
+    BaseType
     | AddableBase
     | SubtractableBase
     | NegatableBase
@@ -144,7 +144,7 @@ __all__ = [  # noqa: RUF022
     # ==========================================================================
     # CORE TYPE
     # ==========================================================================
-    "Type",
+    "BaseType",
     "UnionBaseType",
     # ==========================================================================
     # CAPABILITY BASES

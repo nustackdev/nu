@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyshape.term import Type as BaseType
+from everyshape.term import Type
 
 
 if TYPE_CHECKING:
@@ -18,11 +18,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Type",
+    "BaseType",
 ]
 
 
-class Type[T](BaseType[T]):
+class BaseType[T](Type[T]):
     """Core base that all values should inherit.
 
     Provides:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from .bases import ComparisonBase, SetBase, Type
+from .bases import BaseType, ComparisonBase, SetBase
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ __all__ = [
 class SetType[T](
     SetBase[T, "SetType[T]"],
     ComparisonBase[set[T]],
-    Type[set[T]],
+    BaseType[set[T]],
 ):
     """Set type - represents set expressions (literal or computed).
 
@@ -52,7 +52,7 @@ class SetType[T](
 class FrozenSetType[T](
     SetBase[T, "FrozenSetType[T]"],
     ComparisonBase[frozenset[T]],
-    Type[frozenset[T]],
+    BaseType[frozenset[T]],
 ):
     """FrozenSet type - represents frozenset expressions (literal or computed).
 

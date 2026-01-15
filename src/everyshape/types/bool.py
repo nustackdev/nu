@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .bases import ComparisonBase, LogicalBase, Type
+from .bases import BaseType, ComparisonBase, LogicalBase
 
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ __all__ = [
 class BoolType(
     LogicalBase["bool | BoolType", "BoolType"],
     ComparisonBase["bool | BoolType"],
-    Type[bool],
+    BaseType[bool],
 ):
     """Boolean type - represents bool expressions (literal or computed).
 

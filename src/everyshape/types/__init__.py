@@ -24,6 +24,7 @@ from .bases import (
     AddableBase,
     AdditiveBase,
     AndableBase,
+    BaseType,
     BitwiseAndableBase,
     BitwiseBase,
     BitwiseNotableBase,
@@ -52,7 +53,6 @@ from .bases import (
     ShiftableBase,
     SliceableBase,
     SubtractableBase,
-    Type,
     UnionBaseType,
 )
 from .bool import BoolType
@@ -72,7 +72,7 @@ __all__ = [  # noqa: RUF022
     # ==========================================================================
     # CORE TYPE
     # ==========================================================================
-    "Type",
+    "BaseType",
     "UnionBaseType",
     # ==========================================================================
     # CAPABILITY BASES

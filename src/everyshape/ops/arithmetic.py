@@ -8,9 +8,8 @@ All ops inherit from arity bases and implement `_apply_op()`.
 
 from __future__ import annotations
 
+from everyshape.term import BinaryOp, UnaryOp
 from everyshape.typing import NAN, Sentinel
-
-from .core import BinaryOp, UnaryOp
 
 
 __all__ = [  # noqa: RUF022

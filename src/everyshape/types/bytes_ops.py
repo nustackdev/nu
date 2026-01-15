@@ -19,7 +19,7 @@ Design principles:
 
 from __future__ import annotations
 
-from everyshape.ops.core import BinaryOp, NAryOp, UnaryOp
+from everyshape.term import BinaryOp, NAryOp, UnaryOp
 from everyshape.typing import NAN, NOT_SET, NotSet, Sentinel, is_notset
 
 

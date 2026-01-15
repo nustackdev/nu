@@ -1,4 +1,4 @@
-"""Arity base classes for operations.
+"""Computation defition, and arity base classes for operations.
 
 This module provides the 4 fundamental arity bases that all operations inherit from:
 
@@ -13,6 +13,7 @@ Override `execute()` only when needed (e.g., short-circuit in AndOp/OrOp).
 """
 
 from .binary import BinaryOp
+from .comp import Command, Computation, Operation
 from .nary import NAryOp
 from .ternary import TernaryOp
 from .unary import UnaryOp
@@ -20,7 +21,10 @@ from .unary import UnaryOp
 
 __all__ = [
     "BinaryOp",
+    "Command",
+    "Computation",
     "NAryOp",
+    "Operation",
     "TernaryOp",
     "UnaryOp",
 ]

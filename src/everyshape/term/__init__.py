@@ -23,24 +23,33 @@ from .args import (
     TupleArg,
 )
 from .combiners import all_, and_, any_, coalesce, ifelse, none_, or_
-from .context import Context
-from .conversion import computed, literal
-from .term import (
+from .comp import (
+    BinaryOp,
     Command,
     Computation,
-    LValue,
+    NAryOp,
     Operation,
+    TernaryOp,
+    UnaryOp,
+)
+from .context import Context
+from .conversion import computed, literal
+from .ref import (
     PrimitiveRef,
     Ref,
-    RValue,
-    Term,
-    Type,
     ViewRef,
 )
+from .term import (
+    LValue,
+    RValue,
+    Term,
+)
+from .type import Type
 
 
 __all__ = [
     "Arg",
+    "BinaryOp",
     "BoolArg",
     "BytesArg",
     "Command",
@@ -52,6 +61,7 @@ __all__ = [
     "IntArg",
     "LValue",
     "ListArg",
+    "NAryOp",
     "NoneArg",
     "Operation",
     "PrimitiveRef",
@@ -60,8 +70,10 @@ __all__ = [
     "SetArg",
     "StrArg",
     "Term",
+    "TernaryOp",
     "TupleArg",
     "Type",
+    "UnaryOp",
     "ViewRef",
     "all_",
     "and_",

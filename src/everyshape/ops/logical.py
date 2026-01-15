@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from everyshape.term import BinaryOp, UnaryOp
 from everyshape.typing import Sentinel, propagate_special
-
-from .core import BinaryOp, UnaryOp
 
 
 if TYPE_CHECKING:

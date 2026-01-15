@@ -14,7 +14,7 @@ Design principles:
 
 from __future__ import annotations
 
-from everyshape.ops.core import BinaryOp
+from everyshape.term import BinaryOp
 from everyshape.typing import NAN, Sentinel
 
 

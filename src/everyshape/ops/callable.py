@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from .core import BinaryOp, NAryOp, TernaryOp
+from everyshape.term import BinaryOp, NAryOp, TernaryOp
 
 
 if TYPE_CHECKING:

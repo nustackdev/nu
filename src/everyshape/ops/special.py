@@ -7,9 +7,8 @@ Operations for checking special sentinel values (Empty, NaN).
 
 from __future__ import annotations
 
+from everyshape.term import UnaryOp
 from everyshape.typing import is_empty, is_nan
-
-from .core import UnaryOp
 
 
 __all__ = [

@@ -12,9 +12,8 @@ from __future__ import annotations
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
+from everyshape.term import NAryOp, UnaryOp
 from everyshape.typing import NAN, Sentinel
-
-from ..core import NAryOp, UnaryOp
 
 
 if TYPE_CHECKING:

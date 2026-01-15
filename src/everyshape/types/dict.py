@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from .bases import ComparisonBase, MappingBase, Type
+from .bases import BaseType, ComparisonBase, MappingBase
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ __all__ = [
 class DictType[K, V](
     MappingBase[K, V, "DictType[K, V]"],
     ComparisonBase[dict[K, V]],
-    Type[dict[K, V]],
+    BaseType[dict[K, V]],
 ):
     """Dict type - represents dict expressions (literal or computed).
 

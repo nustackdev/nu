@@ -7,9 +7,8 @@ All ops inherit from BinaryOp and implement `_apply_op()`.
 
 from __future__ import annotations
 
+from everyshape.term import BinaryOp
 from everyshape.typing import NAN, Sentinel
-
-from .core import BinaryOp
 
 
 __all__ = [

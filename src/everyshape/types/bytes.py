@@ -9,12 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, cast, overload
 
 from .bases import (
+    BaseType,
     ComparisonBase,
     ContainableBase,
     LengthableBase,
     LogicalBase,
     SliceableBase,
-    Type,
 )
 
 
@@ -38,7 +38,7 @@ class BytesType(
     ContainableBase["int | bytes"],
     ComparisonBase["bytes | BytesType"],
     LogicalBase["bytes | BytesType", "BoolType"],
-    Type[bytes],
+    BaseType[bytes],
 ):
     """Bytes type - represents bytes expressions (literal or computed).
 

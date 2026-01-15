@@ -1,7 +1,6 @@
 """Computations module - operations organized by arity and category.
 
 Structure:
-- base/: 4 fundamental arity bases (UnaryOp, BinaryOp, TernaryOp, NAryOp)
 - arithmetic.py: NegOp, AbsOp, PosOp, AddOp, SubOp, MulOp, DivOp, etc.
 - comparison.py: EqOp, NeOp, GtOp, LtOp, GeOp, LeOp, IdCompOp
 - logical.py: NotOp, BoolOp, AndOp, OrOp
@@ -85,7 +84,6 @@ from .conversion import (
     ToStrOp,
     ToTupleOp,
 )
-from .core import BinaryOp, NAryOp, TernaryOp, UnaryOp
 
 # Logical
 from .logical import AndOp, BoolOp, NotOp, OrOp
@@ -95,11 +93,6 @@ from .special import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
 
 
 __all__ = [  # noqa: RUF022
-    # Arity bases
-    "BinaryOp",
-    "NAryOp",
-    "TernaryOp",
-    "UnaryOp",
     # Arithmetic
     "AbsOp",
     "AddOp",

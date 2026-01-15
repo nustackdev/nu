@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .bases import ComparisonBase, LogicalBase, Type
+from .bases import BaseType, ComparisonBase, LogicalBase
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ __all__ = [
 class FloatType(
     ComparisonBase["int | float | FloatType | IntType"],
     LogicalBase["bool | float | BoolType | FloatType", "BoolType"],
-    Type[float],
+    BaseType[float],
 ):
     """Float type - represents float expressions (literal or computed).
 

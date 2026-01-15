@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, overload
 
-from .bases import ComparisonBase, SequenceBase, Type
+from .bases import BaseType, ComparisonBase, SequenceBase
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ __all__ = [
 class TupleType[*Ts](
     SequenceBase[object, "ListType[object]"],
     ComparisonBase[tuple],
-    Type[tuple[*Ts]],
+    BaseType[tuple[*Ts]],
 ):
     """Tuple type - represents tuple expressions (literal or computed).
 

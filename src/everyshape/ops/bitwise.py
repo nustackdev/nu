@@ -9,9 +9,8 @@ Use .bitand(), .bitor(), .bitnot() methods instead.
 
 from __future__ import annotations
 
+from everyshape.term import BinaryOp, UnaryOp
 from everyshape.typing import NAN, Sentinel
-
-from .core import BinaryOp, UnaryOp
 
 
 __all__ = [

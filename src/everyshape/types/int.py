@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from .bases import BitwiseBase, ComparisonBase, LogicalBase, Type
+from .bases import BaseType, BitwiseBase, ComparisonBase, LogicalBase
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class IntType(
     ComparisonBase["int | float | FloatType | IntType"],
     LogicalBase["bool | int | BoolType | IntType", "BoolType"],
     BitwiseBase["int | IntType", "IntType"],
-    Type[int],
+    BaseType[int],
 ):
     """Integer type - represents int expressions (literal or computed).
 

@@ -10,11 +10,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from everyshape.term import Operation, literal
+from ..conversion import literal
+from .comp import Operation
 
 
 if TYPE_CHECKING:
-    from everyshape.term import Context
+    from ..context import Context
 
 __all__ = ["NAryOp"]
 

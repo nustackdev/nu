@@ -8,7 +8,7 @@ This module provides sentinel types for special values:
 
 from __future__ import annotations
 
-from .bases import Type
+from .bases import BaseType
 
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class SentinelType(Type[None]):
+class SentinelType(BaseType[None]):
     """Base for sentinel types (EmptyType, NAType).
 
     Sentinels represent special values that indicate absence or invalidity.

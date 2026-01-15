@@ -10,11 +10,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .bases import (
+    BaseType,
     BitwiseBase,
     ComparisonBase,
     LogicalBase,
     NumericBase,
-    Type,
 )
 
 
@@ -34,7 +34,7 @@ class AnyType(
     ComparisonBase["object"],
     LogicalBase["object", "BoolType"],
     BitwiseBase["object", "AnyType"],
-    Type[object],
+    BaseType[object],
 ):
     """Any type - represents expressions of unknown/dynamic type.
 
