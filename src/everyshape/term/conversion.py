@@ -39,7 +39,7 @@ def literal(value: object) -> Term:
         >>> literal("hello")  # → StrType("hello")
         >>> literal(price.get())  # → price.get() (unchanged)
     """
-    from everyshape.type import (
+    from everyshape.types import (
         BoolType,
         BytesType,
         DictType,
@@ -98,7 +98,7 @@ def computed(result_type: object, op: Term) -> Type:
         >>> computed(int, GetOp(ref))  # → IntType(GetOp(ref))
         >>> computed(str, some_op)  # → StrType(some_op)
     """
-    from everyshape.type import (
+    from everyshape.types import (
         AnyType,
         BoolType,
         BytesType,

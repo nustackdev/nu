@@ -52,7 +52,7 @@ from everyshape.typing.type import capabilities as cap
 
 
 if TYPE_CHECKING:
-    from everyshape.type import BoolType
+    from everyshape.types import BoolType
 
     from .term import Term
 

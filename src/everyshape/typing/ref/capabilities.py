@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
 if TYPE_CHECKING:
     from everyshape.term import Computation, Term
-    from everyshape.type import BoolType, IntType, ListType, NilType
+    from everyshape.types import BoolType, IntType, ListType, NilType
     from everyshape.typing import Sentinel
 
 
