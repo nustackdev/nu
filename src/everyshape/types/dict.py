@@ -68,8 +68,7 @@ class DictType[K, V](
 
     def __getitem__(self, key: K) -> AnyType:
         from everyshape.ops import AtOp
-        from everyshape.term import literal
 
         from .any import AnyType
 
-        return AnyType(AtOp(self, literal(key)))
+        return AnyType(AtOp(self, key))

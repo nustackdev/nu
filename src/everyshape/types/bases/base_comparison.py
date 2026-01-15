@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyshape.term import literal
-
 
 if TYPE_CHECKING:
     from everyshape.types import BoolType
@@ -32,28 +30,28 @@ class OrderableBase[OperandT]:
         from everyshape.ops import GtOp
         from everyshape.types import BoolType
 
-        return BoolType(GtOp(self, literal(other)))
+        return BoolType(GtOp(self, other))
 
     def __lt__(self, other: OperandT) -> BoolType:
         """Less than: self < other."""
         from everyshape.ops import LtOp
         from everyshape.types import BoolType
 
-        return BoolType(LtOp(self, literal(other)))
+        return BoolType(LtOp(self, other))
 
     def __ge__(self, other: OperandT) -> BoolType:
         """Greater than or equal: self >= other."""
         from everyshape.ops import GeOp
         from everyshape.types import BoolType
 
-        return BoolType(GeOp(self, literal(other)))
+        return BoolType(GeOp(self, other))
 
     def __le__(self, other: OperandT) -> BoolType:
         """Less than or equal: self <= other."""
         from everyshape.ops import LeOp
         from everyshape.types import BoolType
 
-        return BoolType(LeOp(self, literal(other)))
+        return BoolType(LeOp(self, other))
 
 
 class EqualableBase[OperandT]:
@@ -90,7 +88,7 @@ class EqualableBase[OperandT]:
         from everyshape.ops import EqOp
         from everyshape.types import BoolType
 
-        return BoolType(EqOp(self, literal(other)))
+        return BoolType(EqOp(self, other))
 
     def ne(self, other: OperandT) -> BoolType:
         """Inequality: self != other (safe method).
@@ -104,7 +102,7 @@ class EqualableBase[OperandT]:
         from everyshape.ops import NeOp
         from everyshape.types import BoolType
 
-        return BoolType(NeOp(self, literal(other)))
+        return BoolType(NeOp(self, other))
 
     def is_(self, other: OperandT) -> BoolType:
         """Identity comparison: self is other (safe method).
@@ -118,7 +116,7 @@ class EqualableBase[OperandT]:
         from everyshape.ops import IdCompOp
         from everyshape.types import BoolType
 
-        return BoolType(IdCompOp(self, literal(other)))
+        return BoolType(IdCompOp(self, other))
 
 
 class ComparisonBase[OperandT](

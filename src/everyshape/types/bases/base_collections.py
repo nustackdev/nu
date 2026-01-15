@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, overload
 
-from everyshape.term import literal
-
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -63,7 +61,7 @@ class IndexableBase[KeyT, ResultValue]:
         """Get item at index/key."""
         from everyshape.ops import AtOp
 
-        return cast("ResultValue", self._wrap_indexable_result(AtOp(self, literal(key))))
+        return cast("ResultValue", self._wrap_indexable_result(AtOp(self, key)))
 
 
 class SliceableBase[ResultT]:
@@ -104,7 +102,7 @@ class ContainableBase[ItemT]:
         from everyshape.ops import ContainsOp
         from everyshape.types import BoolType
 
-        return BoolType(ContainsOp(self, literal(item)))
+        return BoolType(ContainsOp(self, item))
 
 
 class IterableBase[ElementT, ResultT]:
@@ -303,7 +301,7 @@ class SequenceBase[ElementT, ResultT](
         from everyshape.ops import JoinOp
         from everyshape.types import StrType
 
-        return StrType(JoinOp(self, literal(separator)))
+        return StrType(JoinOp(self, separator))
 
     def index(self, value: ElementT) -> IntType:
         """Find index of value.
@@ -317,7 +315,7 @@ class SequenceBase[ElementT, ResultT](
         from everyshape.ops import IndexOfOp
         from everyshape.types import IntType
 
-        return IntType(IndexOfOp(self, literal(value)))
+        return IntType(IndexOfOp(self, value))
 
     def find_index(self, predicate: Callable[[ElementT], bool]) -> IntType:
         """Find index of first match.
@@ -345,7 +343,7 @@ class SequenceBase[ElementT, ResultT](
         from everyshape.ops import CountOp
         from everyshape.types import IntType
 
-        return IntType(CountOp(self, literal(value)))
+        return IntType(CountOp(self, value))
 
 
 class MappingBase[KeyT, ValueT, ResultT](
@@ -417,9 +415,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         """
         from everyshape.types.dict_ops import DictGetOp
 
-        return cast(
-            "ResultT", self._wrap_value_result(DictGetOp(self, literal(key), literal(default)))
-        )
+        return cast("ResultT", self._wrap_value_result(DictGetOp(self, key, default)))
 
 
 # =============================================================================
@@ -452,7 +448,7 @@ class SetBase[ElementT, ResultT](
         """
         from everyshape.types.set_ops import UnionOp
 
-        return cast("ResultT", self._wrap_set_result(UnionOp(self, literal(other))))
+        return cast("ResultT", self._wrap_set_result(UnionOp(self, other)))
 
     def intersection(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set intersection.
@@ -465,7 +461,7 @@ class SetBase[ElementT, ResultT](
         """
         from everyshape.types.set_ops import IntersectionOp
 
-        return cast("ResultT", self._wrap_set_result(IntersectionOp(self, literal(other))))
+        return cast("ResultT", self._wrap_set_result(IntersectionOp(self, other)))
 
     def difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set difference.
@@ -478,7 +474,7 @@ class SetBase[ElementT, ResultT](
         """
         from everyshape.types.set_ops import DifferenceOp
 
-        return cast("ResultT", self._wrap_set_result(DifferenceOp(self, literal(other))))
+        return cast("ResultT", self._wrap_set_result(DifferenceOp(self, other)))
 
     def symmetric_difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set symmetric difference.
@@ -491,7 +487,7 @@ class SetBase[ElementT, ResultT](
         """
         from everyshape.types.set_ops import SymmetricDifferenceOp
 
-        return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, literal(other))))
+        return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
     def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolType:
         """Check if subset.
@@ -505,7 +501,7 @@ class SetBase[ElementT, ResultT](
         from everyshape.types import BoolType
         from everyshape.types.set_ops import IsSubsetOp
 
-        return BoolType(IsSubsetOp(self, literal(other)))
+        return BoolType(IsSubsetOp(self, other))
 
     def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolType:
         """Check if superset.
@@ -519,7 +515,7 @@ class SetBase[ElementT, ResultT](
         from everyshape.types import BoolType
         from everyshape.types.set_ops import IsSupersetOp
 
-        return BoolType(IsSupersetOp(self, literal(other)))
+        return BoolType(IsSupersetOp(self, other))
 
     def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolType:
         """Check if disjoint.
@@ -533,4 +529,4 @@ class SetBase[ElementT, ResultT](
         from everyshape.types import BoolType
         from everyshape.types.set_ops import IsDisjointOp
 
-        return BoolType(IsDisjointOp(self, literal(other)))
+        return BoolType(IsDisjointOp(self, other))

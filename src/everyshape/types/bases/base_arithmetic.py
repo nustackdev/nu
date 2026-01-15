@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.term import literal
-
 
 if TYPE_CHECKING:
     from everyshape.term import Term
@@ -44,13 +42,13 @@ class AddableBase[OperandT, ResultT]:
         """Addition: self + other."""
         from everyshape.ops import AddOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(AddOp(self, literal(other))))
+        return cast("ResultT", self._wrap_arithmetic_result(AddOp(self, other)))
 
     def __radd__(self, other: OperandT) -> ResultT:
         """Right addition: other + self."""
         from everyshape.ops import AddOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(AddOp(literal(other), self)))
+        return cast("ResultT", self._wrap_arithmetic_result(AddOp(other, self)))
 
 
 class SubtractableBase[OperandT, ResultT]:
@@ -64,13 +62,13 @@ class SubtractableBase[OperandT, ResultT]:
         """Subtraction: self - other."""
         from everyshape.ops import SubOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(SubOp(self, literal(other))))
+        return cast("ResultT", self._wrap_arithmetic_result(SubOp(self, other)))
 
     def __rsub__(self, other: OperandT) -> ResultT:
         """Right subtraction: other - self."""
         from everyshape.ops import SubOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(SubOp(literal(other), self)))
+        return cast("ResultT", self._wrap_arithmetic_result(SubOp(other, self)))
 
 
 class NegatableBase[ResultT]:
@@ -110,13 +108,13 @@ class MultiplyableBase[OperandT, ResultT]:
         """Multiplication: self * other."""
         from everyshape.ops import MulOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(MulOp(self, literal(other))))
+        return cast("ResultT", self._wrap_arithmetic_result(MulOp(self, other)))
 
     def __rmul__(self, other: OperandT) -> ResultT:
         """Right multiplication: other * self."""
         from everyshape.ops import MulOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(MulOp(literal(other), self)))
+        return cast("ResultT", self._wrap_arithmetic_result(MulOp(other, self)))
 
 
 class DivisibleBase[OperandT, ResultT]:
@@ -130,25 +128,25 @@ class DivisibleBase[OperandT, ResultT]:
         """Division: self / other."""
         from everyshape.ops import DivOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(DivOp(self, literal(other))))
+        return cast("ResultT", self._wrap_arithmetic_result(DivOp(self, other)))
 
     def __rtruediv__(self, other: OperandT) -> ResultT:
         """Right division: other / self."""
         from everyshape.ops import DivOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(DivOp(literal(other), self)))
+        return cast("ResultT", self._wrap_arithmetic_result(DivOp(other, self)))
 
     def __floordiv__(self, other: OperandT) -> ResultT:
         """Floor division: self // other."""
         from everyshape.ops import FloorDivOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(self, literal(other))))
+        return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(self, other)))
 
     def __rfloordiv__(self, other: OperandT) -> ResultT:
         """Right floor division: other // self."""
         from everyshape.ops import FloorDivOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(literal(other), self)))
+        return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(other, self)))
 
 
 class ModuloableBase[OperandT, ResultT]:
@@ -162,13 +160,13 @@ class ModuloableBase[OperandT, ResultT]:
         """Modulo: self % other."""
         from everyshape.ops import ModOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(ModOp(self, literal(other))))
+        return cast("ResultT", self._wrap_arithmetic_result(ModOp(self, other)))
 
     def __rmod__(self, other: OperandT) -> ResultT:
         """Right modulo: other % self."""
         from everyshape.ops import ModOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(ModOp(literal(other), self)))
+        return cast("ResultT", self._wrap_arithmetic_result(ModOp(other, self)))
 
 
 class PowerableBase[OperandT, ResultT]:
@@ -182,13 +180,13 @@ class PowerableBase[OperandT, ResultT]:
         """Power: self ** other."""
         from everyshape.ops import PowOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(PowOp(self, literal(other))))
+        return cast("ResultT", self._wrap_arithmetic_result(PowOp(self, other)))
 
     def __rpow__(self, other: OperandT) -> ResultT:
         """Right power: other ** self."""
         from everyshape.ops import PowOp
 
-        return cast("ResultT", self._wrap_arithmetic_result(PowOp(literal(other), self)))
+        return cast("ResultT", self._wrap_arithmetic_result(PowOp(other, self)))
 
 
 # =============================================================================

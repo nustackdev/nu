@@ -7,23 +7,15 @@ Set tests: IsSubsetOp, IsSupersetOp, IsDisjointOp
 
 Design principles:
 1. Atomic classes: one operation = one class
-2. Runtime type checking: validate input is set at execution
-3. Special value propagation: Empty/NaN flow through operations
-4. Type safety: preserve return types
+2. All arguments support Term or literal
+3. Proper base class inheritance (BinaryOp)
+4. Runtime type checking with NAN for invalid types
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
-
-from everyshape.term import Operation
+from everyshape.ops.core import BinaryOp
 from everyshape.typing import NAN, Sentinel
-
-
-if TYPE_CHECKING:
-    from everyshape.term import Context, Term
-
-    from .bases import UnionBaseType
 
 
 __all__ = [
@@ -37,31 +29,12 @@ __all__ = [
 ]
 
 
-type OpArgument = Term | UnionBaseType
+# =============================================================================
+# SET OPERATIONS (Binary)
+# =============================================================================
 
 
-class SetBinaryOp[ResultT](Operation[ResultT]):
-    """Base class for binary set operations."""
-
-    def __init__(self, operand: OpArgument, other: OpArgument) -> None:
-        """Init."""
-        self.children = (cast("Term", operand), cast("Term", other))
-
-    def execute(self, context: Context) -> ResultT:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        other_val = self.children[1].execute(context)
-        return self._apply_op(operand_val, other_val)
-
-    def _apply_op(self, operand: object, other: object) -> ResultT:
-        raise NotImplementedError
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.children[0]!r}, {self.children[1]!r})"
-
-
-# Set operations
-class UnionOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
+class UnionOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set union: set.union(other) or set | other."""
 
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
@@ -76,7 +49,7 @@ class UnionOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
         return NAN
 
 
-class IntersectionOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
+class IntersectionOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set intersection: set.intersection(other) or set & other."""
 
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
@@ -91,7 +64,7 @@ class IntersectionOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
         return NAN
 
 
-class DifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
+class DifferenceOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set difference: set.difference(other) or set - other."""
 
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
@@ -106,7 +79,7 @@ class DifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
         return NAN
 
 
-class SymmetricDifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
+class SymmetricDifferenceOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     """Set symmetric difference: set.symmetric_difference(other) or set ^ other."""
 
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
@@ -121,8 +94,12 @@ class SymmetricDifferenceOp[T](SetBinaryOp[set[T] | frozenset[T] | Sentinel]):
         return NAN
 
 
-# Set tests
-class IsSubsetOp(SetBinaryOp[bool | Sentinel]):
+# =============================================================================
+# SET TESTS (Binary)
+# =============================================================================
+
+
+class IsSubsetOp(BinaryOp[bool | Sentinel]):
     """Test if subset: set.issubset(other) or set <= other."""
 
     def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
@@ -133,7 +110,7 @@ class IsSubsetOp(SetBinaryOp[bool | Sentinel]):
         return operand.issubset(other)
 
 
-class IsSupersetOp(SetBinaryOp[bool | Sentinel]):
+class IsSupersetOp(BinaryOp[bool | Sentinel]):
     """Test if superset: set.issuperset(other) or set >= other."""
 
     def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
@@ -144,7 +121,7 @@ class IsSupersetOp(SetBinaryOp[bool | Sentinel]):
         return operand.issuperset(other)
 
 
-class IsDisjointOp(SetBinaryOp[bool | Sentinel]):
+class IsDisjointOp(BinaryOp[bool | Sentinel]):
     """Test if disjoint: set.isdisjoint(other)."""
 
     def _apply_op(self, operand: object, other: object) -> bool | Sentinel:

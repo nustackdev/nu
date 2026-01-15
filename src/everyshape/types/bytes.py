@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, cast, overload
 
-from everyshape.term import literal
-
 from .bases import (
     ComparisonBase,
     ContainableBase,
@@ -73,12 +71,12 @@ class BytesType(
     def __add__(self, other: bytes | BytesType) -> BytesType:
         from everyshape.ops import AddOp
 
-        return BytesType(AddOp(self, literal(other)))
+        return BytesType(AddOp(self, other))
 
     def __radd__(self, other: bytes) -> BytesType:
         from everyshape.ops import AddOp
 
-        return BytesType(AddOp(literal(other), self))
+        return BytesType(AddOp(other, self))
 
     @overload
     def __getitem__(self, key: int) -> IntType: ...
@@ -91,7 +89,7 @@ class BytesType(
 
         if isinstance(key, slice):
             return BytesType(SliceOp[bytes](self, key.start, key.stop, key.step))
-        return IntType(AtOp[int](self, literal(key)))
+        return IntType(AtOp[int](self, key))
 
     # =========================================================================
     # BYTES-SPECIFIC METHODS (merged from BytesMethodsBase)
@@ -131,7 +129,7 @@ class BytesType(
         from .bytes_ops import BytesStripOp
 
         if chars is not None:
-            return cast("BytesType", self._wrap_bytes_result(BytesStripOp(self, literal(chars))))
+            return cast("BytesType", self._wrap_bytes_result(BytesStripOp(self, chars)))
         return cast("BytesType", self._wrap_bytes_result(BytesStripOp(self)))
 
     def lstrip(self, chars: bytes | Term | None = None) -> BytesType:
@@ -139,7 +137,7 @@ class BytesType(
         from .bytes_ops import BytesLStripOp
 
         if chars is not None:
-            return cast("BytesType", self._wrap_bytes_result(BytesLStripOp(self, literal(chars))))
+            return cast("BytesType", self._wrap_bytes_result(BytesLStripOp(self, chars)))
         return cast("BytesType", self._wrap_bytes_result(BytesLStripOp(self)))
 
     def rstrip(self, chars: bytes | Term | None = None) -> BytesType:
@@ -147,7 +145,7 @@ class BytesType(
         from .bytes_ops import BytesRStripOp
 
         if chars is not None:
-            return cast("BytesType", self._wrap_bytes_result(BytesRStripOp(self, literal(chars))))
+            return cast("BytesType", self._wrap_bytes_result(BytesRStripOp(self, chars)))
         return cast("BytesType", self._wrap_bytes_result(BytesRStripOp(self)))
 
     # Splitting
@@ -157,7 +155,7 @@ class BytesType(
         from .list import ListType
 
         if sep is not None:
-            return ListType(BytesSplitOp(self, literal(sep), maxsplit))
+            return ListType(BytesSplitOp(self, sep, maxsplit))
         return ListType(BytesSplitOp(self, None, maxsplit))
 
     # Searching
@@ -166,14 +164,14 @@ class BytesType(
         from .bytes_ops import BytesFindOp
         from .int import IntType
 
-        return IntType(BytesFindOp(self, literal(sub), start, end))
+        return IntType(BytesFindOp(self, sub, start, end))
 
     def count_bytes(self, sub: bytes | Term) -> IntType:
         """Count sub-bytes occurrences."""
         from .bytes_ops import BytesCountOp
         from .int import IntType
 
-        return IntType(BytesCountOp(self, literal(sub)))
+        return IntType(BytesCountOp(self, sub))
 
     # Testing
     def startswith(self, prefix: bytes | Term) -> BoolType:
@@ -181,14 +179,14 @@ class BytesType(
         from .bool import BoolType
         from .bytes_ops import BytesStartsWithOp
 
-        return BoolType(BytesStartsWithOp(self, literal(prefix)))
+        return BoolType(BytesStartsWithOp(self, prefix))
 
     def endswith(self, suffix: bytes | Term) -> BoolType:
         """Check if ends with suffix."""
         from .bool import BoolType
         from .bytes_ops import BytesEndsWithOp
 
-        return BoolType(BytesEndsWithOp(self, literal(suffix)))
+        return BoolType(BytesEndsWithOp(self, suffix))
 
     # Replacing
     def replace(self, old: bytes | Term, new: bytes | Term, count: int = -1) -> BytesType:
@@ -197,5 +195,5 @@ class BytesType(
 
         return cast(
             "BytesType",
-            self._wrap_bytes_result(BytesReplaceOp(self, literal(old), literal(new), count)),
+            self._wrap_bytes_result(BytesReplaceOp(self, old, new, count)),
         )

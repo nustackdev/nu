@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everyshape.term import Type as BaseType
-from everyshape.term import literal
 
 
 if TYPE_CHECKING:
@@ -100,7 +99,7 @@ class Type[T](BaseType[T]):
         from everyshape.types import AnyType
 
         # ConditionalOp expects: (value_if_true, condition, value_if_false)
-        return AnyType(ConditionalOp(self, literal(condition), literal(otherwise)))
+        return AnyType(ConditionalOp(self, condition, otherwise))
 
     def or_default[DefaultT](self, default: DefaultT | Term[DefaultT]) -> AnyType:
         """Return self if not empty/nan, otherwise return default.
@@ -118,7 +117,7 @@ class Type[T](BaseType[T]):
 
         # ifelse returns self if condition is true, otherwise returns the alternative
         # We want: return self if NOT sentinel, return default if sentinel
-        return AnyType(self.ifelse(self.is_sentinel().not_(), literal(default)))
+        return AnyType(self.ifelse(self.is_sentinel().not_(), default))
 
     # =========================================================================
     # TYPE CONVERSIONS

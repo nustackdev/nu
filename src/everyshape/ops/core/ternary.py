@@ -7,10 +7,9 @@ Unlike UnaryOp and BinaryOp, ternary ops often need custom `execute()` logic
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from everyshape.term import Operation
+from everyshape.term import Operation, literal
 
 
 if TYPE_CHECKING:
@@ -26,19 +25,18 @@ type OpArgument = Term | UnionBaseType
 class TernaryOp[ResultT](Operation[ResultT]):
     """Base class for ternary operations (three operands).
 
-    Ternary operations often require custom execution logic:
-    - ConditionalOp: evaluates condition first, then only one branch
-    - SliceOp: may have optional operands
+    Defines execution pattern:
+    1. Evaluate all three operands
+    2. Apply operation via `_apply_op()`
+    3. Return result
 
-    Subclasses typically override `execute()` directly rather than `_apply_op()`.
+    Subclasses implement `_apply_op()` with operation-specific logic.
+    Override `execute()` only when special handling is needed (e.g., lazy evaluation).
 
     Example:
-        class ConditionalOp(TernaryOp[ResultT]):
-            def execute(self, context: Context) -> ResultT:
-                condition = self.children[1].execute(context)
-                if condition:
-                    return self.children[0].execute(context)
-                return self.children[2].execute(context)
+        class ReplaceOp(TernaryOp[str]):
+            def _apply_op(self, text: object, old: object, new: object) -> str:
+                return str(text).replace(str(old), str(new))
     """
 
     def __init__(self, first: OpArgument, second: OpArgument, third: OpArgument) -> None:
@@ -49,13 +47,12 @@ class TernaryOp[ResultT](Operation[ResultT]):
             second: Second operand (can be Term or literal value)
             third: Third operand (can be Term or literal value)
         """
-        self.children = (cast("Term", first), cast("Term", second), cast("Term", third))
+        self.children = (literal(first), literal(second), literal(third))
 
-    @abstractmethod
     def execute(self, context: Context) -> ResultT:
         """Execute ternary operation.
 
-        Subclasses implement operation-specific execution logic.
+        Evaluates all operands and applies operation logic.
 
         Args:
             context: Execution context
@@ -63,13 +60,15 @@ class TernaryOp[ResultT](Operation[ResultT]):
         Returns:
             Operation result
         """
-        ...
+        first_val = self.children[0].execute(context)
+        second_val = self.children[1].execute(context)
+        third_val = self.children[2].execute(context)
+        return self._apply_op(first_val, second_val, third_val)
 
     def _apply_op(self, first: object, second: object, third: object) -> ResultT:
         """Apply the operator to operands.
 
-        Optional hook for subclasses that want simple apply semantics.
-        Most ternary ops override `execute()` directly instead.
+        Subclasses override with operation-specific logic.
 
         Args:
             first: Evaluated first operand value

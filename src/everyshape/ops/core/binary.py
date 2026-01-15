@@ -7,9 +7,9 @@ The base handles operand evaluation and special value propagation.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from everyshape.term import Operation
+from everyshape.term import Operation, literal
 from everyshape.typing import Sentinel, propagate_special
 
 
@@ -48,7 +48,7 @@ class BinaryOp[ResultT](Operation[ResultT | Sentinel]):
             left: Left operand (can be Term or literal value)
             right: Right operand (can be Term or literal value)
         """
-        self.children = (cast("Term", left), cast("Term", right))
+        self.children = (literal(left), literal(right))
 
     def execute(self, context: Context) -> ResultT | Sentinel:
         """Execute binary operation.

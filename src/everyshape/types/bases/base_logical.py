@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.term import literal
-
 
 if TYPE_CHECKING:
     from everyshape.term import Term
@@ -44,7 +42,7 @@ class AndableBase[OperandT, ResultT]:
         """
         from everyshape.ops import AndOp
 
-        return cast("ResultT", self._wrap_logical_result(AndOp(self, literal(other))))
+        return cast("ResultT", self._wrap_logical_result(AndOp(self, other)))
 
 
 class OrableBase[OperandT, ResultT]:
@@ -65,7 +63,7 @@ class OrableBase[OperandT, ResultT]:
         """
         from everyshape.ops import OrOp
 
-        return cast("ResultT", self._wrap_logical_result(OrOp(self, literal(other))))
+        return cast("ResultT", self._wrap_logical_result(OrOp(self, other)))
 
 
 class NotableBase[ResultT]:

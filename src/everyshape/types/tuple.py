@@ -65,10 +65,9 @@ class TupleType[*Ts](
     def __getitem__(self, key: slice) -> TupleType: ...
     def __getitem__(self, key: int | slice) -> AnyType | TupleType:
         from everyshape.ops import AtOp, SliceOp
-        from everyshape.term import literal
 
         from .any import AnyType
 
         if isinstance(key, slice):
             return TupleType(SliceOp(self, key.start, key.stop, key.step))
-        return AnyType(AtOp(self, literal(key)))
+        return AnyType(AtOp(self, key))

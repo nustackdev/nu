@@ -52,87 +52,73 @@ class FloatType(
     # All arithmetic returns FloatType
     def __add__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import AddOp
-        from everyshape.term import literal
 
-        return FloatType(AddOp(self, literal(other)))
+        return FloatType(AddOp(self, other))
 
     def __radd__(self, other: int | float) -> FloatType:
         from everyshape.ops import AddOp
-        from everyshape.term import literal
 
-        return FloatType(AddOp(literal(other), self))
+        return FloatType(AddOp(other, self))
 
     def __sub__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import SubOp
-        from everyshape.term import literal
 
-        return FloatType(SubOp(self, literal(other)))
+        return FloatType(SubOp(self, other))
 
     def __rsub__(self, other: int | float) -> FloatType:
         from everyshape.ops import SubOp
-        from everyshape.term import literal
 
-        return FloatType(SubOp(literal(other), self))
+        return FloatType(SubOp(other, self))
 
     def __mul__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import MulOp
-        from everyshape.term import literal
 
-        return FloatType(MulOp(self, literal(other)))
+        return FloatType(MulOp(self, other))
 
     def __rmul__(self, other: int | float) -> FloatType:
         from everyshape.ops import MulOp
-        from everyshape.term import literal
 
-        return FloatType(MulOp(literal(other), self))
+        return FloatType(MulOp(other, self))
 
     def __truediv__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import DivOp
-        from everyshape.term import literal
 
-        return FloatType(DivOp(self, literal(other)))
+        return FloatType(DivOp(self, other))
 
     def __rtruediv__(self, other: int | float) -> FloatType:
         from everyshape.ops import DivOp
-        from everyshape.term import literal
 
-        return FloatType(DivOp(literal(other), self))
+        return FloatType(DivOp(other, self))
 
     def __floordiv__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import FloorDivOp
-        from everyshape.term import literal
 
-        return FloatType(FloorDivOp(self, literal(other)))
+        return FloatType(FloorDivOp(self, other))
 
     def __rfloordiv__(self, other: int | float) -> FloatType:
         from everyshape.ops import FloorDivOp
-        from everyshape.term import literal
 
-        return FloatType(FloorDivOp(literal(other), self))
+        return FloatType(FloorDivOp(other, self))
 
     def __mod__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import ModOp
-        from everyshape.term import literal
 
-        return FloatType(ModOp(self, literal(other)))
+        return FloatType(ModOp(self, other))
 
     def __rmod__(self, other: int | float) -> FloatType:
         from everyshape.ops import ModOp
-        from everyshape.term import literal
 
-        return FloatType(ModOp(literal(other), self))
+        return FloatType(ModOp(other, self))
 
     def __pow__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import PowOp
-        from everyshape.term import literal
 
-        return FloatType(PowOp(self, literal(other)))
+        return FloatType(PowOp(self, other))
 
     def __rpow__(self, other: int | float) -> FloatType:
         from everyshape.ops import PowOp
-        from everyshape.term import literal
 
-        return FloatType(PowOp(literal(other), self))
+        return FloatType(PowOp(other, self))
 
     def __neg__(self) -> FloatType:
         from everyshape.ops import NegOp

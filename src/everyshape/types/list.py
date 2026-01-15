@@ -58,15 +58,13 @@ class ListType[T](
 
     def __add__(self, other: list[T] | ListType[T]) -> ListType[T]:
         from everyshape.ops import AddOp
-        from everyshape.term import literal
 
-        return ListType(AddOp(self, literal(other)))
+        return ListType(AddOp(self, other))
 
     def __radd__(self, other: list[T]) -> ListType[T]:
         from everyshape.ops import AddOp
-        from everyshape.term import literal
 
-        return ListType(AddOp(literal(other), self))
+        return ListType(AddOp(other, self))
 
     @overload
     def __getitem__(self, key: int) -> AnyType: ...
@@ -74,10 +72,9 @@ class ListType[T](
     def __getitem__(self, key: slice) -> ListType[T]: ...
     def __getitem__(self, key: int | slice) -> AnyType | ListType[T]:
         from everyshape.ops import AtOp, SliceOp
-        from everyshape.term import literal
 
         from .any import AnyType
 
         if isinstance(key, slice):
             return ListType(SliceOp(self, key.start, key.stop, key.step))
-        return AnyType(AtOp(self, literal(key)))
+        return AnyType(AtOp(self, key))

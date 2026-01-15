@@ -12,21 +12,21 @@ Replacing: BytesReplaceOp
 
 Design principles:
 1. Atomic classes: one operation = one class
-2. Runtime type checking: validate input is bytes at execution
-3. Special value propagation: Empty/NaN flow through operations
-4. Type safety: preserve return types
+2. All arguments support Term or literal
+3. Proper base class inheritance (UnaryOp, BinaryOp, NAryOp)
+4. Runtime type checking with NAN for invalid types
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from everyshape.term import Operation
-from everyshape.typing import NAN, Sentinel
+from everyshape.ops.core import BinaryOp, NAryOp, UnaryOp
+from everyshape.typing import NAN, NOT_SET, NotSet, Sentinel, is_notset
 
 
 if TYPE_CHECKING:
-    from everyshape.term import Context, Term
+    from everyshape.term import Term
 
     from .bases import UnionBaseType
 
@@ -51,47 +51,24 @@ __all__ = [
 type OpArgument = Term | UnionBaseType
 
 
-class BytesOp[ResultT](Operation[ResultT]):
-    """Base class for bytes operations."""
-
-    def __init__(self, operand: OpArgument) -> None:
-        """Init."""
-        self.children = (cast("Term", operand),)
-
-    def execute(self, context: Context) -> ResultT:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        return self._apply_op(operand_val)
-
-    def _apply_op(self, operand: object) -> ResultT:
-        raise NotImplementedError
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.children[0]!r})"
+# =============================================================================
+# DECODING (Binary - operand and encoding as Terms)
+# =============================================================================
 
 
-# Decoding
-class DecodeOp(BytesOp[str | Sentinel]):
+class DecodeOp(BinaryOp[str | Sentinel]):
     """Decode bytes to string: bytes.decode(encoding)."""
 
-    def __init__(self, operand: OpArgument, encoding: str = "utf-8") -> None:
-        """Init."""
-        super().__init__(operand)
-        self._encoding = encoding
-
-    def _apply_op(self, operand: object) -> str | Sentinel:
+    def _apply_op(self, operand: object, encoding: object) -> str | Sentinel:
         if not isinstance(operand, bytes):
             return NAN
         try:
-            return operand.decode(self._encoding)
+            return operand.decode(str(encoding) if encoding else "utf-8")
         except (UnicodeDecodeError, LookupError):
             return NAN
 
-    def __repr__(self) -> str:
-        return f"DecodeOp({self.children[0]!r}, encoding={self._encoding!r})"
 
-
-class HexOp(BytesOp[str | Sentinel]):
+class HexOp(UnaryOp[str | Sentinel]):
     """Convert to hex string: bytes.hex()."""
 
     def _apply_op(self, operand: object) -> str | Sentinel:
@@ -100,8 +77,12 @@ class HexOp(BytesOp[str | Sentinel]):
         return operand.hex()
 
 
-# Case transformation
-class BytesUpperOp(BytesOp[bytes | Sentinel]):
+# =============================================================================
+# CASE TRANSFORMATION (Unary)
+# =============================================================================
+
+
+class BytesUpperOp(UnaryOp[bytes | Sentinel]):
     """Convert to uppercase: bytes.upper()."""
 
     def _apply_op(self, operand: object) -> bytes | Sentinel:
@@ -110,7 +91,7 @@ class BytesUpperOp(BytesOp[bytes | Sentinel]):
         return operand.upper()
 
 
-class BytesLowerOp(BytesOp[bytes | Sentinel]):
+class BytesLowerOp(UnaryOp[bytes | Sentinel]):
     """Convert to lowercase: bytes.lower()."""
 
     def _apply_op(self, operand: object) -> bytes | Sentinel:
@@ -119,239 +100,210 @@ class BytesLowerOp(BytesOp[bytes | Sentinel]):
         return operand.lower()
 
 
-# Stripping
-class BytesStripOp(BytesOp[bytes | Sentinel]):
-    """Strip bytes: bytes.strip(chars)."""
+# =============================================================================
+# STRIPPING (NAryOp - optional chars argument)
+# =============================================================================
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
-        """Init."""
-        if chars is not None:
-            self.children = (cast("Term", operand), cast("Term", chars))
+
+class BytesStripOp(NAryOp[bytes | Sentinel]):
+    """Strip bytes: bytes.strip(chars).
+
+    Args can be Terms for dynamic values.
+    """
+
+    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+        """Initialize strip operation."""
+        if is_notset(chars):
+            super().__init__(operand)
         else:
-            self.children = (cast("Term", operand),)
+            super().__init__(operand, chars)
 
-    def execute(self, context: Context) -> bytes | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, bytes):
+    def _apply_op(self, operand: object, chars: object = NOT_SET) -> bytes | Sentinel:
+        if not isinstance(operand, bytes):
             return NAN
-        if len(self.children) > 1:
-            chars_val = self.children[1].execute(context)
-            if chars_val is not None and not isinstance(chars_val, bytes):
-                return NAN
-            return operand_val.strip(chars_val)
-        return operand_val.strip()
-
-    def _apply_op(self, operand: object) -> bytes | Sentinel:
-        raise NotImplementedError
+        if is_notset(chars):
+            return operand.strip()
+        if chars is not None and not isinstance(chars, bytes):
+            return NAN
+        return operand.strip(chars)
 
 
-class BytesLStripOp(BytesOp[bytes | Sentinel]):
+class BytesLStripOp(NAryOp[bytes | Sentinel]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
-        """Init."""
-        if chars is not None:
-            self.children = (cast("Term", operand), cast("Term", chars))
+    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+        """Initialize lstrip operation."""
+        if is_notset(chars):
+            super().__init__(operand)
         else:
-            self.children = (cast("Term", operand),)
+            super().__init__(operand, chars)
 
-    def execute(self, context: Context) -> bytes | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, bytes):
+    def _apply_op(self, operand: object, chars: object = NOT_SET) -> bytes | Sentinel:
+        if not isinstance(operand, bytes):
             return NAN
-        if len(self.children) > 1:
-            chars_val = self.children[1].execute(context)
-            if chars_val is not None and not isinstance(chars_val, bytes):
-                return NAN
-            return operand_val.lstrip(chars_val)
-        return operand_val.lstrip()
-
-    def _apply_op(self, operand: object) -> bytes | Sentinel:
-        raise NotImplementedError
+        if is_notset(chars):
+            return operand.lstrip()
+        if chars is not None and not isinstance(chars, bytes):
+            return NAN
+        return operand.lstrip(chars)
 
 
-class BytesRStripOp(BytesOp[bytes | Sentinel]):
+class BytesRStripOp(NAryOp[bytes | Sentinel]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | None = None) -> None:
-        """Init."""
-        if chars is not None:
-            self.children = (cast("Term", operand), cast("Term", chars))
+    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+        """Initialize rstrip operation."""
+        if is_notset(chars):
+            super().__init__(operand)
         else:
-            self.children = (cast("Term", operand),)
+            super().__init__(operand, chars)
 
-    def execute(self, context: Context) -> bytes | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, bytes):
+    def _apply_op(self, operand: object, chars: object = NOT_SET) -> bytes | Sentinel:
+        if not isinstance(operand, bytes):
             return NAN
-        if len(self.children) > 1:
-            chars_val = self.children[1].execute(context)
-            if chars_val is not None and not isinstance(chars_val, bytes):
-                return NAN
-            return operand_val.rstrip(chars_val)
-        return operand_val.rstrip()
-
-    def _apply_op(self, operand: object) -> bytes | Sentinel:
-        raise NotImplementedError
+        if is_notset(chars):
+            return operand.rstrip()
+        if chars is not None and not isinstance(chars, bytes):
+            return NAN
+        return operand.rstrip(chars)
 
 
-# Splitting
-class BytesSplitOp(Operation[list[bytes] | Sentinel]):
-    """Split bytes: bytes.split(sep, maxsplit)."""
+# =============================================================================
+# SPLITTING (NAryOp - optional sep, maxsplit as Terms)
+# =============================================================================
+
+
+class BytesSplitOp(NAryOp[list[bytes] | Sentinel]):
+    """Split bytes: bytes.split(sep, maxsplit).
+
+    All args can be Terms for dynamic values.
+    """
 
     def __init__(
         self,
         operand: OpArgument,
-        sep: OpArgument | None = None,
-        maxsplit: int = -1,
+        sep: OpArgument | NotSet = NOT_SET,
+        maxsplit: OpArgument = -1,
     ) -> None:
-        """Init."""
-        if sep is not None:
-            self.children = (cast("Term", operand), cast("Term", sep))
+        """Initialize split operation."""
+        if is_notset(sep):
+            super().__init__(operand, maxsplit)
+            self._has_sep = False
         else:
-            self.children = (cast("Term", operand),)
-        self._maxsplit = maxsplit
+            super().__init__(operand, sep, maxsplit)
+            self._has_sep = True
 
-    def execute(self, context: Context) -> list[bytes] | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, bytes):
+    def _apply_op(self, *args: object) -> list[bytes] | Sentinel:
+        if self._has_sep:
+            operand, sep, maxsplit = args
+        else:
+            operand, maxsplit = args
+            sep = None
+
+        if not isinstance(operand, bytes):
             return NAN
-        sep_val = None
-        if len(self.children) > 1:
-            sep_val = self.children[1].execute(context)
-            if sep_val is not None and not isinstance(sep_val, bytes):
-                return NAN
-        return operand_val.split(sep_val, self._maxsplit)
-
-    def __repr__(self) -> str:
-        return f"BytesSplitOp({self.children[0]!r}, maxsplit={self._maxsplit})"
+        if sep is not None and not isinstance(sep, bytes):
+            return NAN
+        return operand.split(sep, int(maxsplit))  # type: ignore[arg-type]
 
 
-# Searching
-class BytesFindOp(Operation[int | Sentinel]):
-    """Find sub-bytes: bytes.find(sub, start, end)."""
+# =============================================================================
+# SEARCHING (NAryOp for optional start/end, Binary for simple)
+# =============================================================================
+
+
+class BytesFindOp(NAryOp[int | Sentinel]):
+    """Find sub-bytes: bytes.find(sub, start, end).
+
+    All args can be Terms.
+    """
 
     def __init__(
         self,
         operand: OpArgument,
         sub: OpArgument,
-        start: int = 0,
-        end: int | None = None,
+        start: OpArgument = 0,
+        end: OpArgument | NotSet = NOT_SET,
     ) -> None:
-        """Init."""
-        self.children = (cast("Term", operand), cast("Term", sub))
-        self._start = start
-        self._end = end
+        """Initialize find operation."""
+        if is_notset(end):
+            super().__init__(operand, sub, start)
+        else:
+            super().__init__(operand, sub, start, end)
 
-    def execute(self, context: Context) -> int | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        sub_val = self.children[1].execute(context)
-        if not isinstance(operand_val, bytes) or not isinstance(sub_val, bytes):
+    def _apply_op(
+        self, operand: object, sub: object, start: object, end: object = NOT_SET
+    ) -> int | Sentinel:
+        if not isinstance(operand, bytes) or not isinstance(sub, bytes):
             return NAN
-        if self._end is None:
-            return operand_val.find(sub_val, self._start)
-        return operand_val.find(sub_val, self._start, self._end)
-
-    def __repr__(self) -> str:
-        return f"BytesFindOp({self.children[0]!r}, {self.children[1]!r})"
+        if is_notset(end) or end is None:
+            return operand.find(sub, int(start))  # type: ignore[arg-type]
+        return operand.find(sub, int(start), int(end))  # type: ignore[arg-type]
 
 
-class BytesCountOp(Operation[int | Sentinel]):
+class BytesCountOp(BinaryOp[int | Sentinel]):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
-    def __init__(self, operand: OpArgument, sub: OpArgument) -> None:
-        """Init."""
-        self.children = (cast("Term", operand), cast("Term", sub))
-
-    def execute(self, context: Context) -> int | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        sub_val = self.children[1].execute(context)
-        if not isinstance(operand_val, bytes) or not isinstance(sub_val, bytes):
+    def _apply_op(self, operand: object, sub: object) -> int | Sentinel:
+        if not isinstance(operand, bytes) or not isinstance(sub, bytes):
             return NAN
-        return operand_val.count(sub_val)
-
-    def __repr__(self) -> str:
-        return f"BytesCountOp({self.children[0]!r}, {self.children[1]!r})"
+        return operand.count(sub)
 
 
-# Testing
-class BytesStartsWithOp(Operation[bool | Sentinel]):
+# =============================================================================
+# PREFIX/SUFFIX TESTING (Binary)
+# =============================================================================
+
+
+class BytesStartsWithOp(BinaryOp[bool | Sentinel]):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
-    def __init__(self, operand: OpArgument, prefix: OpArgument) -> None:
-        """Init."""
-        self.children = (cast("Term", operand), cast("Term", prefix))
-
-    def execute(self, context: Context) -> bool | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        prefix_val = self.children[1].execute(context)
-        if not isinstance(operand_val, bytes) or not isinstance(prefix_val, bytes):
+    def _apply_op(self, operand: object, prefix: object) -> bool | Sentinel:
+        if not isinstance(operand, bytes) or not isinstance(prefix, bytes):
             return NAN
-        return operand_val.startswith(prefix_val)
-
-    def __repr__(self) -> str:
-        return f"BytesStartsWithOp({self.children[0]!r}, {self.children[1]!r})"
+        return operand.startswith(prefix)
 
 
-class BytesEndsWithOp(Operation[bool | Sentinel]):
+class BytesEndsWithOp(BinaryOp[bool | Sentinel]):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
-    def __init__(self, operand: OpArgument, suffix: OpArgument) -> None:
-        """Init."""
-        self.children = (cast("Term", operand), cast("Term", suffix))
-
-    def execute(self, context: Context) -> bool | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        suffix_val = self.children[1].execute(context)
-        if not isinstance(operand_val, bytes) or not isinstance(suffix_val, bytes):
+    def _apply_op(self, operand: object, suffix: object) -> bool | Sentinel:
+        if not isinstance(operand, bytes) or not isinstance(suffix, bytes):
             return NAN
-        return operand_val.endswith(suffix_val)
-
-    def __repr__(self) -> str:
-        return f"BytesEndsWithOp({self.children[0]!r}, {self.children[1]!r})"
+        return operand.endswith(suffix)
 
 
-# Replacing
-class BytesReplaceOp(Operation[bytes | Sentinel]):
-    """Replace sub-bytes: bytes.replace(old, new, count)."""
+# =============================================================================
+# REPLACING (NAryOp - operand, old, new, count all as Terms)
+# =============================================================================
+
+
+class BytesReplaceOp(NAryOp[bytes | Sentinel]):
+    """Replace sub-bytes: bytes.replace(old, new, count).
+
+    All args can be Terms.
+    """
 
     def __init__(
         self,
         operand: OpArgument,
         old: OpArgument,
         new: OpArgument,
-        count: int = -1,
+        count: OpArgument = -1,
     ) -> None:
-        """Init."""
-        self.children = (
-            cast("Term", operand),
-            cast("Term", old),
-            cast("Term", new),
-        )
-        self._count = count
+        """Initialize replace operation."""
+        super().__init__(operand, old, new, count)
 
-    def execute(self, context: Context) -> bytes | Sentinel:
-        """Execute."""
-        operand_val = self.children[0].execute(context)
-        old_val = self.children[1].execute(context)
-        new_val = self.children[2].execute(context)
+    def _apply_op(
+        self, operand: object, old: object, new: object, count: object
+    ) -> bytes | Sentinel:
         if (
-            not isinstance(operand_val, bytes)
-            or not isinstance(old_val, bytes)
-            or not isinstance(new_val, bytes)
+            not isinstance(operand, bytes)
+            or not isinstance(old, bytes)
+            or not isinstance(new, bytes)
         ):
             return NAN
-        if self._count == -1:
-            return operand_val.replace(old_val, new_val)
-        return operand_val.replace(old_val, new_val, self._count)
-
-    def __repr__(self) -> str:
-        return f"BytesReplaceOp({self.children[0]!r}, {self.children[1]!r}, {self.children[2]!r})"
+        count_int = int(count)  # type: ignore[arg-type]
+        if count_int == -1:
+            return operand.replace(old, new)
+        return operand.replace(old, new, count_int)

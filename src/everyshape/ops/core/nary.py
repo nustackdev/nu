@@ -1,17 +1,15 @@
 """Base class for N-ary operations.
 
 N-ary operations have variable numbers of arguments, used for:
+- Operations with optional parameters: SplitOp, StripOp, FindOp, etc.
 - Function calls: FuncCallOp, MethodCallOp
-- Operations with optional parameters: MapOp, FilterOp, ReduceOp
-- Attribute access: GetAttrOp, SetAttrOp, DelAttrOp
 """
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from everyshape.term import Operation, Term
+from everyshape.term import Operation, literal
 
 
 if TYPE_CHECKING:
@@ -23,75 +21,42 @@ __all__ = ["NAryOp"]
 class NAryOp[ResultT](Operation[ResultT]):
     """Base class for N-ary operations (variable arguments).
 
-    N-ary operations handle variable numbers of arguments, supporting
-    both positional and keyword arguments. Arguments can be Terms
-    (executed during evaluation) or raw values (passed directly).
+    Defines execution pattern:
+    1. Evaluate all operands
+    2. Apply operation via `_apply_op()`
+    3. Return result
 
-    Children tracking collects all Term arguments for dependency analysis
-    and purity checking.
+    Subclasses implement `_apply_op()` with operation-specific logic.
+    Override `__init__` to store extra config (callables, flags, etc.).
+    Override `execute()` only for special handling (lazy evaluation, etc.).
 
-    Subclasses implement `execute()` with their specific argument handling.
+    Example simple case:
+        class SplitOp(NAryOp[list[str]]):
+            def _apply_op(self, operand, sep, maxsplit) -> list[str]:
+                return operand.split(sep, int(maxsplit))
 
-    Example:
-        class FuncCallOp(NAryOp[ResultT]):
-            def __init__(self, func: Callable, *args, **kwargs):
-                self._func = func
-                self._args = args
-                self._kwargs = kwargs
-                # Collect Term children
-                children = [a for a in args if isinstance(a, Term)]
-                children.extend(v for v in kwargs.values() if isinstance(v, Term))
-                self.children = tuple(children)
+    Example with config:
+        class MapOp(NAryOp[list]):
+            def __init__(self, operand, fn):
+                super().__init__(operand)  # Just operand as child
+                self._fn = fn  # Callable stored separately
 
-            def execute(self, context: Context) -> ResultT:
-                resolved_args = [a.execute(context) if isinstance(a, Term) else a
-                                 for a in self._args]
-                resolved_kwargs = {k: v.execute(context) if isinstance(v, Term) else v
-                                   for k, v in self._kwargs.items()}
-                return self._func(*resolved_args, **resolved_kwargs)
+            def _apply_op(self, operand) -> list:
+                return list(map(self._fn, operand))
     """
 
-    def _resolve_args(self, context: Context, args: tuple[Any, ...]) -> list[Any]:
-        """Resolve positional arguments, executing any Terms.
+    def __init__(self, *operands: object) -> None:
+        """Initialize N-ary operation.
 
         Args:
-            context: Execution context
-            args: Tuple of arguments (may contain Terms)
-
-        Returns:
-            List of resolved argument values
+            *operands: Operands (can be Terms or literal values)
         """
-        resolved = []
-        for arg in args:
-            if isinstance(arg, Term):
-                resolved.append(arg.execute(context))
-            else:
-                resolved.append(arg)
-        return resolved
+        self.children = tuple(literal(op) for op in operands)
 
-    def _resolve_kwargs(self, context: Context, kwargs: dict[str, Any]) -> dict[str, Any]:
-        """Resolve keyword arguments, executing any Terms.
-
-        Args:
-            context: Execution context
-            kwargs: Dict of keyword arguments (may contain Terms)
-
-        Returns:
-            Dict of resolved keyword argument values
-        """
-        resolved = {}
-        for key, val in kwargs.items():
-            if isinstance(val, Term):
-                resolved[key] = val.execute(context)
-            else:
-                resolved[key] = val
-        return resolved
-
-    @abstractmethod
     def execute(self, context: Context) -> ResultT:
-        """Execute the N-ary operation.
+        """Execute N-ary operation.
 
-        Subclasses implement their specific argument handling and execution logic.
+        Evaluates all operands and applies operation logic.
 
         Args:
             context: Execution context
@@ -99,4 +64,23 @@ class NAryOp[ResultT](Operation[ResultT]):
         Returns:
             Operation result
         """
-        ...
+        resolved = tuple(child.execute(context) for child in self.children)
+        return self._apply_op(*resolved)
+
+    def _apply_op(self, *operands: object) -> ResultT:
+        """Apply the operator to operands.
+
+        Subclasses override with operation-specific logic.
+
+        Args:
+            *operands: Evaluated operand values
+
+        Returns:
+            Operation result
+        """
+        raise NotImplementedError
+
+    def __repr__(self) -> str:
+        """String representation."""
+        args = ", ".join(repr(c) for c in self.children)
+        return f"{self.__class__.__name__}({args})"

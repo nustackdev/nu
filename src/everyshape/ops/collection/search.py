@@ -11,7 +11,7 @@ JoinOp: Join strings (sep.join(seq))
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from everyshape.typing import NAN, Sentinel
 
@@ -21,7 +21,7 @@ from ..core import BinaryOp, NAryOp, UnaryOp
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.term import Context, Term
+    from everyshape.term import Term
     from everyshape.types import UnionBaseType
 
 
@@ -98,15 +98,13 @@ class FindOp[T](NAryOp[T | Sentinel]):
             operand: Term that produces a sequence
             fn: Predicate function
         """
-        self.children = (cast("Term", operand),)
+        super().__init__(operand)
         self._fn = fn
 
-    def execute(self, context: Context) -> T | Sentinel:
-        """Execute find operation."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, (list, tuple)):
-            raise TypeError(f"find() requires list or tuple, got {type(operand_val).__name__}")
-        for item in operand_val:
+    def _apply_op(self, operand: object) -> T | Sentinel:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"find() requires list or tuple, got {type(operand).__name__}")
+        for item in operand:
             if self._fn(item):
                 return item  # type: ignore
         return NAN
@@ -129,17 +127,13 @@ class FindIndexOp[T](NAryOp[int | Sentinel]):
             operand: Term that produces a sequence
             fn: Predicate function
         """
-        self.children = (cast("Term", operand),)
+        super().__init__(operand)
         self._fn = fn
 
-    def execute(self, context: Context) -> int | Sentinel:
-        """Execute find index operation."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, (list, tuple)):
-            raise TypeError(
-                f"find_index() requires list or tuple, got {type(operand_val).__name__}"
-            )
-        for i, item in enumerate(operand_val):
+    def _apply_op(self, operand: object) -> int | Sentinel:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"find_index() requires list or tuple, got {type(operand).__name__}")
+        for i, item in enumerate(operand):
             if self._fn(item):
                 return i
         return NAN

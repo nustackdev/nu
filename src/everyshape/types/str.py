@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, overload
 
-from everyshape.term import literal
-
 from .bases import (
     AddableBase,
     ComparisonBase,
@@ -73,12 +71,12 @@ class StrType(
     def __add__(self, other: str | StrType) -> StrType:
         from everyshape.ops import AddOp
 
-        return StrType(AddOp(self, literal(other)))
+        return StrType(AddOp(self, other))
 
     def __radd__(self, other: str) -> StrType:
         from everyshape.ops import AddOp
 
-        return StrType(AddOp(literal(other), self))
+        return StrType(AddOp(other, self))
 
     @overload
     def __getitem__(self, key: int) -> StrType: ...
@@ -89,7 +87,7 @@ class StrType(
 
         if isinstance(key, slice):
             return StrType(SliceOp(self, key.start, key.stop, key.step))
-        return StrType(AtOp(self, literal(key)))
+        return StrType(AtOp(self, key))
 
     # =========================================================================
     # STRING-SPECIFIC METHODS (merged from StringMethodsBase)
@@ -132,7 +130,7 @@ class StrType(
         from .str_ops import StripOp
 
         if chars is not None:
-            return cast("StrType", self._wrap_string_result(StripOp(self, literal(chars))))
+            return cast("StrType", self._wrap_string_result(StripOp(self, chars)))
         return cast("StrType", self._wrap_string_result(StripOp(self)))
 
     def lstrip(self, chars: str | Term | None = None) -> StrType:
@@ -140,7 +138,7 @@ class StrType(
         from .str_ops import LStripOp
 
         if chars is not None:
-            return cast("StrType", self._wrap_string_result(LStripOp(self, literal(chars))))
+            return cast("StrType", self._wrap_string_result(LStripOp(self, chars)))
         return cast("StrType", self._wrap_string_result(LStripOp(self)))
 
     def rstrip(self, chars: str | Term | None = None) -> StrType:
@@ -148,7 +146,7 @@ class StrType(
         from .str_ops import RStripOp
 
         if chars is not None:
-            return cast("StrType", self._wrap_string_result(RStripOp(self, literal(chars))))
+            return cast("StrType", self._wrap_string_result(RStripOp(self, chars)))
         return cast("StrType", self._wrap_string_result(RStripOp(self)))
 
     # Splitting
@@ -158,7 +156,7 @@ class StrType(
         from .str_ops import SplitOp
 
         if sep is not None:
-            return ListType(SplitOp(self, literal(sep), maxsplit))
+            return ListType(SplitOp(self, sep, maxsplit))
         return ListType(SplitOp(self, None, maxsplit))
 
     def rsplit(self, sep: str | Term | None = None, maxsplit: int = -1) -> ListType[str]:
@@ -167,7 +165,7 @@ class StrType(
         from .str_ops import RSplitOp
 
         if sep is not None:
-            return ListType(RSplitOp(self, literal(sep), maxsplit))
+            return ListType(RSplitOp(self, sep, maxsplit))
         return ListType(RSplitOp(self, None, maxsplit))
 
     # Searching
@@ -176,21 +174,21 @@ class StrType(
         from .int import IntType
         from .str_ops import FindOp
 
-        return IntType(FindOp(self, literal(sub), start, end))
+        return IntType(FindOp(self, sub, start, end))
 
     def rfind(self, sub: str | Term, start: int = 0, end: int | None = None) -> IntType:
         """Find substring from right."""
         from .int import IntType
         from .str_ops import RFindOp
 
-        return IntType(RFindOp(self, literal(sub), start, end))
+        return IntType(RFindOp(self, sub, start, end))
 
     def count_substring(self, sub: str | Term) -> IntType:
         """Count substring occurrences."""
         from .int import IntType
         from .str_ops import CountSubstringOp
 
-        return IntType(CountSubstringOp(self, literal(sub)))
+        return IntType(CountSubstringOp(self, sub))
 
     # Testing
     def startswith(self, prefix: str | Term) -> BoolType:
@@ -198,14 +196,14 @@ class StrType(
         from .bool import BoolType
         from .str_ops import StartsWithOp
 
-        return BoolType(StartsWithOp(self, literal(prefix)))
+        return BoolType(StartsWithOp(self, prefix))
 
     def endswith(self, suffix: str | Term) -> BoolType:
         """Check if ends with suffix."""
         from .bool import BoolType
         from .str_ops import EndsWithOp
 
-        return BoolType(EndsWithOp(self, literal(suffix)))
+        return BoolType(EndsWithOp(self, suffix))
 
     def isdigit(self) -> BoolType:
         """Check if all digits."""
@@ -240,25 +238,25 @@ class StrType(
         """Center in width."""
         from .str_ops import CenterOp
 
-        return cast("StrType", self._wrap_string_result(CenterOp(self, literal(width), fillchar)))
+        return cast("StrType", self._wrap_string_result(CenterOp(self, width, fillchar)))
 
     def ljust(self, width: int | Term, fillchar: str = " ") -> StrType:
         """Left justify."""
         from .str_ops import LJustOp
 
-        return cast("StrType", self._wrap_string_result(LJustOp(self, literal(width), fillchar)))
+        return cast("StrType", self._wrap_string_result(LJustOp(self, width, fillchar)))
 
     def rjust(self, width: int | Term, fillchar: str = " ") -> StrType:
         """Right justify."""
         from .str_ops import RJustOp
 
-        return cast("StrType", self._wrap_string_result(RJustOp(self, literal(width), fillchar)))
+        return cast("StrType", self._wrap_string_result(RJustOp(self, width, fillchar)))
 
     def zfill(self, width: int | Term) -> StrType:
         """Zero-fill."""
         from .str_ops import ZFillOp
 
-        return cast("StrType", self._wrap_string_result(ZFillOp(self, literal(width))))
+        return cast("StrType", self._wrap_string_result(ZFillOp(self, width)))
 
     # Replacing
     def replace(self, old: str | Term, new: str | Term, count: int = -1) -> StrType:
@@ -267,7 +265,7 @@ class StrType(
 
         return cast(
             "StrType",
-            self._wrap_string_result(ReplaceOp(self, literal(old), literal(new), count)),
+            self._wrap_string_result(ReplaceOp(self, old, new, count)),
         )
 
     # Encoding

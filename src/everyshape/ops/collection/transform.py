@@ -10,7 +10,7 @@ ReversedOp: Reversed list (list(reversed(seq)))
 from __future__ import annotations
 
 from functools import reduce as functools_reduce
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from everyshape.typing import NAN, Sentinel
 
@@ -20,7 +20,7 @@ from ..core import NAryOp, UnaryOp
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.term import Context, Term
+    from everyshape.term import Term
     from everyshape.types import UnionBaseType
 
 
@@ -46,7 +46,7 @@ class SortedOp[ResultT](UnaryOp[list[ResultT] | Sentinel]):
             operand: Sequence to sort
             reverse: If True, sort in descending order
         """
-        self.children = (cast("Term", operand),)
+        super().__init__(operand)
         self._reverse = reverse
 
     def _apply_op(self, operand: object) -> list[ResultT] | Sentinel:
@@ -85,15 +85,13 @@ class MapOp[T, T2](NAryOp[list[T2]]):
             operand: Term that produces a sequence
             fn: Function to apply to each element
         """
-        self.children = (cast("Term", operand),)
+        super().__init__(operand)
         self._fn = fn
 
-    def execute(self, context: Context) -> list[T2]:
-        """Execute map operation."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, (list, tuple)):
-            raise TypeError(f"map_() requires list or tuple, got {type(operand_val).__name__}")
-        return list(map(self._fn, operand_val))
+    def _apply_op(self, operand: object) -> list[T2]:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"map_() requires list or tuple, got {type(operand).__name__}")
+        return list(map(self._fn, operand))
 
     def __repr__(self) -> str:
         return f"MapOp({self.children[0]!r}, {self._fn!r})"
@@ -114,15 +112,13 @@ class FilterOp[T](NAryOp[list[T]]):
             operand: Term that produces a sequence
             fn: Predicate function - keep element if returns truthy
         """
-        self.children = (cast("Term", operand),)
+        super().__init__(operand)
         self._fn = fn
 
-    def execute(self, context: Context) -> list[T]:
-        """Execute filter operation."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, (list, tuple)):
-            raise TypeError(f"filter_() requires list or tuple, got {type(operand_val).__name__}")
-        return list(filter(self._fn, operand_val))  # type: ignore
+    def _apply_op(self, operand: object) -> list[T]:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"filter_() requires list or tuple, got {type(operand).__name__}")
+        return list(filter(self._fn, operand))  # type: ignore
 
     def __repr__(self) -> str:
         return f"FilterOp({self.children[0]!r}, {self._fn!r})"
@@ -144,17 +140,15 @@ class ReduceOp[T, T2](NAryOp[T2 | Sentinel]):
             fn: Reducer function (accumulator, element) -> new_accumulator
             initial: Initial accumulator value
         """
-        self.children = (cast("Term", operand),)
+        super().__init__(operand)
         self._fn = fn
         self._initial = initial
 
-    def execute(self, context: Context) -> T2 | Sentinel:
-        """Execute reduce operation."""
-        operand_val = self.children[0].execute(context)
-        if not isinstance(operand_val, (list, tuple)):
-            raise TypeError(f"reduce_() requires list or tuple, got {type(operand_val).__name__}")
+    def _apply_op(self, operand: object) -> T2 | Sentinel:
+        if not isinstance(operand, (list, tuple)):
+            raise TypeError(f"reduce_() requires list or tuple, got {type(operand).__name__}")
         try:
-            return functools_reduce(self._fn, operand_val, self._initial)
+            return functools_reduce(self._fn, operand, self._initial)
         except Exception:
             return NAN
 

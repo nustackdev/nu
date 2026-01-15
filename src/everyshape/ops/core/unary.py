@@ -6,9 +6,9 @@ The base handles operand evaluation; subclasses focus on the operation logic.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from everyshape.term import Operation
+from everyshape.term import Operation, literal
 
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ class UnaryOp[ResultT](Operation[ResultT]):
         Args:
             operand: Single operand (can be Term or literal value)
         """
-        self.children = (cast("Term", operand),)
+        self.children = (literal(operand),)
 
     def execute(self, context: Context) -> ResultT:
         """Execute unary operation.

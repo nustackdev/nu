@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.term import literal
-
 
 if TYPE_CHECKING:
     from everyshape.term import Term
@@ -48,7 +46,7 @@ class BitwiseAndableBase[OperandT, ResultT]:
         """
         from everyshape.ops import BitwiseAndOp
 
-        return cast("ResultT", self._wrap_bitwise_result(BitwiseAndOp(self, literal(other))))
+        return cast("ResultT", self._wrap_bitwise_result(BitwiseAndOp(self, other)))
 
 
 class BitwiseOrableBase[OperandT, ResultT]:
@@ -69,7 +67,7 @@ class BitwiseOrableBase[OperandT, ResultT]:
         """
         from everyshape.ops import BitwiseOrOp
 
-        return cast("ResultT", self._wrap_bitwise_result(BitwiseOrOp(self, literal(other))))
+        return cast("ResultT", self._wrap_bitwise_result(BitwiseOrOp(self, other)))
 
 
 class BitwiseXorableBase[OperandT, ResultT]:
@@ -83,13 +81,13 @@ class BitwiseXorableBase[OperandT, ResultT]:
         """Bitwise XOR: self ^ other."""
         from everyshape.ops import XorOp
 
-        return cast("ResultT", self._wrap_bitwise_result(XorOp(self, literal(other))))
+        return cast("ResultT", self._wrap_bitwise_result(XorOp(self, other)))
 
     def __rxor__(self, other: OperandT) -> ResultT:
         """Right XOR: other ^ self."""
         from everyshape.ops import XorOp
 
-        return cast("ResultT", self._wrap_bitwise_result(XorOp(literal(other), self)))
+        return cast("ResultT", self._wrap_bitwise_result(XorOp(other, self)))
 
 
 class BitwiseNotableBase[ResultT]:
@@ -121,25 +119,25 @@ class ShiftableBase[OperandT, ResultT]:
         """Left shift: self << other."""
         from everyshape.ops import LShiftOp
 
-        return cast("ResultT", self._wrap_bitwise_result(LShiftOp(self, literal(other))))
+        return cast("ResultT", self._wrap_bitwise_result(LShiftOp(self, other)))
 
     def __rlshift__(self, other: OperandT) -> ResultT:
         """Right left shift: other << self."""
         from everyshape.ops import LShiftOp
 
-        return cast("ResultT", self._wrap_bitwise_result(LShiftOp(literal(other), self)))
+        return cast("ResultT", self._wrap_bitwise_result(LShiftOp(other, self)))
 
     def __rshift__(self, other: OperandT) -> ResultT:
         """Right shift: self >> other."""
         from everyshape.ops import RShiftOp
 
-        return cast("ResultT", self._wrap_bitwise_result(RShiftOp(self, literal(other))))
+        return cast("ResultT", self._wrap_bitwise_result(RShiftOp(self, other)))
 
     def __rrshift__(self, other: OperandT) -> ResultT:
         """Right right shift: other >> self."""
         from everyshape.ops import RShiftOp
 
-        return cast("ResultT", self._wrap_bitwise_result(RShiftOp(literal(other), self)))
+        return cast("ResultT", self._wrap_bitwise_result(RShiftOp(other, self)))
 
 
 class BitwiseBase[OperandT, ResultT](
