@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, cast, overload
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.term import Term
+    from everyshape.term import BoolArg, IntArg, StrArg, Term
     from everyshape.types import BoolType, DictType, FloatType, IntType, ListType, StrType
 
 
@@ -71,7 +71,9 @@ class SliceableBase[ResultT]:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
-    def slice_(self, start: int | None, stop: int | None, step: int | None = None) -> ResultT:
+    def slice_(
+        self, start: IntArg | None, stop: IntArg | None, step: IntArg | None = None
+    ) -> ResultT:
         """Get slice of this value.
 
         Args:
@@ -276,7 +278,7 @@ class SequenceBase[ElementT, ResultT](
 
         return cast("ResultT", self._wrap_sliceable_result(ReversedOp(self)))
 
-    def sorted_(self, reverse: bool = False) -> ResultT:
+    def sorted_(self, reverse: BoolArg = False) -> ResultT:
         """Get sorted sequence.
 
         Args:
@@ -289,7 +291,7 @@ class SequenceBase[ElementT, ResultT](
 
         return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse=reverse)))
 
-    def join(self, separator: str) -> StrType:
+    def join(self, separator: StrArg) -> StrType:
         """Join string elements.
 
         Args:

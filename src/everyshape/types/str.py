@@ -20,7 +20,7 @@ from .bases import (
 
 
 if TYPE_CHECKING:
-    from everyshape.term import Term
+    from everyshape.term import IntArg, StrArg, Term
 
     from .bool import BoolType
     from .bytes import BytesType
@@ -125,7 +125,7 @@ class StrType(
         return cast("StrType", self._wrap_string_result(SwapCaseOp(self)))
 
     # Stripping
-    def strip(self, chars: str | Term | None = None) -> StrType:
+    def strip(self, chars: StrArg | None = None) -> StrType:
         """Strip whitespace or chars."""
         from .str_ops import StripOp
 
@@ -133,7 +133,7 @@ class StrType(
             return cast("StrType", self._wrap_string_result(StripOp(self, chars)))
         return cast("StrType", self._wrap_string_result(StripOp(self)))
 
-    def lstrip(self, chars: str | Term | None = None) -> StrType:
+    def lstrip(self, chars: StrArg | None = None) -> StrType:
         """Strip leading whitespace or chars."""
         from .str_ops import LStripOp
 
@@ -141,7 +141,7 @@ class StrType(
             return cast("StrType", self._wrap_string_result(LStripOp(self, chars)))
         return cast("StrType", self._wrap_string_result(LStripOp(self)))
 
-    def rstrip(self, chars: str | Term | None = None) -> StrType:
+    def rstrip(self, chars: StrArg | None = None) -> StrType:
         """Strip trailing whitespace or chars."""
         from .str_ops import RStripOp
 
@@ -150,7 +150,7 @@ class StrType(
         return cast("StrType", self._wrap_string_result(RStripOp(self)))
 
     # Splitting
-    def split(self, sep: str | Term | None = None, maxsplit: int = -1) -> ListType[str]:
+    def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListType[str]:
         """Split string."""
         from .list import ListType
         from .str_ops import SplitOp
@@ -159,7 +159,7 @@ class StrType(
             return ListType(SplitOp(self, sep, maxsplit))
         return ListType(SplitOp(self, None, maxsplit))
 
-    def rsplit(self, sep: str | Term | None = None, maxsplit: int = -1) -> ListType[str]:
+    def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListType[str]:
         """Right split string."""
         from .list import ListType
         from .str_ops import RSplitOp
@@ -169,21 +169,21 @@ class StrType(
         return ListType(RSplitOp(self, None, maxsplit))
 
     # Searching
-    def find(self, sub: str | Term, start: int = 0, end: int | None = None) -> IntType:
+    def find(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntType:
         """Find substring."""
         from .int import IntType
         from .str_ops import FindOp
 
         return IntType(FindOp(self, sub, start, end))
 
-    def rfind(self, sub: str | Term, start: int = 0, end: int | None = None) -> IntType:
+    def rfind(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntType:
         """Find substring from right."""
         from .int import IntType
         from .str_ops import RFindOp
 
         return IntType(RFindOp(self, sub, start, end))
 
-    def count_substring(self, sub: str | Term) -> IntType:
+    def count_substring(self, sub: StrArg) -> IntType:
         """Count substring occurrences."""
         from .int import IntType
         from .str_ops import CountSubstringOp
@@ -191,14 +191,14 @@ class StrType(
         return IntType(CountSubstringOp(self, sub))
 
     # Testing
-    def startswith(self, prefix: str | Term) -> BoolType:
+    def startswith(self, prefix: StrArg) -> BoolType:
         """Check if starts with prefix."""
         from .bool import BoolType
         from .str_ops import StartsWithOp
 
         return BoolType(StartsWithOp(self, prefix))
 
-    def endswith(self, suffix: str | Term) -> BoolType:
+    def endswith(self, suffix: StrArg) -> BoolType:
         """Check if ends with suffix."""
         from .bool import BoolType
         from .str_ops import EndsWithOp
@@ -234,32 +234,32 @@ class StrType(
         return BoolType(IsSpaceOp(self))
 
     # Padding
-    def center(self, width: int | Term, fillchar: str = " ") -> StrType:
+    def center(self, width: IntArg, fillchar: StrArg = " ") -> StrType:
         """Center in width."""
         from .str_ops import CenterOp
 
         return cast("StrType", self._wrap_string_result(CenterOp(self, width, fillchar)))
 
-    def ljust(self, width: int | Term, fillchar: str = " ") -> StrType:
+    def ljust(self, width: IntArg, fillchar: StrArg = " ") -> StrType:
         """Left justify."""
         from .str_ops import LJustOp
 
         return cast("StrType", self._wrap_string_result(LJustOp(self, width, fillchar)))
 
-    def rjust(self, width: int | Term, fillchar: str = " ") -> StrType:
+    def rjust(self, width: IntArg, fillchar: StrArg = " ") -> StrType:
         """Right justify."""
         from .str_ops import RJustOp
 
         return cast("StrType", self._wrap_string_result(RJustOp(self, width, fillchar)))
 
-    def zfill(self, width: int | Term) -> StrType:
+    def zfill(self, width: IntArg) -> StrType:
         """Zero-fill."""
         from .str_ops import ZFillOp
 
         return cast("StrType", self._wrap_string_result(ZFillOp(self, width)))
 
     # Replacing
-    def replace(self, old: str | Term, new: str | Term, count: int = -1) -> StrType:
+    def replace(self, old: StrArg, new: StrArg, count: IntArg = -1) -> StrType:
         """Replace substring."""
         from .str_ops import ReplaceOp
 
@@ -269,7 +269,7 @@ class StrType(
         )
 
     # Encoding
-    def encode(self, encoding: str = "utf-8") -> BytesType:
+    def encode(self, encoding: StrArg = "utf-8") -> BytesType:
         """Encode string to bytes."""
         from .bytes import BytesType
         from .str_ops import EncodeOp

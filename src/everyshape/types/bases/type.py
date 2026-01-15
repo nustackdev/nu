@@ -12,7 +12,7 @@ from everyshape.term import Type as BaseType
 
 
 if TYPE_CHECKING:
-    from everyshape.term import BoolArg, Term
+    from everyshape.term import BoolArg, StrArg, Term
     from everyshape.types import AnyType, BoolType, BytesType, FloatType, IntType, ListType, StrType
     from everyshape.typing import Sentinel
 
@@ -183,7 +183,7 @@ class Type[T](BaseType[T]):
 
         return StrType(ToStrOp(self))
 
-    def to_bytes(self, encoding: str = "utf-8") -> BytesType:
+    def to_bytes(self, encoding: StrArg = "utf-8") -> BytesType:
         """Convert this value to bytes.
 
         Args:

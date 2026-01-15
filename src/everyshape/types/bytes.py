@@ -19,7 +19,7 @@ from .bases import (
 
 
 if TYPE_CHECKING:
-    from everyshape.term import Term
+    from everyshape.term import BytesArg, IntArg, StrArg, Term
 
     from .bool import BoolType
     from .int import IntType
@@ -96,7 +96,7 @@ class BytesType(
     # =========================================================================
 
     # Decoding
-    def decode(self, encoding: str = "utf-8") -> StrType:
+    def decode(self, encoding: StrArg = "utf-8") -> StrType:
         """Decode bytes to string."""
         from .bytes_ops import DecodeOp
         from .str import StrType
@@ -124,7 +124,7 @@ class BytesType(
         return cast("BytesType", self._wrap_bytes_result(BytesLowerOp(self)))
 
     # Stripping
-    def strip(self, chars: bytes | Term | None = None) -> BytesType:
+    def strip(self, chars: BytesArg | None = None) -> BytesType:
         """Strip whitespace or chars."""
         from .bytes_ops import BytesStripOp
 
@@ -132,7 +132,7 @@ class BytesType(
             return cast("BytesType", self._wrap_bytes_result(BytesStripOp(self, chars)))
         return cast("BytesType", self._wrap_bytes_result(BytesStripOp(self)))
 
-    def lstrip(self, chars: bytes | Term | None = None) -> BytesType:
+    def lstrip(self, chars: BytesArg | None = None) -> BytesType:
         """Strip leading whitespace or chars."""
         from .bytes_ops import BytesLStripOp
 
@@ -140,7 +140,7 @@ class BytesType(
             return cast("BytesType", self._wrap_bytes_result(BytesLStripOp(self, chars)))
         return cast("BytesType", self._wrap_bytes_result(BytesLStripOp(self)))
 
-    def rstrip(self, chars: bytes | Term | None = None) -> BytesType:
+    def rstrip(self, chars: BytesArg | None = None) -> BytesType:
         """Strip trailing whitespace or chars."""
         from .bytes_ops import BytesRStripOp
 
@@ -149,7 +149,7 @@ class BytesType(
         return cast("BytesType", self._wrap_bytes_result(BytesRStripOp(self)))
 
     # Splitting
-    def split_bytes(self, sep: bytes | Term | None = None, maxsplit: int = -1) -> ListType[bytes]:
+    def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListType[bytes]:
         """Split bytes."""
         from .bytes_ops import BytesSplitOp
         from .list import ListType
@@ -159,14 +159,14 @@ class BytesType(
         return ListType(BytesSplitOp(self, None, maxsplit))
 
     # Searching
-    def find_bytes(self, sub: bytes | Term, start: int = 0, end: int | None = None) -> IntType:
+    def find_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntType:
         """Find sub-bytes."""
         from .bytes_ops import BytesFindOp
         from .int import IntType
 
         return IntType(BytesFindOp(self, sub, start, end))
 
-    def count_bytes(self, sub: bytes | Term) -> IntType:
+    def count_bytes(self, sub: BytesArg) -> IntType:
         """Count sub-bytes occurrences."""
         from .bytes_ops import BytesCountOp
         from .int import IntType
@@ -174,14 +174,14 @@ class BytesType(
         return IntType(BytesCountOp(self, sub))
 
     # Testing
-    def startswith(self, prefix: bytes | Term) -> BoolType:
+    def startswith(self, prefix: BytesArg) -> BoolType:
         """Check if starts with prefix."""
         from .bool import BoolType
         from .bytes_ops import BytesStartsWithOp
 
         return BoolType(BytesStartsWithOp(self, prefix))
 
-    def endswith(self, suffix: bytes | Term) -> BoolType:
+    def endswith(self, suffix: BytesArg) -> BoolType:
         """Check if ends with suffix."""
         from .bool import BoolType
         from .bytes_ops import BytesEndsWithOp
@@ -189,7 +189,7 @@ class BytesType(
         return BoolType(BytesEndsWithOp(self, suffix))
 
     # Replacing
-    def replace(self, old: bytes | Term, new: bytes | Term, count: int = -1) -> BytesType:
+    def replace(self, old: BytesArg, new: BytesArg, count: IntArg = -1) -> BytesType:
         """Replace sub-bytes."""
         from .bytes_ops import BytesReplaceOp
 

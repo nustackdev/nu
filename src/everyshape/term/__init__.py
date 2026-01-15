@@ -14,10 +14,13 @@ from .args import (
     BytesArg,
     DictArg,
     FloatArg,
+    FrozenSetArg,
     IntArg,
     ListArg,
+    NoneArg,
     SetArg,
     StrArg,
+    TupleArg,
 )
 from .combiners import all_, and_, any_, coalesce, ifelse, none_, or_
 from .context import Context
@@ -45,9 +48,11 @@ __all__ = [
     "Context",
     "DictArg",
     "FloatArg",
+    "FrozenSetArg",
     "IntArg",
     "LValue",
     "ListArg",
+    "NoneArg",
     "Operation",
     "PrimitiveRef",
     "RValue",
@@ -55,6 +60,7 @@ __all__ = [
     "SetArg",
     "StrArg",
     "Term",
+    "TupleArg",
     "Type",
     "ViewRef",
     "all_",
