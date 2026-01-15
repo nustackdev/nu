@@ -15,7 +15,7 @@ from typing import cast
 import pytest
 
 from everyshape.storage import TransactionProtocol
-from everyshape.view import (
+from everyshape.typing.view import (
     is_assignable,
     is_child_observable,
     is_clearable,

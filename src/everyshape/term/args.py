@@ -34,8 +34,10 @@ __all__ = [
     "BytesArg",
     "DictArg",
     "FloatArg",
+    "FrozenSetArg",
     "IntArg",
     "ListArg",
+    "NoneArg",
     "SetArg",
     "StrArg",
 ]
@@ -59,6 +61,7 @@ type FloatArg = float | Term[float | Sentinel]
 type StrArg = str | Term[str | Sentinel]
 type BoolArg = bool | Term[bool | Sentinel]
 type BytesArg = bytes | Term[bytes | Sentinel]
+type NoneArg = None | Term[None | Sentinel]
 
 
 # =============================================================================
@@ -68,4 +71,5 @@ type BytesArg = bytes | Term[bytes | Sentinel]
 type ListArg[V] = list[V] | Term[list[V] | Sentinel]
 type DictArg[K, V] = dict[K, V] | Term[dict[K, V] | Sentinel]
 type SetArg[T] = set[T] | Term[set[T] | Sentinel]
+type FrozenSetArg[T] = frozenset[T] | Term[frozenset[T] | Sentinel]
 type TupleArg[*Ts] = tuple[*Ts] | Term[tuple[*Ts] | Sentinel]

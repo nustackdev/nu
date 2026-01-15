@@ -8,15 +8,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, overload
 
-from ..bases import ComparisonBase, SequenceBase, Type
+from .bases import ComparisonBase, SequenceBase, Type
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
-    from ..any.type import AnyType
-    from ..bool.type import BoolType
-    from ..list.type import ListType  # noqa: F401
+    from .any import AnyType
+    from .bool import BoolType
+    from .list import ListType  # noqa: F401
 
 
 __all__ = [
@@ -42,7 +42,7 @@ class TupleType[*Ts](
     VALUE_TYPE: ClassVar[type] = tuple
 
     def _wrap_comparison_result(self, operand: Term) -> BoolType:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
@@ -50,12 +50,12 @@ class TupleType[*Ts](
         return TupleType(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> Term:
-        from ..list.type import ListType
+        from .list import ListType
 
         return ListType(operand)
 
     def _wrap_element_result(self, operand: Term) -> Term:
-        from ..any.type import AnyType
+        from .any import AnyType
 
         return AnyType(operand)
 
@@ -65,9 +65,9 @@ class TupleType[*Ts](
     def __getitem__(self, key: slice) -> TupleType: ...
     def __getitem__(self, key: int | slice) -> AnyType | TupleType:
         from everyshape.ops import AtOp, SliceOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..any.type import AnyType
+        from .any import AnyType
 
         if isinstance(key, slice):
             return TupleType(SliceOp(self, key.start, key.stop, key.step))

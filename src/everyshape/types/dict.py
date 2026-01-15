@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from ..bases import ComparisonBase, MappingBase, Type
+from .bases import ComparisonBase, MappingBase, Type
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
-    from ..any.type import AnyType
-    from ..bool.type import BoolType
+    from .any import AnyType
+    from .bool import BoolType
 
 
 __all__ = [
@@ -41,14 +41,14 @@ class DictType[K, V](
     VALUE_TYPE: ClassVar[type] = dict
 
     def _wrap_comparison_result(self, operand: Term) -> BoolType:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
     def __getitem__(self, key: K) -> AnyType:
         from everyshape.ops import AtOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..any.type import AnyType
+        from .any import AnyType
 
         return AnyType(AtOp(self, literal(key)))

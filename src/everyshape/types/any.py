@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..bases import (
+from .bases import (
     BitwiseBase,
     ComparisonBase,
     LogicalBase,
@@ -19,9 +19,9 @@ from ..bases import (
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
-    from ..bool.type import BoolType  # noqa: F401
+    from .bool import BoolType  # noqa: F401
 
 
 __all__ = [
@@ -58,11 +58,11 @@ class AnyType(
         return AnyType(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
     def _wrap_logical_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)

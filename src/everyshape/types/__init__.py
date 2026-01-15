@@ -4,7 +4,7 @@ This module provides all concrete type implementations:
 - IntType, FloatType, BoolType - Primitive numeric/boolean types
 - StrType, BytesType - Text and binary types
 - ListType, TupleType, DictType, SetType, FrozenSetType - Collection types
-- NilType - None type
+- NoneType - None type
 - AnyType - Dynamic/unknown type
 - SentinelType, EmptyType, NAType - Special value types
 
@@ -19,7 +19,7 @@ Also, re-export bases ().
 
 from __future__ import annotations
 
-from .any.type import AnyType
+from .any import AnyType
 from .bases import (
     AddableBase,
     AdditiveBase,
@@ -55,17 +55,17 @@ from .bases import (
     Type,
     UnionBaseType,
 )
-from .bool.type import BoolType
-from .bytes.type import BytesType
-from .dict.type import DictType
-from .float.type import FloatType
-from .int.type import IntType
-from .list.type import ListType
-from .none.type import NilType
-from .sentinel.type import EmptyType, NAType, SentinelType
-from .set.type import FrozenSetType, SetType
-from .str.type import StrType
-from .tuple.type import TupleType
+from .bool import BoolType
+from .bytes import BytesType
+from .dict import DictType
+from .float import FloatType
+from .int import IntType
+from .list import ListType
+from .none import NoneType
+from .sentinel import EmptyType, NAType, SentinelType
+from .set import FrozenSetType, SetType
+from .str import StrType
+from .tuple import TupleType
 
 
 __all__ = [  # noqa: RUF022
@@ -126,7 +126,7 @@ __all__ = [  # noqa: RUF022
     "IntType",
     "ListType",
     "NAType",
-    "NilType",
+    "NoneType",
     "SentinelType",
     "SetType",
     "StrType",

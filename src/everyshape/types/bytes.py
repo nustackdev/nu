@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, cast, overload
 
-from everyshape.term.conversion import literal
+from everyshape.term import literal
 
-from ..bases import (
+from .bases import (
     ComparisonBase,
     ContainableBase,
     LengthableBase,
@@ -21,12 +21,12 @@ from ..bases import (
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
-    from ..bool.type import BoolType
-    from ..int.type import IntType
-    from ..list.type import ListType
-    from ..str.type import StrType
+    from .bool import BoolType
+    from .int import IntType
+    from .list import ListType
+    from .str import StrType
 
 
 __all__ = [
@@ -55,12 +55,12 @@ class BytesType(
     VALUE_TYPE: ClassVar[type] = bytes
 
     def _wrap_logical_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
@@ -87,7 +87,7 @@ class BytesType(
     def __getitem__(self, key: int | slice) -> BytesType | IntType:
         from everyshape.ops import AtOp, SliceOp
 
-        from ..int.type import IntType
+        from .int import IntType
 
         if isinstance(key, slice):
             return BytesType(SliceOp[bytes](self, key.start, key.stop, key.step))
@@ -100,37 +100,35 @@ class BytesType(
     # Decoding
     def decode(self, encoding: str = "utf-8") -> StrType:
         """Decode bytes to string."""
-        from everyshape.types.bytes.ops import DecodeOp
-
-        from ..str.type import StrType
+        from .bytes_ops import DecodeOp
+        from .str import StrType
 
         return StrType(DecodeOp(self, encoding))
 
     def hex_(self) -> StrType:
         """Convert to hex string."""
-        from everyshape.types.bytes.ops import HexOp
-
-        from ..str.type import StrType
+        from .bytes_ops import HexOp
+        from .str import StrType
 
         return StrType(HexOp(self))
 
     # Case transformation
     def upper(self) -> BytesType:
         """Convert to uppercase."""
-        from everyshape.types.bytes.ops import BytesUpperOp
+        from .bytes_ops import BytesUpperOp
 
         return cast("BytesType", self._wrap_bytes_result(BytesUpperOp(self)))
 
     def lower(self) -> BytesType:
         """Convert to lowercase."""
-        from everyshape.types.bytes.ops import BytesLowerOp
+        from .bytes_ops import BytesLowerOp
 
         return cast("BytesType", self._wrap_bytes_result(BytesLowerOp(self)))
 
     # Stripping
     def strip(self, chars: bytes | Term | None = None) -> BytesType:
         """Strip whitespace or chars."""
-        from everyshape.types.bytes.ops import BytesStripOp
+        from .bytes_ops import BytesStripOp
 
         if chars is not None:
             return cast("BytesType", self._wrap_bytes_result(BytesStripOp(self, literal(chars))))
@@ -138,7 +136,7 @@ class BytesType(
 
     def lstrip(self, chars: bytes | Term | None = None) -> BytesType:
         """Strip leading whitespace or chars."""
-        from everyshape.types.bytes.ops import BytesLStripOp
+        from .bytes_ops import BytesLStripOp
 
         if chars is not None:
             return cast("BytesType", self._wrap_bytes_result(BytesLStripOp(self, literal(chars))))
@@ -146,7 +144,7 @@ class BytesType(
 
     def rstrip(self, chars: bytes | Term | None = None) -> BytesType:
         """Strip trailing whitespace or chars."""
-        from everyshape.types.bytes.ops import BytesRStripOp
+        from .bytes_ops import BytesRStripOp
 
         if chars is not None:
             return cast("BytesType", self._wrap_bytes_result(BytesRStripOp(self, literal(chars))))
@@ -155,9 +153,8 @@ class BytesType(
     # Splitting
     def split_bytes(self, sep: bytes | Term | None = None, maxsplit: int = -1) -> ListType[bytes]:
         """Split bytes."""
-        from everyshape.types.bytes.ops import BytesSplitOp
-
-        from ..list.type import ListType
+        from .bytes_ops import BytesSplitOp
+        from .list import ListType
 
         if sep is not None:
             return ListType(BytesSplitOp(self, literal(sep), maxsplit))
@@ -166,41 +163,37 @@ class BytesType(
     # Searching
     def find_bytes(self, sub: bytes | Term, start: int = 0, end: int | None = None) -> IntType:
         """Find sub-bytes."""
-        from everyshape.types.bytes.ops import BytesFindOp
-
-        from ..int.type import IntType
+        from .bytes_ops import BytesFindOp
+        from .int import IntType
 
         return IntType(BytesFindOp(self, literal(sub), start, end))
 
     def count_bytes(self, sub: bytes | Term) -> IntType:
         """Count sub-bytes occurrences."""
-        from everyshape.types.bytes.ops import BytesCountOp
-
-        from ..int.type import IntType
+        from .bytes_ops import BytesCountOp
+        from .int import IntType
 
         return IntType(BytesCountOp(self, literal(sub)))
 
     # Testing
     def startswith(self, prefix: bytes | Term) -> BoolType:
         """Check if starts with prefix."""
-        from everyshape.types.bytes.ops import BytesStartsWithOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .bytes_ops import BytesStartsWithOp
 
         return BoolType(BytesStartsWithOp(self, literal(prefix)))
 
     def endswith(self, suffix: bytes | Term) -> BoolType:
         """Check if ends with suffix."""
-        from everyshape.types.bytes.ops import BytesEndsWithOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .bytes_ops import BytesEndsWithOp
 
         return BoolType(BytesEndsWithOp(self, literal(suffix)))
 
     # Replacing
     def replace(self, old: bytes | Term, new: bytes | Term, count: int = -1) -> BytesType:
         """Replace sub-bytes."""
-        from everyshape.types.bytes.ops import BytesReplaceOp
+        from .bytes_ops import BytesReplaceOp
 
         return cast(
             "BytesType",

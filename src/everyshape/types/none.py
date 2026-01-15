@@ -1,35 +1,35 @@
 """None/Nil type for Term expressions.
 
-This module provides NilType which represents None expressions (literal or computed).
+This module provides NoneType which represents None expressions (literal or computed).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..bases import LogicalBase, Type
+from .bases import LogicalBase, Type
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
     from everyshape.typing import Sentinel
 
-    from ..bool.type import BoolType  # noqa: F401
+    from .bool import BoolType  # noqa: F401
 
 
 __all__ = [
-    "NilType",
+    "NoneType",
 ]
 
 
-class NilType(
-    LogicalBase["None | NilType", "BoolType"],
+class NoneType(
+    LogicalBase["None | NoneType", "BoolType"],
     Type[None],
 ):
     """Nil type - represents None expressions (literal or computed).
 
     Example:
-        >>> x = NilType()
+        >>> x = NoneType()
         >>> x.is_empty()  # Returns BoolType
     """
 
@@ -39,6 +39,6 @@ class NilType(
         super().__init__(source if source is not None else None)
 
     def _wrap_logical_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)

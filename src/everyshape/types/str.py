@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.term.conversion import literal
+from everyshape.term import literal
 
-from ..bases import (
+from .bases import (
     AddableBase,
     ComparisonBase,
     ContainableBase,
@@ -22,12 +22,12 @@ from ..bases import (
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
-    from ..bool.type import BoolType
-    from ..bytes.type import BytesType
-    from ..int.type import IntType
-    from ..list.type import ListType
+    from .bool import BoolType
+    from .bytes import BytesType
+    from .int import IntType
+    from .list import ListType
 
 
 __all__ = [
@@ -55,12 +55,12 @@ class StrType(
     """
 
     def _wrap_logical_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
@@ -87,38 +87,38 @@ class StrType(
     # Case transformation
     def upper(self) -> StrType:
         """Convert to uppercase."""
-        from everyshape.types.str.ops import UpperOp
+        from .str_ops import UpperOp
 
         return cast("StrType", self._wrap_string_result(UpperOp(self)))
 
     def lower(self) -> StrType:
         """Convert to lowercase."""
-        from everyshape.types.str.ops import LowerOp
+        from .str_ops import LowerOp
 
         return cast("StrType", self._wrap_string_result(LowerOp(self)))
 
     def title(self) -> StrType:
         """Convert to title case."""
-        from everyshape.types.str.ops import TitleOp
+        from .str_ops import TitleOp
 
         return cast("StrType", self._wrap_string_result(TitleOp(self)))
 
     def capitalize(self) -> StrType:
         """Capitalize first character."""
-        from everyshape.types.str.ops import CapitalizeOp
+        from .str_ops import CapitalizeOp
 
         return cast("StrType", self._wrap_string_result(CapitalizeOp(self)))
 
     def swapcase(self) -> StrType:
         """Swap case."""
-        from everyshape.types.str.ops import SwapCaseOp
+        from .str_ops import SwapCaseOp
 
         return cast("StrType", self._wrap_string_result(SwapCaseOp(self)))
 
     # Stripping
     def strip(self, chars: str | Term | None = None) -> StrType:
         """Strip whitespace or chars."""
-        from everyshape.types.str.ops import StripOp
+        from .str_ops import StripOp
 
         if chars is not None:
             return cast("StrType", self._wrap_string_result(StripOp(self, literal(chars))))
@@ -126,7 +126,7 @@ class StrType(
 
     def lstrip(self, chars: str | Term | None = None) -> StrType:
         """Strip leading whitespace or chars."""
-        from everyshape.types.str.ops import LStripOp
+        from .str_ops import LStripOp
 
         if chars is not None:
             return cast("StrType", self._wrap_string_result(LStripOp(self, literal(chars))))
@@ -134,7 +134,7 @@ class StrType(
 
     def rstrip(self, chars: str | Term | None = None) -> StrType:
         """Strip trailing whitespace or chars."""
-        from everyshape.types.str.ops import RStripOp
+        from .str_ops import RStripOp
 
         if chars is not None:
             return cast("StrType", self._wrap_string_result(RStripOp(self, literal(chars))))
@@ -143,9 +143,8 @@ class StrType(
     # Splitting
     def split(self, sep: str | Term | None = None, maxsplit: int = -1) -> ListType[str]:
         """Split string."""
-        from everyshape.types.str.ops import SplitOp
-
-        from ..list.type import ListType
+        from .list import ListType
+        from .str_ops import SplitOp
 
         if sep is not None:
             return ListType(SplitOp(self, literal(sep), maxsplit))
@@ -153,9 +152,8 @@ class StrType(
 
     def rsplit(self, sep: str | Term | None = None, maxsplit: int = -1) -> ListType[str]:
         """Right split string."""
-        from everyshape.types.str.ops import RSplitOp
-
-        from ..list.type import ListType
+        from .list import ListType
+        from .str_ops import RSplitOp
 
         if sep is not None:
             return ListType(RSplitOp(self, literal(sep), maxsplit))
@@ -164,106 +162,97 @@ class StrType(
     # Searching
     def find(self, sub: str | Term, start: int = 0, end: int | None = None) -> IntType:
         """Find substring."""
-        from everyshape.types.str.ops import FindOp
-
-        from ..int.type import IntType
+        from .int import IntType
+        from .str_ops import FindOp
 
         return IntType(FindOp(self, literal(sub), start, end))
 
     def rfind(self, sub: str | Term, start: int = 0, end: int | None = None) -> IntType:
         """Find substring from right."""
-        from everyshape.types.str.ops import RFindOp
-
-        from ..int.type import IntType
+        from .int import IntType
+        from .str_ops import RFindOp
 
         return IntType(RFindOp(self, literal(sub), start, end))
 
     def count_substring(self, sub: str | Term) -> IntType:
         """Count substring occurrences."""
-        from everyshape.types.str.ops import CountSubstringOp
-
-        from ..int.type import IntType
+        from .int import IntType
+        from .str_ops import CountSubstringOp
 
         return IntType(CountSubstringOp(self, literal(sub)))
 
     # Testing
     def startswith(self, prefix: str | Term) -> BoolType:
         """Check if starts with prefix."""
-        from everyshape.types.str.ops import StartsWithOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .str_ops import StartsWithOp
 
         return BoolType(StartsWithOp(self, literal(prefix)))
 
     def endswith(self, suffix: str | Term) -> BoolType:
         """Check if ends with suffix."""
-        from everyshape.types.str.ops import EndsWithOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .str_ops import EndsWithOp
 
         return BoolType(EndsWithOp(self, literal(suffix)))
 
     def isdigit(self) -> BoolType:
         """Check if all digits."""
-        from everyshape.types.str.ops import IsDigitOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .str_ops import IsDigitOp
 
         return BoolType(IsDigitOp(self))
 
     def isalpha(self) -> BoolType:
         """Check if all alphabetic."""
-        from everyshape.types.str.ops import IsAlphaOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .str_ops import IsAlphaOp
 
         return BoolType(IsAlphaOp(self))
 
     def isalnum(self) -> BoolType:
         """Check if alphanumeric."""
-        from everyshape.types.str.ops import IsAlnumOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .str_ops import IsAlnumOp
 
         return BoolType(IsAlnumOp(self))
 
     def isspace(self) -> BoolType:
         """Check if all whitespace."""
-        from everyshape.types.str.ops import IsSpaceOp
-
-        from ..bool.type import BoolType
+        from .bool import BoolType
+        from .str_ops import IsSpaceOp
 
         return BoolType(IsSpaceOp(self))
 
     # Padding
     def center(self, width: int | Term, fillchar: str = " ") -> StrType:
         """Center in width."""
-        from everyshape.types.str.ops import CenterOp
+        from .str_ops import CenterOp
 
         return cast("StrType", self._wrap_string_result(CenterOp(self, literal(width), fillchar)))
 
     def ljust(self, width: int | Term, fillchar: str = " ") -> StrType:
         """Left justify."""
-        from everyshape.types.str.ops import LJustOp
+        from .str_ops import LJustOp
 
         return cast("StrType", self._wrap_string_result(LJustOp(self, literal(width), fillchar)))
 
     def rjust(self, width: int | Term, fillchar: str = " ") -> StrType:
         """Right justify."""
-        from everyshape.types.str.ops import RJustOp
+        from .str_ops import RJustOp
 
         return cast("StrType", self._wrap_string_result(RJustOp(self, literal(width), fillchar)))
 
     def zfill(self, width: int | Term) -> StrType:
         """Zero-fill."""
-        from everyshape.types.str.ops import ZFillOp
+        from .str_ops import ZFillOp
 
         return cast("StrType", self._wrap_string_result(ZFillOp(self, literal(width))))
 
     # Replacing
     def replace(self, old: str | Term, new: str | Term, count: int = -1) -> StrType:
         """Replace substring."""
-        from everyshape.types.str.ops import ReplaceOp
+        from .str_ops import ReplaceOp
 
         return cast(
             "StrType",
@@ -273,8 +262,7 @@ class StrType(
     # Encoding
     def encode(self, encoding: str = "utf-8") -> BytesType:
         """Encode string to bytes."""
-        from everyshape.types.str.ops import EncodeOp
-
-        from ..bytes.type import BytesType
+        from .bytes import BytesType
+        from .str_ops import EncodeOp
 
         return BytesType(EncodeOp(self, encoding))

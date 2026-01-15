@@ -47,7 +47,7 @@ def literal(value: object) -> Term:
         FrozenSetType,
         IntType,
         ListType,
-        NilType,
+        NoneType,
         SetType,
         StrType,
         TupleType,
@@ -68,7 +68,7 @@ def literal(value: object) -> Term:
     elif isinstance(value, bytes):
         return BytesType(value)
     elif value is None:
-        return NilType()
+        return NoneType()
     elif isinstance(value, dict):
         return DictType(value)
     elif isinstance(value, set):
@@ -107,7 +107,7 @@ def computed(result_type: object, op: Term) -> Type:
         FrozenSetType,
         IntType,
         ListType,
-        NilType,
+        NoneType,
         SetType,
         StrType,
         TupleType,
@@ -124,7 +124,7 @@ def computed(result_type: object, op: Term) -> Type:
     elif result_type is bytes:
         return BytesType(op)
     elif result_type is None:
-        return NilType(None)
+        return NoneType(None)
     elif result_type is dict:
         return DictType(op)
     elif result_type is set:

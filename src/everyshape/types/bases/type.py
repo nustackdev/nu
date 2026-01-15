@@ -99,7 +99,8 @@ class Type[T](BaseType[T]):
         from everyshape.ops import ConditionalOp
         from everyshape.types import AnyType
 
-        return AnyType(ConditionalOp(literal(condition), self, literal(otherwise)))
+        # ConditionalOp expects: (value_if_true, condition, value_if_false)
+        return AnyType(ConditionalOp(self, literal(condition), literal(otherwise)))
 
     def or_default[DefaultT](self, default: DefaultT | Term[DefaultT]) -> AnyType:
         """Return self if not empty/nan, otherwise return default.

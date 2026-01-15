@@ -49,7 +49,7 @@ Hierarchy:
     |   +-- SetBase             - Combines collection ops for sets
 
 Example:
-    >>> from ..bases import Type, NumericBase
+    >>> from .bases import Type, NumericBase
     >>> from everyshape.type import IntType
     >>>
     >>> x = IntType(42)

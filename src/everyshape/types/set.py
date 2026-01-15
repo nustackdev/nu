@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from ..bases import ComparisonBase, SetBase, Type
+from .bases import ComparisonBase, SetBase, Type
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
-    from ..bool.type import BoolType
+    from .bool import BoolType
 
 
 __all__ = [
@@ -41,7 +41,7 @@ class SetType[T](
     VALUE_TYPE: ClassVar[type] = set
 
     def _wrap_comparison_result(self, operand: Term) -> BoolType:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
@@ -66,7 +66,7 @@ class FrozenSetType[T](
     VALUE_TYPE: ClassVar[type] = frozenset
 
     def _wrap_comparison_result(self, operand: Term) -> BoolType:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 

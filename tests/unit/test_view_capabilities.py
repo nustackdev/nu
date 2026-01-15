@@ -10,8 +10,7 @@ from typing import ClassVar
 
 from everyshape.container import ContainerProtocol, ContainerStructure
 from everyshape.typing import EMPTY, Empty
-from everyshape.view import (
-    ViewBase,
+from everyshape.typing.view import (
     is_addable,
     is_appendable,
     is_assignable,
@@ -31,6 +30,7 @@ from everyshape.view import (
     is_sizeable,
     is_subscriptable,
 )
+from everyshape.view import ViewBase
 
 
 # =============================================================================

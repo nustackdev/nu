@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..bases import ComparisonBase, LogicalBase, Type
+from .bases import ComparisonBase, LogicalBase, Type
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
 
 __all__ = [

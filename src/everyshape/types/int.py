@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from ..bases import BitwiseBase, ComparisonBase, LogicalBase, Type
+from .bases import BitwiseBase, ComparisonBase, LogicalBase, Type
 
 
 if TYPE_CHECKING:
-    from everyshape.term.term import Term
+    from everyshape.term import Term
 
-    from ..bool.type import BoolType  # noqa: F401
-    from ..float.type import FloatType
+    from .bool import BoolType  # noqa: F401
+    from .float import FloatType
 
 
 __all__ = [
@@ -48,12 +48,12 @@ class IntType(
         return IntType(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
     def _wrap_logical_result(self, operand: Term) -> Term:
-        from ..bool.type import BoolType
+        from .bool import BoolType
 
         return BoolType(operand)
 
@@ -67,9 +67,9 @@ class IntType(
     def __add__(self, other: float | FloatType) -> FloatType: ...
     def __add__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
         from everyshape.ops import AddOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, (float, FloatType)):
             return FloatType(AddOp(self, literal(other)))
@@ -81,9 +81,9 @@ class IntType(
     def __radd__(self, other: float) -> FloatType: ...
     def __radd__(self, other: int | float) -> IntType | FloatType:
         from everyshape.ops import AddOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, float):
             return FloatType(AddOp(literal(other), self))
@@ -95,9 +95,9 @@ class IntType(
     def __sub__(self, other: float | FloatType) -> FloatType: ...
     def __sub__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
         from everyshape.ops import SubOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, (float, FloatType)):
             return FloatType(SubOp(self, literal(other)))
@@ -109,9 +109,9 @@ class IntType(
     def __rsub__(self, other: float) -> FloatType: ...
     def __rsub__(self, other: int | float) -> IntType | FloatType:
         from everyshape.ops import SubOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, float):
             return FloatType(SubOp(literal(other), self))
@@ -123,9 +123,9 @@ class IntType(
     def __mul__(self, other: float | FloatType) -> FloatType: ...
     def __mul__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
         from everyshape.ops import MulOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, (float, FloatType)):
             return FloatType(MulOp(self, literal(other)))
@@ -137,9 +137,9 @@ class IntType(
     def __rmul__(self, other: float) -> FloatType: ...
     def __rmul__(self, other: int | float) -> IntType | FloatType:
         from everyshape.ops import MulOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, float):
             return FloatType(MulOp(literal(other), self))
@@ -147,17 +147,17 @@ class IntType(
 
     def __truediv__(self, other: int | float | IntType | FloatType) -> FloatType:
         from everyshape.ops import DivOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         return FloatType(DivOp(self, literal(other)))
 
     def __rtruediv__(self, other: int | float) -> FloatType:
         from everyshape.ops import DivOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         return FloatType(DivOp(literal(other), self))
 
@@ -167,9 +167,9 @@ class IntType(
     def __floordiv__(self, other: float | FloatType) -> FloatType: ...
     def __floordiv__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
         from everyshape.ops import FloorDivOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, (float, FloatType)):
             return FloatType(FloorDivOp(self, literal(other)))
@@ -181,9 +181,9 @@ class IntType(
     def __rfloordiv__(self, other: float) -> FloatType: ...
     def __rfloordiv__(self, other: int | float) -> IntType | FloatType:
         from everyshape.ops import FloorDivOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, float):
             return FloatType(FloorDivOp(literal(other), self))
@@ -195,9 +195,9 @@ class IntType(
     def __mod__(self, other: float | FloatType) -> FloatType: ...
     def __mod__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
         from everyshape.ops import ModOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, (float, FloatType)):
             return FloatType(ModOp(self, literal(other)))
@@ -209,9 +209,9 @@ class IntType(
     def __rmod__(self, other: float) -> FloatType: ...
     def __rmod__(self, other: int | float) -> IntType | FloatType:
         from everyshape.ops import ModOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, float):
             return FloatType(ModOp(literal(other), self))
@@ -223,9 +223,9 @@ class IntType(
     def __pow__(self, other: float | FloatType) -> FloatType: ...
     def __pow__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
         from everyshape.ops import PowOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, (float, FloatType)):
             return FloatType(PowOp(self, literal(other)))
@@ -237,9 +237,9 @@ class IntType(
     def __rpow__(self, other: float) -> FloatType: ...
     def __rpow__(self, other: int | float) -> IntType | FloatType:
         from everyshape.ops import PowOp
-        from everyshape.term.conversion import literal
+        from everyshape.term import literal
 
-        from ..float.type import FloatType
+        from .float import FloatType
 
         if isinstance(other, float):
             return FloatType(PowOp(literal(other), self))

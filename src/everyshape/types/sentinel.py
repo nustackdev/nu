@@ -8,7 +8,7 @@ This module provides sentinel types for special values:
 
 from __future__ import annotations
 
-from ..bases import Type
+from .bases import Type
 
 
 __all__ = [

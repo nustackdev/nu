@@ -22,15 +22,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from everyshape.term.term import Operation
+from everyshape.term import Operation
 from everyshape.typing import NAN, Sentinel
 
 
 if TYPE_CHECKING:
-    from everyshape.term.context import Context
-    from everyshape.term.term import Term
+    from everyshape.term import Context, Term
 
-    from ..bases import UnionBaseType
+    from .bases import UnionBaseType
 
 
 __all__ = [
