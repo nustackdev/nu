@@ -52,8 +52,9 @@ from everyshape.typing.type import capabilities as cap
 
 
 if TYPE_CHECKING:
+    from everyshape.type import BoolType
+
     from .term import Term
-    from .type.bool_type import BoolType
 
 
 __all__ = [

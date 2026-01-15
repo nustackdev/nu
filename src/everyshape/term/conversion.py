@@ -39,8 +39,7 @@ def literal(value: object) -> Term:
         >>> literal("hello")  # → StrType("hello")
         >>> literal(price.get())  # → price.get() (unchanged)
     """
-    from .term import Term
-    from .types.collections import (
+    from everyshape.type import (
         BoolType,
         BytesType,
         DictType,
@@ -53,6 +52,8 @@ def literal(value: object) -> Term:
         StrType,
         TupleType,
     )
+
+    from .term import Term
 
     if isinstance(value, Term):
         return value
@@ -97,7 +98,7 @@ def computed(result_type: object, op: Term) -> Type:
         >>> computed(int, GetOp(ref))  # → IntType(GetOp(ref))
         >>> computed(str, some_op)  # → StrType(some_op)
     """
-    from .types.collections import (
+    from everyshape.type import (
         AnyType,
         BoolType,
         BytesType,

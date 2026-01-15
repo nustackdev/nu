@@ -1,9 +1,14 @@
-"""Type system for Term expressions.
+"""Type system bases for Term expressions.
 
-This module provides the unified Type system for everyshape, including:
+This module provides the type system bases for everyshape:
 - Type[T] - Base class for typed expressions
-- Concrete types: IntType, FloatType, StrType, BoolType, etc.
 - Capability mixins: NumericBase, ComparisonBase, LogicalBase, etc.
+
+Concrete type implementations are in everyshape.type:
+- everyshape.type.int.IntType
+- everyshape.type.float.FloatType
+- everyshape.type.str.StrType
+- etc.
 
 Hierarchy:
     +-- Arithmetic Bases
@@ -41,35 +46,17 @@ Hierarchy:
     |   +-- IterableBase        - map_(), filter_(), reduce_(), etc.
     |   +-- SequenceBase        - Combines collection ops for sequences
     |   +-- MappingBase         - Combines collection ops for mappings
-
-Type Hierarchy:
-    Type[T] (base from term.py)
-    ├── IntType               # int expressions
-    ├── FloatType             # float expressions
-    ├── StrType               # str expressions
-    ├── BoolType              # bool expressions
-    ├── BytesType             # bytes expressions
-    ├── NilType               # None expressions
-    ├── ListType[T]           # list expressions
-    ├── DictType[K, V]        # dict expressions
-    ├── SetType[T]            # set expressions
-    ├── TupleType[*Ts]        # tuple expressions
-    ├── FrozenSetType[T]      # frozenset expressions
-    ├── AnyType               # dynamic/unknown type
-    └── SentinelType          # special values
-        ├── EmptyType         # absence of value
-        └── NAType            # not applicable
+    |   +-- SetBase             - Combines collection ops for sets
 
 Example:
-    >>> from everyshape.term.type import IntType
+    >>> from everyshape.term.type import Type, NumericBase
+    >>> from everyshape.type import IntType
     >>>
     >>> x = IntType(42)
     >>> x.execute(ctx)  # Returns 42
 """
 
 from __future__ import annotations
-
-from .any_type import AnyType
 
 # Arithmetic bases
 from .base_arithmetic import (
@@ -112,19 +99,6 @@ from .base_comparison import ComparisonBase, EqualableBase, OrderableBase
 
 # Logical bases
 from .base_logical import AndableBase, LogicalBase, NotableBase, OrableBase
-
-# Concrete types
-from .bool_type import BoolType
-from .bytes_type import BytesType
-from .dict_type import DictType
-from .float_type import FloatType
-from .int_type import IntType
-from .list_type import ListType
-from .none_type import NilType
-from .sentinel import EmptyType, NAType, SentinelType
-from .set_type import FrozenSetType, SetType
-from .str_type import StrType
-from .tuple_type import TupleType
 
 # Core Type class
 from .type import Type
@@ -211,25 +185,4 @@ __all__ = [  # noqa: RUF022
     "LogicalBase",
     "NotableBase",
     "OrableBase",
-    # ==========================================================================
-    # CONCRETE TYPES
-    # ==========================================================================
-    # Primitive types
-    "AnyType",
-    "BoolType",
-    "BytesType",
-    "FloatType",
-    "IntType",
-    "NilType",
-    "StrType",
-    # Collection types
-    "DictType",
-    "FrozenSetType",
-    "ListType",
-    "SetType",
-    "TupleType",
-    # Sentinel types
-    "EmptyType",
-    "NAType",
-    "SentinelType",
 ]

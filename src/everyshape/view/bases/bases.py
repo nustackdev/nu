@@ -259,7 +259,7 @@ class ChildNestedGetBase:
             ValueError: If child has no structure ID
             TypeError: If child view doesn't support extraction
         """
-        from ..capabilities import Convertible
+        from everyshape.typing.view import Convertible
 
         # Get child container
         child_site = (*self.container.site, address)
@@ -352,7 +352,7 @@ class ChildNestedSetBase:
         Raises:
             TypeError: If child view doesn't support initialization
         """
-        from ..capabilities import Initializable
+        from everyshape.typing.view import Initializable
 
         # Get view class and structure for this value type
         value_type = type(value)

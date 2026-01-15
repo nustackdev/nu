@@ -46,7 +46,7 @@ class BitwiseAndableBase[OperandT, ResultT]:
         Returns:
             AND result
         """
-        from ..comp.binary_ops import BitwiseAndOp
+        from ..comp import BitwiseAndOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseAndOp(self, literal(other))))
 
@@ -67,7 +67,7 @@ class BitwiseOrableBase[OperandT, ResultT]:
         Returns:
             OR result
         """
-        from ..comp.binary_ops import BitwiseOrOp
+        from ..comp import BitwiseOrOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseOrOp(self, literal(other))))
 
@@ -81,13 +81,13 @@ class BitwiseXorableBase[OperandT, ResultT]:
 
     def __xor__(self, other: OperandT) -> ResultT:
         """Bitwise XOR: self ^ other."""
-        from ..comp.binary_ops import XorOp
+        from ..comp import XorOp
 
         return cast("ResultT", self._wrap_bitwise_result(XorOp(self, literal(other))))
 
     def __rxor__(self, other: OperandT) -> ResultT:
         """Right XOR: other ^ self."""
-        from ..comp.binary_ops import XorOp
+        from ..comp import XorOp
 
         return cast("ResultT", self._wrap_bitwise_result(XorOp(literal(other), self)))
 
@@ -105,7 +105,7 @@ class BitwiseNotableBase[ResultT]:
         Returns:
             Inverted value
         """
-        from ..comp.unary_ops import BitwiseNotOp
+        from ..comp import BitwiseNotOp
 
         return cast("ResultT", self._wrap_bitwise_result(BitwiseNotOp(self)))
 
@@ -119,25 +119,25 @@ class ShiftableBase[OperandT, ResultT]:
 
     def __lshift__(self, other: OperandT) -> ResultT:
         """Left shift: self << other."""
-        from ..comp.binary_ops import LShiftOp
+        from ..comp import LShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(LShiftOp(self, literal(other))))
 
     def __rlshift__(self, other: OperandT) -> ResultT:
         """Right left shift: other << self."""
-        from ..comp.binary_ops import LShiftOp
+        from ..comp import LShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(LShiftOp(literal(other), self)))
 
     def __rshift__(self, other: OperandT) -> ResultT:
         """Right shift: self >> other."""
-        from ..comp.binary_ops import RShiftOp
+        from ..comp import RShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(RShiftOp(self, literal(other))))
 
     def __rrshift__(self, other: OperandT) -> ResultT:
         """Right right shift: other >> self."""
-        from ..comp.binary_ops import RShiftOp
+        from ..comp import RShiftOp
 
         return cast("ResultT", self._wrap_bitwise_result(RShiftOp(literal(other), self)))
 

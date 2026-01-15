@@ -21,13 +21,9 @@ from ..conversion import literal
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from everyshape.type import BoolType, DictType, FloatType, IntType, ListType, StrType
+
     from .. import Term
-    from .bool_type import BoolType
-    from .dict_type import DictType
-    from .float_type import FloatType
-    from .int_type import IntType
-    from .list_type import ListType
-    from .str_type import StrType
 
 
 __all__ = [
@@ -51,8 +47,9 @@ class LengthableBase:
         Returns:
             Length value
         """
-        from ..comp.sequence import LenOp
-        from .int_type import IntType
+        from everyshape.type import IntType
+
+        from ..comp import LenOp
 
         return IntType(LenOp(self))
 
@@ -66,7 +63,7 @@ class IndexableBase[KeyT, ResultValue]:
 
     def __getitem__(self, key: KeyT) -> ResultValue:
         """Get item at index/key."""
-        from ..comp.sequence import AtOp
+        from ..comp import AtOp
 
         return cast("ResultValue", self._wrap_indexable_result(AtOp(self, literal(key))))
 
@@ -89,7 +86,7 @@ class SliceableBase[ResultT]:
         Returns:
             Sliced result
         """
-        from ..comp.sequence import SliceOp
+        from ..comp import SliceOp
 
         return cast("ResultT", self._wrap_sliceable_result(SliceOp(self, start, stop, step)))
 
@@ -106,8 +103,8 @@ class ContainableBase[ItemT]:
         Returns:
             Boolean result
         """
-        from ..comp.typed.mapping import ContainsOp
-        from .bool_type import BoolType
+        from everyshape.term.comp import ContainsOp
+        from everyshape.type import BoolType
 
         return BoolType(ContainsOp(self, literal(item)))
 
@@ -132,7 +129,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Mapped result
         """
-        from ..comp.sequence import MapOp
+        from ..comp import MapOp
 
         return cast("ResultT", self._wrap_iterable_result(MapOp(self, func)))
 
@@ -145,7 +142,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Filtered result
         """
-        from ..comp.sequence import FilterOp
+        from ..comp import FilterOp
 
         return cast("ResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
 
@@ -181,8 +178,9 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Reduced value
         """
-        from ..comp.sequence import ReduceOp
-        from .any_type import AnyType
+        from everyshape.type import AnyType
+
+        from ..comp import ReduceOp
 
         return AnyType(ReduceOp(self, func, initial))
 
@@ -192,7 +190,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Sum
         """
-        from ..comp.sequence import SumOp
+        from ..comp import SumOp
 
         return cast("ResultT", self._wrap_element_result(SumOp(self)))
 
@@ -202,7 +200,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Minimum
         """
-        from ..comp.sequence import MinOp
+        from ..comp import MinOp
 
         return cast("ResultT", self._wrap_element_result(MinOp(self)))
 
@@ -212,7 +210,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Maximum
         """
-        from ..comp.sequence import MaxOp
+        from ..comp import MaxOp
 
         return cast("ResultT", self._wrap_element_result(MaxOp(self)))
 
@@ -222,8 +220,9 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Boolean result
         """
-        from ..comp.sequence import AnyOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import AnyOp
 
         return BoolType(AnyOp(self))
 
@@ -233,8 +232,9 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Boolean result
         """
-        from ..comp.sequence import AllOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import AllOp
 
         return BoolType(AllOp(self))
 
@@ -259,7 +259,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             First element
         """
-        from ..comp.sequence import FirstOp
+        from ..comp import FirstOp
 
         return cast("ResultT", self._wrap_element_result(FirstOp(self)))
 
@@ -269,7 +269,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Last element
         """
-        from ..comp.sequence import LastOp
+        from ..comp import LastOp
 
         return cast("ResultT", self._wrap_element_result(LastOp(self)))
 
@@ -279,7 +279,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Reversed sequence
         """
-        from ..comp.sequence import ReversedOp
+        from ..comp import ReversedOp
 
         return cast("ResultT", self._wrap_sliceable_result(ReversedOp(self)))
 
@@ -292,7 +292,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Sorted sequence
         """
-        from ..comp.sequence import SortedOp
+        from ..comp import SortedOp
 
         return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse=reverse)))
 
@@ -305,8 +305,9 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Joined string
         """
-        from ..comp.sequence import JoinOp
-        from .str_type import StrType
+        from everyshape.type import StrType
+
+        from ..comp import JoinOp
 
         return StrType(JoinOp(self, literal(separator)))
 
@@ -319,8 +320,9 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Index
         """
-        from ..comp.sequence import IndexOfOp
-        from .int_type import IntType
+        from everyshape.type import IntType
+
+        from ..comp import IndexOfOp
 
         return IntType(IndexOfOp(self, literal(value)))
 
@@ -333,8 +335,9 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             IntType containing index
         """
-        from ..comp.sequence import FindIndexOp
-        from .int_type import IntType
+        from everyshape.type import IntType
+
+        from ..comp import FindIndexOp
 
         return IntType(FindIndexOp(self, predicate))
 
@@ -347,8 +350,9 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Count
         """
-        from ..comp.sequence import CountOp
-        from .int_type import IntType
+        from everyshape.type import IntType
+
+        from ..comp import CountOp
 
         return IntType(CountOp(self, literal(value)))
 
@@ -386,7 +390,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Keys sequence
         """
-        from ..comp.typed.mapping import DictKeysOp
+        from everyshape.type.dict.ops import DictKeysOp
 
         return cast("ResultT", self._wrap_keys_result(DictKeysOp(self)))
 
@@ -396,9 +400,9 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Values sequence
         """
-        from ..comp.typed.mapping import DictTypesOp
+        from everyshape.type.dict import DictValuesOp
 
-        return cast("ResultT", self._wrap_values_result(DictTypesOp(self)))
+        return cast("ResultT", self._wrap_values_result(DictValuesOp(self)))
 
     def items_(self) -> ResultT:
         """Get all key-value pairs.
@@ -406,7 +410,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Items sequence
         """
-        from ..comp.typed.mapping import DictItemsOp
+        from everyshape.type.dict.ops import DictItemsOp
 
         return cast("ResultT", self._wrap_items_result(DictItemsOp(self)))
 
@@ -420,7 +424,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Value or default
         """
-        from ..comp.typed.mapping import DictGetOp
+        from everyshape.type.dict.ops import DictGetOp
 
         return cast(
             "ResultT", self._wrap_value_result(DictGetOp(self, literal(key), literal(default)))
@@ -455,7 +459,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Union set
         """
-        from ..comp.typed.set import UnionOp
+        from everyshape.type.set.ops import UnionOp
 
         return cast("ResultT", self._wrap_set_result(UnionOp(self, literal(other))))
 
@@ -468,7 +472,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Intersection set
         """
-        from ..comp.typed.set import IntersectionOp
+        from everyshape.type.set.ops import IntersectionOp
 
         return cast("ResultT", self._wrap_set_result(IntersectionOp(self, literal(other))))
 
@@ -481,7 +485,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Difference set
         """
-        from ..comp.typed.set import DifferenceOp
+        from everyshape.type.set.ops import DifferenceOp
 
         return cast("ResultT", self._wrap_set_result(DifferenceOp(self, literal(other))))
 
@@ -494,7 +498,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Symmetric difference set
         """
-        from ..comp.typed.set import SymmetricDifferenceOp
+        from everyshape.type.set.ops import SymmetricDifferenceOp
 
         return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, literal(other))))
 
@@ -507,8 +511,8 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..comp.typed.set import IsSubsetOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+        from everyshape.type.set.ops import IsSubsetOp
 
         return BoolType(IsSubsetOp(self, literal(other)))
 
@@ -521,8 +525,8 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..comp.typed.set import IsSupersetOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+        from everyshape.type.set.ops import IsSupersetOp
 
         return BoolType(IsSupersetOp(self, literal(other)))
 
@@ -535,7 +539,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..comp.typed.set import IsDisjointOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+        from everyshape.type.set.ops import IsDisjointOp
 
         return BoolType(IsDisjointOp(self, literal(other)))

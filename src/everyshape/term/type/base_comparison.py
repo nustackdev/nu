@@ -14,7 +14,7 @@ from ..conversion import literal
 
 
 if TYPE_CHECKING:
-    from .bool_type import BoolType
+    from everyshape.type import BoolType
 
 
 __all__ = [
@@ -29,29 +29,33 @@ class OrderableBase[OperandT]:
 
     def __gt__(self, other: OperandT) -> BoolType:
         """Greater than: self > other."""
-        from ..comp.binary_ops import GtOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import GtOp
 
         return BoolType(GtOp(self, literal(other)))
 
     def __lt__(self, other: OperandT) -> BoolType:
         """Less than: self < other."""
-        from ..comp.binary_ops import LtOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import LtOp
 
         return BoolType(LtOp(self, literal(other)))
 
     def __ge__(self, other: OperandT) -> BoolType:
         """Greater than or equal: self >= other."""
-        from ..comp.binary_ops import GeOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import GeOp
 
         return BoolType(GeOp(self, literal(other)))
 
     def __le__(self, other: OperandT) -> BoolType:
         """Less than or equal: self <= other."""
-        from ..comp.binary_ops import LeOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import LeOp
 
         return BoolType(LeOp(self, literal(other)))
 
@@ -87,8 +91,9 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ..comp.binary_ops import EqOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import EqOp
 
         return BoolType(EqOp(self, literal(other)))
 
@@ -101,8 +106,9 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ..comp.binary_ops import NeOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import NeOp
 
         return BoolType(NeOp(self, literal(other)))
 
@@ -115,8 +121,9 @@ class EqualableBase[OperandT]:
         Returns:
             IdCompOp expression
         """
-        from ..comp.binary_ops import IdCompOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import IdCompOp
 
         return BoolType(IdCompOp(self, literal(other)))
 

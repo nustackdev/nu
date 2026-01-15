@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, TypeGuard, runtime_checkable
 
-from .view import View
-
 
 if TYPE_CHECKING:
     from everyshape.loc import key
     from everyshape.storage import Subscription
     from everyshape.typing import Empty
+    from everyshape.view import View
 
 
 __all__ = [
@@ -62,8 +61,11 @@ __all__ = [
 # =============================================================================
 
 
+# TODO: should inherit from View protocol? class Convertible[V](Protocol):
+
+
 @runtime_checkable
-class Convertible[V](View, Protocol):
+class Convertible[V](Protocol):
     """Protocol for containers that can convert their contents to Python values.
 
     Convertible containers can materialize their entire stored state into
@@ -92,7 +94,7 @@ class Convertible[V](View, Protocol):
 
 
 @runtime_checkable
-class Initializable[V](View, Protocol):
+class Initializable[V](Protocol):
     """Protocol for containers that can be initialized from Python values.
 
     Initializable containers can populate their contents from native Python
@@ -123,7 +125,7 @@ class Initializable[V](View, Protocol):
 
 
 @runtime_checkable
-class Nestable[A](View, Protocol):
+class Nestable[A](Protocol):
     """Protocol for containers that support navigation to child containers.
 
     Nestable containers can navigate their hierarchy, returning appropriate
@@ -155,7 +157,7 @@ class Nestable[A](View, Protocol):
 
 
 @runtime_checkable
-class Subscriptable[A, V](View, Protocol):
+class Subscriptable[A, V](Protocol):
     """Protocol for containers that support item access via subscript notation.
 
     Subscriptable containers implement __getitem__ to retrieve values by
@@ -184,7 +186,7 @@ class Subscriptable[A, V](View, Protocol):
 
 
 @runtime_checkable
-class Assignable[A, V](View, Protocol):
+class Assignable[A, V](Protocol):
     """Protocol for containers that support item assignment via subscript notation.
 
     Assignable containers implement __setitem__ to store values by
@@ -211,7 +213,7 @@ class Assignable[A, V](View, Protocol):
 
 
 @runtime_checkable
-class Containable[V](View, Protocol):
+class Containable[V](Protocol):
     """Protocol for containers that support membership testing.
 
     Containable containers implement __contains__ to check if an address
@@ -239,7 +241,7 @@ class Containable[V](View, Protocol):
 
 
 @runtime_checkable
-class Sizeable(View, Protocol):
+class Sizeable(Protocol):
     """Protocol for containers that support size queries.
 
     Sizeable containers implement __len__ to return the number of items
@@ -260,7 +262,7 @@ class Sizeable(View, Protocol):
 
 
 @runtime_checkable
-class Deletable[A](View, Protocol):
+class Deletable[A](Protocol):
     """Protocol for containers that support item deletion.
 
     Deletable containers implement __delitem__ to remove items by
@@ -289,7 +291,7 @@ class Deletable[A](View, Protocol):
 
 
 @runtime_checkable
-class Clearable(View, Protocol):
+class Clearable(Protocol):
     """Protocol for containers that support clearing all items.
 
     Clearable containers implement clear() to remove all items at once.
@@ -305,7 +307,7 @@ class Clearable(View, Protocol):
 
 
 @runtime_checkable
-class Appendable[V](View, Protocol):
+class Appendable[V](Protocol):
     """Protocol for containers that support appending items.
 
     Appendable containers implement append() to add items to the end
@@ -329,7 +331,7 @@ class Appendable[V](View, Protocol):
 
 
 @runtime_checkable
-class Insertable[V](View, Protocol):
+class Insertable[V](Protocol):
     """Protocol for containers that support inserting items at a specific index.
 
     Insertable containers implement insert() to add items at a given position.
@@ -353,7 +355,7 @@ class Insertable[V](View, Protocol):
 
 
 @runtime_checkable
-class Poppable[V](View, Protocol):
+class Poppable[V](Protocol):
     """Protocol for containers that support popping items.
 
     Poppable containers implement pop() to remove and return items.
@@ -383,7 +385,7 @@ class Poppable[V](View, Protocol):
 
 
 @runtime_checkable
-class Addable[V](View, Protocol):
+class Addable[V](Protocol):
     """Protocol for containers that support adding items (sets).
 
     Addable containers implement add() to add items to a set.
@@ -406,7 +408,7 @@ class Addable[V](View, Protocol):
 
 
 @runtime_checkable
-class Removable[V](View, Protocol):
+class Removable[V](Protocol):
     """Protocol for containers that support removing items by value.
 
     Removable containers implement remove() to remove items by value.
@@ -433,7 +435,7 @@ class Removable[V](View, Protocol):
 
 
 @runtime_checkable
-class Discardable[V](View, Protocol):
+class Discardable[V](Protocol):
     """Protocol for containers that support discarding items by value.
 
     Discardable containers implement discard() to remove items by value.
@@ -457,7 +459,7 @@ class Discardable[V](View, Protocol):
 
 
 @runtime_checkable
-class Observable(View, Protocol):
+class Observable(Protocol):
     """Protocol for containers that support observing changes.
 
     Observable containers implement on_change() to subscribe to all
@@ -486,7 +488,7 @@ class Observable(View, Protocol):
 
 
 @runtime_checkable
-class ChildObservable[A](View, Protocol):
+class ChildObservable[A](Protocol):
     """Protocol for containers that support observing child changes.
 
     ChildObservable containers implement on_child_change() to subscribe
@@ -535,7 +537,7 @@ class ChildObservable[A](View, Protocol):
 
 
 @runtime_checkable
-class DescendantsObservable(View, Protocol):
+class DescendantsObservable(Protocol):
     """Protocol for containers that support observing descendant changes.
 
     DescendantsObservable containers implement on_descendents_change() to

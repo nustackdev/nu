@@ -42,7 +42,7 @@ class AndableBase[OperandT, ResultT]:
         Returns:
             AND result
         """
-        from ..comp.binary_ops import AndOp
+        from ..comp import AndOp
 
         return cast("ResultT", self._wrap_logical_result(AndOp(self, literal(other))))
 
@@ -63,7 +63,7 @@ class OrableBase[OperandT, ResultT]:
         Returns:
             OR result
         """
-        from ..comp.binary_ops import OrOp
+        from ..comp import OrOp
 
         return cast("ResultT", self._wrap_logical_result(OrOp(self, literal(other))))
 
@@ -99,7 +99,7 @@ class NotableBase[ResultT]:
         Returns:
             NOT result
         """
-        from ..comp.unary_ops import NotOp
+        from ..comp import NotOp
 
         return cast("ResultT", self._wrap_logical_result(NotOp(self)))
 
@@ -109,7 +109,7 @@ class NotableBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..comp.unary_ops import BoolOp
+        from ..comp import BoolOp
 
         return cast("ResultT", self._wrap_logical_result(BoolOp(self)))
 

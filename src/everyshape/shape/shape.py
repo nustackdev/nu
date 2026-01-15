@@ -34,7 +34,8 @@ from __future__ import annotations
 from abc import ABC, ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
-from everyshape.term.refs.bases_collections import MutableMappingRefBase
+
+# from everyshape.term.refs.bases_collections import MutableMappingRefBase
 
 
 if TYPE_CHECKING:
@@ -222,7 +223,8 @@ class ShapeMeta(ABCMeta):
 # ============================================================================
 
 
-class Shape(MutableMappingRefBase, metaclass=ShapeMeta):
+# class Shape(MutableMappingRefBase, metaclass=ShapeMeta):
+class Shape(metaclass=ShapeMeta):
     """Base class for declarative structure definitions.
 
     Shapes define what exists and where it lives, using Slots.

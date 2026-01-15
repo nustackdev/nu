@@ -13,17 +13,11 @@ from ..term import Type as BaseType
 
 
 if TYPE_CHECKING:
+    from everyshape.type import AnyType, BoolType, BytesType, FloatType, IntType, ListType, StrType
     from everyshape.typing import Sentinel
 
     from ..args import BoolArg
     from ..term import Term
-    from .any_type import AnyType
-    from .bool_type import BoolType
-    from .bytes_type import BytesType
-    from .float_type import FloatType
-    from .int_type import IntType
-    from .list_type import ListType
-    from .str_type import StrType
 
 
 __all__ = [
@@ -46,8 +40,9 @@ class Type[T](BaseType[T]):
         Returns:
             BoolType-like result
         """
-        from ..comp.unary_ops import IsEmptyOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import IsEmptyOp
 
         return BoolType(IsEmptyOp(self))
 
@@ -57,8 +52,9 @@ class Type[T](BaseType[T]):
         Returns:
             BoolType-like result
         """
-        from ..comp.unary_ops import IsNaNOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import IsNaNOp
 
         return BoolType(IsNaNOp(self))
 
@@ -104,8 +100,9 @@ class Type[T](BaseType[T]):
             >>> price.ifelse(price > 0, default_price)
             >>> name.ifelse(name.not_empty(), "Unknown")
         """
-        from ..comp.ternary_ops import ConditionalOp
-        from .any_type import AnyType
+        from everyshape.type import AnyType
+
+        from ..comp import ConditionalOp
 
         return AnyType(ConditionalOp(literal(condition), self, literal(otherwise)))
 
@@ -121,7 +118,7 @@ class Type[T](BaseType[T]):
         Example:
             >>> value.or_default(0)  # Returns 0 if value is Empty
         """
-        from .any_type import AnyType
+        from everyshape.type import AnyType
 
         return AnyType(self.ifelse(self.is_sentinel(), literal(default)))
 
@@ -139,8 +136,9 @@ class Type[T](BaseType[T]):
             >>> float_val.to_int()  # 3.14 -> 3
             >>> str_val.to_int()  # "42" -> 42
         """
-        from ..comp.conversion_ops import ToIntOp
-        from .int_type import IntType
+        from everyshape.type import IntType
+
+        from ..comp import ToIntOp
 
         return IntType(ToIntOp(self))
 
@@ -154,8 +152,9 @@ class Type[T](BaseType[T]):
             >>> int_val.to_float()  # 42 -> 42.0
             >>> str_val.to_float()  # "3.14" -> 3.14
         """
-        from ..comp.conversion_ops import ToFloatOp
-        from .float_type import FloatType
+        from everyshape.type import FloatType
+
+        from ..comp import ToFloatOp
 
         return FloatType(ToFloatOp(self))
 
@@ -169,8 +168,9 @@ class Type[T](BaseType[T]):
             >>> int_val.to_bool()  # 0 -> False, 1 -> True
             >>> str_val.to_bool()  # "" -> False, "x" -> True
         """
-        from ..comp.conversion_ops import ToBoolOp
-        from .bool_type import BoolType
+        from everyshape.type import BoolType
+
+        from ..comp import ToBoolOp
 
         return BoolType(ToBoolOp(self))
 
@@ -184,8 +184,9 @@ class Type[T](BaseType[T]):
             >>> int_val.to_str()  # 42 -> "42"
             >>> datetime_val.to_str()  # datetime -> "2024-01-15 10:30:00"
         """
-        from ..comp.conversion_ops import ToStrOp
-        from .str_type import StrType
+        from everyshape.type import StrType
+
+        from ..comp import ToStrOp
 
         return StrType(ToStrOp(self))
 
@@ -201,8 +202,9 @@ class Type[T](BaseType[T]):
         Example:
             >>> str_val.to_bytes()  # "hello" -> b"hello"
         """
-        from ..comp.conversion_ops import ToBytesOp
-        from .bytes_type import BytesType
+        from everyshape.type import BytesType
+
+        from ..comp import ToBytesOp
 
         return BytesType(ToBytesOp(self, encoding))
 
@@ -216,7 +218,8 @@ class Type[T](BaseType[T]):
             >>> tuple_val.to_list()  # (1, 2, 3) -> [1, 2, 3]
             >>> set_val.to_list()  # {1, 2, 3} -> [1, 2, 3]
         """
-        from ..comp.conversion_ops import ToListOp
-        from .list_type import ListType
+        from everyshape.type import ListType
+
+        from ..comp import ToListOp
 
         return ListType(ToListOp(self))

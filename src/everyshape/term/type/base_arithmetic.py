@@ -42,13 +42,13 @@ class AddableBase[OperandT, ResultT]:
 
     def __add__(self, other: OperandT) -> ResultT:
         """Addition: self + other."""
-        from ..comp.binary_ops import AddOp
+        from ..comp import AddOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AddOp(self, literal(other))))
 
     def __radd__(self, other: OperandT) -> ResultT:
         """Right addition: other + self."""
-        from ..comp.binary_ops import AddOp
+        from ..comp import AddOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AddOp(literal(other), self)))
 
@@ -62,13 +62,13 @@ class SubtractableBase[OperandT, ResultT]:
 
     def __sub__(self, other: OperandT) -> ResultT:
         """Subtraction: self - other."""
-        from ..comp.binary_ops import SubOp
+        from ..comp import SubOp
 
         return cast("ResultT", self._wrap_arithmetic_result(SubOp(self, literal(other))))
 
     def __rsub__(self, other: OperandT) -> ResultT:
         """Right subtraction: other - self."""
-        from ..comp.binary_ops import SubOp
+        from ..comp import SubOp
 
         return cast("ResultT", self._wrap_arithmetic_result(SubOp(literal(other), self)))
 
@@ -82,19 +82,19 @@ class NegatableBase[ResultT]:
 
     def __neg__(self) -> ResultT:
         """Negation: -self."""
-        from ..comp.unary_ops import NegOp
+        from ..comp import NegOp
 
         return cast("ResultT", self._wrap_arithmetic_result(NegOp(self)))
 
     def __pos__(self) -> ResultT:
         """Positive: +self."""
-        from ..comp.unary_ops import PosOp
+        from ..comp import PosOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PosOp(self)))
 
     def __abs__(self) -> ResultT:
         """Absolute value: abs(self)."""
-        from ..comp.unary_ops import AbsOp
+        from ..comp import AbsOp
 
         return cast("ResultT", self._wrap_arithmetic_result(AbsOp(self)))
 
@@ -108,13 +108,13 @@ class MultiplyableBase[OperandT, ResultT]:
 
     def __mul__(self, other: OperandT) -> ResultT:
         """Multiplication: self * other."""
-        from ..comp.binary_ops import MulOp
+        from ..comp import MulOp
 
         return cast("ResultT", self._wrap_arithmetic_result(MulOp(self, literal(other))))
 
     def __rmul__(self, other: OperandT) -> ResultT:
         """Right multiplication: other * self."""
-        from ..comp.binary_ops import MulOp
+        from ..comp import MulOp
 
         return cast("ResultT", self._wrap_arithmetic_result(MulOp(literal(other), self)))
 
@@ -128,25 +128,25 @@ class DivisibleBase[OperandT, ResultT]:
 
     def __truediv__(self, other: OperandT) -> ResultT:
         """Division: self / other."""
-        from ..comp.binary_ops import DivOp
+        from ..comp import DivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(DivOp(self, literal(other))))
 
     def __rtruediv__(self, other: OperandT) -> ResultT:
         """Right division: other / self."""
-        from ..comp.binary_ops import DivOp
+        from ..comp import DivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(DivOp(literal(other), self)))
 
     def __floordiv__(self, other: OperandT) -> ResultT:
         """Floor division: self // other."""
-        from ..comp.binary_ops import FloorDivOp
+        from ..comp import FloorDivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(self, literal(other))))
 
     def __rfloordiv__(self, other: OperandT) -> ResultT:
         """Right floor division: other // self."""
-        from ..comp.binary_ops import FloorDivOp
+        from ..comp import FloorDivOp
 
         return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(literal(other), self)))
 
@@ -160,13 +160,13 @@ class ModuloableBase[OperandT, ResultT]:
 
     def __mod__(self, other: OperandT) -> ResultT:
         """Modulo: self % other."""
-        from ..comp.binary_ops import ModOp
+        from ..comp import ModOp
 
         return cast("ResultT", self._wrap_arithmetic_result(ModOp(self, literal(other))))
 
     def __rmod__(self, other: OperandT) -> ResultT:
         """Right modulo: other % self."""
-        from ..comp.binary_ops import ModOp
+        from ..comp import ModOp
 
         return cast("ResultT", self._wrap_arithmetic_result(ModOp(literal(other), self)))
 
@@ -180,13 +180,13 @@ class PowerableBase[OperandT, ResultT]:
 
     def __pow__(self, other: OperandT) -> ResultT:
         """Power: self ** other."""
-        from ..comp.binary_ops import PowOp
+        from ..comp import PowOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PowOp(self, literal(other))))
 
     def __rpow__(self, other: OperandT) -> ResultT:
         """Right power: other ** self."""
-        from ..comp.binary_ops import PowOp
+        from ..comp import PowOp
 
         return cast("ResultT", self._wrap_arithmetic_result(PowOp(literal(other), self)))
 
