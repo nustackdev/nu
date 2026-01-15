@@ -21,9 +21,6 @@ from ..core import BinaryOp, NAryOp, UnaryOp
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.term import Term
-    from everyshape.types import UnionBaseType
-
 
 __all__ = [
     "CountOp",
@@ -34,9 +31,6 @@ __all__ = [
     "JoinOp",
     "LastOp",
 ]
-
-
-type OpArgument = Term | UnionBaseType
 
 
 class FirstOp[ResultT](UnaryOp[ResultT | Sentinel]):
@@ -91,7 +85,7 @@ class FindOp[T](NAryOp[T | Sentinel]):
         >>> FindOp(items, lambda x: x > 100)
     """
 
-    def __init__(self, operand: OpArgument, fn: Callable[[T], bool]) -> None:
+    def __init__(self, operand: object, fn: Callable[[T], bool]) -> None:
         """Initialize find operation.
 
         Args:
@@ -120,7 +114,7 @@ class FindIndexOp[T](NAryOp[int | Sentinel]):
         >>> FindIndexOp(items, lambda x: x > 100)
     """
 
-    def __init__(self, operand: OpArgument, fn: Callable[[T], bool]) -> None:
+    def __init__(self, operand: object, fn: Callable[[T], bool]) -> None:
         """Initialize find index operation.
 
         Args:

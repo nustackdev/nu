@@ -10,15 +10,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from everyshape.term import Term
-
 from .core import BinaryOp, NAryOp, TernaryOp
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from everyshape.types import UnionBaseType
 
 
 __all__ = [
@@ -28,9 +24,6 @@ __all__ = [
     "MethodCallOp",
     "SetAttrOp",
 ]
-
-
-type OpArgument = Term | UnionBaseType
 
 
 # =============================================================================
@@ -98,7 +91,7 @@ class MethodCallOp[ResultT](NAryOp[ResultT]):
     """
 
     def __init__(
-        self, instance: OpArgument, method_name: OpArgument, *args: object, **kwargs: object
+        self, instance: object, method_name: object, *args: object, **kwargs: object
     ) -> None:
         """Initialize method call operation.
 

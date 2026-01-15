@@ -8,7 +8,7 @@ ContainsOp: Containment check (item in container)
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from everyshape.typing import NAN, Sentinel
 
@@ -17,7 +17,6 @@ from ..core import BinaryOp, TernaryOp, UnaryOp
 
 if TYPE_CHECKING:
     from everyshape.term import Context, Term
-    from everyshape.types import UnionBaseType
 
 
 __all__ = [
@@ -26,9 +25,6 @@ __all__ = [
     "LenOp",
     "SliceOp",
 ]
-
-
-type OpArgument = Term | UnionBaseType
 
 
 class LenOp(UnaryOp[int]):
@@ -75,7 +71,7 @@ class SliceOp[ResultT](TernaryOp[ResultT]):
 
     def __init__(
         self,
-        operand: OpArgument,
+        operand: object,
         start: int | None = None,
         stop: int | None = None,
         step: int | None = None,
@@ -104,6 +100,9 @@ class SliceOp[ResultT](TernaryOp[ResultT]):
                 f"slice() requires sliceable object, got {type(operand_val).__name__}"
             ) from None
 
+    def _apply_op(self, first: Any, second: Any, third: Any) -> ResultT:  # type: ignore  # noqa: ANN401
+        pass
+
     def __repr__(self) -> str:
         return f"SliceOp({self.children[0]!r}, {self._start}:{self._stop}:{self._step})"
 
@@ -125,4 +124,4 @@ class ContainsOp(BinaryOp[bool]):
                 f"contains() requires list, tuple, dict, set, str, or bytes, "
                 f"got {type(left).__name__}"
             )
-        return right in left
+        return right in left  # type: ignore

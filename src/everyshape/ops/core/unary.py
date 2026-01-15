@@ -6,22 +6,19 @@ The base handles operand evaluation; subclasses focus on the operation logic.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from everyshape.term import Operation, literal
 
 
 if TYPE_CHECKING:
-    from everyshape.term import Context, Term
-    from everyshape.types import UnionBaseType
+    from everyshape.term import Context
 
 __all__ = ["UnaryOp"]
 
 
-type OpArgument = Term | UnionBaseType
-
-
-class UnaryOp[ResultT](Operation[ResultT]):
+class UnaryOp[ResultT](Operation[ResultT], ABC):
     """Base class for unary operations (single operand).
 
     Defines execution pattern:
@@ -38,7 +35,7 @@ class UnaryOp[ResultT](Operation[ResultT]):
                 return -operand
     """
 
-    def __init__(self, operand: OpArgument) -> None:
+    def __init__(self, operand: object) -> None:
         """Initialize unary operation.
 
         Args:
@@ -60,7 +57,8 @@ class UnaryOp[ResultT](Operation[ResultT]):
         operand_val = self.children[0].execute(context)
         return self._apply_op(operand_val)
 
-    def _apply_op(self, operand: object) -> ResultT:
+    @abstractmethod
+    def _apply_op(self, operand: Any, /) -> ResultT:  # noqa: ANN401
         """Apply the operator to operand.
 
         Subclasses override with operation-specific logic.

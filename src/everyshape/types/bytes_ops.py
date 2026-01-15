@@ -19,16 +19,8 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from everyshape.ops.core import BinaryOp, NAryOp, UnaryOp
 from everyshape.typing import NAN, NOT_SET, NotSet, Sentinel, is_notset
-
-
-if TYPE_CHECKING:
-    from everyshape.term import Term
-
-    from .bases import UnionBaseType
 
 
 __all__ = [
@@ -46,9 +38,6 @@ __all__ = [
     "DecodeOp",
     "HexOp",
 ]
-
-
-type OpArgument = Term | UnionBaseType
 
 
 # =============================================================================
@@ -111,7 +100,7 @@ class BytesStripOp(NAryOp[bytes | Sentinel]):
     Args can be Terms for dynamic values.
     """
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
         """Initialize strip operation."""
         if is_notset(chars):
             super().__init__(operand)
@@ -131,7 +120,7 @@ class BytesStripOp(NAryOp[bytes | Sentinel]):
 class BytesLStripOp(NAryOp[bytes | Sentinel]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
         """Initialize lstrip operation."""
         if is_notset(chars):
             super().__init__(operand)
@@ -151,7 +140,7 @@ class BytesLStripOp(NAryOp[bytes | Sentinel]):
 class BytesRStripOp(NAryOp[bytes | Sentinel]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
         """Initialize rstrip operation."""
         if is_notset(chars):
             super().__init__(operand)
@@ -181,9 +170,9 @@ class BytesSplitOp(NAryOp[list[bytes] | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        sep: OpArgument | NotSet = NOT_SET,
-        maxsplit: OpArgument = -1,
+        operand: object,
+        sep: object | NotSet = NOT_SET,
+        maxsplit: object = -1,
     ) -> None:
         """Initialize split operation."""
         if is_notset(sep):
@@ -220,10 +209,10 @@ class BytesFindOp(NAryOp[int | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        sub: OpArgument,
-        start: OpArgument = 0,
-        end: OpArgument | NotSet = NOT_SET,
+        operand: object,
+        sub: object,
+        start: object = 0,
+        end: object | NotSet = NOT_SET,
     ) -> None:
         """Initialize find operation."""
         if is_notset(end):
@@ -286,10 +275,10 @@ class BytesReplaceOp(NAryOp[bytes | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        old: OpArgument,
-        new: OpArgument,
-        count: OpArgument = -1,
+        operand: object,
+        old: object,
+        new: object,
+        count: object = -1,
     ) -> None:
         """Initialize replace operation."""
         super().__init__(operand, old, new, count)

@@ -20,16 +20,8 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from everyshape.ops.core import BinaryOp, NAryOp, TernaryOp, UnaryOp
+from everyshape.ops import BinaryOp, NAryOp, TernaryOp, UnaryOp
 from everyshape.typing import NAN, NOT_SET, NotSet, Sentinel, is_notset
-
-
-if TYPE_CHECKING:
-    from everyshape.term import Term
-
-    from .bases import UnionBaseType
 
 
 __all__ = [
@@ -59,9 +51,6 @@ __all__ = [
     "UpperOp",
     "ZFillOp",
 ]
-
-
-type OpArgument = Term | UnionBaseType
 
 
 # =============================================================================
@@ -166,7 +155,7 @@ class StripOp(NAryOp[str | Sentinel]):
     Args can be Terms for dynamic values.
     """
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
         """Initialize strip operation."""
         if is_notset(chars):
             super().__init__(operand)
@@ -186,7 +175,7 @@ class StripOp(NAryOp[str | Sentinel]):
 class LStripOp(NAryOp[str | Sentinel]):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
         """Initialize lstrip operation."""
         if is_notset(chars):
             super().__init__(operand)
@@ -206,7 +195,7 @@ class LStripOp(NAryOp[str | Sentinel]):
 class RStripOp(NAryOp[str | Sentinel]):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
 
-    def __init__(self, operand: OpArgument, chars: OpArgument | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
         """Initialize rstrip operation."""
         if is_notset(chars):
             super().__init__(operand)
@@ -236,9 +225,9 @@ class SplitOp(NAryOp[list[str] | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        sep: OpArgument | NotSet = NOT_SET,
-        maxsplit: OpArgument = -1,
+        operand: object,
+        sep: object | NotSet = NOT_SET,
+        maxsplit: object = -1,
     ) -> None:
         """Initialize split operation."""
         if is_notset(sep):
@@ -267,9 +256,9 @@ class RSplitOp(NAryOp[list[str] | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        sep: OpArgument | NotSet = NOT_SET,
-        maxsplit: OpArgument = -1,
+        operand: object,
+        sep: object | NotSet = NOT_SET,
+        maxsplit: object = -1,
     ) -> None:
         """Initialize rsplit operation."""
         if is_notset(sep):
@@ -306,10 +295,10 @@ class FindOp(NAryOp[int | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        sub: OpArgument,
-        start: OpArgument = 0,
-        end: OpArgument | NotSet = NOT_SET,
+        operand: object,
+        sub: object,
+        start: object = 0,
+        end: object | NotSet = NOT_SET,
     ) -> None:
         """Initialize find operation."""
         if is_notset(end):
@@ -332,10 +321,10 @@ class RFindOp(NAryOp[int | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        sub: OpArgument,
-        start: OpArgument = 0,
-        end: OpArgument | NotSet = NOT_SET,
+        operand: object,
+        sub: object,
+        start: object = 0,
+        end: object | NotSet = NOT_SET,
     ) -> None:
         """Initialize rfind operation."""
         if is_notset(end):
@@ -442,10 +431,10 @@ class ReplaceOp(NAryOp[str | Sentinel]):
 
     def __init__(
         self,
-        operand: OpArgument,
-        old: OpArgument,
-        new: OpArgument,
-        count: OpArgument = -1,
+        operand: object,
+        old: object,
+        new: object,
+        count: object = -1,
     ) -> None:
         """Initialize replace operation."""
         super().__init__(operand, old, new, count)

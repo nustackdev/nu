@@ -15,8 +15,6 @@ from .core import UnaryOp
 
 
 if TYPE_CHECKING:
-    from everyshape.types import UnionBaseType
-
     from ..term import Term
 
 
@@ -30,9 +28,6 @@ __all__ = [
     "ToStrOp",
     "ToTupleOp",
 ]
-
-
-type OpArgument = Term | UnionBaseType
 
 
 # =============================================================================
@@ -90,7 +85,7 @@ class ToBytesOp(UnaryOp[bytes | Sentinel]):
     - Iterables of ints -> bytes
     """
 
-    def __init__(self, operand: OpArgument, encoding: str = "utf-8") -> None:
+    def __init__(self, operand: object, encoding: str = "utf-8") -> None:
         """Initialize bytes conversion.
 
         Args:

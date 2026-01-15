@@ -6,24 +6,20 @@ The base handles operand evaluation and special value propagation.
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from everyshape.term import Operation, literal
 from everyshape.typing import Sentinel, propagate_special
 
 
 if TYPE_CHECKING:
-    from everyshape.term import Context, Term
-    from everyshape.types import UnionBaseType
+    from everyshape.term import Context
 
 __all__ = ["BinaryOp"]
 
 
-type OpArgument = Term | UnionBaseType
-
-
-class BinaryOp[ResultT](Operation[ResultT | Sentinel]):
+class BinaryOp[ResultT](Operation[ResultT | Sentinel], ABC):
     """Base class for binary operations (two operands).
 
     Defines execution pattern:
@@ -41,7 +37,7 @@ class BinaryOp[ResultT](Operation[ResultT | Sentinel]):
                 return left + right
     """
 
-    def __init__(self, left: OpArgument, right: OpArgument) -> None:
+    def __init__(self, left: object, right: object) -> None:
         """Initialize binary operation.
 
         Args:
@@ -72,7 +68,7 @@ class BinaryOp[ResultT](Operation[ResultT | Sentinel]):
         return self._apply_op(left_val, right_val)
 
     @abstractmethod
-    def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
+    def _apply_op(self, left: Any, right: Any, /) -> ResultT | Sentinel:  # noqa: ANN401
         """Apply the operator to operands.
 
         Subclasses override with operation-specific logic.
@@ -84,7 +80,7 @@ class BinaryOp[ResultT](Operation[ResultT | Sentinel]):
         Returns:
             Operation result or Sentinel for errors
         """
-        ...
+        raise NotADirectoryError()
 
     def __repr__(self) -> str:
         """String representation."""

@@ -20,9 +20,6 @@ from ..core import NAryOp, UnaryOp
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from everyshape.term import Term
-    from everyshape.types import UnionBaseType
-
 
 __all__ = [
     "FilterOp",
@@ -33,13 +30,10 @@ __all__ = [
 ]
 
 
-type OpArgument = Term | UnionBaseType
-
-
 class SortedOp[ResultT](UnaryOp[list[ResultT] | Sentinel]):
     """Sorted list: sorted(seq, reverse=reverse)."""
 
-    def __init__(self, operand: OpArgument, *, reverse: bool = False) -> None:
+    def __init__(self, operand: object, *, reverse: bool = False) -> None:
         """Initialize sorted operation.
 
         Args:
@@ -78,7 +72,7 @@ class MapOp[T, T2](NAryOp[list[T2]]):
         >>> MapOp(items, str)
     """
 
-    def __init__(self, operand: OpArgument, fn: Callable[[T], T2]) -> None:
+    def __init__(self, operand: object, fn: Callable[[T], T2]) -> None:
         """Initialize map operation.
 
         Args:
@@ -105,7 +99,7 @@ class FilterOp[T](NAryOp[list[T]]):
         >>> FilterOp(items, bool)  # remove falsy values
     """
 
-    def __init__(self, operand: OpArgument, fn: Callable[[T], bool]) -> None:
+    def __init__(self, operand: object, fn: Callable[[T], bool]) -> None:
         """Initialize filter operation.
 
         Args:
@@ -132,7 +126,7 @@ class ReduceOp[T, T2](NAryOp[T2 | Sentinel]):
         >>> ReduceOp(items, lambda acc, x: acc * x, 1)
     """
 
-    def __init__(self, operand: OpArgument, fn: Callable[[T2, T], T2], initial: T2) -> None:
+    def __init__(self, operand: object, fn: Callable[[T2, T], T2], initial: T2) -> None:
         """Initialize reduce operation.
 
         Args:

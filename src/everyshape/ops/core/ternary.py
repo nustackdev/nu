@@ -7,22 +7,19 @@ Unlike UnaryOp and BinaryOp, ternary ops often need custom `execute()` logic
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from everyshape.term import Operation, literal
 
 
 if TYPE_CHECKING:
-    from everyshape.term import Context, Term
-    from everyshape.types import UnionBaseType
+    from everyshape.term import Context
 
 __all__ = ["TernaryOp"]
 
 
-type OpArgument = Term | UnionBaseType
-
-
-class TernaryOp[ResultT](Operation[ResultT]):
+class TernaryOp[ResultT](Operation[ResultT], ABC):
     """Base class for ternary operations (three operands).
 
     Defines execution pattern:
@@ -39,7 +36,7 @@ class TernaryOp[ResultT](Operation[ResultT]):
                 return str(text).replace(str(old), str(new))
     """
 
-    def __init__(self, first: OpArgument, second: OpArgument, third: OpArgument) -> None:
+    def __init__(self, first: object, second: object, third: object) -> None:
         """Initialize ternary operation.
 
         Args:
@@ -65,7 +62,8 @@ class TernaryOp[ResultT](Operation[ResultT]):
         third_val = self.children[2].execute(context)
         return self._apply_op(first_val, second_val, third_val)
 
-    def _apply_op(self, first: object, second: object, third: object) -> ResultT:
+    @abstractmethod
+    def _apply_op(self, first: Any, second: Any, third: Any, /) -> ResultT:  # noqa: ANN401
         """Apply the operator to operands.
 
         Subclasses override with operation-specific logic.

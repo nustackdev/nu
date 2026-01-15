@@ -7,7 +7,8 @@ N-ary operations have variable numbers of arguments, used for:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from everyshape.term import Operation, literal
 
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 __all__ = ["NAryOp"]
 
 
-class NAryOp[ResultT](Operation[ResultT]):
+class NAryOp[ResultT](Operation[ResultT], ABC):
     """Base class for N-ary operations (variable arguments).
 
     Defines execution pattern:
@@ -67,18 +68,20 @@ class NAryOp[ResultT](Operation[ResultT]):
         resolved = tuple(child.execute(context) for child in self.children)
         return self._apply_op(*resolved)
 
-    def _apply_op(self, *operands: object) -> ResultT:
+    @abstractmethod
+    def _apply_op(self, *args: Any, **kwargs: Any) -> ResultT:  # noqa: ANN401
         """Apply the operator to operands.
 
-        Subclasses override with operation-specific logic.
+        Subclasses override with operation-specific logic.s
 
         Args:
-            *operands: Evaluated operand values
+            *args: Evaluated operand args
+            **kwargs: Evaluated operand kwargs
 
         Returns:
             Operation result
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __repr__(self) -> str:
         """String representation."""

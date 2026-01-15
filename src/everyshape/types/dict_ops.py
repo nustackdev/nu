@@ -13,16 +13,8 @@ Design principles:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from everyshape.ops.core import NAryOp, UnaryOp
 from everyshape.typing import NOT_SET, NotSet, Sentinel, is_notset
-
-
-if TYPE_CHECKING:
-    from everyshape.term import Term
-
-    from .bases import UnionBaseType
 
 
 __all__ = [
@@ -31,9 +23,6 @@ __all__ = [
     "DictKeysOp",
     "DictValuesOp",
 ]
-
-
-type OpArgument = Term | UnionBaseType
 
 
 # =============================================================================
@@ -79,9 +68,7 @@ class DictGetOp[V](NAryOp[V | Sentinel]):
     All args can be Terms for dynamic access.
     """
 
-    def __init__(
-        self, operand: OpArgument, key: OpArgument, default: OpArgument | NotSet = NOT_SET
-    ) -> None:
+    def __init__(self, operand: object, key: object, default: object | NotSet = NOT_SET) -> None:
         """Initialize get operation."""
         if is_notset(default):
             super().__init__(operand, key)
