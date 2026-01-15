@@ -58,13 +58,13 @@ class ListType[T](
         return AnyType(operand)
 
     def __add__(self, other: list[T] | ListType[T]) -> ListType[T]:
-        from ..comps.core.binary_ops import AddOp
+        from ..comp.binary_ops import AddOp
         from ..conversion import literal
 
         return ListType(AddOp(self, literal(other)))
 
     def __radd__(self, other: list[T]) -> ListType[T]:
-        from ..comps.core.binary_ops import AddOp
+        from ..comp.binary_ops import AddOp
         from ..conversion import literal
 
         return ListType(AddOp(literal(other), self))
@@ -74,7 +74,7 @@ class ListType[T](
     @overload
     def __getitem__(self, key: slice) -> ListType[T]: ...
     def __getitem__(self, key: int | slice) -> AnyType | ListType[T]:
-        from ..comps.typed.sequence import AtOp, SliceOp
+        from ..comp.sequence import AtOp, SliceOp
         from ..conversion import literal
         from .any_type import AnyType
 

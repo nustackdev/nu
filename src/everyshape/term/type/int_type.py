@@ -68,7 +68,7 @@ class IntType(
     @overload
     def __add__(self, other: float | FloatType) -> FloatType: ...
     def __add__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
-        from ..comps.core.binary_ops import AddOp
+        from ..comp.binary_ops import AddOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -81,7 +81,7 @@ class IntType(
     @overload
     def __radd__(self, other: float) -> FloatType: ...
     def __radd__(self, other: int | float) -> IntType | FloatType:
-        from ..comps.core.binary_ops import AddOp
+        from ..comp.binary_ops import AddOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -94,7 +94,7 @@ class IntType(
     @overload
     def __sub__(self, other: float | FloatType) -> FloatType: ...
     def __sub__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
-        from ..comps.core.binary_ops import SubOp
+        from ..comp.binary_ops import SubOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -107,7 +107,7 @@ class IntType(
     @overload
     def __rsub__(self, other: float) -> FloatType: ...
     def __rsub__(self, other: int | float) -> IntType | FloatType:
-        from ..comps.core.binary_ops import SubOp
+        from ..comp.binary_ops import SubOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -120,7 +120,7 @@ class IntType(
     @overload
     def __mul__(self, other: float | FloatType) -> FloatType: ...
     def __mul__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
-        from ..comps.core.binary_ops import MulOp
+        from ..comp.binary_ops import MulOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -133,7 +133,7 @@ class IntType(
     @overload
     def __rmul__(self, other: float) -> FloatType: ...
     def __rmul__(self, other: int | float) -> IntType | FloatType:
-        from ..comps.core.binary_ops import MulOp
+        from ..comp.binary_ops import MulOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -142,14 +142,14 @@ class IntType(
         return IntType(MulOp(literal(other), self))
 
     def __truediv__(self, other: int | float | IntType | FloatType) -> FloatType:
-        from ..comps.core.binary_ops import DivOp
+        from ..comp.binary_ops import DivOp
         from ..conversion import literal
         from .float_type import FloatType
 
         return FloatType(DivOp(self, literal(other)))
 
     def __rtruediv__(self, other: int | float) -> FloatType:
-        from ..comps.core.binary_ops import DivOp
+        from ..comp.binary_ops import DivOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -160,7 +160,7 @@ class IntType(
     @overload
     def __floordiv__(self, other: float | FloatType) -> FloatType: ...
     def __floordiv__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
-        from ..comps.core.binary_ops import FloorDivOp
+        from ..comp.binary_ops import FloorDivOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -173,7 +173,7 @@ class IntType(
     @overload
     def __rfloordiv__(self, other: float) -> FloatType: ...
     def __rfloordiv__(self, other: int | float) -> IntType | FloatType:
-        from ..comps.core.binary_ops import FloorDivOp
+        from ..comp.binary_ops import FloorDivOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -186,7 +186,7 @@ class IntType(
     @overload
     def __mod__(self, other: float | FloatType) -> FloatType: ...
     def __mod__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
-        from ..comps.core.binary_ops import ModOp
+        from ..comp.binary_ops import ModOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -199,7 +199,7 @@ class IntType(
     @overload
     def __rmod__(self, other: float) -> FloatType: ...
     def __rmod__(self, other: int | float) -> IntType | FloatType:
-        from ..comps.core.binary_ops import ModOp
+        from ..comp.binary_ops import ModOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -212,7 +212,7 @@ class IntType(
     @overload
     def __pow__(self, other: float | FloatType) -> FloatType: ...
     def __pow__(self, other: int | float | IntType | FloatType) -> IntType | FloatType:
-        from ..comps.core.binary_ops import PowOp
+        from ..comp.binary_ops import PowOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -225,7 +225,7 @@ class IntType(
     @overload
     def __rpow__(self, other: float) -> FloatType: ...
     def __rpow__(self, other: int | float) -> IntType | FloatType:
-        from ..comps.core.binary_ops import PowOp
+        from ..comp.binary_ops import PowOp
         from ..conversion import literal
         from .float_type import FloatType
 
@@ -234,16 +234,16 @@ class IntType(
         return IntType(PowOp(literal(other), self))
 
     def __neg__(self) -> IntType:
-        from ..comps.core.unary_ops import NegOp
+        from ..comp.unary_ops import NegOp
 
         return IntType(NegOp(self))
 
     def __pos__(self) -> IntType:
-        from ..comps.core.unary_ops import PosOp
+        from ..comp.unary_ops import PosOp
 
         return IntType(PosOp(self))
 
     def __abs__(self) -> IntType:
-        from ..comps.core.unary_ops import AbsOp
+        from ..comp.unary_ops import AbsOp
 
         return IntType(AbsOp(self))

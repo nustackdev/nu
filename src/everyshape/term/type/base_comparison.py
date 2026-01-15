@@ -29,28 +29,28 @@ class OrderableBase[OperandT]:
 
     def __gt__(self, other: OperandT) -> BoolType:
         """Greater than: self > other."""
-        from ..comps.core.binary_ops import GtOp
+        from ..comp.binary_ops import GtOp
         from .bool_type import BoolType
 
         return BoolType(GtOp(self, literal(other)))
 
     def __lt__(self, other: OperandT) -> BoolType:
         """Less than: self < other."""
-        from ..comps.core.binary_ops import LtOp
+        from ..comp.binary_ops import LtOp
         from .bool_type import BoolType
 
         return BoolType(LtOp(self, literal(other)))
 
     def __ge__(self, other: OperandT) -> BoolType:
         """Greater than or equal: self >= other."""
-        from ..comps.core.binary_ops import GeOp
+        from ..comp.binary_ops import GeOp
         from .bool_type import BoolType
 
         return BoolType(GeOp(self, literal(other)))
 
     def __le__(self, other: OperandT) -> BoolType:
         """Less than or equal: self <= other."""
-        from ..comps.core.binary_ops import LeOp
+        from ..comp.binary_ops import LeOp
         from .bool_type import BoolType
 
         return BoolType(LeOp(self, literal(other)))
@@ -87,7 +87,7 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ..comps.core.binary_ops import EqOp
+        from ..comp.binary_ops import EqOp
         from .bool_type import BoolType
 
         return BoolType(EqOp(self, literal(other)))
@@ -101,7 +101,7 @@ class EqualableBase[OperandT]:
         Returns:
             Comparison result
         """
-        from ..comps.core.binary_ops import NeOp
+        from ..comp.binary_ops import NeOp
         from .bool_type import BoolType
 
         return BoolType(NeOp(self, literal(other)))
@@ -115,7 +115,7 @@ class EqualableBase[OperandT]:
         Returns:
             IdCompOp expression
         """
-        from ..comps.core.binary_ops import IdCompOp
+        from ..comp.binary_ops import IdCompOp
         from .bool_type import BoolType
 
         return BoolType(IdCompOp(self, literal(other)))

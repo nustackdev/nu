@@ -51,7 +51,7 @@ class LengthableBase:
         Returns:
             Length value
         """
-        from ..comps.typed.sequence import LenOp
+        from ..comp.sequence import LenOp
         from .int_type import IntType
 
         return IntType(LenOp(self))
@@ -66,7 +66,7 @@ class IndexableBase[KeyT, ResultValue]:
 
     def __getitem__(self, key: KeyT) -> ResultValue:
         """Get item at index/key."""
-        from ..comps.typed.sequence import AtOp
+        from ..comp.sequence import AtOp
 
         return cast("ResultValue", self._wrap_indexable_result(AtOp(self, literal(key))))
 
@@ -89,7 +89,7 @@ class SliceableBase[ResultT]:
         Returns:
             Sliced result
         """
-        from ..comps.typed.sequence import SliceOp
+        from ..comp.sequence import SliceOp
 
         return cast("ResultT", self._wrap_sliceable_result(SliceOp(self, start, stop, step)))
 
@@ -106,7 +106,7 @@ class ContainableBase[ItemT]:
         Returns:
             Boolean result
         """
-        from ..comps.typed.mapping import ContainsOp
+        from ..comp.typed.mapping import ContainsOp
         from .bool_type import BoolType
 
         return BoolType(ContainsOp(self, literal(item)))
@@ -132,7 +132,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Mapped result
         """
-        from ..comps.typed.sequence import MapOp
+        from ..comp.sequence import MapOp
 
         return cast("ResultT", self._wrap_iterable_result(MapOp(self, func)))
 
@@ -145,7 +145,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Filtered result
         """
-        from ..comps.typed.sequence import FilterOp
+        from ..comp.sequence import FilterOp
 
         return cast("ResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
 
@@ -181,7 +181,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Reduced value
         """
-        from ..comps.typed.sequence import ReduceOp
+        from ..comp.sequence import ReduceOp
         from .any_type import AnyType
 
         return AnyType(ReduceOp(self, func, initial))
@@ -192,7 +192,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Sum
         """
-        from ..comps.typed.sequence import SumOp
+        from ..comp.sequence import SumOp
 
         return cast("ResultT", self._wrap_element_result(SumOp(self)))
 
@@ -202,7 +202,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Minimum
         """
-        from ..comps.typed.sequence import MinOp
+        from ..comp.sequence import MinOp
 
         return cast("ResultT", self._wrap_element_result(MinOp(self)))
 
@@ -212,7 +212,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Maximum
         """
-        from ..comps.typed.sequence import MaxOp
+        from ..comp.sequence import MaxOp
 
         return cast("ResultT", self._wrap_element_result(MaxOp(self)))
 
@@ -222,7 +222,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Boolean result
         """
-        from ..comps.typed.sequence import AnyOp
+        from ..comp.sequence import AnyOp
         from .bool_type import BoolType
 
         return BoolType(AnyOp(self))
@@ -233,7 +233,7 @@ class IterableBase[ElementT, ResultT]:
         Returns:
             Boolean result
         """
-        from ..comps.typed.sequence import AllOp
+        from ..comp.sequence import AllOp
         from .bool_type import BoolType
 
         return BoolType(AllOp(self))
@@ -259,7 +259,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             First element
         """
-        from ..comps.typed.sequence import FirstOp
+        from ..comp.sequence import FirstOp
 
         return cast("ResultT", self._wrap_element_result(FirstOp(self)))
 
@@ -269,7 +269,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Last element
         """
-        from ..comps.typed.sequence import LastOp
+        from ..comp.sequence import LastOp
 
         return cast("ResultT", self._wrap_element_result(LastOp(self)))
 
@@ -279,7 +279,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Reversed sequence
         """
-        from ..comps.typed.sequence import ReversedOp
+        from ..comp.sequence import ReversedOp
 
         return cast("ResultT", self._wrap_sliceable_result(ReversedOp(self)))
 
@@ -292,7 +292,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Sorted sequence
         """
-        from ..comps.typed.sequence import SortedOp
+        from ..comp.sequence import SortedOp
 
         return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse=reverse)))
 
@@ -305,7 +305,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Joined string
         """
-        from ..comps.typed.sequence import JoinOp
+        from ..comp.sequence import JoinOp
         from .str_type import StrType
 
         return StrType(JoinOp(self, literal(separator)))
@@ -319,7 +319,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Index
         """
-        from ..comps.typed.sequence import IndexOfOp
+        from ..comp.sequence import IndexOfOp
         from .int_type import IntType
 
         return IntType(IndexOfOp(self, literal(value)))
@@ -333,7 +333,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             IntType containing index
         """
-        from ..comps.typed.sequence import FindIndexOp
+        from ..comp.sequence import FindIndexOp
         from .int_type import IntType
 
         return IntType(FindIndexOp(self, predicate))
@@ -347,7 +347,7 @@ class SequenceBase[ElementT, ResultT](
         Returns:
             Count
         """
-        from ..comps.typed.sequence import CountOp
+        from ..comp.sequence import CountOp
         from .int_type import IntType
 
         return IntType(CountOp(self, literal(value)))
@@ -386,7 +386,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Keys sequence
         """
-        from ..comps.typed.mapping import DictKeysOp
+        from ..comp.typed.mapping import DictKeysOp
 
         return cast("ResultT", self._wrap_keys_result(DictKeysOp(self)))
 
@@ -396,7 +396,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Values sequence
         """
-        from ..comps.typed.mapping import DictTypesOp
+        from ..comp.typed.mapping import DictTypesOp
 
         return cast("ResultT", self._wrap_values_result(DictTypesOp(self)))
 
@@ -406,7 +406,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Items sequence
         """
-        from ..comps.typed.mapping import DictItemsOp
+        from ..comp.typed.mapping import DictItemsOp
 
         return cast("ResultT", self._wrap_items_result(DictItemsOp(self)))
 
@@ -420,7 +420,7 @@ class MappingBase[KeyT, ValueT, ResultT](
         Returns:
             Value or default
         """
-        from ..comps.typed.mapping import DictGetOp
+        from ..comp.typed.mapping import DictGetOp
 
         return cast(
             "ResultT", self._wrap_value_result(DictGetOp(self, literal(key), literal(default)))
@@ -455,7 +455,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Union set
         """
-        from ..comps.typed.set import UnionOp
+        from ..comp.typed.set import UnionOp
 
         return cast("ResultT", self._wrap_set_result(UnionOp(self, literal(other))))
 
@@ -468,7 +468,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Intersection set
         """
-        from ..comps.typed.set import IntersectionOp
+        from ..comp.typed.set import IntersectionOp
 
         return cast("ResultT", self._wrap_set_result(IntersectionOp(self, literal(other))))
 
@@ -481,7 +481,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Difference set
         """
-        from ..comps.typed.set import DifferenceOp
+        from ..comp.typed.set import DifferenceOp
 
         return cast("ResultT", self._wrap_set_result(DifferenceOp(self, literal(other))))
 
@@ -494,7 +494,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Symmetric difference set
         """
-        from ..comps.typed.set import SymmetricDifferenceOp
+        from ..comp.typed.set import SymmetricDifferenceOp
 
         return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, literal(other))))
 
@@ -507,7 +507,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..comps.typed.set import IsSubsetOp
+        from ..comp.typed.set import IsSubsetOp
         from .bool_type import BoolType
 
         return BoolType(IsSubsetOp(self, literal(other)))
@@ -521,7 +521,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..comps.typed.set import IsSupersetOp
+        from ..comp.typed.set import IsSupersetOp
         from .bool_type import BoolType
 
         return BoolType(IsSupersetOp(self, literal(other)))
@@ -535,7 +535,7 @@ class SetBase[ElementT, ResultT](
         Returns:
             Boolean result
         """
-        from ..comps.typed.set import IsDisjointOp
+        from ..comp.typed.set import IsDisjointOp
         from .bool_type import BoolType
 
         return BoolType(IsDisjointOp(self, literal(other)))

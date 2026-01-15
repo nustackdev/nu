@@ -46,7 +46,7 @@ class Type[T](BaseType[T]):
         Returns:
             BoolType-like result
         """
-        from ..comps.core.unary_ops import IsEmptyOp
+        from ..comp.unary_ops import IsEmptyOp
         from .bool_type import BoolType
 
         return BoolType(IsEmptyOp(self))
@@ -57,7 +57,7 @@ class Type[T](BaseType[T]):
         Returns:
             BoolType-like result
         """
-        from ..comps.core.unary_ops import IsNaNOp
+        from ..comp.unary_ops import IsNaNOp
         from .bool_type import BoolType
 
         return BoolType(IsNaNOp(self))
@@ -104,7 +104,7 @@ class Type[T](BaseType[T]):
             >>> price.ifelse(price > 0, default_price)
             >>> name.ifelse(name.not_empty(), "Unknown")
         """
-        from ..comps.core.ternary_ops import ConditionalOp
+        from ..comp.ternary_ops import ConditionalOp
         from .any_type import AnyType
 
         return AnyType(ConditionalOp(literal(condition), self, literal(otherwise)))
@@ -139,7 +139,7 @@ class Type[T](BaseType[T]):
             >>> float_val.to_int()  # 3.14 -> 3
             >>> str_val.to_int()  # "42" -> 42
         """
-        from ..comps.core.conversion import ToIntOp
+        from ..comp.conversion_ops import ToIntOp
         from .int_type import IntType
 
         return IntType(ToIntOp(self))
@@ -154,7 +154,7 @@ class Type[T](BaseType[T]):
             >>> int_val.to_float()  # 42 -> 42.0
             >>> str_val.to_float()  # "3.14" -> 3.14
         """
-        from ..comps.core.conversion import ToFloatOp
+        from ..comp.conversion_ops import ToFloatOp
         from .float_type import FloatType
 
         return FloatType(ToFloatOp(self))
@@ -169,7 +169,7 @@ class Type[T](BaseType[T]):
             >>> int_val.to_bool()  # 0 -> False, 1 -> True
             >>> str_val.to_bool()  # "" -> False, "x" -> True
         """
-        from ..comps.core.conversion import ToBoolOp
+        from ..comp.conversion_ops import ToBoolOp
         from .bool_type import BoolType
 
         return BoolType(ToBoolOp(self))
@@ -184,7 +184,7 @@ class Type[T](BaseType[T]):
             >>> int_val.to_str()  # 42 -> "42"
             >>> datetime_val.to_str()  # datetime -> "2024-01-15 10:30:00"
         """
-        from ..comps.core.conversion import ToStrOp
+        from ..comp.conversion_ops import ToStrOp
         from .str_type import StrType
 
         return StrType(ToStrOp(self))
@@ -201,7 +201,7 @@ class Type[T](BaseType[T]):
         Example:
             >>> str_val.to_bytes()  # "hello" -> b"hello"
         """
-        from ..comps.core.conversion import ToBytesOp
+        from ..comp.conversion_ops import ToBytesOp
         from .bytes_type import BytesType
 
         return BytesType(ToBytesOp(self, encoding))
@@ -216,7 +216,7 @@ class Type[T](BaseType[T]):
             >>> tuple_val.to_list()  # (1, 2, 3) -> [1, 2, 3]
             >>> set_val.to_list()  # {1, 2, 3} -> [1, 2, 3]
         """
-        from ..comps.core.conversion import ToListOp
+        from ..comp.conversion_ops import ToListOp
         from .list_type import ListType
 
         return ListType(ToListOp(self))

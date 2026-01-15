@@ -51,7 +51,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Decoded string
         """
-        from ..comps.typed.bytes import DecodeOp
+        from ..comp.bytes import DecodeOp
         from .str_type import StrType
 
         return StrType(DecodeOp(self, encoding))
@@ -62,7 +62,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Hex string
         """
-        from ..comps.typed.bytes import HexOp
+        from ..comp.bytes import HexOp
         from .str_type import StrType
 
         return StrType(HexOp(self))
@@ -74,7 +74,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Uppercase bytes
         """
-        from ..comps.typed.bytes import BytesUpperOp
+        from ..comp.bytes import BytesUpperOp
 
         return cast("ResultT", self._wrap_bytes_result(BytesUpperOp(self)))
 
@@ -84,7 +84,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Lowercase bytes
         """
-        from ..comps.typed.bytes import BytesLowerOp
+        from ..comp.bytes import BytesLowerOp
 
         return cast("ResultT", self._wrap_bytes_result(BytesLowerOp(self)))
 
@@ -98,7 +98,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ..comps.typed.bytes import BytesStripOp
+        from ..comp.bytes import BytesStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesStripOp(self, literal(chars))))
@@ -113,7 +113,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ..comps.typed.bytes import BytesLStripOp
+        from ..comp.bytes import BytesLStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesLStripOp(self, literal(chars))))
@@ -128,7 +128,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Stripped bytes
         """
-        from ..comps.typed.bytes import BytesRStripOp
+        from ..comp.bytes import BytesRStripOp
 
         if chars is not None:
             return cast("ResultT", self._wrap_bytes_result(BytesRStripOp(self, literal(chars))))
@@ -145,7 +145,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             List of bytes
         """
-        from ..comps.typed.bytes import BytesSplitOp
+        from ..comp.bytes import BytesSplitOp
         from .list_type import ListType
 
         if sep is not None:
@@ -164,7 +164,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Index or -1 if not found
         """
-        from ..comps.typed.bytes import BytesFindOp
+        from ..comp.bytes import BytesFindOp
         from .int_type import IntType
 
         return IntType(BytesFindOp(self, literal(sub), start, end))
@@ -178,7 +178,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Count
         """
-        from ..comps.typed.bytes import BytesCountOp
+        from ..comp.bytes import BytesCountOp
         from .int_type import IntType
 
         return IntType(BytesCountOp(self, literal(sub)))
@@ -193,7 +193,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..comps.typed.bytes import BytesStartsWithOp
+        from ..comp.bytes import BytesStartsWithOp
         from .bool_type import BoolType
 
         return BoolType(BytesStartsWithOp(self, literal(prefix)))
@@ -207,7 +207,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Boolean result
         """
-        from ..comps.typed.bytes import BytesEndsWithOp
+        from ..comp.bytes import BytesEndsWithOp
         from .bool_type import BoolType
 
         return BoolType(BytesEndsWithOp(self, literal(suffix)))
@@ -224,7 +224,7 @@ class BytesMethodsBase[ResultT]:
         Returns:
             Modified bytes
         """
-        from ..comps.typed.bytes import BytesReplaceOp
+        from ..comp.bytes import BytesReplaceOp
 
         return cast(
             "ResultT",
@@ -270,12 +270,12 @@ class BytesType(
         return BytesType(operand)
 
     def __add__(self, other: bytes | BytesType) -> BytesType:
-        from ..comps.core.binary_ops import AddOp
+        from ..comp.binary_ops import AddOp
 
         return BytesType(AddOp(self, literal(other)))
 
     def __radd__(self, other: bytes) -> BytesType:
-        from ..comps.core.binary_ops import AddOp
+        from ..comp.binary_ops import AddOp
 
         return BytesType(AddOp(literal(other), self))
 
@@ -284,7 +284,7 @@ class BytesType(
     @overload
     def __getitem__(self, key: slice) -> BytesType: ...
     def __getitem__(self, key: int | slice) -> BytesType | IntType:
-        from ..comps.typed.sequence import AtOp, SliceOp
+        from ..comp.sequence import AtOp, SliceOp
         from .int_type import IntType
 
         if isinstance(key, slice):

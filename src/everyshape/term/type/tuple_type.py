@@ -65,7 +65,7 @@ class TupleType[*Ts](
     @overload
     def __getitem__(self, key: slice) -> TupleType: ...
     def __getitem__(self, key: int | slice) -> AnyType | TupleType:
-        from ..comps.typed.sequence import AtOp, SliceOp
+        from ..comp.sequence import AtOp, SliceOp
         from ..conversion import literal
         from .any_type import AnyType
 

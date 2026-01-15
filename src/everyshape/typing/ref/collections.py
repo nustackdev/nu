@@ -50,7 +50,7 @@ from .capabilities import (
 
 
 if TYPE_CHECKING:
-    from ..types import NilType
+    from everyshape.term.type import NilType
 
 
 __all__ = [  # noqa: RUF022

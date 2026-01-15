@@ -47,7 +47,7 @@ class DictType[K, V](
         return BoolType(operand)
 
     def __getitem__(self, key: K) -> AnyType:
-        from ..comps.typed.sequence import AtOp
+        from ..comp.sequence import AtOp
         from ..conversion import literal
         from .any_type import AnyType
 

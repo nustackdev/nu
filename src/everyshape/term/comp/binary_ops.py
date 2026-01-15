@@ -35,13 +35,13 @@ from typing import TYPE_CHECKING, cast
 
 from everyshape.typing import NAN, Sentinel, propagate_special
 
-from ...term import Operation
+from ..term import Operation
 
 
 if TYPE_CHECKING:
-    from ...context import Context
-    from ...term import Term
-    from ...type import UnionBaseType
+    from ..context import Context
+    from ..term import Term
+    from ..type import UnionBaseType
 
 
 __all__ = [

@@ -30,21 +30,16 @@ Example:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
-from everyshape.loc import path
-from everyshape.typing import Sentinel
-from everyshape.view import Assignable
-
-from ..term import Command, Operation, PrimitiveRef, Term
+from ..term import Operation, Term
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from ..context import Context
-    from ..refs import UnionRefBases
-    from ..types.__init__1 import UnionBaseType
+    from ..type import UnionBaseType
 
 
 __all__ = [
@@ -53,7 +48,6 @@ __all__ = [
     "GetAttrOp",
     "MethodCallOp",
     "SetAttrOp",
-    "TypedSetCmd",
 ]
 
 
@@ -492,92 +486,3 @@ class DelAttrOp(Operation[None]):
     def __repr__(self) -> str:
         """String representation."""
         return f"DelAttrOp({self._instance!r}, {self._attr_name!r})"
-
-
-# =============================================================================
-# TYPED SET COMMAND
-# =============================================================================
-
-
-class TypedSetCmd[T](Command[T]):
-    """Set command for TypedValue that calls __to_storage__ before storing.
-
-    Like SetCmd, but before writing to storage, it checks if the value
-    has a __to_storage__ method and calls it to convert the typed value
-    to a storable format.
-
-    This enables custom types like DatetimeValue to define how they
-    should be serialized to storage.
-
-    Type Parameters:
-        T: Type of value to write (the storage type)
-
-    Example:
-        >>> class DatetimeValue(TypedValue[datetime]):
-        ...     def __to_storage__(self) -> float:
-        ...         # Store as Unix timestamp
-        ...         return self._value.timestamp()
-        >>> typed_set = TypedSetCmd(ref, datetime_value)
-        >>> typed_set.execute(ctx)  # Stores the timestamp float
-    """
-
-    def __init__(
-        self,
-        ref: PrimitiveRef[T] | UnionRefBases,
-        value: Term[T | Sentinel],
-    ) -> None:
-        """Initialize typed set command.
-
-        Args:
-            ref: Reference to write to
-            value: Value to write (can be TypedValue with __to_storage__)
-        """
-        self.ref = cast("PrimitiveRef[T]", ref)
-        self.value_expr = value
-        self.children = (cast("PrimitiveRef[T]", ref), value)
-
-    def execute(self, context: Context) -> T:
-        """Execute typed write command.
-
-        If the value has __to_storage__, calls it to get the storable value.
-        Otherwise stores the value directly.
-
-        Args:
-            context: Execution context with transaction
-
-        Returns:
-            The written value (after __to_storage__ conversion if applicable)
-        """
-        # Resolve ref to Path
-        value_path = self.ref.resolve(context)
-
-        # Evaluate value expression
-        value = self.value_expr.execute(context)
-
-        if isinstance(value, Sentinel):
-            raise ValueError(f"Cannot store special values (Empty, NaN, etc): {value}")
-
-        # Check for __to_storage__ method and call it if present
-        if hasattr(value, "__to_storage__"):
-            storage_value = value.__to_storage__()
-        else:
-            storage_value = value
-
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
-
-        # Navigate using Path system
-        parent_view, key = path.navigate_value(root_view, value_path)
-
-        # Store through view
-        if not isinstance(parent_view, Assignable):
-            raise TypeError(
-                f"View {parent_view.__class__.__name__} does not implement Assignable protocol."
-            )
-
-        # Write value
-        parent_view[key] = storage_value
-        return storage_value
-
-    def __repr__(self) -> str:
-        return f"TypedSetCmd({self.ref!r}, {self.value_expr!r})"
