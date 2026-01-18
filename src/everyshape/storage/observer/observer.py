@@ -16,10 +16,10 @@ if TYPE_CHECKING:
     from everyshape.loc import key
     from everyshape.storage import CodecProtocol
 
-    from .options import SubscriptionOptions
     from .subscription import (
         Subscription,
     )
+    from .types import SubscriptionOptions
 
 
 __all__ = [

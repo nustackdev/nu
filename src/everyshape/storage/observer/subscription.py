@@ -22,8 +22,7 @@ if TYPE_CHECKING:
 
     from ..filter import Filter
     from .observer import ObserverProtocol
-    from .options import SubscriptionOptions
-    from .types import SubscriptionCallback
+    from .types import SubscriptionCallback, SubscriptionOptions
 
 
 __all__ = [

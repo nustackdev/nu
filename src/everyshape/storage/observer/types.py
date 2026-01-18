@@ -65,5 +65,5 @@ class SubscriptionOptions:
     def __eq__(self, other: object) -> bool:
         """Check equality."""
         if not isinstance(other, SubscriptionOptions):
-            return NotImplemented
+            return False
         return self.filter == other.filter
