@@ -7,12 +7,12 @@ from typing import TypeGuard
 
 __all__ = [
     "EMPTY",
-    "NAN",
+    "INVALID",
     "Empty",
-    "NaN",
+    "Invalid",
     "Sentinel",
     "is_empty",
-    "is_nan",
+    "is_invalid",
     "is_sentinel",
     "propagate_special",
 ]
@@ -22,7 +22,7 @@ class Sentinel:
     """Sentinel values for semantics evaluation.
 
     - Empty: Value doesn't exist
-    - NaN: Operation not applicable
+    - Invalid: Operation not applicable
     """
 
     pass
@@ -50,31 +50,31 @@ class Empty(Sentinel):
         return hash("Empty")
 
 
-class NaN(Sentinel):
+class Invalid(Sentinel):
     """Sentinel for invalid operations."""
 
     def __repr__(self) -> str:
         """String representation for debugging."""
-        return "<NaN>"
+        return "<Invalid>"
 
     def __str__(self) -> str:
         """String representation for display."""
-        return "NaN"
+        return "Invalid"
 
     def __bool__(self) -> bool:
         """Boolean evaluation, always False."""
         return False
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, NaN)
+        return isinstance(other, Invalid)
 
     def __hash__(self) -> int:
-        return hash("NaN")
+        return hash("Invalid")
 
 
 # Singleton instances
 EMPTY = Empty()
-NAN = NaN()
+INVALID = Invalid()
 
 
 def is_empty(value: object) -> TypeGuard[Empty]:
@@ -82,9 +82,9 @@ def is_empty(value: object) -> TypeGuard[Empty]:
     return isinstance(value, Empty)
 
 
-def is_nan(value: object) -> TypeGuard[NaN]:
-    """Check if value is NaN sentinel."""
-    return isinstance(value, NaN)
+def is_invalid(value: object) -> TypeGuard[Invalid]:
+    """Check if value is Invalid sentinel."""
+    return isinstance(value, Invalid)
 
 
 def is_sentinel(value: object) -> TypeGuard[Sentinel]:
@@ -92,23 +92,19 @@ def is_sentinel(value: object) -> TypeGuard[Sentinel]:
     return isinstance(value, Sentinel)
 
 
-def propagate_special(*values: object) -> NaN | Empty | None:
+def propagate_special(*values: object) -> Invalid | Empty | None:
     """Propagate special values through operations.
 
     Rules:
-    1. Any NaN → NaN
-    2. Any Empty → NaN
+    1. Any Invalid → Invalid
+    2. Any Empty → Invalid
     3. All normal → None
 
     Returns:
-        NaN if any special value present, None otherwise
+        Invalid if any special value present, None otherwise
     """
     for val in values:
-        if is_nan(val):
-            return NAN
-
-    for val in values:
-        if is_empty(val):
-            return NAN
+        if is_invalid(val) or is_empty(val):
+            return INVALID
 
     return None

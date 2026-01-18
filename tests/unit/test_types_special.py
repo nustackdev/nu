@@ -2,18 +2,18 @@
 
 Tests for special sentinel values used in ABC modules:
 - Empty: sentinel for non-existent values
-- NaN: sentinel for invalid operations
+- Invalid: sentinel for invalid operations
 - Type guard functions and propagation logic
 """
 
 from everyshape.typing import (
     EMPTY,
-    NAN,
+    INVALID,
     Empty,
-    NaN,
+    Invalid,
     Sentinel,
     is_empty,
-    is_nan,
+    is_invalid,
     is_sentinel,
     propagate_special,
 )
@@ -31,15 +31,15 @@ def test_empty_singleton_exists() -> None:
 
 
 def test_nan_singleton_exists() -> None:
-    """Test that NAN singleton exists and is a NaN instance."""
-    assert NAN is not None
-    assert isinstance(NAN, NaN)
+    """Test that INVALID singleton exists and is a Invalid instance."""
+    assert INVALID is not None
+    assert isinstance(INVALID, Invalid)
 
 
 def test_singletons_are_special_values() -> None:
     """Test that singletons are instances of Sentinel."""
     assert isinstance(EMPTY, Sentinel)
-    assert isinstance(NAN, Sentinel)
+    assert isinstance(INVALID, Sentinel)
 
 
 # ============================================================================
@@ -76,7 +76,7 @@ def test_empty_eq_with_new_instance() -> None:
 
 def test_empty_eq_with_other_types() -> None:
     """Test Empty.__eq__ returns False for non-Empty values."""
-    assert EMPTY != NAN
+    assert EMPTY != INVALID
     assert EMPTY != None
     assert EMPTY != ""
     assert EMPTY != 0
@@ -99,59 +99,59 @@ def test_empty_hashable() -> None:
 
 
 # ============================================================================
-# NAN CLASS TESTS
+# INVALID CLASS TESTS
 # ============================================================================
 
 
 def test_nan_repr() -> None:
-    """Test NaN.__repr__ returns debug representation."""
-    assert repr(NAN) == "<NaN>"
+    """Test Invalid.__repr__ returns debug representation."""
+    assert repr(INVALID) == "<Invalid>"
 
 
 def test_nan_str() -> None:
-    """Test NaN.__str__ returns display representation."""
-    assert str(NAN) == "NaN"
+    """Test Invalid.__str__ returns display representation."""
+    assert str(INVALID) == "Invalid"
 
 
 def test_nan_bool() -> None:
-    """Test NaN.__bool__ always returns False."""
-    assert bool(NAN) is False
-    assert not NAN
+    """Test Invalid.__bool__ always returns False."""
+    assert bool(INVALID) is False
+    assert not INVALID
 
 
 def test_nan_eq_with_same_instance() -> None:
-    """Test NaN.__eq__ returns True for same instance."""
-    assert NAN == NAN
+    """Test Invalid.__eq__ returns True for same instance."""
+    assert INVALID == INVALID
 
 
 def test_nan_eq_with_new_instance() -> None:
-    """Test NaN.__eq__ returns True for different NaN instances."""
-    nan2 = NaN()
-    assert NAN == nan2
+    """Test Invalid.__eq__ returns True for different Invalid instances."""
+    nan2 = Invalid()
+    assert INVALID == nan2
 
 
 def test_nan_eq_with_other_types() -> None:
-    """Test NaN.__eq__ returns False for non-NaN values."""
-    assert NAN != EMPTY
-    assert NAN != None
-    assert NAN != ""
-    assert NAN != 0
-    assert NAN != False
+    """Test Invalid.__eq__ returns False for non-Invalid values."""
+    assert INVALID != EMPTY
+    assert INVALID != None
+    assert INVALID != ""
+    assert INVALID != 0
+    assert INVALID != False
 
 
 def test_nan_hash() -> None:
-    """Test NaN.__hash__ returns consistent hash."""
-    nan2 = NaN()
-    assert hash(NAN) == hash(nan2)
+    """Test Invalid.__hash__ returns consistent hash."""
+    nan2 = Invalid()
+    assert hash(INVALID) == hash(nan2)
 
 
 def test_nan_hashable() -> None:
-    """Test NaN can be used in sets and dicts."""
-    nan_set = {NAN}
-    assert NAN in nan_set
+    """Test Invalid can be used in sets and dicts."""
+    nan_set = {INVALID}
+    assert INVALID in nan_set
 
-    nan_dict = {NAN: "value"}
-    assert nan_dict[NAN] == "value"
+    nan_dict = {INVALID: "value"}
+    assert nan_dict[INVALID] == "value"
 
 
 # ============================================================================
@@ -172,7 +172,7 @@ def test_is_empty_with_empty_instance() -> None:
 
 def test_is_empty_with_non_empty() -> None:
     """Test is_empty() returns False for non-Empty values."""
-    assert is_empty(NAN) is False
+    assert is_empty(INVALID) is False
     assert is_empty(None) is False
     assert is_empty("") is False
     assert is_empty(0) is False
@@ -180,25 +180,25 @@ def test_is_empty_with_non_empty() -> None:
     assert is_empty([]) is False
 
 
-def test_is_nan_with_nan_singleton() -> None:
-    """Test is_nan() returns True for NAN singleton."""
-    assert is_nan(NAN) is True
+def test_is_invalid_with_nan_singleton() -> None:
+    """Test is_invalid() returns True for INVALID singleton."""
+    assert is_invalid(INVALID) is True
 
 
-def test_is_nan_with_nan_instance() -> None:
-    """Test is_nan() returns True for NaN instances."""
-    nan = NaN()
-    assert is_nan(nan) is True
+def test_is_invalid_with_nan_instance() -> None:
+    """Test is_invalid() returns True for Invalid instances."""
+    invalid = Invalid()
+    assert is_invalid(invalid) is True
 
 
-def test_is_nan_with_non_nan() -> None:
-    """Test is_nan() returns False for non-NaN values."""
-    assert is_nan(EMPTY) is False
-    assert is_nan(None) is False
-    assert is_nan("") is False
-    assert is_nan(0) is False
-    assert is_nan(False) is False
-    assert is_nan([]) is False
+def test_is_invalid_with_non_nan() -> None:
+    """Test is_invalid() returns False for non-Invalid values."""
+    assert is_invalid(EMPTY) is False
+    assert is_invalid(None) is False
+    assert is_invalid("") is False
+    assert is_invalid(0) is False
+    assert is_invalid(False) is False
+    assert is_invalid([]) is False
 
 
 def test_is_sentinel_with_empty() -> None:
@@ -208,9 +208,9 @@ def test_is_sentinel_with_empty() -> None:
 
 
 def test_is_sentinel_with_nan() -> None:
-    """Test is_sentinel() returns True for NaN instances."""
-    assert is_sentinel(NAN) is True
-    assert is_sentinel(NaN()) is True
+    """Test is_sentinel() returns True for Invalid instances."""
+    assert is_sentinel(INVALID) is True
+    assert is_sentinel(Invalid()) is True
 
 
 def test_is_sentinel_with_non_special() -> None:
@@ -241,45 +241,45 @@ def test_propagate_special_normal_values() -> None:
 
 
 def test_propagate_special_single_empty() -> None:
-    """Test propagate_special() with single Empty returns NAN."""
+    """Test propagate_special() with single Empty returns INVALID."""
     result = propagate_special(EMPTY)
-    assert result is NAN
+    assert result is INVALID
 
 
 def test_propagate_special_single_nan() -> None:
-    """Test propagate_special() with single NaN returns NAN."""
-    result = propagate_special(NAN)
-    assert result is NAN
+    """Test propagate_special() with single Invalid returns INVALID."""
+    result = propagate_special(INVALID)
+    assert result is INVALID
 
 
 def test_propagate_special_nan_with_normal_values() -> None:
-    """Test propagate_special() returns NAN if any value is NaN."""
-    result = propagate_special(1, NAN, 3)
-    assert result is NAN
+    """Test propagate_special() returns INVALID if any value is Invalid."""
+    result = propagate_special(1, INVALID, 3)
+    assert result is INVALID
 
 
 def test_propagate_special_nan_priority() -> None:
-    """Test propagate_special() checks NaN before Empty."""
-    result = propagate_special(EMPTY, NAN)
-    assert result is NAN
+    """Test propagate_special() checks Invalid before Empty."""
+    result = propagate_special(EMPTY, INVALID)
+    assert result is INVALID
 
 
 def test_propagate_special_empty_with_normal_values() -> None:
-    """Test propagate_special() returns NAN if any value is Empty (no NaN)."""
+    """Test propagate_special() returns INVALID if any value is Empty (no Invalid)."""
     result = propagate_special(1, EMPTY, 3)
-    assert result is NAN
+    assert result is INVALID
 
 
 def test_propagate_special_multiple_empty() -> None:
-    """Test propagate_special() with multiple Empty returns NAN."""
+    """Test propagate_special() with multiple Empty returns INVALID."""
     result = propagate_special(EMPTY, EMPTY)
-    assert result is NAN
+    assert result is INVALID
 
 
 def test_propagate_special_multiple_nan() -> None:
-    """Test propagate_special() with multiple NaN returns NAN."""
-    result = propagate_special(NAN, NAN)
-    assert result is NAN
+    """Test propagate_special() with multiple Invalid returns INVALID."""
+    result = propagate_special(INVALID, INVALID)
+    assert result is INVALID
 
 
 def test_propagate_special_mixed_normal() -> None:
@@ -292,11 +292,11 @@ def test_propagate_special_empty_instances() -> None:
     """Test propagate_special() works with Empty instances."""
     empty = Empty()
     result = propagate_special(1, empty, 3)
-    assert result is NAN
+    assert result is INVALID
 
 
 def test_propagate_special_nan_instances() -> None:
-    """Test propagate_special() works with NaN instances."""
-    nan = NaN()
-    result = propagate_special(1, nan, 3)
-    assert result is NAN
+    """Test propagate_special() works with Invalid instances."""
+    invalid = Invalid()
+    result = propagate_special(1, invalid, 3)
+    assert result is INVALID

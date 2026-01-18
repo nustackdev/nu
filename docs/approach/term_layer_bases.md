@@ -55,7 +55,7 @@ Implementation mixins for computations:
 
 | Base | Methods |
 |------|---------|
-| `CoreBase` | `ifelse()`, `is_empty()`, `is_nan()`, `or_default()`, `to_*()` |
+| `CoreBase` | `ifelse()`, `is_empty()`, `is_invalid()`, `or_default()`, `to_*()` |
 
 ### Arithmetic
 

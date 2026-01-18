@@ -26,9 +26,9 @@ class BaseType[T](Type[T]):
     """Core base that all values should inherit.
 
     Provides:
-    - is_empty(), is_nan(), is_sentinel() - Special value checks
+    - is_empty(), is_invalid(), is_sentinel() - Special value checks
     - ifelse() - Conditional/ternary operation
-    - or_default() - Provide default if empty/nan
+    - or_default() - Provide default if empty/invalid
     """
 
     def is_empty(self) -> BoolType:
@@ -42,8 +42,8 @@ class BaseType[T](Type[T]):
 
         return BoolType(IsEmptyOp(self))
 
-    def is_nan(self) -> BoolType:
-        """Check if this value is NaN.
+    def is_invalid(self) -> BoolType:
+        """Check if this value is Invalid.
 
         Returns:
             BoolType-like result
@@ -54,12 +54,12 @@ class BaseType[T](Type[T]):
         return BoolType(IsNaNOp(self))
 
     def is_sentinel(self) -> BoolType:
-        """Check if this value is a special value (Empty, NaN, etc.).
+        """Check if this value is a special value (Empty, Invalid, etc.).
 
         Returns:
             BoolType-like result
         """
-        return self.is_empty().or_(self.is_nan())
+        return self.is_empty().or_(self.is_invalid())
 
     def not_empty(self) -> BoolType:
         """Check if this value is not Empty.
@@ -69,13 +69,13 @@ class BaseType[T](Type[T]):
         """
         return self.is_empty().not_()
 
-    def not_nan(self) -> BoolType:
-        """Check if this value is not NaN.
+    def not_invalid(self) -> BoolType:
+        """Check if this value is not Invalid.
 
         Returns:
             BoolType result
         """
-        return self.is_nan().not_()
+        return self.is_invalid().not_()
 
     def ifelse[ElseT](
         self,
@@ -102,10 +102,10 @@ class BaseType[T](Type[T]):
         return AnyType(ConditionalOp(self, condition, otherwise))
 
     def or_default[DefaultT](self, default: DefaultT | Term[DefaultT]) -> AnyType:
-        """Return self if not empty/nan, otherwise return default.
+        """Return self if not empty/invalid, otherwise return default.
 
         Args:
-            default: Default value if self is empty or nan
+            default: Default value if self is empty or invalid
 
         Returns:
             Self if valid, default otherwise

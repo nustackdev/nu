@@ -11,7 +11,7 @@ import pytest
 
 from everyshape.term import Context, all_, any_, ifelse
 from everyshape.types import BoolType, FloatType, IntType, ListType, StrType
-from everyshape.typing import NAN
+from everyshape.typing import INVALID
 
 
 @pytest.fixture
@@ -338,22 +338,22 @@ class TestCombinerExecution:
 
 
 class TestSpecialValues:
-    """Tests for special value handling (EMPTY, NAN)."""
+    """Tests for special value handling (EMPTY, INVALID)."""
 
     def test_division_by_zero_returns_nan(self, ctx):
-        """Division by zero returns NAN."""
+        """Division by zero returns INVALID."""
         x = IntType(10)
         result = (x / 0).execute(ctx)
-        assert result is NAN
+        assert result is INVALID
 
     def test_floor_division_by_zero_returns_nan(self, ctx):
-        """Floor division by zero returns NAN."""
+        """Floor division by zero returns INVALID."""
         x = IntType(10)
         result = (x // 0).execute(ctx)
-        assert result is NAN
+        assert result is INVALID
 
     def test_modulo_by_zero_returns_nan(self, ctx):
-        """Modulo by zero returns NAN."""
+        """Modulo by zero returns INVALID."""
         x = IntType(10)
         result = (x % 0).execute(ctx)
-        assert result is NAN
+        assert result is INVALID

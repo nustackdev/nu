@@ -6,7 +6,7 @@ This module provides all concrete type implementations:
 - ListType, TupleType, DictType, SetType, FrozenSetType - Collection types
 - NoneType - None type
 - AnyType - Dynamic/unknown type
-- SentinelType, EmptyType, NAType - Special value types
+- SentinelType, EmptyType, InvalidType - Special value types
 
 Type-specific operations are in the respective type module's ops.py:
 - everyshape.type.str.ops - String-specific operations
@@ -62,7 +62,7 @@ from .float import FloatType
 from .int import IntType
 from .list import ListType
 from .none import NoneType
-from .sentinel import EmptyType, NAType, SentinelType
+from .sentinel import EmptyType, InvalidType, SentinelType
 from .set import FrozenSetType, SetType
 from .str import StrType
 from .tuple import TupleType
@@ -125,7 +125,7 @@ __all__ = [  # noqa: RUF022
     "FrozenSetType",
     "IntType",
     "ListType",
-    "NAType",
+    "InvalidType",
     "NoneType",
     "SentinelType",
     "SetType",

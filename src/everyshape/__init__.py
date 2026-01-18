@@ -17,12 +17,12 @@ from .term import (
 from .typing import (
     NOT_SET,
     Empty,
-    NaN,
+    Invalid,
     NotSet,
     Sentinel,
     Value,
     is_empty,
-    is_nan,
+    is_invalid,
     is_notset,
     is_sentinel,
 )
@@ -37,8 +37,8 @@ __all__ = [
     "Context",
     "Empty",
     "EveryShapeError",
+    "Invalid",
     "LValue",
-    "NaN",
     "NotSet",
     "Operation",
     "RValue",
@@ -50,7 +50,7 @@ __all__ = [
     "Value",
     "View",
     "is_empty",
-    "is_nan",
+    "is_invalid",
     "is_notset",
     "is_sentinel",
 ]

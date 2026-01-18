@@ -12,7 +12,7 @@ This module defines the execution model through a minimal type hierarchy:
         │   ├── IntType, FloatType, StrType, BoolType, BytesType
         │   ├── NilType, ListType, DictType, SetType, TupleType
         │   ├── AnyType         - dynamic/unknown type
-        │   └── SentinelType    - special values (EmptyType, NAType)
+        │   └── SentinelType    - special values (EmptyType, InvalidType)
         └── Computation         - computes or mutates
             ├── Operation       - pure computation (e.g. get, add)
             └── Command         - impure mutation (e.g. set, delete)

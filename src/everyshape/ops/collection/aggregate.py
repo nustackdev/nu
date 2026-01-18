@@ -10,7 +10,7 @@ AllOp: All truthy (all(seq))
 from __future__ import annotations
 
 from everyshape.term import UnaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 __all__ = [
@@ -31,7 +31,7 @@ class SumOp[ResultT](UnaryOp[ResultT | Sentinel]):
         try:
             return sum(operand)  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class MinOp[ResultT](UnaryOp[ResultT | Sentinel]):
@@ -41,11 +41,11 @@ class MinOp[ResultT](UnaryOp[ResultT | Sentinel]):
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"min_() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
-            return NAN
+            return INVALID
         try:
             return min(operand)  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class MaxOp[ResultT](UnaryOp[ResultT | Sentinel]):
@@ -55,11 +55,11 @@ class MaxOp[ResultT](UnaryOp[ResultT | Sentinel]):
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"max_() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
-            return NAN
+            return INVALID
         try:
             return max(operand)  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class AnyOp(UnaryOp[bool]):

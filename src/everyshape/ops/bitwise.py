@@ -10,7 +10,7 @@ Use .bitand(), .bitor(), .bitnot() methods instead.
 from __future__ import annotations
 
 from everyshape.term import BinaryOp, UnaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 __all__ = [
@@ -39,7 +39,7 @@ class BitwiseNotOp[ResultT](UnaryOp[ResultT | Sentinel]):
         try:
             return ~operand  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 # =============================================================================
@@ -58,7 +58,7 @@ class BitwiseAndOp[ResultT](BinaryOp[ResultT]):
         try:
             return left & right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class BitwiseOrOp[ResultT](BinaryOp[ResultT]):
@@ -72,7 +72,7 @@ class BitwiseOrOp[ResultT](BinaryOp[ResultT]):
         try:
             return left | right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class XorOp[ResultT](BinaryOp[ResultT]):
@@ -82,7 +82,7 @@ class XorOp[ResultT](BinaryOp[ResultT]):
         try:
             return left ^ right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class LShiftOp[ResultT](BinaryOp[ResultT]):
@@ -92,7 +92,7 @@ class LShiftOp[ResultT](BinaryOp[ResultT]):
         try:
             return left << right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class RShiftOp[ResultT](BinaryOp[ResultT]):
@@ -102,4 +102,4 @@ class RShiftOp[ResultT](BinaryOp[ResultT]):
         try:
             return left >> right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID

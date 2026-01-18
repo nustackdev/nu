@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 from everyshape.term import BinaryOp, TernaryOp, UnaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ class LenOp(UnaryOp[int]):
 class AtOp[ResultT](BinaryOp[ResultT | Sentinel]):
     """Subscript access: seq[key] or dict[key].
 
-    Returns NaN for out-of-bounds indices or missing keys.
+    Returns Invalid for out-of-bounds indices or missing keys.
     """
 
     def _apply_op(self, left: object, right: object) -> ResultT | Sentinel:
@@ -46,11 +46,11 @@ class AtOp[ResultT](BinaryOp[ResultT | Sentinel]):
             if not isinstance(right, int):
                 raise TypeError(f"at() index must be int for sequence, got {type(right).__name__}")
             if right < -len(left) or right >= len(left):
-                return NAN
+                return INVALID
             return left[right]  # type: ignore
         elif isinstance(left, dict):
             if right not in left:
-                return NAN
+                return INVALID
             return left[right]  # type: ignore
         else:
             try:

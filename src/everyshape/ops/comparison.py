@@ -8,7 +8,7 @@ All ops inherit from BinaryOp and implement `_apply_op()`.
 from __future__ import annotations
 
 from everyshape.term import BinaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 __all__ = [
@@ -29,7 +29,7 @@ class GtOp(BinaryOp[bool | Sentinel]):
         try:
             return left > right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class LtOp(BinaryOp[bool | Sentinel]):
@@ -39,7 +39,7 @@ class LtOp(BinaryOp[bool | Sentinel]):
         try:
             return left < right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class EqOp(BinaryOp[bool | Sentinel]):
@@ -49,7 +49,7 @@ class EqOp(BinaryOp[bool | Sentinel]):
         try:
             return left == right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class NeOp(BinaryOp[bool | Sentinel]):
@@ -59,7 +59,7 @@ class NeOp(BinaryOp[bool | Sentinel]):
         try:
             return left != right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class GeOp(BinaryOp[bool | Sentinel]):
@@ -69,7 +69,7 @@ class GeOp(BinaryOp[bool | Sentinel]):
         try:
             return left >= right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class LeOp(BinaryOp[bool | Sentinel]):
@@ -79,7 +79,7 @@ class LeOp(BinaryOp[bool | Sentinel]):
         try:
             return left <= right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class IdCompOp(BinaryOp[bool | Sentinel]):
@@ -89,4 +89,4 @@ class IdCompOp(BinaryOp[bool | Sentinel]):
         try:
             return left is right  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID

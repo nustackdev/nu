@@ -2,13 +2,13 @@
 
 IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
 
-Operations for checking special sentinel values (Empty, NaN).
+Operations for checking special sentinel values (Empty, Invalid).
 """
 
 from __future__ import annotations
 
 from everyshape.term import UnaryOp
-from everyshape.typing import is_empty, is_nan
+from everyshape.typing import is_empty, is_invalid
 
 
 __all__ = [
@@ -34,14 +34,14 @@ class NotEmptyOp(UnaryOp[bool]):
 
 
 class IsNaNOp(UnaryOp[bool]):
-    """Check if operand is NaN sentinel."""
+    """Check if operand is Invalid sentinel."""
 
     def _apply_op(self, operand: object) -> bool:
-        return is_nan(operand)
+        return is_invalid(operand)
 
 
 class NotNaNOp(UnaryOp[bool]):
-    """Check if operand is NOT NaN sentinel."""
+    """Check if operand is NOT Invalid sentinel."""
 
     def _apply_op(self, operand: object) -> bool:
-        return not is_nan(operand)
+        return not is_invalid(operand)

@@ -12,13 +12,13 @@ Three forms, one meaning:
 
 - `T` — Python literal (`42`, `"hello"`, `datetime.now()`)
 - `Term[T]` — Expression producing T (`price.get()`)
-- `Term[T | Sentinel]` — Expression that might be empty/nan
+- `Term[T | Sentinel]` — Expression that might be empty/invalid
 
 All are valid. All compose.
 
 ## Why Three, Not Two
 
-`T | Term[T]` would be simpler. But storage operations return `Term[T | Sentinel]` — they might produce empty/nan values. Accepting only `Term[T]` would force explicit unwrapping everywhere.
+`T | Term[T]` would be simpler. But storage operations return `Term[T | Sentinel]` — they might produce empty/invalid values. Accepting only `Term[T]` would force explicit unwrapping everywhere.
 
 The third variant absorbs this. Sentinel handling moves downstream.
 

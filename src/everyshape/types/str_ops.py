@@ -15,13 +15,13 @@ Design principles:
 1. Atomic classes: one operation = one class
 2. All arguments support Term or literal
 3. Proper base class inheritance (UnaryOp, BinaryOp, TernaryOp, NAryOp)
-4. Runtime type checking with NAN for invalid types
+4. Runtime type checking with INVALID for invalid types
 """
 
 from __future__ import annotations
 
 from everyshape.term import BinaryOp, NAryOp, TernaryOp, UnaryOp
-from everyshape.typing import NAN, NOT_SET, NotSet, Sentinel, is_notset
+from everyshape.typing import INVALID, NOT_SET, NotSet, Sentinel, is_notset
 
 
 __all__ = [
@@ -63,7 +63,7 @@ class UpperOp(UnaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.upper()
 
 
@@ -72,7 +72,7 @@ class LowerOp(UnaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.lower()
 
 
@@ -81,7 +81,7 @@ class TitleOp(UnaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.title()
 
 
@@ -90,7 +90,7 @@ class CapitalizeOp(UnaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.capitalize()
 
 
@@ -99,7 +99,7 @@ class SwapCaseOp(UnaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.swapcase()
 
 
@@ -113,7 +113,7 @@ class IsDigitOp(UnaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object) -> bool | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.isdigit()
 
 
@@ -122,7 +122,7 @@ class IsAlphaOp(UnaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object) -> bool | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.isalpha()
 
 
@@ -131,7 +131,7 @@ class IsAlnumOp(UnaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object) -> bool | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.isalnum()
 
 
@@ -140,7 +140,7 @@ class IsSpaceOp(UnaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object) -> bool | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         return operand.isspace()
 
 
@@ -164,11 +164,11 @@ class StripOp(NAryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, chars: object = NOT_SET) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         if is_notset(chars):
             return operand.strip()
         if chars is not None and not isinstance(chars, str):
-            return NAN
+            return INVALID
         return operand.strip(chars)
 
 
@@ -184,11 +184,11 @@ class LStripOp(NAryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, chars: object = NOT_SET) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         if is_notset(chars):
             return operand.lstrip()
         if chars is not None and not isinstance(chars, str):
-            return NAN
+            return INVALID
         return operand.lstrip(chars)
 
 
@@ -204,11 +204,11 @@ class RStripOp(NAryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, chars: object = NOT_SET) -> str | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         if is_notset(chars):
             return operand.rstrip()
         if chars is not None and not isinstance(chars, str):
-            return NAN
+            return INVALID
         return operand.rstrip(chars)
 
 
@@ -245,9 +245,9 @@ class SplitOp(NAryOp[list[str] | Sentinel]):
             sep = None
 
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         if sep is not None and not isinstance(sep, str):
-            return NAN
+            return INVALID
         return operand.split(sep, int(maxsplit))  # type: ignore[arg-type]
 
 
@@ -276,9 +276,9 @@ class RSplitOp(NAryOp[list[str] | Sentinel]):
             sep = None
 
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         if sep is not None and not isinstance(sep, str):
-            return NAN
+            return INVALID
         return operand.rsplit(sep, int(maxsplit))  # type: ignore[arg-type]
 
 
@@ -310,7 +310,7 @@ class FindOp(NAryOp[int | Sentinel]):
         self, operand: object, sub: object, start: object, end: object = NOT_SET
     ) -> int | Sentinel:
         if not isinstance(operand, str) or not isinstance(sub, str):
-            return NAN
+            return INVALID
         if is_notset(end) or end is None:
             return operand.find(sub, int(start))  # type: ignore[arg-type]
         return operand.find(sub, int(start), int(end))  # type: ignore[arg-type]
@@ -336,7 +336,7 @@ class RFindOp(NAryOp[int | Sentinel]):
         self, operand: object, sub: object, start: object, end: object = NOT_SET
     ) -> int | Sentinel:
         if not isinstance(operand, str) or not isinstance(sub, str):
-            return NAN
+            return INVALID
         if is_notset(end) or end is None:
             return operand.rfind(sub, int(start))  # type: ignore[arg-type]
         return operand.rfind(sub, int(start), int(end))  # type: ignore[arg-type]
@@ -347,7 +347,7 @@ class CountSubstringOp(BinaryOp[int | Sentinel]):
 
     def _apply_op(self, operand: object, sub: object) -> int | Sentinel:
         if not isinstance(operand, str) or not isinstance(sub, str):
-            return NAN
+            return INVALID
         return operand.count(sub)
 
 
@@ -361,7 +361,7 @@ class StartsWithOp(BinaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object, prefix: object) -> bool | Sentinel:
         if not isinstance(operand, str) or not isinstance(prefix, str):
-            return NAN
+            return INVALID
         return operand.startswith(prefix)
 
 
@@ -370,7 +370,7 @@ class EndsWithOp(BinaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object, suffix: object) -> bool | Sentinel:
         if not isinstance(operand, str) or not isinstance(suffix, str):
-            return NAN
+            return INVALID
         return operand.endswith(suffix)
 
 
@@ -384,7 +384,7 @@ class CenterOp(TernaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
         if not isinstance(operand, str) or not isinstance(width, int):
-            return NAN
+            return INVALID
         fill = str(fillchar) if fillchar else " "
         return operand.center(width, fill[0] if fill else " ")
 
@@ -394,7 +394,7 @@ class LJustOp(TernaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
         if not isinstance(operand, str) or not isinstance(width, int):
-            return NAN
+            return INVALID
         fill = str(fillchar) if fillchar else " "
         return operand.ljust(width, fill[0] if fill else " ")
 
@@ -404,7 +404,7 @@ class RJustOp(TernaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
         if not isinstance(operand, str) or not isinstance(width, int):
-            return NAN
+            return INVALID
         fill = str(fillchar) if fillchar else " "
         return operand.rjust(width, fill[0] if fill else " ")
 
@@ -414,7 +414,7 @@ class ZFillOp(BinaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, width: object) -> str | Sentinel:
         if not isinstance(operand, str) or not isinstance(width, int):
-            return NAN
+            return INVALID
         return operand.zfill(width)
 
 
@@ -441,7 +441,7 @@ class ReplaceOp(NAryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, old: object, new: object, count: object) -> str | Sentinel:
         if not isinstance(operand, str) or not isinstance(old, str) or not isinstance(new, str):
-            return NAN
+            return INVALID
         count_int = int(count)  # type: ignore[arg-type]
         if count_int == -1:
             return operand.replace(old, new)
@@ -458,8 +458,8 @@ class EncodeOp(BinaryOp[bytes | Sentinel]):
 
     def _apply_op(self, operand: object, encoding: object) -> bytes | Sentinel:
         if not isinstance(operand, str):
-            return NAN
+            return INVALID
         try:
             return operand.encode(str(encoding) if encoding else "utf-8")
         except (UnicodeEncodeError, LookupError):
-            return NAN
+            return INVALID

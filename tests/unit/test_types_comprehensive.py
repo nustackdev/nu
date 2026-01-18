@@ -329,10 +329,10 @@ class TestIntTypeSpecialChecks:
         result = x.is_empty()
         assert isinstance(result, BoolType)
 
-    def test_is_nan(self):
-        """IntType.is_nan() returns BoolType."""
+    def test_is_invalid(self):
+        """IntType.is_invalid() returns BoolType."""
         x = IntType(42)
-        result = x.is_nan()
+        result = x.is_invalid()
         assert isinstance(result, BoolType)
 
     def test_is_sentinel(self):
@@ -347,10 +347,10 @@ class TestIntTypeSpecialChecks:
         result = x.not_empty()
         assert isinstance(result, BoolType)
 
-    def test_not_nan(self):
-        """IntType.not_nan() returns BoolType."""
+    def test_not_invalid(self):
+        """IntType.not_invalid() returns BoolType."""
         x = IntType(42)
-        result = x.not_nan()
+        result = x.not_invalid()
         assert isinstance(result, BoolType)
 
 

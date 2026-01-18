@@ -7,7 +7,7 @@ literal values and Term expressions.
 Pattern: T | Term[T] | Term[T | Sentinel]
 - T: literal value
 - Term[T]: typed term producing T
-- Term[T | Sentinel]: typed term that may produce sentinel (Empty/NaN)
+- Term[T | Sentinel]: typed term that may produce sentinel (Empty/Invalid)
 
 Usage:
     from everyshape.term import IntArg, StrArg

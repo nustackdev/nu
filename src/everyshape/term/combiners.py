@@ -21,7 +21,7 @@ Available combiners:
 
     Conditional combiners:
     - ifelse(condition, then_value, else_value): Ternary conditional
-    - coalesce(*values): First non-empty/non-nan value
+    - coalesce(*values): First non-empty/non-invalid value
 
 Example:
     >>> price = item.price.get()
@@ -232,17 +232,17 @@ def ifelse(condition: object, then_value: object, else_value: object) -> Term:
 
 
 def coalesce(*values: object) -> Term:
-    """Return first non-empty/non-nan value.
+    """Return first non-empty/non-invalid value.
 
     Similar to SQL's COALESCE or nullish coalescing.
     Checks each value in order, returning the first that is
-    neither empty nor NaN.
+    neither empty nor Invalid.
 
     Args:
         *values: Variable number of values to check
 
     Returns:
-        RValue representing the first non-empty/non-nan value
+        RValue representing the first non-empty/non-invalid value
 
     Raises:
         ValueError: If no values provided

@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everyshape.term import BinaryOp, NAryOp, UnaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 if TYPE_CHECKING:
@@ -33,29 +33,29 @@ __all__ = [
 
 
 class FirstOp[ResultT](UnaryOp[ResultT | Sentinel]):
-    """First element: seq[0]. Returns NaN if empty."""
+    """First element: seq[0]. Returns Invalid if empty."""
 
     def _apply_op(self, operand: object) -> ResultT | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"first() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
-            return NAN
+            return INVALID
         return operand[0]  # type: ignore
 
 
 class LastOp[ResultT](UnaryOp[ResultT | Sentinel]):
-    """Last element: seq[-1]. Returns NaN if empty."""
+    """Last element: seq[-1]. Returns Invalid if empty."""
 
     def _apply_op(self, operand: object) -> ResultT | Sentinel:
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"last() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
-            return NAN
+            return INVALID
         return operand[-1]  # type: ignore
 
 
 class IndexOfOp[T](BinaryOp[int | Sentinel]):
-    """Find index of value: seq.index(value). Returns NaN if not found."""
+    """Find index of value: seq.index(value). Returns Invalid if not found."""
 
     def _apply_op(self, left: object, right: object) -> int | Sentinel:
         # left = sequence, right = value to find
@@ -64,7 +64,7 @@ class IndexOfOp[T](BinaryOp[int | Sentinel]):
         try:
             return list(left).index(right)
         except ValueError:
-            return NAN
+            return INVALID
 
 
 class CountOp(BinaryOp[int]):
@@ -78,7 +78,7 @@ class CountOp(BinaryOp[int]):
 
 
 class FindOp[T](NAryOp[T | Sentinel]):
-    """Find first element matching predicate. Returns NaN if not found.
+    """Find first element matching predicate. Returns Invalid if not found.
 
     Example:
         >>> FindOp(items, lambda x: x > 100)
@@ -100,14 +100,14 @@ class FindOp[T](NAryOp[T | Sentinel]):
         for item in operand:
             if self._fn(item):
                 return item  # type: ignore
-        return NAN
+        return INVALID
 
     def __repr__(self) -> str:
         return f"FindOp({self.children[0]!r}, {self._fn!r})"
 
 
 class FindIndexOp[T](NAryOp[int | Sentinel]):
-    """Find index of first element matching predicate. Returns NaN if not found.
+    """Find index of first element matching predicate. Returns Invalid if not found.
 
     Example:
         >>> FindIndexOp(items, lambda x: x > 100)
@@ -129,7 +129,7 @@ class FindIndexOp[T](NAryOp[int | Sentinel]):
         for i, item in enumerate(operand):
             if self._fn(item):
                 return i
-        return NAN
+        return INVALID
 
     def __repr__(self) -> str:
         return f"FindIndexOp({self.children[0]!r}, {self._fn!r})"
@@ -147,4 +147,4 @@ class JoinOp(BinaryOp[str | Sentinel]):
         try:
             return right.join(str(x) for x in left)
         except Exception:
-            return NAN
+            return INVALID

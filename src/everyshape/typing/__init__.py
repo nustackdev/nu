@@ -8,12 +8,12 @@ from __future__ import annotations
 from .not_set import NOT_SET, NotSet, is_notset
 from .sentinel import (
     EMPTY,
-    NAN,
+    INVALID,
     Empty,
-    NaN,
+    Invalid,
     Sentinel,
     is_empty,
-    is_nan,
+    is_invalid,
     is_sentinel,
     propagate_special,
 )
@@ -31,12 +31,12 @@ __all__ = [  # noqa: RUF022
     "Value",
     # Special sentinels
     "EMPTY",
-    "NAN",
+    "INVALID",
     "Empty",
-    "NaN",
+    "Invalid",
     "Sentinel",
     "is_empty",
-    "is_nan",
+    "is_invalid",
     "is_sentinel",
     "propagate_special",
     # Not set

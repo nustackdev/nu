@@ -2,7 +2,7 @@
 
 ToIntOp, ToFloatOp, ToBoolOp, ToStrOp, ToBytesOp, ToListOp, ToSetOp, ToTupleOp
 
-All conversions inherit from UnaryOp and return NaN on conversion failure.
+All conversions inherit from UnaryOp and return Invalid on conversion failure.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from everyshape.term import UnaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ class ToIntOp(UnaryOp[int | Sentinel]):
         try:
             return int(operand)  # type: ignore
         except (TypeError, ValueError):
-            return NAN
+            return INVALID
 
 
 class ToFloatOp(UnaryOp[float | Sentinel]):
@@ -51,7 +51,7 @@ class ToFloatOp(UnaryOp[float | Sentinel]):
         try:
             return float(operand)  # type: ignore
         except (TypeError, ValueError):
-            return NAN
+            return INVALID
 
 
 class ToBoolOp(UnaryOp[bool | Sentinel]):
@@ -61,7 +61,7 @@ class ToBoolOp(UnaryOp[bool | Sentinel]):
         try:
             return bool(operand)
         except (TypeError, ValueError):
-            return NAN
+            return INVALID
 
 
 class ToStrOp(UnaryOp[str | Sentinel]):
@@ -71,7 +71,7 @@ class ToStrOp(UnaryOp[str | Sentinel]):
         try:
             return str(operand)
         except (TypeError, ValueError):
-            return NAN
+            return INVALID
 
 
 class ToBytesOp(UnaryOp[bytes | Sentinel]):
@@ -104,7 +104,7 @@ class ToBytesOp(UnaryOp[bytes | Sentinel]):
                 return bytes(operand)
             return bytes(operand)  # type: ignore
         except (TypeError, ValueError, UnicodeEncodeError):
-            return NAN
+            return INVALID
 
 
 # =============================================================================
@@ -119,7 +119,7 @@ class ToListOp[T](UnaryOp[list[T] | Sentinel]):
         try:
             return list(operand)  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class ToSetOp[T](UnaryOp[set[T] | Sentinel]):
@@ -129,7 +129,7 @@ class ToSetOp[T](UnaryOp[set[T] | Sentinel]):
         try:
             return set(operand)  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
 
 class ToTupleOp[*Ts](UnaryOp[tuple[*Ts] | Sentinel]):
@@ -139,4 +139,4 @@ class ToTupleOp[*Ts](UnaryOp[tuple[*Ts] | Sentinel]):
         try:
             return tuple(operand)  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID

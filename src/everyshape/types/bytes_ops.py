@@ -14,13 +14,13 @@ Design principles:
 1. Atomic classes: one operation = one class
 2. All arguments support Term or literal
 3. Proper base class inheritance (UnaryOp, BinaryOp, NAryOp)
-4. Runtime type checking with NAN for invalid types
+4. Runtime type checking with INVALID for invalid types
 """
 
 from __future__ import annotations
 
 from everyshape.term import BinaryOp, NAryOp, UnaryOp
-from everyshape.typing import NAN, NOT_SET, NotSet, Sentinel, is_notset
+from everyshape.typing import INVALID, NOT_SET, NotSet, Sentinel, is_notset
 
 
 __all__ = [
@@ -50,11 +50,11 @@ class DecodeOp(BinaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object, encoding: object) -> str | Sentinel:
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         try:
             return operand.decode(str(encoding) if encoding else "utf-8")
         except (UnicodeDecodeError, LookupError):
-            return NAN
+            return INVALID
 
 
 class HexOp(UnaryOp[str | Sentinel]):
@@ -62,7 +62,7 @@ class HexOp(UnaryOp[str | Sentinel]):
 
     def _apply_op(self, operand: object) -> str | Sentinel:
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         return operand.hex()
 
 
@@ -76,7 +76,7 @@ class BytesUpperOp(UnaryOp[bytes | Sentinel]):
 
     def _apply_op(self, operand: object) -> bytes | Sentinel:
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         return operand.upper()
 
 
@@ -85,7 +85,7 @@ class BytesLowerOp(UnaryOp[bytes | Sentinel]):
 
     def _apply_op(self, operand: object) -> bytes | Sentinel:
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         return operand.lower()
 
 
@@ -109,11 +109,11 @@ class BytesStripOp(NAryOp[bytes | Sentinel]):
 
     def _apply_op(self, operand: object, chars: object = NOT_SET) -> bytes | Sentinel:
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         if is_notset(chars):
             return operand.strip()
         if chars is not None and not isinstance(chars, bytes):
-            return NAN
+            return INVALID
         return operand.strip(chars)
 
 
@@ -129,11 +129,11 @@ class BytesLStripOp(NAryOp[bytes | Sentinel]):
 
     def _apply_op(self, operand: object, chars: object = NOT_SET) -> bytes | Sentinel:
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         if is_notset(chars):
             return operand.lstrip()
         if chars is not None and not isinstance(chars, bytes):
-            return NAN
+            return INVALID
         return operand.lstrip(chars)
 
 
@@ -149,11 +149,11 @@ class BytesRStripOp(NAryOp[bytes | Sentinel]):
 
     def _apply_op(self, operand: object, chars: object = NOT_SET) -> bytes | Sentinel:
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         if is_notset(chars):
             return operand.rstrip()
         if chars is not None and not isinstance(chars, bytes):
-            return NAN
+            return INVALID
         return operand.rstrip(chars)
 
 
@@ -190,9 +190,9 @@ class BytesSplitOp(NAryOp[list[bytes] | Sentinel]):
             sep = None
 
         if not isinstance(operand, bytes):
-            return NAN
+            return INVALID
         if sep is not None and not isinstance(sep, bytes):
-            return NAN
+            return INVALID
         return operand.split(sep, int(maxsplit))  # type: ignore[arg-type]
 
 
@@ -224,7 +224,7 @@ class BytesFindOp(NAryOp[int | Sentinel]):
         self, operand: object, sub: object, start: object, end: object = NOT_SET
     ) -> int | Sentinel:
         if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-            return NAN
+            return INVALID
         if is_notset(end) or end is None:
             return operand.find(sub, int(start))  # type: ignore[arg-type]
         return operand.find(sub, int(start), int(end))  # type: ignore[arg-type]
@@ -235,7 +235,7 @@ class BytesCountOp(BinaryOp[int | Sentinel]):
 
     def _apply_op(self, operand: object, sub: object) -> int | Sentinel:
         if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-            return NAN
+            return INVALID
         return operand.count(sub)
 
 
@@ -249,7 +249,7 @@ class BytesStartsWithOp(BinaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object, prefix: object) -> bool | Sentinel:
         if not isinstance(operand, bytes) or not isinstance(prefix, bytes):
-            return NAN
+            return INVALID
         return operand.startswith(prefix)
 
 
@@ -258,7 +258,7 @@ class BytesEndsWithOp(BinaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object, suffix: object) -> bool | Sentinel:
         if not isinstance(operand, bytes) or not isinstance(suffix, bytes):
-            return NAN
+            return INVALID
         return operand.endswith(suffix)
 
 
@@ -291,7 +291,7 @@ class BytesReplaceOp(NAryOp[bytes | Sentinel]):
             or not isinstance(old, bytes)
             or not isinstance(new, bytes)
         ):
-            return NAN
+            return INVALID
         count_int = int(count)  # type: ignore[arg-type]
         if count_int == -1:
             return operand.replace(old, new)

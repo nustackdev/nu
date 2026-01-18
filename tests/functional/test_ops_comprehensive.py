@@ -24,7 +24,7 @@ from everyshape.types import (
     StrType,
     TupleType,
 )
-from everyshape.typing import NAN
+from everyshape.typing import INVALID
 
 
 @pytest.fixture
@@ -118,8 +118,8 @@ class TestArithmeticOps:
         assert (IntType(10) / IntType(4)).execute(ctx) == 2.5
 
     def test_div_by_zero(self, ctx):
-        """10 / 0 = NAN."""
-        assert (IntType(10) / 0).execute(ctx) is NAN
+        """10 / 0 = INVALID."""
+        assert (IntType(10) / 0).execute(ctx) is INVALID
 
     def test_rdiv(self, ctx):
         """20 / IntType(4) = 5.0."""
@@ -130,8 +130,8 @@ class TestArithmeticOps:
         assert (IntType(10) // IntType(3)).execute(ctx) == 3
 
     def test_floordiv_by_zero(self, ctx):
-        """10 // 0 = NAN."""
-        assert (IntType(10) // 0).execute(ctx) is NAN
+        """10 // 0 = INVALID."""
+        assert (IntType(10) // 0).execute(ctx) is INVALID
 
     def test_rfloordiv(self, ctx):
         """10 // IntType(3) = 3."""
@@ -142,8 +142,8 @@ class TestArithmeticOps:
         assert (IntType(10) % IntType(3)).execute(ctx) == 1
 
     def test_mod_by_zero(self, ctx):
-        """10 % 0 = NAN."""
-        assert (IntType(10) % 0).execute(ctx) is NAN
+        """10 % 0 = INVALID."""
+        assert (IntType(10) % 0).execute(ctx) is INVALID
 
     def test_rmod(self, ctx):
         """10 % IntType(3) = 1."""
@@ -870,9 +870,9 @@ class TestSpecialValueOps:
         """42.is_empty() = False."""
         assert IntType(42).is_empty().execute(ctx) is False
 
-    def test_is_nan_false(self, ctx):
-        """42.is_nan() = False."""
-        assert IntType(42).is_nan().execute(ctx) is False
+    def test_is_invalid_false(self, ctx):
+        """42.is_invalid() = False."""
+        assert IntType(42).is_invalid().execute(ctx) is False
 
     def test_is_sentinel_false(self, ctx):
         """42.is_sentinel() = False."""
@@ -882,6 +882,6 @@ class TestSpecialValueOps:
         """42.not_empty() = True."""
         assert IntType(42).not_empty().execute(ctx) is True
 
-    def test_not_nan_true(self, ctx):
-        """42.not_nan() = True."""
-        assert IntType(42).not_nan().execute(ctx) is True
+    def test_not_invalid_true(self, ctx):
+        """42.not_invalid() = True."""
+        assert IntType(42).not_invalid().execute(ctx) is True

@@ -13,7 +13,7 @@ from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
 from everyshape.term import NAryOp, UnaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class SortedOp[ResultT](UnaryOp[list[ResultT] | Sentinel]):
         try:
             return sorted(operand, reverse=self._reverse)  # type: ignore
         except TypeError:
-            return NAN
+            return INVALID
 
     def __repr__(self) -> str:
         return f"SortedOp({self.children[0]!r}, reverse={self._reverse})"
@@ -143,7 +143,7 @@ class ReduceOp[T, T2](NAryOp[T2 | Sentinel]):
         try:
             return functools_reduce(self._fn, operand, self._initial)
         except Exception:
-            return NAN
+            return INVALID
 
     def __repr__(self) -> str:
         return f"ReduceOp({self.children[0]!r}, {self._fn!r}, {self._initial!r})"

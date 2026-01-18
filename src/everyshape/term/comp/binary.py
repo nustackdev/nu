@@ -26,7 +26,7 @@ class BinaryOp[ResultT](Operation[ResultT | Sentinel], ABC):
 
     Defines execution pattern:
     1. Evaluate both operands
-    2. Propagate special values (Empty, NaN)
+    2. Propagate special values (Empty, Invalid)
     3. Apply operation via `_apply_op()`
     4. Return result
 
@@ -62,7 +62,7 @@ class BinaryOp[ResultT](Operation[ResultT | Sentinel], ABC):
         left_val = self.children[0].execute(context)
         right_val = self.children[1].execute(context)
 
-        # Propagate special values (Empty, NaN)
+        # Propagate special values (Empty, Invalid)
         special = propagate_special(left_val, right_val)
         if special is not None:
             return special

@@ -5,7 +5,7 @@ RValue                  - evaluable expression (has children)
 │   ├── IntType, FloatType, StrType, BoolType, BytesType
 │   ├── NilType, ListType, DictType, SetType, TupleType
 │   ├── AnyType         - dynamic/unknown type
-│   └── SentinelType    - special values (EmptyType, NAType)
+│   └── SentinelType    - special values (EmptyType, InvalidType)
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ class Type[T](RValue[T | Sentinel]):
     Constructor accepts:
         - Literal value: Type(42), Type("hello")
         - RValue expression: Type(some_operation)
-        - Sentinel: Type(EMPTY), Type(NA)
+        - Sentinel: Type(EMPTY), Type(INVALID)
 
     On execution:
         - If source is RValue: executes it and returns result
@@ -64,7 +64,7 @@ class Type[T](RValue[T | Sentinel]):
 
         Args:
             source: Either a raw value of type T, an Term that produces T,
-                    or a Sentinel value (EMPTY, NA)
+                    or a Sentinel value (EMPTY, INVALID)
         """
         self._source = source
         if isinstance(source, Term):

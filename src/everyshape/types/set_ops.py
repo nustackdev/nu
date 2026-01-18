@@ -9,13 +9,13 @@ Design principles:
 1. Atomic classes: one operation = one class
 2. All arguments support Term or literal
 3. Proper base class inheritance (BinaryOp)
-4. Runtime type checking with NAN for invalid types
+4. Runtime type checking with INVALID for invalid types
 """
 
 from __future__ import annotations
 
 from everyshape.term import BinaryOp
-from everyshape.typing import NAN, Sentinel
+from everyshape.typing import INVALID, Sentinel
 
 
 __all__ = [
@@ -40,13 +40,13 @@ class UnionOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.union(other)  # type: ignore
         if isinstance(operand, set):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.union(other)  # type: ignore
-        return NAN
+        return INVALID
 
 
 class IntersectionOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
@@ -55,13 +55,13 @@ class IntersectionOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.intersection(other)  # type: ignore
         if isinstance(operand, set):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.intersection(other)  # type: ignore
-        return NAN
+        return INVALID
 
 
 class DifferenceOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
@@ -70,13 +70,13 @@ class DifferenceOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.difference(other)  # type: ignore
         if isinstance(operand, set):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.difference(other)  # type: ignore
-        return NAN
+        return INVALID
 
 
 class SymmetricDifferenceOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
@@ -85,13 +85,13 @@ class SymmetricDifferenceOp[T](BinaryOp[set[T] | frozenset[T] | Sentinel]):
     def _apply_op(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.symmetric_difference(other)  # type: ignore
         if isinstance(operand, set):
             if not isinstance(other, (set, frozenset)):
-                return NAN
+                return INVALID
             return operand.symmetric_difference(other)  # type: ignore
-        return NAN
+        return INVALID
 
 
 # =============================================================================
@@ -104,9 +104,9 @@ class IsSubsetOp(BinaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
         if not isinstance(operand, (set, frozenset)):
-            return NAN
+            return INVALID
         if not isinstance(other, (set, frozenset)):
-            return NAN
+            return INVALID
         return operand.issubset(other)
 
 
@@ -115,9 +115,9 @@ class IsSupersetOp(BinaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
         if not isinstance(operand, (set, frozenset)):
-            return NAN
+            return INVALID
         if not isinstance(other, (set, frozenset)):
-            return NAN
+            return INVALID
         return operand.issuperset(other)
 
 
@@ -126,7 +126,7 @@ class IsDisjointOp(BinaryOp[bool | Sentinel]):
 
     def _apply_op(self, operand: object, other: object) -> bool | Sentinel:
         if not isinstance(operand, (set, frozenset)):
-            return NAN
+            return INVALID
         if not isinstance(other, (set, frozenset)):
-            return NAN
+            return INVALID
         return operand.isdisjoint(other)

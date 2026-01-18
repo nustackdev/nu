@@ -3,7 +3,7 @@
 This module provides sentinel types for special values:
 - SentinelType - Base for sentinel types
 - EmptyType - Represents absence of a value
-- NAType - Represents invalid/undefined operations
+- InvalidType - Represents invalid/undefined operations
 """
 
 from __future__ import annotations
@@ -13,13 +13,13 @@ from .bases import BaseType
 
 __all__ = [
     "EmptyType",
-    "NAType",
+    "InvalidType",
     "SentinelType",
 ]
 
 
 class SentinelType(BaseType[None]):
-    """Base for sentinel types (EmptyType, NAType).
+    """Base for sentinel types (EmptyType, InvalidType).
 
     Sentinels represent special values that indicate absence or invalidity.
     """
@@ -54,28 +54,28 @@ class EmptyType(SentinelType):
         return None
 
 
-class NAType(SentinelType):
-    """Not Applicable type - represents invalid/undefined operations.
+class InvalidType(SentinelType):
+    """Invalid type - represents invalid/undefined operations.
 
-    NAType represents an invalid or not-applicable result.
-    Operations on NA propagate NA.
+    InvalidType represents an invalid or not-applicable result.
+    Operations on INVALID propagate INVALID.
 
     Key properties:
-    - Represents "not applicable" (N/A), not "not a number"
-    - Operations with NA return NA
-    - is_na() always returns True
+    - Represents "not applicable" (N/A)
+    - Operations with INVALID return INVALID
+    - is_invalid() always returns True
 
     Example:
-        >>> na = NAType()
-        >>> na.is_na()  # Always BoolType(True)
+        >>> na = InvalidType()
+        >>> na.is_invalid()  # Always BoolType(True)
     """
 
     def __init__(self) -> None:
         """Init."""
-        """Initialize NA type."""
+        """Initialize INVALID type."""
         super().__init__(None)
 
     def execute(self, context: object) -> None:
         """Execute."""
-        """Execute returns None for NA values."""
+        """Execute returns None for INVALID values."""
         return None

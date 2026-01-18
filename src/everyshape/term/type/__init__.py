@@ -5,7 +5,7 @@ RValue                  - evaluable expression (has children)
 │   ├── IntType, FloatType, StrType, BoolType, BytesType
 │   ├── NilType, ListType, DictType, SetType, TupleType
 │   ├── AnyType         - dynamic/unknown type
-│   └── SentinelType    - special values (EmptyType, NAType)
+│   └── SentinelType    - special values (EmptyType, InvalidType)
 """
 
 from __future__ import annotations
