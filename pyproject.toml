@@ -2,16 +2,16 @@
 # Build System
 # ============================================================================
 [build-system]
-requires = ["setuptools>=68.0", "wheel", "Cython>=3.0"]
+requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 # ============================================================================
 # Project Metadata (PEP 621)
 # ============================================================================
 [project]
-name = "everyshape"
-version = "1.1.0"
-description = "Persistent reactive trees for Python with multiple storage backends"
+name = "everybase"
+version = "2.0.0"
+description = "Term Programming platform - protocols and implementations for topology-based software"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -21,30 +21,27 @@ maintainers = [
     {name = "Gor Arakelyan", email = "gorarkln@gmail.com"}
 ]
 keywords = [
-    "storage",
-    "sqlite",
-    "rocksdb",
-    "database",
-    "persistence",
-    "reactive",
-    "reactivity",
-    "tree",
-    "cython"
+    "term-programming",
+    "topology",
+    "declarative",
+    "protocols",
+    "flows",
+    "orchestration",
+    "ai-native",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Cython",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Database",
 ]
 requires-python = ">=3.10"
 dependencies = [
@@ -52,11 +49,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/everyabc/everyshape"
-Documentation = "https://github.com/everyabc/everyshape#readme"
-Repository = "https://github.com/everyabc/everyshape"
-Issues = "https://github.com/everyabc/everyshape/issues"
-Changelog = "https://github.com/everyabc/everyshape/releases"
+Homepage = "https://github.com/everyabc/everybase"
+Documentation = "https://github.com/everyabc/everybase#readme"
+Repository = "https://github.com/everyabc/everybase"
+Issues = "https://github.com/everyabc/everybase/issues"
+Changelog = "https://github.com/everyabc/everybase/releases"
 
 [project.optional-dependencies]
 
@@ -78,22 +75,37 @@ test = [
 
 # All development dependencies
 all = [
-    "everyshape[dev,test]",
+    "everybase[dev,test]",
 ]
 
 # ============================================================================
-# Package Discovery
+# Package Discovery - Multiple source roots
 # ============================================================================
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["everyshape*"]
+where = ["src", "protocols/everyterm/src", "protocols/everyflow/src", "protocols/everylink/src", "pkgs"]
+include = ["everybase*", "everyterm*", "everyflow*", "everylink*"]
 namespaces = false
 
-# =============================================================
+# ============================================================================
+# Pytest
+# ============================================================================
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+    "src/everybase/tests",
+    "protocols/everyterm/tests",
+    "protocols/everyflow/tests",
+    "protocols/everylink/tests",
+]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# ============================================================================
 # Coverage
 # ============================================================================
 [tool.coverage.run]
-source = ["src"]
+source = ["src", "protocols"]
 omit = [
     "*/tests/*",
     "*/test_*",
@@ -127,15 +139,12 @@ directory = "tests/reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src", "tests"]
+src = ["src", "protocols", "pkgs", "tests"]
 extend-exclude = [
     ".venv",
     "build",
     "dist",
     "*.egg-info",
-    "*.c",
-    "*.cpp",
-    "*.so",
 ]
 
 [tool.ruff.lint]
@@ -163,41 +172,37 @@ ignore = [
 ]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google"  # Use Google style format
+convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [
+"**/tests/**/*.py" = [
     "S101",   # assert allowed in tests
     "T20",    # print allowed in tests
     "D",      # docstrings not required in tests
     "E711",
     "E712",
     "ANN",    # type annotations not required in tests
-    "N806",   # disable variable name checks like `User = collection_shapes["User"]`
+    "N806",   # disable variable name checks
 ]
-"src/everyshape/testing/**/*.py" = [
-    "S101",   # assert allowed in tests
-    "T20",    # print allowed in tests
-    "D",      # docstrings not required in tests
+"**/testing/**/*.py" = [
+    "S101",
+    "T20",
+    "D",
     "E711",
     "E712",
-    "ANN",    # type annotations not required in tests
-    "N806",   # disable variable name checks like `User = collection_shapes["User"]`
-    "B017",   # FIXME: blind exception pass; fix, remove this later
+    "ANN",
+    "N806",
+    "B017",
 ]
 "examples/**/*.py" = [
-    "S101",   # assert allowed in examples
-    "T20",    # print allowed in examples
-    "D",      # docstrings not required in examples
-    "ANN",    # type annotations not required in examples
-]
-"setup.py" = [
-    "T20",    # print allowed in setup
-    "D",      # docstrings not required in setup
+    "S101",
+    "T20",
+    "D",
+    "ANN",
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everyshape"]
+known-first-party = ["everybase", "everyterm", "everyflow", "everylink"]
 force-single-line = false
 lines-after-imports = 2
 
@@ -206,14 +211,14 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
-docstring-code-format = true         # Format code blocks in docstrings
-docstring-code-line-length = 80      # Shorter lines in docstring examples
+docstring-code-format = true
+docstring-code-line-length = 80
 
 # ============================================================================
 # Type Checking - mypy
 # ============================================================================
 [tool.mypy]
-python_version = "3.12"  # Match minimum supported version
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -222,7 +227,6 @@ exclude = [
     "build/",
     "dist/",
     ".venv/",
-    ".*\\.pyx$",  # Ignore Cython files
 ]
 
 # ============================================================================

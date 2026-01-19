@@ -2,8 +2,6 @@
 
 # Configuration
 PYTHON := python
-SRC_DIR := src
-TEST_DIR := tests
 
 # Colors for output
 BLUE := \033[0;34m
@@ -16,7 +14,7 @@ NC := \033[0m
 # ============================================================================
 
 help:
-	@echo "$(BLUE)EveryShape Development Commands$(NC)"
+	@echo "$(BLUE)everybase - Term Programming Platform$(NC)"
 	@echo ""
 	@echo "$(GREEN)Setup:$(NC)"
 	@echo "  make install-uv      - Install uv package manager"
@@ -25,18 +23,16 @@ help:
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
 	@echo "  make test            - Run all tests"
+	@echo "  make test-term       - Run everyterm tests"
+	@echo "  make test-flow       - Run everyflow tests"
+	@echo "  make test-link       - Run everylink tests"
+	@echo "  make test-base       - Run everybase tests"
 	@echo "  make test-cov        - Run tests with coverage report"
 	@echo ""
 	@echo "$(GREEN)Code Quality:$(NC)"
 	@echo "  make format          - Format code with ruff"
 	@echo "  make lint            - Check code with ruff"
 	@echo "  make format-check    - Check formatting without changes"
-	@echo "  make pre-commit      - Run pre-commit checks"
-	@echo ""
-	@echo "$(GREEN)Dependencies:$(NC)"
-	@echo "  make lock            - Lock dependencies to requirements.lock"
-	@echo "  make sync            - Install from lock file (exact versions)"
-	@echo "  make update          - Update all dependencies"
 	@echo ""
 	@echo "$(GREEN)Publishing:$(NC)"
 	@echo "  make dist            - Build distribution packages"
@@ -53,18 +49,18 @@ help:
 
 check-uv:
 	@command -v uv >/dev/null 2>&1 || { \
-		echo "$(YELLOW)⚠️  uv is not installed$(NC)"; \
+		echo "$(YELLOW)uv is not installed$(NC)"; \
 		echo "Run: make install-uv"; \
 		exit 1; \
 	}
 
 install-uv:
 	@if command -v uv >/dev/null 2>&1; then \
-		echo "$(GREEN)✓ uv is already installed$(NC)"; \
+		echo "$(GREEN)uv is already installed$(NC)"; \
 	else \
 		echo "$(BLUE)Installing uv...$(NC)"; \
 		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-		echo "$(GREEN)✓ uv installed successfully$(NC)"; \
+		echo "$(GREEN)uv installed successfully$(NC)"; \
 	fi
 
 install: check-uv
@@ -72,46 +68,51 @@ install: check-uv
 	uv venv
 	@echo "$(BLUE)Installing dependencies...$(NC)"
 	uv pip install -e ".[dev,test]"
-	@echo "$(GREEN)✓ Installation complete$(NC)"
+	@echo "$(GREEN)Installation complete$(NC)"
 	@echo ""
 	@echo "Activate with: source .venv/bin/activate"
 
-dev: install build test
+dev: install test
 	@echo ""
-	@echo "$(GREEN)✓ Development environment ready!$(NC)"
+	@echo "$(GREEN)Development environment ready!$(NC)"
 	@echo ""
 	@echo "Next steps:"
 	@echo "  1. source .venv/bin/activate"
 	@echo "  2. pre-commit install"
-	@echo "  3. make lock"
 
 # ============================================================================
 # Testing
 # ============================================================================
+
 test:
 	@echo "$(BLUE)Running all tests...$(NC)"
-	pytest $(TEST_DIR) -n 4
+	pytest -v
+
+test-term:
+	@echo "$(BLUE)Running everyterm tests...$(NC)"
+	pytest protocols/everyterm/tests -v
+
+test-flow:
+	@echo "$(BLUE)Running everyflow tests...$(NC)"
+	pytest protocols/everyflow/tests -v
+
+test-link:
+	@echo "$(BLUE)Running everylink tests...$(NC)"
+	pytest protocols/everylink/tests -v
+
+test-base:
+	@echo "$(BLUE)Running everybase tests...$(NC)"
+	pytest src/everybase/tests -v
 
 test-fast:
-	@echo "$(BLUE)Running fast tests (no slow tests)...$(NC)"
-	pytest $(TEST_DIR) -m "not slow" -x -v
-
-test-functional:
-	@echo "$(BLUE)Running functional tests...$(NC)"
-	pytest $(TEST_DIR) -m "functional" -v
-
-test-verbose:
-	@echo "$(BLUE)Running tests with maximum verbosity...$(NC)"
-	pytest $(TEST_DIR) -vv --hypothesis-show-statistics
+	@echo "$(BLUE)Running fast tests...$(NC)"
+	pytest -m "not slow" -x -v
 
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
-	pytest $(TEST_DIR) --cov=everyshape --cov-report=html:tests/reports/coverage --cov-report=term-missing --cov-branch
-	@echo "$(GREEN)✓ Coverage report: tests/reports/coverage/index.html$(NC)"
-
-test-watch:
-	@echo "$(BLUE)Running tests in watch mode...$(NC)"
-	pytest-watch $(TEST_DIR)
+	pytest --cov=everybase --cov=everyterm --cov=everyflow --cov=everylink \
+		--cov-report=html:tests/reports/coverage --cov-report=term-missing --cov-branch
+	@echo "$(GREEN)Coverage report: tests/reports/coverage/index.html$(NC)"
 
 # ============================================================================
 # Code Quality
@@ -119,22 +120,18 @@ test-watch:
 
 lint:
 	@echo "$(BLUE)Running linters...$(NC)"
-	ruff check $(SRC_DIR)/everyshape $(TEST_DIR)
+	ruff check src protocols pkgs
 
 format:
 	@echo "$(BLUE)Formatting code...$(NC)"
-	ruff format $(SRC_DIR)/everyshape $(TEST_DIR)
-	ruff check --fix $(SRC_DIR)/everyshape $(TEST_DIR)
-	@echo "$(GREEN)✓ Code formatted$(NC)"
+	ruff format src protocols pkgs
+	ruff check --fix src protocols pkgs
+	@echo "$(GREEN)Code formatted$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking code format...$(NC)"
-	ruff format --check $(SRC_DIR)/everyshape $(TEST_DIR)
-	ruff check $(SRC_DIR)/everyshape $(TEST_DIR)
-
-pre-commit: format lint test-fast
-	@echo ""
-	@echo "$(GREEN)✓ Pre-commit checks passed!$(NC)"
+	ruff format --check src protocols pkgs
+	ruff check src protocols pkgs
 
 # ============================================================================
 # Dependency Management
@@ -143,28 +140,19 @@ pre-commit: format lint test-fast
 lock: check-uv
 	@echo "$(BLUE)Locking dependencies...$(NC)"
 	uv pip compile pyproject.toml -o requirements.lock
-	@echo "$(GREEN)✓ Dependencies locked to requirements.lock$(NC)"
+	@echo "$(GREEN)Dependencies locked$(NC)"
 
 sync: check-uv
 	@echo "$(BLUE)Installing from lock file...$(NC)"
 	uv venv
 	uv pip sync requirements.lock
-	@echo "$(GREEN)✓ Installed exact versions from lock$(NC)"
+	@echo "$(GREEN)Installed exact versions$(NC)"
 
 update: check-uv
 	@echo "$(BLUE)Updating dependencies...$(NC)"
 	uv pip install --upgrade -e ".[dev,test]"
 	@$(MAKE) lock
-	@echo "$(GREEN)✓ Dependencies updated and locked$(NC)"
-
-add: check-uv
-	@if [ -z "$(PKG)" ]; then \
-		echo "$(YELLOW)Usage: make add PKG=package-name$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(BLUE)Adding $(PKG)...$(NC)"
-	uv pip install $(PKG)
-	@echo "$(YELLOW)⚠️  Don't forget to add '$(PKG)' to pyproject.toml!$(NC)"
+	@echo "$(GREEN)Dependencies updated$(NC)"
 
 # ============================================================================
 # Distribution & Publishing
@@ -174,35 +162,28 @@ dist: clean-dist
 	@echo "$(BLUE)Building distribution packages...$(NC)"
 	$(PYTHON) -m pip install --upgrade build twine
 	$(PYTHON) -m build
-	@echo "$(GREEN)✓ Distribution built in dist/$(NC)"
-	@echo ""
-	@echo "Contents:"
+	@echo "$(GREEN)Distribution built in dist/$(NC)"
 	@ls -lh dist/
 
 check-dist: dist
 	@echo "$(BLUE)Checking distribution...$(NC)"
 	twine check dist/*
-	@echo "$(GREEN)✓ Distribution is valid$(NC)"
+	@echo "$(GREEN)Distribution is valid$(NC)"
 
 publish-test: check-dist
 	@echo "$(BLUE)Publishing to TestPyPI...$(NC)"
 	twine upload --repository testpypi dist/*
-	@echo "$(GREEN)✓ Published to TestPyPI$(NC)"
-	@echo ""
-	@echo "Test installation:"
-	@echo "  pip install --index-url https://test.pypi.org/simple/ everyshape"
+	@echo "$(GREEN)Published to TestPyPI$(NC)"
+	@echo "Test: pip install --index-url https://test.pypi.org/simple/ everybase"
 
 publish: check-dist
-	@echo "$(YELLOW)⚠️  Publishing to PyPI (are you sure?)$(NC)"
-	@echo "Package: everyshape"
+	@echo "$(YELLOW)Publishing to PyPI (are you sure?)$(NC)"
+	@echo "Package: everybase"
 	@echo "Version: $(shell grep '^version = ' pyproject.toml | cut -d'"' -f2)"
-	@echo ""
 	@read -p "Press Enter to continue or Ctrl+C to cancel..."
-	@echo "$(BLUE)Publishing to PyPI...$(NC)"
 	twine upload dist/*
-	@echo "$(GREEN)✓ Published to PyPI!$(NC)"
-	@echo ""
-	@echo "Install with: pip install everyshape"
+	@echo "$(GREEN)Published to PyPI!$(NC)"
+	@echo "Install: pip install everybase"
 
 # ============================================================================
 # Cleanup
@@ -211,51 +192,45 @@ publish: check-dist
 clean:
 	@echo "$(BLUE)Cleaning build artifacts...$(NC)"
 	rm -rf build/ dist/ *.egg-info/
-	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
-	find . -type f -name "*.so" -delete
-	find $(SRC_DIR) -name "*.c" -delete
-	@echo "$(GREEN)✓ Clean complete$(NC)"
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	@echo "$(GREEN)Clean complete$(NC)"
 
 clean-dist:
 	@echo "$(BLUE)Cleaning distribution artifacts...$(NC)"
 	rm -rf dist/ build/ *.egg-info/
-	@echo "$(GREEN)✓ Distribution cleaned$(NC)"
 
 clean-test:
 	@echo "$(BLUE)Cleaning test artifacts...$(NC)"
-	rm -rf .pytest_cache/
-	rm -rf .coverage htmlcov/
-	rm -rf tests/reports/
-	@echo "$(GREEN)✓ Test artifacts cleaned$(NC)"
+	rm -rf .pytest_cache/ .coverage htmlcov/ tests/reports/
 
 clean-all: clean clean-test
 	@echo "$(BLUE)Removing virtual environment...$(NC)"
 	rm -rf .venv/
-	@echo "$(GREEN)✓ Deep clean complete$(NC)"
+	@echo "$(GREEN)Deep clean complete$(NC)"
 
 # ============================================================================
-# CI/CD Targets
+# CI/CD
 # ============================================================================
 
 ci: format-check lint test-cov
-	@echo ""
-	@echo "$(GREEN)✓ CI checks passed!$(NC)"
+	@echo "$(GREEN)CI checks passed!$(NC)"
 
 # ============================================================================
-# Information
+# Info
 # ============================================================================
 
 info:
-	@echo "$(BLUE)Environment Information:$(NC)"
-	@echo "────────────────────────────────────"
+	@echo "$(BLUE)everybase Environment$(NC)"
+	@echo "----------------------------------------"
 	@echo "Python:  $(shell $(PYTHON) --version 2>&1)"
 	@echo "uv:      $(shell uv --version 2>/dev/null || echo 'Not installed')"
 	@echo "Venv:    $(shell [ -d .venv ] && echo 'Present' || echo 'Not created')"
-	@echo "Working: $(shell pwd)"
 	@echo ""
-	@if [ -d .venv ]; then \
-		echo "$(BLUE)Installed packages (top 10):$(NC)"; \
-		uv pip list 2>/dev/null | head -11 || true; \
-	fi
+	@echo "$(BLUE)Structure:$(NC)"
+	@echo "  protocols/everyterm  - Term algebra"
+	@echo "  protocols/everyflow  - Flow algebra"
+	@echo "  protocols/everylink  - Link algebra"
+	@echo "  src/everybase        - Implementations"
+	@echo "  pkgs/                - Fabrics"
