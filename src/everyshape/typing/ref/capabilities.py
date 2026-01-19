@@ -99,7 +99,7 @@ class Gettable[ValueT](Protocol):
 
     def get(
         self,
-    ) -> object:  # Returns ComputedValue type based on ValueT (IntType, StrType, etc.)
+    ) -> ValueT:
         """Create a get operation for this location.
 
         Returns:

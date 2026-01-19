@@ -14,7 +14,9 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from everyshape.loc import path
+from everyshape.typing.ref import Extractable, Gettable
 
+from ..context import Context
 from ..term import LValue, Term
 
 
@@ -32,11 +34,12 @@ __all__ = [
 ]
 
 ViewT_co = TypeVar("ViewT_co", covariant=True, bound="View")
+ViewRefResultT = TypeVar("ViewRefResultT")
 
 logger = getLogger(__name__)
 
 
-class Ref[PathTypeT: path.Path](LValue[PathTypeT], ABC):
+class Ref[T, PathTypeT: path.Path](LValue[T, PathTypeT], ABC):
     """Typed reference to a location in the tree.
 
     Combines addressability (LValue) with type information.
@@ -114,7 +117,7 @@ class Ref[PathTypeT: path.Path](LValue[PathTypeT], ABC):
         return None
 
 
-class ViewRef(Generic[ViewT_co], Ref[path.PathToView], ABC):  # noqa: UP046
+class ViewRef(Generic[ViewRefResultT, ViewT_co], Ref[ViewRefResultT, path.PathToView], ABC):  # noqa: UP046
     """Ref that points to a View (container in the tree)."""
 
     def __init__(
@@ -173,8 +176,15 @@ class ViewRef(Generic[ViewT_co], Ref[path.PathToView], ABC):  # noqa: UP046
             return f"ViewRef({self.parent_ref!s} -> {self.address!s})"
         return f"ViewRef({self.address!s})"
 
+    def execute(self, context: Context) -> ViewRefResultT:
+        """Execute the Ref."""
+        # TODO: proper implementation
+        if isinstance(self, Extractable):
+            return self.extract().execute(context)
+        raise TypeError
 
-class PrimitiveRef[T](Ref[path.PathToValue], ABC):
+
+class PrimitiveRef[T](Ref[T, path.PathToValue], ABC):
     """Ref that points to a primtive value in the tree (leaf node)."""
 
     def __init__(
@@ -231,3 +241,10 @@ class PrimitiveRef[T](Ref[path.PathToValue], ABC):
         if self.parent_ref:
             return f"PrimitiveRef({self.parent_ref!s} -> {self.address!s})"
         return f"PrimitiveRef({self.address!s})"
+
+    def execute(self, context: Context) -> T:
+        """Execute the Ref."""
+        # TODO: proper implementation
+        if isinstance(self, Gettable):
+            return self.get().execute(context)
+        raise TypeError

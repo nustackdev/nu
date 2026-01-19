@@ -144,7 +144,7 @@ class Term[ResultT](ABC):
 # =============================================================================
 
 
-class LValue[PathTypeT: path.Path](Term[None]):
+class LValue[T, PathTypeT: path.Path](Term[T]):
     """Addressable location in the data tree.
 
     LValues represent positions where data lives.
