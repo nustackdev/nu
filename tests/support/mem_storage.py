@@ -13,29 +13,30 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from everyshape.storage import (
+from everykv.storage import (
     StorageClosedError,
     StorageScanOptions,
     StorageTransactionAbortedError,
 )
-from everyshape.storage.observer.registry import SubscriptionRegistry
-from everyshape.storage.storage.exceptions import StorageInterfaceError
-from everyshape.typing import EMPTY, Empty
+from everykv.storage.observer.registry import SubscriptionRegistry
+from everykv.storage.storage.exceptions import StorageInterfaceError
+from everykv.typing import EMPTY, Empty
 
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
 
-    from everyshape.loc import key
-    from everyshape.storage import (
+    from everykv.storage.observer.options import SubscriptionOptions
+
+    from everykv.loc import key
+    from everykv.storage import (
         SnapshotProtocol,
         TransactionProtocol,
         WriteBatchProtocol,
     )
-    from everyshape.storage.observer.options import SubscriptionOptions
-    from everyshape.storage.observer.types import SubscriptionCallback
-    from everyshape.storage.storage.scan import ScanProtocol
-    from everyshape.typing import Value
+    from everykv.storage.observer.types import SubscriptionCallback
+    from everykv.storage.storage.scan import ScanProtocol
+    from everykv.typing import Value
 
 
 class MemoryScan:

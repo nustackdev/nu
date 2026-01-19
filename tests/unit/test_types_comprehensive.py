@@ -8,8 +8,7 @@ Tests type construction, operations, and method availability for:
 """
 
 import pytest
-
-from everyshape.ops import (
+from everykv.ops import (
     AddOp,
     BitwiseAndOp,
     BitwiseNotOp,
@@ -27,8 +26,7 @@ from everyshape.ops import (
     SubOp,
     XorOp,
 )
-from everyshape.term import literal
-from everyshape.types import (
+from everykv.types import (
     AnyType,
     BoolType,
     BytesType,
@@ -42,6 +40,8 @@ from everyshape.types import (
     StrType,
     TupleType,
 )
+
+from everyterm.term import literal
 
 
 # =============================================================================

@@ -6,7 +6,7 @@ Tests for special sentinel values used in ABC modules:
 - Type guard functions and propagation logic
 """
 
-from everyshape.typing import (
+from everykv.typing import (
     EMPTY,
     INVALID,
     Empty,

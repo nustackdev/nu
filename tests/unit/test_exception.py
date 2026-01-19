@@ -2,7 +2,7 @@
 
 import pytest
 
-from everyshape._exception import EveryShapeError
+from everykv._exception import EveryShapeError
 
 
 class TestEveryShapeError:

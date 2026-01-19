@@ -9,7 +9,7 @@ This test module covers hierarchical site manipulation functions:
 For flat key operations (construction, joining), see test_loc_key_nav.py.
 """
 
-from everyshape.loc.site import (
+from everykv.loc.site import (
     get_ancestors,
     get_common_ancestor,
     get_depth,

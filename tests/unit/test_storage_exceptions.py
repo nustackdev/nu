@@ -2,8 +2,8 @@
 
 import pytest
 
-from everyshape._exception import EveryShapeError
-from everyshape.storage.storage.exceptions import (
+from everykv._exception import EveryShapeError
+from everykv.storage.storage.exceptions import (
     StorageClosedError,
     StorageDeleteError,
     StorageError,

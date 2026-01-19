@@ -8,11 +8,11 @@ This test module covers key manipulation functions that are flat (non-hierarchic
 For hierarchical operations (ancestors, descendants), see test_loc_site_nav.py.
 """
 
-from everyshape.loc import (
+from everykv.loc import (
     DATA_ROOT,
     METADATA_ROOT,
 )
-from everyshape.loc.key import (
+from everykv.loc.key import (
     create_key,
     get_depth,
     join_key,

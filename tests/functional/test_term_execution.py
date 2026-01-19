@@ -8,10 +8,10 @@ don't require storage access.
 from unittest.mock import MagicMock
 
 import pytest
+from everykv.types import BoolType, FloatType, IntType, ListType, StrType
 
-from everyshape.term import Context, all_, any_, ifelse
-from everyshape.types import BoolType, FloatType, IntType, ListType, StrType
-from everyshape.typing import INVALID
+from everykv.typing import INVALID
+from everyterm.term import Context, all_, any_, ifelse
 
 
 @pytest.fixture

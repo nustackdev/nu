@@ -175,7 +175,7 @@ convention = "google"  # Use Google style format
     "ANN",    # type annotations not required in tests
     "N806",   # disable variable name checks like `User = collection_shapes["User"]`
 ]
-"src/everyshape/testing/**/*.py" = [
+"src/**/testing/**/*.py" = [
     "S101",   # assert allowed in tests
     "T20",    # print allowed in tests
     "D",      # docstrings not required in tests

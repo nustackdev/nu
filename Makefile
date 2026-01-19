@@ -119,18 +119,18 @@ test-watch:
 
 lint:
 	@echo "$(BLUE)Running linters...$(NC)"
-	ruff check $(SRC_DIR)/everyshape $(TEST_DIR)
+	ruff check $(SRC_DIR)/everykv $(SRC_DIR)/everyterm $(SRC_DIR)/everyfabric $(TEST_DIR)
 
 format:
 	@echo "$(BLUE)Formatting code...$(NC)"
-	ruff format $(SRC_DIR)/everyshape $(TEST_DIR)
-	ruff check --fix $(SRC_DIR)/everyshape $(TEST_DIR)
+	ruff format $(SRC_DIR)/everykv $(SRC_DIR)/everyterm $(SRC_DIR)/everyfabric $(TEST_DIR)
+	ruff check --fix $(SRC_DIR)/everykv $(SRC_DIR)/everyterm $(SRC_DIR)/everyfabric $(TEST_DIR)
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking code format...$(NC)"
-	ruff format --check $(SRC_DIR)/everyshape $(TEST_DIR)
-	ruff check $(SRC_DIR)/everyshape $(TEST_DIR)
+	ruff format --check $(SRC_DIR)/everykv $(SRC_DIR)/everyterm $(SRC_DIR)/everyfabric $(TEST_DIR)
+	ruff check $(SRC_DIR)/everykv $(SRC_DIR)/everyterm $(SRC_DIR)/everyfabric $(TEST_DIR)
 
 pre-commit: format lint test-fast
 	@echo ""

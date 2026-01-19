@@ -9,7 +9,7 @@ Tests container child manipulation operations:
 
 import pytest
 
-from everyshape.container import (
+from everykv.container import (
     ContainerNotFoundError,
     ContainerProtocol,
     ContainerStructure,
@@ -26,10 +26,10 @@ from everyshape.container import (
     node_exists,
     put_child_primitive,
 )
-from everyshape.container.container_ops import get_child_primitive
-from everyshape.container.types import NodeType
-from everyshape.storage import TransactionProtocol
-from everyshape.typing import EMPTY
+from everykv.container.container_ops import get_child_primitive
+from everykv.container.types import NodeType
+from everykv.storage import TransactionProtocol
+from everykv.typing import EMPTY
 
 
 # ============================================================================

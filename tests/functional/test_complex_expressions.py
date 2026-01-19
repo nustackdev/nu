@@ -8,9 +8,7 @@ the term system works correctly for real-world use cases.
 from unittest.mock import MagicMock
 
 import pytest
-
-from everyshape.term import Context, all_, any_, ifelse
-from everyshape.types import (
+from everykv.types import (
     BoolType,
     DictType,
     FloatType,
@@ -18,6 +16,8 @@ from everyshape.types import (
     ListType,
     StrType,
 )
+
+from everyterm.term import Context, all_, any_, ifelse
 
 
 @pytest.fixture

@@ -11,9 +11,7 @@ Organized by operation category:
 from unittest.mock import MagicMock
 
 import pytest
-
-from everyshape.term import Context, all_, any_, ifelse, none_
-from everyshape.types import (
+from everykv.types import (
     BoolType,
     BytesType,
     DictType,
@@ -24,7 +22,9 @@ from everyshape.types import (
     StrType,
     TupleType,
 )
-from everyshape.typing import INVALID
+
+from everykv.typing import INVALID
+from everyterm.term import Context, all_, any_, ifelse, none_
 
 
 @pytest.fixture

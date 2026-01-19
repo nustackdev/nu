@@ -11,8 +11,8 @@ from typing import ClassVar
 
 import pytest
 
-from everyshape.container import ContainerProtocol, ContainerStructure
-from everyshape.view import ViewBase, ViewRegistry, ViewRegistryError
+from everykv.container import ContainerProtocol, ContainerStructure
+from everykv.view import ViewBase, ViewRegistry, ViewRegistryError
 
 
 # =============================================================================

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from everyshape.storage.filter import (
+from everykv.storage.filter import (
     WILDCARD,
     And,
     Filter,

@@ -2,8 +2,8 @@
 
 import pytest
 
-from everyshape._exception import EveryShapeError
-from everyshape.container.exceptions import (
+from everykv._exception import EveryShapeError
+from everykv.container.exceptions import (
     ContainerCollisionError,
     ContainerError,
     ContainerExistsError,

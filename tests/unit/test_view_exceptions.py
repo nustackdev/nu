@@ -9,8 +9,8 @@ Tests:
 
 import pytest
 
-from everyshape._exception import EveryShapeError
-from everyshape.view import ViewError, ViewOperationError, ViewRegistryError
+from everykv._exception import EveryShapeError
+from everykv.view import ViewError, ViewOperationError, ViewRegistryError
 
 
 # =============================================================================

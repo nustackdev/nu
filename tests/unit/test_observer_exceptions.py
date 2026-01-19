@@ -2,8 +2,8 @@
 
 import pytest
 
-from everyshape._exception import EveryShapeError
-from everyshape.storage.observer.exceptions import (
+from everykv._exception import EveryShapeError
+from everykv.storage.observer.exceptions import (
     ObserverConnectionError,
     ObserverError,
     ObserverSubscriptionError,

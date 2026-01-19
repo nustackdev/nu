@@ -5,10 +5,10 @@ properly chain together without requiring execution context.
 """
 
 import pytest
+from everykv.ops import AddOp, GtOp, LtOp, MulOp, NegOp, SubOp
+from everykv.types import BoolType, FloatType, IntType, ListType, StrType
 
-from everyshape.ops import AddOp, GtOp, LtOp, MulOp, NegOp, SubOp
-from everyshape.term import literal
-from everyshape.types import BoolType, FloatType, IntType, ListType, StrType
+from everyterm.term import literal
 
 
 class TestIntType:

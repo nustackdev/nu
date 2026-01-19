@@ -6,8 +6,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from everyshape.storage import PrefixFilter, SubscriptionOptions
-from everyshape.storage.observer.subscription import Subscription, _SubscriptionContext
+from everykv.storage import PrefixFilter, SubscriptionOptions
+from everykv.storage.observer.subscription import Subscription, _SubscriptionContext
 
 
 class TestSubscriptionInitialization:
