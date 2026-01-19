@@ -17,18 +17,9 @@ from .sentinel import (
     is_sentinel,
     propagate_special,
 )
-from .storage import (
-    CompositeValue,
-    PrimitiveValue,
-    Value,
-)
 
 
 __all__ = [  # noqa: RUF022
-    # Storage types
-    "CompositeValue",
-    "PrimitiveValue",
-    "Value",
     # Special sentinels
     "EMPTY",
     "INVALID",

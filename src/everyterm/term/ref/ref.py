@@ -13,7 +13,7 @@ from abc import ABC
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from everyterm.term import LValue
+from everyterm.term.term import LValue
 
 
 if TYPE_CHECKING:

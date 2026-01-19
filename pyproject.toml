@@ -86,7 +86,7 @@ all = [
 # ============================================================================
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["everyshape*"]
+include = ["every*"]
 namespaces = false
 
 # =============================================================

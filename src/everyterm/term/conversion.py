@@ -12,7 +12,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .term import Term, Type
+    from .term import Term
+    from .type import Type
 
 __all__ = [
     "computed",
