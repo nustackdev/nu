@@ -1,1 +1,1 @@
-# Test Suite for EveryShape
+# Test Suite for EveryBase
