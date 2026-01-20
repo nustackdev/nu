@@ -1,236 +1,165 @@
-.PHONY: help install dev test lint format clean build publish
+.PHONY: help install sync dev test lint format clean
 
+# =============================================================================
 # Configuration
-PYTHON := python
-
-# Colors for output
+# =============================================================================
 BLUE := \033[0;34m
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-# ============================================================================
+# =============================================================================
 # Help
-# ============================================================================
-
+# =============================================================================
 help:
-	@echo "$(BLUE)everybase - Term Programming Platform$(NC)"
+	@echo "$(BLUE)everybase monorepo$(NC)"
 	@echo ""
 	@echo "$(GREEN)Setup:$(NC)"
-	@echo "  make install-uv      - Install uv package manager"
-	@echo "  make install         - Create venv + install dependencies"
-	@echo "  make dev             - Full dev setup (install + test)"
+	@echo "  make install         Install uv if needed"
+	@echo "  make sync            Sync workspace (install all packages)"
+	@echo "  make dev             Full dev setup (sync + pre-commit)"
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
-	@echo "  make test            - Run all tests"
-	@echo "  make test-term       - Run everyterm tests"
-	@echo "  make test-flow       - Run everyflow tests"
-	@echo "  make test-link       - Run everylink tests"
-	@echo "  make test-base       - Run everybase tests"
-	@echo "  make test-cov        - Run tests with coverage report"
+	@echo "  make test            Run all tests"
+	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=abc/every)"
+	@echo "  make test-abc        Run abc/ tests"
+	@echo "  make test-std        Run std/ tests"
+	@echo "  make test-pkgs       Run pkgs/ tests"
+	@echo "  make test-cov        Run tests with coverage"
+	@echo "  make test-fast       Run tests (fail fast, no slow)"
 	@echo ""
 	@echo "$(GREEN)Code Quality:$(NC)"
-	@echo "  make format          - Format code with ruff"
-	@echo "  make lint            - Check code with ruff"
-	@echo "  make format-check    - Check formatting without changes"
+	@echo "  make lint            Check code with ruff"
+	@echo "  make format          Format code with ruff"
+	@echo "  make check           Run format-check + lint"
 	@echo ""
-	@echo "$(GREEN)Publishing:$(NC)"
-	@echo "  make dist            - Build distribution packages"
-	@echo "  make publish-test    - Publish to TestPyPI"
-	@echo "  make publish         - Publish to PyPI"
+	@echo "$(GREEN)Packages:$(NC)"
+	@echo "  make list            List workspace packages"
+	@echo "  make build PKG=x     Build specific package"
 	@echo ""
 	@echo "$(GREEN)Cleanup:$(NC)"
-	@echo "  make clean           - Remove build artifacts"
-	@echo "  make clean-all       - Remove everything including venv"
+	@echo "  make clean           Remove build artifacts"
+	@echo "  make clean-all       Remove everything including .venv"
 
-# ============================================================================
+# =============================================================================
 # Setup
-# ============================================================================
-
-check-uv:
+# =============================================================================
+install:
 	@command -v uv >/dev/null 2>&1 || { \
-		echo "$(YELLOW)uv is not installed$(NC)"; \
-		echo "Run: make install-uv"; \
-		exit 1; \
-	}
-
-install-uv:
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "$(GREEN)uv is already installed$(NC)"; \
-	else \
 		echo "$(BLUE)Installing uv...$(NC)"; \
 		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-		echo "$(GREEN)uv installed successfully$(NC)"; \
-	fi
+	}
+	@echo "$(GREEN)uv ready$(NC)"
 
-install: check-uv
-	@echo "$(BLUE)Creating virtual environment...$(NC)"
-	uv venv
-	@echo "$(BLUE)Installing dependencies...$(NC)"
-	uv pip install -e ".[dev,test]"
-	@echo "$(GREEN)Installation complete$(NC)"
-	@echo ""
-	@echo "Activate with: source .venv/bin/activate"
+sync: install
+	@echo "$(BLUE)Syncing workspace...$(NC)"
+	uv sync
+	@echo "$(GREEN)Workspace synced$(NC)"
 
-dev: install test
-	@echo ""
-	@echo "$(GREEN)Development environment ready!$(NC)"
-	@echo ""
-	@echo "Next steps:"
-	@echo "  1. source .venv/bin/activate"
-	@echo "  2. pre-commit install"
+dev: sync
+	@echo "$(BLUE)Installing pre-commit hooks...$(NC)"
+	uv run pre-commit install
+	@echo "$(GREEN)Dev environment ready$(NC)"
 
-# ============================================================================
+# =============================================================================
 # Testing
-# ============================================================================
-
+# =============================================================================
 test:
 	@echo "$(BLUE)Running all tests...$(NC)"
-	pytest -v
+	uv run pytest
 
-test-term:
-	@echo "$(BLUE)Running everyterm tests...$(NC)"
-	pytest protocols/everyterm/tests -v
+test-pkg:
+ifndef PKG
+	$(error PKG not set. Usage: make test-pkg PKG=abc/every)
+endif
+	@echo "$(BLUE)Testing $(PKG)...$(NC)"
+	uv run pytest $(PKG)/tests -v
 
-test-flow:
-	@echo "$(BLUE)Running everyflow tests...$(NC)"
-	pytest protocols/everyflow/tests -v
+test-abc:
+	@echo "$(BLUE)Running abc/ tests...$(NC)"
+	uv run pytest abc/ -v
 
-test-link:
-	@echo "$(BLUE)Running everylink tests...$(NC)"
-	pytest protocols/everylink/tests -v
+test-std:
+	@echo "$(BLUE)Running std/ tests...$(NC)"
+	uv run pytest std/ -v
 
-test-base:
-	@echo "$(BLUE)Running everybase tests...$(NC)"
-	pytest src/everybase/tests -v
-
-test-fast:
-	@echo "$(BLUE)Running fast tests...$(NC)"
-	pytest -m "not slow" -x -v
+test-pkgs:
+	@echo "$(BLUE)Running pkgs/ tests...$(NC)"
+	uv run pytest pkgs/ -v
 
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
-	pytest --cov=everybase --cov=everyterm --cov=everyflow --cov=everylink \
-		--cov-report=html:tests/reports/coverage --cov-report=term-missing --cov-branch
-	@echo "$(GREEN)Coverage report: tests/reports/coverage/index.html$(NC)"
+	uv run pytest --cov --cov-report=html --cov-report=term-missing
+	@echo "$(GREEN)Report: tests/reports/coverage/index.html$(NC)"
 
-# ============================================================================
+test-fast:
+	@echo "$(BLUE)Running fast tests...$(NC)"
+	uv run pytest -m "not slow" -x
+
+# =============================================================================
 # Code Quality
-# ============================================================================
-
+# =============================================================================
 lint:
-	@echo "$(BLUE)Running linters...$(NC)"
-	ruff check src protocols pkgs
+	@echo "$(BLUE)Linting...$(NC)"
+	uv run ruff check abc std pkgs tests
 
 format:
-	@echo "$(BLUE)Formatting code...$(NC)"
-	ruff format src protocols pkgs
-	ruff check --fix src protocols pkgs
-	@echo "$(GREEN)Code formatted$(NC)"
+	@echo "$(BLUE)Formatting...$(NC)"
+	uv run ruff format abc std pkgs tests
+	uv run ruff check --fix abc std pkgs tests
+	@echo "$(GREEN)Done$(NC)"
 
 format-check:
-	@echo "$(BLUE)Checking code format...$(NC)"
-	ruff format --check src protocols pkgs
-	ruff check src protocols pkgs
+	@echo "$(BLUE)Checking format...$(NC)"
+	uv run ruff format --check abc std pkgs tests
 
-# ============================================================================
-# Dependency Management
-# ============================================================================
+check: format-check lint
+	@echo "$(GREEN)All checks passed$(NC)"
 
-lock: check-uv
-	@echo "$(BLUE)Locking dependencies...$(NC)"
-	uv pip compile pyproject.toml -o requirements.lock
-	@echo "$(GREEN)Dependencies locked$(NC)"
-
-sync: check-uv
-	@echo "$(BLUE)Installing from lock file...$(NC)"
-	uv venv
-	uv pip sync requirements.lock
-	@echo "$(GREEN)Installed exact versions$(NC)"
-
-update: check-uv
-	@echo "$(BLUE)Updating dependencies...$(NC)"
-	uv pip install --upgrade -e ".[dev,test]"
-	@$(MAKE) lock
-	@echo "$(GREEN)Dependencies updated$(NC)"
-
-# ============================================================================
-# Distribution & Publishing
-# ============================================================================
-
-dist: clean-dist
-	@echo "$(BLUE)Building distribution packages...$(NC)"
-	$(PYTHON) -m pip install --upgrade build twine
-	$(PYTHON) -m build
-	@echo "$(GREEN)Distribution built in dist/$(NC)"
-	@ls -lh dist/
-
-check-dist: dist
-	@echo "$(BLUE)Checking distribution...$(NC)"
-	twine check dist/*
-	@echo "$(GREEN)Distribution is valid$(NC)"
-
-publish-test: check-dist
-	@echo "$(BLUE)Publishing to TestPyPI...$(NC)"
-	twine upload --repository testpypi dist/*
-	@echo "$(GREEN)Published to TestPyPI$(NC)"
-	@echo "Test: pip install --index-url https://test.pypi.org/simple/ everybase"
-
-publish: check-dist
-	@echo "$(YELLOW)Publishing to PyPI (are you sure?)$(NC)"
-	@echo "Package: everybase"
-	@echo "Version: $(shell grep '^version = ' pyproject.toml | cut -d'"' -f2)"
-	@read -p "Press Enter to continue or Ctrl+C to cancel..."
-	twine upload dist/*
-	@echo "$(GREEN)Published to PyPI!$(NC)"
-	@echo "Install: pip install everybase"
-
-# ============================================================================
-# Cleanup
-# ============================================================================
-
-clean:
-	@echo "$(BLUE)Cleaning build artifacts...$(NC)"
-	rm -rf build/ dist/ *.egg-info/
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete 2>/dev/null || true
-	find . -type f -name "*.pyo" -delete 2>/dev/null || true
-	@echo "$(GREEN)Clean complete$(NC)"
-
-clean-dist:
-	@echo "$(BLUE)Cleaning distribution artifacts...$(NC)"
-	rm -rf dist/ build/ *.egg-info/
-
-clean-test:
-	@echo "$(BLUE)Cleaning test artifacts...$(NC)"
-	rm -rf .pytest_cache/ .coverage htmlcov/ tests/reports/
-
-clean-all: clean clean-test
-	@echo "$(BLUE)Removing virtual environment...$(NC)"
-	rm -rf .venv/
-	@echo "$(GREEN)Deep clean complete$(NC)"
-
-# ============================================================================
-# CI/CD
-# ============================================================================
-
-ci: format-check lint test-cov
-	@echo "$(GREEN)CI checks passed!$(NC)"
-
-# ============================================================================
-# Info
-# ============================================================================
-
-info:
-	@echo "$(BLUE)everybase Environment$(NC)"
-	@echo "----------------------------------------"
-	@echo "Python:  $(shell $(PYTHON) --version 2>&1)"
-	@echo "uv:      $(shell uv --version 2>/dev/null || echo 'Not installed')"
-	@echo "Venv:    $(shell [ -d .venv ] && echo 'Present' || echo 'Not created')"
+# =============================================================================
+# Packages
+# =============================================================================
+list:
+	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(BLUE)Structure:$(NC)"
-	@echo "  protocols/everyterm  - Term algebra"
-	@echo "  protocols/everyflow  - Flow algebra"
-	@echo "  protocols/everylink  - Link algebra"
-	@echo "  src/everybase        - Implementations"
-	@echo "  pkgs/                - Fabrics"
+	@echo "$(GREEN)abc/ (core):$(NC)"
+	@ls -d abc/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo ""
+	@echo "$(GREEN)std/ (standard):$(NC)"
+	@ls -d std/every_*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo ""
+	@echo "$(GREEN)pkgs/ (extensions):$(NC)"
+	@ls -d pkgs/every_*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+
+build:
+ifndef PKG
+	$(error PKG not set. Usage: make build PKG=abc/every)
+endif
+	@echo "$(BLUE)Building $(PKG)...$(NC)"
+	cd $(PKG) && uv build
+	@echo "$(GREEN)Built: $(PKG)/dist/$(NC)"
+
+# =============================================================================
+# Cleanup
+# =============================================================================
+clean:
+	@echo "$(BLUE)Cleaning...$(NC)"
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "build" -exec rm -rf {} + 2>/dev/null || true
+	rm -rf .coverage htmlcov/ tests/reports/
+	@echo "$(GREEN)Clean$(NC)"
+
+clean-all: clean
+	@echo "$(BLUE)Removing .venv...$(NC)"
+	rm -rf .venv/
+	@echo "$(GREEN)Deep clean$(NC)"
+
+# =============================================================================
+# CI
+# =============================================================================
+ci: check test-cov
+	@echo "$(GREEN)CI passed$(NC)"

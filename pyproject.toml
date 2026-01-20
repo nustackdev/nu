@@ -1,70 +1,30 @@
-# ============================================================================
-# Build System
-# ============================================================================
-[build-system]
-requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.build_meta"
+# =============================================================================
+# Root pyproject.toml - Monorepo Workspace (Virtual)
+# =============================================================================
+# This is a virtual workspace root - not a package itself.
+# Individual packages are in abc/, std/, and pkgs/ directories.
+# =============================================================================
 
-# ============================================================================
-# Project Metadata (PEP 621)
-# ============================================================================
 [project]
-name = "everybase"
-version = "2.0.0"
-description = "Term Programming platform - protocols and implementations for topology-based software"
-readme = "README.md"
-license = "MIT"
-authors = [
-    {name = "Gor Arakelyan", email = "gorarkln@gmail.com"}
-]
-maintainers = [
-    {name = "Gor Arakelyan", email = "gorarkln@gmail.com"}
-]
-keywords = [
-    "term-programming",
-    "topology",
-    "declarative",
-    "protocols",
-    "flows",
-    "orchestration",
-    "ai-native",
-]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Programming Language :: Python :: 3.15",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-]
+name = "everybase-workspace"
+version = "0.0.0"
+description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = [
-    "attrs",
-]
+dependencies = ["every"]
 
-[project.urls]
-Homepage = "https://github.com/everyabc/everybase"
-Documentation = "https://github.com/everyabc/everybase#readme"
-Repository = "https://github.com/everyabc/everybase"
-Issues = "https://github.com/everyabc/everybase/issues"
-Changelog = "https://github.com/everyabc/everybase/releases"
+# =============================================================================
+# UV Workspace
+# =============================================================================
+[tool.uv.workspace]
+members = ["abc/every"]
 
-[project.optional-dependencies]
+[tool.uv.sources]
+every = { workspace = true }
 
-# Development tools
+[dependency-groups]
 dev = [
-    "ruff>=0.1.0",
+    "ruff>=0.8.0",
     "pre-commit>=3.0.0",
-]
-
-# Testing
-test = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-xdist>=3.0.0",
@@ -73,46 +33,28 @@ test = [
     "hypothesis>=6.0.0",
 ]
 
-# All development dependencies
-all = [
-    "everybase[dev,test]",
-]
-
-# ============================================================================
-# Package Discovery - Multiple source roots
-# ============================================================================
-[tool.setuptools.packages.find]
-where = ["src", "protocols/everyterm/src", "protocols/everyflow/src", "protocols/everylink/src", "pkgs"]
-include = ["everybase*", "everyterm*", "everyflow*", "everylink*"]
-namespaces = false
-
-# ============================================================================
+# =============================================================================
 # Pytest
-# ============================================================================
+# =============================================================================
 [tool.pytest.ini_options]
-testpaths = [
-    "tests",
-    "src/everybase/tests",
-    "protocols/everyterm/tests",
-    "protocols/everyflow/tests",
-    "protocols/everylink/tests",
-]
+testpaths = ["tests", "abc", "std", "pkgs"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-
-# ============================================================================
-# Coverage
-# ============================================================================
-[tool.coverage.run]
-source = ["src", "protocols"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/__pycache__/*",
-    "*/site-packages/*",
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
 ]
+
+# =============================================================================
+# Coverage
+# =============================================================================
+[tool.coverage.run]
+source = ["abc", "std", "pkgs"]
+omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
+parallel = true
 
 [tool.coverage.report]
 exclude_lines = [
@@ -129,23 +71,19 @@ exclude_lines = [
 ]
 precision = 2
 show_missing = true
+skip_covered = true
 
 [tool.coverage.html]
 directory = "tests/reports/coverage"
 
-# ============================================================================
-# Linting & Formatting - Ruff
-# ============================================================================
+# =============================================================================
+# Ruff
+# =============================================================================
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src", "protocols", "pkgs", "tests"]
-extend-exclude = [
-    ".venv",
-    "build",
-    "dist",
-    "*.egg-info",
-]
+src = ["abc", "std", "pkgs", "tests"]
+extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
 select = [
@@ -202,23 +140,19 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "everyterm", "everyflow", "everylink"]
+known-first-party = ["every"]
 force-single-line = false
 lines-after-imports = 2
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-docstring-code-format = true
-docstring-code-line-length = 80
 
-# ============================================================================
-# Type Checking - mypy
-# ============================================================================
+# =============================================================================
+# Mypy
+# =============================================================================
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
