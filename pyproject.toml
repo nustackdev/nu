@@ -10,16 +10,17 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["every"]
+dependencies = ["every", "everybase"]
 
 # =============================================================================
 # UV Workspace
 # =============================================================================
 [tool.uv.workspace]
-members = ["abc/every"]
+members = ["abc/every", "abc/everybase"]
 
 [tool.uv.sources]
 every = { workspace = true }
+everybase = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -140,7 +141,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["every"]
+known-first-party = ["every", "everybase"]
 force-single-line = false
 lines-after-imports = 2
 

@@ -1,57 +1,6 @@
 # Principles Setup Plan
 
-This document outlines the recommended structure for the everybase Python monorepo with UV workspace.
-
-## Directory Structure
-
-```text
-everybase/
-├── pyproject.toml              # Root: UV workspace + centralized tooling
-├── uv.lock                     # Workspace-wide lockfile (generated)
-├── Makefile                    # Multi-package workflow
-├── README.md                   # Project overview
-│
-├── abc/                        # CORE packages (primitives, fundamentals)
-│   └── every/                  # The core "every" package
-│       ├── pyproject.toml
-│       ├── README.md
-│       ├── src/
-│       │   └── every/
-│       │       └── __init__.py
-│       └── tests/
-│           └── test_*.py
-│
-├── std/                        # STANDARD library packages
-│   └── every_<name>/           # e.g., every_datetime, every_numeric
-│       ├── pyproject.toml
-│       ├── README.md
-│       ├── src/
-│       │   └── every_<name>/
-│       │       └── __init__.py
-│       └── tests/
-│           └── test_*.py
-│
-├── pkgs/                       # EXTENSION packages (integrations, optional)
-│   └── every_<name>/           # e.g., every_notion, every_airtable
-│       ├── pyproject.toml
-│       ├── README.md
-│       ├── src/
-│       │   └── every_<name>/
-│       │       └── __init__.py
-│       └── tests/
-│           └── test_*.py
-│
-├── tests/                      # INTEGRATION tests (cross-package)
-│   ├── conftest.py
-│   └── integration/
-│       └── test_*.py
-│
-└── docs/                       # Documentation
-    └── repo/
-        └── MONOREPO_SETUP.md   # This file
-```
-
----
+This document outlines the principles for the everybase Python monorepo with UV workspace.
 
 ## 1. Root pyproject.toml
 

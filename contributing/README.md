@@ -18,10 +18,16 @@ make test    # run tests
 make format  # fix lint issues
 ```
 
-## Package Locations
+## Core Packages (abc/)
+
+| Package | Purpose |
+|---------|---------|
+| `every` | Protocols - Term, Flow, Ref |
+| `everybase` | Base implementations - types, computations |
+
+## Other Locations
 
 | Dir | Purpose |
 |-----|---------|
-| `abc/` | Core primitives |
-| `std/` | Standard library |
-| `pkgs/` | Extensions/integrations |
+| `std/` | Standard library (every_datetime, etc.) |
+| `pkgs/` | Extensions (every_notion, etc.) |
