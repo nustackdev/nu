@@ -39,6 +39,10 @@ from .term import (
     Operation,
     Ref,
     RValue,
+    Shape,
+    ShapeMeta,
+    Slot,
+    SlotDescriptor,
     Term,
     Type,
 )
@@ -85,4 +89,9 @@ __all__ = [  # noqa: RUF022
     "Ref",
     "Term",
     "Type",
+    # Shape
+    "Shape",
+    "ShapeMeta",
+    "Slot",
+    "SlotDescriptor",
 ]

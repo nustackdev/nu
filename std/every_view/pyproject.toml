@@ -1,5 +1,5 @@
 # =============================================================================
-# std/every_pv - Polymorphic View Refs
+# std/every_view - Standard Views for PV
 # =============================================================================
 
 [build-system]
@@ -7,19 +7,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every-pv"
+name = "every-view"
 version = "0.1.0"
-description = "Specialized refs for polymorphic views over KV storages"
+description = "Standard view implementations for polymorphic views"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
-dependencies = [
-    "every>=0.1.0",
-    "everybase>=0.1.0",
-    "pv",
-]
-keywords = ["every", "pv", "refs", "kv", "polymorphic"]
+dependencies = ["pv"]
+keywords = ["every", "pv", "views", "kv"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
@@ -35,4 +31,4 @@ Repository = "https://github.com/everyabc/everybase"
 pv = { git = "https://github.com/everyabc/pv" }
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/every_pv"]
+packages = ["src/every_view"]

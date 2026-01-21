@@ -9,6 +9,7 @@ Quick reference for contributors.
 - [PACKAGES.md](PACKAGES.md) - Adding new packages
 - [TEMPLATES.md](TEMPLATES.md) - pyproject.toml templates
 - [TESTING.md](TESTING.md) - Test conventions
+- [GOTCHAS.md](GOTCHAS.md) - Non-obvious things
 
 ## Quick Start
 
