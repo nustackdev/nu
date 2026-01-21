@@ -1,0 +1,71 @@
+"""Dict morphisms for everybase.
+
+Access: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
+"""
+
+from __future__ import annotations
+
+from every import NOT_SET, NAryMorphism, NotSet, Operation, Sentinel, UnaryMorphism, is_notset
+
+
+__all__ = [
+    "DictGetOp",
+    "DictItemsOp",
+    "DictKeysOp",
+    "DictValuesOp",
+]
+
+
+# =============================================================================
+# MAPPING ACCESS (Unary)
+# =============================================================================
+
+
+class DictKeysOp[K](Operation, UnaryMorphism[list[K]]):
+    """Get keys from dict: list(dict.keys())."""
+
+    def _apply(self, operand: object) -> list[K]:
+        if not isinstance(operand, dict):
+            raise TypeError(f"keys_() requires dict, got {type(operand).__name__}")
+        return list(operand.keys())  # type: ignore
+
+
+class DictValuesOp[V](Operation, UnaryMorphism[list[V]]):
+    """Get values from dict: list(dict.values())."""
+
+    def _apply(self, operand: object) -> list[V]:
+        if not isinstance(operand, dict):
+            raise TypeError(f"values_() requires dict, got {type(operand).__name__}")
+        return list(operand.values())  # type: ignore
+
+
+class DictItemsOp[K, V](Operation, UnaryMorphism[list[tuple[K, V]]]):
+    """Get items from dict: list(dict.items())."""
+
+    def _apply(self, operand: object) -> list[tuple[K, V]]:
+        if not isinstance(operand, dict):
+            raise TypeError(f"items_() requires dict, got {type(operand).__name__}")
+        return list(operand.items())  # type: ignore
+
+
+# =============================================================================
+# DICT GET (NAryMorphism - optional default)
+# =============================================================================
+
+
+class DictGetOp[V](Operation, NAryMorphism[V | Sentinel]):
+    """Get value from dict with optional default: dict.get(key, default) or dict[key]."""
+
+    def __init__(self, operand: object, key: object, default: object | NotSet = NOT_SET) -> None:
+        """Initialize get operation."""
+        if is_notset(default):
+            self._children = (operand, key)  # type: ignore
+        else:
+            self._children = (operand, key, default)  # type: ignore
+
+    def _apply(self, operand: object, key: object, default: object = NOT_SET) -> V | Sentinel:
+        if not isinstance(operand, dict):
+            raise TypeError(f"get_() requires dict, got {type(operand).__name__}")
+        if is_notset(default):
+            return operand[key]  # type: ignore
+        return operand.get(key, default)  # type: ignore

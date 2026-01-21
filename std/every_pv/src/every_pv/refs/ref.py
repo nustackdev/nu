@@ -14,7 +14,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from every import Context, Ref, Term
-from everybase.typing.ref import Extractable, Gettable
+from everybase.protocols import Extractable, Gettable
 
 
 if TYPE_CHECKING:

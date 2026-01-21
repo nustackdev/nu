@@ -125,7 +125,8 @@ class NAryMorphism[T](Morphism[T], ABC):
     """Base for morphisms with operands. Handles resolution and sentinels.
 
     Provides a uniform children management interface for working with operands.
-    Subclasses must initialize _children tuple in their __init__.
+    Subclasses with fixed arity should use UnaryMorphism, BinaryMorphism, or
+    TernaryMorphism. Subclasses with variable arity can override __init__.
 
     Children can be:
     - Terms: executed to get values
@@ -141,6 +142,14 @@ class NAryMorphism[T](Morphism[T], ABC):
     """
 
     _children: tuple[Term, ...]
+
+    def __init__(self, *children: Term) -> None:
+        """Initialize with operands.
+
+        Args:
+            *children: Variable number of operands (Terms, Gettables, or literals)
+        """
+        self._children = children
 
     # =========================================================================
     # CHILDREN MANAGEMENT INTERFACE

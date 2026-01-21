@@ -6,82 +6,91 @@ properly chain together without requiring execution context.
 
 import pytest
 
-from everybase.conversion import literal
-from everybase.ops import AddOp, GtOp, LtOp, MulOp, NegOp, SubOp
-from everybase.types import BoolType, FloatType, IntType, ListType, StrType
+from everybase import (
+    AddOp,
+    BoolRef,
+    FloatRef,
+    GtOp,
+    IntRef,
+    ListRef,
+    LtOp,
+    MulOp,
+    NegOp,
+    StrRef,
+    SubOp,
+    ensure_term,
+)
 
 
-class TestIntType:
-    """Tests for IntType construction and operations."""
+class TestIntRef:
+    """Tests for IntRef construction and operations."""
 
     def test_int_type_literal_creation(self):
-        """IntType can wrap a literal integer."""
-        x = IntType(42)
-        assert x.is_literal
+        """IntRef can wrap a literal integer."""
+        x = IntRef(42)
         assert x.source == 42
-        assert x.children == ()
 
     def test_int_type_addition_returns_int_type(self):
-        """Adding two IntTypes returns an IntType wrapping AddOp."""
-        x = IntType(10)
-        y = IntType(5)
+        """Adding two IntRefs returns an IntRef wrapping AddOp."""
+        x = IntRef(10)
+        y = IntRef(5)
         result = x + y
-        assert isinstance(result, IntType)
-        assert not result.is_literal
+        assert isinstance(result, IntRef)
+
         assert isinstance(result.source, AddOp)
 
-    def test_int_type_addition_with_literal(self):
-        """IntType + int literal returns IntType."""
-        x = IntType(10)
+    def test_int_type_addition_with_ensure_term(self):
+        """IntRef + int literal returns IntRef."""
+        x = IntRef(10)
         result = x + 5
-        assert isinstance(result, IntType)
+        assert isinstance(result, IntRef)
         assert isinstance(result.source, AddOp)
 
     def test_int_type_subtraction(self):
-        """IntType subtraction returns IntType wrapping SubOp."""
-        x = IntType(20)
-        y = IntType(8)
+        """IntRef subtraction returns IntRef wrapping SubOp."""
+        x = IntRef(20)
+        y = IntRef(8)
         result = x - y
-        assert isinstance(result, IntType)
+        assert isinstance(result, IntRef)
         assert isinstance(result.source, SubOp)
 
     def test_int_type_multiplication(self):
-        """IntType multiplication returns IntType wrapping MulOp."""
-        x = IntType(6)
+        """IntRef multiplication returns IntRef wrapping MulOp."""
+        x = IntRef(6)
         result = x * 7
-        assert isinstance(result, IntType)
+        assert isinstance(result, IntRef)
         assert isinstance(result.source, MulOp)
 
     def test_int_type_division_returns_float(self):
-        """IntType division always returns FloatType."""
-        x = IntType(10)
+        """IntRef division always returns FloatRef."""
+        x = IntRef(10)
         result = x / 3
-        assert isinstance(result, FloatType)
+        assert isinstance(result, FloatRef)
 
     def test_int_type_negation(self):
-        """Negating IntType returns IntType wrapping NegOp."""
-        x = IntType(42)
+        """Negating IntRef returns IntRef wrapping NegOp."""
+        x = IntRef(42)
         result = -x
-        assert isinstance(result, IntType)
+        assert isinstance(result, IntRef)
         assert isinstance(result.source, NegOp)
 
     def test_int_type_comparison_returns_bool_type(self):
-        """Comparison operations return BoolType."""
-        x = IntType(10)
+        """Comparison operations return BoolRef."""
+        x = IntRef(10)
         result = x > 5
-        assert isinstance(result, BoolType)
+        assert isinstance(result, BoolRef)
         assert isinstance(result.source, GtOp)
 
     def test_int_type_less_than(self):
-        """Less than comparison returns BoolType wrapping LtOp."""
-        x = IntType(3)
+        """Less than comparison returns BoolRef wrapping LtOp."""
+        x = IntRef(3)
         result = x < 10
-        assert isinstance(result, BoolType)
+        assert isinstance(result, BoolRef)
         assert isinstance(result.source, LtOp)
 
     def test_int_type_is_pure(self):
-        """IntType expressions are pure."""
-        x = IntType(42)
+        """IntRef expressions are pure."""
+        x = IntRef(42)
         y = x + 10
         z = y * 2
         assert x.is_pure
@@ -89,97 +98,94 @@ class TestIntType:
         assert z.is_pure
 
 
-class TestStrType:
-    """Tests for StrType construction and operations."""
+class TestStrRef:
+    """Tests for StrRef construction and operations."""
 
     def test_str_type_literal_creation(self):
-        """StrType can wrap a literal string."""
-        s = StrType("hello")
-        assert s.is_literal
+        """StrRef can wrap a literal string."""
+        s = StrRef("hello")
+
         assert s.source == "hello"
 
     def test_str_type_concatenation(self):
-        """StrType + str returns StrType wrapping AddOp."""
-        s = StrType("hello")
+        """StrRef + str returns StrRef wrapping AddOp."""
+        s = StrRef("hello")
         result = s + " world"
-        assert isinstance(result, StrType)
+        assert isinstance(result, StrRef)
         assert isinstance(result.source, AddOp)
 
     def test_str_type_upper_method(self):
-        """StrType.upper() returns StrType with operation."""
-        s = StrType("hello")
+        """StrRef.upper() returns StrRef with operation."""
+        s = StrRef("hello")
         result = s.upper()
-        assert isinstance(result, StrType)
-        assert not result.is_literal
+        assert isinstance(result, StrRef)
 
 
-class TestBoolType:
-    """Tests for BoolType construction and operations."""
+class TestBoolRef:
+    """Tests for BoolRef construction and operations."""
 
     def test_bool_type_literal_creation(self):
-        """BoolType can wrap a literal boolean."""
-        b = BoolType(True)
-        assert b.is_literal
+        """BoolRef can wrap a literal boolean."""
+        b = BoolRef(True)
+
         assert b.source is True
 
     def test_bool_type_and_operation(self):
-        """BoolType.and_() returns BoolType."""
-        a = BoolType(True)
-        b = BoolType(False)
+        """BoolRef.and_() returns BoolRef."""
+        a = BoolRef(True)
+        b = BoolRef(False)
         result = a.and_(b)
-        assert isinstance(result, BoolType)
-        assert not result.is_literal
+        assert isinstance(result, BoolRef)
 
     def test_bool_type_or_operation(self):
-        """BoolType.or_() returns BoolType."""
-        a = BoolType(True)
-        b = BoolType(False)
+        """BoolRef.or_() returns BoolRef."""
+        a = BoolRef(True)
+        b = BoolRef(False)
         result = a.or_(b)
-        assert isinstance(result, BoolType)
-        assert not result.is_literal
+        assert isinstance(result, BoolRef)
 
     def test_bool_type_not_operation(self):
-        """BoolType.not_() returns BoolType."""
-        a = BoolType(True)
+        """BoolRef.not_() returns BoolRef."""
+        a = BoolRef(True)
         result = a.not_()
-        assert isinstance(result, BoolType)
+        assert isinstance(result, BoolRef)
 
 
-class TestLiteral:
-    """Tests for the literal() conversion function."""
+class TestEnsureTerm:
+    """Tests for the ensure_term() conversion function."""
 
-    def test_literal_int(self):
-        """literal() wraps int in IntType."""
-        result = literal(42)
-        assert isinstance(result, IntType)
+    def test_ensure_term_int(self):
+        """ensure_term() wraps int in IntRef."""
+        result = ensure_term(42)
+        assert isinstance(result, IntRef)
         assert result.source == 42
 
-    def test_literal_str(self):
-        """literal() wraps str in StrType."""
-        result = literal("hello")
-        assert isinstance(result, StrType)
+    def test_ensure_term_str(self):
+        """ensure_term() wraps str in StrRef."""
+        result = ensure_term("hello")
+        assert isinstance(result, StrRef)
         assert result.source == "hello"
 
-    def test_literal_bool(self):
-        """literal() wraps bool in BoolType."""
-        result = literal(True)
-        assert isinstance(result, BoolType)
+    def test_ensure_term_bool(self):
+        """ensure_term() wraps bool in BoolRef."""
+        result = ensure_term(True)
+        assert isinstance(result, BoolRef)
         assert result.source is True
 
-    def test_literal_float(self):
-        """literal() wraps float in FloatType."""
-        result = literal(3.14)
-        assert isinstance(result, FloatType)
+    def test_ensure_term_float(self):
+        """ensure_term() wraps float in FloatRef."""
+        result = ensure_term(3.14)
+        assert isinstance(result, FloatRef)
 
-    def test_literal_list(self):
-        """literal() wraps list in ListType."""
-        result = literal([1, 2, 3])
-        assert isinstance(result, ListType)
+    def test_ensure_term_list(self):
+        """ensure_term() wraps list in ListRef."""
+        result = ensure_term([1, 2, 3])
+        assert isinstance(result, ListRef)
 
-    def test_literal_passthrough_term(self):
-        """literal() passes through existing Term unchanged."""
-        original = IntType(42)
-        result = literal(original)
+    def test_ensure_term_passthrough(self):
+        """ensure_term() passes through existing Term unchanged."""
+        original = IntRef(42)
+        result = ensure_term(original)
         assert result is original
 
 
@@ -188,35 +194,35 @@ class TestExpressionChaining:
 
     def test_arithmetic_chain(self):
         """Multiple arithmetic operations can be chained."""
-        x = IntType(10)
-        y = IntType(5)
-        z = IntType(2)
+        x = IntRef(10)
+        y = IntRef(5)
+        z = IntRef(2)
         result = (x + y) * z
-        assert isinstance(result, IntType)
+        assert isinstance(result, IntRef)
         assert isinstance(result.source, MulOp)
-        # The MulOp's first child should be an IntType wrapping AddOp
+        # The MulOp's first child should be an IntRef wrapping AddOp
         # result.source is MulOp, result.source.children[0] is the left operand
         mul_op = result.source
         left_operand = mul_op.children[0]
-        assert isinstance(left_operand, IntType)
+        assert isinstance(left_operand, IntRef)
         assert isinstance(left_operand.source, AddOp)
 
     def test_comparison_with_arithmetic(self):
         """Comparisons can use arithmetic expressions."""
-        x = IntType(5)
-        y = IntType(3)
+        x = IntRef(5)
+        y = IntRef(3)
         # (5 + 3) > 7
         result = (x + y) > 7
-        assert isinstance(result, BoolType)
+        assert isinstance(result, BoolRef)
         assert isinstance(result.source, GtOp)
 
     def test_logical_with_comparisons(self):
         """Logical operations can combine comparisons."""
-        x = IntType(10)
+        x = IntRef(10)
         cond1 = x > 5  # True
         cond2 = x < 20  # True
         result = cond1.and_(cond2)
-        assert isinstance(result, BoolType)
+        assert isinstance(result, BoolRef)
 
 
 class TestBlockedOperators:
@@ -224,32 +230,32 @@ class TestBlockedOperators:
 
     def test_eq_blocked(self):
         """Using == on Terms raises TypeError."""
-        x = IntType(10)
-        y = IntType(10)
+        x = IntRef(10)
+        y = IntRef(10)
         with pytest.raises(TypeError, match="Cannot use =="):
             _ = x == y
 
     def test_ne_blocked(self):
         """Using != on Terms raises TypeError."""
-        x = IntType(10)
-        y = IntType(5)
+        x = IntRef(10)
+        y = IntRef(5)
         with pytest.raises(TypeError, match="Cannot use !="):
             _ = x != y
 
     def test_bool_conversion_blocked(self):
         """Using bool() on Terms raises TypeError."""
-        x = IntType(10)
+        x = IntRef(10)
         with pytest.raises(TypeError, match="Cannot convert Term to bool"):
             bool(x)
 
     def test_eq_method_works(self):
         """The eq() method works for equality checks."""
-        x = IntType(10)
+        x = IntRef(10)
         result = x.eq(10)
-        assert isinstance(result, BoolType)
+        assert isinstance(result, BoolRef)
 
     def test_ne_method_works(self):
         """The ne() method works for inequality checks."""
-        x = IntType(10)
+        x = IntRef(10)
         result = x.ne(5)
-        assert isinstance(result, BoolType)
+        assert isinstance(result, BoolRef)
