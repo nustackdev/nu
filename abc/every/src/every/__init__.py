@@ -32,10 +32,13 @@ from .sentinel import (
     propagate_special,
 )
 from .term import (
+    BinaryMorphism,
     Command,
-    Computation,
     Context,
+    Gettable,
     LValue,
+    Morphism,
+    NAryMorphism,
     Operation,
     Ref,
     RValue,
@@ -44,7 +47,8 @@ from .term import (
     Slot,
     SlotDescriptor,
     Term,
-    Type,
+    TernaryMorphism,
+    UnaryMorphism,
 )
 
 
@@ -79,16 +83,25 @@ __all__ = [  # noqa: RUF022
     "is_notset",
     "is_sentinel",
     "propagate_special",
-    # Term
-    "Command",
-    "Computation",
-    "Context",
-    "LValue",
-    "Operation",
-    "RValue",
-    "Ref",
+    # Term hierarchy
     "Term",
-    "Type",
+    "LValue",
+    "RValue",
+    # References
+    "Ref",
+    # Morphisms
+    "Morphism",
+    "NAryMorphism",
+    "UnaryMorphism",
+    "BinaryMorphism",
+    "TernaryMorphism",
+    # Purity mixins
+    "Operation",
+    "Command",
+    # Protocols
+    "Gettable",
+    # Context
+    "Context",
     # Shape
     "Shape",
     "ShapeMeta",

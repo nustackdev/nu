@@ -5,24 +5,71 @@ Term                        - executable node
 │   └── Ref                 - typed reference to storage location
 │       ├── ViewRef         - reference to container (dict, list, set)
 │       └── PrimitiveRef    - reference to leaf value (int, str, etc.)
+
+Protocols:
+    Gettable[T]             - protocol for objects that support value extraction
 """
 
 from __future__ import annotations
 
 from abc import ABC
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from .term import LValue
 
 
 if TYPE_CHECKING:
+    from every.sentinel import Sentinel
+
+    from .context import Context
     from .shape import Shape
 
 
 __all__ = [
+    "Gettable",
     "Ref",
 ]
+
+
+# =============================================================================
+# PROTOCOLS
+# =============================================================================
+
+
+@runtime_checkable
+class Gettable[T](Protocol):
+    """Protocol for refs that support value extraction.
+
+    Use isinstance(obj, Gettable) to check if an object supports
+    value extraction before calling get().
+
+    This is used by morphism operand resolution to determine how
+    to extract values from operands that are not Terms but can
+    still provide values.
+
+    Example:
+        >>> if isinstance(operand, Gettable):
+        ...     value = operand.get(ctx)
+        ... else:
+        ...     value = operand  # Use as literal
+    """
+
+    def get(self, ctx: Context) -> T | Sentinel:
+        """Extract value from this location.
+
+        Args:
+            ctx: Execution context providing storage access
+
+        Returns:
+            The value at this location, or a Sentinel if absent/invalid
+        """
+        ...
+
+
+# =============================================================================
+# REF BASE CLASS
+# =============================================================================
 
 
 logger = getLogger(__name__)

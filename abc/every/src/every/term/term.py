@@ -8,14 +8,15 @@ This module defines the execution model through a minimal type hierarchy:
     │       ├── ViewRef         - reference to container (dict, list, set)
     │       └── PrimitiveRef    - reference to leaf value (int, str, etc.)
     └── RValue                  - evaluable expression (has children)
-        ├── Type                - typed value (literal or computed, unified)
-        │   ├── IntType, FloatType, StrType, BoolType, BytesType
-        │   ├── NilType, ListType, DictType, SetType, TupleType
-        │   ├── AnyType         - dynamic/unknown type
-        │   └── SentinelType    - special values (EmptyType, InvalidType)
-        └── Computation         - computes or mutates
-            ├── Operation       - pure computation (e.g. get, add)
-            └── Command         - impure mutation (e.g. set, delete)
+        └── Morphism            - transformation (maps inputs to outputs)
+            └── NAryMorphism    - morphism with operands and children management
+                ├── UnaryMorphism   - single operand (e.g., -x, abs(x))
+                ├── BinaryMorphism  - two operands (e.g., x + y, x > y)
+                └── TernaryMorphism - three operands (e.g., if a then b else c)
+
+Purity mixins (orthogonal to arity):
+    - Operation: pure computation (no side effects)
+    - Command: impure mutation (has side effects)
 
 Design principles:
     - Minimal contracts: only essential methods
@@ -32,12 +33,7 @@ LValue vs RValue:
     price + 100             → RValue (computes)
     price.set(150)          → RValue (writes to location)
 
-Type classes:
-    Type[T] = unified typed expression (literal or computed)
-    Accepts: T | Term[T] | Sentinel in constructor
-    Handles dispatch automatically based on input type
-
-Computation types (pure vs impure):
+Morphism types (pure vs impure):
     Operation = deterministic, no side effects, cacheable
     Command   = modifies state, transactional, explicit effects
 
