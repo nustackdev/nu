@@ -12,7 +12,6 @@ __all__ = [
 ]
 
 
-
 type Segment = str | int
 
 
