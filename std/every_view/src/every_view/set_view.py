@@ -109,10 +109,9 @@ class SetView(
             KeyError: If value not in set
         """
         key = self._make_key(value)
-        deleted = self.container.delete_child(key)
-        if not deleted:
+        if not self.container.exists_child(key):
             raise KeyError(value)
-        # Update length metadata
+        self.container.delete_child(key)
         self._decrement_length()
 
     def discard(self, value: object) -> None:
@@ -122,9 +121,8 @@ class SetView(
             value: Value to remove
         """
         key = self._make_key(value)
-        deleted = self.container.delete_child(key)
-        # Update length metadata if actually deleted
-        if deleted:
+        if self.container.exists_child(key):
+            self.container.delete_child(key)
             self._decrement_length()
 
     def __contains__(self, obj: object) -> bool:

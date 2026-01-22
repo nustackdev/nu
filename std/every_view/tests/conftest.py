@@ -1,12 +1,101 @@
 """Fixtures for view layer testing."""
 
-from collections.abc import Callable
-from typing import Any
+from __future__ import annotations
+
+from functools import partial
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from pv.view import View
+from evkv.inmemdb import InMemoryStorage
+from evkv.tupkey import StringKeyCodec
+from pv.storage import Codec, SnapshotProtocol, StorageProtocol, TransactionProtocol
 
 from every_view import DictView
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+
+    from pv.typing import Value
+    from pv.view import View
+
+
+__all__ = ["PassthroughCodec"]
+
+
+class PassthroughCodec:
+    """Codec that performs no transformation on data.
+
+    This adapter is suitable for in-memory storage where serialization
+    is not required. It passes values through without any encoding or
+    decoding overhead.
+
+    """
+
+    def __init__(self) -> None:
+        """Initialize passthrough codec with identity function references."""
+        self.encode = lambda x: x  # type: ignore[return-value]
+        self.decode = lambda x: x  # type: ignore[return-value]
+
+    def encode(self, value: Value) -> object:
+        """Encode a supported value (no transformation)."""
+        ...
+
+    def decode(self, encoded: object) -> Value:
+        """Decode a supported value (no transformation)."""
+        ...
+
+
+# =============================================================================
+# FIXTURES
+# =============================================================================
+
+
+@pytest.fixture
+def storage() -> Generator[StorageProtocol, None, None]:
+    """Memory storage instance for functional tests.
+
+    Provides a clean storage instance for each test with automatic cleanup.
+    """
+    # No-op codec
+    NoOpCodec = partial(
+        Codec,
+        key_codec_cls=StringKeyCodec,
+        value_codec_cls=PassthroughCodec,
+    )
+
+    storage = InMemoryStorage(codec=NoOpCodec())
+    storage.open()
+    try:
+        yield storage
+    finally:
+        storage.close()
+
+
+@pytest.fixture
+def tx(storage: StorageProtocol) -> Generator[TransactionProtocol, None, None]:
+    """Read-write transaction context.
+
+    Auto-commits on successful completion, rolls back on exception.
+    """
+    with storage.transaction() as transaction:
+        yield transaction
+
+
+@pytest.fixture
+def snapshot(storage: StorageProtocol) -> Generator[SnapshotProtocol, None, None]:
+    """Read-only snapshot context.
+
+    Useful for testing isolation and concurrent read scenarios.
+    """
+    with storage.snapshot() as snap:
+        yield snap
+
+
+@pytest.fixture
+def root_view(tx: TransactionProtocol) -> DictView:
+    """Create a DictView at root for testing."""
+    return DictView.open_root(tx)
 
 
 # ============================================================================
@@ -27,7 +116,7 @@ def dict_factory(root_view: DictView) -> Callable[[str, dict[str, Any] | None], 
     """
 
     def _create(address: str, data: dict | None = None) -> View:
-        from everybase.view import DictView
+        from every_view import DictView
 
         view = root_view.open_child(address, DictView)
         if data is not None:
@@ -50,7 +139,7 @@ def list_factory(root_view: DictView) -> Callable[[str, list[Any] | None], View]
     """
 
     def _create(address: str, data: list | None = None) -> View:
-        from everybase.view import ListView
+        from every_view import ListView
 
         view = root_view.open_child(address, ListView)
         if data is not None:
@@ -73,7 +162,7 @@ def set_factory(root_view: DictView) -> Callable[[str, set[Any] | None], View]:
     """
 
     def _create(address: str, data: set | None = None) -> View:
-        from everybase.view import SetView
+        from every_view import SetView
 
         view = root_view.open_child(address, SetView)
         if data is not None:
@@ -96,7 +185,7 @@ def tuple_factory(root_view: DictView) -> Callable[[str, tuple[Any, ...] | None]
     """
 
     def _create(address: str, data: tuple | None = None) -> View:
-        from everybase.view import TupleView
+        from every_view import TupleView
 
         view = root_view.open_child(address, TupleView)
         if data is not None:
