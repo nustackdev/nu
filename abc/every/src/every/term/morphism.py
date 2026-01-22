@@ -151,6 +151,14 @@ class NAryMorphism[T](Morphism[T], ABC):
         """
         self._children = children
 
+    def __repr__(self) -> str:
+        args = ", ".join(repr(c) for c in self._children)
+        return f"{self.__class__.__name__}({args})"
+
+    def __str__(self) -> str:
+        args = ", ".join(str(c) for c in self._children)
+        return f"{self.__class__.__name__}({args})"
+
     # =========================================================================
     # CHILDREN MANAGEMENT INTERFACE
     # =========================================================================
@@ -317,6 +325,12 @@ class UnaryMorphism[T](NAryMorphism[T], ABC):
         """
         self._children = (operand,)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.operand!r})"
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.operand})"
+
     @property
     def operand(self) -> Term:
         """The single operand.
@@ -361,6 +375,12 @@ class BinaryMorphism[T](NAryMorphism[T], ABC):
             right: Right operand (Term, Gettable, or literal)
         """
         self._children = (left, right)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.left!r}, {self.right!r})"
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.left}, {self.right})"
 
     @property
     def left(self) -> Term:
@@ -417,6 +437,12 @@ class TernaryMorphism[T](NAryMorphism[T], ABC):
             third: Third operand (Term, Gettable, or literal)
         """
         self._children = (first, second, third)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.first!r}, {self.second!r}, {self.third!r})"
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.first}, {self.second}, {self.third})"
 
     @property
     def first(self) -> Term:
