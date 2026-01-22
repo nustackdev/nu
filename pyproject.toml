@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["every", "everybase", "every-pv", "every-view"]
+dependencies = ["every", "everybase", "every-pv", "every-view", "every-adapters"]
 
 # =============================================================================
 # UV Workspace

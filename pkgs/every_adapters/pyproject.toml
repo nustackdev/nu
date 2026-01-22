@@ -15,10 +15,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-rocksdb = ["rdbpy"]
+rocksdb = ["rdbpython"]
 redis = ["redis"]
 msgpack = ["msgpack"]
 micropack = ["micropack"]
+
+[tool.uv.sources]
+evkv = { git = "https://github.com/everyabc/evkv" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/every_adapters"]
