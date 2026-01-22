@@ -116,8 +116,8 @@ class _ItemSlot(Slot):
             address=self.name,
             value_type=self.value_type,
             value_value_type=self.value_value_type,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
+            parent=parent_ref,
+            shape=owner_shape,
         )
 
 
@@ -204,8 +204,8 @@ class _DictSlot(Slot):
             view_type=self.view_type or DictView,
             key_value_type=self.key_value_type,
             value_value_type=self.value_value_type,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
+            parent=parent_ref,
+            shape=owner_shape,
         )
 
 
@@ -285,8 +285,8 @@ class _ListSlot(Slot):
             item_type=self.item_type,
             item_value_type=self.item_value_type,
             view_type=self.view_type or ListView,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
+            parent=parent_ref,
+            shape=owner_shape,
         )
 
 
@@ -365,8 +365,8 @@ class _ShapeSlot(Slot):
             address=self.name,
             shape_type=self.shape_type,
             view_type=self.view_type or DictView,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
+            parent=parent_ref,
+            shape=owner_shape,
         )
 
 
@@ -446,8 +446,8 @@ class _ShapesListSlot(Slot):
             address=self.name,
             shape_type=self.shape_type,
             view_type=self.view_type or ListView,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
+            parent=parent_ref,
+            shape=owner_shape,
         )
 
 
@@ -534,8 +534,8 @@ class _ShapesDictSlot(Slot):
             key_value_type=self.key_value_type,
             shape_type=self.shape_type,
             view_type=self.view_type or DictView,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
+            parent=parent_ref,
+            shape=owner_shape,
         )
 
 

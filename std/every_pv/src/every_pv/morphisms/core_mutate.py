@@ -29,7 +29,7 @@ from everybase import ensure_term
 
 if TYPE_CHECKING:
     from every_pv.context import KVContext as Context
-    from every_pv.ref import PrimitiveRef, ViewRef
+    from every_pv.ref import PVPrimitiveRef, PVViewRef
 
 type UnionRefBases = None
 
@@ -59,7 +59,7 @@ class SetCmd[T](Command, Morphism[T]):
 
     def __init__(
         self,
-        ref: PrimitiveRef[T] | UnionRefBases,
+        ref: PVPrimitiveRef[T] | UnionRefBases,
         value: Term[T | Sentinel],
     ) -> None:
         """Initialize set command.
@@ -68,9 +68,9 @@ class SetCmd[T](Command, Morphism[T]):
             ref: Reference to write to
             value: Value to write (wrapped in Term)
         """
-        self.ref = cast("PrimitiveRef[T]", ref)
+        self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = value
-        self.children = (cast("PrimitiveRef[T]", ref), value)
+        self.children = (cast("PVPrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute write command.
@@ -124,14 +124,14 @@ class DeleteCmd(Command, Morphism[None]):
         >>> del_cmd.execute(ctx)  # Returns None
     """
 
-    def __init__(self, ref: PrimitiveRef | UnionRefBases) -> None:
+    def __init__(self, ref: PVPrimitiveRef | UnionRefBases) -> None:
         """Initialize delete command.
 
         Args:
             ref: Reference to delete
         """
-        self.ref = cast("PrimitiveRef", ref)
-        self.children = (cast("PrimitiveRef", ref),)
+        self.ref = cast("PVPrimitiveRef", ref)
+        self.children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute delete command.
@@ -181,7 +181,7 @@ class StoreCmd[T](Command, Morphism[T]):
 
     def __init__(
         self,
-        ref: ViewRef[Initializable] | UnionRefBases,
+        ref: PVViewRef[Initializable] | UnionRefBases,
         data: Term[T | Sentinel],
     ) -> None:
         """Initialize store command.
@@ -190,9 +190,9 @@ class StoreCmd[T](Command, Morphism[T]):
             ref: View reference to store to
             data: Data to store (wrapped in Term)
         """
-        self.ref = cast("ViewRef[Initializable]", ref)
+        self.ref = cast("PVViewRef[Initializable]", ref)
         self.data_expr = data
-        self.children = (cast("ViewRef[Initializable]", ref), data)
+        self.children = (cast("PVViewRef[Initializable]", ref), data)
 
     def execute(self, context: Context) -> T:
         """Execute store command.
@@ -248,14 +248,14 @@ class ClearCmd(Command, Morphism[None]):
         >>> clear_cmd.execute(ctx)  # Returns None
     """
 
-    def __init__(self, ref: ViewRef[Clearable] | UnionRefBases) -> None:
+    def __init__(self, ref: PVViewRef[Clearable] | UnionRefBases) -> None:
         """Initialize clear command.
 
         Args:
             ref: View reference to clear
         """
-        self.ref = cast("ViewRef[Clearable]", ref)
-        self.children = (cast("ViewRef[Clearable]", ref),)
+        self.ref = cast("PVViewRef[Clearable]", ref)
+        self.children = (cast("PVViewRef[Clearable]", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute clear command.
@@ -320,7 +320,7 @@ class TypedSetCmd[T](Command, Morphism[T]):
 
     def __init__(
         self,
-        ref: PrimitiveRef[T],
+        ref: PVPrimitiveRef[T],
         value: Term[T | Sentinel],
     ) -> None:
         """Initialize typed set command.
@@ -329,9 +329,9 @@ class TypedSetCmd[T](Command, Morphism[T]):
             ref: Reference to write to
             value: Value to write (can be TypedValue with __to_storage__)
         """
-        self.ref = cast("PrimitiveRef[T]", ref)
+        self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = ensure_term(value)
-        self.children = (cast("PrimitiveRef[T]", ref), value)
+        self.children = (cast("PVPrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute typed write command.

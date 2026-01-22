@@ -48,7 +48,7 @@ class CollectionItemRefBase[T, ValueT](
         ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
 
     Example:
-        class MyValueRef(CollectionItemRefBase[str, StrType], PrimitiveRef, ABC):
+        class MyValueRef(CollectionItemRefBase[str, StrType], PVPrimitiveRef, ABC):
             value_type = str
             value_value_type = StrType
     """
@@ -70,7 +70,7 @@ class SequenceItemRefBase[T, ValueT](CollectionItemRefBase[T, ValueT]):
         ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
 
     Example:
-        class MySequenceItemRef(SequenceItemRefBase[int, IntType], PrimitiveRef, ABC):
+        class MySequenceItemRef(SequenceItemRefBase[int, IntType], PVPrimitiveRef, ABC):
             value_type = int
             value_value_type = IntType
     """
@@ -103,7 +103,7 @@ class MappingItemRefBase[T, ValueT](CollectionItemRefBase[T, ValueT]):
         ValueT: ComputedValue type for this value (IntType, StrType, FloatType, AnyType, etc.)
 
     Example:
-        class MyMappingValueRef(MappingItemRefBase[str, StrType], PrimitiveRef, ABC):
+        class MyMappingValueRef(MappingItemRefBase[str, StrType], PVPrimitiveRef, ABC):
             value_type = str
             value_value_type = StrType
     """

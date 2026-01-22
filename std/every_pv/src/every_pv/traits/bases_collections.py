@@ -8,7 +8,7 @@ to create final types like ListRef, DictRef, SetRef, etc.
 Implementation Hierarchy:
     SequenceRefBase combines:
         ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
-        SequenceIndexableBase + SequenceIterableBase + ViewRef
+        SequenceIndexableBase + SequenceIterableBase + PVViewRef
 
     MutableSequenceRefBase extends SequenceRefBase:
         + AppendableBase + InsertableBase + PoppableBase + ViewObservableBase
@@ -16,13 +16,13 @@ Implementation Hierarchy:
     MappingRefBase combines:
         ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase +
         MappingNestableBase + KeysQueryableBase + ValuesQueryableBase +
-        ItemsQueryableBase + MappingIterableBase + ViewRef
+        ItemsQueryableBase + MappingIterableBase + PVViewRef
 
     MutableMappingRefBase extends MappingRefBase:
         + ViewObservableBase
 
     SetRefBase combines:
-        ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase + ViewRef
+        ExistableBase + ExtractableBase + StorableBase + ClearableBase + LengthableBase + PVViewRef
 
     MutableSetRefBase extends SetRefBase:
         + SetAddableBase + SetRemovableBase + ViewObservableBase
@@ -76,8 +76,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-
-from every_pv.ref import ViewRef
 
 from .core import (
     ClearableBase,
@@ -327,7 +325,6 @@ class MappingRefBase[
     ItemsQueryableBase[KeyT, ValueT],
     MappingIterableBase[KeyT, ValueT],
     MappingAccessibleBase[KeyT, ValueT],
-    ViewRef,
     ABC,
 ):
     """Base class for read-only mapping references.
@@ -486,7 +483,6 @@ class SetRefBase[
     StorableBase[CollectionValueT, CollectionT],
     ClearableBase,
     LengthableBase,
-    ViewRef,
     ABC,
 ):
     """Base class for read-only set references.

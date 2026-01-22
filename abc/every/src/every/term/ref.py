@@ -3,18 +3,21 @@
 Term                        - executable node
 ├── LValue                  - addressable location (has path)
 │   └── Ref                 - typed reference to storage location
-│       ├── ViewRef         - reference to container (dict, list, set)
-│       └── PrimitiveRef    - reference to leaf value (int, str, etc.)
 
-Protocols:
-    Gettable[T]             - protocol for objects that support value extraction
+Ref is the pure protocol for typed references. No substrate assumptions.
+Substrates (Python memory, PV storage, etc.) extend this with their
+own storage implementations.
+
+Core vocabulary:
+    resolve(ctx) → Location    - WHERE is this? (identity/path)
+    fetch(ctx) → T | Sentinel  - WHAT is there? (value extraction)
+    execute(ctx)               - Term interface, delegates to fetch()
 """
 
 from __future__ import annotations
 
-from abc import ABC
-from logging import getLogger
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from .term import LValue
 
@@ -23,131 +26,84 @@ if TYPE_CHECKING:
     from every.sentinel import Sentinel
 
     from .context import Context
-    from .shape import Shape
 
 
 __all__ = [
-    "Gettable",
     "Ref",
 ]
 
 
-# =============================================================================
-# PROTOCOLS
-# =============================================================================
-
-
-@runtime_checkable
-class Gettable[T](Protocol):
-    """Protocol for refs that support value extraction.
-
-    Use isinstance(obj, Gettable) to check if an object supports
-    value extraction before calling get().
-
-    This is used by morphism operand resolution to determine how
-    to extract values from operands that are not Terms but can
-    still provide values.
-
-    Example:
-        >>> if isinstance(operand, Gettable):
-        ...     value = operand.get(ctx)
-        ... else:
-        ...     value = operand  # Use as literal
-    """
-
-    def get(self, ctx: Context) -> T | Sentinel:
-        """Extract value from this location.
-
-        Args:
-            ctx: Execution context providing storage access
-
-        Returns:
-            The value at this location, or a Sentinel if absent/invalid
-        """
-        ...
-
-
-# =============================================================================
-# REF BASE CLASS
-# =============================================================================
-
-
-logger = getLogger(__name__)
-
-
 class Ref[T](LValue[T], ABC):
-    """Typed reference to a location.
+    """Typed reference to a location. Pure protocol.
 
-    Combines addressability (LValue) with type information.
-    Refs are both locations AND terms (dual nature):
+    Ref is the minimal contract for typed references:
+    - resolve(): build identity/location
+    - fetch(): extract value
+    - execute(): Term compatibility (delegates to fetch)
 
-    As Ref:
-    - Can resolve to paths
-    - Can navigate to parent
-
-    As Term:
-    - Can execute (returns self)
-    - Can be used in children tuples
+    No parent. No shape. No substrate assumptions.
+    Substrates add their own storage mechanisms.
 
     Generic type T specifies value type at this location:
         Ref[float] → location holding float
         Ref[str]   → location holding string
         Ref[Order] → location holding Order shape
-
-    Concrete implementations (see in standard library or ecosystem repo):
-        ValueRef[T]     - primitive values
-        ShapeRef[T]     - nested structures
-        MapRef[K,V]     - mapping containers
-        MapItemRef[T]   - specific map entries
-
-    Implementations determine:
-    - Storage strategy (caching, lazy evaluation)
-    - Navigation behavior (nested field access)
-    - Available operations (get/set for values, keys/items for maps)
     """
 
-    def __init__(self, parent_ref: Ref | None, owner_shape: type[Shape] | None) -> None:
-        """Init Ref."""
-        self.parent_ref = parent_ref
-        self.owner_shape = owner_shape
+    __slots__ = ()
+
+    @abstractmethod
+    def resolve(self, ctx: Context) -> object:
+        """Build identity/location for this reference.
+
+        Returns a substrate-specific location identifier.
+        For path-based substrates, this builds the path.
+        For simple substrates, may return minimal identifier.
+
+        Args:
+            ctx: Execution context
+
+        Returns:
+            Location identifier (substrate-specific)
+        """
+        ...
+
+    @abstractmethod
+    def fetch(self, ctx: Context) -> T | Sentinel:
+        """Extract value from this location.
+
+        The core operation of a Ref - retrieve the value
+        from wherever it lives (memory, storage, network, etc.).
+
+        Args:
+            ctx: Execution context providing storage access
+
+        Returns:
+            The value at this location, or Sentinel if absent/invalid
+        """
+        ...
+
+    def execute(self, ctx: Context) -> T | Sentinel:
+        """Execute this ref by fetching its value.
+
+        Term interface compatibility. For Refs, execution means
+        fetching the value from the location.
+
+        Args:
+            ctx: Execution context
+
+        Returns:
+            The fetched value
+        """
+        return self.fetch(ctx)
 
     @property
     def is_pure(self) -> bool:
         """Refs are always pure.
 
+        Reading from a location doesn't mutate state.
+
         Returns:
             True - refs never have side effects
         """
         return True
-
-    @property
-    def parent(self) -> Ref | None:
-        """Get parent location in the navigation chain.
-
-        Used for path construction and hierarchy traversal.
-        Root locations return None.
-
-        Returns:
-            Parent Ref, or None if this is root
-        """
-        return self.parent_ref
-
-    def get_owner_shape(self) -> type[Shape] | None:
-        """Get the Shape class this Ref was created by."""
-        if self.owner_shape is not None:
-            return self.owner_shape
-
-        if self.parent is not None:
-            return self.parent.owner_shape
-
-        return None
-
-    def get_root_shape(self) -> type[Shape] | None:
-        """Get the Shape class this Ref was originated from."""
-        if self.parent is not None:
-            return self.parent.get_root_shape()
-
-        if self.owner_shape is not None:
-            return self.owner_shape
-
-        return None

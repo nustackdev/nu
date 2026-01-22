@@ -67,9 +67,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
+from every.protocols import Gettable
 from every.sentinel import INVALID, Sentinel, is_sentinel
 
-from .ref import Gettable
 from .term import RValue, Term
 
 

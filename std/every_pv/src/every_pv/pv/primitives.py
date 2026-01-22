@@ -1,11 +1,12 @@
 """Concrete PV primitive ref implementations.
 
-These refs inherit from everybase RefBases for the interface (operators, methods)
-and use PVPrimitiveRefMixin for PV-specific storage access.
+These refs inherit from PVPrimitiveRef for storage access and everybase
+RefBases for the operator interface.
 
 Pattern:
-    class PVIntRef(PVPrimitiveRefMixin[int], IntRefBase):
-        pass
+    class PVIntRef(PVPrimitiveRef[int], IntRefBase):
+        def __init__(self, address, parent=None, shape=None):
+            super().__init__(address, int, parent, shape)
 
 The IntRefBase provides:
     - Arithmetic operators: +, -, *, /, //, %, **
@@ -13,16 +14,16 @@ The IntRefBase provides:
     - Bitwise operators: &, |, ^, ~, <<, >>
     - Logical operators: and_(), or_(), not_()
 
-The PVPrimitiveRefMixin provides:
-    - get(ctx) -> int | Sentinel: Read from PV storage
-    - resolve(ctx) -> path: Path resolution
+The PVPrimitiveRef provides:
+    - fetch(ctx) -> int | Sentinel: Read from PV storage
+    - resolve(ctx) -> path: Path resolution from parent chain
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from every import Ref
+from every_pv.ref import PVPrimitiveRef
 from every_pv.traits.bases_primitive import (
     CollectionItemRefBase,
     MutableMappingItemRefBase,
@@ -36,13 +37,11 @@ from everybase.refs import (
     StrRefBase,
 )
 
-from .base import PVPrimitiveRefMixin
-
 
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from every import Ref, RValue, Shape
+    from every import Ref, Shape, Term
 
 
 __all__ = [
@@ -62,104 +61,94 @@ __all__ = [
 # =============================================================================
 
 
-class PVIntRef(PVPrimitiveRefMixin[int], IntRefBase):
+class PVIntRef(PVPrimitiveRef[int], IntRefBase):
     """PV integer reference with full numeric interface.
 
     Inherits:
+        - PVPrimitiveRef: PV storage access via fetch()
         - IntRefBase: Arithmetic, comparison, bitwise, logical operators
-        - PVPrimitiveRefMixin: PV storage access via get()
     """
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV int ref."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = int
+        super().__init__(address, int, parent, shape)
 
 
-class PVStrRef(PVPrimitiveRefMixin[str], StrRefBase):
+class PVStrRef(PVPrimitiveRef[str], StrRefBase):
     """PV string reference with full string interface.
 
     Inherits:
+        - PVPrimitiveRef: PV storage access via fetch()
         - StrRefBase: String methods (upper, lower, split, etc.), concatenation
-        - PVPrimitiveRefMixin: PV storage access via get()
     """
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV str ref."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = str
+        super().__init__(address, str, parent, shape)
 
 
-class PVFloatRef(PVPrimitiveRefMixin[float], FloatRefBase):
+class PVFloatRef(PVPrimitiveRef[float], FloatRefBase):
     """PV float reference with full numeric interface.
 
     Inherits:
+        - PVPrimitiveRef: PV storage access via fetch()
         - FloatRefBase: Arithmetic, comparison, logical operators
-        - PVPrimitiveRefMixin: PV storage access via get()
     """
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV float ref."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = float
+        super().__init__(address, float, parent, shape)
 
 
-class PVBoolRef(PVPrimitiveRefMixin[bool], BoolRefBase):
+class PVBoolRef(PVPrimitiveRef[bool], BoolRefBase):
     """PV boolean reference with full logical interface.
 
     Inherits:
+        - PVPrimitiveRef: PV storage access via fetch()
         - BoolRefBase: Logical operators (and_, or_, not_)
-        - PVPrimitiveRefMixin: PV storage access via get()
     """
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bool ref."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = bool
+        super().__init__(address, bool, parent, shape)
 
 
-class PVBytesRef(PVPrimitiveRefMixin[bytes], BytesRefBase):
+class PVBytesRef(PVPrimitiveRef[bytes], BytesRefBase):
     """PV bytes reference with full bytes interface.
 
     Inherits:
+        - PVPrimitiveRef: PV storage access via fetch()
         - BytesRefBase: Bytes methods (decode, hex, etc.)
-        - PVPrimitiveRefMixin: PV storage access via get()
     """
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bytes ref."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = bytes
+        super().__init__(address, bytes, parent, shape)
 
 
 # =============================================================================
@@ -168,7 +157,7 @@ class PVBytesRef(PVPrimitiveRefMixin[bytes], BytesRefBase):
 
 
 class PVItemRef[T, ValueT: Ref](
-    PVPrimitiveRefMixin[T],
+    PVPrimitiveRef[T],
     CollectionItemRefBase[T, ValueT],
 ):
     """PV item reference for primitive values.
@@ -179,21 +168,24 @@ class PVItemRef[T, ValueT: Ref](
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
+        address: path.PathAddress | Term,
         value_type: type[T],
         value_value_type: type[ValueT],
-        parent_ref: Ref | None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize item reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = value_type
-        self.value_value_type = value_value_type
+        super().__init__(address, value_type, parent, shape)
+        self._value_value_type = value_value_type
+
+    @property
+    def value_value_type(self) -> type[ValueT]:
+        """The ref type for this item's value."""
+        return self._value_value_type
 
 
 class PVListItemRef[T, ValueT: Ref](
-    PVPrimitiveRefMixin[T],
+    PVPrimitiveRef[T],
     MutableSequenceItemRefBase[T, ValueT],
 ):
     """PV list item reference for items in a list.
@@ -204,21 +196,24 @@ class PVListItemRef[T, ValueT: Ref](
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
+        address: path.PathAddress | Term,
         value_type: type[T],
         value_value_type: type[ValueT],
-        parent_ref: Ref | None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize list item reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = value_type
-        self.value_value_type = value_value_type
+        super().__init__(address, value_type, parent, shape)
+        self._value_value_type = value_value_type
+
+    @property
+    def value_value_type(self) -> type[ValueT]:
+        """The ref type for this item's value."""
+        return self._value_value_type
 
 
 class PVDictItemRef[T, ValueT: Ref](
-    PVPrimitiveRefMixin[T],
+    PVPrimitiveRef[T],
     MutableMappingItemRefBase[T, ValueT],
 ):
     """PV dict item reference for items in a mapping.
@@ -229,14 +224,17 @@ class PVDictItemRef[T, ValueT: Ref](
 
     def __init__(
         self,
-        address: path.PathAddress | RValue,
+        address: path.PathAddress | Term,
         value_type: type[T],
         value_value_type: type[ValueT],
-        parent_ref: Ref | None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVPrimitiveRef | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict item reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.value_type = value_type
-        self.value_value_type = value_value_type
+        super().__init__(address, value_type, parent, shape)
+        self._value_value_type = value_value_type
+
+    @property
+    def value_value_type(self) -> type[ValueT]:
+        """The ref type for this item's value."""
+        return self._value_value_type

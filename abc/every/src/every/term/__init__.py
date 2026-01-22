@@ -16,11 +16,14 @@ Purity mixins (orthogonal to arity):
     - Operation: pure computation (no side effects)
     - Command: impure mutation (has side effects)
 
-Protocols:
+Protocols (see every.protocols):
     - Gettable[T]: objects that support value extraction via get()
+    - Settable[T]: objects that support value mutation via set()
 """
 
 from __future__ import annotations
+
+from every.protocols import Gettable, Settable
 
 from .context import Context
 from .morphism import (
@@ -32,7 +35,7 @@ from .morphism import (
     TernaryMorphism,
     UnaryMorphism,
 )
-from .ref import Gettable, Ref
+from .ref import Ref
 from .shape import Shape, ShapeMeta, Slot, SlotDescriptor
 from .term import (
     LValue,
@@ -59,6 +62,7 @@ __all__ = [  # noqa: RUF022
     "Command",
     # Protocols
     "Gettable",
+    "Settable",
     # Context
     "Context",
     # Shapes

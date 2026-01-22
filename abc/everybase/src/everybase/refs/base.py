@@ -1,6 +1,12 @@
 """Base ref class inheriting from every.Ref.
 
-RefBase provides core ergonomics for all typed refs.
+RefBase provides core ergonomics for all typed refs:
+- Sentinel checks (is_empty, is_invalid, etc.)
+- Type conversions (to_int, to_str, etc.)
+- Conditional operations (ifelse, or_default)
+
+Substrate-specific bases (PyRef, PVRefBase) implement fetch().
+Type-specific bases (IntRefBase, etc.) add operator traits.
 """
 
 from __future__ import annotations
@@ -8,11 +14,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from every import Gettable, Ref, Sentinel
+from every import Ref, Sentinel
 
 
 if TYPE_CHECKING:
-    from every import BoolArg, Context, StrArg, Term
+    from every import BoolArg, Context, Term
     from everybase.py import AnyRef, BoolRef, BytesRef, FloatRef, IntRef, ListRef, StrRef
 
 
@@ -25,34 +31,45 @@ class RefBase[T](Ref[T], ABC):
     """Abstract base for all typed refs.
 
     Inherits from every.Ref and provides:
-    - execute(): delegates to get() if Gettable
-    - Special value checks
-    - Type conversions
-    - Conditional operations
+    - Ergonomics (sentinel checks, type conversions, conditionals)
+    - Abstract fetch() for substrates to implement
 
-    Subclasses (IntRefBase, etc.) add traits.
-    Substrate-specific bases (PyRefBase) add storage.
+    Subclasses (IntRefBase, etc.) add operator traits.
+    Substrate-specific bases (PyRef, PVRefBase) add storage.
+
+    Note: Arithmetic operations return Python memory refs because
+    the result is a computation (lazy expression), not a storage
+    location. A PVIntRef + 5 produces IntRef(AddOp(...)).
     """
 
-    @property
-    def is_pure(self) -> bool:
-        """Check if this ref is pure (no side effects)."""
-        return True
+    @abstractmethod
+    def fetch(self, ctx: Context) -> T | Sentinel:
+        """Fetch the value from this location.
 
-    def execute(self, ctx: Context) -> T | Sentinel:
-        """Execute this ref by delegating to get()."""
-        if isinstance(self, Gettable):
-            return self.get(ctx)
-        raise NotImplementedError(f"{self.__class__.__name__} must implement get()")
+        Implemented by substrate-specific subclasses to actually
+        retrieve the value from storage (memory, disk, network, etc.).
+
+        Args:
+            ctx: Execution context
+
+        Returns:
+            The value, or Sentinel if absent/invalid
+        """
+        ...
 
     def resolve(self, ctx: Context) -> object:
-        """Resolve to concrete path."""
-        return ((self.__class__.__name__,),)
+        """Resolve to identity/location.
 
-    @abstractmethod
-    def get(self, ctx: Context) -> T | Sentinel:
-        """Get the value. Implemented by substrate-specific subclasses."""
-        ...
+        Default implementation returns minimal identifier.
+        Path-based substrates override with full path construction.
+
+        Args:
+            ctx: Execution context
+
+        Returns:
+            Location identifier
+        """
+        return (self.__class__.__name__,)
 
     # =========================================================================
     # SPECIAL VALUE CHECKS
@@ -137,7 +154,7 @@ class RefBase[T](Ref[T], ABC):
 
         return StrRef(ToStrOp(self))
 
-    def to_bytes(self, encoding: StrArg = "utf-8") -> BytesRef:
+    def to_bytes(self, encoding: str = "utf-8") -> BytesRef:
         """Convert to bytes."""
         from everybase.morphisms import ToBytesOp
         from everybase.py.bytes import BytesRef
@@ -150,6 +167,3 @@ class RefBase[T](Ref[T], ABC):
         from everybase.py.list import ListRef
 
         return ListRef(ToListOp(self))
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self._source!r})"

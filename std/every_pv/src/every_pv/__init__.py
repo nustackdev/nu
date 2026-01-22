@@ -112,8 +112,8 @@ from every_pv.pv import (
 
 # Abstract ref classes
 from every_pv.ref import (
-    PrimitiveRef,
-    ViewRef,
+    PVPrimitiveRef,
+    PVViewRef,
 )
 
 # Slots
@@ -270,8 +270,8 @@ __all__ = [  # noqa: RUF022
     "ShapesListSlot",
     "StrSlot",
     # Abstract refs
-    "PrimitiveRef",
-    "ViewRef",
+    "PVPrimitiveRef",
+    "PVViewRef",
     # Traits - Core
     "ClearableBase",
     "CollectionGettableBase",

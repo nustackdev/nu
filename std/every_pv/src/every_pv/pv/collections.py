@@ -6,7 +6,7 @@ must work streaming without loading everything into memory.
 
 Unlike primitive refs, collection refs don't inherit from everybase RefBases
 because the interface is fundamentally different:
-- everybase collection refs: get() loads entire collection, then run operations
+- everybase collection refs: fetch() loads entire collection, then run operations
 - PV collection refs: operations work lazily/streaming on the view directly
 """
 
@@ -17,7 +17,8 @@ from typing import TYPE_CHECKING, ClassVar
 from pv.typing import Value
 from pv.typing.view import MutableMappingView, MutableSequenceView
 
-from every import Ref, RValue, Sentinel, Shape
+from every import Ref, RValue, Sentinel, Shape, Term
+from every_pv.ref import PVRefBase, PVViewRef
 from every_pv.traits.bases_collections import (
     MutableMappingRefBase,
     MutableSequenceRefBase,
@@ -31,7 +32,6 @@ from everybase import (
     ensure_term,
 )
 
-from .base import PVViewRefMixin
 from .primitives import PVDictItemRef, PVListItemRef
 
 
@@ -63,7 +63,7 @@ class SequenceShapeSliceRef:
 
 
 class PVShapeRef[T: Shape](
-    PVViewRefMixin[dict[str, Value], MutableMappingView],
+    PVViewRef[dict[str, Value], MutableMappingView],
     MutableMappingRefBase[
         dict[str, Value],  # CollectionT
         str,  # KeyT
@@ -91,22 +91,27 @@ class PVShapeRef[T: Shape](
             "__str__",
             # Ref base
             "address",
+            "_address",
             "view_type",
-            "parent_ref",
+            "_view_type",
             "parent",
-            "owner_shape",
+            "_parent",
+            "shape",
+            "_shape",
             "resolve",
             "execute",
+            "fetch",
             "is_pure",
             "get_root_shape",
-            "get_owner_shape",
+            "_type_marker",
+            "_resolve_address",
             # ShapeRef specific
             "shape_type",
+            "_shape_type",
             "key_type",
             "value_type",
             "result",
             "_create_child_ref",
-            "get_view",
             # Ref annotation attributes
             "collection_type",
             "collection_value_type",
@@ -144,23 +149,26 @@ class PVShapeRef[T: Shape](
 
     def __init__(
         self,
-        address: path.PathAddress,
+        address: path.PathAddress | Term,
         shape_type: type[T],
         view_type: type[MutableMappingView],
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVRefBase | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize shape reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.shape_type = shape_type
-        self.view_type = view_type
+        super().__init__(address, view_type, parent, shape)
+        self._shape_type = shape_type
         self.key_type: type = str
         self.value_type: type = object
         self.collection_type: type[dict[str, Value]] = dict
         self.collection_value_type: type[DictRef[str, Value]] = DictRef
         self.key_value_type: type[StrRef] = StrRef
         self.value_value_type: type[AnyRef] = AnyRef
+
+    @property
+    def shape_type(self) -> type[T]:
+        """The Shape class type at this location."""
+        return self._shape_type
 
     def result(self, op: RValue) -> DictRef[str, Value]:
         """Wrap an operation result in a DictRef container."""
@@ -174,11 +182,11 @@ class PVShapeRef[T: Shape](
         if not isinstance(key, str):
             raise TypeError(f"key must be str, `{type(key).__name__}` given")
 
-        if hasattr(self.shape_type, "_slots") and key in self.shape_type._slots:
-            slot = self.shape_type._slots[key]
-            return slot.create_ref(owner_shape=self.shape_type, parent_ref=self)
+        if hasattr(self._shape_type, "_slots") and key in self._shape_type._slots:
+            slot = self._shape_type._slots[key]
+            return slot.create_ref(owner_shape=self._shape_type, parent_ref=self)
 
-        raise KeyError(f"{self.shape_type.__name__} has no slot '{key}'")
+        raise KeyError(f"{self._shape_type.__name__} has no slot '{key}'")
 
     def __getattribute__(self, name: str) -> object:
         """Navigate to nested fields via attribute access."""
@@ -186,7 +194,7 @@ class PVShapeRef[T: Shape](
         if name in passthrough:
             return object.__getattribute__(self, name)
 
-        shape_type: type[Shape] = object.__getattribute__(self, "shape_type")
+        shape_type: type[Shape] = object.__getattribute__(self, "_shape_type")
 
         if hasattr(shape_type, "_slots") and name in shape_type._slots:
             slot = shape_type._slots[name]
@@ -201,7 +209,7 @@ class PVShapeRef[T: Shape](
 
 
 class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
-    PVViewRefMixin[dict[K, V], MutableMappingView],
+    PVViewRef[dict[K, V], MutableMappingView],
     MutableMappingRefBase[
         dict[K, V],  # CollectionT
         K,  # KeyT
@@ -224,21 +232,19 @@ class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
 
     def __init__(
         self,
-        address: path.PathAddress,
+        address: path.PathAddress | Term,
         value_type: type[V],
         key_type: type[K],
         view_type: type[MutableMappingView],
         key_value_type: type[KeyValueT],
         value_value_type: type[ValueValueT],
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVRefBase | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize mapping reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
+        super().__init__(address, view_type, parent, shape)
         self.value_type = value_type
         self.key_type = key_type
-        self.view_type = view_type
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
 
@@ -254,8 +260,8 @@ class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
             address=ensure_term(key),
             value_type=self.value_type,
             value_value_type=self.value_value_type,
-            parent_ref=self,
-            owner_shape=self.owner_shape,
+            parent=self,
+            shape=self._shape,
         )
 
 
@@ -265,7 +271,7 @@ class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
 
 
 class PVListRef[T, ItemValueT](
-    PVViewRefMixin[list[T], MutableSequenceView],
+    PVViewRef[list[T], MutableSequenceView],
     MutableSequenceRefBase[
         list[T],  # CollectionT
         T,  # ItemT
@@ -292,19 +298,17 @@ class PVListRef[T, ItemValueT](
 
     def __init__(
         self,
-        address: path.PathAddress,
+        address: path.PathAddress | Term,
         item_type: type[T],
         item_value_type: type[ItemValueT],
         view_type: type[MutableSequenceView],
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVRefBase | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize sequence reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
+        super().__init__(address, view_type, parent, shape)
         self.item_type = item_type
         self.item_value_type = item_value_type
-        self.view_type = view_type
 
     def result(self, op: RValue) -> ListRef[T]:
         """Wrap an operation result in a ListRef container."""
@@ -318,8 +322,8 @@ class PVListRef[T, ItemValueT](
             address=ensure_term(index),
             value_type=self.item_type,
             value_value_type=self.item_value_type,
-            parent_ref=self,
-            owner_shape=self.owner_shape,
+            parent=self,
+            shape=self._shape,
         )
 
     def _create_slice_ref(self, key: slice) -> SequenceSliceRef:
@@ -333,7 +337,7 @@ class PVListRef[T, ItemValueT](
 
 
 class PVShapesListRef[T: Shape](
-    PVViewRefMixin[list[dict], MutableSequenceView],
+    PVViewRef[list[dict], MutableSequenceView],
     MutableSequenceRefBase[
         list[dict],  # CollectionT
         dict,  # ItemT (shapes serialize to dicts)
@@ -357,18 +361,21 @@ class PVShapesListRef[T: Shape](
 
     def __init__(
         self,
-        address: path.PathAddress,
+        address: path.PathAddress | Term,
         shape_type: type[T],
         view_type: type[MutableSequenceView],
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVRefBase | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize sequence shape reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
-        self.shape_type = shape_type
+        super().__init__(address, view_type, parent, shape)
+        self._shape_type = shape_type
         self.item_type = dict
-        self.view_type = view_type
+
+    @property
+    def shape_type(self) -> type[T]:
+        """The Shape class for items in this list."""
+        return self._shape_type
 
     def result(self, op: RValue) -> ListRef[dict]:
         """Wrap an operation result in a ListRef container."""
@@ -380,10 +387,10 @@ class PVShapesListRef[T: Shape](
 
         return PVShapeRef(
             address=ensure_term(index),
-            shape_type=self.shape_type,
+            shape_type=self._shape_type,
             view_type=DictView,
-            parent_ref=self,
-            owner_shape=self.owner_shape,
+            parent=self,
+            shape=self._shape,
         )
 
     def _create_slice_ref(self, key: slice) -> SequenceShapeSliceRef:
@@ -397,7 +404,7 @@ class PVShapesListRef[T: Shape](
 
 
 class PVShapesDictRef[K: int | str, T: Shape, KeyValueT](
-    PVViewRefMixin[dict[K, dict], MutableMappingView],
+    PVViewRef[dict[K, dict], MutableMappingView],
     MutableMappingRefBase[
         dict[K, dict],  # CollectionT
         K,  # KeyT
@@ -417,22 +424,25 @@ class PVShapesDictRef[K: int | str, T: Shape, KeyValueT](
 
     def __init__(
         self,
-        address: path.PathAddress,
+        address: path.PathAddress | Term,
         key_type: type[K],
         key_value_type: type[KeyValueT],
         shape_type: type[T],
         view_type: type[MutableMappingView],
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        parent: PVRefBase | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize mapping shape reference."""
-        super().__init__(parent_ref, owner_shape)
-        self.address = address
+        super().__init__(address, view_type, parent, shape)
         self.value_type = dict
         self.key_type = key_type
         self.key_value_type = key_value_type
-        self.shape_type = shape_type
-        self.view_type = view_type
+        self._shape_type = shape_type
+
+    @property
+    def shape_type(self) -> type[T]:
+        """The Shape class for values in this dict."""
+        return self._shape_type
 
     def result(self, op: RValue) -> DictRef[K, dict]:
         """Wrap an operation result in a DictRef container."""
@@ -444,8 +454,8 @@ class PVShapesDictRef[K: int | str, T: Shape, KeyValueT](
 
         return PVShapeRef(
             address=ensure_term(key),
-            shape_type=self.shape_type,
+            shape_type=self._shape_type,
             view_type=DictView,
-            parent_ref=self,
-            owner_shape=self.owner_shape,
+            parent=self,
+            shape=self._shape,
         )

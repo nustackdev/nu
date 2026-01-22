@@ -21,7 +21,7 @@ from every import Command, Morphism, Term
 
 if TYPE_CHECKING:
     from every_pv.context import KVContext as Context
-    from every_pv.ref import ViewRef
+    from every_pv.ref import PVViewRef
 type UnionRefBases = None
 
 
@@ -48,7 +48,7 @@ class AddValueCmd[T](Command, Morphism[None]):
 
     def __init__(
         self,
-        ref: ViewRef | UnionRefBases,
+        ref: PVViewRef | UnionRefBases,
         value: Term[T | Sentinel],
     ) -> None:
         """Initialize add value command.
@@ -57,9 +57,9 @@ class AddValueCmd[T](Command, Morphism[None]):
             ref: Set reference to add to
             value: Value to add (wrapped in Term)
         """
-        self.ref = cast("ViewRef", ref)
+        self.ref = cast("PVViewRef", ref)
         self.value_expr = value
-        self.children = (cast("ViewRef", ref), value)
+        self.children = (cast("PVViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute add value command.
@@ -110,7 +110,7 @@ class RemoveValueCmd[T](Command, Morphism[None]):
 
     def __init__(
         self,
-        ref: ViewRef | UnionRefBases,
+        ref: PVViewRef | UnionRefBases,
         value: Term[T | Sentinel],
     ) -> None:
         """Initialize remove value command.
@@ -119,9 +119,9 @@ class RemoveValueCmd[T](Command, Morphism[None]):
             ref: Set reference to remove from
             value: Value to remove (wrapped in Term)
         """
-        self.ref = cast("ViewRef", ref)
+        self.ref = cast("PVViewRef", ref)
         self.value_expr = value
-        self.children = (cast("ViewRef", ref), value)
+        self.children = (cast("PVViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute remove value command.
@@ -177,7 +177,7 @@ class DiscardValueCmd[T](Command, Morphism[None]):
 
     def __init__(
         self,
-        ref: ViewRef | UnionRefBases,
+        ref: PVViewRef | UnionRefBases,
         value: Term[T | Sentinel],
     ) -> None:
         """Initialize discard value command.
@@ -186,9 +186,9 @@ class DiscardValueCmd[T](Command, Morphism[None]):
             ref: Set reference to discard from
             value: Value to discard (wrapped in Term)
         """
-        self.ref = cast("ViewRef", ref)
+        self.ref = cast("PVViewRef", ref)
         self.value_expr = value
-        self.children = (cast("ViewRef", ref), value)
+        self.children = (cast("PVViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute discard value command.

@@ -19,7 +19,7 @@ from pv.typing import Empty, Sentinel, Value
 from pv.typing.view import capabilities as view_capabilities
 
 from every import Morphism, Operation
-from every_pv.ref import PrimitiveRef, ViewRef
+from every_pv.ref import PVPrimitiveRef, PVViewRef
 
 
 if TYPE_CHECKING:
@@ -54,14 +54,14 @@ class GetOp[T](Operation, Morphism[T | Sentinel]):
         >>> value = get_op.execute(ctx)  # Returns T | Sentinel
     """
 
-    def __init__(self, ref: PrimitiveRef[T] | UnionRefBases) -> None:
+    def __init__(self, ref: PVPrimitiveRef[T] | UnionRefBases) -> None:
         """Initialize get operation.
 
         Args:
             ref: Reference to read from
         """
-        self.ref = cast("PrimitiveRef", ref)
-        self.children = (cast("PrimitiveRef", ref),)
+        self.ref = cast("PVPrimitiveRef", ref)
+        self.children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> T | Sentinel:
         """Execute read operation.
@@ -106,14 +106,14 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
         >>> data = extract_op.execute(ctx)  # Returns dict/list/etc
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Convertible[T]] | UnionRefBases) -> None:
+    def __init__(self, ref: PVViewRef[view_capabilities.Convertible[T]] | UnionRefBases) -> None:
         """Initialize extract operation.
 
         Args:
             ref: View reference to extract from
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[T]]", ref)
-        self.children = (cast("ViewRef[view_capabilities.Convertible[T]]", ref),)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[T]]", ref)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[T]]", ref),)
 
     def execute(self, context: Context) -> T | Sentinel:
         """Execute extract operation.
@@ -161,14 +161,14 @@ class ExistsOp(Operation, Morphism[bool]):
         >>> exists = exists_op.execute(ctx)  # Returns bool
     """
 
-    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View] | UnionRefBases) -> None:
+    def __init__(self, ref: PVPrimitiveRef[Value] | PVViewRef[View] | UnionRefBases) -> None:
         """Initialize exists operation.
 
         Args:
             ref: Reference to check
         """
-        self.ref = cast("PrimitiveRef[Value] | ViewRef[View]", ref)
-        self.children = (cast("PrimitiveRef[Value] | ViewRef[View]", ref),)
+        self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
+        self.children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute existence check.
@@ -185,14 +185,14 @@ class ExistsOp(Operation, Morphism[bool]):
         try:
             ref_path = self.ref.resolve(context)
 
-            if isinstance(self.ref, PrimitiveRef):
+            if isinstance(self.ref, PVPrimitiveRef):
                 parent_view, key = path.navigate_value(root_view, ref_path)
                 # Check if key exists
                 if isinstance(parent_view, view_capabilities.Containable):
                     return key in parent_view
                 raise TypeError(f"View {parent_view.__class__.__name__} is not containable")
             else:
-                # ViewRef - just try to navigate
+                # PVViewRef - just try to navigate
                 if not ref_path:
                     return True
                 path.navigate_view(root_view, ref_path)
@@ -217,14 +217,14 @@ class MissingOp(Operation, Morphism[bool]):
         >>> is_missing = missing_op.execute(ctx)  # Returns bool
     """
 
-    def __init__(self, ref: PrimitiveRef[Value] | ViewRef[View] | UnionRefBases) -> None:
+    def __init__(self, ref: PVPrimitiveRef[Value] | PVViewRef[View] | UnionRefBases) -> None:
         """Initialize missing operation.
 
         Args:
             ref: Reference to check
         """
-        self.ref = cast("PrimitiveRef[Value] | ViewRef[View]", ref)
-        self.children = (cast("PrimitiveRef[Value] | ViewRef[View]", ref),)
+        self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
+        self.children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute missing check.
@@ -255,14 +255,14 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
         >>> length = len_op.execute(ctx)  # Returns int
     """
 
-    def __init__(self, ref: ViewRef[view_capabilities.Sizeable] | UnionRefBases) -> None:
+    def __init__(self, ref: PVViewRef[view_capabilities.Sizeable] | UnionRefBases) -> None:
         """Initialize length operation.
 
         Args:
             ref: View reference to query
         """
-        self.ref = cast("ViewRef[view_capabilities.Sizeable]", ref)
-        self.children = (cast("ViewRef[view_capabilities.Sizeable]", ref),)
+        self.ref = cast("PVViewRef[view_capabilities.Sizeable]", ref)
+        self.children = (cast("PVViewRef[view_capabilities.Sizeable]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute length query.

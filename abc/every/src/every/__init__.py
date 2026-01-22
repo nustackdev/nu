@@ -17,6 +17,7 @@ from .arg import (
     TupleArg,
 )
 from .flow import Flow, Path, Runtime
+from .protocols import Gettable, Settable
 from .sentinel import (
     EMPTY,
     INVALID,
@@ -35,7 +36,6 @@ from .term import (
     BinaryMorphism,
     Command,
     Context,
-    Gettable,
     LValue,
     Morphism,
     NAryMorphism,
@@ -100,6 +100,7 @@ __all__ = [  # noqa: RUF022
     "Command",
     # Protocols
     "Gettable",
+    "Settable",
     # Context
     "Context",
     # Shape

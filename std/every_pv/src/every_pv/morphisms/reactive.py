@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pv.loc import key
 
     from every_pv.context import KVContext as Context
-    from every_pv.ref import PrimitiveRef, ViewRef
+    from every_pv.ref import PVPrimitiveRef, PVViewRef
 
 
 __all__ = [
@@ -64,14 +64,14 @@ class OnChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef) -> None:
+    def __init__(self, ref: PVViewRef) -> None:
         """Initialize on_change operation.
 
         Args:
             ref: View reference to watch
         """
-        self.ref = cast("ViewRef", ref)
-        self.children = (cast("ViewRef", ref),)
+        self.ref = cast("PVViewRef", ref)
+        self.children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_change operation.
@@ -122,14 +122,14 @@ class OnPrimitiveChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: PrimitiveRef) -> None:
+    def __init__(self, ref: PVPrimitiveRef) -> None:
         """Initialize on_primitive_change operation.
 
         Args:
             ref: Primitive reference to watch
         """
-        self.ref = cast("PrimitiveRef", ref)
-        self.children = (cast("PrimitiveRef", ref),)
+        self.ref = cast("PVPrimitiveRef", ref)
+        self.children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_primitive_change operation.
@@ -177,16 +177,16 @@ class OnChildChangeOp[A](ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef, address: A | Term[A]) -> None:
+    def __init__(self, ref: PVViewRef, address: A | Term[A]) -> None:
         """Initialize on_child_change operation.
 
         Args:
             ref: View reference containing the child
             address: Child address to watch
         """
-        self.ref = cast("ViewRef", ref)
+        self.ref = cast("PVViewRef", ref)
         self.address = address
-        self.children = (cast("ViewRef", ref),)
+        self.children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_child_change operation.
@@ -239,14 +239,14 @@ class OnChildrenChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef) -> None:
+    def __init__(self, ref: PVViewRef) -> None:
         """Initialize on_children_change operation.
 
         Args:
             ref: View reference to watch children of
         """
-        self.ref = cast("ViewRef", ref)
-        self.children = (cast("ViewRef", ref),)
+        self.ref = cast("PVViewRef", ref)
+        self.children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_children_change operation.
@@ -297,16 +297,16 @@ class OnDescendantsChangeOp(ChangeOp):
         >>> sub.close()
     """
 
-    def __init__(self, ref: ViewRef, *pattern: key.KeySegment) -> None:
+    def __init__(self, ref: PVViewRef, *pattern: key.KeySegment) -> None:
         """Initialize on_descendants_change operation.
 
         Args:
             ref: View reference to watch descendants of
             *pattern: Key segments pattern (use "*" for wildcards)
         """
-        self.ref = cast("ViewRef", ref)
+        self.ref = cast("PVViewRef", ref)
         self.pattern = pattern
-        self.children = (cast("ViewRef", ref),)
+        self.children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_descendants_change operation.

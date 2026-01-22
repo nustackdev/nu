@@ -3,9 +3,13 @@
 This module provides concrete ref implementations for PV storage:
 - Primitive refs: PVIntRef, PVStrRef, etc. (inherit from everybase RefBases)
 - Collection refs: PVDictRef, PVListRef, etc. (lazy implementations)
+
+The base hierarchy lives in every_pv.ref:
+- PVRefBase: substrate root with address/parent/shape
+- PVPrimitiveRef: leaf values
+- PVViewRef: container views
 """
 
-from .base import PVRefMixin
 from .collections import (
     PVDictRef,
     PVListRef,
@@ -35,7 +39,6 @@ __all__ = [
     "PVItemRef",
     "PVListItemRef",
     "PVListRef",
-    "PVRefMixin",
     "PVShapeRef",
     "PVShapesDictRef",
     "PVShapesListRef",

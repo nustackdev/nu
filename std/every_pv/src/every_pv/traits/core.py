@@ -149,7 +149,7 @@ class GettableBase[ValueT]:
 class CollectionGettableBase[CollectionTypeT](ABC):
     """Implementation base for getting container contents.
 
-    Implements get() for ViewRefs (containers).
+    Implements get() for PVViewRefs (containers).
     Unified with GettableBase - all refs now use .get() for reading.
     """
 

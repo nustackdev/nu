@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from every_pv.context import KVContext as Context
-    from every_pv.ref import ViewRef
+    from every_pv.ref import PVViewRef
 
 type UnionRefBases = None
 
@@ -78,7 +78,7 @@ class AppendValueCmd[T](Command, Morphism[T]):
 
     def __init__(
         self,
-        ref: ViewRef[Appendable] | UnionRefBases,
+        ref: PVViewRef[Appendable] | UnionRefBases,
         value: Term[T | Sentinel],
     ) -> None:
         """Initialize append value command.
@@ -87,9 +87,9 @@ class AppendValueCmd[T](Command, Morphism[T]):
             ref: Sequence reference to append to
             value: Value to append (wrapped in Term)
         """
-        self.ref = cast("ViewRef[Appendable]", ref)
+        self.ref = cast("PVViewRef[Appendable]", ref)
         self.value_expr = value
-        self.children = (cast("ViewRef[Appendable]", ref), value)
+        self.children = (cast("PVViewRef[Appendable]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute append value command.
@@ -141,7 +141,7 @@ class InsertAtIndexCmd[T](Command, Morphism[T]):
 
     def __init__(
         self,
-        ref: ViewRef | UnionRefBases,
+        ref: PVViewRef | UnionRefBases,
         index: Term[int | Sentinel],
         value: Term[T | Sentinel],
     ) -> None:
@@ -152,10 +152,10 @@ class InsertAtIndexCmd[T](Command, Morphism[T]):
             index: Index to insert at (wrapped in Term)
             value: Value to insert (wrapped in Term)
         """
-        self.ref = cast("ViewRef", ref)
+        self.ref = cast("PVViewRef", ref)
         self.index_expr = index
         self.value_expr = value
-        self.children = (cast("ViewRef", ref), index, value)
+        self.children = (cast("PVViewRef", ref), index, value)
 
     def execute(self, context: Context) -> T:
         """Execute insert at index command.
@@ -191,7 +191,7 @@ class PopByIndexCmd[T](Command, Morphism[T]):
 
     def __init__(
         self,
-        ref: ViewRef | UnionRefBases,
+        ref: PVViewRef | UnionRefBases,
         index: Term[int | Sentinel] | None = None,
     ) -> None:
         """Initialize pop by index command.
@@ -200,10 +200,10 @@ class PopByIndexCmd[T](Command, Morphism[T]):
             ref: Sequence reference to pop from
             index: Index to pop from (default: -1, last item)
         """
-        self.ref = cast("ViewRef", ref)
+        self.ref = cast("PVViewRef", ref)
         self.index_expr = index
         self.children = (
-            (cast("ViewRef", ref), index) if index is not None else (cast("ViewRef", ref),)
+            (cast("PVViewRef", ref), index) if index is not None else (cast("PVViewRef", ref),)
         )
 
     def execute(self, context: Context) -> T:
@@ -261,7 +261,7 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         value: T,
     ) -> None:
         """Initialize index of value operation.
@@ -270,9 +270,9 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
             ref: Sequence reference to search
             value: Value to find
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute index of value operation.
@@ -319,7 +319,7 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         value: T,
     ) -> None:
         """Initialize count of value operation.
@@ -328,9 +328,9 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
             ref: Sequence reference to count in
             value: Value to count
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute count of value operation.
@@ -384,7 +384,7 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find by predicate operation.
@@ -393,9 +393,9 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> T:
         """Execute find by predicate operation.
@@ -447,7 +447,7 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find index by predicate operation.
@@ -456,9 +456,9 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute find index by predicate operation.
@@ -514,7 +514,7 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         func: Callable[[T], R],
     ) -> None:
         """Initialize map operation.
@@ -523,9 +523,9 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
             ref: Sequence reference to map over
             func: Function to apply to each element
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.func = func
-        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[R] | Sentinel:
         """Execute map operation.
@@ -572,7 +572,7 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize filter operation.
@@ -581,9 +581,9 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
             ref: Sequence reference to filter
             predicate: Function that returns True for elements to keep
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[T] | Sentinel:
         """Execute filter operation.
@@ -631,7 +631,7 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
 
     def __init__(
         self,
-        ref: ViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
         func: Callable[[R, T], R],
         initial: R,
     ) -> None:
@@ -642,10 +642,10 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
             func: Reducer function (accumulator, element) -> accumulator
             initial: Initial accumulator value
         """
-        self.ref = cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
         self.func = func
         self.initial = initial
-        self.children = (cast("ViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce operation.
