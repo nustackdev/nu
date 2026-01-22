@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "every-adapters"
+version = "0.1.0"
+description = "Storage, codec, and observer adapters for everybase"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "every-pv>=0.1.0",
+    "evkv>=0.1.0",
+]
+
+[project.optional-dependencies]
+rocksdb = ["rdbpy"]
+redis = ["redis"]
+msgpack = ["msgpack"]
+micropack = ["micropack"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/every_adapters"]

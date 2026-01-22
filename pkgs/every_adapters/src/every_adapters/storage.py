@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
-from everybase.view import DictView
 
-# from everyflow import FlowState, StorageProvider
-from pv.loc import key
-from pv.storage import StorageProtocol
-from term.shape import Shape
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from pv.storage import StorageProtocol
 
 
 __all__ = [
-    "text_storage",
+    # "regular_provider",
     "rocksdb_storage",
-    "regular_provider",
-    "sharded_provider",
     "rocksdb_storage_inmemory",
+    # "sharded_provider",
+    "text_storage",
 ]
 
 
@@ -28,6 +27,7 @@ def text_storage(path: str, read_only: bool = False) -> Generator[StorageProtoco
 
     Args:
         path: Path for text storage directory
+        read_only: Permissions
 
     Yields:
         Configured text storage instance
@@ -37,9 +37,9 @@ def text_storage(path: str, read_only: bool = False) -> Generator[StorageProtoco
         ...     with storage.transaction() as txn:
         ...         txn.put("key", "value")
     """
-    from everybase.adapters.codecs import TextCodec
-    from everybase.adapters.observers.in_memory import InMemoryObserver
-    from everybase.adapters.storages.textdb import TextStorage
+    from every_adapters.codecs import TextCodec
+    from every_adapters.observers.in_memory import InMemoryObserver
+    from every_adapters.storages.textdb import TextStorage
 
     with (
         InMemoryObserver(codec=TextCodec()) as observer,
@@ -73,10 +73,9 @@ def rocksdb_storage_inmemory(
         ...     with storage.transaction() as txn:
         ...         txn.put(b"key", b"value")
     """
-
-    from everybase.adapters.codecs import BinaryCodec
-    from everybase.adapters.observers.in_memory import InMemoryObserver
-    from everybase.adapters.storages.rocksdb import RocksDBStorage
+    from every_adapters.codecs import BinaryCodec
+    from every_adapters.observers.in_memory import InMemoryObserver
+    from every_adapters.storages.rocksdb import RocksDBStorage
 
     with (
         InMemoryObserver(codec=BinaryCodec()) as observer,
@@ -97,12 +96,16 @@ def rocksdb_storage(
     read_only: bool = False,
     secondary_path: str | None = None,
     redis_url: str = "redis://localhost:6379",
-    channel_prefix: str = "everyshape",
+    channel_prefix: str = "__every__",
 ) -> Generator[StorageProtocol, None, None]:
     """Create RocksDB storage with binary codec and in-memory observer.
 
     Args:
         path: Path to RocksDB database directory
+        read_only: Permissions
+        secondary_path: Open as secondary rocksdb storage
+        redis_url: Redis service url
+        channel_prefix: Redis channel prefix
 
     Yields:
         Configured RocksDB storage instance
@@ -112,10 +115,9 @@ def rocksdb_storage(
         ...     with storage.transaction() as txn:
         ...         txn.put(b"key", b"value")
     """
-
-    from everybase.adapters.codecs import BinaryCodec, TextCodec
-    from everybase.adapters.observers.redis_pubsub import RedisObserver
-    from everybase.adapters.storages.rocksdb import RocksDBStorage
+    from every_adapters.codecs import BinaryCodec, TextCodec
+    from every_adapters.observers.redis_pubsub import RedisObserver
+    from every_adapters.storages.rocksdb import RocksDBStorage
 
     with (
         RedisObserver(
@@ -134,32 +136,32 @@ def rocksdb_storage(
         yield storage
 
 
-def regular_provider(storage: StorageProtocol):
-    return StorageProvider(
-        (storage,),
-        {
-            None: (DictView, ("/",), 0),
-            FlowState: (DictView, ("/", "__flow__"), 0),
-        },
-    )
+# def regular_provider(storage: StorageProtocol):
+#     return StorageProvider(
+#         (storage,),
+#         {
+#             None: (DictView, ("/",), 0),
+#             FlowState: (DictView, ("/", "__flow__"), 0),
+#         },
+#     )
 
 
-def sharded_provider(storage: StorageProtocol, *ext: tuple[type[Shape], key.Key, StorageProtocol]):
-    config = {
-        None: (DictView, ("/",), 0),
-        FlowState: (DictView, ("/", "__flow__"), 0),
-    }
+# def sharded_provider(storage: StorageProtocol, *ext: tuple[type[Shape], key.Key, StorageProtocol]):
+#     config = {
+#         None: (DictView, ("/",), 0),
+#         FlowState: (DictView, ("/", "__flow__"), 0),
+#     }
 
-    storages: list[StorageProtocol] = []
+#     storages: list[StorageProtocol] = []
 
-    storages.append(storage)
+#     storages.append(storage)
 
-    for shape, shape_key, shape_storage in ext:
-        if shape_storage not in storages:
-            storages.append(shape_storage)
-        config.setdefault(shape, (DictView, shape_key, storages.index(shape_storage)))
+#     for shape, shape_key, shape_storage in ext:
+#         if shape_storage not in storages:
+#             storages.append(shape_storage)
+#         config.setdefault(shape, (DictView, shape_key, storages.index(shape_storage)))
 
-    return StorageProvider(
-        tuple(storages),
-        config,
-    )
+#     return StorageProvider(
+#         tuple(storages),
+#         config,
+#     )

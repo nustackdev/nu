@@ -21,6 +21,7 @@ members = [
     "abc/everybase",
     "std/every_pv",
     "std/every_view",
+    "pkgs/every_adapters",
 ]
 
 [tool.uv.sources]
@@ -28,6 +29,7 @@ every = { workspace = true }
 everybase = { workspace = true }
 every-pv = { workspace = true }
 every-view = { workspace = true }
+every-adapters = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -148,7 +150,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["every", "everybase", "every_pv", "every_view"]
+known-first-party = ["every", "everybase", "every_pv", "every_view", "every_adapters"]
 force-single-line = false
 lines-after-imports = 2
 

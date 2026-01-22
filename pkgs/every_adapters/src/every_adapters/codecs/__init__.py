@@ -1,14 +1,14 @@
 """Codec adapters.
 
 Individual codecs can be imported from their respective modules:
-    from everybase.adapters.codecs.json import JSONCodec
-    from everybase.adapters.codecs.msgpack import MessagePackCodec
-    from everybase.adapters.codecs.micropack import MicroPackCodec
-    from everybase.adapters.codecs.pickle import PickleCodec
-    from everybase.adapters.codecs.passthrough import PassthroughCodec
+    from every_adapters.codecs.json import JSONCodec
+    from every_adapters.codecs.msgpack import MessagePackCodec
+    from every_adapters.codecs.micropack import MicroPackCodec
+    from every_adapters.codecs.pickle import PickleCodec
+    from every_adapters.codecs.passthrough import PassthroughCodec
 
 Composite codecs (BinaryCodec, TextCodec, NoOpCodec) are available from this module:
-    from everybase.adapters.codecs import BinaryCodec, TextCodec, NoOpCodec
+    from every_adapters.codecs import BinaryCodec, TextCodec, NoOpCodec
 """
 
 from __future__ import annotations
@@ -31,13 +31,11 @@ except ImportError as e:
 
 
 __all__ = [
-    # Composite codecs
     "BinaryCodec",
-    "NoOpCodec",
-    "TextCodec",
-    # Key codecs (re-exported from evkv)
     "BinaryKeyCodec",
+    "NoOpCodec",
     "StringKeyCodec",
+    "TextCodec",
 ]
 
 # =========================================================
