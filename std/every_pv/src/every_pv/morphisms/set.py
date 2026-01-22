@@ -16,12 +16,12 @@ from pv.loc import path
 from pv.typing import Sentinel
 from pv.typing.view import Addable, Discardable, Removable
 
-from every import Command, Term
+from every import Command, Morphism, Term
 
 
 if TYPE_CHECKING:
-    from ..context import Context
-    from ..ref import ViewRef
+    from every_pv.context import KVContext as Context
+    from every_pv.ref import ViewRef
 type UnionRefBases = None
 
 
@@ -32,7 +32,7 @@ __all__ = [
 ]
 
 
-class AddValueCmd[T](Command[None]):
+class AddValueCmd[T](Command, Morphism[None]):
     """Add a value to a set.
 
     Impure command that adds an item to a set.
@@ -93,7 +93,7 @@ class AddValueCmd[T](Command[None]):
         return f"AddValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class RemoveValueCmd[T](Command[None]):
+class RemoveValueCmd[T](Command, Morphism[None]):
     """Remove a value from a set.
 
     Impure command that removes an item by value from a set.
@@ -160,7 +160,7 @@ class RemoveValueCmd[T](Command[None]):
         return f"RemoveValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class DiscardValueCmd[T](Command[None]):
+class DiscardValueCmd[T](Command, Morphism[None]):
     """Discard a value from a set (no error if missing).
 
     Impure command that discards an item by value from a set.

@@ -13,28 +13,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, overload
 
-from everybase.conversion import computed, literal
-from everybase.types import IntType, ListType, NoneType
-
-from ..comp import (
-    AppendValueCmd,
-    CountOfValueOp,
-    FilterOp,
-    FindIndexByPredicateOp,
-    FindValueByPredicateOp,
-    IndexOfValueOp,
-    InsertAtIndexCmd,
-    MapOp,
-    PopByIndexCmd,
-    ReduceOp,
-)
+from everybase import IntRef, ListRef, NoneRef, ensure_term, typed_ref
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from every import Sentinel, Term
-    from everybase.types import BoolType, DictType, FloatType, StrType
+    from everybase import BoolRef, DictRef, FloatRef, StrRef
 
 
 __all__ = [
@@ -134,7 +120,7 @@ class SequenceIterableBase[ItemT]:
 
     item_type: type[ItemT]
 
-    def map[R](self, func: Callable[[ItemT], R]) -> ListType[R]:
+    def map[R](self, func: Callable[[ItemT], R]) -> ListRef[R]:
         """Map a function over sequence elements.
 
         Args:
@@ -146,43 +132,47 @@ class SequenceIterableBase[ItemT]:
         Example:
             >>> doubled = list_ref.map(lambda x: x * 2).execute(ctx)
         """
-        return ListType(MapOp(self, func))
+        from every_pv.morphisms import MapOp
 
-    def filter(self, predicate: Callable[[ItemT], bool]) -> ListType[ItemT]:
+        return ListRef(MapOp(self, func))
+
+    def filter(self, predicate: Callable[[ItemT], bool]) -> ListRef[ItemT]:
         """Filter sequence elements by predicate.
 
         Args:
             predicate: Function returning True for elements to keep
 
         Returns:
-            ListType containing filtered elements at execution time
+            ListRef containing filtered elements at execution time
 
         Example:
             >>> evens = list_ref.filter(lambda x: x % 2 == 0).execute(ctx)
         """
-        return ListType(FilterOp(self, predicate))
+        from every_pv.morphisms import FilterOp
+
+        return ListRef(FilterOp(self, predicate))
 
     @overload
-    def reduce(self, func: Callable[[int, ItemT], int], initial: int) -> IntType: ...
+    def reduce(self, func: Callable[[int, ItemT], int], initial: int) -> IntRef: ...
 
     @overload
-    def reduce(self, func: Callable[[str, ItemT], str], initial: str) -> StrType: ...
+    def reduce(self, func: Callable[[str, ItemT], str], initial: str) -> StrRef: ...
 
     @overload
-    def reduce(self, func: Callable[[float, ItemT], float], initial: float) -> FloatType: ...
+    def reduce(self, func: Callable[[float, ItemT], float], initial: float) -> FloatRef: ...
 
     @overload
-    def reduce(self, func: Callable[[bool, ItemT], bool], initial: bool) -> BoolType: ...
+    def reduce(self, func: Callable[[bool, ItemT], bool], initial: bool) -> BoolRef: ...
 
     @overload
     def reduce[V](
         self, func: Callable[[list[V], ItemT], list[V]], initial: list[V]
-    ) -> ListType[V]: ...
+    ) -> ListRef[V]: ...
 
     @overload
     def reduce[K, V](
         self, func: Callable[[dict[K, V], ItemT], dict[K, V]], initial: dict[K, V]
-    ) -> DictType[K, V]: ...
+    ) -> DictRef[K, V]: ...
 
     def reduce[R](self, func: Callable[[R, ItemT], R], initial: R) -> object:
         """Reduce sequence to single value.
@@ -197,32 +187,32 @@ class SequenceIterableBase[ItemT]:
         Example:
             >>> total = list_ref.reduce(lambda acc, x: acc + x, 0).execute(ctx)
         """
-        return computed(type(initial), ReduceOp(self, func, initial))
+        from every_pv.morphisms import ReduceOp
+
+        return typed_ref(type(initial), ReduceOp(self, func, initial))
 
     @overload
-    def find(self: SequenceIterableBase[int], predicate: Callable[[int], bool]) -> IntType: ...
+    def find(self: SequenceIterableBase[int], predicate: Callable[[int], bool]) -> IntRef: ...
 
     @overload
-    def find(self: SequenceIterableBase[str], predicate: Callable[[str], bool]) -> StrType: ...
+    def find(self: SequenceIterableBase[str], predicate: Callable[[str], bool]) -> StrRef: ...
 
     @overload
-    def find(
-        self: SequenceIterableBase[float], predicate: Callable[[float], bool]
-    ) -> FloatType: ...
+    def find(self: SequenceIterableBase[float], predicate: Callable[[float], bool]) -> FloatRef: ...
 
     @overload
-    def find(self: SequenceIterableBase[bool], predicate: Callable[[bool], bool]) -> BoolType: ...
+    def find(self: SequenceIterableBase[bool], predicate: Callable[[bool], bool]) -> BoolRef: ...
 
     @overload
     def find[V](
         self: SequenceIterableBase[list[V]], predicate: Callable[[list[V]], bool]
-    ) -> ListType[V]: ...
+    ) -> ListRef[V]: ...
 
     @overload
     def find[K, V](
         self: SequenceIterableBase[dict[K, V]],
         predicate: Callable[[dict[K, V]], bool],
-    ) -> DictType[K, V]: ...
+    ) -> DictRef[K, V]: ...
 
     def find(self, predicate: Callable) -> object:
         """Find first element matching predicate.
@@ -236,49 +226,57 @@ class SequenceIterableBase[ItemT]:
         Example:
             >>> first_even = list_ref.find(lambda x: x % 2 == 0).execute(ctx)
         """
-        return computed(self.item_type, FindValueByPredicateOp(self, predicate))
+        from every_pv.morphisms import FindValueByPredicateOp
 
-    def find_index(self, predicate: Callable[[ItemT], bool]) -> IntType:
+        return typed_ref(self.item_type, FindValueByPredicateOp(self, predicate))
+
+    def find_index(self, predicate: Callable[[ItemT], bool]) -> IntRef:
         """Find index of first element matching predicate.
 
         Args:
             predicate: Function returning True for element to find
 
         Returns:
-            IntType containing index at execution time
+            IntRef containing index at execution time
 
         Example:
             >>> idx = list_ref.find_index(lambda x: x > 10).execute(ctx)
         """
-        return IntType(FindIndexByPredicateOp(self, predicate))
+        from every_pv.morphisms import FindIndexByPredicateOp
 
-    def index(self, value: ItemT | Sentinel) -> IntType:
+        return IntRef(FindIndexByPredicateOp(self, predicate))
+
+    def index(self, value: ItemT | Sentinel) -> IntRef:
         """Find index of value in sequence.
 
         Args:
             value: Value to search for
 
         Returns:
-            IntType containing index at execution time
+            IntRef containing index at execution time
 
         Example:
             >>> idx = list_ref.index("apple").execute(ctx)
         """
-        return IntType(IndexOfValueOp(self, value))
+        from every_pv.morphisms import IndexOfValueOp
 
-    def count(self, value: ItemT | Sentinel) -> IntType:
+        return IntRef(IndexOfValueOp(self, value))
+
+    def count(self, value: ItemT | Sentinel) -> IntRef:
         """Count occurrences of value in sequence.
 
         Args:
             value: Value to count
 
         Returns:
-            IntType containing count at execution time
+            IntRef containing count at execution time
 
         Example:
             >>> n = list_ref.count("apple").execute(ctx)
         """
-        return IntType(CountOfValueOp(self, value))
+        from every_pv.morphisms import CountOfValueOp
+
+        return IntRef(CountOfValueOp(self, value))
 
 
 class AppendableBase[ItemT]:
@@ -287,19 +285,21 @@ class AppendableBase[ItemT]:
     Implements the Appendable protocol with append() method.
     """
 
-    def append(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneType:
+    def append(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneRef:
         """Create an append command.
 
         Args:
             value: Item to append (literal or Term)
 
         Returns:
-            NoneType (append returns None after execution)
+            NoneRef (append returns None after execution)
 
         Example:
             >>> list_ref.append(42).execute(ctx)
         """
-        return NoneType(AppendValueCmd(self, literal(value)))
+        from every_pv.morphisms import AppendValueCmd
+
+        return NoneRef(AppendValueCmd(self, ensure_term(value)))
 
 
 class InsertableBase[ItemT]:
@@ -312,7 +312,7 @@ class InsertableBase[ItemT]:
         self,
         index: int | Sentinel | Term[int | Sentinel],
         value: ItemT | Sentinel | Term[ItemT | Sentinel],
-    ) -> NoneType:
+    ) -> NoneRef:
         """Create an insert command.
 
         Args:
@@ -320,12 +320,14 @@ class InsertableBase[ItemT]:
             value: Item to insert (literal or Term)
 
         Returns:
-            NoneType (insert returns None after execution)
+            NoneRef (insert returns None after execution)
 
         Example:
             >>> list_ref.insert(0, "first").execute(ctx)
         """
-        return NoneType(InsertAtIndexCmd(self, literal(index), literal(value)))
+        from every_pv.morphisms import InsertAtIndexCmd
+
+        return NoneRef(InsertAtIndexCmd(self, ensure_term(index), ensure_term(value)))
 
 
 class PoppableBase[ItemT]:
@@ -341,37 +343,37 @@ class PoppableBase[ItemT]:
     def pop(
         self: PoppableBase[int],
         index: int | Sentinel | Term[int | Sentinel] | None = None,
-    ) -> IntType: ...
+    ) -> IntRef: ...
 
     @overload
     def pop(
         self: PoppableBase[str],
         index: int | Sentinel | Term[int | Sentinel] | None = None,
-    ) -> StrType: ...
+    ) -> StrRef: ...
 
     @overload
     def pop(
         self: PoppableBase[float],
         index: int | Sentinel | Term[int | Sentinel] | None = None,
-    ) -> FloatType: ...
+    ) -> FloatRef: ...
 
     @overload
     def pop(
         self: PoppableBase[bool],
         index: int | Sentinel | Term[int | Sentinel] | None = None,
-    ) -> BoolType: ...
+    ) -> BoolRef: ...
 
     @overload
     def pop[V](
         self: PoppableBase[list[V]],
         index: int | Sentinel | Term[int | Sentinel] | None = None,
-    ) -> ListType[V]: ...
+    ) -> ListRef[V]: ...
 
     @overload
     def pop[K, V](
         self: PoppableBase[dict[K, V]],
         index: int | Sentinel | Term[int | Sentinel] | None = None,
-    ) -> DictType[K, V]: ...
+    ) -> DictRef[K, V]: ...
 
     def pop(self, index: int | Sentinel | Term[int | Sentinel] | None = None) -> object:
         """Create a pop command.
@@ -386,5 +388,7 @@ class PoppableBase[ItemT]:
             >>> last = list_ref.pop().execute(ctx)
             >>> first = list_ref.pop(0).execute(ctx)
         """
-        wrapped_index = literal(index) if index is not None else None
-        return computed(self.item_type, PopByIndexCmd(self, wrapped_index))
+        from every_pv.morphisms import PopByIndexCmd
+
+        wrapped_index = ensure_term(index) if index is not None else None
+        return typed_ref(self.item_type, PopByIndexCmd(self, wrapped_index))

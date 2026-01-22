@@ -10,14 +10,14 @@ from pv.loc import path
 from pv.storage import Subscription
 from pv.typing.view import ChildObservable, DescendantsObservable, Observable
 
-from every import Operation, Term
+from every import Morphism, Operation, Term
 
 
 if TYPE_CHECKING:
     from pv.loc import key
 
-    from ..context import Context
-    from ..ref import PrimitiveRef, ViewRef
+    from every_pv.context import KVContext as Context
+    from every_pv.ref import PrimitiveRef, ViewRef
 
 
 __all__ = [
@@ -33,7 +33,7 @@ __all__ = [
 logger = getLogger(__name__)
 
 
-class ChangeOp(Operation[Subscription]):
+class ChangeOp(Operation, Morphism[Subscription]):
     """Base class for all change subscription operations.
 
     All change operations return a Subscription that can be used to

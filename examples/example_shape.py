@@ -12,39 +12,38 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from everyterm.shape import Shape
+import every
+import every_pv
+import every_view
 
-import everybase as e
-from everybase.ref.context import KVContext
 
-
-class SymbolInfo(Shape):
+class SymbolInfo(every.Shape):
     """Individual symbol information."""
 
-    price = e.slot.FloatSlot()
-    volume = e.slot.IntSlot()
-    exchange = e.slot.StrSlot()
-    yo = e.slot.BytesSlot()
+    price = every_pv.slots.FloatSlot()
+    volume = every_pv.slots.IntSlot()
+    exchange = every_pv.slots.StrSlot()
+    yo = every_pv.slots.BytesSlot()
 
 
-class Order(Shape):
+class Order(every.Shape):
     """Order information."""
 
-    id = e.slot.StrSlot()
-    symbol = e.slot.StrSlot()
-    quantity = e.slot.IntSlot()
-    price = e.slot.FloatSlot()
+    id = every_pv.slots.StrSlot()
+    symbol = every_pv.slots.StrSlot()
+    quantity = every_pv.slots.IntSlot()
+    price = every_pv.slots.FloatSlot()
 
 
-class Market(Shape):
+class Market(every.Shape):
     """Market data with various collection types."""
 
-    misc_val = e.slot.IntSlot()
-    signals = e.slot.DictSlot(float)
-    prices = e.slot.ListSlot(float)
-    symbols = e.slot.ShapesDictSlot(SymbolInfo)
-    orders = e.slot.ShapesListSlot(Order)
-    last_order = e.slot.ShapeSlot(Order)
+    misc_val = every_pv.slots.IntSlot()
+    signals = every_pv.slots.DictSlot(float)
+    prices = every_pv.slots.ListSlot(float)
+    symbols = every_pv.slots.ShapesDictSlot(SymbolInfo)
+    orders = every_pv.slots.ShapesListSlot(Order)
+    last_order = every_pv.slots.ShapeSlot(Order)
 
 
 # =============================================================================
@@ -52,7 +51,7 @@ class Market(Shape):
 # =============================================================================
 
 
-def example_mapping_primitives(ctx: KVContext) -> None:
+def example_mapping_primitives(ctx: every_pv.KVContext) -> None:
     """Example: mapping of primitive values."""
     print("\n=== Mapping of Primitives ===")
 
@@ -67,7 +66,7 @@ def example_mapping_primitives(ctx: KVContext) -> None:
     print(f"Sentiment: {sentiment}")
 
 
-def example_sequence_primitives(ctx: KVContext) -> None:
+def example_sequence_primitives(ctx: every_pv.KVContext) -> None:
     """Example: sequence of primitive values."""
     print("\n=== Sequence of Primitives ===")
 
@@ -96,7 +95,7 @@ def example_sequence_primitives(ctx: KVContext) -> None:
     print(Market.last_order.get().execute(ctx))
 
 
-def example_mapping_shapes(ctx: KVContext) -> None:
+def example_mapping_shapes(ctx: every_pv.KVContext) -> None:
     """Example: mapping of shapes."""
     print("\n=== Mapping of Shapes ===")
 
@@ -129,7 +128,7 @@ def example_mapping_shapes(ctx: KVContext) -> None:
     print(f"AAPL Data: {aapl_data}")
 
 
-def example_sequence_shapes(ctx: KVContext) -> None:
+def example_sequence_shapes(ctx: every_pv.KVContext) -> None:
     """Example: sequence of shapes."""
     print("\n=== Sequence of Shapes ===")
 
@@ -172,8 +171,8 @@ if __name__ == "__main__":
         TextStorage(path=Path(".db_shape"), codec=TextCodec()) as storage,
         storage.transaction() as tx,
     ):
-        root = e.view.DictView.open_root(tx)
-        ctx = KVContext.create(root_view=root, storage_context=tx)
+        root = every_view.DictView.open_root(tx)
+        ctx = every_pv.KVContext.create(root_view=root, storage_context=tx)
 
         set_res = SymbolInfo.volume.set(12)
         set_res = set_res.execute(ctx)

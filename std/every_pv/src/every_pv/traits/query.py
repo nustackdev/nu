@@ -8,13 +8,7 @@ This module provides query-related capability bases:
 
 from __future__ import annotations
 
-from everybase.types import ListType
-
-from ..comp import (
-    ItemsOp,
-    KeysOp,
-    ValuesOp,
-)
+from everybase import ListRef
 
 
 __all__ = [
@@ -35,16 +29,18 @@ class KeysQueryableBase[KeyT]:
     Implements the KeysQueryable protocol with keys() method.
     """
 
-    def keys(self) -> ListType[KeyT]:
+    def keys(self) -> ListRef[KeyT]:
         """Create a keys query operation.
 
         Returns:
-            ListType containing all keys when executed
+            ListRef containing all keys when executed
 
         Example:
             >>> all_keys = dict_ref.keys().execute(ctx)
         """
-        return ListType(KeysOp(self))
+        from every_pv.morphisms import KeysOp
+
+        return ListRef(KeysOp(self))
 
 
 class ValuesQueryableBase[ValueT]:
@@ -53,16 +49,18 @@ class ValuesQueryableBase[ValueT]:
     Implements the ValuesQueryable protocol with values() method.
     """
 
-    def values(self) -> ListType[ValueT]:
+    def values(self) -> ListRef[ValueT]:
         """Create a values query operation.
 
         Returns:
-            ListType containing all values when executed
+            ListRef containing all values when executed
 
         Example:
             >>> all_values = dict_ref.values().execute(ctx)
         """
-        return ListType(ValuesOp(self))
+        from every_pv.morphisms import ValuesOp
+
+        return ListRef(ValuesOp(self))
 
 
 class ItemsQueryableBase[KeyT, ValueT]:
@@ -71,13 +69,15 @@ class ItemsQueryableBase[KeyT, ValueT]:
     Implements the ItemsQueryable protocol with items() method.
     """
 
-    def items(self) -> ListType[tuple[KeyT, ValueT]]:
+    def items(self) -> ListRef[tuple[KeyT, ValueT]]:
         """Create an items query operation.
 
         Returns:
-            ListType containing all (key, value) pairs when executed
+            ListRef containing all (key, value) pairs when executed
 
         Example:
             >>> all_items = dict_ref.items().execute(ctx)
         """
-        return ListType(ItemsOp(self))
+        from every_pv.morphisms import ItemsOp
+
+        return ListRef(ItemsOp(self))

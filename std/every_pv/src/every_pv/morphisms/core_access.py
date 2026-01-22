@@ -18,15 +18,14 @@ from pv.loc import path
 from pv.typing import Empty, Sentinel, Value
 from pv.typing.view import capabilities as view_capabilities
 
-from every import Operation
-
-from ..ref import PrimitiveRef, ViewRef
+from every import Morphism, Operation
+from every_pv.ref import PrimitiveRef, ViewRef
 
 
 if TYPE_CHECKING:
     from pv.view import View
 
-    from ..context import Context
+    from every_pv.context import KVContext as Context
 
 
 __all__ = [
@@ -40,7 +39,7 @@ __all__ = [
 type UnionRefBases = None
 
 
-class GetOp[T](Operation[T | Sentinel]):
+class GetOp[T](Operation, Morphism[T | Sentinel]):
     """Read operation for primitive values.
 
     Pure operation that navigates to a location and reads the value.
@@ -92,7 +91,7 @@ class GetOp[T](Operation[T | Sentinel]):
         return f"GetOp({self.ref!r})"
 
 
-class ExtractOp[T](Operation[T | Sentinel]):
+class ExtractOp[T](Operation, Morphism[T | Sentinel]):
     """Extract operation for container structures.
 
     Pure operation that reads an entire container structure.
@@ -149,7 +148,7 @@ class ExtractOp[T](Operation[T | Sentinel]):
         return f"ExtractOp({self.ref!r})"
 
 
-class ExistsOp(Operation[bool]):
+class ExistsOp(Operation, Morphism[bool]):
     """Existence check operation.
 
     Pure operation that checks if a location exists in storage.
@@ -205,7 +204,7 @@ class ExistsOp(Operation[bool]):
         return f"ExistsOp({self.ref!r})"
 
 
-class MissingOp(Operation[bool]):
+class MissingOp(Operation, Morphism[bool]):
     """Missing check operation (inverse of exists).
 
     Pure operation that checks if a location is missing from storage.
@@ -243,7 +242,7 @@ class MissingOp(Operation[bool]):
         return f"MissingOp({self.ref!r})"
 
 
-class LengthOp(Operation[int | Sentinel]):
+class LengthOp(Operation, Morphism[int | Sentinel]):
     """Length query operation for containers.
 
     Pure operation that returns the length of a container.

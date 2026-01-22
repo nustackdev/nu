@@ -31,14 +31,14 @@ from pv.typing import Empty, Sentinel
 from pv.typing.view import Appendable, Poppable
 from pv.typing.view import capabilities as view_capabilities
 
-from every import Command, Operation, Term
+from every import Command, Morphism, Operation, Term
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..context import Context
-    from ..ref import ViewRef
+    from every_pv.context import KVContext as Context
+    from every_pv.ref import ViewRef
 
 type UnionRefBases = None
 
@@ -62,7 +62,7 @@ __all__ = [
 # =============================================================================
 
 
-class AppendValueCmd[T](Command[T]):
+class AppendValueCmd[T](Command, Morphism[T]):
     """Append a value to the end of a sequence.
 
     Impure command that appends an item to a list or similar sequence.
@@ -125,7 +125,7 @@ class AppendValueCmd[T](Command[T]):
         return f"AppendValueCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class InsertAtIndexCmd[T](Command[T]):
+class InsertAtIndexCmd[T](Command, Morphism[T]):
     """Insert a value at a specific index in a sequence.
 
     Impure command that inserts an item at a specific index.
@@ -172,7 +172,7 @@ class InsertAtIndexCmd[T](Command[T]):
         return f"InsertAtIndexCmd({self.ref!r}, {self.index_expr!r}, {self.value_expr!r})"
 
 
-class PopByIndexCmd[T](Command[T]):
+class PopByIndexCmd[T](Command, Morphism[T]):
     """Pop a value from a sequence by index.
 
     Impure command that removes and returns an item by index.
@@ -245,7 +245,7 @@ class PopByIndexCmd[T](Command[T]):
 # =============================================================================
 
 
-class IndexOfValueOp[T](Operation[int]):
+class IndexOfValueOp[T](Operation, Morphism[int]):
     """Find the index of a specific value in a sequence.
 
     Pure operation that finds the index of a value.
@@ -304,7 +304,7 @@ class IndexOfValueOp[T](Operation[int]):
         return f"IndexOfValueOp({self.ref!r}, {self.value!r})"
 
 
-class CountOfValueOp[T](Operation[int | Sentinel]):
+class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
     """Count occurrences of a specific value in a sequence.
 
     Pure operation that counts how many times a value appears.
@@ -367,7 +367,7 @@ class CountOfValueOp[T](Operation[int | Sentinel]):
 # =============================================================================
 
 
-class FindByPredicateOp[T](Operation[T]):
+class FindByPredicateOp[T](Operation, Morphism[T]):
     """Find the first element matching a predicate.
 
     Pure operation that searches a sequence and returns the first element
@@ -430,7 +430,7 @@ class FindByPredicateOp[T](Operation[T]):
         return f"FindByPredicateOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindIndexByPredicateOp[T](Operation[int]):
+class FindIndexByPredicateOp[T](Operation, Morphism[int]):
     """Find the index of the first element matching a predicate.
 
     Pure operation that searches a sequence and returns the index of the
@@ -498,7 +498,7 @@ class FindIndexByPredicateOp[T](Operation[int]):
 # =============================================================================
 
 
-class MapOp[T, R](Operation[list[R] | Sentinel]):
+class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
     """Map a function over sequence elements.
 
     Pure operation that applies a function to each element.
@@ -557,7 +557,7 @@ class MapOp[T, R](Operation[list[R] | Sentinel]):
         return f"MapOp({self.ref!r}, {self.func!r})"
 
 
-class FilterOp[T](Operation[list[T] | Sentinel]):
+class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
     """Filter sequence elements by predicate.
 
     Pure operation that keeps elements matching a predicate.
@@ -615,7 +615,7 @@ class FilterOp[T](Operation[list[T] | Sentinel]):
         return f"FilterOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceOp[T, R](Operation[R | Sentinel]):
+class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
     """Reduce sequence to single value.
 
     Pure operation that reduces a sequence using a reducer function.

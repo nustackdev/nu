@@ -9,19 +9,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..comp.reactive import (
-    OnChangeOp,
-    OnChildChangeOp,
-    OnChildrenChangeOp,
-    OnDescendantsChangeOp,
-    OnPrimitiveChangeOp,
-)
-
 
 if TYPE_CHECKING:
     from pv.loc import key
 
     from every import Sentinel, Term
+    from every_pv.morphisms import (
+        OnChangeOp,
+        OnChildChangeOp,
+        OnChildrenChangeOp,
+        OnDescendantsChangeOp,
+        OnPrimitiveChangeOp,
+    )
 
 
 __all__ = [
@@ -50,6 +49,8 @@ class PrimitiveObservableBase:
         Example:
             >>> Once(User.name.on_change(), HandleNameChange())
         """
+        from every_pv.morphisms import OnPrimitiveChangeOp
+
         return OnPrimitiveChangeOp(self)
 
 
@@ -68,6 +69,8 @@ class ViewObservableBase:
         Example:
             >>> OnChange(User.profile.on_change(), SyncProfile())
         """
+        from every_pv.morphisms import OnChangeOp
+
         return OnChangeOp(self)
 
     def on_child_change(self, address: str | Sentinel | Term[str | Sentinel]) -> OnChildChangeOp:
@@ -82,6 +85,8 @@ class ViewObservableBase:
         Example:
             >>> OnChange(User.profile.on_child_change("email"), HandleEmailChange())
         """
+        from every_pv.morphisms import OnChildChangeOp
+
         return OnChildChangeOp(self, address)
 
     def on_children_change(self) -> OnChildrenChangeOp:
@@ -93,6 +98,8 @@ class ViewObservableBase:
         Example:
             >>> OnChange(Users.on_children_change(), SyncUsers())
         """
+        from every_pv.morphisms import OnChildrenChangeOp
+
         return OnChildrenChangeOp(self)
 
     def on_descendants_change(self, *pattern: key.KeySegment) -> OnDescendantsChangeOp:
@@ -107,4 +114,6 @@ class ViewObservableBase:
         Example:
             >>> OnChange(Users.on_descendants_change("*", "status"), HandleStatusChanges())
         """
+        from every_pv.morphisms import OnDescendantsChangeOp
+
         return OnDescendantsChangeOp(self, *pattern)

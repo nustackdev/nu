@@ -33,14 +33,14 @@ from pv.storage import StorageKeyError
 from pv.typing import NOT_SET, Empty, NotSet, Sentinel, Value
 from pv.typing.view import capabilities as view_capabilities
 
-from every import Command, Operation, Term
+from every import Command, Morphism, Operation, Term
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..context import Context
-    from ..ref import ViewRef
+    from every_pv.context import KVContext as Context
+    from every_pv.ref import ViewRef
 
 type UnionRefBases = None
 
@@ -67,7 +67,7 @@ __all__ = [
 # =============================================================================
 
 
-class SetByKeyCmd[K, V: Value](Command[V]):
+class SetByKeyCmd[K, V: Value](Command, Morphism[V]):
     """Set a value at a key in a mapping.
 
     Impure command that sets a value at a key in a mapping container.
@@ -136,7 +136,7 @@ class SetByKeyCmd[K, V: Value](Command[V]):
         return f"SetByKeyCmd({self.ref!r}, {self.key!r}, {self.value_expr!r})"
 
 
-class RemoveByKeyCmd[K](Command[None]):
+class RemoveByKeyCmd[K](Command, Morphism[None]):
     """Remove an entry by key from a mapping.
 
     Impure command that removes a key from a mapping container.
@@ -205,7 +205,7 @@ class RemoveByKeyCmd[K](Command[None]):
 # =============================================================================
 
 
-class GetByKeyOp[K, V](Operation[V | Sentinel]):
+class GetByKeyOp[K, V](Operation, Morphism[V | Sentinel]):
     """Get a value by key from a mapping.
 
     Pure operation that gets a value by key, returning a default if not found.
@@ -271,7 +271,7 @@ class GetByKeyOp[K, V](Operation[V | Sentinel]):
         return f"GetByKeyOp({self.ref!r}, {self.key!r}, {self.default!r})"
 
 
-class KeysOp[K](Operation[list[K] | Sentinel]):
+class KeysOp[K](Operation, Morphism[list[K] | Sentinel]):
     """Get all keys from a mapping.
 
     Pure operation that returns all keys of a mapping as a list.
@@ -327,7 +327,7 @@ class KeysOp[K](Operation[list[K] | Sentinel]):
         return f"KeysOp({self.ref!r})"
 
 
-class ValuesOp[V](Operation[list[V] | Sentinel]):
+class ValuesOp[V](Operation, Morphism[list[V] | Sentinel]):
     """Get all values from a mapping.
 
     Pure operation that returns all values of a mapping as a list.
@@ -383,7 +383,7 @@ class ValuesOp[V](Operation[list[V] | Sentinel]):
         return f"ValuesOp({self.ref!r})"
 
 
-class ItemsOp[K, V](Operation[list[tuple[K, V]] | Sentinel]):
+class ItemsOp[K, V](Operation, Morphism[list[tuple[K, V]] | Sentinel]):
     """Get all key-value pairs from a mapping.
 
     Pure operation that returns all key-value pairs as a list of tuples.
@@ -445,7 +445,7 @@ class ItemsOp[K, V](Operation[list[tuple[K, V]] | Sentinel]):
 # =============================================================================
 
 
-class FindKeyByPredicateOp[K, V](Operation[K]):
+class FindKeyByPredicateOp[K, V](Operation, Morphism[K]):
     """Find a key whose value matches a predicate.
 
     Pure operation that searches a mapping and returns the first key
@@ -511,7 +511,7 @@ class FindKeyByPredicateOp[K, V](Operation[K]):
         return f"FindKeyByPredicateOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindValueByPredicateOp[V](Operation[V]):
+class FindValueByPredicateOp[V](Operation, Morphism[V]):
     """Find the first value in a mapping matching a predicate.
 
     Pure operation that searches a mapping's values and returns the first
@@ -576,7 +576,7 @@ class FindValueByPredicateOp[V](Operation[V]):
         return f"FindValueByPredicateOp({self.ref!r}, {self.predicate!r})"
 
 
-class FindItemByPredicateOp[K, V](Operation[tuple[K, V]]):
+class FindItemByPredicateOp[K, V](Operation, Morphism[tuple[K, V]]):
     """Find the first (key, value) pair in a mapping matching a predicate.
 
     Pure operation that searches a mapping and returns the first (key, value)
@@ -649,7 +649,7 @@ class FindItemByPredicateOp[K, V](Operation[tuple[K, V]]):
 # =============================================================================
 
 
-class MapValuesOp[K, V, R](Operation[dict[K, R] | Sentinel]):
+class MapValuesOp[K, V, R](Operation, Morphism[dict[K, R] | Sentinel]):
     """Map a function over mapping values.
 
     Pure operation that applies a function to each value in a mapping.
@@ -711,7 +711,7 @@ class MapValuesOp[K, V, R](Operation[dict[K, R] | Sentinel]):
         return f"MapValuesOp({self.ref!r}, {self.func!r})"
 
 
-class MapItemsOp[K, V, K2, V2](Operation[dict[K2, V2] | Sentinel]):
+class MapItemsOp[K, V, K2, V2](Operation, Morphism[dict[K2, V2] | Sentinel]):
     """Map a function over mapping items.
 
     Pure operation that applies a function to each (key, value) pair.
@@ -774,7 +774,7 @@ class MapItemsOp[K, V, K2, V2](Operation[dict[K2, V2] | Sentinel]):
         return f"MapItemsOp({self.ref!r}, {self.func!r})"
 
 
-class FilterItemsOp[K, V](Operation[dict[K, V] | Sentinel]):
+class FilterItemsOp[K, V](Operation, Morphism[dict[K, V] | Sentinel]):
     """Filter mapping items by predicate.
 
     Pure operation that keeps items matching a predicate.
@@ -835,7 +835,7 @@ class FilterItemsOp[K, V](Operation[dict[K, V] | Sentinel]):
         return f"FilterItemsOp({self.ref!r}, {self.predicate!r})"
 
 
-class ReduceItemsOp[K, V, R](Operation[R | Sentinel]):
+class ReduceItemsOp[K, V, R](Operation, Morphism[R | Sentinel]):
     """Reduce mapping items to single value.
 
     Pure operation that reduces a mapping to a single value.

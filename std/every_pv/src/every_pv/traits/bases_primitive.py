@@ -9,13 +9,13 @@ Type Parameters (matching protocol conventions):
 
 from __future__ import annotations
 
-from .bases import (
+from .core import (
     DeletableBase,
     ExistableBase,
     GettableBase,
-    PrimitiveObservableBase,
     SettableBase,
 )
+from .observable import PrimitiveObservableBase
 
 
 __all__ = [

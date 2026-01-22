@@ -23,13 +23,13 @@ from pv.typing.view import (
     Initializable,
 )
 
-from every import Command, Term
-from everybase.conversion import literal
+from every import Command, Morphism, Term
+from everybase import ensure_term
 
 
 if TYPE_CHECKING:
-    from ..context import Context
-    from ..ref import PrimitiveRef, ViewRef
+    from every_pv.context import KVContext as Context
+    from every_pv.ref import PrimitiveRef, ViewRef
 
 type UnionRefBases = None
 
@@ -42,7 +42,7 @@ __all__ = [
 ]
 
 
-class SetCmd[T](Command[T]):
+class SetCmd[T](Command, Morphism[T]):
     """Write command for primitive values.
 
     Impure command that writes a value to a storage location.
@@ -53,7 +53,7 @@ class SetCmd[T](Command[T]):
         ContextT: Execution context type
 
     Example:
-        >>> set_cmd = SetCmd(value_ref, literal(42))
+        >>> set_cmd = SetCmd(value_ref, ensure_term(42))
         >>> written = set_cmd.execute(ctx)  # Returns 42
     """
 
@@ -110,7 +110,7 @@ class SetCmd[T](Command[T]):
         return f"SetCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class DeleteCmd(Command[None]):
+class DeleteCmd(Command, Morphism[None]):
     """Delete command for removing items.
 
     Impure command that deletes a value from storage.
@@ -164,7 +164,7 @@ class DeleteCmd(Command[None]):
         return f"DeleteCmd({self.ref!r})"
 
 
-class StoreCmd[T](Command[T]):
+class StoreCmd[T](Command, Morphism[T]):
     """Store command for container structures.
 
     Impure command that writes an entire structure to a container.
@@ -175,7 +175,7 @@ class StoreCmd[T](Command[T]):
         ContextT: Execution context type
 
     Example:
-        >>> store_cmd = StoreCmd(dict_ref, literal({"key": "value"}))
+        >>> store_cmd = StoreCmd(dict_ref, ensure_term({"key": "value"}))
         >>> stored = store_cmd.execute(ctx)  # Returns {"key": "value"}
     """
 
@@ -234,7 +234,7 @@ class StoreCmd[T](Command[T]):
         return f"StoreCmd({self.ref!r}, {self.data_expr!r})"
 
 
-class ClearCmd(Command[None]):
+class ClearCmd(Command, Morphism[None]):
     """Clear command for containers.
 
     Impure command that removes all items from a container.
@@ -296,7 +296,7 @@ class ClearCmd(Command[None]):
 # =============================================================================
 
 
-class TypedSetCmd[T](Command[T]):
+class TypedSetCmd[T](Command, Morphism[T]):
     """Set command for TypedValue that calls __to_storage__ before storing.
 
     Like SetCmd, but before writing to storage, it checks if the value
@@ -330,7 +330,7 @@ class TypedSetCmd[T](Command[T]):
             value: Value to write (can be TypedValue with __to_storage__)
         """
         self.ref = cast("PrimitiveRef[T]", ref)
-        self.value_expr = literal(value)
+        self.value_expr = ensure_term(value)
         self.children = (cast("PrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:

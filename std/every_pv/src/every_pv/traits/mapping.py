@@ -12,28 +12,14 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, overload
 
 from every import Term
-from everybase.conversion import computed, literal
-from everybase.types import DictType, NoneType, TupleType
-
-from ..comp import (
-    FilterItemsOp,
-    FindItemByPredicateOp,
-    FindKeyByPredicateOp,
-    FindValueByPredicateOp,
-    GetByKeyOp,
-    MapItemsOp,
-    MapValuesOp,
-    ReduceItemsOp,
-    RemoveByKeyCmd,
-    SetByKeyCmd,
-)
+from everybase import DictRef, NoneRef, TupleRef, ensure_term, typed_ref
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from every import Sentinel, Term
-    from everybase.types import BoolType, BytesType, FloatType, IntType, ListType, SetType, StrType
+    from everybase import BoolRef, BytesRef, FloatRef, IntRef, ListRef, SetRef, StrRef
 
 
 __all__ = [
@@ -100,69 +86,75 @@ class MappingIterableBase[KeyT, ValueT]:
     key_type: type[KeyT]
     value_type: type[ValueT]
 
-    def map_values[R](self, func: Callable[[ValueT], R]) -> DictType[KeyT, R]:
+    def map_values[R](self, func: Callable[[ValueT], R]) -> DictRef[KeyT, R]:
         """Map function over mapping values.
 
         Args:
             func: Function to apply to each value
 
         Returns:
-            DictType containing transformed dict at execution time
+            DictRef containing transformed dict at execution time
 
         Example:
             >>> doubled = scores_ref.map_values(lambda x: x * 2).execute(ctx)
         """
-        return DictType(MapValuesOp(self, func))
+        from every_pv.morphisms import MapValuesOp
 
-    def map_items[K2, V2](self, func: Callable[[KeyT, ValueT], tuple[K2, V2]]) -> DictType[K2, V2]:
+        return DictRef(MapValuesOp(self, func))
+
+    def map_items[K2, V2](self, func: Callable[[KeyT, ValueT], tuple[K2, V2]]) -> DictRef[K2, V2]:
         """Map function over mapping items.
 
         Args:
             func: Function (key, value) -> (new_key, new_value)
 
         Returns:
-            DictType containing transformed dict at execution time
+            DictRef containing transformed dict at execution time
 
         Example:
             >>> upper_keys = dict_ref.map_items(lambda k, v: (k.upper(), v)).execute(ctx)
         """
-        return DictType(MapItemsOp(self, func))
+        from every_pv.morphisms import MapItemsOp
 
-    def filter(self, predicate: Callable[[KeyT, ValueT], bool]) -> DictType[KeyT, ValueT]:
+        return DictRef(MapItemsOp(self, func))
+
+    def filter(self, predicate: Callable[[KeyT, ValueT], bool]) -> DictRef[KeyT, ValueT]:
         """Filter mapping items by predicate.
 
         Args:
             predicate: Function (key, value) -> bool, keep if True
 
         Returns:
-            DictType containing filtered dict at execution time
+            DictRef containing filtered dict at execution time
 
         Example:
             >>> high_scores = scores_ref.filter(lambda k, v: v > 100).execute(ctx)
         """
-        return DictType(FilterItemsOp(self, predicate))
+        from every_pv.morphisms import FilterItemsOp
+
+        return DictRef(FilterItemsOp(self, predicate))
 
     @overload
-    def reduce(self, func: Callable[[int, KeyT, ValueT], int], initial: int) -> IntType: ...
+    def reduce(self, func: Callable[[int, KeyT, ValueT], int], initial: int) -> IntRef: ...
 
     @overload
-    def reduce(self, func: Callable[[str, KeyT, ValueT], str], initial: str) -> StrType: ...
+    def reduce(self, func: Callable[[str, KeyT, ValueT], str], initial: str) -> StrRef: ...
 
     @overload
-    def reduce(self, func: Callable[[float, KeyT, ValueT], float], initial: float) -> FloatType: ...
+    def reduce(self, func: Callable[[float, KeyT, ValueT], float], initial: float) -> FloatRef: ...
 
     @overload
-    def reduce(self, func: Callable[[bool, KeyT, ValueT], bool], initial: bool) -> BoolType: ...
+    def reduce(self, func: Callable[[bool, KeyT, ValueT], bool], initial: bool) -> BoolRef: ...
 
     @overload
     def reduce[V2](
         self, func: Callable[[list[V2], KeyT, ValueT], list[V2]], initial: list[V2]
-    ) -> ListType[V2]: ...
+    ) -> ListRef[V2]: ...
 
     @overload
     def reduce[K2, V2](
         self, func: Callable[[dict[K2, V2], KeyT, ValueT], dict[K2, V2]], initial: dict[K2, V2]
-    ) -> DictType[K2, V2]: ...
+    ) -> DictRef[K2, V2]: ...
 
     def reduce[R](self, func: Callable[[R, KeyT, ValueT], R], initial: R) -> object:
         """Reduce mapping to single value.
@@ -177,27 +169,29 @@ class MappingIterableBase[KeyT, ValueT]:
         Example:
             >>> total = scores_ref.reduce(lambda acc, k, v: acc + v, 0).execute(ctx)
         """
-        return computed(type(initial), ReduceItemsOp(self, func, initial))
+        from every_pv.morphisms import ReduceItemsOp
+
+        return typed_ref(type(initial), ReduceItemsOp(self, func, initial))
 
     @overload
     def find_key(
         self: MappingIterableBase[int, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> IntType: ...
+    ) -> IntRef: ...
 
     @overload
     def find_key(
         self: MappingIterableBase[str, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> StrType: ...
+    ) -> StrRef: ...
 
     @overload
     def find_key(
         self: MappingIterableBase[float, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> FloatType: ...
+    ) -> FloatRef: ...
 
     @overload
     def find_key(
         self: MappingIterableBase[bool, ValueT], predicate: Callable[[ValueT], bool]
-    ) -> BoolType: ...
+    ) -> BoolRef: ...
 
     def find_key(self, predicate: Callable[[ValueT], bool]) -> object:
         """Find first key whose value matches predicate.
@@ -211,38 +205,40 @@ class MappingIterableBase[KeyT, ValueT]:
         Example:
             >>> winner = scores_ref.find_key(lambda v: v >= 100).execute(ctx)
         """
-        return computed(self.key_type, FindKeyByPredicateOp(self, predicate))
+        from every_pv.morphisms import FindKeyByPredicateOp
+
+        return typed_ref(self.key_type, FindKeyByPredicateOp(self, predicate))
 
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, int], predicate: Callable[[int], bool]
-    ) -> IntType: ...
+    ) -> IntRef: ...
 
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, str], predicate: Callable[[str], bool]
-    ) -> StrType: ...
+    ) -> StrRef: ...
 
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, float], predicate: Callable[[float], bool]
-    ) -> FloatType: ...
+    ) -> FloatRef: ...
 
     @overload
     def find_value(
         self: MappingIterableBase[KeyT, bool], predicate: Callable[[bool], bool]
-    ) -> BoolType: ...
+    ) -> BoolRef: ...
 
     @overload
     def find_value[V2](
         self: MappingIterableBase[KeyT, list[V2]], predicate: Callable[[list[V2]], bool]
-    ) -> ListType[V2]: ...
+    ) -> ListRef[V2]: ...
 
     @overload
     def find_value[K2, V2](
         self: MappingIterableBase[KeyT, dict[K2, V2]],
         predicate: Callable[[dict[K2, V2]], bool],
-    ) -> DictType[K2, V2]: ...
+    ) -> DictRef[K2, V2]: ...
 
     def find_value(self, predicate: Callable) -> object:
         """Find first value matching predicate.
@@ -256,21 +252,25 @@ class MappingIterableBase[KeyT, ValueT]:
         Example:
             >>> high_score = scores_ref.find_value(lambda v: v >= 100).execute(ctx)
         """
-        return computed(self.value_type, FindValueByPredicateOp(self, predicate))
+        from every_pv.morphisms import FindValueByPredicateOp
 
-    def find_item(self, predicate: Callable[[KeyT, ValueT], bool]) -> TupleType[KeyT, ValueT]:
+        return typed_ref(self.value_type, FindValueByPredicateOp(self, predicate))
+
+    def find_item(self, predicate: Callable[[KeyT, ValueT], bool]) -> TupleRef[KeyT, ValueT]:
         """Find first item (key, value) matching predicate.
 
         Args:
             predicate: Function (key, value) -> bool
 
         Returns:
-            TupleType containing matching (key, value) tuple at execution time
+            TupleRef containing matching (key, value) tuple at execution time
 
         Example:
             >>> item = dict_ref.find_item(lambda k, v: k.startswith("admin")).execute(ctx)
         """
-        return TupleType(FindItemByPredicateOp(self, predicate))
+        from every_pv.morphisms import FindItemByPredicateOp
+
+        return TupleRef(FindItemByPredicateOp(self, predicate))
 
 
 class MappingAccessibleBase[KeyT, ValueT]:
@@ -287,63 +287,63 @@ class MappingAccessibleBase[KeyT, ValueT]:
         self: MappingAccessibleBase[KeyT, int],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: int | Sentinel | None = None,
-    ) -> IntType: ...
+    ) -> IntRef: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, str],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: str | Sentinel | None = None,
-    ) -> StrType: ...
+    ) -> StrRef: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, bool],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: bool | Sentinel | None = None,
-    ) -> BoolType: ...
+    ) -> BoolRef: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, float],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: float | Sentinel | None = None,
-    ) -> FloatType: ...
+    ) -> FloatRef: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, bytes],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: bytes | Sentinel | None = None,
-    ) -> BytesType: ...
+    ) -> BytesRef: ...
 
     @overload
     def get_item(
         self: MappingAccessibleBase[KeyT, None],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: None | Sentinel = None,
-    ) -> NoneType: ...
+    ) -> NoneRef: ...
 
     @overload
     def get_item[V](
         self: MappingAccessibleBase[KeyT, list[V]],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: list[V] | Sentinel | None = None,
-    ) -> ListType[V]: ...
+    ) -> ListRef[V]: ...
 
     @overload
     def get_item[K, V](
         self: MappingAccessibleBase[KeyT, dict[K, V]],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: dict[K, V] | Sentinel | None = None,
-    ) -> DictType[K, V]: ...
+    ) -> DictRef[K, V]: ...
 
     @overload
     def get_item[V](
         self: MappingAccessibleBase[KeyT, set[V]],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         default: set[V] | Sentinel | None = None,
-    ) -> SetType[V]: ...
+    ) -> SetRef[V]: ...
 
     def get_item(
         self,
@@ -362,70 +362,72 @@ class MappingAccessibleBase[KeyT, ValueT]:
         Example:
             >>> value = dict_ref.get_item("key", "default").execute(ctx)
         """
-        return computed(self.value_type, GetByKeyOp(self, key, default))
+        from every_pv.morphisms import GetByKeyOp
+
+        return typed_ref(self.value_type, GetByKeyOp(self, key, default))
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, int],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: int | Sentinel | Term[int | Sentinel],
-    ) -> IntType: ...
+    ) -> IntRef: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, str],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: str | Sentinel | Term[str | Sentinel],
-    ) -> StrType: ...
+    ) -> StrRef: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, bool],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: bool | Sentinel | Term[bool | Sentinel],
-    ) -> BoolType: ...
+    ) -> BoolRef: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, float],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: float | Sentinel | Term[float | Sentinel],
-    ) -> FloatType: ...
+    ) -> FloatRef: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, bytes],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: bytes | Sentinel | Term[bytes | Sentinel],
-    ) -> BytesType: ...
+    ) -> BytesRef: ...
 
     @overload
     def set_item(
         self: MappingAccessibleBase[KeyT, None],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: None | Sentinel | Term[None | Sentinel],
-    ) -> NoneType: ...
+    ) -> NoneRef: ...
 
     @overload
     def set_item[V](
         self: MappingAccessibleBase[KeyT, list[V]],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: list[V] | Sentinel | Term[list[V] | Sentinel],
-    ) -> ListType[V]: ...
+    ) -> ListRef[V]: ...
 
     @overload
     def set_item[K, V](
         self: MappingAccessibleBase[KeyT, dict[K, V]],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: dict[K, V] | Sentinel | Term[dict[K, V] | Sentinel],
-    ) -> DictType[K, V]: ...
+    ) -> DictRef[K, V]: ...
 
     @overload
     def set_item[V](
         self: MappingAccessibleBase[KeyT, set[V]],
         key: KeyT | Sentinel | Term[KeyT | Sentinel],
         value: set[V] | Sentinel | Term[set[V] | Sentinel],
-    ) -> SetType[V]: ...
+    ) -> SetRef[V]: ...
 
     def set_item(
         self,
@@ -444,16 +446,18 @@ class MappingAccessibleBase[KeyT, ValueT]:
         Example:
             >>> dict_ref.set_item("key", "value").execute(ctx)
         """
-        return computed(self.value_type, SetByKeyCmd(self, key, literal(value)))
+        from every_pv.morphisms import SetByKeyCmd
 
-    def remove_item(self, key: KeyT | Sentinel | Term[KeyT | Sentinel]) -> NoneType:
+        return typed_ref(self.value_type, SetByKeyCmd(self, key, ensure_term(value)))
+
+    def remove_item(self, key: KeyT | Sentinel | Term[KeyT | Sentinel]) -> NoneRef:
         """Remove key from mapping.
 
         Args:
             key: Key to remove
 
         Returns:
-            NoneType (remove returns None after execution)
+            NoneRef (remove returns None after execution)
 
         Note:
             Raises KeyError at execution if key not found.
@@ -461,4 +465,6 @@ class MappingAccessibleBase[KeyT, ValueT]:
         Example:
             >>> dict_ref.remove_item("key").execute(ctx)
         """
-        return NoneType(RemoveByKeyCmd(self, key))
+        from every_pv.morphisms import RemoveByKeyCmd
+
+        return NoneRef(RemoveByKeyCmd(self, key))

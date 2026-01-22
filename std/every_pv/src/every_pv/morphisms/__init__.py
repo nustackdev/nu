@@ -39,6 +39,14 @@ from .mapping import (
     SetByKeyCmd,
     ValuesOp,
 )
+from .reactive import (
+    ChangeOp,
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
+)
 from .sequence import (
     AppendValueCmd,
     CountOfValueOp,
@@ -100,4 +108,11 @@ __all__ = [  # noqa: RUF022
     "AddValueCmd",
     "DiscardValueCmd",
     "RemoveValueCmd",
+    # Reactive
+    "ChangeOp",
+    "OnChangeOp",
+    "OnChildChangeOp",
+    "OnChildrenChangeOp",
+    "OnDescendantsChangeOp",
+    "OnPrimitiveChangeOp",
 ]

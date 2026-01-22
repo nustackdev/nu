@@ -13,55 +13,49 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from every import Slot
-from every_pv.refs import (
+from everybase import (
+    AnyRef,
+    BoolRef,
+    BytesRef,
     DictRef,
-    ItemRef,
+    FloatRef,
+    IntRef,
     ListRef,
-    ShapeRef,
-    ShapesDictRef,
-    ShapesListRef,
+    SetRef,
+    StrRef,
 )
-from everybase.types import (
-    AnyType,
-    BoolType,
-    BytesType,
-    DictType,
-    FloatType,
-    IntType,
-    ListType,
-    SetType,
-    StrType,
-)
+
+from ..pv import PVDictRef, PVItemRef, PVListRef, PVShapeRef, PVShapesDictRef, PVShapesListRef
 
 
 if TYPE_CHECKING:
     from pv.typing import Value
     from pv.typing.view import MutableMappingView, MutableSequenceView
 
-    from every import Ref, Shape, Type
-    from everybase.types import AnyType, IntType, StrType  # noqa: TC004
+    from every import Ref, Shape
+    from everybase import AnyRef, IntRef, StrRef  # noqa: TC004
 
 
-def _value_type_for(python_type: type) -> type[Type]:
-    """Map Python type to its corresponding Type type.
+def _value_type_for(python_type: type) -> type[Ref]:
+    """Map Python type to its corresponding Ref type.
 
     Args:
         python_type: Native Python type (int, str, float, etc.)
 
     Returns:
-        Corresponding Type type (IntType, StrType, etc.)
+        Corresponding Ref type (IntRef, StrRef, etc.)
     """
-    mapping: dict[type, type[Type]] = {
-        int: IntType,
-        str: StrType,
-        float: FloatType,
-        bool: BoolType,
-        bytes: BytesType,
-        list: ListType,
-        dict: DictType,
-        set: SetType,
+    mapping: dict[type, type[Ref]] = {
+        int: IntRef,
+        str: StrRef,
+        float: FloatRef,
+        bool: BoolRef,
+        bytes: BytesRef,
+        list: ListRef,
+        dict: DictRef,
+        set: SetRef,
     }
-    return mapping.get(python_type, AnyType)
+    return mapping.get(python_type, AnyRef)
 
 
 __all__ = [
@@ -88,17 +82,17 @@ class _ItemSlot(Slot):
 
     Example:
         class User(Shape):
-            name: ItemRef[str, StrType] = ItemSlot(str)
-            age: ItemRef[int, IntType] = ItemSlot(int)
-            balance: ItemRef[float, FloatType] = ItemSlot(float)
+            name: ItemRef[str, StrRef] = ItemSlot(str)
+            age: ItemRef[int, IntRef] = ItemSlot(int)
+            balance: ItemRef[float, FloatRef] = ItemSlot(float)
     """
 
-    def __init__(self, value_type: type[Value], value_value_type: type[Type]) -> None:
+    def __init__(self, value_type: type[Value], value_value_type: type[Ref]) -> None:
         """Initialize value slot.
 
         Args:
             value_type: Python type for the primitive value
-            value_value_type: Type for the value's type
+            value_value_type: Ref for the value's type
         """
         super().__init__()
         self.value_type = value_type
@@ -108,7 +102,7 @@ class _ItemSlot(Slot):
         self,
         owner_shape: type[Shape],
         parent_ref: Ref | None = None,
-    ) -> ItemRef:
+    ) -> PVItemRef:
         """Create ItemRef for this slot.
 
         Args:
@@ -118,7 +112,7 @@ class _ItemSlot(Slot):
         Returns:
             ItemRef instance
         """
-        return ItemRef(
+        return PVItemRef(
             address=self.name,
             value_type=self.value_type,
             value_value_type=self.value_value_type,
@@ -127,16 +121,16 @@ class _ItemSlot(Slot):
         )
 
 
-def ItemSlot[V: Value, VV: Type](  # noqa: N802
+def ItemSlot[V: Value, VV: Ref](  # noqa: N802
     value_type: type[V], value_value_type: type[VV]
-) -> ItemRef[V, VV]:
+) -> PVItemRef[V, VV]:
     """Create a value slot for primitive types.
 
     Factory function that returns a slot instance.
 
     Args:
         value_type: Python type of the value (int, str, float, etc.)
-        value_value_type: Type for the value's type
+        value_value_type: Ref for the value's type
 
     Returns:
         Slot instance
@@ -161,10 +155,10 @@ class _DictSlot(Slot):
     Example:
         class Market(Shape):
             # Mapping of primitives
-            signals: DictRef[str, float, StrType, FloatType] = DictSlot(float)
+            signals: DictRef[str, float, StrRef, FloatRef] = DictSlot(float)
 
         # Access items
-        Market.signals["vix"].get()  # DictItemRef[float, FloatType]
+        Market.signals["vix"].get()  # DictItemRef[float, FloatRef]
     """
 
     def __init__(
@@ -191,7 +185,7 @@ class _DictSlot(Slot):
         self,
         owner_shape: type[Shape],
         parent_ref: Ref | None = None,
-    ) -> DictRef:
+    ) -> PVDictRef:
         """Create DictRef for this slot.
 
         Args:
@@ -203,7 +197,7 @@ class _DictSlot(Slot):
         """
         from every_view import DictView
 
-        return DictRef(
+        return PVDictRef(
             address=self.name,
             value_type=self.value_type,
             key_type=self.key_type,
@@ -219,7 +213,7 @@ def DictSlot[K: int | str, V: Value](  # noqa: N802
     value_type: type[V],
     view_type: type[MutableMappingView] | None = None,
     key_type: type[K] = str,
-) -> DictRef[K, V, AnyType, AnyType]:
+) -> PVDictRef[K, V, AnyRef, AnyRef]:
     """Create a mapping slot for dict-like collections of primitives.
 
     Factory function that returns a slot instance.
@@ -248,10 +242,10 @@ class _ListSlot(Slot):
 
     Example:
         class Market(Shape):
-            prices: ListRef[float, FloatType] = ListSlot(float)
+            prices: ListRef[float, FloatRef] = ListSlot(float)
 
         # Access items
-        Market.prices[0].get()  # ListItemRef[float, FloatType]
+        Market.prices[0].get()  # ListItemRef[float, FloatRef]
     """
 
     def __init__(
@@ -274,7 +268,7 @@ class _ListSlot(Slot):
         self,
         owner_shape: type[Shape],
         parent_ref: Ref | None = None,
-    ) -> ListRef:
+    ) -> PVListRef:
         """Create ListRef for this slot.
 
         Args:
@@ -286,7 +280,7 @@ class _ListSlot(Slot):
         """
         from every_view import ListView
 
-        return ListRef(
+        return PVListRef(
             address=self.name,
             item_type=self.item_type,
             item_value_type=self.item_value_type,
@@ -299,7 +293,7 @@ class _ListSlot(Slot):
 def ListSlot[V: Value](  # noqa: N802
     item_type: type[V],
     view_type: type[MutableSequenceView] | None = None,
-) -> ListRef[V, AnyType]:
+) -> PVListRef[V, AnyRef]:
     """Create a sequence slot for list-like collections of primitives.
 
     Factory function that returns a slot instance.
@@ -355,7 +349,7 @@ class _ShapeSlot(Slot):
         self,
         owner_shape: type[Shape],
         parent_ref: Ref | None = None,
-    ) -> ShapeRef:
+    ) -> PVShapeRef:
         """Create ShapeRef for this slot.
 
         Args:
@@ -367,7 +361,7 @@ class _ShapeSlot(Slot):
         """
         from every_view import DictView
 
-        return ShapeRef(
+        return PVShapeRef(
             address=self.name,
             shape_type=self.shape_type,
             view_type=self.view_type or DictView,
@@ -436,7 +430,7 @@ class _ShapesListSlot(Slot):
         self,
         owner_shape: type[Shape],
         parent_ref: Ref | None = None,
-    ) -> ShapesListRef:
+    ) -> PVShapesListRef:
         """Create ShapesListRef for this slot.
 
         Args:
@@ -448,7 +442,7 @@ class _ShapesListSlot(Slot):
         """
         from every_view import ListView
 
-        return ShapesListRef(
+        return PVShapesListRef(
             address=self.name,
             shape_type=self.shape_type,
             view_type=self.view_type or ListView,
@@ -460,7 +454,7 @@ class _ShapesListSlot(Slot):
 def ShapesListSlot[S: Shape](  # noqa: N802
     shape_type: type[S],
     view_type: type[MutableSequenceView] | None = None,
-) -> ShapesListRef[S]:
+) -> PVShapesListRef[S]:
     """Create a sequence slot for lists of shapes.
 
     Factory function that returns a slot instance.
@@ -489,11 +483,11 @@ class _ShapesDictSlot(Slot):
 
     Example:
         class SymbolInfo(Shape):
-            price: ItemRef[float, FloatType] = ItemSlot(float)
-            volume: ItemRef[int, IntType] = ItemSlot(int)
+            price: ItemRef[float, FloatRef] = ItemSlot(float)
+            volume: ItemRef[int, IntRef] = ItemSlot(int)
 
         class Market(Shape):
-            symbols: ShapesDictRef[str, SymbolInfo, StrType] = ShapesDictSlot(SymbolInfo)
+            symbols: ShapesDictRef[str, SymbolInfo, StrRef] = ShapesDictSlot(SymbolInfo)
 
         # Access items
         Market.symbols["AAPL"].price.get()  # Navigate to shape fields
@@ -522,7 +516,7 @@ class _ShapesDictSlot(Slot):
         self,
         owner_shape: type[Shape],
         parent_ref: Ref | None = None,
-    ) -> ShapesDictRef:
+    ) -> PVShapesDictRef:
         """Create ShapesDictRef for this slot.
 
         Args:
@@ -534,7 +528,7 @@ class _ShapesDictSlot(Slot):
         """
         from every_view import DictView
 
-        return ShapesDictRef(
+        return PVShapesDictRef(
             address=self.name,
             key_type=self.key_type,
             key_value_type=self.key_value_type,
@@ -549,7 +543,7 @@ def ShapesDictSlot[K: (int, str), S: Shape](  # noqa: N802
     shape_type: type[S],
     view_type: type[MutableMappingView] | None = None,
     key_type: type[K] = str,
-) -> ShapesDictRef[K, S, AnyType]:
+) -> PVShapesDictRef[K, S, AnyRef]:
     """Create a mapping slot for dicts of shapes.
 
     Factory function that returns a slot instance.
@@ -570,30 +564,30 @@ def ShapesDictSlot[K: (int, str), S: Shape](  # noqa: N802
 
 
 # =====================================================================
-# Convenience Functions for Primitive Type Slots
+# Convenience Functions for Primitive Ref Slots
 # =====================================================================
 
 
-def IntSlot() -> ItemRef[int, IntType]:  # noqa: N802
+def IntSlot() -> PVItemRef[int, IntRef]:  # noqa: N802
     """Create a slot for int values."""
-    return ItemSlot(int, IntType)  # type: ignore
+    return ItemSlot(int, IntRef)  # type: ignore
 
 
-def StrSlot() -> ItemRef[str, StrType]:  # noqa: N802
+def StrSlot() -> PVItemRef[str, StrRef]:  # noqa: N802
     """Create a slot for str values."""
-    return ItemSlot(str, StrType)  # type: ignore
+    return ItemSlot(str, StrRef)  # type: ignore
 
 
-def FloatSlot() -> ItemRef[float, FloatType]:  # noqa: N802
+def FloatSlot() -> PVItemRef[float, FloatRef]:  # noqa: N802
     """Create a slot for float values."""
-    return ItemSlot(float, FloatType)  # type: ignore
+    return ItemSlot(float, FloatRef)  # type: ignore
 
 
-def BoolSlot() -> ItemRef[bool, BoolType]:  # noqa: N802
+def BoolSlot() -> PVItemRef[bool, BoolRef]:  # noqa: N802
     """Create a slot for bool values."""
-    return ItemSlot(bool, BoolType)  # type: ignore
+    return ItemSlot(bool, BoolRef)  # type: ignore
 
 
-def BytesSlot() -> ItemRef[bytes, BytesType]:  # noqa: N802
+def BytesSlot() -> PVItemRef[bytes, BytesRef]:  # noqa: N802
     """Create a slot for bytes values."""
-    return ItemSlot(bytes, BytesType)  # type: ignore
+    return ItemSlot(bytes, BytesRef)  # type: ignore
