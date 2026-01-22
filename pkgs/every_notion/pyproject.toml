@@ -3,19 +3,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every-kv"
+name = "every-notion"
 version = "0.1.0"
-description = "Key-value storage abstractions for everybase"
+description = "Notion integration for everybase"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
-    "every>=0.1.0"
+    "every>=0.1.0",
+    "attrs>=23.0.0",
+    "httpx>=0.24.0",
 ]
 
-[project.optional-dependencies]
-rocksdb = ["rdbpython"]
-redis = ["redis"]
-
 [tool.hatch.build.targets.wheel]
-packages = ["src/every_kv"]
+packages = ["src/every_notion"]

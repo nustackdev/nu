@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["every", "everybase", "every-pv", "every-view", "every-adapters"]
+dependencies = ["every", "everybase", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion"]
 
 # =============================================================================
 # UV Workspace
@@ -22,6 +22,8 @@ members = [
     "std/every_pv",
     "std/every_view",
     "pkgs/every_adapters",
+    "pkgs/every_kv",
+    "pkgs/every_notion",
 ]
 
 [tool.uv.sources]
@@ -30,6 +32,8 @@ everybase = { workspace = true }
 every-pv = { workspace = true }
 every-view = { workspace = true }
 every-adapters = { workspace = true }
+every-kv = { workspace = true }
+every-notion = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -148,9 +152,13 @@ convention = "google"
     "D",
     "ANN",
 ]
+"pkgs/every_notion/**/*.py" = [
+    "ANN401",  # Any type needed for Notion's dynamic JSON API
+    "D107",    # __init__ docstrings covered by class docstring
+]
 
 [tool.ruff.lint.isort]
-known-first-party = ["every", "everybase", "every_pv", "every_view", "every_adapters"]
+known-first-party = ["every", "everybase", "every_pv", "every_view", "every_adapters", "every_kv", "every_notion"]
 force-single-line = false
 lines-after-imports = 2
 

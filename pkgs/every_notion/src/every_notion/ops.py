@@ -13,7 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from every._abc import Command, Operation, Term
+from every import Command, Operation, Term
+from every.term.morphism import Morphism
 
 
 if TYPE_CHECKING:
@@ -159,7 +160,7 @@ def build_property_value(value: Any, prop_type: str | None = None) -> dict[str, 
 # =============================================================================
 
 
-class GetCellOp(Operation[Any]):
+class GetCellOp(Operation, Morphism[Any]):
     """Read operation for cell values."""
 
     def __init__(self, cell_ref: CellRef) -> None:
@@ -167,6 +168,7 @@ class GetCellOp(Operation[Any]):
         self.children = (cell_ref,)
 
     def execute(self, context: NotionContext) -> Any:
+        """Execute the read operation, fetching cell value from Notion."""
         resolved = self.cell_ref.resolve(context)
         page_id = resolved["page_id"]
         prop_name = resolved["property"]
@@ -188,7 +190,7 @@ class GetCellOp(Operation[Any]):
 # =============================================================================
 
 
-class AddRowCmd(Command[dict[str, Any]]):
+class AddRowCmd(Command, Morphism[dict[str, Any]]):
     """Command to add a new row to a table."""
 
     def __init__(
@@ -203,6 +205,7 @@ class AddRowCmd(Command[dict[str, Any]]):
         self.children = (table_ref,)
 
     def execute(self, context: NotionContext) -> dict[str, Any]:
+        """Execute the command, creating a new row in Notion."""
         resolved = self.table_ref.resolve(context)
         database_id = resolved["database_id"]
 
@@ -233,7 +236,7 @@ class AddRowCmd(Command[dict[str, Any]]):
         return f"AddRowCmd({self.table_ref!r}, ...)"
 
 
-class RemoveRowCmd(Command[dict[str, Any]]):
+class RemoveRowCmd(Command, Morphism[dict[str, Any]]):
     """Command to remove (archive) a row."""
 
     def __init__(self, row_ref: RowRef) -> None:
@@ -241,6 +244,7 @@ class RemoveRowCmd(Command[dict[str, Any]]):
         self.children = (row_ref,)
 
     def execute(self, context: NotionContext) -> dict[str, Any]:
+        """Execute the command, archiving the row in Notion."""
         resolved = self.row_ref.resolve(context)
         return context.archive_page(resolved["page_id"])
 
@@ -248,7 +252,7 @@ class RemoveRowCmd(Command[dict[str, Any]]):
         return f"RemoveRowCmd({self.row_ref!r})"
 
 
-class SetCellCmd(Command[dict[str, Any]]):
+class SetCellCmd(Command, Morphism[dict[str, Any]]):
     """Command to set a cell value."""
 
     def __init__(
@@ -263,6 +267,7 @@ class SetCellCmd(Command[dict[str, Any]]):
         self.children = (cell_ref,)
 
     def execute(self, context: NotionContext) -> dict[str, Any]:
+        """Execute the command, updating a cell value in Notion."""
         resolved = self.cell_ref.resolve(context)
         page_id = resolved["page_id"]
         prop_name = resolved["property"]
@@ -279,8 +284,8 @@ class SetCellCmd(Command[dict[str, Any]]):
                 page_data = context.get_page(page_id)
                 existing_prop = page_data.get("properties", {}).get(prop_name, {})
                 prop_type = existing_prop.get("type")
-            except Exception:
-                pass
+            except Exception:  # noqa: S110
+                pass  # Fall back to type inference if page fetch fails
 
         prop_value = build_property_value(value, prop_type)
         return context.update_page(page_id, {prop_name: prop_value})

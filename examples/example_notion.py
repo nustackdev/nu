@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import os
 
-from everybase.notion import (
+from every_notion import (
     CheckboxSlot,
     EmailSlot,
     NotionContext,

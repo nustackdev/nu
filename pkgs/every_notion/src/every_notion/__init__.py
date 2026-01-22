@@ -60,31 +60,31 @@ from .slots import (
 
 
 __all__ = [
-    # Context
-    "NotionContext",
-    # Shape
-    "NotionTable",
-    # Slots
-    "NotionSlot",
-    "TitleSlot",
-    "TextSlot",
-    "NumberSlot",
-    "SelectSlot",
-    "MultiSelectSlot",
+    # Ops
+    "AddRowCmd",
+    "CellRef",
     "CheckboxSlot",
     "DateSlot",
     "EmailSlot",
-    "UrlSlot",
-    "PhoneSlot",
-    "RelationSlot",
+    "GetCellOp",
+    "MultiSelectSlot",
+    # Context
+    "NotionContext",
     # Refs
     "NotionRef",
-    "TableRef",
-    "RowRef",
-    "CellRef",
-    # Ops
-    "AddRowCmd",
+    # Slots
+    "NotionSlot",
+    # Shape
+    "NotionTable",
+    "NumberSlot",
+    "PhoneSlot",
+    "RelationSlot",
     "RemoveRowCmd",
-    "GetCellOp",
+    "RowRef",
+    "SelectSlot",
     "SetCellCmd",
+    "TableRef",
+    "TextSlot",
+    "TitleSlot",
+    "UrlSlot",
 ]
