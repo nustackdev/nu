@@ -54,10 +54,10 @@ class _React[RuntimeT: Runtime](Flow[RuntimeT]):
     async def run(self, runtime: RuntimeT) -> None:
         """Wait for change, then execute child."""
         change_event = threading.Event()
-        changed_key_holder: dict[str, key.Key] = {}
+        changed_key_holder: dict[str, Key] = {}
         lock = threading.Lock()
 
-        def on_change(changed_key: key.Key) -> None:
+        def on_change(changed_key: Key) -> None:
             with lock:
                 changed_key_holder["key"] = changed_key
                 change_event.set()
@@ -114,10 +114,10 @@ class _ReactForever[RuntimeT: Runtime](Flow[RuntimeT]):
             raise ValueError("No child is provided")
 
         change_event = threading.Event()
-        changed_key_holder: dict[str, key.Key] = {}
+        changed_key_holder: dict[str, Key] = {}
         lock = threading.Lock()
 
-        def on_change(changed_key: key.Key) -> None:
+        def on_change(changed_key: Key) -> None:
             with lock:
                 changed_key_holder["key"] = changed_key
                 change_event.set()
@@ -180,10 +180,10 @@ class _ReactWhile[RuntimeT: Runtime](Flow[RuntimeT]):
             raise ValueError("No child is provided")
 
         change_event = threading.Event()
-        changed_key_holder: dict[str, key.Key] = {}
+        changed_key_holder: dict[str, Key] = {}
         lock = threading.Lock()
 
-        def on_change(changed_key: key.Key) -> None:
+        def on_change(changed_key: Key) -> None:
             with lock:
                 changed_key_holder["key"] = changed_key
                 change_event.set()
