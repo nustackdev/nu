@@ -1,0 +1,293 @@
+"""Core access operations for LValue references.
+
+This module provides core operations for refs that read data:
+
+Operations (pure computations):
+    - GetOp: Read primitive value from ref
+    - ExtractOp: Read entire container structure
+    - ExistsOp: Check if location exists
+    - MissingOp: Check if location is missing
+    - LengthOp: Get container length
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
+
+import pv.traits as view_traits
+from pv.loc import path
+
+from every import EMPTY, Morphism, Operation, Sentinel
+from every_pv.ref import PVPrimitiveRef, PVViewRef
+
+
+if TYPE_CHECKING:
+    from pv.types import Value
+    from pv.view import View
+
+    from every_pv.context import KVContext as Context
+
+
+__all__ = [
+    "ExistsOp",
+    "ExtractOp",
+    "GetOp",
+    "LengthOp",
+    "MissingOp",
+]
+
+type UnionRefBases = None
+
+
+class GetOp[T](Operation, Morphism[T | Sentinel]):
+    """Read operation for primitive values.
+
+    Pure operation that navigates to a location and reads the value.
+    Returns Empty if the value doesn't exist.
+
+    Type Parameters:
+        T: Type of value to read
+        ContextT: Execution context type
+
+    Example:
+        >>> get_op = GetOp(value_ref)
+        >>> value = get_op.execute(ctx)  # Returns T | Sentinel
+    """
+
+    def __init__(self, ref: PVPrimitiveRef[T] | UnionRefBases) -> None:
+        """Initialize get operation.
+
+        Args:
+            ref: Reference to read from
+        """
+        self.ref = cast("PVPrimitiveRef", ref)
+        self.children = (cast("PVPrimitiveRef", ref),)
+
+    def execute(self, context: Context) -> T | Sentinel:
+        """Execute read operation.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            Value read from storage, or Empty if not found
+        """
+        # Resolve ref to path
+        value_path = self.ref.resolve(context)
+
+        # Get root view from context
+        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+
+        # Navigate to parent and get key
+        try:
+            parent_view, key = path.navigate_value(root_view, value_path)
+            if isinstance(parent_view, view_traits.Subscriptable):
+                return parent_view[key]
+            raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
+        except (KeyError, IndexError):
+            return EMPTY
+
+    def __repr__(self) -> str:
+        return f"GetOp({self.ref!r})"
+
+
+class ExtractOp[T](Operation, Morphism[T | Sentinel]):
+    """Extract operation for container structures.
+
+    Pure operation that reads an entire container structure.
+    Returns the extracted data as dict/list/etc.
+
+    Type Parameters:
+        T: Type of extracted value (dict, list, etc.)
+        ContextT: Execution context type
+
+    Example:
+        >>> extract_op = ExtractOp(view_ref)
+        >>> data = extract_op.execute(ctx)  # Returns dict/list/etc
+    """
+
+    def __init__(self, ref: PVViewRef[view_traits.Convertible[T]] | UnionRefBases) -> None:
+        """Initialize extract operation.
+
+        Args:
+            ref: View reference to extract from
+        """
+        self.ref = cast("PVViewRef[view_traits.Convertible[T]]", ref)
+        self.children = (cast("PVViewRef[view_traits.Convertible[T]]", ref),)
+
+    def execute(self, context: Context) -> T | Sentinel:
+        """Execute extract operation.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            Extracted data, or Empty if not found
+        """
+        # Resolve ref to path
+        view_path = self.ref.resolve(context)
+
+        # Get root view from context
+        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+
+        # Navigate to view
+        try:
+            if not view_path:
+                view = root_view
+            else:
+                view = path.navigate_view(root_view, view_path)
+
+            if isinstance(view, view_traits.Convertible):
+                return view.extract()
+
+            raise TypeError(f"View {view.__class__.__name__} is not convertible")
+        except (KeyError, IndexError):
+            return EMPTY
+
+    def __repr__(self) -> str:
+        return f"ExtractOp({self.ref!r})"
+
+
+class ExistsOp(Operation, Morphism[bool]):
+    """Existence check operation.
+
+    Pure operation that checks if a location exists in storage.
+
+    Type Parameters:
+        ContextT: Execution context type
+
+    Example:
+        >>> exists_op = ExistsOp(ref)
+        >>> exists = exists_op.execute(ctx)  # Returns bool
+    """
+
+    def __init__(self, ref: PVPrimitiveRef[Value] | PVViewRef[View] | UnionRefBases) -> None:
+        """Initialize exists operation.
+
+        Args:
+            ref: Reference to check
+        """
+        self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
+        self.children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
+
+    def execute(self, context: Context) -> bool:
+        """Execute existence check.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            True if location exists, False otherwise
+        """
+        # Get root view from context
+        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+
+        try:
+            ref_path = self.ref.resolve(context)
+
+            if isinstance(self.ref, PVPrimitiveRef):
+                parent_view, key = path.navigate_value(root_view, ref_path)
+                # Check if key exists
+                if isinstance(parent_view, view_traits.Containable):
+                    return key in parent_view
+                raise TypeError(f"View {parent_view.__class__.__name__} is not containable")
+            else:
+                # PVViewRef - just try to navigate
+                if not ref_path:
+                    return True
+                path.navigate_view(root_view, ref_path)
+                return True
+        except (KeyError, IndexError):
+            return False
+
+    def __repr__(self) -> str:
+        return f"ExistsOp({self.ref!r})"
+
+
+class MissingOp(Operation, Morphism[bool]):
+    """Missing check operation (inverse of exists).
+
+    Pure operation that checks if a location is missing from storage.
+
+    Type Parameters:
+        ContextT: Execution context type
+
+    Example:
+        >>> missing_op = MissingOp(ref)
+        >>> is_missing = missing_op.execute(ctx)  # Returns bool
+    """
+
+    def __init__(self, ref: PVPrimitiveRef[Value] | PVViewRef[View] | UnionRefBases) -> None:
+        """Initialize missing operation.
+
+        Args:
+            ref: Reference to check
+        """
+        self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
+        self.children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
+
+    def execute(self, context: Context) -> bool:
+        """Execute missing check.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            True if location is missing, False otherwise
+        """
+        exists_op = ExistsOp(self.ref)
+        return not exists_op.execute(context)
+
+    def __repr__(self) -> str:
+        return f"MissingOp({self.ref!r})"
+
+
+class LengthOp(Operation, Morphism[int | Sentinel]):
+    """Length query operation for containers.
+
+    Pure operation that returns the length of a container.
+
+    Type Parameters:
+        ContextT: Execution context type
+
+    Example:
+        >>> len_op = LengthOp(list_ref)
+        >>> length = len_op.execute(ctx)  # Returns int
+    """
+
+    def __init__(self, ref: PVViewRef[view_traits.Sizeable] | UnionRefBases) -> None:
+        """Initialize length operation.
+
+        Args:
+            ref: View reference to query
+        """
+        self.ref = cast("PVViewRef[view_traits.Sizeable]", ref)
+        self.children = (cast("PVViewRef[view_traits.Sizeable]", ref),)
+
+    def execute(self, context: Context) -> int | Sentinel:
+        """Execute length query.
+
+        Args:
+            context: Execution context
+
+        Returns:
+            Length of container, or Empty if not found
+        """
+        view_path = self.ref.resolve(context)
+        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+
+        try:
+            if not view_path:
+                view = root_view
+            else:
+                view = path.navigate_view(root_view, view_path)
+
+            if isinstance(view, view_traits.Sizeable):
+                return len(view)
+
+            raise TypeError(f"View {view.__class__.__name__} is not sizeable")
+        except (KeyError, IndexError):
+            return EMPTY
+
+    def __repr__(self) -> str:
+        return f"LengthOp({self.ref!r})"

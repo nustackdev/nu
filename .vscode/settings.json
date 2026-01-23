@@ -1,6 +1,14 @@
 {
   "python.languageServer": "Pylance",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.extraPaths": [
+    "abc/every/src",
+    "abc/everybase/src",
+    "std/every_pv/src",
+    "std/every_view/src"
+  ],
   "ruff.enable": true,
   "ruff.lint.enable": true,
   "[python]": {
