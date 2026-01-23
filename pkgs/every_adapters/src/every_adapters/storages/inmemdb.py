@@ -20,7 +20,7 @@ from __future__ import annotations
 
 
 try:
-    from tkv.inmemdb import InMemoryStorage
+    from tkv.storages.mem import InMemoryStorage
 except ImportError as e:
     raise ImportError(
         "tkv package is required for InMemoryStorage. Install via: pip install tkv"
