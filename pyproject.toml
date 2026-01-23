@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["every", "everybase", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion"]
+dependencies = ["every", "everybase", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion", "every-type"]
 
 # =============================================================================
 # UV Workspace
@@ -20,6 +20,7 @@ members = [
     "abc/every",
     "abc/everybase",
     "std/every_pv",
+    "std/every_type",
     "std/every_view",
     "pkgs/every_adapters",
     "pkgs/every_kv",
@@ -30,6 +31,7 @@ members = [
 every = { workspace = true }
 everybase = { workspace = true }
 every-pv = { workspace = true }
+every-type = { workspace = true }
 every-view = { workspace = true }
 every-adapters = { workspace = true }
 every-kv = { workspace = true }
@@ -121,6 +123,7 @@ select = [
 ignore = [
     "E501",   # Line too long (handled by formatter)
     "D105",   # Missing docstring in magic method
+    "D107",   # Missing docstring in __init__ (covered by class docstring)
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -129,6 +132,7 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**/*.py" = [
     "S101",   # assert allowed in tests
+    "S108",   # /tmp usage allowed in tests
     "T20",    # print allowed in tests
     "D",      # docstrings not required in tests
     "E711",
@@ -158,7 +162,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["every", "everybase", "every_pv", "every_view", "every_adapters", "every_kv", "every_notion"]
+known-first-party = ["every", "everybase", "every_pv", "every_type", "every_view", "every_adapters", "every_kv", "every_notion"]
 force-single-line = false
 lines-after-imports = 2
 

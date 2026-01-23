@@ -1,0 +1,34 @@
+# =============================================================================
+# std/every_type - Extended Type Refs
+# =============================================================================
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "every-type"
+version = "0.1.0"
+description = "Extended type refs for everybase (Decimal, UUID, datetime, Path, etc.)"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "every>=0.1.0",
+    "everybase>=0.1.0",
+]
+keywords = ["every", "types", "refs", "decimal", "uuid", "datetime", "path"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Repository = "https://github.com/everyabc/everybase"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/every_type"]
