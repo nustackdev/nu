@@ -20,7 +20,7 @@ The `every` package provides foundational abstractions:
 
 - **Term** - Computation expressions and references
 - **Flow** - Execution runtime and paths
-- **Sentinel** - Special marker values (NotSet, Empty, Invalid)
+- **Sentinel** - Special marker values (Empty, Invalid)
 - **Arg** - Type-safe argument definitions
 
 ## Usage

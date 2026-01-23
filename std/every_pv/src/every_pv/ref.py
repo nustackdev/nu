@@ -19,11 +19,10 @@ from abc import ABC, abstractmethod
 from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+import pv.traits as view_traits
 from pv.loc import path
-from pv.typing import Empty
-from pv.typing.view import capabilities as view_capabilities
 
-from every import Context, Ref, Sentinel, Term
+from every import EMPTY, Context, Ref, Sentinel, Term
 
 
 if TYPE_CHECKING:
@@ -207,11 +206,11 @@ class PVPrimitiveRef[T](PVRefBase[T]):
 
         try:
             parent_view, key = path.navigate_value(root_view, value_path)
-            if isinstance(parent_view, view_capabilities.Subscriptable):
+            if isinstance(parent_view, view_traits.Subscriptable):
                 return parent_view[key]
             raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
 
 class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046

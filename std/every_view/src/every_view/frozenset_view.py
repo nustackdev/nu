@@ -7,7 +7,7 @@ import pickle  # nosec: F401
 from typing import TYPE_CHECKING, ClassVar
 
 from pv.container import ContainerProtocol, ContainerStructure
-from pv.typing import is_empty
+from pv.types import is_empty
 from pv.view import ChildNestedSetBase, MetadataBasedChildrenCountBase
 
 from .base import StdView
@@ -17,8 +17,9 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
     from collections.abc import Set as PySet
 
+    from pv.collections import SetView
     from pv.loc import key as key_
-    from pv.typing.view import Containable, Convertible, Initializable, SetView, Sizeable
+    from pv.traits import Containable, Convertible, Initializable, Sizeable
 
 
 __all__ = ["FrozenSetView"]

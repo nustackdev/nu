@@ -43,7 +43,7 @@ every/
 ├── purity.py         # Operation, Command (orthogonal mixins)
 ├── shape.py          # Shape, Slot, SlotDescriptor, ShapeMeta
 ├── context.py        # Context (execution environment)
-├── sentinel.py       # Sentinel, Empty, Invalid, NotSet
+├── sentinel.py       # Sentinel, Empty, Invalid
 ├── arg.py            # Arg[T], IntArg, StrArg, ...
 └── flow.py           # Flow, Runtime, Path
 ```
@@ -414,12 +414,10 @@ total.get(ctx)  # → 130
 
 ## Sentinel System
 
-```
+```text
 Sentinel                # Base for special values
 ├── Empty               # Location has no value
 └── Invalid             # Operation failed
-
-NotSet                  # Distinct from None (optional params)
 ```
 
 Sentinels propagate: any sentinel operand → `INVALID` result.

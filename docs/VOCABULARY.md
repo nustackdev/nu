@@ -149,7 +149,6 @@ class SetCmd(BinaryMorphism, Command):
 |----------|---------|------|
 | `Empty` | Location has no value | Key doesn't exist, field is null |
 | `Invalid` | Operation cannot produce result | Type error, division by zero |
-| `NotSet` | Parameter not provided | Distinct from `None` |
 
 **Propagation:** Sentinels propagate through morphisms:
 ```python

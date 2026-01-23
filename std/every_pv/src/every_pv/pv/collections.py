@@ -14,8 +14,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from pv.typing import Value
-from pv.typing.view import MutableMappingView, MutableSequenceView
+from pv.collections import MutableMappingView, MutableSequenceView
+from pv.types import Value
 
 from every import Ref, RValue, Sentinel, Shape, Term
 from every_pv.ref import PVRefBase, PVViewRef

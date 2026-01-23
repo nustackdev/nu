@@ -14,15 +14,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+import pv.traits as view_traits
 from pv.loc import path
-from pv.typing import Empty, Sentinel, Value
-from pv.typing.view import capabilities as view_capabilities
 
-from every import Morphism, Operation
+from every import EMPTY, Morphism, Operation, Sentinel
 from every_pv.ref import PVPrimitiveRef, PVViewRef
 
 
 if TYPE_CHECKING:
+    from pv.types import Value
     from pv.view import View
 
     from every_pv.context import KVContext as Context
@@ -81,11 +81,11 @@ class GetOp[T](Operation, Morphism[T | Sentinel]):
         # Navigate to parent and get key
         try:
             parent_view, key = path.navigate_value(root_view, value_path)
-            if isinstance(parent_view, view_capabilities.Subscriptable):
+            if isinstance(parent_view, view_traits.Subscriptable):
                 return parent_view[key]
             raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
     def __repr__(self) -> str:
         return f"GetOp({self.ref!r})"
@@ -106,14 +106,14 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
         >>> data = extract_op.execute(ctx)  # Returns dict/list/etc
     """
 
-    def __init__(self, ref: PVViewRef[view_capabilities.Convertible[T]] | UnionRefBases) -> None:
+    def __init__(self, ref: PVViewRef[view_traits.Convertible[T]] | UnionRefBases) -> None:
         """Initialize extract operation.
 
         Args:
             ref: View reference to extract from
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[T]]", ref)
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[T]]", ref),)
+        self.ref = cast("PVViewRef[view_traits.Convertible[T]]", ref)
+        self.children = (cast("PVViewRef[view_traits.Convertible[T]]", ref),)
 
     def execute(self, context: Context) -> T | Sentinel:
         """Execute extract operation.
@@ -137,12 +137,12 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
             else:
                 view = path.navigate_view(root_view, view_path)
 
-            if isinstance(view, view_capabilities.Convertible):
+            if isinstance(view, view_traits.Convertible):
                 return view.extract()
 
             raise TypeError(f"View {view.__class__.__name__} is not convertible")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
     def __repr__(self) -> str:
         return f"ExtractOp({self.ref!r})"
@@ -188,7 +188,7 @@ class ExistsOp(Operation, Morphism[bool]):
             if isinstance(self.ref, PVPrimitiveRef):
                 parent_view, key = path.navigate_value(root_view, ref_path)
                 # Check if key exists
-                if isinstance(parent_view, view_capabilities.Containable):
+                if isinstance(parent_view, view_traits.Containable):
                     return key in parent_view
                 raise TypeError(f"View {parent_view.__class__.__name__} is not containable")
             else:
@@ -255,14 +255,14 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
         >>> length = len_op.execute(ctx)  # Returns int
     """
 
-    def __init__(self, ref: PVViewRef[view_capabilities.Sizeable] | UnionRefBases) -> None:
+    def __init__(self, ref: PVViewRef[view_traits.Sizeable] | UnionRefBases) -> None:
         """Initialize length operation.
 
         Args:
             ref: View reference to query
         """
-        self.ref = cast("PVViewRef[view_capabilities.Sizeable]", ref)
-        self.children = (cast("PVViewRef[view_capabilities.Sizeable]", ref),)
+        self.ref = cast("PVViewRef[view_traits.Sizeable]", ref)
+        self.children = (cast("PVViewRef[view_traits.Sizeable]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute length query.
@@ -282,12 +282,12 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
             else:
                 view = path.navigate_view(root_view, view_path)
 
-            if isinstance(view, view_capabilities.Sizeable):
+            if isinstance(view, view_traits.Sizeable):
                 return len(view)
 
             raise TypeError(f"View {view.__class__.__name__} is not sizeable")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
     def __repr__(self) -> str:
         return f"LengthOp({self.ref!r})"

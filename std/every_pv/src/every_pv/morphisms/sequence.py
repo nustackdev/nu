@@ -26,12 +26,11 @@ from __future__ import annotations
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING, cast
 
+import pv.traits as view_traits
 from pv.loc import path
-from pv.typing import Empty, Sentinel
-from pv.typing.view import Appendable, Poppable
-from pv.typing.view import capabilities as view_capabilities
+from pv.traits import Appendable, Poppable
 
-from every import Command, Morphism, Operation, Term
+from every import EMPTY, Command, Morphism, Operation, Sentinel, Term
 
 
 if TYPE_CHECKING:
@@ -261,7 +260,7 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
 
     def __init__(
         self,
-        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_traits.Convertible[list[T]]] | UnionRefBases,
         value: T,
     ) -> None:
         """Initialize index of value operation.
@@ -270,9 +269,9 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
             ref: Sequence reference to search
             value: Value to find
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute index of value operation.
@@ -294,7 +293,7 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
         else:
             view = path.navigate_view(root_view, view_path)
 
-        if isinstance(view, view_capabilities.Convertible):
+        if isinstance(view, view_traits.Convertible):
             data = view.extract()
             return list(data).index(self.value)
 
@@ -319,7 +318,7 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
 
     def __init__(
         self,
-        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_traits.Convertible[list[T]]] | UnionRefBases,
         value: T,
     ) -> None:
         """Initialize count of value operation.
@@ -328,9 +327,9 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
             ref: Sequence reference to count in
             value: Value to count
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute count of value operation.
@@ -350,13 +349,13 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
             else:
                 view = path.navigate_view(root_view, view_path)
 
-            if isinstance(view, view_capabilities.Convertible):
+            if isinstance(view, view_traits.Convertible):
                 data = view.extract()
                 return list(data).count(self.value)
 
             raise TypeError(f"View {view.__class__.__name__} is not convertible")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
     def __repr__(self) -> str:
         return f"CountOfValueOp({self.ref!r}, {self.value!r})"
@@ -384,7 +383,7 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
 
     def __init__(
         self,
-        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_traits.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find by predicate operation.
@@ -393,9 +392,9 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> T:
         """Execute find by predicate operation.
@@ -417,7 +416,7 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
         else:
             view = path.navigate_view(root_view, view_path)
 
-        if isinstance(view, view_capabilities.Convertible):
+        if isinstance(view, view_traits.Convertible):
             data = view.extract()
             for item in data:
                 if self.predicate(item):
@@ -447,7 +446,7 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
 
     def __init__(
         self,
-        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_traits.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize find index by predicate operation.
@@ -456,9 +455,9 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute find index by predicate operation.
@@ -480,7 +479,7 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
         else:
             view = path.navigate_view(root_view, view_path)
 
-        if isinstance(view, view_capabilities.Convertible):
+        if isinstance(view, view_traits.Convertible):
             data = view.extract()
             for i, item in enumerate(data):
                 if self.predicate(item):
@@ -514,7 +513,7 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
 
     def __init__(
         self,
-        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_traits.Convertible[list[T]]] | UnionRefBases,
         func: Callable[[T], R],
     ) -> None:
         """Initialize map operation.
@@ -523,9 +522,9 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
             ref: Sequence reference to map over
             func: Function to apply to each element
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.func = func
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[R] | Sentinel:
         """Execute map operation.
@@ -545,13 +544,13 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
             else:
                 view = path.navigate_view(root_view, view_path)
 
-            if isinstance(view, view_capabilities.Convertible):
+            if isinstance(view, view_traits.Convertible):
                 data = view.extract()
                 return [self.func(item) for item in data]
 
             raise TypeError(f"View {view.__class__.__name__} is not convertible")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
     def __repr__(self) -> str:
         return f"MapOp({self.ref!r}, {self.func!r})"
@@ -572,7 +571,7 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
 
     def __init__(
         self,
-        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_traits.Convertible[list[T]]] | UnionRefBases,
         predicate: Callable[[T], bool],
     ) -> None:
         """Initialize filter operation.
@@ -581,9 +580,9 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
             ref: Sequence reference to filter
             predicate: Function that returns True for elements to keep
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[T] | Sentinel:
         """Execute filter operation.
@@ -603,13 +602,13 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
             else:
                 view = path.navigate_view(root_view, view_path)
 
-            if isinstance(view, view_capabilities.Convertible):
+            if isinstance(view, view_traits.Convertible):
                 data = view.extract()
                 return [item for item in data if self.predicate(item)]
 
             raise TypeError(f"View {view.__class__.__name__} is not convertible")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
     def __repr__(self) -> str:
         return f"FilterOp({self.ref!r}, {self.predicate!r})"
@@ -631,7 +630,7 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
 
     def __init__(
         self,
-        ref: PVViewRef[view_capabilities.Convertible[list[T]]] | UnionRefBases,
+        ref: PVViewRef[view_traits.Convertible[list[T]]] | UnionRefBases,
         func: Callable[[R, T], R],
         initial: R,
     ) -> None:
@@ -642,10 +641,10 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
             func: Reducer function (accumulator, element) -> accumulator
             initial: Initial accumulator value
         """
-        self.ref = cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref)
+        self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.func = func
         self.initial = initial
-        self.children = (cast("PVViewRef[view_capabilities.Convertible[list[T]]]", ref),)
+        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce operation.
@@ -665,13 +664,13 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
             else:
                 view = path.navigate_view(root_view, view_path)
 
-            if isinstance(view, view_capabilities.Convertible):
+            if isinstance(view, view_traits.Convertible):
                 data = view.extract()
                 return functools_reduce(self.func, data, self.initial)
 
             raise TypeError(f"View {view.__class__.__name__} is not convertible")
         except (KeyError, IndexError):
-            return Empty()
+            return EMPTY
 
     def __repr__(self) -> str:
         return f"ReduceOp({self.ref!r}, {self.func!r}, {self.initial!r})"

@@ -6,7 +6,7 @@ from collections.abc import Generator
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pv.container import ContainerProtocol, ContainerStructure
-from pv.typing import is_empty
+from pv.types import is_empty
 from pv.view import (
     ChildObservableBase,
     MetadataBasedChildrenCountBase,
@@ -19,7 +19,7 @@ from .base import StdView
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
-    from pv.typing.view import (
+    from pv.traits import (
         Assignable,
         Convertible,
         Initializable,

@@ -29,8 +29,8 @@ from ..pv import PVDictRef, PVItemRef, PVListRef, PVShapeRef, PVShapesDictRef, P
 
 
 if TYPE_CHECKING:
-    from pv.typing import Value
-    from pv.typing.view import MutableMappingView, MutableSequenceView
+    from pv.collections import MutableMappingView, MutableSequenceView
+    from pv.types import Value
 
     from every import Ref, Shape
     from everybase import AnyRef, IntRef, StrRef  # noqa: TC004

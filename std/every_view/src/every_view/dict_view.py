@@ -10,7 +10,7 @@ from pv.container import (
     ContainerStructure,
     NodeType,
 )
-from pv.typing import EMPTY, Empty, is_empty
+from pv.types import EMPTY, Empty, is_empty
 from pv.view import (
     ChildNavigationBase,
     ChildNestedGetBase,
@@ -27,7 +27,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Generator
     from collections.abc import Mapping as PyMapping
 
-    from pv.typing.view import (
+    from pv.collections import MutableMappingView
+    from pv.traits import (
         Assignable,
         ChildObservable,
         Clearable,
@@ -35,7 +36,6 @@ if TYPE_CHECKING:
         Convertible,
         Deletable,
         Initializable,
-        MutableMappingView,
         Nestable,
         Observable,
         Sizeable,

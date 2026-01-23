@@ -7,8 +7,8 @@ from logging import getLogger
 from typing import TYPE_CHECKING, cast
 
 from pv.loc import path
-from pv.storage import Subscription
-from pv.typing.view import ChildObservable, DescendantsObservable, Observable
+from pv.traits import ChildObservable, DescendantsObservable, Observable
+from tkv.tkv.observer import Subscription
 
 from every import Morphism, Operation, Term
 

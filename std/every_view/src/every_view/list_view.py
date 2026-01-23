@@ -25,8 +25,8 @@ from .base import StdView
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterable
 
-    from pv.typing import Empty, Value
-    from pv.typing.view import (
+    from pv.collections import MutableSequenceView
+    from pv.traits import (
         Appendable,
         Assignable,
         ChildObservable,
@@ -35,12 +35,12 @@ if TYPE_CHECKING:
         Convertible,
         Deletable,
         Initializable,
-        MutableSequenceView,
         Nestable,
         Observable,
         Sizeable,
         Subscriptable,
     )
+    from pv.types import Empty, Value
 
 
 __all__ = ["ListSliceView", "ListView"]

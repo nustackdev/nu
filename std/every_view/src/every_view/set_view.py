@@ -7,7 +7,7 @@ import pickle  # nosec: F401
 from typing import TYPE_CHECKING, ClassVar
 
 from pv.container import ContainerProtocol, ContainerStructure
-from pv.typing import is_empty
+from pv.types import is_empty
 from pv.view import (
     ChildNestedSetBase,
     ChildObservableBase,
@@ -22,13 +22,13 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
     from collections.abc import Set as PySet
 
-    from pv.typing.view import (
+    from pv.collections import MutableSetView
+    from pv.traits import (
         ChildObservable,
         Clearable,
         Containable,
         Convertible,
         Initializable,
-        MutableSetView,
         Observable,
         Sizeable,
     )

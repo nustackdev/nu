@@ -5,7 +5,7 @@ Access: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
 
 from __future__ import annotations
 
-from every import NOT_SET, NAryMorphism, Operation, Sentinel, UnaryMorphism
+from every import NAryMorphism, Operation, Sentinel, UnaryMorphism
 
 
 __all__ = [
@@ -63,7 +63,7 @@ class DictGetOp[V](Operation, NAryMorphism[V | Sentinel]):
         else:
             self._children = (operand, key, default)  # type: ignore
 
-    def _apply(self, operand: object, key: object, default: object = NOT_SET) -> V | Sentinel:
+    def _apply(self, operand: object, key: object, default: object | None = None) -> V | Sentinel:
         if not isinstance(operand, dict):
             raise TypeError(f"get_() requires dict, got {type(operand).__name__}")
         if default is None:

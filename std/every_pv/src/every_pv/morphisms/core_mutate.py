@@ -15,15 +15,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from pv.loc import path
-from pv.typing import Sentinel
-from pv.typing.view import (
+from pv.traits import (
     Assignable,
     Clearable,
     Deletable,
     Initializable,
 )
 
-from every import Command, Morphism, Term
+from every import Command, Morphism, Sentinel, Term
 from everybase import ensure_term
 
 

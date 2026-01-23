@@ -11,8 +11,8 @@ from every import Context
 
 
 if TYPE_CHECKING:
-    from pv.storage import StorageContextType
     from pv.view import View
+    from tkv.tkv.storage import StorageContextType
 
     from every import Shape
 

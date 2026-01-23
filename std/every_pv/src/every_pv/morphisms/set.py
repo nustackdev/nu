@@ -13,10 +13,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from pv.loc import path
-from pv.typing import Sentinel
-from pv.typing.view import Addable, Discardable, Removable
+from pv.traits import Addable, Discardable, Removable
 
-from every import Command, Morphism, Term
+from every import Command, Morphism, Sentinel, Term
 
 
 if TYPE_CHECKING:

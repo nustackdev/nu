@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from functools import partial
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from pv.storage import Codec, SnapshotProtocol, StorageProtocol, TransactionProtocol
-from tkv.inmemdb import InMemoryStorage
-from tkv.tupkey import StringKeyCodec
+from tkv.codecs import NoOpCodec
+from tkv.storages.mem import InMemoryStorage
 
 from every_view import DictView
 
@@ -16,34 +14,8 @@ from every_view import DictView
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from pv.typing import Value
     from pv.view import View
-
-
-__all__ = ["PassthroughCodec"]
-
-
-class PassthroughCodec:
-    """Codec that performs no transformation on data.
-
-    This adapter is suitable for in-memory storage where serialization
-    is not required. It passes values through without any encoding or
-    decoding overhead.
-
-    """
-
-    def __init__(self) -> None:
-        """Initialize passthrough codec with identity function references."""
-        self.encode = lambda x: x  # type: ignore[return-value]
-        self.decode = lambda x: x  # type: ignore[return-value]
-
-    def encode(self, value: Value) -> object:
-        """Encode a supported value (no transformation)."""
-        ...
-
-    def decode(self, encoded: object) -> Value:
-        """Decode a supported value (no transformation)."""
-        ...
+    from tkv.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
 
 # =============================================================================
@@ -58,12 +30,6 @@ def storage() -> Generator[StorageProtocol, None, None]:
     Provides a clean storage instance for each test with automatic cleanup.
     """
     # No-op codec
-    NoOpCodec = partial(
-        Codec,
-        key_codec_cls=StringKeyCodec,
-        value_codec_cls=PassthroughCodec,
-    )
-
     storage = InMemoryStorage(codec=NoOpCodec())
     storage.open()
     try:

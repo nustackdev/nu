@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pv.container import ContainerProtocol, ContainerStructure
-from pv.typing import EMPTY, Empty, Value
+from pv.types import EMPTY, Empty, Value
 
 from .base import StdView
 

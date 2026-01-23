@@ -10,7 +10,6 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
-    "every-pv>=0.1.0",
     "tkv>=0.1.0",
 ]
 

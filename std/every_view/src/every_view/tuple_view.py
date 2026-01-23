@@ -25,16 +25,16 @@ from .base import StdView
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
-    from pv.typing import Empty
-    from pv.typing.view import (
+    from pv.collections import SequenceView
+    from pv.traits import (
         Containable,
         Convertible,
         Initializable,
         Nestable,
-        SequenceView,
         Sizeable,
         Subscriptable,
     )
+    from pv.types import Empty
 
 __all__ = ["TupleView"]
 
