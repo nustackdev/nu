@@ -20,10 +20,10 @@ from __future__ import annotations
 
 
 try:
-    from evkv.inmemdb import InMemoryStorage
+    from tkv.inmemdb import InMemoryStorage
 except ImportError as e:
     raise ImportError(
-        "evkv package is required for InMemoryStorage. Install via: pip install evkv"
+        "tkv package is required for InMemoryStorage. Install via: pip install tkv"
     ) from e
 
 

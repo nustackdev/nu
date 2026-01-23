@@ -5,7 +5,7 @@ Access: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
 
 from __future__ import annotations
 
-from every import NOT_SET, NAryMorphism, NotSet, Operation, Sentinel, UnaryMorphism, is_notset
+from every import NOT_SET, NAryMorphism, Operation, Sentinel, UnaryMorphism
 
 
 __all__ = [
@@ -56,9 +56,9 @@ class DictItemsOp[K, V](Operation, UnaryMorphism[list[tuple[K, V]]]):
 class DictGetOp[V](Operation, NAryMorphism[V | Sentinel]):
     """Get value from dict with optional default: dict.get(key, default) or dict[key]."""
 
-    def __init__(self, operand: object, key: object, default: object | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, key: object, default: object | None = None) -> None:
         """Initialize get operation."""
-        if is_notset(default):
+        if default is None:
             self._children = (operand, key)  # type: ignore
         else:
             self._children = (operand, key, default)  # type: ignore
@@ -66,6 +66,6 @@ class DictGetOp[V](Operation, NAryMorphism[V | Sentinel]):
     def _apply(self, operand: object, key: object, default: object = NOT_SET) -> V | Sentinel:
         if not isinstance(operand, dict):
             raise TypeError(f"get_() requires dict, got {type(operand).__name__}")
-        if is_notset(default):
+        if default is None:
             return operand[key]  # type: ignore
         return operand.get(key, default)  # type: ignore

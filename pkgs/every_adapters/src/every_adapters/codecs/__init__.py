@@ -13,53 +13,15 @@ Composite codecs (BinaryCodec, TextCodec, NoOpCodec) are available from this mod
 
 from __future__ import annotations
 
-from functools import partial
-
-from pv.storage import Codec
-
-from .json import JSONCodec
-from .passthrough import PassthroughCodec
-from .pickle import PickleCodec  # nosec: B403
-
 
 try:
-    from evkv.tupkey import BinaryKeyCodec, StringKeyCodec
+    from tkv.codecs import BinaryCodec, NoOpCodec, TextCodec
 except ImportError as e:
-    raise ImportError(
-        "evkv package is required for key codecs. Install via: pip install evkv"
-    ) from e
+    raise ImportError("tkv package is required for key codecs. Install via: pip install tkv") from e
 
 
 __all__ = [
     "BinaryCodec",
-    "BinaryKeyCodec",
     "NoOpCodec",
-    "StringKeyCodec",
     "TextCodec",
 ]
-
-# =========================================================
-# Composite codec factories
-# =========================================================
-
-
-# MicroPack-based binary codec
-BinaryCodec = partial(
-    Codec,
-    key_codec_cls=BinaryKeyCodec,
-    value_codec_cls=PickleCodec,
-)
-
-# JSON-based text codec
-TextCodec = partial(
-    Codec,
-    key_codec_cls=StringKeyCodec,
-    value_codec_cls=JSONCodec,
-)
-
-# No-op codec
-NoOpCodec = partial(
-    Codec,
-    key_codec_cls=StringKeyCodec,
-    value_codec_cls=PassthroughCodec,
-)

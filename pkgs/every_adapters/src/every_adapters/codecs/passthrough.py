@@ -1,39 +1,14 @@
-"""Passthrough codec adapter - no transformation."""
+"""Codec adapter."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+
+try:
+    from tkv.codecs.passthrough import PassthroughCodec
+except ImportError as e:
+    raise ImportError("dependency missing for tkv (pip install tkv)") from e
 
 
-if TYPE_CHECKING:
-    from pv.storage import ValueCodecProtocol
-    from pv.typing import Value
-
-__all__ = ["PassthroughCodec"]
-
-
-class PassthroughCodec:
-    """Codec that performs no transformation on data.
-
-    This adapter is suitable for in-memory storage where serialization
-    is not required. It passes values through without any encoding or
-    decoding overhead.
-
-    """
-
-    def __init__(self) -> None:
-        """Initialize passthrough codec with identity function references."""
-        self.encode = lambda x: x  # type: ignore[return-value]
-        self.decode = lambda x: x  # type: ignore[return-value]
-
-    def encode(self, value: Value) -> object:
-        """Encode a supported value (no transformation)."""
-        ...
-
-    def decode(self, encoded: object) -> Value:
-        """Decode a supported value (no transformation)."""
-        ...
-
-
-if TYPE_CHECKING:
-    _: type[ValueCodecProtocol[object]] = PassthroughCodec
+__all__ = [
+    "PassthroughCodec",
+]

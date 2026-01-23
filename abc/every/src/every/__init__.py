@@ -21,14 +21,11 @@ from .protocols import Gettable, Settable
 from .sentinel import (
     EMPTY,
     INVALID,
-    NOT_SET,
     Empty,
     Invalid,
-    NotSet,
     Sentinel,
     is_empty,
     is_invalid,
-    is_notset,
     is_sentinel,
     propagate_special,
 )
@@ -73,14 +70,11 @@ __all__ = [  # noqa: RUF022
     # Sentinel
     "EMPTY",
     "INVALID",
-    "NOT_SET",
     "Empty",
     "Invalid",
-    "NotSet",
     "Sentinel",
     "is_empty",
     "is_invalid",
-    "is_notset",
     "is_sentinel",
     "propagate_special",
     # Term hierarchy

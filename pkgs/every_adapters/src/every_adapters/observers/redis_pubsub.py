@@ -15,7 +15,7 @@ from __future__ import annotations
 
 
 try:
-    from evkv.observers.redis_pubsub import RedisObserver
+    from tkv.observers.redis_pubsub import RedisObserver
 except ImportError as e:
     raise ImportError(
         "redis package is required for RedisObserver. Install via: pip install redis"

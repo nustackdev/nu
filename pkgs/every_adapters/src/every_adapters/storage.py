@@ -37,9 +37,9 @@ def text_storage(path: str, read_only: bool = False) -> Generator[StorageProtoco
         ...     with storage.transaction() as txn:
         ...         txn.put("key", "value")
     """
-    from every_adapters.codecs import TextCodec
-    from every_adapters.observers.in_memory import InMemoryObserver
-    from every_adapters.storages.textdb import TextStorage
+    from tkv.codecs import TextCodec
+    from tkv.observers.mem import InMemoryObserver
+    from tkv.storages.textdb import TextStorage
 
     with (
         InMemoryObserver(codec=TextCodec()) as observer,
@@ -73,9 +73,9 @@ def rocksdb_storage_inmemory(
         ...     with storage.transaction() as txn:
         ...         txn.put(b"key", b"value")
     """
-    from every_adapters.codecs import BinaryCodec
-    from every_adapters.observers.in_memory import InMemoryObserver
-    from every_adapters.storages.rocksdb import RocksDBStorage
+    from tkv.codecs import BinaryCodec
+    from tkv.observers.mem import InMemoryObserver
+    from tkv.storages.rocksdb import RocksDBStorage
 
     with (
         InMemoryObserver(codec=BinaryCodec()) as observer,
@@ -115,9 +115,9 @@ def rocksdb_storage(
         ...     with storage.transaction() as txn:
         ...         txn.put(b"key", b"value")
     """
-    from every_adapters.codecs import BinaryCodec, TextCodec
-    from every_adapters.observers.redis_pubsub import RedisObserver
-    from every_adapters.storages.rocksdb import RocksDBStorage
+    from tkv.codecs import BinaryCodec, TextCodec
+    from tkv.observers.redis_pubsub import RedisObserver
+    from tkv.storages.rocksdb import RocksDBStorage
 
     with (
         RedisObserver(

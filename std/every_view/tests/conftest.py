@@ -6,9 +6,9 @@ from functools import partial
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from evkv.inmemdb import InMemoryStorage
-from evkv.tupkey import StringKeyCodec
 from pv.storage import Codec, SnapshotProtocol, StorageProtocol, TransactionProtocol
+from tkv.inmemdb import InMemoryStorage
+from tkv.tupkey import StringKeyCodec
 
 from every_view import DictView
 

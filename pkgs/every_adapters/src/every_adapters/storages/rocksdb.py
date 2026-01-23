@@ -4,9 +4,9 @@ from __future__ import annotations
 
 
 try:
-    from evkv.rocksdb import RocksDBStorage
+    from tkv.storages.rocksdb import RocksDBStorage
 except ImportError as e:
-    raise ImportError("dependency missing for rocksdb (pip install evkv, rdbpy)") from e
+    raise ImportError("dependency missing for rocksdb (pip install tkv, rdbpy)") from e
 
 
 __all__ = [

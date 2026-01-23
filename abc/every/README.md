@@ -26,7 +26,7 @@ The `every` package provides foundational abstractions:
 ## Usage
 
 ```python
-from every import Term, Ref, Flow, NOT_SET
+from every import Term, Ref, Flow
 ```
 
 ## Development

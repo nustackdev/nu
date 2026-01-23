@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, cast
 
 from pv.loc import path
 from pv.storage import StorageKeyError
-from pv.typing import NOT_SET, Empty, NotSet, Sentinel, Value
+from pv.typing import Empty, NotSet, Sentinel, Value
 from pv.typing.view import capabilities as view_capabilities
 
 from every import Command, Morphism, Operation, Term
@@ -224,7 +224,7 @@ class GetByKeyOp[K, V](Operation, Morphism[V | Sentinel]):
         self,
         ref: PVViewRef[view_capabilities.Subscriptable[K, V]] | UnionRefBases,
         key: Term[K | Sentinel],
-        default: Term[V | Sentinel] | NotSet = NOT_SET,
+        default: Term[V | Sentinel] | None = None,
     ) -> None:
         """Initialize get by key operation.
 

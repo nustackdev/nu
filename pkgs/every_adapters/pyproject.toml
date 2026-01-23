@@ -11,17 +11,16 @@ license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "every-pv>=0.1.0",
-    "evkv>=0.1.0",
+    "tkv>=0.1.0",
 ]
 
 [project.optional-dependencies]
 rocksdb = ["rdbpython"]
 redis = ["redis"]
 msgpack = ["msgpack"]
-micropack = ["micropack"]
 
 [tool.uv.sources]
-evkv = { git = "https://github.com/everyabc/evkv" }
+tkv = { git = "https://github.com/everyabc/tkv" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/every_adapters"]

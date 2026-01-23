@@ -14,15 +14,12 @@ from __future__ import annotations
 
 from every import (
     INVALID,
-    NOT_SET,
     BinaryMorphism,
     NAryMorphism,
-    NotSet,
     Operation,
     Sentinel,
     TernaryMorphism,
     UnaryMorphism,
-    is_notset,
 )
 
 
@@ -154,9 +151,9 @@ class IsSpaceOp(Operation, UnaryMorphism[bool | Sentinel]):
 class StripOp(Operation, NAryMorphism[str | Sentinel]):
     """Strip whitespace or chars: str.strip(chars)."""
 
-    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | None = None) -> None:
         """Initialize strip operation."""
-        if is_notset(chars):
+        if chars is None:
             super().__init__(operand)
         else:
             super().__init__(operand, chars)
@@ -177,9 +174,9 @@ class StripOp(Operation, NAryMorphism[str | Sentinel]):
 class LStripOp(Operation, NAryMorphism[str | Sentinel]):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
-    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | None = None) -> None:
         """Initialize lstrip operation."""
-        if is_notset(chars):
+        if chars is None:
             super().__init__(operand)
         else:
             super().__init__(operand, chars)
@@ -200,9 +197,9 @@ class LStripOp(Operation, NAryMorphism[str | Sentinel]):
 class RStripOp(Operation, NAryMorphism[str | Sentinel]):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
 
-    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | None = None) -> None:
         """Initialize rstrip operation."""
-        if is_notset(chars):
+        if chars is None:
             super().__init__(operand)
         else:
             super().__init__(operand, chars)
@@ -231,11 +228,11 @@ class SplitOp(Operation, NAryMorphism[list[str] | Sentinel]):
     def __init__(
         self,
         operand: object,
-        sep: object | NotSet = NOT_SET,
+        sep: object | None = None,
         maxsplit: object = -1,
     ) -> None:
         """Initialize split operation."""
-        if is_notset(sep):
+        if sep is None:
             super().__init__(operand, maxsplit)
             self._has_sep = False
         else:
@@ -261,11 +258,11 @@ class RSplitOp(Operation, NAryMorphism[list[str] | Sentinel]):
     def __init__(
         self,
         operand: object,
-        sep: object | NotSet = NOT_SET,
+        sep: object | None = None,
         maxsplit: object = -1,
     ) -> None:
         """Initialize rsplit operation."""
-        if is_notset(sep):
+        if sep is None:
             super().__init__(operand, maxsplit)
             self._has_sep = False
         else:
@@ -298,10 +295,10 @@ class FindOp(Operation, NAryMorphism[int | Sentinel]):
         operand: object,
         sub: object,
         start: object = 0,
-        end: object | NotSet = NOT_SET,
+        end: object | None = None,
     ) -> None:
         """Initialize find operation."""
-        if is_notset(end):
+        if end is None:
             super().__init__(operand, sub, start)
         else:
             super().__init__(operand, sub, start, end)
@@ -327,10 +324,10 @@ class RFindOp(Operation, NAryMorphism[int | Sentinel]):
         operand: object,
         sub: object,
         start: object = 0,
-        end: object | NotSet = NOT_SET,
+        end: object | None = None,
     ) -> None:
         """Initialize rfind operation."""
-        if is_notset(end):
+        if end is None:
             super().__init__(operand, sub, start)
         else:
             super().__init__(operand, sub, start, end)

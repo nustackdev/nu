@@ -30,7 +30,7 @@ Use RocksDB adapter for real workloads.
 
 from __future__ import annotations
 
-from evkv.textdb import TextStorage
+from tkv.storages.textdb import TextStorage
 
 
 __all__ = [

@@ -5,7 +5,6 @@ This module defines the primitive types and special values.
 
 from __future__ import annotations
 
-from .not_set import NOT_SET, NotSet, is_notset
 from .sentinel import (
     EMPTY,
     INVALID,
@@ -19,8 +18,7 @@ from .sentinel import (
 )
 
 
-__all__ = [  # noqa: RUF022
-    # Special sentinels
+__all__ = [
     "EMPTY",
     "INVALID",
     "Empty",
@@ -30,8 +28,4 @@ __all__ = [  # noqa: RUF022
     "is_invalid",
     "is_sentinel",
     "propagate_special",
-    # Not set
-    "NotSet",
-    "NOT_SET",
-    "is_notset",
 ]

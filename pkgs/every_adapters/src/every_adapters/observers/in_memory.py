@@ -9,10 +9,10 @@ from __future__ import annotations
 
 
 try:
-    from evkv.observers.in_memory import InMemoryObserver
+    from tkv.observers.mem import InMemoryObserver
 except ImportError as e:
     raise ImportError(
-        "evkv package is required for InMemoryObserver. Install via: pip install evkv"
+        "tkv package is required for InMemoryObserver. Install via: pip install tkv"
     ) from e
 
 

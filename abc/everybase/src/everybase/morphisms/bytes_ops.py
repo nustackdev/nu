@@ -15,14 +15,11 @@ from __future__ import annotations
 
 from every import (
     INVALID,
-    NOT_SET,
     BinaryMorphism,
     NAryMorphism,
-    NotSet,
     Operation,
     Sentinel,
     UnaryMorphism,
-    is_notset,
 )
 
 
@@ -100,9 +97,9 @@ class BytesLowerOp(Operation, UnaryMorphism[bytes | Sentinel]):
 class BytesStripOp(Operation, NAryMorphism[bytes | Sentinel]):
     """Strip bytes: bytes.strip(chars)."""
 
-    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | None = None) -> None:
         """Initialize strip operation."""
-        if is_notset(chars):
+        if chars is None:
             super().__init__(operand)
         else:
             super().__init__(operand, chars)
@@ -124,9 +121,9 @@ class BytesStripOp(Operation, NAryMorphism[bytes | Sentinel]):
 class BytesLStripOp(Operation, NAryMorphism[bytes | Sentinel]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
-    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | None = None) -> None:
         """Initialize lstrip operation."""
-        if is_notset(chars):
+        if chars is None:
             super().__init__(operand)
         else:
             super().__init__(operand, chars)
@@ -148,9 +145,9 @@ class BytesLStripOp(Operation, NAryMorphism[bytes | Sentinel]):
 class BytesRStripOp(Operation, NAryMorphism[bytes | Sentinel]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
-    def __init__(self, operand: object, chars: object | NotSet = NOT_SET) -> None:
+    def __init__(self, operand: object, chars: object | None = None) -> None:
         """Initialize rstrip operation."""
-        if is_notset(chars):
+        if chars is None:
             super().__init__(operand)
         else:
             super().__init__(operand, chars)
@@ -182,11 +179,11 @@ class BytesSplitOp(Operation, NAryMorphism[list[bytes] | Sentinel]):
     def __init__(
         self,
         operand: object,
-        sep: object | NotSet = NOT_SET,
+        sep: object | None = None,
         maxsplit: object = -1,
     ) -> None:
         """Initialize split operation."""
-        if is_notset(sep):
+        if sep is None:
             super().__init__(operand, maxsplit)
             self._has_sep = False
         else:
@@ -220,10 +217,10 @@ class BytesFindOp(Operation, NAryMorphism[int | Sentinel]):
         operand: object,
         sub: object,
         start: object = 0,
-        end: object | NotSet = NOT_SET,
+        end: object | None = None,
     ) -> None:
         """Initialize find operation."""
-        if is_notset(end):
+        if end is None:
             super().__init__(operand, sub, start)
         else:
             super().__init__(operand, sub, start, end)
