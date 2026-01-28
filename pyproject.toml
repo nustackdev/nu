@@ -10,14 +10,14 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["every", "everybase", "every-flow", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion", "every-type"]
+dependencies = ["everyast", "everybase", "every-flow", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion", "every-type"]
 
 # =============================================================================
 # UV Workspace
 # =============================================================================
 [tool.uv.workspace]
 members = [
-    "abc/every",
+    "abc/everyast",
     "abc/everybase",
     "std/every_flow",
     "std/every_pv",
@@ -29,7 +29,7 @@ members = [
 ]
 
 [tool.uv.sources]
-every = { workspace = true }
+everyast = { workspace = true }
 everybase = { workspace = true }
 every-flow = { workspace = true }
 every-pv = { workspace = true }
@@ -164,7 +164,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["every", "everybase", "every_flow", "every_pv", "every_type", "every_view", "every_adapters", "every_kv", "every_notion"]
+known-first-party = ["everyast", "everybase", "every_flow", "every_pv", "every_type", "every_view", "every_adapters", "every_kv", "every_notion"]
 force-single-line = false
 lines-after-imports = 2
 
