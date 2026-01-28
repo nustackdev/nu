@@ -1,31 +1,64 @@
 """everyast -- Abstract tree construction, traversal, and transformation.
 
-Pure tree structure and operations. No domain semantics.
-Downstream packages subclass Node to build typed AST hierarchies.
+Two layers:
+
+    ast/   -- pure tree data structure (Node, walk, transform, query)
+    defs/  -- topology node contracts (Exec, Term, Flow, Span) and core types
+
+The ast layer is structure without semantics.
+The defs layer adds topological meaning as abstract contracts.
 """
 
 from __future__ import annotations
 
-from .node import Node
-from .query import count, depth, find, find_first, size
-from .transform import (
+from .ast import (
+    Node,
     Transform,
+    ancestors,
     apply,
+    bfs,
     compose,
+    count,
+    depth,
+    find,
+    find_first,
     graft,
+    leaves,
     map_children,
     map_nodes,
+    postorder,
+    preorder,
     prune,
     replace,
+    size,
     unwrap,
     wrap,
 )
-from .walk import ancestors, bfs, leaves, postorder, preorder
+from .defs import (
+    EMPTY,
+    INVALID,
+    Empty,
+    Exec,
+    Flow,
+    Invalid,
+    Sentinel,
+    Span,
+    Term,
+    is_empty,
+    is_invalid,
+    is_sentinel,
+    propagate_special,
+)
 
 
 __all__ = [  # noqa: RUF022
     # Node
     "Node",
+    # Topology nodes
+    "Exec",
+    "Term",
+    "Flow",
+    "Span",
     # Walk
     "preorder",
     "postorder",
@@ -49,4 +82,14 @@ __all__ = [  # noqa: RUF022
     "count",
     "size",
     "depth",
+    # Sentinel
+    "Sentinel",
+    "Empty",
+    "Invalid",
+    "EMPTY",
+    "INVALID",
+    "is_empty",
+    "is_invalid",
+    "is_sentinel",
+    "propagate_special",
 ]
