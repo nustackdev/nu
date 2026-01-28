@@ -14,6 +14,33 @@ from __future__ import annotations
 from .context import Context, Handle
 from .flow import Flow
 from .span import Span
+from .term import (
+    EMPTY,
+    INVALID,
+    BinaryMorphism,
+    Command,
+    Empty,
+    Fetchable,
+    Invalid,
+    LValue,
+    Morphism,
+    NAryMorphism,
+    Operation,
+    Ref,
+    RValue,
+    Sentinel,
+    Shape,
+    ShapeMeta,
+    Slot,
+    SlotDescriptor,
+    Term,
+    TernaryMorphism,
+    UnaryMorphism,
+    is_empty,
+    is_invalid,
+    is_sentinel,
+    propagate_special,
+)
 from .tree import (
     Exec,
     Node,
@@ -44,6 +71,34 @@ __all__ = [  # noqa: RUF022
     # Tree
     "Node",
     "Exec",
+    # Term
+    "Term",
+    "LValue",
+    "RValue",
+    "Ref",
+    "Morphism",
+    "NAryMorphism",
+    "UnaryMorphism",
+    "BinaryMorphism",
+    "TernaryMorphism",
+    "Operation",
+    "Command",
+    "Fetchable",
+    # Sentinel
+    "Sentinel",
+    "Empty",
+    "Invalid",
+    "EMPTY",
+    "INVALID",
+    "is_empty",
+    "is_invalid",
+    "is_sentinel",
+    "propagate_special",
+    # Shape
+    "Shape",
+    "ShapeMeta",
+    "Slot",
+    "SlotDescriptor",
     # Flow & Span
     "Flow",
     "Span",
