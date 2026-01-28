@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
-    "every>=0.1.0"
+    "everyabc>=0.1.0"
 ]
 
 [project.optional-dependencies]
