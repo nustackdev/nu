@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["everyabc", "everybase", "every-flow", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion", "every-type"]
+dependencies = ["everyabc", "everybase", "every-flow", "every-flow-ext", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion", "every-type"]
 
 # =============================================================================
 # UV Workspace
@@ -20,6 +20,7 @@ members = [
     "abc/everyabc",
     "abc/everybase",
     "std/every_flow",
+    "std/every_flow_ext",
     "std/every_pv",
     "std/every_type",
     "std/every_view",
@@ -32,6 +33,7 @@ members = [
 everyabc = { workspace = true }
 everybase = { workspace = true }
 every-flow = { workspace = true }
+every-flow-ext = { workspace = true }
 every-pv = { workspace = true }
 every-type = { workspace = true }
 every-view = { workspace = true }
@@ -161,13 +163,16 @@ convention = "google"
 "std/every_flow/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
+"std/every_flow_ext/**/*.py" = [
+    "ANN401",  # Any type needed for polymorphic ref/value parameters
+]
 "pkgs/every_notion/**/*.py" = [
     "ANN401",  # Any type needed for Notion's dynamic JSON API
     "D107",    # __init__ docstrings covered by class docstring
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everyabc", "everybase", "every_flow", "every_pv", "every_type", "every_view", "every_adapters", "every_kv", "every_notion"]
+known-first-party = ["everyabc", "everybase", "every_flow", "every_flow_leg", "every_flow_ext", "every_pv", "every_type", "every_view", "every_adapters", "every_kv", "every_notion"]
 force-single-line = false
 lines-after-imports = 2
 

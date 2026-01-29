@@ -1,5 +1,5 @@
 # =============================================================================
-# std/every_flow - Flow Primitives
+# std/every_flow_ext - Flow Extensions & Tree Meta-transforms
 # =============================================================================
 
 [build-system]
@@ -7,17 +7,18 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every-flow"
+name = "every-flow-ext"
 version = "0.1.0"
-description = "Synchronous flow primitives for everyabc"
+description = "Flow extensions and tree meta-transforms for everyabc"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
     "everyabc>=0.1.0",
+    "every-flow>=0.1.0",
 ]
-keywords = ["every", "flow", "control-flow", "synchronous"]
+keywords = ["every", "flow", "cancellation", "checkpoint", "logging"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
@@ -30,4 +31,4 @@ classifiers = [
 Repository = "https://github.com/everyabc/everybase"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/every_flow", "src/every_flow_leg"]
+packages = ["src/every_flow_ext"]
