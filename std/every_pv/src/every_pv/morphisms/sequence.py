@@ -87,9 +87,9 @@ class AppendValueCmd[T](Command, Morphism[T]):
             ref: Sequence reference to append to
             value: Value to append (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef[Appendable]", ref), value)
         self.ref = cast("PVViewRef[Appendable]", ref)
         self.value_expr = value
-        self._children = (cast("PVViewRef[Appendable]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute append value command.
@@ -152,10 +152,10 @@ class InsertAtIndexCmd[T](Command, Morphism[T]):
             index: Index to insert at (wrapped in Term)
             value: Value to insert (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef", ref), index, value)
         self.ref = cast("PVViewRef", ref)
         self.index_expr = index
         self.value_expr = value
-        self._children = (cast("PVViewRef", ref), index, value)
 
     def execute(self, context: Context) -> T:
         """Execute insert at index command.
@@ -200,11 +200,12 @@ class PopByIndexCmd[T](Command, Morphism[T]):
             ref: Sequence reference to pop from
             index: Index to pop from (default: -1, last item)
         """
+        if index is not None:
+            super().__init__(cast("PVViewRef", ref), index)
+        else:
+            super().__init__(cast("PVViewRef", ref))
         self.ref = cast("PVViewRef", ref)
         self.index_expr = index
-        self._children = (
-            (cast("PVViewRef", ref), index) if index is not None else (cast("PVViewRef", ref),)
-        )
 
     def execute(self, context: Context) -> T:
         """Execute pop by index command.
@@ -270,9 +271,9 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
             ref: Sequence reference to search
             value: Value to find
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[list[T]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
-        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute index of value operation.
@@ -328,9 +329,9 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
             ref: Sequence reference to count in
             value: Value to count
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[list[T]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
-        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute count of value operation.
@@ -393,9 +394,9 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[list[T]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> T:
         """Execute find by predicate operation.
@@ -456,9 +457,9 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
             ref: Sequence reference to search
             predicate: Function returning True for element to find
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[list[T]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute find index by predicate operation.
@@ -523,9 +524,9 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
             ref: Sequence reference to map over
             func: Function to apply to each element
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[list[T]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.func = func
-        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[R] | Sentinel:
         """Execute map operation.
@@ -581,9 +582,9 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
             ref: Sequence reference to filter
             predicate: Function that returns True for elements to keep
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[list[T]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[T] | Sentinel:
         """Execute filter operation.
@@ -642,10 +643,10 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
             func: Reducer function (accumulator, element) -> accumulator
             initial: Initial accumulator value
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[list[T]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.func = func
         self.initial = initial
-        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce operation.

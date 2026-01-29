@@ -47,6 +47,10 @@ class PyRefBase[T](Ref[T]):
         Args:
             source: Either a Term (computation) or literal value
         """
+        if isinstance(source, Term):
+            super().__init__(source)
+        else:
+            super().__init__()
         self._source = source
 
     @property

@@ -57,9 +57,9 @@ class AddValueCmd[T](Command, Morphism[None]):
             ref: Set reference to add to
             value: Value to add (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef", ref), value)
         self.ref = cast("PVViewRef", ref)
         self.value_expr = value
-        self._children = (cast("PVViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute add value command.
@@ -119,9 +119,9 @@ class RemoveValueCmd[T](Command, Morphism[None]):
             ref: Set reference to remove from
             value: Value to remove (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef", ref), value)
         self.ref = cast("PVViewRef", ref)
         self.value_expr = value
-        self._children = (cast("PVViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute remove value command.
@@ -186,9 +186,9 @@ class DiscardValueCmd[T](Command, Morphism[None]):
             ref: Set reference to discard from
             value: Value to discard (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef", ref), value)
         self.ref = cast("PVViewRef", ref)
         self.value_expr = value
-        self._children = (cast("PVViewRef", ref), value)
 
     def execute(self, context: Context) -> None:
         """Execute discard value command.

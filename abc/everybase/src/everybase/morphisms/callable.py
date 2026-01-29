@@ -50,10 +50,9 @@ class FuncCallOp[ResultT](Operation, NAryMorphism[ResultT]):
             *args: Positional arguments (can be Terms or raw values)
             **kwargs: Keyword arguments (can be Terms or raw values)
         """
+        super().__init__(*args, *kwargs.values())
         self._func = func
         self._kwarg_keys = tuple(kwargs.keys())
-        # Store all args and kwargs values as children
-        self._children = (*args, *kwargs.values())
 
     def _apply(self, *resolved: object) -> ResultT:
         """Apply the function call with resolved arguments."""
@@ -101,9 +100,8 @@ class MethodCallOp[ResultT](Operation, NAryMorphism[ResultT]):
             *args: Positional arguments (can be Terms or raw values)
             **kwargs: Keyword arguments (can be Terms or raw values)
         """
+        super().__init__(instance, method_name, *args, *kwargs.values())
         self._kwarg_keys = tuple(kwargs.keys())
-        # Store instance, method_name, args, and kwargs values as children
-        self._children = (instance, method_name, *args, *kwargs.values())
 
     def _apply(self, *resolved: object) -> ResultT:
         """Apply the method call with resolved arguments."""

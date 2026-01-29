@@ -96,10 +96,10 @@ class SetByKeyCmd[K, V: Value](Command, Morphism[V]):
             key: Key to set (wrapped in Term)
             value: Value to set (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef[view_traits.Assignable[K, V]]", ref), value)
         self.ref = cast("PVViewRef[view_traits.Assignable[K, V]]", ref)
         self.key = key
         self.value_expr = value
-        self._children = (cast("PVViewRef[view_traits.Assignable[K, V]]", ref), value)
 
     def execute(self, context: Context) -> V:
         """Execute set by key command.
@@ -163,9 +163,9 @@ class RemoveByKeyCmd[K](Command, Morphism[None]):
             ref: Mapping reference to remove key from
             key: Key to remove (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef[view_traits.Deletable[K]]", ref))
         self.ref = cast("PVViewRef[view_traits.Deletable[K]]", ref)
         self.key = key
-        self._children = (cast("PVViewRef[view_traits.Deletable[K]]", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute remove by key command.
@@ -234,10 +234,10 @@ class GetByKeyOp[K, V](Operation, Morphism[V | Sentinel]):
             key: Key to look up
             default: Value to return if key not found (default: Empty)
         """
+        super().__init__(cast("PVViewRef[view_traits.Subscriptable[K, V]]", ref))
         self.ref = cast("PVViewRef[view_traits.Subscriptable[K, V]]", ref)
         self.key = key
         self.default = default
-        self._children = (cast("PVViewRef[view_traits.Subscriptable[K, V]]", ref),)
 
     def execute(self, context: Context) -> V | Sentinel:
         """Execute get by key operation.
@@ -293,8 +293,8 @@ class KeysOp[K](Operation, Morphism[list[K] | Sentinel]):
         Args:
             ref: Mapping reference to query
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref)
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref),)
 
     def execute(self, context: Context) -> list[K] | Sentinel:
         """Execute keys operation.
@@ -349,8 +349,8 @@ class ValuesOp[V](Operation, Morphism[list[V] | Sentinel]):
         Args:
             ref: Mapping reference to query
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref)
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref),)
 
     def execute(self, context: Context) -> list[V] | Sentinel:
         """Execute values operation.
@@ -404,8 +404,8 @@ class ItemsOp[K, V](Operation, Morphism[list[tuple[K, V]] | Sentinel]):
         Args:
             ref: Mapping reference to query
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> list[tuple[K, V]] | Sentinel:
         """Execute items operation.
@@ -471,9 +471,9 @@ class FindKeyByPredicateOp[K, V](Operation, Morphism[K]):
             ref: Mapping reference to search
             predicate: Function applied to values, return True to match
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> K:
         """Execute find key by predicate operation.
@@ -536,9 +536,9 @@ class FindValueByPredicateOp[V](Operation, Morphism[V]):
             ref: Mapping reference to search
             predicate: Function applied to values, return True to match
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref)
         self.predicate = predicate
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref),)
 
     def execute(self, context: Context) -> V:
         """Execute find value by predicate operation.
@@ -604,9 +604,9 @@ class FindItemByPredicateOp[K, V](Operation, Morphism[tuple[K, V]]):
             ref: Mapping reference to search
             predicate: Function (key, value) -> bool
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> tuple[K, V]:
         """Execute find item by predicate operation.
@@ -674,9 +674,9 @@ class MapValuesOp[K, V, R](Operation, Morphism[dict[K, R] | Sentinel]):
             ref: Mapping reference to map over
             func: Function to apply to each value
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K, R] | Sentinel:
         """Execute map values operation.
@@ -737,9 +737,9 @@ class MapItemsOp[K, V, K2, V2](Operation, Morphism[dict[K2, V2] | Sentinel]):
             ref: Mapping reference to map over
             func: Function taking (key, value) returning (new_key, new_value)
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K2, V2] | Sentinel:
         """Execute map items operation.
@@ -798,9 +798,9 @@ class FilterItemsOp[K, V](Operation, Morphism[dict[K, V] | Sentinel]):
             ref: Mapping reference to filter
             predicate: Function (key, value) -> bool, keep if True
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K, V] | Sentinel:
         """Execute filter items operation.
@@ -862,10 +862,10 @@ class ReduceItemsOp[K, V, R](Operation, Morphism[R | Sentinel]):
             func: Reducer function (accumulator, key, value) -> accumulator
             initial: Initial accumulator value
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
         self.initial = initial
-        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce items operation.

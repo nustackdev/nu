@@ -71,8 +71,8 @@ class OnChangeOp(ChangeOp):
         Args:
             ref: View reference to watch
         """
+        super().__init__(cast("PVViewRef", ref))
         self.ref = cast("PVViewRef", ref)
-        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_change operation.
@@ -129,8 +129,8 @@ class OnPrimitiveChangeOp(ChangeOp):
         Args:
             ref: Primitive reference to watch
         """
+        super().__init__(cast("PVPrimitiveRef", ref))
         self.ref = cast("PVPrimitiveRef", ref)
-        self._children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_primitive_change operation.
@@ -185,9 +185,9 @@ class OnChildChangeOp[A](ChangeOp):
             ref: View reference containing the child
             address: Child address to watch
         """
+        super().__init__(cast("PVViewRef", ref))
         self.ref = cast("PVViewRef", ref)
         self.address = address
-        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_child_change operation.
@@ -246,8 +246,8 @@ class OnChildrenChangeOp(ChangeOp):
         Args:
             ref: View reference to watch children of
         """
+        super().__init__(cast("PVViewRef", ref))
         self.ref = cast("PVViewRef", ref)
-        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_children_change operation.
@@ -305,9 +305,9 @@ class OnDescendantsChangeOp(ChangeOp):
             ref: View reference to watch descendants of
             *pattern: Key segments pattern (use "*" for wildcards)
         """
+        super().__init__(cast("PVViewRef", ref))
         self.ref = cast("PVViewRef", ref)
         self.pattern = pattern
-        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_descendants_change operation.

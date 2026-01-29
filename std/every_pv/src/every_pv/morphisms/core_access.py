@@ -57,8 +57,8 @@ class GetOp[T](Operation, Morphism[T | Sentinel]):
         Args:
             ref: Reference to read from
         """
+        super().__init__(cast("PVPrimitiveRef", ref))
         self.ref = cast("PVPrimitiveRef", ref)
-        self._children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> T | Sentinel:
         """Execute read operation.
@@ -109,8 +109,8 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
         Args:
             ref: View reference to extract from
         """
+        super().__init__(cast("PVViewRef[view_traits.Convertible[T]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[T]]", ref)
-        self._children = (cast("PVViewRef[view_traits.Convertible[T]]", ref),)
 
     def execute(self, context: Context) -> T | Sentinel:
         """Execute extract operation.
@@ -162,8 +162,8 @@ class ExistsOp(Operation, Morphism[bool]):
         Args:
             ref: Reference to check
         """
+        super().__init__(cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref))
         self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
-        self._children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute existence check.
@@ -216,8 +216,8 @@ class MissingOp(Operation, Morphism[bool]):
         Args:
             ref: Reference to check
         """
+        super().__init__(cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref))
         self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
-        self._children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute missing check.
@@ -251,8 +251,8 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
         Args:
             ref: View reference to query
         """
+        super().__init__(cast("PVViewRef[view_traits.Sizeable]", ref))
         self.ref = cast("PVViewRef[view_traits.Sizeable]", ref)
-        self._children = (cast("PVViewRef[view_traits.Sizeable]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute length query.

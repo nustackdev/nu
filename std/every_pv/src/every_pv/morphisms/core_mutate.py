@@ -67,9 +67,9 @@ class SetCmd[T](Command, Morphism[T]):
             ref: Reference to write to
             value: Value to write (wrapped in Term)
         """
+        super().__init__(cast("PVPrimitiveRef[T]", ref), value)
         self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = value
-        self._children = (cast("PVPrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute write command.
@@ -127,8 +127,8 @@ class DeleteCmd(Command, Morphism[None]):
         Args:
             ref: Reference to delete
         """
+        super().__init__(cast("PVPrimitiveRef", ref))
         self.ref = cast("PVPrimitiveRef", ref)
-        self._children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute delete command.
@@ -187,9 +187,9 @@ class StoreCmd[T](Command, Morphism[T]):
             ref: View reference to store to
             data: Data to store (wrapped in Term)
         """
+        super().__init__(cast("PVViewRef[Initializable]", ref), data)
         self.ref = cast("PVViewRef[Initializable]", ref)
         self.data_expr = data
-        self._children = (cast("PVViewRef[Initializable]", ref), data)
 
     def execute(self, context: Context) -> T:
         """Execute store command.
@@ -249,8 +249,8 @@ class ClearCmd(Command, Morphism[None]):
         Args:
             ref: View reference to clear
         """
+        super().__init__(cast("PVViewRef[Clearable]", ref))
         self.ref = cast("PVViewRef[Clearable]", ref)
-        self._children = (cast("PVViewRef[Clearable]", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute clear command.
@@ -325,9 +325,9 @@ class TypedSetCmd[T](Command, Morphism[T]):
             ref: Reference to write to
             value: Value to write (can be TypedValue with __to_storage__)
         """
+        super().__init__(cast("PVPrimitiveRef[T]", ref), value)
         self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = ensure_term(value)
-        self._children = (cast("PVPrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute typed write command.

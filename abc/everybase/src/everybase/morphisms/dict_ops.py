@@ -59,9 +59,9 @@ class DictGetOp[V](Operation, NAryMorphism[V | Sentinel]):
     def __init__(self, operand: object, key: object, default: object | None = None) -> None:
         """Initialize get operation."""
         if default is None:
-            self._children = (operand, key)  # type: ignore
+            super().__init__(operand, key)
         else:
-            self._children = (operand, key, default)  # type: ignore
+            super().__init__(operand, key, default)
 
     def _apply(self, operand: object, key: object, default: object | None = None) -> V | Sentinel:
         if not isinstance(operand, dict):
