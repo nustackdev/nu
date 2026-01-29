@@ -10,7 +10,7 @@ Package Structure:
     pv/           - Concrete PV ref implementations
     slots/        - Slot definitions for Shape system
     ref.py        - Abstract ref classes (PrimitiveRef, ViewRef)
-    context.py    - KVContext for execution
+    spans.py      - PVAtomic, PVSnapshot context boundary spans
 
 Key Classes:
     Concrete PV Refs (from pv/):
@@ -24,17 +24,16 @@ Key Classes:
         - ItemSlot, DictSlot, ListSlot
         - ShapeSlot, ShapesListSlot, ShapesDictSlot
 
-    Context:
-        - KVContext, SingularContext
+    Spans:
+        - PVAtomic: Transaction/snapshot boundary (auto-selects based on purity)
+        - PVSnapshot: Read-only snapshot boundary
 
 Usage:
-    from every_pv import PVIntRef, PVStrRef, IntSlot, KVContext
+    from every_pv import PVIntRef, PVStrRef, IntSlot, PVAtomic
     from every_pv.morphisms import GetOp, SetCmd
 """
 
-# Context
-from every_pv.context import KVContext, SingularContext
-
+# Spans (context boundaries)
 # Morphisms
 from every_pv.morphisms import (
     AddValueCmd,
@@ -130,6 +129,7 @@ from every_pv.slots import (
     ShapeSlot,
     StrSlot,
 )
+from every_pv.spans import PVAtomic, PVSnapshot
 
 # Traits
 from every_pv.traits import (
@@ -182,9 +182,9 @@ from . import slots
 __all__ = [  # noqa: RUF022
     # Modules
     "slots",
-    # Context
-    "KVContext",
-    "SingularContext",
+    # Spans (context boundaries)
+    "PVAtomic",
+    "PVSnapshot",
     # Morphisms - Core access
     "ExistsOp",
     "ExtractOp",

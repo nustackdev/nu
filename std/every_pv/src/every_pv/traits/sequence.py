@@ -19,7 +19,7 @@ from everybase import IntRef, ListRef, NoneRef, ensure_term, typed_ref
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from every import Sentinel, Term
+    from everyabc import Sentinel, Term
     from everybase import BoolRef, DictRef, FloatRef, StrRef
 
 

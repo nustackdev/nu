@@ -14,13 +14,14 @@ from typing import TYPE_CHECKING, cast
 
 from pv.loc import path
 from pv.traits import Addable, Discardable, Removable
+from pv.view import View
 
-from every import Command, Morphism, Sentinel, Term
+from everyabc import Command, Morphism, Sentinel, Term
 
 
 if TYPE_CHECKING:
-    from every_pv.context import KVContext as Context
     from every_pv.ref import PVViewRef
+    from everyabc import Context
 type UnionRefBases = None
 
 
@@ -75,7 +76,7 @@ class AddValueCmd[T](Command, Morphism[None]):
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot add special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -140,7 +141,7 @@ class RemoveValueCmd[T](Command, Morphism[None]):
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot remove special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -204,7 +205,7 @@ class DiscardValueCmd[T](Command, Morphism[None]):
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot discard special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view

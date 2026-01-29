@@ -13,7 +13,7 @@ from everybase import NoneRef, ensure_term
 
 
 if TYPE_CHECKING:
-    from every import Sentinel, Term
+    from everyabc import Sentinel, Term
 
 
 __all__ = [

@@ -7,8 +7,6 @@ import pytest
 from pv.view import View
 from tkv.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
-from every import Shape
-from every_pv.context import KVContext as PVContext
 from every_type.pv import (
     ComplexSlot,
     DateSlot,
@@ -22,6 +20,7 @@ from every_type.pv import (
     TimezoneSlot,
     UUIDSlot,
 )
+from everyabc import Context, Shape
 
 
 # ============================================================================
@@ -154,14 +153,14 @@ def root_view(tx: TransactionProtocol) -> View:
 
 
 @pytest.fixture
-def ctx(root_view: View, tx: TransactionProtocol) -> PVContext:
+def ctx(root_view: View, tx: TransactionProtocol) -> Context:
     """Context bundling root view and transaction.
 
     Used by shapes layer for executing operations and commands.
 
     Dependency chain: codec → storage → tx → root_view → ctx
     """
-    return PVContext.create(root_view=root_view, storage_context=tx)
+    return Context().with_handle(View, root_view).with_handle(TransactionProtocol, tx)
 
 
 # ============================================================================

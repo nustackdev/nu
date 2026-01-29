@@ -21,13 +21,13 @@ from pv.traits import (
     Deletable,
     Initializable,
 )
+from pv.view import View
 
-from every import Command, Morphism, Sentinel, Term
+from everyabc import Command, Context, Morphism, Sentinel, Term
 from everybase import ensure_term
 
 
 if TYPE_CHECKING:
-    from every_pv.context import KVContext as Context
     from every_pv.ref import PVPrimitiveRef, PVViewRef
 
 type UnionRefBases = None
@@ -38,6 +38,7 @@ __all__ = [
     "DeleteCmd",
     "SetCmd",
     "StoreCmd",
+    "TypedSetCmd",
 ]
 
 
@@ -49,7 +50,6 @@ class SetCmd[T](Command, Morphism[T]):
 
     Type Parameters:
         T: Type of value to write
-        ContextT: Execution context type
 
     Example:
         >>> set_cmd = SetCmd(value_ref, ensure_term(42))
@@ -89,8 +89,9 @@ class SetCmd[T](Command, Morphism[T]):
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, Invalid, etc): {value}")
 
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         # Navigate using Path system
         parent_view, key = path.navigate_value(root_view, value_path)
@@ -114,9 +115,6 @@ class DeleteCmd(Command, Morphism[None]):
 
     Impure command that deletes a value from storage.
     Returns None.
-
-    Type Parameters:
-        ContextT: Execution context type
 
     Example:
         >>> del_cmd = DeleteCmd(value_ref)
@@ -144,8 +142,9 @@ class DeleteCmd(Command, Morphism[None]):
         # Resolve ref to Path
         value_path = self.ref.resolve(context)
 
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         # Navigate using Path system
         parent_view, key = path.navigate_value(root_view, value_path)
@@ -171,7 +170,6 @@ class StoreCmd[T](Command, Morphism[T]):
 
     Type Parameters:
         T: Type of value to store (dict, list, etc.)
-        ContextT: Execution context type
 
     Example:
         >>> store_cmd = StoreCmd(dict_ref, ensure_term({"key": "value"}))
@@ -211,8 +209,9 @@ class StoreCmd[T](Command, Morphism[T]):
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, Invalid, etc): {data}")
 
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         # Navigate to the view
         if not view_path:
@@ -238,9 +237,6 @@ class ClearCmd(Command, Morphism[None]):
 
     Impure command that removes all items from a container.
     Returns None.
-
-    Type Parameters:
-        ContextT: Execution context type
 
     Example:
         >>> clear_cmd = ClearCmd(list_ref)
@@ -268,8 +264,9 @@ class ClearCmd(Command, Morphism[None]):
         # Resolve ref to Path
         view_path = self.ref.resolve(context)
 
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         # Navigate to the view
         if not view_path:
@@ -359,8 +356,9 @@ class TypedSetCmd[T](Command, Morphism[T]):
         else:
             storage_value = value
 
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         # Navigate using Path system
         parent_view, key = path.navigate_value(root_view, value_path)

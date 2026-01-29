@@ -41,7 +41,7 @@ from everybase.refs import (
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from every import Ref, Shape, Term
+    from everyabc import Ref, Shape, Term
 
 
 __all__ = [

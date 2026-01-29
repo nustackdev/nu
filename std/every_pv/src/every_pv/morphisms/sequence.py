@@ -29,15 +29,16 @@ from typing import TYPE_CHECKING, cast
 import pv.traits as view_traits
 from pv.loc import path
 from pv.traits import Appendable, Poppable
+from pv.view import View
 
-from every import EMPTY, Command, Morphism, Operation, Sentinel, Term
+from everyabc import EMPTY, Command, Morphism, Operation, Sentinel, Term
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from every_pv.context import KVContext as Context
     from every_pv.ref import PVViewRef
+    from everyabc import Context
 
 type UnionRefBases = None
 
@@ -105,7 +106,7 @@ class AppendValueCmd[T](Command, Morphism[T]):
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot append special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -223,7 +224,7 @@ class PopByIndexCmd[T](Command, Morphism[T]):
         else:
             index = -1
 
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -286,7 +287,7 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
             ValueError: If value not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -341,7 +342,7 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
             Count of occurrences, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -409,7 +410,7 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
             ValueError: If no element matches
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -472,7 +473,7 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
             ValueError: If no element matches
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -536,7 +537,7 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
             List of transformed elements, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -594,7 +595,7 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
             List of filtered elements, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -656,7 +657,7 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
             Reduced value, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:

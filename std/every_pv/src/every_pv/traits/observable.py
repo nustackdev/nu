@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pv.loc import key
 
-    from every import Sentinel, Term
     from every_pv.morphisms import (
         OnChangeOp,
         OnChildChangeOp,
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
         OnDescendantsChangeOp,
         OnPrimitiveChangeOp,
     )
+    from everyabc import Sentinel, Term
 
 
 __all__ = [

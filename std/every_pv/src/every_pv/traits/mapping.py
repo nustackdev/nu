@@ -11,14 +11,14 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, overload
 
-from every import Term
+from everyabc import Term
 from everybase import DictRef, NoneRef, TupleRef, ensure_term, typed_ref
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from every import Sentinel, Term
+    from everyabc import Sentinel, Term
     from everybase import BoolRef, BytesRef, FloatRef, IntRef, ListRef, SetRef, StrRef
 
 

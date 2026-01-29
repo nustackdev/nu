@@ -8,16 +8,17 @@ from typing import TYPE_CHECKING, cast
 
 from pv.loc import path
 from pv.traits import ChildObservable, DescendantsObservable, Observable
+from pv.view import View
 from tkv.tkv.observer import Subscription
 
-from every import Morphism, Operation, Term
+from everyabc import Morphism, Operation, Term
 
 
 if TYPE_CHECKING:
     from pv.loc import key
 
-    from every_pv.context import KVContext as Context
     from every_pv.ref import PVPrimitiveRef, PVViewRef
+    from everyabc import Context
 
 
 __all__ = [
@@ -88,10 +89,10 @@ class OnChangeOp(ChangeOp):
         view_path = self.ref.resolve(context)
 
         if not view_path:
-            view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+            view = context.get(View, shape=self.ref.get_root_shape())
         else:
             view = path.navigate_view(
-                context.get_context_for_shape(self.ref.get_root_shape()).root_view,
+                context.get(View, shape=self.ref.get_root_shape()),
                 view_path,
             )
 
@@ -146,7 +147,7 @@ class OnPrimitiveChangeOp(ChangeOp):
         value_path = cast("path.PathToValue", self.ref.resolve(context))
 
         parent_view, key = path.navigate_value(
-            context.get_context_for_shape(self.ref.get_root_shape()).root_view,
+            context.get(View, shape=self.ref.get_root_shape()),
             value_path,
         )
 
@@ -208,7 +209,7 @@ class OnChildChangeOp[A](ChangeOp):
         view_path = self.ref.resolve(context)
 
         view = path.navigate_view(
-            context.get_context_for_shape(self.ref.get_root_shape()).root_view,
+            context.get(View, shape=self.ref.get_root_shape()),
             view_path,
         )
 
@@ -263,10 +264,10 @@ class OnChildrenChangeOp(ChangeOp):
         view_path = self.ref.resolve(context)
 
         if not view_path:
-            view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+            view = context.get(View, shape=self.ref.get_root_shape())
         else:
             view = path.navigate_view(
-                context.get_context_for_shape(self.ref.get_root_shape()).root_view,
+                context.get(View, shape=self.ref.get_root_shape()),
                 view_path,
             )
 
@@ -327,10 +328,10 @@ class OnDescendantsChangeOp(ChangeOp):
         view_path = self.ref.resolve(context)
 
         if not view_path:
-            view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+            view = context.get(View, shape=self.ref.get_root_shape())
         else:
             view = path.navigate_view(
-                context.get_context_for_shape(self.ref.get_root_shape()).root_view,
+                context.get(View, shape=self.ref.get_root_shape()),
                 view_path,
             )
 

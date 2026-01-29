@@ -16,16 +16,14 @@ from typing import TYPE_CHECKING, cast
 
 import pv.traits as view_traits
 from pv.loc import path
+from pv.view import View
 
-from every import EMPTY, Morphism, Operation, Sentinel
 from every_pv.ref import PVPrimitiveRef, PVViewRef
+from everyabc import EMPTY, Context, Morphism, Operation, Sentinel
 
 
 if TYPE_CHECKING:
     from pv.types import Value
-    from pv.view import View
-
-    from every_pv.context import KVContext as Context
 
 
 __all__ = [
@@ -47,7 +45,6 @@ class GetOp[T](Operation, Morphism[T | Sentinel]):
 
     Type Parameters:
         T: Type of value to read
-        ContextT: Execution context type
 
     Example:
         >>> get_op = GetOp(value_ref)
@@ -75,8 +72,9 @@ class GetOp[T](Operation, Morphism[T | Sentinel]):
         # Resolve ref to path
         value_path = self.ref.resolve(context)
 
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         # Navigate to parent and get key
         try:
@@ -99,7 +97,6 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
 
     Type Parameters:
         T: Type of extracted value (dict, list, etc.)
-        ContextT: Execution context type
 
     Example:
         >>> extract_op = ExtractOp(view_ref)
@@ -127,8 +124,9 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
         # Resolve ref to path
         view_path = self.ref.resolve(context)
 
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         # Navigate to view
         try:
@@ -153,9 +151,6 @@ class ExistsOp(Operation, Morphism[bool]):
 
     Pure operation that checks if a location exists in storage.
 
-    Type Parameters:
-        ContextT: Execution context type
-
     Example:
         >>> exists_op = ExistsOp(ref)
         >>> exists = exists_op.execute(ctx)  # Returns bool
@@ -179,8 +174,9 @@ class ExistsOp(Operation, Morphism[bool]):
         Returns:
             True if location exists, False otherwise
         """
-        # Get root view from context
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         try:
             ref_path = self.ref.resolve(context)
@@ -208,9 +204,6 @@ class MissingOp(Operation, Morphism[bool]):
     """Missing check operation (inverse of exists).
 
     Pure operation that checks if a location is missing from storage.
-
-    Type Parameters:
-        ContextT: Execution context type
 
     Example:
         >>> missing_op = MissingOp(ref)
@@ -247,9 +240,6 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
 
     Pure operation that returns the length of a container.
 
-    Type Parameters:
-        ContextT: Execution context type
-
     Example:
         >>> len_op = LengthOp(list_ref)
         >>> length = len_op.execute(ctx)  # Returns int
@@ -274,7 +264,10 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
             Length of container, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+
+        # Get root view from context (shape-scoped)
+        shape = self.ref.get_root_shape()
+        root_view = context.get(View, shape=shape)
 
         try:
             if not view_path:

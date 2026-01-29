@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from every import Slot
+from everyabc import Slot
 from everybase import (
     AnyRef,
     BoolRef,
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from pv.collections import MutableMappingView, MutableSequenceView
     from pv.types import Value
 
-    from every import Ref, Shape
+    from everyabc import Ref, Shape
     from everybase import AnyRef, IntRef, StrRef  # noqa: TC004
 
 

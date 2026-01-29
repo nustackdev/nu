@@ -31,16 +31,17 @@ from typing import TYPE_CHECKING, cast
 import pv.traits as view_traits
 from pv.loc import path
 from pv.types import Value
+from pv.view import View
 from tkv.tkv.storage import StorageKeyError
 
-from every import EMPTY, Command, Morphism, Operation, Sentinel, Term
+from everyabc import EMPTY, Command, Morphism, Operation, Sentinel, Term
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from every_pv.context import KVContext as Context
     from every_pv.ref import PVViewRef
+    from everyabc import Context
 
 type UnionRefBases = None
 
@@ -117,7 +118,7 @@ class SetByKeyCmd[K, V: Value](Command, Morphism[V]):
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -181,7 +182,7 @@ class RemoveByKeyCmd[K](Command, Morphism[None]):
         view_path = self.ref.resolve(context)
         key = self.key.execute(context)
 
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -248,7 +249,7 @@ class GetByKeyOp[K, V](Operation, Morphism[V | Sentinel]):
             Value at key, or default if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         key = self.key.execute(context)
 
@@ -305,7 +306,7 @@ class KeysOp[K](Operation, Morphism[list[K] | Sentinel]):
             List of keys, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -361,7 +362,7 @@ class ValuesOp[V](Operation, Morphism[list[V] | Sentinel]):
             List of values, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -416,7 +417,7 @@ class ItemsOp[K, V](Operation, Morphism[list[tuple[K, V]] | Sentinel]):
             List of (key, value) pairs, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -487,7 +488,7 @@ class FindKeyByPredicateOp[K, V](Operation, Morphism[K]):
             ValueError: If no value matches
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -552,7 +553,7 @@ class FindValueByPredicateOp[V](Operation, Morphism[V]):
             ValueError: If no value matches
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -620,7 +621,7 @@ class FindItemByPredicateOp[K, V](Operation, Morphism[tuple[K, V]]):
             ValueError: If no item matches
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -687,7 +688,7 @@ class MapValuesOp[K, V, R](Operation, Morphism[dict[K, R] | Sentinel]):
             Dict with transformed values, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -750,7 +751,7 @@ class MapItemsOp[K, V, K2, V2](Operation, Morphism[dict[K2, V2] | Sentinel]):
             Transformed dict, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -811,7 +812,7 @@ class FilterItemsOp[K, V](Operation, Morphism[dict[K, V] | Sentinel]):
             Filtered dict, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -876,7 +877,7 @@ class ReduceItemsOp[K, V, R](Operation, Morphism[R | Sentinel]):
             Reduced value, or Empty if not found
         """
         view_path = self.ref.resolve(context)
-        root_view = context.get_context_for_shape(self.ref.get_root_shape()).root_view
+        root_view = context.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:

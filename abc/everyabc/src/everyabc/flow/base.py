@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 from abc import ABC
+from typing import TYPE_CHECKING
 
 from everyabc.tree import Exec
+
+
+if TYPE_CHECKING:
+    from everyabc.context import Context
 
 
 __all__ = [
@@ -13,13 +18,13 @@ __all__ = [
 
 
 class Flow(Exec[Exec], ABC):
-    """Ordering constraint (1-cell). Pure structure.
+    """Ordering constraint (1-cell). Controls child execution.
 
     Flows define when children execute relative to each other.
-    They carry no behavior -- the executor interprets the shape.
+    Default execute() runs children sequentially.
 
-    Concrete flows (Seq, Par, Cond, etc.) and algebraic traits
-    (Associative, Commutative, etc.) are defined downstream.
+    Concrete flows (Seq, Par, Cond, etc.) override execute()
+    to provide specific ordering semantics.
 
     Design rules:
         R2: Flow children can be any Exec.
@@ -27,3 +32,9 @@ class Flow(Exec[Exec], ABC):
     """
 
     __slots__ = ()
+
+    def execute(self, ctx: Context) -> None:
+        """Execute children sequentially. Override for different ordering."""
+        for child in self.children:
+            child.execute(ctx)
+        return None

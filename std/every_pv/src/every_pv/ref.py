@@ -21,14 +21,13 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 import pv.traits as view_traits
 from pv.loc import path
+from pv.view import View
 
-from every import EMPTY, Context, Ref, Sentinel, Term
+from everyabc import EMPTY, Context, Ref, Sentinel, Term
 
 
 if TYPE_CHECKING:
-    from pv.view import View
-
-    from every import Shape
+    from everyabc import Shape
 
 
 __all__ = [
@@ -202,7 +201,8 @@ class PVPrimitiveRef[T](PVRefBase[T]):
             The value, or Empty if not found
         """
         value_path = self.resolve(ctx)
-        root_view = ctx.get_context_for_shape(self.get_root_shape()).root_view
+        shape = self.get_root_shape()
+        root_view = ctx.get(View, shape=shape)
 
         try:
             parent_view, key = path.navigate_value(root_view, value_path)
@@ -289,7 +289,8 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
             The view instance
         """
         view_path = self.resolve(ctx)
-        root_view = ctx.get_context_for_shape(self.get_root_shape()).root_view
+        shape = self.get_root_shape()
+        root_view = ctx.get(View, shape=shape)
 
         if not view_path:
             return root_view  # type: ignore

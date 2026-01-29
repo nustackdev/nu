@@ -109,7 +109,7 @@ from .set import (
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
 
 
 __all__ = [

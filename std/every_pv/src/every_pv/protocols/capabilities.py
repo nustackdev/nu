@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from every import Sentinel, Term
+    from everyabc import Sentinel, Term
     from everybase import BoolRef, IntRef, NoneRef
 
 

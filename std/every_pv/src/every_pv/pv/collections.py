@@ -17,12 +17,12 @@ from typing import TYPE_CHECKING, ClassVar
 from pv.collections import MutableMappingView, MutableSequenceView
 from pv.types import Value
 
-from every import Ref, RValue, Sentinel, Shape, Term
 from every_pv.ref import PVRefBase, PVViewRef
 from every_pv.traits.bases_collections import (
     MutableMappingRefBase,
     MutableSequenceRefBase,
 )
+from everyabc import Ref, RValue, Sentinel, Shape, Term
 from everybase import (
     AnyRef,
     DictRef,
