@@ -5,7 +5,7 @@ Access: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
 
 from __future__ import annotations
 
-from every import NAryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import NAryMorphism, Operation, Sentinel, UnaryMorphism
 
 
 __all__ = [

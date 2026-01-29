@@ -13,7 +13,7 @@ All ops use every.Morphism base classes with Operation mixin (pure).
 
 from __future__ import annotations
 
-from every import (
+from everyabc import (
     INVALID,
     BinaryMorphism,
     NAryMorphism,

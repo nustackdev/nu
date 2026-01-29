@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from every import Ref, Term
+    from everyabc import Ref, Term
 
 __all__ = [
     "ensure_term",
@@ -39,7 +39,7 @@ def ensure_term(value: object) -> Term:
         >>> ensure_term("hello")  # → StrRef("hello")
         >>> ensure_term(price.get())  # → price.get() (unchanged)
     """
-    from every import Term
+    from everyabc import Term
     from everybase.py import (
         BoolRef,
         BytesRef,

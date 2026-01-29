@@ -44,8 +44,6 @@ class Span(Exec[Exec], ABC):
 
         Calls enter() to scope context, executes children sequentially,
         then calls exit_success/exit_failure for cleanup.
-
-        Returns the result of the last child.
         """
         child_ctx = self.enter(ctx)
         try:

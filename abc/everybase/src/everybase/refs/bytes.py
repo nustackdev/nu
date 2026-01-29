@@ -16,7 +16,7 @@ from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from every import BytesArg, IntArg, StrArg, Term
+    from everyabc import BytesArg, IntArg, StrArg, Term
     from everybase.py import BoolRef, BytesRef, IntRef, ListRef, StrRef
 
 

@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, cast
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
 
 
 __all__ = [

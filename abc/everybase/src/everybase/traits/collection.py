@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, cast, overload
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from every import BoolArg, IntArg, StrArg, Term
+    from everyabc import BoolArg, IntArg, StrArg, Term
     from everybase.py import BoolRef, DictRef, FloatRef, IntRef, ListRef, StrRef
 
 

@@ -15,7 +15,7 @@ from everybase.traits import Equalable
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
     from everybase.py import FloatRef, TupleRef
 
     from .args import ComplexArg

@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeGuard, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from every import Context, Morphism, Sentinel, Term
+    from everyabc import Context, Morphism, Sentinel, Term
 
 
 __all__ = [  # noqa: RUF022

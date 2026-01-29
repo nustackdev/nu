@@ -16,7 +16,7 @@ from .basis_point_cls import BasisPoint
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
     from everybase.py import FloatRef, IntRef
 
     from .args import BasisPointArg

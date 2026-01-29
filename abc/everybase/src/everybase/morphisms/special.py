@@ -7,7 +7,7 @@ Operations for checking special sentinel values (Empty, Invalid).
 
 from __future__ import annotations
 
-from every import Operation, UnaryMorphism, is_empty, is_invalid
+from everyabc import Operation, UnaryMorphism, is_empty, is_invalid
 
 
 __all__ = [

@@ -37,4 +37,3 @@ class Flow(Exec[Exec], ABC):
         """Execute children sequentially. Override for different ordering."""
         for child in self.children:
             child.execute(ctx)
-        return None

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from every import BinaryMorphism, Command, NAryMorphism, Operation, TernaryMorphism
+from everyabc import BinaryMorphism, Command, NAryMorphism, Operation, TernaryMorphism
 
 
 if TYPE_CHECKING:

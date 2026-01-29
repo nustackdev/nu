@@ -20,7 +20,7 @@ Example usage:
     result = d + DecimalRef.from_str("0.001")
 
     # PV storage in Shape
-    from every import Shape
+    from everyabc import Shape
 
     class Account(Shape):
         balance: PVDecimalRef = DecimalSlot()

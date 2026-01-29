@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from every import INVALID, BinaryMorphism, Operation, Sentinel, TernaryMorphism, UnaryMorphism
+from everyabc import INVALID, BinaryMorphism, Operation, Sentinel, TernaryMorphism, UnaryMorphism
 
 
 if TYPE_CHECKING:
-    from every import Context
+    from everyabc import Context
 
 
 __all__ = [

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from every import INVALID, BinaryMorphism, NAryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, BinaryMorphism, NAryMorphism, Operation, Sentinel, UnaryMorphism
 
 
 if TYPE_CHECKING:

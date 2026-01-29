@@ -40,7 +40,7 @@ from .error import Assert
 
 
 if TYPE_CHECKING:
-    from every import Flow, Term
+    from everyabc import Flow, Term
 
 
 __all__ = [  # noqa: RUF022

@@ -9,7 +9,7 @@ AllOp: All truthy (all(seq))
 
 from __future__ import annotations
 
-from every import INVALID, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, Operation, Sentinel, UnaryMorphism
 
 
 __all__ = [

@@ -7,7 +7,7 @@ the term system works correctly for real-world use cases.
 
 import pytest
 
-from every import Context
+from everyabc import Context
 from everybase import (
     BoolRef,
     DictRef,

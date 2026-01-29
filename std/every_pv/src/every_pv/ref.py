@@ -71,6 +71,7 @@ class PVRefBase[T](Ref[T], ABC):
             parent: Parent ref in navigation chain
             shape: Shape class for context lookup
         """
+        super().__init__()  # no children
         self._address = address
         self._parent = parent
         self._shape = shape

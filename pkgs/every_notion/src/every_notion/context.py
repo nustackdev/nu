@@ -11,7 +11,7 @@ from typing import Any
 import attrs
 import httpx
 
-from every import Context
+from everyabc import Context
 
 
 __all__ = [

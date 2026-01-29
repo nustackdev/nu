@@ -89,7 +89,7 @@ class AppendValueCmd[T](Command, Morphism[T]):
         """
         self.ref = cast("PVViewRef[Appendable]", ref)
         self.value_expr = value
-        self.children = (cast("PVViewRef[Appendable]", ref), value)
+        self._children = (cast("PVViewRef[Appendable]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute append value command.
@@ -155,7 +155,7 @@ class InsertAtIndexCmd[T](Command, Morphism[T]):
         self.ref = cast("PVViewRef", ref)
         self.index_expr = index
         self.value_expr = value
-        self.children = (cast("PVViewRef", ref), index, value)
+        self._children = (cast("PVViewRef", ref), index, value)
 
     def execute(self, context: Context) -> T:
         """Execute insert at index command.
@@ -202,7 +202,7 @@ class PopByIndexCmd[T](Command, Morphism[T]):
         """
         self.ref = cast("PVViewRef", ref)
         self.index_expr = index
-        self.children = (
+        self._children = (
             (cast("PVViewRef", ref), index) if index is not None else (cast("PVViewRef", ref),)
         )
 
@@ -272,7 +272,7 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute index of value operation.
@@ -330,7 +330,7 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
-        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute count of value operation.
@@ -395,7 +395,7 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> T:
         """Execute find by predicate operation.
@@ -458,7 +458,7 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> int:
         """Execute find index by predicate operation.
@@ -525,7 +525,7 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.func = func
-        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[R] | Sentinel:
         """Execute map operation.
@@ -583,7 +583,7 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> list[T] | Sentinel:
         """Execute filter operation.
@@ -645,7 +645,7 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.func = func
         self.initial = initial
-        self.children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[list[T]]]", ref),)
 
     def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce operation.

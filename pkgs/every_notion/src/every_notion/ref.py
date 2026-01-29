@@ -20,7 +20,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from every import EMPTY, Ref, Sentinel, Term
+from everyabc import EMPTY, Ref, Sentinel, Term
 
 
 if TYPE_CHECKING:

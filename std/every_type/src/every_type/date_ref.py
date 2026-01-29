@@ -15,7 +15,7 @@ from everybase.traits import Comparable
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
     from everybase.py import IntRef, StrRef
 
     from .args import DateArg, TimedeltaArg

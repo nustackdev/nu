@@ -13,8 +13,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from every import Command, Operation, Term
 from every.term.morphism import Morphism
+
+from everyabc import Command, Operation, Term
 
 
 if TYPE_CHECKING:
@@ -165,7 +166,7 @@ class GetCellOp(Operation, Morphism[Any]):
 
     def __init__(self, cell_ref: CellRef) -> None:
         self.cell_ref = cell_ref
-        self.children = (cell_ref,)
+        self._children = (cell_ref,)
 
     def execute(self, context: NotionContext) -> Any:
         """Execute the read operation, fetching cell value from Notion."""
@@ -202,7 +203,7 @@ class AddRowCmd(Command, Morphism[dict[str, Any]]):
         self.table_ref = table_ref
         self._properties = properties
         self._table_shape = table_shape
-        self.children = (table_ref,)
+        self._children = (table_ref,)
 
     def execute(self, context: NotionContext) -> dict[str, Any]:
         """Execute the command, creating a new row in Notion."""
@@ -241,7 +242,7 @@ class RemoveRowCmd(Command, Morphism[dict[str, Any]]):
 
     def __init__(self, row_ref: RowRef) -> None:
         self.row_ref = row_ref
-        self.children = (row_ref,)
+        self._children = (row_ref,)
 
     def execute(self, context: NotionContext) -> dict[str, Any]:
         """Execute the command, archiving the row in Notion."""
@@ -264,7 +265,7 @@ class SetCellCmd(Command, Morphism[dict[str, Any]]):
         self.cell_ref = cell_ref
         self._value = value
         self._prop_type = prop_type
-        self.children = (cell_ref,)
+        self._children = (cell_ref,)
 
     def execute(self, context: NotionContext) -> dict[str, Any]:
         """Execute the command, updating a cell value in Notion."""

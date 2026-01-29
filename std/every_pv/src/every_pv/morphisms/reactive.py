@@ -72,7 +72,7 @@ class OnChangeOp(ChangeOp):
             ref: View reference to watch
         """
         self.ref = cast("PVViewRef", ref)
-        self.children = (cast("PVViewRef", ref),)
+        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_change operation.
@@ -130,7 +130,7 @@ class OnPrimitiveChangeOp(ChangeOp):
             ref: Primitive reference to watch
         """
         self.ref = cast("PVPrimitiveRef", ref)
-        self.children = (cast("PVPrimitiveRef", ref),)
+        self._children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_primitive_change operation.
@@ -187,7 +187,7 @@ class OnChildChangeOp[A](ChangeOp):
         """
         self.ref = cast("PVViewRef", ref)
         self.address = address
-        self.children = (cast("PVViewRef", ref),)
+        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_child_change operation.
@@ -247,7 +247,7 @@ class OnChildrenChangeOp(ChangeOp):
             ref: View reference to watch children of
         """
         self.ref = cast("PVViewRef", ref)
-        self.children = (cast("PVViewRef", ref),)
+        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_children_change operation.
@@ -307,7 +307,7 @@ class OnDescendantsChangeOp(ChangeOp):
         """
         self.ref = cast("PVViewRef", ref)
         self.pattern = pattern
-        self.children = (cast("PVViewRef", ref),)
+        self._children = (cast("PVViewRef", ref),)
 
     def execute(self, context: Context) -> Subscription:
         """Execute on_descendants_change operation.

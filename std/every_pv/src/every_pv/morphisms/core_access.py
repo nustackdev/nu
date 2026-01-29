@@ -58,7 +58,7 @@ class GetOp[T](Operation, Morphism[T | Sentinel]):
             ref: Reference to read from
         """
         self.ref = cast("PVPrimitiveRef", ref)
-        self.children = (cast("PVPrimitiveRef", ref),)
+        self._children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> T | Sentinel:
         """Execute read operation.
@@ -110,7 +110,7 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
             ref: View reference to extract from
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[T]]", ref)
-        self.children = (cast("PVViewRef[view_traits.Convertible[T]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[T]]", ref),)
 
     def execute(self, context: Context) -> T | Sentinel:
         """Execute extract operation.
@@ -163,7 +163,7 @@ class ExistsOp(Operation, Morphism[bool]):
             ref: Reference to check
         """
         self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
-        self.children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
+        self._children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute existence check.
@@ -217,7 +217,7 @@ class MissingOp(Operation, Morphism[bool]):
             ref: Reference to check
         """
         self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
-        self.children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
+        self._children = (cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref),)
 
     def execute(self, context: Context) -> bool:
         """Execute missing check.
@@ -252,7 +252,7 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
             ref: View reference to query
         """
         self.ref = cast("PVViewRef[view_traits.Sizeable]", ref)
-        self.children = (cast("PVViewRef[view_traits.Sizeable]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Sizeable]", ref),)
 
     def execute(self, context: Context) -> int | Sentinel:
         """Execute length query.

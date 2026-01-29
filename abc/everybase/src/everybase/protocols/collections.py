@@ -44,7 +44,7 @@ from .capabilities import (
 
 
 if TYPE_CHECKING:
-    from every import Context
+    from everyabc import Context
 
 
 __all__ = [  # noqa: RUF022

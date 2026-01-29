@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from every import Ref, Sentinel, Term
+from everyabc import Ref, Sentinel, Term
 
 
 if TYPE_CHECKING:
-    from every import Context
+    from everyabc import Context
 
 
 __all__ = [

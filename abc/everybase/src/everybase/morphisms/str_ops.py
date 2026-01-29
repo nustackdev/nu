@@ -12,7 +12,7 @@ Encoding: EncodeOp
 
 from __future__ import annotations
 
-from every import (
+from everyabc import (
     INVALID,
     BinaryMorphism,
     NAryMorphism,

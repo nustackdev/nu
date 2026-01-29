@@ -15,7 +15,7 @@ import threading
 
 import attrs
 
-from every import Flow, Morphism, Runtime, Term
+from everyabc import Flow, Morphism, Runtime, Term
 
 
 __all__ = [
@@ -262,6 +262,7 @@ def ReactForever(change: ChangeOp, child: Flow | Term, name: str | None = None) 
     Args:
         change: ChangeOp that creates the subscription
         child: Child flow to execute on each change
+        name: Optional name for attribute tracking
 
     Returns:
         ReactForever flow

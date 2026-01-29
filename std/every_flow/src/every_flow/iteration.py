@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 import attrs
 
-from every import Flow, Runtime, Term
+from everyabc import Flow, Runtime, Term
 
 
 if TYPE_CHECKING:

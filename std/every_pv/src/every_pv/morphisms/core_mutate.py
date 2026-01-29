@@ -69,7 +69,7 @@ class SetCmd[T](Command, Morphism[T]):
         """
         self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = value
-        self.children = (cast("PVPrimitiveRef[T]", ref), value)
+        self._children = (cast("PVPrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute write command.
@@ -128,7 +128,7 @@ class DeleteCmd(Command, Morphism[None]):
             ref: Reference to delete
         """
         self.ref = cast("PVPrimitiveRef", ref)
-        self.children = (cast("PVPrimitiveRef", ref),)
+        self._children = (cast("PVPrimitiveRef", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute delete command.
@@ -189,7 +189,7 @@ class StoreCmd[T](Command, Morphism[T]):
         """
         self.ref = cast("PVViewRef[Initializable]", ref)
         self.data_expr = data
-        self.children = (cast("PVViewRef[Initializable]", ref), data)
+        self._children = (cast("PVViewRef[Initializable]", ref), data)
 
     def execute(self, context: Context) -> T:
         """Execute store command.
@@ -250,7 +250,7 @@ class ClearCmd(Command, Morphism[None]):
             ref: View reference to clear
         """
         self.ref = cast("PVViewRef[Clearable]", ref)
-        self.children = (cast("PVViewRef[Clearable]", ref),)
+        self._children = (cast("PVViewRef[Clearable]", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute clear command.
@@ -327,7 +327,7 @@ class TypedSetCmd[T](Command, Morphism[T]):
         """
         self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = ensure_term(value)
-        self.children = (cast("PVPrimitiveRef[T]", ref), value)
+        self._children = (cast("PVPrimitiveRef[T]", ref), value)
 
     def execute(self, context: Context) -> T:
         """Execute typed write command.

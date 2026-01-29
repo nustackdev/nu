@@ -62,7 +62,7 @@ from ..uuid_ref import UUIDRefBase
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from every import Shape, Term
+    from everyabc import Shape, Term
 
 
 __all__ = [

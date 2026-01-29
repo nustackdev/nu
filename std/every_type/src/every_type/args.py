@@ -12,7 +12,7 @@ from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from every import Arg
+from everyabc import Arg
 
 
 if TYPE_CHECKING:

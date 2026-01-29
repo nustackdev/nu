@@ -52,7 +52,7 @@ from everybase import traits as cap
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
     from everybase.py import BoolRef as BoolType
 
 

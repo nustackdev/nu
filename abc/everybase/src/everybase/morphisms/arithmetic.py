@@ -8,7 +8,7 @@ All ops use every.Morphism base classes with Operation mixin (pure).
 
 from __future__ import annotations
 
-from every import INVALID, BinaryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, BinaryMorphism, Operation, Sentinel, UnaryMorphism
 
 
 __all__ = [

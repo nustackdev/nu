@@ -15,7 +15,7 @@ from everybase.traits import Comparable
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
     from everybase.py import BoolRef, IntRef
 
     from .args import DecimalArg

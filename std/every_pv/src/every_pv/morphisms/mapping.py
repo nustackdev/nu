@@ -99,7 +99,7 @@ class SetByKeyCmd[K, V: Value](Command, Morphism[V]):
         self.ref = cast("PVViewRef[view_traits.Assignable[K, V]]", ref)
         self.key = key
         self.value_expr = value
-        self.children = (cast("PVViewRef[view_traits.Assignable[K, V]]", ref), value)
+        self._children = (cast("PVViewRef[view_traits.Assignable[K, V]]", ref), value)
 
     def execute(self, context: Context) -> V:
         """Execute set by key command.
@@ -165,7 +165,7 @@ class RemoveByKeyCmd[K](Command, Morphism[None]):
         """
         self.ref = cast("PVViewRef[view_traits.Deletable[K]]", ref)
         self.key = key
-        self.children = (cast("PVViewRef[view_traits.Deletable[K]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Deletable[K]]", ref),)
 
     def execute(self, context: Context) -> None:
         """Execute remove by key command.
@@ -237,7 +237,7 @@ class GetByKeyOp[K, V](Operation, Morphism[V | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Subscriptable[K, V]]", ref)
         self.key = key
         self.default = default
-        self.children = (cast("PVViewRef[view_traits.Subscriptable[K, V]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Subscriptable[K, V]]", ref),)
 
     def execute(self, context: Context) -> V | Sentinel:
         """Execute get by key operation.
@@ -294,7 +294,7 @@ class KeysOp[K](Operation, Morphism[list[K] | Sentinel]):
             ref: Mapping reference to query
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref)
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref),)
 
     def execute(self, context: Context) -> list[K] | Sentinel:
         """Execute keys operation.
@@ -350,7 +350,7 @@ class ValuesOp[V](Operation, Morphism[list[V] | Sentinel]):
             ref: Mapping reference to query
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref)
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref),)
 
     def execute(self, context: Context) -> list[V] | Sentinel:
         """Execute values operation.
@@ -405,7 +405,7 @@ class ItemsOp[K, V](Operation, Morphism[list[tuple[K, V]] | Sentinel]):
             ref: Mapping reference to query
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> list[tuple[K, V]] | Sentinel:
         """Execute items operation.
@@ -473,7 +473,7 @@ class FindKeyByPredicateOp[K, V](Operation, Morphism[K]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> K:
         """Execute find key by predicate operation.
@@ -538,7 +538,7 @@ class FindValueByPredicateOp[V](Operation, Morphism[V]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref),)
 
     def execute(self, context: Context) -> V:
         """Execute find value by predicate operation.
@@ -606,7 +606,7 @@ class FindItemByPredicateOp[K, V](Operation, Morphism[tuple[K, V]]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> tuple[K, V]:
         """Execute find item by predicate operation.
@@ -676,7 +676,7 @@ class MapValuesOp[K, V, R](Operation, Morphism[dict[K, R] | Sentinel]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K, R] | Sentinel:
         """Execute map values operation.
@@ -739,7 +739,7 @@ class MapItemsOp[K, V, K2, V2](Operation, Morphism[dict[K2, V2] | Sentinel]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K2, V2] | Sentinel:
         """Execute map items operation.
@@ -800,7 +800,7 @@ class FilterItemsOp[K, V](Operation, Morphism[dict[K, V] | Sentinel]):
         """
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> dict[K, V] | Sentinel:
         """Execute filter items operation.
@@ -865,7 +865,7 @@ class ReduceItemsOp[K, V, R](Operation, Morphism[R | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
         self.initial = initial
-        self.children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
+        self._children = (cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref),)
 
     def execute(self, context: Context) -> R | Sentinel:
         """Execute reduce items operation.

@@ -7,7 +7,7 @@ All ops use every.BinaryMorphism with Operation mixin (pure).
 
 from __future__ import annotations
 
-from every import INVALID, BinaryMorphism, Operation, Sentinel
+from everyabc import INVALID, BinaryMorphism, Operation, Sentinel
 
 
 __all__ = [

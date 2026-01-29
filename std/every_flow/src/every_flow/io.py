@@ -13,7 +13,7 @@ from typing import Any
 
 import attrs
 
-from every import Flow, Runtime, Term
+from everyabc import Flow, Runtime, Term
 
 
 __all__ = [
@@ -175,6 +175,7 @@ def Log(  # noqa: N802
         level: Log level (debug, info, warning, error, critical)
         values: Optional values for format placeholders
         extra: Optional extra data to include in log record
+        logger_name: Logger name to use (default: "everybase.flows")
 
     Returns:
         Log flow

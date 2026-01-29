@@ -15,7 +15,7 @@ from .percentage_cls import Percentage
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
     from everybase.py import BoolRef, FloatRef, IntRef
 
     from .args import PercentageArg

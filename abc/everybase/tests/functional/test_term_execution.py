@@ -7,7 +7,7 @@ don't require storage access.
 
 import pytest
 
-from every import INVALID, Context
+from everyabc import INVALID, Context
 from everybase import BoolRef, FloatRef, IntRef, ListRef, StrRef, all_, any_, ifelse
 
 

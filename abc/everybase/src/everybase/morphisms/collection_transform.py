@@ -12,7 +12,7 @@ from __future__ import annotations
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
-from every import INVALID, NAryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, NAryMorphism, Operation, Sentinel, UnaryMorphism
 
 
 if TYPE_CHECKING:

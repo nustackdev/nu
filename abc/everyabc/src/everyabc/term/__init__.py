@@ -21,6 +21,20 @@ Sentinels:
 
 from __future__ import annotations
 
+from .arg import (
+    Arg,
+    BoolArg,
+    BytesArg,
+    DictArg,
+    FloatArg,
+    FrozenSetArg,
+    IntArg,
+    ListArg,
+    NoneArg,
+    SetArg,
+    StrArg,
+    TupleArg,
+)
 from .morphism import (
     BinaryMorphism,
     Command,
@@ -79,6 +93,19 @@ __all__ = [  # noqa: RUF022
     "is_invalid",
     "is_sentinel",
     "propagate_special",
+    # Arg types
+    "Arg",
+    "IntArg",
+    "FloatArg",
+    "StrArg",
+    "BoolArg",
+    "BytesArg",
+    "NoneArg",
+    "ListArg",
+    "DictArg",
+    "SetArg",
+    "FrozenSetArg",
+    "TupleArg",
     # Shapes
     "Shape",
     "ShapeMeta",

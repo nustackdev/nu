@@ -7,14 +7,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from every import EMPTY, INVALID, Sentinel
+from everyabc import EMPTY, INVALID, Sentinel
 from everybase.refs import EmptyRefBase, InvalidRefBase, SentinelRefBase
 
 from .base import PyRefBase
 
 
 if TYPE_CHECKING:
-    from every import Context
+    from everyabc import Context
 
 
 __all__ = [

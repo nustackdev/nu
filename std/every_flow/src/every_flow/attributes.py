@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import attrs
 
-from every import Flow, Runtime, Term
+from everyabc import Flow, Runtime, Term
 
 
 __all__ = [

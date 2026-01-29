@@ -9,7 +9,7 @@ Use .bitand(), .bitor(), .bitnot() methods instead.
 
 from __future__ import annotations
 
-from every import INVALID, BinaryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, BinaryMorphism, Operation, Sentinel, UnaryMorphism
 
 
 __all__ = [

@@ -14,11 +14,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from every import Ref, Sentinel
+from everyabc import Ref, Sentinel
 
 
 if TYPE_CHECKING:
-    from every import BoolArg, Context, Term
+    from everyabc import BoolArg, Context, Term
     from everybase.py import AnyRef, BoolRef, BytesRef, FloatRef, IntRef, ListRef, StrRef
 
 

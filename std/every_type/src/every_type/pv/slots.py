@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from every import Slot
+from everyabc import Slot
 
 from .refs import (
     PVBasisPointRef,
@@ -26,7 +26,7 @@ from .refs import (
 
 
 if TYPE_CHECKING:
-    from every import Ref, Shape
+    from everyabc import Ref, Shape
 
 
 __all__ = [

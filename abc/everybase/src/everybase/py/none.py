@@ -13,7 +13,7 @@ from .base import PyRefBase
 
 
 if TYPE_CHECKING:
-    from every import Sentinel, Term
+    from everyabc import Sentinel, Term
 
 
 __all__ = [

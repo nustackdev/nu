@@ -16,7 +16,7 @@ from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from every import Term
+    from everyabc import Term
     from everybase.py.any import AnyRef
     from everybase.py.bool import BoolRef
     from everybase.py.list import ListRef

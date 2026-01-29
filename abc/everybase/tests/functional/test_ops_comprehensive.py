@@ -10,7 +10,7 @@ Organized by operation category:
 
 import pytest
 
-from every import INVALID, Context
+from everyabc import INVALID, Context
 from everybase import (
     BoolRef,
     BytesRef,

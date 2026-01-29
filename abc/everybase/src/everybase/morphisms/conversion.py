@@ -7,7 +7,7 @@ All conversions return Invalid on conversion failure.
 
 from __future__ import annotations
 
-from every import INVALID, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, Operation, Sentinel, UnaryMorphism
 
 
 __all__ = [

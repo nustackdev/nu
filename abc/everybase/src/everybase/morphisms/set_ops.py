@@ -6,7 +6,7 @@ Set tests: IsSubsetOp, IsSupersetOp, IsDisjointOp
 
 from __future__ import annotations
 
-from every import INVALID, BinaryMorphism, Operation, Sentinel
+from everyabc import INVALID, BinaryMorphism, Operation, Sentinel
 
 
 __all__ = [

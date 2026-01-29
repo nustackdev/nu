@@ -158,6 +158,9 @@ convention = "google"
     "D",
     "ANN",
 ]
+"std/every_flow/**/*.py" = [
+    "ANN401",  # Any type needed for polymorphic ref/value parameters
+]
 "pkgs/every_notion/**/*.py" = [
     "ANN401",  # Any type needed for Notion's dynamic JSON API
     "D107",    # __init__ docstrings covered by class docstring

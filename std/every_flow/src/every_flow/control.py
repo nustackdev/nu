@@ -15,7 +15,7 @@ from typing import Any
 
 import attrs
 
-from every import Flow, Runtime, Term
+from everyabc import Flow, Runtime, Term
 
 
 __all__ = [
