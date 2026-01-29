@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from .context import Context, Handle
 from .flow import Flow
+from .shape import Shape, Slot
 from .span import Span
 from .term import (
     EMPTY,
@@ -39,10 +40,6 @@ from .term import (
     RValue,
     Sentinel,
     SetArg,
-    Shape,
-    ShapeMeta,
-    Slot,
-    SlotDescriptor,
     StrArg,
     Term,
     TernaryMorphism,
@@ -121,9 +118,7 @@ __all__ = [  # noqa: RUF022
     "TupleArg",
     # Shape
     "Shape",
-    "ShapeMeta",
     "Slot",
-    "SlotDescriptor",
     # Flow & Span
     "Flow",
     "Span",

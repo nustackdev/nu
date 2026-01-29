@@ -7,6 +7,7 @@ import pytest
 from pv.view import View
 from tkv.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
+from every_pv import PVShape
 from every_type.pv import (
     ComplexSlot,
     DateSlot,
@@ -20,7 +21,7 @@ from every_type.pv import (
     TimezoneSlot,
     UUIDSlot,
 )
-from everyabc import Context, Shape
+from everyabc import Context
 
 
 # ============================================================================
@@ -169,10 +170,10 @@ def ctx(root_view: View, tx: TransactionProtocol) -> Context:
 
 
 @pytest.fixture
-def date_shape() -> type[Shape]:
+def date_shape() -> type[PVShape]:
     """Shape with DateSlot."""
 
-    class Event(Shape):
+    class Event(PVShape):
         event_date = DateSlot()
         start_date = DateSlot()
         end_date = DateSlot()
@@ -181,10 +182,10 @@ def date_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def datetime_shape() -> type[Shape]:
+def datetime_shape() -> type[PVShape]:
     """Shape with DatetimeSlot."""
 
-    class Event(Shape):
+    class Event(PVShape):
         created_at = DatetimeSlot()
         updated_at = DatetimeSlot()
         scheduled_at = DatetimeSlot()
@@ -193,10 +194,10 @@ def datetime_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def decimal_shape() -> type[Shape]:
+def decimal_shape() -> type[PVShape]:
     """Shape with DecimalSlot."""
 
-    class Account(Shape):
+    class Account(PVShape):
         balance = DecimalSlot()
         credit = DecimalSlot()
         debit = DecimalSlot()
@@ -205,10 +206,10 @@ def decimal_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def path_shape() -> type[Shape]:
+def path_shape() -> type[PVShape]:
     """Shape with PathSlot."""
 
-    class Config(Shape):
+    class Config(PVShape):
         config_path = PathSlot()
         data_dir = PathSlot()
         log_file = PathSlot()
@@ -217,10 +218,10 @@ def path_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def time_shape() -> type[Shape]:
+def time_shape() -> type[PVShape]:
     """Shape with TimeSlot."""
 
-    class Schedule(Shape):
+    class Schedule(PVShape):
         start_time = TimeSlot()
         end_time = TimeSlot()
         break_time = TimeSlot()
@@ -229,10 +230,10 @@ def time_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def timedelta_shape() -> type[Shape]:
+def timedelta_shape() -> type[PVShape]:
     """Shape with TimedeltaSlot."""
 
-    class Task(Shape):
+    class Task(PVShape):
         duration = TimedeltaSlot()
         timeout = TimedeltaSlot()
         interval = TimedeltaSlot()
@@ -241,10 +242,10 @@ def timedelta_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def timezone_shape() -> type[Shape]:
+def timezone_shape() -> type[PVShape]:
     """Shape with TimezoneSlot."""
 
-    class Location(Shape):
+    class Location(PVShape):
         local_tz = TimezoneSlot()
         display_tz = TimezoneSlot()
 
@@ -252,10 +253,10 @@ def timezone_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def uuid_shape() -> type[Shape]:
+def uuid_shape() -> type[PVShape]:
     """Shape with UUIDSlot."""
 
-    class Entity(Shape):
+    class Entity(PVShape):
         id = UUIDSlot()
         parent_id = UUIDSlot()
         correlation_id = UUIDSlot()
@@ -264,10 +265,10 @@ def uuid_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def complex_shape() -> type[Shape]:
+def complex_shape() -> type[PVShape]:
     """Shape with ComplexSlot."""
 
-    class Signal(Shape):
+    class Signal(PVShape):
         amplitude = ComplexSlot()
         phase = ComplexSlot()
         coefficient = ComplexSlot()
@@ -276,10 +277,10 @@ def complex_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def fraction_shape() -> type[Shape]:
+def fraction_shape() -> type[PVShape]:
     """Shape with FractionSlot."""
 
-    class Ratio(Shape):
+    class Ratio(PVShape):
         portion = FractionSlot()
         scale = FractionSlot()
         multiplier = FractionSlot()
@@ -288,10 +289,10 @@ def fraction_shape() -> type[Shape]:
 
 
 @pytest.fixture
-def percentage_shape() -> type[Shape]:
+def percentage_shape() -> type[PVShape]:
     """Shape with PercentageSlot."""
 
-    class Metrics(Shape):
+    class Metrics(PVShape):
         completion = PercentageSlot()
         discount = PercentageSlot()
         tax_rate = PercentageSlot()

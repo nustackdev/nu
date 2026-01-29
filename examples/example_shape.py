@@ -12,12 +12,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import every
 import every_pv
 import every_view
 
 
-class SymbolInfo(every.Shape):
+class SymbolInfo(every_pv.PVShape):
     """Individual symbol information."""
 
     price = every_pv.slots.FloatSlot()
@@ -26,7 +25,7 @@ class SymbolInfo(every.Shape):
     yo = every_pv.slots.BytesSlot()
 
 
-class Order(every.Shape):
+class Order(every_pv.PVShape):
     """Order information."""
 
     id = every_pv.slots.StrSlot()
@@ -35,7 +34,7 @@ class Order(every.Shape):
     price = every_pv.slots.FloatSlot()
 
 
-class Market(every.Shape):
+class Market(every_pv.PVShape):
     """Market data with various collection types."""
 
     misc_val = every_pv.slots.IntSlot()

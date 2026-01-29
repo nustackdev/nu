@@ -18,11 +18,12 @@ from pv.collections import MutableMappingView, MutableSequenceView
 from pv.types import Value
 
 from every_pv.ref import PVRefBase, PVViewRef
+from every_pv.shape import PVShape
 from every_pv.traits.bases_collections import (
     MutableMappingRefBase,
     MutableSequenceRefBase,
 )
-from everyabc import Ref, RValue, Sentinel, Shape, Term
+from everyabc import Ref, RValue, Sentinel, Term
 from everybase import (
     AnyRef,
     DictRef,
@@ -62,7 +63,7 @@ class SequenceShapeSliceRef:
 # =============================================================================
 
 
-class PVShapeRef[T: Shape](
+class PVShapeRef[T: PVShape](
     PVViewRef[dict[str, Value], MutableMappingView],
     MutableMappingRefBase[
         dict[str, Value],  # CollectionT
@@ -153,7 +154,7 @@ class PVShapeRef[T: Shape](
         shape_type: type[T],
         view_type: type[MutableMappingView],
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize shape reference."""
         super().__init__(address, view_type, parent, shape)
@@ -194,7 +195,7 @@ class PVShapeRef[T: Shape](
         if name in passthrough:
             return object.__getattribute__(self, name)
 
-        shape_type: type[Shape] = object.__getattribute__(self, "_shape_type")
+        shape_type: type[PVShape] = object.__getattribute__(self, "_shape_type")
 
         if hasattr(shape_type, "_slots") and name in shape_type._slots:
             slot = shape_type._slots[name]
@@ -239,7 +240,7 @@ class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
         key_value_type: type[KeyValueT],
         value_value_type: type[ValueValueT],
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize mapping reference."""
         super().__init__(address, view_type, parent, shape)
@@ -303,7 +304,7 @@ class PVListRef[T, ItemValueT](
         item_value_type: type[ItemValueT],
         view_type: type[MutableSequenceView],
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize sequence reference."""
         super().__init__(address, view_type, parent, shape)
@@ -336,7 +337,7 @@ class PVListRef[T, ItemValueT](
 # =============================================================================
 
 
-class PVShapesListRef[T: Shape](
+class PVShapesListRef[T: PVShape](
     PVViewRef[list[dict], MutableSequenceView],
     MutableSequenceRefBase[
         list[dict],  # CollectionT
@@ -365,7 +366,7 @@ class PVShapesListRef[T: Shape](
         shape_type: type[T],
         view_type: type[MutableSequenceView],
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize sequence shape reference."""
         super().__init__(address, view_type, parent, shape)
@@ -403,7 +404,7 @@ class PVShapesListRef[T: Shape](
 # =============================================================================
 
 
-class PVShapesDictRef[K: int | str, T: Shape, KeyValueT](
+class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
     PVViewRef[dict[K, dict], MutableMappingView],
     MutableMappingRefBase[
         dict[K, dict],  # CollectionT
@@ -430,7 +431,7 @@ class PVShapesDictRef[K: int | str, T: Shape, KeyValueT](
         shape_type: type[T],
         view_type: type[MutableMappingView],
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize mapping shape reference."""
         super().__init__(address, view_type, parent, shape)

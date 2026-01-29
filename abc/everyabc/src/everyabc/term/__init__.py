@@ -57,7 +57,6 @@ from .sentinel import (
     is_sentinel,
     propagate_special,
 )
-from .shape import Shape, ShapeMeta, Slot, SlotDescriptor
 from .term import (
     LValue,
     RValue,
@@ -106,9 +105,4 @@ __all__ = [  # noqa: RUF022
     "SetArg",
     "FrozenSetArg",
     "TupleArg",
-    # Shapes
-    "Shape",
-    "ShapeMeta",
-    "Slot",
-    "SlotDescriptor",
 ]

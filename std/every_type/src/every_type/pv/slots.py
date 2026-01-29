@@ -26,7 +26,8 @@ from .refs import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Ref, Shape
+    from every_pv.shape import PVShape
+    from everyabc import Ref
 
 
 __all__ = [
@@ -58,7 +59,7 @@ class _DecimalSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVDecimalRef:
         return PVDecimalRef(
@@ -78,7 +79,7 @@ class _FractionSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVFractionRef:
         return PVFractionRef(
@@ -98,7 +99,7 @@ class _ComplexSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVComplexRef:
         return PVComplexRef(
@@ -118,7 +119,7 @@ class _BasisPointSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVBasisPointRef:
         return PVBasisPointRef(
@@ -138,7 +139,7 @@ class _PercentageSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVPercentageRef:
         return PVPercentageRef(
@@ -163,7 +164,7 @@ class _DateSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVDateRef:
         return PVDateRef(
@@ -183,7 +184,7 @@ class _DatetimeSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVDatetimeRef:
         return PVDatetimeRef(
@@ -203,7 +204,7 @@ class _TimeSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVTimeRef:
         return PVTimeRef(
@@ -223,7 +224,7 @@ class _TimedeltaSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVTimedeltaRef:
         return PVTimedeltaRef(
@@ -243,7 +244,7 @@ class _TimezoneSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVTimezoneRef:
         return PVTimezoneRef(
@@ -268,7 +269,7 @@ class _PathSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVPathRef:
         return PVPathRef(
@@ -288,7 +289,7 @@ class _UUIDSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVUUIDRef:
         return PVUUIDRef(

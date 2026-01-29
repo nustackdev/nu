@@ -114,6 +114,7 @@ from every_pv.ref import (
     PVPrimitiveRef,
     PVViewRef,
 )
+from every_pv.shape import PVShape, PVShapeMeta, SlotDescriptor
 
 # Slots
 from every_pv.slots import (
@@ -182,6 +183,10 @@ from . import slots
 __all__ = [  # noqa: RUF022
     # Modules
     "slots",
+    # Shape
+    "PVShape",
+    "PVShapeMeta",
+    "SlotDescriptor",
     # Spans (context boundaries)
     "PVAtomic",
     "PVSnapshot",

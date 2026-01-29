@@ -17,6 +17,7 @@ requires-python = ">=3.10"
 dependencies = [
     "everyabc>=0.1.0",
     "everybase>=0.1.0",
+    "every-pv>=0.1.0",
 ]
 keywords = ["every", "types", "refs", "decimal", "uuid", "datetime", "path"]
 classifiers = [

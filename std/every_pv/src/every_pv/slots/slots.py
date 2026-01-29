@@ -32,7 +32,8 @@ if TYPE_CHECKING:
     from pv.collections import MutableMappingView, MutableSequenceView
     from pv.types import Value
 
-    from everyabc import Ref, Shape
+    from every_pv.shape import PVShape
+    from everyabc import Ref
     from everybase import AnyRef, IntRef, StrRef  # noqa: TC004
 
 
@@ -100,7 +101,7 @@ class _ItemSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVItemRef:
         """Create ItemRef for this slot.
@@ -183,7 +184,7 @@ class _DictSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVDictRef:
         """Create DictRef for this slot.
@@ -266,7 +267,7 @@ class _ListSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVListRef:
         """Create ListRef for this slot.
@@ -332,7 +333,7 @@ class _ShapeSlot(Slot):
 
     def __init__(
         self,
-        shape_type: type[Shape],
+        shape_type: type[PVShape],
         view_type: type[MutableMappingView] | None = None,
     ) -> None:
         """Initialize shape slot.
@@ -347,7 +348,7 @@ class _ShapeSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVShapeRef:
         """Create ShapeRef for this slot.
@@ -370,7 +371,7 @@ class _ShapeSlot(Slot):
         )
 
 
-def ShapeSlot[S: Shape](  # noqa: N802
+def ShapeSlot[S: PVShape](  # noqa: N802
     shape_type: type[S],
     view_type: type[MutableMappingView] | None = None,
 ) -> S:
@@ -413,7 +414,7 @@ class _ShapesListSlot(Slot):
 
     def __init__(
         self,
-        shape_type: type[Shape],
+        shape_type: type[PVShape],
         view_type: type[MutableSequenceView] | None = None,
     ) -> None:
         """Initialize shapes list slot.
@@ -428,7 +429,7 @@ class _ShapesListSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVShapesListRef:
         """Create ShapesListRef for this slot.
@@ -451,7 +452,7 @@ class _ShapesListSlot(Slot):
         )
 
 
-def ShapesListSlot[S: Shape](  # noqa: N802
+def ShapesListSlot[S: PVShape](  # noqa: N802
     shape_type: type[S],
     view_type: type[MutableSequenceView] | None = None,
 ) -> PVShapesListRef[S]:
@@ -495,7 +496,7 @@ class _ShapesDictSlot(Slot):
 
     def __init__(
         self,
-        shape_type: type[Shape],
+        shape_type: type[PVShape],
         view_type: type[MutableMappingView] | None = None,
         key_type: type[int | str] = str,
     ) -> None:
@@ -514,7 +515,7 @@ class _ShapesDictSlot(Slot):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVShapesDictRef:
         """Create ShapesDictRef for this slot.
@@ -539,7 +540,7 @@ class _ShapesDictSlot(Slot):
         )
 
 
-def ShapesDictSlot[K: (int, str), S: Shape](  # noqa: N802
+def ShapesDictSlot[K: (int, str), S: PVShape](  # noqa: N802
     shape_type: type[S],
     view_type: type[MutableMappingView] | None = None,
     key_type: type[K] = str,

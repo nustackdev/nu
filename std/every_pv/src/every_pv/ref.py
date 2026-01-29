@@ -27,7 +27,7 @@ from everyabc import EMPTY, Context, Ref, Sentinel, Term
 
 
 if TYPE_CHECKING:
-    from everyabc import Shape
+    from every_pv.shape import PVShape
 
 
 __all__ = [
@@ -62,7 +62,7 @@ class PVRefBase[T](Ref[T], ABC):
         self,
         address: path.PathAddress | Term,
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize PV ref.
 
@@ -87,11 +87,11 @@ class PVRefBase[T](Ref[T], ABC):
         return self._parent
 
     @property
-    def shape(self) -> type[Shape] | None:
+    def shape(self) -> type[PVShape] | None:
         """Shape class for context lookup."""
         return self._shape
 
-    def get_root_shape(self) -> type[Shape] | None:
+    def get_root_shape(self) -> type[PVShape] | None:
         """Get the root shape for context lookup.
 
         Traverses up the parent chain to find the shape.
@@ -139,7 +139,7 @@ class PVPrimitiveRef[T](PVRefBase[T]):
         address: path.PathAddress | Term,
         value_type: type[T],
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize primitive ref.
 
@@ -228,7 +228,7 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
         address: path.PathAddress | Term,
         view_type: type[ViewT],
         parent: PVRefBase | None = None,
-        shape: type[Shape] | None = None,
+        shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize view ref.
 
