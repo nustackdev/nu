@@ -36,15 +36,22 @@ from .arg import (
     TupleArg,
 )
 from .morphism import (
+    BinaryCommand,
     BinaryMorphism,
+    BinaryOperation,
     Command,
     Morphism,
+    NAryCommand,
     NAryMorphism,
+    NAryOperation,
     Operation,
+    TernaryCommand,
     TernaryMorphism,
+    TernaryOperation,
+    UnaryCommand,
     UnaryMorphism,
+    UnaryOperation,
 )
-from .protocols import Fetchable
 from .ref import Ref
 from .sentinel import (
     EMPTY,
@@ -80,8 +87,15 @@ __all__ = [  # noqa: RUF022
     # Purity mixins
     "Operation",
     "Command",
-    # Protocols
-    "Fetchable",
+    # Purity + arity
+    "NAryOperation",
+    "NAryCommand",
+    "UnaryOperation",
+    "UnaryCommand",
+    "BinaryOperation",
+    "BinaryCommand",
+    "TernaryOperation",
+    "TernaryCommand",
     # Sentinel
     "Sentinel",
     "Empty",

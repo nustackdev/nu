@@ -9,7 +9,7 @@ Generic over ``ChildT`` so subclasses can narrow the children type:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -29,27 +29,22 @@ class Node[ChildT]:
         *children: Child nodes.
 
     Access:
-        children       — direct child nodes (tuple)
-        is_leaf        — True if no children
-        child_count    — number of direct children
+        children        — direct child nodes (tuple)
+        is_leaf         — True if no children
+        child_count     — number of direct children
+        get_child       — child at index
+        iter_children   — iterate over children
+        has_child       — identity check against children
 
     Reconstruction:
-        with_children  — replace all children, preserving node identity
+        with_children   — replace all children, preserving node identity
 
     Modification (all return new nodes):
-        append         — add child at end
-        prepend        — add child at start
-        insert         — add child at index
-        remove         — remove child at index
-        replace_child  — swap child at index
-
-    Dunder methods:
-        __len__        — child_count
-        __iter__       — iterate over children
-        __getitem__    — child at index (int or slice)
-        __contains__   — identity check against children
-        __bool__       — always True (a node exists)
-        __repr__       — ClassName(child_count=N) or ClassName()
+        append_child    — add child at end
+        prepend_child   — add child at start
+        insert_child    — add child at index
+        remove_child    — remove child at index
+        replace_child   — swap child at index
     """
 
     def __init__(self, *children: ChildT) -> None:
@@ -73,6 +68,18 @@ class Node[ChildT]:
         """Number of direct children."""
         return len(self._children)
 
+    def get_child(self, index: int) -> ChildT:
+        """Return child at index."""
+        return self._children[index]
+
+    def iter_children(self) -> Iterator[ChildT]:
+        """Iterate over direct children."""
+        return iter(self._children)
+
+    def has_child(self, child: object) -> bool:
+        """Check if child is a direct child by identity (``is``)."""
+        return any(c is child for c in self._children)
+
     # --- Reconstruction ---
 
     def with_children(self, *children: ChildT) -> Self:
@@ -87,21 +94,21 @@ class Node[ChildT]:
 
     # --- Modification (immutable — all return new nodes) ---
 
-    def append(self, child: ChildT) -> Self:
+    def append_child(self, child: ChildT) -> Self:
         """New node with child added at the end."""
         return self.with_children(*self._children, child)
 
-    def prepend(self, child: ChildT) -> Self:
+    def prepend_child(self, child: ChildT) -> Self:
         """New node with child added at the start."""
         return self.with_children(child, *self._children)
 
-    def insert(self, index: int, child: ChildT) -> Self:
+    def insert_child(self, index: int, child: ChildT) -> Self:
         """New node with child inserted at index."""
         children = list(self._children)
         children.insert(index, child)
         return self.with_children(*children)
 
-    def remove(self, index: int) -> Self:
+    def remove_child(self, index: int) -> Self:
         """New node with child at index removed."""
         children = list(self._children)
         del children[index]
@@ -114,28 +121,6 @@ class Node[ChildT]:
         return self.with_children(*children)
 
     # --- Dunder methods ---
-
-    def __len__(self) -> int:
-        """Return child count."""
-        return len(self._children)
-
-    def __iter__(self) -> Iterator[ChildT]:
-        """Iterate over direct children."""
-        return iter(self._children)
-
-    @overload
-    def __getitem__(self, index: int) -> ChildT: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> tuple[ChildT, ...]: ...
-
-    def __getitem__(self, index: int | slice) -> ChildT | tuple[ChildT, ...]:
-        """Return child at index or slice of children."""
-        return self._children[index]
-
-    def __contains__(self, child: object) -> bool:
-        """Check if child is in children by identity (``is``)."""
-        return any(c is child for c in self._children)
 
     def __bool__(self) -> bool:
         """A node always exists (always True)."""

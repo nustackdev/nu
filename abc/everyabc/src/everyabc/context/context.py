@@ -56,8 +56,6 @@ class Context:
         txn = ctx.get(Transaction)  # created on first access
     """
 
-    __slots__ = ("_factories", "_handles", "_opened")
-
     def __init__(self) -> None:
         """Initialize empty context."""
         self._handles: dict[ContextKey, Any] = {}

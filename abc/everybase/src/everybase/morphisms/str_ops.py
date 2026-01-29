@@ -60,7 +60,8 @@ __all__ = [
 class UpperOp(Operation, UnaryMorphism[str | Sentinel]):
     """Convert to uppercase: str.upper()."""
 
-    def _apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.upper()
@@ -69,7 +70,8 @@ class UpperOp(Operation, UnaryMorphism[str | Sentinel]):
 class LowerOp(Operation, UnaryMorphism[str | Sentinel]):
     """Convert to lowercase: str.lower()."""
 
-    def _apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.lower()
@@ -78,7 +80,8 @@ class LowerOp(Operation, UnaryMorphism[str | Sentinel]):
 class TitleOp(Operation, UnaryMorphism[str | Sentinel]):
     """Convert to title case: str.title()."""
 
-    def _apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.title()
@@ -87,7 +90,8 @@ class TitleOp(Operation, UnaryMorphism[str | Sentinel]):
 class CapitalizeOp(Operation, UnaryMorphism[str | Sentinel]):
     """Capitalize first character: str.capitalize()."""
 
-    def _apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.capitalize()
@@ -96,7 +100,8 @@ class CapitalizeOp(Operation, UnaryMorphism[str | Sentinel]):
 class SwapCaseOp(Operation, UnaryMorphism[str | Sentinel]):
     """Swap case: str.swapcase()."""
 
-    def _apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.swapcase()
@@ -110,7 +115,8 @@ class SwapCaseOp(Operation, UnaryMorphism[str | Sentinel]):
 class IsDigitOp(Operation, UnaryMorphism[bool | Sentinel]):
     """Check if all digits: str.isdigit()."""
 
-    def _apply(self, operand: object) -> bool | Sentinel:
+    def apply(self, operand: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.isdigit()
@@ -119,7 +125,8 @@ class IsDigitOp(Operation, UnaryMorphism[bool | Sentinel]):
 class IsAlphaOp(Operation, UnaryMorphism[bool | Sentinel]):
     """Check if all alphabetic: str.isalpha()."""
 
-    def _apply(self, operand: object) -> bool | Sentinel:
+    def apply(self, operand: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.isalpha()
@@ -128,7 +135,8 @@ class IsAlphaOp(Operation, UnaryMorphism[bool | Sentinel]):
 class IsAlnumOp(Operation, UnaryMorphism[bool | Sentinel]):
     """Check if alphanumeric: str.isalnum()."""
 
-    def _apply(self, operand: object) -> bool | Sentinel:
+    def apply(self, operand: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.isalnum()
@@ -137,7 +145,8 @@ class IsAlnumOp(Operation, UnaryMorphism[bool | Sentinel]):
 class IsSpaceOp(Operation, UnaryMorphism[bool | Sentinel]):
     """Check if all whitespace: str.isspace()."""
 
-    def _apply(self, operand: object) -> bool | Sentinel:
+    def apply(self, operand: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         return operand.isspace()
@@ -158,7 +167,8 @@ class StripOp(Operation, NAryMorphism[str | Sentinel]):
         else:
             super().__init__(operand, chars)
 
-    def _apply(self, *args: object) -> str | Sentinel:
+    def apply(self, *args: object) -> str | Sentinel:
+        """Apply."""
         if len(args) == 1:
             operand = args[0]
             chars = None
@@ -181,7 +191,8 @@ class LStripOp(Operation, NAryMorphism[str | Sentinel]):
         else:
             super().__init__(operand, chars)
 
-    def _apply(self, *args: object) -> str | Sentinel:
+    def apply(self, *args: object) -> str | Sentinel:
+        """Apply."""
         if len(args) == 1:
             operand = args[0]
             chars = None
@@ -204,7 +215,8 @@ class RStripOp(Operation, NAryMorphism[str | Sentinel]):
         else:
             super().__init__(operand, chars)
 
-    def _apply(self, *args: object) -> str | Sentinel:
+    def apply(self, *args: object) -> str | Sentinel:
+        """Apply."""
         if len(args) == 1:
             operand = args[0]
             chars = None
@@ -239,7 +251,8 @@ class SplitOp(Operation, NAryMorphism[list[str] | Sentinel]):
             super().__init__(operand, sep, maxsplit)
             self._has_sep = True
 
-    def _apply(self, *args: object) -> list[str] | Sentinel:
+    def apply(self, *args: object) -> list[str] | Sentinel:
+        """Apply."""
         if self._has_sep:
             operand, sep, maxsplit = args
         else:
@@ -269,7 +282,8 @@ class RSplitOp(Operation, NAryMorphism[list[str] | Sentinel]):
             super().__init__(operand, sep, maxsplit)
             self._has_sep = True
 
-    def _apply(self, *args: object) -> list[str] | Sentinel:
+    def apply(self, *args: object) -> list[str] | Sentinel:
+        """Apply."""
         if self._has_sep:
             operand, sep, maxsplit = args
         else:
@@ -303,7 +317,8 @@ class FindOp(Operation, NAryMorphism[int | Sentinel]):
         else:
             super().__init__(operand, sub, start, end)
 
-    def _apply(self, *args: object) -> int | Sentinel:
+    def apply(self, *args: object) -> int | Sentinel:
+        """Apply."""
         if len(args) == 3:
             operand, sub, start = args
             end = None
@@ -332,7 +347,8 @@ class RFindOp(Operation, NAryMorphism[int | Sentinel]):
         else:
             super().__init__(operand, sub, start, end)
 
-    def _apply(self, *args: object) -> int | Sentinel:
+    def apply(self, *args: object) -> int | Sentinel:
+        """Apply."""
         if len(args) == 3:
             operand, sub, start = args
             end = None
@@ -348,7 +364,8 @@ class RFindOp(Operation, NAryMorphism[int | Sentinel]):
 class CountSubstringOp(Operation, BinaryMorphism[int | Sentinel]):
     """Count substring occurrences: str.count(sub)."""
 
-    def _apply(self, operand: object, sub: object) -> int | Sentinel:
+    def apply(self, operand: object, sub: object) -> int | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(sub, str):
             return INVALID
         return operand.count(sub)
@@ -362,7 +379,8 @@ class CountSubstringOp(Operation, BinaryMorphism[int | Sentinel]):
 class StartsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Check if starts with prefix: str.startswith(prefix)."""
 
-    def _apply(self, operand: object, prefix: object) -> bool | Sentinel:
+    def apply(self, operand: object, prefix: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(prefix, str):
             return INVALID
         return operand.startswith(prefix)
@@ -371,7 +389,8 @@ class StartsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
 class EndsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Check if ends with suffix: str.endswith(suffix)."""
 
-    def _apply(self, operand: object, suffix: object) -> bool | Sentinel:
+    def apply(self, operand: object, suffix: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(suffix, str):
             return INVALID
         return operand.endswith(suffix)
@@ -385,7 +404,8 @@ class EndsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
 class CenterOp(Operation, TernaryMorphism[str | Sentinel]):
     """Center in width: str.center(width, fillchar)."""
 
-    def _apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+    def apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(width, int):
             return INVALID
         fill = str(fillchar) if fillchar else " "
@@ -395,7 +415,8 @@ class CenterOp(Operation, TernaryMorphism[str | Sentinel]):
 class LJustOp(Operation, TernaryMorphism[str | Sentinel]):
     """Left justify: str.ljust(width, fillchar)."""
 
-    def _apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+    def apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(width, int):
             return INVALID
         fill = str(fillchar) if fillchar else " "
@@ -405,7 +426,8 @@ class LJustOp(Operation, TernaryMorphism[str | Sentinel]):
 class RJustOp(Operation, TernaryMorphism[str | Sentinel]):
     """Right justify: str.rjust(width, fillchar)."""
 
-    def _apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+    def apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(width, int):
             return INVALID
         fill = str(fillchar) if fillchar else " "
@@ -415,7 +437,8 @@ class RJustOp(Operation, TernaryMorphism[str | Sentinel]):
 class ZFillOp(Operation, BinaryMorphism[str | Sentinel]):
     """Zero-fill: str.zfill(width)."""
 
-    def _apply(self, operand: object, width: object) -> str | Sentinel:
+    def apply(self, operand: object, width: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(width, int):
             return INVALID
         return operand.zfill(width)
@@ -439,7 +462,8 @@ class ReplaceOp(Operation, NAryMorphism[str | Sentinel]):
         """Initialize replace operation."""
         super().__init__(operand, old, new, count)
 
-    def _apply(self, operand: object, old: object, new: object, count: object) -> str | Sentinel:
+    def apply(self, operand: object, old: object, new: object, count: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, str) or not isinstance(old, str) or not isinstance(new, str):
             return INVALID
         count_int = int(count)  # type: ignore
@@ -456,7 +480,8 @@ class ReplaceOp(Operation, NAryMorphism[str | Sentinel]):
 class EncodeOp(Operation, BinaryMorphism[bytes | Sentinel]):
     """Encode string to bytes: str.encode(encoding)."""
 
-    def _apply(self, operand: object, encoding: object) -> bytes | Sentinel:
+    def apply(self, operand: object, encoding: object) -> bytes | Sentinel:
+        """Apply."""
         if not isinstance(operand, str):
             return INVALID
         try:

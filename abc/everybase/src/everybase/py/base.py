@@ -58,13 +58,6 @@ class PyRefBase[T](Ref[T]):
         """Get the underlying source."""
         return self._source
 
-    @property
-    def is_pure(self) -> bool:
-        """Check if this ref is pure (no side effects)."""
-        if isinstance(self._source, Term):
-            return self._source.is_pure
-        return True
-
     def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value by evaluating the source.
 

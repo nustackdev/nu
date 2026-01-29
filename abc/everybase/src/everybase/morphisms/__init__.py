@@ -18,7 +18,7 @@ Structure:
 - dict_ops.py: Dict-specific ops (DictKeysOp, DictValuesOp, etc.)
 - set_ops.py: Set-specific ops (UnionOp, IntersectionOp, etc.)
 
-All morphisms use every.Morphism base classes and implement _apply().
+All morphisms use every.Morphism base classes and implement apply().
 """
 
 # Arithmetic

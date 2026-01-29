@@ -10,7 +10,7 @@ from ._util import _ensure_term
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Exec
+    from everyabc import Context, Executable
 
     from .var import Var
 
@@ -34,9 +34,7 @@ class While(Flow):
         While(counter < 10, increment_body)
     """
 
-    __slots__ = ()
-
-    def __init__(self, condition: Any, body: Exec) -> None:
+    def __init__(self, condition: Any, body: Executable) -> None:
         """Initialize while loop.
 
         Args:
@@ -45,10 +43,10 @@ class While(Flow):
         """
         super().__init__(_ensure_term(condition), body)
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute body while condition is truthy."""
-        while self.children[0].execute(ctx):
-            self.children[1].execute(ctx)
+        while await self.children[0].execute(ctx):
+            await self.children[1].execute(ctx)
 
 
 class ForRange(Flow):
@@ -66,13 +64,11 @@ class ForRange(Flow):
         # i.get() == 9 after execution
     """
 
-    __slots__ = ("_index",)
-
     def __init__(
         self,
         start: Any,
         stop: Any,
-        body: Exec,
+        body: Executable,
         *,
         step: Any = 1,
         index: Var[int] | None = None,
@@ -94,14 +90,14 @@ class ForRange(Flow):
         )
         self._index = index
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute body for each value in range."""
-        start = self.children[0].execute(ctx)
-        stop = self.children[1].execute(ctx)
-        step = self.children[2].execute(ctx)
+        start = await self.children[0].execute(ctx)
+        stop = await self.children[1].execute(ctx)
+        step = await self.children[2].execute(ctx)
         body = self.children[3]
 
         for i in range(start, stop, step):
             if self._index is not None:
                 self._index.set(i)
-            body.execute(ctx)
+            await body.execute(ctx)

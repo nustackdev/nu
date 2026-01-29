@@ -56,8 +56,6 @@ class PVRefBase[T](Ref[T], ABC):
         _shape: Shape class for context lookup
     """
 
-    __slots__ = ("_address", "_parent", "_shape")
-
     def __init__(
         self,
         address: path.PathAddress | Term,
@@ -108,10 +106,10 @@ class PVRefBase[T](Ref[T], ABC):
         """Type marker for path segments (value_type or view_type)."""
         ...
 
-    def _resolve_address(self, ctx: Context) -> path.PathAddress:
+    async def _resolve_address(self, ctx: Context) -> path.PathAddress:
         """Resolve dynamic address if needed."""
         if isinstance(self._address, Term):
-            return self._address.execute(ctx)
+            return await self._address.execute(ctx)
         return self._address
 
     def __repr__(self) -> str:
@@ -131,8 +129,6 @@ class PVPrimitiveRef[T](PVRefBase[T]):
     Used for scalar values like int, str, float, etc.
     fetch() navigates to the parent view and subscripts to get the value.
     """
-
-    __slots__ = ("_value_type",)
 
     def __init__(
         self,
@@ -161,7 +157,7 @@ class PVPrimitiveRef[T](PVRefBase[T]):
     def _type_marker(self) -> type:
         return self._value_type
 
-    def resolve(self, ctx: Context) -> path.PathToValue:
+    async def resolve(self, ctx: Context) -> path.PathToValue:
         """Build path from parent chain ending at this value.
 
         Args:
@@ -170,12 +166,12 @@ class PVPrimitiveRef[T](PVRefBase[T]):
         Returns:
             Path tuple ending with (address, value_type)
         """
-        address = self._resolve_address(ctx)
+        address = await self._resolve_address(ctx)
 
         if self._parent is None:
             resolved_path = ((address, self._value_type),)
         else:
-            parent_path = self._parent.resolve(ctx)
+            parent_path = await self._parent.resolve(ctx)
             resolved_path = (*parent_path, (address, self._value_type))
 
         logger.debug(
@@ -189,7 +185,7 @@ class PVPrimitiveRef[T](PVRefBase[T]):
         )
         return resolved_path  # type: ignore
 
-    def fetch(self, ctx: Context) -> T | Sentinel:
+    async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value from PV storage.
 
         Navigates through the view hierarchy and reads the value.
@@ -201,7 +197,7 @@ class PVPrimitiveRef[T](PVRefBase[T]):
         Returns:
             The value, or Empty if not found
         """
-        value_path = self.resolve(ctx)
+        value_path = await self.resolve(ctx)
         shape = self.get_root_shape()
         root_view = ctx.get(View, shape=shape)
 
@@ -220,8 +216,6 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
     Used for collection types like dict, list, set views.
     fetch() navigates to and returns the view itself.
     """
-
-    __slots__ = ("_view_type",)
 
     def __init__(
         self,
@@ -250,7 +244,7 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
     def _type_marker(self) -> type:
         return self._view_type
 
-    def resolve(self, ctx: Context) -> path.PathToView:
+    async def resolve(self, ctx: Context) -> path.PathToView:
         """Build path from parent chain ending at this view.
 
         Args:
@@ -259,12 +253,12 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
         Returns:
             Path tuple ending with (address, view_type)
         """
-        address = self._resolve_address(ctx)
+        address = await self._resolve_address(ctx)
 
         if self._parent is None:
             resolved_path = ((address, self._view_type),)
         else:
-            parent_path = self._parent.resolve(ctx)
+            parent_path = await self._parent.resolve(ctx)
             resolved_path = (*parent_path, (address, self._view_type))
 
         logger.debug(
@@ -278,7 +272,7 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
         )
         return resolved_path
 
-    def fetch(self, ctx: Context) -> ViewT:
+    async def fetch(self, ctx: Context) -> ViewT:
         """Fetch the view from PV storage.
 
         Navigates through the view hierarchy to get this view.
@@ -289,7 +283,7 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
         Returns:
             The view instance
         """
-        view_path = self.resolve(ctx)
+        view_path = await self.resolve(ctx)
         shape = self.get_root_shape()
         root_view = ctx.get(View, shape=shape)
 

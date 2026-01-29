@@ -14,9 +14,15 @@ Purity mixins (orthogonal to arity):
     - Operation: pure (no side effects)
     - Command: impure (has side effects)
 
+Convenience classes (purity + arity):
+    - NAryOperation / NAryCommand
+    - UnaryOperation / UnaryCommand
+    - BinaryOperation / BinaryCommand
+    - TernaryOperation / TernaryCommand
+
 Composition pattern:
-    class AddOp(BinaryMorphism[float], Operation):
-        def _apply(self, left: float, right: float) -> float:
+    class AddOp(BinaryOperation[float]):
+        def apply(self, left: float, right: float) -> float:
             return left + right
 
 Design principles:
@@ -30,20 +36,13 @@ Children Management Interface:
     NAryMorphism provides a uniform interface for working with operands:
     - children: Get all children as tuple
     - iter_children(): Iterate over children
-    - child_count(): Number of children
+    - child_count: Number of children
     - get_child(index): Get child by index
-    - iter_term_children(): Iterate only over Term children
-    - iter_resolved(ctx): Iterate over resolved child values
-
-Resolution order for operands:
-    1. Term → execute()
-    2. Fetchable → get()
-    3. Literal → use directly
 
 Example usage:
 >>> # Define a pure binary operation
->>> class AddOp(BinaryMorphism[float], Operation):
-...     def _apply(self, left: float, right: float) -> float:
+>>> class AddOp(BinaryOperation[float]):
+...     def apply(self, left: float, right: float) -> float:
 ...         return left + right
 
 >>> # Use it
@@ -51,12 +50,12 @@ Example usage:
 >>> result = add.execute(ctx)  # Resolves price_ref, adds 100
 
 >>> # Define an impure command
->>> class SetCmd(UnaryMorphism[T], Command):
+>>> class SetCmd(UnaryCommand[T]):
 ...     def __init__(self, ref: Ref[T], value: T | Term[T]):
 ...         super().__init__(value)
 ...         self._ref = ref
 ...
-...     def _apply(self, value: T) -> T:
+...     def apply(self, value: T) -> T:
 ...         # Side effect: write to storage
 ...         self._ref.set(value, ctx)
 ...         return value
@@ -67,7 +66,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from .protocols import Fetchable
 from .sentinel import INVALID, Sentinel, is_sentinel
 from .term import RValue, Term
 
@@ -76,14 +74,25 @@ if TYPE_CHECKING:
     from everyabc.context import Context
 
 
-__all__ = [
-    "BinaryMorphism",
-    "Command",
+__all__ = [  # noqa: RUF022
+    # Base
     "Morphism",
     "NAryMorphism",
-    "Operation",
-    "TernaryMorphism",
     "UnaryMorphism",
+    "BinaryMorphism",
+    "TernaryMorphism",
+    # Purity mixins
+    "Operation",
+    "Command",
+    # Purity + arity combinations
+    "NAryOperation",
+    "NAryCommand",
+    "UnaryOperation",
+    "UnaryCommand",
+    "BinaryOperation",
+    "BinaryCommand",
+    "TernaryOperation",
+    "TernaryCommand",
 ]
 
 
@@ -110,7 +119,16 @@ class Morphism[T](RValue[T], ABC):
         T: The type of result this morphism produces
     """
 
-    pass
+    def __init__(self, *children: object) -> None:
+        """Initialize with operands.
+
+        Args:
+            *children: Variable number of operands
+        """
+        # FIXME: This is a core circular dependency!!
+        from everybase import ensure_term
+
+        super().__init__(*[ensure_term(c) for c in children])
 
 
 # =============================================================================
@@ -118,7 +136,7 @@ class Morphism[T](RValue[T], ABC):
 # =============================================================================
 
 
-class NAryMorphism[T](Morphism[T], ABC):
+class NAryMorphism[T](Morphism[T | Sentinel], ABC):
     """Base for morphisms with operands. Handles resolution and sentinels.
 
     Provides a uniform children management interface for working with operands.
@@ -127,24 +145,20 @@ class NAryMorphism[T](Morphism[T], ABC):
 
     Children can be:
     - Terms: executed to get values
-    - Fetchable objects: get() called to extract values
-    - Literals: used directly as values
+    - Python literals: wrapped into PyRefs
 
     Sentinel propagation:
         If any operand resolves to a sentinel (EMPTY, INVALID),
-        the morphism returns INVALID without calling _apply().
-
-    Attributes:
-        _children: Tuple of operands (Terms, Fetchables, or literals)
+        the morphism returns INVALID without calling apply().
     """
 
-    def __init__(self, *children: Term) -> None:
+    def __init__(self, *children: object) -> None:
         """Initialize with operands.
 
         Args:
-            *children: Variable number of operands (Terms, Fetchables, or literals)
+            *children: Variable number of operands
         """
-        self._children = children
+        super().__init__(*children)
 
     def __repr__(self) -> str:
         args = ", ".join(repr(c) for c in self._children)
@@ -158,52 +172,31 @@ class NAryMorphism[T](Morphism[T], ABC):
     # EXECUTION
     # =========================================================================
 
-    def execute(self, ctx: Context) -> T | Sentinel:
+    async def execute(self, ctx: Context) -> T | Sentinel:
         """Resolve operands, propagate sentinels, apply transformation.
 
         Execution steps:
         1. Resolve all operands to values
         2. If any value is a sentinel, return INVALID
-        3. Call _apply() with resolved values
+        3. Call apply() with resolved values
         4. Return result
 
         Args:
             ctx: Execution context
 
         Returns:
-            Result of _apply(), or INVALID if any operand is sentinel
+            Result of apply(), or INVALID if any operand is sentinel
         """
         values = []
-        for child in self._children:
-            val = self._resolve(child, ctx)
+        for child in self.children:
+            val = await child.execute(ctx)
             if is_sentinel(val):
                 return INVALID
             values.append(val)
-        return self._apply(*values)
-
-    def _resolve(self, operand: Any, ctx: Context) -> Any:  # noqa: ANN401
-        """Resolve operand to value.
-
-        Resolution order:
-        1. Term → execute()
-        2. Fetchable → fetch()
-        3. Literal → use directly
-
-        Args:
-            operand: The operand to resolve
-            ctx: Execution context
-
-        Returns:
-            Resolved value (may be a sentinel)
-        """
-        if isinstance(operand, Term):
-            return operand.execute(ctx)
-        if isinstance(operand, Fetchable):
-            return operand.fetch(ctx)
-        return operand
+        return self.apply(*values)
 
     @abstractmethod
-    def _apply(self, *values: Any) -> T | Sentinel:  # noqa: ANN401
+    def apply(self, *values: Any) -> T | Sentinel:  # noqa: ANN401
         """Apply the transformation to resolved values.
 
         Called after all operands are resolved and verified non-sentinel.
@@ -229,21 +222,21 @@ class UnaryMorphism[T](NAryMorphism[T], ABC):
     For transformations with one input: -x, abs(x), not x, len(x), etc.
 
     Example:
-        >>> class NegateOp(UnaryMorphism[float], Operation):
-        ...     def _apply(self, operand: float) -> float:
+        >>> class NegateOp(UnaryOperation[float]):
+        ...     def apply(self, operand: float) -> float:
         ...         return -operand
         ...
         >>> neg = NegateOp(price_ref.get())
         >>> result = neg.execute(ctx)  # Returns negated price
     """
 
-    def __init__(self, operand: Term) -> None:
+    def __init__(self, operand: object) -> None:
         """Initialize with single operand.
 
         Args:
-            operand: The input (Term, Fetchable, or literal)
+            operand: The input
         """
-        self._children = (operand,)
+        super().__init__(operand)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.operand!r})"
@@ -261,7 +254,7 @@ class UnaryMorphism[T](NAryMorphism[T], ABC):
         return self._children[0]
 
     @abstractmethod
-    def _apply(self, operand: Any) -> T | Sentinel:  # noqa: ANN401
+    def apply(self, operand: Any) -> T | Sentinel:  # type: ignore[override]  # noqa: ANN401
         """Apply transformation to resolved operand.
 
         Args:
@@ -279,22 +272,22 @@ class BinaryMorphism[T](NAryMorphism[T], ABC):
     For transformations with two inputs: x + y, x > y, x and y, x[y], etc.
 
     Example:
-        >>> class AddOp(BinaryMorphism[float], Operation):
-        ...     def _apply(self, left: float, right: float) -> float:
+        >>> class AddOp(BinaryOperation[float]):
+        ...     def apply(self, left: float, right: float) -> float:
         ...         return left + right
         ...
         >>> add = AddOp(price_ref.get(), 100)
         >>> result = add.execute(ctx)  # Returns price + 100
     """
 
-    def __init__(self, left: Term, right: Term) -> None:
+    def __init__(self, left: object, right: object) -> None:
         """Initialize with two operands.
 
         Args:
-            left: Left operand (Term, Fetchable, or literal)
-            right: Right operand (Term, Fetchable, or literal)
+            left: Left operand
+            right: Right operand
         """
-        self._children = (left, right)
+        super().__init__(left, right)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.left!r}, {self.right!r})"
@@ -321,7 +314,7 @@ class BinaryMorphism[T](NAryMorphism[T], ABC):
         return self._children[1]
 
     @abstractmethod
-    def _apply(self, left: Any, right: Any) -> T | Sentinel:  # noqa: ANN401
+    def apply(self, left: Any, right: Any) -> T | Sentinel:  # type: ignore[override]  # noqa: ANN401
         """Apply transformation to resolved operands.
 
         Args:
@@ -340,8 +333,8 @@ class TernaryMorphism[T](NAryMorphism[T], ABC):
     For transformations with three inputs: if a then b else c, slice(a, b, c), etc.
 
     Example:
-        >>> class IfThenElseOp(TernaryMorphism[T], Operation):
-        ...     def _apply(self, cond: bool, then_val: T, else_val: T) -> T:
+        >>> class IfThenElseOp(TernaryOperation[T]):
+        ...     def apply(self, cond: bool, then_val: T, else_val: T) -> T:
         ...         return then_val if cond else else_val
         ...
         >>> ite = IfThenElseOp(is_valid.get(), price.get(), default_price)
@@ -352,11 +345,11 @@ class TernaryMorphism[T](NAryMorphism[T], ABC):
         """Initialize with three operands.
 
         Args:
-            first: First operand (Term, Fetchable, or literal)
-            second: Second operand (Term, Fetchable, or literal)
-            third: Third operand (Term, Fetchable, or literal)
+            first: First operand
+            second: Second operand
+            third: Third operand
         """
-        self._children = (first, second, third)
+        super().__init__(first, second, third)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.first!r}, {self.second!r}, {self.third!r})"
@@ -392,7 +385,7 @@ class TernaryMorphism[T](NAryMorphism[T], ABC):
         return self._children[2]
 
     @abstractmethod
-    def _apply(self, first: Any, second: Any, third: Any) -> T | Sentinel:  # noqa: ANN401
+    def apply(self, first: Any, second: Any, third: Any) -> T | Sentinel:  # type: ignore[override]  # noqa: ANN401
         """Apply transformation to resolved operands.
 
         Args:
@@ -420,29 +413,20 @@ class Operation:
     - Cacheable: results can be memoized
     - Reorderable: execution order doesn't matter
 
-    Purity is compositional: an Operation is pure only if
-    all its Term children are also pure.
-
     Usage:
-        class AddOp(BinaryMorphism[float], Operation):
-            def _apply(self, left: float, right: float) -> float:
+        class AddOp(BinaryOperation[float]):
+            def apply(self, left: float, right: float) -> float:
                 return left + right
     """
 
-    # Type hint for children from NAryMorphism
-    _children: tuple[Term | Any, ...]
-
     @property
-    def is_pure(self) -> bool:
-        """Whether this operation is pure.
-
-        An operation is pure if all its Term children are pure.
-        Non-Term children (literals) don't affect purity.
+    def is_self_pure(self) -> bool:
+        """Operations are pure by definition.
 
         Returns:
-            True if all Term children are pure
+            True - operations never have side effects
         """
-        return all(child.is_pure for child in self._children if isinstance(child, Term))
+        return True
 
 
 class Command:
@@ -454,21 +438,74 @@ class Command:
     - Not cacheable: results may differ each execution
 
     Usage:
-        class SetCmd(UnaryMorphism[T], Command):
+        class SetCmd(UnaryCommand[T]):
             def __init__(self, ref: Ref[T], value: T | Term[T]):
                 super().__init__(value)
                 self._ref = ref
 
-            def _apply(self, value: T) -> T:
+            def apply(self, value: T) -> T:
                 # Side effect here
                 return value
     """
 
     @property
-    def is_pure(self) -> bool:
+    def is_self_pure(self) -> bool:
         """Commands are always impure by definition.
 
         Returns:
             False - commands always have side effects
         """
         return False
+
+
+# =============================================================================
+# CONVENIENCE: PURITY + ARITY COMBINATIONS
+# =============================================================================
+
+
+class NAryOperation[T](Operation, NAryMorphism[T]):
+    """Pure NAry morphism. Shorthand for ``Operation, NAryMorphism[T]``."""
+
+    pass
+
+
+class NAryCommand[T](Command, NAryMorphism[T]):
+    """Impure NAry morphism. Shorthand for ``Command, NAryMorphism[T]``."""
+
+    pass
+
+
+class UnaryOperation[T](Operation, UnaryMorphism[T]):
+    """Pure unary morphism. Shorthand for ``Operation, UnaryMorphism[T]``."""
+
+    pass
+
+
+class UnaryCommand[T](Command, UnaryMorphism[T]):
+    """Impure unary morphism. Shorthand for ``Command, UnaryMorphism[T]``."""
+
+    pass
+
+
+class BinaryOperation[T](Operation, BinaryMorphism[T]):
+    """Pure binary morphism. Shorthand for ``Operation, BinaryMorphism[T]``."""
+
+    pass
+
+
+class BinaryCommand[T](Command, BinaryMorphism[T]):
+    """Impure binary morphism. Shorthand for ``Command, BinaryMorphism[T]``."""
+
+    pass
+
+
+class TernaryOperation[T](Operation, TernaryMorphism[T]):
+    """Pure ternary morphism. Shorthand for ``Operation, TernaryMorphism[T]``."""
+
+    pass
+
+
+class TernaryCommand[T](Command, TernaryMorphism[T]):
+    """Impure ternary morphism. Shorthand for ``Command, TernaryMorphism[T]``."""
+
+    pass

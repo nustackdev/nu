@@ -23,7 +23,7 @@ from everyabc import Context, Span, Term, find
 
 
 if TYPE_CHECKING:
-    from everyabc import Exec
+    from everyabc import Executable
 
 
 __all__ = [
@@ -50,7 +50,7 @@ class PVAtomic(Span):
     opens a SnapshotProtocol instead of TransactionProtocol.
     """
 
-    def __init__(self, shape: type, view_cls: type[View], *children: Exec) -> None:
+    def __init__(self, shape: type, view_cls: type[View], *children: Executable) -> None:
         """Initialize atomic span.
 
         Args:
@@ -69,7 +69,7 @@ class PVAtomic(Span):
         storage = ctx.get(StorageProtocol, shape=self.shape)
 
         # Check if subtree is pure (all terms are read-only)
-        has_impure = any(not t.is_pure for t in find(self, lambda n: isinstance(n, Term)))
+        has_impure = any(not t.is_self_pure for t in find(self, lambda n: isinstance(n, Term)))
 
         if has_impure:
             return self._enter_transaction(ctx, storage)
@@ -121,7 +121,7 @@ class PVAtomic(Span):
         elif self._snap is not None:
             self._snap.close()
 
-    def with_children(self, *children: Exec) -> PVAtomic:
+    def with_children(self, *children: Executable) -> PVAtomic:
         """Return new PVAtomic with replaced children."""
         if children == self._children:
             return self
@@ -146,7 +146,7 @@ class PVSnapshot(Span):
       - Closes snapshot (if it was opened)
     """
 
-    def __init__(self, shape: type, view_cls: type[View], *children: Exec) -> None:
+    def __init__(self, shape: type, view_cls: type[View], *children: Executable) -> None:
         """Initialize snapshot span.
 
         Args:
@@ -187,7 +187,7 @@ class PVSnapshot(Span):
         if self._snap is not None:
             self._snap.close()
 
-    def with_children(self, *children: Exec) -> PVSnapshot:
+    def with_children(self, *children: Executable) -> PVSnapshot:
         """Return new PVSnapshot with replaced children."""
         if children == self._children:
             return self

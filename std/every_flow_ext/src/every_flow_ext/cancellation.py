@@ -10,7 +10,7 @@ from everyabc import Flow, map_nodes
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Exec
+    from everyabc import Context, Executable
 
 
 __all__ = [
@@ -31,26 +31,24 @@ class CheckCancellation(Flow):
 
         cancelled = Var(False)
         check = CheckCancellation(cancelled)
-        check.execute(ctx)  # passes
+        await check.execute(ctx)  # passes
 
         cancelled.set(True)
-        check.execute(ctx)  # raises CancelledError
+        await check.execute(ctx)  # raises CancelledError
     """
-
-    __slots__ = ("_cancelled",)
 
     def __init__(self, cancelled: Var[bool]) -> None:
         """Initialize with a Var[bool] to check."""
         super().__init__()
         self._cancelled = cancelled
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Raise CancelledError if the cancelled var is True."""
         if self._cancelled.get():
             raise CancelledError
 
 
-def add_cancellation_checks(root: Exec, cancelled: Var[bool]) -> Exec:
+def add_cancellation_checks(root: Executable, cancelled: Var[bool]) -> Executable:
     """Insert cancellation checks into loop bodies.
 
     Tree transform: finds While and ForRange nodes, wraps their
@@ -65,7 +63,7 @@ def add_cancellation_checks(root: Exec, cancelled: Var[bool]) -> Exec:
     """
     check = CheckCancellation(cancelled)
 
-    def _inject(node: Exec) -> Exec:
+    def _inject(node: Executable) -> Executable:
         if isinstance(node, While):
             body = node.children[1]
             new_body = Seq(check, body)

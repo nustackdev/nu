@@ -49,7 +49,7 @@ class ChangeOp(Operation, Morphism[Subscription]):
     """
 
     @abstractmethod
-    def execute(self, context: Context) -> Subscription:
+    async def execute(self, ctx: Context) -> Subscription:
         """Execute the change operation and return a subscription."""
         ...
 
@@ -74,11 +74,11 @@ class OnChangeOp(ChangeOp):
         super().__init__(cast("PVViewRef", ref))
         self.ref = cast("PVViewRef", ref)
 
-    def execute(self, context: Context) -> Subscription:
+    async def execute(self, ctx: Context) -> Subscription:
         """Execute on_change operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Subscription handle
@@ -86,13 +86,13 @@ class OnChangeOp(ChangeOp):
         Raises:
             TypeError: If view doesn't support Observable protocol
         """
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         if not view_path:
-            view = context.get(View, shape=self.ref.get_root_shape())
+            view = ctx.get(View, shape=self.ref.get_root_shape())
         else:
             view = path.navigate_view(
-                context.get(View, shape=self.ref.get_root_shape()),
+                ctx.get(View, shape=self.ref.get_root_shape()),
                 view_path,
             )
 
@@ -132,11 +132,11 @@ class OnPrimitiveChangeOp(ChangeOp):
         super().__init__(cast("PVPrimitiveRef", ref))
         self.ref = cast("PVPrimitiveRef", ref)
 
-    def execute(self, context: Context) -> Subscription:
+    async def execute(self, ctx: Context) -> Subscription:
         """Execute on_primitive_change operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Subscription handle
@@ -144,10 +144,10 @@ class OnPrimitiveChangeOp(ChangeOp):
         Raises:
             TypeError: If parent view doesn't support ChildObservable protocol
         """
-        value_path = cast("path.PathToValue", self.ref.resolve(context))
+        value_path = cast("path.PathToValue", await self.ref.resolve(ctx))
 
         parent_view, key = path.navigate_value(
-            context.get(View, shape=self.ref.get_root_shape()),
+            ctx.get(View, shape=self.ref.get_root_shape()),
             value_path,
         )
 
@@ -189,11 +189,11 @@ class OnChildChangeOp[A](ChangeOp):
         self.ref = cast("PVViewRef", ref)
         self.address = address
 
-    def execute(self, context: Context) -> Subscription:
+    async def execute(self, ctx: Context) -> Subscription:
         """Execute on_child_change operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Subscription handle
@@ -202,14 +202,14 @@ class OnChildChangeOp[A](ChangeOp):
             TypeError: If view doesn't support ChildObservable protocol
         """
         if isinstance(self.address, Term):
-            address = self.address.execute(context)
+            address = await self.address.execute(ctx)
         else:
             address = self.address
 
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         view = path.navigate_view(
-            context.get(View, shape=self.ref.get_root_shape()),
+            ctx.get(View, shape=self.ref.get_root_shape()),
             view_path,
         )
 
@@ -249,11 +249,11 @@ class OnChildrenChangeOp(ChangeOp):
         super().__init__(cast("PVViewRef", ref))
         self.ref = cast("PVViewRef", ref)
 
-    def execute(self, context: Context) -> Subscription:
+    async def execute(self, ctx: Context) -> Subscription:
         """Execute on_children_change operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Subscription handle
@@ -261,13 +261,13 @@ class OnChildrenChangeOp(ChangeOp):
         Raises:
             TypeError: If view doesn't support ChildObservable protocol
         """
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         if not view_path:
-            view = context.get(View, shape=self.ref.get_root_shape())
+            view = ctx.get(View, shape=self.ref.get_root_shape())
         else:
             view = path.navigate_view(
-                context.get(View, shape=self.ref.get_root_shape()),
+                ctx.get(View, shape=self.ref.get_root_shape()),
                 view_path,
             )
 
@@ -309,11 +309,11 @@ class OnDescendantsChangeOp(ChangeOp):
         self.ref = cast("PVViewRef", ref)
         self.pattern = pattern
 
-    def execute(self, context: Context) -> Subscription:
+    async def execute(self, ctx: Context) -> Subscription:
         """Execute on_descendants_change operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Subscription handle
@@ -325,13 +325,13 @@ class OnDescendantsChangeOp(ChangeOp):
         if not self.pattern:
             raise ValueError("Pattern cannot be empty for on_descendants_change")
 
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         if not view_path:
-            view = context.get(View, shape=self.ref.get_root_shape())
+            view = ctx.get(View, shape=self.ref.get_root_shape())
         else:
             view = path.navigate_view(
-                context.get(View, shape=self.ref.get_root_shape()),
+                ctx.get(View, shape=self.ref.get_root_shape()),
                 view_path,
             )
 

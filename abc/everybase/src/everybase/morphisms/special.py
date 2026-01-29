@@ -21,26 +21,30 @@ __all__ = [
 class IsEmptyOp(Operation, UnaryMorphism[bool]):
     """Check if operand is Empty sentinel."""
 
-    def _apply(self, operand: object) -> bool:
+    def apply(self, operand: object) -> bool:
+        """Apply."""
         return is_empty(operand)
 
 
 class NotEmptyOp(Operation, UnaryMorphism[bool]):
     """Check if operand is NOT Empty sentinel."""
 
-    def _apply(self, operand: object) -> bool:
+    def apply(self, operand: object) -> bool:
+        """Apply."""
         return not is_empty(operand)
 
 
 class IsNaNOp(Operation, UnaryMorphism[bool]):
     """Check if operand is Invalid sentinel."""
 
-    def _apply(self, operand: object) -> bool:
+    def apply(self, operand: object) -> bool:
+        """Apply."""
         return is_invalid(operand)
 
 
 class NotNaNOp(Operation, UnaryMorphism[bool]):
     """Check if operand is NOT Invalid sentinel."""
 
-    def _apply(self, operand: object) -> bool:
+    def apply(self, operand: object) -> bool:
+        """Apply."""
         return not is_invalid(operand)

@@ -70,7 +70,7 @@ NotionIntRef(cell)      # Ref to Notion cell location
 
 - Has `children` - tuple of operands (Terms or literals)
 - `execute(ctx)` - resolve operands, apply transformation
-- `_apply(*values)` - the actual transformation logic
+- `apply(*values)` - the actual transformation logic
 
 **Why "Morphism"?**
 
@@ -97,7 +97,7 @@ NotionIntRef(cell)      # Ref to Notion cell location
 
 - Operand resolution
 - Sentinel propagation
-- The `_apply()` contract
+- The `apply()` contract
 
 ---
 
@@ -118,7 +118,7 @@ NotionIntRef(cell)      # Ref to Notion cell location
 ```python
 class AddOp(BinaryMorphism, Operation):
     # No side effects - just computes
-    def _apply(self, left, right):
+    def apply(self, left, right):
         return left + right
 ```
 
@@ -126,7 +126,7 @@ class AddOp(BinaryMorphism, Operation):
 ```python
 class SetCmd(BinaryMorphism, Command):
     # Side effect - mutates storage
-    def _apply(self, ref, value):
+    def apply(self, ref, value):
         ref.set(ctx, value)
         return value
 ```

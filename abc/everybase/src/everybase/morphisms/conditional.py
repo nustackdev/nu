@@ -39,6 +39,6 @@ class ConditionalOp[ResultT](Operation, TernaryMorphism[ResultT]):
             return self._children[0].execute(ctx)
         return self._children[2].execute(ctx)
 
-    def _apply(self, first: object, second: object, third: object) -> ResultT:
+    def apply(self, first: object, second: object, third: object) -> ResultT:
         """Simple apply for completeness."""
         return first if second else third  # type: ignore

@@ -19,13 +19,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from .sentinel import Sentinel
 from .term import LValue
 
 
 if TYPE_CHECKING:
     from everyabc.context import Context
-
-    from .sentinel import Sentinel
 
 
 __all__ = [
@@ -33,7 +32,7 @@ __all__ = [
 ]
 
 
-class Ref[T](LValue[T], ABC):
+class Ref[T](LValue[T | Sentinel], ABC):
     """Typed reference to a location. Pure protocol.
 
     Ref is the minimal contract for typed references:
@@ -49,8 +48,6 @@ class Ref[T](LValue[T], ABC):
         Ref[str]   → location holding string
         Ref[Order] → location holding Order shape
     """
-
-    __slots__ = ()
 
     @abstractmethod
     def resolve(self, ctx: Context) -> object:
@@ -83,7 +80,7 @@ class Ref[T](LValue[T], ABC):
         """
         ...
 
-    def execute(self, ctx: Context) -> T | Sentinel:
+    async def execute(self, ctx: Context) -> T | Sentinel:
         """Execute this ref by fetching its value.
 
         Term interface compatibility. For Refs, execution means
@@ -98,7 +95,7 @@ class Ref[T](LValue[T], ABC):
         return self.fetch(ctx)
 
     @property
-    def is_pure(self) -> bool:
+    def is_self_pure(self) -> bool:
         """Refs are always pure.
 
         Reading from a location doesn't mutate state.

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from everyabc.term import Term
-from everyabc.tree import Exec, find, map_nodes, preorder, size
+from everyabc.tree import Executable, find, map_nodes, preorder, size
 
 
 class PureTerm(Term):
@@ -13,10 +13,10 @@ class PureTerm(Term):
         super().__init__(*children)
 
     @property
-    def is_pure(self):
+    def is_self_pure(self):
         return True
 
-    def execute(self, context):
+    async def execute(self, ctx):
         return None
 
 
@@ -27,10 +27,10 @@ class ImpureTerm(Term):
         super().__init__(*children)
 
     @property
-    def is_pure(self):
+    def is_self_pure(self):
         return False
 
-    def execute(self, context):
+    async def execute(self, ctx):
         return None
 
 
@@ -43,10 +43,10 @@ class CompoundTerm(Term):
         self._pure = pure
 
     @property
-    def is_pure(self):
+    def is_self_pure(self):
         return self._pure
 
-    def execute(self, context):
+    async def execute(self, ctx):
         return None
 
     def with_children(self, *children):
@@ -62,25 +62,25 @@ class TestTermIsAbstract:
             Term()
 
     def test_term_is_exec(self):
-        assert issubclass(Term, Exec)
+        assert issubclass(Term, Executable)
 
 
 class TestTermPurity:
     def test_pure_term(self):
         t = PureTerm()
-        assert t.is_pure is True
+        assert t.is_self_pure is True
 
     def test_impure_term(self):
         t = ImpureTerm()
-        assert t.is_pure is False
+        assert t.is_self_pure is False
 
     def test_compound_term_pure(self):
         t = CompoundTerm("add", pure=True)
-        assert t.is_pure is True
+        assert t.is_self_pure is True
 
     def test_compound_term_impure(self):
         t = CompoundTerm("write", pure=False)
-        assert t.is_pure is False
+        assert t.is_self_pure is False
 
 
 class TestTermChildren:
@@ -143,4 +143,4 @@ class TestTermWithAstOperations:
         b = CompoundTerm("b")
         root = CompoundTerm("add", a, b, pure=False)
         new_root = root.with_children(a)
-        assert new_root.is_pure is False
+        assert new_root.is_self_pure is False

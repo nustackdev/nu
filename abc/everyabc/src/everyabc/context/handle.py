@@ -34,8 +34,6 @@ class Handle:
     Subclass to add resource-specific methods.
     """
 
-    __slots__ = ()
-
     def release(self) -> None:
         """Release this handle's resources.
 

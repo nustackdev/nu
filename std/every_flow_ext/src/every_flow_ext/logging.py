@@ -29,8 +29,6 @@ class Log(Flow):
         Log("Starting process", level="debug")
     """
 
-    __slots__ = ("_level", "_message", "_values")
-
     def __init__(
         self,
         message: str,
@@ -50,9 +48,9 @@ class Log(Flow):
         self._values = values or []
         self._level = level
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Log the message with resolved values."""
-        resolved = [v.execute(ctx) if isinstance(v, Term) else v for v in self._values]
+        resolved = [await v.execute(ctx) if isinstance(v, Term) else v for v in self._values]
         formatted = self._message.format(*resolved) if resolved else self._message
         log_level = getattr(logging, self._level.upper(), logging.INFO)
         logger.log(log_level, formatted)
@@ -66,8 +64,6 @@ class Debug(Flow):
         Debug(x_ref, y_ref, labels=["x", "y"])
         # prints: [DEBUG] x=42 y=17
     """
-
-    __slots__ = ("_labels", "_prefix", "_values")
 
     def __init__(
         self,
@@ -87,11 +83,11 @@ class Debug(Flow):
         self._labels = labels
         self._prefix = prefix
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Print debug output."""
         parts = [self._prefix]
         for i, v in enumerate(self._values):
-            resolved = v.execute(ctx) if isinstance(v, Term) else v
+            resolved = await v.execute(ctx) if isinstance(v, Term) else v
             label = self._labels[i] if self._labels and i < len(self._labels) else f"v{i}"
             parts.append(f"{label}={resolved!r}")
         print(" ".join(parts))  # noqa: T201

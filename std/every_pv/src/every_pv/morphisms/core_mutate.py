@@ -71,27 +71,27 @@ class SetCmd[T](Command, Morphism[T]):
         self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = value
 
-    def execute(self, context: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Execute write command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             The written value
         """
         # Resolve ref to Path
-        value_path = self.ref.resolve(context)
+        value_path = await self.ref.resolve(ctx)
 
         # Evaluate value expression
-        value = self.value_expr.execute(context)
+        value = await self.value_expr.execute(ctx)
 
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, Invalid, etc): {value}")
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         # Navigate using Path system
         parent_view, key = path.navigate_value(root_view, value_path)
@@ -130,21 +130,21 @@ class DeleteCmd(Command, Morphism[None]):
         super().__init__(cast("PVPrimitiveRef", ref))
         self.ref = cast("PVPrimitiveRef", ref)
 
-    def execute(self, context: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute delete command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             None
         """
         # Resolve ref to Path
-        value_path = self.ref.resolve(context)
+        value_path = await self.ref.resolve(ctx)
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         # Navigate using Path system
         parent_view, key = path.navigate_value(root_view, value_path)
@@ -191,27 +191,27 @@ class StoreCmd[T](Command, Morphism[T]):
         self.ref = cast("PVViewRef[Initializable]", ref)
         self.data_expr = data
 
-    def execute(self, context: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Execute store command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             The stored value
         """
         # Resolve ref to Path
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         # Evaluate data expression
-        data = self.data_expr.execute(context)
+        data = await self.data_expr.execute(ctx)
 
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, Invalid, etc): {data}")
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         # Navigate to the view
         if not view_path:
@@ -252,21 +252,21 @@ class ClearCmd(Command, Morphism[None]):
         super().__init__(cast("PVViewRef[Clearable]", ref))
         self.ref = cast("PVViewRef[Clearable]", ref)
 
-    def execute(self, context: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute clear command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             None
         """
         # Resolve ref to Path
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         # Navigate to the view
         if not view_path:
@@ -329,23 +329,23 @@ class TypedSetCmd[T](Command, Morphism[T]):
         self.ref = cast("PVPrimitiveRef[T]", ref)
         self.value_expr = ensure_term(value)
 
-    def execute(self, context: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Execute typed write command.
 
         If the value has __to_storage__, calls it to get the storable value.
         Otherwise stores the value directly.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             The written value (after __to_storage__ conversion if applicable)
         """
         # Resolve ref to Path
-        value_path = self.ref.resolve(context)
+        value_path = await self.ref.resolve(ctx)
 
         # Evaluate value expression
-        value = self.value_expr.execute(context)
+        value = await self.value_expr.execute(ctx)
 
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, Invalid, etc): {value}")
@@ -358,7 +358,7 @@ class TypedSetCmd[T](Command, Morphism[T]):
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         # Navigate using Path system
         parent_view, key = path.navigate_value(root_view, value_path)

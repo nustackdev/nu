@@ -2,7 +2,7 @@
 
 Packages:
 
-    tree/     -- pure tree (Node, Exec, walk, transform, query)
+    tree/     -- pure tree (Node, Executable, walk, transform, query)
     term/     -- computation (Term, Ref, Morphism, Sentinel)
     flow/     -- ordering (Flow)
     span/     -- cohesion (Span)
@@ -19,13 +19,14 @@ from .term import (
     EMPTY,
     INVALID,
     Arg,
+    BinaryCommand,
     BinaryMorphism,
+    BinaryOperation,
     BoolArg,
     BytesArg,
     Command,
     DictArg,
     Empty,
-    Fetchable,
     FloatArg,
     FrozenSetArg,
     IntArg,
@@ -33,7 +34,9 @@ from .term import (
     ListArg,
     LValue,
     Morphism,
+    NAryCommand,
     NAryMorphism,
+    NAryOperation,
     NoneArg,
     Operation,
     Ref,
@@ -42,16 +45,20 @@ from .term import (
     SetArg,
     StrArg,
     Term,
+    TernaryCommand,
     TernaryMorphism,
+    TernaryOperation,
     TupleArg,
+    UnaryCommand,
     UnaryMorphism,
+    UnaryOperation,
     is_empty,
     is_invalid,
     is_sentinel,
     propagate_special,
 )
 from .tree import (
-    Exec,
+    Executable,
     Node,
     Transform,
     ancestors,
@@ -79,7 +86,7 @@ from .tree import (
 __all__ = [  # noqa: RUF022
     # Tree
     "Node",
-    "Exec",
+    "Executable",
     # Term
     "Term",
     "LValue",
@@ -92,7 +99,14 @@ __all__ = [  # noqa: RUF022
     "TernaryMorphism",
     "Operation",
     "Command",
-    "Fetchable",
+    "NAryOperation",
+    "NAryCommand",
+    "UnaryOperation",
+    "UnaryCommand",
+    "BinaryOperation",
+    "BinaryCommand",
+    "TernaryOperation",
+    "TernaryCommand",
     # Sentinel
     "Sentinel",
     "Empty",

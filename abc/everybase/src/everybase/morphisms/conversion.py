@@ -30,7 +30,8 @@ __all__ = [
 class ToIntOp(Operation, UnaryMorphism[int | Sentinel]):
     """Convert value to integer."""
 
-    def _apply(self, operand: object) -> int | Sentinel:
+    def apply(self, operand: object) -> int | Sentinel:
+        """Apply."""
         try:
             return int(operand)  # type: ignore
         except (TypeError, ValueError):
@@ -40,7 +41,8 @@ class ToIntOp(Operation, UnaryMorphism[int | Sentinel]):
 class ToFloatOp(Operation, UnaryMorphism[float | Sentinel]):
     """Convert value to float."""
 
-    def _apply(self, operand: object) -> float | Sentinel:
+    def apply(self, operand: object) -> float | Sentinel:
+        """Apply."""
         try:
             return float(operand)  # type: ignore
         except (TypeError, ValueError):
@@ -50,7 +52,8 @@ class ToFloatOp(Operation, UnaryMorphism[float | Sentinel]):
 class ToBoolOp(Operation, UnaryMorphism[bool | Sentinel]):
     """Convert value to boolean."""
 
-    def _apply(self, operand: object) -> bool | Sentinel:
+    def apply(self, operand: object) -> bool | Sentinel:
+        """Apply."""
         try:
             return bool(operand)
         except (TypeError, ValueError):
@@ -60,7 +63,8 @@ class ToBoolOp(Operation, UnaryMorphism[bool | Sentinel]):
 class ToStrOp(Operation, UnaryMorphism[str | Sentinel]):
     """Convert value to string."""
 
-    def _apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str | Sentinel:
+        """Apply."""
         try:
             return str(operand)
         except (TypeError, ValueError):
@@ -87,7 +91,8 @@ class ToBytesOp(Operation, UnaryMorphism[bytes | Sentinel]):
         super().__init__(operand)
         self._encoding = encoding
 
-    def _apply(self, operand: object) -> bytes | Sentinel:
+    def apply(self, operand: object) -> bytes | Sentinel:
+        """Apply."""
         try:
             if isinstance(operand, bytes):
                 return operand
@@ -108,7 +113,8 @@ class ToBytesOp(Operation, UnaryMorphism[bytes | Sentinel]):
 class ToListOp[T](Operation, UnaryMorphism[list[T] | Sentinel]):
     """Convert value to list."""
 
-    def _apply(self, operand: object) -> list[T] | Sentinel:
+    def apply(self, operand: object) -> list[T] | Sentinel:
+        """Apply."""
         try:
             return list(operand)  # type: ignore
         except TypeError:
@@ -118,7 +124,8 @@ class ToListOp[T](Operation, UnaryMorphism[list[T] | Sentinel]):
 class ToSetOp[T](Operation, UnaryMorphism[set[T] | Sentinel]):
     """Convert value to set."""
 
-    def _apply(self, operand: object) -> set[T] | Sentinel:
+    def apply(self, operand: object) -> set[T] | Sentinel:
+        """Apply."""
         try:
             return set(operand)  # type: ignore
         except TypeError:
@@ -128,7 +135,8 @@ class ToSetOp[T](Operation, UnaryMorphism[set[T] | Sentinel]):
 class ToTupleOp[*Ts](Operation, UnaryMorphism[tuple[*Ts] | Sentinel]):
     """Convert value to tuple."""
 
-    def _apply(self, operand: object) -> tuple[*Ts] | Sentinel:
+    def apply(self, operand: object) -> tuple[*Ts] | Sentinel:
+        """Apply."""
         try:
             return tuple(operand)  # type: ignore
         except TypeError:

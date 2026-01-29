@@ -34,7 +34,8 @@ __all__ = [
 class FirstOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """First element: seq[0]. Returns Invalid if empty."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"first() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -45,7 +46,8 @@ class FirstOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class LastOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"last() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -56,7 +58,8 @@ class LastOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class IndexOfOp[T](Operation, BinaryMorphism[int | Sentinel]):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
-    def _apply(self, left: object, right: object) -> int | Sentinel:
+    def apply(self, left: object, right: object) -> int | Sentinel:
+        """Apply."""
         # left = sequence, right = value to find
         if not isinstance(left, (list, tuple)):
             raise TypeError(f"index_() requires list or tuple, got {type(left).__name__}")
@@ -69,7 +72,8 @@ class IndexOfOp[T](Operation, BinaryMorphism[int | Sentinel]):
 class CountOp(Operation, BinaryMorphism[int]):
     """Count occurrences: seq.count(value)."""
 
-    def _apply(self, left: object, right: object) -> int | Sentinel:
+    def apply(self, left: object, right: object) -> int | Sentinel:
+        """Apply."""
         # left = sequence, right = value to count
         if not isinstance(left, (list, tuple)):
             raise TypeError(f"count_() requires list or tuple, got {type(left).__name__}")
@@ -93,7 +97,8 @@ class FindOp[T](Operation, NAryMorphism[T | Sentinel]):
         super().__init__(operand)
         self._fn = fn
 
-    def _apply(self, operand: object) -> T | Sentinel:
+    def apply(self, operand: object) -> T | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"find() requires list or tuple, got {type(operand).__name__}")
         for item in operand:
@@ -122,7 +127,8 @@ class FindIndexOp[T](Operation, NAryMorphism[int | Sentinel]):
         super().__init__(operand)
         self._fn = fn
 
-    def _apply(self, operand: object) -> int | Sentinel:
+    def apply(self, operand: object) -> int | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"find_index() requires list or tuple, got {type(operand).__name__}")
         for i, item in enumerate(operand):
@@ -137,7 +143,8 @@ class FindIndexOp[T](Operation, NAryMorphism[int | Sentinel]):
 class JoinOp(Operation, BinaryMorphism[str | Sentinel]):
     """Join strings: sep.join(seq)."""
 
-    def _apply(self, left: object, right: object) -> str | Sentinel:
+    def apply(self, left: object, right: object) -> str | Sentinel:
+        """Apply."""
         # left = sequence, right = separator
         if not isinstance(left, (list, tuple)):
             raise TypeError(f"join() requires list or tuple, got {type(left).__name__}")

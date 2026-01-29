@@ -61,22 +61,22 @@ class AddValueCmd[T](Command, Morphism[None]):
         self.ref = cast("PVViewRef", ref)
         self.value_expr = value
 
-    def execute(self, context: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute add value command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             None
         """
-        view_path = self.ref.resolve(context)
-        value = self.value_expr.execute(context)
+        view_path = await self.ref.resolve(ctx)
+        value = await self.value_expr.execute(ctx)
 
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot add special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -123,11 +123,11 @@ class RemoveValueCmd[T](Command, Morphism[None]):
         self.ref = cast("PVViewRef", ref)
         self.value_expr = value
 
-    def execute(self, context: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute remove value command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             None
@@ -135,13 +135,13 @@ class RemoveValueCmd[T](Command, Morphism[None]):
         Raises:
             KeyError: If value not in set
         """
-        view_path = self.ref.resolve(context)
-        value = self.value_expr.execute(context)
+        view_path = await self.ref.resolve(ctx)
+        value = await self.value_expr.execute(ctx)
 
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot remove special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -190,22 +190,22 @@ class DiscardValueCmd[T](Command, Morphism[None]):
         self.ref = cast("PVViewRef", ref)
         self.value_expr = value
 
-    def execute(self, context: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute discard value command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             None
         """
-        view_path = self.ref.resolve(context)
-        value = self.value_expr.execute(context)
+        view_path = await self.ref.resolve(ctx)
+        value = await self.value_expr.execute(ctx)
 
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot discard special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view

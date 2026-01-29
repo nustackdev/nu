@@ -48,7 +48,8 @@ __all__ = [
 class DecodeOp(Operation, BinaryMorphism[str | Sentinel]):
     """Decode bytes to string: bytes.decode(encoding)."""
 
-    def _apply(self, operand: object, encoding: object) -> str | Sentinel:
+    def apply(self, operand: object, encoding: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, bytes):
             return INVALID
         try:
@@ -60,7 +61,8 @@ class DecodeOp(Operation, BinaryMorphism[str | Sentinel]):
 class HexOp(Operation, UnaryMorphism[str | Sentinel]):
     """Convert to hex string: bytes.hex()."""
 
-    def _apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str | Sentinel:
+        """Apply."""
         if not isinstance(operand, bytes):
             return INVALID
         return operand.hex()
@@ -74,7 +76,8 @@ class HexOp(Operation, UnaryMorphism[str | Sentinel]):
 class BytesUpperOp(Operation, UnaryMorphism[bytes | Sentinel]):
     """Convert to uppercase: bytes.upper()."""
 
-    def _apply(self, operand: object) -> bytes | Sentinel:
+    def apply(self, operand: object) -> bytes | Sentinel:
+        """Apply."""
         if not isinstance(operand, bytes):
             return INVALID
         return operand.upper()
@@ -83,7 +86,8 @@ class BytesUpperOp(Operation, UnaryMorphism[bytes | Sentinel]):
 class BytesLowerOp(Operation, UnaryMorphism[bytes | Sentinel]):
     """Convert to lowercase: bytes.lower()."""
 
-    def _apply(self, operand: object) -> bytes | Sentinel:
+    def apply(self, operand: object) -> bytes | Sentinel:
+        """Apply."""
         if not isinstance(operand, bytes):
             return INVALID
         return operand.lower()
@@ -104,7 +108,8 @@ class BytesStripOp(Operation, NAryMorphism[bytes | Sentinel]):
         else:
             super().__init__(operand, chars)
 
-    def _apply(self, *args: object) -> bytes | Sentinel:
+    def apply(self, *args: object) -> bytes | Sentinel:
+        """Apply."""
         if len(args) == 1:
             operand = args[0]
             chars = None
@@ -128,7 +133,8 @@ class BytesLStripOp(Operation, NAryMorphism[bytes | Sentinel]):
         else:
             super().__init__(operand, chars)
 
-    def _apply(self, *args: object) -> bytes | Sentinel:
+    def apply(self, *args: object) -> bytes | Sentinel:
+        """Apply."""
         if len(args) == 1:
             operand = args[0]
             chars = None
@@ -152,7 +158,8 @@ class BytesRStripOp(Operation, NAryMorphism[bytes | Sentinel]):
         else:
             super().__init__(operand, chars)
 
-    def _apply(self, *args: object) -> bytes | Sentinel:
+    def apply(self, *args: object) -> bytes | Sentinel:
+        """Apply."""
         if len(args) == 1:
             operand = args[0]
             chars = None
@@ -190,7 +197,8 @@ class BytesSplitOp(Operation, NAryMorphism[list[bytes] | Sentinel]):
             super().__init__(operand, sep, maxsplit)
             self._has_sep = True
 
-    def _apply(self, *args: object) -> list[bytes] | Sentinel:
+    def apply(self, *args: object) -> list[bytes] | Sentinel:
+        """Apply."""
         if self._has_sep:
             operand, sep, maxsplit = args
         else:
@@ -225,7 +233,8 @@ class BytesFindOp(Operation, NAryMorphism[int | Sentinel]):
         else:
             super().__init__(operand, sub, start, end)
 
-    def _apply(self, *args: object) -> int | Sentinel:
+    def apply(self, *args: object) -> int | Sentinel:
+        """Apply."""
         if len(args) == 3:
             operand, sub, start = args
             end = None
@@ -242,7 +251,8 @@ class BytesFindOp(Operation, NAryMorphism[int | Sentinel]):
 class BytesCountOp(Operation, BinaryMorphism[int | Sentinel]):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
-    def _apply(self, operand: object, sub: object) -> int | Sentinel:
+    def apply(self, operand: object, sub: object) -> int | Sentinel:
+        """Apply."""
         if not isinstance(operand, bytes) or not isinstance(sub, bytes):
             return INVALID
         return operand.count(sub)
@@ -256,7 +266,8 @@ class BytesCountOp(Operation, BinaryMorphism[int | Sentinel]):
 class BytesStartsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
-    def _apply(self, operand: object, prefix: object) -> bool | Sentinel:
+    def apply(self, operand: object, prefix: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, bytes) or not isinstance(prefix, bytes):
             return INVALID
         return operand.startswith(prefix)
@@ -265,7 +276,8 @@ class BytesStartsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
 class BytesEndsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
-    def _apply(self, operand: object, suffix: object) -> bool | Sentinel:
+    def apply(self, operand: object, suffix: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, bytes) or not isinstance(suffix, bytes):
             return INVALID
         return operand.endswith(suffix)
@@ -289,7 +301,8 @@ class BytesReplaceOp(Operation, NAryMorphism[bytes | Sentinel]):
         """Initialize replace operation."""
         super().__init__(operand, old, new, count)
 
-    def _apply(self, operand: object, old: object, new: object, count: object) -> bytes | Sentinel:
+    def apply(self, operand: object, old: object, new: object, count: object) -> bytes | Sentinel:
+        """Apply."""
         if (
             not isinstance(operand, bytes)
             or not isinstance(old, bytes)

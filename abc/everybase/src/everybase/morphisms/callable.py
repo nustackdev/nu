@@ -54,7 +54,7 @@ class FuncCallOp[ResultT](Operation, NAryMorphism[ResultT]):
         self._func = func
         self._kwarg_keys = tuple(kwargs.keys())
 
-    def _apply(self, *resolved: object) -> ResultT:
+    def apply(self, *resolved: object) -> ResultT:
         """Apply the function call with resolved arguments."""
         # Split resolved args into positional and keyword
         num_kwargs = len(self._kwarg_keys)
@@ -103,7 +103,7 @@ class MethodCallOp[ResultT](Operation, NAryMorphism[ResultT]):
         super().__init__(instance, method_name, *args, *kwargs.values())
         self._kwarg_keys = tuple(kwargs.keys())
 
-    def _apply(self, *resolved: object) -> ResultT:
+    def apply(self, *resolved: object) -> ResultT:
         """Apply the method call with resolved arguments."""
         instance = resolved[0]
         method_name = resolved[1]
@@ -140,7 +140,8 @@ class GetAttrOp[ResultT](Operation, BinaryMorphism[ResultT]):
         >>> GetAttrOp(obj, attr_name_term)  # dynamic attribute
     """
 
-    def _apply(self, instance: object, attr_name: object) -> ResultT:
+    def apply(self, instance: object, attr_name: object) -> ResultT:
+        """Apply."""
         return getattr(instance, str(attr_name))
 
 
@@ -154,7 +155,8 @@ class SetAttrOp(Command, TernaryMorphism[object]):
         >>> SetAttrOp(obj, "name", "value")
     """
 
-    def _apply(self, instance: object, attr_name: object, value: object) -> object:
+    def apply(self, instance: object, attr_name: object, value: object) -> object:
+        """Apply."""
         setattr(instance, str(attr_name), value)
         return value
 
@@ -169,5 +171,6 @@ class DelAttrOp(Command, BinaryMorphism[None]):
         >>> DelAttrOp(obj, "cached_value")
     """
 
-    def _apply(self, instance: object, attr_name: object) -> None:
+    def apply(self, instance: object, attr_name: object) -> None:
+        """Apply."""
         delattr(instance, str(attr_name))

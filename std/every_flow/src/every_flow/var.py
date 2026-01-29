@@ -31,8 +31,6 @@ class Var[T](Ref[T]):
         i.fetch(ctx)      # → 42  (Ref interface)
     """
 
-    __slots__ = ("_value",)
-
     def __init__(self, value: T | Sentinel = EMPTY) -> None:
         """Initialize with optional value (defaults to EMPTY)."""
         super().__init__()

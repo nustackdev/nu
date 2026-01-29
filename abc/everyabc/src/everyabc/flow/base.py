@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from everyabc.tree import Exec
+from everyabc.tree import Executable
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class Flow(Exec[Exec], ABC):
+class Flow(Executable[Executable], ABC):
     """Ordering constraint (1-cell). Controls child execution.
 
     Flows define when children execute relative to each other.
@@ -27,13 +27,11 @@ class Flow(Exec[Exec], ABC):
     to provide specific ordering semantics.
 
     Design rules:
-        R2: Flow children can be any Exec.
+        R2: Flow children can be any Executable.
         S4: Flows own exactly one concern -- ordering (when).
     """
 
-    __slots__ = ()
-
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute children sequentially. Override for different ordering."""
         for child in self.children:
-            child.execute(ctx)
+            await child.execute(ctx)

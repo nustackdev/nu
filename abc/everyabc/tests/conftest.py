@@ -8,8 +8,6 @@ from everyabc import Node
 class SimpleNode(Node):
     """Concrete node for testing with extra state (label)."""
 
-    __slots__ = ("_label",)
-
     def __init__(self, label, *children):
         super().__init__(*children)
         self._label = label

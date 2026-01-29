@@ -34,7 +34,8 @@ class BitwiseNotOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     Use .bitnot() method instead.
     """
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return ~operand  # type: ignore
         except TypeError:
@@ -53,7 +54,8 @@ class BitwiseAndOp[ResultT](Operation, BinaryMorphism[ResultT]):
     Use .bitand() method to create this operation.
     """
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left & right  # type: ignore
         except TypeError:
@@ -67,7 +69,8 @@ class BitwiseOrOp[ResultT](Operation, BinaryMorphism[ResultT]):
     Use .bitor() method to create this operation.
     """
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left | right  # type: ignore
         except TypeError:
@@ -77,7 +80,8 @@ class BitwiseOrOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class XorOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Bitwise XOR: left ^ right."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left ^ right  # type: ignore
         except TypeError:
@@ -87,7 +91,8 @@ class XorOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class LShiftOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Left shift: left << right."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left << right  # type: ignore
         except TypeError:
@@ -97,7 +102,8 @@ class LShiftOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class RShiftOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Right shift: left >> right."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left >> right  # type: ignore
         except TypeError:

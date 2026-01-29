@@ -4,27 +4,27 @@ from every_flow import Const
 from everyabc import Context
 
 
-def test_const_int():
+async def test_const_int():
     c = Const(42)
-    assert c.execute(Context()) == 42
+    assert await c.execute(Context()) == 42
 
 
-def test_const_str():
+async def test_const_str():
     c = Const("hello")
-    assert c.execute(Context()) == "hello"
+    assert await c.execute(Context()) == "hello"
 
 
-def test_const_bool():
-    assert Const(True).execute(Context()) is True
-    assert Const(False).execute(Context()) is False
+async def test_const_bool():
+    assert await Const(True).execute(Context()) is True
+    assert await Const(False).execute(Context()) is False
 
 
-def test_const_none():
-    assert Const(None).execute(Context()) is None
+async def test_const_none():
+    assert await Const(None).execute(Context()) is None
 
 
 def test_const_is_pure():
-    assert Const(1).is_pure is True
+    assert Const(1).is_self_pure is True
 
 
 def test_const_is_leaf():

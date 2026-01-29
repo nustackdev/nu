@@ -6,22 +6,22 @@ from everyabc import Context
 from .conftest import Recorder
 
 
-def test_seq_executes_in_order():
+async def test_seq_executes_in_order():
     log = []
     tree = Seq(Recorder(log, "a"), Recorder(log, "b"), Recorder(log, "c"))
-    tree.execute(Context())
+    await tree.execute(Context())
     assert log == ["a", "b", "c"]
 
 
-def test_seq_empty():
+async def test_seq_empty():
     tree = Seq()
-    tree.execute(Context())  # no-op, no error
+    await tree.execute(Context())  # no-op, no error
 
 
-def test_seq_single():
+async def test_seq_single():
     log = []
     tree = Seq(Recorder(log, "only"))
-    tree.execute(Context())
+    await tree.execute(Context())
     assert log == ["only"]
 
 

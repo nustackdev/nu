@@ -41,7 +41,8 @@ class SortedOp[ResultT](Operation, UnaryMorphism[list[ResultT] | Sentinel]):
         super().__init__(operand)
         self._reverse = reverse
 
-    def _apply(self, operand: object) -> list[ResultT] | Sentinel:
+    def apply(self, operand: object) -> list[ResultT] | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"sorted_() requires list or tuple, got {type(operand).__name__}")
         try:
@@ -56,7 +57,8 @@ class SortedOp[ResultT](Operation, UnaryMorphism[list[ResultT] | Sentinel]):
 class ReversedOp[ResultT](Operation, UnaryMorphism[list[ResultT]]):
     """Reversed list: list(reversed(seq))."""
 
-    def _apply(self, operand: object) -> list[ResultT]:
+    def apply(self, operand: object) -> list[ResultT]:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"reversed_() requires list or tuple, got {type(operand).__name__}")
         return list(reversed(operand))  # type: ignore
@@ -80,7 +82,8 @@ class MapOp[T, T2](Operation, NAryMorphism[list[T2]]):
         super().__init__(operand)
         self._fn = fn
 
-    def _apply(self, operand: object) -> list[T2]:
+    def apply(self, operand: object) -> list[T2]:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"map_() requires list or tuple, got {type(operand).__name__}")
         return list(map(self._fn, operand))
@@ -107,7 +110,8 @@ class FilterOp[T](Operation, NAryMorphism[list[T]]):
         super().__init__(operand)
         self._fn = fn
 
-    def _apply(self, operand: object) -> list[T]:
+    def apply(self, operand: object) -> list[T]:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"filter_() requires list or tuple, got {type(operand).__name__}")
         return list(filter(self._fn, operand))  # type: ignore
@@ -136,7 +140,8 @@ class ReduceOp[T, T2](Operation, NAryMorphism[T2 | Sentinel]):
         self._fn = fn
         self._initial = initial
 
-    def _apply(self, operand: object) -> T2 | Sentinel:
+    def apply(self, operand: object) -> T2 | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"reduce_() requires list or tuple, got {type(operand).__name__}")
         try:

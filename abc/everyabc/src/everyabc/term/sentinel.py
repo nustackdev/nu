@@ -21,16 +21,12 @@ __all__ = [
 class Sentinel:
     """Base class for special sentinel values."""
 
-    __slots__ = ()
-
 
 class Empty(Sentinel):
     """Value doesn't exist.
 
     Represents the absence of a value -- distinct from None.
     """
-
-    __slots__ = ()
 
     def __repr__(self) -> str:
         """Return string representation."""
@@ -54,8 +50,6 @@ class Invalid(Sentinel):
 
     Represents a computation that cannot produce a meaningful result.
     """
-
-    __slots__ = ()
 
     def __repr__(self) -> str:
         """Return string representation."""

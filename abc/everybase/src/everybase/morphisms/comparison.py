@@ -24,7 +24,8 @@ __all__ = [
 class GtOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Greater than: left > right."""
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         try:
             return left > right  # type: ignore
         except TypeError:
@@ -34,7 +35,8 @@ class GtOp(Operation, BinaryMorphism[bool | Sentinel]):
 class LtOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Less than: left < right."""
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         try:
             return left < right  # type: ignore
         except TypeError:
@@ -44,7 +46,8 @@ class LtOp(Operation, BinaryMorphism[bool | Sentinel]):
 class EqOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Equality: left == right."""
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         try:
             return left == right  # type: ignore
         except TypeError:
@@ -54,7 +57,8 @@ class EqOp(Operation, BinaryMorphism[bool | Sentinel]):
 class NeOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Not equal: left != right."""
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         try:
             return left != right  # type: ignore
         except TypeError:
@@ -64,7 +68,8 @@ class NeOp(Operation, BinaryMorphism[bool | Sentinel]):
 class GeOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Greater than or equal: left >= right."""
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         try:
             return left >= right  # type: ignore
         except TypeError:
@@ -74,7 +79,8 @@ class GeOp(Operation, BinaryMorphism[bool | Sentinel]):
 class LeOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Less than or equal: left <= right."""
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         try:
             return left <= right  # type: ignore
         except TypeError:
@@ -84,5 +90,6 @@ class LeOp(Operation, BinaryMorphism[bool | Sentinel]):
 class IdCompOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Identity comparison: left is right."""
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         return left is right

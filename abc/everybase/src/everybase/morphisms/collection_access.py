@@ -28,7 +28,8 @@ __all__ = [
 class LenOp(Operation, UnaryMorphism[int]):
     """Length of sequence, mapping, or string: len(obj)."""
 
-    def _apply(self, operand: object) -> int:
+    def apply(self, operand: object) -> int:
+        """Apply."""
         if not isinstance(operand, (list, tuple, dict, set, frozenset, str, bytes)):
             raise TypeError(f"len_() requires sized object, got {type(operand).__name__}")
         return len(operand)
@@ -40,7 +41,8 @@ class AtOp[ResultT](Operation, BinaryMorphism[ResultT | Sentinel]):
     Returns Invalid for out-of-bounds indices or missing keys.
     """
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         if isinstance(left, (list, tuple)):
             if not isinstance(right, int):
                 raise TypeError(f"at() index must be int for sequence, got {type(right).__name__}")
@@ -98,7 +100,8 @@ class SliceOp[ResultT](Operation, TernaryMorphism[ResultT]):
                 f"slice() requires sliceable object, got {type(operand_val).__name__}"
             ) from None
 
-    def _apply(self, first: Any, second: Any, third: Any) -> ResultT:  # noqa: ANN401
+    def apply(self, first: Any, second: Any, third: Any) -> ResultT:  # noqa: ANN401
+        """Apply."""
         pass  # type: ignore
 
     def __repr__(self) -> str:
@@ -115,7 +118,8 @@ class ContainsOp(Operation, BinaryMorphism[bool]):
     - str/bytes: checks if substring is in string
     """
 
-    def _apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
+        """Apply."""
         # left = container, right = item
         if not isinstance(left, (list, tuple, dict, set, frozenset, str, bytes)):
             raise TypeError(

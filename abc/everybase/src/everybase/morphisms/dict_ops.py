@@ -24,7 +24,8 @@ __all__ = [
 class DictKeysOp[K](Operation, UnaryMorphism[list[K]]):
     """Get keys from dict: list(dict.keys())."""
 
-    def _apply(self, operand: object) -> list[K]:
+    def apply(self, operand: object) -> list[K]:
+        """Apply."""
         if not isinstance(operand, dict):
             raise TypeError(f"keys_() requires dict, got {type(operand).__name__}")
         return list(operand.keys())  # type: ignore
@@ -33,7 +34,8 @@ class DictKeysOp[K](Operation, UnaryMorphism[list[K]]):
 class DictValuesOp[V](Operation, UnaryMorphism[list[V]]):
     """Get values from dict: list(dict.values())."""
 
-    def _apply(self, operand: object) -> list[V]:
+    def apply(self, operand: object) -> list[V]:
+        """Apply."""
         if not isinstance(operand, dict):
             raise TypeError(f"values_() requires dict, got {type(operand).__name__}")
         return list(operand.values())  # type: ignore
@@ -42,7 +44,8 @@ class DictValuesOp[V](Operation, UnaryMorphism[list[V]]):
 class DictItemsOp[K, V](Operation, UnaryMorphism[list[tuple[K, V]]]):
     """Get items from dict: list(dict.items())."""
 
-    def _apply(self, operand: object) -> list[tuple[K, V]]:
+    def apply(self, operand: object) -> list[tuple[K, V]]:
+        """Apply."""
         if not isinstance(operand, dict):
             raise TypeError(f"items_() requires dict, got {type(operand).__name__}")
         return list(operand.items())  # type: ignore
@@ -63,7 +66,8 @@ class DictGetOp[V](Operation, NAryMorphism[V | Sentinel]):
         else:
             super().__init__(operand, key, default)
 
-    def _apply(self, operand: object, key: object, default: object | None = None) -> V | Sentinel:
+    def apply(self, operand: object, key: object, default: object | None = None) -> V | Sentinel:
+        """Apply."""
         if not isinstance(operand, dict):
             raise TypeError(f"get_() requires dict, got {type(operand).__name__}")
         if default is None:

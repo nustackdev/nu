@@ -10,7 +10,7 @@ from ._util import _ensure_term
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Exec
+    from everyabc import Context, Executable
 
 
 __all__ = [
@@ -33,13 +33,11 @@ class If(Flow):
         If(True, always_runs)
     """
 
-    __slots__ = ()
-
     def __init__(
         self,
         condition: Any,
-        then_branch: Exec,
-        else_branch: Exec | None = None,
+        then_branch: Executable,
+        else_branch: Executable | None = None,
     ) -> None:
         """Initialize conditional flow.
 
@@ -54,9 +52,9 @@ class If(Flow):
         else:
             super().__init__(condition, then_branch)
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Evaluate condition and execute the appropriate branch."""
-        if self.children[0].execute(ctx):
-            self.children[1].execute(ctx)
+        if await self.children[0].execute(ctx):
+            await self.children[1].execute(ctx)
         elif self.child_count > 2:
-            self.children[2].execute(ctx)
+            await self.children[2].execute(ctx)

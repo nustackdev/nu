@@ -8,7 +8,7 @@ from everyabc import Flow
 
 
 if TYPE_CHECKING:
-    from everyabc import Exec
+    from everyabc import Executable
 
 
 __all__ = [
@@ -27,8 +27,6 @@ class Seq(Flow):
         Seq(step_a, step_b, step_c)
     """
 
-    __slots__ = ()
-
-    def __init__(self, *children: Exec) -> None:
+    def __init__(self, *children: Executable) -> None:
         """Initialize with children to execute in order."""
         super().__init__(*children)

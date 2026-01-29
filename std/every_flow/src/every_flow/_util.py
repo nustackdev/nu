@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from everyabc import Exec, Term
+from everyabc import Executable, Term
 
 
 if TYPE_CHECKING:
@@ -28,19 +28,17 @@ class Const[T](Term[T]):
         Const("hello").execute(ctx)  # → "hello"
     """
 
-    __slots__ = ("_value",)
-
     def __init__(self, value: T) -> None:
         """Initialize with a literal value."""
         super().__init__()
         self._value = value
 
     @property
-    def is_pure(self) -> bool:
+    def is_self_pure(self) -> bool:
         """Constants are always pure."""
         return True
 
-    def execute(self, ctx: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Return the literal value."""
         return self._value
 
@@ -49,12 +47,12 @@ class Const[T](Term[T]):
         return f"Const({self._value!r})"
 
 
-def _ensure_term(value: Any) -> Exec:
+def _ensure_term(value: Any) -> Executable:
     """Convert a value to a Term if it isn't one already.
 
-    If value is already an Exec (Term, Flow, Span), return as-is.
+    If value is already an Executable (Term, Flow, Span), return as-is.
     Otherwise wrap in Const.
     """
-    if isinstance(value, Exec):
+    if isinstance(value, Executable):
         return value
     return Const(value)

@@ -5,7 +5,7 @@ Structural operations only. No domain semantics.
 
 from __future__ import annotations
 
-from .exec import Exec
+from .exec import Executable
 from .node import Node
 from .query import count, depth, find, find_first, size
 from .transform import (
@@ -26,7 +26,7 @@ from .walk import ancestors, bfs, leaves, postorder, preorder
 __all__ = [  # noqa: RUF022
     # Node
     "Node",
-    "Exec",
+    "Executable",
     # Walk
     "preorder",
     "postorder",

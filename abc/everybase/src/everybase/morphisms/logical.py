@@ -37,14 +37,16 @@ class NotOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     Use .not_() method in trait classes instead.
     """
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         return not operand  # type: ignore
 
 
 class BoolOp(Operation, UnaryMorphism[bool]):
     """Boolean conversion: bool(operand)."""
 
-    def _apply(self, operand: object) -> bool:
+    def apply(self, operand: object) -> bool:
+        """Apply."""
         return bool(operand)
 
 
@@ -83,7 +85,8 @@ class AndOp[ResultT](Operation, BinaryMorphism[ResultT]):
 
         return left_val and right_val
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         # Not used - execute() handles everything
         raise NotImplementedError
 
@@ -118,6 +121,7 @@ class OrOp[ResultT](Operation, BinaryMorphism[ResultT]):
 
         return left_val or right_val  # type: ignore[return-value]
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         # Not used - execute() handles everything
         raise NotImplementedError

@@ -8,7 +8,7 @@ from everyabc import Flow
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Exec
+    from everyabc import Context, Executable
 
     from .var import Var
 
@@ -36,13 +36,11 @@ class TryCatch(Flow):
         )
     """
 
-    __slots__ = ("_error", "_has_catch", "_has_finally")
-
     def __init__(
         self,
-        body: Exec,
-        catch: Exec | None = None,
-        finally_: Exec | None = None,
+        body: Executable,
+        catch: Executable | None = None,
+        finally_: Executable | None = None,
         *,
         error: Var[str] | None = None,
     ) -> None:
@@ -54,7 +52,7 @@ class TryCatch(Flow):
             finally_: Executed always after body/catch (optional).
             error: Var written with str(exception) on catch (optional).
         """
-        children: list[Exec] = [body]
+        children: list[Executable] = [body]
         self._has_catch = catch is not None
         self._has_finally = finally_ is not None
         if catch is not None:
@@ -64,7 +62,7 @@ class TryCatch(Flow):
         super().__init__(*children)
         self._error = error
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute with try/catch/finally semantics."""
         body = self.children[0]
         catch_idx = 1 if self._has_catch else None
@@ -74,16 +72,16 @@ class TryCatch(Flow):
 
         caught: Exception | None = None
         try:
-            body.execute(ctx)
+            await body.execute(ctx)
         except Exception as e:
             caught = e
             if catch_idx is not None:
                 if self._error is not None:
                     self._error.set(str(e))
-                self.children[catch_idx].execute(ctx)
+                await self.children[catch_idx].execute(ctx)
         finally:
             if finally_idx is not None:
-                self.children[finally_idx].execute(ctx)
+                await self.children[finally_idx].execute(ctx)
 
         if caught is not None and not self._has_catch:
             raise caught

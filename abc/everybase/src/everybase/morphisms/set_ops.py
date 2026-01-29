@@ -28,7 +28,8 @@ __all__ = [
 class UnionOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] | Sentinel]):
     """Set union: set.union(other) or set | other."""
 
-    def _apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+    def apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+        """Apply."""
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return INVALID
@@ -43,7 +44,8 @@ class UnionOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] | Sentinel]):
 class IntersectionOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] | Sentinel]):
     """Set intersection: set.intersection(other) or set & other."""
 
-    def _apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+    def apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+        """Apply."""
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return INVALID
@@ -58,7 +60,8 @@ class IntersectionOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] | Sentin
 class DifferenceOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] | Sentinel]):
     """Set difference: set.difference(other) or set - other."""
 
-    def _apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+    def apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+        """Apply."""
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return INVALID
@@ -73,7 +76,8 @@ class DifferenceOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] | Sentinel
 class SymmetricDifferenceOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] | Sentinel]):
     """Set symmetric difference: set.symmetric_difference(other) or set ^ other."""
 
-    def _apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+    def apply(self, operand: object, other: object) -> set[T] | frozenset[T] | Sentinel:
+        """Apply."""
         if isinstance(operand, frozenset):
             if not isinstance(other, (set, frozenset)):
                 return INVALID
@@ -93,7 +97,8 @@ class SymmetricDifferenceOp[T](Operation, BinaryMorphism[set[T] | frozenset[T] |
 class IsSubsetOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Test if subset: set.issubset(other) or set <= other."""
 
-    def _apply(self, operand: object, other: object) -> bool | Sentinel:
+    def apply(self, operand: object, other: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, (set, frozenset)):
             return INVALID
         if not isinstance(other, (set, frozenset)):
@@ -104,7 +109,8 @@ class IsSubsetOp(Operation, BinaryMorphism[bool | Sentinel]):
 class IsSupersetOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Test if superset: set.issuperset(other) or set >= other."""
 
-    def _apply(self, operand: object, other: object) -> bool | Sentinel:
+    def apply(self, operand: object, other: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, (set, frozenset)):
             return INVALID
         if not isinstance(other, (set, frozenset)):
@@ -115,7 +121,8 @@ class IsSupersetOp(Operation, BinaryMorphism[bool | Sentinel]):
 class IsDisjointOp(Operation, BinaryMorphism[bool | Sentinel]):
     """Test if disjoint: set.isdisjoint(other)."""
 
-    def _apply(self, operand: object, other: object) -> bool | Sentinel:
+    def apply(self, operand: object, other: object) -> bool | Sentinel:
+        """Apply."""
         if not isinstance(operand, (set, frozenset)):
             return INVALID
         if not isinstance(other, (set, frozenset)):

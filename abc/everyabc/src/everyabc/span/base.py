@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from everyabc.tree import Exec
+from everyabc.tree import Executable
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class Span(Exec[Exec], ABC):
+class Span(Executable[Executable], ABC):
     """Cohesion boundary (2-cell). Context shaper.
 
     Spans scope context for their children via enter/exit lifecycle.
@@ -37,9 +37,7 @@ class Span(Exec[Exec], ABC):
         S4: Spans own exactly one concern -- cohesion (what's shared).
     """
 
-    __slots__ = ()
-
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute span: enter → run children → exit.
 
         Calls enter() to scope context, executes children sequentially,
@@ -48,7 +46,7 @@ class Span(Exec[Exec], ABC):
         child_ctx = self.enter(ctx)
         try:
             for child in self.children:
-                child.execute(child_ctx)
+                await child.execute(child_ctx)
             self.exit_success(child_ctx)
         except Exception as e:
             self.exit_failure(child_ctx, e)

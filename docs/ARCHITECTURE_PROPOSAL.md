@@ -19,11 +19,11 @@ Command                          # Impure - has side effects
 Concrete implementations compose arity + purity:
 ```python
 class AddOp[T](BinaryMorphism[T], Operation):
-    def _apply(self, left, right) -> T:
+    def apply(self, left, right) -> T:
         return left + right
 
 class SetCmd[T](BinaryMorphism[T], Command):
-    def _apply(self, ref, value) -> T:
+    def apply(self, ref, value) -> T:
         ...
 ```
 
@@ -175,7 +175,7 @@ class NAryMorphism[T](Morphism[T], ABC):
             if is_sentinel(val):
                 return INVALID
             values.append(val)
-        return self._apply(*values)
+        return self.apply(*values)
 
     def _resolve(self, operand: Any, ctx: Context) -> Any:
         """Resolve operand to value."""
@@ -184,7 +184,7 @@ class NAryMorphism[T](Morphism[T], ABC):
         return operand  # Literal value
 
     @abstractmethod
-    def _apply(self, *values: Any) -> T | Sentinel:
+    def apply(self, *values: Any) -> T | Sentinel:
         """Apply the transformation to resolved values."""
         ...
 
@@ -196,7 +196,7 @@ class UnaryMorphism[T](NAryMorphism[T], ABC):
         self.children = (operand,)
 
     @abstractmethod
-    def _apply(self, operand: Any) -> T | Sentinel: ...
+    def apply(self, operand: Any) -> T | Sentinel: ...
 
 
 class BinaryMorphism[T](NAryMorphism[T], ABC):
@@ -206,7 +206,7 @@ class BinaryMorphism[T](NAryMorphism[T], ABC):
         self.children = (left, right)
 
     @abstractmethod
-    def _apply(self, left: Any, right: Any) -> T | Sentinel: ...
+    def apply(self, left: Any, right: Any) -> T | Sentinel: ...
 
 
 class TernaryMorphism[T](NAryMorphism[T], ABC):
@@ -216,7 +216,7 @@ class TernaryMorphism[T](NAryMorphism[T], ABC):
         self.children = (a, b, c)
 
     @abstractmethod
-    def _apply(self, a: Any, b: Any, c: Any) -> T | Sentinel: ...
+    def apply(self, a: Any, b: Any, c: Any) -> T | Sentinel: ...
 ```
 
 ### 4. Purity (in `every/purity.py`)
@@ -341,7 +341,7 @@ class IntRefBase(Numeric, Bitwise, Comparable, Ref[int], Gettable[int], ABC):
 class AddOp[T](BinaryMorphism[T], Operation):
     """Addition: left + right. Pure."""
 
-    def _apply(self, left: Any, right: Any) -> T | Sentinel:
+    def apply(self, left: Any, right: Any) -> T | Sentinel:
         try:
             return left + right
         except TypeError:
@@ -351,7 +351,7 @@ class AddOp[T](BinaryMorphism[T], Operation):
 class NegOp[T](UnaryMorphism[T], Operation):
     """Negation: -operand. Pure."""
 
-    def _apply(self, operand: Any) -> T | Sentinel:
+    def apply(self, operand: Any) -> T | Sentinel:
         try:
             return -operand
         except TypeError:
@@ -364,7 +364,7 @@ class NegOp[T](UnaryMorphism[T], Operation):
 class EqOp(BinaryMorphism[bool], Operation):
     """Equality: left == right. Pure."""
 
-    def _apply(self, left: Any, right: Any) -> bool:
+    def apply(self, left: Any, right: Any) -> bool:
         return left == right
 ```
 
@@ -374,7 +374,7 @@ class EqOp(BinaryMorphism[bool], Operation):
 class IfElseOp[T](TernaryMorphism[T], Operation):
     """Conditional: if cond then a else b. Pure."""
 
-    def _apply(self, cond: Any, if_true: T, if_false: T) -> T:
+    def apply(self, cond: Any, if_true: T, if_false: T) -> T:
         return if_true if cond else if_false
 ```
 

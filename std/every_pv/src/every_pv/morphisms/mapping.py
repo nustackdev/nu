@@ -101,24 +101,24 @@ class SetByKeyCmd[K, V: Value](Command, Morphism[V]):
         self.key = key
         self.value_expr = value
 
-    def execute(self, context: Context) -> V:
+    async def execute(self, ctx: Context) -> V:
         """Execute set by key command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             The set value
         """
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
-        key = self.key.execute(context)
-        value = self.value_expr.execute(context)
+        key = await self.key.execute(ctx)
+        value = await self.value_expr.execute(ctx)
 
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -167,11 +167,11 @@ class RemoveByKeyCmd[K](Command, Morphism[None]):
         self.ref = cast("PVViewRef[view_traits.Deletable[K]]", ref)
         self.key = key
 
-    def execute(self, context: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute remove by key command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             None
@@ -179,10 +179,10 @@ class RemoveByKeyCmd[K](Command, Morphism[None]):
         Raises:
             KeyError: If key not in mapping
         """
-        view_path = self.ref.resolve(context)
-        key = self.key.execute(context)
+        view_path = await self.ref.resolve(ctx)
+        key = await self.key.execute(ctx)
 
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -239,19 +239,19 @@ class GetByKeyOp[K, V](Operation, Morphism[V | Sentinel]):
         self.key = key
         self.default = default
 
-    def execute(self, context: Context) -> V | Sentinel:
+    async def execute(self, ctx: Context) -> V | Sentinel:
         """Execute get by key operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Value at key, or default if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
-        key = self.key.execute(context)
+        key = await self.key.execute(ctx)
 
         if not view_path:
             view = root_view
@@ -263,7 +263,7 @@ class GetByKeyOp[K, V](Operation, Morphism[V | Sentinel]):
                 return view[key]
             except (KeyError, IndexError, StorageKeyError) as e:
                 if self.default is not None:
-                    return self.default.execute(context)
+                    return await self.default.execute(ctx)
                 raise e
 
         raise TypeError(f"View {view.__class__.__name__} is not subscriptable")
@@ -296,17 +296,17 @@ class KeysOp[K](Operation, Morphism[list[K] | Sentinel]):
         super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, object]]]", ref)
 
-    def execute(self, context: Context) -> list[K] | Sentinel:
+    async def execute(self, ctx: Context) -> list[K] | Sentinel:
         """Execute keys operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             List of keys, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -352,17 +352,17 @@ class ValuesOp[V](Operation, Morphism[list[V] | Sentinel]):
         super().__init__(cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref)
 
-    def execute(self, context: Context) -> list[V] | Sentinel:
+    async def execute(self, ctx: Context) -> list[V] | Sentinel:
         """Execute values operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             List of values, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -407,17 +407,17 @@ class ItemsOp[K, V](Operation, Morphism[list[tuple[K, V]] | Sentinel]):
         super().__init__(cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
 
-    def execute(self, context: Context) -> list[tuple[K, V]] | Sentinel:
+    async def execute(self, ctx: Context) -> list[tuple[K, V]] | Sentinel:
         """Execute items operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             List of (key, value) pairs, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -475,11 +475,11 @@ class FindKeyByPredicateOp[K, V](Operation, Morphism[K]):
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
 
-    def execute(self, context: Context) -> K:
+    async def execute(self, ctx: Context) -> K:
         """Execute find key by predicate operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             First key whose value matches
@@ -487,8 +487,8 @@ class FindKeyByPredicateOp[K, V](Operation, Morphism[K]):
         Raises:
             ValueError: If no value matches
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -540,11 +540,11 @@ class FindValueByPredicateOp[V](Operation, Morphism[V]):
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[object, V]]]", ref)
         self.predicate = predicate
 
-    def execute(self, context: Context) -> V:
+    async def execute(self, ctx: Context) -> V:
         """Execute find value by predicate operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             First matching value
@@ -552,8 +552,8 @@ class FindValueByPredicateOp[V](Operation, Morphism[V]):
         Raises:
             ValueError: If no value matches
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -608,11 +608,11 @@ class FindItemByPredicateOp[K, V](Operation, Morphism[tuple[K, V]]):
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
 
-    def execute(self, context: Context) -> tuple[K, V]:
+    async def execute(self, ctx: Context) -> tuple[K, V]:
         """Execute find item by predicate operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             First matching (key, value) pair
@@ -620,8 +620,8 @@ class FindItemByPredicateOp[K, V](Operation, Morphism[tuple[K, V]]):
         Raises:
             ValueError: If no item matches
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -678,17 +678,17 @@ class MapValuesOp[K, V, R](Operation, Morphism[dict[K, R] | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
 
-    def execute(self, context: Context) -> dict[K, R] | Sentinel:
+    async def execute(self, ctx: Context) -> dict[K, R] | Sentinel:
         """Execute map values operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Dict with transformed values, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -741,17 +741,17 @@ class MapItemsOp[K, V, K2, V2](Operation, Morphism[dict[K2, V2] | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.func = func
 
-    def execute(self, context: Context) -> dict[K2, V2] | Sentinel:
+    async def execute(self, ctx: Context) -> dict[K2, V2] | Sentinel:
         """Execute map items operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Transformed dict, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -802,17 +802,17 @@ class FilterItemsOp[K, V](Operation, Morphism[dict[K, V] | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[dict[K, V]]]", ref)
         self.predicate = predicate
 
-    def execute(self, context: Context) -> dict[K, V] | Sentinel:
+    async def execute(self, ctx: Context) -> dict[K, V] | Sentinel:
         """Execute filter items operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Filtered dict, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -867,17 +867,17 @@ class ReduceItemsOp[K, V, R](Operation, Morphism[R | Sentinel]):
         self.func = func
         self.initial = initial
 
-    def execute(self, context: Context) -> R | Sentinel:
+    async def execute(self, ctx: Context) -> R | Sentinel:
         """Execute reduce items operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Reduced value, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:

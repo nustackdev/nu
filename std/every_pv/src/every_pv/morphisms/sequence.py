@@ -91,22 +91,22 @@ class AppendValueCmd[T](Command, Morphism[T]):
         self.ref = cast("PVViewRef[Appendable]", ref)
         self.value_expr = value
 
-    def execute(self, context: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Execute append value command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             The appended value
         """
-        view_path = self.ref.resolve(context)
-        value = self.value_expr.execute(context)
+        view_path = await self.ref.resolve(ctx)
+        value = await self.value_expr.execute(ctx)
 
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot append special values (Empty, Invalid, etc): {value}")
 
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -157,11 +157,11 @@ class InsertAtIndexCmd[T](Command, Morphism[T]):
         self.index_expr = index
         self.value_expr = value
 
-    def execute(self, context: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Execute insert at index command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             The inserted value
@@ -207,25 +207,25 @@ class PopByIndexCmd[T](Command, Morphism[T]):
         self.ref = cast("PVViewRef", ref)
         self.index_expr = index
 
-    def execute(self, context: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Execute pop by index command.
 
         Args:
-            context: Execution context with transaction
+            ctx: Execution context with transaction
 
         Returns:
             The popped value
         """
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         if self.index_expr is not None:
-            index = self.index_expr.execute(context)
+            index = await self.index_expr.execute(ctx)
             if isinstance(index, Sentinel):
                 raise ValueError(f"Cannot use special value as index: {index}")
         else:
             index = -1
 
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -275,11 +275,11 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
 
-    def execute(self, context: Context) -> int:
+    async def execute(self, ctx: Context) -> int:
         """Execute index of value operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Index of value
@@ -287,8 +287,8 @@ class IndexOfValueOp[T](Operation, Morphism[int]):
         Raises:
             ValueError: If value not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -333,17 +333,17 @@ class CountOfValueOp[T](Operation, Morphism[int | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.value = value
 
-    def execute(self, context: Context) -> int | Sentinel:
+    async def execute(self, ctx: Context) -> int | Sentinel:
         """Execute count of value operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Count of occurrences, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -398,11 +398,11 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
 
-    def execute(self, context: Context) -> T:
+    async def execute(self, ctx: Context) -> T:
         """Execute find by predicate operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             First matching element
@@ -410,8 +410,8 @@ class FindByPredicateOp[T](Operation, Morphism[T]):
         Raises:
             ValueError: If no element matches
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -461,11 +461,11 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
 
-    def execute(self, context: Context) -> int:
+    async def execute(self, ctx: Context) -> int:
         """Execute find index by predicate operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Index of first matching element
@@ -473,8 +473,8 @@ class FindIndexByPredicateOp[T](Operation, Morphism[int]):
         Raises:
             ValueError: If no element matches
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         if not view_path:
             view = root_view
@@ -528,17 +528,17 @@ class MapOp[T, R](Operation, Morphism[list[R] | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.func = func
 
-    def execute(self, context: Context) -> list[R] | Sentinel:
+    async def execute(self, ctx: Context) -> list[R] | Sentinel:
         """Execute map operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             List of transformed elements, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -586,17 +586,17 @@ class FilterOp[T](Operation, Morphism[list[T] | Sentinel]):
         self.ref = cast("PVViewRef[view_traits.Convertible[list[T]]]", ref)
         self.predicate = predicate
 
-    def execute(self, context: Context) -> list[T] | Sentinel:
+    async def execute(self, ctx: Context) -> list[T] | Sentinel:
         """Execute filter operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             List of filtered elements, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:
@@ -648,17 +648,17 @@ class ReduceOp[T, R](Operation, Morphism[R | Sentinel]):
         self.func = func
         self.initial = initial
 
-    def execute(self, context: Context) -> R | Sentinel:
+    async def execute(self, ctx: Context) -> R | Sentinel:
         """Execute reduce operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Reduced value, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
-        root_view = context.get(View, shape=self.ref.get_root_shape())
+        view_path = await self.ref.resolve(ctx)
+        root_view = ctx.get(View, shape=self.ref.get_root_shape())
 
         try:
             if not view_path:

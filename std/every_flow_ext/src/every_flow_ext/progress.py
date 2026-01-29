@@ -9,7 +9,7 @@ from everyabc import Flow, map_nodes
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Exec
+    from everyabc import Context, Executable
 
 
 __all__ = [
@@ -31,16 +31,14 @@ class Progress(Flow):
         finished = Var(False)
         error = Var("")
         p = Progress(child, started=started, finished=finished, error=error)
-        p.execute(ctx)
+        await p.execute(ctx)
         assert started.get() is True
         assert finished.get() is True
     """
 
-    __slots__ = ("_error", "_finished", "_started")
-
     def __init__(
         self,
-        *children: Exec,
+        *children: Executable,
         started: Var[bool] | None = None,
         finished: Var[bool] | None = None,
         error: Var[str] | None = None,
@@ -58,21 +56,21 @@ class Progress(Flow):
         self._finished = finished or Var(False)
         self._error = error or Var("")
 
-    def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> None:
         """Execute children with lifecycle tracking."""
         self._started.set(True)
         self._finished.set(False)
         self._error.set("")
         try:
             for child in self.children:
-                child.execute(ctx)
+                await child.execute(ctx)
             self._finished.set(True)
         except Exception as e:
             self._error.set(str(e))
             raise
 
 
-def add_progress(root: Exec) -> Exec:
+def add_progress(root: Executable) -> Executable:
     """Wrap every non-Progress Flow in a Progress.
 
     Tree transform: walks the tree bottom-up and wraps
@@ -86,7 +84,7 @@ def add_progress(root: Exec) -> Exec:
         New tree with Progress wrappers.
     """
 
-    def _wrap(node: Exec) -> Exec:
+    def _wrap(node: Executable) -> Executable:
         if isinstance(node, Flow) and not isinstance(node, Progress):
             return Progress(node)
         return node

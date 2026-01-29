@@ -33,7 +33,8 @@ __all__ = [
 class NegOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """Negation: -operand."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return -operand  # type: ignore
         except TypeError:
@@ -43,7 +44,8 @@ class NegOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class AbsOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """Absolute value: abs(operand)."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return abs(operand)  # type: ignore
         except TypeError:
@@ -53,7 +55,8 @@ class AbsOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class PosOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """Unary plus: +operand."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return +operand  # type: ignore
         except TypeError:
@@ -68,7 +71,8 @@ class PosOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class AddOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Addition: left + right."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left + right  # type: ignore
         except TypeError:
@@ -78,7 +82,8 @@ class AddOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class SubOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Subtraction: left - right."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left - right  # type: ignore
         except TypeError:
@@ -88,7 +93,8 @@ class SubOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class MulOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Multiplication: left * right."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left * right  # type: ignore
         except TypeError:
@@ -98,7 +104,8 @@ class MulOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class DivOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Division: left / right. Returns Invalid on division by zero."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left / right  # type: ignore
         except (TypeError, ZeroDivisionError):
@@ -108,7 +115,8 @@ class DivOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class FloorDivOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Floor division: left // right. Returns Invalid on division by zero."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left // right  # type: ignore
         except (TypeError, ZeroDivisionError):
@@ -118,7 +126,8 @@ class FloorDivOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class ModOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Modulo: left % right. Returns Invalid on division by zero."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left % right  # type: ignore
         except (TypeError, ZeroDivisionError):
@@ -128,7 +137,8 @@ class ModOp[ResultT](Operation, BinaryMorphism[ResultT]):
 class PowOp[ResultT](Operation, BinaryMorphism[ResultT]):
     """Power: left ** right."""
 
-    def _apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+        """Apply."""
         try:
             return left**right  # type: ignore
         except (TypeError, OverflowError):

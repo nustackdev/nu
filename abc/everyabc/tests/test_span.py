@@ -5,7 +5,7 @@ from abc import ABC
 from everyabc.flow import Flow
 from everyabc.span import Span
 from everyabc.term import Term
-from everyabc.tree import Exec, depth, find, map_nodes, preorder, prune, size, unwrap
+from everyabc.tree import Executable, depth, find, map_nodes, preorder, prune, size, unwrap
 
 
 # --- Test helpers ---
@@ -25,10 +25,10 @@ class SimpleTerm(Term):
         super().__init__(*children)
 
     @property
-    def is_pure(self):
+    def is_self_pure(self):
         return True
 
-    def execute(self, context):
+    async def execute(self, ctx):
         return None
 
 
@@ -47,7 +47,7 @@ class TestSpanIsAbstract:
         assert issubclass(Span, ABC)
 
     def test_span_is_exec(self):
-        assert issubclass(Span, Exec)
+        assert issubclass(Span, Executable)
 
 
 class TestSpanChildren:

@@ -4,7 +4,7 @@ from everyabc.flow import Flow
 from everyabc.span import Span
 from everyabc.term import Term
 from everyabc.tree import (
-    Exec,
+    Executable,
     bfs,
     depth,
     find,
@@ -26,10 +26,10 @@ class Add(Term):
         super().__init__(*children)
 
     @property
-    def is_pure(self):
+    def is_self_pure(self):
         return True
 
-    def execute(self, context):
+    async def execute(self, ctx):
         return None
 
 
@@ -41,10 +41,10 @@ class Lit(Term):
         self._value = value
 
     @property
-    def is_pure(self):
+    def is_self_pure(self):
         return True
 
-    def execute(self, context):
+    async def execute(self, ctx):
         return self._value
 
     def with_children(self, *children):
@@ -156,8 +156,8 @@ class TestTopologyTree:
 
     def test_find_execs(self):
         tree = self._make_tree()
-        execs = find(tree, lambda n: isinstance(n, Exec))
-        # All nodes are Execs
+        execs = find(tree, lambda n: isinstance(n, Executable))
+        # All nodes are Executables
         assert len(execs) == 9
 
 

@@ -60,21 +60,21 @@ class GetOp[T](Operation, Morphism[T | Sentinel]):
         super().__init__(cast("PVPrimitiveRef", ref))
         self.ref = cast("PVPrimitiveRef", ref)
 
-    def execute(self, context: Context) -> T | Sentinel:
+    async def execute(self, ctx: Context) -> T | Sentinel:
         """Execute read operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Value read from storage, or Empty if not found
         """
         # Resolve ref to path
-        value_path = self.ref.resolve(context)
+        value_path = await self.ref.resolve(ctx)
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         # Navigate to parent and get key
         try:
@@ -112,21 +112,21 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
         super().__init__(cast("PVViewRef[view_traits.Convertible[T]]", ref))
         self.ref = cast("PVViewRef[view_traits.Convertible[T]]", ref)
 
-    def execute(self, context: Context) -> T | Sentinel:
+    async def execute(self, ctx: Context) -> T | Sentinel:
         """Execute extract operation.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Extracted data, or Empty if not found
         """
         # Resolve ref to path
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         # Navigate to view
         try:
@@ -165,21 +165,21 @@ class ExistsOp(Operation, Morphism[bool]):
         super().__init__(cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref))
         self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
 
-    def execute(self, context: Context) -> bool:
+    async def execute(self, ctx: Context) -> bool:
         """Execute existence check.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             True if location exists, False otherwise
         """
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         try:
-            ref_path = self.ref.resolve(context)
+            ref_path = await self.ref.resolve(ctx)
 
             if isinstance(self.ref, PVPrimitiveRef):
                 parent_view, key = path.navigate_value(root_view, ref_path)
@@ -219,17 +219,17 @@ class MissingOp(Operation, Morphism[bool]):
         super().__init__(cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref))
         self.ref = cast("PVPrimitiveRef[Value] | PVViewRef[View]", ref)
 
-    def execute(self, context: Context) -> bool:
+    async def execute(self, ctx: Context) -> bool:
         """Execute missing check.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             True if location is missing, False otherwise
         """
         exists_op = ExistsOp(self.ref)
-        return not exists_op.execute(context)
+        return not await exists_op.execute(ctx)
 
     def __repr__(self) -> str:
         return f"MissingOp({self.ref!r})"
@@ -254,20 +254,20 @@ class LengthOp(Operation, Morphism[int | Sentinel]):
         super().__init__(cast("PVViewRef[view_traits.Sizeable]", ref))
         self.ref = cast("PVViewRef[view_traits.Sizeable]", ref)
 
-    def execute(self, context: Context) -> int | Sentinel:
+    async def execute(self, ctx: Context) -> int | Sentinel:
         """Execute length query.
 
         Args:
-            context: Execution context
+            ctx: Execution context
 
         Returns:
             Length of container, or Empty if not found
         """
-        view_path = self.ref.resolve(context)
+        view_path = await self.ref.resolve(ctx)
 
         # Get root view from context (shape-scoped)
         shape = self.ref.get_root_shape()
-        root_view = context.get(View, shape=shape)
+        root_view = ctx.get(View, shape=shape)
 
         try:
             if not view_path:

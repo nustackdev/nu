@@ -24,7 +24,8 @@ __all__ = [
 class SumOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """Sum of sequence elements: sum(seq)."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"sum_() requires list or tuple, got {type(operand).__name__}")
         try:
@@ -36,7 +37,8 @@ class SumOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class MinOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """Minimum element: min(seq)."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"min_() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -50,7 +52,8 @@ class MinOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class MaxOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
     """Maximum element: max(seq)."""
 
-    def _apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT | Sentinel:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"max_() requires list or tuple, got {type(operand).__name__}")
         if len(operand) == 0:
@@ -64,7 +67,8 @@ class MaxOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 class AnyOp(Operation, UnaryMorphism[bool]):
     """Any truthy element: any(seq)."""
 
-    def _apply(self, operand: object) -> bool:
+    def apply(self, operand: object) -> bool:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"any_() requires list or tuple, got {type(operand).__name__}")
         return any(operand)
@@ -73,7 +77,8 @@ class AnyOp(Operation, UnaryMorphism[bool]):
 class AllOp(Operation, UnaryMorphism[bool]):
     """All truthy elements: all(seq)."""
 
-    def _apply(self, operand: object) -> bool:
+    def apply(self, operand: object) -> bool:
+        """Apply."""
         if not isinstance(operand, (list, tuple)):
             raise TypeError(f"all_() requires list or tuple, got {type(operand).__name__}")
         return all(operand)

@@ -20,7 +20,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from everyabc.tree import Exec
+from everyabc.tree import Executable
 
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class Term[ResultT](Exec["Term"], ABC):
+class Term[ResultT](Executable["Term"], ABC):
     """Base contract for all executable semantic nodes.
 
     Everything in the topology that computes is a Term:
@@ -46,24 +46,46 @@ class Term[ResultT](Exec["Term"], ABC):
     Context provides resolved Handles for resource access.
 
     Inherits from defs.Term which provides:
-    - is_pure: abstract property
+    - is_self_pure: abstract property (this node only)
+    - is_subtree_pure: concrete property (this node + all descendants)
     - children: property returning tuple[Term, ...]
     """
 
     @abstractmethod
-    def execute(self, context: Context) -> ResultT:
+    async def execute(self, ctx: Context) -> ResultT:
         """Execute this term within a context.
 
         Args:
-            context: Container of resolved handles.
+            ctx: Container of resolved handles.
 
         Returns:
             Term-specific result.
         """
         ...
 
+    @property
+    @abstractmethod
+    def is_self_pure(self) -> bool:
+        """Whether this exact node is pure (no side effects).
 
-class LValue[T](Term[T]):
+        Returns:
+            True - if pure, False otherwise
+        """
+        ...
+
+    @property
+    def is_subtree_pure(self) -> bool:
+        """Whether this node and its entire subtree are pure.
+
+        Returns:
+            True - if self and all descendant Terms are pure
+        """
+        if not self.is_self_pure:
+            return False
+        return all(child.is_subtree_pure for child in self._children if isinstance(child, Term))
+
+
+class LValue[T](Term[T], ABC):
     """Addressable location in the data tree.
 
     LValues represent positions where data lives.
@@ -71,7 +93,7 @@ class LValue[T](Term[T]):
     """
 
     @abstractmethod
-    def resolve(self, context: Context) -> object:
+    def resolve(self, ctx: Context) -> object:
         """Resolve to concrete location identifier.
 
         Returns a substrate-specific location identifier.
@@ -79,7 +101,7 @@ class LValue[T](Term[T]):
         ...
 
 
-class RValue[ResultT](Term[ResultT]):
+class RValue[ResultT](Term[ResultT], ABC):
     """Evaluable expression that produces a value.
 
     RValues represent computations — both pure (operations)

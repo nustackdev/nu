@@ -1,15 +1,15 @@
-"""Parallel -- concurrent execution via ThreadPoolExecutor."""
+"""Parallel -- concurrent execution via asyncio.gather."""
 
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
 from typing import TYPE_CHECKING
 
 from everyabc import Flow
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Exec
+    from everyabc import Context, Executable
 
 
 __all__ = [
@@ -18,9 +18,9 @@ __all__ = [
 
 
 class Parallel(Flow):
-    """Execute children concurrently via ThreadPoolExecutor.
+    """Execute children concurrently via asyncio.gather.
 
-    All children are submitted to a thread pool and waited on.
+    All children are launched as async tasks and gathered.
     First exception encountered is propagated.
 
     Example::
@@ -28,9 +28,7 @@ class Parallel(Flow):
         Parallel(fetch_users, fetch_posts, fetch_comments)
     """
 
-    __slots__ = ("_max_workers",)
-
-    def __init__(self, *children: Exec, max_workers: int | None = None) -> None:
+    def __init__(self, *children: Executable, max_workers: int | None = None) -> None:
         """Initialize parallel flow.
 
         Args:
@@ -40,12 +38,9 @@ class Parallel(Flow):
         super().__init__(*children)
         self._max_workers = max_workers
 
-    def execute(self, ctx: Context) -> None:
-        """Execute children in parallel threads."""
+    async def execute(self, ctx: Context) -> None:
+        """Execute children concurrently via asyncio.gather."""
         if not self.children:
             return
 
-        with ThreadPoolExecutor(max_workers=self._max_workers) as pool:
-            futures = {pool.submit(child.execute, ctx): child for child in self.children}
-            for future in as_completed(futures):
-                future.result()
+        await asyncio.gather(*(child.execute(ctx) for child in self.children))

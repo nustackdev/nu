@@ -74,11 +74,6 @@ class NotionRef[T](Ref[T], ABC):
         """Execute by fetching value. Term interface."""
         return self.fetch(ctx)
 
-    @property
-    def is_pure(self) -> bool:
-        """Refs are pure (reading doesn't mutate)."""
-        return True
-
 
 class TableRef(NotionRef[list[dict[str, Any]]]):
     """Reference to a Notion database (table).

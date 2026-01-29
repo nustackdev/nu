@@ -93,9 +93,9 @@ class TestIntRef:
         x = IntRef(42)
         y = x + 10
         z = y * 2
-        assert x.is_pure
-        assert y.is_pure
-        assert z.is_pure
+        assert x.is_self_pure
+        assert y.is_self_pure
+        assert z.is_self_pure
 
 
 class TestStrRef:

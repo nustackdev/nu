@@ -81,87 +81,149 @@ class TestWithChildren:
         assert result.label == "original"
 
 
-class TestAppend:
-    def test_append_to_leaf(self):
+class TestGetChild:
+    def test_get_child_int(self):
+        a = SimpleNode("a")
+        b = SimpleNode("b")
+        parent = SimpleNode("p", a, b)
+        assert parent.get_child(0) is a
+        assert parent.get_child(1) is b
+
+    def test_get_child_negative(self):
+        a = SimpleNode("a")
+        b = SimpleNode("b")
+        parent = SimpleNode("p", a, b)
+        assert parent.get_child(-1) is b
+
+    def test_get_child_out_of_range(self):
+        parent = SimpleNode("p", SimpleNode("a"))
+        with pytest.raises(IndexError):
+            parent.get_child(5)
+
+
+class TestIterChildren:
+    def test_iter_children_leaf(self):
+        leaf = SimpleNode("x")
+        assert list(leaf.iter_children()) == []
+
+    def test_iter_children_branch(self):
+        a = SimpleNode("a")
+        b = SimpleNode("b")
+        parent = SimpleNode("p", a, b)
+        assert list(parent.iter_children()) == [a, b]
+
+    def test_iter_children_for_loop(self):
+        children = [SimpleNode("a"), SimpleNode("b"), SimpleNode("c")]
+        parent = SimpleNode("p", *children)
+        collected = []
+        for child in parent.iter_children():
+            collected.append(child)
+        assert collected == children
+
+
+class TestHasChild:
+    def test_has_child_by_identity(self):
+        a = SimpleNode("a")
+        b = SimpleNode("b")
+        parent = SimpleNode("p", a, b)
+        assert parent.has_child(a)
+        assert parent.has_child(b)
+
+    def test_has_child_not_found(self):
+        a = SimpleNode("a")
+        other = SimpleNode("a")  # same label, different object
+        parent = SimpleNode("p", a)
+        assert not parent.has_child(other)
+
+    def test_has_child_uses_identity_not_equality(self):
+        a = SimpleNode("a")
+        equal_a = SimpleNode("a")
+        parent = SimpleNode("p", a)
+        assert a == equal_a  # they are equal
+        assert not parent.has_child(equal_a)  # but different identity
+
+
+class TestAppendChild:
+    def test_append_child_to_leaf(self):
         leaf = SimpleNode("p")
         child = SimpleNode("a")
-        result = leaf.append(child)
+        result = leaf.append_child(child)
         assert result.children == (child,)
         assert result.label == "p"
 
-    def test_append_to_branch(self):
+    def test_append_child_to_branch(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", a)
-        result = parent.append(b)
+        result = parent.append_child(b)
         assert result.children == (a, b)
 
-    def test_append_does_not_mutate_original(self):
+    def test_append_child_does_not_mutate_original(self):
         a = SimpleNode("a")
         parent = SimpleNode("p", a)
-        parent.append(SimpleNode("b"))
+        parent.append_child(SimpleNode("b"))
         assert parent.children == (a,)
 
 
-class TestPrepend:
-    def test_prepend_to_leaf(self):
+class TestPrependChild:
+    def test_prepend_child_to_leaf(self):
         leaf = SimpleNode("p")
         child = SimpleNode("a")
-        result = leaf.prepend(child)
+        result = leaf.prepend_child(child)
         assert result.children == (child,)
 
-    def test_prepend_to_branch(self):
+    def test_prepend_child_to_branch(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", b)
-        result = parent.prepend(a)
+        result = parent.prepend_child(a)
         assert result.children == (a, b)
 
 
-class TestInsert:
-    def test_insert_at_beginning(self):
+class TestInsertChild:
+    def test_insert_child_at_beginning(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", b)
-        result = parent.insert(0, a)
+        result = parent.insert_child(0, a)
         assert result.children == (a, b)
 
-    def test_insert_in_middle(self):
+    def test_insert_child_in_middle(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         c = SimpleNode("c")
         parent = SimpleNode("p", a, c)
-        result = parent.insert(1, b)
+        result = parent.insert_child(1, b)
         assert result.children == (a, b, c)
 
-    def test_insert_at_end(self):
+    def test_insert_child_at_end(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", a)
-        result = parent.insert(1, b)
+        result = parent.insert_child(1, b)
         assert result.children == (a, b)
 
 
-class TestRemove:
-    def test_remove_first(self):
+class TestRemoveChild:
+    def test_remove_child_first(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", a, b)
-        result = parent.remove(0)
+        result = parent.remove_child(0)
         assert result.children == (b,)
 
-    def test_remove_last(self):
+    def test_remove_child_last(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", a, b)
-        result = parent.remove(1)
+        result = parent.remove_child(1)
         assert result.children == (a,)
 
-    def test_remove_does_not_mutate_original(self):
+    def test_remove_child_does_not_mutate_original(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", a, b)
-        parent.remove(0)
+        parent.remove_child(0)
         assert parent.children == (a, b)
 
 
@@ -180,84 +242,6 @@ class TestReplaceChild:
         parent = SimpleNode("p", a)
         parent.replace_child(0, b)
         assert parent.children == (a,)
-
-
-class TestLen:
-    def test_len_of_leaf(self):
-        assert len(SimpleNode("x")) == 0
-
-    def test_len_of_branch(self):
-        parent = SimpleNode("p", SimpleNode("a"), SimpleNode("b"))
-        assert len(parent) == 2
-
-
-class TestIter:
-    def test_iter_leaf(self):
-        leaf = SimpleNode("x")
-        assert list(leaf) == []
-
-    def test_iter_branch(self):
-        a = SimpleNode("a")
-        b = SimpleNode("b")
-        parent = SimpleNode("p", a, b)
-        assert list(parent) == [a, b]
-
-    def test_for_loop(self):
-        children = [SimpleNode("a"), SimpleNode("b"), SimpleNode("c")]
-        parent = SimpleNode("p", *children)
-        collected = []
-        for child in parent:
-            collected.append(child)
-        assert collected == children
-
-
-class TestGetitem:
-    def test_getitem_int(self):
-        a = SimpleNode("a")
-        b = SimpleNode("b")
-        parent = SimpleNode("p", a, b)
-        assert parent[0] is a
-        assert parent[1] is b
-
-    def test_getitem_negative(self):
-        a = SimpleNode("a")
-        b = SimpleNode("b")
-        parent = SimpleNode("p", a, b)
-        assert parent[-1] is b
-
-    def test_getitem_slice(self):
-        a = SimpleNode("a")
-        b = SimpleNode("b")
-        c = SimpleNode("c")
-        parent = SimpleNode("p", a, b, c)
-        assert parent[0:2] == (a, b)
-
-    def test_getitem_out_of_range(self):
-        parent = SimpleNode("p", SimpleNode("a"))
-        with pytest.raises(IndexError):
-            parent[5]
-
-
-class TestContains:
-    def test_contains_by_identity(self):
-        a = SimpleNode("a")
-        b = SimpleNode("b")
-        parent = SimpleNode("p", a, b)
-        assert a in parent
-        assert b in parent
-
-    def test_contains_not_found(self):
-        a = SimpleNode("a")
-        other = SimpleNode("a")  # same label, different object
-        parent = SimpleNode("p", a)
-        assert other not in parent
-
-    def test_contains_uses_identity_not_equality(self):
-        a = SimpleNode("a")
-        equal_a = SimpleNode("a")
-        parent = SimpleNode("p", a)
-        assert a == equal_a  # they are equal
-        assert equal_a not in parent  # but different identity
 
 
 class TestBool:
@@ -286,33 +270,33 @@ class TestRepr:
 
 
 class TestImmutability:
-    def test_append_does_not_mutate(self):
+    def test_append_child_does_not_mutate(self):
         a = SimpleNode("a")
         parent = SimpleNode("p", a)
         original_children = parent.children
-        parent.append(SimpleNode("b"))
+        parent.append_child(SimpleNode("b"))
         assert parent.children is original_children
 
-    def test_prepend_does_not_mutate(self):
+    def test_prepend_child_does_not_mutate(self):
         a = SimpleNode("a")
         parent = SimpleNode("p", a)
         original_children = parent.children
-        parent.prepend(SimpleNode("b"))
+        parent.prepend_child(SimpleNode("b"))
         assert parent.children is original_children
 
-    def test_insert_does_not_mutate(self):
+    def test_insert_child_does_not_mutate(self):
         a = SimpleNode("a")
         parent = SimpleNode("p", a)
         original_children = parent.children
-        parent.insert(0, SimpleNode("b"))
+        parent.insert_child(0, SimpleNode("b"))
         assert parent.children is original_children
 
-    def test_remove_does_not_mutate(self):
+    def test_remove_child_does_not_mutate(self):
         a = SimpleNode("a")
         b = SimpleNode("b")
         parent = SimpleNode("p", a, b)
         original_children = parent.children
-        parent.remove(0)
+        parent.remove_child(0)
         assert parent.children is original_children
 
     def test_replace_child_does_not_mutate(self):

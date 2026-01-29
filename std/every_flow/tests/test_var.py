@@ -25,19 +25,19 @@ def test_var_fetch():
     assert v.fetch(Context()) == 7
 
 
-def test_var_execute():
+async def test_var_execute():
     v = Var(7)
-    assert v.execute(Context()) == 7
+    assert await v.execute(Context()) == 7
 
 
-def test_var_set_then_execute():
+async def test_var_set_then_execute():
     v = Var(0)
     v.set(42)
-    assert v.execute(Context()) == 42
+    assert await v.execute(Context()) == 42
 
 
 def test_var_is_pure():
-    assert Var(0).is_pure is True
+    assert Var(0).is_self_pure is True
 
 
 def test_var_is_leaf():
