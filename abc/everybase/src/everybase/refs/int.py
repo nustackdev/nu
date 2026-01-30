@@ -11,14 +11,12 @@ from typing import TYPE_CHECKING, overload
 
 from everybase.capabilities import BitwiseBase, ComparableBase, LogicalBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
     from everyabc import Term
-    from everybase.py.bool import BoolRef
-    from everybase.py.float import FloatRef
-    from everybase.py.int import IntRef
+    from everybase.py import BoolRef, FloatRef, IntRef
 
 
 __all__ = [
@@ -38,12 +36,12 @@ class IntRefBase(
     """
 
     def _wrap_bitwise_result(self, operand: Term) -> IntRef:
-        from everybase.py.int import IntRef
+        from everybase.py import IntRef
 
         return IntRef(operand)
 
     def _wrap_logical_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
@@ -57,8 +55,7 @@ class IntRefBase(
     def __add__(self, other: float | FloatRef) -> FloatRef: ...
     def __add__(self, other: int | float | IntRef | FloatRef) -> IntRef | FloatRef:
         from everybase.morphisms import AddOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, (float, FloatRef)):
             return FloatRef(AddOp(self, other))
@@ -70,8 +67,7 @@ class IntRefBase(
     def __radd__(self, other: float) -> FloatRef: ...
     def __radd__(self, other: int | float) -> IntRef | FloatRef:
         from everybase.morphisms import AddOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, float):
             return FloatRef(AddOp(other, self))
@@ -83,8 +79,7 @@ class IntRefBase(
     def __sub__(self, other: float | FloatRef) -> FloatRef: ...
     def __sub__(self, other: int | float | IntRef | FloatRef) -> IntRef | FloatRef:
         from everybase.morphisms import SubOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, (float, FloatRef)):
             return FloatRef(SubOp(self, other))
@@ -96,8 +91,7 @@ class IntRefBase(
     def __rsub__(self, other: float) -> FloatRef: ...
     def __rsub__(self, other: int | float) -> IntRef | FloatRef:
         from everybase.morphisms import SubOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, float):
             return FloatRef(SubOp(other, self))
@@ -109,8 +103,7 @@ class IntRefBase(
     def __mul__(self, other: float | FloatRef) -> FloatRef: ...
     def __mul__(self, other: int | float | IntRef | FloatRef) -> IntRef | FloatRef:
         from everybase.morphisms import MulOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, (float, FloatRef)):
             return FloatRef(MulOp(self, other))
@@ -122,8 +115,7 @@ class IntRefBase(
     def __rmul__(self, other: float) -> FloatRef: ...
     def __rmul__(self, other: int | float) -> IntRef | FloatRef:
         from everybase.morphisms import MulOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, float):
             return FloatRef(MulOp(other, self))
@@ -131,13 +123,13 @@ class IntRefBase(
 
     def __truediv__(self, other: int | float | IntRef | FloatRef) -> FloatRef:
         from everybase.morphisms import DivOp
-        from everybase.py.float import FloatRef
+        from everybase.py import FloatRef
 
         return FloatRef(DivOp(self, other))
 
     def __rtruediv__(self, other: int | float) -> FloatRef:
         from everybase.morphisms import DivOp
-        from everybase.py.float import FloatRef
+        from everybase.py import FloatRef
 
         return FloatRef(DivOp(other, self))
 
@@ -147,8 +139,7 @@ class IntRefBase(
     def __floordiv__(self, other: float | FloatRef) -> FloatRef: ...
     def __floordiv__(self, other: int | float | IntRef | FloatRef) -> IntRef | FloatRef:
         from everybase.morphisms import FloorDivOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, (float, FloatRef)):
             return FloatRef(FloorDivOp(self, other))
@@ -160,8 +151,7 @@ class IntRefBase(
     def __rfloordiv__(self, other: float) -> FloatRef: ...
     def __rfloordiv__(self, other: int | float) -> IntRef | FloatRef:
         from everybase.morphisms import FloorDivOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, float):
             return FloatRef(FloorDivOp(other, self))
@@ -173,8 +163,7 @@ class IntRefBase(
     def __mod__(self, other: float | FloatRef) -> FloatRef: ...
     def __mod__(self, other: int | float | IntRef | FloatRef) -> IntRef | FloatRef:
         from everybase.morphisms import ModOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, (float, FloatRef)):
             return FloatRef(ModOp(self, other))
@@ -186,8 +175,7 @@ class IntRefBase(
     def __rmod__(self, other: float) -> FloatRef: ...
     def __rmod__(self, other: int | float) -> IntRef | FloatRef:
         from everybase.morphisms import ModOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, float):
             return FloatRef(ModOp(other, self))
@@ -199,8 +187,7 @@ class IntRefBase(
     def __pow__(self, other: float | FloatRef) -> FloatRef: ...
     def __pow__(self, other: int | float | IntRef | FloatRef) -> IntRef | FloatRef:
         from everybase.morphisms import PowOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, (float, FloatRef)):
             return FloatRef(PowOp(self, other))
@@ -212,8 +199,7 @@ class IntRefBase(
     def __rpow__(self, other: float) -> FloatRef: ...
     def __rpow__(self, other: int | float) -> IntRef | FloatRef:
         from everybase.morphisms import PowOp
-        from everybase.py.float import FloatRef
-        from everybase.py.int import IntRef
+        from everybase.py import FloatRef, IntRef
 
         if isinstance(other, float):
             return FloatRef(PowOp(other, self))
@@ -221,18 +207,18 @@ class IntRefBase(
 
     def __neg__(self) -> IntRef:
         from everybase.morphisms import NegOp
-        from everybase.py.int import IntRef
+        from everybase.py import IntRef
 
         return IntRef(NegOp(self))
 
     def __pos__(self) -> IntRef:
         from everybase.morphisms import PosOp
-        from everybase.py.int import IntRef
+        from everybase.py import IntRef
 
         return IntRef(PosOp(self))
 
     def __abs__(self) -> IntRef:
         from everybase.morphisms import AbsOp
-        from everybase.py.int import IntRef
+        from everybase.py import IntRef
 
         return IntRef(AbsOp(self))

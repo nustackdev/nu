@@ -17,7 +17,7 @@ from everybase.capabilities import (
     SliceableBase,
 )
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
@@ -44,34 +44,34 @@ class BytesRefBase(
     """
 
     def _wrap_logical_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_bytes_result(self, operand: Term) -> BytesRef:
-        from everybase.py.bytes import BytesRef
+        from everybase.py import BytesRef
 
         return BytesRef(operand)
 
     def _wrap_sliceable_result(self, operand: Term) -> BytesRef:
-        from everybase.py.bytes import BytesRef
+        from everybase.py import BytesRef
 
         return BytesRef(operand)
 
     def __add__(self, other: bytes | BytesRefBase) -> BytesRef:
         from everybase.morphisms import AddOp
-        from everybase.py.bytes import BytesRef
+        from everybase.py import BytesRef
 
         return BytesRef(AddOp(self, other))
 
     def __radd__(self, other: bytes) -> BytesRef:
         from everybase.morphisms import AddOp
-        from everybase.py.bytes import BytesRef
+        from everybase.py import BytesRef
 
         return BytesRef(AddOp(other, self))
 
@@ -81,8 +81,7 @@ class BytesRefBase(
     def __getitem__(self, key: slice) -> BytesRef: ...
     def __getitem__(self, key: int | slice) -> BytesRef | IntRef:
         from everybase.morphisms import AtOp, SliceOp
-        from everybase.py.bytes import BytesRef
-        from everybase.py.int import IntRef
+        from everybase.py import BytesRef, IntRef
 
         if isinstance(key, slice):
             return BytesRef(SliceOp(self, key.start, key.stop, key.step))
@@ -95,14 +94,14 @@ class BytesRefBase(
     def decode(self, encoding: StrArg = "utf-8") -> StrRef:
         """Decode bytes to string."""
         from everybase.morphisms.type_bytes import DecodeOp
-        from everybase.py.str import StrRef
+        from everybase.py import StrRef
 
         return StrRef(DecodeOp(self, encoding))
 
     def hex_(self) -> StrRef:
         """Convert to hex string."""
         from everybase.morphisms.type_bytes import HexOp
-        from everybase.py.str import StrRef
+        from everybase.py import StrRef
 
         return StrRef(HexOp(self))
 
@@ -145,7 +144,7 @@ class BytesRefBase(
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListRef[bytes]:
         """Split bytes."""
         from everybase.morphisms.type_bytes import BytesSplitOp
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         if sep is not None:
             return ListRef(BytesSplitOp(self, sep, maxsplit))
@@ -154,28 +153,28 @@ class BytesRefBase(
     def find_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntRef:
         """Find sub-bytes."""
         from everybase.morphisms.type_bytes import BytesFindOp
-        from everybase.py.int import IntRef
+        from everybase.py import IntRef
 
         return IntRef(BytesFindOp(self, sub, start, end))
 
     def count_bytes(self, sub: BytesArg) -> IntRef:
         """Count sub-bytes occurrences."""
         from everybase.morphisms.type_bytes import BytesCountOp
-        from everybase.py.int import IntRef
+        from everybase.py import IntRef
 
         return IntRef(BytesCountOp(self, sub))
 
     def startswith(self, prefix: BytesArg) -> BoolRef:
         """Check if starts with prefix."""
         from everybase.morphisms.type_bytes import BytesStartsWithOp
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(BytesStartsWithOp(self, prefix))
 
     def endswith(self, suffix: BytesArg) -> BoolRef:
         """Check if ends with suffix."""
         from everybase.morphisms.type_bytes import BytesEndsWithOp
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(BytesEndsWithOp(self, suffix))
 

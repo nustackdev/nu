@@ -10,8 +10,8 @@ Example:
     KVIntRef(IntRefBase) = IntRefBase + KV storage get()
 """
 
+from ._base import RefBase
 from .any import AnyRefBase
-from .base import RefBase
 from .bool import BoolRefBase
 from .bytes import BytesRefBase
 from .dict import DictRefBase

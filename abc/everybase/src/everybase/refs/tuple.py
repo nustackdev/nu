@@ -11,15 +11,12 @@ from typing import TYPE_CHECKING, overload
 
 from everybase.capabilities import ComparableBase, SequenceBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
     from everyabc import Term
-    from everybase.py.any import AnyRef
-    from everybase.py.bool import BoolRef
-    from everybase.py.list import ListRef
-    from everybase.py.tuple import TupleRef
+    from everybase.py import AnyRef, BoolRef, ListRef, TupleRef
 
 
 __all__ = [
@@ -38,22 +35,22 @@ class TupleRefBase[*Ts](
     """
 
     def _wrap_comparison_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_sliceable_result(self, operand: Term) -> TupleRef:
-        from everybase.py.tuple import TupleRef
+        from everybase.py import TupleRef
 
         return TupleRef(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)
 
@@ -63,8 +60,7 @@ class TupleRefBase[*Ts](
     def __getitem__(self, key: slice) -> TupleRef: ...
     def __getitem__(self, key: int | slice) -> AnyRef | TupleRef:
         from everybase.morphisms import AtOp, SliceOp
-        from everybase.py.any import AnyRef
-        from everybase.py.tuple import TupleRef
+        from everybase.py import AnyRef, TupleRef
 
         if isinstance(key, slice):
             return TupleRef(SliceOp(self, key.start, key.stop, key.step))

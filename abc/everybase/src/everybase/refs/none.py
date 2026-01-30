@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from everybase.capabilities import LogicalBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
@@ -34,6 +34,6 @@ class NoneRefBase(
     """
 
     def _wrap_logical_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)

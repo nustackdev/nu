@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from everybase.capabilities import ComparableBase, LogicalBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
@@ -37,11 +37,11 @@ class BoolRefBase(
     """
 
     def _wrap_logical_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)

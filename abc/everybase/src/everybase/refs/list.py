@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, overload
 
 from everybase.capabilities import ComparableBase, SequenceBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
@@ -35,34 +35,34 @@ class ListRefBase[T](
     """
 
     def _wrap_comparison_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_sliceable_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)
 
     def __add__(self, other: list[T] | ListRefBase[T]) -> ListRef[T]:
         from everybase.morphisms import AddOp
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(AddOp[list[T]](self, other))
 
     def __radd__(self, other: list[T]) -> ListRef[T]:
         from everybase.morphisms import AddOp
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(AddOp(other, self))
 
@@ -72,8 +72,7 @@ class ListRefBase[T](
     def __getitem__(self, key: slice) -> ListRef[T]: ...
     def __getitem__(self, key: int | slice) -> AnyRef | ListRef[T]:
         from everybase.morphisms import AtOp, SliceOp
-        from everybase.py.any import AnyRef
-        from everybase.py.list import ListRef
+        from everybase.py import AnyRef, ListRef
 
         if isinstance(key, slice):
             return ListRef(SliceOp(self, key.start, key.stop, key.step))

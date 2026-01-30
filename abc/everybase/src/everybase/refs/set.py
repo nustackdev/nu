@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from everybase.capabilities import ComparableBase, SetLikeBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
@@ -42,17 +42,17 @@ class SetRefBase[T](
         return BoolRef(operand)
 
     def _wrap_set_result(self, operand: Term) -> SetRef[T]:
-        from everybase.py.set import SetRef
+        from everybase.py import SetRef
 
         return SetRef(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)
 
@@ -68,21 +68,21 @@ class FrozenSetRefBase[T](
     """
 
     def _wrap_comparison_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_set_result(self, operand: Term) -> FrozenSetRef[T]:
-        from everybase.py.frozenset import FrozenSetRef
+        from everybase.py import FrozenSetRef
 
         return FrozenSetRef(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)

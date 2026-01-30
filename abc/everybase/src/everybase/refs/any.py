@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from everybase.capabilities import BitwiseBase, ComparableBase, LogicalBase, NumericBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
@@ -38,21 +38,21 @@ class AnyRefBase(
     """
 
     def _wrap_arithmetic_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)
 
     def _wrap_bitwise_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_logical_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)

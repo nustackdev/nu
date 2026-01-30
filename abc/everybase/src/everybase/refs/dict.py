@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from everybase.capabilities import ComparableBase, MappingBase
 
-from .base import RefBase
+from ._base import RefBase
 
 
 if TYPE_CHECKING:
@@ -35,42 +35,42 @@ class DictRefBase[K, V](
     """
 
     def _wrap_comparison_result(self, operand: Term) -> BoolRef:
-        from everybase.py.bool import BoolRef
+        from everybase.py import BoolRef
 
         return BoolRef(operand)
 
     def _wrap_keys_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_values_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_items_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListRef:
-        from everybase.py.list import ListRef
+        from everybase.py import ListRef
 
         return ListRef(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyRef:
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(operand)
 
     def __getitem__(self, key: K) -> AnyRef:
         from everybase.morphisms import AtOp
-        from everybase.py.any import AnyRef
+        from everybase.py import AnyRef
 
         return AnyRef(AtOp(self, key))

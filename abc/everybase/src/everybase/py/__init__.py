@@ -1,16 +1,7 @@
 """Concrete Python memory refs for everybase.
 
-This module provides concrete ref implementations for Python types.
-Each inherits from PyRefBase (source storage) and its type-specific
-RefBase (traits).
-
-Hierarchy:
-    RefBase (in refs/) - pure ABC with ergonomics
-    └── XxxRefBase (in refs/) - combines traits
-
-    PyRefBase (in py/) - source storage mixin
-
-    XxxRef(PyRefBase, XxxRefBase) - concrete py ref
+Each ref combines PyRefBase (source storage) with its type-specific
+RefBase (capability traits).
 
 Types:
     Primitives: IntRef, FloatRef, BoolRef, StrRef, BytesRef
@@ -20,27 +11,24 @@ Types:
 
 from __future__ import annotations
 
-# Special
-from .any import AnyRef
-
-# Base
 from .base import PyRefBase
-
-# Primitives
-from .bool import BoolRef
-from .bytes import BytesRef
-
-# Collections
-from .dict import DictRef
-from .float import FloatRef
-from .frozenset import FrozenSetRef
-from .int import IntRef
-from .list import ListRef
-from .none import NoneRef
-from .sentinel import EmptyRef, InvalidRef, SentinelRef
-from .set import SetRef
-from .str import StrRef
-from .tuple import TupleRef
+from .refs import (
+    AnyRef,
+    BoolRef,
+    BytesRef,
+    DictRef,
+    EmptyRef,
+    FloatRef,
+    FrozenSetRef,
+    IntRef,
+    InvalidRef,
+    ListRef,
+    NoneRef,
+    SentinelRef,
+    SetRef,
+    StrRef,
+    TupleRef,
+)
 
 
 __all__ = [

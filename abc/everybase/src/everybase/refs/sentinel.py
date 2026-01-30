@@ -7,9 +7,9 @@ InvalidRefBase - Represents invalid/undefined operations
 
 from __future__ import annotations
 
-from abc import ABC
+from everyabc import Empty, Invalid
 
-from .base import RefBase
+from ._base import RefBase
 
 
 __all__ = [
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class SentinelRefBase(RefBase[None], ABC):
+class SentinelRefBase[T](RefBase[T]):
     """Base for sentinel refs (Empty, Invalid).
 
     Sentinels represent special values indicating absence or invalidity.
@@ -28,7 +28,7 @@ class SentinelRefBase(RefBase[None], ABC):
     pass
 
 
-class EmptyRefBase(SentinelRefBase, ABC):
+class EmptyRefBase(SentinelRefBase[Empty]):
     """Abstract base for Empty refs.
 
     Represents absence of a value, distinct from None.
@@ -40,7 +40,7 @@ class EmptyRefBase(SentinelRefBase, ABC):
     pass
 
 
-class InvalidRefBase(SentinelRefBase, ABC):
+class InvalidRefBase(SentinelRefBase[Invalid]):
     """Abstract base for Invalid refs.
 
     Represents invalid/undefined operations.
