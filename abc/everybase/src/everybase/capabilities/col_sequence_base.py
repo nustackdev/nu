@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from everyabc import BoolArg, StrArg
-    from everybase.py import IntRef, StrRef
+    from everybase.values import IntValue, StrValue
 
 
 __all__ = [
@@ -53,30 +53,30 @@ class SequenceBase[ElementT, ResultT](
 
         return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse=reverse)))
 
-    def join(self, separator: StrArg) -> StrRef:
+    def join(self, separator: StrArg) -> StrValue:
         """Join string elements."""
         from everybase.morphisms import JoinOp
-        from everybase.py import StrRef
+        from everybase.values import StrValue
 
-        return StrRef(JoinOp(self, separator))
+        return StrValue(JoinOp(self, separator))
 
-    def index(self, value: ElementT) -> IntRef:
+    def index(self, value: ElementT) -> IntValue:
         """Find index of value."""
         from everybase.morphisms import IndexOfOp
-        from everybase.py import IntRef
+        from everybase.values import IntValue
 
-        return IntRef(IndexOfOp(self, value))
+        return IntValue(IndexOfOp(self, value))
 
-    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntRef:
+    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue:
         """Find index of first match."""
         from everybase.morphisms import FindIndexOp
-        from everybase.py import IntRef
+        from everybase.values import IntValue
 
-        return IntRef(FindIndexOp(self, predicate))
+        return IntValue(FindIndexOp(self, predicate))
 
-    def count(self, value: ElementT) -> IntRef:
+    def count(self, value: ElementT) -> IntValue:
         """Count occurrences."""
         from everybase.morphisms import CountOp
-        from everybase.py import IntRef
+        from everybase.values import IntValue
 
-        return IntRef(CountOp(self, value))
+        return IntValue(CountOp(self, value))

@@ -1,0 +1,39 @@
+"""None ref base for nil/null values.
+
+NoneType_ = TypeBase[None] + Logical
+
+Returns concrete py types.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from everybase.capabilities import LogicalBase
+
+from ._base import TypeBase
+
+
+if TYPE_CHECKING:
+    from everyabc import Term
+    from everybase.values import BoolValue, NoneValue  # noqa: F401
+
+
+__all__ = [
+    "NoneType_",
+]
+
+
+class NoneType_(  # noqa: N801
+    LogicalBase["None | NoneValue", "BoolValue"],
+    TypeBase[None],
+):
+    """Abstract base for None/nil refs.
+
+    Represents absence of a value (distinct from Empty sentinel).
+    """
+
+    def _wrap_logical_result(self, operand: Term) -> BoolValue:
+        from everybase.values import BoolValue
+
+        return BoolValue(operand)

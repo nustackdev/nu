@@ -12,7 +12,7 @@ from .col_collection_base import CollectionBase
 
 if TYPE_CHECKING:
     from everyabc import Term
-    from everybase.py import BoolRef
+    from everybase.values import BoolValue
 
 
 __all__ = [
@@ -53,23 +53,23 @@ class SetLikeBase[ElementT, ResultT](
 
         return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
-    def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolRef:
+    def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
         """Check if subset."""
         from everybase.morphisms.abc_set import IsSubsetOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(IsSubsetOp(self, other))
+        return BoolValue(IsSubsetOp(self, other))
 
-    def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolRef:
+    def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
         """Check if superset."""
         from everybase.morphisms.abc_set import IsSupersetOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(IsSupersetOp(self, other))
+        return BoolValue(IsSupersetOp(self, other))
 
-    def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolRef:
+    def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
         """Check if disjoint."""
         from everybase.morphisms.abc_set import IsDisjointOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(IsDisjointOp(self, other))
+        return BoolValue(IsDisjointOp(self, other))

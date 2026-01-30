@@ -2,7 +2,7 @@
 
 This module provides conversion utilities for the unified Ref system:
 - ensure_term(): Wrap Python values in appropriate Ref classes
-- typed_ref(): Wrap operations in typed Ref classes
+- typed_value(): Wrap operations in typed Ref classes
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ensure_term",
-    "typed_ref",
+    "typed_value",
 ]
 
 logger = logging.getLogger(__name__)
@@ -35,55 +35,55 @@ def ensure_term(value: object) -> Term:
         Term (unchanged if already Term, wrapped in Ref otherwise)
 
     Example:
-        >>> ensure_term(42)  # → IntRef(42)
-        >>> ensure_term("hello")  # → StrRef("hello")
+        >>> ensure_term(42)  # → IntValue(42)
+        >>> ensure_term("hello")  # → StrValue("hello")
         >>> ensure_term(price.get())  # → price.get() (unchanged)
     """
     from everyabc import Term
-    from everybase.py import (
-        BoolRef,
-        BytesRef,
-        DictRef,
-        FloatRef,
-        FrozenSetRef,
-        IntRef,
-        ListRef,
-        NoneRef,
-        SetRef,
-        StrRef,
-        TupleRef,
+    from everybase.values import (
+        BoolValue,
+        BytesValue,
+        DictValue,
+        FloatValue,
+        FrozenSetValue,
+        IntValue,
+        ListValue,
+        NoneValue,
+        SetValue,
+        StrValue,
+        TupleValue,
     )
 
     if isinstance(value, Term):
         return value
     elif isinstance(value, bool):  # Must check bool before int (bool is subclass)
-        return BoolRef(value)
+        return BoolValue(value)
     elif isinstance(value, int):
-        return IntRef(value)
+        return IntValue(value)
     elif isinstance(value, str):
-        return StrRef(value)
+        return StrValue(value)
     elif isinstance(value, float):
-        return FloatRef(value)
+        return FloatValue(value)
     elif isinstance(value, bytes):
-        return BytesRef(value)
+        return BytesValue(value)
     elif value is None:
-        return NoneRef()
+        return NoneValue()
     elif isinstance(value, dict):
-        return DictRef(value)
+        return DictValue(value)
     elif isinstance(value, set):
-        return SetRef(value)
+        return SetValue(value)
     elif isinstance(value, list):
-        return ListRef(value)
+        return ListValue(value)
     elif isinstance(value, tuple):
-        return TupleRef(value)
+        return TupleValue(value)
     elif isinstance(value, frozenset):
-        return FrozenSetRef(value)
+        return FrozenSetValue(value)
     else:
         logger.error(f"Not supported type {value.__class__.__name__}")
         raise TypeError(f"Not supported type {value.__class__.__name__}")
 
 
-def typed_ref(result_type: object, op: Term) -> Ref:
+def typed_value(result_type: object, op: Term) -> Ref:
     """Wrap an operation in a typed Ref.
 
     Args:
@@ -94,46 +94,46 @@ def typed_ref(result_type: object, op: Term) -> Ref:
         Typed Ref wrapping the operation
 
     Example:
-        >>> typed_ref(int, GetOp(ref))  # → IntRef(GetOp(ref))
-        >>> typed_ref(str, some_op)  # → StrRef(some_op)
+        >>> typed_value(int, GetOp(ref))  # → IntValue(GetOp(ref))
+        >>> typed_value(str, some_op)  # → StrValue(some_op)
     """
-    from everybase.py import (
-        AnyRef,
-        BoolRef,
-        BytesRef,
-        DictRef,
-        FloatRef,
-        FrozenSetRef,
-        IntRef,
-        ListRef,
-        NoneRef,
-        SetRef,
-        StrRef,
-        TupleRef,
+    from everybase.values import (
+        AnyValue,
+        BoolValue,
+        BytesValue,
+        DictValue,
+        FloatValue,
+        FrozenSetValue,
+        IntValue,
+        ListValue,
+        NoneValue,
+        SetValue,
+        StrValue,
+        TupleValue,
     )
 
     if result_type is int:
-        return IntRef(op)
+        return IntValue(op)
     elif result_type is str:
-        return StrRef(op)
+        return StrValue(op)
     elif result_type is bool:
-        return BoolRef(op)
+        return BoolValue(op)
     elif result_type is float:
-        return FloatRef(op)
+        return FloatValue(op)
     elif result_type is bytes:
-        return BytesRef(op)
+        return BytesValue(op)
     elif result_type is None:
-        return NoneRef(None)
+        return NoneValue(None)
     elif result_type is dict:
-        return DictRef(op)
+        return DictValue(op)
     elif result_type is set:
-        return SetRef(op)
+        return SetValue(op)
     elif result_type is list:
-        return ListRef(op)
+        return ListValue(op)
     elif result_type is tuple:
-        return TupleRef(op)
+        return TupleValue(op)
     elif result_type is frozenset:
-        return FrozenSetRef(op)
+        return FrozenSetValue(op)
     else:
         logger.debug(f"Unknown type `{result_type}` for term `{op}`")
-        return AnyRef(op)
+        return AnyValue(op)

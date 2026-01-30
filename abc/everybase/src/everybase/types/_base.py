@@ -1,73 +1,79 @@
 """Base ref class inheriting from every.Ref.
 
-RefBase provides core ergonomics for all typed refs:
+TypeBase provides core ergonomics for all typed refs:
 - Sentinel checks (is_empty, is_invalid, etc.)
 - Type conversions (to_int, to_str, etc.)
 - Conditional operations (ifelse, or_default)
 
 Substrate-specific bases (PyRef, PVRefBase) implement fetch().
-Type-specific bases (IntRefBase, etc.) add operator traits.
+Type-specific bases (IntType, etc.) add operator traits.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Ref, Sentinel
-
 
 if TYPE_CHECKING:
-    from everyabc import BoolArg, Term
-    from everybase.py import AnyRef, BoolRef, BytesRef, FloatRef, IntRef, ListRef, StrRef
+    from everyabc import BoolArg, Sentinel, Term
+    from everybase.values import (
+        AnyValue,
+        BoolValue,
+        BytesValue,
+        FloatValue,
+        IntValue,
+        ListValue,
+        StrValue,
+    )
 
 
 __all__ = [
-    "RefBase",
+    "TypeBase",
 ]
 
 
-class RefBase[T](Ref[T]):
+class TypeBase[T]:
     """Abstract base for all typed refs.
 
     Inherits from every.Ref and provides:
     - Ergonomics (sentinel checks, type conversions, conditionals)
     - Abstract fetch() for substrates to implement
 
-    Subclasses (IntRefBase, etc.) add operator traits.
+    Subclasses (IntType, etc.) add operator traits.
     Substrate-specific bases (PyRef, PVRefBase) add storage.
 
     Note: Arithmetic operations return Python memory refs because
     the result is a computation (lazy expression), not a storage
-    location. A PVIntRef + 5 produces IntRef(AddOp(...)).
+    location. A PVIntRef + 5 produces IntValue(AddOp(...)).
     """
 
     # =========================================================================
     # SPECIAL VALUE CHECKS
     # =========================================================================
 
-    def is_empty(self) -> BoolRef:
+    def is_empty(self) -> BoolValue:
         """Check if this value is Empty."""
         from everybase.morphisms import IsEmptyOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(IsEmptyOp(self))
+        return BoolValue(IsEmptyOp(self))
 
-    def is_invalid(self) -> BoolRef:
+    def is_invalid(self) -> BoolValue:
         """Check if this value is Invalid."""
         from everybase.morphisms import IsNaNOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(IsNaNOp(self))
+        return BoolValue(IsNaNOp(self))
 
-    def is_sentinel(self) -> BoolRef:
+    def is_sentinel(self) -> BoolValue:
         """Check if this value is a special value."""
         return self.is_empty().or_(self.is_invalid())
 
-    def not_empty(self) -> BoolRef:
+    def not_empty(self) -> BoolValue:
         """Check if this value is not Empty."""
         return self.is_empty().not_()
 
-    def not_invalid(self) -> BoolRef:
+    def not_invalid(self) -> BoolValue:
         """Check if this value is not Invalid."""
         return self.is_invalid().not_()
 
@@ -79,61 +85,61 @@ class RefBase[T](Ref[T]):
         self,
         condition: BoolArg,
         otherwise: ElseT | Term[ElseT | Sentinel],
-    ) -> AnyRef:
+    ) -> AnyValue:
         """Conditional/ternary: if condition then self else otherwise."""
         from everybase.morphisms import ConditionalOp
-        from everybase.py import AnyRef
+        from everybase.values import AnyValue
 
-        return AnyRef(ConditionalOp(self, condition, otherwise))
+        return AnyValue(ConditionalOp(self, condition, otherwise))
 
-    def or_default[DefaultT](self, default: DefaultT | Term[DefaultT]) -> AnyRef:
+    def or_default[DefaultT](self, default: DefaultT | Term[DefaultT]) -> AnyValue:
         """Return self if not empty/invalid, otherwise return default."""
-        from everybase.py import AnyRef
+        from everybase.values import AnyValue
 
-        return AnyRef(self.ifelse(self.is_sentinel().not_(), default))
+        return AnyValue(self.ifelse(self.is_sentinel().not_(), default))
 
     # =========================================================================
     # TYPE CONVERSIONS
     # =========================================================================
 
-    def to_int(self) -> IntRef:
+    def to_int(self) -> IntValue:
         """Convert to integer."""
         from everybase.morphisms import ToIntOp
-        from everybase.py import IntRef
+        from everybase.values import IntValue
 
-        return IntRef(ToIntOp(self))
+        return IntValue(ToIntOp(self))
 
-    def to_float(self) -> FloatRef:
+    def to_float(self) -> FloatValue:
         """Convert to float."""
         from everybase.morphisms import ToFloatOp
-        from everybase.py import FloatRef
+        from everybase.values import FloatValue
 
-        return FloatRef(ToFloatOp(self))
+        return FloatValue(ToFloatOp(self))
 
-    def to_bool(self) -> BoolRef:
+    def to_bool(self) -> BoolValue:
         """Convert to boolean."""
         from everybase.morphisms import ToBoolOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(ToBoolOp(self))
+        return BoolValue(ToBoolOp(self))
 
-    def to_str(self) -> StrRef:
+    def to_str(self) -> StrValue:
         """Convert to string."""
         from everybase.morphisms import ToStrOp
-        from everybase.py import StrRef
+        from everybase.values import StrValue
 
-        return StrRef(ToStrOp(self))
+        return StrValue(ToStrOp(self))
 
-    def to_bytes(self, encoding: str = "utf-8") -> BytesRef:
+    def to_bytes(self, encoding: str = "utf-8") -> BytesValue:
         """Convert to bytes."""
         from everybase.morphisms import ToBytesOp
-        from everybase.py import BytesRef
+        from everybase.values import BytesValue
 
-        return BytesRef(ToBytesOp(self, encoding))
+        return BytesValue(ToBytesOp(self, encoding))
 
-    def to_list(self) -> ListRef:
+    def to_list(self) -> ListValue:
         """Convert to list."""
         from everybase.morphisms import ToListOp
-        from everybase.py import ListRef
+        from everybase.values import ListValue
 
-        return ListRef(ToListOp(self))
+        return ListValue(ToListOp(self))

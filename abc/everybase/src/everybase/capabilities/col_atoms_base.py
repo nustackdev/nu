@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from everyabc import IntArg, Term
-    from everybase.py import BoolRef, IntRef
+    from everybase.values import BoolValue, IntValue
 
 
 __all__ = [
@@ -27,23 +27,23 @@ __all__ = [
 class ContainableBase[ItemT]:
     """Base for values that support containment testing."""
 
-    def contains(self, item: ItemT) -> BoolRef:
+    def contains(self, item: ItemT) -> BoolValue:
         """Check if item is in this value."""
         from everybase.morphisms import ContainsOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(ContainsOp(self, item))
+        return BoolValue(ContainsOp(self, item))
 
 
 class LengthableBase:
     """Base for values that have a length."""
 
-    def len_(self) -> IntRef:
+    def len_(self) -> IntValue:
         """Get length of this value."""
         from everybase.morphisms import LenOp
-        from everybase.py import IntRef
+        from everybase.values import IntValue
 
-        return IntRef(LenOp(self))
+        return IntValue(LenOp(self))
 
 
 class IndexableBase[KeyT, ResultValue]:

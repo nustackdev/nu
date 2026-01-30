@@ -69,8 +69,8 @@ from .term import (
     LValue,
     RValue,
     Term,
-    Value,
 )
+from .value import Value
 
 
 __all__ = [  # noqa: RUF022

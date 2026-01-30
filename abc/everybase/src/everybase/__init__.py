@@ -3,9 +3,9 @@
 Structure:
 - capabilities/: Capability protocols and bases (NumericBase/Protocol, ComparableBase/Protocol, etc.)
 - morphisms/: Concrete morphisms (AddOp, SubOp, EqOp, etc.)
-- refs/: Abstract ref bases (IntRefBase, StrRefBase, etc.)
-- py/: Python memory refs (IntRef, StrRef, ListRef, etc.)
-- util/: Utilities (ensure_term, typed_ref, combiners)
+- refs/: Abstract ref bases (IntType, StrType, etc.)
+- py/: Python memory refs (IntValue, StrValue, ListValue, etc.)
+- util/: Utilities (ensure_term, typed_value, combiners)
 """
 
 # Re-export capabilities
@@ -163,46 +163,46 @@ from everybase.morphisms import (
     XorOp,
 )
 
-# Re-export py refs
-from everybase.py import (
-    AnyRef,
-    BoolRef,
-    BytesRef,
-    DictRef,
-    EmptyRef,
-    FloatRef,
-    FrozenSetRef,
-    IntRef,
-    InvalidRef,
-    ListRef,
-    NoneRef,
-    PyRefBase,
-    SentinelRef,
-    SetRef,
-    StrRef,
-    TupleRef,
-)
-
 # Re-export ref bases
-from everybase.refs import (
-    AnyRefBase,
-    BoolRefBase,
-    BytesRefBase,
-    DictRefBase,
-    EmptyRefBase,
-    FloatRefBase,
-    FrozenSetRefBase,
-    IntRefBase,
-    InvalidRefBase,
-    ListRefBase,
-    NoneRefBase,
-    RefBase,
-    SentinelRefBase,
-    SetRefBase,
-    StrRefBase,
-    TupleRefBase,
+from everybase.types import (
+    AnyType,
+    BoolType,
+    BytesType,
+    DictType,
+    EmptyType,
+    FloatType,
+    FrozenSetType,
+    IntType,
+    InvalidType,
+    ListType,
+    NoneType_,
+    SentinelType,
+    SetType,
+    StrType,
+    TupleType,
+    TypeBase,
 )
-from everybase.utils import ensure_term, typed_ref
+from everybase.utils import ensure_term, typed_value
+
+# Re-export py refs
+from everybase.values import (
+    AnyValue,
+    BoolValue,
+    BytesValue,
+    DictValue,
+    EmptyValue,
+    FloatValue,
+    FrozenSetValue,
+    IntValue,
+    InvalidValue,
+    ListValue,
+    NoneValue,
+    SentinelValue,
+    SetValue,
+    StrValue,
+    TupleValue,
+    ValueBase,
+)
 
 
 __all__ = [  # noqa: RUF022
@@ -361,46 +361,46 @@ __all__ = [  # noqa: RUF022
     # =========================================================================
     # REFS (Python memory)
     # =========================================================================
-    "PyRefBase",
-    "IntRef",
-    "FloatRef",
-    "BoolRef",
-    "StrRef",
-    "BytesRef",
-    "ListRef",
-    "SetRef",
-    "DictRef",
-    "FrozenSetRef",
-    "TupleRef",
-    "AnyRef",
-    "NoneRef",
-    "SentinelRef",
-    "EmptyRef",
-    "InvalidRef",
+    "ValueBase",
+    "IntValue",
+    "FloatValue",
+    "BoolValue",
+    "StrValue",
+    "BytesValue",
+    "ListValue",
+    "SetValue",
+    "DictValue",
+    "FrozenSetValue",
+    "TupleValue",
+    "AnyValue",
+    "NoneValue",
+    "SentinelValue",
+    "EmptyValue",
+    "InvalidValue",
     # =========================================================================
     # REF BASES (abstract)
     # =========================================================================
-    "RefBase",
-    "IntRefBase",
-    "FloatRefBase",
-    "BoolRefBase",
-    "StrRefBase",
-    "BytesRefBase",
-    "ListRefBase",
-    "DictRefBase",
-    "SetRefBase",
-    "FrozenSetRefBase",
-    "TupleRefBase",
-    "AnyRefBase",
-    "NoneRefBase",
-    "SentinelRefBase",
-    "EmptyRefBase",
-    "InvalidRefBase",
+    "TypeBase",
+    "IntType",
+    "FloatType",
+    "BoolType",
+    "StrType",
+    "BytesType",
+    "ListType",
+    "DictType",
+    "SetType",
+    "FrozenSetType",
+    "TupleType",
+    "AnyType",
+    "NoneType_",
+    "SentinelType",
+    "EmptyType",
+    "InvalidType",
     # =========================================================================
     # UTILITIES
     # =========================================================================
     "ensure_term",
-    "typed_ref",
+    "typed_value",
     "all_",
     "and_",
     "any_",

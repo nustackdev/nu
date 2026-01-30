@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from everyabc import IntArg
-    from everybase.py import BoolRef, IntRef
+    from everybase.values import BoolValue, IntValue
 
 
 __all__ = [
@@ -29,14 +29,14 @@ __all__ = [
 class ContainableProtocol[ItemT](Protocol):
     """Protocol for values that support containment testing."""
 
-    def contains(self, item: ItemT) -> BoolRef: ...
+    def contains(self, item: ItemT) -> BoolValue: ...
 
 
 @runtime_checkable
 class LengthableProtocol(Protocol):
     """Protocol for values that have a length."""
 
-    def len_(self) -> IntRef: ...
+    def len_(self) -> IntValue: ...
 
 
 @runtime_checkable

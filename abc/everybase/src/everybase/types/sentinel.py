@@ -1,25 +1,25 @@
 """Sentinel ref bases for special values.
 
-SentinelRefBase - Base for all sentinel types
-EmptyRefBase - Represents absence of a value
-InvalidRefBase - Represents invalid/undefined operations
+SentinelType - Base for all sentinel types
+EmptyType - Represents absence of a value
+InvalidType - Represents invalid/undefined operations
 """
 
 from __future__ import annotations
 
 from everyabc import Empty, Invalid
 
-from ._base import RefBase
+from ._base import TypeBase
 
 
 __all__ = [
-    "EmptyRefBase",
-    "InvalidRefBase",
-    "SentinelRefBase",
+    "EmptyType",
+    "InvalidType",
+    "SentinelType",
 ]
 
 
-class SentinelRefBase[T](RefBase[T]):
+class SentinelType[T](TypeBase[T]):
     """Base for sentinel refs (Empty, Invalid).
 
     Sentinels represent special values indicating absence or invalidity.
@@ -28,7 +28,7 @@ class SentinelRefBase[T](RefBase[T]):
     pass
 
 
-class EmptyRefBase(SentinelRefBase[Empty]):
+class EmptyType(SentinelType[Empty]):
     """Abstract base for Empty refs.
 
     Represents absence of a value, distinct from None.
@@ -40,7 +40,7 @@ class EmptyRefBase(SentinelRefBase[Empty]):
     pass
 
 
-class InvalidRefBase(SentinelRefBase[Invalid]):
+class InvalidType(SentinelType[Invalid]):
     """Abstract base for Invalid refs.
 
     Represents invalid/undefined operations.

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from everybase.py import BoolRef
+    from everybase.values import BoolValue
 
 
 __all__ = [
@@ -27,33 +27,33 @@ __all__ = [
 class OrderableBase[OperandT]:
     """Base for values that support ordering comparisons: >, <, >=, <=."""
 
-    def __gt__(self, other: OperandT) -> BoolRef:
+    def __gt__(self, other: OperandT) -> BoolValue:
         """Greater than: self > other."""
         from everybase.morphisms import GtOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(GtOp(self, other))
+        return BoolValue(GtOp(self, other))
 
-    def __lt__(self, other: OperandT) -> BoolRef:
+    def __lt__(self, other: OperandT) -> BoolValue:
         """Less than: self < other."""
         from everybase.morphisms import LtOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(LtOp(self, other))
+        return BoolValue(LtOp(self, other))
 
-    def __ge__(self, other: OperandT) -> BoolRef:
+    def __ge__(self, other: OperandT) -> BoolValue:
         """Greater than or equal: self >= other."""
         from everybase.morphisms import GeOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(GeOp(self, other))
+        return BoolValue(GeOp(self, other))
 
-    def __le__(self, other: OperandT) -> BoolRef:
+    def __le__(self, other: OperandT) -> BoolValue:
         """Less than or equal: self <= other."""
         from everybase.morphisms import LeOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(LeOp(self, other))
+        return BoolValue(LeOp(self, other))
 
 
 class EqualableBase[OperandT]:
@@ -78,26 +78,26 @@ class EqualableBase[OperandT]:
         """
         raise TypeError("Cannot use != directly on Terms. Use .ne(other) method instead.")
 
-    def eq(self, other: OperandT) -> BoolRef:
+    def eq(self, other: OperandT) -> BoolValue:
         """Equality: self == other (safe method)."""
         from everybase.morphisms import EqOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(EqOp(self, other))
+        return BoolValue(EqOp(self, other))
 
-    def ne(self, other: OperandT) -> BoolRef:
+    def ne(self, other: OperandT) -> BoolValue:
         """Inequality: self != other (safe method)."""
         from everybase.morphisms import NeOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(NeOp(self, other))
+        return BoolValue(NeOp(self, other))
 
-    def is_(self, other: OperandT) -> BoolRef:
+    def is_(self, other: OperandT) -> BoolValue:
         """Identity comparison: self is other (safe method)."""
         from everybase.morphisms import IdCompOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(IdCompOp(self, other))
+        return BoolValue(IdCompOp(self, other))
 
 
 class ComparableBase[OperandT](

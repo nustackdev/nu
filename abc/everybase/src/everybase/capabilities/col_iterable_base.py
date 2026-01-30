@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from everyabc import Term
-    from everybase.py import BoolRef, DictRef, FloatRef, IntRef, ListRef, StrRef
+    from everybase.values import BoolValue, DictValue, FloatValue, IntValue, ListValue, StrValue
 
 
 __all__ = [
@@ -44,33 +44,33 @@ class IterableBase[ElementT, ResultT]:
         return cast("ResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
 
     @overload
-    def reduce_(self, func: Callable[[int, ElementT], int], initial: int) -> IntRef: ...
+    def reduce_(self, func: Callable[[int, ElementT], int], initial: int) -> IntValue: ...
 
     @overload
-    def reduce_(self, func: Callable[[float, ElementT], float], initial: float) -> FloatRef: ...
+    def reduce_(self, func: Callable[[float, ElementT], float], initial: float) -> FloatValue: ...
 
     @overload
-    def reduce_(self, func: Callable[[str, ElementT], str], initial: str) -> StrRef: ...
+    def reduce_(self, func: Callable[[str, ElementT], str], initial: str) -> StrValue: ...
 
     @overload
-    def reduce_(self, func: Callable[[bool, ElementT], bool], initial: bool) -> BoolRef: ...
+    def reduce_(self, func: Callable[[bool, ElementT], bool], initial: bool) -> BoolValue: ...
 
     @overload
     def reduce_[V](
         self, func: Callable[[list[V], ElementT], list[V]], initial: list[V]
-    ) -> ListRef[V]: ...
+    ) -> ListValue[V]: ...
 
     @overload
     def reduce_[K, V](
         self, func: Callable[[dict[K, V], ElementT], dict[K, V]], initial: dict[K, V]
-    ) -> DictRef[K, V]: ...
+    ) -> DictValue[K, V]: ...
 
     def reduce_[R](self, func: Callable[[R, ElementT], R], initial: R) -> object:
         """Reduce to single value."""
         from everybase.morphisms import ReduceOp
-        from everybase.py import AnyRef
+        from everybase.values import AnyValue
 
-        return AnyRef(ReduceOp(self, func, initial))
+        return AnyValue(ReduceOp(self, func, initial))
 
     def sum_(self) -> ResultT:
         """Sum all elements."""
@@ -90,16 +90,16 @@ class IterableBase[ElementT, ResultT]:
 
         return cast("ResultT", self._wrap_element_result(MaxOp(self)))
 
-    def any_(self) -> BoolRef:
+    def any_(self) -> BoolValue:
         """Check if any element is truthy."""
         from everybase.morphisms import AnyOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(AnyOp(self))
+        return BoolValue(AnyOp(self))
 
-    def all_(self) -> BoolRef:
+    def all_(self) -> BoolValue:
         """Check if all elements are truthy."""
         from everybase.morphisms import AllOp
-        from everybase.py import BoolRef
+        from everybase.values import BoolValue
 
-        return BoolRef(AllOp(self))
+        return BoolValue(AllOp(self))
