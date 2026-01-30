@@ -29,6 +29,9 @@ from everybase.capabilities import (
     BitwiseProtocol,
     BitwiseXorableBase,
     BitwiseXorableProtocol,
+    # Clearable
+    ClearableBase,
+    ClearableProtocol,
     # Collection: combined
     CollectionBase,
     CollectionProtocol,
@@ -49,6 +52,12 @@ from everybase.capabilities import (
     IterableProtocol,
     LengthableBase,
     LengthableProtocol,
+    # Location capabilities (protocol-only)
+    LocationDeletableProtocol,
+    LocationExistableProtocol,
+    LocationGettableProtocol,
+    LocationObservableProtocol,
+    LocationSettableProtocol,
     LogicalBase,
     LogicalProtocol,
     MappingBase,
@@ -59,6 +68,13 @@ from everybase.capabilities import (
     MultiplicativeProtocol,
     MultiplyableBase,
     MultiplyableProtocol,
+    # Mutable collection capabilities
+    MutableMappingBase,
+    MutableMappingProtocol,
+    MutableSequenceBase,
+    MutableSequenceProtocol,
+    MutableSetBase,
+    MutableSetProtocol,
     NegatableBase,
     NegatableProtocol,
     NotableBase,
@@ -88,24 +104,30 @@ from everybase.combiners import all_, and_, any_, coalesce, ifelse, none_, or_
 from everybase.morphisms import (
     # Arithmetic
     AbsOp,
+    # Collection mutations (impure)
+    AddCmd,
     AddOp,
-    # Collection
+    # Collection (pure)
     AllOp,
     # Logical
     AndOp,
     AnyOp,
+    AppendCmd,
     AtOp,
     # Bitwise
     BitwiseAndOp,
     BitwiseNotOp,
     BitwiseOrOp,
     BoolOp,
+    ClearCmd,
     # Conditional
     ConditionalOp,
     ContainsOp,
     CountOp,
     # Callable
     DelAttrOp,
+    DeleteItemCmd,
+    DiscardCmd,
     DivOp,
     # Comparison
     EqOp,
@@ -120,6 +142,7 @@ from everybase.morphisms import (
     GtOp,
     IdCompOp,
     IndexOfOp,
+    InsertCmd,
     # Special
     IsEmptyOp,
     IsNaNOp,
@@ -141,12 +164,15 @@ from everybase.morphisms import (
     NotNaNOp,
     NotOp,
     OrOp,
+    PopCmd,
     PosOp,
     PowOp,
     ReduceOp,
+    RemoveCmd,
     ReversedOp,
     RShiftOp,
     SetAttrOp,
+    SetItemCmd,
     SliceOp,
     SortedOp,
     SubOp,
@@ -160,6 +186,7 @@ from everybase.morphisms import (
     ToSetOp,
     ToStrOp,
     ToTupleOp,
+    UpdateCmd,
     XorOp,
 )
 
@@ -280,8 +307,23 @@ __all__ = [  # noqa: RUF022
     "MappingProtocol",
     "SetLikeBase",
     "SetLikeProtocol",
+    # Mutable collection
+    "MutableSequenceBase",
+    "MutableSequenceProtocol",
+    "MutableMappingBase",
+    "MutableMappingProtocol",
+    "MutableSetBase",
+    "MutableSetProtocol",
+    "ClearableBase",
+    "ClearableProtocol",
+    # Location capabilities (protocol-only)
+    "LocationGettableProtocol",
+    "LocationSettableProtocol",
+    "LocationExistableProtocol",
+    "LocationDeletableProtocol",
+    "LocationObservableProtocol",
     # =========================================================================
-    # MORPHISMS (operations)
+    # MORPHISMS (operations + commands)
     # =========================================================================
     # Arithmetic
     "AbsOp",
@@ -358,6 +400,17 @@ __all__ = [  # noqa: RUF022
     "SliceOp",
     "SortedOp",
     "SumOp",
+    # Collection mutations (impure)
+    "AddCmd",
+    "AppendCmd",
+    "ClearCmd",
+    "DeleteItemCmd",
+    "DiscardCmd",
+    "InsertCmd",
+    "PopCmd",
+    "RemoveCmd",
+    "SetItemCmd",
+    "UpdateCmd",
     # =========================================================================
     # REFS (Python memory)
     # =========================================================================

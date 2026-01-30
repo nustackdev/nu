@@ -1,16 +1,17 @@
-"""Comparison capability bases.
+# ruff: noqa: D102
+"""Comparison capabilities — protocols + bases.
 
 Atomic:
-    OrderableBase: __gt__, __lt__, __ge__, __le__
-    EqualableBase: eq(), ne(), is_()
+    OrderableProtocol/Base: __gt__, __lt__, __ge__, __le__
+    EqualableProtocol/Base: eq(), ne(), is_()
 
 Combined:
-    ComparableBase = Orderable + Equalable
+    ComparableProtocol/Base = Orderable + Equalable
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
@@ -19,9 +20,51 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ComparableBase",
+    "ComparableProtocol",
     "EqualableBase",
+    "EqualableProtocol",
     "OrderableBase",
+    "OrderableProtocol",
 ]
+
+
+# =============================================================================
+# PROTOCOLS
+# =============================================================================
+
+
+@runtime_checkable
+class OrderableProtocol[OperandT](Protocol):
+    """Protocol for values that support ordering comparisons."""
+
+    def __gt__(self, other: OperandT) -> BoolValue: ...
+    def __lt__(self, other: OperandT) -> BoolValue: ...
+    def __ge__(self, other: OperandT) -> BoolValue: ...
+    def __le__(self, other: OperandT) -> BoolValue: ...
+
+
+@runtime_checkable
+class EqualableProtocol[OperandT](Protocol):
+    """Protocol for values that support equality comparison."""
+
+    def eq(self, other: OperandT) -> BoolValue: ...
+    def ne(self, other: OperandT) -> BoolValue: ...
+    def is_(self, other: OperandT) -> BoolValue: ...
+
+
+class ComparableProtocol[OperandT](
+    OrderableProtocol[OperandT],
+    EqualableProtocol[OperandT],
+    Protocol,
+):
+    """Full comparison protocol."""
+
+    ...
+
+
+# =============================================================================
+# BASES
+# =============================================================================
 
 
 class OrderableBase[OperandT]:

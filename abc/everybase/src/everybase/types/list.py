@@ -1,6 +1,6 @@
 """List ref base combining sequence traits.
 
-ListType = TypeBase[list] + Sequence + Comparable
+ListType = TypeBase[list] + MutableSequence + Clearable + Comparable
 
 Returns concrete py types.
 """
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from everybase.capabilities import ComparableBase, SequenceBase
+from everybase.capabilities import ClearableBase, ComparableBase, MutableSequenceBase
 
 from ._base import TypeBase
 
@@ -25,7 +25,8 @@ __all__ = [
 
 
 class ListType[T](
-    SequenceBase[T, "ListValue[T]"],
+    MutableSequenceBase[T, "ListValue[T]"],
+    ClearableBase,
     ComparableBase["list[T] | ListValue[T]"],
     TypeBase[list[T]],
 ):

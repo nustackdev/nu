@@ -1,6 +1,6 @@
 """Dict ref base combining mapping traits.
 
-DictType = TypeBase[dict] + Mapping + Comparable
+DictType = TypeBase[dict] + MutableMapping + Clearable + Comparable
 
 Returns concrete py types.
 """
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import ComparableBase, MappingBase
+from everybase.capabilities import ClearableBase, ComparableBase, MutableMappingBase
 
 from ._base import TypeBase
 
@@ -25,7 +25,8 @@ __all__ = [
 
 
 class DictType[K, V](
-    MappingBase[K, V, "DictValue[K, V]"],
+    MutableMappingBase[K, V, "DictValue[K, V]"],
+    ClearableBase,
     ComparableBase["dict[K, V] | DictValue[K, V]"],
     TypeBase[dict[K, V]],
 ):

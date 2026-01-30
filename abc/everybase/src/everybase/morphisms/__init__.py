@@ -25,36 +25,47 @@ type_ — Concrete type methods
   type_str.py: String-specific ops (UpperOp, SplitOp, JoinOp, etc.)
   type_bytes.py: Bytes-specific ops (DecodeOp, HexOp, etc.)
 
-abc_ — ABC-level abstract operations
-  abc_sequence.py: FirstOp, LastOp, IndexOfOp, CountOp
-  abc_mapping.py: KeysOp, ValuesOp, ItemsOp, GetOp
-  abc_set.py: UnionOp, IntersectionOp, DifferenceOp, etc.
+abc_ — ABC-level operations (pure) + commands (impure)
+  abc_sequence.py: FirstOp, LastOp, IndexOfOp, CountOp, AppendCmd, InsertCmd, PopCmd
+  abc_mapping.py: KeysOp, ValuesOp, ItemsOp, GetOp, SetItemCmd, DeleteItemCmd, UpdateCmd
+  abc_set.py: UnionOp, IntersectionOp, DifferenceOp, etc., AddCmd, RemoveCmd, DiscardCmd
+  cmd_collection.py: ClearCmd (shared across collection types)
 
 All morphisms use every.Morphism base classes and implement apply().
 """
 
-# ── abc_ — ABC-level abstract operations ────────────────────────────────────
+# ── abc_ — ABC-level operations + commands ────────────────────────────────────
 from .abc_mapping import (
+    DeleteItemCmd,
     GetOp,
     ItemsOp,
     KeysOp,
+    SetItemCmd,
+    UpdateCmd,
     ValuesOp,
 )
 from .abc_sequence import (
+    AppendCmd,
     CountOp,
     FirstOp,
     IndexOfOp,
+    InsertCmd,
     LastOp,
+    PopCmd,
 )
 from .abc_set import (
+    AddCmd,
     DifferenceOp,
+    DiscardCmd,
     IntersectionOp,
     IsDisjointOp,
     IsSubsetOp,
     IsSupersetOp,
+    RemoveCmd,
     SymmetricDifferenceOp,
     UnionOp,
 )
+from .cmd_collection import ClearCmd
 
 # ── fn_ — Builtin functions & higher-order ──────────────────────────────────
 from .fn_aggregate import (
@@ -283,16 +294,34 @@ __all__ = [  # noqa: RUF022
     "TitleOp",
     "UpperOp",
     "ZFillOp",
-    # abc_ — ABC-level abstract operations
-    "GetOp",
-    "ItemsOp",
+    # abc_ — ABC-level operations + commands
+    # Sequence
+    "FirstOp",
+    "LastOp",
+    "IndexOfOp",
+    "CountOp",
+    "AppendCmd",
+    "InsertCmd",
+    "PopCmd",
+    # Mapping
     "KeysOp",
     "ValuesOp",
-    "DifferenceOp",
+    "ItemsOp",
+    "GetOp",
+    "SetItemCmd",
+    "DeleteItemCmd",
+    "UpdateCmd",
+    # Set
+    "UnionOp",
     "IntersectionOp",
-    "IsDisjointOp",
+    "DifferenceOp",
+    "SymmetricDifferenceOp",
     "IsSubsetOp",
     "IsSupersetOp",
-    "SymmetricDifferenceOp",
-    "UnionOp",
+    "IsDisjointOp",
+    "AddCmd",
+    "RemoveCmd",
+    "DiscardCmd",
+    # Shared
+    "ClearCmd",
 ]

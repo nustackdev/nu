@@ -14,7 +14,7 @@ Branch: `refactor/pv-redesign` (from `main` at `48c3b62`)
 
 ### Phase 1: everyabc -- Add Value[T]
 
-**Status: PENDING**
+**Status: DONE** (commit `b58359c`)
 
 Add `Value[T](RValue[T])` to the term hierarchy as sibling of Morphism.
 
@@ -28,7 +28,7 @@ Commit 1.1: Add Value[T] to everyabc
 
 ### Phase 2: everybase -- Rename Ref -> Type + Value
 
-**Status: PENDING**
+**Status: DONE** (commit `d8cf7dc`)
 
 The big mechanical rename. Split into multiple commits for safety.
 
@@ -58,44 +58,42 @@ Commit 2.3: Update everybase __init__.py exports + fix all tests
 
 ### Phase 3: everybase -- Add mutation commands + capabilities
 
-**Status: PENDING**
+**Status: DONE** (commit pending)
 
 New files, no renames. Extends everybase with collection mutations.
+Organization: domain-first — ops + cmds merged per collection type in
+abc_* files. Mutable capabilities merged into parent col_* files.
+Location capabilities are protocol-only (no base — substrates implement).
 
-Commit 3.1: Add cmd_collection.py (mutation commands)
-- NEW `morphisms/cmd_collection.py` -- SetItemCmd, DeleteItemCmd, AppendCmd,
-  InsertCmd, PopCmd, ClearCmd, AddCmd, RemoveCmd, DiscardCmd, UpdateCmd
-- `morphisms/__init__.py` -- export new commands
-- `__init__.py` -- export new commands
-- Verify: `make test-pkg PKG=abc/everybase`
+Morphisms (abc_* -- ops + cmds per collection domain):
+- `morphisms/abc_sequence.py` -- FirstOp, LastOp, IndexOfOp, CountOp + AppendCmd, InsertCmd, PopCmd
+- `morphisms/abc_mapping.py` -- KeysOp, ValuesOp, ItemsOp, GetOp + SetItemCmd, DeleteItemCmd, UpdateCmd
+- `morphisms/abc_set.py` -- UnionOp, IntersectionOp, ... + AddCmd, RemoveCmd, DiscardCmd
+- NEW `morphisms/cmd_collection.py` -- ClearCmd (shared across collection types)
 
-Commit 3.2: Add mutation capabilities (mut_*)
-- NEW `capabilities/mut_indexable_base.py` + `mut_indexable_protocol.py`
-- NEW `capabilities/mut_sequence_base.py` + `mut_sequence_protocol.py`
-- NEW `capabilities/mut_mapping_base.py` + `mut_mapping_protocol.py`
-- NEW `capabilities/mut_set_base.py` + `mut_set_protocol.py`
-- NEW `capabilities/mut_clearable_base.py` + `mut_clearable_protocol.py`
-- `capabilities/__init__.py` -- export new capabilities
-- `__init__.py` -- export new capabilities
-- Verify: `make test-pkg PKG=abc/everybase`
+Collection capabilities (mutable merged into parent col_* files):
+- `capabilities/col_sequence_base.py` -- SequenceBase + MutableSequenceBase
+- `capabilities/col_sequence_protocol.py` -- SequenceProtocol + MutableSequenceProtocol
+- `capabilities/col_mapping_base.py` -- MappingBase + MutableMappingBase
+- `capabilities/col_mapping_protocol.py` -- MappingProtocol + MutableMappingProtocol
+- `capabilities/col_set_base.py` -- SetLikeBase + MutableSetBase
+- `capabilities/col_set_protocol.py` -- SetLikeProtocol + MutableSetProtocol
+- NEW `capabilities/col_clearable_base.py` + `col_clearable_protocol.py`
 
-Commit 3.3: Add location capabilities (loc_*)
-- NEW `capabilities/loc_gettable_base.py` + `loc_gettable_protocol.py`
-- NEW `capabilities/loc_settable_base.py` + `loc_settable_protocol.py`
-- NEW `capabilities/loc_existable_base.py` + `loc_existable_protocol.py`
-- NEW `capabilities/loc_deletable_base.py` + `loc_deletable_protocol.py`
-- NEW `capabilities/loc_observable_base.py` + `loc_observable_protocol.py`
-- `capabilities/__init__.py` -- export
-- `__init__.py` -- export
-- Verify: `make test-pkg PKG=abc/everybase`
+Location capabilities (protocol-only, no base):
+- NEW `capabilities/loc_gettable_protocol.py` -- LocationGettableProtocol
+- NEW `capabilities/loc_settable_protocol.py` -- LocationSettableProtocol
+- NEW `capabilities/loc_existable_protocol.py` -- LocationExistableProtocol
+- NEW `capabilities/loc_deletable_protocol.py` -- LocationDeletableProtocol
+- NEW `capabilities/loc_observable_protocol.py` -- LocationObservableProtocol
 
-Commit 3.4: Extend type bases with mutation methods
-- `types/list.py` -- ListType: add .append(), .insert(), .pop(), .clear()
-- `types/dict.py` -- DictType: add .clear(), .update()
-- `types/set.py` -- SetType: add .add(), .remove(), .discard(), .clear()
-- Add tests for mutation methods
-- Verify: `make test-pkg PKG=abc/everybase`
-- Verify: `make lint`
+Type bases wired to mutable capabilities:
+- `types/list.py` -- ListType: MutableSequenceBase + ClearableBase
+- `types/dict.py` -- DictType: MutableMappingBase + ClearableBase
+- `types/set.py` -- SetType: MutableSetBase + ClearableBase
+
+Tests: NEW `tests/unit/test_mutations.py` -- 42 tests
+- Verify: 497 tests passing, lint clean
 
 ---
 

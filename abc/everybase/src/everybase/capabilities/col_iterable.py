@@ -1,11 +1,12 @@
-"""Iterable capability base.
+# ruff: noqa: D102
+"""Iterable capability — protocol + base.
 
-IterableBase: map_(), filter_(), reduce_(), sum_(), min_(), max_(), any_(), all_()
+IterableProtocol/Base: map_(), filter_(), reduce_(), sum_(), min_(), max_(), any_(), all_()
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, overload
+from typing import TYPE_CHECKING, Protocol, cast, overload, runtime_checkable
 
 
 if TYPE_CHECKING:
@@ -17,7 +18,32 @@ if TYPE_CHECKING:
 
 __all__ = [
     "IterableBase",
+    "IterableProtocol",
 ]
+
+
+# =============================================================================
+# PROTOCOL
+# =============================================================================
+
+
+@runtime_checkable
+class IterableProtocol[ElementT, ResultT](Protocol):
+    """Protocol for values that support functional iteration operations."""
+
+    def map_[R](self, func: Callable[[ElementT], R]) -> ResultT: ...
+    def filter_(self, predicate: Callable[[ElementT], bool]) -> ResultT: ...
+    def reduce_[R](self, func: Callable[[R, ElementT], R], initial: R) -> object: ...
+    def sum_(self) -> ResultT: ...
+    def min_(self) -> ResultT: ...
+    def max_(self) -> ResultT: ...
+    def any_(self) -> BoolValue: ...
+    def all_(self) -> BoolValue: ...
+
+
+# =============================================================================
+# BASE
+# =============================================================================
 
 
 class IterableBase[ElementT, ResultT]:
