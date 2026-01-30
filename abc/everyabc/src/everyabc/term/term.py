@@ -18,9 +18,11 @@ Design rules:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic
 
 from everyabc.tree import Executable
+
+from .type_vars import T_co
 
 
 if TYPE_CHECKING:
@@ -34,7 +36,7 @@ __all__ = [
 ]
 
 
-class Term[ResultT](Executable["Term"], ABC):
+class Term(Executable["Term"], Generic[T_co], ABC):  # noqa: UP046
     """Base contract for all executable semantic nodes.
 
     Everything in the topology that computes is a Term:
@@ -52,7 +54,7 @@ class Term[ResultT](Executable["Term"], ABC):
     """
 
     @abstractmethod
-    async def execute(self, ctx: Context) -> ResultT:
+    async def execute(self, ctx: Context) -> T_co:
         """Execute this term within a context.
 
         Args:
@@ -85,7 +87,7 @@ class Term[ResultT](Executable["Term"], ABC):
         return all(child.is_subtree_pure for child in self._children if isinstance(child, Term))
 
 
-class LValue[T](Term[T], ABC):
+class LValue(Term[T_co], ABC):
     """Addressable location in the data tree.
 
     LValues represent positions where data lives.
@@ -93,7 +95,7 @@ class LValue[T](Term[T], ABC):
     """
 
 
-class RValue[ResultT](Term[ResultT], ABC):
+class RValue(Term[T_co], ABC):
     """Evaluable expression that produces a value.
 
     RValues represent computations — both pure (operations)

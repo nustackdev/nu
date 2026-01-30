@@ -50,11 +50,6 @@ class PyRefBase[T](Ref[T]):
 
         self._source = source
 
-    @property
-    def source(self) -> Arg[T]:
-        """Get the underlying source."""
-        return self._source
-
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value by evaluating the source.
 
@@ -72,18 +67,18 @@ class PyRefBase[T](Ref[T]):
             return await self._source.execute(ctx)
         return self._source
 
-    async def resolve(self, ctx: Context) -> tuple[str, type]:
+    async def resolve(self, ctx: Context) -> int:
         """Resolve to identity.
 
-        Python memory refs have simple identity - just class and source type.
+        Python memory refs have simple identity - id(var).
 
         Args:
             ctx: Execution context
 
         Returns:
-            Tuple of (class_name, source_type)
+            int
         """
-        return (self.__class__.__name__, type(self._source))
+        return id(self._source)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self._source!r})"

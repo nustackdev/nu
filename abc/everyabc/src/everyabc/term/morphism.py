@@ -68,6 +68,7 @@ from typing import TYPE_CHECKING, Any
 
 from .sentinel import INVALID, Sentinel, is_sentinel
 from .term import RValue, Term
+from .type_vars import T_co
 
 
 if TYPE_CHECKING:
@@ -101,7 +102,7 @@ __all__ = [  # noqa: RUF022
 # =============================================================================
 
 
-class Morphism[T](RValue[T], ABC):
+class Morphism(RValue[T_co], ABC):
     """Transformation. Maps inputs to outputs.
 
     Morphisms are the fundamental unit of computation in the term system.
@@ -136,7 +137,7 @@ class Morphism[T](RValue[T], ABC):
 # =============================================================================
 
 
-class NAryMorphism[T](Morphism[T | Sentinel], ABC):
+class NAryMorphism(Morphism[T_co | Sentinel], ABC):
     """Base for morphisms with operands. Handles resolution and sentinels.
 
     Provides a uniform children management interface for working with operands.
@@ -172,7 +173,7 @@ class NAryMorphism[T](Morphism[T | Sentinel], ABC):
     # EXECUTION
     # =========================================================================
 
-    async def execute(self, ctx: Context) -> T | Sentinel:
+    async def execute(self, ctx: Context) -> T_co | Sentinel:
         """Resolve operands, propagate sentinels, apply transformation.
 
         Execution steps:
@@ -196,7 +197,7 @@ class NAryMorphism[T](Morphism[T | Sentinel], ABC):
         return self.apply(*values)
 
     @abstractmethod
-    def apply(self, *values: Any) -> T | Sentinel:  # noqa: ANN401
+    def apply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
         """Apply the transformation to resolved values.
 
         Called after all operands are resolved and verified non-sentinel.
@@ -216,7 +217,7 @@ class NAryMorphism[T](Morphism[T | Sentinel], ABC):
 # =============================================================================
 
 
-class UnaryMorphism[T](NAryMorphism[T], ABC):
+class UnaryMorphism(NAryMorphism[T_co], ABC):
     """Single operand morphism.
 
     For transformations with one input: -x, abs(x), not x, len(x), etc.
@@ -254,7 +255,7 @@ class UnaryMorphism[T](NAryMorphism[T], ABC):
         return self._children[0]
 
     @abstractmethod
-    def apply(self, operand: Any) -> T | Sentinel:  # type: ignore[override]  # noqa: ANN401
+    def apply(self, operand: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
         """Apply transformation to resolved operand.
 
         Args:
@@ -266,7 +267,7 @@ class UnaryMorphism[T](NAryMorphism[T], ABC):
         ...
 
 
-class BinaryMorphism[T](NAryMorphism[T], ABC):
+class BinaryMorphism(NAryMorphism[T_co], ABC):
     """Two operand morphism.
 
     For transformations with two inputs: x + y, x > y, x and y, x[y], etc.
@@ -314,7 +315,7 @@ class BinaryMorphism[T](NAryMorphism[T], ABC):
         return self._children[1]
 
     @abstractmethod
-    def apply(self, left: Any, right: Any) -> T | Sentinel:  # type: ignore[override]  # noqa: ANN401
+    def apply(self, left: Any, right: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
         """Apply transformation to resolved operands.
 
         Args:
@@ -327,7 +328,7 @@ class BinaryMorphism[T](NAryMorphism[T], ABC):
         ...
 
 
-class TernaryMorphism[T](NAryMorphism[T], ABC):
+class TernaryMorphism(NAryMorphism[T_co], ABC):
     """Three operand morphism.
 
     For transformations with three inputs: if a then b else c, slice(a, b, c), etc.
@@ -341,7 +342,7 @@ class TernaryMorphism[T](NAryMorphism[T], ABC):
         >>> result = ite.execute(ctx)  # Returns price or default based on condition
     """
 
-    def __init__(self, first: Term, second: Term, third: Term) -> None:
+    def __init__(self, first: object, second: object, third: object) -> None:
         """Initialize with three operands.
 
         Args:
@@ -385,7 +386,7 @@ class TernaryMorphism[T](NAryMorphism[T], ABC):
         return self._children[2]
 
     @abstractmethod
-    def apply(self, first: Any, second: Any, third: Any) -> T | Sentinel:  # type: ignore[override]  # noqa: ANN401
+    def apply(self, first: Any, second: Any, third: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
         """Apply transformation to resolved operands.
 
         Args:
@@ -463,49 +464,49 @@ class Command:
 # =============================================================================
 
 
-class NAryOperation[T](Operation, NAryMorphism[T]):
+class NAryOperation(Operation, NAryMorphism[T_co]):
     """Pure NAry morphism. Shorthand for ``Operation, NAryMorphism[T]``."""
 
     pass
 
 
-class NAryCommand[T](Command, NAryMorphism[T]):
+class NAryCommand(Command, NAryMorphism[T_co]):
     """Impure NAry morphism. Shorthand for ``Command, NAryMorphism[T]``."""
 
     pass
 
 
-class UnaryOperation[T](Operation, UnaryMorphism[T]):
+class UnaryOperation(Operation, UnaryMorphism[T_co]):
     """Pure unary morphism. Shorthand for ``Operation, UnaryMorphism[T]``."""
 
     pass
 
 
-class UnaryCommand[T](Command, UnaryMorphism[T]):
+class UnaryCommand(Command, UnaryMorphism[T_co]):
     """Impure unary morphism. Shorthand for ``Command, UnaryMorphism[T]``."""
 
     pass
 
 
-class BinaryOperation[T](Operation, BinaryMorphism[T]):
+class BinaryOperation(Operation, BinaryMorphism[T_co]):
     """Pure binary morphism. Shorthand for ``Operation, BinaryMorphism[T]``."""
 
     pass
 
 
-class BinaryCommand[T](Command, BinaryMorphism[T]):
+class BinaryCommand(Command, BinaryMorphism[T_co]):
     """Impure binary morphism. Shorthand for ``Command, BinaryMorphism[T]``."""
 
     pass
 
 
-class TernaryOperation[T](Operation, TernaryMorphism[T]):
+class TernaryOperation(Operation, TernaryMorphism[T_co]):
     """Pure ternary morphism. Shorthand for ``Operation, TernaryMorphism[T]``."""
 
     pass
 
 
-class TernaryCommand[T](Command, TernaryMorphism[T]):
+class TernaryCommand(Command, TernaryMorphism[T_co]):
     """Impure ternary morphism. Shorthand for ``Command, TernaryMorphism[T]``."""
 
     pass

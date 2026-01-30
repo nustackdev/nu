@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from .sentinel import Sentinel
 from .term import LValue
+from .type_vars import T_co
 
 
 if TYPE_CHECKING:
@@ -32,7 +33,7 @@ __all__ = [
 ]
 
 
-class Ref[T](LValue[T | Sentinel], ABC):
+class Ref(LValue[T_co | Sentinel], ABC):
     """Typed reference to a location. Pure protocol.
 
     Ref is the minimal contract for typed references:
@@ -43,7 +44,7 @@ class Ref[T](LValue[T | Sentinel], ABC):
     No parent. No shape. No substrate assumptions.
     Substrates add their own storage mechanisms.
 
-    Generic type T specifies value type at this location:
+    Generic type T_co specifies value type at this location:
         Ref[float] → location holding float
         Ref[str]   → location holding string
         Ref[Order] → location holding Order shape
@@ -66,7 +67,7 @@ class Ref[T](LValue[T | Sentinel], ABC):
         ...
 
     @abstractmethod
-    async def fetch(self, ctx: Context) -> T | Sentinel:
+    async def fetch(self, ctx: Context) -> T_co | Sentinel:
         """Extract value from this location.
 
         The core operation of a Ref - retrieve the value
@@ -80,7 +81,7 @@ class Ref[T](LValue[T | Sentinel], ABC):
         """
         ...
 
-    async def execute(self, ctx: Context) -> T | Sentinel:
+    async def execute(self, ctx: Context) -> T_co | Sentinel:
         """Execute this ref by fetching its value.
 
         Term interface compatibility. For Refs, execution means
