@@ -82,6 +82,9 @@ from everybase.capabilities import (
     SubtractableBase,
     SubtractableProtocol,
 )
+
+# Re-export utilities
+from everybase.combiners import all_, and_, any_, coalesce, ifelse, none_, or_
 from everybase.morphisms import (
     # Arithmetic
     AbsOp,
@@ -199,19 +202,7 @@ from everybase.refs import (
     StrRefBase,
     TupleRefBase,
 )
-
-# Re-export utilities
-from everybase.util import (
-    all_,
-    and_,
-    any_,
-    coalesce,
-    ensure_term,
-    ifelse,
-    none_,
-    or_,
-    typed_ref,
-)
+from everybase.utils import ensure_term, typed_ref
 
 
 __all__ = [  # noqa: RUF022

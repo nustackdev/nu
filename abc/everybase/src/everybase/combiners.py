@@ -87,7 +87,7 @@ def and_(left: object, right: object) -> BoolType:
     Example:
         >>> and_(price > 0, price < 100)
     """
-    from .conversion import ensure_term
+    from .utils import ensure_term
 
     left_op = ensure_term(left)
     if not isinstance(left_op, AndableProtocol):
@@ -111,7 +111,7 @@ def or_(left: object, right: object) -> BoolType:
     Example:
         >>> or_(status.eq("ready"), status.eq("pending"))
     """
-    from .conversion import ensure_term
+    from .utils import ensure_term
 
     left_op = ensure_term(left)
     if not isinstance(left_op, OrableProtocol):
@@ -140,7 +140,7 @@ def all_(*conditions: object) -> BoolType:
     if not conditions:
         raise ValueError("all_() requires at least one condition")
 
-    from .conversion import ensure_term
+    from .utils import ensure_term
 
     # Convert all to RValues
     rvalues = [ensure_term(c) for c in conditions]
@@ -169,7 +169,7 @@ def any_(*conditions: object) -> BoolType:
     if not conditions:
         raise ValueError("any_() requires at least one condition")
 
-    from .conversion import ensure_term
+    from .utils import ensure_term
 
     # Convert all to RValues
     rvalues = [ensure_term(c) for c in conditions]
@@ -223,7 +223,7 @@ def ifelse(condition: object, then_value: object, else_value: object) -> Term:
         >>> display_price = ifelse(is_sale, sale_price, regular_price)
         >>> status_text = ifelse(is_active, "Active", "Inactive")
     """
-    from .conversion import ensure_term
+    from .utils import ensure_term
 
     # Use the ifelse method from CoreBase via the then_value
     # ifelse(cond, then, else) -> then.ifelse(cond, else)
@@ -254,11 +254,11 @@ def coalesce(*values: object) -> Term:
         raise ValueError("coalesce() requires at least one value")
 
     if len(values) == 1:
-        from .conversion import ensure_term
+        from .utils import ensure_term
 
         return ensure_term(values[0])
 
-    from .conversion import ensure_term
+    from .utils import ensure_term
 
     # Build chain: v1.or_default(v2.or_default(v3...))
     # Start from the end and work backwards
