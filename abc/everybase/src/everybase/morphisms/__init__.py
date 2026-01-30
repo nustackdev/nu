@@ -10,7 +10,7 @@ op_  — Python operators (syntactic)
 
 fn_  — Builtin functions & higher-order
   fn_transform.py: MapOp, FilterOp, ReduceOp, SortedOp, ReversedOp
-  fn_search.py: FirstOp, LastOp, IndexOfOp, FindOp, FindIndexOp, CountOp, JoinOp
+  fn_search.py: FindOp, FindIndexOp
   fn_aggregate.py: SumOp, MinOp, MaxOp, AnyOp, AllOp
   fn_conversion.py: ToIntOp, ToStrOp, ToBoolOp, ToFloatOp, ToBytesOp, etc.
   fn_call.py: FuncCallOp, MethodCallOp
@@ -22,24 +22,29 @@ gen_ — General patterns (protocol-level)
   gen_conditional.py: ConditionalOp
 
 type_ — Concrete type methods
-  type_str.py: String-specific ops (UpperOp, SplitOp, etc.)
+  type_str.py: String-specific ops (UpperOp, SplitOp, JoinOp, etc.)
   type_bytes.py: Bytes-specific ops (DecodeOp, HexOp, etc.)
 
 abc_ — ABC-level abstract operations
-  abc_mapping.py: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
+  abc_sequence.py: FirstOp, LastOp, IndexOfOp, CountOp
+  abc_mapping.py: KeysOp, ValuesOp, ItemsOp, GetOp
   abc_set.py: UnionOp, IntersectionOp, DifferenceOp, etc.
 
 All morphisms use every.Morphism base classes and implement apply().
 """
 
-# ── op_ — Python operators ──────────────────────────────────────────────────
-
 # ── abc_ — ABC-level abstract operations ────────────────────────────────────
 from .abc_mapping import (
-    DictGetOp,
-    DictItemsOp,
-    DictKeysOp,
-    DictValuesOp,
+    GetOp,
+    ItemsOp,
+    KeysOp,
+    ValuesOp,
+)
+from .abc_sequence import (
+    CountOp,
+    FirstOp,
+    IndexOfOp,
+    LastOp,
 )
 from .abc_set import (
     DifferenceOp,
@@ -71,13 +76,8 @@ from .fn_conversion import (
     ToTupleOp,
 )
 from .fn_search import (
-    CountOp,
     FindIndexOp,
     FindOp,
-    FirstOp,
-    IndexOfOp,
-    JoinOp,
-    LastOp,
 )
 from .fn_transform import (
     FilterOp,
@@ -97,6 +97,8 @@ from .gen_access import (
 from .gen_attr import DelAttrOp, GetAttrOp, SetAttrOp
 from .gen_conditional import ConditionalOp
 from .gen_special import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
+
+# ── op_ — Python operators ──────────────────────────────────────────────────
 from .op_arithmetic import (
     AbsOp,
     AddOp,
@@ -146,6 +148,7 @@ from .type_str import (
     IsAlphaOp,
     IsDigitOp,
     IsSpaceOp,
+    JoinOp,
     LJustOp,
     LowerOp,
     LStripOp,
@@ -281,10 +284,10 @@ __all__ = [  # noqa: RUF022
     "UpperOp",
     "ZFillOp",
     # abc_ — ABC-level abstract operations
-    "DictGetOp",
-    "DictItemsOp",
-    "DictKeysOp",
-    "DictValuesOp",
+    "GetOp",
+    "ItemsOp",
+    "KeysOp",
+    "ValuesOp",
     "DifferenceOp",
     "IntersectionOp",
     "IsDisjointOp",

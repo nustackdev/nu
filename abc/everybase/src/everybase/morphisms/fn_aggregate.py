@@ -9,6 +9,8 @@ AllOp: All truthy (all(seq))
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from everyabc import INVALID, Sentinel, UnaryOperation
 
 
@@ -26,8 +28,8 @@ class SumOp[ResultT](UnaryOperation[ResultT]):
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"sum_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"sum_() requires iterable, got {type(operand).__name__}")
         try:
             return sum(operand)  # type: ignore
         except TypeError:
@@ -39,13 +41,11 @@ class MinOp[ResultT](UnaryOperation[ResultT]):
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"min_() requires list or tuple, got {type(operand).__name__}")
-        if len(operand) == 0:
-            return INVALID
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"min_() requires iterable, got {type(operand).__name__}")
         try:
             return min(operand)  # type: ignore
-        except TypeError:
+        except (TypeError, ValueError):
             return INVALID
 
 
@@ -54,13 +54,11 @@ class MaxOp[ResultT](UnaryOperation[ResultT]):
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"max_() requires list or tuple, got {type(operand).__name__}")
-        if len(operand) == 0:
-            return INVALID
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"max_() requires iterable, got {type(operand).__name__}")
         try:
             return max(operand)  # type: ignore
-        except TypeError:
+        except (TypeError, ValueError):
             return INVALID
 
 
@@ -69,8 +67,8 @@ class AnyOp(UnaryOperation[bool]):
 
     def apply(self, operand: object) -> bool:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"any_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"any_() requires iterable, got {type(operand).__name__}")
         return any(operand)
 
 
@@ -79,6 +77,6 @@ class AllOp(UnaryOperation[bool]):
 
     def apply(self, operand: object) -> bool:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"all_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"all_() requires iterable, got {type(operand).__name__}")
         return all(operand)

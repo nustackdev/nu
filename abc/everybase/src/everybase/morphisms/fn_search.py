@@ -1,19 +1,15 @@
-"""Collection search morphisms.
+"""Higher-order search morphisms.
 
-FirstOp: First element (seq[0])
-LastOp: Last element (seq[-1])
-IndexOfOp: Find index of value (seq.index(value))
 FindOp: Find first element matching predicate
 FindIndexOp: Find index of first element matching predicate
-CountOp: Count occurrences (seq.count(value))
-JoinOp: Join strings (sep.join(seq))
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from everyabc import INVALID, BinaryOperation, Sentinel, UnaryOperation
+from everyabc import INVALID, Sentinel, UnaryOperation
 
 
 if TYPE_CHECKING:
@@ -21,63 +17,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CountOp",
     "FindIndexOp",
     "FindOp",
-    "FirstOp",
-    "IndexOfOp",
-    "JoinOp",
-    "LastOp",
 ]
-
-
-class FirstOp[ResultT](UnaryOperation[ResultT]):
-    """First element: seq[0]. Returns Invalid if empty."""
-
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"first() requires list or tuple, got {type(operand).__name__}")
-        if len(operand) == 0:
-            return INVALID
-        return operand[0]  # type: ignore
-
-
-class LastOp[ResultT](UnaryOperation[ResultT]):
-    """Last element: seq[-1]. Returns Invalid if empty."""
-
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"last() requires list or tuple, got {type(operand).__name__}")
-        if len(operand) == 0:
-            return INVALID
-        return operand[-1]  # type: ignore
-
-
-class IndexOfOp(BinaryOperation[int]):
-    """Find index of value: seq.index(value). Returns Invalid if not found."""
-
-    def apply(self, left: object, right: object) -> int | Sentinel:
-        """Apply."""
-        # left = sequence, right = value to find
-        if not isinstance(left, (list, tuple)):
-            raise TypeError(f"index_() requires list or tuple, got {type(left).__name__}")
-        try:
-            return list(left).index(right)
-        except ValueError:
-            return INVALID
-
-
-class CountOp(BinaryOperation[int]):
-    """Count occurrences: seq.count(value)."""
-
-    def apply(self, left: object, right: object) -> int | Sentinel:
-        """Apply."""
-        # left = sequence, right = value to count
-        if not isinstance(left, (list, tuple)):
-            raise TypeError(f"count_() requires list or tuple, got {type(left).__name__}")
-        return list(left).count(right)
 
 
 class FindOp[T](UnaryOperation[T]):
@@ -99,8 +41,8 @@ class FindOp[T](UnaryOperation[T]):
 
     def apply(self, operand: object) -> T | Sentinel:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"find() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"find() requires iterable, got {type(operand).__name__}")
         for item in operand:
             if self._fn(item):
                 return item  # type: ignore
@@ -129,8 +71,8 @@ class FindIndexOp[T](UnaryOperation[int]):
 
     def apply(self, operand: object) -> int | Sentinel:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"find_index() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"find_index() requires iterable, got {type(operand).__name__}")
         for i, item in enumerate(operand):
             if self._fn(item):
                 return i
@@ -138,19 +80,3 @@ class FindIndexOp[T](UnaryOperation[int]):
 
     def __repr__(self) -> str:
         return f"FindIndexOp({self._children[0]!r}, {self._fn!r})"
-
-
-class JoinOp(BinaryOperation[str]):
-    """Join strings: sep.join(seq)."""
-
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
-        # left = sequence, right = separator
-        if not isinstance(left, (list, tuple)):
-            raise TypeError(f"join() requires list or tuple, got {type(left).__name__}")
-        if not isinstance(right, str):
-            raise TypeError(f"join() separator must be str, got {type(right).__name__}")
-        try:
-            return right.join(str(x) for x in left)
-        except Exception:
-            return INVALID

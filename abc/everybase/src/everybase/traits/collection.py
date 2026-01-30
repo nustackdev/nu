@@ -259,27 +259,27 @@ class Mapping[KeyT, ValueT, ResultT](
 
     def keys_(self) -> ResultT:
         """Get all keys."""
-        from everybase.morphisms.abc_mapping import DictKeysOp
+        from everybase.morphisms.abc_mapping import KeysOp
 
-        return cast("ResultT", self._wrap_keys_result(DictKeysOp(self)))
+        return cast("ResultT", self._wrap_keys_result(KeysOp(self)))
 
     def values_(self) -> ResultT:
         """Get all values."""
-        from everybase.morphisms.abc_mapping import DictValuesOp
+        from everybase.morphisms.abc_mapping import ValuesOp
 
-        return cast("ResultT", self._wrap_values_result(DictValuesOp(self)))
+        return cast("ResultT", self._wrap_values_result(ValuesOp(self)))
 
     def items_(self) -> ResultT:
         """Get all key-value pairs."""
-        from everybase.morphisms.abc_mapping import DictItemsOp
+        from everybase.morphisms.abc_mapping import ItemsOp
 
-        return cast("ResultT", self._wrap_items_result(DictItemsOp(self)))
+        return cast("ResultT", self._wrap_items_result(ItemsOp(self)))
 
     def get_(self, key: KeyT, default: ValueT | None = None) -> ResultT:
         """Get value with default."""
-        from everybase.morphisms.abc_mapping import DictGetOp
+        from everybase.morphisms.abc_mapping import GetOp
 
-        return cast("ResultT", self._wrap_value_result(DictGetOp(self, key, default)))
+        return cast("ResultT", self._wrap_value_result(GetOp(self, key, default)))
 
 
 class SetLike[ElementT, ResultT](

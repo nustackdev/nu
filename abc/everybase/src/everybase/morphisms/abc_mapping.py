@@ -1,6 +1,6 @@
-"""Dict morphisms for everybase.
+"""Mapping ABC morphisms.
 
-Access: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
+Access: KeysOp, ValuesOp, ItemsOp, GetOp
 """
 
 from __future__ import annotations
@@ -11,10 +11,10 @@ from everyabc import Sentinel, TernaryOperation, UnaryOperation
 
 
 __all__ = [
-    "DictGetOp",
-    "DictItemsOp",
-    "DictKeysOp",
-    "DictValuesOp",
+    "GetOp",
+    "ItemsOp",
+    "KeysOp",
+    "ValuesOp",
 ]
 
 
@@ -23,43 +23,43 @@ __all__ = [
 # =============================================================================
 
 
-class DictKeysOp[K](UnaryOperation[list[K]]):
-    """Get keys from dict: list(dict.keys())."""
+class KeysOp[K](UnaryOperation[list[K]]):
+    """Get keys from mapping: list(mapping.keys())."""
 
     def apply(self, operand: object) -> list[K]:
         """Apply."""
         if not isinstance(operand, Mapping):
-            raise TypeError(f"keys_() requires dict, got {type(operand).__name__}")
+            raise TypeError(f"keys_() requires mapping, got {type(operand).__name__}")
         return list(operand.keys())  # type: ignore
 
 
-class DictValuesOp[V](UnaryOperation[list[V]]):
-    """Get values from dict: list(dict.values())."""
+class ValuesOp[V](UnaryOperation[list[V]]):
+    """Get values from mapping: list(mapping.values())."""
 
     def apply(self, operand: object) -> list[V]:
         """Apply."""
         if not isinstance(operand, Mapping):
-            raise TypeError(f"values_() requires dict, got {type(operand).__name__}")
+            raise TypeError(f"values_() requires mapping, got {type(operand).__name__}")
         return list(operand.values())  # type: ignore
 
 
-class DictItemsOp[K, V](UnaryOperation[list[tuple[K, V]]]):
-    """Get items from dict: list(dict.items())."""
+class ItemsOp[K, V](UnaryOperation[list[tuple[K, V]]]):
+    """Get items from mapping: list(mapping.items())."""
 
     def apply(self, operand: object) -> list[tuple[K, V]]:
         """Apply."""
         if not isinstance(operand, Mapping):
-            raise TypeError(f"items_() requires dict, got {type(operand).__name__}")
+            raise TypeError(f"items_() requires mapping, got {type(operand).__name__}")
         return list(operand.items())  # type: ignore
 
 
 # =============================================================================
-# DICT GET (Ternary)
+# MAPPING GET (Ternary)
 # =============================================================================
 
 
-class DictGetOp[V](TernaryOperation[V]):
-    """Get value from dict with optional default: dict.get(key, default) or dict[key]."""
+class GetOp[V](TernaryOperation[V]):
+    """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""

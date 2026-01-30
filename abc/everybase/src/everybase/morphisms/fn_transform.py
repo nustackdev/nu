@@ -9,6 +9,7 @@ ReversedOp: Reversed list (list(reversed(seq)))
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
@@ -43,8 +44,8 @@ class SortedOp[ResultT](UnaryOperation[list[ResultT]]):
 
     def apply(self, operand: object) -> list[ResultT] | Sentinel:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"sorted_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"sorted_() requires iterable, got {type(operand).__name__}")
         try:
             return sorted(operand, reverse=self._reverse)  # type: ignore
         except TypeError:
@@ -59,8 +60,8 @@ class ReversedOp[ResultT](UnaryOperation[list[ResultT]]):
 
     def apply(self, operand: object) -> list[ResultT]:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"reversed_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Sequence):
+            raise TypeError(f"reversed_() requires sequence, got {type(operand).__name__}")
         return list(reversed(operand))  # type: ignore
 
 
@@ -84,8 +85,8 @@ class MapOp[T, T2](UnaryOperation[list[T2]]):
 
     def apply(self, operand: object) -> list[T2]:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"map_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"map_() requires iterable, got {type(operand).__name__}")
         return list(map(self._fn, operand))
 
     def __repr__(self) -> str:
@@ -112,8 +113,8 @@ class FilterOp[T](UnaryOperation[list[T]]):
 
     def apply(self, operand: object) -> list[T]:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"filter_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"filter_() requires iterable, got {type(operand).__name__}")
         return list(filter(self._fn, operand))  # type: ignore
 
     def __repr__(self) -> str:
@@ -142,8 +143,8 @@ class ReduceOp[T, T2](UnaryOperation[T2]):
 
     def apply(self, operand: object) -> T2 | Sentinel:
         """Apply."""
-        if not isinstance(operand, (list, tuple)):
-            raise TypeError(f"reduce_() requires list or tuple, got {type(operand).__name__}")
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"reduce_() requires iterable, got {type(operand).__name__}")
         try:
             return functools_reduce(self._fn, operand, self._initial)
         except Exception:
