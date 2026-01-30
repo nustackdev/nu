@@ -14,12 +14,11 @@ from __future__ import annotations
 
 from everyabc import (
     INVALID,
-    BinaryMorphism,
-    NAryMorphism,
-    Operation,
+    BinaryOperation,
+    NAryOperation,
     Sentinel,
-    TernaryMorphism,
-    UnaryMorphism,
+    TernaryOperation,
+    UnaryOperation,
 )
 
 
@@ -57,7 +56,7 @@ __all__ = [
 # =============================================================================
 
 
-class UpperOp(Operation, UnaryMorphism[str | Sentinel]):
+class UpperOp(UnaryOperation[str]):
     """Convert to uppercase: str.upper()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -67,7 +66,7 @@ class UpperOp(Operation, UnaryMorphism[str | Sentinel]):
         return operand.upper()
 
 
-class LowerOp(Operation, UnaryMorphism[str | Sentinel]):
+class LowerOp(UnaryOperation[str]):
     """Convert to lowercase: str.lower()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -77,7 +76,7 @@ class LowerOp(Operation, UnaryMorphism[str | Sentinel]):
         return operand.lower()
 
 
-class TitleOp(Operation, UnaryMorphism[str | Sentinel]):
+class TitleOp(UnaryOperation[str]):
     """Convert to title case: str.title()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -87,7 +86,7 @@ class TitleOp(Operation, UnaryMorphism[str | Sentinel]):
         return operand.title()
 
 
-class CapitalizeOp(Operation, UnaryMorphism[str | Sentinel]):
+class CapitalizeOp(UnaryOperation[str]):
     """Capitalize first character: str.capitalize()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -97,7 +96,7 @@ class CapitalizeOp(Operation, UnaryMorphism[str | Sentinel]):
         return operand.capitalize()
 
 
-class SwapCaseOp(Operation, UnaryMorphism[str | Sentinel]):
+class SwapCaseOp(UnaryOperation[str]):
     """Swap case: str.swapcase()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -112,7 +111,7 @@ class SwapCaseOp(Operation, UnaryMorphism[str | Sentinel]):
 # =============================================================================
 
 
-class IsDigitOp(Operation, UnaryMorphism[bool | Sentinel]):
+class IsDigitOp(UnaryOperation[bool]):
     """Check if all digits: str.isdigit()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -122,7 +121,7 @@ class IsDigitOp(Operation, UnaryMorphism[bool | Sentinel]):
         return operand.isdigit()
 
 
-class IsAlphaOp(Operation, UnaryMorphism[bool | Sentinel]):
+class IsAlphaOp(UnaryOperation[bool]):
     """Check if all alphabetic: str.isalpha()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -132,7 +131,7 @@ class IsAlphaOp(Operation, UnaryMorphism[bool | Sentinel]):
         return operand.isalpha()
 
 
-class IsAlnumOp(Operation, UnaryMorphism[bool | Sentinel]):
+class IsAlnumOp(UnaryOperation[bool]):
     """Check if alphanumeric: str.isalnum()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -142,7 +141,7 @@ class IsAlnumOp(Operation, UnaryMorphism[bool | Sentinel]):
         return operand.isalnum()
 
 
-class IsSpaceOp(Operation, UnaryMorphism[bool | Sentinel]):
+class IsSpaceOp(UnaryOperation[bool]):
     """Check if all whitespace: str.isspace()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -153,177 +152,86 @@ class IsSpaceOp(Operation, UnaryMorphism[bool | Sentinel]):
 
 
 # =============================================================================
-# STRIPPING (NAryMorphism - optional chars argument)
+# STRIPPING (Binary)
 # =============================================================================
 
 
-class StripOp(Operation, NAryMorphism[str | Sentinel]):
+class StripOp(BinaryOperation[str]):
     """Strip whitespace or chars: str.strip(chars)."""
 
-    def __init__(self, operand: object, chars: object | None = None) -> None:
-        """Initialize strip operation."""
-        if chars is None:
-            super().__init__(operand)
-        else:
-            super().__init__(operand, chars)
-
-    def apply(self, *args: object) -> str | Sentinel:
+    def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
-        if len(args) == 1:
-            operand = args[0]
-            chars = None
-        else:
-            operand, chars = args
-        if not isinstance(operand, str):
+        if not isinstance(left, str):
             return INVALID
-        if chars is not None and not isinstance(chars, str):
+        if right is not None and not isinstance(right, str):
             return INVALID
-        return operand.strip(chars)  # type: ignore
+        return left.strip(right)  # type: ignore
 
 
-class LStripOp(Operation, NAryMorphism[str | Sentinel]):
+class LStripOp(BinaryOperation[str]):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
-    def __init__(self, operand: object, chars: object | None = None) -> None:
-        """Initialize lstrip operation."""
-        if chars is None:
-            super().__init__(operand)
-        else:
-            super().__init__(operand, chars)
-
-    def apply(self, *args: object) -> str | Sentinel:
+    def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
-        if len(args) == 1:
-            operand = args[0]
-            chars = None
-        else:
-            operand, chars = args
-        if not isinstance(operand, str):
+        if not isinstance(left, str):
             return INVALID
-        if chars is not None and not isinstance(chars, str):
+        if right is not None and not isinstance(right, str):
             return INVALID
-        return operand.lstrip(chars)  # type: ignore
+        return left.lstrip(right)  # type: ignore
 
 
-class RStripOp(Operation, NAryMorphism[str | Sentinel]):
+class RStripOp(BinaryOperation[str]):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
 
-    def __init__(self, operand: object, chars: object | None = None) -> None:
-        """Initialize rstrip operation."""
-        if chars is None:
-            super().__init__(operand)
-        else:
-            super().__init__(operand, chars)
-
-    def apply(self, *args: object) -> str | Sentinel:
+    def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
-        if len(args) == 1:
-            operand = args[0]
-            chars = None
-        else:
-            operand, chars = args
-        if not isinstance(operand, str):
+        if not isinstance(left, str):
             return INVALID
-        if chars is not None and not isinstance(chars, str):
+        if right is not None and not isinstance(right, str):
             return INVALID
-        return operand.rstrip(chars)  # type: ignore
+        return left.rstrip(right)  # type: ignore
 
 
 # =============================================================================
-# SPLITTING (NAryMorphism)
+# SPLITTING (Ternary)
 # =============================================================================
 
 
-class SplitOp(Operation, NAryMorphism[list[str] | Sentinel]):
+class SplitOp(TernaryOperation[list[str]]):
     """Split string: str.split(sep, maxsplit)."""
 
-    def __init__(
-        self,
-        operand: object,
-        sep: object | None = None,
-        maxsplit: object = -1,
-    ) -> None:
-        """Initialize split operation."""
-        if sep is None:
-            super().__init__(operand, maxsplit)
-            self._has_sep = False
-        else:
-            super().__init__(operand, sep, maxsplit)
-            self._has_sep = True
-
-    def apply(self, *args: object) -> list[str] | Sentinel:
+    def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
         """Apply."""
-        if self._has_sep:
-            operand, sep, maxsplit = args
-        else:
-            operand, maxsplit = args
-            sep = None
-        if not isinstance(operand, str):
+        if not isinstance(first, str):
             return INVALID
-        if sep is not None and not isinstance(sep, str):
+        if second is not None and not isinstance(second, str):
             return INVALID
-        return operand.split(sep, int(maxsplit))  # type: ignore
+        return first.split(second, int(third))  # type: ignore
 
 
-class RSplitOp(Operation, NAryMorphism[list[str] | Sentinel]):
+class RSplitOp(TernaryOperation[list[str]]):
     """Right split string: str.rsplit(sep, maxsplit)."""
 
-    def __init__(
-        self,
-        operand: object,
-        sep: object | None = None,
-        maxsplit: object = -1,
-    ) -> None:
-        """Initialize rsplit operation."""
-        if sep is None:
-            super().__init__(operand, maxsplit)
-            self._has_sep = False
-        else:
-            super().__init__(operand, sep, maxsplit)
-            self._has_sep = True
-
-    def apply(self, *args: object) -> list[str] | Sentinel:
+    def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
         """Apply."""
-        if self._has_sep:
-            operand, sep, maxsplit = args
-        else:
-            operand, maxsplit = args
-            sep = None
-        if not isinstance(operand, str):
+        if not isinstance(first, str):
             return INVALID
-        if sep is not None and not isinstance(sep, str):
+        if second is not None and not isinstance(second, str):
             return INVALID
-        return operand.rsplit(sep, int(maxsplit))  # type: ignore
+        return first.rsplit(second, int(third))  # type: ignore
 
 
 # =============================================================================
-# SEARCHING (NAryMorphism/BinaryMorphism)
+# SEARCHING
 # =============================================================================
 
 
-class FindOp(Operation, NAryMorphism[int | Sentinel]):
+class FindOp(NAryOperation[int]):
     """Find substring: str.find(sub, start, end)."""
-
-    def __init__(
-        self,
-        operand: object,
-        sub: object,
-        start: object = 0,
-        end: object | None = None,
-    ) -> None:
-        """Initialize find operation."""
-        if end is None:
-            super().__init__(operand, sub, start)
-        else:
-            super().__init__(operand, sub, start, end)
 
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
-        if len(args) == 3:
-            operand, sub, start = args
-            end = None
-        else:
-            operand, sub, start, end = args
+        operand, sub, start, end = args
         if not isinstance(operand, str) or not isinstance(sub, str):
             return INVALID
         if end is None:
@@ -331,29 +239,12 @@ class FindOp(Operation, NAryMorphism[int | Sentinel]):
         return operand.find(sub, int(start), int(end))  # type: ignore
 
 
-class RFindOp(Operation, NAryMorphism[int | Sentinel]):
+class RFindOp(NAryOperation[int]):
     """Find substring from right: str.rfind(sub, start, end)."""
-
-    def __init__(
-        self,
-        operand: object,
-        sub: object,
-        start: object = 0,
-        end: object | None = None,
-    ) -> None:
-        """Initialize rfind operation."""
-        if end is None:
-            super().__init__(operand, sub, start)
-        else:
-            super().__init__(operand, sub, start, end)
 
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
-        if len(args) == 3:
-            operand, sub, start = args
-            end = None
-        else:
-            operand, sub, start, end = args
+        operand, sub, start, end = args
         if not isinstance(operand, str) or not isinstance(sub, str):
             return INVALID
         if end is None:
@@ -361,14 +252,14 @@ class RFindOp(Operation, NAryMorphism[int | Sentinel]):
         return operand.rfind(sub, int(start), int(end))  # type: ignore
 
 
-class CountSubstringOp(Operation, BinaryMorphism[int | Sentinel]):
+class CountSubstringOp(BinaryOperation[int]):
     """Count substring occurrences: str.count(sub)."""
 
-    def apply(self, operand: object, sub: object) -> int | Sentinel:
+    def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
-        if not isinstance(operand, str) or not isinstance(sub, str):
+        if not isinstance(left, str) or not isinstance(right, str):
             return INVALID
-        return operand.count(sub)
+        return left.count(right)
 
 
 # =============================================================================
@@ -376,94 +267,85 @@ class CountSubstringOp(Operation, BinaryMorphism[int | Sentinel]):
 # =============================================================================
 
 
-class StartsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
+class StartsWithOp(BinaryOperation[bool]):
     """Check if starts with prefix: str.startswith(prefix)."""
 
-    def apply(self, operand: object, prefix: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
-        if not isinstance(operand, str) or not isinstance(prefix, str):
+        if not isinstance(left, str) or not isinstance(right, str):
             return INVALID
-        return operand.startswith(prefix)
+        return left.startswith(right)
 
 
-class EndsWithOp(Operation, BinaryMorphism[bool | Sentinel]):
+class EndsWithOp(BinaryOperation[bool]):
     """Check if ends with suffix: str.endswith(suffix)."""
 
-    def apply(self, operand: object, suffix: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
-        if not isinstance(operand, str) or not isinstance(suffix, str):
+        if not isinstance(left, str) or not isinstance(right, str):
             return INVALID
-        return operand.endswith(suffix)
+        return left.endswith(right)
 
 
 # =============================================================================
-# PADDING (TernaryMorphism)
+# PADDING (Ternary)
 # =============================================================================
 
 
-class CenterOp(Operation, TernaryMorphism[str | Sentinel]):
+class CenterOp(TernaryOperation[str]):
     """Center in width: str.center(width, fillchar)."""
 
-    def apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+    def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
-        if not isinstance(operand, str) or not isinstance(width, int):
+        if not isinstance(first, str) or not isinstance(second, int):
             return INVALID
-        fill = str(fillchar) if fillchar else " "
-        return operand.center(width, fill[0] if fill else " ")
+        fill = str(third) if third else " "
+        return first.center(second, fill[0] if fill else " ")
 
 
-class LJustOp(Operation, TernaryMorphism[str | Sentinel]):
+class LJustOp(TernaryOperation[str]):
     """Left justify: str.ljust(width, fillchar)."""
 
-    def apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+    def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
-        if not isinstance(operand, str) or not isinstance(width, int):
+        if not isinstance(first, str) or not isinstance(second, int):
             return INVALID
-        fill = str(fillchar) if fillchar else " "
-        return operand.ljust(width, fill[0] if fill else " ")
+        fill = str(third) if third else " "
+        return first.ljust(second, fill[0] if fill else " ")
 
 
-class RJustOp(Operation, TernaryMorphism[str | Sentinel]):
+class RJustOp(TernaryOperation[str]):
     """Right justify: str.rjust(width, fillchar)."""
 
-    def apply(self, operand: object, width: object, fillchar: object) -> str | Sentinel:
+    def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
-        if not isinstance(operand, str) or not isinstance(width, int):
+        if not isinstance(first, str) or not isinstance(second, int):
             return INVALID
-        fill = str(fillchar) if fillchar else " "
-        return operand.rjust(width, fill[0] if fill else " ")
+        fill = str(third) if third else " "
+        return first.rjust(second, fill[0] if fill else " ")
 
 
-class ZFillOp(Operation, BinaryMorphism[str | Sentinel]):
+class ZFillOp(BinaryOperation[str]):
     """Zero-fill: str.zfill(width)."""
 
-    def apply(self, operand: object, width: object) -> str | Sentinel:
+    def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
-        if not isinstance(operand, str) or not isinstance(width, int):
+        if not isinstance(left, str) or not isinstance(right, int):
             return INVALID
-        return operand.zfill(width)
+        return left.zfill(right)
 
 
 # =============================================================================
-# REPLACING (NAryMorphism)
+# REPLACING
 # =============================================================================
 
 
-class ReplaceOp(Operation, NAryMorphism[str | Sentinel]):
+class ReplaceOp(NAryOperation[str]):
     """Replace substring: str.replace(old, new, count)."""
 
-    def __init__(
-        self,
-        operand: object,
-        old: object,
-        new: object,
-        count: object = -1,
-    ) -> None:
-        """Initialize replace operation."""
-        super().__init__(operand, old, new, count)
-
-    def apply(self, operand: object, old: object, new: object, count: object) -> str | Sentinel:
+    def apply(self, *args: object) -> str | Sentinel:
         """Apply."""
+        operand, old, new, count = args
         if not isinstance(operand, str) or not isinstance(old, str) or not isinstance(new, str):
             return INVALID
         count_int = int(count)  # type: ignore
@@ -477,14 +359,14 @@ class ReplaceOp(Operation, NAryMorphism[str | Sentinel]):
 # =============================================================================
 
 
-class EncodeOp(Operation, BinaryMorphism[bytes | Sentinel]):
+class EncodeOp(BinaryOperation[bytes]):
     """Encode string to bytes: str.encode(encoding)."""
 
-    def apply(self, operand: object, encoding: object) -> bytes | Sentinel:
+    def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
-        if not isinstance(operand, str):
+        if not isinstance(left, str):
             return INVALID
         try:
-            return operand.encode(str(encoding) if encoding else "utf-8")
+            return left.encode(str(right) if right else "utf-8")
         except (UnicodeEncodeError, LookupError):
             return INVALID

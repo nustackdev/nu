@@ -7,7 +7,7 @@ All ops use every.BinaryMorphism with Operation mixin (pure).
 
 from __future__ import annotations
 
-from everyabc import INVALID, BinaryMorphism, Operation, Sentinel
+from everyabc import INVALID, BinaryOperation, Sentinel
 
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class GtOp(Operation, BinaryMorphism[bool | Sentinel]):
+class GtOp(BinaryOperation[bool]):
     """Greater than: left > right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -32,7 +32,7 @@ class GtOp(Operation, BinaryMorphism[bool | Sentinel]):
             return INVALID
 
 
-class LtOp(Operation, BinaryMorphism[bool | Sentinel]):
+class LtOp(BinaryOperation[bool]):
     """Less than: left < right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -43,7 +43,7 @@ class LtOp(Operation, BinaryMorphism[bool | Sentinel]):
             return INVALID
 
 
-class EqOp(Operation, BinaryMorphism[bool | Sentinel]):
+class EqOp(BinaryOperation[bool]):
     """Equality: left == right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -54,7 +54,7 @@ class EqOp(Operation, BinaryMorphism[bool | Sentinel]):
             return INVALID
 
 
-class NeOp(Operation, BinaryMorphism[bool | Sentinel]):
+class NeOp(BinaryOperation[bool]):
     """Not equal: left != right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -65,7 +65,7 @@ class NeOp(Operation, BinaryMorphism[bool | Sentinel]):
             return INVALID
 
 
-class GeOp(Operation, BinaryMorphism[bool | Sentinel]):
+class GeOp(BinaryOperation[bool]):
     """Greater than or equal: left >= right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -76,7 +76,7 @@ class GeOp(Operation, BinaryMorphism[bool | Sentinel]):
             return INVALID
 
 
-class LeOp(Operation, BinaryMorphism[bool | Sentinel]):
+class LeOp(BinaryOperation[bool]):
     """Less than or equal: left <= right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -87,7 +87,7 @@ class LeOp(Operation, BinaryMorphism[bool | Sentinel]):
             return INVALID
 
 
-class IdCompOp(Operation, BinaryMorphism[bool | Sentinel]):
+class IdCompOp(BinaryOperation[bool]):
     """Identity comparison: left is right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:

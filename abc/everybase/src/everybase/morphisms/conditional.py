@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Operation, TernaryMorphism
+from everyabc import TernaryOperation
 
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class ConditionalOp[ResultT](Operation, TernaryMorphism[ResultT]):
+class ConditionalOp[ResultT](TernaryOperation[ResultT]):
     """Conditional ternary: value_if_true if condition else value_if_false.
 
     Arguments order: (value_if_true, condition, value_if_false)

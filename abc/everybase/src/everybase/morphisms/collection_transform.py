@@ -12,7 +12,7 @@ from __future__ import annotations
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
-from everyabc import INVALID, NAryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, Sentinel, UnaryOperation
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-class SortedOp[ResultT](Operation, UnaryMorphism[list[ResultT] | Sentinel]):
+class SortedOp[ResultT](UnaryOperation[list[ResultT]]):
     """Sorted list: sorted(seq, reverse=reverse)."""
 
     def __init__(self, operand: object, *, reverse: bool = False) -> None:
@@ -54,7 +54,7 @@ class SortedOp[ResultT](Operation, UnaryMorphism[list[ResultT] | Sentinel]):
         return f"SortedOp({self._children[0]!r}, reverse={self._reverse})"
 
 
-class ReversedOp[ResultT](Operation, UnaryMorphism[list[ResultT]]):
+class ReversedOp[ResultT](UnaryOperation[list[ResultT]]):
     """Reversed list: list(reversed(seq))."""
 
     def apply(self, operand: object) -> list[ResultT]:
@@ -64,7 +64,7 @@ class ReversedOp[ResultT](Operation, UnaryMorphism[list[ResultT]]):
         return list(reversed(operand))  # type: ignore
 
 
-class MapOp[T, T2](Operation, NAryMorphism[list[T2]]):
+class MapOp[T, T2](UnaryOperation[list[T2]]):
     """Map function over sequence: list(map(fn, seq)).
 
     Example:
@@ -92,7 +92,7 @@ class MapOp[T, T2](Operation, NAryMorphism[list[T2]]):
         return f"MapOp({self._children[0]!r}, {self._fn!r})"
 
 
-class FilterOp[T](Operation, NAryMorphism[list[T]]):
+class FilterOp[T](UnaryOperation[list[T]]):
     """Filter sequence by predicate: list(filter(fn, seq)).
 
     Example:
@@ -120,7 +120,7 @@ class FilterOp[T](Operation, NAryMorphism[list[T]]):
         return f"FilterOp({self._children[0]!r}, {self._fn!r})"
 
 
-class ReduceOp[T, T2](Operation, NAryMorphism[T2 | Sentinel]):
+class ReduceOp[T, T2](UnaryOperation[T2]):
     """Reduce sequence to single value: functools.reduce(fn, seq, initial).
 
     Example:

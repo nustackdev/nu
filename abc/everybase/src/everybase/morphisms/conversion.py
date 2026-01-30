@@ -7,7 +7,7 @@ All conversions return Invalid on conversion failure.
 
 from __future__ import annotations
 
-from everyabc import INVALID, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, Sentinel, UnaryOperation
 
 
 __all__ = [
@@ -27,7 +27,7 @@ __all__ = [
 # =============================================================================
 
 
-class ToIntOp(Operation, UnaryMorphism[int | Sentinel]):
+class ToIntOp(UnaryOperation[int]):
     """Convert value to integer."""
 
     def apply(self, operand: object) -> int | Sentinel:
@@ -38,7 +38,7 @@ class ToIntOp(Operation, UnaryMorphism[int | Sentinel]):
             return INVALID
 
 
-class ToFloatOp(Operation, UnaryMorphism[float | Sentinel]):
+class ToFloatOp(UnaryOperation[float]):
     """Convert value to float."""
 
     def apply(self, operand: object) -> float | Sentinel:
@@ -49,7 +49,7 @@ class ToFloatOp(Operation, UnaryMorphism[float | Sentinel]):
             return INVALID
 
 
-class ToBoolOp(Operation, UnaryMorphism[bool | Sentinel]):
+class ToBoolOp(UnaryOperation[bool]):
     """Convert value to boolean."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -60,7 +60,7 @@ class ToBoolOp(Operation, UnaryMorphism[bool | Sentinel]):
             return INVALID
 
 
-class ToStrOp(Operation, UnaryMorphism[str | Sentinel]):
+class ToStrOp(UnaryOperation[str]):
     """Convert value to string."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -71,7 +71,7 @@ class ToStrOp(Operation, UnaryMorphism[str | Sentinel]):
             return INVALID
 
 
-class ToBytesOp(Operation, UnaryMorphism[bytes | Sentinel]):
+class ToBytesOp(UnaryOperation[bytes]):
     """Convert value to bytes.
 
     Supports:
@@ -110,7 +110,7 @@ class ToBytesOp(Operation, UnaryMorphism[bytes | Sentinel]):
 # =============================================================================
 
 
-class ToListOp[T](Operation, UnaryMorphism[list[T] | Sentinel]):
+class ToListOp[T](UnaryOperation[list[T]]):
     """Convert value to list."""
 
     def apply(self, operand: object) -> list[T] | Sentinel:
@@ -121,7 +121,7 @@ class ToListOp[T](Operation, UnaryMorphism[list[T] | Sentinel]):
             return INVALID
 
 
-class ToSetOp[T](Operation, UnaryMorphism[set[T] | Sentinel]):
+class ToSetOp[T](UnaryOperation[set[T]]):
     """Convert value to set."""
 
     def apply(self, operand: object) -> set[T] | Sentinel:
@@ -132,7 +132,7 @@ class ToSetOp[T](Operation, UnaryMorphism[set[T] | Sentinel]):
             return INVALID
 
 
-class ToTupleOp[*Ts](Operation, UnaryMorphism[tuple[*Ts] | Sentinel]):
+class ToTupleOp[*Ts](UnaryOperation[tuple[*Ts]]):
     """Convert value to tuple."""
 
     def apply(self, operand: object) -> tuple[*Ts] | Sentinel:

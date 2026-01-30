@@ -9,7 +9,7 @@ AllOp: All truthy (all(seq))
 
 from __future__ import annotations
 
-from everyabc import INVALID, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, Sentinel, UnaryOperation
 
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class SumOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class SumOp[ResultT](UnaryOperation[ResultT]):
     """Sum of sequence elements: sum(seq)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -34,7 +34,7 @@ class SumOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
             return INVALID
 
 
-class MinOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class MinOp[ResultT](UnaryOperation[ResultT]):
     """Minimum element: min(seq)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -49,7 +49,7 @@ class MinOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
             return INVALID
 
 
-class MaxOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class MaxOp[ResultT](UnaryOperation[ResultT]):
     """Maximum element: max(seq)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -64,7 +64,7 @@ class MaxOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
             return INVALID
 
 
-class AnyOp(Operation, UnaryMorphism[bool]):
+class AnyOp(UnaryOperation[bool]):
     """Any truthy element: any(seq)."""
 
     def apply(self, operand: object) -> bool:
@@ -74,7 +74,7 @@ class AnyOp(Operation, UnaryMorphism[bool]):
         return any(operand)
 
 
-class AllOp(Operation, UnaryMorphism[bool]):
+class AllOp(UnaryOperation[bool]):
     """All truthy elements: all(seq)."""
 
     def apply(self, operand: object) -> bool:

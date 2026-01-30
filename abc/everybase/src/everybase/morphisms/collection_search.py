@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import INVALID, BinaryMorphism, NAryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, BinaryOperation, Sentinel, UnaryOperation
 
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 
-class FirstOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class FirstOp[ResultT](UnaryOperation[ResultT]):
     """First element: seq[0]. Returns Invalid if empty."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -43,7 +43,7 @@ class FirstOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
         return operand[0]  # type: ignore
 
 
-class LastOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class LastOp[ResultT](UnaryOperation[ResultT]):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -55,7 +55,7 @@ class LastOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
         return operand[-1]  # type: ignore
 
 
-class IndexOfOp[T](Operation, BinaryMorphism[int | Sentinel]):
+class IndexOfOp(BinaryOperation[int]):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -69,7 +69,7 @@ class IndexOfOp[T](Operation, BinaryMorphism[int | Sentinel]):
             return INVALID
 
 
-class CountOp(Operation, BinaryMorphism[int]):
+class CountOp(BinaryOperation[int]):
     """Count occurrences: seq.count(value)."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -80,7 +80,7 @@ class CountOp(Operation, BinaryMorphism[int]):
         return list(left).count(right)
 
 
-class FindOp[T](Operation, NAryMorphism[T | Sentinel]):
+class FindOp[T](UnaryOperation[T]):
     """Find first element matching predicate. Returns Invalid if not found.
 
     Example:
@@ -110,7 +110,7 @@ class FindOp[T](Operation, NAryMorphism[T | Sentinel]):
         return f"FindOp({self._children[0]!r}, {self._fn!r})"
 
 
-class FindIndexOp[T](Operation, NAryMorphism[int | Sentinel]):
+class FindIndexOp[T](UnaryOperation[int]):
     """Find index of first element matching predicate. Returns Invalid if not found.
 
     Example:
@@ -140,7 +140,7 @@ class FindIndexOp[T](Operation, NAryMorphism[int | Sentinel]):
         return f"FindIndexOp({self._children[0]!r}, {self._fn!r})"
 
 
-class JoinOp(Operation, BinaryMorphism[str | Sentinel]):
+class JoinOp(BinaryOperation[str]):
     """Join strings: sep.join(seq)."""
 
     def apply(self, left: object, right: object) -> str | Sentinel:

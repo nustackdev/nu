@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from everyabc import BinaryMorphism, Command, NAryMorphism, Operation, TernaryMorphism
+from everyabc import BinaryCommand, BinaryOperation, NAryOperation, TernaryCommand
 
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ __all__ = [
 # =============================================================================
 
 
-class FuncCallOp[ResultT](Operation, NAryMorphism[ResultT]):
+class FuncCallOp[ResultT](NAryOperation[ResultT]):
     """Call a function with arguments.
 
     Arguments can be raw values or Terms - Terms are executed before
@@ -78,7 +78,7 @@ class FuncCallOp[ResultT](Operation, NAryMorphism[ResultT]):
 # =============================================================================
 
 
-class MethodCallOp[ResultT](Operation, NAryMorphism[ResultT]):
+class MethodCallOp[ResultT](NAryOperation[ResultT]):
     """Call a method on an instance.
 
     The instance, method name, and arguments can be Terms - they are
@@ -130,7 +130,7 @@ class MethodCallOp[ResultT](Operation, NAryMorphism[ResultT]):
 # =============================================================================
 
 
-class GetAttrOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class GetAttrOp[ResultT](BinaryOperation[ResultT]):
     """Get an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute access.
@@ -140,12 +140,12 @@ class GetAttrOp[ResultT](Operation, BinaryMorphism[ResultT]):
         >>> GetAttrOp(obj, attr_name_term)  # dynamic attribute
     """
 
-    def apply(self, instance: object, attr_name: object) -> ResultT:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        return getattr(instance, str(attr_name))
+        return getattr(left, str(right))
 
 
-class SetAttrOp(Command, TernaryMorphism[object]):
+class SetAttrOp(TernaryCommand[None]):
     """Set an attribute on an instance.
 
     All arguments can be Terms for dynamic attribute setting.
@@ -155,13 +155,12 @@ class SetAttrOp(Command, TernaryMorphism[object]):
         >>> SetAttrOp(obj, "name", "value")
     """
 
-    def apply(self, instance: object, attr_name: object, value: object) -> object:
+    def apply(self, first: object, second: object, third: object) -> None:
         """Apply."""
-        setattr(instance, str(attr_name), value)
-        return value
+        setattr(first, str(second), third)
 
 
-class DelAttrOp(Command, BinaryMorphism[None]):
+class DelAttrOp(BinaryCommand[None]):
     """Delete an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute deletion.
@@ -171,6 +170,6 @@ class DelAttrOp(Command, BinaryMorphism[None]):
         >>> DelAttrOp(obj, "cached_value")
     """
 
-    def apply(self, instance: object, attr_name: object) -> None:
+    def apply(self, left: object, right: object) -> None:
         """Apply."""
-        delattr(instance, str(attr_name))
+        delattr(left, str(right))

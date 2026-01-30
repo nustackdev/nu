@@ -7,7 +7,7 @@ Operations for checking special sentinel values (Empty, Invalid).
 
 from __future__ import annotations
 
-from everyabc import Operation, UnaryMorphism, is_empty, is_invalid
+from everyabc import UnaryOperation, is_empty, is_invalid
 
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class IsEmptyOp(Operation, UnaryMorphism[bool]):
+class IsEmptyOp(UnaryOperation[bool]):
     """Check if operand is Empty sentinel."""
 
     def apply(self, operand: object) -> bool:
@@ -26,7 +26,7 @@ class IsEmptyOp(Operation, UnaryMorphism[bool]):
         return is_empty(operand)
 
 
-class NotEmptyOp(Operation, UnaryMorphism[bool]):
+class NotEmptyOp(UnaryOperation[bool]):
     """Check if operand is NOT Empty sentinel."""
 
     def apply(self, operand: object) -> bool:
@@ -34,7 +34,7 @@ class NotEmptyOp(Operation, UnaryMorphism[bool]):
         return not is_empty(operand)
 
 
-class IsNaNOp(Operation, UnaryMorphism[bool]):
+class IsNaNOp(UnaryOperation[bool]):
     """Check if operand is Invalid sentinel."""
 
     def apply(self, operand: object) -> bool:
@@ -42,7 +42,7 @@ class IsNaNOp(Operation, UnaryMorphism[bool]):
         return is_invalid(operand)
 
 
-class NotNaNOp(Operation, UnaryMorphism[bool]):
+class NotNaNOp(UnaryOperation[bool]):
     """Check if operand is NOT Invalid sentinel."""
 
     def apply(self, operand: object) -> bool:

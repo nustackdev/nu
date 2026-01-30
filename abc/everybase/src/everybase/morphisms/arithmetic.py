@@ -8,7 +8,7 @@ All ops use every.Morphism base classes with Operation mixin (pure).
 
 from __future__ import annotations
 
-from everyabc import INVALID, BinaryMorphism, Operation, Sentinel, UnaryMorphism
+from everyabc import INVALID, BinaryOperation, Sentinel, UnaryOperation
 
 
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
 # =============================================================================
 
 
-class NegOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class NegOp[ResultT](UnaryOperation[ResultT]):
     """Negation: -operand."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -41,7 +41,7 @@ class NegOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
             return INVALID
 
 
-class AbsOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class AbsOp[ResultT](UnaryOperation[ResultT]):
     """Absolute value: abs(operand)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -52,7 +52,7 @@ class AbsOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
             return INVALID
 
 
-class PosOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
+class PosOp[ResultT](UnaryOperation[ResultT]):
     """Unary plus: +operand."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -68,7 +68,7 @@ class PosOp[ResultT](Operation, UnaryMorphism[ResultT | Sentinel]):
 # =============================================================================
 
 
-class AddOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class AddOp[ResultT](BinaryOperation[ResultT]):
     """Addition: left + right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -79,7 +79,7 @@ class AddOp[ResultT](Operation, BinaryMorphism[ResultT]):
             return INVALID
 
 
-class SubOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class SubOp[ResultT](BinaryOperation[ResultT]):
     """Subtraction: left - right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -90,7 +90,7 @@ class SubOp[ResultT](Operation, BinaryMorphism[ResultT]):
             return INVALID
 
 
-class MulOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class MulOp[ResultT](BinaryOperation[ResultT]):
     """Multiplication: left * right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -101,7 +101,7 @@ class MulOp[ResultT](Operation, BinaryMorphism[ResultT]):
             return INVALID
 
 
-class DivOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class DivOp[ResultT](BinaryOperation[ResultT]):
     """Division: left / right. Returns Invalid on division by zero."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -112,7 +112,7 @@ class DivOp[ResultT](Operation, BinaryMorphism[ResultT]):
             return INVALID
 
 
-class FloorDivOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class FloorDivOp[ResultT](BinaryOperation[ResultT]):
     """Floor division: left // right. Returns Invalid on division by zero."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -123,7 +123,7 @@ class FloorDivOp[ResultT](Operation, BinaryMorphism[ResultT]):
             return INVALID
 
 
-class ModOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class ModOp[ResultT](BinaryOperation[ResultT]):
     """Modulo: left % right. Returns Invalid on division by zero."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -134,7 +134,7 @@ class ModOp[ResultT](Operation, BinaryMorphism[ResultT]):
             return INVALID
 
 
-class PowOp[ResultT](Operation, BinaryMorphism[ResultT]):
+class PowOp[ResultT](BinaryOperation[ResultT]):
     """Power: left ** right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
