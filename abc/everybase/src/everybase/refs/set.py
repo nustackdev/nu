@@ -8,17 +8,16 @@ Returns concrete py types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import Comparable, SetLike
+from everybase.capabilities import ComparableBase, SetLikeBase
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
     from everyabc import Term
-    from everybase.py import BoolRef, FrozenSetRef, SetRef
+    from everybase.py import AnyRef, BoolRef, FrozenSetRef, ListRef, SetRef
 
 
 __all__ = [
@@ -28,10 +27,9 @@ __all__ = [
 
 
 class SetRefBase[T](
-    SetLike[T, "SetRef[T]"],
-    Comparable["set[T] | SetRef[T]"],
+    SetLikeBase[T, "SetRef[T]"],
+    ComparableBase["set[T] | SetRef[T]"],
     RefBase[set[T]],
-    ABC,
 ):
     """Abstract base for set refs.
 
@@ -48,12 +46,21 @@ class SetRefBase[T](
 
         return SetRef(operand)
 
+    def _wrap_iterable_result(self, operand: Term) -> ListRef:
+        from everybase.py.list import ListRef
+
+        return ListRef(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyRef:
+        from everybase.py.any import AnyRef
+
+        return AnyRef(operand)
+
 
 class FrozenSetRefBase[T](
-    SetLike[T, "FrozenSetRef[T]"],
-    Comparable["frozenset[T] | FrozenSetRef[T]"],
+    SetLikeBase[T, "FrozenSetRef[T]"],
+    ComparableBase["frozenset[T] | FrozenSetRef[T]"],
     RefBase[frozenset[T]],
-    ABC,
 ):
     """Abstract base for frozenset refs.
 
@@ -69,3 +76,13 @@ class FrozenSetRefBase[T](
         from everybase.py.frozenset import FrozenSetRef
 
         return FrozenSetRef(operand)
+
+    def _wrap_iterable_result(self, operand: Term) -> ListRef:
+        from everybase.py.list import ListRef
+
+        return ListRef(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyRef:
+        from everybase.py.any import AnyRef
+
+        return AnyRef(operand)

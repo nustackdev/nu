@@ -1,9 +1,9 @@
-"""Atomic collection access capabilities.
+"""Atomic collection capability bases.
 
-- Lengthable: len_()
-- Indexable: __getitem__
-- Sliceable: slice_()
-- Containable: contains()
+ContainableBase: contains()       — like collections.abc.Container
+LengthableBase: len_()            — like collections.abc.Sized
+IndexableBase: __getitem__        — index/key access
+SliceableBase: slice_()           — slice access
 """
 
 from __future__ import annotations
@@ -17,15 +17,26 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Containable",
-    "Indexable",
-    "Lengthable",
-    "Sliceable",
+    "ContainableBase",
+    "IndexableBase",
+    "LengthableBase",
+    "SliceableBase",
 ]
 
 
-class Lengthable:
-    """Trait for values that have a length."""
+class ContainableBase[ItemT]:
+    """Base for values that support containment testing."""
+
+    def contains(self, item: ItemT) -> BoolRef:
+        """Check if item is in this value."""
+        from everybase.morphisms import ContainsOp
+        from everybase.py import BoolRef
+
+        return BoolRef(ContainsOp(self, item))
+
+
+class LengthableBase:
+    """Base for values that have a length."""
 
     def len_(self) -> IntRef:
         """Get length of this value."""
@@ -35,8 +46,8 @@ class Lengthable:
         return IntRef(LenOp(self))
 
 
-class Indexable[KeyT, ResultValue]:
-    """Trait for values that support index/key access."""
+class IndexableBase[KeyT, ResultValue]:
+    """Base for values that support index/key access."""
 
     def _wrap_indexable_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -49,8 +60,8 @@ class Indexable[KeyT, ResultValue]:
         return cast("ResultValue", self._wrap_indexable_result(AtOp(self, key)))
 
 
-class Sliceable[ResultT]:
-    """Trait for values that support slicing."""
+class SliceableBase[ResultT]:
+    """Base for values that support slicing."""
 
     def _wrap_sliceable_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -63,14 +74,3 @@ class Sliceable[ResultT]:
         from everybase.morphisms import SliceOp
 
         return cast("ResultT", self._wrap_sliceable_result(SliceOp(self, start, stop, step)))
-
-
-class Containable[ItemT]:
-    """Trait for values that support containment testing."""
-
-    def contains(self, item: ItemT) -> BoolRef:
-        """Check if item is in this value."""
-        from everybase.morphisms import ContainsOp
-        from everybase.py import BoolRef
-
-        return BoolRef(ContainsOp(self, item))

@@ -7,10 +7,9 @@ Returns concrete py types (IntRef, FloatRef, BoolRef).
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING, overload
 
-from everybase.capabilities import Bitwise, Comparable, Logical
+from everybase.capabilities import BitwiseBase, ComparableBase, LogicalBase
 
 from .base import RefBase
 
@@ -28,11 +27,10 @@ __all__ = [
 
 
 class IntRefBase(
-    Comparable["int | float | IntRef | FloatRef"],
-    Logical["bool | int | BoolRef | IntRef", "BoolRef"],
-    Bitwise["int | IntRef", "IntRef"],
+    ComparableBase["int | float | IntRef | FloatRef"],
+    LogicalBase["bool | int | BoolRef | IntRef", "BoolRef"],
+    BitwiseBase["int | IntRef", "IntRef"],
     RefBase[int],
-    ABC,
 ):
     """Abstract base for integer refs.
 

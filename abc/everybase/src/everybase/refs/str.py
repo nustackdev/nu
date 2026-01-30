@@ -7,10 +7,16 @@ Includes all string-specific methods.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING, overload
 
-from everybase.capabilities import Addable, Comparable, Containable, Lengthable, Logical, Sliceable
+from everybase.capabilities import (
+    AddableBase,
+    ComparableBase,
+    ContainableBase,
+    LengthableBase,
+    LogicalBase,
+    SliceableBase,
+)
 
 from .base import RefBase
 
@@ -26,14 +32,13 @@ __all__ = [
 
 
 class StrRefBase(
-    Addable[str, "StrRef"],
-    Lengthable,
-    Sliceable["StrRef"],
-    Containable[str],
-    Comparable["str | StrRef"],
-    Logical["str | StrRef", "BoolRef"],
+    AddableBase[str, "StrRef"],
+    LengthableBase,
+    SliceableBase["StrRef"],
+    ContainableBase[str],
+    ComparableBase["str | StrRef"],
+    LogicalBase["str | StrRef", "BoolRef"],
     RefBase[str],
-    ABC,
 ):
     """Abstract base for string refs.
 

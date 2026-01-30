@@ -1,14 +1,14 @@
-"""Bitwise capability traits for refs.
+"""Bitwise capability bases.
 
-Atomic traits:
-- BitwiseAndable: bitand()
-- BitwiseOrable: bitor()
-- BitwiseXorable: __xor__, __rxor__
-- BitwiseInvertable: bitnot()
-- Shiftable: __lshift__, __rshift__
+Atomic:
+    BitwiseAndableBase: bitand()
+    BitwiseOrableBase: bitor()
+    BitwiseXorableBase: __xor__, __rxor__
+    BitwiseInvertableBase: bitnot()
+    ShiftableBase: __lshift__, __rshift__
 
-Combined traits:
-- Bitwise = BitwiseAndable + BitwiseOrable + BitwiseXorable + BitwiseInvertable + Shiftable
+Combined:
+    BitwiseBase = all of the above
 """
 
 from __future__ import annotations
@@ -21,17 +21,17 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Bitwise",
-    "BitwiseAndable",
-    "BitwiseInvertable",
-    "BitwiseOrable",
-    "BitwiseXorable",
-    "Shiftable",
+    "BitwiseAndableBase",
+    "BitwiseBase",
+    "BitwiseInvertableBase",
+    "BitwiseOrableBase",
+    "BitwiseXorableBase",
+    "ShiftableBase",
 ]
 
 
-class BitwiseAndable[OperandT, ResultT]:
-    """Trait for values that support bitwise AND."""
+class BitwiseAndableBase[OperandT, ResultT]:
+    """Base for values that support bitwise AND."""
 
     def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -44,8 +44,8 @@ class BitwiseAndable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_bitwise_result(BitwiseAndOp(self, other)))
 
 
-class BitwiseOrable[OperandT, ResultT]:
-    """Trait for values that support bitwise OR."""
+class BitwiseOrableBase[OperandT, ResultT]:
+    """Base for values that support bitwise OR."""
 
     def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -58,8 +58,8 @@ class BitwiseOrable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_bitwise_result(BitwiseOrOp(self, other)))
 
 
-class BitwiseXorable[OperandT, ResultT]:
-    """Trait for values that support bitwise XOR."""
+class BitwiseXorableBase[OperandT, ResultT]:
+    """Base for values that support bitwise XOR."""
 
     def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -78,8 +78,8 @@ class BitwiseXorable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_bitwise_result(XorOp(other, self)))
 
 
-class BitwiseInvertable[ResultT]:
-    """Trait for values that support bitwise NOT."""
+class BitwiseInvertableBase[ResultT]:
+    """Base for values that support bitwise NOT."""
 
     def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -92,8 +92,8 @@ class BitwiseInvertable[ResultT]:
         return cast("ResultT", self._wrap_bitwise_result(BitwiseNotOp(self)))
 
 
-class Shiftable[OperandT, ResultT]:
-    """Trait for values that support bit shifting."""
+class ShiftableBase[OperandT, ResultT]:
+    """Base for values that support bit shifting."""
 
     def _wrap_bitwise_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -124,12 +124,12 @@ class Shiftable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_bitwise_result(RShiftOp(other, self)))
 
 
-class Bitwise[OperandT, ResultT](
-    BitwiseAndable[OperandT, ResultT],
-    BitwiseOrable[OperandT, ResultT],
-    BitwiseXorable[OperandT, ResultT],
-    BitwiseInvertable[ResultT],
-    Shiftable[OperandT, ResultT],
+class BitwiseBase[OperandT, ResultT](
+    BitwiseAndableBase[OperandT, ResultT],
+    BitwiseOrableBase[OperandT, ResultT],
+    BitwiseXorableBase[OperandT, ResultT],
+    BitwiseInvertableBase[ResultT],
+    ShiftableBase[OperandT, ResultT],
 ):
     """Full bitwise: bitand(), bitor(), ^, bitnot(), <<, >>."""
 

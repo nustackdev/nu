@@ -7,10 +7,15 @@ Returns concrete py types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING, cast, overload
 
-from everybase.capabilities import Comparable, Containable, Lengthable, Logical, Sliceable
+from everybase.capabilities import (
+    ComparableBase,
+    ContainableBase,
+    LengthableBase,
+    LogicalBase,
+    SliceableBase,
+)
 
 from .base import RefBase
 
@@ -26,13 +31,12 @@ __all__ = [
 
 
 class BytesRefBase(
-    Lengthable,
-    Sliceable["BytesRef"],
-    Containable["int | bytes"],
-    Comparable["bytes | BytesRef"],
-    Logical["bytes | BytesRef", "BoolRef"],
+    LengthableBase,
+    SliceableBase["BytesRef"],
+    ContainableBase["int | bytes"],
+    ComparableBase["bytes | BytesRef"],
+    LogicalBase["bytes | BytesRef", "BoolRef"],
     RefBase[bytes],
-    ABC,
 ):
     """Abstract base for bytes refs.
 

@@ -1,12 +1,12 @@
-"""Logical capability traits for refs.
+"""Logical capability bases.
 
-Atomic traits:
-- Andable: and_()
-- Orable: or_()
-- Notable: not_(), bool_()
+Atomic:
+    AndableBase: and_()
+    OrableBase: or_()
+    NotableBase: not_(), bool_()
 
-Combined traits:
-- Logical = Andable + Orable + Notable
+Combined:
+    LogicalBase = Andable + Orable + Notable
 """
 
 from __future__ import annotations
@@ -19,15 +19,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Andable",
-    "Logical",
-    "Notable",
-    "Orable",
+    "AndableBase",
+    "LogicalBase",
+    "NotableBase",
+    "OrableBase",
 ]
 
 
-class Andable[OperandT, ResultT]:
-    """Trait for values that support logical AND."""
+class AndableBase[OperandT, ResultT]:
+    """Base for values that support logical AND."""
 
     def _wrap_logical_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -40,8 +40,8 @@ class Andable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_logical_result(AndOp(self, other)))
 
 
-class Orable[OperandT, ResultT]:
-    """Trait for values that support logical OR."""
+class OrableBase[OperandT, ResultT]:
+    """Base for values that support logical OR."""
 
     def _wrap_logical_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -54,8 +54,8 @@ class Orable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_logical_result(OrOp(self, other)))
 
 
-class Notable[ResultT]:
-    """Trait for values that support logical NOT and bool conversion."""
+class NotableBase[ResultT]:
+    """Base for values that support logical NOT and bool conversion."""
 
     def _wrap_logical_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -92,10 +92,10 @@ class Notable[ResultT]:
         return cast("ResultT", self._wrap_logical_result(BoolOp(self)))
 
 
-class Logical[OperandT, ResultT](
-    Andable[OperandT, ResultT],
-    Orable[OperandT, ResultT],
-    Notable[ResultT],
+class LogicalBase[OperandT, ResultT](
+    AndableBase[OperandT, ResultT],
+    OrableBase[OperandT, ResultT],
+    NotableBase[ResultT],
 ):
     """Full logical: and_(), or_(), not_(), bool_()."""
 

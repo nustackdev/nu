@@ -5,10 +5,9 @@ BoolRefBase = RefBase[bool] + Logical + Comparable
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import Comparable, Logical
+from everybase.capabilities import ComparableBase, LogicalBase
 
 from .base import RefBase
 
@@ -24,10 +23,9 @@ __all__ = [
 
 
 class BoolRefBase(
-    Logical["bool | BoolRef", "BoolRef"],
-    Comparable["bool | BoolRef"],
+    LogicalBase["bool | BoolRef", "BoolRef"],
+    ComparableBase["bool | BoolRef"],
     RefBase[bool],
-    ABC,
 ):
     """Abstract base for boolean refs.
 

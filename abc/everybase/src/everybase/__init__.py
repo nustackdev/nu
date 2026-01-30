@@ -1,48 +1,86 @@
 """Everybase - Foundation library for the every ecosystem.
 
 Structure:
-- capabilities/: Capability mixins for refs (Numeric, Comparable, Logical, etc.)
-- protocols/: Storage capability protocols (Gettable, Settable, etc.)
+- capabilities/: Capability protocols and bases (NumericBase/Protocol, ComparableBase/Protocol, etc.)
 - morphisms/: Concrete morphisms (AddOp, SubOp, EqOp, etc.)
 - refs/: Abstract ref bases (IntRefBase, StrRefBase, etc.)
 - py/: Python memory refs (IntRef, StrRef, ListRef, etc.)
 - util/: Utilities (ensure_term, typed_ref, combiners)
 """
 
-# Re-export traits
-# Re-export morphisms
+# Re-export capabilities
 from everybase.capabilities import (
-    Addable,
-    Additive,
-    Andable,
-    Bitwise,
-    BitwiseAndable,
-    BitwiseInvertable,
-    BitwiseOrable,
-    BitwiseXorable,
-    Comparable,
-    Containable,
-    Divisible,
-    Equalable,
-    Indexable,
-    Iterable,
-    Lengthable,
-    Logical,
-    Mapping,
-    Moduloable,
-    Multiplicative,
-    Multiplyable,
-    Negatable,
-    Notable,
-    Numeric,
-    Orable,
-    Orderable,
-    Powerable,
-    Sequence,
-    SetLike,
-    Shiftable,
-    Sliceable,
-    Subtractable,
+    # Arithmetic
+    AddableBase,
+    AddableProtocol,
+    AdditiveBase,
+    AdditiveProtocol,
+    # Logical
+    AndableBase,
+    AndableProtocol,
+    # Bitwise
+    BitwiseAndableBase,
+    BitwiseAndableProtocol,
+    BitwiseBase,
+    BitwiseInvertableBase,
+    BitwiseInvertableProtocol,
+    BitwiseOrableBase,
+    BitwiseOrableProtocol,
+    BitwiseProtocol,
+    BitwiseXorableBase,
+    BitwiseXorableProtocol,
+    # Collection: combined
+    CollectionBase,
+    CollectionProtocol,
+    # Comparison
+    ComparableBase,
+    ComparableProtocol,
+    # Collection atoms
+    ContainableBase,
+    ContainableProtocol,
+    DivisibleBase,
+    DivisibleProtocol,
+    EqualableBase,
+    EqualableProtocol,
+    IndexableBase,
+    IndexableProtocol,
+    # Collection: iterable
+    IterableBase,
+    IterableProtocol,
+    LengthableBase,
+    LengthableProtocol,
+    LogicalBase,
+    LogicalProtocol,
+    MappingBase,
+    MappingProtocol,
+    ModuloableBase,
+    ModuloableProtocol,
+    MultiplicativeBase,
+    MultiplicativeProtocol,
+    MultiplyableBase,
+    MultiplyableProtocol,
+    NegatableBase,
+    NegatableProtocol,
+    NotableBase,
+    NotableProtocol,
+    NumericBase,
+    NumericProtocol,
+    OrableBase,
+    OrableProtocol,
+    OrderableBase,
+    OrderableProtocol,
+    PowerableBase,
+    PowerableProtocol,
+    SequenceBase,
+    SequenceProtocol,
+    SetLikeBase,
+    SetLikeProtocol,
+    ShiftableBase,
+    ShiftableProtocol,
+    SliceableBase,
+    SliceableProtocol,
+    SubtractableBase,
+    SubtractableProtocol,
 )
 from everybase.morphisms import (
     # Arithmetic
@@ -122,53 +160,6 @@ from everybase.morphisms import (
     XorOp,
 )
 
-# Re-export protocols
-from everybase.protocols import (
-    # Capability protocols
-    Appendable,
-    Clearable,
-    # Collection protocols
-    CollectionItemRef,
-    CollectionRef,
-    ContainerRef,
-    Deletable,
-    Existable,
-    Extractable,
-    Gettable,
-    Insertable,
-    ItemsQueryable,
-    KeysQueryable,
-    MappingAccessible,
-    MappingRef,
-    MutableMappingRef,
-    MutableSequenceRef,
-    MutableSetLikeRef,
-    Nestable,
-    Poppable,
-    RefChildObservable,
-    RefDescendantsObservable,
-    RefIndexable,
-    RefObservable,
-    RefSliceable,
-    SequenceRef,
-    SetLikeRef,
-    Settable,
-    Storable,
-    ValuesQueryable,
-    # Type guards
-    is_clearable,
-    is_deletable,
-    is_existable,
-    is_extractable,
-    is_gettable,
-    is_lengthable,
-    is_mapping_accessible,
-    is_ref_indexable,
-    is_ref_observable,
-    is_settable,
-    is_storable,
-)
-
 # Re-export py refs
 from everybase.py import (
     AnyRef,
@@ -187,9 +178,6 @@ from everybase.py import (
     SetRef,
     StrRef,
     TupleRef,
-)
-from everybase.py import (
-    SetRef as PySetRef,  # Avoid collision with SetRef protocol
 )
 
 # Re-export ref bases
@@ -228,97 +216,79 @@ from everybase.util import (
 
 __all__ = [  # noqa: RUF022
     # =========================================================================
-    # CAPABILITIES (operator + collection mixins)
+    # CAPABILITIES (protocols + bases)
     # =========================================================================
     # Arithmetic
-    "Addable",
-    "Subtractable",
-    "Negatable",
-    "Multiplyable",
-    "Divisible",
-    "Moduloable",
-    "Powerable",
-    "Additive",
-    "Multiplicative",
-    "Numeric",
+    "AddableBase",
+    "AddableProtocol",
+    "SubtractableBase",
+    "SubtractableProtocol",
+    "NegatableBase",
+    "NegatableProtocol",
+    "MultiplyableBase",
+    "MultiplyableProtocol",
+    "DivisibleBase",
+    "DivisibleProtocol",
+    "ModuloableBase",
+    "ModuloableProtocol",
+    "PowerableBase",
+    "PowerableProtocol",
+    "AdditiveBase",
+    "AdditiveProtocol",
+    "MultiplicativeBase",
+    "MultiplicativeProtocol",
+    "NumericBase",
+    "NumericProtocol",
     # Comparison
-    "Orderable",
-    "Equalable",
-    "Comparable",
+    "OrderableBase",
+    "OrderableProtocol",
+    "EqualableBase",
+    "EqualableProtocol",
+    "ComparableBase",
+    "ComparableProtocol",
     # Logical
-    "Andable",
-    "Orable",
-    "Notable",
-    "Logical",
+    "AndableBase",
+    "AndableProtocol",
+    "OrableBase",
+    "OrableProtocol",
+    "NotableBase",
+    "NotableProtocol",
+    "LogicalBase",
+    "LogicalProtocol",
     # Bitwise
-    "BitwiseAndable",
-    "BitwiseOrable",
-    "BitwiseXorable",
-    "BitwiseInvertable",
-    "Shiftable",
-    "Bitwise",
-    # Collection
-    "Lengthable",
-    "Indexable",
-    "Sliceable",
-    "Containable",
-    "Iterable",
-    "Sequence",
-    "Mapping",
-    "SetLike",
-    # =========================================================================
-    # PROTOCOLS (storage capabilities)
-    # =========================================================================
-    # Read
-    "Gettable",
-    "Extractable",
-    # Write
-    "Settable",
-    "Storable",
-    "Appendable",
-    "Insertable",
-    # Delete
-    "Deletable",
-    "Clearable",
-    "Poppable",
-    # Existence
-    "Existable",
-    # Observable
-    "RefObservable",
-    "RefChildObservable",
-    "RefDescendantsObservable",
-    # Navigation
-    "Nestable",
-    "RefIndexable",
-    "RefSliceable",
-    # Query
-    "KeysQueryable",
-    "ValuesQueryable",
-    "ItemsQueryable",
-    # Mapping access
-    "MappingAccessible",
-    # Type guards
-    "is_gettable",
-    "is_extractable",
-    "is_settable",
-    "is_storable",
-    "is_deletable",
-    "is_clearable",
-    "is_existable",
-    "is_ref_observable",
-    "is_ref_indexable",
-    "is_lengthable",
-    "is_mapping_accessible",
-    # Collection protocols
-    "ContainerRef",
-    "CollectionRef",
-    "SequenceRef",
-    "MutableSequenceRef",
-    "MappingRef",
-    "MutableMappingRef",
-    "SetLikeRef",
-    "MutableSetLikeRef",
-    "CollectionItemRef",
+    "BitwiseAndableBase",
+    "BitwiseAndableProtocol",
+    "BitwiseOrableBase",
+    "BitwiseOrableProtocol",
+    "BitwiseXorableBase",
+    "BitwiseXorableProtocol",
+    "BitwiseInvertableBase",
+    "BitwiseInvertableProtocol",
+    "ShiftableBase",
+    "ShiftableProtocol",
+    "BitwiseBase",
+    "BitwiseProtocol",
+    # Collection atoms
+    "ContainableBase",
+    "ContainableProtocol",
+    "LengthableBase",
+    "LengthableProtocol",
+    "IndexableBase",
+    "IndexableProtocol",
+    "SliceableBase",
+    "SliceableProtocol",
+    # Collection: iterable
+    "IterableBase",
+    "IterableProtocol",
+    # Collection: combined
+    "CollectionBase",
+    "CollectionProtocol",
+    "SequenceBase",
+    "SequenceProtocol",
+    "MappingBase",
+    "MappingProtocol",
+    "SetLikeBase",
+    "SetLikeProtocol",
     # =========================================================================
     # MORPHISMS (operations)
     # =========================================================================
@@ -409,7 +379,6 @@ __all__ = [  # noqa: RUF022
     "ListRef",
     "SetRef",
     "DictRef",
-    "PySetRef",
     "FrozenSetRef",
     "TupleRef",
     "AnyRef",

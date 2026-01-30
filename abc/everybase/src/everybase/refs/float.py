@@ -5,10 +5,9 @@ FloatRefBase = RefBase[float] + Numeric + Comparable + Logical
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import Comparable, Logical, Numeric
+from everybase.capabilities import ComparableBase, LogicalBase, NumericBase
 
 from .base import RefBase
 
@@ -24,11 +23,10 @@ __all__ = [
 
 
 class FloatRefBase(
-    Numeric["int | float | IntRef | FloatRef", "FloatRef"],
-    Comparable["int | float | IntRef | FloatRef"],
-    Logical["bool | float | BoolRef | FloatRef", "BoolRef"],
+    NumericBase["int | float | IntRef | FloatRef", "FloatRef"],
+    ComparableBase["int | float | IntRef | FloatRef"],
+    LogicalBase["bool | float | BoolRef | FloatRef", "BoolRef"],
     RefBase[float],
-    ABC,
 ):
     """Abstract base for float refs.
 

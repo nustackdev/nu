@@ -1,13 +1,13 @@
-"""Arithmetic capability traits for refs.
+"""Arithmetic capability bases.
 
-Atomic traits:
-- Addable, Subtractable, Negatable
-- Multiplyable, Divisible, Moduloable, Powerable
+Atomic:
+    AddableBase, SubtractableBase, NegatableBase,
+    MultiplyableBase, DivisibleBase, ModuloableBase, PowerableBase
 
-Combined traits:
-- Additive = Addable + Subtractable + Negatable
-- Multiplicative = Multiplyable + Divisible + Moduloable + Powerable
-- Numeric = Additive + Multiplicative
+Combined:
+    AdditiveBase = Addable + Subtractable + Negatable
+    MultiplicativeBase = Multiplyable + Divisible + Moduloable + Powerable
+    NumericBase = Additive + Multiplicative
 """
 
 from __future__ import annotations
@@ -20,21 +20,21 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Addable",
-    "Additive",
-    "Divisible",
-    "Moduloable",
-    "Multiplicative",
-    "Multiplyable",
-    "Negatable",
-    "Numeric",
-    "Powerable",
-    "Subtractable",
+    "AddableBase",
+    "AdditiveBase",
+    "DivisibleBase",
+    "ModuloableBase",
+    "MultiplicativeBase",
+    "MultiplyableBase",
+    "NegatableBase",
+    "NumericBase",
+    "PowerableBase",
+    "SubtractableBase",
 ]
 
 
-class Addable[OperandT, ResultT]:
-    """Trait for values that support addition."""
+class AddableBase[OperandT, ResultT]:
+    """Base for values that support addition."""
 
     def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -53,8 +53,8 @@ class Addable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_arithmetic_result(AddOp(other, self)))
 
 
-class Subtractable[OperandT, ResultT]:
-    """Trait for values that support subtraction."""
+class SubtractableBase[OperandT, ResultT]:
+    """Base for values that support subtraction."""
 
     def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -73,8 +73,8 @@ class Subtractable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_arithmetic_result(SubOp(other, self)))
 
 
-class Negatable[ResultT]:
-    """Trait for values that support unary negation, positive, and abs."""
+class NegatableBase[ResultT]:
+    """Base for values that support unary negation, positive, and abs."""
 
     def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -99,8 +99,8 @@ class Negatable[ResultT]:
         return cast("ResultT", self._wrap_arithmetic_result(AbsOp(self)))
 
 
-class Multiplyable[OperandT, ResultT]:
-    """Trait for values that support multiplication."""
+class MultiplyableBase[OperandT, ResultT]:
+    """Base for values that support multiplication."""
 
     def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -119,8 +119,8 @@ class Multiplyable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_arithmetic_result(MulOp(other, self)))
 
 
-class Divisible[OperandT, ResultT]:
-    """Trait for values that support division (true and floor)."""
+class DivisibleBase[OperandT, ResultT]:
+    """Base for values that support division (true and floor)."""
 
     def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -151,8 +151,8 @@ class Divisible[OperandT, ResultT]:
         return cast("ResultT", self._wrap_arithmetic_result(FloorDivOp(other, self)))
 
 
-class Moduloable[OperandT, ResultT]:
-    """Trait for values that support modulo operation."""
+class ModuloableBase[OperandT, ResultT]:
+    """Base for values that support modulo operation."""
 
     def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -171,8 +171,8 @@ class Moduloable[OperandT, ResultT]:
         return cast("ResultT", self._wrap_arithmetic_result(ModOp(other, self)))
 
 
-class Powerable[OperandT, ResultT]:
-    """Trait for values that support exponentiation."""
+class PowerableBase[OperandT, ResultT]:
+    """Base for values that support exponentiation."""
 
     def _wrap_arithmetic_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
@@ -192,34 +192,34 @@ class Powerable[OperandT, ResultT]:
 
 
 # =============================================================================
-# COMBINED TRAITS
+# COMBINED BASES
 # =============================================================================
 
 
-class Additive[OperandT, ResultT](
-    Addable[OperandT, ResultT],
-    Subtractable[OperandT, ResultT],
-    Negatable[ResultT],
+class AdditiveBase[OperandT, ResultT](
+    AddableBase[OperandT, ResultT],
+    SubtractableBase[OperandT, ResultT],
+    NegatableBase[ResultT],
 ):
-    """Combined trait for additive operations: +, -, neg, pos, abs."""
+    """Combined base for additive operations: +, -, neg, pos, abs."""
 
     pass
 
 
-class Multiplicative[OperandT, ResultT](
-    Multiplyable[OperandT, ResultT],
-    Divisible[OperandT, ResultT],
-    Moduloable[OperandT, ResultT],
-    Powerable[OperandT, ResultT],
+class MultiplicativeBase[OperandT, ResultT](
+    MultiplyableBase[OperandT, ResultT],
+    DivisibleBase[OperandT, ResultT],
+    ModuloableBase[OperandT, ResultT],
+    PowerableBase[OperandT, ResultT],
 ):
-    """Combined trait for multiplicative operations: *, /, //, %, **."""
+    """Combined base for multiplicative operations: *, /, //, %, **."""
 
     pass
 
 
-class Numeric[OperandT, ResultT](
-    Additive[OperandT, ResultT],
-    Multiplicative[OperandT, ResultT],
+class NumericBase[OperandT, ResultT](
+    AdditiveBase[OperandT, ResultT],
+    MultiplicativeBase[OperandT, ResultT],
 ):
     """Full arithmetic: +, -, *, /, //, %, **, neg, pos, abs."""
 

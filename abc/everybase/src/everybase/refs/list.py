@@ -7,10 +7,9 @@ Returns concrete py types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING, overload
 
-from everybase.capabilities import Comparable, Sequence
+from everybase.capabilities import ComparableBase, SequenceBase
 
 from .base import RefBase
 
@@ -26,10 +25,9 @@ __all__ = [
 
 
 class ListRefBase[T](
-    Sequence[T, "ListRef[T]"],
-    Comparable["list[T] | ListRef[T]"],
+    SequenceBase[T, "ListRef[T]"],
+    ComparableBase["list[T] | ListRef[T]"],
     RefBase[list[T]],
-    ABC,
 ):
     """Abstract base for list refs.
 

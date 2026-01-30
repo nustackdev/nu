@@ -48,7 +48,7 @@ from __future__ import annotations
 from functools import reduce
 from typing import TYPE_CHECKING
 
-from everybase import traits as cap
+from everybase.capabilities import AndableProtocol, OrableProtocol
 
 
 if TYPE_CHECKING:
@@ -90,7 +90,7 @@ def and_(left: object, right: object) -> BoolType:
     from .conversion import ensure_term
 
     left_op = ensure_term(left)
-    if not isinstance(left_op, cap.Andable):
+    if not isinstance(left_op, AndableProtocol):
         raise TypeError(f"Operand {type(left).__name__} does not support AND logical operation")
 
     return left_op.and_(ensure_term(right))
@@ -114,7 +114,7 @@ def or_(left: object, right: object) -> BoolType:
     from .conversion import ensure_term
 
     left_op = ensure_term(left)
-    if not isinstance(left_op, cap.Orable):
+    if not isinstance(left_op, OrableProtocol):
         raise TypeError(f"Operand {type(left).__name__} does not support OR logical operation")
 
     return left_op.or_(ensure_term(right))

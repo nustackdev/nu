@@ -1,156 +1,224 @@
-"""Capability mixins for refs.
+"""Capability protocols and bases for refs.
 
-Capabilities define what operations a ref supports. They are mixins that provide
-operator overloads and methods that return morphism-wrapped results.
+Each capability has a paired Protocol (structural type contract) and Base (mixin implementation).
+Protocols declare the public interface; Bases provide morphism-wrapping implementations.
 
-Hierarchy:
-    ARITHMETIC (op_arithmetic)
-    ──────────
-    Addable           →  __add__, __radd__
-    Subtractable      →  __sub__, __rsub__
-    Negatable         →  __neg__, __pos__, __abs__
-    Multiplyable      →  __mul__, __rmul__
-    Divisible         →  __truediv__, __floordiv__
-    Powerable         →  __pow__, __rpow__
-    Moduloable        →  __mod__, __rmod__
+    GENERAL OPERATIONS (gen_*)
+    ──────────────────────────
+    Arithmetic:  AddableBase/Protocol … NumericBase/Protocol
+    Comparison:  OrderableBase/Protocol, EqualableBase/Protocol, ComparableBase/Protocol
+    Logical:     AndableBase/Protocol … LogicalBase/Protocol
+    Bitwise:     BitwiseAndableBase/Protocol … BitwiseBase/Protocol
 
-    Additive = Addable + Subtractable + Negatable
-    Multiplicative = Multiplyable + Divisible + Moduloable + Powerable
-    Numeric = Additive + Multiplicative
-
-
-    COMPARISON (op_comparison)
-    ──────────
-    Orderable         →  __lt__, __gt__, __le__, __ge__
-    Equalable         →  eq(), ne(), is_()
-
-    Comparable = Orderable + Equalable
-
-
-    LOGICAL (op_logical)
-    ───────
-    Andable           →  and_()
-    Orable            →  or_()
-    Notable           →  not_(), bool_()
-
-    Logical = Andable + Orable + Notable
-
-
-    BITWISE (op_bitwise)
-    ───────
-    BitwiseAndable    →  bitand()
-    BitwiseOrable     →  bitor()
-    BitwiseXorable    →  __xor__, __rxor__
-    BitwiseInvertable →  bitnot()
-    Shiftable         →  __lshift__, __rshift__
-
-    Bitwise = BitwiseAndable + BitwiseOrable + BitwiseXorable + BitwiseInvertable + Shiftable
-
-
-    COLLECTION ACCESS (col_access)
-    ─────────────────
-    Lengthable        →  len_()
-    Indexable          →  __getitem__
-    Sliceable         →  slice_()
-    Containable       →  contains()
-
-    COLLECTION ITERABLE (col_iterable)
-    ───────────────────
-    Iterable          →  map_(), filter_(), reduce_()
-
-    COLLECTION COMBINED (col_sequence, col_mapping, col_set)
-    ───────────────────
-    Sequence = Lengthable + Sliceable + Containable + Iterable
-    Mapping = Lengthable + Containable + keys/values/items
-    SetLike = Lengthable + Containable + set operations
+    COLLECTION OPERATIONS (col_*)
+    ─────────────────────────────
+    Atoms:       ContainableBase/Protocol, LengthableBase/Protocol, IndexableBase/Protocol, SliceableBase/Protocol
+    Iterable:    IterableBase/Protocol
+    Collection:  CollectionBase/Protocol  = Containable + Lengthable + Iterable
+    Sequence:    SequenceBase/Protocol    = Collection + Sliceable + first/last/sorted/...
+    Mapping:     MappingBase/Protocol     = Collection + keys_/values_/items_/get_
+    SetLike:     SetLikeBase/Protocol     = Collection + union/intersection/difference/...
 """
 
-from .col_access import (
-    Containable,
-    Indexable,
-    Lengthable,
-    Sliceable,
+from .col_atoms_base import (
+    ContainableBase,
+    IndexableBase,
+    LengthableBase,
+    SliceableBase,
 )
-from .col_iterable import (
-    Iterable,
+from .col_atoms_protocol import (
+    ContainableProtocol,
+    IndexableProtocol,
+    LengthableProtocol,
+    SliceableProtocol,
 )
-from .col_mapping import (
-    Mapping,
+from .col_collection_base import (
+    CollectionBase,
 )
-from .col_sequence import (
-    Sequence,
+from .col_collection_protocol import (
+    CollectionProtocol,
 )
-from .col_set import (
-    SetLike,
+from .col_iterable_base import (
+    IterableBase,
 )
-from .op_arithmetic import (
-    Addable,
-    Additive,
-    Divisible,
-    Moduloable,
-    Multiplicative,
-    Multiplyable,
-    Negatable,
-    Numeric,
-    Powerable,
-    Subtractable,
+from .col_iterable_protocol import (
+    IterableProtocol,
 )
-from .op_bitwise import (
-    Bitwise,
-    BitwiseAndable,
-    BitwiseInvertable,
-    BitwiseOrable,
-    BitwiseXorable,
-    Shiftable,
+from .col_mapping_base import (
+    MappingBase,
 )
-from .op_comparison import (
-    Comparable,
-    Equalable,
-    Orderable,
+from .col_mapping_protocol import (
+    MappingProtocol,
 )
-from .op_logical import (
-    Andable,
-    Logical,
-    Notable,
-    Orable,
+from .col_sequence_base import (
+    SequenceBase,
+)
+from .col_sequence_protocol import (
+    SequenceProtocol,
+)
+from .col_set_base import (
+    SetLikeBase,
+)
+from .col_set_protocol import (
+    SetLikeProtocol,
+)
+from .gen_arithmetic_base import (
+    AddableBase,
+    AdditiveBase,
+    DivisibleBase,
+    ModuloableBase,
+    MultiplicativeBase,
+    MultiplyableBase,
+    NegatableBase,
+    NumericBase,
+    PowerableBase,
+    SubtractableBase,
+)
+from .gen_arithmetic_protocol import (
+    AddableProtocol,
+    AdditiveProtocol,
+    DivisibleProtocol,
+    ModuloableProtocol,
+    MultiplicativeProtocol,
+    MultiplyableProtocol,
+    NegatableProtocol,
+    NumericProtocol,
+    PowerableProtocol,
+    SubtractableProtocol,
+)
+from .gen_bitwise_base import (
+    BitwiseAndableBase,
+    BitwiseBase,
+    BitwiseInvertableBase,
+    BitwiseOrableBase,
+    BitwiseXorableBase,
+    ShiftableBase,
+)
+from .gen_bitwise_protocol import (
+    BitwiseAndableProtocol,
+    BitwiseInvertableProtocol,
+    BitwiseOrableProtocol,
+    BitwiseProtocol,
+    BitwiseXorableProtocol,
+    ShiftableProtocol,
+)
+from .gen_comparison_base import (
+    ComparableBase,
+    EqualableBase,
+    OrderableBase,
+)
+from .gen_comparison_protocol import (
+    ComparableProtocol,
+    EqualableProtocol,
+    OrderableProtocol,
+)
+from .gen_logical_base import (
+    AndableBase,
+    LogicalBase,
+    NotableBase,
+    OrableBase,
+)
+from .gen_logical_protocol import (
+    AndableProtocol,
+    LogicalProtocol,
+    NotableProtocol,
+    OrableProtocol,
 )
 
 
 __all__ = [  # noqa: RUF022
-    # Arithmetic
-    "Addable",
-    "Subtractable",
-    "Negatable",
-    "Multiplyable",
-    "Divisible",
-    "Moduloable",
-    "Powerable",
-    "Additive",
-    "Multiplicative",
-    "Numeric",
-    # Comparison
-    "Orderable",
-    "Equalable",
-    "Comparable",
-    # Logical
-    "Andable",
-    "Orable",
-    "Notable",
-    "Logical",
-    # Bitwise
-    "BitwiseAndable",
-    "BitwiseOrable",
-    "BitwiseXorable",
-    "BitwiseInvertable",
-    "Shiftable",
-    "Bitwise",
-    # Collection
-    "Lengthable",
-    "Indexable",
-    "Sliceable",
-    "Containable",
-    "Iterable",
-    "Sequence",
-    "Mapping",
-    "SetLike",
+    # =========================================================================
+    # GENERAL: ARITHMETIC
+    # =========================================================================
+    "AddableBase",
+    "AddableProtocol",
+    "SubtractableBase",
+    "SubtractableProtocol",
+    "NegatableBase",
+    "NegatableProtocol",
+    "MultiplyableBase",
+    "MultiplyableProtocol",
+    "DivisibleBase",
+    "DivisibleProtocol",
+    "ModuloableBase",
+    "ModuloableProtocol",
+    "PowerableBase",
+    "PowerableProtocol",
+    "AdditiveBase",
+    "AdditiveProtocol",
+    "MultiplicativeBase",
+    "MultiplicativeProtocol",
+    "NumericBase",
+    "NumericProtocol",
+    # =========================================================================
+    # GENERAL: COMPARISON
+    # =========================================================================
+    "OrderableBase",
+    "OrderableProtocol",
+    "EqualableBase",
+    "EqualableProtocol",
+    "ComparableBase",
+    "ComparableProtocol",
+    # =========================================================================
+    # GENERAL: LOGICAL
+    # =========================================================================
+    "AndableBase",
+    "AndableProtocol",
+    "OrableBase",
+    "OrableProtocol",
+    "NotableBase",
+    "NotableProtocol",
+    "LogicalBase",
+    "LogicalProtocol",
+    # =========================================================================
+    # GENERAL: BITWISE
+    # =========================================================================
+    "BitwiseAndableBase",
+    "BitwiseAndableProtocol",
+    "BitwiseOrableBase",
+    "BitwiseOrableProtocol",
+    "BitwiseXorableBase",
+    "BitwiseXorableProtocol",
+    "BitwiseInvertableBase",
+    "BitwiseInvertableProtocol",
+    "ShiftableBase",
+    "ShiftableProtocol",
+    "BitwiseBase",
+    "BitwiseProtocol",
+    # =========================================================================
+    # COLLECTION: ATOMS
+    # =========================================================================
+    "ContainableBase",
+    "ContainableProtocol",
+    "LengthableBase",
+    "LengthableProtocol",
+    "IndexableBase",
+    "IndexableProtocol",
+    "SliceableBase",
+    "SliceableProtocol",
+    # =========================================================================
+    # COLLECTION: ITERABLE
+    # =========================================================================
+    "IterableBase",
+    "IterableProtocol",
+    # =========================================================================
+    # COLLECTION: COLLECTION
+    # =========================================================================
+    "CollectionBase",
+    "CollectionProtocol",
+    # =========================================================================
+    # COLLECTION: SEQUENCE
+    # =========================================================================
+    "SequenceBase",
+    "SequenceProtocol",
+    # =========================================================================
+    # COLLECTION: MAPPING
+    # =========================================================================
+    "MappingBase",
+    "MappingProtocol",
+    # =========================================================================
+    # COLLECTION: SET
+    # =========================================================================
+    "SetLikeBase",
+    "SetLikeProtocol",
 ]

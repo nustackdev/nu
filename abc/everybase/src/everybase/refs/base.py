@@ -11,7 +11,7 @@ Type-specific bases (IntRefBase, etc.) add operator traits.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from everyabc import Ref, Sentinel
@@ -27,7 +27,7 @@ __all__ = [
 ]
 
 
-class RefBase[T](Ref[T], ABC):
+class RefBase[T](Ref[T]):
     """Abstract base for all typed refs.
 
     Inherits from every.Ref and provides:

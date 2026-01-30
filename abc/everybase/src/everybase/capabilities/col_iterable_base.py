@@ -1,6 +1,6 @@
-"""Functional iteration capability.
+"""Iterable capability base.
 
-- Iterable: map_(), filter_(), reduce_(), sum_(), min_(), max_(), any_(), all_()
+IterableBase: map_(), filter_(), reduce_(), sum_(), min_(), max_(), any_(), all_()
 """
 
 from __future__ import annotations
@@ -16,12 +16,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Iterable",
+    "IterableBase",
 ]
 
 
-class Iterable[ElementT, ResultT]:
-    """Trait for values that support functional iteration operations."""
+class IterableBase[ElementT, ResultT]:
+    """Base for values that support functional iteration operations."""
 
     def _wrap_iterable_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate collection type."""

@@ -1,14 +1,14 @@
-"""Sequence capability — combined collection trait.
+"""Sequence capability base — Collection + Sliceable + first/last/sorted/...
 
-Sequence = Lengthable + Sliceable + Containable + Iterable + first/last/reversed/sorted/join/index/count
+Follows Python's collections.abc.Sequence pattern.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from .col_access import Containable, Lengthable, Sliceable
-from .col_iterable import Iterable
+from .col_atoms_base import SliceableBase
+from .col_collection_base import CollectionBase
 
 
 if TYPE_CHECKING:
@@ -19,17 +19,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Sequence",
+    "SequenceBase",
 ]
 
 
-class Sequence[ElementT, ResultT](
-    Lengthable,
-    Sliceable[ResultT],
-    Containable[ElementT],
-    Iterable[ElementT, ResultT],
+class SequenceBase[ElementT, ResultT](
+    CollectionBase[ElementT, ResultT],
+    SliceableBase[ResultT],
 ):
-    """Combined trait for sequence-like values."""
+    """Base for sequence values — like collections.abc.Sequence."""
 
     def first(self) -> ResultT:
         """Get first element."""

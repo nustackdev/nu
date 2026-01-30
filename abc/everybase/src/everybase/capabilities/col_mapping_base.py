@@ -1,13 +1,13 @@
-"""Mapping capability — combined collection trait.
+"""Mapping capability base — Collection + keys/values/items/get.
 
-Mapping = Lengthable + Containable + keys/values/items/get
+Follows Python's collections.abc.Mapping pattern.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from .col_access import Containable, Lengthable
+from .col_collection_base import CollectionBase
 
 
 if TYPE_CHECKING:
@@ -15,15 +15,14 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Mapping",
+    "MappingBase",
 ]
 
 
-class Mapping[KeyT, ValueT, ResultT](
-    Lengthable,
-    Containable[KeyT],
+class MappingBase[KeyT, ValueT, ResultT](
+    CollectionBase[KeyT, ResultT],
 ):
-    """Combined trait for mapping-like values."""
+    """Base for mapping values — like collections.abc.Mapping."""
 
     def _wrap_keys_result(self, operand: Term) -> Term:
         """Override in subclass to wrap keys sequence result."""

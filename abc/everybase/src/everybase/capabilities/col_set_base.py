@@ -1,13 +1,13 @@
-"""Set capability — combined collection trait.
+"""Set capability base — Collection + set operations.
 
-SetLike = Lengthable + Containable + set operations
+Follows Python's collections.abc.Set pattern.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from .col_access import Containable, Lengthable
+from .col_collection_base import CollectionBase
 
 
 if TYPE_CHECKING:
@@ -16,15 +16,14 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "SetLike",
+    "SetLikeBase",
 ]
 
 
-class SetLike[ElementT, ResultT](
-    Lengthable,
-    Containable[ElementT],
+class SetLikeBase[ElementT, ResultT](
+    CollectionBase[ElementT, ResultT],
 ):
-    """Combined trait for set-like values."""
+    """Base for set values — like collections.abc.Set."""
 
     def _wrap_set_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate set type."""

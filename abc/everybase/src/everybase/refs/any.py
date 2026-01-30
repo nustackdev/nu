@@ -7,10 +7,9 @@ Returns concrete py types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import Bitwise, Comparable, Logical, Numeric
+from everybase.capabilities import BitwiseBase, ComparableBase, LogicalBase, NumericBase
 
 from .base import RefBase
 
@@ -26,12 +25,11 @@ __all__ = [
 
 
 class AnyRefBase(
-    Numeric["object", "AnyRef"],
-    Comparable["object"],
-    Logical["object", "BoolRef"],
-    Bitwise["object", "AnyRef"],
+    NumericBase["object", "AnyRef"],
+    ComparableBase["object"],
+    LogicalBase["object", "BoolRef"],
+    BitwiseBase["object", "AnyRef"],
     RefBase[object],
-    ABC,
 ):
     """Abstract base for any/dynamic type refs.
 

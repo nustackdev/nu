@@ -1,11 +1,11 @@
-"""Comparison capability traits for refs.
+"""Comparison capability bases.
 
-Atomic traits:
-- Orderable: __gt__, __lt__, __ge__, __le__
-- Equalable: eq(), ne(), is_()
+Atomic:
+    OrderableBase: __gt__, __lt__, __ge__, __le__
+    EqualableBase: eq(), ne(), is_()
 
-Combined traits:
-- Comparable = Orderable + Equalable
+Combined:
+    ComparableBase = Orderable + Equalable
 """
 
 from __future__ import annotations
@@ -18,14 +18,14 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Comparable",
-    "Equalable",
-    "Orderable",
+    "ComparableBase",
+    "EqualableBase",
+    "OrderableBase",
 ]
 
 
-class Orderable[OperandT]:
-    """Trait for values that support ordering comparisons: >, <, >=, <=."""
+class OrderableBase[OperandT]:
+    """Base for values that support ordering comparisons: >, <, >=, <=."""
 
     def __gt__(self, other: OperandT) -> BoolRef:
         """Greater than: self > other."""
@@ -56,8 +56,8 @@ class Orderable[OperandT]:
         return BoolRef(LeOp(self, other))
 
 
-class Equalable[OperandT]:
-    """Trait for values that support equality comparison.
+class EqualableBase[OperandT]:
+    """Base for values that support equality comparison.
 
     Note: == and != are blocked; use eq() and ne() methods.
     """
@@ -100,9 +100,9 @@ class Equalable[OperandT]:
         return BoolRef(IdCompOp(self, other))
 
 
-class Comparable[OperandT](
-    Orderable[OperandT],
-    Equalable[OperandT],
+class ComparableBase[OperandT](
+    OrderableBase[OperandT],
+    EqualableBase[OperandT],
 ):
     """Full comparison: >, <, >=, <=, eq(), ne(), is_()."""
 

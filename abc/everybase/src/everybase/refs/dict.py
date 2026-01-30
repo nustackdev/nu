@@ -7,10 +7,9 @@ Returns concrete py types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import Comparable, Mapping
+from everybase.capabilities import ComparableBase, MappingBase
 
 from .base import RefBase
 
@@ -26,10 +25,9 @@ __all__ = [
 
 
 class DictRefBase[K, V](
-    Mapping[K, V, "DictRef[K, V]"],
-    Comparable["dict[K, V] | DictRef[K, V]"],
+    MappingBase[K, V, "DictRef[K, V]"],
+    ComparableBase["dict[K, V] | DictRef[K, V]"],
     RefBase[dict[K, V]],
-    ABC,
 ):
     """Abstract base for dict refs.
 
@@ -57,6 +55,16 @@ class DictRefBase[K, V](
         return ListRef(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyRef:
+        from everybase.py.any import AnyRef
+
+        return AnyRef(operand)
+
+    def _wrap_iterable_result(self, operand: Term) -> ListRef:
+        from everybase.py.list import ListRef
+
+        return ListRef(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyRef:
         from everybase.py.any import AnyRef
 
         return AnyRef(operand)

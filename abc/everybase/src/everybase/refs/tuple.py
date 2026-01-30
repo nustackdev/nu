@@ -7,10 +7,9 @@ Returns concrete py types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING, overload
 
-from everybase.capabilities import Comparable, Sequence
+from everybase.capabilities import ComparableBase, SequenceBase
 
 from .base import RefBase
 
@@ -29,10 +28,9 @@ __all__ = [
 
 
 class TupleRefBase[*Ts](
-    Sequence[object, "ListRef[object]"],
-    Comparable["tuple"],
+    SequenceBase[object, "ListRef[object]"],
+    ComparableBase["tuple"],
     RefBase[tuple[*Ts]],
-    ABC,
 ):
     """Abstract base for tuple refs.
 

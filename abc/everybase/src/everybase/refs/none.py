@@ -7,10 +7,9 @@ Returns concrete py types.
 
 from __future__ import annotations
 
-from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import Logical
+from everybase.capabilities import LogicalBase
 
 from .base import RefBase
 
@@ -26,9 +25,8 @@ __all__ = [
 
 
 class NoneRefBase(
-    Logical["None | NoneRef", "BoolRef"],
+    LogicalBase["None | NoneRef", "BoolRef"],
     RefBase[None],
-    ABC,
 ):
     """Abstract base for None/nil refs.
 
