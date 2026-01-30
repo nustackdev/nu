@@ -4,6 +4,7 @@
     ├── LValue[T]           — addressable location
     │   └── Ref[T]          — typed reference
     └── RValue[ResultT]     — evaluable expression
+        ├── Value[T]        — typed value holder
         └── Morphism[T]     — transformation
             └── NAryMorphism    — with operand management
                 ├── UnaryMorphism
@@ -68,6 +69,7 @@ from .term import (
     LValue,
     RValue,
     Term,
+    Value,
 )
 
 
@@ -76,6 +78,7 @@ __all__ = [  # noqa: RUF022
     "Term",
     "LValue",
     "RValue",
+    "Value",
     # References
     "Ref",
     # Morphisms

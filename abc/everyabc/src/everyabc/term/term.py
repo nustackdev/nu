@@ -5,9 +5,10 @@ the leaves of the topology tree — the actual computation.
 
 Hierarchy:
     Term[ResultT]           — base: execute(context) -> ResultT
-    ├── LValue[T]           — addressable location (has resolve)
+    ├── LValue[T]           — addressable location
     │   └── Ref[T]          — typed reference (see ref.py)
     └── RValue[ResultT]     — evaluable expression
+        ├── Value[T]        — typed value holder (see below)
         └── Morphism[T]     — transformation (see morphism.py)
 
 Design rules:
@@ -33,6 +34,7 @@ __all__ = [
     "LValue",
     "RValue",
     "Term",
+    "Value",
 ]
 
 
@@ -103,3 +105,18 @@ class RValue(Term[T_co], ABC):
 
     Children are the Terms this expression depends on.
     """
+
+
+class Value(RValue[T_co], ABC):
+    """Typed value holder — literal or computed.
+
+    Values are RValues that hold data directly or wrap a source Term.
+    They have no address and cannot be written to.
+
+    Substrate-specific bases (PyValueBase, etc.) implement execute().
+    """
+
+    @property
+    def is_self_pure(self) -> bool:
+        """Values never have side effects."""
+        return True
