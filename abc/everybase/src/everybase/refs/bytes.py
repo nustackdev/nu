@@ -121,25 +121,19 @@ class BytesRefBase(
         """Strip whitespace or chars."""
         from everybase.morphisms.type_bytes import BytesStripOp
 
-        if chars is not None:
-            return cast("BytesRef", self._wrap_bytes_result(BytesStripOp(self, chars)))
-        return cast("BytesRef", self._wrap_bytes_result(BytesStripOp(self)))
+        return cast("BytesRef", self._wrap_bytes_result(BytesStripOp(self, chars)))
 
     def lstrip(self, chars: BytesArg | None = None) -> BytesRef:
         """Strip leading whitespace or chars."""
         from everybase.morphisms.type_bytes import BytesLStripOp
 
-        if chars is not None:
-            return cast("BytesRef", self._wrap_bytes_result(BytesLStripOp(self, chars)))
-        return cast("BytesRef", self._wrap_bytes_result(BytesLStripOp(self)))
+        return cast("BytesRef", self._wrap_bytes_result(BytesLStripOp(self, chars)))
 
     def rstrip(self, chars: BytesArg | None = None) -> BytesRef:
         """Strip trailing whitespace or chars."""
         from everybase.morphisms.type_bytes import BytesRStripOp
 
-        if chars is not None:
-            return cast("BytesRef", self._wrap_bytes_result(BytesRStripOp(self, chars)))
-        return cast("BytesRef", self._wrap_bytes_result(BytesRStripOp(self)))
+        return cast("BytesRef", self._wrap_bytes_result(BytesRStripOp(self, chars)))
 
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListRef[bytes]:
         """Split bytes."""

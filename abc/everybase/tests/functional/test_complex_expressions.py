@@ -35,49 +35,49 @@ def ctx():
 class TestArithmeticChains:
     """Test chained arithmetic expressions."""
 
-    def test_simple_chain(self, ctx):
+    async def test_simple_chain(self, ctx):
         """(5 + 3) * 2 = 16."""
         x = IntRef(5)
         y = IntRef(3)
         z = IntRef(2)
-        result = ((x + y) * z).execute(ctx)
+        result = await ((x + y) * z).execute(ctx)
         assert result == 16
 
-    def test_complex_arithmetic(self, ctx):
+    async def test_complex_arithmetic(self, ctx):
         """((10 - 2) * 3 + 4) / 2 = 14.0."""
-        result = ((((IntRef(10) - 2) * 3) + 4) / 2).execute(ctx)
+        result = await ((((IntRef(10) - 2) * 3) + 4) / 2).execute(ctx)
         assert result == 14.0
 
-    def test_mixed_types(self, ctx):
+    async def test_mixed_types(self, ctx):
         """(10 + 5) / 3.0 = 5.0."""
-        result = ((IntRef(10) + 5) / 3.0).execute(ctx)
+        result = await ((IntRef(10) + 5) / 3.0).execute(ctx)
         assert result == 5.0
 
-    def test_power_chain(self, ctx):
+    async def test_power_chain(self, ctx):
         """(2 ** 3) ** 2 = 64."""
-        result = ((IntRef(2) ** 3) ** 2).execute(ctx)
+        result = await ((IntRef(2) ** 3) ** 2).execute(ctx)
         assert result == 64
 
-    def test_modulo_chain(self, ctx):
+    async def test_modulo_chain(self, ctx):
         """((100 % 30) % 7) = 3.  (100 % 30 = 10, 10 % 7 = 3)"""
-        result = ((IntRef(100) % 30) % 7).execute(ctx)
+        result = await ((IntRef(100) % 30) % 7).execute(ctx)
         assert result == 3
 
-    def test_quadratic_formula_discriminant(self, ctx):
+    async def test_quadratic_formula_discriminant(self, ctx):
         """b^2 - 4ac where a=1, b=5, c=6: 25 - 24 = 1."""
         a = IntRef(1)
         b = IntRef(5)
         c = IntRef(6)
         discriminant = (b**2) - (IntRef(4) * a * c)
-        assert discriminant.execute(ctx) == 1
+        assert await discriminant.execute(ctx) == 1
 
-    def test_compound_interest_simple(self, ctx):
+    async def test_compound_interest_simple(self, ctx):
         """Principal * (1 + rate)^time: 1000 * 1.05^2 = 1102.5."""
         principal = FloatRef(1000.0)
         rate = FloatRef(0.05)
         time = IntRef(2)
         # (1 + rate) ** time * principal
-        result = (principal * ((FloatRef(1.0) + rate) ** time)).execute(ctx)
+        result = await (principal * ((FloatRef(1.0) + rate) ** time)).execute(ctx)
         assert result == 1102.5
 
 
@@ -89,35 +89,35 @@ class TestArithmeticChains:
 class TestComparisonChains:
     """Test chained comparison expressions."""
 
-    def test_range_check(self, ctx):
+    async def test_range_check(self, ctx):
         """x > 0 AND x < 100 where x = 50."""
         x = IntRef(50)
-        result = (x > 0).and_(x < 100).execute(ctx)
+        result = await (x > 0).and_(x < 100).execute(ctx)
         assert result is True
 
-    def test_range_check_false(self, ctx):
+    async def test_range_check_false(self, ctx):
         """x > 0 AND x < 100 where x = 150."""
         x = IntRef(150)
-        result = (x > 0).and_(x < 100).execute(ctx)
+        result = await (x > 0).and_(x < 100).execute(ctx)
         assert result is False
 
-    def test_equality_chain(self, ctx):
+    async def test_equality_chain(self, ctx):
         """(a == b) AND (b == c) where all equal."""
         a = IntRef(42)
         b = IntRef(42)
         c = IntRef(42)
-        result = a.eq(b).and_(b.eq(c)).execute(ctx)
+        result = await a.eq(b).and_(b.eq(c)).execute(ctx)
         assert result is True
 
-    def test_comparison_after_arithmetic(self, ctx):
+    async def test_comparison_after_arithmetic(self, ctx):
         """(a + b) > (c - d) where 5+3 > 10-5."""
         a, b, c, d = IntRef(5), IntRef(3), IntRef(10), IntRef(5)
-        result = ((a + b) > (c - d)).execute(ctx)
+        result = await ((a + b) > (c - d)).execute(ctx)
         assert result is True  # 8 > 5
 
-    def test_string_comparison_chain(self, ctx):
+    async def test_string_comparison_chain(self, ctx):
         """'a' < 'b' AND 'b' < 'c'."""
-        result = (StrRef("a") < "b").and_(StrRef("b") < "c").execute(ctx)
+        result = await (StrRef("a") < "b").and_(StrRef("b") < "c").execute(ctx)
         assert result is True
 
 
@@ -129,35 +129,35 @@ class TestComparisonChains:
 class TestLogicalChains:
     """Test chained logical expressions."""
 
-    def test_and_chain(self, ctx):
+    async def test_and_chain(self, ctx):
         """True AND True AND True = True."""
-        result = BoolRef(True).and_(True).and_(True).execute(ctx)
+        result = await BoolRef(True).and_(True).and_(True).execute(ctx)
         assert result is True
 
-    def test_or_chain(self, ctx):
+    async def test_or_chain(self, ctx):
         """False OR False OR True = True."""
-        result = BoolRef(False).or_(False).or_(True).execute(ctx)
+        result = await BoolRef(False).or_(False).or_(True).execute(ctx)
         assert result is True
 
-    def test_mixed_logical(self, ctx):
+    async def test_mixed_logical(self, ctx):
         """(True AND False) OR (True AND True) = True."""
         left = BoolRef(True).and_(False)
         right = BoolRef(True).and_(True)
-        result = left.or_(right).execute(ctx)
+        result = await left.or_(right).execute(ctx)
         assert result is True
 
-    def test_not_chain(self, ctx):
+    async def test_not_chain(self, ctx):
         """NOT(NOT(True)) = True."""
-        result = BoolRef(True).not_().not_().execute(ctx)
+        result = await BoolRef(True).not_().not_().execute(ctx)
         assert result is True
 
-    def test_de_morgan(self, ctx):
+    async def test_de_morgan(self, ctx):
         """NOT(A AND B) = NOT(A) OR NOT(B)."""
         a = BoolRef(True)
         b = BoolRef(False)
         lhs = a.and_(b).not_()
         rhs = a.not_().or_(b.not_())
-        assert lhs.execute(ctx) == rhs.execute(ctx)
+        assert await lhs.execute(ctx) == await rhs.execute(ctx)
 
 
 # =============================================================================
@@ -168,42 +168,42 @@ class TestLogicalChains:
 class TestStringChains:
     """Test chained string expressions."""
 
-    def test_case_chain(self, ctx):
+    async def test_case_chain(self, ctx):
         """'hello'.upper().lower() = 'hello'."""
-        result = StrRef("hello").upper().lower().execute(ctx)
+        result = await StrRef("hello").upper().lower().execute(ctx)
         assert result == "hello"
 
-    def test_strip_and_case(self, ctx):
+    async def test_strip_and_case(self, ctx):
         """'  HELLO  '.strip().lower() = 'hello'."""
-        result = StrRef("  HELLO  ").strip().lower().execute(ctx)
+        result = await StrRef("  HELLO  ").strip().lower().execute(ctx)
         assert result == "hello"
 
-    def test_concatenation_chain(self, ctx):
+    async def test_concatenation_chain(self, ctx):
         """'a' + 'b' + 'c' = 'abc'."""
-        result = ((StrRef("a") + "b") + "c").execute(ctx)
+        result = await ((StrRef("a") + "b") + "c").execute(ctx)
         assert result == "abc"
 
-    def test_string_processing(self, ctx):
+    async def test_string_processing(self, ctx):
         """'  Hello World  '.strip().title() = 'Hello World'."""
-        result = StrRef("  hello world  ").strip().title().execute(ctx)
+        result = await StrRef("  hello world  ").strip().title().execute(ctx)
         assert result == "Hello World"
 
-    def test_string_with_comparison(self, ctx):
+    async def test_string_with_comparison(self, ctx):
         """'hello'.upper() == 'HELLO'."""
-        result = StrRef("hello").upper().eq("HELLO").execute(ctx)
+        result = await StrRef("hello").upper().eq("HELLO").execute(ctx)
         assert result is True
 
-    def test_string_length_comparison(self, ctx):
+    async def test_string_length_comparison(self, ctx):
         """len('hello') > 3."""
-        result = (StrRef("hello").len_() > 3).execute(ctx)
+        result = await (StrRef("hello").len_() > 3).execute(ctx)
         assert result is True
 
-    def test_find_and_slice(self, ctx):
+    async def test_find_and_slice(self, ctx):
         """Complex string manipulation."""
         s = StrRef("hello world")
         # Find 'world' and check it's at position 6
         pos = s.find("world")
-        result = (pos.eq(6)).execute(ctx)
+        result = await (pos.eq(6)).execute(ctx)
         assert result is True
 
 
@@ -215,35 +215,35 @@ class TestStringChains:
 class TestCollectionChains:
     """Test chained collection expressions."""
 
-    def test_list_operations(self, ctx):
+    async def test_list_operations(self, ctx):
         """([1,2,3] + [4,5]).len_() = 5."""
-        result = (ListRef([1, 2, 3]) + [4, 5]).len_().execute(ctx)  # noqa: RUF005
+        result = await (ListRef([1, 2, 3]) + [4, 5]).len_().execute(ctx)  # noqa: RUF005
         assert result == 5
 
-    def test_sorted_and_first(self, ctx):
+    async def test_sorted_and_first(self, ctx):
         """[3,1,2].sorted_().first() = 1."""
-        result = ListRef([3, 1, 2]).sorted_().first().execute(ctx)
+        result = await ListRef([3, 1, 2]).sorted_().first().execute(ctx)
         assert result == 1
 
-    def test_sorted_and_last(self, ctx):
+    async def test_sorted_and_last(self, ctx):
         """[3,1,2].sorted_().last() = 3."""
-        result = ListRef([3, 1, 2]).sorted_().last().execute(ctx)
+        result = await ListRef([3, 1, 2]).sorted_().last().execute(ctx)
         assert result == 3
 
-    def test_reversed_slice(self, ctx):
+    async def test_reversed_slice(self, ctx):
         """[1,2,3,4,5].reversed_()[1:3] = [4,3]."""
-        result = ListRef([1, 2, 3, 4, 5]).reversed_()[1:3].execute(ctx)
+        result = await ListRef([1, 2, 3, 4, 5]).reversed_()[1:3].execute(ctx)
         assert result == [4, 3]
 
-    def test_aggregation_comparison(self, ctx):
+    async def test_aggregation_comparison(self, ctx):
         """sum([1,2,3]) > 5."""
-        result = (ListRef([1, 2, 3]).sum_() > 5).execute(ctx)
+        result = await (ListRef([1, 2, 3]).sum_() > 5).execute(ctx)
         assert result is True
 
-    def test_min_max_comparison(self, ctx):
+    async def test_min_max_comparison(self, ctx):
         """max([1,2,3]) > min([1,2,3])."""
         lst = ListRef([1, 2, 3])
-        result = (lst.max_() > lst.min_()).execute(ctx)
+        result = await (lst.max_() > lst.min_()).execute(ctx)
         assert result is True
 
 
@@ -255,25 +255,25 @@ class TestCollectionChains:
 class TestConditionalChains:
     """Test conditional expressions."""
 
-    def test_nested_ifelse(self, ctx):
+    async def test_nested_ifelse(self, ctx):
         """Nested conditional: ifelse(x > 10, 'large', ifelse(x > 5, 'medium', 'small'))."""
         x = IntRef(7)
         inner = ifelse(x > 5, StrRef("medium"), StrRef("small"))
         outer = ifelse(x > 10, StrRef("large"), inner)
-        assert outer.execute(ctx) == "medium"
+        assert await outer.execute(ctx) == "medium"
 
-    def test_conditional_with_arithmetic(self, ctx):
+    async def test_conditional_with_arithmetic(self, ctx):
         """ifelse(x > 0, x * 2, x * -1)."""
         x = IntRef(5)
-        result = ifelse(x > 0, x * 2, x * IntRef(-1)).execute(ctx)
+        result = await ifelse(x > 0, x * 2, x * IntRef(-1)).execute(ctx)
         assert result == 10
 
-    def test_conditional_in_comparison(self, ctx):
+    async def test_conditional_in_comparison(self, ctx):
         """ifelse(a > b, a, b) > 5 where a=3, b=7."""
         a = IntRef(3)
         b = IntRef(7)
         max_val = ifelse(a > b, a, b)
-        result = (max_val > 5).execute(ctx)
+        result = await (max_val > 5).execute(ctx)
         assert result is True  # 7 > 5
 
 
@@ -285,25 +285,25 @@ class TestConditionalChains:
 class TestCombinerChains:
     """Test combiner expressions."""
 
-    def test_all_with_arithmetic(self, ctx):
+    async def test_all_with_arithmetic(self, ctx):
         """all_(x > 0, x < 100, x % 2 == 0) where x = 50."""
         x = IntRef(50)
-        result = all_(x > 0, x < 100, (x % 2).eq(0)).execute(ctx)
+        result = await all_(x > 0, x < 100, (x % 2).eq(0)).execute(ctx)
         assert result is True
 
-    def test_any_with_string_checks(self, ctx):
+    async def test_any_with_string_checks(self, ctx):
         """any_(s.startswith('a'), s.endswith('z'))."""
         s = StrRef("hello")
-        result = any_(s.startswith("a"), s.endswith("o")).execute(ctx)
+        result = await any_(s.startswith("a"), s.endswith("o")).execute(ctx)
         assert result is True  # endswith 'o' is True
 
-    def test_complex_validation(self, ctx):
+    async def test_complex_validation(self, ctx):
         """Validate a value meets multiple criteria."""
         value = IntRef(42)
         is_positive = value > 0
         is_even = (value % 2).eq(0)
         in_range = (value >= 0).and_(value <= 100)
-        result = all_(is_positive, is_even, in_range).execute(ctx)
+        result = await all_(is_positive, is_even, in_range).execute(ctx)
         assert result is True
 
 
@@ -315,21 +315,21 @@ class TestCombinerChains:
 class TestRealWorldScenarios:
     """Test expressions that model real-world use cases."""
 
-    def test_price_calculation(self, ctx):
+    async def test_price_calculation(self, ctx):
         """Calculate discounted price: price * (1 - discount)."""
         price = FloatRef(100.0)
         discount = FloatRef(0.2)  # 20% discount
         final_price = price * (FloatRef(1.0) - discount)
-        assert final_price.execute(ctx) == 80.0
+        assert await final_price.execute(ctx) == 80.0
 
-    def test_tax_calculation(self, ctx):
+    async def test_tax_calculation(self, ctx):
         """Calculate price with tax: price * (1 + tax_rate)."""
         price = FloatRef(100.0)
         tax_rate = FloatRef(0.08)  # 8% tax
         total = price * (FloatRef(1.0) + tax_rate)
-        assert total.execute(ctx) == 108.0
+        assert await total.execute(ctx) == 108.0
 
-    def test_grade_classification(self, ctx):
+    async def test_grade_classification(self, ctx):
         """Classify grade based on score."""
         score = IntRef(85)
         # A: >= 90, B: >= 80, C: >= 70, else F
@@ -340,24 +340,24 @@ class TestRealWorldScenarios:
         grade = ifelse(
             is_a, StrRef("A"), ifelse(is_b, StrRef("B"), ifelse(is_c, StrRef("C"), StrRef("F")))
         )
-        assert grade.execute(ctx) == "B"
+        assert await grade.execute(ctx) == "B"
 
-    def test_age_validation(self, ctx):
+    async def test_age_validation(self, ctx):
         """Validate age is reasonable."""
         age = IntRef(25)
         is_valid = all_(age >= 0, age <= 150, (age % 1).eq(0))
-        assert is_valid.execute(ctx) is True
+        assert await is_valid.execute(ctx) is True
 
-    def test_email_basic_validation(self, ctx):
+    async def test_email_basic_validation(self, ctx):
         """Basic email validation (contains @)."""
         email = StrRef("user@example.com")
         has_at = email.contains("@")
         has_dot = email.contains(".")
         not_empty = email.len_() > 0
         is_valid = all_(has_at, has_dot, not_empty)
-        assert is_valid.execute(ctx) is True
+        assert await is_valid.execute(ctx) is True
 
-    def test_inventory_check(self, ctx):
+    async def test_inventory_check(self, ctx):
         """Check if item is in stock and affordable."""
         price = FloatRef(29.99)
         quantity = IntRef(5)
@@ -367,9 +367,9 @@ class TestRealWorldScenarios:
         affordable = price <= budget
         can_buy = in_stock.and_(affordable)
 
-        assert can_buy.execute(ctx) is True
+        assert await can_buy.execute(ctx) is True
 
-    def test_string_formatting(self, ctx):
+    async def test_string_formatting(self, ctx):
         """Format a name properly."""
         first = StrRef("  john  ")
         last = StrRef("  DOE  ")
@@ -379,10 +379,10 @@ class TestRealWorldScenarios:
         formatted_last = last.strip().capitalize()
         # Note: We can't easily concatenate with space in the middle
         # But we can test individual parts
-        assert formatted_first.execute(ctx) == "John"
-        assert formatted_last.execute(ctx) == "Doe"
+        assert await formatted_first.execute(ctx) == "John"
+        assert await formatted_last.execute(ctx) == "Doe"
 
-    def test_list_statistics(self, ctx):
+    async def test_list_statistics(self, ctx):
         """Calculate basic statistics on a list."""
         data = ListRef([10, 20, 30, 40, 50])
 
@@ -391,12 +391,12 @@ class TestRealWorldScenarios:
         minimum = data.min_()
         maximum = data.max_()
 
-        assert total.execute(ctx) == 150
-        assert count.execute(ctx) == 5
-        assert minimum.execute(ctx) == 10
-        assert maximum.execute(ctx) == 50
+        assert await total.execute(ctx) == 150
+        assert await count.execute(ctx) == 5
+        assert await minimum.execute(ctx) == 10
+        assert await maximum.execute(ctx) == 50
 
-    def test_dict_key_validation(self, ctx):
+    async def test_dict_key_validation(self, ctx):
         """Validate required keys exist in dict."""
         config = DictRef({"host": "localhost", "port": 8080, "debug": True})
 
@@ -404,7 +404,7 @@ class TestRealWorldScenarios:
         has_port = config.contains("port")
         is_valid = has_host.and_(has_port)
 
-        assert is_valid.execute(ctx) is True
+        assert await is_valid.execute(ctx) is True
 
 
 # =============================================================================
@@ -415,60 +415,60 @@ class TestRealWorldScenarios:
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
-    def test_empty_string_operations(self, ctx):
+    async def test_empty_string_operations(self, ctx):
         """Operations on empty string."""
         s = StrRef("")
-        assert s.len_().execute(ctx) == 0
-        assert s.upper().execute(ctx) == ""
-        assert s.strip().execute(ctx) == ""
+        assert await s.len_().execute(ctx) == 0
+        assert await s.upper().execute(ctx) == ""
+        assert await s.strip().execute(ctx) == ""
 
-    def test_empty_list_operations(self, ctx):
+    async def test_empty_list_operations(self, ctx):
         """Operations on empty list."""
         lst = ListRef([])
-        assert lst.len_().execute(ctx) == 0
-        assert lst.reversed_().execute(ctx) == []
+        assert await lst.len_().execute(ctx) == 0
+        assert await lst.reversed_().execute(ctx) == []
 
-    def test_single_element_list(self, ctx):
+    async def test_single_element_list(self, ctx):
         """Operations on single-element list."""
         lst = ListRef([42])
-        assert lst.first().execute(ctx) == 42
-        assert lst.last().execute(ctx) == 42
-        assert lst.sum_().execute(ctx) == 42
-        assert lst.min_().execute(ctx) == 42
-        assert lst.max_().execute(ctx) == 42
+        assert await lst.first().execute(ctx) == 42
+        assert await lst.last().execute(ctx) == 42
+        assert await lst.sum_().execute(ctx) == 42
+        assert await lst.min_().execute(ctx) == 42
+        assert await lst.max_().execute(ctx) == 42
 
-    def test_zero_arithmetic(self, ctx):
+    async def test_zero_arithmetic(self, ctx):
         """Arithmetic with zero."""
         x = IntRef(0)
-        assert (x + 5).execute(ctx) == 5
-        assert (x * 5).execute(ctx) == 0
-        assert (x - 5).execute(ctx) == -5
+        assert await (x + 5).execute(ctx) == 5
+        assert await (x * 5).execute(ctx) == 0
+        assert await (x - 5).execute(ctx) == -5
 
-    def test_negative_numbers(self, ctx):
+    async def test_negative_numbers(self, ctx):
         """Operations with negative numbers."""
         x = IntRef(-10)
-        assert (x + 5).execute(ctx) == -5
-        assert (x * IntRef(-2)).execute(ctx) == 20
-        assert abs(x).execute(ctx) == 10
+        assert await (x + 5).execute(ctx) == -5
+        assert await (x * IntRef(-2)).execute(ctx) == 20
+        assert await abs(x).execute(ctx) == 10
 
-    def test_float_precision(self, ctx):
+    async def test_float_precision(self, ctx):
         """Float operations maintain precision."""
         x = FloatRef(0.1)
         y = FloatRef(0.2)
         # Due to floating point, 0.1 + 0.2 != 0.3 exactly
-        result = (x + y).execute(ctx)
+        result = await (x + y).execute(ctx)
         assert abs(result - 0.3) < 0.0001
 
-    def test_large_numbers(self, ctx):
+    async def test_large_numbers(self, ctx):
         """Operations with large numbers."""
         x = IntRef(10**10)
         y = IntRef(10**10)
-        assert (x + y).execute(ctx) == 2 * 10**10
+        assert await (x + y).execute(ctx) == 2 * 10**10
 
-    def test_deeply_nested_expression(self, ctx):
+    async def test_deeply_nested_expression(self, ctx):
         """Deeply nested expression evaluation."""
         # ((((1 + 2) + 3) + 4) + 5) = 15
-        result = ((((IntRef(1) + 2) + 3) + 4) + 5).execute(ctx)
+        result = await ((((IntRef(1) + 2) + 3) + 4) + 5).execute(ctx)
         assert result == 15
 
 
@@ -480,21 +480,21 @@ class TestEdgeCases:
 class TestTypeCoercion:
     """Test automatic type coercion in expressions."""
 
-    def test_int_float_addition(self, ctx):
+    async def test_int_float_addition(self, ctx):
         """Int + Float coerces to Float."""
-        result = (IntRef(5) + FloatRef(2.5)).execute(ctx)
+        result = await (IntRef(5) + FloatRef(2.5)).execute(ctx)
         assert result == 7.5
         assert isinstance(result, float)
 
-    def test_int_division_to_float(self, ctx):
+    async def test_int_division_to_float(self, ctx):
         """Int / Int produces Float."""
-        result = (IntRef(7) / IntRef(2)).execute(ctx)
+        result = await (IntRef(7) / IntRef(2)).execute(ctx)
         assert result == 3.5
         assert isinstance(result, float)
 
-    def test_comparison_mixed_types(self, ctx):
+    async def test_comparison_mixed_types(self, ctx):
         """Comparing int and float works."""
-        result = (IntRef(5) > FloatRef(4.9)).execute(ctx)
+        result = await (IntRef(5) > FloatRef(4.9)).execute(ctx)
         assert result is True
 
 
@@ -506,27 +506,27 @@ class TestTypeCoercion:
 class TestBuilderPatterns:
     """Test expression builder patterns."""
 
-    def test_incremental_build(self, ctx):
+    async def test_incremental_build(self, ctx):
         """Build expression incrementally."""
         expr = IntRef(10)
         expr = expr + 5
         expr = expr * 2
         expr = expr - 10
-        assert expr.execute(ctx) == 20  # ((10 + 5) * 2) - 10 = 20
+        assert await expr.execute(ctx) == 20  # ((10 + 5) * 2) - 10 = 20
 
-    def test_reusable_subexpression(self, ctx):
+    async def test_reusable_subexpression(self, ctx):
         """Reuse subexpressions in multiple contexts."""
         base = IntRef(10)
         doubled = base * 2
 
         # Use doubled in different expressions
-        result1 = (doubled + 5).execute(ctx)  # 20 + 5 = 25
-        result2 = (doubled - 5).execute(ctx)  # 20 - 5 = 15
+        result1 = await (doubled + 5).execute(ctx)  # 20 + 5 = 25
+        result2 = await (doubled - 5).execute(ctx)  # 20 - 5 = 15
 
         assert result1 == 25
         assert result2 == 15
 
-    def test_conditional_builder(self, ctx):
+    async def test_conditional_builder(self, ctx):
         """Build conditional expressions."""
         x = IntRef(15)
 
@@ -535,6 +535,6 @@ class TestBuilderPatterns:
         medium = (x >= 10).and_(x < 20)
         large = x >= 20
 
-        assert small.execute(ctx) is False
-        assert medium.execute(ctx) is True
-        assert large.execute(ctx) is False
+        assert await small.execute(ctx) is False
+        assert await medium.execute(ctx) is True
+        assert await large.execute(ctx) is False

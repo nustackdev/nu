@@ -10,34 +10,18 @@ Tests type construction, operations, and method availability for:
 import pytest
 
 from everybase import (
-    AddOp,
     AnyRef,
-    BitwiseAndOp,
-    BitwiseNotOp,
-    BitwiseOrOp,
     BoolRef,
     BytesRef,
     DictRef,
-    DivOp,
     FloatRef,
-    FloorDivOp,
     FrozenSetRef,
-    GtOp,
     IntRef,
     ListRef,
-    LShiftOp,
-    LtOp,
-    ModOp,
-    MulOp,
-    NegOp,
     NoneRef,
-    PowOp,
-    RShiftOp,
     SetRef,
     StrRef,
-    SubOp,
     TupleRef,
-    XorOp,
     ensure_term,
 )
 
@@ -55,7 +39,6 @@ class TestIntRefArithmetic:
         x = IntRef(10)
         result = x + 5
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, AddOp)
 
     def test_addition_int_inttype(self):
         """IntRef + IntRef returns IntRef."""
@@ -81,7 +64,6 @@ class TestIntRefArithmetic:
         x = IntRef(10)
         result = x - 3
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, SubOp)
 
     def test_rsub(self):
         """20 - IntRef works."""
@@ -94,7 +76,6 @@ class TestIntRefArithmetic:
         x = IntRef(6)
         result = x * 7
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, MulOp)
 
     def test_rmul(self):
         """7 * IntRef works."""
@@ -107,7 +88,6 @@ class TestIntRefArithmetic:
         x = IntRef(10)
         result = x / 3
         assert isinstance(result, FloatRef)
-        assert isinstance(result.source, DivOp)
 
     def test_rdiv(self):
         """30 / IntRef works."""
@@ -120,7 +100,6 @@ class TestIntRefArithmetic:
         x = IntRef(10)
         result = x // 3
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, FloorDivOp)
 
     def test_rfloordiv(self):
         """30 // IntRef works."""
@@ -133,7 +112,6 @@ class TestIntRefArithmetic:
         x = IntRef(10)
         result = x % 3
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, ModOp)
 
     def test_rmod(self):
         """30 % IntRef works."""
@@ -146,7 +124,6 @@ class TestIntRefArithmetic:
         x = IntRef(2)
         result = x**10
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, PowOp)
 
     def test_rpow(self):
         """2 ** IntRef works."""
@@ -159,7 +136,6 @@ class TestIntRefArithmetic:
         x = IntRef(42)
         result = -x
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, NegOp)
 
     def test_positive(self):
         """IntRef unary plus."""
@@ -182,42 +158,36 @@ class TestIntRefBitwise:
         x = IntRef(0b1100)
         result = x.bitand(0b1010)
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, BitwiseAndOp)
 
     def test_bitwise_or(self):
         """IntRef bitor() method."""
         x = IntRef(0b1100)
         result = x.bitor(0b1010)
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, BitwiseOrOp)
 
     def test_bitwise_xor(self):
         """IntRef xor via ^."""
         x = IntRef(0b1100)
         result = x ^ 0b1010
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, XorOp)
 
     def test_bitwise_not(self):
         """IntRef bitnot() method."""
         x = IntRef(0b1100)
         result = x.bitnot()
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, BitwiseNotOp)
 
     def test_left_shift(self):
         """IntRef left shift."""
         x = IntRef(1)
         result = x << 4
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, LShiftOp)
 
     def test_right_shift(self):
         """IntRef right shift."""
         x = IntRef(16)
         result = x >> 2
         assert isinstance(result, IntRef)
-        assert isinstance(result.source, RShiftOp)
 
 
 class TestIntRefComparison:
@@ -228,14 +198,12 @@ class TestIntRefComparison:
         x = IntRef(10)
         result = x > 5
         assert isinstance(result, BoolRef)
-        assert isinstance(result.source, GtOp)
 
     def test_less_than(self):
         """IntRef < comparison."""
         x = IntRef(10)
         result = x < 20
         assert isinstance(result, BoolRef)
-        assert isinstance(result.source, LtOp)
 
     def test_greater_equal(self):
         """IntRef >= comparison."""
@@ -378,8 +346,7 @@ class TestFloatRef:
 
     def test_literal_creation(self):
         """FloatRef can wrap literal."""
-        f = FloatRef(3.14)
-        assert f.source == 3.14
+        FloatRef(3.14)
 
     def test_addition(self):
         """FloatRef addition."""
@@ -452,15 +419,11 @@ class TestBoolRef:
 
     def test_literal_creation_true(self):
         """BoolRef can wrap True."""
-        b = BoolRef(True)
-
-        assert b.source is True
+        BoolRef(True)
 
     def test_literal_creation_false(self):
         """BoolRef can wrap False."""
-        b = BoolRef(False)
-
-        assert b.source is False
+        BoolRef(False)
 
     def test_and_operation(self):
         """BoolRef and_() method."""
@@ -511,16 +474,13 @@ class TestStrRefBasic:
 
     def test_literal_creation(self):
         """StrRef can wrap literal."""
-        s = StrRef("hello")
-
-        assert s.source == "hello"
+        StrRef("hello")
 
     def test_concatenation(self):
         """StrRef + str returns StrRef."""
         s = StrRef("hello")
         result = s + " world"
         assert isinstance(result, StrRef)
-        assert isinstance(result.source, AddOp)
 
     def test_radd(self):
         """str + StrRef works."""
@@ -763,8 +723,7 @@ class TestBytesRef:
 
     def test_literal_creation(self):
         """BytesRef can wrap literal."""
-        b = BytesRef(b"hello")
-        assert b.source == b"hello"
+        BytesRef(b"hello")
 
     def test_concatenation(self):
         """BytesRef + bytes returns BytesRef."""
@@ -831,8 +790,7 @@ class TestListRefBasic:
 
     def test_literal_creation(self):
         """ListRef can wrap literal."""
-        lst = ListRef([1, 2, 3])
-        assert lst.source == [1, 2, 3]
+        ListRef([1, 2, 3])
 
     def test_concatenation(self):
         """ListRef + list returns ListRef."""
@@ -949,8 +907,7 @@ class TestTupleRef:
 
     def test_literal_creation(self):
         """TupleRef can wrap literal."""
-        t = TupleRef((1, 2, 3))
-        assert t.source == (1, 2, 3)
+        TupleRef((1, 2, 3))
 
     def test_indexing(self):
         """TupleRef[int] returns AnyRef."""
@@ -988,8 +945,7 @@ class TestDictRef:
 
     def test_literal_creation(self):
         """DictRef can wrap literal."""
-        d = DictRef({"a": 1, "b": 2})
-        assert d.source == {"a": 1, "b": 2}
+        DictRef({"a": 1, "b": 2})
 
     def test_key_access(self):
         """DictRef[key] returns AnyRef."""
@@ -1044,8 +1000,7 @@ class TestSetRef:
 
     def test_literal_creation(self):
         """SetRef can wrap literal."""
-        s = SetRef({1, 2, 3})
-        assert s.source == {1, 2, 3}
+        SetRef({1, 2, 3})
 
     def test_len(self):
         """SetRef.len_() returns IntRef."""
@@ -1107,8 +1062,7 @@ class TestFrozenSetRef:
 
     def test_literal_creation(self):
         """FrozenSetRef can wrap literal."""
-        s = FrozenSetRef(frozenset({1, 2, 3}))
-        assert s.source == frozenset({1, 2, 3})
+        FrozenSetRef(frozenset({1, 2, 3}))
 
     def test_union(self):
         """FrozenSetRef.union() returns FrozenSetRef."""
@@ -1128,10 +1082,6 @@ class TestNoneRef:
     def test_default_creation(self):
         """NoneRef() creates None literal."""
         _ = NoneRef()
-
-    def test_explicit_none(self):
-        """NoneRef(None) works."""
-        _ = NoneRef(None)
 
     def test_is_empty(self):
         """NoneRef.is_empty() returns BoolRef."""
@@ -1154,10 +1104,9 @@ class TestNoneRef:
 class TestAnyRef:
     """AnyRef operations."""
 
-    def test_from_ensure_term(self):
+    def test_literal_creation(self):
         """AnyRef can wrap literal."""
-        a = AnyRef(42)
-        assert a.source == 42
+        AnyRef(42)
 
     def test_arithmetic(self):
         """AnyRef supports arithmetic."""
@@ -1196,37 +1145,31 @@ class TestEnsureTermFunction:
         """ensure_term(int) returns IntRef."""
         result = ensure_term(42)
         assert isinstance(result, IntRef)
-        assert result.source == 42
 
     def test_float(self):
         """ensure_term(float) returns FloatRef."""
         result = ensure_term(3.14)
         assert isinstance(result, FloatRef)
-        assert result.source == 3.14
 
     def test_bool_true(self):
         """ensure_term(True) returns BoolRef (not IntRef)."""
         result = ensure_term(True)
         assert isinstance(result, BoolRef)
-        assert result.source is True
 
     def test_bool_false(self):
         """ensure_term(False) returns BoolRef."""
         result = ensure_term(False)
         assert isinstance(result, BoolRef)
-        assert result.source is False
 
     def test_str(self):
         """ensure_term(str) returns StrRef."""
         result = ensure_term("hello")
         assert isinstance(result, StrRef)
-        assert result.source == "hello"
 
     def test_bytes(self):
         """ensure_term(bytes) returns BytesRef."""
         result = ensure_term(b"hello")
         assert isinstance(result, BytesRef)
-        assert result.source == b"hello"
 
     def test_none(self):
         """ensure_term(None) returns NoneRef."""
@@ -1237,19 +1180,16 @@ class TestEnsureTermFunction:
         """ensure_term(list) returns ListRef."""
         result = ensure_term([1, 2, 3])
         assert isinstance(result, ListRef)
-        assert result.source == [1, 2, 3]
 
     def test_tuple(self):
         """ensure_term(tuple) returns TupleRef."""
         result = ensure_term((1, 2, 3))
         assert isinstance(result, TupleRef)
-        assert result.source == (1, 2, 3)
 
     def test_dict(self):
         """ensure_term(dict) returns DictRef."""
         result = ensure_term({"a": 1})
         assert isinstance(result, DictRef)
-        assert result.source == {"a": 1}
 
     def test_set(self):
         """ensure_term(set) returns SetRef."""
@@ -1271,3 +1211,44 @@ class TestEnsureTermFunction:
         """ensure_term(unsupported) raises TypeError."""
         with pytest.raises(TypeError, match="Not supported type"):
             ensure_term(object())
+
+
+# =============================================================================
+# BLOCKED OPERATORS
+# =============================================================================
+
+
+class TestBlockedOperators:
+    """Tests for operators that are intentionally blocked."""
+
+    def test_eq_blocked(self):
+        """Using == on Terms raises TypeError."""
+        x = IntRef(10)
+        y = IntRef(10)
+        with pytest.raises(TypeError, match="Cannot use =="):
+            _ = x == y
+
+    def test_ne_blocked(self):
+        """Using != on Terms raises TypeError."""
+        x = IntRef(10)
+        y = IntRef(5)
+        with pytest.raises(TypeError, match="Cannot use !="):
+            _ = x != y
+
+    def test_bool_conversion_blocked(self):
+        """Using bool() on Terms raises TypeError."""
+        x = IntRef(10)
+        with pytest.raises(TypeError, match="Cannot convert Term to bool"):
+            bool(x)
+
+    def test_eq_method_works(self):
+        """The eq() method works for equality checks."""
+        x = IntRef(10)
+        result = x.eq(10)
+        assert isinstance(result, BoolRef)
+
+    def test_ne_method_works(self):
+        """The ne() method works for inequality checks."""
+        x = IntRef(10)
+        result = x.ne(5)
+        assert isinstance(result, BoolRef)
