@@ -60,7 +60,7 @@ class ListRefBase[T](
         from everybase.morphisms import AddOp
         from everybase.py.list import ListRef
 
-        return ListRef(AddOp(self, other))
+        return ListRef(AddOp[list[T]](self, other))
 
     def __radd__(self, other: list[T]) -> ListRef[T]:
         from everybase.morphisms import AddOp

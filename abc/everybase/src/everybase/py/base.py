@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Ref, Sentinel, Term
+from everyabc import Arg, Ref, Sentinel, Term
 
 
 if TYPE_CHECKING:
@@ -37,11 +37,7 @@ class PyRefBase[T](Ref[T]):
     - Otherwise returns the literal value
     """
 
-    __slots__ = ("_source",)
-
-    _source: Term[T] | T
-
-    def __init__(self, source: Term[T] | T) -> None:
+    def __init__(self, source: Arg[T]) -> None:
         """Initialize ref with source.
 
         Args:
@@ -51,14 +47,15 @@ class PyRefBase[T](Ref[T]):
             super().__init__(source)
         else:
             super().__init__()
+
         self._source = source
 
     @property
-    def source(self) -> Term[T] | T:
+    def source(self) -> Arg[T]:
         """Get the underlying source."""
         return self._source
 
-    def fetch(self, ctx: Context) -> T | Sentinel:
+    async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value by evaluating the source.
 
         For Python memory refs:
@@ -72,10 +69,10 @@ class PyRefBase[T](Ref[T]):
             The value, or Sentinel if computation returns one
         """
         if isinstance(self._source, Term):
-            return self._source.execute(ctx)
+            return await self._source.execute(ctx)
         return self._source
 
-    def resolve(self, ctx: Context) -> tuple[str, type]:
+    async def resolve(self, ctx: Context) -> tuple[str, type]:
         """Resolve to identity.
 
         Python memory refs have simple identity - just class and source type.

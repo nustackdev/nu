@@ -36,11 +36,11 @@ class Var[T](Ref[T]):
         super().__init__()
         self._value: T | Sentinel = value
 
-    def resolve(self, ctx: Context) -> object:
+    async def resolve(self, ctx: Context) -> object:
         """Return identity of this variable."""
         return id(self)
 
-    def fetch(self, ctx: Context) -> T | Sentinel:
+    async def fetch(self, ctx: Context) -> T | Sentinel:
         """Return current value."""
         return self._value
 

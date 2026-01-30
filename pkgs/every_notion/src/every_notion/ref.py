@@ -50,7 +50,7 @@ class NotionRef[T](Ref[T], ABC):
     __slots__ = ()
 
     @abstractmethod
-    def resolve(self, ctx: NotionContext) -> dict[str, Any]:
+    async def resolve(self, ctx: NotionContext) -> dict[str, Any]:
         """Resolve ref to Notion API parameters.
 
         Returns:
@@ -59,7 +59,7 @@ class NotionRef[T](Ref[T], ABC):
         ...
 
     @abstractmethod
-    def fetch(self, ctx: NotionContext) -> T | Sentinel:
+    async def fetch(self, ctx: NotionContext) -> T | Sentinel:
         """Fetch value from Notion API.
 
         Args:
@@ -70,9 +70,9 @@ class NotionRef[T](Ref[T], ABC):
         """
         ...
 
-    def execute(self, ctx: NotionContext) -> T | Sentinel:
+    async def execute(self, ctx: NotionContext) -> T | Sentinel:
         """Execute by fetching value. Term interface."""
-        return self.fetch(ctx)
+        return await self.fetch(ctx)
 
 
 class TableRef(NotionRef[list[dict[str, Any]]]):
@@ -102,11 +102,11 @@ class TableRef(NotionRef[list[dict[str, Any]]]):
         """The associated NotionTable shape class."""
         return self._table_shape
 
-    def resolve(self, ctx: NotionContext) -> dict[str, Any]:
+    async def resolve(self, ctx: NotionContext) -> dict[str, Any]:
         """Resolve to database_id parameter."""
         return {"database_id": self._database_id}
 
-    def fetch(self, ctx: NotionContext) -> list[dict[str, Any]]:
+    async def fetch(self, ctx: NotionContext) -> list[dict[str, Any]]:
         """Fetch all rows from the database.
 
         Returns:
@@ -172,24 +172,24 @@ class RowRef(NotionRef[dict[str, Any]]):
         """The associated NotionTable shape class."""
         return self._table_shape
 
-    def resolve(self, ctx: NotionContext) -> dict[str, Any]:
+    async def resolve(self, ctx: NotionContext) -> dict[str, Any]:
         """Resolve to database_id + page_id parameters."""
-        parent_params = self._table_ref.resolve(ctx)
+        parent_params = await self._table_ref.resolve(ctx)
 
         if isinstance(self._row_id, Term):
-            row_id = self._row_id.execute(ctx)
+            row_id = await self._row_id.execute(ctx)
         else:
             row_id = self._row_id
 
         return {**parent_params, "page_id": row_id}
 
-    def fetch(self, ctx: NotionContext) -> dict[str, Any]:
+    async def fetch(self, ctx: NotionContext) -> dict[str, Any]:
         """Fetch the full page data.
 
         Returns:
             Page object with properties
         """
-        resolved = self.resolve(ctx)
+        resolved = await self.resolve(ctx)
         return ctx.get_page(resolved["page_id"])
 
     def __getitem__(self, property_name: str) -> CellRef:
@@ -251,18 +251,18 @@ class CellRef[T](NotionRef[T]):
         """The Notion property type (title, rich_text, number, etc.)."""
         return self._notion_type
 
-    def resolve(self, ctx: NotionContext) -> dict[str, Any]:
+    async def resolve(self, ctx: NotionContext) -> dict[str, Any]:
         """Resolve to database_id + page_id + property parameters."""
-        parent_params = self._row_ref.resolve(ctx)
+        parent_params = await self._row_ref.resolve(ctx)
 
         if isinstance(self._property_name, Term):
-            prop_name = self._property_name.execute(ctx)
+            prop_name = await self._property_name.execute(ctx)
         else:
             prop_name = self._property_name
 
         return {**parent_params, "property": prop_name}
 
-    def fetch(self, ctx: NotionContext) -> T | Sentinel:
+    async def fetch(self, ctx: NotionContext) -> T | Sentinel:
         """Fetch the cell value from Notion.
 
         Returns:
@@ -270,7 +270,7 @@ class CellRef[T](NotionRef[T]):
         """
         from .ops import extract_property_value
 
-        resolved = self.resolve(ctx)
+        resolved = await self.resolve(ctx)
         page_id = resolved["page_id"]
         prop_name = resolved["property"]
 

@@ -92,14 +92,6 @@ class LValue[T](Term[T], ABC):
     They resolve to concrete paths for storage access.
     """
 
-    @abstractmethod
-    def resolve(self, ctx: Context) -> object:
-        """Resolve to concrete location identifier.
-
-        Returns a substrate-specific location identifier.
-        """
-        ...
-
 
 class RValue[ResultT](Term[ResultT], ABC):
     """Evaluable expression that produces a value.

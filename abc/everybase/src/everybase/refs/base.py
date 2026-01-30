@@ -43,7 +43,7 @@ class RefBase[T](Ref[T], ABC):
     """
 
     @abstractmethod
-    def fetch(self, ctx: Context) -> T | Sentinel:
+    async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value from this location.
 
         Implemented by substrate-specific subclasses to actually
@@ -57,7 +57,7 @@ class RefBase[T](Ref[T], ABC):
         """
         ...
 
-    def resolve(self, ctx: Context) -> object:
+    async def resolve(self, ctx: Context) -> object:
         """Resolve to identity/location.
 
         Default implementation returns minimal identifier.

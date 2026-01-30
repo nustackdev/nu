@@ -20,9 +20,9 @@ def test_var_set_get():
     assert v.get() == 99
 
 
-def test_var_fetch():
+async def test_var_fetch():
     v = Var(7)
-    assert v.fetch(Context()) == 7
+    assert await v.fetch(Context()) == 7
 
 
 async def test_var_execute():
@@ -44,9 +44,9 @@ def test_var_is_leaf():
     assert Var(0).is_leaf is True
 
 
-def test_var_resolve():
+async def test_var_resolve():
     v = Var(0)
-    assert v.resolve(Context()) == id(v)
+    assert await v.resolve(Context()) == id(v)
 
 
 def test_var_repr():

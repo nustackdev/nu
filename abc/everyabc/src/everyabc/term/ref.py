@@ -50,7 +50,7 @@ class Ref[T](LValue[T | Sentinel], ABC):
     """
 
     @abstractmethod
-    def resolve(self, ctx: Context) -> object:
+    async def resolve(self, ctx: Context) -> object:
         """Build identity/location for this reference.
 
         Returns a substrate-specific location identifier.
@@ -66,7 +66,7 @@ class Ref[T](LValue[T | Sentinel], ABC):
         ...
 
     @abstractmethod
-    def fetch(self, ctx: Context) -> T | Sentinel:
+    async def fetch(self, ctx: Context) -> T | Sentinel:
         """Extract value from this location.
 
         The core operation of a Ref - retrieve the value
@@ -92,7 +92,7 @@ class Ref[T](LValue[T | Sentinel], ABC):
         Returns:
             The fetched value
         """
-        return self.fetch(ctx)
+        return await self.fetch(ctx)
 
     @property
     def is_self_pure(self) -> bool:

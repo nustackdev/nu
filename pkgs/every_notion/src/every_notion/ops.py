@@ -168,9 +168,9 @@ class GetCellOp(Operation, Morphism[Any]):
         super().__init__(cell_ref)
         self.cell_ref = cell_ref
 
-    def execute(self, context: NotionContext) -> Any:
+    async def execute(self, context: NotionContext) -> Any:
         """Execute the read operation, fetching cell value from Notion."""
-        resolved = self.cell_ref.resolve(context)
+        resolved = await self.cell_ref.resolve(context)
         page_id = resolved["page_id"]
         prop_name = resolved["property"]
 
@@ -205,16 +205,16 @@ class AddRowCmd(Command, Morphism[dict[str, Any]]):
         self._properties = properties
         self._table_shape = table_shape
 
-    def execute(self, context: NotionContext) -> dict[str, Any]:
+    async def execute(self, context: NotionContext) -> dict[str, Any]:
         """Execute the command, creating a new row in Notion."""
-        resolved = self.table_ref.resolve(context)
+        resolved = await self.table_ref.resolve(context)
         database_id = resolved["database_id"]
 
         # Resolve Term values
         properties = {}
         for key, value in self._properties.items():
             if isinstance(value, Term):
-                value = value.execute(context)
+                value = await value.execute(context)
             properties[key] = value
 
         # Convert to Notion format using slot info if available
@@ -244,9 +244,9 @@ class RemoveRowCmd(Command, Morphism[dict[str, Any]]):
         super().__init__(row_ref)
         self.row_ref = row_ref
 
-    def execute(self, context: NotionContext) -> dict[str, Any]:
+    async def execute(self, context: NotionContext) -> dict[str, Any]:
         """Execute the command, archiving the row in Notion."""
-        resolved = self.row_ref.resolve(context)
+        resolved = await self.row_ref.resolve(context)
         return context.archive_page(resolved["page_id"])
 
     def __repr__(self) -> str:
@@ -267,16 +267,16 @@ class SetCellCmd(Command, Morphism[dict[str, Any]]):
         self._value = value
         self._prop_type = prop_type
 
-    def execute(self, context: NotionContext) -> dict[str, Any]:
+    async def execute(self, context: NotionContext) -> dict[str, Any]:
         """Execute the command, updating a cell value in Notion."""
-        resolved = self.cell_ref.resolve(context)
+        resolved = await self.cell_ref.resolve(context)
         page_id = resolved["page_id"]
         prop_name = resolved["property"]
 
         # Resolve value
         value = self._value
         if isinstance(value, Term):
-            value = value.execute(context)
+            value = await value.execute(context)
 
         # Infer prop_type from existing property if not set
         prop_type = self._prop_type
