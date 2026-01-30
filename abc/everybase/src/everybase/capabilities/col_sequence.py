@@ -16,7 +16,7 @@ from .col_collection import CollectionBase, CollectionProtocol
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     from everyabc import BoolArg, StrArg
     from everybase.values import IntValue, StrValue
@@ -59,8 +59,10 @@ class MutableSequenceProtocol[ElementT, ResultT](
     """Protocol for mutable sequence values — like collections.abc.MutableSequence."""
 
     def append(self, value: ElementT) -> ResultT: ...
+    def extend(self, other: Iterable[ElementT]) -> ResultT: ...
     def insert(self, index: int, value: ElementT) -> ResultT: ...
     def pop(self, index: int = -1) -> ResultT: ...
+    def remove(self, value: ElementT) -> ResultT: ...
 
 
 # =============================================================================
@@ -138,6 +140,12 @@ class MutableSequenceBase[ElementT, ResultT](
 
         return cast("ResultT", self._wrap_sliceable_result(AppendCmd(self, value)))
 
+    def extend(self, other: Iterable[ElementT]) -> ResultT:
+        """Extend sequence with elements from iterable."""
+        from everybase.morphisms.abc_sequence import ExtendCmd
+
+        return cast("ResultT", self._wrap_sliceable_result(ExtendCmd(self, other)))
+
     def insert(self, index: int, value: ElementT) -> ResultT:
         """Insert item at index."""
         from everybase.morphisms.abc_sequence import InsertCmd
@@ -149,3 +157,9 @@ class MutableSequenceBase[ElementT, ResultT](
         from everybase.morphisms.abc_sequence import PopCmd
 
         return cast("ResultT", self._wrap_element_result(PopCmd(self, index)))
+
+    def remove(self, value: ElementT) -> ResultT:
+        """Remove first occurrence of value."""
+        from everybase.morphisms.abc_sequence import RemoveValueCmd
+
+        return cast("ResultT", self._wrap_sliceable_result(RemoveValueCmd(self, value)))

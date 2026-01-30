@@ -8,13 +8,15 @@ Operations:
 
 Commands:
     AppendCmd: Append item to end of sequence
+    ExtendCmd: Extend sequence with iterable
     InsertCmd: Insert item at index
     PopCmd: Remove and return item at index
+    RemoveValueCmd: Remove first occurrence of value
 """
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Iterable, MutableSequence, Sequence
 
 from everyabc import (
     INVALID,
@@ -29,11 +31,13 @@ from everyabc import (
 __all__ = [
     "AppendCmd",
     "CountOp",
+    "ExtendCmd",
     "FirstOp",
     "IndexOfOp",
     "InsertCmd",
     "LastOp",
     "PopCmd",
+    "RemoveValueCmd",
 ]
 
 
@@ -134,3 +138,30 @@ class PopCmd[T](BinaryCommand[T]):
             return operand.pop(index)  # type: ignore[return-value]
         except IndexError:
             return INVALID
+
+
+class ExtendCmd[T](BinaryCommand[list[T]]):
+    """Extend sequence with iterable: seq.extend(other). Returns mutated list."""
+
+    def apply(self, operand: object, other: object) -> list[T] | Sentinel:
+        """Apply."""
+        if not isinstance(operand, MutableSequence):
+            raise TypeError(f"extend() requires mutable sequence, got {type(operand).__name__}")
+        if not isinstance(other, Iterable):
+            return INVALID
+        operand.extend(other)
+        return list(operand)  # type: ignore[arg-type]
+
+
+class RemoveValueCmd[T](BinaryCommand[list[T]]):
+    """Remove first occurrence of value: seq.remove(value). Returns INVALID if not found."""
+
+    def apply(self, operand: object, value: object) -> list[T] | Sentinel:
+        """Apply."""
+        if not isinstance(operand, MutableSequence):
+            raise TypeError(f"remove() requires mutable sequence, got {type(operand).__name__}")
+        try:
+            operand.remove(value)
+        except ValueError:
+            return INVALID
+        return list(operand)  # type: ignore[arg-type]

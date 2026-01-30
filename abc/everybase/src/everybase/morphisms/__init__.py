@@ -47,11 +47,13 @@ from .abc_mapping import (
 from .abc_sequence import (
     AppendCmd,
     CountOp,
+    ExtendCmd,
     FirstOp,
     IndexOfOp,
     InsertCmd,
     LastOp,
     PopCmd,
+    RemoveValueCmd,
 )
 from .abc_set import (
     AddCmd,
@@ -301,8 +303,10 @@ __all__ = [  # noqa: RUF022
     "IndexOfOp",
     "CountOp",
     "AppendCmd",
+    "ExtendCmd",
     "InsertCmd",
     "PopCmd",
+    "RemoveValueCmd",
     # Mapping
     "KeysOp",
     "ValuesOp",
