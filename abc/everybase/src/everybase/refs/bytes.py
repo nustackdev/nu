@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, cast, overload
 
-from everybase.traits import Comparable, Containable, Lengthable, Logical, Sliceable
+from everybase.capabilities import Comparable, Containable, Lengthable, Logical, Sliceable
 
 from .base import RefBase
 

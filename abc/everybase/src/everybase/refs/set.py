@@ -11,7 +11,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.traits import Comparable, SetLike
+from everybase.capabilities import Comparable, SetLike
 
 from .base import RefBase
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from everybase.traits import Comparable, Logical
+from everybase.capabilities import Comparable, Logical
 
 from .base import RefBase
 

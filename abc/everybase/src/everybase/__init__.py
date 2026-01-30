@@ -1,7 +1,7 @@
 """Everybase - Foundation library for the every ecosystem.
 
 Structure:
-- traits/: Capability traits for refs (Numeric, Comparable, Logical, etc.)
+- capabilities/: Capability mixins for refs (Numeric, Comparable, Logical, etc.)
 - protocols/: Storage capability protocols (Gettable, Settable, etc.)
 - morphisms/: Concrete morphisms (AddOp, SubOp, EqOp, etc.)
 - refs/: Abstract ref bases (IntRefBase, StrRefBase, etc.)
@@ -11,6 +11,39 @@ Structure:
 
 # Re-export traits
 # Re-export morphisms
+from everybase.capabilities import (
+    Addable,
+    Additive,
+    Andable,
+    Bitwise,
+    BitwiseAndable,
+    BitwiseInvertable,
+    BitwiseOrable,
+    BitwiseXorable,
+    Comparable,
+    Containable,
+    Divisible,
+    Equalable,
+    Indexable,
+    Iterable,
+    Lengthable,
+    Logical,
+    Mapping,
+    Moduloable,
+    Multiplicative,
+    Multiplyable,
+    Negatable,
+    Notable,
+    Numeric,
+    Orable,
+    Orderable,
+    Powerable,
+    Sequence,
+    SetLike,
+    Shiftable,
+    Sliceable,
+    Subtractable,
+)
 from everybase.morphisms import (
     # Arithmetic
     AbsOp,
@@ -178,39 +211,6 @@ from everybase.refs import (
     StrRefBase,
     TupleRefBase,
 )
-from everybase.traits import (
-    Addable,
-    Additive,
-    Andable,
-    Bitwise,
-    BitwiseAndable,
-    BitwiseInvertable,
-    BitwiseOrable,
-    BitwiseXorable,
-    Comparable,
-    Containable,
-    Divisible,
-    Equalable,
-    Indexable,
-    Iterable,
-    Lengthable,
-    Logical,
-    Mapping,
-    Moduloable,
-    Multiplicative,
-    Multiplyable,
-    Negatable,
-    Notable,
-    Numeric,
-    Orable,
-    Orderable,
-    Powerable,
-    Sequence,
-    SetLike,
-    Shiftable,
-    Sliceable,
-    Subtractable,
-)
 
 # Re-export utilities
 from everybase.util import (
@@ -228,7 +228,7 @@ from everybase.util import (
 
 __all__ = [  # noqa: RUF022
     # =========================================================================
-    # TRAITS (operator capabilities)
+    # CAPABILITIES (operator + collection mixins)
     # =========================================================================
     # Arithmetic
     "Addable",

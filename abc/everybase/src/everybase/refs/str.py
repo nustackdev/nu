@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, overload
 
-from everybase.traits import Addable, Comparable, Containable, Lengthable, Logical, Sliceable
+from everybase.capabilities import Addable, Comparable, Containable, Lengthable, Logical, Sliceable
 
 from .base import RefBase
 
@@ -148,27 +148,21 @@ class StrRefBase(
         from everybase.morphisms.type_str import StripOp
         from everybase.py.str import StrRef
 
-        if chars is not None:
-            return StrRef(StripOp(self, chars))
-        return StrRef(StripOp(self))
+        return StrRef(StripOp(self, chars))
 
     def lstrip(self, chars: StrArg | None = None) -> StrRef:
         """Strip leading whitespace or chars."""
         from everybase.morphisms.type_str import LStripOp
         from everybase.py.str import StrRef
 
-        if chars is not None:
-            return StrRef(LStripOp(self, chars))
-        return StrRef(LStripOp(self))
+        return StrRef(LStripOp(self, chars))
 
     def rstrip(self, chars: StrArg | None = None) -> StrRef:
         """Strip trailing whitespace or chars."""
         from everybase.morphisms.type_str import RStripOp
         from everybase.py.str import StrRef
 
-        if chars is not None:
-            return StrRef(RStripOp(self, chars))
-        return StrRef(RStripOp(self))
+        return StrRef(RStripOp(self, chars))
 
     # =========================================================================
     # SPLITTING
@@ -179,18 +173,14 @@ class StrRefBase(
         from everybase.morphisms.type_str import SplitOp
         from everybase.py.list import ListRef
 
-        if sep is not None:
-            return ListRef(SplitOp(self, sep, maxsplit))
-        return ListRef(SplitOp(self, maxsplit=maxsplit))
+        return ListRef(SplitOp(self, sep, maxsplit))
 
     def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListRef:
         """Right split string."""
         from everybase.morphisms.type_str import RSplitOp
         from everybase.py.list import ListRef
 
-        if sep is not None:
-            return ListRef(RSplitOp(self, sep, maxsplit))
-        return ListRef(RSplitOp(self, maxsplit=maxsplit))
+        return ListRef(RSplitOp(self, sep, maxsplit))
 
     # =========================================================================
     # SEARCHING

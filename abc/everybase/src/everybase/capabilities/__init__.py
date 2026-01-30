@@ -1,10 +1,10 @@
-"""Capability traits for refs.
+"""Capability mixins for refs.
 
-Traits define what operations a ref supports. They are mixins that provide
+Capabilities define what operations a ref supports. They are mixins that provide
 operator overloads and methods that return morphism-wrapped results.
 
 Hierarchy:
-    ARITHMETIC
+    ARITHMETIC (op_arithmetic)
     ──────────
     Addable           →  __add__, __radd__
     Subtractable      →  __sub__, __rsub__
@@ -19,7 +19,7 @@ Hierarchy:
     Numeric = Additive + Multiplicative
 
 
-    COMPARISON
+    COMPARISON (op_comparison)
     ──────────
     Orderable         →  __lt__, __gt__, __le__, __ge__
     Equalable         →  eq(), ne(), is_()
@@ -27,7 +27,7 @@ Hierarchy:
     Comparable = Orderable + Equalable
 
 
-    LOGICAL
+    LOGICAL (op_logical)
     ───────
     Andable           →  and_()
     Orable            →  or_()
@@ -36,7 +36,7 @@ Hierarchy:
     Logical = Andable + Orable + Notable
 
 
-    BITWISE
+    BITWISE (op_bitwise)
     ───────
     BitwiseAndable    →  bitand()
     BitwiseOrable     →  bitor()
@@ -47,20 +47,43 @@ Hierarchy:
     Bitwise = BitwiseAndable + BitwiseOrable + BitwiseXorable + BitwiseInvertable + Shiftable
 
 
-    COLLECTION
-    ──────────
+    COLLECTION ACCESS (col_access)
+    ─────────────────
     Lengthable        →  len_()
-    Indexable         →  __getitem__
+    Indexable          →  __getitem__
     Sliceable         →  slice_()
     Containable       →  contains()
+
+    COLLECTION ITERABLE (col_iterable)
+    ───────────────────
     Iterable          →  map_(), filter_(), reduce_()
 
+    COLLECTION COMBINED (col_sequence, col_mapping, col_set)
+    ───────────────────
     Sequence = Lengthable + Sliceable + Containable + Iterable
     Mapping = Lengthable + Containable + keys/values/items
     SetLike = Lengthable + Containable + set operations
 """
 
-from .arithmetic import (
+from .col_access import (
+    Containable,
+    Indexable,
+    Lengthable,
+    Sliceable,
+)
+from .col_iterable import (
+    Iterable,
+)
+from .col_mapping import (
+    Mapping,
+)
+from .col_sequence import (
+    Sequence,
+)
+from .col_set import (
+    SetLike,
+)
+from .op_arithmetic import (
     Addable,
     Additive,
     Divisible,
@@ -72,7 +95,7 @@ from .arithmetic import (
     Powerable,
     Subtractable,
 )
-from .bitwise import (
+from .op_bitwise import (
     Bitwise,
     BitwiseAndable,
     BitwiseInvertable,
@@ -80,22 +103,12 @@ from .bitwise import (
     BitwiseXorable,
     Shiftable,
 )
-from .collection import (
-    Containable,
-    Indexable,
-    Iterable,
-    Lengthable,
-    Mapping,
-    Sequence,
-    SetLike,
-    Sliceable,
-)
-from .comparison import (
+from .op_comparison import (
     Comparable,
     Equalable,
     Orderable,
 )
-from .logical import (
+from .op_logical import (
     Andable,
     Logical,
     Notable,
