@@ -1,28 +1,103 @@
 """Concrete morphisms for everybase.
 
 Structure:
-- arithmetic.py: NegOp, AbsOp, PosOp, AddOp, SubOp, MulOp, DivOp, etc.
-- comparison.py: EqOp, NeOp, GtOp, LtOp, GeOp, LeOp, IdCompOp
-- logical.py: NotOp, BoolOp, AndOp, OrOp
-- bitwise.py: BitwiseNotOp, BitwiseAndOp, BitwiseOrOp, XorOp, LShiftOp, RShiftOp
-- conversion.py: ToIntOp, ToStrOp, ToBoolOp, ToFloatOp, ToBytesOp, etc.
-- special.py: IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
-- conditional.py: ConditionalOp
-- callable.py: FuncCallOp, MethodCallOp, GetAttrOp, SetAttrOp, DelAttrOp
-- collection_access.py: AtOp, SliceOp, LenOp, ContainsOp
-- collection_aggregate.py: SumOp, MinOp, MaxOp, AnyOp, AllOp
-- collection_search.py: FirstOp, LastOp, IndexOfOp, FindOp, FindIndexOp, CountOp, JoinOp
-- collection_transform.py: MapOp, FilterOp, ReduceOp, SortedOp, ReversedOp
-- bytes_ops.py: Bytes-specific ops (DecodeOp, HexOp, etc.)
-- str_ops.py: String-specific ops (UpperOp, SplitOp, etc.)
-- dict_ops.py: Dict-specific ops (DictKeysOp, DictValuesOp, etc.)
-- set_ops.py: Set-specific ops (UnionOp, IntersectionOp, etc.)
+
+op_  — Python operators (syntactic)
+  op_arithmetic.py: NegOp, AbsOp, PosOp, AddOp, SubOp, MulOp, DivOp, etc.
+  op_comparison.py: EqOp, NeOp, GtOp, LtOp, GeOp, LeOp, IdCompOp
+  op_logical.py: NotOp, BoolOp, AndOp, OrOp
+  op_bitwise.py: BitwiseNotOp, BitwiseAndOp, BitwiseOrOp, XorOp, LShiftOp, RShiftOp
+
+fn_  — Builtin functions & higher-order
+  fn_transform.py: MapOp, FilterOp, ReduceOp, SortedOp, ReversedOp
+  fn_search.py: FirstOp, LastOp, IndexOfOp, FindOp, FindIndexOp, CountOp, JoinOp
+  fn_aggregate.py: SumOp, MinOp, MaxOp, AnyOp, AllOp
+  fn_conversion.py: ToIntOp, ToStrOp, ToBoolOp, ToFloatOp, ToBytesOp, etc.
+  fn_call.py: FuncCallOp, MethodCallOp
+
+gen_ — General patterns (protocol-level)
+  gen_access.py: AtOp, SliceOp, LenOp, ContainsOp
+  gen_attr.py: GetAttrOp, SetAttrOp, DelAttrOp
+  gen_special.py: IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
+  gen_conditional.py: ConditionalOp
+
+type_ — Concrete type methods
+  type_str.py: String-specific ops (UpperOp, SplitOp, etc.)
+  type_bytes.py: Bytes-specific ops (DecodeOp, HexOp, etc.)
+
+abc_ — ABC-level abstract operations
+  abc_mapping.py: DictKeysOp, DictValuesOp, DictItemsOp, DictGetOp
+  abc_set.py: UnionOp, IntersectionOp, DifferenceOp, etc.
 
 All morphisms use every.Morphism base classes and implement apply().
 """
 
-# Arithmetic
-from .arithmetic import (
+# ── op_ — Python operators ──────────────────────────────────────────────────
+
+# ── abc_ — ABC-level abstract operations ────────────────────────────────────
+from .abc_mapping import (
+    DictGetOp,
+    DictItemsOp,
+    DictKeysOp,
+    DictValuesOp,
+)
+from .abc_set import (
+    DifferenceOp,
+    IntersectionOp,
+    IsDisjointOp,
+    IsSubsetOp,
+    IsSupersetOp,
+    SymmetricDifferenceOp,
+    UnionOp,
+)
+
+# ── fn_ — Builtin functions & higher-order ──────────────────────────────────
+from .fn_aggregate import (
+    AllOp,
+    AnyOp,
+    MaxOp,
+    MinOp,
+    SumOp,
+)
+from .fn_call import FuncCallOp, MethodCallOp
+from .fn_conversion import (
+    ToBoolOp,
+    ToBytesOp,
+    ToFloatOp,
+    ToIntOp,
+    ToListOp,
+    ToSetOp,
+    ToStrOp,
+    ToTupleOp,
+)
+from .fn_search import (
+    CountOp,
+    FindIndexOp,
+    FindOp,
+    FirstOp,
+    IndexOfOp,
+    JoinOp,
+    LastOp,
+)
+from .fn_transform import (
+    FilterOp,
+    MapOp,
+    ReduceOp,
+    ReversedOp,
+    SortedOp,
+)
+
+# ── gen_ — General patterns ─────────────────────────────────────────────────
+from .gen_access import (
+    AtOp,
+    ContainsOp,
+    LenOp,
+    SliceOp,
+)
+from .gen_attr import DelAttrOp, GetAttrOp, SetAttrOp
+from .gen_conditional import ConditionalOp
+from .gen_special import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
+from .op_arithmetic import (
     AbsOp,
     AddOp,
     DivOp,
@@ -34,9 +109,7 @@ from .arithmetic import (
     PowOp,
     SubOp,
 )
-
-# Bitwise
-from .bitwise import (
+from .op_bitwise import (
     BitwiseAndOp,
     BitwiseNotOp,
     BitwiseOrOp,
@@ -44,9 +117,11 @@ from .bitwise import (
     RShiftOp,
     XorOp,
 )
+from .op_comparison import EqOp, GeOp, GtOp, IdCompOp, LeOp, LtOp, NeOp
+from .op_logical import AndOp, BoolOp, NotOp, OrOp
 
-# Bytes ops
-from .bytes_ops import (
+# ── type_ — Concrete type methods ───────────────────────────────────────────
+from .type_bytes import (
     BytesCountOp,
     BytesEndsWithOp,
     BytesFindOp,
@@ -61,92 +136,7 @@ from .bytes_ops import (
     DecodeOp,
     HexOp,
 )
-
-# Callable (function/method invocation)
-from .callable import DelAttrOp, FuncCallOp, GetAttrOp, MethodCallOp, SetAttrOp
-
-# Collection ops - access
-from .collection_access import (
-    AtOp,
-    ContainsOp,
-    LenOp,
-    SliceOp,
-)
-
-# Collection ops - aggregate
-from .collection_aggregate import (
-    AllOp,
-    AnyOp,
-    MaxOp,
-    MinOp,
-    SumOp,
-)
-
-# Collection ops - search
-from .collection_search import (
-    CountOp,
-    FindIndexOp,
-    FindOp,
-    FirstOp,
-    IndexOfOp,
-    JoinOp,
-    LastOp,
-)
-
-# Collection ops - transform
-from .collection_transform import (
-    FilterOp,
-    MapOp,
-    ReduceOp,
-    ReversedOp,
-    SortedOp,
-)
-
-# Comparison
-from .comparison import EqOp, GeOp, GtOp, IdCompOp, LeOp, LtOp, NeOp
-
-# Conditional
-from .conditional import ConditionalOp
-
-# Conversion
-from .conversion import (
-    ToBoolOp,
-    ToBytesOp,
-    ToFloatOp,
-    ToIntOp,
-    ToListOp,
-    ToSetOp,
-    ToStrOp,
-    ToTupleOp,
-)
-
-# Dict ops
-from .dict_ops import (
-    DictGetOp,
-    DictItemsOp,
-    DictKeysOp,
-    DictValuesOp,
-)
-
-# Logical
-from .logical import AndOp, BoolOp, NotOp, OrOp
-
-# Set ops
-from .set_ops import (
-    DifferenceOp,
-    IntersectionOp,
-    IsDisjointOp,
-    IsSubsetOp,
-    IsSupersetOp,
-    SymmetricDifferenceOp,
-    UnionOp,
-)
-
-# Special value checks
-from .special import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
-
-# String ops
-from .str_ops import (
+from .type_str import (
     CapitalizeOp,
     CenterOp,
     CountSubstringOp,
@@ -170,19 +160,19 @@ from .str_ops import (
     UpperOp,
     ZFillOp,
 )
-from .str_ops import (
+from .type_str import (
     FindOp as StrFindOp,
 )
-from .str_ops import (
+from .type_str import (
     RFindOp as StrRFindOp,
 )
-from .str_ops import (
+from .type_str import (
     StripOp as StrStripOp,
 )
 
 
 __all__ = [  # noqa: RUF022
-    # Arithmetic
+    # op_ — Python operators
     "AbsOp",
     "AddOp",
     "DivOp",
@@ -193,7 +183,6 @@ __all__ = [  # noqa: RUF022
     "PosOp",
     "PowOp",
     "SubOp",
-    # Comparison
     "EqOp",
     "GeOp",
     "GtOp",
@@ -201,19 +190,24 @@ __all__ = [  # noqa: RUF022
     "LeOp",
     "LtOp",
     "NeOp",
-    # Logical
     "AndOp",
     "BoolOp",
     "NotOp",
     "OrOp",
-    # Bitwise
     "BitwiseAndOp",
     "BitwiseNotOp",
     "BitwiseOrOp",
     "LShiftOp",
     "RShiftOp",
     "XorOp",
-    # Conversion
+    # fn_ — Builtin functions & higher-order
+    "AllOp",
+    "AnyOp",
+    "MaxOp",
+    "MinOp",
+    "SumOp",
+    "FuncCallOp",
+    "MethodCallOp",
     "ToBoolOp",
     "ToBytesOp",
     "ToFloatOp",
@@ -222,42 +216,32 @@ __all__ = [  # noqa: RUF022
     "ToSetOp",
     "ToStrOp",
     "ToTupleOp",
-    # Special
-    "IsEmptyOp",
-    "IsNaNOp",
-    "NotEmptyOp",
-    "NotNaNOp",
-    # Conditional
-    "ConditionalOp",
-    # Callable
-    "DelAttrOp",
-    "FuncCallOp",
-    "GetAttrOp",
-    "MethodCallOp",
-    "SetAttrOp",
-    # Collection
-    "AllOp",
-    "AnyOp",
-    "AtOp",
-    "ContainsOp",
     "CountOp",
-    "FilterOp",
     "FindIndexOp",
     "FindOp",
     "FirstOp",
     "IndexOfOp",
     "JoinOp",
     "LastOp",
-    "LenOp",
+    "FilterOp",
     "MapOp",
-    "MaxOp",
-    "MinOp",
     "ReduceOp",
     "ReversedOp",
-    "SliceOp",
     "SortedOp",
-    "SumOp",
-    # Bytes
+    # gen_ — General patterns
+    "AtOp",
+    "ContainsOp",
+    "LenOp",
+    "SliceOp",
+    "DelAttrOp",
+    "GetAttrOp",
+    "SetAttrOp",
+    "ConditionalOp",
+    "IsEmptyOp",
+    "IsNaNOp",
+    "NotEmptyOp",
+    "NotNaNOp",
+    # type_ — Concrete type methods
     "BytesCountOp",
     "BytesEndsWithOp",
     "BytesFindOp",
@@ -271,7 +255,6 @@ __all__ = [  # noqa: RUF022
     "BytesUpperOp",
     "DecodeOp",
     "HexOp",
-    # String
     "CapitalizeOp",
     "CenterOp",
     "CountSubstringOp",
@@ -297,12 +280,11 @@ __all__ = [  # noqa: RUF022
     "TitleOp",
     "UpperOp",
     "ZFillOp",
-    # Dict
+    # abc_ — ABC-level abstract operations
     "DictGetOp",
     "DictItemsOp",
     "DictKeysOp",
     "DictValuesOp",
-    # Set
     "DifferenceOp",
     "IntersectionOp",
     "IsDisjointOp",

@@ -259,25 +259,25 @@ class Mapping[KeyT, ValueT, ResultT](
 
     def keys_(self) -> ResultT:
         """Get all keys."""
-        from everybase.morphisms.dict_ops import DictKeysOp
+        from everybase.morphisms.abc_mapping import DictKeysOp
 
         return cast("ResultT", self._wrap_keys_result(DictKeysOp(self)))
 
     def values_(self) -> ResultT:
         """Get all values."""
-        from everybase.morphisms.dict_ops import DictValuesOp
+        from everybase.morphisms.abc_mapping import DictValuesOp
 
         return cast("ResultT", self._wrap_values_result(DictValuesOp(self)))
 
     def items_(self) -> ResultT:
         """Get all key-value pairs."""
-        from everybase.morphisms.dict_ops import DictItemsOp
+        from everybase.morphisms.abc_mapping import DictItemsOp
 
         return cast("ResultT", self._wrap_items_result(DictItemsOp(self)))
 
     def get_(self, key: KeyT, default: ValueT | None = None) -> ResultT:
         """Get value with default."""
-        from everybase.morphisms.dict_ops import DictGetOp
+        from everybase.morphisms.abc_mapping import DictGetOp
 
         return cast("ResultT", self._wrap_value_result(DictGetOp(self, key, default)))
 
@@ -294,45 +294,45 @@ class SetLike[ElementT, ResultT](
 
     def union(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set union."""
-        from everybase.morphisms.set_ops import UnionOp
+        from everybase.morphisms.abc_set import UnionOp
 
         return cast("ResultT", self._wrap_set_result(UnionOp(self, other)))
 
     def intersection(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set intersection."""
-        from everybase.morphisms.set_ops import IntersectionOp
+        from everybase.morphisms.abc_set import IntersectionOp
 
         return cast("ResultT", self._wrap_set_result(IntersectionOp(self, other)))
 
     def difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set difference."""
-        from everybase.morphisms.set_ops import DifferenceOp
+        from everybase.morphisms.abc_set import DifferenceOp
 
         return cast("ResultT", self._wrap_set_result(DifferenceOp(self, other)))
 
     def symmetric_difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> ResultT:
         """Set symmetric difference."""
-        from everybase.morphisms.set_ops import SymmetricDifferenceOp
+        from everybase.morphisms.abc_set import SymmetricDifferenceOp
 
         return cast("ResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
     def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolRef:
         """Check if subset."""
-        from everybase.morphisms.set_ops import IsSubsetOp
+        from everybase.morphisms.abc_set import IsSubsetOp
         from everybase.py import BoolRef
 
         return BoolRef(IsSubsetOp(self, other))
 
     def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolRef:
         """Check if superset."""
-        from everybase.morphisms.set_ops import IsSupersetOp
+        from everybase.morphisms.abc_set import IsSupersetOp
         from everybase.py import BoolRef
 
         return BoolRef(IsSupersetOp(self, other))
 
     def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolRef:
         """Check if disjoint."""
-        from everybase.morphisms.set_ops import IsDisjointOp
+        from everybase.morphisms.abc_set import IsDisjointOp
         from everybase.py import BoolRef
 
         return BoolRef(IsDisjointOp(self, other))

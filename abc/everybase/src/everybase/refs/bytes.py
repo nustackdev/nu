@@ -90,33 +90,33 @@ class BytesRefBase(
 
     def decode(self, encoding: StrArg = "utf-8") -> StrRef:
         """Decode bytes to string."""
-        from everybase.morphisms.bytes_ops import DecodeOp
+        from everybase.morphisms.type_bytes import DecodeOp
         from everybase.py.str import StrRef
 
         return StrRef(DecodeOp(self, encoding))
 
     def hex_(self) -> StrRef:
         """Convert to hex string."""
-        from everybase.morphisms.bytes_ops import HexOp
+        from everybase.morphisms.type_bytes import HexOp
         from everybase.py.str import StrRef
 
         return StrRef(HexOp(self))
 
     def upper(self) -> BytesRef:
         """Convert to uppercase."""
-        from everybase.morphisms.bytes_ops import BytesUpperOp
+        from everybase.morphisms.type_bytes import BytesUpperOp
 
         return cast("BytesRef", self._wrap_bytes_result(BytesUpperOp(self)))
 
     def lower(self) -> BytesRef:
         """Convert to lowercase."""
-        from everybase.morphisms.bytes_ops import BytesLowerOp
+        from everybase.morphisms.type_bytes import BytesLowerOp
 
         return cast("BytesRef", self._wrap_bytes_result(BytesLowerOp(self)))
 
     def strip(self, chars: BytesArg | None = None) -> BytesRef:
         """Strip whitespace or chars."""
-        from everybase.morphisms.bytes_ops import BytesStripOp
+        from everybase.morphisms.type_bytes import BytesStripOp
 
         if chars is not None:
             return cast("BytesRef", self._wrap_bytes_result(BytesStripOp(self, chars)))
@@ -124,7 +124,7 @@ class BytesRefBase(
 
     def lstrip(self, chars: BytesArg | None = None) -> BytesRef:
         """Strip leading whitespace or chars."""
-        from everybase.morphisms.bytes_ops import BytesLStripOp
+        from everybase.morphisms.type_bytes import BytesLStripOp
 
         if chars is not None:
             return cast("BytesRef", self._wrap_bytes_result(BytesLStripOp(self, chars)))
@@ -132,7 +132,7 @@ class BytesRefBase(
 
     def rstrip(self, chars: BytesArg | None = None) -> BytesRef:
         """Strip trailing whitespace or chars."""
-        from everybase.morphisms.bytes_ops import BytesRStripOp
+        from everybase.morphisms.type_bytes import BytesRStripOp
 
         if chars is not None:
             return cast("BytesRef", self._wrap_bytes_result(BytesRStripOp(self, chars)))
@@ -140,7 +140,7 @@ class BytesRefBase(
 
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListRef[bytes]:
         """Split bytes."""
-        from everybase.morphisms.bytes_ops import BytesSplitOp
+        from everybase.morphisms.type_bytes import BytesSplitOp
         from everybase.py.list import ListRef
 
         if sep is not None:
@@ -149,34 +149,34 @@ class BytesRefBase(
 
     def find_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntRef:
         """Find sub-bytes."""
-        from everybase.morphisms.bytes_ops import BytesFindOp
+        from everybase.morphisms.type_bytes import BytesFindOp
         from everybase.py.int import IntRef
 
         return IntRef(BytesFindOp(self, sub, start, end))
 
     def count_bytes(self, sub: BytesArg) -> IntRef:
         """Count sub-bytes occurrences."""
-        from everybase.morphisms.bytes_ops import BytesCountOp
+        from everybase.morphisms.type_bytes import BytesCountOp
         from everybase.py.int import IntRef
 
         return IntRef(BytesCountOp(self, sub))
 
     def startswith(self, prefix: BytesArg) -> BoolRef:
         """Check if starts with prefix."""
-        from everybase.morphisms.bytes_ops import BytesStartsWithOp
+        from everybase.morphisms.type_bytes import BytesStartsWithOp
         from everybase.py.bool import BoolRef
 
         return BoolRef(BytesStartsWithOp(self, prefix))
 
     def endswith(self, suffix: BytesArg) -> BoolRef:
         """Check if ends with suffix."""
-        from everybase.morphisms.bytes_ops import BytesEndsWithOp
+        from everybase.morphisms.type_bytes import BytesEndsWithOp
         from everybase.py.bool import BoolRef
 
         return BoolRef(BytesEndsWithOp(self, suffix))
 
     def replace(self, old: BytesArg, new: BytesArg, count: IntArg = -1) -> BytesRef:
         """Replace sub-bytes."""
-        from everybase.morphisms.bytes_ops import BytesReplaceOp
+        from everybase.morphisms.type_bytes import BytesReplaceOp
 
         return cast("BytesRef", self._wrap_bytes_result(BytesReplaceOp(self, old, new, count)))
