@@ -53,8 +53,8 @@ Fundamental packages. Minimal deps.
 |---------|---------|------------|
 | `everyabc` | Protocols - Term, Flow, Ref, Sentinel | (none) |
 | `everybase` | Base implementations - Python types, computations | everyabc |
-| `everyshape` | Document model - shapes, slots, descriptors | everyabc |
-| `everytable` | Relational model - tables, columns, queries | everyabc |
+| `everyshape` | Document model - shapes, items, collections | everyabc, everybase |
+| `everytable` | Relational model - tables, columns, queries | everyabc, everybase |
 
 ### packages/ - Everything Else
 
@@ -74,12 +74,11 @@ Models, extensions, and integrations. Depends on core.
 
 ```
 everyabc (contracts)
-  ├── everybase (base impl)
-  │     └── packages/* (extensions, integrations)
-  ├── everyshape (document model)
-  │     └── every-pv (PV adapter + views)
-  └── everytable (relational model)
-        └── every-notion, etc.
+  └── everybase (base impl)
+        ├── everyshape (document model)
+        │     └── every-pv (PV substrate + views)
+        └── everytable (relational model)
+              └── every-notion, etc.
 ```
 
 ## Key Files

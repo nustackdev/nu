@@ -1,22 +1,17 @@
 """Concrete PV primitive ref implementations.
 
-These refs inherit from PVPrimitiveRef for storage access and everybase
-RefBases for the operator interface.
+Typed leaf refs combine PVPrimitiveRef (PV substrate) with everybase
+type operators (IntType, StrType, etc.).
+
+Item refs combine ReactiveItemRef (everyshape document model) with
+PVPrimitiveRef (PV substrate) for CRUD + observation on PV storage.
 
 Pattern:
     class PVIntRef(PVPrimitiveRef[int], IntType):
-        def __init__(self, address, parent=None, shape=None):
-            super().__init__(address, int, parent, shape)
+        # PV substrate + int operators
 
-The IntType provides:
-    - Arithmetic operators: +, -, *, /, //, %, **
-    - Comparison operators: ==, !=, <, <=, >, >=
-    - Bitwise operators: &, |, ^, ~, <<, >>
-    - Logical operators: and_(), or_(), not_()
-
-The PVPrimitiveRef provides:
-    - fetch(ctx) -> int | Sentinel: Read from PV storage
-    - resolve(ctx) -> path: Path resolution from parent chain
+    class PVItemRef(ReactiveItemRef[T, ValueT], PVPrimitiveRef[T]):
+        # Document model (CRUD + observe) + PV substrate
 """
 
 from __future__ import annotations
@@ -24,13 +19,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from every_pv.ref import PVPrimitiveRef
-from everybase.capabilities.loc_item import (
-    ItemDeletableBase,
-    ItemExistableBase,
-    ItemGettableBase,
-    ItemSettableBase,
-)
-from everybase.capabilities.loc_reactive import PrimitiveObservableBase
 from everybase.types import (
     BoolType,
     BytesType,
@@ -38,6 +26,7 @@ from everybase.types import (
     IntType,
     StrType,
 )
+from everyshape import ReactiveItemRef
 
 
 if TYPE_CHECKING:
@@ -155,21 +144,18 @@ class PVBytesRef(PVPrimitiveRef[bytes], BytesType):
 
 
 # =============================================================================
-# ITEM REFS (for items within collections)
+# ITEM REFS (document model + PV substrate)
 # =============================================================================
 
 
 class PVItemRef[T, ValueT: Value](
+    ReactiveItemRef[T, ValueT],
     PVPrimitiveRef[T],
-    ItemExistableBase,
-    ItemGettableBase[T],
-    ItemSettableBase[T],
-    ItemDeletableBase,
-    PrimitiveObservableBase,
 ):
     """PV item reference for primitive values.
 
-    Used for standalone primitive values in shapes.
+    Combines everyshape document model (CRUD + observation) with
+    PV substrate (path resolution, view navigation).
     """
 
     def __init__(
@@ -184,19 +170,10 @@ class PVItemRef[T, ValueT: Value](
         super().__init__(address, value_type, parent, shape)
         self._value_value_type = value_value_type
 
-    @property
-    def value_value_type(self) -> type[ValueT]:
-        """The ref type for this item's value."""
-        return self._value_value_type
-
 
 class PVListItemRef[T, ValueT: Value](
+    ReactiveItemRef[T, ValueT],
     PVPrimitiveRef[T],
-    ItemExistableBase,
-    ItemGettableBase[T],
-    ItemSettableBase[T],
-    ItemDeletableBase,
-    PrimitiveObservableBase,
 ):
     """PV list item reference for items in a list.
 
@@ -216,19 +193,10 @@ class PVListItemRef[T, ValueT: Value](
         super().__init__(address, value_type, parent, shape)
         self._value_value_type = value_value_type
 
-    @property
-    def value_value_type(self) -> type[ValueT]:
-        """The ref type for this item's value."""
-        return self._value_value_type
-
 
 class PVDictItemRef[T, ValueT: Value](
+    ReactiveItemRef[T, ValueT],
     PVPrimitiveRef[T],
-    ItemExistableBase,
-    ItemGettableBase[T],
-    ItemSettableBase[T],
-    ItemDeletableBase,
-    PrimitiveObservableBase,
 ):
     """PV dict item reference for items in a mapping.
 
@@ -247,8 +215,3 @@ class PVDictItemRef[T, ValueT: Value](
         """Initialize dict item reference."""
         super().__init__(address, value_type, parent, shape)
         self._value_value_type = value_value_type
-
-    @property
-    def value_value_type(self) -> type[ValueT]:
-        """The ref type for this item's value."""
-        return self._value_value_type

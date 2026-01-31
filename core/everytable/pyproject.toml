@@ -16,6 +16,7 @@ authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
     "everyabc>=0.1.0",
+    "everybase>=0.1.0",
 ]
 keywords = ["every", "table", "relational", "model"]
 classifiers = [

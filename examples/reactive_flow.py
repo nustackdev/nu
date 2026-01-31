@@ -10,8 +10,6 @@ The example uses Parallel to simulate concurrent producers and consumers.
 
 import asyncio
 
-from everyshape import Shape
-
 from everybase.flow import (
     Delay,
     ForRange,
@@ -28,6 +26,7 @@ from everybase.slot import (
     DictSlot,
     IntSlot,
 )
+from everyshape import Shape
 
 
 class TaskQueue(Shape):
