@@ -34,7 +34,13 @@ from everybase.capabilities import (
     ClearableProtocol,
     # Collection: combined
     CollectionBase,
+    # Location: collection (bases)
+    CollectionClearableBase,
+    CollectionExistableBase,
+    CollectionExtractableBase,
+    CollectionLengthableBase,
     CollectionProtocol,
+    CollectionStorableBase,
     # Comparison
     ComparableBase,
     ComparableProtocol,
@@ -47,6 +53,11 @@ from everybase.capabilities import (
     EqualableProtocol,
     IndexableBase,
     IndexableProtocol,
+    # Location: item access (bases)
+    ItemDeletableBase,
+    ItemExistableBase,
+    ItemGettableBase,
+    ItemSettableBase,
     # Collection: iterable
     IterableBase,
     IterableProtocol,
@@ -87,6 +98,8 @@ from everybase.capabilities import (
     OrderableProtocol,
     PowerableBase,
     PowerableProtocol,
+    # Location: reactive (bases)
+    PrimitiveObservableBase,
     SequenceBase,
     SequenceProtocol,
     SetLikeBase,
@@ -97,6 +110,7 @@ from everybase.capabilities import (
     SliceableProtocol,
     SubtractableBase,
     SubtractableProtocol,
+    ViewObservableBase,
 )
 
 # Re-export utilities
@@ -119,7 +133,14 @@ from everybase.morphisms import (
     BitwiseNotOp,
     BitwiseOrOp,
     BoolOp,
+    # Location: reactive
+    ChangeOp,
     ClearCmd,
+    # Location: collection
+    CollectionClearCmd,
+    CollectionExistsOp,
+    CollectionLenOp,
+    CollectionMissingOp,
     # Conditional
     ConditionalOp,
     ContainsOp,
@@ -131,6 +152,7 @@ from everybase.morphisms import (
     DivOp,
     # Comparison
     EqOp,
+    ExtractOp,
     FilterOp,
     FindIndexOp,
     FindOp,
@@ -146,6 +168,12 @@ from everybase.morphisms import (
     # Special
     IsEmptyOp,
     IsNaNOp,
+    # Location: item access
+    ItemDeleteCmd,
+    ItemExistsOp,
+    ItemGetOp,
+    ItemMissingOp,
+    ItemSetCmd,
     JoinOp,
     LastOp,
     LenOp,
@@ -163,6 +191,11 @@ from everybase.morphisms import (
     NotEmptyOp,
     NotNaNOp,
     NotOp,
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
     OrOp,
     PopCmd,
     PosOp,
@@ -175,6 +208,7 @@ from everybase.morphisms import (
     SetItemCmd,
     SliceOp,
     SortedOp,
+    StoreCmd,
     SubOp,
     SumOp,
     # Conversion
@@ -322,6 +356,20 @@ __all__ = [  # noqa: RUF022
     "LocationExistableProtocol",
     "LocationDeletableProtocol",
     "LocationObservableProtocol",
+    # Location: item access (bases)
+    "ItemGettableBase",
+    "ItemSettableBase",
+    "ItemDeletableBase",
+    "ItemExistableBase",
+    # Location: collection (bases)
+    "CollectionExtractableBase",
+    "CollectionStorableBase",
+    "CollectionLengthableBase",
+    "CollectionClearableBase",
+    "CollectionExistableBase",
+    # Location: reactive (bases)
+    "PrimitiveObservableBase",
+    "ViewObservableBase",
     # =========================================================================
     # MORPHISMS (operations + commands)
     # =========================================================================
@@ -411,6 +459,26 @@ __all__ = [  # noqa: RUF022
     "RemoveCmd",
     "SetItemCmd",
     "UpdateCmd",
+    # Location: item access morphisms
+    "ItemGetOp",
+    "ItemSetCmd",
+    "ItemDeleteCmd",
+    "ItemExistsOp",
+    "ItemMissingOp",
+    # Location: collection morphisms
+    "ExtractOp",
+    "StoreCmd",
+    "CollectionLenOp",
+    "CollectionClearCmd",
+    "CollectionExistsOp",
+    "CollectionMissingOp",
+    # Location: reactive morphisms
+    "ChangeOp",
+    "OnChangeOp",
+    "OnPrimitiveChangeOp",
+    "OnChildChangeOp",
+    "OnChildrenChangeOp",
+    "OnDescendantsChangeOp",
     # =========================================================================
     # REFS (Python memory)
     # =========================================================================

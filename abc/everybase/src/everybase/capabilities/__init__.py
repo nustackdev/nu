@@ -123,6 +123,23 @@ from .loc import (
     LocationObservableProtocol,
     LocationSettableProtocol,
 )
+from .loc_collection import (
+    CollectionClearableBase,
+    CollectionExistableBase,
+    CollectionExtractableBase,
+    CollectionLengthableBase,
+    CollectionStorableBase,
+)
+from .loc_item import (
+    ItemDeletableBase,
+    ItemExistableBase,
+    ItemGettableBase,
+    ItemSettableBase,
+)
+from .loc_reactive import (
+    PrimitiveObservableBase,
+    ViewObservableBase,
+)
 
 
 __all__ = [  # noqa: RUF022
@@ -239,4 +256,24 @@ __all__ = [  # noqa: RUF022
     "LocationExistableProtocol",
     "LocationDeletableProtocol",
     "LocationObservableProtocol",
+    # =========================================================================
+    # LOCATION: ITEM ACCESS (bases)
+    # =========================================================================
+    "ItemGettableBase",
+    "ItemSettableBase",
+    "ItemDeletableBase",
+    "ItemExistableBase",
+    # =========================================================================
+    # LOCATION: COLLECTION (bases)
+    # =========================================================================
+    "CollectionExtractableBase",
+    "CollectionStorableBase",
+    "CollectionLengthableBase",
+    "CollectionClearableBase",
+    "CollectionExistableBase",
+    # =========================================================================
+    # LOCATION: REACTIVE (bases)
+    # =========================================================================
+    "PrimitiveObservableBase",
+    "ViewObservableBase",
 ]

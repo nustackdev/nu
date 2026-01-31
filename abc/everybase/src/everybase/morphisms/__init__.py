@@ -111,6 +111,31 @@ from .gen_attr import DelAttrOp, GetAttrOp, SetAttrOp
 from .gen_conditional import ConditionalOp
 from .gen_special import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
 
+# ── loc_ — Location-level morphisms (async, work via ref protocols) ────────
+from .loc_collection import (
+    CollectionClearCmd,
+    CollectionExistsOp,
+    CollectionLenOp,
+    CollectionMissingOp,
+    ExtractOp,
+    StoreCmd,
+)
+from .loc_item import (
+    ItemDeleteCmd,
+    ItemExistsOp,
+    ItemGetOp,
+    ItemMissingOp,
+    ItemSetCmd,
+)
+from .loc_reactive import (
+    ChangeOp,
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
+)
+
 # ── op_ — Python operators ──────────────────────────────────────────────────
 from .op_arithmetic import (
     AbsOp,
@@ -328,4 +353,24 @@ __all__ = [  # noqa: RUF022
     "DiscardCmd",
     # Shared
     "ClearCmd",
+    # loc_ — Location-level morphisms (item access)
+    "ItemGetOp",
+    "ItemSetCmd",
+    "ItemDeleteCmd",
+    "ItemExistsOp",
+    "ItemMissingOp",
+    # loc_ — Location-level morphisms (collection)
+    "ExtractOp",
+    "StoreCmd",
+    "CollectionLenOp",
+    "CollectionClearCmd",
+    "CollectionExistsOp",
+    "CollectionMissingOp",
+    # loc_ — Location-level morphisms (reactive)
+    "ChangeOp",
+    "OnChangeOp",
+    "OnPrimitiveChangeOp",
+    "OnChildChangeOp",
+    "OnChildrenChangeOp",
+    "OnDescendantsChangeOp",
 ]

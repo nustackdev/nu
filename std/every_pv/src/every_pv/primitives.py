@@ -24,11 +24,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from every_pv.ref import PVPrimitiveRef
-from every_pv.traits.bases_primitive import (
-    CollectionItemRefBase,
-    MutableMappingItemRefBase,
-    MutableSequenceItemRefBase,
+from everybase.capabilities.loc_item import (
+    ItemDeletableBase,
+    ItemExistableBase,
+    ItemGettableBase,
+    ItemSettableBase,
 )
+from everybase.capabilities.loc_reactive import PrimitiveObservableBase
 from everybase.types import (
     BoolType,
     BytesType,
@@ -159,12 +161,15 @@ class PVBytesRef(PVPrimitiveRef[bytes], BytesType):
 
 class PVItemRef[T, ValueT: Value](
     PVPrimitiveRef[T],
-    CollectionItemRefBase[T, ValueT],
+    ItemExistableBase,
+    ItemGettableBase[T],
+    ItemSettableBase[T],
+    ItemDeletableBase,
+    PrimitiveObservableBase,
 ):
     """PV item reference for primitive values.
 
     Used for standalone primitive values in shapes.
-    Combines PV storage access with collection item capabilities.
     """
 
     def __init__(
@@ -187,7 +192,11 @@ class PVItemRef[T, ValueT: Value](
 
 class PVListItemRef[T, ValueT: Value](
     PVPrimitiveRef[T],
-    MutableSequenceItemRefBase[T, ValueT],
+    ItemExistableBase,
+    ItemGettableBase[T],
+    ItemSettableBase[T],
+    ItemDeletableBase,
+    PrimitiveObservableBase,
 ):
     """PV list item reference for items in a list.
 
@@ -215,7 +224,11 @@ class PVListItemRef[T, ValueT: Value](
 
 class PVDictItemRef[T, ValueT: Value](
     PVPrimitiveRef[T],
-    MutableMappingItemRefBase[T, ValueT],
+    ItemExistableBase,
+    ItemGettableBase[T],
+    ItemSettableBase[T],
+    ItemDeletableBase,
+    PrimitiveObservableBase,
 ):
     """PV dict item reference for items in a mapping.
 

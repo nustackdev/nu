@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from every_pv.collections import PVDictRef, PVListRef, PVShapeRef, PVShapesDictRef, PVShapesListRef
+from every_pv.primitives import PVItemRef
 from everyabc import Slot, Value
 from everybase import (
     AnyValue,
@@ -24,8 +26,6 @@ from everybase import (
     SetValue,
     StrValue,
 )
-
-from ..pv import PVDictRef, PVItemRef, PVListRef, PVShapeRef, PVShapesDictRef, PVShapesListRef
 
 
 if TYPE_CHECKING:
