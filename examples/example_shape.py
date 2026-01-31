@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import every_pv
-import every_view
+import every_pv.views
 
 
 class SymbolInfo(every_pv.PVShape):
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         TextStorage(path=Path(".db_shape"), codec=TextCodec()) as storage,
         storage.transaction() as tx,
     ):
-        root = every_view.DictView.open_root(tx)
+        root = every_pv.views.DictView.open_root(tx)
         ctx = every_pv.KVContext.create(root_view=root, storage_context=tx)
 
         set_res = SymbolInfo.volume.set(12)

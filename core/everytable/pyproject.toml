@@ -1,5 +1,5 @@
 # =============================================================================
-# std/every_view - Standard Views for PV
+# core/everytable - Relational Data Model
 # =============================================================================
 
 [build-system]
@@ -7,15 +7,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every-view"
+name = "everytable"
 version = "0.1.0"
-description = "Standard view implementations for polymorphic views"
+description = "Relational data model for everybase - tables, columns, and queries"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
-dependencies = ["pv"]
-keywords = ["every", "pv", "views", "kv"]
+dependencies = [
+    "everyabc>=0.1.0",
+]
+keywords = ["every", "table", "relational", "model"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
@@ -27,8 +29,5 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/everyabc/everybase"
 
-[tool.uv.sources]
-pv = { git = "https://github.com/everyabc/pv" }
-
 [tool.hatch.build.targets.wheel]
-packages = ["src/every_view"]
+packages = ["src/everytable"]

@@ -26,8 +26,8 @@ from .refs import (
 
 
 if TYPE_CHECKING:
-    from every_pv.shape import PVShape
     from everyabc import Ref
+    from everyshape import ShapeBase as PVShape
 
 
 __all__ = [

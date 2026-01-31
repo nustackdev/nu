@@ -19,8 +19,8 @@ from pv.types import Value as StorageValue
 
 from every_pv.primitives import PVDictItemRef, PVListItemRef
 from every_pv.ref import PVRefBase, PVViewRef
-from every_pv.shape import PVShape
 from everybase import ensure_term
+from everyshape import ShapeBase as PVShape
 
 
 if TYPE_CHECKING:
@@ -245,7 +245,7 @@ class PVShapesListRef[T: PVShape](
 
     def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> PVShapeRef[T]:
         """Create a reference to a shape at the given index."""
-        from every_view import DictView
+        from every_pv.views import DictView
 
         return PVShapeRef(
             address=ensure_term(index),
@@ -290,7 +290,7 @@ class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
 
     def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> PVShapeRef[T]:
         """Create a reference to a shape at the given key."""
-        from every_view import DictView
+        from every_pv.views import DictView
 
         return PVShapeRef(
             address=ensure_term(key),

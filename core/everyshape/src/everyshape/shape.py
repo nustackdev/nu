@@ -1,16 +1,16 @@
-"""PVShape -- declarative PV storage structure definitions.
+"""Declarative shape structure definitions.
 
-PVShape uses Slot/SlotDescriptor/PVShapeMeta to define how data
-maps to PV storage views. Slots are factories that create PV refs.
+Shapes use Slot/SlotDescriptor/ShapeMeta to define hierarchical
+document structures. Slots are factories that create refs.
 
 Example::
 
-    class Order(PVShape):
+    class Order(ShapeBase):
         price = ItemSlot(float, FloatValue)
         volume = ItemSlot(int, IntValue)
 
-    Order.price   # → PVItemRef
-    Order.volume  # → PVItemRef
+    Order.price   # → ref
+    Order.volume  # → ref
 """
 
 from __future__ import annotations
@@ -26,18 +26,18 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "PVShape",
-    "PVShapeMeta",
+    "ShapeBase",
+    "ShapeMeta",
     "SlotDescriptor",
 ]
 
 
 class SlotDescriptor:
-    """Descriptor that creates refs when slots are accessed on a PVShape.
+    """Descriptor that creates refs when slots are accessed on a shape.
 
     Bridges slot definitions (declarative) to refs (runtime).
 
-    When you access a slot on a PVShape class::
+    When you access a slot on a shape class::
 
         Market.signal  # SlotDescriptor.__get__() is called
 
@@ -56,12 +56,12 @@ class SlotDescriptor:
         self.name = name
         self.slot = slot
 
-    def __get__(self, obj: PVShape | None, objtype: type[PVShape] | None = None) -> Ref:
+    def __get__(self, obj: ShapeBase | None, objtype: type[ShapeBase] | None = None) -> Ref:
         """Return ref when slot is accessed.
 
         Args:
-            obj: PVShape instance (unused -- class-level access).
-            objtype: PVShape class.
+            obj: Shape instance (unused -- class-level access).
+            objtype: Shape class.
 
         Returns:
             Ref created by the slot.
@@ -77,14 +77,14 @@ class SlotDescriptor:
             parent_ref=None,
         )
 
-    def __set__(self, obj: PVShape, value: object) -> None:
+    def __set__(self, obj: ShapeBase, value: object) -> None:
         """Prevent setting slots -- they're structure definitions."""
         raise AttributeError(
             f"Cannot set slot '{self.name}' - slots are read-only structure definitions"
         )
 
 
-class PVShapeMeta(ABCMeta):
+class ShapeMeta(ABCMeta):
     """Metaclass that collects slot definitions into _slots dict.
 
     Processing steps:
@@ -103,7 +103,7 @@ class PVShapeMeta(ABCMeta):
         namespace: dict[str, object],
         **kwargs: object,
     ) -> type:
-        """Create PVShape class with slot processing."""
+        """Create shape class with slot processing."""
         slots: dict[str, Slot] = {}
 
         # 1. Collect slots from base classes (inheritance)
@@ -130,24 +130,24 @@ class PVShapeMeta(ABCMeta):
         return cls
 
 
-class PVShape(Shape, metaclass=PVShapeMeta):
-    """Declarative PV structure definitions using Slots.
+class ShapeBase(Shape, metaclass=ShapeMeta):
+    """Declarative structure definitions using Slots.
 
-    PVShape classes are never instantiated. All access is at class level.
+    ShapeBase classes are never instantiated. All access is at class level.
     Slots are replaced by descriptors at class creation.
 
     Example::
 
-        class Profile(PVShape):
+        class Profile(ShapeBase):
             email = StrSlot()
             age = IntSlot()
 
-        class User(PVShape):
+        class User(ShapeBase):
             name = StrSlot()
             profile = ShapeSlot(Profile)
 
-        User.name            # → PVItemRef
-        User.profile.email   # → PVItemRef (nested)
+        User.name            # → ref
+        User.profile.email   # → ref (nested)
     """
 
     _slots: ClassVar[dict[str, Slot]] = {}

@@ -16,9 +16,19 @@ everybase/
 │   │   ├── src/everyabc/
 │   │   └── tests/
 │   │
-│   └── everybase/      # Base implementations
+│   ├── everybase/      # Base implementations
+│   │   ├── pyproject.toml
+│   │   ├── src/everybase/
+│   │   └── tests/
+│   │
+│   ├── everyshape/     # Document model
+│   │   ├── pyproject.toml
+│   │   ├── src/everyshape/
+│   │   └── tests/
+│   │
+│   └── everytable/     # Relational model
 │       ├── pyproject.toml
-│       ├── src/everybase/
+│       ├── src/everytable/
 │       └── tests/
 │
 ├── packages/           # All other packages
@@ -43,6 +53,8 @@ Fundamental packages. Minimal deps.
 |---------|---------|------------|
 | `everyabc` | Protocols - Term, Flow, Ref, Sentinel | (none) |
 | `everybase` | Base implementations - Python types, computations | everyabc |
+| `everyshape` | Document model - shapes, slots, descriptors | everyabc |
+| `everytable` | Relational model - tables, columns, queries | everyabc |
 
 ### packages/ - Everything Else
 
@@ -50,7 +62,6 @@ Models, extensions, and integrations. Depends on core.
 
 | Package | Purpose |
 |---------|---------|
-| `every-shape` | Document model (hierarchical shapes) |
 | `every-pv` | PV storage adapter + views |
 | `every-flow` | Flow primitives (Seq, If, While, etc.) |
 | `every-flow-ext` | Flow extensions (cancellation, progress) |
@@ -63,9 +74,12 @@ Models, extensions, and integrations. Depends on core.
 
 ```
 everyabc (contracts)
-  └── everybase (base impl)
-        ├── packages/* (models, extensions, integrations)
-        └── ...
+  ├── everybase (base impl)
+  │     └── packages/* (extensions, integrations)
+  ├── everyshape (document model)
+  │     └── every-pv (PV adapter + views)
+  └── everytable (relational model)
+        └── every-notion, etc.
 ```
 
 ## Key Files

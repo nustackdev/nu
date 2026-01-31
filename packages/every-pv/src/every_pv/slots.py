@@ -32,9 +32,9 @@ if TYPE_CHECKING:
     from pv.collections import MutableMappingView, MutableSequenceView
     from pv.types import Value as StorageValue
 
-    from every_pv.shape import PVShape
     from everyabc import Ref
     from everybase import AnyValue, IntValue, StrValue  # noqa: TC004
+    from everyshape import ShapeBase as PVShape
 
 
 def _value_type_for(python_type: type) -> type[Ref]:
@@ -196,7 +196,7 @@ class _DictSlot(Slot):
         Returns:
             PVDictRef instance
         """
-        from every_view import DictView
+        from every_pv.views import DictView
 
         return PVDictRef(
             address=self.name,
@@ -279,7 +279,7 @@ class _ListSlot(Slot):
         Returns:
             PVListRef instance
         """
-        from every_view import ListView
+        from every_pv.views import ListView
 
         return PVListRef(
             address=self.name,
@@ -360,7 +360,7 @@ class _ShapeSlot(Slot):
         Returns:
             ShapeRef instance
         """
-        from every_view import DictView
+        from every_pv.views import DictView
 
         return PVShapeRef(
             address=self.name,
@@ -441,7 +441,7 @@ class _ShapesListSlot(Slot):
         Returns:
             ShapesListRef instance
         """
-        from every_view import ListView
+        from every_pv.views import ListView
 
         return PVShapesListRef(
             address=self.name,
@@ -527,7 +527,7 @@ class _ShapesDictSlot(Slot):
         Returns:
             ShapesDictRef instance
         """
-        from every_view import DictView
+        from every_pv.views import DictView
 
         return PVShapesDictRef(
             address=self.name,

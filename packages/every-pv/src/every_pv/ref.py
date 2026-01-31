@@ -27,7 +27,7 @@ from everyabc import EMPTY, Context, Ref, Sentinel, Term
 
 
 if TYPE_CHECKING:
-    from every_pv.shape import PVShape
+    from everyshape import ShapeBase as PVShape
 
 
 __all__ = [

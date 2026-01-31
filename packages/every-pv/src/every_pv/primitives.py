@@ -43,8 +43,8 @@ from everybase.types import (
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from every_pv.shape import PVShape
     from everyabc import Term, Value
+    from everyshape import ShapeBase as PVShape
 
 
 __all__ = [

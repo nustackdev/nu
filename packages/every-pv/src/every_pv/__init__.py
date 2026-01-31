@@ -45,7 +45,6 @@ from every_pv.ref import (
     PVPrimitiveRef,
     PVViewRef,
 )
-from every_pv.shape import PVShape, PVShapeMeta, SlotDescriptor
 from every_pv.slots import (
     BoolSlot,
     BytesSlot,
@@ -60,6 +59,9 @@ from every_pv.slots import (
     StrSlot,
 )
 from every_pv.spans import PVAtomic, PVSnapshot
+from everyshape import ShapeBase as PVShape
+from everyshape import ShapeMeta as PVShapeMeta
+from everyshape import SlotDescriptor
 
 from . import slots
 
@@ -67,7 +69,7 @@ from . import slots
 __all__ = [  # noqa: RUF022
     # Modules
     "slots",
-    # Shape
+    # Shape (re-exported from everyshape)
     "PVShape",
     "PVShapeMeta",
     "SlotDescriptor",

@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["everyabc", "everybase", "every-flow", "every-flow-ext", "every-pv", "every-view", "every-adapters", "every-kv", "every-notion", "every-type"]
+dependencies = ["everyabc", "everybase", "everyshape", "everytable", "every-flow", "every-flow-ext", "every-pv", "every-adapters", "every-kv", "every-notion", "every-type"]
 
 # =============================================================================
 # UV Workspace
@@ -21,9 +21,10 @@ members = [
     "core/everybase",
     "packages/every-flow",
     "packages/every-flow-ext",
+    "core/everyshape",
+    "core/everytable",
     "packages/every-pv",
     "packages/every-type",
-    "packages/every-view",
     "packages/every-adapters",
     "packages/every-kv",
     "packages/every-notion",
@@ -34,9 +35,10 @@ everyabc = { workspace = true }
 everybase = { workspace = true }
 every-flow = { workspace = true }
 every-flow-ext = { workspace = true }
+everyshape = { workspace = true }
+everytable = { workspace = true }
 every-pv = { workspace = true }
 every-type = { workspace = true }
-every-view = { workspace = true }
 every-adapters = { workspace = true }
 every-kv = { workspace = true }
 every-notion = { workspace = true }
@@ -174,7 +176,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everyabc", "everybase", "every_flow", "every_flow_leg", "every_flow_ext", "every_pv", "every_type", "every_view", "every_adapters", "every_kv", "every_notion"]
+known-first-party = ["everyabc", "everybase", "everyshape", "everytable", "every_flow", "every_flow_leg", "every_flow_ext", "every_pv", "every_type", "every_adapters", "every_kv", "every_notion"]
 force-single-line = false
 lines-after-imports = 2
 

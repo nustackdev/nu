@@ -6,8 +6,9 @@
   "python.analysis.extraPaths": [
     "core/everyabc/src",
     "core/everybase/src",
-    "packages/every-pv/src",
-    "packages/every-view/src"
+    "core/everyshape/src",
+    "core/everytable/src",
+    "packages/every-pv/src"
   ],
   "ruff.enable": true,
   "ruff.lint.enable": true,

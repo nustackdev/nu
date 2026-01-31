@@ -143,7 +143,7 @@ def root_view(tx: TransactionProtocol) -> View:
 
     Dependency chain: codec → storage → tx → root_view
     """
-    from every_view import DictView
+    from every_pv.views import DictView
 
     return DictView.open_root(ctx=tx)
 

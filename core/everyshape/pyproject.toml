@@ -1,5 +1,5 @@
 # =============================================================================
-# std/every_pv - Polymorphic View Refs
+# core/everyshape - Declarative Document Model
 # =============================================================================
 
 [build-system]
@@ -7,20 +7,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every-pv"
+name = "everyshape"
 version = "0.1.0"
-description = "Specialized refs for polymorphic views over KV storages"
+description = "Declarative document model for everybase - shapes, slots, and descriptors"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
     "everyabc>=0.1.0",
-    "everybase>=0.1.0",
-    "everyshape>=0.1.0",
-    "pv",
 ]
-keywords = ["every", "pv", "refs", "kv", "polymorphic"]
+keywords = ["every", "shape", "document", "model", "declarative"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
@@ -32,8 +29,5 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/everyabc/everybase"
 
-[tool.uv.sources]
-pv = { git = "https://github.com/everyabc/pv" }
-
 [tool.hatch.build.targets.wheel]
-packages = ["src/every_pv"]
+packages = ["src/everyshape"]

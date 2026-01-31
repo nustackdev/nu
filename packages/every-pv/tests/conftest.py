@@ -8,7 +8,7 @@ import pytest
 from tkv.codecs import NoOpCodec
 from tkv.storages.mem import InMemoryStorage
 
-from every_view import DictView
+from every_pv.views import DictView
 
 
 if TYPE_CHECKING:
@@ -82,7 +82,7 @@ def dict_factory(root_view: DictView) -> Callable[[str, dict[str, Any] | None], 
     """
 
     def _create(address: str, data: dict | None = None) -> View:
-        from every_view import DictView
+        from every_pv.views import DictView
 
         view = root_view.open_child(address, DictView)
         if data is not None:
@@ -105,7 +105,7 @@ def list_factory(root_view: DictView) -> Callable[[str, list[Any] | None], View]
     """
 
     def _create(address: str, data: list | None = None) -> View:
-        from every_view import ListView
+        from every_pv.views import ListView
 
         view = root_view.open_child(address, ListView)
         if data is not None:
@@ -128,7 +128,7 @@ def set_factory(root_view: DictView) -> Callable[[str, set[Any] | None], View]:
     """
 
     def _create(address: str, data: set | None = None) -> View:
-        from every_view import SetView
+        from every_pv.views import SetView
 
         view = root_view.open_child(address, SetView)
         if data is not None:
@@ -151,7 +151,7 @@ def tuple_factory(root_view: DictView) -> Callable[[str, tuple[Any, ...] | None]
     """
 
     def _create(address: str, data: tuple | None = None) -> View:
-        from every_view import TupleView
+        from every_pv.views import TupleView
 
         view = root_view.open_child(address, TupleView)
         if data is not None:
