@@ -8,6 +8,10 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
+CORE_DIRS := core-every core-every-bases
+PKG_DIRS := pkg-every-dict pkg-every-flow pkg-every-flow-ext pkg-every-notion pkg-every-pv pkg-every-shape pkg-every-stdtypes pkg-every-table
+ALL_DIRS := $(CORE_DIRS) $(PKG_DIRS)
+
 # =============================================================================
 # Help
 # =============================================================================
@@ -21,9 +25,9 @@ help:
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
 	@echo "  make test            Run all tests"
-	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=core/everyabc)"
-	@echo "  make test-core       Run core/ tests"
-	@echo "  make test-packages   Run packages/ tests"
+	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=core-every)"
+	@echo "  make test-core       Run core-* tests"
+	@echo "  make test-packages   Run pkg-* tests"
 	@echo "  make test-cov        Run tests with coverage"
 	@echo "  make test-fast       Run tests (fail fast, no slow)"
 	@echo ""
@@ -69,18 +73,18 @@ test:
 
 test-pkg:
 ifndef PKG
-	$(error PKG not set. Usage: make test-pkg PKG=core/everyabc)
+	$(error PKG not set. Usage: make test-pkg PKG=core-every)
 endif
 	@echo "$(BLUE)Testing $(PKG)...$(NC)"
 	uv run pytest $(PKG)/tests -v
 
 test-core:
-	@echo "$(BLUE)Running core/ tests...$(NC)"
-	uv run pytest core/ -v
+	@echo "$(BLUE)Running core-* tests...$(NC)"
+	uv run pytest $(CORE_DIRS) -v
 
 test-packages:
-	@echo "$(BLUE)Running packages/ tests...$(NC)"
-	uv run pytest packages/ -v
+	@echo "$(BLUE)Running pkg-* tests...$(NC)"
+	uv run pytest $(PKG_DIRS) -v
 
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
@@ -96,17 +100,17 @@ test-fast:
 # =============================================================================
 lint:
 	@echo "$(BLUE)Linting...$(NC)"
-	uv run ruff check core packages tests
+	uv run ruff check $(ALL_DIRS)
 
 format:
 	@echo "$(BLUE)Formatting...$(NC)"
-	uv run ruff format core packages tests
-	uv run ruff check --fix core packages tests
+	uv run ruff format $(ALL_DIRS)
+	uv run ruff check --fix $(ALL_DIRS)
 	@echo "$(GREEN)Done$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking format...$(NC)"
-	uv run ruff format --check core packages tests
+	uv run ruff format --check $(ALL_DIRS)
 
 check: format-check lint
 	@echo "$(GREEN)All checks passed$(NC)"
@@ -117,15 +121,15 @@ check: format-check lint
 list:
 	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(GREEN)core/:$(NC)"
-	@ls -d core/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)core-*:$(NC)"
+	@ls -d core-*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 	@echo ""
-	@echo "$(GREEN)packages/:$(NC)"
-	@ls -d packages/every-*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)pkg-*:$(NC)"
+	@ls -d pkg-*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 
 build:
 ifndef PKG
-	$(error PKG not set. Usage: make build PKG=core/everyabc)
+	$(error PKG not set. Usage: make build PKG=core-every)
 endif
 	@echo "$(BLUE)Building $(PKG)...$(NC)"
 	cd $(PKG) && uv build

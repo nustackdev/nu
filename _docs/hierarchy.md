@@ -16,6 +16,21 @@ everyabc            contracts — Term, Flow, Span, Ref, Shape, Slot, Context
     └── every-type        extended type refs (Decimal, UUID, datetime, Path)
 ```
 
+## Directory Layout
+
+```
+core-every/           everyabc
+core-every-bases/     everybase
+pkg-every-shape/      everyshape
+pkg-every-table/      everytable
+pkg-every-dict/       every-dict
+pkg-every-flow/       every-flow
+pkg-every-flow-ext/   every-flow-ext
+pkg-every-notion/     every-notion
+pkg-every-pv/         every-pv
+pkg-every-stdtypes/   every-type
+```
+
 ## Core Packages
 
 ### everyabc

@@ -1,67 +1,37 @@
 # everybase
 
-Term Programming platform for Python.
+Term Programming platform for Python — build distributed, persistent and reactive applications with declarative simplicity.
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `every` | Core protocols - Term, Flow, Ref, Sentinel |
-| `everybase` | Base implementations - Python types, computations |
+| | Package | Description |
+|---|---|---|
+| **Core** | `everyabc` | Contracts — Term, Flow, Ref, Shape, Slot, Context, Sentinel |
+| | `everybase` | Base implementations — types, values, morphisms, capabilities |
+| **Models** | `everyshape` | Document model — shapes, items, collections |
+| | `everytable` | Relational model — tables, columns, queries |
+| **Substrates** | `every-pv` | Persistent + reactive — polymorphic views over KV storages |
+| | `every-dict` | Plain nested dicts — no storage, no reactivity |
+| **Extensions** | `every-flow` | Flow primitives — Seq, Par, Cond, Loop |
+| | `every-flow-ext` | Flow extensions — cancellation, progress |
+| | `every-type` | Extended types — Decimal, UUID, datetime, Path |
+| | `every-notion` | Notion API integration |
 
-### Standard Library (std/)
+## Architecture
 
-| Package | Description |
-|---------|-------------|
-| `every_datetime` | Date, Time, DateTime, Timezone types |
-| `every_numeric` | Decimal, Fraction, Percentage types |
-| `every_uuid` | UUID type |
-| `every_path` | Path type |
-
-### Extensions (pkgs/)
-
-| Package | Description |
-|---------|-------------|
-| `every_notion` | Notion API integration |
-| `every_dict` | Dict substrate (plain nested dicts, no persistence) |
-
-## Install
-
-```bash
-pip install every everybase
 ```
-
-## Quick Start
-
-```python
-from every import Term, Ref, Flow
-from everybase.types import IntType, StrType
+everyabc
+  └── everybase
+        ├── everyshape ── every-pv, every-dict
+        └── everytable ── every-notion
 ```
 
 ## Development
 
 ```bash
-# Setup
-make sync
-
-# Test
-make test
-
-# Lint
-make format
-```
-
-See [contributing/](contributing/) for detailed docs.
-
-## Structure
-
-```
-abc/          # Core packages
-├── every/    # Protocols
-└── everybase/  # Base implementations
-
-std/          # Standard library
-pkgs/         # Extensions
+make sync      # install
+make test      # test
+make format    # lint + format
 ```
 
 ## License

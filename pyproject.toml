@@ -2,7 +2,7 @@
 # Root pyproject.toml - Monorepo Workspace (Virtual)
 # =============================================================================
 # This is a virtual workspace root - not a package itself.
-# Individual packages are in core/ and packages/ directories.
+# Individual packages are in core-* and pkg-* directories.
 # =============================================================================
 
 [project]
@@ -17,17 +17,16 @@ dependencies = ["everyabc", "everybase", "everyshape", "everytable", "every-flow
 # =============================================================================
 [tool.uv.workspace]
 members = [
-    "core/everyabc",
-    "core/everybase",
-    "packages/every-flow",
-    "packages/every-flow-ext",
-    "core/everyshape",
-    "core/everytable",
-    "packages/every-pv",
-    "packages/every-type",
-
-    "packages/every-dict",
-    "packages/every-notion",
+    "core-every",
+    "core-every-bases",
+    "pkg-every-shape",
+    "pkg-every-table",
+    "pkg-every-dict",
+    "pkg-every-flow",
+    "pkg-every-flow-ext",
+    "pkg-every-notion",
+    "pkg-every-pv",
+    "pkg-every-stdtypes",
 ]
 
 [tool.uv.sources]
@@ -60,7 +59,7 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["tests", "core", "packages"]
+testpaths = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-dict", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-notion", "pkg-every-pv", "pkg-every-stdtypes"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -75,7 +74,7 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["core", "packages"]
+source = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-dict", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-notion", "pkg-every-pv", "pkg-every-stdtypes"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -98,7 +97,7 @@ show_missing = true
 skip_covered = true
 
 [tool.coverage.html]
-directory = "tests/reports/coverage"
+directory = "reports/coverage"
 
 # =============================================================================
 # Ruff
@@ -106,7 +105,7 @@ directory = "tests/reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["core", "packages", "tests"]
+src = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-dict", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-notion", "pkg-every-pv", "pkg-every-stdtypes"]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -158,19 +157,19 @@ convention = "google"
     "N806",
     "B017",
 ]
-"examples/**/*.py" = [
+"_examples/**/*.py" = [
     "S101",
     "T20",
     "D",
     "ANN",
 ]
-"packages/every-flow/**/*.py" = [
+"pkg-every-flow/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
-"packages/every-flow-ext/**/*.py" = [
+"pkg-every-flow-ext/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
-"packages/every-notion/**/*.py" = [
+"pkg-every-notion/**/*.py" = [
     "ANN401",  # Any type needed for Notion's dynamic JSON API
     "D107",    # __init__ docstrings covered by class docstring
 ]
@@ -203,4 +202,4 @@ exclude = [
 # Security
 # ============================================================================
 [tool.bandit]
-exclude_dirs = ["tests/", "examples/", "docs/"]
+exclude_dirs = ["_examples/", "_docs/"]
