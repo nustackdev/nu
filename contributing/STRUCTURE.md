@@ -63,10 +63,10 @@ Models, extensions, and integrations. Depends on core.
 | Package | Purpose |
 |---------|---------|
 | `every-pv` | PV storage substrate + views + adapters |
+| `every-dict` | Dict substrate (plain nested dicts, no persistence) |
 | `every-flow` | Flow primitives (Seq, If, While, etc.) |
 | `every-flow-ext` | Flow extensions (cancellation, progress) |
 | `every-type` | Extended type refs (Date, Decimal, UUID, etc.) |
-| `every-kv` | Key-value store protocol |
 | `every-notion` | Notion API integration |
 
 ## Dependency Graph
@@ -75,7 +75,8 @@ Models, extensions, and integrations. Depends on core.
 everyabc (contracts)
   └── everybase (base impl)
         ├── everyshape (document model)
-        │     └── every-pv (PV substrate + views)
+        │     ├── every-pv (PV substrate + views)
+        │     └── every-dict (dict substrate)
         └── everytable (relational model)
               └── every-notion, etc.
 ```

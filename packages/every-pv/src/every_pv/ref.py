@@ -4,9 +4,9 @@ PV (Polymorphic Views) storage refs navigate through a view hierarchy
 to access values stored in key-value backends.
 
 Hierarchy:
-    PVRefBase[T]           - PV substrate root with address/parent/shape
-    ├── PVPrimitiveRef[T]  - refs to leaf values (int, str, etc.)
-    └── PVViewRef[T, V]    - refs to container views (dict, list, set)
+    RefBase[T]           - PV substrate root with address/parent/shape
+    ├── PrimitiveRef[T]  - refs to leaf values (int, str, etc.)
+    └── ViewRef[T, V]    - refs to container views (dict, list, set)
 
 Core vocabulary:
     resolve(ctx) → Path    - build path from parent chain
@@ -31,9 +31,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "PVPrimitiveRef",
-    "PVRefBase",
-    "PVViewRef",
+    "PrimitiveRef",
+    "RefBase",
+    "ViewRef",
 ]
 
 
@@ -43,7 +43,7 @@ ViewT = TypeVar("ViewT", bound="View")
 logger = getLogger(__name__)
 
 
-class PVRefBase[T](Ref[T]):
+class RefBase[T](Ref[T]):
     """Base for all PV storage refs.
 
     PV refs navigate through a view hierarchy to access values.
@@ -59,7 +59,7 @@ class PVRefBase[T](Ref[T]):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize PV ref.
@@ -80,7 +80,7 @@ class PVRefBase[T](Ref[T]):
         return self._address
 
     @property
-    def parent(self) -> PVRefBase | None:
+    def parent(self) -> RefBase | None:
         """Parent ref in the navigation chain."""
         return self._parent
 
@@ -123,7 +123,7 @@ class PVRefBase[T](Ref[T]):
         return f"{self.__class__.__name__}({self._address!s})"
 
 
-class PVPrimitiveRef[T](PVRefBase[T]):
+class PrimitiveRef[T](RefBase[T]):
     """PV ref to a primitive/leaf value.
 
     Used for scalar values like int, str, float, etc.
@@ -134,7 +134,7 @@ class PVPrimitiveRef[T](PVRefBase[T]):
         self,
         address: path.PathAddress | Term,
         value_type: type[T],
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize primitive ref.
@@ -175,7 +175,7 @@ class PVPrimitiveRef[T](PVRefBase[T]):
             resolved_path = (*parent_path, (address, self._value_type))
 
         logger.debug(
-            "PVPrimitiveRef resolved",
+            "PrimitiveRef resolved",
             extra={
                 "address": address,
                 "value_type": self._value_type.__name__,
@@ -239,7 +239,7 @@ class PVPrimitiveRef[T](PVRefBase[T]):
             return EMPTY
 
 
-class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
+class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
     """PV ref to a container view.
 
     Used for collection types like dict, list, set views.
@@ -250,7 +250,7 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
         self,
         address: path.PathAddress | Term,
         view_type: type[ViewT],
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize view ref.
@@ -291,7 +291,7 @@ class PVViewRef(Generic[T, ViewT], PVRefBase[T]):  # noqa: UP046
             resolved_path = (*parent_path, (address, self._view_type))
 
         logger.debug(
-            "PVViewRef resolved",
+            "ViewRef resolved",
             extra={
                 "address": address,
                 "view_type": self._view_type.__name__,

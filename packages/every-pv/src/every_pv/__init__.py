@@ -5,10 +5,10 @@ for the everybase term system.
 
 Key Classes:
     Concrete PV Refs:
-        - PVIntRef, PVStrRef, PVFloatRef, PVBoolRef, PVBytesRef
-        - PVItemRef, PVListItemRef, PVDictItemRef
-        - PVDictRef, PVListRef
-        - PVShapeRef, PVShapesListRef, PVShapesDictRef
+        - IntRef, StrRef, FloatRef, BoolRef, BytesRef
+        - ItemRef, ListItemRef, DictItemRef
+        - DictRef, ListRef
+        - ShapeRef, ShapesListRef, ShapesDictRef
 
     Slots:
         - IntSlot, StrSlot, FloatSlot, BoolSlot, BytesSlot
@@ -16,34 +16,34 @@ Key Classes:
         - ShapeSlot, ShapesListSlot, ShapesDictSlot
 
     Spans:
-        - PVAtomic: Transaction/snapshot boundary (auto-selects based on purity)
-        - PVSnapshot: Read-only snapshot boundary
+        - Atomic: Transaction/snapshot boundary (auto-selects based on purity)
+        - Snapshot: Read-only snapshot boundary
 
 Usage:
-    from every_pv import PVIntRef, PVStrRef, IntSlot, PVAtomic
+    from every_pv import IntRef, StrRef, IntSlot, Atomic
 """
 
 from every_pv.collections import (
-    PVDictRef,
-    PVListRef,
-    PVShapeRef,
-    PVShapesDictRef,
-    PVShapesListRef,
+    DictRef,
+    ListRef,
+    ShapeRef,
+    ShapesDictRef,
+    ShapesListRef,
 )
 from every_pv.morphisms import TypedSetCmd
 from every_pv.primitives import (
-    PVBoolRef,
-    PVBytesRef,
-    PVDictItemRef,
-    PVFloatRef,
-    PVIntRef,
-    PVItemRef,
-    PVListItemRef,
-    PVStrRef,
+    BoolRef,
+    BytesRef,
+    DictItemRef,
+    FloatRef,
+    IntRef,
+    ItemRef,
+    ListItemRef,
+    StrRef,
 )
 from every_pv.ref import (
-    PVPrimitiveRef,
-    PVViewRef,
+    PrimitiveRef,
+    ViewRef,
 )
 from every_pv.slots import (
     BoolSlot,
@@ -58,10 +58,9 @@ from every_pv.slots import (
     ShapeSlot,
     StrSlot,
 )
-from every_pv.spans import PVAtomic, PVSnapshot
-from everyshape import ShapeBase as PVShape
-from everyshape import ShapeMeta as PVShapeMeta
-from everyshape import SlotDescriptor
+from every_pv.spans import Atomic, Snapshot
+from everyshape import ShapeBase as Shape
+from everyshape import ShapeMeta, SlotDescriptor
 
 from . import slots
 
@@ -70,29 +69,29 @@ __all__ = [  # noqa: RUF022
     # Modules
     "slots",
     # Shape (re-exported from everyshape)
-    "PVShape",
-    "PVShapeMeta",
+    "Shape",
+    "ShapeMeta",
     "SlotDescriptor",
     # Spans
-    "PVAtomic",
-    "PVSnapshot",
+    "Atomic",
+    "Snapshot",
     # Morphisms
     "TypedSetCmd",
-    # Concrete PV refs - Primitives
-    "PVBoolRef",
-    "PVBytesRef",
-    "PVDictItemRef",
-    "PVFloatRef",
-    "PVIntRef",
-    "PVItemRef",
-    "PVListItemRef",
-    "PVStrRef",
-    # Concrete PV refs - Collections
-    "PVDictRef",
-    "PVListRef",
-    "PVShapeRef",
-    "PVShapesDictRef",
-    "PVShapesListRef",
+    # Concrete refs - Primitives
+    "BoolRef",
+    "BytesRef",
+    "DictItemRef",
+    "FloatRef",
+    "IntRef",
+    "ItemRef",
+    "ListItemRef",
+    "StrRef",
+    # Concrete refs - Collections
+    "DictRef",
+    "ListRef",
+    "ShapeRef",
+    "ShapesDictRef",
+    "ShapesListRef",
     # Slots
     "BoolSlot",
     "BytesSlot",
@@ -106,6 +105,6 @@ __all__ = [  # noqa: RUF022
     "ShapesListSlot",
     "StrSlot",
     # Abstract refs
-    "PVPrimitiveRef",
-    "PVViewRef",
+    "PrimitiveRef",
+    "ViewRef",
 ]

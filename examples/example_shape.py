@@ -16,7 +16,7 @@ import every_pv
 import every_pv.views
 
 
-class SymbolInfo(every_pv.PVShape):
+class SymbolInfo(every_pv.Shape):
     """Individual symbol information."""
 
     price = every_pv.slots.FloatSlot()
@@ -25,7 +25,7 @@ class SymbolInfo(every_pv.PVShape):
     yo = every_pv.slots.BytesSlot()
 
 
-class Order(every_pv.PVShape):
+class Order(every_pv.Shape):
     """Order information."""
 
     id = every_pv.slots.StrSlot()
@@ -34,7 +34,7 @@ class Order(every_pv.PVShape):
     price = every_pv.slots.FloatSlot()
 
 
-class Market(every_pv.PVShape):
+class Market(every_pv.Shape):
     """Market data with various collection types."""
 
     misc_val = every_pv.slots.IntSlot()

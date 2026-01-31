@@ -7,7 +7,7 @@ import pytest
 from pv.view import View
 from tkv.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
-from every_pv import PVShape
+from every_pv import Shape as PVShape
 from every_type.pv import (
     ComplexSlot,
     DateSlot,

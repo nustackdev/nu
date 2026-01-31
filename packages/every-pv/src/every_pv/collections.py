@@ -1,7 +1,7 @@
 """Concrete PV collection ref implementations.
 
 PV collection refs combine everyshape document model bases (navigation,
-capabilities) with PVViewRef (PV substrate: view hierarchy navigation).
+capabilities) with ViewRef (PV substrate: view hierarchy navigation).
 
 Lazy operations note: find(), filter(), map() etc. work streaming on
 PV views without loading everything into memory. The everybase collection
@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, ClassVar
 from pv.collections import MutableMappingView, MutableSequenceView
 from pv.types import Value as StorageValue
 
-from every_pv.primitives import PVDictItemRef, PVListItemRef
-from every_pv.ref import PVRefBase, PVViewRef
+from every_pv.primitives import DictItemRef, ListItemRef
+from every_pv.ref import RefBase, ViewRef
 from everybase import ensure_term
 from everyshape import ShapeBase as PVShape
 from everyshape.collections import (
@@ -26,7 +26,9 @@ from everyshape.collections import (
     ReactiveShapeRef,
     ReactiveShapesDictRef,
     ReactiveShapesListRef,
-    ShapeRef,
+)
+from everyshape.collections import (
+    ShapeRef as _BaseShapeRef,
 )
 
 
@@ -37,11 +39,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "PVDictRef",
-    "PVListRef",
-    "PVShapeRef",
-    "PVShapesDictRef",
-    "PVShapesListRef",
+    "DictRef",
+    "ListRef",
+    "ShapeRef",
+    "ShapesDictRef",
+    "ShapesListRef",
 ]
 
 
@@ -50,18 +52,18 @@ __all__ = [
 # =============================================================================
 
 
-class PVShapeRef[T: PVShape](
+class ShapeRef[T: PVShape](
     ReactiveShapeRef[T],
-    PVViewRef[dict[str, StorageValue], MutableMappingView],
+    ViewRef[dict[str, StorageValue], MutableMappingView],
 ):
     """PV shape reference — document model + PV substrate.
 
     Inherits attribute navigation and _create_child_ref from everyshape ShapeRef.
-    Inherits PV path resolution and view fetching from PVViewRef.
+    Inherits PV path resolution and view fetching from ViewRef.
     """
 
     # Extend passthrough with PV-specific attributes
-    _PASSTHROUGH_ATTRS: ClassVar[frozenset[str]] = ShapeRef._PASSTHROUGH_ATTRS | frozenset(
+    _PASSTHROUGH_ATTRS: ClassVar[frozenset[str]] = _BaseShapeRef._PASSTHROUGH_ATTRS | frozenset(
         {
             "view_type",
             "_view_type",
@@ -73,7 +75,7 @@ class PVShapeRef[T: PVShape](
         address: path.PathAddress | Term,
         shape_type: type[T],
         view_type: type[MutableMappingView],
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize shape reference."""
@@ -88,9 +90,9 @@ class PVShapeRef[T: PVShape](
 # =============================================================================
 
 
-class PVDictRef[K: int | str, V: StorageValue](
+class DictRef[K: int | str, V: StorageValue](
     ReactiveMappingRef[K, V],
-    PVViewRef[dict[K, V], MutableMappingView],
+    ViewRef[dict[K, V], MutableMappingView],
 ):
     """PV mapping reference — document model + PV substrate.
 
@@ -105,7 +107,7 @@ class PVDictRef[K: int | str, V: StorageValue](
         view_type: type[MutableMappingView],
         key_value_type: type,
         value_value_type: type,
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize mapping reference."""
@@ -115,9 +117,9 @@ class PVDictRef[K: int | str, V: StorageValue](
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> PVDictItemRef[V, ...]:
+    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> DictItemRef[V, ...]:
         """Create a reference to a child at the given key."""
-        return PVDictItemRef(
+        return DictItemRef(
             address=ensure_term(key),
             value_type=self.value_type,
             value_value_type=self.value_value_type,
@@ -131,9 +133,9 @@ class PVDictRef[K: int | str, V: StorageValue](
 # =============================================================================
 
 
-class PVListRef[T, ItemValueT](
+class ListRef[T, ItemValueT](
     ReactiveSequenceRef[T],
-    PVViewRef[list[T], MutableSequenceView],
+    ViewRef[list[T], MutableSequenceView],
 ):
     """PV sequence reference — document model + PV substrate.
 
@@ -146,7 +148,7 @@ class PVListRef[T, ItemValueT](
         item_type: type[T],
         item_value_type: type[ItemValueT],
         view_type: type[MutableSequenceView],
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize sequence reference."""
@@ -156,9 +158,9 @@ class PVListRef[T, ItemValueT](
 
     def _create_item_ref(
         self, index: int | Sentinel | Term[int | Sentinel]
-    ) -> PVListItemRef[T, ItemValueT]:
+    ) -> ListItemRef[T, ItemValueT]:
         """Create a reference to an item at the given index."""
-        return PVListItemRef(
+        return ListItemRef(
             address=ensure_term(index),
             value_type=self.item_type,
             value_value_type=self.item_value_type,
@@ -172,9 +174,9 @@ class PVListRef[T, ItemValueT](
 # =============================================================================
 
 
-class PVShapesListRef[T: PVShape](
+class ShapesListRef[T: PVShape](
     ReactiveShapesListRef[T],
-    PVViewRef[list[dict], MutableSequenceView],
+    ViewRef[list[dict], MutableSequenceView],
 ):
     """PV shapes list reference — document model + PV substrate."""
 
@@ -183,7 +185,7 @@ class PVShapesListRef[T: PVShape](
         address: path.PathAddress | Term,
         shape_type: type[T],
         view_type: type[MutableSequenceView],
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize sequence shape reference."""
@@ -191,11 +193,11 @@ class PVShapesListRef[T: PVShape](
         self._shape_type = shape_type
         self.item_type = dict
 
-    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> PVShapeRef[T]:
+    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> ShapeRef[T]:
         """Create a reference to a shape at the given index."""
         from every_pv.views import DictView
 
-        return PVShapeRef(
+        return ShapeRef(
             address=ensure_term(index),
             shape_type=self._shape_type,
             view_type=DictView,
@@ -209,9 +211,9 @@ class PVShapesListRef[T: PVShape](
 # =============================================================================
 
 
-class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
+class ShapesDictRef[K: int | str, T: PVShape, KeyValueT](
     ReactiveShapesDictRef[K, T],
-    PVViewRef[dict[K, dict], MutableMappingView],
+    ViewRef[dict[K, dict], MutableMappingView],
 ):
     """PV shapes dict reference — document model + PV substrate."""
 
@@ -222,7 +224,7 @@ class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
         key_value_type: type[KeyValueT],
         shape_type: type[T],
         view_type: type[MutableMappingView],
-        parent: PVRefBase | None = None,
+        parent: RefBase | None = None,
         shape: type[PVShape] | None = None,
     ) -> None:
         """Initialize mapping shape reference."""
@@ -232,11 +234,11 @@ class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
         self.key_value_type = key_value_type
         self._shape_type = shape_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> PVShapeRef[T]:
+    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ShapeRef[T]:
         """Create a reference to a shape at the given key."""
         from every_pv.views import DictView
 
-        return PVShapeRef(
+        return ShapeRef(
             address=ensure_term(key),
             shape_type=self._shape_type,
             view_type=DictView,

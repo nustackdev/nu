@@ -1,7 +1,7 @@
 """PV storage refs for standard library types.
 
 These refs store values in PV storage with serialization/deserialization.
-Pattern: PVXxxRef = PVPrimitiveRef[StorageType] + XxxRefBase + get/set methods
+Pattern: PVXxxRef = PrimitiveRef[StorageType] + XxxRefBase + get/set methods
 
 Storage formats:
 - Decimal: str (exact representation)
@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from every_pv.ref import PVPrimitiveRef
+from every_pv.ref import PrimitiveRef
 
 from ..basis_point_cls import BasisPoint
 from ..basis_point_ref import BasisPointRefBase
@@ -89,7 +89,7 @@ __all__ = [
 # =============================================================================
 
 
-class PVDecimalRef(PVPrimitiveRef[str], DecimalRefBase):
+class PVDecimalRef(PrimitiveRef[str], DecimalRefBase):
     """PV storage ref for Decimal values.
 
     Stores as str for exact representation.
@@ -98,7 +98,7 @@ class PVDecimalRef(PVPrimitiveRef[str], DecimalRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -121,7 +121,7 @@ class PVDecimalRef(PVPrimitiveRef[str], DecimalRefBase):
         return DecimalRef(TypedSetCmd(self, val))
 
 
-class PVFractionRef(PVPrimitiveRef[str], FractionRefBase):
+class PVFractionRef(PrimitiveRef[str], FractionRefBase):
     """PV storage ref for Fraction values.
 
     Stores as str ("numerator/denominator" format).
@@ -130,7 +130,7 @@ class PVFractionRef(PVPrimitiveRef[str], FractionRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -153,7 +153,7 @@ class PVFractionRef(PVPrimitiveRef[str], FractionRefBase):
         return FractionRef(TypedSetCmd(self, val))
 
 
-class PVComplexRef(PVPrimitiveRef[str], ComplexRefBase):
+class PVComplexRef(PrimitiveRef[str], ComplexRefBase):
     """PV storage ref for complex values.
 
     Stores as str ("real,imag" format).
@@ -162,7 +162,7 @@ class PVComplexRef(PVPrimitiveRef[str], ComplexRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -196,7 +196,7 @@ class PVComplexRef(PVPrimitiveRef[str], ComplexRefBase):
         return ComplexRef(TypedSetCmd(self, val))
 
 
-class PVBasisPointRef(PVPrimitiveRef[int], BasisPointRefBase):
+class PVBasisPointRef(PrimitiveRef[int], BasisPointRefBase):
     """PV storage ref for BasisPoint values.
 
     Stores as int (raw basis points).
@@ -205,7 +205,7 @@ class PVBasisPointRef(PVPrimitiveRef[int], BasisPointRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, int, parent, shape)
@@ -228,7 +228,7 @@ class PVBasisPointRef(PVPrimitiveRef[int], BasisPointRefBase):
         return BasisPointRef(TypedSetCmd(self, val))
 
 
-class PVPercentageRef(PVPrimitiveRef[float], PercentageRefBase):
+class PVPercentageRef(PrimitiveRef[float], PercentageRefBase):
     """PV storage ref for Percentage values.
 
     Stores as float (raw percentage value).
@@ -237,7 +237,7 @@ class PVPercentageRef(PVPrimitiveRef[float], PercentageRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, float, parent, shape)
@@ -265,7 +265,7 @@ class PVPercentageRef(PVPrimitiveRef[float], PercentageRefBase):
 # =============================================================================
 
 
-class PVDateRef(PVPrimitiveRef[str], DateRefBase):
+class PVDateRef(PrimitiveRef[str], DateRefBase):
     """PV storage ref for date values.
 
     Stores as str (ISO format YYYY-MM-DD).
@@ -274,7 +274,7 @@ class PVDateRef(PVPrimitiveRef[str], DateRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -297,7 +297,7 @@ class PVDateRef(PVPrimitiveRef[str], DateRefBase):
         return DateRef(TypedSetCmd(self, val))
 
 
-class PVDatetimeRef(PVPrimitiveRef[str], DatetimeRefBase):
+class PVDatetimeRef(PrimitiveRef[str], DatetimeRefBase):
     """PV storage ref for datetime values.
 
     Stores as str (ISO format).
@@ -306,7 +306,7 @@ class PVDatetimeRef(PVPrimitiveRef[str], DatetimeRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -329,7 +329,7 @@ class PVDatetimeRef(PVPrimitiveRef[str], DatetimeRefBase):
         return DatetimeRef(TypedSetCmd(self, val))
 
 
-class PVTimeRef(PVPrimitiveRef[str], TimeRefBase):
+class PVTimeRef(PrimitiveRef[str], TimeRefBase):
     """PV storage ref for time values.
 
     Stores as str (ISO format HH:MM:SS[.ffffff]).
@@ -338,7 +338,7 @@ class PVTimeRef(PVPrimitiveRef[str], TimeRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -361,7 +361,7 @@ class PVTimeRef(PVPrimitiveRef[str], TimeRefBase):
         return TimeRef(TypedSetCmd(self, val))
 
 
-class PVTimedeltaRef(PVPrimitiveRef[float], TimedeltaRefBase):
+class PVTimedeltaRef(PrimitiveRef[float], TimedeltaRefBase):
     """PV storage ref for timedelta values.
 
     Stores as float (total_seconds).
@@ -370,7 +370,7 @@ class PVTimedeltaRef(PVPrimitiveRef[float], TimedeltaRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, float, parent, shape)
@@ -393,7 +393,7 @@ class PVTimedeltaRef(PVPrimitiveRef[float], TimedeltaRefBase):
         return TimedeltaRef(TypedSetCmd(self, val))
 
 
-class PVTimezoneRef(PVPrimitiveRef[str], TimezoneRefBase):
+class PVTimezoneRef(PrimitiveRef[str], TimezoneRefBase):
     """PV storage ref for timezone values.
 
     Stores as str (offset like "+05:30" or "UTC").
@@ -402,7 +402,7 @@ class PVTimezoneRef(PVPrimitiveRef[str], TimezoneRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -469,7 +469,7 @@ class PVTimezoneRef(PVPrimitiveRef[str], TimezoneRefBase):
 # =============================================================================
 
 
-class PVPathRef(PVPrimitiveRef[str], PathRefBase):
+class PVPathRef(PrimitiveRef[str], PathRefBase):
     """PV storage ref for Path values.
 
     Stores as str.
@@ -478,7 +478,7 @@ class PVPathRef(PVPrimitiveRef[str], PathRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)
@@ -501,7 +501,7 @@ class PVPathRef(PVPrimitiveRef[str], PathRefBase):
         return PathRef(TypedSetCmd(self, val))
 
 
-class PVUUIDRef(PVPrimitiveRef[str], UUIDRefBase):
+class PVUUIDRef(PrimitiveRef[str], UUIDRefBase):
     """PV storage ref for UUID values.
 
     Stores as str (hex format).
@@ -510,7 +510,7 @@ class PVUUIDRef(PVPrimitiveRef[str], UUIDRefBase):
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PVPrimitiveRef | None = None,
+        parent: PrimitiveRef | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, str, parent, shape)

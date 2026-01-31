@@ -18,7 +18,7 @@ from everybase import ensure_term
 
 
 if TYPE_CHECKING:
-    from every_pv.ref import PVPrimitiveRef
+    from every_pv.ref import PrimitiveRef
     from everyabc import Term
 
 
@@ -37,11 +37,11 @@ class TypedSetCmd[T](Command, Morphism[T]):
 
     def __init__(
         self,
-        ref: PVPrimitiveRef[T],
+        ref: PrimitiveRef[T],
         value: Term[T | Sentinel],
     ) -> None:
-        super().__init__(cast("PVPrimitiveRef[T]", ref), value)
-        self.ref = cast("PVPrimitiveRef[T]", ref)
+        super().__init__(cast("PrimitiveRef[T]", ref), value)
+        self.ref = cast("PrimitiveRef[T]", ref)
         self.value_expr = ensure_term(value)
 
     async def execute(self, ctx: Context) -> T:

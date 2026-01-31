@@ -23,7 +23,7 @@ Term Programming platform for Python.
 | Package | Description |
 |---------|-------------|
 | `every_notion` | Notion API integration |
-| `every_kv` | Key-value store abstractions |
+| `every_dict` | Dict substrate (plain nested dicts, no persistence) |
 
 ## Install
 

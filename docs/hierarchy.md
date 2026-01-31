@@ -6,14 +6,14 @@
 everyabc            contracts — Term, Flow, Span, Ref, Shape, Slot, Context
   └── everybase     toolbox — types, values, morphisms, capabilities, utilities
         ├── everyshape    document model — shapes, items, collections, navigation
-        │     └── every-pv      PV storage substrate (path resolution, views, spans, adapters)
+        │     ├── every-pv      PV storage substrate (path resolution, views, spans, adapters)
+        │     └── every-dict    dict substrate (plain nested dicts, no persistence)
         └── everytable    relational model — (TBD)
               └── every-notion    Notion API integration
     │
     ├── every-flow        flow primitives (Seq, Par, Cond, Loop)
     ├── every-flow-ext    flow extensions (cancellation, progress)
-    ├── every-type        extended type refs (Decimal, UUID, datetime, Path)
-    └── every-kv          key-value store protocol
+    └── every-type        extended type refs (Decimal, UUID, datetime, Path)
 ```
 
 ## Core Packages
@@ -88,10 +88,11 @@ Abstract relational model. Depends on everybase. (TBD)
                     /       \
             everyshape    everytable
                 |             |
-            every-pv     every-notion
-                |
+            every-pv     everytable
+            every-dict       |
+                |        every-notion
           every-type  every-flow
-          every-kv    every-flow-ext
+          every-flow-ext
 ```
 
 Key constraints:
@@ -99,5 +100,6 @@ Key constraints:
 - everyshape and everytable are siblings — both depend on everybase
 - everyshape has zero PV imports — substrate-independent document model
 - everytable has zero PV imports — independent data model
-- every-pv depends on everyshape (PV substrate for document model refs)
+- every-pv depends on everyshape (PV substrate: persistent, reactive)
+- every-dict depends on everyshape (dict substrate: plain dicts, no reactivity)
 - every-notion will depend on everytable (relational adapter)

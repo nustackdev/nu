@@ -1,10 +1,10 @@
 """PV Spans — context-shaping boundaries for PV storage operations.
 
-PVAtomic: Opens a transaction lazily, provides View on top of it.
-PVSnapshot: Opens a read-only snapshot lazily, provides View on top of it.
+Atomic: Opens a transaction lazily, provides View on top of it.
+Snapshot: Opens a read-only snapshot lazily, provides View on top of it.
 
 Usage:
-    tree = PVAtomic(UserShape, DictView,
+    tree = Atomic(UserShape, DictView,
         Seq(
             SetCmd(ref, Lit(42)),
             GetOp(ref),
@@ -27,12 +27,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "PVAtomic",
-    "PVSnapshot",
+    "Atomic",
+    "Snapshot",
 ]
 
 
-class PVAtomic(Span):
+class Atomic(Span):
     """Atomic transaction boundary for PV operations.
 
     On enter:
@@ -121,20 +121,20 @@ class PVAtomic(Span):
         elif self._snap is not None:
             self._snap.close()
 
-    def with_children(self, *children: Executable) -> PVAtomic:
-        """Return new PVAtomic with replaced children."""
+    def with_children(self, *children: Executable) -> Atomic:
+        """Return new Atomic with replaced children."""
         if children == self._children:
             return self
-        return PVAtomic(self.shape, self.view_cls, *children)
+        return Atomic(self.shape, self.view_cls, *children)
 
     def __repr__(self) -> str:
-        return f"PVAtomic({self.shape.__name__})"
+        return f"Atomic({self.shape.__name__})"
 
 
-class PVSnapshot(Span):
+class Snapshot(Span):
     """Read-only snapshot boundary for PV operations.
 
-    Like PVAtomic but always opens a snapshot, never a transaction.
+    Like Atomic but always opens a snapshot, never a transaction.
     Use when you know the subtree is read-only.
 
     On enter:
@@ -187,11 +187,11 @@ class PVSnapshot(Span):
         if self._snap is not None:
             self._snap.close()
 
-    def with_children(self, *children: Executable) -> PVSnapshot:
-        """Return new PVSnapshot with replaced children."""
+    def with_children(self, *children: Executable) -> Snapshot:
+        """Return new Snapshot with replaced children."""
         if children == self._children:
             return self
-        return PVSnapshot(self.shape, self.view_cls, *children)
+        return Snapshot(self.shape, self.view_cls, *children)
 
     def __repr__(self) -> str:
-        return f"PVSnapshot({self.shape.__name__})"
+        return f"Snapshot({self.shape.__name__})"
