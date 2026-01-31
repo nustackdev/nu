@@ -13,7 +13,6 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from everyshape.typing import Sentinel
 from everyterm.shape import Shape
 from everyterm.term import Context, RValue, TypedValue
 from everyterm.term.comps.callable import FuncCallOp, MethodCallOp
@@ -24,6 +23,7 @@ from everybase.adapters.codecs import TextCodec
 from everybase.adapters.storages.textdb import TextStorage
 from everybase.slot import StrSlot
 from everybase.view import DictView
+from everyshape.typing import Sentinel
 
 
 class DatetimeValue(CoreBase, TypedValue[datetime | Sentinel]):

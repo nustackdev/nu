@@ -12,9 +12,8 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from everyshape import Context, Shape
-
 import everybase as e
+from everyshape import Context, Shape
 
 
 # =============================================

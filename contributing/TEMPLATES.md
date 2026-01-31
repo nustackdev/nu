@@ -1,6 +1,6 @@
 # Templates
 
-## pyproject.toml - Core Package (abc/)
+## pyproject.toml - Core Package (core/)
 
 ```toml
 [build-system]
@@ -8,14 +8,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every"
+name = "everyabc"
 version = "0.1.0"
 description = "Core primitives for every"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10"
-dependencies = ["attrs>=23.0.0"]
+dependencies = []
 keywords = ["every", "core"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -29,10 +29,10 @@ classifiers = [
 Repository = "https://github.com/everyabc/everybase"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/every"]
+packages = ["src/everyabc"]
 ```
 
-## pyproject.toml - Standard Package (std/)
+## pyproject.toml - Standard Package (packages/)
 
 ```toml
 [build-system]
@@ -40,41 +40,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every-datetime"
+name = "every-foo"
 version = "0.1.0"
-description = "DateTime types for every"
+description = "Foo types for every"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10"
-dependencies = ["every>=0.1.0"]
+dependencies = ["everyabc>=0.1.0"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/every_datetime"]
-```
-
-## pyproject.toml - Extension Package (pkgs/)
-
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "every-notion"
-version = "0.1.0"
-description = "Notion integration for every"
-readme = "README.md"
-license = "MIT"
-authors = [{ name = "Your Name", email = "you@example.com" }]
-requires-python = ">=3.10"
-dependencies = [
-    "every>=0.1.0",
-    "notion-client>=2.0.0",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/every_notion"]
+packages = ["src/every_foo"]
 ```
 
 ## README.md - Package
@@ -101,7 +77,7 @@ from every_foo import Thing
 Part of [everybase](https://github.com/everyabc/everybase).
 
 \`\`\`bash
-make test-pkg PKG=std/every_foo
+make test-pkg PKG=packages/every-foo
 \`\`\`
 ```
 

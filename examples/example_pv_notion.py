@@ -5,11 +5,12 @@ from __future__ import annotations
 from datetime import datetime
 
 import every
+
 import every_pv
-import every_view
-from every_adapters.codecs import BinaryCodec
-from every_adapters.storages.inmemdb import InMemoryStorage
+import every_pv.views
 from every_notion import EmailSlot, NotionContext, NotionTable, TitleSlot
+from every_pv.adapters.codecs import BinaryCodec
+from every_pv.adapters.storages.inmemdb import InMemoryStorage
 
 
 API_KEY = "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"
@@ -65,7 +66,7 @@ def sync_to_notion(ctx: NotionContext, metrics: dict) -> None:
 
 def main() -> None:
     with InMemoryStorage(codec=BinaryCodec()) as storage, storage.transaction() as tx:
-        root = every_view.DictView.open_root(tx)
+        root = every_pv.views.DictView.open_root(tx)
         pv_ctx = every_pv.KVContext.create(root_view=root, storage_context=tx)
 
         print("=== PV Trading Session ===")

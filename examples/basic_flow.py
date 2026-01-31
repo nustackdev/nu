@@ -1,8 +1,7 @@
 """Basic Everybase example - Counter."""
 
-from everyshape import Shape
-
 import everybase as e
+from everyshape import Shape
 
 
 # =============================================

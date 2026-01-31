@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from everyshape.typing import Sentinel
 from everyterm.shape import Shape, Slot
 from everyterm.term import PrimitiveRef, Ref, RValue, TypedValue
 from everyterm.term.comps.callable import FuncCallOp, MethodCallOp, TypedSetCmd
@@ -22,6 +21,7 @@ from everyterm.term.refs import CollectionItemRefBase
 from everyterm.term.types import CoreBase, FloatType, literal
 
 import everybase as e
+from everyshape.typing import Sentinel
 
 
 # =============================================

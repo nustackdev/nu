@@ -11,9 +11,8 @@ Tests performance of various flow operations:
 
 import asyncio
 
-from everyshape import Shape
-
 import everybase as e
+from everyshape import Shape
 
 
 # =============================================
