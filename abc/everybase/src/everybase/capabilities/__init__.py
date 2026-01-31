@@ -14,115 +14,131 @@ Protocols declare the public interface; Bases provide morphism-wrapping implemen
     ─────────────────────────────
     Atoms:       ContainableBase/Protocol, LengthableBase/Protocol, IndexableBase/Protocol, SliceableBase/Protocol
     Iterable:    IterableBase/Protocol
-    Collection:  CollectionBase/Protocol  = Containable + Lengthable + Iterable
-    Sequence:    SequenceBase/Protocol    = Collection + Sliceable + first/last/sorted/...
-    Mapping:     MappingBase/Protocol     = Collection + keys_/values_/items_/get_
-    SetLike:     SetLikeBase/Protocol     = Collection + union/intersection/difference/...
+    Collection:  CollectionBase/Protocol       = Containable + Lengthable + Iterable
+    Sequence:    SequenceBase/Protocol         = Collection + Sliceable + first/last/sorted/...
+      Mutable:   MutableSequenceBase/Protocol = Sequence + append/insert/pop
+    Mapping:     MappingBase/Protocol          = Collection + keys_/values_/items_/get_
+      Mutable:   MutableMappingBase/Protocol  = Mapping + set_/delete/update_
+    SetLike:     SetLikeBase/Protocol          = Collection + union/intersection/difference/...
+      Mutable:   MutableSetBase/Protocol      = SetLike + add/remove/discard
+    Clearable:   ClearableBase/Protocol        = clear()
 """
 
-from .col_atoms_base import (
+from .col_atoms import (
     ContainableBase,
-    IndexableBase,
-    LengthableBase,
-    SliceableBase,
-)
-from .col_atoms_protocol import (
     ContainableProtocol,
+    IndexableBase,
     IndexableProtocol,
+    LengthableBase,
     LengthableProtocol,
+    SliceableBase,
     SliceableProtocol,
 )
-from .col_collection_base import (
+from .col_collection import (
+    ClearableBase,
+    ClearableProtocol,
     CollectionBase,
-)
-from .col_collection_protocol import (
     CollectionProtocol,
 )
-from .col_iterable_base import (
+from .col_iterable import (
     IterableBase,
-)
-from .col_iterable_protocol import (
     IterableProtocol,
 )
-from .col_mapping_base import (
+from .col_mapping import (
     MappingBase,
-)
-from .col_mapping_protocol import (
     MappingProtocol,
+    MutableMappingBase,
+    MutableMappingProtocol,
 )
-from .col_sequence_base import (
+from .col_sequence import (
+    MutableSequenceBase,
+    MutableSequenceProtocol,
     SequenceBase,
-)
-from .col_sequence_protocol import (
     SequenceProtocol,
 )
-from .col_set_base import (
+from .col_set import (
+    MutableSetBase,
+    MutableSetProtocol,
     SetLikeBase,
-)
-from .col_set_protocol import (
     SetLikeProtocol,
 )
-from .gen_arithmetic_base import (
+from .gen_arithmetic import (
     AddableBase,
-    AdditiveBase,
-    DivisibleBase,
-    ModuloableBase,
-    MultiplicativeBase,
-    MultiplyableBase,
-    NegatableBase,
-    NumericBase,
-    PowerableBase,
-    SubtractableBase,
-)
-from .gen_arithmetic_protocol import (
     AddableProtocol,
+    AdditiveBase,
     AdditiveProtocol,
+    DivisibleBase,
     DivisibleProtocol,
+    ModuloableBase,
     ModuloableProtocol,
+    MultiplicativeBase,
     MultiplicativeProtocol,
+    MultiplyableBase,
     MultiplyableProtocol,
+    NegatableBase,
     NegatableProtocol,
+    NumericBase,
     NumericProtocol,
+    PowerableBase,
     PowerableProtocol,
+    SubtractableBase,
     SubtractableProtocol,
 )
-from .gen_bitwise_base import (
+from .gen_bitwise import (
     BitwiseAndableBase,
+    BitwiseAndableProtocol,
     BitwiseBase,
     BitwiseInvertableBase,
-    BitwiseOrableBase,
-    BitwiseXorableBase,
-    ShiftableBase,
-)
-from .gen_bitwise_protocol import (
-    BitwiseAndableProtocol,
     BitwiseInvertableProtocol,
+    BitwiseOrableBase,
     BitwiseOrableProtocol,
     BitwiseProtocol,
+    BitwiseXorableBase,
     BitwiseXorableProtocol,
+    ShiftableBase,
     ShiftableProtocol,
 )
-from .gen_comparison_base import (
+from .gen_comparison import (
     ComparableBase,
-    EqualableBase,
-    OrderableBase,
-)
-from .gen_comparison_protocol import (
     ComparableProtocol,
+    EqualableBase,
     EqualableProtocol,
+    OrderableBase,
     OrderableProtocol,
 )
-from .gen_logical_base import (
+from .gen_logical import (
     AndableBase,
-    LogicalBase,
-    NotableBase,
-    OrableBase,
-)
-from .gen_logical_protocol import (
     AndableProtocol,
+    LogicalBase,
     LogicalProtocol,
+    NotableBase,
     NotableProtocol,
+    OrableBase,
     OrableProtocol,
+)
+from .loc import (
+    LocationDeletableProtocol,
+    LocationExistableProtocol,
+    LocationGettableProtocol,
+    LocationObservableProtocol,
+    LocationSettableProtocol,
+)
+from .loc_collection import (
+    CollectionClearableBase,
+    CollectionExistableBase,
+    CollectionExtractableBase,
+    CollectionLengthableBase,
+    CollectionStorableBase,
+)
+from .loc_item import (
+    ItemDeletableBase,
+    ItemExistableBase,
+    ItemGettableBase,
+    ItemSettableBase,
+)
+from .loc_reactive import (
+    PrimitiveObservableBase,
+    ViewObservableBase,
 )
 
 
@@ -207,18 +223,57 @@ __all__ = [  # noqa: RUF022
     "CollectionBase",
     "CollectionProtocol",
     # =========================================================================
-    # COLLECTION: SEQUENCE
+    # COLLECTION: SEQUENCE (+ Mutable)
     # =========================================================================
     "SequenceBase",
     "SequenceProtocol",
+    "MutableSequenceBase",
+    "MutableSequenceProtocol",
     # =========================================================================
-    # COLLECTION: MAPPING
+    # COLLECTION: MAPPING (+ Mutable)
     # =========================================================================
     "MappingBase",
     "MappingProtocol",
+    "MutableMappingBase",
+    "MutableMappingProtocol",
     # =========================================================================
-    # COLLECTION: SET
+    # COLLECTION: SET (+ Mutable)
     # =========================================================================
     "SetLikeBase",
     "SetLikeProtocol",
+    "MutableSetBase",
+    "MutableSetProtocol",
+    # =========================================================================
+    # COLLECTION: CLEARABLE
+    # =========================================================================
+    "ClearableBase",
+    "ClearableProtocol",
+    # =========================================================================
+    # LOCATION CAPABILITIES (protocol-only)
+    # =========================================================================
+    "LocationGettableProtocol",
+    "LocationSettableProtocol",
+    "LocationExistableProtocol",
+    "LocationDeletableProtocol",
+    "LocationObservableProtocol",
+    # =========================================================================
+    # LOCATION: ITEM ACCESS (bases)
+    # =========================================================================
+    "ItemGettableBase",
+    "ItemSettableBase",
+    "ItemDeletableBase",
+    "ItemExistableBase",
+    # =========================================================================
+    # LOCATION: COLLECTION (bases)
+    # =========================================================================
+    "CollectionExtractableBase",
+    "CollectionStorableBase",
+    "CollectionLengthableBase",
+    "CollectionClearableBase",
+    "CollectionExistableBase",
+    # =========================================================================
+    # LOCATION: REACTIVE (bases)
+    # =========================================================================
+    "PrimitiveObservableBase",
+    "ViewObservableBase",
 ]

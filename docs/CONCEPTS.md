@@ -1,15 +1,11 @@
-# Concepts
-
-Mental map of the core contracts.
-
----
+# Concepts and Rules
 
 ## Hierarchy
 
 ```text
 Node[ChildT]                          # immutable tree node
  └── Executable[ChildT: Executable]   # typed subtree
-      ├── Term[ResultT]               # computation (0-cell)
+      ├── Term[ResultT]               # computation
       │    ├── LValue[T]              # addressable location
       │    │    └── Ref[T]            # typed reference
       │    └── RValue[ResultT]        # evaluable expression
@@ -18,8 +14,8 @@ Node[ChildT]                          # immutable tree node
       │                   ├── UnaryMorphism[T]
       │                   ├── BinaryMorphism[T]
       │                   └── TernaryMorphism[T]
-      ├── Flow                        # ordering (1-cell)
-      └── Span                        # cohesion boundary (2-cell)
+      ├── Flow                        # ordering
+      └── Span                        # cohesion boundary
 ```
 
 Orthogonal purity mixins (first in MRO):
@@ -58,11 +54,32 @@ Node[ChildT]
   .replace_child(i,c)-> Self
 ```
 
+### Node Initialization Contract
+
+Every class in the Node hierarchy **must** call `super().__init__()` with its children. Failing to do so leaves `_children` uninitialized, which silently breaks tree traversal, purity detection, and any operation that walks the tree.
+
+```python
+# CORRECT - children are registered via super().__init__()
+class MyOp(Operation, Morphism[int]):
+    def __init__(self, ref, value):
+        super().__init__(ref, value)
+        self.ref = ref
+        self.value = value
+
+# WRONG - _children is never set
+class MyOp(Operation, Morphism[int]):
+    def __init__(self, ref, value):
+        self.ref = ref
+        self.value = value
+```
+
+This is especially dangerous because the error only surfaces when something traverses *through* that node. Spans walk the entire subtree to check purity — a single missing `_children` anywhere in the tree crashes the span before any child executes.
+
 ---
 
 ## Term
 
-Executable computation node. Leaf of the topology.
+Executable computation node.
 
 ```text
 Term[ResultT](Executable, ABC)
@@ -130,8 +147,17 @@ Ordering constraint. Controls how children execute.
 
 ```text
 Flow(Executable[Executable], ABC)
-  concrete  execute(ctx) -> None          # sequential by default, override for other strategies
+  concrete  execute(ctx) -> None          # sequential by default
 ```
+
+Concrete flows:
+
+| Flow | Semantics |
+|------|-----------|
+| `Seq(a, b, c)` | Execute in order |
+| `Par(a, b, c)` | Execute concurrently |
+| `Cond(pred, then, else_)` | Branch on predicate |
+| `Loop(pred, body)` | Repeat while predicate holds |
 
 ---
 
@@ -207,7 +233,7 @@ is_sentinel(v) -> TypeGuard[Sentinel]
 propagate_special(*values) -> Invalid | Empty | None
 ```
 
-NAryMorphism.execute: if any resolved child is sentinel -> return INVALID without calling apply.
+NAryMorphism.execute: if any resolved child is sentinel → return INVALID without calling apply.
 
 ---
 
@@ -246,3 +272,111 @@ count(root, pred=None) -> int              count matching (None = all)
 size(root)             -> int              total nodes
 depth(root)            -> int              max depth (leaf = 0)
 ```
+
+---
+
+## Naming Conventions
+
+| Concept | Naming | Examples |
+|---------|--------|----------|
+| Abstract ref | `*Type` | `IntType`, `StrType` |
+| Concrete ref | `*Ref` | `PVIntRef`, `PVStrRef` |
+| Pure morphism | `*Op` | `AddOp`, `EqOp`, `LenOp` |
+| Impure morphism | `*Cmd` | `SetCmd`, `DeleteCmd` |
+| Capability | Adjective | `Addable`, `Orderable`, `Gettable` |
+| Compound capability | Noun | `Numeric`, `Comparable`, `Sequence` |
+
+---
+
+# Design Rules
+
+The invariants we commit to. Labeled for cross-referencing.
+
+## Composition
+
+```
+R1.  Term.children() → list[Term]           Terms compose only with Terms.
+R2.  Flow.children() → list[Executable]     Flows compose with any Executable.
+R3.  Span.children() → list[Executable]     Spans compose with any Executable.
+```
+
+## Structure
+
+**S1. Implicit grouping.**
+Every direct Term child of a Flow is implicitly wrapped in an Atomic span.
+An expression tree is indivisible — like a function call.
+
+```
+F(T₁, T₂, ...) is treated as F(Atomic(T₁), Atomic(T₂), ...)
+```
+
+**S2. Span transparency.**
+A Span is not a computation. It passes through the value of its contents.
+Removing all Spans from a tree does not change what is computed,
+only what is shared during computation.
+
+**S3. Term closure.**
+Composing Terms yields a Term. The Term algebra is closed.
+
+**S4. Orthogonality.**
+Flow does not compute — it only orders.
+Span does not order — it only declares cohesion.
+Term does not order or share — it only computes.
+Each primitive owns exactly one concern.
+
+## Resolution
+
+**B1. Needs propagate up.**
+A node's needs are the union of its own needs and its children's needs.
+Spans absorb the needs they provide — those don't propagate further.
+
+**B2. Nearest enclosing Span wins.**
+When a Term needs a context type, the executor walks up the tree.
+First Span that provides a matching context wins.
+
+**B3. Ephemeral fallback.**
+If no Span provides what a Term needs, the executor creates
+an ephemeral context from the nearest Substrate. Scoped to the
+single expression (per S1).
+
+**B4. Innermost wins.**
+Nested Spans override. Inner Span's context shadows outer
+for its subtree. Same mental model as variable scoping.
+
+## Lifetime
+
+**C1. Lazy open.**
+A Span's context is created when the first child that needs it executes.
+Not at Span entry.
+
+**C2. Eager close.**
+A Span's context is released when the last child that needed it completes.
+Not at Span exit.
+
+**C3. Context type inference.**
+Atomic analyzes its subtree to pick the cheapest sufficient context:
+only reads → Snapshot, any writes → Transaction, no needs → nothing opened.
+
+## What Follows
+
+**From S1 + C3:**
+Ungrouped Terms in a Flow automatically get optimal context.
+No annotation needed. Zero cost when the substrate doesn't need it.
+
+**From S4 + S1:**
+Flow controls order. Span controls sharing. These compose freely.
+`Atomic(Seq(...))` and `Seq(Atomic(...))` are both valid, mean different things.
+
+**From B2 + B4:**
+Context scoping is lexical. Innermost binding wins.
+
+**From S2:**
+Spans can be added or removed without changing computation.
+They only affect resource sharing and consistency guarantees.
+The computation topology (Terms + Flows) is Span-invariant.
+
+Note: Span-invariance holds cleanly for pure computations.
+For impure computations, Spans affect consistency guarantees
+(e.g., whether two writes are atomic), which may affect
+observable outcomes. The *intent* of the computation is
+preserved; the *guarantees* change.

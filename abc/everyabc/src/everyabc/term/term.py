@@ -5,9 +5,10 @@ the leaves of the topology tree — the actual computation.
 
 Hierarchy:
     Term[ResultT]           — base: execute(context) -> ResultT
-    ├── LValue[T]           — addressable location (has resolve)
+    ├── LValue[T]           — addressable location
     │   └── Ref[T]          — typed reference (see ref.py)
     └── RValue[ResultT]     — evaluable expression
+        ├── Value[T]        — typed value holder (see value.py)
         └── Morphism[T]     — transformation (see morphism.py)
 
 Design rules:

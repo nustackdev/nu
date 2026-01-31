@@ -1,25 +1,44 @@
-"""Mapping ABC morphisms.
+"""Mapping morphisms — operations (pure) + commands (impure).
 
-Access: KeysOp, ValuesOp, ItemsOp, GetOp
+Operations:
+    KeysOp: Get all keys
+    ValuesOp: Get all values
+    ItemsOp: Get all key-value pairs
+    GetOp: Get value by key with default
+
+Commands:
+    SetItemCmd: Set value at key
+    DeleteItemCmd: Delete entry by key
+    UpdateCmd: Update mapping with another mapping
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 
-from everyabc import Sentinel, TernaryOperation, UnaryOperation
+from everyabc import (
+    INVALID,
+    BinaryCommand,
+    Sentinel,
+    TernaryCommand,
+    TernaryOperation,
+    UnaryOperation,
+)
 
 
 __all__ = [
+    "DeleteItemCmd",
     "GetOp",
     "ItemsOp",
     "KeysOp",
+    "SetItemCmd",
+    "UpdateCmd",
     "ValuesOp",
 ]
 
 
 # =============================================================================
-# MAPPING ACCESS (Unary)
+# OPERATIONS (pure)
 # =============================================================================
 
 
@@ -53,11 +72,6 @@ class ItemsOp[K, V](UnaryOperation[list[tuple[K, V]]]):
         return list(operand.items())  # type: ignore
 
 
-# =============================================================================
-# MAPPING GET (Ternary)
-# =============================================================================
-
-
 class GetOp[V](TernaryOperation[V]):
     """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
 
@@ -68,3 +82,46 @@ class GetOp[V](TernaryOperation[V]):
         if third is None:
             return first[second]  # type: ignore
         return first.get(second, third)  # type: ignore
+
+
+# =============================================================================
+# COMMANDS (impure)
+# =============================================================================
+
+
+class SetItemCmd[K, V](TernaryCommand[V]):
+    """Set value at key: mapping[key] = value. Returns the set value."""
+
+    def apply(self, operand: object, key: object, value: object) -> V | Sentinel:
+        """Apply."""
+        if not isinstance(operand, MutableMapping):
+            raise TypeError(f"setitem() requires mutable mapping, got {type(operand).__name__}")
+        operand[key] = value
+        return value  # type: ignore[return-value]
+
+
+class DeleteItemCmd[K](BinaryCommand[None]):
+    """Delete entry by key: del mapping[key]. Returns None."""
+
+    def apply(self, operand: object, key: object) -> None | Sentinel:
+        """Apply."""
+        if not isinstance(operand, MutableMapping):
+            raise TypeError(f"delitem() requires mutable mapping, got {type(operand).__name__}")
+        try:
+            del operand[key]
+        except KeyError:
+            return INVALID
+        return None
+
+
+class UpdateCmd[K, V](BinaryCommand[dict[K, V]]):
+    """Update mapping with another: mapping.update(other). Returns mutated mapping."""
+
+    def apply(self, operand: object, other: object) -> dict[K, V] | Sentinel:
+        """Apply."""
+        if not isinstance(operand, MutableMapping):
+            raise TypeError(f"update() requires mutable mapping, got {type(operand).__name__}")
+        if not isinstance(other, Mapping):
+            return INVALID
+        operand.update(other)
+        return dict(operand)  # type: ignore[arg-type]

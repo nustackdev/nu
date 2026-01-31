@@ -53,7 +53,7 @@ from everybase.capabilities import AndableProtocol, OrableProtocol
 
 if TYPE_CHECKING:
     from everyabc import Term
-    from everybase.py import BoolRef as BoolType
+    from everybase.values import BoolValue as BoolType
 
 
 __all__ = [

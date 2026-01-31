@@ -3,9 +3,9 @@
 Structure:
 - capabilities/: Capability protocols and bases (NumericBase/Protocol, ComparableBase/Protocol, etc.)
 - morphisms/: Concrete morphisms (AddOp, SubOp, EqOp, etc.)
-- refs/: Abstract ref bases (IntRefBase, StrRefBase, etc.)
-- py/: Python memory refs (IntRef, StrRef, ListRef, etc.)
-- util/: Utilities (ensure_term, typed_ref, combiners)
+- refs/: Abstract ref bases (IntType, StrType, etc.)
+- py/: Python memory refs (IntValue, StrValue, ListValue, etc.)
+- util/: Utilities (ensure_term, typed_value, combiners)
 """
 
 # Re-export capabilities
@@ -29,9 +29,18 @@ from everybase.capabilities import (
     BitwiseProtocol,
     BitwiseXorableBase,
     BitwiseXorableProtocol,
+    # Clearable
+    ClearableBase,
+    ClearableProtocol,
     # Collection: combined
     CollectionBase,
+    # Location: collection (bases)
+    CollectionClearableBase,
+    CollectionExistableBase,
+    CollectionExtractableBase,
+    CollectionLengthableBase,
     CollectionProtocol,
+    CollectionStorableBase,
     # Comparison
     ComparableBase,
     ComparableProtocol,
@@ -44,11 +53,22 @@ from everybase.capabilities import (
     EqualableProtocol,
     IndexableBase,
     IndexableProtocol,
+    # Location: item access (bases)
+    ItemDeletableBase,
+    ItemExistableBase,
+    ItemGettableBase,
+    ItemSettableBase,
     # Collection: iterable
     IterableBase,
     IterableProtocol,
     LengthableBase,
     LengthableProtocol,
+    # Location capabilities (protocol-only)
+    LocationDeletableProtocol,
+    LocationExistableProtocol,
+    LocationGettableProtocol,
+    LocationObservableProtocol,
+    LocationSettableProtocol,
     LogicalBase,
     LogicalProtocol,
     MappingBase,
@@ -59,6 +79,13 @@ from everybase.capabilities import (
     MultiplicativeProtocol,
     MultiplyableBase,
     MultiplyableProtocol,
+    # Mutable collection capabilities
+    MutableMappingBase,
+    MutableMappingProtocol,
+    MutableSequenceBase,
+    MutableSequenceProtocol,
+    MutableSetBase,
+    MutableSetProtocol,
     NegatableBase,
     NegatableProtocol,
     NotableBase,
@@ -71,6 +98,8 @@ from everybase.capabilities import (
     OrderableProtocol,
     PowerableBase,
     PowerableProtocol,
+    # Location: reactive (bases)
+    PrimitiveObservableBase,
     SequenceBase,
     SequenceProtocol,
     SetLikeBase,
@@ -81,6 +110,7 @@ from everybase.capabilities import (
     SliceableProtocol,
     SubtractableBase,
     SubtractableProtocol,
+    ViewObservableBase,
 )
 
 # Re-export utilities
@@ -88,27 +118,41 @@ from everybase.combiners import all_, and_, any_, coalesce, ifelse, none_, or_
 from everybase.morphisms import (
     # Arithmetic
     AbsOp,
+    # Collection mutations (impure)
+    AddCmd,
     AddOp,
-    # Collection
+    # Collection (pure)
     AllOp,
     # Logical
     AndOp,
     AnyOp,
+    AppendCmd,
     AtOp,
     # Bitwise
     BitwiseAndOp,
     BitwiseNotOp,
     BitwiseOrOp,
     BoolOp,
+    # Location: reactive
+    ChangeOp,
+    ClearCmd,
+    # Location: collection
+    CollectionClearCmd,
+    CollectionExistsOp,
+    CollectionLenOp,
+    CollectionMissingOp,
     # Conditional
     ConditionalOp,
     ContainsOp,
     CountOp,
     # Callable
     DelAttrOp,
+    DeleteItemCmd,
+    DiscardCmd,
     DivOp,
     # Comparison
     EqOp,
+    ExtractOp,
     FilterOp,
     FindIndexOp,
     FindOp,
@@ -120,9 +164,16 @@ from everybase.morphisms import (
     GtOp,
     IdCompOp,
     IndexOfOp,
+    InsertCmd,
     # Special
     IsEmptyOp,
     IsNaNOp,
+    # Location: item access
+    ItemDeleteCmd,
+    ItemExistsOp,
+    ItemGetOp,
+    ItemMissingOp,
+    ItemSetCmd,
     JoinOp,
     LastOp,
     LenOp,
@@ -140,15 +191,24 @@ from everybase.morphisms import (
     NotEmptyOp,
     NotNaNOp,
     NotOp,
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
     OrOp,
+    PopCmd,
     PosOp,
     PowOp,
     ReduceOp,
+    RemoveCmd,
     ReversedOp,
     RShiftOp,
     SetAttrOp,
+    SetItemCmd,
     SliceOp,
     SortedOp,
+    StoreCmd,
     SubOp,
     SumOp,
     # Conversion
@@ -160,49 +220,50 @@ from everybase.morphisms import (
     ToSetOp,
     ToStrOp,
     ToTupleOp,
+    UpdateCmd,
     XorOp,
 )
 
-# Re-export py refs
-from everybase.py import (
-    AnyRef,
-    BoolRef,
-    BytesRef,
-    DictRef,
-    EmptyRef,
-    FloatRef,
-    FrozenSetRef,
-    IntRef,
-    InvalidRef,
-    ListRef,
-    NoneRef,
-    PyRefBase,
-    SentinelRef,
-    SetRef,
-    StrRef,
-    TupleRef,
-)
-
 # Re-export ref bases
-from everybase.refs import (
-    AnyRefBase,
-    BoolRefBase,
-    BytesRefBase,
-    DictRefBase,
-    EmptyRefBase,
-    FloatRefBase,
-    FrozenSetRefBase,
-    IntRefBase,
-    InvalidRefBase,
-    ListRefBase,
-    NoneRefBase,
-    RefBase,
-    SentinelRefBase,
-    SetRefBase,
-    StrRefBase,
-    TupleRefBase,
+from everybase.types import (
+    AnyType,
+    BoolType,
+    BytesType,
+    DictType,
+    EmptyType,
+    FloatType,
+    FrozenSetType,
+    IntType,
+    InvalidType,
+    ListType,
+    NoneType,
+    SentinelType,
+    SetType,
+    StrType,
+    TupleType,
+    TypeBase,
 )
-from everybase.utils import ensure_term, typed_ref
+from everybase.utils import ensure_term, typed_value
+
+# Re-export py refs
+from everybase.values import (
+    AnyValue,
+    BoolValue,
+    BytesValue,
+    DictValue,
+    EmptyValue,
+    FloatValue,
+    FrozenSetValue,
+    IntValue,
+    InvalidValue,
+    ListValue,
+    NoneValue,
+    SentinelValue,
+    SetValue,
+    StrValue,
+    TupleValue,
+    ValueBase,
+)
 
 
 __all__ = [  # noqa: RUF022
@@ -280,8 +341,37 @@ __all__ = [  # noqa: RUF022
     "MappingProtocol",
     "SetLikeBase",
     "SetLikeProtocol",
+    # Mutable collection
+    "MutableSequenceBase",
+    "MutableSequenceProtocol",
+    "MutableMappingBase",
+    "MutableMappingProtocol",
+    "MutableSetBase",
+    "MutableSetProtocol",
+    "ClearableBase",
+    "ClearableProtocol",
+    # Location capabilities (protocol-only)
+    "LocationGettableProtocol",
+    "LocationSettableProtocol",
+    "LocationExistableProtocol",
+    "LocationDeletableProtocol",
+    "LocationObservableProtocol",
+    # Location: item access (bases)
+    "ItemGettableBase",
+    "ItemSettableBase",
+    "ItemDeletableBase",
+    "ItemExistableBase",
+    # Location: collection (bases)
+    "CollectionExtractableBase",
+    "CollectionStorableBase",
+    "CollectionLengthableBase",
+    "CollectionClearableBase",
+    "CollectionExistableBase",
+    # Location: reactive (bases)
+    "PrimitiveObservableBase",
+    "ViewObservableBase",
     # =========================================================================
-    # MORPHISMS (operations)
+    # MORPHISMS (operations + commands)
     # =========================================================================
     # Arithmetic
     "AbsOp",
@@ -358,49 +448,80 @@ __all__ = [  # noqa: RUF022
     "SliceOp",
     "SortedOp",
     "SumOp",
+    # Collection mutations (impure)
+    "AddCmd",
+    "AppendCmd",
+    "ClearCmd",
+    "DeleteItemCmd",
+    "DiscardCmd",
+    "InsertCmd",
+    "PopCmd",
+    "RemoveCmd",
+    "SetItemCmd",
+    "UpdateCmd",
+    # Location: item access morphisms
+    "ItemGetOp",
+    "ItemSetCmd",
+    "ItemDeleteCmd",
+    "ItemExistsOp",
+    "ItemMissingOp",
+    # Location: collection morphisms
+    "ExtractOp",
+    "StoreCmd",
+    "CollectionLenOp",
+    "CollectionClearCmd",
+    "CollectionExistsOp",
+    "CollectionMissingOp",
+    # Location: reactive morphisms
+    "ChangeOp",
+    "OnChangeOp",
+    "OnPrimitiveChangeOp",
+    "OnChildChangeOp",
+    "OnChildrenChangeOp",
+    "OnDescendantsChangeOp",
     # =========================================================================
     # REFS (Python memory)
     # =========================================================================
-    "PyRefBase",
-    "IntRef",
-    "FloatRef",
-    "BoolRef",
-    "StrRef",
-    "BytesRef",
-    "ListRef",
-    "SetRef",
-    "DictRef",
-    "FrozenSetRef",
-    "TupleRef",
-    "AnyRef",
-    "NoneRef",
-    "SentinelRef",
-    "EmptyRef",
-    "InvalidRef",
+    "ValueBase",
+    "IntValue",
+    "FloatValue",
+    "BoolValue",
+    "StrValue",
+    "BytesValue",
+    "ListValue",
+    "SetValue",
+    "DictValue",
+    "FrozenSetValue",
+    "TupleValue",
+    "AnyValue",
+    "NoneValue",
+    "SentinelValue",
+    "EmptyValue",
+    "InvalidValue",
     # =========================================================================
     # REF BASES (abstract)
     # =========================================================================
-    "RefBase",
-    "IntRefBase",
-    "FloatRefBase",
-    "BoolRefBase",
-    "StrRefBase",
-    "BytesRefBase",
-    "ListRefBase",
-    "DictRefBase",
-    "SetRefBase",
-    "FrozenSetRefBase",
-    "TupleRefBase",
-    "AnyRefBase",
-    "NoneRefBase",
-    "SentinelRefBase",
-    "EmptyRefBase",
-    "InvalidRefBase",
+    "TypeBase",
+    "IntType",
+    "FloatType",
+    "BoolType",
+    "StrType",
+    "BytesType",
+    "ListType",
+    "DictType",
+    "SetType",
+    "FrozenSetType",
+    "TupleType",
+    "AnyType",
+    "NoneType",
+    "SentinelType",
+    "EmptyType",
+    "InvalidType",
     # =========================================================================
     # UTILITIES
     # =========================================================================
     "ensure_term",
-    "typed_ref",
+    "typed_value",
     "all_",
     "and_",
     "any_",

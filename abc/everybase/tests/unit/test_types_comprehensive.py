@@ -1,27 +1,27 @@
 """Comprehensive unit tests for all Term types.
 
 Tests type construction, operations, and method availability for:
-- IntRef, FloatRef, BoolRef (numeric/boolean)
-- StrRef, BytesRef (text/binary)
-- ListRef, TupleRef, DictRef, SetRef, FrozenSetRef (collections)
-- NoneRef, AnyRef (special types)
+- IntValue, FloatValue, BoolValue (numeric/boolean)
+- StrValue, BytesValue (text/binary)
+- ListValue, TupleValue, DictValue, SetValue, FrozenSetValue (collections)
+- NoneValue, AnyValue (special types)
 """
 
 import pytest
 
 from everybase import (
-    AnyRef,
-    BoolRef,
-    BytesRef,
-    DictRef,
-    FloatRef,
-    FrozenSetRef,
-    IntRef,
-    ListRef,
-    NoneRef,
-    SetRef,
-    StrRef,
-    TupleRef,
+    AnyValue,
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    FrozenSetValue,
+    IntValue,
+    ListValue,
+    NoneValue,
+    SetValue,
+    StrValue,
+    TupleValue,
     ensure_term,
 )
 
@@ -32,308 +32,308 @@ from everybase import (
 
 
 class TestIntRefArithmetic:
-    """IntRef arithmetic operations."""
+    """IntValue arithmetic operations."""
 
     def test_addition_int_int(self):
-        """int + int returns IntRef."""
-        x = IntRef(10)
+        """int + int returns IntValue."""
+        x = IntValue(10)
         result = x + 5
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_addition_int_inttype(self):
-        """IntRef + IntRef returns IntRef."""
-        x = IntRef(10)
-        y = IntRef(5)
+        """IntValue + IntValue returns IntValue."""
+        x = IntValue(10)
+        y = IntValue(5)
         result = x + y
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_addition_int_float(self):
-        """int + float returns FloatRef."""
-        x = IntRef(10)
+        """int + float returns FloatValue."""
+        x = IntValue(10)
         result = x + 2.5
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_radd(self):
-        """5 + IntRef works via __radd__."""
-        x = IntRef(10)
+        """5 + IntValue works via __radd__."""
+        x = IntValue(10)
         result = 5 + x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_subtraction(self):
-        """IntRef subtraction."""
-        x = IntRef(10)
+        """IntValue subtraction."""
+        x = IntValue(10)
         result = x - 3
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_rsub(self):
-        """20 - IntRef works."""
-        x = IntRef(10)
+        """20 - IntValue works."""
+        x = IntValue(10)
         result = 20 - x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_multiplication(self):
-        """IntRef multiplication."""
-        x = IntRef(6)
+        """IntValue multiplication."""
+        x = IntValue(6)
         result = x * 7
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_rmul(self):
-        """7 * IntRef works."""
-        x = IntRef(6)
+        """7 * IntValue works."""
+        x = IntValue(6)
         result = 7 * x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_division(self):
-        """IntRef division always returns FloatRef."""
-        x = IntRef(10)
+        """IntValue division always returns FloatValue."""
+        x = IntValue(10)
         result = x / 3
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_rdiv(self):
-        """30 / IntRef works."""
-        x = IntRef(10)
+        """30 / IntValue works."""
+        x = IntValue(10)
         result = 30 / x
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_floor_division(self):
-        """IntRef floor division."""
-        x = IntRef(10)
+        """IntValue floor division."""
+        x = IntValue(10)
         result = x // 3
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_rfloordiv(self):
-        """30 // IntRef works."""
-        x = IntRef(10)
+        """30 // IntValue works."""
+        x = IntValue(10)
         result = 30 // x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_modulo(self):
-        """IntRef modulo."""
-        x = IntRef(10)
+        """IntValue modulo."""
+        x = IntValue(10)
         result = x % 3
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_rmod(self):
-        """30 % IntRef works."""
-        x = IntRef(7)
+        """30 % IntValue works."""
+        x = IntValue(7)
         result = 30 % x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_power(self):
-        """IntRef power."""
-        x = IntRef(2)
+        """IntValue power."""
+        x = IntValue(2)
         result = x**10
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_rpow(self):
-        """2 ** IntRef works."""
-        x = IntRef(10)
+        """2 ** IntValue works."""
+        x = IntValue(10)
         result = 2**x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_negation(self):
-        """IntRef negation."""
-        x = IntRef(42)
+        """IntValue negation."""
+        x = IntValue(42)
         result = -x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_positive(self):
-        """IntRef unary plus."""
-        x = IntRef(42)
+        """IntValue unary plus."""
+        x = IntValue(42)
         result = +x
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_absolute(self):
-        """IntRef absolute value."""
-        x = IntRef(-42)
+        """IntValue absolute value."""
+        x = IntValue(-42)
         result = abs(x)
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
 
 class TestIntRefBitwise:
-    """IntRef bitwise operations."""
+    """IntValue bitwise operations."""
 
     def test_bitwise_and(self):
-        """IntRef bitand() method."""
-        x = IntRef(0b1100)
+        """IntValue bitand() method."""
+        x = IntValue(0b1100)
         result = x.bitand(0b1010)
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_bitwise_or(self):
-        """IntRef bitor() method."""
-        x = IntRef(0b1100)
+        """IntValue bitor() method."""
+        x = IntValue(0b1100)
         result = x.bitor(0b1010)
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_bitwise_xor(self):
-        """IntRef xor via ^."""
-        x = IntRef(0b1100)
+        """IntValue xor via ^."""
+        x = IntValue(0b1100)
         result = x ^ 0b1010
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_bitwise_not(self):
-        """IntRef bitnot() method."""
-        x = IntRef(0b1100)
+        """IntValue bitnot() method."""
+        x = IntValue(0b1100)
         result = x.bitnot()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_left_shift(self):
-        """IntRef left shift."""
-        x = IntRef(1)
+        """IntValue left shift."""
+        x = IntValue(1)
         result = x << 4
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_right_shift(self):
-        """IntRef right shift."""
-        x = IntRef(16)
+        """IntValue right shift."""
+        x = IntValue(16)
         result = x >> 2
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
 
 class TestIntRefComparison:
-    """IntRef comparison operations."""
+    """IntValue comparison operations."""
 
     def test_greater_than(self):
-        """IntRef > comparison."""
-        x = IntRef(10)
+        """IntValue > comparison."""
+        x = IntValue(10)
         result = x > 5
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_less_than(self):
-        """IntRef < comparison."""
-        x = IntRef(10)
+        """IntValue < comparison."""
+        x = IntValue(10)
         result = x < 20
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_greater_equal(self):
-        """IntRef >= comparison."""
-        x = IntRef(10)
+        """IntValue >= comparison."""
+        x = IntValue(10)
         result = x >= 10
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_less_equal(self):
-        """IntRef <= comparison."""
-        x = IntRef(10)
+        """IntValue <= comparison."""
+        x = IntValue(10)
         result = x <= 10
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_equality_method(self):
-        """IntRef eq() method."""
-        x = IntRef(10)
+        """IntValue eq() method."""
+        x = IntValue(10)
         result = x.eq(10)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_inequality_method(self):
-        """IntRef ne() method."""
-        x = IntRef(10)
+        """IntValue ne() method."""
+        x = IntValue(10)
         result = x.ne(5)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_identity_method(self):
-        """IntRef is_() method."""
-        x = IntRef(10)
+        """IntValue is_() method."""
+        x = IntValue(10)
         result = x.is_(10)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 class TestIntRefLogical:
-    """IntRef logical operations."""
+    """IntValue logical operations."""
 
     def test_and(self):
-        """IntRef and_() method."""
-        x = IntRef(1)
-        result = x.and_(IntRef(2))
-        assert isinstance(result, BoolRef)
+        """IntValue and_() method."""
+        x = IntValue(1)
+        result = x.and_(IntValue(2))
+        assert isinstance(result, BoolValue)
 
     def test_or(self):
-        """IntRef or_() method."""
-        x = IntRef(0)
-        result = x.or_(IntRef(1))
-        assert isinstance(result, BoolRef)
+        """IntValue or_() method."""
+        x = IntValue(0)
+        result = x.or_(IntValue(1))
+        assert isinstance(result, BoolValue)
 
     def test_not(self):
-        """IntRef not_() method."""
-        x = IntRef(0)
+        """IntValue not_() method."""
+        x = IntValue(0)
         result = x.not_()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_bool_method(self):
-        """IntRef bool_() method."""
-        x = IntRef(42)
+        """IntValue bool_() method."""
+        x = IntValue(42)
         result = x.bool_()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 class TestIntRefConversions:
-    """IntRef type conversion methods."""
+    """IntValue type conversion methods."""
 
     def test_to_float(self):
-        """IntRef.to_float() returns FloatRef."""
-        x = IntRef(42)
+        """IntValue.to_float() returns FloatValue."""
+        x = IntValue(42)
         result = x.to_float()
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_to_str(self):
-        """IntRef.to_str() returns StrRef."""
-        x = IntRef(42)
+        """IntValue.to_str() returns StrValue."""
+        x = IntValue(42)
         result = x.to_str()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_to_bool(self):
-        """IntRef.to_bool() returns BoolRef."""
-        x = IntRef(42)
+        """IntValue.to_bool() returns BoolValue."""
+        x = IntValue(42)
         result = x.to_bool()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 class TestIntRefSpecialChecks:
-    """IntRef special value checks."""
+    """IntValue special value checks."""
 
     def test_is_empty(self):
-        """IntRef.is_empty() returns BoolRef."""
-        x = IntRef(42)
+        """IntValue.is_empty() returns BoolValue."""
+        x = IntValue(42)
         result = x.is_empty()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_is_invalid(self):
-        """IntRef.is_invalid() returns BoolRef."""
-        x = IntRef(42)
+        """IntValue.is_invalid() returns BoolValue."""
+        x = IntValue(42)
         result = x.is_invalid()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_is_sentinel(self):
-        """IntRef.is_sentinel() returns BoolRef."""
-        x = IntRef(42)
+        """IntValue.is_sentinel() returns BoolValue."""
+        x = IntValue(42)
         result = x.is_sentinel()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_not_empty(self):
-        """IntRef.not_empty() returns BoolRef."""
-        x = IntRef(42)
+        """IntValue.not_empty() returns BoolValue."""
+        x = IntValue(42)
         result = x.not_empty()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_not_invalid(self):
-        """IntRef.not_invalid() returns BoolRef."""
-        x = IntRef(42)
+        """IntValue.not_invalid() returns BoolValue."""
+        x = IntValue(42)
         result = x.not_invalid()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 class TestIntRefConditional:
-    """IntRef conditional operations."""
+    """IntValue conditional operations."""
 
     def test_ifelse(self):
-        """IntRef.ifelse() returns AnyRef."""
-        x = IntRef(100)
-        result = x.ifelse(BoolRef(True), IntRef(0))
-        assert isinstance(result, AnyRef)
+        """IntValue.ifelse() returns AnyValue."""
+        x = IntValue(100)
+        result = x.ifelse(BoolValue(True), IntValue(0))
+        assert isinstance(result, AnyValue)
 
     def test_or_default(self):
-        """IntRef.or_default() returns AnyRef."""
-        x = IntRef(42)
+        """IntValue.or_default() returns AnyValue."""
+        x = IntValue(42)
         result = x.or_default(0)
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
 
 # =============================================================================
@@ -342,71 +342,71 @@ class TestIntRefConditional:
 
 
 class TestFloatRef:
-    """FloatRef operations."""
+    """FloatValue operations."""
 
     def test_literal_creation(self):
-        """FloatRef can wrap literal."""
-        FloatRef(3.14)
+        """FloatValue can wrap literal."""
+        FloatValue(3.14)
 
     def test_addition(self):
-        """FloatRef addition."""
-        f = FloatRef(1.5)
+        """FloatValue addition."""
+        f = FloatValue(1.5)
         result = f + 2.5
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_subtraction(self):
-        """FloatRef subtraction."""
-        f = FloatRef(5.0)
+        """FloatValue subtraction."""
+        f = FloatValue(5.0)
         result = f - 2.0
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_multiplication(self):
-        """FloatRef multiplication."""
-        f = FloatRef(2.5)
+        """FloatValue multiplication."""
+        f = FloatValue(2.5)
         result = f * 4.0
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_division(self):
-        """FloatRef division."""
-        f = FloatRef(10.0)
+        """FloatValue division."""
+        f = FloatValue(10.0)
         result = f / 4.0
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_floor_division(self):
-        """FloatRef floor division."""
-        f = FloatRef(10.0)
+        """FloatValue floor division."""
+        f = FloatValue(10.0)
         result = f // 3.0
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_modulo(self):
-        """FloatRef modulo."""
-        f = FloatRef(10.0)
+        """FloatValue modulo."""
+        f = FloatValue(10.0)
         result = f % 3.0
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_power(self):
-        """FloatRef power."""
-        f = FloatRef(2.0)
+        """FloatValue power."""
+        f = FloatValue(2.0)
         result = f**3.0
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_negation(self):
-        """FloatRef negation."""
-        f = FloatRef(3.14)
+        """FloatValue negation."""
+        f = FloatValue(3.14)
         result = -f
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_comparison(self):
-        """FloatRef comparison."""
-        f = FloatRef(3.14)
+        """FloatValue comparison."""
+        f = FloatValue(3.14)
         result = f > 3.0
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_to_int(self):
-        """FloatRef.to_int() returns IntRef."""
-        f = FloatRef(3.14)
+        """FloatValue.to_int() returns IntValue."""
+        f = FloatValue(3.14)
         result = f.to_int()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
 
 # =============================================================================
@@ -415,53 +415,53 @@ class TestFloatRef:
 
 
 class TestBoolRef:
-    """BoolRef operations."""
+    """BoolValue operations."""
 
     def test_literal_creation_true(self):
-        """BoolRef can wrap True."""
-        BoolRef(True)
+        """BoolValue can wrap True."""
+        BoolValue(True)
 
     def test_literal_creation_false(self):
-        """BoolRef can wrap False."""
-        BoolRef(False)
+        """BoolValue can wrap False."""
+        BoolValue(False)
 
     def test_and_operation(self):
-        """BoolRef and_() method."""
-        a = BoolRef(True)
-        b = BoolRef(False)
+        """BoolValue and_() method."""
+        a = BoolValue(True)
+        b = BoolValue(False)
         result = a.and_(b)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_or_operation(self):
-        """BoolRef or_() method."""
-        a = BoolRef(True)
-        b = BoolRef(False)
+        """BoolValue or_() method."""
+        a = BoolValue(True)
+        b = BoolValue(False)
         result = a.or_(b)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_not_operation(self):
-        """BoolRef not_() method."""
-        a = BoolRef(True)
+        """BoolValue not_() method."""
+        a = BoolValue(True)
         result = a.not_()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_bool_method(self):
-        """BoolRef bool_() method."""
-        a = BoolRef(True)
+        """BoolValue bool_() method."""
+        a = BoolValue(True)
         result = a.bool_()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_comparison(self):
-        """BoolRef comparison."""
-        a = BoolRef(True)
-        result = a > BoolRef(False)
-        assert isinstance(result, BoolRef)
+        """BoolValue comparison."""
+        a = BoolValue(True)
+        result = a > BoolValue(False)
+        assert isinstance(result, BoolValue)
 
     def test_equality(self):
-        """BoolRef eq() method."""
-        a = BoolRef(True)
+        """BoolValue eq() method."""
+        a = BoolValue(True)
         result = a.eq(True)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 # =============================================================================
@@ -470,247 +470,247 @@ class TestBoolRef:
 
 
 class TestStrRefBasic:
-    """StrRef basic operations."""
+    """StrValue basic operations."""
 
     def test_literal_creation(self):
-        """StrRef can wrap literal."""
-        StrRef("hello")
+        """StrValue can wrap literal."""
+        StrValue("hello")
 
     def test_concatenation(self):
-        """StrRef + str returns StrRef."""
-        s = StrRef("hello")
+        """StrValue + str returns StrValue."""
+        s = StrValue("hello")
         result = s + " world"
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_radd(self):
-        """str + StrRef works."""
-        s = StrRef("world")
+        """str + StrValue works."""
+        s = StrValue("world")
         result = "hello " + s
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
 
 class TestStrRefCaseMethods:
-    """StrRef case transformation methods."""
+    """StrValue case transformation methods."""
 
     def test_upper(self):
-        """StrRef.upper() returns StrRef."""
-        s = StrRef("hello")
+        """StrValue.upper() returns StrValue."""
+        s = StrValue("hello")
         result = s.upper()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_lower(self):
-        """StrRef.lower() returns StrRef."""
-        s = StrRef("HELLO")
+        """StrValue.lower() returns StrValue."""
+        s = StrValue("HELLO")
         result = s.lower()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_title(self):
-        """StrRef.title() returns StrRef."""
-        s = StrRef("hello world")
+        """StrValue.title() returns StrValue."""
+        s = StrValue("hello world")
         result = s.title()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_capitalize(self):
-        """StrRef.capitalize() returns StrRef."""
-        s = StrRef("hello")
+        """StrValue.capitalize() returns StrValue."""
+        s = StrValue("hello")
         result = s.capitalize()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_swapcase(self):
-        """StrRef.swapcase() returns StrRef."""
-        s = StrRef("HeLLo")
+        """StrValue.swapcase() returns StrValue."""
+        s = StrValue("HeLLo")
         result = s.swapcase()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
 
 class TestStrRefStrippingMethods:
-    """StrRef stripping methods."""
+    """StrValue stripping methods."""
 
     def test_strip(self):
-        """StrRef.strip() returns StrRef."""
-        s = StrRef("  hello  ")
+        """StrValue.strip() returns StrValue."""
+        s = StrValue("  hello  ")
         result = s.strip()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_strip_with_chars(self):
-        """StrRef.strip(chars) returns StrRef."""
-        s = StrRef("xxhelloxx")
+        """StrValue.strip(chars) returns StrValue."""
+        s = StrValue("xxhelloxx")
         result = s.strip("x")
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_lstrip(self):
-        """StrRef.lstrip() returns StrRef."""
-        s = StrRef("  hello")
+        """StrValue.lstrip() returns StrValue."""
+        s = StrValue("  hello")
         result = s.lstrip()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_rstrip(self):
-        """StrRef.rstrip() returns StrRef."""
-        s = StrRef("hello  ")
+        """StrValue.rstrip() returns StrValue."""
+        s = StrValue("hello  ")
         result = s.rstrip()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
 
 class TestStrRefSplittingMethods:
-    """StrRef splitting methods."""
+    """StrValue splitting methods."""
 
     def test_split(self):
-        """StrRef.split() returns ListRef."""
-        s = StrRef("a,b,c")
+        """StrValue.split() returns ListValue."""
+        s = StrValue("a,b,c")
         result = s.split(",")
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_split_no_sep(self):
-        """StrRef.split() with no separator."""
-        s = StrRef("a b c")
+        """StrValue.split() with no separator."""
+        s = StrValue("a b c")
         result = s.split()
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_rsplit(self):
-        """StrRef.rsplit() returns ListRef."""
-        s = StrRef("a,b,c")
+        """StrValue.rsplit() returns ListValue."""
+        s = StrValue("a,b,c")
         result = s.rsplit(",")
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
 
 class TestStrRefSearchMethods:
-    """StrRef search methods."""
+    """StrValue search methods."""
 
     def test_find(self):
-        """StrRef.find() returns IntRef."""
-        s = StrRef("hello world")
+        """StrValue.find() returns IntValue."""
+        s = StrValue("hello world")
         result = s.find("world")
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_rfind(self):
-        """StrRef.rfind() returns IntRef."""
-        s = StrRef("hello world world")
+        """StrValue.rfind() returns IntValue."""
+        s = StrValue("hello world world")
         result = s.rfind("world")
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_count_substring(self):
-        """StrRef.count_substring() returns IntRef."""
-        s = StrRef("abcabc")
+        """StrValue.count_substring() returns IntValue."""
+        s = StrValue("abcabc")
         result = s.count_substring("abc")
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
 
 class TestStrRefTestMethods:
-    """StrRef testing methods."""
+    """StrValue testing methods."""
 
     def test_startswith(self):
-        """StrRef.startswith() returns BoolRef."""
-        s = StrRef("hello")
+        """StrValue.startswith() returns BoolValue."""
+        s = StrValue("hello")
         result = s.startswith("he")
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_endswith(self):
-        """StrRef.endswith() returns BoolRef."""
-        s = StrRef("hello")
+        """StrValue.endswith() returns BoolValue."""
+        s = StrValue("hello")
         result = s.endswith("lo")
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_isdigit(self):
-        """StrRef.isdigit() returns BoolRef."""
-        s = StrRef("123")
+        """StrValue.isdigit() returns BoolValue."""
+        s = StrValue("123")
         result = s.isdigit()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_isalpha(self):
-        """StrRef.isalpha() returns BoolRef."""
-        s = StrRef("abc")
+        """StrValue.isalpha() returns BoolValue."""
+        s = StrValue("abc")
         result = s.isalpha()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_isalnum(self):
-        """StrRef.isalnum() returns BoolRef."""
-        s = StrRef("abc123")
+        """StrValue.isalnum() returns BoolValue."""
+        s = StrValue("abc123")
         result = s.isalnum()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_isspace(self):
-        """StrRef.isspace() returns BoolRef."""
-        s = StrRef("   ")
+        """StrValue.isspace() returns BoolValue."""
+        s = StrValue("   ")
         result = s.isspace()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 class TestStrRefPaddingMethods:
-    """StrRef padding methods."""
+    """StrValue padding methods."""
 
     def test_center(self):
-        """StrRef.center() returns StrRef."""
-        s = StrRef("hi")
+        """StrValue.center() returns StrValue."""
+        s = StrValue("hi")
         result = s.center(10)
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_ljust(self):
-        """StrRef.ljust() returns StrRef."""
-        s = StrRef("hi")
+        """StrValue.ljust() returns StrValue."""
+        s = StrValue("hi")
         result = s.ljust(10)
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_rjust(self):
-        """StrRef.rjust() returns StrRef."""
-        s = StrRef("hi")
+        """StrValue.rjust() returns StrValue."""
+        s = StrValue("hi")
         result = s.rjust(10)
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_zfill(self):
-        """StrRef.zfill() returns StrRef."""
-        s = StrRef("42")
+        """StrValue.zfill() returns StrValue."""
+        s = StrValue("42")
         result = s.zfill(5)
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
 
 class TestStrRefOtherMethods:
-    """StrRef other methods."""
+    """StrValue other methods."""
 
     def test_replace(self):
-        """StrRef.replace() returns StrRef."""
-        s = StrRef("hello")
+        """StrValue.replace() returns StrValue."""
+        s = StrValue("hello")
         result = s.replace("l", "L")
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_encode(self):
-        """StrRef.encode() returns BytesRef."""
-        s = StrRef("hello")
+        """StrValue.encode() returns BytesValue."""
+        s = StrValue("hello")
         result = s.encode()
-        assert isinstance(result, BytesRef)
+        assert isinstance(result, BytesValue)
 
     def test_len(self):
-        """StrRef.len_() returns IntRef."""
-        s = StrRef("hello")
+        """StrValue.len_() returns IntValue."""
+        s = StrValue("hello")
         result = s.len_()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """StrRef.contains() returns BoolRef."""
-        s = StrRef("hello")
+        """StrValue.contains() returns BoolValue."""
+        s = StrValue("hello")
         result = s.contains("ell")
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 class TestStrRefComparison:
-    """StrRef comparison operations."""
+    """StrValue comparison operations."""
 
     def test_greater_than(self):
-        """StrRef > comparison."""
-        s = StrRef("b")
+        """StrValue > comparison."""
+        s = StrValue("b")
         result = s > "a"
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_less_than(self):
-        """StrRef < comparison."""
-        s = StrRef("a")
+        """StrValue < comparison."""
+        s = StrValue("a")
         result = s < "b"
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_equality(self):
-        """StrRef eq() method."""
-        s = StrRef("hello")
+        """StrValue eq() method."""
+        s = StrValue("hello")
         result = s.eq("hello")
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 # =============================================================================
@@ -719,65 +719,65 @@ class TestStrRefComparison:
 
 
 class TestBytesRef:
-    """BytesRef operations."""
+    """BytesValue operations."""
 
     def test_literal_creation(self):
-        """BytesRef can wrap literal."""
-        BytesRef(b"hello")
+        """BytesValue can wrap literal."""
+        BytesValue(b"hello")
 
     def test_concatenation(self):
-        """BytesRef + bytes returns BytesRef."""
-        b = BytesRef(b"hello")
+        """BytesValue + bytes returns BytesValue."""
+        b = BytesValue(b"hello")
         result = b + b" world"
-        assert isinstance(result, BytesRef)
+        assert isinstance(result, BytesValue)
 
     def test_decode(self):
-        """BytesRef.decode() returns StrRef."""
-        b = BytesRef(b"hello")
+        """BytesValue.decode() returns StrValue."""
+        b = BytesValue(b"hello")
         result = b.decode()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_hex(self):
-        """BytesRef.hex_() returns StrRef."""
-        b = BytesRef(b"hello")
+        """BytesValue.hex_() returns StrValue."""
+        b = BytesValue(b"hello")
         result = b.hex_()
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_upper(self):
-        """BytesRef.upper() returns BytesRef."""
-        b = BytesRef(b"hello")
+        """BytesValue.upper() returns BytesValue."""
+        b = BytesValue(b"hello")
         result = b.upper()
-        assert isinstance(result, BytesRef)
+        assert isinstance(result, BytesValue)
 
     def test_lower(self):
-        """BytesRef.lower() returns BytesRef."""
-        b = BytesRef(b"HELLO")
+        """BytesValue.lower() returns BytesValue."""
+        b = BytesValue(b"HELLO")
         result = b.lower()
-        assert isinstance(result, BytesRef)
+        assert isinstance(result, BytesValue)
 
     def test_strip(self):
-        """BytesRef.strip() returns BytesRef."""
-        b = BytesRef(b"  hello  ")
+        """BytesValue.strip() returns BytesValue."""
+        b = BytesValue(b"  hello  ")
         result = b.strip()
-        assert isinstance(result, BytesRef)
+        assert isinstance(result, BytesValue)
 
     def test_find_bytes(self):
-        """BytesRef.find_bytes() returns IntRef."""
-        b = BytesRef(b"hello world")
+        """BytesValue.find_bytes() returns IntValue."""
+        b = BytesValue(b"hello world")
         result = b.find_bytes(b"world")
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_startswith(self):
-        """BytesRef.startswith() returns BoolRef."""
-        b = BytesRef(b"hello")
+        """BytesValue.startswith() returns BoolValue."""
+        b = BytesValue(b"hello")
         result = b.startswith(b"he")
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_len(self):
-        """BytesRef.len_() returns IntRef."""
-        b = BytesRef(b"hello")
+        """BytesValue.len_() returns IntValue."""
+        b = BytesValue(b"hello")
         result = b.len_()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
 
 # =============================================================================
@@ -786,115 +786,115 @@ class TestBytesRef:
 
 
 class TestListRefBasic:
-    """ListRef basic operations."""
+    """ListValue basic operations."""
 
     def test_literal_creation(self):
-        """ListRef can wrap literal."""
-        ListRef([1, 2, 3])
+        """ListValue can wrap literal."""
+        ListValue([1, 2, 3])
 
     def test_concatenation(self):
-        """ListRef + list returns ListRef."""
-        lst = ListRef([1, 2])
+        """ListValue + list returns ListValue."""
+        lst = ListValue([1, 2])
         result = lst + [3, 4]  # noqa: RUF005
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_indexing(self):
-        """ListRef[int] returns AnyRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue[int] returns AnyValue."""
+        lst = ListValue([1, 2, 3])
         result = lst[0]
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_slicing(self):
-        """ListRef[slice] returns ListRef."""
-        lst = ListRef([1, 2, 3, 4, 5])
+        """ListValue[slice] returns ListValue."""
+        lst = ListValue([1, 2, 3, 4, 5])
         result = lst[1:4]
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
 
 class TestListRefSequenceMethods:
-    """ListRef sequence methods."""
+    """ListValue sequence methods."""
 
     def test_len(self):
-        """ListRef.len_() returns IntRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue.len_() returns IntValue."""
+        lst = ListValue([1, 2, 3])
         result = lst.len_()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """ListRef.contains() returns BoolRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue.contains() returns BoolValue."""
+        lst = ListValue([1, 2, 3])
         result = lst.contains(2)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_first(self):
-        """ListRef.first() returns AnyRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue.first() returns AnyValue."""
+        lst = ListValue([1, 2, 3])
         result = lst.first()
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_last(self):
-        """ListRef.last() returns AnyRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue.last() returns AnyValue."""
+        lst = ListValue([1, 2, 3])
         result = lst.last()
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_reversed(self):
-        """ListRef.reversed_() returns ListRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue.reversed_() returns ListValue."""
+        lst = ListValue([1, 2, 3])
         result = lst.reversed_()
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_sorted(self):
-        """ListRef.sorted_() returns ListRef."""
-        lst = ListRef([3, 1, 2])
+        """ListValue.sorted_() returns ListValue."""
+        lst = ListValue([3, 1, 2])
         result = lst.sorted_()
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_index(self):
-        """ListRef.index() returns IntRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue.index() returns IntValue."""
+        lst = ListValue([1, 2, 3])
         result = lst.index(2)
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_count(self):
-        """ListRef.count() returns IntRef."""
-        lst = ListRef([1, 2, 2, 3])
+        """ListValue.count() returns IntValue."""
+        lst = ListValue([1, 2, 2, 3])
         result = lst.count(2)
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
 
 class TestListRefIterableMethods:
-    """ListRef iterable/functional methods."""
+    """ListValue iterable/functional methods."""
 
     def test_sum(self):
-        """ListRef.sum_() returns AnyRef."""
-        lst = ListRef([1, 2, 3])
+        """ListValue.sum_() returns AnyValue."""
+        lst = ListValue([1, 2, 3])
         result = lst.sum_()
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_min(self):
-        """ListRef.min_() returns AnyRef."""
-        lst = ListRef([3, 1, 2])
+        """ListValue.min_() returns AnyValue."""
+        lst = ListValue([3, 1, 2])
         result = lst.min_()
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_max(self):
-        """ListRef.max_() returns AnyRef."""
-        lst = ListRef([3, 1, 2])
+        """ListValue.max_() returns AnyValue."""
+        lst = ListValue([3, 1, 2])
         result = lst.max_()
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_any(self):
-        """ListRef.any_() returns BoolRef."""
-        lst = ListRef([False, True, False])
+        """ListValue.any_() returns BoolValue."""
+        lst = ListValue([False, True, False])
         result = lst.any_()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_all(self):
-        """ListRef.all_() returns BoolRef."""
-        lst = ListRef([True, True, True])
+        """ListValue.all_() returns BoolValue."""
+        lst = ListValue([True, True, True])
         result = lst.all_()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 # =============================================================================
@@ -903,36 +903,36 @@ class TestListRefIterableMethods:
 
 
 class TestTupleRef:
-    """TupleRef operations."""
+    """TupleValue operations."""
 
     def test_literal_creation(self):
-        """TupleRef can wrap literal."""
-        TupleRef((1, 2, 3))
+        """TupleValue can wrap literal."""
+        TupleValue((1, 2, 3))
 
     def test_indexing(self):
-        """TupleRef[int] returns AnyRef."""
-        t = TupleRef((1, 2, 3))
+        """TupleValue[int] returns AnyValue."""
+        t = TupleValue((1, 2, 3))
         result = t[0]
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_slicing(self):
-        """TupleRef[slice] returns TupleRef."""
-        t = TupleRef((1, 2, 3, 4, 5))
+        """TupleValue[slice] returns TupleValue."""
+        t = TupleValue((1, 2, 3, 4, 5))
         result = t[1:4]
-        # TupleRef slicing returns TupleRef (not ListRef)
-        assert isinstance(result, TupleRef)
+        # TupleValue slicing returns TupleValue (not ListValue)
+        assert isinstance(result, TupleValue)
 
     def test_len(self):
-        """TupleRef.len_() returns IntRef."""
-        t = TupleRef((1, 2, 3))
+        """TupleValue.len_() returns IntValue."""
+        t = TupleValue((1, 2, 3))
         result = t.len_()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """TupleRef.contains() returns BoolRef."""
-        t = TupleRef((1, 2, 3))
+        """TupleValue.contains() returns BoolValue."""
+        t = TupleValue((1, 2, 3))
         result = t.contains(2)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 # =============================================================================
@@ -941,53 +941,53 @@ class TestTupleRef:
 
 
 class TestDictRef:
-    """DictRef operations."""
+    """DictValue operations."""
 
     def test_literal_creation(self):
-        """DictRef can wrap literal."""
-        DictRef({"a": 1, "b": 2})
+        """DictValue can wrap literal."""
+        DictValue({"a": 1, "b": 2})
 
     def test_key_access(self):
-        """DictRef[key] returns AnyRef."""
-        d = DictRef({"a": 1, "b": 2})
+        """DictValue[key] returns AnyValue."""
+        d = DictValue({"a": 1, "b": 2})
         result = d["a"]
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_len(self):
-        """DictRef.len_() returns IntRef."""
-        d = DictRef({"a": 1, "b": 2})
+        """DictValue.len_() returns IntValue."""
+        d = DictValue({"a": 1, "b": 2})
         result = d.len_()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """DictRef.contains() returns BoolRef."""
-        d = DictRef({"a": 1, "b": 2})
+        """DictValue.contains() returns BoolValue."""
+        d = DictValue({"a": 1, "b": 2})
         result = d.contains("a")
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_keys(self):
-        """DictRef.keys_() returns ListRef."""
-        d = DictRef({"a": 1, "b": 2})
+        """DictValue.keys_() returns ListValue."""
+        d = DictValue({"a": 1, "b": 2})
         result = d.keys_()
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_values(self):
-        """DictRef.values_() returns ListRef."""
-        d = DictRef({"a": 1, "b": 2})
+        """DictValue.values_() returns ListValue."""
+        d = DictValue({"a": 1, "b": 2})
         result = d.values_()
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_items(self):
-        """DictRef.items_() returns ListRef."""
-        d = DictRef({"a": 1, "b": 2})
+        """DictValue.items_() returns ListValue."""
+        d = DictValue({"a": 1, "b": 2})
         result = d.items_()
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_get(self):
-        """DictRef.get_() returns AnyRef."""
-        d = DictRef({"a": 1, "b": 2})
+        """DictValue.get_() returns AnyValue."""
+        d = DictValue({"a": 1, "b": 2})
         result = d.get_("a", 0)
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
 
 # =============================================================================
@@ -996,79 +996,79 @@ class TestDictRef:
 
 
 class TestSetRef:
-    """SetRef operations."""
+    """SetValue operations."""
 
     def test_literal_creation(self):
-        """SetRef can wrap literal."""
-        SetRef({1, 2, 3})
+        """SetValue can wrap literal."""
+        SetValue({1, 2, 3})
 
     def test_len(self):
-        """SetRef.len_() returns IntRef."""
-        s = SetRef({1, 2, 3})
+        """SetValue.len_() returns IntValue."""
+        s = SetValue({1, 2, 3})
         result = s.len_()
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """SetRef.contains() returns BoolRef."""
-        s = SetRef({1, 2, 3})
+        """SetValue.contains() returns BoolValue."""
+        s = SetValue({1, 2, 3})
         result = s.contains(2)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_union(self):
-        """SetRef.union() returns SetRef."""
-        s = SetRef({1, 2})
+        """SetValue.union() returns SetValue."""
+        s = SetValue({1, 2})
         result = s.union({3, 4})
-        assert isinstance(result, SetRef)
+        assert isinstance(result, SetValue)
 
     def test_intersection(self):
-        """SetRef.intersection() returns SetRef."""
-        s = SetRef({1, 2, 3})
+        """SetValue.intersection() returns SetValue."""
+        s = SetValue({1, 2, 3})
         result = s.intersection({2, 3, 4})
-        assert isinstance(result, SetRef)
+        assert isinstance(result, SetValue)
 
     def test_difference(self):
-        """SetRef.difference() returns SetRef."""
-        s = SetRef({1, 2, 3})
+        """SetValue.difference() returns SetValue."""
+        s = SetValue({1, 2, 3})
         result = s.difference({2, 3})
-        assert isinstance(result, SetRef)
+        assert isinstance(result, SetValue)
 
     def test_symmetric_difference(self):
-        """SetRef.symmetric_difference() returns SetRef."""
-        s = SetRef({1, 2, 3})
+        """SetValue.symmetric_difference() returns SetValue."""
+        s = SetValue({1, 2, 3})
         result = s.symmetric_difference({2, 3, 4})
-        assert isinstance(result, SetRef)
+        assert isinstance(result, SetValue)
 
     def test_issubset(self):
-        """SetRef.issubset() returns BoolRef."""
-        s = SetRef({1, 2})
+        """SetValue.issubset() returns BoolValue."""
+        s = SetValue({1, 2})
         result = s.issubset({1, 2, 3})
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_issuperset(self):
-        """SetRef.issuperset() returns BoolRef."""
-        s = SetRef({1, 2, 3})
+        """SetValue.issuperset() returns BoolValue."""
+        s = SetValue({1, 2, 3})
         result = s.issuperset({1, 2})
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_isdisjoint(self):
-        """SetRef.isdisjoint() returns BoolRef."""
-        s = SetRef({1, 2})
+        """SetValue.isdisjoint() returns BoolValue."""
+        s = SetValue({1, 2})
         result = s.isdisjoint({3, 4})
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
 
 class TestFrozenSetRef:
-    """FrozenSetRef operations."""
+    """FrozenSetValue operations."""
 
     def test_literal_creation(self):
-        """FrozenSetRef can wrap literal."""
-        FrozenSetRef(frozenset({1, 2, 3}))
+        """FrozenSetValue can wrap literal."""
+        FrozenSetValue(frozenset({1, 2, 3}))
 
     def test_union(self):
-        """FrozenSetRef.union() returns FrozenSetRef."""
-        s = FrozenSetRef(frozenset({1, 2}))
+        """FrozenSetValue.union() returns FrozenSetValue."""
+        s = FrozenSetValue(frozenset({1, 2}))
         result = s.union(frozenset({3, 4}))
-        assert isinstance(result, FrozenSetRef)
+        assert isinstance(result, FrozenSetValue)
 
 
 # =============================================================================
@@ -1077,23 +1077,23 @@ class TestFrozenSetRef:
 
 
 class TestNoneRef:
-    """NoneRef operations."""
+    """NoneValue operations."""
 
     def test_default_creation(self):
-        """NoneRef() creates None literal."""
-        _ = NoneRef()
+        """NoneValue() creates None literal."""
+        _ = NoneValue()
 
     def test_is_empty(self):
-        """NoneRef.is_empty() returns BoolRef."""
-        n = NoneRef()
+        """NoneValue.is_empty() returns BoolValue."""
+        n = NoneValue()
         result = n.is_empty()
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_logical_and(self):
-        """NoneRef.and_() works."""
-        n = NoneRef()
-        result = n.and_(BoolRef(True))
-        assert isinstance(result, BoolRef)
+        """NoneValue.and_() works."""
+        n = NoneValue()
+        result = n.and_(BoolValue(True))
+        assert isinstance(result, BoolValue)
 
 
 # =============================================================================
@@ -1102,35 +1102,35 @@ class TestNoneRef:
 
 
 class TestAnyRef:
-    """AnyRef operations."""
+    """AnyValue operations."""
 
     def test_literal_creation(self):
-        """AnyRef can wrap literal."""
-        AnyRef(42)
+        """AnyValue can wrap literal."""
+        AnyValue(42)
 
     def test_arithmetic(self):
-        """AnyRef supports arithmetic."""
-        a = AnyRef(10)
+        """AnyValue supports arithmetic."""
+        a = AnyValue(10)
         result = a + 5
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
     def test_comparison(self):
-        """AnyRef supports comparison."""
-        a = AnyRef(10)
+        """AnyValue supports comparison."""
+        a = AnyValue(10)
         result = a > 5
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_logical(self):
-        """AnyRef supports logical."""
-        a = AnyRef(True)
+        """AnyValue supports logical."""
+        a = AnyValue(True)
         result = a.and_(False)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_bitwise(self):
-        """AnyRef supports bitwise."""
-        a = AnyRef(0b1100)
+        """AnyValue supports bitwise."""
+        a = AnyValue(0b1100)
         result = a.bitand(0b1010)
-        assert isinstance(result, AnyRef)
+        assert isinstance(result, AnyValue)
 
 
 # =============================================================================
@@ -1142,68 +1142,68 @@ class TestEnsureTermFunction:
     """ensure_term() function comprehensive tests."""
 
     def test_int(self):
-        """ensure_term(int) returns IntRef."""
+        """ensure_term(int) returns IntValue."""
         result = ensure_term(42)
-        assert isinstance(result, IntRef)
+        assert isinstance(result, IntValue)
 
     def test_float(self):
-        """ensure_term(float) returns FloatRef."""
+        """ensure_term(float) returns FloatValue."""
         result = ensure_term(3.14)
-        assert isinstance(result, FloatRef)
+        assert isinstance(result, FloatValue)
 
     def test_bool_true(self):
-        """ensure_term(True) returns BoolRef (not IntRef)."""
+        """ensure_term(True) returns BoolValue (not IntValue)."""
         result = ensure_term(True)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_bool_false(self):
-        """ensure_term(False) returns BoolRef."""
+        """ensure_term(False) returns BoolValue."""
         result = ensure_term(False)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_str(self):
-        """ensure_term(str) returns StrRef."""
+        """ensure_term(str) returns StrValue."""
         result = ensure_term("hello")
-        assert isinstance(result, StrRef)
+        assert isinstance(result, StrValue)
 
     def test_bytes(self):
-        """ensure_term(bytes) returns BytesRef."""
+        """ensure_term(bytes) returns BytesValue."""
         result = ensure_term(b"hello")
-        assert isinstance(result, BytesRef)
+        assert isinstance(result, BytesValue)
 
     def test_none(self):
-        """ensure_term(None) returns NoneRef."""
+        """ensure_term(None) returns NoneValue."""
         result = ensure_term(None)
-        assert isinstance(result, NoneRef)
+        assert isinstance(result, NoneValue)
 
     def test_list(self):
-        """ensure_term(list) returns ListRef."""
+        """ensure_term(list) returns ListValue."""
         result = ensure_term([1, 2, 3])
-        assert isinstance(result, ListRef)
+        assert isinstance(result, ListValue)
 
     def test_tuple(self):
-        """ensure_term(tuple) returns TupleRef."""
+        """ensure_term(tuple) returns TupleValue."""
         result = ensure_term((1, 2, 3))
-        assert isinstance(result, TupleRef)
+        assert isinstance(result, TupleValue)
 
     def test_dict(self):
-        """ensure_term(dict) returns DictRef."""
+        """ensure_term(dict) returns DictValue."""
         result = ensure_term({"a": 1})
-        assert isinstance(result, DictRef)
+        assert isinstance(result, DictValue)
 
     def test_set(self):
-        """ensure_term(set) returns SetRef."""
+        """ensure_term(set) returns SetValue."""
         result = ensure_term({1, 2, 3})
-        assert isinstance(result, SetRef)
+        assert isinstance(result, SetValue)
 
     def test_frozenset(self):
-        """ensure_term(frozenset) returns FrozenSetRef."""
+        """ensure_term(frozenset) returns FrozenSetValue."""
         result = ensure_term(frozenset({1, 2, 3}))
-        assert isinstance(result, FrozenSetRef)
+        assert isinstance(result, FrozenSetValue)
 
     def test_passthrough_term(self):
         """ensure_term(Term) returns Term unchanged."""
-        original = IntRef(42)
+        original = IntValue(42)
         result = ensure_term(original)
         assert result is original
 
@@ -1223,32 +1223,26 @@ class TestBlockedOperators:
 
     def test_eq_blocked(self):
         """Using == on Terms raises TypeError."""
-        x = IntRef(10)
-        y = IntRef(10)
+        x = IntValue(10)
+        y = IntValue(10)
         with pytest.raises(TypeError, match="Cannot use =="):
             _ = x == y
 
     def test_ne_blocked(self):
         """Using != on Terms raises TypeError."""
-        x = IntRef(10)
-        y = IntRef(5)
+        x = IntValue(10)
+        y = IntValue(5)
         with pytest.raises(TypeError, match="Cannot use !="):
             _ = x != y
 
-    def test_bool_conversion_blocked(self):
-        """Using bool() on Terms raises TypeError."""
-        x = IntRef(10)
-        with pytest.raises(TypeError, match="Cannot convert Term to bool"):
-            bool(x)
-
     def test_eq_method_works(self):
         """The eq() method works for equality checks."""
-        x = IntRef(10)
+        x = IntValue(10)
         result = x.eq(10)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)
 
     def test_ne_method_works(self):
         """The ne() method works for inequality checks."""
-        x = IntRef(10)
+        x = IntValue(10)
         result = x.ne(5)
-        assert isinstance(result, BoolRef)
+        assert isinstance(result, BoolValue)

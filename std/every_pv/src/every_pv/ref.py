@@ -15,7 +15,7 @@ Core vocabulary:
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
@@ -43,7 +43,7 @@ ViewT = TypeVar("ViewT", bound="View")
 logger = getLogger(__name__)
 
 
-class PVRefBase[T](Ref[T], ABC):
+class PVRefBase[T](Ref[T]):
     """Base for all PV storage refs.
 
     PV refs navigate through a view hierarchy to access values.
@@ -184,6 +184,35 @@ class PVPrimitiveRef[T](PVRefBase[T]):
             },
         )
         return resolved_path  # type: ignore
+
+    async def fetch_parent(self, ctx: Context) -> object:
+        """Fetch the parent collection (view) for item access.
+
+        Navigates through the view hierarchy and returns the parent view
+        that contains this primitive value.
+
+        Args:
+            ctx: Execution context with root_view access
+
+        Returns:
+            The parent view object
+        """
+        value_path = await self.resolve(ctx)
+        shape = self.get_root_shape()
+        root_view = ctx.get(View, shape=shape)
+        parent_view, _key = path.navigate_value(root_view, value_path)
+        return parent_view
+
+    async def resolve_address(self, ctx: Context) -> object:
+        """Resolve the address (key/index) for this item.
+
+        Args:
+            ctx: Execution context
+
+        Returns:
+            The resolved key/index
+        """
+        return await self._resolve_address(ctx)
 
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value from PV storage.
