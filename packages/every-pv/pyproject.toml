@@ -19,6 +19,7 @@ dependencies = [
     "everybase>=0.1.0",
     "everyshape>=0.1.0",
     "pv",
+    "tkv>=0.1.0",
 ]
 keywords = ["every", "pv", "refs", "kv", "polymorphic"]
 classifiers = [
@@ -32,8 +33,14 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/everyabc/everybase"
 
+[project.optional-dependencies]
+rocksdb = ["rdbpython"]
+redis = ["redis"]
+msgpack = ["msgpack"]
+
 [tool.uv.sources]
 pv = { git = "https://github.com/everyabc/pv" }
+tkv = { git = "https://github.com/everyabc/tkv" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/every_pv"]

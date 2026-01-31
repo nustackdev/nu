@@ -6,15 +6,14 @@
 everyabc            contracts — Term, Flow, Span, Ref, Shape, Slot, Context
   └── everybase     toolbox — types, values, morphisms, capabilities, utilities
         ├── everyshape    document model — shapes, items, collections, navigation
-        │     └── every-pv      PV storage substrate (path resolution, views, spans)
+        │     └── every-pv      PV storage substrate (path resolution, views, spans, adapters)
         └── everytable    relational model — (TBD)
               └── every-notion    Notion API integration
     │
     ├── every-flow        flow primitives (Seq, Par, Cond, Loop)
     ├── every-flow-ext    flow extensions (cancellation, progress)
     ├── every-type        extended type refs (Decimal, UUID, datetime, Path)
-    ├── every-kv          key-value store protocol
-    └── every-adapters    storage/codec/observer backends
+    └── every-kv          key-value store protocol
 ```
 
 ## Core Packages
@@ -91,9 +90,8 @@ Abstract relational model. Depends on everybase. (TBD)
                 |             |
             every-pv     every-notion
                 |
-          every-type  every-adapters
-          every-flow  every-kv
-          every-flow-ext
+          every-type  every-flow
+          every-kv    every-flow-ext
 ```
 
 Key constraints:

@@ -163,8 +163,8 @@ def example_sequence_shapes(ctx: every_pv.KVContext) -> None:
 
 
 if __name__ == "__main__":
-    from every_adapters.codecs import TextCodec
-    from every_adapters.storages.textdb import TextStorage
+    from every_pv.adapters.codecs import TextCodec
+    from every_pv.adapters.storages.textdb import TextStorage
 
     with (
         TextStorage(path=Path(".db_shape"), codec=TextCodec()) as storage,

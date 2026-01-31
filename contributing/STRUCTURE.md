@@ -62,12 +62,11 @@ Models, extensions, and integrations. Depends on core.
 
 | Package | Purpose |
 |---------|---------|
-| `every-pv` | PV storage adapter + views |
+| `every-pv` | PV storage substrate + views + adapters |
 | `every-flow` | Flow primitives (Seq, If, While, etc.) |
 | `every-flow-ext` | Flow extensions (cancellation, progress) |
 | `every-type` | Extended type refs (Date, Decimal, UUID, etc.) |
 | `every-kv` | Key-value store protocol |
-| `every-adapters` | Storage/codec/observer backends |
 | `every-notion` | Notion API integration |
 
 ## Dependency Graph

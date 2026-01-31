@@ -8,9 +8,9 @@ import every
 
 import every_pv
 import every_pv.views
-from every_adapters.codecs import BinaryCodec
-from every_adapters.storages.inmemdb import InMemoryStorage
 from every_notion import EmailSlot, NotionContext, NotionTable, TitleSlot
+from every_pv.adapters.codecs import BinaryCodec
+from every_pv.adapters.storages.inmemdb import InMemoryStorage
 
 
 API_KEY = "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"
