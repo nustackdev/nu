@@ -2,7 +2,7 @@
 # Root pyproject.toml - Monorepo Workspace (Virtual)
 # =============================================================================
 # This is a virtual workspace root - not a package itself.
-# Individual packages are in abc/, std/, and pkgs/ directories.
+# Individual packages are in core/ and packages/ directories.
 # =============================================================================
 
 [project]
@@ -17,16 +17,16 @@ dependencies = ["everyabc", "everybase", "every-flow", "every-flow-ext", "every-
 # =============================================================================
 [tool.uv.workspace]
 members = [
-    "abc/everyabc",
-    "abc/everybase",
-    "std/every_flow",
-    "std/every_flow_ext",
-    "std/every_pv",
-    "std/every_type",
-    "std/every_view",
-    "pkgs/every_adapters",
-    "pkgs/every_kv",
-    "pkgs/every_notion",
+    "core/everyabc",
+    "core/everybase",
+    "packages/every-flow",
+    "packages/every-flow-ext",
+    "packages/every-pv",
+    "packages/every-type",
+    "packages/every-view",
+    "packages/every-adapters",
+    "packages/every-kv",
+    "packages/every-notion",
 ]
 
 [tool.uv.sources]
@@ -58,11 +58,11 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["tests", "abc", "std", "pkgs"]
+testpaths = ["tests", "core", "packages"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = ["-ra", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 asyncio_mode = "auto"
 markers = [
     "slow: marks tests as slow",
@@ -73,7 +73,7 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["abc", "std", "pkgs"]
+source = ["core", "packages"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -104,7 +104,7 @@ directory = "tests/reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["abc", "std", "pkgs", "tests"]
+src = ["core", "packages", "tests"]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -162,13 +162,13 @@ convention = "google"
     "D",
     "ANN",
 ]
-"std/every_flow/**/*.py" = [
+"packages/every-flow/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
-"std/every_flow_ext/**/*.py" = [
+"packages/every-flow-ext/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
-"pkgs/every_notion/**/*.py" = [
+"packages/every-notion/**/*.py" = [
     "ANN401",  # Any type needed for Notion's dynamic JSON API
     "D107",    # __init__ docstrings covered by class docstring
 ]

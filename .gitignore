@@ -200,6 +200,7 @@ _playground/
 .claude/
 Claude.md
 repomix*.txt
+.agent
 
 # cython files
 *.c

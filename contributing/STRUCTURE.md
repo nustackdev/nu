@@ -10,26 +10,22 @@ everybase/
 ├── Makefile            # Dev commands
 ├── uv.lock             # Lockfile (generated)
 │
-├── abc/                # Core packages
-│   ├── every/          # Protocols/contracts
+├── core/               # Core packages
+│   ├── everyabc/       # Protocols/contracts
 │   │   ├── pyproject.toml
-│   │   ├── README.md
-│   │   ├── src/every/
+│   │   ├── src/everyabc/
 │   │   └── tests/
 │   │
 │   └── everybase/      # Base implementations
 │       ├── pyproject.toml
-│       ├── README.md
 │       ├── src/everybase/
 │       └── tests/
 │
-├── std/                # Standard library packages
-│   └── every_<name>/   # e.g., every_datetime
-│       └── ...
-│
-├── pkgs/               # Extensions/integrations
-│   └── every_<name>/   # e.g., every_notion
-│       └── ...
+├── packages/           # All other packages
+│   └── every-<name>/   # e.g., every-pv, every-flow
+│       ├── pyproject.toml
+│       ├── src/every_<name>/
+│       └── tests/
 │
 ├── tests/              # Integration tests
 │   └── integration/
@@ -39,36 +35,37 @@ everybase/
 
 ## Package Tiers
 
-### abc/ - Core
+### core/ - Foundation
 
 Fundamental packages. Minimal deps.
 
 | Package | Purpose | Depends on |
 |---------|---------|------------|
-| `every` | Protocols - Term, Flow, Ref, Sentinel | attrs |
-| `everybase` | Base implementations - Python types, computations | every |
+| `everyabc` | Protocols - Term, Flow, Ref, Sentinel | (none) |
+| `everybase` | Base implementations - Python types, computations | everyabc |
 
-### std/ - Standard
+### packages/ - Everything Else
 
-Type extensions. Depends on `every` + `everybase`.
+Models, extensions, and integrations. Depends on core.
 
-- `every_datetime` - Date/time types
-- `every_numeric` - Decimal, Fraction
-
-### pkgs/ - Extensions
-
-External integrations. May have heavy deps.
-
-- `every_notion` - Notion API
-- `every_kv` - Key-value stores
+| Package | Purpose |
+|---------|---------|
+| `every-shape` | Document model (hierarchical shapes) |
+| `every-pv` | PV storage adapter + views |
+| `every-flow` | Flow primitives (Seq, If, While, etc.) |
+| `every-flow-ext` | Flow extensions (cancellation, progress) |
+| `every-type` | Extended type refs (Date, Decimal, UUID, etc.) |
+| `every-kv` | Key-value store protocol |
+| `every-adapters` | Storage/codec/observer backends |
+| `every-notion` | Notion API integration |
 
 ## Dependency Graph
 
 ```
-every (protocols)
+everyabc (contracts)
   └── everybase (base impl)
-        ├── std/* (type extensions)
-        └── pkgs/* (integrations)
+        ├── packages/* (models, extensions, integrations)
+        └── ...
 ```
 
 ## Key Files
@@ -79,3 +76,12 @@ every (protocols)
 | `<pkg>/pyproject.toml` | Package metadata, deps |
 | `<pkg>/src/<name>/` | Source code |
 | `<pkg>/tests/` | Package tests |
+
+## Naming Convention
+
+| Context | Style | Example |
+|---------|-------|---------|
+| Directory | hyphen | `packages/every-pv/` |
+| Import | underscore | `from every_pv import ...` |
+| PyPI name | hyphen | `every-pv` |
+| pyproject.toml name | hyphen | `name = "every-pv"` |

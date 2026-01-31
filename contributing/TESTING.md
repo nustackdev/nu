@@ -33,11 +33,12 @@ def test_foo_does_thing():
 ## Commands
 
 ```bash
-make test                     # All tests
-make test-abc                 # abc/ only
-make test-pkg PKG=abc/every   # Specific package
-make test-fast                # Skip @pytest.mark.slow
-make test-cov                 # With coverage
+make test                          # All tests
+make test-core                     # core/ only
+make test-packages                 # packages/ only
+make test-pkg PKG=core/everyabc    # Specific package
+make test-fast                     # Skip @pytest.mark.slow
+make test-cov                      # With coverage
 ```
 
 ## Markers
@@ -86,6 +87,6 @@ Config in root `pyproject.toml`:
 
 ```toml
 [tool.coverage.run]
-source = ["abc", "std", "pkgs"]
+source = ["core", "packages"]
 omit = ["*/tests/*"]
 ```

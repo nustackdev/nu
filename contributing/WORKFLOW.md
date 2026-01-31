@@ -13,10 +13,9 @@ make dev        # Also installs pre-commit hooks
 ```bash
 # Testing
 make test               # Run all tests
-make test-abc           # Run abc/ tests only
-make test-std           # Run std/ tests only
-make test-pkgs          # Run pkgs/ tests only
-make test-pkg PKG=abc/every  # Run specific package tests
+make test-core          # Run core/ tests only
+make test-packages      # Run packages/ tests only
+make test-pkg PKG=core/everyabc  # Run specific package tests
 make test-fast          # Skip slow tests, fail fast
 
 # Code quality
@@ -33,7 +32,7 @@ make help               # All commands
 
 ```bash
 # Add to specific package
-cd abc/every
+cd packages/every-pv
 uv add attrs
 
 # Add dev dependency (workspace-wide)
@@ -46,7 +45,7 @@ uv sync
 ## Building
 
 ```bash
-make build PKG=abc/every  # Build one package
+make build PKG=core/everyabc  # Build one package
 ```
 
 ## Pre-commit

@@ -4,14 +4,13 @@
 
 Pick the right tier:
 
-- `abc/` - Core (no external deps)
-- `std/` - Standard (depends on every)
-- `pkgs/` - Extensions (external integrations)
+- `core/` - Foundation (no external deps, rarely changes)
+- `packages/` - Everything else (models, extensions, integrations)
 
 ```bash
-mkdir -p std/every_foo/{src/every_foo,tests}
-touch std/every_foo/{pyproject.toml,README.md}
-touch std/every_foo/src/every_foo/__init__.py
+mkdir -p packages/every-foo/{src/every_foo,tests}
+touch packages/every-foo/{pyproject.toml,README.md}
+touch packages/every-foo/src/every_foo/__init__.py
 ```
 
 ## 2. Create pyproject.toml
@@ -30,7 +29,7 @@ name = "every-foo"
 version = "0.1.0"
 description = "Foo for every"
 requires-python = ">=3.10"
-dependencies = ["every"]
+dependencies = ["everyabc"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/every_foo"]
@@ -43,8 +42,8 @@ Edit root `pyproject.toml`:
 ```toml
 [tool.uv.workspace]
 members = [
-    "abc/every",
-    "std/every_foo",  # Add here
+    "core/everyabc",
+    "packages/every-foo",  # Add here
 ]
 ```
 
@@ -52,7 +51,7 @@ If other packages depend on it:
 
 ```toml
 [tool.uv.sources]
-every = { workspace = true }
+everyabc = { workspace = true }
 every-foo = { workspace = true }  # Add here
 ```
 
@@ -64,14 +63,13 @@ uv sync
 
 ## Naming
 
-| Package name | Import name | PyPI name |
-|--------------|-------------|-----------|
-| `every_foo` | `every_foo` | `every-foo` |
+| Directory name | Import name | PyPI name |
+|----------------|-------------|-----------|
+| `every-foo` | `every_foo` | `every-foo` |
 
-Use underscores in dirs/imports, hyphens in PyPI names.
+Use hyphens in directory names, underscores in imports/package dirs, hyphens in PyPI names.
 
 ## Dependencies
 
-- Core (`abc/`) should have minimal deps
-- Standard (`std/`) depends on `every`
-- Extensions (`pkgs/`) can have external deps
+- Core (`core/`) should have minimal deps
+- Packages (`packages/`) depend on core and may have external deps

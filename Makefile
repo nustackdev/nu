@@ -21,10 +21,9 @@ help:
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
 	@echo "  make test            Run all tests"
-	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=abc/every)"
-	@echo "  make test-abc        Run abc/ tests"
-	@echo "  make test-std        Run std/ tests"
-	@echo "  make test-pkgs       Run pkgs/ tests"
+	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=core/everyabc)"
+	@echo "  make test-core       Run core/ tests"
+	@echo "  make test-packages   Run packages/ tests"
 	@echo "  make test-cov        Run tests with coverage"
 	@echo "  make test-fast       Run tests (fail fast, no slow)"
 	@echo ""
@@ -70,22 +69,18 @@ test:
 
 test-pkg:
 ifndef PKG
-	$(error PKG not set. Usage: make test-pkg PKG=abc/every)
+	$(error PKG not set. Usage: make test-pkg PKG=core/everyabc)
 endif
 	@echo "$(BLUE)Testing $(PKG)...$(NC)"
 	uv run pytest $(PKG)/tests -v
 
-test-abc:
-	@echo "$(BLUE)Running abc/ tests...$(NC)"
-	uv run pytest abc/ -v
+test-core:
+	@echo "$(BLUE)Running core/ tests...$(NC)"
+	uv run pytest core/ -v
 
-test-std:
-	@echo "$(BLUE)Running std/ tests...$(NC)"
-	uv run pytest std/ -v
-
-test-pkgs:
-	@echo "$(BLUE)Running pkgs/ tests...$(NC)"
-	uv run pytest pkgs/ -v
+test-packages:
+	@echo "$(BLUE)Running packages/ tests...$(NC)"
+	uv run pytest packages/ -v
 
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
@@ -101,17 +96,17 @@ test-fast:
 # =============================================================================
 lint:
 	@echo "$(BLUE)Linting...$(NC)"
-	uv run ruff check abc std pkgs tests
+	uv run ruff check core packages tests
 
 format:
 	@echo "$(BLUE)Formatting...$(NC)"
-	uv run ruff format abc std pkgs tests
-	uv run ruff check --fix abc std pkgs tests
+	uv run ruff format core packages tests
+	uv run ruff check --fix core packages tests
 	@echo "$(GREEN)Done$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking format...$(NC)"
-	uv run ruff format --check abc std pkgs tests
+	uv run ruff format --check core packages tests
 
 check: format-check lint
 	@echo "$(GREEN)All checks passed$(NC)"
@@ -122,18 +117,15 @@ check: format-check lint
 list:
 	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(GREEN)abc/ (core):$(NC)"
-	@ls -d abc/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)core/:$(NC)"
+	@ls -d core/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 	@echo ""
-	@echo "$(GREEN)std/ (standard):$(NC)"
-	@ls -d std/every_*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
-	@echo ""
-	@echo "$(GREEN)pkgs/ (extensions):$(NC)"
-	@ls -d pkgs/every_*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)packages/:$(NC)"
+	@ls -d packages/every-*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 
 build:
 ifndef PKG
-	$(error PKG not set. Usage: make build PKG=abc/every)
+	$(error PKG not set. Usage: make build PKG=core/everyabc)
 endif
 	@echo "$(BLUE)Building $(PKG)...$(NC)"
 	cd $(PKG) && uv build

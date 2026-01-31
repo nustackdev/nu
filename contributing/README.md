@@ -19,16 +19,19 @@ make test    # run tests
 make format  # fix lint issues
 ```
 
-## Core Packages (abc/)
+## Core Packages (core/)
 
 | Package | Purpose |
 |---------|---------|
-| `every` | Protocols - Term, Flow, Ref |
+| `everyabc` | Protocols - Term, Flow, Ref |
 | `everybase` | Base implementations - types, computations |
 
-## Other Locations
+## Packages (packages/)
 
-| Dir | Purpose |
-|-----|---------|
-| `std/` | Standard library (every_datetime, etc.) |
-| `pkgs/` | Extensions (every_notion, etc.) |
+| Package | Purpose |
+|---------|---------|
+| `every-pv` | PV storage adapter + views |
+| `every-flow` | Flow primitives |
+| `every-type` | Extended type refs |
+| `every-adapters` | Storage/codec backends |
+| `every-notion` | Notion integration |
