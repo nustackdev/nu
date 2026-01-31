@@ -7,7 +7,7 @@ InvalidType - Represents invalid/undefined operations
 
 from __future__ import annotations
 
-from everyabc import Empty, Invalid
+from everyabc import Empty, Invalid, Sentinel
 
 from ._base import TypeBase
 
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class SentinelType[T](TypeBase[T]):
+class SentinelType[T: Sentinel](TypeBase[T]):
     """Base for sentinel refs (Empty, Invalid).
 
     Sentinels represent special values indicating absence or invalidity.

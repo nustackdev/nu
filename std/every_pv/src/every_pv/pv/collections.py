@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from pv.collections import MutableMappingView, MutableSequenceView
-from pv.types import Value
+from pv.types import Value as StorageValue
 
 from every_pv.ref import PVRefBase, PVViewRef
 from every_pv.shape import PVShape
@@ -23,13 +23,13 @@ from every_pv.traits.bases_collections import (
     MutableMappingRefBase,
     MutableSequenceRefBase,
 )
-from everyabc import Ref, RValue, Sentinel, Term
+from everyabc import Ref, RValue, Sentinel, Term, Value
 from everybase import (
-    AnyRef,
-    DictRef,
-    IntRef,
-    ListRef,
-    StrRef,
+    AnyValue,
+    DictValue,
+    IntValue,
+    ListValue,
+    StrValue,
     ensure_term,
 )
 
@@ -64,14 +64,14 @@ class SequenceShapeSliceRef:
 
 
 class PVShapeRef[T: PVShape](
-    PVViewRef[dict[str, Value], MutableMappingView],
+    PVViewRef[dict[str, StorageValue], MutableMappingView],
     MutableMappingRefBase[
-        dict[str, Value],  # CollectionT
+        dict[str, StorageValue],  # CollectionT
         str,  # KeyT
-        Value,  # ValueT
-        DictRef[str, Value],  # CollectionValueT
-        StrRef,  # KeyValueT
-        AnyRef,  # ValueValueT
+        StorageValue,  # ValueT
+        DictValue[str, StorageValue],  # CollectionValueT
+        StrValue,  # KeyValueT
+        AnyValue,  # ValueValueT
         MutableMappingView,  # ViewT
         Ref,  # ChildRefT
     ],
@@ -162,19 +162,19 @@ class PVShapeRef[T: PVShape](
         self._shape_type = shape_type
         self.key_type: type = str
         self.value_type: type = object
-        self.collection_type: type[dict[str, Value]] = dict
-        self.collection_value_type: type[DictRef[str, Value]] = DictRef
-        self.key_value_type: type[StrRef] = StrRef
-        self.value_value_type: type[AnyRef] = AnyRef
+        self.collection_type: type[dict[str, StorageValue]] = dict
+        self.collection_value_type: type[DictValue[str, StorageValue]] = DictValue
+        self.key_value_type: type[StrValue] = StrValue
+        self.value_value_type: type[AnyValue] = AnyValue
 
     @property
     def shape_type(self) -> type[T]:
         """The Shape class type at this location."""
         return self._shape_type
 
-    def result(self, op: RValue) -> DictRef[str, Value]:
-        """Wrap an operation result in a DictRef container."""
-        return DictRef(op)
+    def result(self, op: RValue) -> DictValue[str, StorageValue]:
+        """Wrap an operation result in a DictValue container."""
+        return DictValue(op)
 
     def _create_child_ref(self, key: str | Sentinel | RValue[str | Sentinel]) -> Ref:
         """Create a reference to a child at the given key."""
@@ -210,13 +210,13 @@ class PVShapeRef[T: PVShape](
 # =============================================================================
 
 
-class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
+class PVDictRef[K: int | str, V: StorageValue, KeyValueT, ValueValueT: Value](
     PVViewRef[dict[K, V], MutableMappingView],
     MutableMappingRefBase[
         dict[K, V],  # CollectionT
         K,  # KeyT
         V,  # ValueT
-        DictRef[K, V],  # CollectionValueT
+        DictValue[K, V],  # CollectionValueT
         KeyValueT,  # KeyValueT
         ValueValueT,  # ValueValueT
         MutableMappingView,  # ViewT
@@ -230,7 +230,7 @@ class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
     """
 
     collection_type: type[dict[K, V]] = dict
-    collection_value_type: type[DictRef[K, V]] = DictRef
+    collection_value_type: type[DictValue[K, V]] = DictValue
 
     def __init__(
         self,
@@ -250,9 +250,9 @@ class PVDictRef[K: int | str, V: Value, KeyValueT, ValueValueT](
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
 
-    def result(self, op: RValue) -> DictRef[K, V]:
-        """Wrap an operation result in a DictRef container."""
-        return DictRef(op)
+    def result(self, op: RValue) -> DictValue[K, V]:
+        """Wrap an operation result in a DictValue container."""
+        return DictValue(op)
 
     def _create_child_ref(
         self, key: K | Sentinel | RValue[K | Sentinel]
@@ -277,12 +277,12 @@ class PVListRef[T, ItemValueT](
     MutableSequenceRefBase[
         list[T],  # CollectionT
         T,  # ItemT
-        ListRef[T],  # CollectionValueT
+        ListValue[T],  # CollectionValueT
         ItemValueT,  # ItemValueT
         MutableSequenceView,  # ViewT
         int,  # IndexT
-        IntRef,  # IndexValueT
-        ListRef[T],  # SliceValueT
+        IntValue,  # IndexValueT
+        ListValue[T],  # SliceValueT
         PVListItemRef[T, ItemValueT],  # ItemRefT
         SequenceSliceRef,  # SliceRefT
     ],
@@ -294,9 +294,9 @@ class PVListRef[T, ItemValueT](
     """
 
     collection_type: type[list[T]] = list
-    collection_value_type: type[ListRef[T]] = ListRef
+    collection_value_type: type[ListValue[T]] = ListValue
     index_type: type[int] = int
-    index_value_type: type[IntRef] = IntRef
+    index_value_type: type[IntValue] = IntValue
 
     def __init__(
         self,
@@ -312,9 +312,9 @@ class PVListRef[T, ItemValueT](
         self.item_type = item_type
         self.item_value_type = item_value_type
 
-    def result(self, op: RValue) -> ListRef[T]:
-        """Wrap an operation result in a ListRef container."""
-        return ListRef(op)
+    def result(self, op: RValue) -> ListValue[T]:
+        """Wrap an operation result in a ListValue container."""
+        return ListValue(op)
 
     def _create_item_ref(
         self, index: int | Sentinel | RValue[int | Sentinel]
@@ -343,12 +343,12 @@ class PVShapesListRef[T: PVShape](
     MutableSequenceRefBase[
         list[dict],  # CollectionT
         dict,  # ItemT (shapes serialize to dicts)
-        ListRef[dict],  # CollectionValueT
-        DictRef[str, Value],  # ItemValueT (shape items are dicts)
+        ListValue[dict],  # CollectionValueT
+        DictValue[str, StorageValue],  # ItemValueT (shape items are dicts)
         MutableSequenceView,  # ViewT
         int,  # IndexT
-        IntRef,  # IndexValueT
-        ListRef[dict],  # SliceValueT
+        IntValue,  # IndexValueT
+        ListValue[dict],  # SliceValueT
         PVShapeRef[T],  # ItemRefT
         SequenceShapeSliceRef,  # SliceRefT
     ],
@@ -356,10 +356,10 @@ class PVShapesListRef[T: PVShape](
     """Reference to a list of homogeneous shapes."""
 
     collection_type: type[list[dict]] = list
-    collection_value_type: type[ListRef[dict]] = ListRef
-    item_value_type: type[DictRef[str, Value]] = DictRef
+    collection_value_type: type[ListValue[dict]] = ListValue
+    item_value_type: type[DictValue[str, StorageValue]] = DictValue
     index_type: type[int] = int
-    index_value_type: type[IntRef] = IntRef
+    index_value_type: type[IntValue] = IntValue
 
     def __init__(
         self,
@@ -379,9 +379,9 @@ class PVShapesListRef[T: PVShape](
         """The Shape class for items in this list."""
         return self._shape_type
 
-    def result(self, op: RValue) -> ListRef[dict]:
-        """Wrap an operation result in a ListRef container."""
-        return ListRef(op)
+    def result(self, op: RValue) -> ListValue[dict]:
+        """Wrap an operation result in a ListValue container."""
+        return ListValue(op)
 
     def _create_item_ref(self, index: int | Sentinel | RValue[int | Sentinel]) -> PVShapeRef[T]:
         """Create a reference to a shape at the given index."""
@@ -411,9 +411,9 @@ class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
         dict[K, dict],  # CollectionT
         K,  # KeyT
         dict,  # ValueT (shapes serialize to dicts)
-        DictRef[K, dict],  # CollectionValueT
+        DictValue[K, dict],  # CollectionValueT
         KeyValueT,  # KeyValueT
-        DictRef[str, Value],  # ValueValueT (shape values are dicts)
+        DictValue[str, StorageValue],  # ValueValueT (shape values are dicts)
         MutableMappingView,  # ViewT
         PVShapeRef[T],  # ChildRefT
     ],
@@ -421,8 +421,8 @@ class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
     """Reference to a mapping of homogeneous shapes."""
 
     collection_type: type[dict[K, dict]] = dict
-    collection_value_type: type[DictRef[K, dict]] = DictRef
-    value_value_type: type[DictRef[str, Value]] = DictRef
+    collection_value_type: type[DictValue[K, dict]] = DictValue
+    value_value_type: type[DictValue[str, StorageValue]] = DictValue
 
     def __init__(
         self,
@@ -446,9 +446,9 @@ class PVShapesDictRef[K: int | str, T: PVShape, KeyValueT](
         """The Shape class for values in this dict."""
         return self._shape_type
 
-    def result(self, op: RValue) -> DictRef[K, dict]:
-        """Wrap an operation result in a DictRef container."""
-        return DictRef(op)
+    def result(self, op: RValue) -> DictValue[K, dict]:
+        """Wrap an operation result in a DictValue container."""
+        return DictValue(op)
 
     def _create_child_ref(self, key: K | Sentinel | RValue[K | Sentinel]) -> PVShapeRef[T]:
         """Create a reference to a shape at the given key."""

@@ -6,8 +6,8 @@ maps to PV storage views. Slots are factories that create PV refs.
 Example::
 
     class Order(PVShape):
-        price = ItemSlot(float, FloatRef)
-        volume = ItemSlot(int, IntRef)
+        price = ItemSlot(float, FloatValue)
+        volume = ItemSlot(int, IntValue)
 
     Order.price   # → PVItemRef
     Order.volume  # → PVItemRef

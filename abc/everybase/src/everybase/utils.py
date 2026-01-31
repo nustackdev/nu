@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from everyabc import Ref, Term
+    from everyabc import Term, Value
 
 __all__ = [
     "ensure_term",
@@ -83,15 +83,15 @@ def ensure_term(value: object) -> Term:
         raise TypeError(f"Not supported type {value.__class__.__name__}")
 
 
-def typed_value(result_type: object, op: Term) -> Ref:
-    """Wrap an operation in a typed Ref.
+def typed_value(result_type: object, op: Term) -> Value:
+    """Wrap an operation in a typed Value.
 
     Args:
         result_type: Expected result type (e.g., int, str, float)
         op: Operation to wrap
 
     Returns:
-        Typed Ref wrapping the operation
+        Typed Value wrapping the operation
 
     Example:
         >>> typed_value(int, GetOp(ref))  # → IntValue(GetOp(ref))
@@ -123,7 +123,7 @@ def typed_value(result_type: object, op: Term) -> Ref:
     elif result_type is bytes:
         return BytesValue(op)
     elif result_type is None:
-        return NoneValue(None)
+        return NoneValue()
     elif result_type is dict:
         return DictValue(op)
     elif result_type is set:

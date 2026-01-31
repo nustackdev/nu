@@ -8,7 +8,7 @@ This module provides query-related capability bases:
 
 from __future__ import annotations
 
-from everybase import ListRef
+from everybase import ListValue
 
 
 __all__ = [
@@ -29,18 +29,18 @@ class KeysQueryableBase[KeyT]:
     Implements the KeysQueryable protocol with keys() method.
     """
 
-    def keys(self) -> ListRef[KeyT]:
+    def keys(self) -> ListValue[KeyT]:
         """Create a keys query operation.
 
         Returns:
-            ListRef containing all keys when executed
+            ListValue containing all keys when executed
 
         Example:
             >>> all_keys = dict_ref.keys().execute(ctx)
         """
         from every_pv.morphisms import KeysOp
 
-        return ListRef(KeysOp(self))
+        return ListValue(KeysOp(self))
 
 
 class ValuesQueryableBase[ValueT]:
@@ -49,18 +49,18 @@ class ValuesQueryableBase[ValueT]:
     Implements the ValuesQueryable protocol with values() method.
     """
 
-    def values(self) -> ListRef[ValueT]:
+    def values(self) -> ListValue[ValueT]:
         """Create a values query operation.
 
         Returns:
-            ListRef containing all values when executed
+            ListValue containing all values when executed
 
         Example:
             >>> all_values = dict_ref.values().execute(ctx)
         """
         from every_pv.morphisms import ValuesOp
 
-        return ListRef(ValuesOp(self))
+        return ListValue(ValuesOp(self))
 
 
 class ItemsQueryableBase[KeyT, ValueT]:
@@ -69,15 +69,15 @@ class ItemsQueryableBase[KeyT, ValueT]:
     Implements the ItemsQueryable protocol with items() method.
     """
 
-    def items(self) -> ListRef[tuple[KeyT, ValueT]]:
+    def items(self) -> ListValue[tuple[KeyT, ValueT]]:
         """Create an items query operation.
 
         Returns:
-            ListRef containing all (key, value) pairs when executed
+            ListValue containing all (key, value) pairs when executed
 
         Example:
             >>> all_items = dict_ref.items().execute(ctx)
         """
         from every_pv.morphisms import ItemsOp
 
-        return ListRef(ItemsOp(self))
+        return ListValue(ItemsOp(self))

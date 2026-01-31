@@ -3,7 +3,7 @@
 This module provides ready-to-extend ref base classes that combine capability implementation mixins from bases.py
 
 These are the abstract base classes users will extend in everybase
-to create final types like ListRef, DictRef, SetRef, etc.
+to create final types like ListValue, DictValue, SetValue, etc.
 
 Implementation Hierarchy:
     SequenceRefBase combines:
@@ -45,7 +45,7 @@ Type Parameters (matching protocol conventions):
     ChildRefT: Reference type for child items in mappings
 
 Usage in everybase:
-    class ListRef(MutableSequenceRefBase[
+    class ListValue(MutableSequenceRefBase[
         list[int],           # CollectionT
         int,                 # ItemT
         ListType[int],      # CollectionValueT
@@ -182,7 +182,7 @@ class SequenceRefBase[
         - item_value_type property
 
     Example:
-        class ListRef(SequenceRefBase[
+        class ListValue(SequenceRefBase[
             list[int], int, ListType[int], IntType,
             ListView, int, IntType, ListType[int],
             ItemRef, SliceRef
@@ -365,7 +365,7 @@ class MappingRefBase[
         - value_value_type property
 
     Example:
-        class DictRef(MappingRefBase[
+        class DictValue(MappingRefBase[
             dict[str, int], str, int, DictType[str, int],
             StrType, IntType, DictView, ValueRef
         ]):
@@ -494,7 +494,7 @@ class SetRefBase[
     - clear() from ClearableBase
     - length() from LengthableBase
 
-    Implements SetRef protocol from collections.py.
+    Implements SetValue protocol from collections.py.
 
     Type Parameters:
         CollectionT: Native Python collection type (set, frozenset, etc.)

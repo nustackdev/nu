@@ -2,8 +2,8 @@
 
 This module provides concrete slot types that create refs:
 - ItemSlot: creates ItemRef for primitive values
-- DictSlot: creates DictRef for dict-like collections
-- ListSlot: creates ListRef for list-like collections
+- DictSlot: creates PVDictRef for dict-like collections
+- ListSlot: creates PVListRef for list-like collections
 - ShapesListSlot: creates ShapesListRef for lists of shapes
 - ShapesDictSlot: creates ShapesDictRef for dicts of shapes
 """
@@ -12,17 +12,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Slot
+from everyabc import Slot, Value
 from everybase import (
-    AnyRef,
-    BoolRef,
-    BytesRef,
-    DictRef,
-    FloatRef,
-    IntRef,
-    ListRef,
-    SetRef,
-    StrRef,
+    AnyValue,
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    IntValue,
+    ListValue,
+    SetValue,
+    StrValue,
 )
 
 from ..pv import PVDictRef, PVItemRef, PVListRef, PVShapeRef, PVShapesDictRef, PVShapesListRef
@@ -30,33 +30,33 @@ from ..pv import PVDictRef, PVItemRef, PVListRef, PVShapeRef, PVShapesDictRef, P
 
 if TYPE_CHECKING:
     from pv.collections import MutableMappingView, MutableSequenceView
-    from pv.types import Value
+    from pv.types import Value as StorageValue
 
     from every_pv.shape import PVShape
     from everyabc import Ref
-    from everybase import AnyRef, IntRef, StrRef  # noqa: TC004
+    from everybase import AnyValue, IntValue, StrValue  # noqa: TC004
 
 
 def _value_type_for(python_type: type) -> type[Ref]:
-    """Map Python type to its corresponding Ref type.
+    """Map Python type to its corresponding Value type.
 
     Args:
         python_type: Native Python type (int, str, float, etc.)
 
     Returns:
-        Corresponding Ref type (IntRef, StrRef, etc.)
+        Corresponding Value type (IntValue, StrValue, etc.)
     """
-    mapping: dict[type, type[Ref]] = {
-        int: IntRef,
-        str: StrRef,
-        float: FloatRef,
-        bool: BoolRef,
-        bytes: BytesRef,
-        list: ListRef,
-        dict: DictRef,
-        set: SetRef,
+    mapping: dict[type, type[Value]] = {
+        int: IntValue,
+        str: StrValue,
+        float: FloatValue,
+        bool: BoolValue,
+        bytes: BytesValue,
+        list: ListValue,
+        dict: DictValue,
+        set: SetValue,
     }
-    return mapping.get(python_type, AnyRef)
+    return mapping.get(python_type, AnyValue)
 
 
 __all__ = [
@@ -83,12 +83,12 @@ class _ItemSlot(Slot):
 
     Example:
         class User(Shape):
-            name: ItemRef[str, StrRef] = ItemSlot(str)
-            age: ItemRef[int, IntRef] = ItemSlot(int)
-            balance: ItemRef[float, FloatRef] = ItemSlot(float)
+            name: ItemRef[str, StrValue] = ItemSlot(str)
+            age: ItemRef[int, IntValue] = ItemSlot(int)
+            balance: ItemRef[float, FloatValue] = ItemSlot(float)
     """
 
-    def __init__(self, value_type: type[Value], value_value_type: type[Ref]) -> None:
+    def __init__(self, value_type: type[StorageValue], value_value_type: type[Ref]) -> None:
         """Initialize value slot.
 
         Args:
@@ -122,7 +122,7 @@ class _ItemSlot(Slot):
         )
 
 
-def ItemSlot[V: Value, VV: Ref](  # noqa: N802
+def ItemSlot[V: StorageValue, VV: Ref](  # noqa: N802
     value_type: type[V], value_value_type: type[VV]
 ) -> PVItemRef[V, VV]:
     """Create a value slot for primitive types.
@@ -156,15 +156,15 @@ class _DictSlot(Slot):
     Example:
         class Market(Shape):
             # Mapping of primitives
-            signals: DictRef[str, float, StrRef, FloatRef] = DictSlot(float)
+            signals: PVDictRef[str, float, StrValue, FloatValue] = DictSlot(float)
 
         # Access items
-        Market.signals["vix"].get()  # DictItemRef[float, FloatRef]
+        Market.signals["vix"].get()  # PVDictItemRef[float, FloatValue]
     """
 
     def __init__(
         self,
-        value_type: type[Value],
+        value_type: type[StorageValue],
         view_type: type[MutableMappingView] | None = None,
         key_type: type[int | str] = str,
     ) -> None:
@@ -187,14 +187,14 @@ class _DictSlot(Slot):
         owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVDictRef:
-        """Create DictRef for this slot.
+        """Create PVDictRef for this slot.
 
         Args:
             owner_shape: Shape class this slot belongs to
             parent_ref: Parent reference for nested access
 
         Returns:
-            DictRef instance
+            PVDictRef instance
         """
         from every_view import DictView
 
@@ -210,11 +210,11 @@ class _DictSlot(Slot):
         )
 
 
-def DictSlot[K: int | str, V: Value](  # noqa: N802
+def DictSlot[K: int | str, V: StorageValue](  # noqa: N802
     value_type: type[V],
     view_type: type[MutableMappingView] | None = None,
     key_type: type[K] = str,
-) -> PVDictRef[K, V, AnyRef, AnyRef]:
+) -> PVDictRef[K, V, AnyValue, AnyValue]:
     """Create a mapping slot for dict-like collections of primitives.
 
     Factory function that returns a slot instance.
@@ -229,7 +229,7 @@ def DictSlot[K: int | str, V: Value](  # noqa: N802
 
     Example:
         class Market(Shape):
-            signals: DictRef[str, float] = DictSlot(float)
+            signals: PVDictRef[str, float] = DictSlot(float)
     """
     return _DictSlot(value_type=value_type, view_type=view_type, key_type=key_type)  # type: ignore
 
@@ -243,15 +243,15 @@ class _ListSlot(Slot):
 
     Example:
         class Market(Shape):
-            prices: ListRef[float, FloatRef] = ListSlot(float)
+            prices: PVListRef[float, FloatValue] = ListSlot(float)
 
         # Access items
-        Market.prices[0].get()  # ListItemRef[float, FloatRef]
+        Market.prices[0].get()  # PVListItemRef[float, FloatValue]
     """
 
     def __init__(
         self,
-        item_type: type[Value],
+        item_type: type[StorageValue],
         view_type: type[MutableSequenceView] | None = None,
     ) -> None:
         """Initialize list slot.
@@ -270,14 +270,14 @@ class _ListSlot(Slot):
         owner_shape: type[PVShape],
         parent_ref: Ref | None = None,
     ) -> PVListRef:
-        """Create ListRef for this slot.
+        """Create PVListRef for this slot.
 
         Args:
             owner_shape: Shape class this slot belongs to
             parent_ref: Parent reference for nested access
 
         Returns:
-            ListRef instance
+            PVListRef instance
         """
         from every_view import ListView
 
@@ -291,10 +291,10 @@ class _ListSlot(Slot):
         )
 
 
-def ListSlot[V: Value](  # noqa: N802
+def ListSlot[V: StorageValue](  # noqa: N802
     item_type: type[V],
     view_type: type[MutableSequenceView] | None = None,
-) -> PVListRef[V, AnyRef]:
+) -> PVListRef[V, AnyValue]:
     """Create a sequence slot for list-like collections of primitives.
 
     Factory function that returns a slot instance.
@@ -308,7 +308,7 @@ def ListSlot[V: Value](  # noqa: N802
 
     Example:
         class Market(Shape):
-            prices: ListRef[float] = ListSlot(float)
+            prices: PVListRef[float] = ListSlot(float)
     """
     return _ListSlot(item_type=item_type, view_type=view_type)  # type: ignore
 
@@ -402,8 +402,8 @@ class _ShapesListSlot(Slot):
 
     Example:
         class Order(Shape):
-            id: ItemRef[str] = ItemSlot(str)
-            price: ItemRef[float] = ItemSlot(float)
+            id: ItemSlot[str] = ItemSlot(str)
+            price: ItemSlot[float] = ItemSlot(float)
 
         class Market(Shape):
             orders: ShapesListRef[Order] = ShapesListSlot(Order)
@@ -484,11 +484,11 @@ class _ShapesDictSlot(Slot):
 
     Example:
         class SymbolInfo(Shape):
-            price: ItemRef[float, FloatRef] = ItemSlot(float)
-            volume: ItemRef[int, IntRef] = ItemSlot(int)
+            price: ItemRef[float, FloatValue] = ItemSlot(float)
+            volume: ItemRef[int, IntValue] = ItemSlot(int)
 
         class Market(Shape):
-            symbols: ShapesDictRef[str, SymbolInfo, StrRef] = ShapesDictSlot(SymbolInfo)
+            symbols: ShapesDictRef[str, SymbolInfo, StrValue] = ShapesDictSlot(SymbolInfo)
 
         # Access items
         Market.symbols["AAPL"].price.get()  # Navigate to shape fields
@@ -544,7 +544,7 @@ def ShapesDictSlot[K: (int, str), S: PVShape](  # noqa: N802
     shape_type: type[S],
     view_type: type[MutableMappingView] | None = None,
     key_type: type[K] = str,
-) -> PVShapesDictRef[K, S, AnyRef]:
+) -> PVShapesDictRef[K, S, AnyValue]:
     """Create a mapping slot for dicts of shapes.
 
     Factory function that returns a slot instance.
@@ -569,26 +569,26 @@ def ShapesDictSlot[K: (int, str), S: PVShape](  # noqa: N802
 # =====================================================================
 
 
-def IntSlot() -> PVItemRef[int, IntRef]:  # noqa: N802
+def IntSlot() -> PVItemRef[int, IntValue]:  # noqa: N802
     """Create a slot for int values."""
-    return ItemSlot(int, IntRef)  # type: ignore
+    return ItemSlot(int, IntValue)  # type: ignore
 
 
-def StrSlot() -> PVItemRef[str, StrRef]:  # noqa: N802
+def StrSlot() -> PVItemRef[str, StrValue]:  # noqa: N802
     """Create a slot for str values."""
-    return ItemSlot(str, StrRef)  # type: ignore
+    return ItemSlot(str, StrValue)  # type: ignore
 
 
-def FloatSlot() -> PVItemRef[float, FloatRef]:  # noqa: N802
+def FloatSlot() -> PVItemRef[float, FloatValue]:  # noqa: N802
     """Create a slot for float values."""
-    return ItemSlot(float, FloatRef)  # type: ignore
+    return ItemSlot(float, FloatValue)  # type: ignore
 
 
-def BoolSlot() -> PVItemRef[bool, BoolRef]:  # noqa: N802
+def BoolSlot() -> PVItemRef[bool, BoolValue]:  # noqa: N802
     """Create a slot for bool values."""
-    return ItemSlot(bool, BoolRef)  # type: ignore
+    return ItemSlot(bool, BoolValue)  # type: ignore
 
 
-def BytesSlot() -> PVItemRef[bytes, BytesRef]:  # noqa: N802
+def BytesSlot() -> PVItemRef[bytes, BytesValue]:  # noqa: N802
     """Create a slot for bytes values."""
-    return ItemSlot(bytes, BytesRef)  # type: ignore
+    return ItemSlot(bytes, BytesValue)  # type: ignore

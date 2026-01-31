@@ -18,17 +18,17 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, overload
 
 from everybase import (
-    BoolRef,
-    BytesRef,
-    DictRef,
-    FloatRef,
-    IntRef,
-    ListRef,
-    NoneRef,
-    SetRef,
-    StrRef,
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    IntValue,
+    ListValue,
+    NoneValue,
+    SetValue,
+    StrValue,
     ensure_term,
-    typed_ref,
+    typed_value,
 )
 
 
@@ -60,7 +60,7 @@ class ExistableBase:
     Requires self to have resolve() method.
     """
 
-    def exists(self) -> BoolRef:
+    def exists(self) -> BoolValue:
         """Create an existence check operation.
 
         Returns:
@@ -72,9 +72,9 @@ class ExistableBase:
         """
         from every_pv.morphisms import ExistsOp
 
-        return BoolRef(ExistsOp(self))
+        return BoolValue(ExistsOp(self))
 
-    def missing(self) -> BoolRef:
+    def missing(self) -> BoolValue:
         """Create a missing check operation.
 
         Returns:
@@ -86,7 +86,7 @@ class ExistableBase:
         """
         from every_pv.morphisms import MissingOp
 
-        return BoolRef(MissingOp(self))
+        return BoolValue(MissingOp(self))
 
 
 # =============================================================================
@@ -105,32 +105,32 @@ class GettableBase[ValueT]:
 
     # Primitives
     @overload
-    def get(self: GettableBase[int]) -> IntRef: ...
+    def get(self: GettableBase[int]) -> IntValue: ...
 
     @overload
-    def get(self: GettableBase[str]) -> StrRef: ...
+    def get(self: GettableBase[str]) -> StrValue: ...
 
     @overload
-    def get(self: GettableBase[bool]) -> BoolRef: ...
+    def get(self: GettableBase[bool]) -> BoolValue: ...
 
     @overload
-    def get(self: GettableBase[float]) -> FloatRef: ...
+    def get(self: GettableBase[float]) -> FloatValue: ...
 
     @overload
-    def get(self: GettableBase[bytes]) -> BytesRef: ...
+    def get(self: GettableBase[bytes]) -> BytesValue: ...
 
     @overload
-    def get(self: GettableBase[None]) -> NoneRef: ...
+    def get(self: GettableBase[None]) -> NoneValue: ...
 
     # Collections
     @overload
-    def get[V](self: GettableBase[list[V]]) -> ListRef[V]: ...
+    def get[V](self: GettableBase[list[V]]) -> ListValue[V]: ...
 
     @overload
-    def get[K, V](self: GettableBase[dict[K, V]]) -> DictRef[K, V]: ...
+    def get[K, V](self: GettableBase[dict[K, V]]) -> DictValue[K, V]: ...
 
     @overload
-    def get[V](self: GettableBase[set[V]]) -> SetRef[V]: ...
+    def get[V](self: GettableBase[set[V]]) -> SetValue[V]: ...
 
     def get(self) -> object:
         """Create a get operation for this location.
@@ -143,7 +143,7 @@ class GettableBase[ValueT]:
         """
         from every_pv.morphisms import GetOp
 
-        return typed_ref(self.value_type, GetOp(self))
+        return typed_value(self.value_type, GetOp(self))
 
 
 class CollectionGettableBase[CollectionTypeT](ABC):
@@ -161,14 +161,14 @@ class CollectionGettableBase[CollectionTypeT](ABC):
             op: The operation to wrap
 
         Returns:
-            Typed wrapper (e.g., ListRef, DictRef, SetRef)
+            Typed wrapper (e.g., ListValue, DictValue, SetValue)
 
         Note:
             Subclasses must implement this to return the correct wrapper type.
 
         Example:
-            def result(self, op: Term) -> ListRef[T]:
-                return ListRef(op)
+            def result(self, op: Term) -> ListValue[T]:
+                return ListValue(op)
         """
         ...
 
@@ -210,48 +210,48 @@ class SettableBase[ValueT]:
     @overload
     def set(
         self: SettableBase[int], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> IntRef: ...
+    ) -> IntValue: ...
 
     @overload
     def set(
         self: SettableBase[str], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> StrRef: ...
+    ) -> StrValue: ...
 
     @overload
     def set(
         self: SettableBase[bool], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> BoolRef: ...
+    ) -> BoolValue: ...
 
     @overload
     def set(
         self: SettableBase[float], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> FloatRef: ...
+    ) -> FloatValue: ...
 
     @overload
     def set(
         self: SettableBase[bytes], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> BytesRef: ...
+    ) -> BytesValue: ...
 
     @overload
     def set(
         self: SettableBase[None], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> NoneRef: ...
+    ) -> NoneValue: ...
 
     # Collections
     @overload
     def set[V](
         self: SettableBase[list[V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> ListRef[V]: ...
+    ) -> ListValue[V]: ...
 
     @overload
     def set[K, V](
         self: SettableBase[dict[K, V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> DictRef[K, V]: ...
+    ) -> DictValue[K, V]: ...
 
     @overload
     def set[V](
         self: SettableBase[set[V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> SetRef[V]: ...
+    ) -> SetValue[V]: ...
 
     def set(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> object:
         """Create a set command for this location.
@@ -268,7 +268,7 @@ class SettableBase[ValueT]:
         """
         from every_pv.morphisms import SetCmd
 
-        return typed_ref(self.value_type, SetCmd(self, ensure_term(value)))
+        return typed_value(self.value_type, SetCmd(self, ensure_term(value)))
 
 
 class StorableBase[CollectionTypeT, CollectionT](ABC):
@@ -285,14 +285,14 @@ class StorableBase[CollectionTypeT, CollectionT](ABC):
             op: The operation to wrap
 
         Returns:
-            Typed wrapper (e.g., ListRef, DictRef, SetRef)
+            Typed wrapper (e.g., ListValue, DictValue, SetValue)
 
         Note:
             Subclasses must implement this to return the correct wrapper type.
 
         Example:
-            def result(self, op: Term) -> DictRef[K, V]:
-                return DictRef(op)
+            def result(self, op: Term) -> DictValue[K, V]:
+                return DictValue(op)
         """
         ...
 
@@ -326,7 +326,7 @@ class DeletableBase:
     Implements the Deletable protocol with remove() method.
     """
 
-    def remove(self) -> NoneRef:
+    def remove(self) -> NoneValue:
         """Create a delete command for this location.
 
         Returns:
@@ -337,7 +337,7 @@ class DeletableBase:
         """
         from every_pv.morphisms import DeleteCmd
 
-        return NoneRef(DeleteCmd(self))
+        return NoneValue(DeleteCmd(self))
 
 
 class ClearableBase:
@@ -346,7 +346,7 @@ class ClearableBase:
     Implements the Clearable protocol with clear() method.
     """
 
-    def clear(self) -> NoneRef:
+    def clear(self) -> NoneValue:
         """Create a clear command for this container.
 
         Returns:
@@ -357,7 +357,7 @@ class ClearableBase:
         """
         from every_pv.morphisms import ClearCmd
 
-        return NoneRef(ClearCmd(self))
+        return NoneValue(ClearCmd(self))
 
 
 # =============================================================================
@@ -371,7 +371,7 @@ class LengthableBase:
     Implements the Lengthable protocol with length() method.
     """
 
-    def length(self) -> IntRef:
+    def length(self) -> IntValue:
         """Create a length query operation.
 
         Returns:
@@ -382,4 +382,4 @@ class LengthableBase:
         """
         from every_pv.morphisms import LengthOp
 
-        return IntRef(LengthOp(self))
+        return IntValue(LengthOp(self))

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from everyabc import Sentinel, Term
-    from everybase import BoolRef, IntRef, NoneRef
+    from everybase import BoolValue, IntValue, NoneValue
 
 
 __all__ = [
@@ -29,11 +29,11 @@ __all__ = [
 class PVExistable(Protocol):
     """Protocol for refs that can check existence."""
 
-    def exists(self) -> BoolRef:
+    def exists(self) -> BoolValue:
         """Check if location exists."""
         ...
 
-    def missing(self) -> BoolRef:
+    def missing(self) -> BoolValue:
         """Check if location is missing."""
         ...
 
@@ -78,7 +78,7 @@ class PVStorable[T](Protocol):
 class PVDeletable(Protocol):
     """Protocol for refs that can delete values."""
 
-    def remove(self) -> NoneRef:
+    def remove(self) -> NoneValue:
         """Delete the value at this location."""
         ...
 
@@ -87,7 +87,7 @@ class PVDeletable(Protocol):
 class PVClearable(Protocol):
     """Protocol for refs that can clear all items."""
 
-    def clear(self) -> NoneRef:
+    def clear(self) -> NoneValue:
         """Clear all items from container."""
         ...
 
@@ -96,6 +96,6 @@ class PVClearable(Protocol):
 class PVLengthable(Protocol):
     """Protocol for refs that can query length."""
 
-    def length(self) -> IntRef:
+    def length(self) -> IntValue:
         """Get container length."""
         ...

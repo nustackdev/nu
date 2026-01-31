@@ -25,7 +25,7 @@ from everybase.types import (
     IntType,
     InvalidType,
     ListType,
-    NoneType_,
+    NoneType,
     SentinelType,
     SetType,
     StrType,
@@ -190,7 +190,7 @@ class AnyValue(ValueBase[object], AnyType):
     pass
 
 
-class NoneValue(ValueBase[None], NoneType_):
+class NoneValue(ValueBase[None], NoneType):
     """Concrete none value for Python memory storage."""
 
     def __init__(self) -> None:

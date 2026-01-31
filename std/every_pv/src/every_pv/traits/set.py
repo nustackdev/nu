@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase import NoneRef, ensure_term
+from everybase import NoneValue, ensure_term
 
 
 if TYPE_CHECKING:
@@ -33,21 +33,21 @@ class SetAddableBase[ItemT]:
     Implements add() method for sets.
     """
 
-    def add(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneRef:
+    def add(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneValue:
         """Create an add command.
 
         Args:
             value: Item to add (literal or Term)
 
         Returns:
-            NoneRef (add returns None after execution)
+            NoneValue (add returns None after execution)
 
         Example:
             >>> set_ref.add("item").execute(ctx)
         """
         from every_pv.morphisms import AddValueCmd
 
-        return NoneRef(AddValueCmd(self, ensure_term(value)))
+        return NoneValue(AddValueCmd(self, ensure_term(value)))
 
 
 class SetRemovableBase[ItemT]:
@@ -56,14 +56,14 @@ class SetRemovableBase[ItemT]:
     Implements remove() and discard() methods for sets.
     """
 
-    def remove(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneRef:
+    def remove(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneValue:
         """Create a remove command.
 
         Args:
             value: Item to remove (literal or Term)
 
         Returns:
-            NoneRef (remove returns None after execution)
+            NoneValue (remove returns None after execution)
 
         Note:
             Raises KeyError at execution if item not found.
@@ -73,20 +73,20 @@ class SetRemovableBase[ItemT]:
         """
         from every_pv.morphisms import RemoveValueCmd
 
-        return NoneRef(RemoveValueCmd(self, ensure_term(value)))
+        return NoneValue(RemoveValueCmd(self, ensure_term(value)))
 
-    def discard(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneRef:
+    def discard(self, value: ItemT | Sentinel | Term[ItemT | Sentinel]) -> NoneValue:
         """Create a discard command.
 
         Args:
             value: Item to discard (literal or Term)
 
         Returns:
-            NoneRef (discard returns None after execution, no error if missing)
+            NoneValue (discard returns None after execution, no error if missing)
 
         Example:
             >>> set_ref.discard("item").execute(ctx)  # No error if missing
         """
         from every_pv.morphisms import DiscardValueCmd
 
-        return NoneRef(DiscardValueCmd(self, ensure_term(value)))
+        return NoneValue(DiscardValueCmd(self, ensure_term(value)))

@@ -4,11 +4,11 @@ These refs inherit from PVPrimitiveRef for storage access and everybase
 RefBases for the operator interface.
 
 Pattern:
-    class PVIntRef(PVPrimitiveRef[int], IntRefBase):
+    class PVIntRef(PVPrimitiveRef[int], IntType):
         def __init__(self, address, parent=None, shape=None):
             super().__init__(address, int, parent, shape)
 
-The IntRefBase provides:
+The IntType provides:
     - Arithmetic operators: +, -, *, /, //, %, **
     - Comparison operators: ==, !=, <, <=, >, >=
     - Bitwise operators: &, |, ^, ~, <<, >>
@@ -29,12 +29,12 @@ from every_pv.traits.bases_primitive import (
     MutableMappingItemRefBase,
     MutableSequenceItemRefBase,
 )
-from everybase.refs import (
-    BoolRefBase,
-    BytesRefBase,
-    FloatRefBase,
-    IntRefBase,
-    StrRefBase,
+from everybase.types import (
+    BoolType,
+    BytesType,
+    FloatType,
+    IntType,
+    StrType,
 )
 
 
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from pv.loc import path
 
     from every_pv.shape import PVShape
-    from everyabc import Ref, Term
+    from everyabc import Term, Value
 
 
 __all__ = [
@@ -62,12 +62,12 @@ __all__ = [
 # =============================================================================
 
 
-class PVIntRef(PVPrimitiveRef[int], IntRefBase):
+class PVIntRef(PVPrimitiveRef[int], IntType):
     """PV integer reference with full numeric interface.
 
     Inherits:
         - PVPrimitiveRef: PV storage access via fetch()
-        - IntRefBase: Arithmetic, comparison, bitwise, logical operators
+        - IntType: Arithmetic, comparison, bitwise, logical operators
     """
 
     def __init__(
@@ -80,12 +80,12 @@ class PVIntRef(PVPrimitiveRef[int], IntRefBase):
         super().__init__(address, int, parent, shape)
 
 
-class PVStrRef(PVPrimitiveRef[str], StrRefBase):
+class PVStrRef(PVPrimitiveRef[str], StrType):
     """PV string reference with full string interface.
 
     Inherits:
         - PVPrimitiveRef: PV storage access via fetch()
-        - StrRefBase: String methods (upper, lower, split, etc.), concatenation
+        - StrType: String methods (upper, lower, split, etc.), concatenation
     """
 
     def __init__(
@@ -98,12 +98,12 @@ class PVStrRef(PVPrimitiveRef[str], StrRefBase):
         super().__init__(address, str, parent, shape)
 
 
-class PVFloatRef(PVPrimitiveRef[float], FloatRefBase):
+class PVFloatRef(PVPrimitiveRef[float], FloatType):
     """PV float reference with full numeric interface.
 
     Inherits:
         - PVPrimitiveRef: PV storage access via fetch()
-        - FloatRefBase: Arithmetic, comparison, logical operators
+        - FloatType: Arithmetic, comparison, logical operators
     """
 
     def __init__(
@@ -116,12 +116,12 @@ class PVFloatRef(PVPrimitiveRef[float], FloatRefBase):
         super().__init__(address, float, parent, shape)
 
 
-class PVBoolRef(PVPrimitiveRef[bool], BoolRefBase):
+class PVBoolRef(PVPrimitiveRef[bool], BoolType):
     """PV boolean reference with full logical interface.
 
     Inherits:
         - PVPrimitiveRef: PV storage access via fetch()
-        - BoolRefBase: Logical operators (and_, or_, not_)
+        - BoolType: Logical operators (and_, or_, not_)
     """
 
     def __init__(
@@ -134,12 +134,12 @@ class PVBoolRef(PVPrimitiveRef[bool], BoolRefBase):
         super().__init__(address, bool, parent, shape)
 
 
-class PVBytesRef(PVPrimitiveRef[bytes], BytesRefBase):
+class PVBytesRef(PVPrimitiveRef[bytes], BytesType):
     """PV bytes reference with full bytes interface.
 
     Inherits:
         - PVPrimitiveRef: PV storage access via fetch()
-        - BytesRefBase: Bytes methods (decode, hex, etc.)
+        - BytesType: Bytes methods (decode, hex, etc.)
     """
 
     def __init__(
@@ -157,7 +157,7 @@ class PVBytesRef(PVPrimitiveRef[bytes], BytesRefBase):
 # =============================================================================
 
 
-class PVItemRef[T, ValueT: Ref](
+class PVItemRef[T, ValueT: Value](
     PVPrimitiveRef[T],
     CollectionItemRefBase[T, ValueT],
 ):
@@ -185,7 +185,7 @@ class PVItemRef[T, ValueT: Ref](
         return self._value_value_type
 
 
-class PVListItemRef[T, ValueT: Ref](
+class PVListItemRef[T, ValueT: Value](
     PVPrimitiveRef[T],
     MutableSequenceItemRefBase[T, ValueT],
 ):
@@ -213,7 +213,7 @@ class PVListItemRef[T, ValueT: Ref](
         return self._value_value_type
 
 
-class PVDictItemRef[T, ValueT: Ref](
+class PVDictItemRef[T, ValueT: Value](
     PVPrimitiveRef[T],
     MutableMappingItemRefBase[T, ValueT],
 ):

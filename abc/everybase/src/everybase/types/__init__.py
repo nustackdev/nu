@@ -18,7 +18,7 @@ from .dict import DictType
 from .float import FloatType
 from .int import IntType
 from .list import ListType
-from .none import NoneType_
+from .none import NoneType
 from .sentinel import EmptyType, InvalidType, SentinelType
 from .set import FrozenSetType, SetType
 from .str import StrType
@@ -41,7 +41,7 @@ __all__ = [  # noqa: RUF022
     "TupleType",
     # Special
     "AnyType",
-    "NoneType_",
+    "NoneType",
     "SentinelType",
     "EmptyType",
     "InvalidType",
