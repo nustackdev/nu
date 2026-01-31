@@ -1,10 +1,8 @@
-# everyshape
+# Philosophy
 
 ## Data Topology
 
 Here is a location, here is another location, here is the path between them. The locations can hold anything. The paths can traverse anything. The topology itself is the invariant.
-
-everyshape encodes data topology.
 
 ## Three Separations
 
@@ -12,32 +10,26 @@ everyshape encodes data topology.
 
 **Structure from Storage.** Views define how data behaves — dict semantics, list semantics, set semantics. Storage defines where bytes live. The same view can sit on memory, disk, network, sharded cluster. The same storage can present different views.
 
-**Protocol from Implementation.** Layer 4 defines what refs and values must do. It says nothing about how. Implement the protocol, gain the composition. The system doesn't know or care what's behind the interface.
+**Protocol from Implementation.** Contracts define what refs and values must do. They say nothing about how. Implement the protocol, gain the composition. The system doesn't know or care what's behind the interface.
 
-## Views Are Infinite
+## Why Three Primitives
 
-A view is a lens over storage. It interprets raw keys as structure.
+Every program answers three orthogonal questions:
 
-Dict view sees `{"a": 1, "b": 2}`. List view sees `[1, 2, 3]`. Set view sees `{1, 2, 3}`. But these are just the obvious ones.
+1. **What** happens at each step? → Term
+2. **When** does each step run relative to others? → Flow
+3. **Which** steps are related toghether? → Span
 
-A view can see a B-tree. A view can see a time-series with automatic bucketing. A view can see a graph with adjacency encoded in key prefixes. A view can see a sparse tensor.
+These concerns are independent. Changing the order (Flow) doesn't change the computation (Term). Adding shared context (Span) doesn't change what is computed or in what order.
 
-The view protocol is fixed. What views can represent is not. Any structure that can be projected onto key-value pairs can have a view. Any optimization that can be expressed in how keys are laid out can be encoded.
+Each primitive owns exactly one question:
 
-This is the extensibility that matters. Not plugin architectures. Not configuration options. The ability to define entirely new structural interpretations without changing anything above or below.
-
-## The Term Layer as Algebra
-
-Layer 4 is algebraic. It defines:
-
-- Ref — element of the location set
-- Value — element of the computation set
-- Operation — pure morphism (computation → computation)
-- Command — impure morphism (computation → effect)
-
-These compose. Refs chain through navigation. Values chain through operators. Operations chain through application. The algebra is closed — combining terms produces terms.
-
-The specific types (IntType, FloatRef, GetOp) are inhabitants. The layer defines the algebra. You populate it.
+```
+          computes?    orders?    shares?
+Term         x
+Flow                     x
+Span                                x
+```
 
 ## Shapes as Declarations
 
@@ -62,20 +54,6 @@ Execution is a separate act. You can build many trees. You can combine trees. Yo
 
 This separation means the system can see your intent before committing to action. Batching, caching, reordering — these become transformations on trees, not runtime heuristics.
 
-## The Stack
-
-```
-Shape  — topology declaration
-Term   — computation algebra
-View   — structure interpretation
-Container — hierarchy maintenance
-Storage — byte persistence
-```
-
-Each layer depends only on the layer below. Each layer is independently replaceable. The contracts between layers are thin — just protocols.
-
-This isn't modular design for its own sake. It's recognition that these concerns are orthogonal. How you declare structure shouldn't know how you persist bytes. How you compute shouldn't know how you interpret keys.
-
 ## What Flows Through
 
 Define a new view. It works with existing shapes, existing terms, existing storage.
@@ -84,7 +62,7 @@ Define a new value type. It works with existing refs, existing views, existing s
 
 Define a new storage backend. It works with existing everything.
 
-The protocols are the stable points. Implementations flow through them. This is why the term layer is mostly abstract — it's the algebra, not the inhabitants.
+The protocols are the stable points. Implementations flow through them.
 
 ## Data Programming
 
