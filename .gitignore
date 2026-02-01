@@ -189,7 +189,7 @@ benchmark_results/
 .ruff_cache/
 
 # Misc
-_playground/
+/*playground
 .db*/
 .state*/
 .logs*/

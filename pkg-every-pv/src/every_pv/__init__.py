@@ -30,7 +30,6 @@ from every_pv.collections import (
     ShapesDictRef,
     ShapesListRef,
 )
-from every_pv.morphisms import TypedSetCmd
 from every_pv.primitives import (
     BoolRef,
     BytesRef,
@@ -75,8 +74,6 @@ __all__ = [  # noqa: RUF022
     # Spans
     "Atomic",
     "Snapshot",
-    # Morphisms
-    "TypedSetCmd",
     # Concrete refs - Primitives
     "BoolRef",
     "BytesRef",
