@@ -4,23 +4,27 @@ This package provides PV (polymorphic views) based ref implementations
 for the everybase term system.
 
 Key Classes:
-    Concrete PV Refs:
+    Typed Refs (with operators):
         - IntRef, StrRef, FloatRef, BoolRef, BytesRef
+
+    Generic Item Refs:
         - ItemRef, ListItemRef, DictItemRef
+
+    Collection Refs:
         - DictRef, ListRef
         - ShapeRef, ShapesListRef, ShapesDictRef
-
-    Slots:
-        - IntSlot, StrSlot, FloatSlot, BoolSlot, BytesSlot
-        - ItemSlot, DictSlot, ListSlot
-        - ShapeSlot, ShapesListSlot, ShapesDictSlot
 
     Spans:
         - Atomic: Transaction/snapshot boundary (auto-selects based on purity)
         - Snapshot: Read-only snapshot boundary
 
 Usage:
-    from every_pv import IntRef, StrRef, IntSlot, Atomic
+    from every_pv import Shape, IntRef, StrRef, ShapeRef, Atomic
+
+    class User(Shape):
+        name = StrRef.slot()
+        age = IntRef.slot()
+        profile = ShapeRef.slot(Profile)
 """
 
 from every_pv.collections import (
@@ -44,64 +48,35 @@ from every_pv.ref import (
     PrimitiveRef,
     ViewRef,
 )
-from every_pv.slots import (
-    BoolSlot,
-    BytesSlot,
-    DictSlot,
-    FloatSlot,
-    IntSlot,
-    ItemSlot,
-    ListSlot,
-    ShapesDictSlot,
-    ShapesListSlot,
-    ShapeSlot,
-    StrSlot,
-)
 from every_pv.spans import Atomic, Snapshot
-from everyshape import ShapeBase as Shape
-from everyshape import ShapeMeta, SlotDescriptor
-
-from . import slots
+from everyshape import Shape, ShapeMeta, SlotDescriptor
 
 
-__all__ = [  # noqa: RUF022
-    # Modules
-    "slots",
-    # Shape (re-exported from everyshape)
-    "Shape",
-    "ShapeMeta",
-    "SlotDescriptor",
+__all__ = [
     # Spans
     "Atomic",
-    "Snapshot",
-    # Concrete refs - Primitives
+    # Typed refs (with operators)
     "BoolRef",
     "BytesRef",
+    # Generic item refs
     "DictItemRef",
+    # Collection refs
+    "DictRef",
     "FloatRef",
     "IntRef",
     "ItemRef",
     "ListItemRef",
-    "StrRef",
-    # Concrete refs - Collections
-    "DictRef",
     "ListRef",
+    # Abstract refs
+    "PrimitiveRef",
+    # Shape (re-exported from everyshape)
+    "Shape",
+    "ShapeMeta",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
-    # Slots
-    "BoolSlot",
-    "BytesSlot",
-    "DictSlot",
-    "FloatSlot",
-    "IntSlot",
-    "ItemSlot",
-    "ListSlot",
-    "ShapeSlot",
-    "ShapesDictSlot",
-    "ShapesListSlot",
-    "StrSlot",
-    # Abstract refs
-    "PrimitiveRef",
+    "SlotDescriptor",
+    "Snapshot",
+    "StrRef",
     "ViewRef",
 ]

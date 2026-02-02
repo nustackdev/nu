@@ -1,22 +1,25 @@
-"""Example demonstrating mapping and sequence support in Shape system.
+"""Example demonstrating custom Ref types with the Ref.slot() pattern.
 
-This example shows:
-1. Mapping of primitives (dict-like)
-2. Mapping of shapes (dict of structured objects)
-3. Sequence of primitives (list-like)
-4. Sequence of shapes (list of structured objects)
-5. Nested collections (infinite nesting)
+This example shows how to add a custom type (datetime) across substrates.
+The pattern:
+    1. Define a Type class with operators (DatetimeType)
+    2. Define a Value class for computed results (DatetimeValue)
+    3. Define a RefBase with get/set methods (DatetimeRefBase)
+    4. For each substrate, subclass RefBase and add .slot()
+
+The .slot() classmethod uses Slot internally — users never
+need to create Slot classes manually.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Self
 
-from every_dict import RefBase
-from every_dict import Shape as DictShape
+from every_dict import RefBase as DictRefBase
+from every_dict import Shape
 from every_pv import PrimitiveRef
-from every_pv import Shape as PVShape
-from everyabc import Arg, FloatArg, Ref, Sentinel, Shape, Slot, StrArg
+from everyabc import Arg, FloatArg, Sentinel, StrArg
 from everybase import (
     AddOp,
     FloatType,
@@ -33,7 +36,7 @@ from everybase import (
     ValueBase,
     ensure_term,
 )
-from everyshape import ItemRef
+from everyshape import ItemRef, Slot
 
 
 # =============================================
@@ -115,81 +118,46 @@ class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
 
 
 # =============================================
-# Refs for PV and Dict substrates
+# Substrate-specific Refs with .slot() pattern
 # =============================================
+#
+# Each Ref class implements .slot() classmethod that returns a Slot.
+# This eliminates the need for manual Slot classes per type per substrate.
 
 
 class PVDatetimeRef(DatetimeRefBase, PrimitiveRef):
-    pass
+    """PV substrate datetime ref with .slot() factory."""
+
+    @classmethod
+    def slot(cls) -> Self:
+        """Create a slot for this ref type."""
+        return Slot(cls, value_type=str)  # type: ignore[return-value]
 
 
-class DictDatetimeRef(DatetimeRefBase, RefBase):
-    pass
+class DictDatetimeRef(DatetimeRefBase, DictRefBase):
+    """Dict substrate datetime ref with .slot() factory."""
 
-
-# =============================================
-# Slots for PV and Dict substrates
-# =============================================
-
-
-class _PVDatetimeSlot(Slot):
-    def __init__(self) -> None:
-        super().__init__()
-        self.value_type = str
-
-    def create_ref(
-        self,
-        owner_shape: type[Shape],
-        parent_ref: Ref | None = None,
-    ) -> PVDatetimeRef:
-        return PVDatetimeRef(
-            address=self.name,
-            value_type=self.value_type,
-            parent=parent_ref,
-            shape=owner_shape,
-        )
-
-
-def PVDatetimeSlot() -> PVDatetimeRef:  # noqa: N802
-    return _PVDatetimeSlot()  # type: ignore[reportReturnType]
-
-
-class _DictDatetimeSlot(Slot):
-    def __init__(self) -> None:
-        super().__init__()
-        self.value_type = str
-
-    def create_ref(
-        self,
-        owner_shape: type[Shape],
-        parent_ref: Ref | None = None,
-    ) -> DictDatetimeRef:
-        return DictDatetimeRef(
-            address=self.name,
-            parent=parent_ref,
-            shape=owner_shape,
-        )
-
-
-def DictDatetimeSlot() -> DictDatetimeRef:  # noqa: N802
-    return _DictDatetimeSlot()  # type: ignore[reportReturnType]
+    @classmethod
+    def slot(cls) -> Self:
+        """Create a slot for this ref type."""
+        return Slot(cls)  # type: ignore[return-value]
 
 
 # =============================================
-# Example
+# Shape definitions using Ref.slot()
 # =============================================
 
 
-class SymbolInfo(DictShape):
-    """Individual symbol information."""
+class SymbolInfo(Shape):
+    """Symbol info using dict substrate."""
 
-    test_dt = DictDatetimeSlot()
+    test_dt = DictDatetimeRef.slot()
 
 
-class PVSymbolInfo(PVShape):
-    """Individual symbol information."""
+class PVSymbolInfo(Shape):
+    """Symbol info using PV substrate."""
 
-    test_dt = PVDatetimeSlot()
+    test_dt = PVDatetimeRef.slot()
 
 
 # =============================================

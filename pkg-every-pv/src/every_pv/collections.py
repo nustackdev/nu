@@ -11,7 +11,7 @@ single-operation calls, not bulk iteration.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from pv.collections import MutableMappingView, MutableSequenceView
 from pv.types import Value as StorageValue
@@ -19,7 +19,8 @@ from pv.types import Value as StorageValue
 from every_pv.primitives import DictItemRef, ListItemRef
 from every_pv.ref import RefBase, ViewRef
 from everybase import ensure_term
-from everyshape import ShapeBase as PVShape
+from everyshape import Shape as PVShape
+from everyshape import Slot
 from everyshape.collections import (
     ReactiveMappingRef,
     ReactiveSequenceRef,
@@ -35,7 +36,41 @@ from everyshape.collections import (
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from everyabc import Sentinel, Term
+    from everyabc import Sentinel, Term, Value
+
+from everybase import (
+    AnyValue,
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    IntValue,
+    ListValue,
+    SetValue,
+    StrValue,
+)
+
+
+def _value_type_for(python_type: type) -> type[Value]:
+    """Map Python type to its corresponding Value type.
+
+    Args:
+        python_type: Native Python type (int, str, float, etc.)
+
+    Returns:
+        Corresponding Value type (IntValue, StrValue, etc.)
+    """
+    mapping: dict[type, type] = {
+        int: IntValue,
+        str: StrValue,
+        float: FloatValue,
+        bool: BoolValue,
+        bytes: BytesValue,
+        list: ListValue,
+        dict: DictValue,
+        set: SetValue,
+    }
+    return mapping.get(python_type, AnyValue)
 
 
 __all__ = [
@@ -84,6 +119,29 @@ class ShapeRef[T: PVShape](
         self.key_type: type = str
         self.value_type: type = object
 
+    @classmethod
+    def slot(
+        cls,
+        shape_type: type[T],
+        view_type: type[MutableMappingView] | None = None,
+    ) -> Self:
+        """Create a slot for this shape ref type.
+
+        Args:
+            shape_type: Shape class for the nested structure
+            view_type: View class implementing MutableMappingView protocol
+
+        Returns:
+            Slot configured to create ShapeRef instances
+        """
+        from every_pv.views import DictView
+
+        return Slot(
+            cls,
+            shape_type=shape_type,
+            view_type=view_type or DictView,
+        )  # type: ignore
+
 
 # =============================================================================
 # DICT REF
@@ -127,6 +185,34 @@ class DictRef[K: int | str, V: StorageValue](
             shape=self._shape,
         )
 
+    @classmethod
+    def slot(
+        cls,
+        value_type: type[V],
+        view_type: type[MutableMappingView] | None = None,
+        key_type: type[K] = str,
+    ) -> Self:
+        """Create a slot for this dict ref type.
+
+        Args:
+            value_type: Python type of values (primitives)
+            view_type: View class implementing MutableMappingView protocol
+            key_type: Python type of keys (default: str)
+
+        Returns:
+            Slot configured to create DictRef instances
+        """
+        from every_pv.views import DictView
+
+        return Slot(
+            cls,
+            value_type=value_type,
+            key_type=key_type,
+            view_type=view_type or DictView,
+            key_value_type=_value_type_for(key_type),
+            value_value_type=_value_type_for(value_type),
+        )  # type: ignore
+
 
 # =============================================================================
 # LIST REF
@@ -168,6 +254,30 @@ class ListRef[T, ItemValueT](
             shape=self._shape,
         )
 
+    @classmethod
+    def slot(
+        cls,
+        item_type: type[T],
+        view_type: type[MutableSequenceView] | None = None,
+    ) -> Self:
+        """Create a slot for this list ref type.
+
+        Args:
+            item_type: Python type of items (primitives)
+            view_type: View class implementing MutableSequenceView protocol
+
+        Returns:
+            Slot configured to create ListRef instances
+        """
+        from every_pv.views import ListView
+
+        return Slot(
+            cls,
+            item_type=item_type,
+            item_value_type=_value_type_for(item_type),
+            view_type=view_type or ListView,
+        )  # type: ignore
+
 
 # =============================================================================
 # SHAPES LIST REF
@@ -204,6 +314,29 @@ class ShapesListRef[T: PVShape](
             parent=self,
             shape=self._shape,
         )
+
+    @classmethod
+    def slot(
+        cls,
+        shape_type: type[T],
+        view_type: type[MutableSequenceView] | None = None,
+    ) -> Self:
+        """Create a slot for this shapes list ref type.
+
+        Args:
+            shape_type: Shape class for items
+            view_type: View class implementing MutableSequenceView protocol
+
+        Returns:
+            Slot configured to create ShapesListRef instances
+        """
+        from every_pv.views import ListView
+
+        return Slot(
+            cls,
+            shape_type=shape_type,
+            view_type=view_type or ListView,
+        )  # type: ignore
 
 
 # =============================================================================
@@ -245,3 +378,30 @@ class ShapesDictRef[K: int | str, T: PVShape, KeyValueT](
             parent=self,
             shape=self._shape,
         )
+
+    @classmethod
+    def slot(
+        cls,
+        shape_type: type[T],
+        view_type: type[MutableMappingView] | None = None,
+        key_type: type[K] = str,
+    ) -> Self:
+        """Create a slot for this shapes dict ref type.
+
+        Args:
+            shape_type: Shape class for values
+            view_type: View class implementing MutableMappingView protocol
+            key_type: Python type for keys (default: str)
+
+        Returns:
+            Slot configured to create ShapesDictRef instances
+        """
+        from every_pv.views import DictView
+
+        return Slot(
+            cls,
+            key_type=key_type,
+            key_value_type=_value_type_for(key_type),
+            shape_type=shape_type,
+            view_type=view_type or DictView,
+        )  # type: ignore

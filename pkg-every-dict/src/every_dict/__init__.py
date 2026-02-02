@@ -7,12 +7,12 @@ Alternative to every-pv when you need shapes without persistence.
 
 Usage::
 
-    from every_dict import Shape, ShapeRef, IntSlot, StrSlot
+    from every_dict import Shape, ShapeRef, IntRef, StrRef
     from everyabc import Context
 
     class User(Shape):
-        name = StrSlot()
-        age = IntSlot()
+        name = StrRef.slot()
+        age = IntRef.slot()
 
     data = {}
     ctx = Context().with_handle(dict, data, shape=User)
@@ -28,54 +28,29 @@ from every_dict.collections import (
     ShapesDictRef,
     ShapesListRef,
 )
-from every_dict.items import ItemRef
+from every_dict.items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
 from every_dict.ref import RefBase
-from every_dict.slots import (
-    BoolSlot,
-    BytesSlot,
-    DictSlot,
-    FloatSlot,
-    IntSlot,
-    ItemSlot,
-    ListSlot,
-    ShapesDictSlot,
-    ShapesListSlot,
-    ShapeSlot,
-    StrSlot,
-)
-from everyshape import ShapeBase as Shape
-from everyshape import ShapeMeta, SlotDescriptor
-
-from . import slots
+from everyshape import Shape, ShapeMeta, SlotDescriptor
 
 
-__all__ = [  # noqa: RUF022
-    # Modules
-    "slots",
-    # Shape (re-exported from everyshape)
-    "Shape",
-    "ShapeMeta",
-    "SlotDescriptor",
-    # Base ref
-    "RefBase",
-    # Item refs
+__all__ = [
+    # Typed item refs
+    "BoolRef",
+    "BytesRef",
+    "FloatRef",
+    "IntRef",
     "ItemRef",
     # Collection refs
     "MappingRef",
+    # Base ref
+    "RefBase",
     "SequenceRef",
+    # Shape (re-exported from everyshape)
+    "Shape",
+    "ShapeMeta",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
-    # Slots
-    "BoolSlot",
-    "BytesSlot",
-    "DictSlot",
-    "FloatSlot",
-    "IntSlot",
-    "ItemSlot",
-    "ListSlot",
-    "ShapeSlot",
-    "ShapesDictSlot",
-    "ShapesListSlot",
-    "StrSlot",
+    "SlotDescriptor",
+    "StrRef",
 ]

@@ -19,7 +19,7 @@ from everyabc import EMPTY, Ref, Sentinel, Term
 
 if TYPE_CHECKING:
     from everyabc import Context
-    from everyshape import ShapeBase
+    from everyshape import Shape as ShapeBase
 
 
 __all__ = [

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from .context import Context, Handle
 from .flow import Flow
-from .shape import Shape, Slot
+from .model import Model
 from .span import Span
 from .term import (
     EMPTY,
@@ -132,9 +132,8 @@ __all__ = [  # noqa: RUF022
     "SetArg",
     "FrozenSetArg",
     "TupleArg",
-    # Shape
-    "Shape",
-    "Slot",
+    # Model
+    "Model",
     # Flow & Span
     "Flow",
     "Span",

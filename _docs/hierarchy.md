@@ -3,7 +3,7 @@
 ## Layers
 
 ```
-everyabc            contracts — Term, Flow, Span, Ref, Shape, Slot, Context
+everyabc            contracts — Term, Flow, Span, Ref, Model, Context
   └── everybase     toolbox — types, values, morphisms, capabilities, utilities
         ├── everyshape    document model — shapes, items, collections, navigation
         │     ├── every-pv      PV storage substrate (path resolution, views, spans, adapters)
@@ -48,8 +48,7 @@ Term            computation (execute → result)
 Flow            ordering (Seq, Par, Cond, Loop)
 Span            cohesion boundary (enter/exit context)
 Context         type-keyed handle container
-Shape           marker base for structure definitions
-Slot            abstract slot (create_ref → Ref)
+Model           marker base for structure definitions (Shape, Table extend this)
 Sentinel        EMPTY / INVALID propagation
 ```
 
@@ -72,7 +71,11 @@ Utilities       ensure_term, tree walking, etc.
 Document model. Depends on everybase.
 
 ```
-Shape System    ShapeMeta, ShapeBase, SlotDescriptor
+Shape System    ShapeMeta, Shape (extends Model), SlotDescriptor
+
+Slot            universal slot that creates any Ref type (used by Ref.slot())
+
+Ref Base        ShapeRefBase (document-model ref contract: address, parent, shape, slot())
 
 Items           ItemRef → MutableItemRef → ReactiveItemRef
                 (typed value holders with CRUD + observation)

@@ -16,7 +16,7 @@ Pattern:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from every_pv.ref import PrimitiveRef
 from everybase.types import (
@@ -26,14 +26,14 @@ from everybase.types import (
     IntType,
     StrType,
 )
-from everyshape import ReactiveItemRef
+from everyshape import ReactiveItemRef, Slot
 
 
 if TYPE_CHECKING:
     from pv.loc import path
 
     from everyabc import Term, Value
-    from everyshape import ShapeBase as PVShape
+    from everyshape import Shape as PVShape
 
 
 __all__ = [
@@ -70,6 +70,11 @@ class IntRef(PrimitiveRef[int], IntType):
         """Initialize PV int ref."""
         super().__init__(address, int, parent, shape)
 
+    @classmethod
+    def slot(cls) -> Self:
+        """Create a slot for int values."""
+        return Slot(cls)  # type: ignore[return-value]
+
 
 class StrRef(PrimitiveRef[str], StrType):
     """PV string reference with full string interface.
@@ -87,6 +92,11 @@ class StrRef(PrimitiveRef[str], StrType):
     ) -> None:
         """Initialize PV str ref."""
         super().__init__(address, str, parent, shape)
+
+    @classmethod
+    def slot(cls) -> Self:
+        """Create a slot for str values."""
+        return Slot(cls)  # type: ignore[return-value]
 
 
 class FloatRef(PrimitiveRef[float], FloatType):
@@ -106,6 +116,11 @@ class FloatRef(PrimitiveRef[float], FloatType):
         """Initialize PV float ref."""
         super().__init__(address, float, parent, shape)
 
+    @classmethod
+    def slot(cls) -> Self:
+        """Create a slot for float values."""
+        return Slot(cls)  # type: ignore[return-value]
+
 
 class BoolRef(PrimitiveRef[bool], BoolType):
     """PV boolean reference with full logical interface.
@@ -124,6 +139,11 @@ class BoolRef(PrimitiveRef[bool], BoolType):
         """Initialize PV bool ref."""
         super().__init__(address, bool, parent, shape)
 
+    @classmethod
+    def slot(cls) -> Self:
+        """Create a slot for bool values."""
+        return Slot(cls)  # type: ignore[return-value]
+
 
 class BytesRef(PrimitiveRef[bytes], BytesType):
     """PV bytes reference with full bytes interface.
@@ -141,6 +161,11 @@ class BytesRef(PrimitiveRef[bytes], BytesType):
     ) -> None:
         """Initialize PV bytes ref."""
         super().__init__(address, bytes, parent, shape)
+
+    @classmethod
+    def slot(cls) -> Self:
+        """Create a slot for bytes values."""
+        return Slot(cls)  # type: ignore[return-value]
 
 
 # =============================================================================
@@ -170,6 +195,23 @@ class ItemRef[T, ValueT: Value](
         super().__init__(address, value_type, parent, shape)
         self._value_value_type = value_value_type
 
+    @classmethod
+    def slot(
+        cls,
+        value_type: type[T],
+        value_value_type: type[ValueT],
+    ) -> Self:
+        """Create a slot for this item ref type.
+
+        Args:
+            value_type: Python type of the value (int, str, float, etc.)
+            value_value_type: Value type for serialization
+
+        Returns:
+            Slot configured to create ItemRef instances
+        """
+        return Slot(cls, value_type=value_type, value_value_type=value_value_type)  # type: ignore
+
 
 class ListItemRef[T, ValueT: Value](
     ReactiveItemRef[T, ValueT],
@@ -193,6 +235,23 @@ class ListItemRef[T, ValueT: Value](
         super().__init__(address, value_type, parent, shape)
         self._value_value_type = value_value_type
 
+    @classmethod
+    def slot(
+        cls,
+        value_type: type[T],
+        value_value_type: type[ValueT],
+    ) -> Self:
+        """Create a slot for this list item ref type.
+
+        Args:
+            value_type: Python type of the value
+            value_value_type: Value type for serialization
+
+        Returns:
+            Slot configured to create ListItemRef instances
+        """
+        return Slot(cls, value_type=value_type, value_value_type=value_value_type)  # type: ignore
+
 
 class DictItemRef[T, ValueT: Value](
     ReactiveItemRef[T, ValueT],
@@ -215,3 +274,20 @@ class DictItemRef[T, ValueT: Value](
         """Initialize dict item reference."""
         super().__init__(address, value_type, parent, shape)
         self._value_value_type = value_value_type
+
+    @classmethod
+    def slot(
+        cls,
+        value_type: type[T],
+        value_value_type: type[ValueT],
+    ) -> Self:
+        """Create a slot for this dict item ref type.
+
+        Args:
+            value_type: Python type of the value
+            value_value_type: Value type for serialization
+
+        Returns:
+            Slot configured to create DictItemRef instances
+        """
+        return Slot(cls, value_type=value_type, value_value_type=value_value_type)  # type: ignore

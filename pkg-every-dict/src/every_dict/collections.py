@@ -17,8 +17,19 @@ from typing import TYPE_CHECKING, ClassVar
 
 from every_dict.items import ItemRef
 from every_dict.ref import RefBase
-from everybase import ensure_term
-from everyshape import ShapeBase
+from everybase import (
+    AnyValue,
+    BoolValue,
+    BytesValue,
+    DictValue,
+    FloatValue,
+    IntValue,
+    ListValue,
+    SetValue,
+    StrValue,
+    ensure_term,
+)
+from everyshape import Slot
 from everyshape.collections import (
     MutableMappingRef,
     MutableSequenceRef,
@@ -30,7 +41,25 @@ from everyshape.collections import ShapeRef as _BaseShapeRef
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel, Term
+    from typing import Self
+
+    from everyabc import Sentinel, Term, Value
+    from everyshape import Shape as ShapeBase
+
+
+def _value_type_for(python_type: type) -> type[Value]:
+    """Map Python type to its corresponding Value type."""
+    mapping: dict[type, type[Value]] = {
+        int: IntValue,
+        str: StrValue,
+        float: FloatValue,
+        bool: BoolValue,
+        bytes: BytesValue,
+        list: ListValue,
+        dict: DictValue,
+        set: SetValue,
+    }
+    return mapping.get(python_type, AnyValue)
 
 
 __all__ = [
@@ -67,6 +96,18 @@ class ShapeRef[T: ShapeBase](
         self._shape_type = shape_type
         self.key_type: type = str
         self.value_type: type = object
+
+    @classmethod
+    def slot(cls, shape_type: type[T]) -> Self:
+        """Create a slot for this shape ref type.
+
+        Args:
+            shape_type: Shape class for the nested structure.
+
+        Returns:
+            Slot that creates ShapeRef instances.
+        """
+        return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
 
 
 # =============================================================================
@@ -107,6 +148,25 @@ class MappingRef[K, V](
             shape=self._shape,
         )
 
+    @classmethod
+    def slot(cls, value_type: type[V], key_type: type[K] = str) -> Self:  # type: ignore[assignment]
+        """Create a slot for this mapping ref type.
+
+        Args:
+            value_type: Python type of values.
+            key_type: Python type of keys (default: str).
+
+        Returns:
+            Slot that creates MappingRef instances.
+        """
+        return Slot(
+            cls,
+            value_type=value_type,
+            key_type=key_type,
+            key_value_type=_value_type_for(key_type),
+            value_value_type=_value_type_for(value_type),
+        )  # type: ignore[return-value]
+
 
 # =============================================================================
 # SEQUENCE REF
@@ -142,6 +202,22 @@ class SequenceRef[T](
             shape=self._shape,
         )
 
+    @classmethod
+    def slot(cls, item_type: type[T]) -> Self:
+        """Create a slot for this sequence ref type.
+
+        Args:
+            item_type: Python type of items.
+
+        Returns:
+            Slot that creates SequenceRef instances.
+        """
+        return Slot(
+            cls,
+            item_type=item_type,
+            item_value_type=_value_type_for(item_type),
+        )  # type: ignore[return-value]
+
 
 # =============================================================================
 # SHAPES LIST REF
@@ -174,6 +250,18 @@ class ShapesListRef[T: ShapeBase](
             parent=self,
             shape=self._shape,
         )
+
+    @classmethod
+    def slot(cls, shape_type: type[T]) -> Self:
+        """Create a slot for this shapes list ref type.
+
+        Args:
+            shape_type: Shape class for items.
+
+        Returns:
+            Slot that creates ShapesListRef instances.
+        """
+        return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
 
 
 # =============================================================================
@@ -211,3 +299,21 @@ class ShapesDictRef[K, T: ShapeBase](
             parent=self,
             shape=self._shape,
         )
+
+    @classmethod
+    def slot(cls, shape_type: type[T], key_type: type[K] = str) -> Self:  # type: ignore[assignment]
+        """Create a slot for this shapes dict ref type.
+
+        Args:
+            shape_type: Shape class for values.
+            key_type: Python type for keys (default: str).
+
+        Returns:
+            Slot that creates ShapesDictRef instances.
+        """
+        return Slot(
+            cls,
+            shape_type=shape_type,
+            key_type=key_type,
+            key_value_type=_value_type_for(key_type),
+        )  # type: ignore[return-value]

@@ -53,7 +53,7 @@ Fundamental packages. Minimal deps.
 
 | Directory | Package | Purpose | Depends on |
 |-----------|---------|---------|------------|
-| `core-every` | `everyabc` | Protocols - Term, Flow, Ref, Sentinel | (none) |
+| `core-every` | `everyabc` | Protocols - Term, Flow, Ref, Model, Sentinel | (none) |
 | `core-every-bases` | `everybase` | Base implementations - Python types, computations | everyabc |
 
 ### pkg-* — Everything Else
@@ -62,7 +62,7 @@ Models, substrates, extensions, and integrations.
 
 | Directory | Package | Purpose |
 |-----------|---------|---------|
-| `pkg-every-shape` | `everyshape` | Document model - shapes, items, collections |
+| `pkg-every-shape` | `everyshape` | Document model - shapes, slots, items, collections |
 | `pkg-every-table` | `everytable` | Relational model - tables, columns, queries |
 | `pkg-every-pv` | `every-pv` | PV storage substrate + views + adapters |
 | `pkg-every-dict` | `every-dict` | Dict substrate (plain nested dicts, no persistence) |

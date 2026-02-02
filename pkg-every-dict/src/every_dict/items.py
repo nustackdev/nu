@@ -2,24 +2,44 @@
 
 ItemRef combines MutableItemRef (everyshape CRUD) with RefBase
 (dict navigation). No reactivity.
+
+Typed refs (IntRef, StrRef, etc.) combine ItemRef behavior with
+everybase type operators for a rich interface.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from every_dict.ref import RefBase
 from everyabc import Value
-from everyshape import MutableItemRef
+from everybase import (
+    BoolType,
+    BoolValue,
+    BytesType,
+    BytesValue,
+    FloatType,
+    FloatValue,
+    IntType,
+    IntValue,
+    StrType,
+    StrValue,
+)
+from everyshape import MutableItemRef, Slot
 
 
 if TYPE_CHECKING:
     from everyabc import Term
-    from everyshape import ShapeBase
+    from everyshape import Shape as ShapeBase
 
 
 __all__ = [
+    "BoolRef",
+    "BytesRef",
+    "FloatRef",
+    "IntRef",
     "ItemRef",
+    "StrRef",
 ]
 
 
@@ -45,3 +65,136 @@ class ItemRef[T, ValueT: Value](
         super().__init__(address, parent, shape)
         self._value_type = value_type
         self._value_value_type = value_value_type
+
+    @classmethod
+    def slot(cls, value_type: type[T], value_value_type: type[ValueT]) -> Self:
+        """Create a slot for this item ref type.
+
+        Args:
+            value_type: Python type of the value (int, str, float, etc.)
+            value_value_type: Value wrapper type (IntValue, StrValue, etc.)
+
+        Returns:
+            Slot that creates ItemRef instances.
+        """
+        return Slot(cls, value_type=value_type, value_value_type=value_value_type)  # type: ignore[return-value]
+
+
+# =============================================================================
+# TYPED REFS (with everybase interface)
+# =============================================================================
+
+
+class IntRef(ItemRef[int, IntValue], IntType):
+    """Dict integer reference with full numeric interface.
+
+    Inherits:
+        - ItemRef: Dict substrate access + CRUD
+        - IntType: Arithmetic, comparison, bitwise, logical operators
+    """
+
+    def __init__(
+        self,
+        address: str | int | Term,
+        parent: RefBase | None = None,
+        shape: type[ShapeBase] | None = None,
+    ) -> None:
+        """Initialize dict int ref."""
+        super().__init__(address, int, IntValue, parent, shape)
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for int values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class StrRef(ItemRef[str, StrValue], StrType):
+    """Dict string reference with full string interface.
+
+    Inherits:
+        - ItemRef: Dict substrate access + CRUD
+        - StrType: String methods (upper, lower, split, etc.), concatenation
+    """
+
+    def __init__(
+        self,
+        address: str | int | Term,
+        parent: RefBase | None = None,
+        shape: type[ShapeBase] | None = None,
+    ) -> None:
+        """Initialize dict str ref."""
+        super().__init__(address, str, StrValue, parent, shape)
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for str values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class FloatRef(ItemRef[float, FloatValue], FloatType):
+    """Dict float reference with full numeric interface.
+
+    Inherits:
+        - ItemRef: Dict substrate access + CRUD
+        - FloatType: Arithmetic, comparison, logical operators
+    """
+
+    def __init__(
+        self,
+        address: str | int | Term,
+        parent: RefBase | None = None,
+        shape: type[ShapeBase] | None = None,
+    ) -> None:
+        """Initialize dict float ref."""
+        super().__init__(address, float, FloatValue, parent, shape)
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for float values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class BoolRef(ItemRef[bool, BoolValue], BoolType):
+    """Dict boolean reference with full logical interface.
+
+    Inherits:
+        - ItemRef: Dict substrate access + CRUD
+        - BoolType: Logical operators (and_, or_, not_)
+    """
+
+    def __init__(
+        self,
+        address: str | int | Term,
+        parent: RefBase | None = None,
+        shape: type[ShapeBase] | None = None,
+    ) -> None:
+        """Initialize dict bool ref."""
+        super().__init__(address, bool, BoolValue, parent, shape)
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for bool values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class BytesRef(ItemRef[bytes, BytesValue], BytesType):
+    """Dict bytes reference with full bytes interface.
+
+    Inherits:
+        - ItemRef: Dict substrate access + CRUD
+        - BytesType: Bytes methods (decode, hex, etc.)
+    """
+
+    def __init__(
+        self,
+        address: str | int | Term,
+        parent: RefBase | None = None,
+        shape: type[ShapeBase] | None = None,
+    ) -> None:
+        """Initialize dict bytes ref."""
+        super().__init__(address, bytes, BytesValue, parent, shape)
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for bytes values."""
+        return Slot(cls)  # type: ignore[return-value]

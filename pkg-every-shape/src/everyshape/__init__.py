@@ -5,9 +5,13 @@ document structures with typed slots, plus abstract ref hierarchies
 for items and collections in the document model.
 
 Shape System:
+    Shape: Base class for declarative shape definitions.
     ShapeMeta: Metaclass that processes slot definitions at class creation time.
-    ShapeBase: Base class for declarative shape definitions.
     SlotDescriptor: Descriptor bridging slot definitions to refs at runtime.
+    Slot: Universal slot that creates any Ref type.
+
+Ref Hierarchy:
+    ShapeRefBase: Base for all document-model refs (address/parent/shape).
 
 Item Refs (typed values):
     ItemRef → MutableItemRef → ReactiveItemRef
@@ -38,13 +42,13 @@ from everyshape.collections import (
     ShapesListRef,
 )
 from everyshape.items import ItemRef, MutableItemRef, ReactiveItemRef
-from everyshape.shape import ShapeBase, ShapeMeta, SlotDescriptor
+from everyshape.shape import Shape, ShapeMeta, SlotDescriptor
+from everyshape.shape_ref import ShapeRef as ShapeRefBase
+from everyshape.slot import Slot
 
 
 __all__ = [
-    # Items
     "ItemRef",
-    # Mappings
     "MappingRef",
     "MutableItemRef",
     "MutableMappingRef",
@@ -58,15 +62,13 @@ __all__ = [
     "ReactiveShapeRef",
     "ReactiveShapesDictRef",
     "ReactiveShapesListRef",
-    # Sequences
     "SequenceRef",
-    # Shape system
-    "ShapeBase",
+    "Shape",
     "ShapeMeta",
-    # Shapes
     "ShapeRef",
+    "ShapeRefBase",
     "ShapesDictRef",
-    # Shapes in collections
     "ShapesListRef",
+    "Slot",
     "SlotDescriptor",
 ]

@@ -5,9 +5,9 @@ document structures. Slots are factories that create refs.
 
 Example::
 
-    class Order(ShapeBase):
-        price = ItemSlot(float, FloatValue)
-        volume = ItemSlot(int, IntValue)
+    class Order(Shape):
+        price = FloatRef.slot()
+        volume = IntRef.slot()
 
     Order.price   # → ref
     Order.volume  # → ref
@@ -18,7 +18,9 @@ from __future__ import annotations
 from abc import ABCMeta
 from typing import TYPE_CHECKING, ClassVar
 
-from everyabc import Shape, Slot
+from everyabc import Model
+
+from .slot import Slot, _SlotBase
 
 
 if TYPE_CHECKING:
@@ -26,7 +28,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ShapeBase",
+    "Shape",
     "ShapeMeta",
     "SlotDescriptor",
 ]
@@ -46,7 +48,7 @@ class SlotDescriptor:
         slot.create_ref(owner_shape=Market, parent_ref=None)
     """
 
-    def __init__(self, name: str, slot: Slot) -> None:
+    def __init__(self, name: str, slot: _SlotBase) -> None:
         """Initialize descriptor.
 
         Args:
@@ -56,7 +58,7 @@ class SlotDescriptor:
         self.name = name
         self.slot = slot
 
-    def __get__(self, obj: ShapeBase | None, objtype: type[ShapeBase] | None = None) -> Ref:
+    def __get__(self, obj: Shape | None, objtype: type[Shape] | None = None) -> Ref:
         """Return ref when slot is accessed.
 
         Args:
@@ -77,7 +79,7 @@ class SlotDescriptor:
             parent_ref=None,
         )
 
-    def __set__(self, obj: ShapeBase, value: object) -> None:
+    def __set__(self, obj: Shape, value: object) -> None:
         """Prevent setting slots -- they're structure definitions."""
         raise AttributeError(
             f"Cannot set slot '{self.name}' - slots are read-only structure definitions"
@@ -104,7 +106,7 @@ class ShapeMeta(ABCMeta):
         **kwargs: object,
     ) -> type:
         """Create shape class with slot processing."""
-        slots: dict[str, Slot] = {}
+        slots: dict[str, _SlotBase] = {}
 
         # 1. Collect slots from base classes (inheritance)
         for base in bases:
@@ -113,7 +115,7 @@ class ShapeMeta(ABCMeta):
 
         # 2. Scan namespace for Slot instances
         for field_name, value in namespace.items():
-            if isinstance(value, Slot):
+            if isinstance(value, _SlotBase):
                 value.name = field_name
                 slots[field_name] = value
 
@@ -130,21 +132,21 @@ class ShapeMeta(ABCMeta):
         return cls
 
 
-class ShapeBase(Shape, metaclass=ShapeMeta):
+class Shape(Model, metaclass=ShapeMeta):
     """Declarative structure definitions using Slots.
 
-    ShapeBase classes are never instantiated. All access is at class level.
+    Shape classes are never instantiated. All access is at class level.
     Slots are replaced by descriptors at class creation.
 
     Example::
 
-        class Profile(ShapeBase):
-            email = StrSlot()
-            age = IntSlot()
+        class Profile(Shape):
+            email = StrRef.slot()
+            age = IntRef.slot()
 
-        class User(ShapeBase):
-            name = StrSlot()
-            profile = ShapeSlot(Profile)
+        class User(Shape):
+            name = StrRef.slot()
+            profile = ShapeRef.slot(Profile)
 
         User.name            # → ref
         User.profile.email   # → ref (nested)

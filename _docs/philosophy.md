@@ -37,14 +37,14 @@ A shape declares: at this address, this topology exists.
 
 ```python
 class Market(Shape):
-    symbols = ShapesDictSlot(Symbol)
+    symbols = ShapesDictRef.slot(Symbol)
 ```
 
 This says: under "symbols", there is a dict-shaped topology where values have Symbol topology.
 
 It doesn't say how to store it. It doesn't say how to validate it. It doesn't say what Symbol means. It declares the nesting relationship.
 
-Shapes are topology declarations. Slots are local topology specifiers. Together they describe the full traversal graph.
+Shapes are topology declarations. Ref.slot() calls are local topology specifiers. Together they describe the full traversal graph.
 
 ## Lazy by Construction
 

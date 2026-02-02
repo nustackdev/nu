@@ -5,11 +5,11 @@ A substrate is where data actually lives. everyabc defines the computation model
 ## What a Substrate Provides
 
 1. **Refs** — the navigation layer (how to resolve a reference to a storage location)
+   - Each Ref class implements `.slot()` classmethod with typed signature for IDE autocomplete
 2. **Protocol implementations** — make storage objects support standard Python protocols
 3. **Spans** — context boundaries (transaction, snapshot, etc.) if the storage needs them
-4. **Shapes / Slots** — declarative schemas if the substrate supports structured data
 
-Everything else comes from everybase for free: type algebra, value wrappers, morphisms, capability bases, utilities.
+Everything else comes from everybase/everyshape for free: type algebra, value wrappers, morphisms, capability bases, Slot, ShapeRefBase, utilities. The `Slot` abstraction is an internal implementation detail — users just use `Ref.slot()`.
 
 
 ## The Span-Context Model
@@ -127,19 +127,19 @@ class PVAtomic(Span):
 
 PVAtomic inspects subtree purity: if all terms are Operations (pure), opens a read-only snapshot instead of a transaction. If no child accesses storage at all, nothing is opened.
 
-### PV Shapes and Slots
+### PV Shapes
 
-Declarative schemas for PV data:
+Declarative schemas for PV data using `Ref.slot()`:
 
 ```python
-class User(PVShape):
-    name = StrSlot()
-    age = IntSlot()
-    tasks = ListSlot(str)
-    profile = ShapeSlot(Profile)
+class User(Shape):
+    name = StrRef.slot()
+    age = IntRef.slot()
+    tasks = ListRef.slot(str)
+    profile = ShapeRef.slot(Profile)
 ```
 
-PVShapeMeta collects Slots at class creation, replaces them with SlotDescriptors. Accessing `User.name` at class level calls `SlotDescriptor.__get__()` which calls `slot.create_ref()` → returns a PVItemRef. Shapes are never instantiated.
+ShapeMeta collects Slots at class creation, replaces them with SlotDescriptors. Accessing `User.name` at class level calls `SlotDescriptor.__get__()` which calls `slot.create_ref()` → returns the appropriate Ref. Shapes are never instantiated.
 
 ### PV Ref Hierarchy
 
@@ -195,9 +195,9 @@ Primitive refs mix in everybase type bases (IntType, StrType, ...) to get operat
 ### Usage
 
 ```python
-class AppState(PVShape):
-    name = StrSlot()
-    age = IntSlot()
+class AppState(Shape):
+    name = StrRef.slot()
+    age = IntRef.slot()
 
 with Storage(".db", codec=Codec()) as storage:
     ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)

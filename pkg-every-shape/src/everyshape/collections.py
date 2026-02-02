@@ -30,8 +30,9 @@ from everybase.capabilities.loc_reactive import ViewObservableBase
 
 
 if TYPE_CHECKING:
-    from everyabc import Slot, Term
-    from everyshape.shape import ShapeBase
+    from everyabc import Term
+    from everyshape.shape import Shape as ShapeBase
+    from everyshape.slot import Slot
 
 
 __all__ = [
