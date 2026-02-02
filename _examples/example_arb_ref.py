@@ -16,14 +16,16 @@ from every_dict import RefBase
 from every_dict import Shape as DictShape
 from every_pv import PrimitiveRef
 from every_pv import Shape as PVShape
-from everyabc import Arg, FloatArg, Ref, RValue, Sentinel, Shape, Slot, StrArg, Term
+from everyabc import Arg, FloatArg, Ref, Sentinel, Shape, Slot, StrArg
 from everybase import (
     AddOp,
+    FloatType,
     FloatValue,
     FuncCallOp,
     ItemGetOp,
     ItemSetCmd,
     MethodCallOp,
+    StrType,
     StrValue,
     ToFloatOp,
     ToStrOp,
@@ -41,21 +43,21 @@ from everyshape import ItemRef
 
 class DatetimeType(TypeBase[datetime | Sentinel]):
     @classmethod
-    def from_timestamp(cls, ts: FloatArg) -> DatetimeValue:
-        if isinstance(ts, str):
-            val = float(ts)
-        elif isinstance(ts, float):
+    def from_timestamp(cls, ts: FloatArg | StrArg) -> DatetimeValue:
+        if isinstance(ts, (float, FloatType)):
             val = ts
-        elif isinstance(ts, Term):
+        elif isinstance(ts, str):
+            val = float(ts)
+        elif isinstance(ts, StrType):
             val = FloatValue(ToFloatOp(ts))
         else:
-            raise TypeError(f"Unknown type for datetime: {type(ts)}")
+            raise TypeError(f"Unsupported type for datetime: {type(ts)}")
         return DatetimeValue(FuncCallOp(datetime.fromtimestamp, val))
 
     @classmethod
     def from_iso(cls, ts: StrArg) -> DatetimeValue:
-        if isinstance(ts, Sentinel):
-            raise TypeError
+        if not isinstance(ts, (str, StrType)):
+            raise TypeError(f"from_iso requires str type, got {type(ts)}")
         return DatetimeValue(FuncCallOp(datetime.fromisoformat, ts))
 
     def to_timestamp(self) -> FloatValue:
@@ -65,14 +67,17 @@ class DatetimeType(TypeBase[datetime | Sentinel]):
         return StrValue(ToStrOp(self))
 
     def __add__(self, obj: Arg[DatetimeType]) -> DatetimeValue:
-        if isinstance(obj, float):
+        if isinstance(obj, (float, FloatType)):
             val = obj
+        elif isinstance(obj, str):
+            val = float(obj)
+        elif isinstance(obj, StrType):
+            val = FloatValue(ToFloatOp(obj))
         elif isinstance(obj, DatetimeType):
             val = obj.to_timestamp()
         else:
-            val = obj
-
-        return DatetimeValue.from_timestamp(AddOp(self.to_timestamp(), val))
+            raise TypeError(f"Unsupported type for datetime addition: {type(obj)}")
+        return DatetimeValue.from_timestamp(FloatValue(AddOp(self.to_timestamp(), val)))
 
 
 # =============================================
@@ -90,21 +95,23 @@ class DatetimeValue(ValueBase, DatetimeType):
 
 
 class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
-    def set(self, value: datetime | RValue[str | Sentinel]) -> DatetimeValue:
+    def set(self, value: Arg[datetime] | StrArg | FloatArg) -> DatetimeValue:
         if isinstance(value, datetime):
             val = str(value)
-        elif isinstance(value, float):
-            val = str(value)
-        elif isinstance(value, str):
-            val = value
         elif isinstance(value, DatetimeType):
             val = value.to_iso()
+        elif isinstance(value, float):
+            val = str(value)
+        elif isinstance(value, FloatType):
+            val = StrValue(ToStrOp(value))
+        elif isinstance(value, StrType):
+            val = value
         else:
-            raise TypeError(f"Unknown type for datetime: {type(value)}")
+            raise TypeError(f"Unsupported type for datetime: {type(value)}")
         return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
 
     def get(self) -> DatetimeValue:
-        return DatetimeValue.from_iso(ItemGetOp(self))
+        return DatetimeValue.from_iso(StrValue(ItemGetOp(self)))
 
 
 # =============================================
