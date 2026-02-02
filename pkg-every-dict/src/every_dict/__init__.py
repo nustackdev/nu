@@ -30,6 +30,20 @@ from every_dict.collections import (
 )
 from every_dict.items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
 from every_dict.ref import RefBase
+from every_dict.stdtypes import (
+    DictBasisPointRef,
+    DictComplexRef,
+    DictDateRef,
+    DictDatetimeRef,
+    DictDecimalRef,
+    DictFractionRef,
+    DictPathRef,
+    DictPercentageRef,
+    DictTimedeltaRef,
+    DictTimeRef,
+    DictTimezoneRef,
+    DictUUIDRef,
+)
 from everyshape import Shape, ShapeMeta, SlotDescriptor
 
 
@@ -37,6 +51,19 @@ __all__ = [
     # Typed item refs
     "BoolRef",
     "BytesRef",
+    # Stdtypes refs
+    "DictBasisPointRef",
+    "DictComplexRef",
+    "DictDateRef",
+    "DictDatetimeRef",
+    "DictDecimalRef",
+    "DictFractionRef",
+    "DictPathRef",
+    "DictPercentageRef",
+    "DictTimeRef",
+    "DictTimedeltaRef",
+    "DictTimezoneRef",
+    "DictUUIDRef",
     "FloatRef",
     "IntRef",
     "ItemRef",

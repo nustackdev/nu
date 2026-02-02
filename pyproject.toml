@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["everyabc", "everybase", "everyshape", "everytable", "every-flow", "every-flow-ext", "every-pv", "every-dict", "every-notion", "every-type"]
+dependencies = ["everyabc", "everybase", "everyshape", "everytable", "every-datetime", "every-dict", "every-fin", "every-flow", "every-flow-ext", "every-math", "every-notion", "every-path", "every-pv", "every-uuid"]
 
 # =============================================================================
 # UV Workspace
@@ -21,26 +21,34 @@ members = [
     "core-every-bases",
     "pkg-every-shape",
     "pkg-every-table",
+    "pkg-every-datetime",
     "pkg-every-dict",
+    "pkg-every-fin",
     "pkg-every-flow",
     "pkg-every-flow-ext",
+    "pkg-every-math",
     "pkg-every-notion",
+    "pkg-every-path",
     "pkg-every-pv",
-    "pkg-every-stdtypes",
+
+    "pkg-every-uuid",
 ]
 
 [tool.uv.sources]
 everyabc = { workspace = true }
 everybase = { workspace = true }
+every-datetime = { workspace = true }
+every-dict = { workspace = true }
+every-fin = { workspace = true }
 every-flow = { workspace = true }
 every-flow-ext = { workspace = true }
+every-math = { workspace = true }
+every-notion = { workspace = true }
+every-path = { workspace = true }
+every-pv = { workspace = true }
+every-uuid = { workspace = true }
 everyshape = { workspace = true }
 everytable = { workspace = true }
-every-pv = { workspace = true }
-every-type = { workspace = true }
-
-every-dict = { workspace = true }
-every-notion = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -59,7 +67,7 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-dict", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-notion", "pkg-every-pv", "pkg-every-stdtypes"]
+testpaths = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -74,7 +82,7 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-dict", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-notion", "pkg-every-pv", "pkg-every-stdtypes"]
+source = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -105,7 +113,7 @@ directory = "reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-dict", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-notion", "pkg-every-pv", "pkg-every-stdtypes"]
+src = ["core-every", "core-every-bases", "pkg-every-shape", "pkg-every-table", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -175,7 +183,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everyabc", "everybase", "everyshape", "everytable", "every_flow", "every_flow_leg", "every_flow_ext", "every_pv", "every_dict", "every_type", "every_notion"]
+known-first-party = ["everyabc", "everybase", "everyshape", "everytable", "every_datetime", "every_dict", "every_fin", "every_flow", "every_flow_leg", "every_flow_ext", "every_math", "every_notion", "every_path", "every_pv", "every_uuid"]
 force-single-line = false
 lines-after-imports = 2
 

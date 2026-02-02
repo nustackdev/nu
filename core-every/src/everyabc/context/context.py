@@ -81,6 +81,8 @@ class Context:
         If the handle doesn't exist but a factory is registered,
         the factory is called and the result is cached.
 
+        Falls back to unscoped lookup if shape-scoped lookup fails.
+
         Args:
             handle_type: The type to look up.
             shape: Optional Shape discriminator for multi-store.
@@ -103,6 +105,17 @@ class Context:
             self._handles[key] = handle
             self._opened.add(key)  # mark as lazily opened
             return handle
+
+        # Fallback: try unscoped lookup when shape-scoped fails
+        if shape is not None:
+            unscoped_key = handle_type
+            if unscoped_key in self._handles:
+                return self._handles[unscoped_key]
+            if unscoped_key in self._factories:
+                handle = self._factories[unscoped_key]()
+                self._handles[unscoped_key] = handle
+                self._opened.add(unscoped_key)
+                return handle
 
         # Build error message
         if shape:
