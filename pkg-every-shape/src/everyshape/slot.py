@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .shape import Shape
-    from .shape_ref import ShapeRef as Ref
+    from .shape_ref import Ref
 
 
 __all__ = [

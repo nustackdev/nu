@@ -75,7 +75,7 @@ Shape System    ShapeMeta, Shape (extends Model), SlotDescriptor
 
 Slot            universal slot that creates any Ref type (used by Ref.slot())
 
-Ref Base        ShapeRefBase (document-model ref contract: address, parent, shape, slot())
+Ref Base        Ref (document-model ref contract: address, parent, shape, slot())
 
 Items           ItemRef → MutableItemRef → ReactiveItemRef
                 (typed value holders with CRUD + observation)

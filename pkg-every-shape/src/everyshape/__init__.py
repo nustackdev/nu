@@ -11,17 +11,17 @@ Shape System:
     Slot: Universal slot that creates any Ref type.
 
 Ref Hierarchy:
-    ShapeRefBase: Base for all document-model refs (address/parent/shape).
+    Ref: Base for all document-model refs (address/parent/shape).
 
 Item Refs (typed values):
-    ItemRef → MutableItemRef → ReactiveItemRef
+    ItemRef -> MutableItemRef -> ReactiveItemRef
 
 Collection Refs (containers):
-    ShapeRef → MutableShapeRef → ReactiveShapeRef
-    MappingRef → MutableMappingRef → ReactiveMappingRef
-    SequenceRef → MutableSequenceRef → ReactiveSequenceRef
-    ShapesListRef → MutableShapesListRef → ReactiveShapesListRef
-    ShapesDictRef → MutableShapesDictRef → ReactiveShapesDictRef
+    ShapeRef -> MutableShapeRef -> ReactiveShapeRef
+    MappingRef -> MutableMappingRef -> ReactiveMappingRef
+    SequenceRef -> MutableSequenceRef -> ReactiveSequenceRef
+    ShapesListRef -> MutableShapesListRef -> ReactiveShapesListRef
+    ShapesDictRef -> MutableShapesDictRef -> ReactiveShapesDictRef
 """
 
 from everyshape.collections import (
@@ -43,7 +43,7 @@ from everyshape.collections import (
 )
 from everyshape.items import ItemRef, MutableItemRef, ReactiveItemRef
 from everyshape.shape import Shape, ShapeMeta, SlotDescriptor
-from everyshape.shape_ref import ShapeRef as ShapeRefBase
+from everyshape.shape_ref import Ref
 from everyshape.slot import Slot
 
 
@@ -62,11 +62,11 @@ __all__ = [
     "ReactiveShapeRef",
     "ReactiveShapesDictRef",
     "ReactiveShapesListRef",
+    "Ref",
     "SequenceRef",
     "Shape",
     "ShapeMeta",
     "ShapeRef",
-    "ShapeRefBase",
     "ShapesDictRef",
     "ShapesListRef",
     "Slot",

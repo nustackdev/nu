@@ -1,6 +1,6 @@
-"""ShapeRef -- base class for all document-model refs.
+"""Ref -- base class for all document-model refs.
 
-ShapeRef captures invariants shared by all Shape-aware refs:
+Ref captures invariants shared by all Shape-aware refs:
 - Hierarchical addressing (address + parent chain)
 - Path composition and resolution
 - Shape context association
@@ -8,11 +8,11 @@ ShapeRef captures invariants shared by all Shape-aware refs:
 
 Hierarchy:
     everyabc.Ref[T]              # Pure protocol: resolve, fetch, execute
-        ↓
-    ShapeRef[T]                  # Document-model base (this module)
-        ↓
+        |
+    everyshape.Ref[T]            # Document-model base (this module)
+        |
     ItemRef, MappingRef, etc.    # Structural types (items.py, collections.py)
-        ↓
+        |
     every_pv.RefBase, etc.       # Substrate implementations
 """
 
@@ -21,21 +21,22 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Self
 
-from everyabc import Ref, Term
+from everyabc import Ref as RefABC
+from everyabc import Term
 
 
 if TYPE_CHECKING:
     from everyabc import Context
 
-    from .shape import Shape as ShapeBase
+    from .shape import Shape
 
 
 __all__ = [
-    "ShapeRef",
+    "Ref",
 ]
 
 
-class ShapeRef[T](Ref[T]):
+class Ref[T](RefABC[T]):
     """Base for all document-model refs.
 
     Captures invariants shared by all Shape-aware refs:
@@ -48,45 +49,61 @@ class ShapeRef[T](Ref[T]):
     - every_dict.RefBase: dict navigation
     - every_pv.RefBase: PV view navigation
 
-    Properties (abstract, set by __init__):
-        address: Location identifier within parent
-        parent: Parent ref for path composition
-        shape: Owning Shape class for context lookup
+    Attributes:
+        _address: Location identifier within parent
+        _parent: Parent ref for path composition
+        _shape: Owning Shape class for context lookup
     """
+
+    def __init__(
+        self,
+        address: str | int | Term | None = None,
+        parent: Ref | None = None,
+        shape: type[Shape] | None = None,
+    ) -> None:
+        """Initialize ref.
+
+        Args:
+            address: Key/index for this segment (or Term for dynamic)
+            parent: Parent ref in navigation chain
+            shape: Shape class for context lookup
+        """
+        super().__init__()
+        self._address = address
+        self._parent = parent
+        self._shape = shape
 
     # =========================================================================
     # CORE PROPERTIES — Location Identity
     # =========================================================================
 
     @property
-    @abstractmethod
-    def address(self) -> str | int | Term:
+    def address(self) -> str | int | Term | None:
         """Location identifier within parent.
 
         Can be:
         - str: named field in a shape/dict
         - int: index in a sequence
         - Term: computed address (resolved at execution time)
+        - None: root ref with no address
         """
-        ...
+        return self._address
 
     @property
-    @abstractmethod
-    def parent(self) -> ShapeRef | None:
+    def parent(self) -> Ref | None:
         """Parent ref in the navigation hierarchy.
 
         None for root refs (entry points from Storage).
         """
-        ...
+        return self._parent
 
     @property
-    @abstractmethod
-    def shape(self) -> type[ShapeBase] | None:
+    def shape(self) -> type[Shape] | None:
         """Owning Shape class for context lookup.
 
         Used to find the right Storage handle at execution time.
         """
-        ...
+        return self._shape
 
     # =========================================================================
     # PATH COMPOSITION — Building Full Paths
@@ -108,7 +125,7 @@ class ShapeRef[T](Ref[T]):
             return await addr.execute(ctx)
         return addr
 
-    def get_root_shape(self) -> type[ShapeBase] | None:
+    def get_root_shape(self) -> type[Shape] | None:
         """Traverse parent chain to find root shape.
 
         Used when a nested ref needs the storage context.
@@ -122,17 +139,17 @@ class ShapeRef[T](Ref[T]):
             return self.parent.get_root_shape()
         return None
 
-    def get_path_segments(self) -> list[ShapeRef]:
+    def get_path_segments(self) -> list[Ref]:
         """Get all refs from root to self (inclusive).
 
         Returns list starting from root, ending with self.
         Useful for debugging and path visualization.
 
         Returns:
-            List of ShapeRefs from root to self.
+            List of Refs from root to self.
         """
-        segments: list[ShapeRef] = []
-        current: ShapeRef | None = self
+        segments: list[Ref] = []
+        current: Ref | None = self
         while current is not None:
             segments.append(current)
             current = current.parent
@@ -166,7 +183,7 @@ class ShapeRef[T](Ref[T]):
     def slot(cls) -> Self:
         """Create a Slot that produces instances of this Ref.
 
-        Contract: Every ShapeRef subclass provides its own .slot()
+        Contract: Every Ref subclass provides its own .slot()
         with substrate-specific typed signature for IDE autocomplete.
 
         Example (PV substrate):
@@ -189,6 +206,13 @@ class ShapeRef[T](Ref[T]):
     # =========================================================================
 
     def __repr__(self) -> str:
-        """Debug representation showing address and parent chain depth."""
-        depth = len(self.get_path_segments())
-        return f"<{self.__class__.__name__} address={self.address!r} depth={depth}>"
+        """Debug representation showing address and parent chain."""
+        if self._parent:
+            return f"<{self.__class__.__name__}: {self._parent!r} -> {self._address!r}>"
+        return f"<{self.__class__.__name__}: {self._address!r}>"
+
+    def __str__(self) -> str:
+        """String representation showing address and parent chain."""
+        if self._parent:
+            return f"{self.__class__.__name__}({self._parent!s} -> {self._address!s})"
+        return f"{self.__class__.__name__}({self._address!s})"

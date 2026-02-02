@@ -20,7 +20,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
-from everyabc import Ref, Sentinel
 from everybase.capabilities.loc_collection import (
     CollectionClearableBase,
     CollectionExistableBase,
@@ -28,9 +27,11 @@ from everybase.capabilities.loc_collection import (
 )
 from everybase.capabilities.loc_reactive import ViewObservableBase
 
+from .shape_ref import Ref
+
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everyabc import Sentinel, Term
     from everyshape.shape import Shape as ShapeBase
     from everyshape.slot import Slot
 

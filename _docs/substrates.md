@@ -9,7 +9,7 @@ A substrate is where data actually lives. everyabc defines the computation model
 2. **Protocol implementations** — make storage objects support standard Python protocols
 3. **Spans** — context boundaries (transaction, snapshot, etc.) if the storage needs them
 
-Everything else comes from everybase/everyshape for free: type algebra, value wrappers, morphisms, capability bases, Slot, ShapeRefBase, utilities. The `Slot` abstraction is an internal implementation detail — users just use `Ref.slot()`.
+Everything else comes from everybase/everyshape for free: type algebra, value wrappers, morphisms, capability bases, Slot, Ref (document-model base), utilities. The `Slot` abstraction is an internal implementation detail — users just use `Ref.slot()`.
 
 
 ## The Span-Context Model

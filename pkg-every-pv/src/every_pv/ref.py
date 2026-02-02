@@ -4,13 +4,15 @@ PV (Polymorphic Views) storage refs navigate through a view hierarchy
 to access values stored in key-value backends.
 
 Hierarchy:
-    RefBase[T]           - PV substrate root with address/parent/shape
+    everyshape.Ref[T]    - document-model base (address/parent/shape)
+        |
+    RefBase[T]           - PV substrate base
     ├── PrimitiveRef[T]  - refs to leaf values (int, str, etc.)
     └── ViewRef[T, V]    - refs to container views (dict, list, set)
 
 Core vocabulary:
-    resolve(ctx) → Path    - build path from parent chain
-    fetch(ctx) → T         - navigate views and extract value
+    resolve(ctx) -> Path    - build path from parent chain
+    fetch(ctx) -> T         - navigate views and extract value
 """
 
 from __future__ import annotations
@@ -23,11 +25,12 @@ import pv.traits as view_traits
 from pv.loc import path
 from pv.view import View
 
-from everyabc import EMPTY, Context, Ref, Sentinel, Term
+from everyabc import EMPTY, Context, Sentinel, Term
+from everyshape import Ref
 
 
 if TYPE_CHECKING:
-    from everyshape import Shape as PVShape
+    from everyshape import Shape
 
 
 __all__ = [
@@ -49,78 +52,13 @@ class RefBase[T](Ref[T]):
     PV refs navigate through a view hierarchy to access values.
     They maintain parent chains for path construction and shape
     associations for context lookup.
-
-    Attributes:
-        _address: The address/key for this ref's segment
-        _parent: Parent ref in the navigation chain
-        _shape: Shape class for context lookup
     """
-
-    def __init__(
-        self,
-        address: path.PathAddress | Term,
-        parent: RefBase | None = None,
-        shape: type[PVShape] | None = None,
-    ) -> None:
-        """Initialize PV ref.
-
-        Args:
-            address: Address/key for this segment (or Term for dynamic)
-            parent: Parent ref in navigation chain
-            shape: Shape class for context lookup
-        """
-        super().__init__()  # no children
-        self._address = address
-        self._parent = parent
-        self._shape = shape
-
-    @property
-    def address(self) -> path.PathAddress | Term:
-        """The address/key for this ref's path segment."""
-        return self._address
-
-    @property
-    def parent(self) -> RefBase | None:
-        """Parent ref in the navigation chain."""
-        return self._parent
-
-    @property
-    def shape(self) -> type[PVShape] | None:
-        """Shape class for context lookup."""
-        return self._shape
-
-    def get_root_shape(self) -> type[PVShape] | None:
-        """Get the root shape for context lookup.
-
-        Traverses up the parent chain to find the shape.
-        """
-        if self._shape is not None:
-            return self._shape
-        if self._parent is not None:
-            return self._parent.get_root_shape()
-        return None
 
     @property
     @abstractmethod
     def _type_marker(self) -> type:
         """Type marker for path segments (value_type or view_type)."""
         ...
-
-    async def _resolve_address(self, ctx: Context) -> path.PathAddress:
-        """Resolve dynamic address if needed."""
-        if isinstance(self._address, Term):
-            return await self._address.execute(ctx)
-        return self._address
-
-    def __repr__(self) -> str:
-        if self._parent:
-            return f"<{self.__class__.__name__}: {self._parent!r} -> {self._address!r}>"
-        return f"<{self.__class__.__name__}: {self._address!r}>"
-
-    def __str__(self) -> str:
-        if self._parent:
-            return f"{self.__class__.__name__}({self._parent!s} -> {self._address!s})"
-        return f"{self.__class__.__name__}({self._address!s})"
 
 
 class PrimitiveRef[T](RefBase[T]):
@@ -135,7 +73,7 @@ class PrimitiveRef[T](RefBase[T]):
         address: path.PathAddress | Term,
         value_type: type[T],
         parent: RefBase | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize primitive ref.
 
@@ -166,7 +104,7 @@ class PrimitiveRef[T](RefBase[T]):
         Returns:
             Path tuple ending with (address, value_type)
         """
-        address = await self._resolve_address(ctx)
+        address = await self.resolve_address(ctx)
 
         if self._parent is None:
             resolved_path = ((address, self._value_type),)
@@ -202,17 +140,6 @@ class PrimitiveRef[T](RefBase[T]):
         root_view = ctx.get(View, shape=shape)
         parent_view, _key = path.navigate_value(root_view, value_path)
         return parent_view
-
-    async def resolve_address(self, ctx: Context) -> object:
-        """Resolve the address (key/index) for this item.
-
-        Args:
-            ctx: Execution context
-
-        Returns:
-            The resolved key/index
-        """
-        return await self._resolve_address(ctx)
 
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value from PV storage.
@@ -251,7 +178,7 @@ class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
         address: path.PathAddress | Term,
         view_type: type[ViewT],
         parent: RefBase | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize view ref.
 
@@ -282,7 +209,7 @@ class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
         Returns:
             Path tuple ending with (address, view_type)
         """
-        address = await self._resolve_address(ctx)
+        address = await self.resolve_address(ctx)
 
         if self._parent is None:
             resolved_path = ((address, self._view_type),)
