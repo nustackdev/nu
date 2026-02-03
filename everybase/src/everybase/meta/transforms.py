@@ -2,7 +2,7 @@
 
 These operate on tree *structure*, not individual nodes.
 Unlike core transforms (map_nodes, wrap, replace) which act on
-single nodes, meta-transforms group and restructure siblings.
+single nodes, meta-transforms understand parent/child relationships.
 """
 
 from __future__ import annotations
@@ -24,60 +24,41 @@ __all__ = [
 def conditional_wrap(
     root: Node,
     pred: Callable[[Node], bool],
-    wrapper: Callable[[tuple[Node, ...]], Node],
+    wrapper: Callable[[Node], Node],
 ) -> Node:
-    """Group contiguous children matching *pred* and wrap each group.
+    """Wrap each matching child, bottom-up.
 
-    Bottom-up: recurses into non-matching children first, then at each
-    non-leaf node groups contiguous runs of children that satisfy *pred*
-    and replaces each run with ``wrapper(run)``.
+    At each node, matching children are wrapped individually via
+    ``wrapper(child)``. Non-matching children are recursed into.
 
-    Matching children are **not** recursed into — they are claimed by
-    the nearest non-matching ancestor.
+    Matching children are **not** recursed into — they are claimed
+    whole by the nearest non-matching ancestor, giving the biggest
+    matching subtree at each level.
 
     Args:
         root: Tree root.
-        pred: Which children to group.
-        wrapper: ``(matched_children,) -> replacement_node``.
+        pred: Which children to wrap.
+        wrapper: ``child -> wrapped_child``.
 
     Returns:
-        New tree with matched runs wrapped.
+        New tree with matching children wrapped.
 
     Example::
 
-        # Wrap contiguous Term children in Atomic spans
         conditional_wrap(
             tree,
             lambda n: isinstance(n, Term),
-            lambda terms: Atomic(shape, view_cls, *terms),
+            lambda term: Atomic(shape, view_cls, term),
         )
     """
-    if pred(root):
+    if pred(root) or root.is_leaf:
         return root
 
-    if root.is_leaf:
-        return root
-
-    # Recurse into non-matching children first (bottom-up).
-    processed: list[Node] = []
+    new_children: list[Node] = []
     for child in root.children:
         if pred(child):
-            processed.append(child)
+            new_children.append(wrapper(child))
         else:
-            processed.append(conditional_wrap(child, pred, wrapper))
-
-    # Group contiguous matching children into runs, wrap each.
-    new_children: list[Node] = []
-    run: list[Node] = []
-    for child in processed:
-        if pred(child):
-            run.append(child)
-        else:
-            if run:
-                new_children.append(wrapper(tuple(run)))
-                run = []
-            new_children.append(child)
-    if run:
-        new_children.append(wrapper(tuple(run)))
+            new_children.append(conditional_wrap(child, pred, wrapper))
 
     return root.with_children(*new_children)
