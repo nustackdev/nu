@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from everybase import (
+from everybase.abc import (
     BoolValue,
     BytesValue,
     DictValue,
@@ -28,7 +28,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel, Term
+    from everybase import Sentinel, Term
 
 
 __all__ = [
@@ -93,7 +93,7 @@ class ItemGettableBase[ValueT]:
     def get[V](self: ItemGettableBase[set[V]]) -> SetValue[V]: ...
 
     def get(self) -> object:
-        from everybase.utils import typed_value
+        from everybase.abc import typed_value
         from everyshape.morphisms.item import ItemGetOp
 
         return typed_value(self.value_type, ItemGetOp(self))
@@ -154,7 +154,7 @@ class ItemSettableBase[ValueT]:
     ) -> SetValue[V]: ...
 
     def set(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> object:
-        from everybase.utils import ensure_term, typed_value
+        from everybase.abc import ensure_term, typed_value
         from everyshape.morphisms.item import ItemSetCmd
 
         return typed_value(self.value_type, ItemSetCmd(self, ensure_term(value)))

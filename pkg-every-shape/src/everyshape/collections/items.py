@@ -10,7 +10,7 @@ Substrates extend these with their own storage mechanisms.
 
 from __future__ import annotations
 
-from everyabc import Value
+from everybase import Value
 from everyshape.capabilities import (
     ItemDeletableBase,
     ItemExistableBase,

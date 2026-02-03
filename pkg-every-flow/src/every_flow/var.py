@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import EMPTY, Ref
+from everybase import EMPTY, Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Sentinel
+    from everybase import Context, Sentinel
 
 
 __all__ = [

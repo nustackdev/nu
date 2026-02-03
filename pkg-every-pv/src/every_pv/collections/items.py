@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from everybase import (
+from everybase.abc import (
     BoolType,
     BoolValue,
     BytesType,
@@ -38,7 +38,7 @@ from .base import PrimitiveRef
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from everyabc import Term, Value
+    from everybase import Term, Value
     from everyshape import Shape
 
 

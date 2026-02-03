@@ -21,7 +21,7 @@ from every_dict import (
     IntRef,
     Shape,
 )
-from everyabc import Context
+from everybase import Context
 
 
 # =============================================

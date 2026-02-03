@@ -19,11 +19,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import EMPTY, Command, Morphism, Operation, Sentinel
+from everybase import EMPTY, Command, Morphism, Operation, Sentinel
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Term
+    from everybase import Context, Term
 
 
 __all__ = [

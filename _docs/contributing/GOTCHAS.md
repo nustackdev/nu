@@ -23,10 +23,10 @@ To install, also add to root `dependencies`:
 ```toml
 # pyproject.toml (root)
 [project]
-dependencies = ["everyabc", "everybase", "every-pv"]  # ← add here
+dependencies = ["everybase", "every-pv"]  # <- add here
 
 [tool.uv.workspace]
-members = ["core/everyabc", "core/everybase", "packages/every-pv"]  # ← and here
+members = ["everybase", "packages/every-pv"]  # <- and here
 ```
 
 ## VS Code / Pylance
@@ -35,8 +35,7 @@ When adding new packages, update `.vscode/settings.json`:
 
 ```json
 "python.analysis.extraPaths": [
-  "core/everyabc/src",
-  "core/everybase/src",
+  "everybase/src",
   "packages/every-pv/src"
 ]
 ```
@@ -58,5 +57,5 @@ When adding packages, update root `pyproject.toml`:
 
 ```toml
 [tool.ruff.lint.isort]
-known-first-party = ["everyabc", "everybase", "every_pv"]  # ← underscore
+known-first-party = ["everybase", "every_pv"]  # <- underscore
 ```

@@ -15,11 +15,11 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from everybase.values import BoolValue, IntValue, NoneValue
+from everybase.abc import BoolValue, IntValue, NoneValue
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel, Term
+    from everybase import Sentinel, Term
 
 
 __all__ = [
@@ -77,7 +77,7 @@ class CollectionStorableBase[CollectionTypeT, CollectionT]:
     def store(
         self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]
     ) -> CollectionTypeT:
-        from everybase.utils import ensure_term
+        from everybase.abc import ensure_term
         from everyshape.morphisms.collection import StoreCmd
 
         return self.result(StoreCmd(self, ensure_term(value)))

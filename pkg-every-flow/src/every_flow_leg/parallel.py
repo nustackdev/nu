@@ -14,7 +14,7 @@ from enum import Enum
 
 import attrs
 
-from everyabc import Flow, Runtime, Term
+from everybase import Flow, Runtime, Term
 
 
 __all__ = [

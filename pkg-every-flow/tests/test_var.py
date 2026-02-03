@@ -1,7 +1,7 @@
 """Tests for Var."""
 
 from every_flow import Var
-from everyabc import EMPTY, Context
+from everybase import EMPTY, Context
 
 
 def test_var_init_with_value():

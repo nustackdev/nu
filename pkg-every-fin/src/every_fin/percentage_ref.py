@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     BoolValue,
     ComparableBase,
     FloatValue,
@@ -23,7 +23,7 @@ from .percentage_cls import Percentage
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import PercentageArg
 
@@ -51,21 +51,21 @@ class PercentageType(
     @classmethod
     def from_float(cls, value: float | Term[float]) -> PercentageValue:
         """Create from percentage float."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return PercentageValue(FuncCallOp(Percentage, value))
 
     @classmethod
     def from_dec(cls, dec: float | Term[float]) -> PercentageValue:
         """Create from decimal."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return PercentageValue(FuncCallOp(Percentage.from_dec, dec))
 
     @classmethod
     def from_bps(cls, bps: int | Term[int]) -> PercentageValue:
         """Create from basis points."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return PercentageValue(FuncCallOp(Percentage.from_bps, bps))
 
@@ -75,19 +75,19 @@ class PercentageType(
 
     def to_dec(self) -> FloatValue:
         """Convert to decimal."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "to_dec"))
 
     def to_bps(self) -> IntValue:
         """Convert to basis points."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return IntValue(MethodCallOp(self, "to_bps"))
 
     def to_float(self) -> FloatValue:
         """Get raw percentage."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "to_float"))
 
@@ -97,25 +97,25 @@ class PercentageType(
 
     def apply(self, amount: int | float | Term) -> FloatValue:
         """Apply percentage to amount."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "apply", amount))
 
     def of(self, amount: int | float | Term) -> FloatValue:
         """Alias for apply."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "of", amount))
 
     def add_to(self, amount: int | float | Term) -> FloatValue:
         """Add percentage to amount."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "add_to", amount))
 
     def sub_from(self, amount: int | float | Term) -> FloatValue:
         """Subtract percentage from amount."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "sub_from", amount))
 
@@ -125,13 +125,13 @@ class PercentageType(
 
     def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolValue:
         """Check if within range."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_valid", min_val, max_val))
 
     def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> PercentageValue:
         """Clamp to range."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return PercentageValue(MethodCallOp(self, "clamp", min_val, max_val))
 
@@ -141,7 +141,7 @@ class PercentageType(
 
     def __add__(self, other: PercentageArg | float) -> PercentageValue:
         """Add percentages."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
@@ -149,7 +149,7 @@ class PercentageType(
 
     def __radd__(self, other: Percentage | float) -> PercentageValue:
         """Right add."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
@@ -157,7 +157,7 @@ class PercentageType(
 
     def __sub__(self, other: PercentageArg | float) -> PercentageValue:
         """Subtract percentages."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
@@ -165,7 +165,7 @@ class PercentageType(
 
     def __rsub__(self, other: Percentage | float) -> PercentageValue:
         """Right subtract."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
@@ -173,25 +173,25 @@ class PercentageType(
 
     def __mul__(self, factor: int | float | Term) -> PercentageValue:
         """Multiply by factor."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         return PercentageValue(MulOp(self, factor))
 
     def __rmul__(self, factor: int | float) -> PercentageValue:
         """Right multiply."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         return PercentageValue(MulOp(factor, self))
 
     def __truediv__(self, divisor: int | float | Term) -> PercentageValue:
         """Divide by factor."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         return PercentageValue(DivOp(self, divisor))
 
     def __neg__(self) -> PercentageValue:
         """Negate."""
-        from everybase import NegOp
+        from everybase.abc import NegOp
 
         return PercentageValue(NegOp(self))
 

@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timezone
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
@@ -22,7 +22,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import DatetimeArg, TimedeltaArg, TimezoneArg
 
@@ -50,7 +50,7 @@ class DatetimeType(
     @classmethod
     def now(cls, tz: TimezoneArg | None = None) -> DatetimeValue:
         """Create a DatetimeValue for the current time."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         from .timezone_ref import TimezoneValue
 
@@ -63,7 +63,7 @@ class DatetimeType(
     @classmethod
     def utcnow(cls) -> DatetimeValue:
         """Create a DatetimeValue for current UTC time."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         from .timezone_ref import TimezoneValue
 
@@ -74,7 +74,7 @@ class DatetimeType(
         cls, ts: float | Term[float], tz: TimezoneArg | None = None
     ) -> DatetimeValue:
         """Create a DatetimeValue from a POSIX timestamp."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         from .timezone_ref import TimezoneValue
 
@@ -87,7 +87,7 @@ class DatetimeType(
     @classmethod
     def from_iso(cls, iso_str: str | Term[str]) -> DatetimeValue:
         """Create a DatetimeValue from an ISO format string."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DatetimeValue(FuncCallOp(datetime.fromisoformat, iso_str))
 
@@ -97,55 +97,55 @@ class DatetimeType(
 
     def year(self) -> IntValue:
         """Get the year component."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "year"))
 
     def month(self) -> IntValue:
         """Get the month component (1-12)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "month"))
 
     def day(self) -> IntValue:
         """Get the day component (1-31)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "day"))
 
     def hour(self) -> IntValue:
         """Get the hour component (0-23)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "hour"))
 
     def minute(self) -> IntValue:
         """Get the minute component (0-59)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "minute"))
 
     def second(self) -> IntValue:
         """Get the second component (0-59)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "second"))
 
     def microsecond(self) -> IntValue:
         """Get the microsecond component (0-999999)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "microsecond"))
 
     def weekday(self) -> IntValue:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return IntValue(MethodCallOp(self, "weekday"))
 
     def isoweekday(self) -> IntValue:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return IntValue(MethodCallOp(self, "isoweekday"))
 
@@ -155,19 +155,19 @@ class DatetimeType(
 
     def timestamp(self) -> FloatValue:
         """Convert to POSIX timestamp."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "timestamp"))
 
     def isoformat(self, sep: str | Term[str] = "T", timespec: str | Term[str] = "auto") -> StrValue:
         """Convert to ISO 8601 format string."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "isoformat", sep, timespec))
 
     def date(self) -> DateValue:
         """Extract the date component."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         from .date_ref import DateValue
 
@@ -175,7 +175,7 @@ class DatetimeType(
 
     def time(self) -> TimeValue:
         """Extract the time component."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         from .time_ref import TimeValue
 
@@ -183,7 +183,7 @@ class DatetimeType(
 
     def strftime(self, fmt: str | Term[str]) -> StrValue:
         """Format datetime as string."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "strftime", fmt))
 
@@ -202,7 +202,7 @@ class DatetimeType(
         microsecond: int | Term[int] | None = None,
     ) -> DatetimeValue:
         """Create a new datetime with some components replaced."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         kwargs = {}
         if year is not None:
@@ -229,7 +229,7 @@ class DatetimeType(
         """Add a timedelta to this datetime."""
         from datetime import timedelta
 
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -241,7 +241,7 @@ class DatetimeType(
         """Subtract a datetime or timedelta."""
         from datetime import timedelta
 
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         from .timedelta_ref import TimedeltaValue
 

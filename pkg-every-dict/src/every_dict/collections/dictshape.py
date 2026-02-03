@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase import (
+from everybase.abc import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -26,7 +26,7 @@ from .shape import ShapeRef
 if TYPE_CHECKING:
     from typing import Self
 
-    from everyabc import Sentinel, Term, Value
+    from everybase import Sentinel, Term, Value
     from everyshape import Shape
 
 

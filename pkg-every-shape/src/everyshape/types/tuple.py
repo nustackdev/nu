@@ -8,7 +8,7 @@ Goes directly to everybase since everyshape's SequenceBase is list-specific.
 
 from __future__ import annotations
 
-from everybase.collections import SequenceBase as _EB_SequenceBase
+from everybase.abc import SequenceBase as _EB_SequenceBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,

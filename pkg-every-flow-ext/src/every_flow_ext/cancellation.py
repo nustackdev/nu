@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING
 
 from every_flow import Seq, Var
 from every_flow.loops import ForRange, While
-from everyabc import Flow, map_nodes
+from everybase import Flow, map_nodes
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Executable
+    from everybase import Context, Executable
 
 
 __all__ = [

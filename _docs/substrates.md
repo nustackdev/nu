@@ -1,15 +1,15 @@
 # Substrates
 
-A substrate is where data actually lives. everyabc defines the computation model, everybase provides reusable building blocks, and substrates wire it all to real storage.
+A substrate is where data actually lives. everybase defines the computation model (via everybase.core) and provides reusable building blocks (via everybase.abc), and substrates wire it all to real storage.
 
 ## What a Substrate Provides
 
-1. **Refs** — the navigation layer (how to resolve a reference to a storage location)
+1. **Refs** -- the navigation layer (how to resolve a reference to a storage location)
    - Each Ref class implements `.slot()` classmethod with typed signature for IDE autocomplete
-2. **Protocol implementations** — make storage objects support standard Python protocols
-3. **Spans** — context boundaries (transaction, snapshot, etc.) if the storage needs them
+2. **Protocol implementations** -- make storage objects support standard Python protocols
+3. **Spans** -- context boundaries (transaction, snapshot, etc.) if the storage needs them
 
-Everything else comes from everybase/everyshape for free: type algebra, value wrappers, morphisms, capability bases, Slot, Ref (document-model base), utilities. The `Slot` abstraction is an internal implementation detail — users just use `Ref.slot()`.
+Everything else comes from everybase for free: type algebra, value wrappers, morphisms, capability bases, Slot, Ref (document-model base), utilities. The `Slot` abstraction is an internal implementation detail -- users just use `Ref.slot()`.
 
 
 ## The Span-Context Model
@@ -17,9 +17,9 @@ Everything else comes from everybase/everyshape for free: type algebra, value wr
 Spans scope Context for their children. At execution time:
 
 ```
-Span.enter(ctx)        → child_ctx      # add handles for children
+Span.enter(ctx)        -> child_ctx      # add handles for children
   children.execute(child_ctx)            # children use scoped context
-Span.exit_success(ctx) → cleanup        # or exit_failure on error
+Span.exit_success(ctx) -> cleanup        # or exit_failure on error
 ```
 
 Context is a type-keyed bag of handles with optional **shape discrimination** for multi-store scenarios:
@@ -53,18 +53,18 @@ PV (Polymorphic Views) is the primary substrate. Data lives in KV stores (RocksD
 
 ```
 StorageProtocol (long-lived, app-scoped)
-    │
-    │  Span.enter() opens:
-    ▼
+    |
+    |  Span.enter() opens:
+    v
 TransactionProtocol / SnapshotProtocol (short-lived, span-scoped)
-    │
-    │  View.open_root(txn) wraps:
-    ▼
+    |
+    |  View.open_root(txn) wraps:
+    v
 View (stateless accessor over storage context)
-    │
-    │  ctx.get(View, shape=S) consumed by:
-    ▼
-Term.execute(ctx) → result
+    |
+    |  ctx.get(View, shape=S) consumed by:
+    v
+Term.execute(ctx) -> result
 ```
 
 | Handle | Lifecycle | Purpose |
@@ -139,13 +139,13 @@ class User(Shape):
     profile = ShapeRef.slot(Profile)
 ```
 
-ShapeMeta collects Slots at class creation, replaces them with SlotDescriptors. Accessing `User.name` at class level calls `SlotDescriptor.__get__()` which calls `slot.create_ref()` → returns the appropriate Ref. Shapes are never instantiated.
+ShapeMeta collects Slots at class creation, replaces them with SlotDescriptors. Accessing `User.name` at class level calls `SlotDescriptor.__get__()` which calls `slot.create_ref()` -> returns the appropriate Ref. Shapes are never instantiated.
 
 ### PV Ref Hierarchy
 
 ```text
 PVRefBase[T]                    address + parent chain + shape association
-├── PVPrimitiveRef[T]           leaf values — resolve() → path, fetch() → view[key]
+├── PVPrimitiveRef[T]           leaf values -- resolve() -> path, fetch() -> view[key]
 │   ├── PVIntRef                = PVPrimitiveRef[int] + IntType
 │   ├── PVStrRef                = PVPrimitiveRef[str] + StrType
 │   ├── PVFloatRef, PVBoolRef, PVBytesRef
@@ -153,15 +153,15 @@ PVRefBase[T]                    address + parent chain + shape association
 │   ├── PVListItemRef[T, VT]   item within a list
 │   └── PVDictItemRef[T, VT]   item within a dict
 │
-└── PVViewRef[T, ViewT]        container views — resolve() → path, fetch() → View
+└── PVViewRef[T, ViewT]        container views -- resolve() -> path, fetch() -> View
     ├── PVDictRef[K, V]        mapping of primitives
     ├── PVListRef[T]           sequence of primitives
-    ├── PVShapeRef[S]          nested shape (attr access → child refs)
+    ├── PVShapeRef[S]          nested shape (attr access -> child refs)
     ├── PVShapesListRef[S]     list of shapes
     └── PVShapesDictRef[K, S]  dict of shapes
 ```
 
-Primitive refs mix in everybase type bases (IntType, StrType, ...) to get operator methods. Item refs inherit everybase capability bases (ItemGettableBase, ItemSettableBase, ...) for `.get()`, `.set()`, `.exists()`, `.remove()`, `.on_change()`.
+Primitive refs mix in everybase.abc type bases (IntType, StrType, ...) to get operator methods. Item refs inherit everybase.abc capability bases (ItemGettableBase, ItemSettableBase, ...) for `.get()`, `.set()`, `.exists()`, `.remove()`, `.on_change()`.
 
 ### E2E Flow
 
@@ -179,8 +179,8 @@ Primitive refs mix in everybase type bases (IntType, StrType, ...) to get operat
    │   └─ Returns child_ctx
    │
    ├─ Term.execute(child_ctx)
-   │   ├─ ctx.get(View, shape=S)  ← triggers View factory
-   │   │   └─ View factory calls ctx.get(TransactionProtocol)  ← triggers txn factory
+   │   ├─ ctx.get(View, shape=S)  <- triggers View factory
+   │   │   └─ View factory calls ctx.get(TransactionProtocol)  <- triggers txn factory
    │   │       └─ txn factory calls storage.begin_transaction()
    │   ├─ Navigates view, reads/writes data
    │   └─ Returns result
@@ -210,7 +210,7 @@ with Storage(".db", codec=Codec()) as storage:
         )
     ).execute(ctx)
 
-    # Read (snapshot — pure subtree)
+    # Read (snapshot -- pure subtree)
     await PVAtomic(AppState, DictView,
         Seq(
             Print("name", AppState.name.get()),
@@ -222,7 +222,7 @@ with Storage(".db", codec=Codec()) as storage:
 
 ## Tree Transforms
 
-Spans are structural — they can be added or removed via tree transforms. This enables meta-level operations on context boundaries.
+Spans are structural -- they can be added or removed via tree transforms. This enables meta-level operations on context boundaries.
 
 ### Atomicize
 

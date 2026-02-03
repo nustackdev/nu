@@ -34,9 +34,7 @@ def test_foo_does_thing():
 
 ```bash
 make test                          # All tests
-make test-core                     # core/ only
-make test-packages                 # packages/ only
-make test-pkg PKG=core/everyabc    # Specific package
+make test-pkg PKG=everybase        # Specific package
 make test-fast                     # Skip @pytest.mark.slow
 make test-cov                      # With coverage
 ```
@@ -87,6 +85,6 @@ Config in root `pyproject.toml`:
 
 ```toml
 [tool.coverage.run]
-source = ["core", "packages"]
+source = ["everybase", "packages"]
 omit = ["*/tests/*"]
 ```

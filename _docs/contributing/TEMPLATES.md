@@ -1,6 +1,6 @@
 # Templates
 
-## pyproject.toml - Core Package (core/)
+## pyproject.toml - Core Package (everybase/)
 
 ```toml
 [build-system]
@@ -8,7 +8,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "everyabc"
+name = "everybase"
 version = "0.1.0"
 description = "Core primitives for every"
 readme = "README.md"
@@ -29,7 +29,7 @@ classifiers = [
 Repository = "https://github.com/everyabc/everybase"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/everyabc"]
+packages = ["src/everybase"]
 ```
 
 ## pyproject.toml - Standard Package (packages/)
@@ -47,7 +47,7 @@ readme = "README.md"
 license = "MIT"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10"
-dependencies = ["everyabc>=0.1.0"]
+dependencies = ["everybase>=0.1.0"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/every_foo"]

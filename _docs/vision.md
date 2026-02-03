@@ -3,14 +3,14 @@
 ## Three Layers
 
 ```text
-everyabc          contracts — pure abstractions, nothing else
-everybase         toolbox   — common bases, morphisms, utilities
+everybase.core    contracts — pure abstractions, nothing else
+everybase.abc     toolbox   — common bases, morphisms, utilities
 every_*           substrates — actual storage implementations
 ```
 
-**everyabc** defines the computation model: Term, Ref, Value, Morphism, Shape, Slot, Span, Context. It answers "what CAN exist" without saying how anything works.
+**everybase.core** defines the computation model: Term, Ref, Value, Morphism, Shape, Slot, Span, Context. It answers "what CAN exist" without saying how anything works. Top-level `everybase` re-exports everything from `everybase.core`.
 
-**everybase** is not a substrate. It doesn't store anything. It provides reusable building blocks — type bases (IntType, ListType), value wrappers (IntValue, ListValue), capability protocol+base pairs, common morphisms (AddOp, MapOp), and utilities (ensure_term, typed_value). Any substrate can import and compose these instead of reimplementing from scratch.
+**everybase.abc** is not a substrate. It doesn't store anything. It provides reusable building blocks — type bases (IntType, ListType), value wrappers (IntValue, ListValue), capability protocol+base pairs, common morphisms (AddOp, MapOp), and utilities (ensure_term, typed_value). Any substrate can import and compose these instead of reimplementing from scratch.
 
 **Substrates** are where data actually lives:
 
@@ -19,10 +19,10 @@ every_*           substrates — actual storage implementations
 - `every_notion` (future) — Notion API as storage backend
 - `every_sqlite` (future) — SQLite as storage
 
-Each substrate provides its own refs, spans, and capability wiring. Each reuses everybase's type algebra and common morphisms where applicable.
+Each substrate provides its own refs, spans, and capability wiring. Each reuses everybase.abc's type algebra and common morphisms where applicable.
 
 
-## What everyabc Owns
+## What everybase.core Owns
 
 The computation model and nothing else.
 
@@ -61,10 +61,10 @@ Term[T]                     executable node
 
 - Context / Handle — type-keyed handle container for runtime plumbing
 
-**What everyabc does NOT own:** any opinion about data models (document, relational, graph). Those are specializations that live in everybase or substrate packages. everyabc only knows that Terms form trees, Refs point to locations, Values hold data, and Morphisms transform things.
+**What everybase.core does NOT own:** any opinion about data models (document, relational, graph). Those are specializations that live in everybase.abc or substrate packages. everybase.core only knows that Terms form trees, Refs point to locations, Values hold data, and Morphisms transform things.
 
 
-## What everybase Provides
+## What everybase.abc Provides
 
 A toolbox. Everything here exists to save substrates from reimplementing common patterns.
 
@@ -121,7 +121,7 @@ These operate via standard Python protocols. Substrates whose storage objects su
 
 ## Standardized Substrate Contracts
 
-Three patterns are generic — they all follow the same design: everybase defines protocols + morphisms + bases, substrates provide refs (navigation) and protocol implementations on their storage objects.
+Three patterns are generic — they all follow the same design: everybase.abc defines protocols + morphisms + bases, substrates provide refs (navigation) and protocol implementations on their storage objects.
 
 ### Item Access
 
@@ -152,7 +152,7 @@ Capability bases wire these to methods:
 
 ### Reactivity
 
-Change observation at various granularities. Substrate storage objects implement observable protocols, everybase provides the morphisms and bases.
+Change observation at various granularities. Substrate storage objects implement observable protocols, everybase.abc provides the morphisms and bases.
 
 - **Observable** — `.on_change() → Subscription`
 - **ChildObservable** — `.on_child_change(key) → Subscription`

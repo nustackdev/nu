@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-import everybase as e
+import everybase.abc as e
 from everyshape import Context, Shape
 
 
@@ -170,8 +170,7 @@ def print_result(name: str, elapsed: float, ops: int = N) -> None:
 
 
 def main() -> None:
-    from everybase.adapters.codecs import BinaryCodec
-    from everybase.adapters.storages.rocksdb import RocksDBStorage
+    from everybase.abc import BinaryCodec, RocksDBStorage
 
     print("=" * 60)
     print(f"Everybase Term Benchmark (N={N})")

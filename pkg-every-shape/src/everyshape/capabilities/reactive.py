@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel, Term
+    from everybase import Sentinel, Term
     from everyshape.morphisms.reactive import (
         OnChangeOp,
         OnChildChangeOp,

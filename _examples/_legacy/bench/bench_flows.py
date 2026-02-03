@@ -11,7 +11,7 @@ Tests performance of various flow operations:
 
 import asyncio
 
-import everybase as e
+import everybase.abc as e
 from everyshape import Shape
 
 
@@ -206,7 +206,7 @@ main_flow = e.flow.Seq(
 
 
 async def main():
-    from everybase.top import regular_provider, rocksdb_storage_inmemory
+    from everybase.abc import regular_provider, rocksdb_storage_inmemory
 
     with rocksdb_storage_inmemory(".db_bench_flows") as storage:
         await main_flow.start_flow(regular_provider(storage))

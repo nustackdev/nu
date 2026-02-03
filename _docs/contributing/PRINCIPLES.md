@@ -14,7 +14,7 @@ The root `pyproject.toml` serves three purposes:
 
 ## 2. Per-Package pyproject.toml Template
 
-Each package in `core/`, `packages/` has its own minimal `pyproject.toml`
+Each package in `everybase/`, `packages/` has its own minimal `pyproject.toml`
 
 ---
 

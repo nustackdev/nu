@@ -19,8 +19,8 @@ from typing import Self
 from every_dict import RefBase as DictRefBase
 from every_dict import Shape
 from every_pv import PrimitiveRef
-from everyabc import Arg, FloatArg, Sentinel, StrArg
-from everybase import (
+from everybase import Arg, FloatArg, Sentinel, StrArg
+from everybase.abc import (
     AddOp,
     FloatType,
     FloatValue,
@@ -167,7 +167,7 @@ class PVSymbolInfo(Shape):
 async def main():
     from time import perf_counter
 
-    from everyabc import Context
+    from everybase import Context
 
     # ============
     # DICT

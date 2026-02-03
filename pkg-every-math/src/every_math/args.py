@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from fractions import Fraction
 
-from everyabc import Arg
+from everybase import Arg
 
 
 __all__ = [

@@ -12,8 +12,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     EqualableBase,
     NoneValue,
     StrValue,
@@ -23,7 +23,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import DatetimeArg, TimedeltaArg
 
@@ -63,7 +63,7 @@ class TimezoneType(
         name: str | Term[str] | None = None,
     ) -> TimezoneValue:
         """Create a TimezoneValue from hour/minute offset."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -79,7 +79,7 @@ class TimezoneType(
         name: str | Term[str] | None = None,
     ) -> TimezoneValue:
         """Create a TimezoneValue from a timedelta offset."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -95,7 +95,7 @@ class TimezoneType(
 
     def tzname(self, dt: DatetimeArg | None = None) -> StrValue:
         """Get the timezone name."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         from .datetime_ref import DatetimeValue
 
@@ -109,7 +109,7 @@ class TimezoneType(
 
     def utcoffset(self, dt: DatetimeArg | None = None) -> TimedeltaValue:
         """Get the UTC offset as timedelta."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         from .datetime_ref import DatetimeValue
         from .timedelta_ref import TimedeltaValue

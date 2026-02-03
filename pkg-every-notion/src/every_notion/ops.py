@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 from every.term.morphism import Morphism
 
-from everyabc import Command, Operation, Term
+from everybase import Command, Operation, Term
 
 
 if TYPE_CHECKING:

@@ -3,9 +3,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from everybase.adapters.codecs import BinaryCodec
-from everybase.adapters.storages.rocksdb import RocksDBStorage
-from everybase.view import DictView
+from everybase.abc import BinaryCodec, DictView, RocksDBStorage
 
 
 def example_basic_usage() -> None:

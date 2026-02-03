@@ -10,9 +10,12 @@ The example uses Parallel to simulate concurrent producers and consumers.
 
 import asyncio
 
-from everybase.flow import (
+from everybase.abc import (
+    BoolSlot,
     Delay,
+    DictSlot,
     ForRange,
+    IntSlot,
     Parallel,
     Print,
     React,
@@ -20,11 +23,6 @@ from everybase.flow import (
     ReactWhile,
     Sequence,
     Timeout,
-)
-from everybase.slot import (
-    BoolSlot,
-    DictSlot,
-    IntSlot,
 )
 from everyshape import Shape
 
@@ -201,7 +199,7 @@ main_flow = Sequence(
 
 
 async def main():
-    from everybase.top import regular_provider, text_storage
+    from everybase.abc import regular_provider, text_storage
 
     with text_storage(".db_reactive") as storage:
         await main_flow.start_flow(regular_provider(storage))

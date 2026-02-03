@@ -15,11 +15,8 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import TYPE_CHECKING
 
-import everybase as e
-from everybase import Context, Shape
-from everybase.adapters.codecs import BinaryCodec
-from everybase.adapters.storages.rocksdb import RocksDBStorage
-from everybase.view import DictView
+import everybase.abc as e
+from everybase.abc import BinaryCodec, Context, DictView, RocksDBStorage, Shape
 
 
 if TYPE_CHECKING:

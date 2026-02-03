@@ -18,13 +18,13 @@ from __future__ import annotations
 from abc import ABCMeta
 from typing import TYPE_CHECKING, ClassVar
 
-from everyabc import Model
+from everybase import Model
 
 from .slot import Slot
 
 
 if TYPE_CHECKING:
-    from everyabc import Ref
+    from everybase import Ref
 
 
 __all__ = [

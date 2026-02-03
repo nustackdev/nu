@@ -12,7 +12,7 @@ from .base import RefBase
 if TYPE_CHECKING:
     from typing import Self
 
-    from everyabc import Term
+    from everybase import Term
     from everyshape import Shape
 
 

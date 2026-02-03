@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from pv.collections import MutableMappingView
 
-from everybase import (
+from everybase.abc import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -28,7 +28,7 @@ from .shape import ShapeRef
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from everyabc import Sentinel, Term, Value
+    from everybase import Sentinel, Term, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:

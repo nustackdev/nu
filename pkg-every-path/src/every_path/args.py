@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path, PurePath
 
-from everyabc import Arg
+from everybase import Arg
 
 
 __all__ = [

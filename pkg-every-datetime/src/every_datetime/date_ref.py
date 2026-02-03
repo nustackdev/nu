@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     ComparableBase,
     IntValue,
     StrValue,
@@ -21,7 +21,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import DateArg, TimedeltaArg
 
@@ -49,28 +49,28 @@ class DateType(
     @classmethod
     def today(cls) -> DateValue:
         """Create a DateValue for today."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DateValue(FuncCallOp(date.today))
 
     @classmethod
     def from_iso(cls, iso_str: str | Term[str]) -> DateValue:
         """Create a DateValue from an ISO format string (YYYY-MM-DD)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DateValue(FuncCallOp(date.fromisoformat, iso_str))
 
     @classmethod
     def from_ordinal(cls, ordinal: int | Term[int]) -> DateValue:
         """Create a DateValue from a Gregorian ordinal."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DateValue(FuncCallOp(date.fromordinal, ordinal))
 
     @classmethod
     def from_timestamp(cls, timestamp: float | Term[float]) -> DateValue:
         """Create a DateValue from a POSIX timestamp."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DateValue(FuncCallOp(date.fromtimestamp, timestamp))
 
@@ -80,37 +80,37 @@ class DateType(
 
     def year(self) -> IntValue:
         """Get the year component."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "year"))
 
     def month(self) -> IntValue:
         """Get the month component (1-12)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "month"))
 
     def day(self) -> IntValue:
         """Get the day component (1-31)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "day"))
 
     def weekday(self) -> IntValue:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return IntValue(MethodCallOp(self, "weekday"))
 
     def isoweekday(self) -> IntValue:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return IntValue(MethodCallOp(self, "isoweekday"))
 
     def toordinal(self) -> IntValue:
         """Get the Gregorian ordinal."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return IntValue(MethodCallOp(self, "toordinal"))
 
@@ -120,19 +120,19 @@ class DateType(
 
     def isoformat(self) -> StrValue:
         """Convert to ISO 8601 format string (YYYY-MM-DD)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "isoformat"))
 
     def strftime(self, fmt: str | Term[str]) -> StrValue:
         """Format date as string."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "strftime", fmt))
 
     def ctime(self) -> StrValue:
         """Return ctime-style string."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "ctime"))
 
@@ -147,7 +147,7 @@ class DateType(
         day: int | Term[int] | None = None,
     ) -> DateValue:
         """Create a new date with some components replaced."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         kwargs = {}
         if year is not None:
@@ -166,7 +166,7 @@ class DateType(
         """Add a timedelta to this date."""
         from datetime import timedelta
 
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -178,7 +178,7 @@ class DateType(
         """Subtract a date or timedelta."""
         from datetime import timedelta
 
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         from .timedelta_ref import TimedeltaValue
 

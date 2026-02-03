@@ -5,11 +5,11 @@ Tests for:
 """
 
 from every_path import PathValue as PathRef
-from everybase import BoolValue as BoolRef
-from everybase import DivOp, FuncCallOp
-from everybase import ListValue as ListRef
-from everybase import StrValue as StrRef
-from everybase import TupleValue as TupleRef
+from everybase.abc import BoolValue as BoolRef
+from everybase.abc import DivOp, FuncCallOp
+from everybase.abc import ListValue as ListRef
+from everybase.abc import StrValue as StrRef
+from everybase.abc import TupleValue as TupleRef
 
 
 # =============================================================================

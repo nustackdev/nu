@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from everyabc import Flow, Term
+from everybase import Flow, Term
 
 
 if TYPE_CHECKING:
-    from everyabc import Context
+    from everybase import Context
 
 
 __all__ = [

@@ -1,19 +1,16 @@
-"""Example demonstrating mapping and sequence support in Shape system.
-
-This example shows:
-1. Mapping of primitives (dict-like)
-2. Mapping of shapes (dict of structured objects)
-3. Sequence of primitives (list-like)
-4. Sequence of shapes (list of structured objects)
-5. Nested collections (infinite nesting)
-"""
+"""Shape system demo — line-by-line capability showcase."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import every_pv as e
-from everyabc import Context
+from everybase import Context
+
+
+# =============================================================================
+# SHAPES
+# =============================================================================
 
 
 class SymbolInfo(e.Shape):
@@ -22,7 +19,6 @@ class SymbolInfo(e.Shape):
     price = e.FloatRef.slot()
     volume = e.IntRef.slot()
     exchange = e.StrRef.slot()
-    yo = e.BytesRef.slot()
 
 
 class Order(e.Shape):
@@ -46,139 +42,76 @@ class Market(e.Shape):
 
 
 # =============================================================================
-# EXAMPLES
+# DEMO
 # =============================================================================
 
 
-async def example_mapping_primitives(ctx: Context) -> None:
-    """Example: mapping of primitive values."""
-    print("\n=== Mapping of Primitives ===")
+async def run(ctx: Context) -> None:
+    # --- Primitive fields ---------------------------------------------------
+    await SymbolInfo.volume.set(12).execute(ctx)
+    await SymbolInfo.exchange.set("hello").execute(ctx)
+    print("set volume:", await SymbolInfo.volume.get().execute(ctx))
+    print("arith:", await (SymbolInfo.volume + SymbolInfo.volume).execute(ctx))
+    print("str expr:", await (SymbolInfo.exchange.get() + "12").and_(None).execute(ctx))
 
+    # --- Dict of primitives -------------------------------------------------
     await Market.signals["vix"].set(23.5).execute(ctx)
     await Market.signals["sentiment"].set(0.75).execute(ctx)
+    print("vix:", await Market.signals["vix"].get().execute(ctx))
+    print("sentiment:", await Market.signals["sentiment"].get().execute(ctx))
 
-    # Get values
-    vix = await Market.signals["vix"].get().execute(ctx)
-    sentiment = await Market.signals["sentiment"].get().execute(ctx)
-
-    print(f"VIX: {vix}")
-    print(f"Sentiment: {sentiment}")
-
-
-async def example_sequence_primitives(ctx: Context) -> None:
-    """Example: sequence of primitive values."""
-    print("\n=== Sequence of Primitives ===")
-
+    # --- List of primitives -------------------------------------------------
     await Market.misc_val.set(1).execute(ctx)
-
-    # Set values at indices
-    # a = Market.prices.append(100.5)
-    # print("append res", await a.execute(ctx))
-    # await Market.prices.append(101.2).execute(ctx)
     await Market.prices.store([100.5, 101.2, 99.8]).execute(ctx)
-
-    # Get values
-    price_0 = await Market.prices[0].get().execute(ctx)
-    price_1 = await Market.prices[1].get().execute(ctx)
-    price_2 = (
-        await Market.prices.extract().map_(lambda x: x * 2).filter_(lambda a: a > 200).execute(ctx)
+    print("price[0]:", await Market.prices[0].get().execute(ctx))
+    print("price[1]:", await Market.prices[1].get().execute(ctx))
+    print("prices:", await Market.prices.extract().execute(ctx))
+    print(
+        "map+filter:",
+        await Market.prices.extract().map_(lambda x: x * 2).filter_(lambda x: x > 200).execute(ctx),
+    )
+    print(
+        "dynamic idx:", await (Market.prices[Market.misc_val.get()].get() + 12 > 100).execute(ctx)
     )
 
-    print(f"Prices: [{price_0}, {price_1}, {price_2}]")
-
-    prices = await Market.prices.extract().execute(ctx)
-    print(prices)
-
-    nested_acc = await (Market.prices[Market.misc_val.get()].get() + 12 > 100).execute(ctx)
-    print(nested_acc)
-
+    # --- Shape (single) -----------------------------------------------------
     await Market.last_order.id.set("ID").execute(ctx)
-    print(await Market.last_order.extract().execute(ctx))
+    print("shape extract:", await Market.last_order.extract().execute(ctx))
 
-
-async def example_mapping_shapes(ctx: Context) -> None:
-    """Example: mapping of shapes."""
-    print("\n=== Mapping of Shapes ===")
-
-    # Store shape data
+    # --- Dict of shapes -----------------------------------------------------
     await (
         Market.symbols["AAPL"]
         .store(
-            {
-                "price": 150.0,
-                "volume": 1000000,
-                "exchange": "NASDAQ",
-            }
+            {"price": 150.0, "volume": 1000000, "exchange": "NASDAQ"},
         )
         .execute(ctx)
     )
-
     await (
         Market.symbols["GOOGL"]
         .store(
-            {
-                "price": 2800.0,
-                "volume": 500000,
-                "exchange": "NASDAQ",
-            }
+            {"price": 2800.0, "volume": 500000, "exchange": "NASDAQ"},
         )
         .execute(ctx)
     )
+    print("AAPL price:", await Market.symbols["AAPL"].price.get().execute(ctx))
+    print("GOOGL exch:", await Market.symbols["GOOGL"].exchange.get().execute(ctx))
+    print("AAPL data:", await Market.symbols["AAPL"].extract().execute(ctx))
 
-    # Access nested fields
-    aapl_price = await Market.symbols["AAPL"].price.get().execute(ctx)
-    googl_exchange = await Market.symbols["GOOGL"].exchange.get().execute(ctx)
-
-    print(f"AAPL Price: {aapl_price}")
-    print(f"GOOGL Exchange: {googl_exchange}")
-
-    # extract entire shape
-    aapl_data = await Market.symbols["AAPL"].extract().execute(ctx)
-    print(f"AAPL Data: {aapl_data}")
-
-
-async def example_sequence_shapes(ctx: Context) -> None:
-    """Example: sequence of shapes."""
-    print("\n=== Sequence of Shapes ===")
-
-    # Store shape data
+    # --- List of shapes -----------------------------------------------------
     await Market.orders.store(
         [
-            {
-                "id": "ORD001",
-                "symbol": "AAPL",
-                "quantity": 100,
-                "price": 150.0,
-            },
-            {
-                "id": "ORD002",
-                "symbol": "GOOGL",
-                "quantity": 50,
-                "price": 2800.0,
-            },
+            {"id": "ORD001", "symbol": "AAPL", "quantity": 100, "price": 150.0},
+            {"id": "ORD002", "symbol": "GOOGL", "quantity": 50, "price": 2800.0},
         ]
     ).execute(ctx)
+    print("order[0].id:", await Market.orders[0].id.get().execute(ctx))
+    print("order[1].sym:", await Market.orders[1].symbol.get().execute(ctx))
+    print("order[0]:", await Market.orders[0].extract().execute(ctx))
 
-    # await Market.orders.append(
-    #     {
-    #         "id": "ORD002",
-    #         "symbol": "GOOGL",
-    #         "quantity": 50,
-    #         "price": 2800.0,
-    #     }
-    # ).execute(ctx)
 
-    # Access nested fields
-    order_0_id = await Market.orders[0].id.get().execute(ctx)
-    order_1_symbol = await Market.orders[1].symbol.get().execute(ctx)
-
-    print(f"Order 0 ID: {order_0_id}")
-    print(f"Order 1 Symbol: {order_1_symbol}")
-
-    # extract entire shape
-    order_0_data = await Market.orders[0].extract().execute(ctx)
-    print(f"Order 0 Data: {order_0_data}")
-
+# =============================================================================
+# INFRA
+# =============================================================================
 
 if __name__ == "__main__":
     import asyncio
@@ -201,44 +134,6 @@ if __name__ == "__main__":
                 .with_handle(View, root, Order)
                 .with_handle(View, root, Market)
             )
-
-            set_res = SymbolInfo.volume.set(12)
-            set_res = await set_res.execute(ctx)
-            print(set_res)
-
-            await SymbolInfo.exchange.set("hello").execute(ctx)
-            await SymbolInfo.yo.set(b"hello").execute(ctx)
-
-            c = SymbolInfo.volume + SymbolInfo.volume
-            c = await c.execute(ctx)
-            print(c)
-
-            a = (SymbolInfo.exchange.get() + "12").and_(None)
-            resa = await a.execute(ctx)
-            print("A", resa)
-            print("=" * 60)
-
-            x = SymbolInfo.yo.get()[:3]
-            resx = await x.execute(ctx)
-            print("X", resx)
-
-            print("Shape Collections Example")
-            print("=" * 60)
-
-            # Run examples
-            await example_mapping_primitives(ctx)
-            await example_sequence_primitives(ctx)
-            await example_mapping_shapes(ctx)
-            await example_sequence_shapes(ctx)
-
-            print("\n" + "=" * 60)
-            print("All examples completed successfully!")
-            print("=" * 60)
-
-            # prices_complex = Market.prices.extract()
-            # prices_complex = prices_complex.map_(lambda x: x + 120)
-            # prices_complex = prices_complex[0]
-            # prices_complex = await prices_complex.execute(ctx)
-            # print("ABC", prices_complex)
+            await run(ctx)
 
     asyncio.run(main())

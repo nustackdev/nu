@@ -1,6 +1,6 @@
 """Basic Everybase example - Counter."""
 
-import everybase as e
+import everybase.abc as e
 from everyshape import Shape
 
 
@@ -57,7 +57,7 @@ main_flow = e.flow.Seq(
 
 
 async def main():
-    from everybase.top import regular_provider, text_storage
+    from everybase.abc import regular_provider, text_storage
 
     with text_storage(".db12") as storage:
         await main_flow.start_flow(regular_provider(storage))

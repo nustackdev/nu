@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from pv.collections import MutableSequenceView
 
-from everybase import AnyValue, ListValue, ensure_term
+from everybase.abc import AnyValue, ListValue, ensure_term
 from everyshape import ReactiveShapesListRefBase, Shape, Slot
 
 from .base import ViewRef
@@ -17,7 +17,7 @@ from .shape import ShapeRef
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from everyabc import Sentinel, Term
+    from everybase import Sentinel, Term
 
 
 __all__ = [

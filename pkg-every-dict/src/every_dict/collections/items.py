@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from everyabc import Value
-from everybase import (
+from everybase import Value
+from everybase.abc import (
     BoolType,
     BoolValue,
     BytesType,
@@ -30,7 +30,7 @@ from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
     from everyshape import Shape
 
 

@@ -15,7 +15,7 @@ import threading
 
 import attrs
 
-from everyabc import Flow, Morphism, Runtime, Term
+from everybase import Flow, Morphism, Runtime, Term
 
 
 __all__ = [

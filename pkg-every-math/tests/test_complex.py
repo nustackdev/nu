@@ -7,9 +7,9 @@ Tests for:
 import cmath
 
 from every_math import ComplexValue as ComplexRef
-from everybase import AddOp, DivOp, FuncCallOp, MulOp, PowOp, SubOp
-from everybase import FloatValue as FloatRef
-from everybase import TupleValue as TupleRef
+from everybase.abc import AddOp, DivOp, FuncCallOp, MulOp, PowOp, SubOp
+from everybase.abc import FloatValue as FloatRef
+from everybase.abc import TupleValue as TupleRef
 
 
 # =============================================================================

@@ -8,7 +8,7 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-CORE_DIRS := core-every core-every-bases
+CORE_DIRS := everybase
 PKG_DIRS := pkg-every-dict pkg-every-flow pkg-every-flow-ext pkg-every-notion pkg-every-pv pkg-every-shape pkg-every-stdtypes pkg-every-table
 ALL_DIRS := $(CORE_DIRS) $(PKG_DIRS)
 

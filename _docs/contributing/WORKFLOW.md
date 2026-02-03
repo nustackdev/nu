@@ -13,9 +13,7 @@ make dev        # Also installs pre-commit hooks
 ```bash
 # Testing
 make test               # Run all tests
-make test-core          # Run core/ tests only
-make test-packages      # Run packages/ tests only
-make test-pkg PKG=core/everyabc  # Run specific package tests
+make test-pkg PKG=everybase      # Run specific package tests
 make test-fast          # Skip slow tests, fail fast
 
 # Code quality
@@ -45,7 +43,7 @@ uv sync
 ## Building
 
 ```bash
-make build PKG=core/everyabc  # Build one package
+make build PKG=everybase  # Build one package
 ```
 
 ## Pre-commit

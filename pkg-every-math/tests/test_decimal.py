@@ -7,9 +7,19 @@ Tests for:
 from decimal import Decimal
 
 from every_math import DecimalValue as DecimalRef
-from everybase import AddOp, DivOp, FloorDivOp, FuncCallOp, MethodCallOp, ModOp, MulOp, PowOp, SubOp
-from everybase import BoolValue as BoolRef
-from everybase import IntValue as IntRef
+from everybase.abc import (
+    AddOp,
+    DivOp,
+    FloorDivOp,
+    FuncCallOp,
+    MethodCallOp,
+    ModOp,
+    MulOp,
+    PowOp,
+    SubOp,
+)
+from everybase.abc import BoolValue as BoolRef
+from everybase.abc import IntValue as IntRef
 
 
 # =============================================================================

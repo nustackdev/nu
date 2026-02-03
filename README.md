@@ -6,8 +6,9 @@ Term Programming platform for Python — build distributed, persistent and react
 
 | | Package | Description |
 |---|---|---|
-| **Core** | `everyabc` | Contracts — Term, Flow, Ref, Shape, Slot, Context, Sentinel |
-| | `everybase` | Base implementations — types, values, morphisms, capabilities |
+| **Core** | `everybase` | Contracts + base implementations — Term, Flow, Ref, Shape, types, values, morphisms |
+| | `everybase.core` | Contracts — Term, Flow, Ref, Shape, Slot, Context, Sentinel |
+| | `everybase.abc` | Base implementations — types, values, morphisms, capabilities |
 | **Models** | `everyshape` | Document model — shapes, items, collections |
 | | `everytable` | Relational model — tables, columns, queries |
 | **Substrates** | `every-pv` | Persistent + reactive — polymorphic views over KV storages |
@@ -20,10 +21,11 @@ Term Programming platform for Python — build distributed, persistent and react
 ## Architecture
 
 ```
-everyabc
-  └── everybase
-        ├── everyshape ── every-pv, every-dict
-        └── everytable ── every-notion
+everybase
+  ├── everybase.core (contracts)
+  ├── everybase.abc (base impl)
+  ├── everyshape ── every-pv, every-dict
+  └── everytable ── every-notion
 ```
 
 ## Development

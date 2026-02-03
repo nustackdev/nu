@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase import ensure_term
+from everybase.abc import ensure_term
 from everyshape import ShapesListRefBase, Slot
 
 from .base import RefBase
@@ -14,7 +14,7 @@ from .shape import ShapeRef
 if TYPE_CHECKING:
     from typing import Self
 
-    from everyabc import Sentinel, Term
+    from everybase import Sentinel, Term
     from everyshape import Shape
 
 

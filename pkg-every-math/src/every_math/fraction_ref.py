@@ -10,8 +10,8 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
@@ -22,7 +22,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import DecimalArg, FractionArg
 
@@ -54,28 +54,28 @@ class FractionType(
         denominator: int | Term[int] = 1,
     ) -> FractionValue:
         """Create a FractionValue from numerator and denominator."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, numerator, denominator))
 
     @classmethod
     def from_str(cls, value: str | Term[str]) -> FractionValue:
         """Create a FractionValue from a string."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, value))
 
     @classmethod
     def from_float(cls, value: float | Term[float]) -> FractionValue:
         """Create a FractionValue from a float."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, value))
 
     @classmethod
     def from_decimal(cls, value: DecimalArg) -> FractionValue:
         """Create a FractionValue from a Decimal."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, value))
 
@@ -85,13 +85,13 @@ class FractionType(
 
     def numerator(self) -> IntValue:
         """Get the numerator."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "numerator"))
 
     def denominator(self) -> IntValue:
         """Get the denominator."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "denominator"))
 
@@ -101,7 +101,7 @@ class FractionType(
 
     def __add__(self, other: FractionArg | int | float) -> FractionValue:
         """Add fractions."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -109,7 +109,7 @@ class FractionType(
 
     def __radd__(self, other: Fraction | int | float) -> FractionValue:
         """Right add."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -117,7 +117,7 @@ class FractionType(
 
     def __sub__(self, other: FractionArg | int | float) -> FractionValue:
         """Subtract fractions."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -125,7 +125,7 @@ class FractionType(
 
     def __rsub__(self, other: Fraction | int | float) -> FractionValue:
         """Right subtract."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -133,7 +133,7 @@ class FractionType(
 
     def __mul__(self, other: FractionArg | int | float) -> FractionValue:
         """Multiply fractions."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -141,7 +141,7 @@ class FractionType(
 
     def __rmul__(self, other: Fraction | int | float) -> FractionValue:
         """Right multiply."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -149,7 +149,7 @@ class FractionType(
 
     def __truediv__(self, other: FractionArg | int | float) -> FractionValue:
         """Divide fractions."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -157,7 +157,7 @@ class FractionType(
 
     def __rtruediv__(self, other: Fraction | int | float) -> FractionValue:
         """Right divide."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -165,7 +165,7 @@ class FractionType(
 
     def __floordiv__(self, other: FractionArg | int | float) -> IntValue:
         """Floor divide fractions."""
-        from everybase import FloorDivOp
+        from everybase.abc import FloorDivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -173,7 +173,7 @@ class FractionType(
 
     def __mod__(self, other: FractionArg | int | float) -> FractionValue:
         """Modulo operation."""
-        from everybase import ModOp
+        from everybase.abc import ModOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -181,7 +181,7 @@ class FractionType(
 
     def __rfloordiv__(self, other: Fraction | int | float) -> IntValue:
         """Right floor divide."""
-        from everybase import FloorDivOp
+        from everybase.abc import FloorDivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -189,7 +189,7 @@ class FractionType(
 
     def __rmod__(self, other: Fraction | int | float) -> FractionValue:
         """Right modulo."""
-        from everybase import ModOp
+        from everybase.abc import ModOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -197,19 +197,19 @@ class FractionType(
 
     def __pow__(self, other: int) -> FractionValue:
         """Raise to power."""
-        from everybase import PowOp
+        from everybase.abc import PowOp
 
         return FractionValue(PowOp(self, other))
 
     def __neg__(self) -> FractionValue:
         """Negate."""
-        from everybase import NegOp
+        from everybase.abc import NegOp
 
         return FractionValue(NegOp(self))
 
     def __abs__(self) -> FractionValue:
         """Absolute value."""
-        from everybase import AbsOp
+        from everybase.abc import AbsOp
 
         return FractionValue(AbsOp(self))
 
@@ -219,19 +219,19 @@ class FractionType(
 
     def limit_denominator(self, max_denominator: int = 10**6) -> FractionValue:
         """Find closest fraction with denominator at most max_denominator."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FractionValue(MethodCallOp(self, "limit_denominator", max_denominator))
 
     def as_float(self) -> FloatValue:
         """Convert to float."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FloatValue(FuncCallOp(float, self))
 
     def as_integer_ratio(self) -> TupleValue:
         """Return (numerator, denominator) tuple."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return TupleValue(MethodCallOp(self, "as_integer_ratio"))
 

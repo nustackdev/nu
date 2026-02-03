@@ -7,10 +7,10 @@ Tests for:
 from fractions import Fraction
 
 from every_math import FractionValue as FractionRef
-from everybase import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, PowOp, SubOp
-from everybase import FloatValue as FloatRef
-from everybase import IntValue as IntRef
-from everybase import TupleValue as TupleRef
+from everybase.abc import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, PowOp, SubOp
+from everybase.abc import FloatValue as FloatRef
+from everybase.abc import IntValue as IntRef
+from everybase.abc import TupleValue as TupleRef
 
 
 # =============================================================================

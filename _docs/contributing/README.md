@@ -19,12 +19,12 @@ make test    # run tests
 make format  # fix lint issues
 ```
 
-## Core Packages (core/)
+## Core Package (everybase/)
 
-| Package | Purpose |
-|---------|---------|
-| `everyabc` | Protocols - Term, Flow, Ref |
-| `everybase` | Base implementations - types, computations |
+| Subpackage | Purpose |
+|------------|---------|
+| `everybase.core` | Protocols - Term, Flow, Ref |
+| `everybase.abc` | Base implementations - types, computations |
 
 ## Packages (packages/)
 

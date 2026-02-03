@@ -19,11 +19,11 @@ from typing import TYPE_CHECKING
 from pv.view import View
 from tkv.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
-from everyabc import Context, Span, Term, find
+from everybase import Context, Span, Term, find
 
 
 if TYPE_CHECKING:
-    from everyabc import Executable
+    from everybase import Executable
 
 
 __all__ = [

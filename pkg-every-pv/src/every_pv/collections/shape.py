@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 from pv.collections import MutableMappingView
 from pv.types import Value as StorageValue
 
-from everybase import AnyValue, DictValue, ListValue
+from everybase.abc import AnyValue, DictValue, ListValue
 from everyshape import ReactiveShapeRef, Shape, Slot
 from everyshape import Ref as EveryshapeRef
 
@@ -17,7 +17,7 @@ from .base import ViewRef
 if TYPE_CHECKING:
     from pv.loc import path
 
-    from everyabc import Term
+    from everybase import Term
 
 
 __all__ = [

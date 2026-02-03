@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Arg
+from everybase import Arg
 
 
 if TYPE_CHECKING:

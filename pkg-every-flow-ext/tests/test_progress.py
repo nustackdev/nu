@@ -4,7 +4,7 @@ import pytest
 
 from every_flow import Seq, Var
 from every_flow_ext import Progress, add_progress
-from everyabc import Context, Flow
+from everybase import Context, Flow
 
 
 class Recorder(Flow):

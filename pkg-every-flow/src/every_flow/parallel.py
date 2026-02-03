@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from everyabc import Flow
+from everybase import Flow
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Executable
+    from everybase import Context, Executable
 
 
 __all__ = [

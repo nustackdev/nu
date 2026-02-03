@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import time
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     ComparableBase,
     IntValue,
     StrValue,
@@ -21,7 +21,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
 
 __all__ = [
@@ -47,7 +47,7 @@ class TimeType(
     @classmethod
     def from_iso(cls, iso_str: str | Term[str]) -> TimeValue:
         """Create a TimeValue from an ISO format string (HH:MM:SS[.ffffff])."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return TimeValue(FuncCallOp(time.fromisoformat, iso_str))
 
@@ -60,7 +60,7 @@ class TimeType(
         microsecond: int | Term[int] = 0,
     ) -> TimeValue:
         """Create a TimeValue from time components."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return TimeValue(FuncCallOp(time, hour, minute, second, microsecond))
 
@@ -80,25 +80,25 @@ class TimeType(
 
     def hour(self) -> IntValue:
         """Get the hour component (0-23)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "hour"))
 
     def minute(self) -> IntValue:
         """Get the minute component (0-59)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "minute"))
 
     def second(self) -> IntValue:
         """Get the second component (0-59)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "second"))
 
     def microsecond(self) -> IntValue:
         """Get the microsecond component (0-999999)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "microsecond"))
 
@@ -108,13 +108,13 @@ class TimeType(
 
     def isoformat(self, timespec: str | Term[str] = "auto") -> StrValue:
         """Convert to ISO 8601 format string."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "isoformat", timespec))
 
     def strftime(self, fmt: str | Term[str]) -> StrValue:
         """Format time as string."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "strftime", fmt))
 
@@ -130,7 +130,7 @@ class TimeType(
         microsecond: int | Term[int] | None = None,
     ) -> TimeValue:
         """Create a new time with some components replaced."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         kwargs = {}
         if hour is not None:

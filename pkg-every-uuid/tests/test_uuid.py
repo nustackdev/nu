@@ -7,10 +7,10 @@ Tests for:
 from uuid import NAMESPACE_DNS
 
 from every_uuid import UUIDValue as UUIDRef
-from everybase import BytesValue as BytesRef
-from everybase import FuncCallOp
-from everybase import IntValue as IntRef
-from everybase import StrValue as StrRef
+from everybase.abc import BytesValue as BytesRef
+from everybase.abc import FuncCallOp
+from everybase.abc import IntValue as IntRef
+from everybase.abc import StrValue as StrRef
 
 
 # =============================================================================

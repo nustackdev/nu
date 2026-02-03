@@ -21,15 +21,15 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Self
 
-from everyabc import Ref as RefABC
-from everyabc import Term
-from everybase import AnyValue, ensure_term
+from everybase import Ref as RefABC
+from everybase import Term
+from everybase.abc import AnyValue, ensure_term
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from everyabc import Context
+    from everybase import Context
 
     from ..shape import Shape
 

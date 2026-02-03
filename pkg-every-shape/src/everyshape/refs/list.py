@@ -10,14 +10,14 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from everyabc import Value
+from everybase import Value
 from everyshape.collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
 
 from .base import Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import IntArg, Sentinel
+    from everybase import IntArg, Sentinel
 
     from .items import ItemRef, MutableItemRef, ReactiveItemRef
 

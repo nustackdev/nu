@@ -9,9 +9,9 @@ import pytest
 
 from every_fin import BasisPoint
 from every_fin import BasisPointValue as BasisPointRef
-from everybase import AddOp, DivOp, FuncCallOp, MulOp, SubOp
-from everybase import FloatValue as FloatRef
-from everybase import IntValue as IntRef
+from everybase.abc import AddOp, DivOp, FuncCallOp, MulOp, SubOp
+from everybase.abc import FloatValue as FloatRef
+from everybase.abc import IntValue as IntRef
 
 
 # =============================================================================

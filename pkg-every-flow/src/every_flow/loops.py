@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from everyabc import Flow
+from everybase import Flow
 
 from ._util import _ensure_term
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Executable
+    from everybase import Context, Executable
 
     from .var import Var
 

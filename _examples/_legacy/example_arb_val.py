@@ -19,10 +19,7 @@ from everyterm.term.comps.callable import FuncCallOp, MethodCallOp
 from everyterm.term.comps.core import AddOp
 from everyterm.term.types import CoreBase, FloatType
 
-from everybase.adapters.codecs import TextCodec
-from everybase.adapters.storages.textdb import TextStorage
-from everybase.slot import StrSlot
-from everybase.view import DictView
+from everybase.abc import DictView, StrSlot, TextCodec, TextStorage
 from everyshape.typing import Sentinel
 
 

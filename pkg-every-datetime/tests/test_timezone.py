@@ -8,10 +8,10 @@ from datetime import UTC, timedelta, timezone
 
 from every_datetime import TimedeltaValue as TimedeltaRef
 from every_datetime import TimezoneValue as TimezoneRef
-from everybase import BoolValue as BoolRef
-from everybase import FuncCallOp
-from everybase import NoneValue as NoneRef
-from everybase import StrValue as StrRef
+from everybase.abc import BoolValue as BoolRef
+from everybase.abc import FuncCallOp
+from everybase.abc import NoneValue as NoneRef
+from everybase.abc import StrValue as StrRef
 
 
 # =============================================================================

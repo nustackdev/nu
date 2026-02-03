@@ -10,14 +10,9 @@ everybase/
 ├── Makefile                # Dev commands
 ├── uv.lock                 # Lockfile (generated)
 │
-├── core-every/             # Protocols/contracts (everyabc)
-│   ├── pyproject.toml
-│   ├── src/everyabc/
-│   └── tests/
-│
-├── core-every-bases/       # Base implementations (everybase)
-│   ├── pyproject.toml
-│   ├── src/everybase/
+├── everybase/              # Core package (everybase)
+│   ├── pyproject.toml      #   everybase.core = contracts (was everyabc)
+│   ├── src/everybase/      #   everybase.abc  = base implementations (was everybase)
 │   └── tests/
 │
 ├── pkg-every-shape/        # Document model (everyshape)
@@ -47,14 +42,16 @@ everybase/
 
 ## Package Tiers
 
-### core-* — Foundation
+### everybase — Foundation
 
-Fundamental packages. Minimal deps.
+The unified core package. Minimal deps. Contains two subpackages:
 
-| Directory | Package | Purpose | Depends on |
-|-----------|---------|---------|------------|
-| `core-every` | `everyabc` | Protocols - Term, Flow, Ref, Model, Sentinel | (none) |
-| `core-every-bases` | `everybase` | Base implementations - Python types, computations | everyabc |
+| Subpackage | Purpose | Import |
+|------------|---------|--------|
+| `everybase.core` | Protocols - Term, Flow, Ref, Model, Sentinel | `from everybase import ...` |
+| `everybase.abc` | Base implementations - Python types, computations | `from everybase.abc import ...` |
+
+`everybase.__init__` re-exports everything from `everybase.core`, so top-level imports work directly.
 
 ### pkg-* — Everything Else
 
@@ -74,13 +71,12 @@ Models, substrates, extensions, and integrations.
 ## Dependency Graph
 
 ```
-everyabc (contracts)
-  └── everybase (base impl)
-        ├── everyshape (document model)
-        │     ├── every-pv (PV substrate + views)
-        │     └── every-dict (dict substrate)
-        └── everytable (relational model)
-              └── every-notion, etc.
+everybase (contracts + base impl)
+  ├── everyshape (document model)
+  │     ├── every-pv (PV substrate + views)
+  │     └── every-dict (dict substrate)
+  └── everytable (relational model)
+        └── every-notion, etc.
 ```
 
 ## Key Files
@@ -96,7 +92,7 @@ everyabc (contracts)
 
 | Context | Style | Example |
 |---------|-------|---------|
-| Directory | `core-`/`pkg-` prefix | `pkg-every-pv/` |
+| Directory | `pkg-` prefix | `pkg-every-pv/` |
 | Import | underscore | `from every_pv import ...` |
 | PyPI name | hyphen | `every-pv` |
 | pyproject.toml name | hyphen | `name = "every-pv"` |

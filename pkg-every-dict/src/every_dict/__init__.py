@@ -8,7 +8,7 @@ Alternative to every-pv when you need shapes without persistence.
 Usage::
 
     from every_dict import Shape, ShapeRef, IntRef, StrRef
-    from everyabc import Context
+    from everybase import Context
 
     class User(Shape):
         name = StrRef.slot()

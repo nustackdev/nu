@@ -4,7 +4,7 @@ import pytest
 
 from every_flow import ForRange, Seq, Var, While
 from every_flow_ext import CancelledError, CheckCancellation, add_cancellation_checks
-from everyabc import Context, Flow
+from everybase import Context, Flow
 
 
 class Recorder(Flow):

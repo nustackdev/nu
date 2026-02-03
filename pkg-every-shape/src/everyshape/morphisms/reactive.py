@@ -17,11 +17,11 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from everyabc import Morphism, Operation, Term
+from everybase import Morphism, Operation, Term
 
 
 if TYPE_CHECKING:
-    from everyabc import Context
+    from everybase import Context
 
 
 __all__ = [

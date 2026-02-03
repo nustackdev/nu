@@ -15,12 +15,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import EMPTY, Sentinel
+from everybase import EMPTY, Sentinel
 from everyshape import Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import Context
+    from everybase import Context
 
 
 __all__ = [

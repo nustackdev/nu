@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 
 import attrs
 
-from everyabc import Flow, Runtime, Term
+from everybase import Flow, Runtime, Term
 
 
 if TYPE_CHECKING:
     from collections.abc import Sequence as PySequence
 
-    from everybase import SequenceRef
+    from everybase.abc import SequenceRef
 
 
 __all__ = [

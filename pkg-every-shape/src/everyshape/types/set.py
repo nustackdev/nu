@@ -8,7 +8,7 @@ Goes directly to everybase since there is no everyshape set collection base yet.
 
 from __future__ import annotations
 
-from everybase.collections import MutableSetBase as _EB_MutableSetBase
+from everybase.abc import MutableSetBase as _EB_MutableSetBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,

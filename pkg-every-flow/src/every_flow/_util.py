@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from everyabc import Executable, Term
+from everybase import Executable, Term
 
 
 if TYPE_CHECKING:
-    from everyabc import Context
+    from everybase import Context
 
 
 __all__ = [

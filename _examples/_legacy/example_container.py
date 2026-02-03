@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from everybase.adapters.codecs import BinaryCodec
-from everybase.adapters.storages.rocksdb import RocksDBStorage
+from everybase.abc import BinaryCodec, RocksDBStorage
 from everyshape.container import Container, ContainerProtocol, ContainerStructure
 
 

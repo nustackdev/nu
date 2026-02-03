@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from every_flow import Var
-from everyabc import Flow, map_nodes
+from everybase import Flow, map_nodes
 
 
 if TYPE_CHECKING:
-    from everyabc import Context, Executable
+    from everybase import Context, Executable
 
 
 __all__ = [

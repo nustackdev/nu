@@ -57,7 +57,7 @@ from every_math import (
 )
 from every_path import PathType, PathValue
 from every_uuid import UUIDType, UUIDValue
-from everybase import FuncCallOp, MethodCallOp, ensure_term
+from everybase.abc import FuncCallOp, MethodCallOp, ensure_term
 from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
 
@@ -69,7 +69,7 @@ if TYPE_CHECKING:
 
     from pv.loc import path
 
-    from everyabc import Shape, Term
+    from everybase import Shape, Term
 
 
 __all__ = [

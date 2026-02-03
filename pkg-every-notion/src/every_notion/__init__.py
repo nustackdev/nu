@@ -3,7 +3,7 @@
 Provides Shape-based declarative access to Notion databases.
 
 Example:
-    from everybase.notion import (
+    from every_notion import (
         NotionContext,
         NotionTable,
         TitleSlot,

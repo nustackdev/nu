@@ -7,9 +7,9 @@ Tests for:
 from datetime import timedelta
 
 from every_datetime import TimedeltaValue as TimedeltaRef
-from everybase import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, SubOp
-from everybase import FloatValue as FloatRef
-from everybase import IntValue as IntRef
+from everybase.abc import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, SubOp
+from everybase.abc import FloatValue as FloatRef
+from everybase.abc import IntValue as IntRef
 
 
 # =============================================================================

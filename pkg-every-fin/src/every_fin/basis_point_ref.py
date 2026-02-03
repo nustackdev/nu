@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
@@ -24,7 +24,7 @@ from .basis_point_cls import BasisPoint
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import BasisPointArg
 
@@ -52,21 +52,21 @@ class BasisPointType(
     @classmethod
     def from_int(cls, value: int | Term[int]) -> BasisPointValue:
         """Create from raw basis points."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return BasisPointValue(FuncCallOp(BasisPoint, value))
 
     @classmethod
     def from_pct(cls, pct: float | Term[float]) -> BasisPointValue:
         """Create from percentage."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return BasisPointValue(FuncCallOp(BasisPoint.from_pct, pct))
 
     @classmethod
     def from_dec(cls, dec: float | Term[float]) -> BasisPointValue:
         """Create from decimal."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return BasisPointValue(FuncCallOp(BasisPoint.from_dec, dec))
 
@@ -76,19 +76,19 @@ class BasisPointType(
 
     def to_pct(self) -> FloatValue:
         """Convert to percentage."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "to_pct"))
 
     def to_dec(self) -> FloatValue:
         """Convert to decimal."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "to_dec"))
 
     def to_int(self) -> IntValue:
         """Get raw basis points."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return IntValue(MethodCallOp(self, "to_int"))
 
@@ -98,19 +98,19 @@ class BasisPointType(
 
     def apply(self, amount: int | float | Term) -> FloatValue:
         """Apply basis points to amount."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "apply", amount))
 
     def add_to(self, amount: int | float | Term) -> FloatValue:
         """Add basis points to amount."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "add_to", amount))
 
     def sub_from(self, amount: int | float | Term) -> FloatValue:
         """Subtract basis points from amount."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "sub_from", amount))
 
@@ -120,7 +120,7 @@ class BasisPointType(
 
     def __add__(self, other: BasisPointArg) -> BasisPointValue:
         """Add basis points."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
@@ -128,7 +128,7 @@ class BasisPointType(
 
     def __radd__(self, other: BasisPoint | int) -> BasisPointValue:
         """Right add."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
@@ -136,7 +136,7 @@ class BasisPointType(
 
     def __sub__(self, other: BasisPointArg) -> BasisPointValue:
         """Subtract basis points."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
@@ -144,7 +144,7 @@ class BasisPointType(
 
     def __rsub__(self, other: BasisPoint | int) -> BasisPointValue:
         """Right subtract."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
@@ -152,19 +152,19 @@ class BasisPointType(
 
     def __mul__(self, factor: int | float | Term) -> BasisPointValue:
         """Multiply by factor."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         return BasisPointValue(MulOp(self, factor))
 
     def __rmul__(self, factor: int | float) -> BasisPointValue:
         """Right multiply."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         return BasisPointValue(MulOp(factor, self))
 
     def __truediv__(self, divisor: int | float | Term) -> BasisPointValue:
         """Divide by factor."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         return BasisPointValue(DivOp(self, divisor))
 

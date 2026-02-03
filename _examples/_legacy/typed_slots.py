@@ -14,7 +14,7 @@ The magic: Call domain methods directly on slots without importing Value types!
 import asyncio
 from datetime import datetime, timedelta
 
-import everybase as e
+import everybase.abc as e
 
 
 # =============================================================================
@@ -116,7 +116,7 @@ main_flow = e.f.Seq(init, record_event, show_stats)
 
 
 async def main():
-    from everybase.top import regular_provider, text_storage
+    from everybase.abc import regular_provider, text_storage
 
     with text_storage(".db_events") as storage:
         await main_flow.start_flow(regular_provider(storage))

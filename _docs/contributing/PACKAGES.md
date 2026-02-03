@@ -2,11 +2,6 @@
 
 ## 1. Create Structure
 
-Pick the right tier:
-
-- `core/` - Foundation (no external deps, rarely changes)
-- `packages/` - Everything else (models, extensions, integrations)
-
 ```bash
 mkdir -p packages/every-foo/{src/every_foo,tests}
 touch packages/every-foo/{pyproject.toml,README.md}
@@ -29,7 +24,7 @@ name = "every-foo"
 version = "0.1.0"
 description = "Foo for every"
 requires-python = ">=3.10"
-dependencies = ["everyabc"]
+dependencies = ["everybase"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/every_foo"]
@@ -42,7 +37,7 @@ Edit root `pyproject.toml`:
 ```toml
 [tool.uv.workspace]
 members = [
-    "core/everyabc",
+    "everybase",
     "packages/every-foo",  # Add here
 ]
 ```
@@ -51,7 +46,7 @@ If other packages depend on it:
 
 ```toml
 [tool.uv.sources]
-everyabc = { workspace = true }
+everybase = { workspace = true }
 every-foo = { workspace = true }  # Add here
 ```
 
@@ -71,5 +66,5 @@ Use hyphens in directory names, underscores in imports/package dirs, hyphens in 
 
 ## Dependencies
 
-- Core (`core/`) should have minimal deps
-- Packages (`packages/`) depend on core and may have external deps
+- Core (`everybase/`) should have minimal deps
+- Packages (`packages/`) depend on everybase and may have external deps

@@ -10,8 +10,8 @@ from __future__ import annotations
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     BoolValue,
     ComparableBase,
     ListValue,
@@ -23,7 +23,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import PathArg
 
@@ -51,21 +51,21 @@ class PathType(
     @classmethod
     def from_str(cls, value: str | Term[str]) -> PathValue:
         """Create a PathValue from a string."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return PathValue(FuncCallOp(Path, value))
 
     @classmethod
     def cwd(cls) -> PathValue:
         """Get current working directory."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return PathValue(FuncCallOp(Path.cwd))
 
     @classmethod
     def home(cls) -> PathValue:
         """Get user home directory."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return PathValue(FuncCallOp(Path.home))
 
@@ -75,55 +75,55 @@ class PathType(
 
     def name(self) -> StrValue:
         """Get the final component (filename)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return StrValue(FuncCallOp(getattr, self, "name"))
 
     def stem(self) -> StrValue:
         """Get the filename without the final extension."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return StrValue(FuncCallOp(getattr, self, "stem"))
 
     def suffix(self) -> StrValue:
         """Get the file extension (including dot)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return StrValue(FuncCallOp(getattr, self, "suffix"))
 
     def suffixes(self) -> ListValue:
         """Get all file extensions."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ListValue(FuncCallOp(getattr, self, "suffixes"))
 
     def parent(self) -> PathValue:
         """Get the parent directory."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return PathValue(FuncCallOp(getattr, self, "parent"))
 
     def root(self) -> StrValue:
         """Get the root (e.g., '/' on Unix)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return StrValue(FuncCallOp(getattr, self, "root"))
 
     def anchor(self) -> StrValue:
         """Get the anchor (drive + root)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return StrValue(FuncCallOp(getattr, self, "anchor"))
 
     def parts(self) -> TupleValue:
         """Get path parts as a tuple."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return TupleValue(FuncCallOp(getattr, self, "parts"))
 
     def parents(self) -> TupleValue:
         """Get an immutable sequence of parent paths."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return TupleValue(FuncCallOp(tuple, FuncCallOp(getattr, self, "parents")))
 
@@ -133,7 +133,7 @@ class PathType(
 
     def __truediv__(self, other: PathArg | str | Term[str]) -> PathValue:
         """Join paths using / operator."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(other, (Path, PurePath)):
             other = PathValue(other)
@@ -141,26 +141,26 @@ class PathType(
 
     def joinpath(self, *others: PathArg | str) -> PathValue:
         """Join with multiple path components."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         wrapped = tuple(PathValue(o) if isinstance(o, (Path, PurePath)) else o for o in others)
         return PathValue(MethodCallOp(self, "joinpath", *wrapped))
 
     def with_name(self, name: str | Term[str]) -> PathValue:
         """Return a new path with the name changed."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return PathValue(MethodCallOp(self, "with_name", name))
 
     def with_stem(self, stem: str | Term[str]) -> PathValue:
         """Return a new path with the stem changed."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return PathValue(MethodCallOp(self, "with_stem", stem))
 
     def with_suffix(self, suffix: str | Term[str]) -> PathValue:
         """Return a new path with the suffix changed."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return PathValue(MethodCallOp(self, "with_suffix", suffix))
 
@@ -169,19 +169,19 @@ class PathType(
 
         Named resolve_path() to avoid collision with RefBase.resolve().
         """
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return PathValue(MethodCallOp(self, "resolve", strict))
 
     def absolute(self) -> PathValue:
         """Make the path absolute (without resolving symlinks)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return PathValue(MethodCallOp(self, "absolute"))
 
     def relative_to(self, other: PathArg | str | Term[str]) -> PathValue:
         """Compute relative path from other."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         if isinstance(other, (Path, PurePath)):
             other = PathValue(other)
@@ -193,13 +193,13 @@ class PathType(
 
     def is_absolute(self) -> BoolValue:
         """Check if path is absolute."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_absolute"))
 
     def is_relative_to(self, other: PathArg | str | Term[str]) -> BoolValue:
         """Check if path is relative to other."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         if isinstance(other, (Path, PurePath)):
             other = PathValue(other)
@@ -207,7 +207,7 @@ class PathType(
 
     def match(self, pattern: str | Term[str]) -> BoolValue:
         """Match path against a glob pattern."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "match", pattern))
 
@@ -217,31 +217,31 @@ class PathType(
 
     def exists(self) -> BoolValue:
         """Check if path exists."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "exists"))
 
     def is_file(self) -> BoolValue:
         """Check if path is a file."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_file"))
 
     def is_dir(self) -> BoolValue:
         """Check if path is a directory."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_dir"))
 
     def is_symlink(self) -> BoolValue:
         """Check if path is a symlink."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_symlink"))
 
     def is_mount(self) -> BoolValue:
         """Check if path is a mount point."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_mount"))
 
@@ -251,13 +251,13 @@ class PathType(
 
     def as_posix(self) -> StrValue:
         """Return path with forward slashes."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "as_posix"))
 
     def as_uri(self) -> StrValue:
         """Return path as file:// URI."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return StrValue(MethodCallOp(self, "as_uri"))
 

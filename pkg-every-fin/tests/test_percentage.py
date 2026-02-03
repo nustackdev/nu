@@ -9,10 +9,10 @@ import pytest
 
 from every_fin import Percentage
 from every_fin import PercentageValue as PercentageRef
-from everybase import AddOp, DivOp, FuncCallOp, MulOp, SubOp
-from everybase import BoolValue as BoolRef
-from everybase import FloatValue as FloatRef
-from everybase import IntValue as IntRef
+from everybase.abc import AddOp, DivOp, FuncCallOp, MulOp, SubOp
+from everybase.abc import BoolValue as BoolRef
+from everybase.abc import FloatValue as FloatRef
+from everybase.abc import IntValue as IntRef
 
 
 # =============================================================================

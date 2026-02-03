@@ -15,7 +15,7 @@ from .base import Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import IntArg, Sentinel
+    from everybase import IntArg, Sentinel
 
     from ..shape import Shape as ShapeBase
     from .structured import MutableShapeRef, ReactiveShapeRef

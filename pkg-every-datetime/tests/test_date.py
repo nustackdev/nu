@@ -8,9 +8,9 @@ from datetime import date, timedelta
 
 from every_datetime import DateValue as DateRef
 from every_datetime import TimedeltaValue as TimedeltaRef
-from everybase import AddOp, FuncCallOp, MethodCallOp, SubOp
-from everybase import IntValue as IntRef
-from everybase import StrValue as StrRef
+from everybase.abc import AddOp, FuncCallOp, MethodCallOp, SubOp
+from everybase.abc import IntValue as IntRef
+from everybase.abc import StrValue as StrRef
 
 
 # =============================================================================

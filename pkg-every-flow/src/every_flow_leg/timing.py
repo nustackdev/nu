@@ -14,7 +14,7 @@ import time
 
 import attrs
 
-from everyabc import Flow, Runtime, Term, is_sentinel
+from everybase import Flow, Runtime, Term, is_sentinel
 
 
 __all__ = [

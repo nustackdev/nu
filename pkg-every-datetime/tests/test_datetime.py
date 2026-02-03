@@ -10,10 +10,10 @@ from every_datetime import DatetimeValue as DatetimeRef
 from every_datetime import DateValue as DateRef
 from every_datetime import TimedeltaValue as TimedeltaRef
 from every_datetime import TimeValue as TimeRef
-from everybase import AddOp, FuncCallOp, SubOp
-from everybase import FloatValue as FloatRef
-from everybase import IntValue as IntRef
-from everybase import StrValue as StrRef
+from everybase.abc import AddOp, FuncCallOp, SubOp
+from everybase.abc import FloatValue as FloatRef
+from everybase.abc import IntValue as IntRef
+from everybase.abc import StrValue as StrRef
 
 
 # =============================================================================

@@ -10,8 +10,8 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     BoolValue,
     ComparableBase,
     IntValue,
@@ -21,7 +21,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import DecimalArg
 
@@ -51,14 +51,14 @@ class DecimalType(
     @classmethod
     def from_str(cls, value: str | Term[str]) -> DecimalValue:
         """Create a DecimalValue from a string."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DecimalValue(FuncCallOp(Decimal, value))
 
     @classmethod
     def from_int(cls, value: int | Term[int]) -> DecimalValue:
         """Create a DecimalValue from an integer."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DecimalValue(FuncCallOp(Decimal, value))
 
@@ -69,7 +69,7 @@ class DecimalType(
         Note: Converting from float may introduce precision issues.
         Prefer from_str() for exact values.
         """
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return DecimalValue(FuncCallOp(Decimal, value))
 
@@ -79,7 +79,7 @@ class DecimalType(
 
     def __add__(self, other: DecimalArg) -> DecimalValue:
         """Add two decimals."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -87,7 +87,7 @@ class DecimalType(
 
     def __radd__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right add."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -95,7 +95,7 @@ class DecimalType(
 
     def __sub__(self, other: DecimalArg) -> DecimalValue:
         """Subtract decimals."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -103,7 +103,7 @@ class DecimalType(
 
     def __rsub__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right subtract."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -111,7 +111,7 @@ class DecimalType(
 
     def __mul__(self, other: DecimalArg) -> DecimalValue:
         """Multiply decimals."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -119,7 +119,7 @@ class DecimalType(
 
     def __rmul__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right multiply."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -127,7 +127,7 @@ class DecimalType(
 
     def __truediv__(self, other: DecimalArg) -> DecimalValue:
         """Divide decimals."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -135,7 +135,7 @@ class DecimalType(
 
     def __rtruediv__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right divide."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -143,7 +143,7 @@ class DecimalType(
 
     def __floordiv__(self, other: DecimalArg) -> DecimalValue:
         """Floor divide decimals."""
-        from everybase import FloorDivOp
+        from everybase.abc import FloorDivOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -151,7 +151,7 @@ class DecimalType(
 
     def __mod__(self, other: DecimalArg) -> DecimalValue:
         """Modulo operation."""
-        from everybase import ModOp
+        from everybase.abc import ModOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -159,7 +159,7 @@ class DecimalType(
 
     def __pow__(self, other: int | DecimalArg) -> DecimalValue:
         """Raise to power."""
-        from everybase import PowOp
+        from everybase.abc import PowOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -167,13 +167,13 @@ class DecimalType(
 
     def __neg__(self) -> DecimalValue:
         """Negate."""
-        from everybase import NegOp
+        from everybase.abc import NegOp
 
         return DecimalValue(NegOp(self))
 
     def __abs__(self) -> DecimalValue:
         """Absolute value."""
-        from everybase import AbsOp
+        from everybase.abc import AbsOp
 
         return DecimalValue(AbsOp(self))
 
@@ -183,7 +183,7 @@ class DecimalType(
 
     def quantize(self, exp: str | DecimalArg, rounding: str | None = None) -> DecimalValue:
         """Quantize to a given exponent (e.g., "0.01" for 2 decimal places)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         if isinstance(exp, Decimal):
             exp = DecimalValue(exp)
@@ -193,31 +193,31 @@ class DecimalType(
 
     def normalize(self) -> DecimalValue:
         """Remove trailing zeros."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "normalize"))
 
     def sqrt(self) -> DecimalValue:
         """Square root."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "sqrt"))
 
     def exp(self) -> DecimalValue:
         """Exponential (e^self)."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "exp"))
 
     def ln(self) -> DecimalValue:
         """Natural logarithm."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "ln"))
 
     def log10(self) -> DecimalValue:
         """Base-10 logarithm."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "log10"))
 
@@ -227,25 +227,25 @@ class DecimalType(
 
     def is_finite(self) -> BoolValue:
         """Check if value is finite."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_finite"))
 
     def is_infinite(self) -> BoolValue:
         """Check if value is infinite."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_infinite"))
 
     def is_signed(self) -> BoolValue:
         """Check if value is negative."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_signed"))
 
     def is_zero(self) -> BoolValue:
         """Check if value is zero."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return BoolValue(MethodCallOp(self, "is_zero"))
 
@@ -255,7 +255,7 @@ class DecimalType(
 
     def to_int(self) -> IntValue:
         """Convert to integer (truncating decimal)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(int, self))
 

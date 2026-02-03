@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
@@ -21,7 +21,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import TimedeltaArg
 
@@ -49,7 +49,7 @@ class TimedeltaType(
     @classmethod
     def from_seconds(cls, seconds: float | Term[float]) -> TimedeltaValue:
         """Create a TimedeltaValue from seconds."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return TimedeltaValue(FuncCallOp(timedelta, seconds=seconds))
 
@@ -65,7 +65,7 @@ class TimedeltaType(
         weeks: float | Term[float] = 0,
     ) -> TimedeltaValue:
         """Create a TimedeltaValue from time components."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return TimedeltaValue(
             FuncCallOp(
@@ -86,19 +86,19 @@ class TimedeltaType(
 
     def days(self) -> IntValue:
         """Get the days component (normalized)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "days"))
 
     def seconds(self) -> IntValue:
         """Get the seconds component (0-86399)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "seconds"))
 
     def microseconds(self) -> IntValue:
         """Get the microseconds component (0-999999)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "microseconds"))
 
@@ -108,7 +108,7 @@ class TimedeltaType(
 
     def total_seconds(self) -> FloatValue:
         """Get total duration in seconds."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return FloatValue(MethodCallOp(self, "total_seconds"))
 
@@ -130,7 +130,7 @@ class TimedeltaType(
 
     def __add__(self, other: TimedeltaArg) -> TimedeltaValue:
         """Add two timedeltas."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -138,7 +138,7 @@ class TimedeltaType(
 
     def __radd__(self, other: timedelta) -> TimedeltaValue:
         """Right add."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -146,7 +146,7 @@ class TimedeltaType(
 
     def __sub__(self, other: TimedeltaArg) -> TimedeltaValue:
         """Subtract timedeltas."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -154,7 +154,7 @@ class TimedeltaType(
 
     def __rsub__(self, other: timedelta) -> TimedeltaValue:
         """Right subtract."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -162,19 +162,19 @@ class TimedeltaType(
 
     def __mul__(self, factor: int | float | Term) -> TimedeltaValue:
         """Multiply timedelta by a scalar."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         return TimedeltaValue(MulOp(self, factor))
 
     def __rmul__(self, factor: int | float) -> TimedeltaValue:
         """Right multiply."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         return TimedeltaValue(MulOp(factor, self))
 
     def __truediv__(self, divisor: int | float | TimedeltaArg) -> TimedeltaValue | FloatValue:
         """Divide timedelta."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(divisor, timedelta):
             divisor = TimedeltaValue(divisor)
@@ -184,13 +184,13 @@ class TimedeltaType(
 
     def __floordiv__(self, divisor: int | Term[int]) -> TimedeltaValue:
         """Floor divide timedelta by scalar."""
-        from everybase import FloorDivOp
+        from everybase.abc import FloorDivOp
 
         return TimedeltaValue(FloorDivOp(self, divisor))
 
     def __mod__(self, other: TimedeltaArg) -> TimedeltaValue:
         """Modulo operation."""
-        from everybase import ModOp
+        from everybase.abc import ModOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -198,13 +198,13 @@ class TimedeltaType(
 
     def __neg__(self) -> TimedeltaValue:
         """Negate."""
-        from everybase import NegOp
+        from everybase.abc import NegOp
 
         return TimedeltaValue(NegOp(self))
 
     def __abs__(self) -> TimedeltaValue:
         """Absolute value."""
-        from everybase import AbsOp
+        from everybase.abc import AbsOp
 
         return TimedeltaValue(AbsOp(self))
 

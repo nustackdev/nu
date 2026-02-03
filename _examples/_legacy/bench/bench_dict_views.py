@@ -133,11 +133,7 @@ def run_benchmarks(view: object, name: str) -> dict[str, float]:
 
 
 def main() -> None:
-    from everybase.adapters.codecs import BinaryCodec
-    from everybase.adapters.storages.rocksdb import RocksDBStorage
-    from everybase.view import DictView
-    from everybase.view.flat_dict_view import FlatDictView
-    from everybase.view.light_dict_view import LightDictView
+    from everybase.abc import BinaryCodec, DictView, FlatDictView, LightDictView, RocksDBStorage
 
     print("=" * 60)
     print(f"Dict View Benchmarks (N={N})")

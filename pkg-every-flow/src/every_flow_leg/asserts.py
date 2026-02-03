@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from everybase import (
+from everybase.abc import (
     Existable,
     Gettable,
     KeysQueryable,
@@ -40,7 +40,7 @@ from .error import Assert
 
 
 if TYPE_CHECKING:
-    from everyabc import Flow, Term
+    from everybase import Flow, Term
 
 
 __all__ = [  # noqa: RUF022

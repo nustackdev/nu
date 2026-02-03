@@ -5,9 +5,9 @@ Tests for:
 """
 
 from every_datetime import TimeValue as TimeRef
-from everybase import FuncCallOp, MethodCallOp
-from everybase import IntValue as IntRef
-from everybase import StrValue as StrRef
+from everybase.abc import FuncCallOp, MethodCallOp
+from everybase.abc import IntValue as IntRef
+from everybase.abc import StrValue as StrRef
 
 
 # =============================================================================

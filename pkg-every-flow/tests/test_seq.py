@@ -1,7 +1,7 @@
 """Tests for Seq."""
 
 from every_flow import Seq
-from everyabc import Context
+from everybase import Context
 
 from .conftest import Recorder
 

@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everyabc import Sentinel
-from everybase import (
+from everybase import Sentinel
+from everybase.abc import (
     EqualableBase,
     FloatValue,
     TupleValue,
@@ -22,7 +22,7 @@ from everybase import (
 
 
 if TYPE_CHECKING:
-    from everyabc import Term
+    from everybase import Term
 
     from .args import ComplexArg
 
@@ -56,14 +56,14 @@ class ComplexType(
         imag: float | Term[float] = 0,
     ) -> ComplexValue:
         """Create a ComplexValue from real and imaginary parts."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(complex, real, imag))
 
     @classmethod
     def from_str(cls, value: str | Term[str]) -> ComplexValue:
         """Create a ComplexValue from a string."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(complex, value))
 
@@ -72,7 +72,7 @@ class ComplexType(
         """Create a ComplexValue from polar coordinates."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.rect, r, phi))
 
@@ -82,13 +82,13 @@ class ComplexType(
 
     def real(self) -> FloatValue:
         """Get the real part."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FloatValue(FuncCallOp(getattr, self, "real"))
 
     def imag(self) -> FloatValue:
         """Get the imaginary part."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FloatValue(FuncCallOp(getattr, self, "imag"))
 
@@ -98,7 +98,7 @@ class ComplexType(
 
     def __add__(self, other: ComplexArg) -> ComplexValue:
         """Add complex numbers."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -106,7 +106,7 @@ class ComplexType(
 
     def __radd__(self, other: complex | int | float) -> ComplexValue:
         """Right add."""
-        from everybase import AddOp
+        from everybase.abc import AddOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -114,7 +114,7 @@ class ComplexType(
 
     def __sub__(self, other: ComplexArg) -> ComplexValue:
         """Subtract complex numbers."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -122,7 +122,7 @@ class ComplexType(
 
     def __rsub__(self, other: complex | int | float) -> ComplexValue:
         """Right subtract."""
-        from everybase import SubOp
+        from everybase.abc import SubOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -130,7 +130,7 @@ class ComplexType(
 
     def __mul__(self, other: ComplexArg) -> ComplexValue:
         """Multiply complex numbers."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -138,7 +138,7 @@ class ComplexType(
 
     def __rmul__(self, other: complex | int | float) -> ComplexValue:
         """Right multiply."""
-        from everybase import MulOp
+        from everybase.abc import MulOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -146,7 +146,7 @@ class ComplexType(
 
     def __truediv__(self, other: ComplexArg) -> ComplexValue:
         """Divide complex numbers."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -154,7 +154,7 @@ class ComplexType(
 
     def __rtruediv__(self, other: complex | int | float) -> ComplexValue:
         """Right divide."""
-        from everybase import DivOp
+        from everybase.abc import DivOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -162,7 +162,7 @@ class ComplexType(
 
     def __pow__(self, other: ComplexArg) -> ComplexValue:
         """Raise to power."""
-        from everybase import PowOp
+        from everybase.abc import PowOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -170,7 +170,7 @@ class ComplexType(
 
     def __rpow__(self, other: complex | int | float) -> ComplexValue:
         """Right power."""
-        from everybase import PowOp
+        from everybase.abc import PowOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -178,13 +178,13 @@ class ComplexType(
 
     def __neg__(self) -> ComplexValue:
         """Negate."""
-        from everybase import NegOp
+        from everybase.abc import NegOp
 
         return ComplexValue(NegOp(self))
 
     def __abs__(self) -> FloatValue:
         """Get magnitude (absolute value)."""
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FloatValue(FuncCallOp(abs, self))
 
@@ -194,7 +194,7 @@ class ComplexType(
 
     def conjugate(self) -> ComplexValue:
         """Get the complex conjugate."""
-        from everybase import MethodCallOp
+        from everybase.abc import MethodCallOp
 
         return ComplexValue(MethodCallOp(self, "conjugate"))
 
@@ -202,7 +202,7 @@ class ComplexType(
         """Get the phase angle in radians."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return FloatValue(FuncCallOp(cmath.phase, self))
 
@@ -210,7 +210,7 @@ class ComplexType(
         """Get polar coordinates (r, phi)."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return TupleValue(FuncCallOp(cmath.polar, self))
 
@@ -222,7 +222,7 @@ class ComplexType(
         """Square root."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.sqrt, self))
 
@@ -230,7 +230,7 @@ class ComplexType(
         """Exponential (e^self)."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.exp, self))
 
@@ -238,7 +238,7 @@ class ComplexType(
         """Logarithm."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         if base is not None:
             return ComplexValue(FuncCallOp(cmath.log, self, base))
@@ -248,7 +248,7 @@ class ComplexType(
         """Sine."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.sin, self))
 
@@ -256,7 +256,7 @@ class ComplexType(
         """Cosine."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.cos, self))
 
@@ -264,7 +264,7 @@ class ComplexType(
         """Tangent."""
         import cmath
 
-        from everybase import FuncCallOp
+        from everybase.abc import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.tan, self))
 

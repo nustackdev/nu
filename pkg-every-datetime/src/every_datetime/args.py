@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta, timezone
 
-from everyabc import Arg
+from everybase import Arg
 
 
 __all__ = [

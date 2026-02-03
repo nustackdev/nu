@@ -25,7 +25,7 @@ from .base import Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel
+    from everybase import Sentinel
 
     from ..shape import Shape as ShapeBase
     from ..shape import Slot

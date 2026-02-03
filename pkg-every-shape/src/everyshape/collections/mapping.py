@@ -9,8 +9,8 @@ Substrates implement _wrap_* methods and result() directly on their concrete ref
 
 from __future__ import annotations
 
-from everybase.collections import MappingBase as _EB_MappingBase
-from everybase.collections import MutableMappingBase as _EB_MutableMappingBase
+from everybase.abc import MappingBase as _EB_MappingBase
+from everybase.abc import MutableMappingBase as _EB_MutableMappingBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,
