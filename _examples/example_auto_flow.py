@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import every_flow as f
-import every_pv as e
+import every_pv as pv
 
 
-class AppState(e.Shape):
-    name = e.StrRef.slot()
-    age = e.IntRef.slot()
+class AppState(pv.Shape):
+    name = pv.StrRef.slot()
+    age = pv.IntRef.slot()
 
 
 demos = [
@@ -44,7 +44,7 @@ async def main():
             # Get the tree
             tree = demos[i]
             # Add atomicity
-            tree = e.auto_atomic(tree, AppState, DictView)
+            tree = pv.auto_atomic(tree, AppState, DictView)
             # Add other features
             ...
             # Execute the tree
