@@ -58,10 +58,10 @@ from every_math import (
 from every_path import PathType, PathValue
 from every_uuid import UUIDType, UUIDValue
 from everybase import FuncCallOp, MethodCallOp, ensure_term
+from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
 
-from .primitives import Slot
-from .ref import PrimitiveRef
+from .collections.base import PrimitiveRef
 
 
 if TYPE_CHECKING:

@@ -28,24 +28,20 @@ Usage:
 """
 
 from every_pv.collections import (
-    DictRef,
-    ListRef,
-    ShapeRef,
-    ShapesDictRef,
-    ShapesListRef,
-)
-from every_pv.primitives import (
     BoolRef,
     BytesRef,
     DictItemRef,
+    DictRef,
     FloatRef,
     IntRef,
     ItemRef,
     ListItemRef,
-    StrRef,
-)
-from every_pv.ref import (
+    ListRef,
     PrimitiveRef,
+    ShapeRef,
+    ShapesDictRef,
+    ShapesListRef,
+    StrRef,
     ViewRef,
 )
 from every_pv.spans import Atomic, Snapshot

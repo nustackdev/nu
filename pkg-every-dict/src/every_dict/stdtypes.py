@@ -61,7 +61,7 @@ from everybase import FuncCallOp, MethodCallOp, ensure_term
 from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
 
-from .ref import RefBase
+from .collections.base import RefBase
 
 
 if TYPE_CHECKING:

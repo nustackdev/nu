@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from every_dict.ref import RefBase
 from everyabc import Value
 from everybase import (
     BoolType,
@@ -25,13 +24,14 @@ from everybase import (
     StrType,
     StrValue,
 )
-from everyshape import Slot
-from everyshape.refs import MutableItemRef
+from everyshape import MutableItemRef, Slot
+
+from .base import RefBase
 
 
 if TYPE_CHECKING:
     from everyabc import Term
-    from everyshape import Shape as ShapeBase
+    from everyshape import Shape
 
 
 __all__ = [
@@ -60,7 +60,7 @@ class ItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: RefBase | None = None,
-        shape: type[ShapeBase] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize item reference."""
         super().__init__(address, parent, shape)
@@ -98,7 +98,7 @@ class IntRef(ItemRef[int, IntValue], IntType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[ShapeBase] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict int ref."""
         super().__init__(address, int, IntValue, parent, shape)
@@ -121,7 +121,7 @@ class StrRef(ItemRef[str, StrValue], StrType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[ShapeBase] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict str ref."""
         super().__init__(address, str, StrValue, parent, shape)
@@ -144,7 +144,7 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[ShapeBase] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict float ref."""
         super().__init__(address, float, FloatValue, parent, shape)
@@ -167,7 +167,7 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[ShapeBase] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict bool ref."""
         super().__init__(address, bool, BoolValue, parent, shape)
@@ -190,7 +190,7 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[ShapeBase] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict bytes ref."""
         super().__init__(address, bytes, BytesValue, parent, shape)

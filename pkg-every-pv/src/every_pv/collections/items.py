@@ -25,17 +25,16 @@ from everybase.types import (
     IntType,
     StrType,
 )
-from everyshape import Slot
-from everyshape.refs import ReactiveItemRef
+from everyshape import ReactiveItemRef, Slot
 
-from .ref import PrimitiveRef
+from .base import PrimitiveRef
 
 
 if TYPE_CHECKING:
     from pv.loc import path
 
     from everyabc import Term, Value
-    from everyshape import Shape as PVShape
+    from everyshape import Shape
 
 
 __all__ = [
@@ -67,7 +66,7 @@ class IntRef(PrimitiveRef[int], IntType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV int ref."""
         super().__init__(address, int, parent, shape)
@@ -90,7 +89,7 @@ class StrRef(PrimitiveRef[str], StrType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV str ref."""
         super().__init__(address, str, parent, shape)
@@ -113,7 +112,7 @@ class FloatRef(PrimitiveRef[float], FloatType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV float ref."""
         super().__init__(address, float, parent, shape)
@@ -136,7 +135,7 @@ class BoolRef(PrimitiveRef[bool], BoolType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bool ref."""
         super().__init__(address, bool, parent, shape)
@@ -159,7 +158,7 @@ class BytesRef(PrimitiveRef[bytes], BytesType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bytes ref."""
         super().__init__(address, bytes, parent, shape)
@@ -191,7 +190,7 @@ class ItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize item reference."""
         super().__init__(address, value_type, parent, shape)
@@ -231,7 +230,7 @@ class ListItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize list item reference."""
         super().__init__(address, value_type, parent, shape)
@@ -271,7 +270,7 @@ class DictItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: PrimitiveRef | None = None,
-        shape: type[PVShape] | None = None,
+        shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict item reference."""
         super().__init__(address, value_type, parent, shape)

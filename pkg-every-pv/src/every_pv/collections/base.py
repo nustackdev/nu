@@ -6,7 +6,7 @@ to access values stored in key-value backends.
 Hierarchy:
     everyshape.Ref[T]    - document-model base (address/parent/shape)
         |
-    RefBase[T]           - PV substrate base
+    Ref[T]           - PV substrate base
     ├── PrimitiveRef[T]  - refs to leaf values (int, str, etc.)
     └── ViewRef[T, V]    - refs to container views (dict, list, set)
 
@@ -17,7 +17,6 @@ Core vocabulary:
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
@@ -27,7 +26,7 @@ from pv.loc import path
 from pv.view import View
 
 from everyabc import EMPTY, Arg, Context, Sentinel
-from everyshape import Ref as RefShape
+from everyshape import Ref
 
 
 if TYPE_CHECKING:
@@ -36,7 +35,6 @@ if TYPE_CHECKING:
 
 __all__ = [
     "PrimitiveRef",
-    "RefBase",
     "ViewRef",
 ]
 
@@ -47,22 +45,7 @@ ViewT = TypeVar("ViewT", bound="View")
 logger = getLogger(__name__)
 
 
-class RefBase[T](RefShape[T]):
-    """Base for all PV storage refs.
-
-    PV refs navigate through a view hierarchy to access values.
-    They maintain parent chains for path construction and shape
-    associations for context lookup.
-    """
-
-    @property
-    @abstractmethod
-    def _type_marker(self) -> type:
-        """Type marker for path segments (value_type or view_type)."""
-        ...
-
-
-class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
+class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
     """PV ref to a container view.
 
     Used for collection types like dict, list, set views.
@@ -73,7 +56,7 @@ class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
         self,
         address: Arg[path.PathAddress],
         view_type: type[ViewT],
-        parent: RefShape | None = None,
+        parent: Ref | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         """Initialize view ref.
@@ -144,7 +127,7 @@ class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
         return path.navigate_view(root_view, view_path)  # type: ignore
 
 
-class PrimitiveRef[T](RefBase[T]):
+class PrimitiveRef[T](Ref[T]):
     """PV ref to a primitive/leaf value.
 
     Used for scalar values like int, str, float, etc.
@@ -155,7 +138,7 @@ class PrimitiveRef[T](RefBase[T]):
         self,
         address: Arg[path.PathAddress],
         value_type: type[T],
-        parent: RefShape | None = None,
+        parent: Ref | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         """Initialize primitive ref.

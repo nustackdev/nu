@@ -22,14 +22,19 @@ Usage::
 """
 
 from every_dict.collections import (
+    BoolRef,
+    BytesRef,
+    FloatRef,
+    IntRef,
+    ItemRef,
     MappingRef,
+    RefBase,
     SequenceRef,
     ShapeRef,
     ShapesDictRef,
     ShapesListRef,
+    StrRef,
 )
-from every_dict.items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
-from every_dict.ref import RefBase
 from every_dict.stdtypes import (
     DictBasisPointRef,
     DictComplexRef,
