@@ -15,7 +15,7 @@ from .base import Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel, Term
+    from everyabc import IntArg, Sentinel
 
     from ..shape import Shape as ShapeBase
     from .structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
@@ -35,11 +35,11 @@ class ShapesListRefBase[T: ShapeBase](
     """Shapes list ref — sequence of shapes with navigation."""
 
     @abstractmethod
-    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> ShapeRef[T]:
+    def _create_item_ref(self, index: IntArg | Sentinel) -> ShapeRef[T]:
         """Create a reference to the shape at the given index."""
         ...
 
-    def __getitem__(self, index: int | Term[int]) -> ShapeRef[T]:
+    def __getitem__(self, index: IntArg) -> ShapeRef[T]:
         """Subscript access — returns a ref to the shape at index."""
         return self._create_item_ref(index)
 
@@ -51,11 +51,11 @@ class MutableShapesListRefBase[T: ShapeBase](
     """Mutable shapes list ref — collection ops + navigation."""
 
     @abstractmethod
-    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> MutableShapeRef[T]:
+    def _create_item_ref(self, index: IntArg | Sentinel) -> MutableShapeRef[T]:
         """Create a reference to the shape at the given index."""
         ...
 
-    def __getitem__(self, index: int | Term[int]) -> MutableShapeRef[T]:
+    def __getitem__(self, index: IntArg) -> MutableShapeRef[T]:
         """Subscript access — returns a ref to the shape at index."""
         return self._create_item_ref(index)
 
@@ -67,10 +67,10 @@ class ReactiveShapesListRefBase[T: ShapeBase](
     """Reactive shapes list ref — observation + collection ops + navigation."""
 
     @abstractmethod
-    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> ReactiveShapeRef[T]:
+    def _create_item_ref(self, index: IntArg | Sentinel) -> ReactiveShapeRef[T]:
         """Create a reference to the shape at the given index."""
         ...
 
-    def __getitem__(self, index: int | Term[int]) -> ReactiveShapeRef[T]:
+    def __getitem__(self, index: IntArg) -> ReactiveShapeRef[T]:
         """Subscript access — returns a ref to the shape at index."""
         return self._create_item_ref(index)

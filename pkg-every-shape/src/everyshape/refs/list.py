@@ -17,7 +17,7 @@ from .base import Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel, Term
+    from everyabc import IntArg, Sentinel
 
     from .items import ItemRef, MutableItemRef, ReactiveItemRef
 
@@ -36,13 +36,11 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     """Sequence ref — ordered container with document-model navigation."""
 
     @abstractmethod
-    def _create_item_ref(
-        self, index: int | Sentinel | Term[int | Sentinel]
-    ) -> ItemRef[T, ItemValueT]:
+    def _create_item_ref(self, index: IntArg | Sentinel) -> ItemRef[T, ItemValueT]:
         """Create a reference to the item at the given index."""
         ...
 
-    def __getitem__(self, index: int | Term[int]) -> ItemRef[T, ItemValueT]:
+    def __getitem__(self, index: IntArg) -> ItemRef[T, ItemValueT]:
         """Subscript access — returns a ref to the item at index."""
         return self._create_item_ref(index)
 
@@ -54,13 +52,11 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     """Mutable sequence ref — mutations + navigation."""
 
     @abstractmethod
-    def _create_item_ref(
-        self, index: int | Sentinel | Term[int | Sentinel]
-    ) -> MutableItemRef[T, ItemValueT]:
+    def _create_item_ref(self, index: IntArg | Sentinel) -> MutableItemRef[T, ItemValueT]:
         """Create a reference to the item at the given index."""
         ...
 
-    def __getitem__(self, index: int | Term[int]) -> MutableItemRef[T, ItemValueT]:
+    def __getitem__(self, index: IntArg) -> MutableItemRef[T, ItemValueT]:
         """Subscript access — returns a ref to the item at index."""
         return self._create_item_ref(index)
 
@@ -72,12 +68,10 @@ class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     """Reactive sequence ref — observation + mutations + navigation."""
 
     @abstractmethod
-    def _create_item_ref(
-        self, index: int | Sentinel | Term[int | Sentinel]
-    ) -> ReactiveItemRef[T, ItemValueT]:
+    def _create_item_ref(self, index: IntArg | Sentinel) -> ReactiveItemRef[T, ItemValueT]:
         """Create a reference to the item at the given index."""
         ...
 
-    def __getitem__(self, index: int | Term[int]) -> ReactiveItemRef[T, ItemValueT]:
+    def __getitem__(self, index: IntArg) -> ReactiveItemRef[T, ItemValueT]:
         """Subscript access — returns a ref to the item at index."""
         return self._create_item_ref(index)

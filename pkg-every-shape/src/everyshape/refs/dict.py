@@ -17,7 +17,7 @@ from .base import Ref
 
 
 if TYPE_CHECKING:
-    from everyabc import Sentinel, Term
+    from everyabc import Arg, Sentinel
 
     from .items import ItemRef, MutableItemRef, ReactiveItemRef
 
@@ -36,11 +36,11 @@ class MappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
     """Mapping ref — key-value container with document-model navigation."""
 
     @abstractmethod
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ItemRef[V, ValueValueT]:
+    def _create_child_ref(self, key: Arg[K] | Sentinel) -> ItemRef[V, ValueValueT]:
         """Create a reference to the value at the given key."""
         ...
 
-    def __getitem__(self, key: K | Term[K]) -> ItemRef[V, ValueValueT]:
+    def __getitem__(self, key: Arg[K]) -> ItemRef[V, ValueValueT]:
         """Subscript access — returns a ref to the value at key."""
         return self._create_child_ref(key)
 
@@ -52,13 +52,11 @@ class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
     """Mutable mapping ref — mutations + navigation."""
 
     @abstractmethod
-    def _create_child_ref(
-        self, key: K | Sentinel | Term[K | Sentinel]
-    ) -> MutableItemRef[V, ValueValueT]:
+    def _create_child_ref(self, key: Arg[K] | Sentinel) -> MutableItemRef[V, ValueValueT]:
         """Create a reference to the value at the given key."""
         ...
 
-    def __getitem__(self, key: K | Term[K]) -> MutableItemRef[V, ValueValueT]:
+    def __getitem__(self, key: Arg[K]) -> MutableItemRef[V, ValueValueT]:
         """Subscript access — returns a ref to the value at key."""
         return self._create_child_ref(key)
 
@@ -70,12 +68,10 @@ class ReactiveMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
     """Reactive mapping ref — observation + mutations + navigation."""
 
     @abstractmethod
-    def _create_child_ref(
-        self, key: K | Sentinel | Term[K | Sentinel]
-    ) -> ReactiveItemRef[V, ValueValueT]:
+    def _create_child_ref(self, key: Arg[K] | Sentinel) -> ReactiveItemRef[V, ValueValueT]:
         """Create a reference to the value at the given key."""
         ...
 
-    def __getitem__(self, key: K | Term[K]) -> ReactiveItemRef[V, ValueValueT]:
+    def __getitem__(self, key: Arg[K]) -> ReactiveItemRef[V, ValueValueT]:
         """Subscript access — returns a ref to the value at key."""
         return self._create_child_ref(key)

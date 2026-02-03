@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar
 
 from pv.collections import MutableMappingView
 from pv.types import Value as StorageValue
@@ -63,7 +63,7 @@ class ShapeRef[T: Shape](
         cls,
         shape_type: type[T],
         view_type: type[MutableMappingView] | None = None,
-    ) -> Self:
+    ) -> T:
         """Create a slot for this shape ref type.
 
         Args:
