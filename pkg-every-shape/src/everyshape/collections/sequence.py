@@ -12,10 +12,8 @@ from __future__ import annotations
 from everybase.collections import MutableSequenceBase as _EB_MutableSequenceBase
 from everybase.collections import SequenceBase as _EB_SequenceBase
 from everyshape.capabilities import (
-    CollectionClearableBase,
     CollectionExistableBase,
     CollectionExtractableBase,
-    CollectionLengthableBase,
     CollectionStorableBase,
     ViewObservableBase,
 )
@@ -50,15 +48,9 @@ class SequenceBase[T, CollectionValueT, ItemValueT](
 class MutableSequenceBase[T, CollectionValueT, ItemValueT](
     _EB_MutableSequenceBase[list[T], T, CollectionValueT, ItemValueT],
     SequenceBase[T, CollectionValueT, ItemValueT],
-    CollectionLengthableBase,
-    CollectionClearableBase,
     CollectionStorableBase[CollectionValueT, list[T]],
 ):
-    """Mutable sequence — adds append, extend, insert, pop, remove.
-
-    Also adds length(), clear(), store() from everyshape capabilities.
-    Diamond at _EB_SequenceBase resolved by C3 linearization.
-    """
+    """Mutable sequence — adds append, extend, insert, pop, remove."""
 
 
 class ReactiveSequenceBase[T, CollectionValueT, ItemValueT](

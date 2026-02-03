@@ -12,10 +12,8 @@ from __future__ import annotations
 from everybase.collections import MappingBase as _EB_MappingBase
 from everybase.collections import MutableMappingBase as _EB_MutableMappingBase
 from everyshape.capabilities import (
-    CollectionClearableBase,
     CollectionExistableBase,
     CollectionExtractableBase,
-    CollectionLengthableBase,
     CollectionStorableBase,
     ViewObservableBase,
 )
@@ -50,15 +48,9 @@ class MappingBase[K, V, CollectionValueT, ValueValueT](
 class MutableMappingBase[K, V, CollectionValueT, ValueValueT](
     _EB_MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     MappingBase[K, V, CollectionValueT, ValueValueT],
-    CollectionLengthableBase,
-    CollectionClearableBase,
     CollectionStorableBase[CollectionValueT, dict[K, V]],
 ):
-    """Mutable mapping — adds set_, delete, update_.
-
-    Also adds length(), clear(), store() from everyshape capabilities.
-    Diamond at _EB_MappingBase resolved by C3 linearization.
-    """
+    """Mutable mapping — adds set_, delete, update_."""
 
 
 class ReactiveMappingBase[K, V, CollectionValueT, ValueValueT](

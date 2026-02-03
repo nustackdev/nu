@@ -11,8 +11,8 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from everyabc import Value
+from everyshape.collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
 
-from ..collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
 from .base import Ref
 
 
@@ -47,7 +47,7 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT: Value](
 
 class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     MutableSequenceBase[T, CollectionValueT, ItemValueT],
-    SequenceRefBase[T, CollectionValueT, ItemValueT],
+    Ref[list[T]],
 ):
     """Mutable sequence ref — mutations + navigation."""
 
@@ -63,7 +63,7 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
 
 class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     ReactiveSequenceBase[T, CollectionValueT, ItemValueT],
-    MutableSequenceRefBase[T, CollectionValueT, ItemValueT],
+    Ref[list[T]],
 ):
     """Reactive sequence ref — observation + mutations + navigation."""
 

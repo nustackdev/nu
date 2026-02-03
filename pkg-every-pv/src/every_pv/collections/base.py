@@ -136,6 +136,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
 
         if not view_path:
             return root_view  # type: ignore
+
         return path.navigate_view(root_view, view_path)  # type: ignore
 
 

@@ -1,3 +1,4 @@
+# ruff: noqa: D102
 """PV shapes list reference — document model + PV substrate."""
 
 from __future__ import annotations
@@ -6,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from pv.collections import MutableSequenceView
 
-from everybase import ensure_term
+from everybase import AnyValue, ListValue, ensure_term
 from everyshape import ReactiveShapesListRefBase, Shape, Slot
 
 from .base import ViewRef
@@ -32,6 +33,18 @@ class ShapesListRef[T: Shape](
     ],
 ):
     """PV shapes list reference — document model + PV substrate."""
+
+    def result(self, op: Term) -> ListValue:
+        return ListValue(op)
+
+    def _wrap_iterable_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_sliceable_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
 
     def __init__(
         self,

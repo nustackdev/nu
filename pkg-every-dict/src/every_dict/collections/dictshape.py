@@ -17,7 +17,7 @@ from everybase import (
     ensure_term,
 )
 from everyshape import Slot
-from everyshape.refs import MutableShapesDictRefBase
+from everyshape.refs import ShapesDictRefBase
 
 from .base import RefBase
 from .shape import ShapeRef
@@ -51,7 +51,7 @@ __all__ = [
 
 
 class ShapesDictRef[K, T: Shape](
-    MutableShapesDictRefBase[K, T],
+    ShapesDictRefBase[K, T],
     RefBase[dict[K, dict]],
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""

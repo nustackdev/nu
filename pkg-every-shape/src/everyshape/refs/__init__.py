@@ -8,10 +8,10 @@ Substrates (every_pv, every_dict) inherit from these.
 
 from .base import Ref
 from .dict import MappingRefBase, MutableMappingRefBase, ReactiveMappingRefBase
-from .dictshape import MutableShapesDictRefBase, ReactiveShapesDictRefBase, ShapesDictRefBase
+from .dictshape import ReactiveShapesDictRefBase, ShapesDictRefBase
 from .items import ItemRef, MutableItemRef, ReactiveItemRef
 from .list import MutableSequenceRefBase, ReactiveSequenceRefBase, SequenceRefBase
-from .listshape import MutableShapesListRefBase, ReactiveShapesListRefBase, ShapesListRefBase
+from .listshape import ReactiveShapesListRefBase, ShapesListRefBase
 from .structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
@@ -35,11 +35,9 @@ __all__ = [  # noqa: RUF022
     "MutableMappingRefBase",
     "ReactiveMappingRefBase",
     # ShapesList refs
-    "MutableShapesListRefBase",
     "ReactiveShapesListRefBase",
     "ShapesListRefBase",
     # ShapesDict refs
-    "MutableShapesDictRefBase",
     "ReactiveShapesDictRefBase",
     "ShapesDictRefBase",
 ]

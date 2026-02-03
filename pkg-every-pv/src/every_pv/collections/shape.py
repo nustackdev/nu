@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING, ClassVar
 from pv.collections import MutableMappingView
 from pv.types import Value as StorageValue
 
+from everybase import AnyValue, DictValue, ListValue
 from everyshape import ReactiveShapeRef, Shape, Slot
+from everyshape import Ref as EveryshapeRef
 
 from .base import ViewRef
 
@@ -41,8 +43,31 @@ class ShapeRef[T: Shape](
         {
             "view_type",
             "_view_type",
+            "result",
         }
     )
+
+    def result(self, op: Term) -> DictValue[str, object]:
+        """Wrap morphism in DictValue for shape extract/store."""
+        return DictValue(op)
+
+    def _wrap_keys_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_values_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_items_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_iterable_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_value_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
 
     def __init__(
         self,
@@ -52,9 +77,15 @@ class ShapeRef[T: Shape](
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        """Initialize shape reference."""
-        super().__init__(address, view_type, parent, owner_shape)
+        """Initialize shape reference.
+
+        Bypasses cooperative super().__init__() because the diamond MRO
+        mangles positional args between everyshape.ShapeRef (shape_type first)
+        and ViewRef (address first).
+        """
+        EveryshapeRef.__init__(self, address, parent, owner_shape)
         self._shape_type = shape_type
+        self._view_type = view_type
         self.key_type: type = str
         self.value_type: type = object
 

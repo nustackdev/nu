@@ -23,8 +23,7 @@ from typing import TYPE_CHECKING, Self
 
 from everyabc import Ref as RefABC
 from everyabc import Term
-from everybase import ensure_term
-from everybase.values import AnyValue
+from everybase import AnyValue, ensure_term
 
 
 if TYPE_CHECKING:

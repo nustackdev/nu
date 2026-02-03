@@ -72,28 +72,28 @@ async def example_sequence_primitives(ctx: Context) -> None:
     await Market.misc_val.set(1).execute(ctx)
 
     # Set values at indices
-    a = Market.prices.append(100.5)
-    print("append res", await a.execute(ctx))
-    await Market.prices.append(101.2).execute(ctx)
-    await Market.prices.append(99.8).execute(ctx)
+    # a = Market.prices.append(100.5)
+    # print("append res", await a.execute(ctx))
+    # await Market.prices.append(101.2).execute(ctx)
+    await Market.prices.store([100.5, 101.2, 99.8]).execute(ctx)
 
     # Get values
     price_0 = await Market.prices[0].get().execute(ctx)
     price_1 = await Market.prices[1].get().execute(ctx)
     price_2 = (
-        await Market.prices.get().map_(lambda x: x * 2).filter_(lambda a: a > 200).execute(ctx)
+        await Market.prices.extract().map_(lambda x: x * 2).filter_(lambda a: a > 200).execute(ctx)
     )
 
     print(f"Prices: [{price_0}, {price_1}, {price_2}]")
 
-    prices = await Market.prices.get().execute(ctx)
+    prices = await Market.prices.extract().execute(ctx)
     print(prices)
 
     nested_acc = await (Market.prices[Market.misc_val.get()].get() + 12 > 100).execute(ctx)
     print(nested_acc)
 
     await Market.last_order.id.set("ID").execute(ctx)
-    print(await Market.last_order.get().execute(ctx))
+    print(await Market.last_order.extract().execute(ctx))
 
 
 async def example_mapping_shapes(ctx: Context) -> None:
@@ -132,8 +132,8 @@ async def example_mapping_shapes(ctx: Context) -> None:
     print(f"AAPL Price: {aapl_price}")
     print(f"GOOGL Exchange: {googl_exchange}")
 
-    # get entire shape
-    aapl_data = await Market.symbols["AAPL"].get().execute(ctx)
+    # extract entire shape
+    aapl_data = await Market.symbols["AAPL"].extract().execute(ctx)
     print(f"AAPL Data: {aapl_data}")
 
 
@@ -142,23 +142,31 @@ async def example_sequence_shapes(ctx: Context) -> None:
     print("\n=== Sequence of Shapes ===")
 
     # Store shape data
-    await Market.orders.append(
-        {
-            "id": "ORD001",
-            "symbol": "AAPL",
-            "quantity": 100,
-            "price": 150.0,
-        }
+    await Market.orders.store(
+        [
+            {
+                "id": "ORD001",
+                "symbol": "AAPL",
+                "quantity": 100,
+                "price": 150.0,
+            },
+            {
+                "id": "ORD002",
+                "symbol": "GOOGL",
+                "quantity": 50,
+                "price": 2800.0,
+            },
+        ]
     ).execute(ctx)
 
-    await Market.orders.append(
-        {
-            "id": "ORD002",
-            "symbol": "GOOGL",
-            "quantity": 50,
-            "price": 2800.0,
-        }
-    ).execute(ctx)
+    # await Market.orders.append(
+    #     {
+    #         "id": "ORD002",
+    #         "symbol": "GOOGL",
+    #         "quantity": 50,
+    #         "price": 2800.0,
+    #     }
+    # ).execute(ctx)
 
     # Access nested fields
     order_0_id = await Market.orders[0].id.get().execute(ctx)
@@ -167,8 +175,8 @@ async def example_sequence_shapes(ctx: Context) -> None:
     print(f"Order 0 ID: {order_0_id}")
     print(f"Order 1 Symbol: {order_1_symbol}")
 
-    # get entire shape
-    order_0_data = await Market.orders[0].get().execute(ctx)
+    # extract entire shape
+    order_0_data = await Market.orders[0].extract().execute(ctx)
     print(f"Order 0 Data: {order_0_data}")
 
 
@@ -227,7 +235,7 @@ if __name__ == "__main__":
             print("All examples completed successfully!")
             print("=" * 60)
 
-            # prices_complex = Market.prices.get()
+            # prices_complex = Market.prices.extract()
             # prices_complex = prices_complex.map_(lambda x: x + 120)
             # prices_complex = prices_complex[0]
             # prices_complex = await prices_complex.execute(ctx)

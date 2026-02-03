@@ -1,3 +1,4 @@
+# ruff: noqa: D102
 """PV shapes dict reference — document model + PV substrate."""
 
 from __future__ import annotations
@@ -65,6 +66,27 @@ class ShapesDictRef[
     ],
 ):
     """PV shapes dict reference — document model + PV substrate."""
+
+    def result(self, op: Term) -> DictValue:
+        return DictValue(op)
+
+    def _wrap_keys_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_values_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_items_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_iterable_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_value_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
 
     def __init__(
         self,

@@ -1,7 +1,7 @@
 # ruff: noqa: D102
 """Collection-level capability bases — extract, store, clear, exists.
 
-CollectionExtractableBase: .get() wrapping ExtractOp
+CollectionExtractableBase: .extract() wrapping ExtractOp
 CollectionStorableBase: .store(data) wrapping StoreCmd
 CollectionClearableBase: .clear() wrapping CollectionClearCmd
 CollectionExistableBase: .exists(), .missing()
@@ -51,14 +51,14 @@ class CollectionExistableBase:
 class CollectionExtractableBase[CollectionTypeT]:
     """Base for collection refs that can extract their contents as a Python value.
 
-    Provides get() using ExtractOp. Subclasses must implement result()
+    Provides extract() using ExtractOp. Subclasses must implement result()
     to wrap the operation in the correct typed container.
     """
 
     @abstractmethod
     def result(self, op: Term) -> CollectionTypeT: ...
 
-    def get(self) -> CollectionTypeT:
+    def extract(self) -> CollectionTypeT:
         from everyshape.morphisms.collection import ExtractOp
 
         return self.result(ExtractOp(self))

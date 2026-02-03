@@ -8,8 +8,8 @@ ReactiveItemRef = ReactiveItemBase + MutableItemRef
 from __future__ import annotations
 
 from everyabc import Value
+from everyshape.collections import ItemBase, MutableItemBase, ReactiveItemBase
 
-from ..collections import ItemBase, MutableItemBase, ReactiveItemBase
 from .base import Ref
 
 

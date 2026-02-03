@@ -8,8 +8,8 @@ Structural types:
     ShapesDictRef   mapping of homogeneous shapes
 
 Each has three capability levels:
-    Base            structural identity + navigation
-    Mutable         + exists/length/clear
+    Base            structural identity + navigation + extract
+    Mutable         + store/exists/length/clear + mapping mutations
     Reactive        + change observation
 
 Substrates extend these with their own storage mechanisms.
@@ -19,12 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from everyshape.capabilities import (
-    CollectionClearableBase,
-    CollectionExistableBase,
-    CollectionLengthableBase,
-    ViewObservableBase,
-)
+from everyshape.collections import MappingBase, MutableMappingBase, ReactiveMappingBase
 
 from .base import Ref
 
@@ -48,8 +43,14 @@ __all__ = [
 # =============================================================================
 
 
-class ShapeRef[T: ShapeBase](Ref[dict[str, object]]):
+class ShapeRef[T: ShapeBase](
+    Ref[dict[str, object]],
+    MappingBase[str, object, object, object],
+):
     """Reference to a shape — a structured container with named fields.
+
+    A shape IS a mapping (dict[str, object]) by nature. Inherits full mapping
+    ops (keys_, values_, items_, get_, extract, exists, etc.) from MappingBase.
 
     Attribute access is intercepted to look up slots on the shape class.
     If the name matches a slot, a child ref is created via slot.create_ref().
@@ -60,6 +61,8 @@ class ShapeRef[T: ShapeBase](Ref[dict[str, object]]):
         __init__: set shape (and optionally key_type, value_type)
         resolve(ctx): build location identity
         fetch(ctx): extract value
+        result(op): wrap morphism in typed Value
+        _wrap_*: wrap operations in substrate Value types
 
     The _PASSTHROUGH_ATTRS class variable controls which names skip slot
     lookup entirely (for performance). Substrates can extend this set.
@@ -166,15 +169,13 @@ class ShapeRef[T: ShapeBase](Ref[dict[str, object]]):
 
 class MutableShapeRef[T: ShapeBase](
     ShapeRef[T],
-    CollectionExistableBase,
-    CollectionLengthableBase,
-    CollectionClearableBase,
+    MutableMappingBase[str, object, object, object],
 ):
-    """Shape with collection-level operations: exists, length, clear."""
+    """Shape + mapping mutations (set_, delete, update_) + store/length/clear."""
 
 
 class ReactiveShapeRef[T: ShapeBase](
     MutableShapeRef[T],
-    ViewObservableBase,
+    ReactiveMappingBase[str, object, object, object],
 ):
-    """Shape with collection operations + change observation."""
+    """Shape + mapping mutations + change observation."""
