@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from everyabc import Empty, Invalid, Sentinel
 
-from ._base import TypeBase
+from .base import TypeBase
 
 
 __all__ = [

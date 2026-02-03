@@ -18,7 +18,7 @@ from everybase.capabilities import (
     SliceableBase,
 )
 
-from ._base import TypeBase
+from .base import TypeBase
 
 
 if TYPE_CHECKING:

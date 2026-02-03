@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, overload
 
 from everybase.capabilities import BitwiseBase, ComparableBase, LogicalBase
 
-from ._base import TypeBase
+from .base import TypeBase
 
 
 if TYPE_CHECKING:

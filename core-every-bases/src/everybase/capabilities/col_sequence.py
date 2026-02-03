@@ -98,7 +98,7 @@ class SequenceBase[ElementT, ResultT](
         """Get sorted sequence."""
         from everybase.morphisms import SortedOp
 
-        return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse=reverse)))
+        return cast("ResultT", self._wrap_sliceable_result(SortedOp(self, reverse)))
 
     def join(self, separator: StrArg) -> StrValue:
         """Join string elements."""

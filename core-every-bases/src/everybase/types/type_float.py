@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from everybase.capabilities import ComparableBase, LogicalBase, NumericBase
 
-from ._base import TypeBase
+from .base import TypeBase
 
 
 if TYPE_CHECKING:

@@ -10,19 +10,19 @@ Example:
     KVIntRef(IntType) = IntType + KV storage get()
 """
 
-from ._base import TypeBase
-from .any import AnyType
-from .bool import BoolType
-from .bytes import BytesType
-from .dict import DictType
-from .float import FloatType
-from .int import IntType
-from .list import ListType
-from .none import NoneType
-from .sentinel import EmptyType, InvalidType, SentinelType
-from .set import FrozenSetType, SetType
-from .str import StrType
-from .tuple import TupleType
+from .base import TypeBase
+from .type_any import AnyType
+from .type_bool import BoolType
+from .type_bytes import BytesType
+from .type_dict import DictType
+from .type_float import FloatType
+from .type_int import IntType
+from .type_list import ListType
+from .type_none import NoneType
+from .type_sentinel import EmptyType, InvalidType, SentinelType
+from .type_set import FrozenSetType, SetType
+from .type_str import StrType
+from .type_tuple import TupleType
 
 
 __all__ = [  # noqa: RUF022

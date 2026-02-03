@@ -13,7 +13,7 @@ from collections.abc import Iterable, Sequence
 from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
-from everyabc import INVALID, Sentinel, UnaryOperation
+from everyabc import INVALID, BinaryOperation, Sentinel, UnaryOperation
 
 
 if TYPE_CHECKING:
@@ -29,30 +29,20 @@ __all__ = [
 ]
 
 
-class SortedOp[ResultT](UnaryOperation[list[ResultT]]):
+class SortedOp[ResultT](BinaryOperation[list[ResultT]]):
     """Sorted list: sorted(seq, reverse=reverse)."""
 
-    def __init__(self, operand: object, *, reverse: bool = False) -> None:
-        """Initialize sorted operation.
-
-        Args:
-            operand: Sequence to sort
-            reverse: If True, sort in descending order
-        """
-        super().__init__(operand)
-        self._reverse = reverse
-
-    def apply(self, operand: object) -> list[ResultT] | Sentinel:
+    def apply(self, left: object, right: object) -> list[ResultT] | Sentinel:
         """Apply."""
-        if not isinstance(operand, Iterable):
-            raise TypeError(f"sorted_() requires iterable, got {type(operand).__name__}")
+        if not isinstance(left, Iterable):
+            raise TypeError(f"sorted_() requires iterable, got {type(left).__name__}")
         try:
-            return sorted(operand, reverse=self._reverse)  # type: ignore
+            return sorted(left, reverse=right)  # type: ignore
         except TypeError:
             return INVALID
 
     def __repr__(self) -> str:
-        return f"SortedOp({self._children[0]!r}, reverse={self._reverse})"
+        return f"SortedOp({self._children[0]!r}, reverse={self._children[1]!r})"
 
 
 class ReversedOp[ResultT](UnaryOperation[list[ResultT]]):
@@ -121,7 +111,7 @@ class FilterOp[T](UnaryOperation[list[T]]):
         return f"FilterOp({self._children[0]!r}, {self._fn!r})"
 
 
-class ReduceOp[T, T2](UnaryOperation[T2]):
+class ReduceOp[T, T2](BinaryOperation[T2]):
     """Reduce sequence to single value: functools.reduce(fn, seq, initial).
 
     Example:
@@ -137,18 +127,17 @@ class ReduceOp[T, T2](UnaryOperation[T2]):
             fn: Reducer function (accumulator, element) -> new_accumulator
             initial: Initial accumulator value
         """
-        super().__init__(operand)
+        super().__init__(operand, initial)
         self._fn = fn
-        self._initial = initial
 
-    def apply(self, operand: object) -> T2 | Sentinel:
+    def apply(self, left: object, right: object) -> T2 | Sentinel:
         """Apply."""
-        if not isinstance(operand, Iterable):
-            raise TypeError(f"reduce_() requires iterable, got {type(operand).__name__}")
+        if not isinstance(left, Iterable):
+            raise TypeError(f"reduce_() requires iterable, got {type(left).__name__}")
         try:
-            return functools_reduce(self._fn, operand, self._initial)
+            return functools_reduce(self._fn, left, right)  # type: ignore
         except Exception:
             return INVALID
 
     def __repr__(self) -> str:
-        return f"ReduceOp({self._children[0]!r}, {self._fn!r}, {self._initial!r})"
+        return f"ReduceOp({self._children[0]!r}, {self._fn!r}, {self._children[1]!r})"
