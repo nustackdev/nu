@@ -31,14 +31,14 @@ from everybase import (
     ensure_term,
 )
 from everyshape import Slot
-from everyshape.collections import (
+from everyshape.refs import (
     MutableMappingRefBase,
     MutableSequenceRefBase,
+    MutableShapeRef,
     MutableShapesDictRefBase,
     MutableShapesListRefBase,
 )
-from everyshape.ref_structured import MutableShapeRef
-from everyshape.ref_structured import ShapeRef as _BaseShapeRef
+from everyshape.refs import ShapeRef as _BaseShapeRef
 
 
 if TYPE_CHECKING:

@@ -1,9 +1,9 @@
 # ruff: noqa: D102
-"""Sequence collection RefBases — three tiers for the document model.
+"""Sequence collection bases — three tiers for the document model.
 
-SequenceRefBase         = everybase.SequenceBase + Existable + Extractable + Ref
-MutableSequenceRefBase  = everybase.MutableSequenceBase + SequenceRefBase + Lengthable + Clearable + Storable
-ReactiveSequenceRefBase = MutableSequenceRefBase + ViewObservable
+SequenceBase         = everybase.SequenceBase + Existable + Extractable
+MutableSequenceBase  = everybase.MutableSequenceBase + SequenceBase + Lengthable + Clearable + Storable
+ReactiveSequenceBase = MutableSequenceBase + ViewObservable
 
 These provide the bridge between everybase's _wrap_* hooks and everyshape's
 simpler result()/element_result() abstracts. Downstream substrates only need
@@ -15,7 +15,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from everybase.collections import MutableSequenceBase, SequenceBase
+from everybase.collections import MutableSequenceBase as _EB_MutableSequenceBase
+from everybase.collections import SequenceBase as _EB_SequenceBase
 from everyshape.capabilities import (
     CollectionClearableBase,
     CollectionExistableBase,
@@ -25,32 +26,29 @@ from everyshape.capabilities import (
     ViewObservableBase,
 )
 
-from ..ref import Ref
-
 
 if TYPE_CHECKING:
     from everyabc import Term
 
 
 __all__ = [
-    "MutableSequenceRefBase",
-    "ReactiveSequenceRefBase",
-    "SequenceRefBase",
+    "MutableSequenceBase",
+    "ReactiveSequenceBase",
+    "SequenceBase",
 ]
 
 
 # =============================================================================
-# SEQUENCE REF — three tiers
+# SEQUENCE — three tiers
 # =============================================================================
 
 
-class SequenceRefBase[T, CollectionValueT, ItemValueT](
-    SequenceBase[list[T], T, CollectionValueT, ItemValueT],
+class SequenceBase[T, CollectionValueT, ItemValueT](
+    _EB_SequenceBase[list[T], T, CollectionValueT, ItemValueT],
     CollectionExistableBase,
     CollectionExtractableBase[CollectionValueT],
-    Ref[list[T]],
 ):
-    """Base for sequence refs — ordered containers in the document model.
+    """Base for sequences — ordered containers in the document model.
 
     Bridges everybase's _wrap_* hooks to two abstract methods:
         result(op) -> CollectionValueT       (collection-level ops)
@@ -78,22 +76,22 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT](
     def element_result(self, op: Term) -> ItemValueT: ...
 
 
-class MutableSequenceRefBase[T, CollectionValueT, ItemValueT](
-    MutableSequenceBase[list[T], T, CollectionValueT, ItemValueT],
-    SequenceRefBase[T, CollectionValueT, ItemValueT],
+class MutableSequenceBase[T, CollectionValueT, ItemValueT](
+    _EB_MutableSequenceBase[list[T], T, CollectionValueT, ItemValueT],
+    SequenceBase[T, CollectionValueT, ItemValueT],
     CollectionLengthableBase,
     CollectionClearableBase,
     CollectionStorableBase[CollectionValueT, list[T]],
 ):
-    """Mutable sequence ref — adds append, extend, insert, pop, remove.
+    """Mutable sequence — adds append, extend, insert, pop, remove.
 
     Also adds length(), clear(), store() from everyshape capabilities.
-    Diamond at SequenceBase resolved by C3 linearization.
+    Diamond at _EB_SequenceBase resolved by C3 linearization.
     """
 
 
-class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT](
-    MutableSequenceRefBase[T, CollectionValueT, ItemValueT],
+class ReactiveSequenceBase[T, CollectionValueT, ItemValueT](
+    MutableSequenceBase[T, CollectionValueT, ItemValueT],
     ViewObservableBase,
 ):
-    """Reactive sequence ref — adds on_change, on_child_change, etc."""
+    """Reactive sequence — adds on_change, on_child_change, etc."""

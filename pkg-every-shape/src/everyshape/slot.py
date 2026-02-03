@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .ref import Ref
+    from .refs.base import Ref
     from .shape import Shape
 
 

@@ -1,9 +1,9 @@
 # ruff: noqa: D102
-"""Mapping collection RefBases — three tiers for the document model.
+"""Mapping collection bases — three tiers for the document model.
 
-MappingRefBase         = everybase.MappingBase + Existable + Extractable + Ref
-MutableMappingRefBase  = everybase.MutableMappingBase + MappingRefBase + Lengthable + Clearable + Storable
-ReactiveMappingRefBase = MutableMappingRefBase + ViewObservable
+MappingBase         = everybase.MappingBase + Existable + Extractable
+MutableMappingBase  = everybase.MutableMappingBase + MappingBase + Lengthable + Clearable + Storable
+ReactiveMappingBase = MutableMappingBase + ViewObservable
 
 These provide the bridge between everybase's _wrap_* hooks and everyshape's
 simpler result()/element_result()/iterable_result() abstracts.
@@ -14,7 +14,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from everybase.collections import MappingBase, MutableMappingBase
+from everybase.collections import MappingBase as _EB_MappingBase
+from everybase.collections import MutableMappingBase as _EB_MutableMappingBase
 from everyshape.capabilities import (
     CollectionClearableBase,
     CollectionExistableBase,
@@ -24,32 +25,29 @@ from everyshape.capabilities import (
     ViewObservableBase,
 )
 
-from ..ref import Ref
-
 
 if TYPE_CHECKING:
     from everyabc import Term
 
 
 __all__ = [
-    "MappingRefBase",
-    "MutableMappingRefBase",
-    "ReactiveMappingRefBase",
+    "MappingBase",
+    "MutableMappingBase",
+    "ReactiveMappingBase",
 ]
 
 
 # =============================================================================
-# MAPPING REF — three tiers
+# MAPPING — three tiers
 # =============================================================================
 
 
-class MappingRefBase[K, V, CollectionValueT, ValueValueT](
-    MappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
+class MappingBase[K, V, CollectionValueT, ValueValueT](
+    _EB_MappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     CollectionExistableBase,
     CollectionExtractableBase[CollectionValueT],
-    Ref[dict[K, V]],
 ):
-    """Base for mapping refs — key-value containers in the document model.
+    """Base for mappings — key-value containers in the document model.
 
     Bridges everybase's _wrap_* hooks to three abstract methods:
         result(op) -> CollectionValueT       (extract/store)
@@ -89,22 +87,22 @@ class MappingRefBase[K, V, CollectionValueT, ValueValueT](
     def iterable_result(self, op: Term) -> object: ...
 
 
-class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT](
-    MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
-    MappingRefBase[K, V, CollectionValueT, ValueValueT],
+class MutableMappingBase[K, V, CollectionValueT, ValueValueT](
+    _EB_MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
+    MappingBase[K, V, CollectionValueT, ValueValueT],
     CollectionLengthableBase,
     CollectionClearableBase,
     CollectionStorableBase[CollectionValueT, dict[K, V]],
 ):
-    """Mutable mapping ref — adds set_, delete, update_.
+    """Mutable mapping — adds set_, delete, update_.
 
     Also adds length(), clear(), store() from everyshape capabilities.
-    Diamond at MappingBase resolved by C3 linearization.
+    Diamond at _EB_MappingBase resolved by C3 linearization.
     """
 
 
-class ReactiveMappingRefBase[K, V, CollectionValueT, ValueValueT](
-    MutableMappingRefBase[K, V, CollectionValueT, ValueValueT],
+class ReactiveMappingBase[K, V, CollectionValueT, ValueValueT](
+    MutableMappingBase[K, V, CollectionValueT, ValueValueT],
     ViewObservableBase,
 ):
-    """Reactive mapping ref — adds on_change, on_child_change, etc."""
+    """Reactive mapping — adds on_change, on_child_change, etc."""

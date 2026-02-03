@@ -22,14 +22,14 @@ from every_pv.ref import RefBase, ViewRef
 from everybase import ensure_term
 from everyshape import Shape as PVShape
 from everyshape import Slot
-from everyshape.collections import (
+from everyshape.refs import (
     ReactiveMappingRefBase,
     ReactiveSequenceRefBase,
+    ReactiveShapeRef,
     ReactiveShapesDictRefBase,
     ReactiveShapesListRefBase,
 )
-from everyshape.ref_structured import ReactiveShapeRef
-from everyshape.ref_structured import ShapeRef as _BaseShapeRef
+from everyshape.refs import ShapeRef as _BaseShapeRef
 
 
 if TYPE_CHECKING:

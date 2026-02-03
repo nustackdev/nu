@@ -11,7 +11,7 @@ Hierarchy:
         |
     everyshape.Ref[T]            # Document-model base (this module)
         |
-    ItemRef, MappingRef, etc.    # Structural types (items.py, collections.py)
+    ItemRef, MappingRef, etc.    # Structural types (everyshape.refs)
         |
     every_pv.RefBase, etc.       # Substrate implementations
 """
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
     from everyabc import Context
 
-    from .shape import Shape
+    from ..shape import Shape
 
 
 __all__ = [

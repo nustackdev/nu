@@ -26,7 +26,7 @@ from everybase.types import (
     StrType,
 )
 from everyshape import Slot
-from everyshape.collections import ReactiveItemRef
+from everyshape.refs import ReactiveItemRef
 
 from .ref import PrimitiveRef
 

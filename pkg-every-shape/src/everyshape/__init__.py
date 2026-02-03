@@ -10,16 +10,17 @@ Shape System:
     SlotDescriptor: Descriptor bridging slot definitions to refs at runtime.
     Slot: Universal slot that creates any Ref type.
 
-Ref Hierarchy:
-    Ref: Base for all document-model refs (address/parent/shape).
+Collection Bases (pure, no Ref — everyshape.collections):
+    ItemBase -> MutableItemBase -> ReactiveItemBase
+    SequenceBase -> MutableSequenceBase -> ReactiveSequenceBase
+    MappingBase -> MutableMappingBase -> ReactiveMappingBase
+    ShapesListBase -> MutableShapesListBase -> ReactiveShapesListBase
+    ShapesDictBase -> MutableShapesDictBase -> ReactiveShapesDictBase
 
-Item Refs (typed values):
+Refs (collection bases + Ref — everyshape.refs):
+    Ref: Base for all document-model refs.
     ItemRef -> MutableItemRef -> ReactiveItemRef
-
-Shape Refs (structured containers):
     ShapeRef -> MutableShapeRef -> ReactiveShapeRef
-
-Collection RefBases (containers — substrates inherit these):
     SequenceRefBase -> MutableSequenceRefBase -> ReactiveSequenceRefBase
     MappingRefBase -> MutableMappingRefBase -> ReactiveMappingRefBase
     ShapesListRefBase -> MutableShapesListRefBase -> ReactiveShapesListRefBase
@@ -45,24 +46,43 @@ from everyshape.capabilities import (
     ViewObservableBase,
 )
 from everyshape.collections import (
+    ItemBase,
+    MappingBase,
+    MutableItemBase,
+    MutableMappingBase,
+    MutableSequenceBase,
+    MutableShapesDictBase,
+    MutableShapesListBase,
+    ReactiveItemBase,
+    ReactiveMappingBase,
+    ReactiveSequenceBase,
+    ReactiveShapesDictBase,
+    ReactiveShapesListBase,
+    SequenceBase,
+    ShapesDictBase,
+    ShapesListBase,
+)
+from everyshape.refs import (
     ItemRef,
     MappingRefBase,
     MutableItemRef,
     MutableMappingRefBase,
     MutableSequenceRefBase,
+    MutableShapeRef,
     MutableShapesDictRefBase,
     MutableShapesListRefBase,
     ReactiveItemRef,
     ReactiveMappingRefBase,
     ReactiveSequenceRefBase,
+    ReactiveShapeRef,
     ReactiveShapesDictRefBase,
     ReactiveShapesListRefBase,
+    Ref,
     SequenceRefBase,
+    ShapeRef,
     ShapesDictRefBase,
     ShapesListRefBase,
 )
-from everyshape.ref import Ref
-from everyshape.ref_structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
 from everyshape.shape import Shape, ShapeMeta, SlotDescriptor
 from everyshape.slot import Slot
 
@@ -90,15 +110,29 @@ __all__ = [  # noqa: RUF022
     "ViewObservableBase",
     # Ref base
     "Ref",
-    # Item refs
+    # Collection bases (pure)
+    "ItemBase",
+    "MutableItemBase",
+    "ReactiveItemBase",
+    "SequenceBase",
+    "MutableSequenceBase",
+    "ReactiveSequenceBase",
+    "MappingBase",
+    "MutableMappingBase",
+    "ReactiveMappingBase",
+    "ShapesListBase",
+    "MutableShapesListBase",
+    "ReactiveShapesListBase",
+    "ShapesDictBase",
+    "MutableShapesDictBase",
+    "ReactiveShapesDictBase",
+    # Refs
     "ItemRef",
     "MutableItemRef",
     "ReactiveItemRef",
-    # Shape refs
     "ShapeRef",
     "MutableShapeRef",
     "ReactiveShapeRef",
-    # Collection RefBases
     "MappingRefBase",
     "MutableMappingRefBase",
     "ReactiveMappingRefBase",

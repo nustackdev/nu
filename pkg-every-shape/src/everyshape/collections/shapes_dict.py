@@ -1,8 +1,8 @@
-"""ShapesDict collection RefBases — mapping of homogeneous shapes.
+"""ShapesDict collection bases — mapping of homogeneous shapes.
 
-ShapesDictRefBase         = Ref (no everybase inheritance — shapes are opaque dicts)
-MutableShapesDictRefBase  + Existable + Lengthable + Clearable
-ReactiveShapesDictRefBase + ViewObservable
+ShapesDictBase         = marker base (no everybase inheritance — shapes are opaque dicts)
+MutableShapesDictBase  + Existable + Lengthable + Clearable
+ReactiveShapesDictBase + ViewObservable
 """
 
 from __future__ import annotations
@@ -16,27 +16,25 @@ from everyshape.capabilities import (
     ViewObservableBase,
 )
 
-from ..ref import Ref
-
 
 if TYPE_CHECKING:
     from ..shape import Shape as ShapeBase
 
 
 __all__ = [
-    "MutableShapesDictRefBase",
-    "ReactiveShapesDictRefBase",
-    "ShapesDictRefBase",
+    "MutableShapesDictBase",
+    "ReactiveShapesDictBase",
+    "ShapesDictBase",
 ]
 
 
 # =============================================================================
-# SHAPES DICT REF — three tiers
+# SHAPES DICT — three tiers
 # =============================================================================
 
 
-class ShapesDictRefBase[K, T: ShapeBase](Ref[dict[K, dict[str, object]]]):
-    """Base for shapes dict refs — mappings of homogeneous shapes.
+class ShapesDictBase[K, T: ShapeBase]:
+    """Base for shapes dicts — mappings of homogeneous shapes.
 
     Each value is a shape instance of type T, keyed by K. No everybase
     collection inheritance since shapes are opaque dicts, not typed
@@ -46,8 +44,8 @@ class ShapesDictRefBase[K, T: ShapeBase](Ref[dict[K, dict[str, object]]]):
     """
 
 
-class MutableShapesDictRefBase[K, T: ShapeBase](
-    ShapesDictRefBase[K, T],
+class MutableShapesDictBase[K, T: ShapeBase](
+    ShapesDictBase[K, T],
     CollectionExistableBase,
     CollectionLengthableBase,
     CollectionClearableBase,
@@ -55,8 +53,8 @@ class MutableShapesDictRefBase[K, T: ShapeBase](
     """Mutable shapes dict with collection operations."""
 
 
-class ReactiveShapesDictRefBase[K, T: ShapeBase](
-    MutableShapesDictRefBase[K, T],
+class ReactiveShapesDictBase[K, T: ShapeBase](
+    MutableShapesDictBase[K, T],
     ViewObservableBase,
 ):
     """Shapes dict with collection operations + change observation."""

@@ -1,9 +1,9 @@
-"""Item ref hierarchy — typed values in a document model.
+"""Item base hierarchy — typed values in a document model.
 
 Three levels of capability:
-    ItemRef         structural identity (typed value holder)
-    MutableItemRef  + CRUD (get/set/delete/exists)
-    ReactiveItemRef + change observation (on_change)
+    ItemBase         structural identity (typed value holder)
+    MutableItemBase  + CRUD (get/set/delete/exists)
+    ReactiveItemBase + change observation (on_change)
 
 Substrates extend these with their own storage mechanisms.
 """
@@ -19,22 +19,20 @@ from everyshape.capabilities import (
     PrimitiveObservableBase,
 )
 
-from ..ref import Ref
-
 
 __all__ = [
-    "ItemRef",
-    "MutableItemRef",
-    "ReactiveItemRef",
+    "ItemBase",
+    "MutableItemBase",
+    "ReactiveItemBase",
 ]
 
 
 # =============================================================================
-# ITEM REF HIERARCHY
+# ITEM BASE HIERARCHY
 # =============================================================================
 
 
-class ItemRef[T, ValueT: Value](Ref[T]):
+class ItemBase[T, ValueT: Value]:
     """Item in a document — holds a typed value.
 
     An item is the leaf node of the document model: a single typed value
@@ -60,8 +58,8 @@ class ItemRef[T, ValueT: Value](Ref[T]):
         return self._value_value_type
 
 
-class MutableItemRef[T, ValueT: Value](
-    ItemRef[T, ValueT],
+class MutableItemBase[T, ValueT: Value](
+    ItemBase[T, ValueT],
     ItemExistableBase,
     ItemGettableBase[T],
     ItemSettableBase[T],
@@ -78,12 +76,12 @@ class MutableItemRef[T, ValueT: Value](
     """
 
 
-class ReactiveItemRef[T, ValueT: Value](
-    MutableItemRef[T, ValueT],
+class ReactiveItemBase[T, ValueT: Value](
+    MutableItemBase[T, ValueT],
     PrimitiveObservableBase,
 ):
     """Item with CRUD + change observation.
 
-    Provides everything from MutableItemRef plus:
+    Provides everything from MutableItemBase plus:
         on_change() -> OnPrimitiveChangeOp
     """

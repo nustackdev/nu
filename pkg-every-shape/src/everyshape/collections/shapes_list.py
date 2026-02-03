@@ -1,8 +1,8 @@
-"""ShapesList collection RefBases — sequence of homogeneous shapes.
+"""ShapesList collection bases — sequence of homogeneous shapes.
 
-ShapesListRefBase         = Ref (no everybase inheritance — shapes are opaque dicts)
-MutableShapesListRefBase  + Existable + Lengthable + Clearable
-ReactiveShapesListRefBase + ViewObservable
+ShapesListBase         = marker base (no everybase inheritance — shapes are opaque dicts)
+MutableShapesListBase  + Existable + Lengthable + Clearable
+ReactiveShapesListBase + ViewObservable
 """
 
 from __future__ import annotations
@@ -16,27 +16,25 @@ from everyshape.capabilities import (
     ViewObservableBase,
 )
 
-from ..ref import Ref
-
 
 if TYPE_CHECKING:
     from ..shape import Shape as ShapeBase
 
 
 __all__ = [
-    "MutableShapesListRefBase",
-    "ReactiveShapesListRefBase",
-    "ShapesListRefBase",
+    "MutableShapesListBase",
+    "ReactiveShapesListBase",
+    "ShapesListBase",
 ]
 
 
 # =============================================================================
-# SHAPES LIST REF — three tiers
+# SHAPES LIST — three tiers
 # =============================================================================
 
 
-class ShapesListRefBase[T: ShapeBase](Ref[list[dict[str, object]]]):
-    """Base for shapes list refs — sequences of homogeneous shapes.
+class ShapesListBase[T: ShapeBase]:
+    """Base for shapes lists — sequences of homogeneous shapes.
 
     Each element is a shape instance of type T. No everybase collection
     inheritance since shapes are opaque dicts, not typed primitives.
@@ -45,8 +43,8 @@ class ShapesListRefBase[T: ShapeBase](Ref[list[dict[str, object]]]):
     """
 
 
-class MutableShapesListRefBase[T: ShapeBase](
-    ShapesListRefBase[T],
+class MutableShapesListBase[T: ShapeBase](
+    ShapesListBase[T],
     CollectionExistableBase,
     CollectionLengthableBase,
     CollectionClearableBase,
@@ -54,8 +52,8 @@ class MutableShapesListRefBase[T: ShapeBase](
     """Mutable shapes list with collection operations."""
 
 
-class ReactiveShapesListRefBase[T: ShapeBase](
-    MutableShapesListRefBase[T],
+class ReactiveShapesListBase[T: ShapeBase](
+    MutableShapesListBase[T],
     ViewObservableBase,
 ):
     """Shapes list with collection operations + change observation."""

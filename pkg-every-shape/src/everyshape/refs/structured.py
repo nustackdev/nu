@@ -26,14 +26,14 @@ from everyshape.capabilities import (
     ViewObservableBase,
 )
 
-from .ref import Ref
+from .base import Ref
 
 
 if TYPE_CHECKING:
     from everyabc import Sentinel
 
-    from .shape import Shape as ShapeBase
-    from .slot import Slot
+    from ..shape import Shape as ShapeBase
+    from ..slot import Slot
 
 
 __all__ = [
