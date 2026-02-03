@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import every_pv as e
+from every_flow import Print, Seq
 from every_pv.views import DictView
-from everybase import Context, Flow, Term
+from everybase import Context
 
 
 # --- Shape ---
@@ -15,25 +16,7 @@ class AppState(e.Shape):
     age = e.IntRef.slot()
 
 
-# --- Minimal concrete nodes (not in everyabc — defined per app) ---
-
-
-class Print(Flow):
-    """Print a child term's result. Returns the value."""
-
-    def __init__(self, label: str, child: Term):
-        super().__init__(child)
-        self.label = label
-
-    async def execute(self, ctx) -> None:
-        value = await self.children[0].execute(ctx)
-        print(f"  [{self.label}] {value!r}")
-
-
-class Seq(Flow):
-    """Sequential execution flow."""
-
-    pass
+# --- Run ---
 
 
 async def main():

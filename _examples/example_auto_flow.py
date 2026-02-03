@@ -1,12 +1,9 @@
-"""E2E Demo: auto_atomic — no manual Atomic wrapping."""
+"""E2E Example."""
 
 from __future__ import annotations
 
+import every_flow as f
 import every_pv as e
-from everybase import Context, Flow, Term
-
-
-# --- Shapes ---
 
 
 class AppState(e.Shape):
@@ -14,43 +11,19 @@ class AppState(e.Shape):
     age = e.IntRef.slot()
 
 
-# --- Minimal concrete Flows ---
-
-
-class Print(Flow):
-    """Print a child term's result."""
-
-    def __init__(self, label: str, child: Term):
-        super().__init__(child)
-        self.label = label
-
-    async def execute(self, ctx) -> None:
-        value = await self.children[0].execute(ctx)
-        print(f"  [{self.label}] {value!r}")
-
-
-class Seq(Flow):
-    """Sequential execution flow."""
-
-    pass
-
-
-# --- Minimal concrete apps ---
-
-
 demos = [
-    Seq(
+    f.Seq(
         AppState.name.set("Alice"),
         AppState.age.set(30),
     ),
-    Seq(
-        Print("name", AppState.name.get()),
-        Print("age", AppState.age.get()),
+    f.Seq(
+        f.Print("name", AppState.name.get()),
+        f.Print("age", AppState.age.get()),
     ),
-    Seq(
+    f.Seq(
         AppState.age.set(31),
-        Print("name", AppState.name.get()),
-        Print("age", AppState.age.get()),
+        f.Print("name", AppState.name.get()),
+        f.Print("age", AppState.age.get()),
     ),
 ]
 
@@ -63,6 +36,7 @@ async def main():
     from every_pv.adapters.codecs import TextCodec as Codec
     from every_pv.adapters.storages.textdb import TextStorage as Storage
     from every_pv.views import DictView
+    from everybase import Context
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)

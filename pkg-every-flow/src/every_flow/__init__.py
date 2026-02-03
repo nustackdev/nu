@@ -23,6 +23,7 @@ from __future__ import annotations
 from ._util import Const
 from .cond import If
 from .error import TryCatch
+from .io import Print
 from .loops import ForRange, While
 from .parallel import Parallel
 from .seq import Seq
@@ -34,6 +35,7 @@ __all__ = [
     "ForRange",
     "If",
     "Parallel",
+    "Print",
     "Seq",
     "TryCatch",
     "Var",
