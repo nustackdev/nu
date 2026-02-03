@@ -102,24 +102,10 @@ class OrderableBase[OperandT]:
 class EqualableBase[OperandT]:
     """Base for values that support equality comparison.
 
-    Note: == and != are blocked; use eq() and ne() methods.
+    Python ``==``/``!=`` use default identity semantics.
+    Use ``.eq()`` / ``.ne()`` for DSL-level equality that builds
+    expression trees.
     """
-
-    def __eq__(self, other: object) -> bool:
-        """Equality is blocked in DSL context.
-
-        Raises:
-            TypeError: Use eq() method instead
-        """
-        raise TypeError("Cannot use == directly on Terms. Use .eq(other) method instead.")
-
-    def __ne__(self, other: object) -> bool:
-        """Inequality is blocked in DSL context.
-
-        Raises:
-            TypeError: Use ne() method instead
-        """
-        raise TypeError("Cannot use != directly on Terms. Use .ne(other) method instead.")
 
     def eq(self, other: OperandT) -> BoolValue:
         """Equality: self == other (safe method)."""

@@ -103,29 +103,16 @@ class OrableBase[OperandT, ResultT]:
 
 
 class NotableBase[ResultT]:
-    """Base for values that support logical NOT and bool conversion."""
+    """Base for values that support logical NOT and bool conversion.
+
+    Python ``bool()`` / ``if node:`` use default truthiness (always True,
+    inherited from ``Node.__bool__``).
+    Use ``.bool_()`` for DSL-level bool that builds expression trees.
+    """
 
     def _wrap_logical_result(self, operand: Term) -> Term:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
-
-    def __bool__(self) -> bool:
-        """Bool conversion is blocked in DSL context.
-
-        Raises:
-            TypeError: Cannot convert to bool directly
-        """
-        raise TypeError(
-            "Cannot convert Term to bool directly. Use .bool_() method or explicit comparisons."
-        )
-
-    def __and__(self, other: object) -> object:
-        """Bitwise AND is blocked; use and_() method."""
-        raise TypeError("Cannot use & operator on Terms. Use .and_(other) method instead.")
-
-    def __or__(self, other: object) -> object:
-        """Bitwise OR is blocked; use or_() method."""
-        raise TypeError("Cannot use | operator on Terms. Use .or_(other) method instead.")
 
     def not_(self) -> ResultT:
         """Logical NOT: NOT self."""

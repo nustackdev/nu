@@ -42,6 +42,7 @@ from every_pv.collections import (
     StrRef,
     ViewRef,
 )
+from every_pv.meta import auto_atomic
 from every_pv.spans import Atomic, Snapshot
 from every_pv.stdtypes import (
     PVBasisPointRef,
@@ -60,7 +61,9 @@ from every_pv.stdtypes import (
 from everyshape import Shape, ShapeMeta, SlotDescriptor
 
 
-__all__ = [
+__all__ = [  # noqa: RUF022
+    # Meta
+    "auto_atomic",
     # Spans
     "Atomic",
     # Typed refs (with operators)
