@@ -107,6 +107,18 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         )
         return resolved_path
 
+    async def fetch_parent(self, ctx: Context) -> object:
+        """Fetch the parent container of this view.
+
+        Returns:
+            The parent view, or root view if this is a top-level ref.
+        """
+        shape = self.get_root_shape()
+        root_view = ctx.get(View, shape=shape)
+        if self._parent is None:
+            return root_view
+        return await self._parent.fetch(ctx)
+
     async def fetch(self, ctx: Context) -> ViewT | Sentinel:
         """Fetch the view from PV storage.
 
@@ -202,7 +214,7 @@ class PrimitiveRef[T](Ref[T]):
             The parent view object
         """
         value_path = await self.resolve(ctx)
-        shape = self.owner_shape
+        shape = self.get_root_shape()
         root_view = ctx.get(View, shape=shape)
         parent_view, _key = path.navigate_value(root_view, value_path)
         return parent_view

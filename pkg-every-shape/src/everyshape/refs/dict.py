@@ -7,7 +7,8 @@ ReactiveMappingRefBase = ReactiveMappingBase + MutableMappingRefBase
 
 from __future__ import annotations
 
-from ..collections import MappingBase, MutableMappingBase, ReactiveMappingBase
+from everyshape.collections import MappingBase, MutableMappingBase, ReactiveMappingBase
+
 from .base import Ref
 
 

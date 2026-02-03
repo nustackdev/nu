@@ -187,9 +187,12 @@ if __name__ == "__main__":
             storage.transaction() as tx,
         ):
             root = DictView.open_root(tx)
-            ctx = Context().with_handle(View, root, SymbolInfo)
-            ctx = Context().with_handle(View, root, Order)
-            ctx = Context().with_handle(View, root, Market)
+            ctx = (
+                Context()
+                .with_handle(View, root, SymbolInfo)
+                .with_handle(View, root, Order)
+                .with_handle(View, root, Market)
+            )
 
             set_res = SymbolInfo.volume.set(12)
             set_res = await set_res.execute(ctx)
@@ -198,7 +201,7 @@ if __name__ == "__main__":
             await SymbolInfo.exchange.set("hello").execute(ctx)
             await SymbolInfo.yo.set(b"hello").execute(ctx)
 
-            c = SymbolInfo.volume.get() + SymbolInfo.volume
+            c = SymbolInfo.volume + SymbolInfo.volume
             c = await c.execute(ctx)
             print(c)
 
