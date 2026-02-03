@@ -48,12 +48,6 @@ class CompoundTerm(Term):
     async def execute(self, ctx):
         return None
 
-    def with_children(self, *children):
-        """Preserve label and purity when reconstructing."""
-        if children == self._children:
-            return self
-        return CompoundTerm(self._label, *children, pure=self._pure)
-
 
 class TestTermIsAbstract:
     def test_cannot_instantiate_term(self):

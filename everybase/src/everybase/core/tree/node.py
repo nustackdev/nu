@@ -9,6 +9,7 @@ Generic over ``ChildT`` so subclasses can narrow the children type:
 
 from __future__ import annotations
 
+import copy
 from typing import TYPE_CHECKING
 
 
@@ -83,14 +84,16 @@ class Node[ChildT]:
     # --- Reconstruction ---
 
     def with_children(self, *children: ChildT) -> Self:
-        """Reconstruct this node with new children.
+        """Shallow-copy this node with new children.
 
-        Preserves node type. Subclasses with extra state
-        should override to preserve that state.
+        Preserves all instance state (extra attributes set in __init__).
+        Subclasses never need to override this.
         """
         if children == self._children:
             return self
-        return type(self)(*children)
+        clone = copy.copy(self)
+        clone._children = children
+        return clone
 
     # --- Modification (immutable — all return new nodes) ---
 

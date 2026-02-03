@@ -121,12 +121,6 @@ class Atomic(Span):
         elif self._snap is not None:
             self._snap.close()
 
-    def with_children(self, *children: Executable) -> Atomic:
-        """Return new Atomic with replaced children."""
-        if children == self._children:
-            return self
-        return Atomic(self.shape, self.view_cls, *children)
-
     def __repr__(self) -> str:
         return f"Atomic({self.shape.__name__})"
 
@@ -186,12 +180,6 @@ class Snapshot(Span):
         """Close snapshot if opened."""
         if self._snap is not None:
             self._snap.close()
-
-    def with_children(self, *children: Executable) -> Snapshot:
-        """Return new Snapshot with replaced children."""
-        if children == self._children:
-            return self
-        return Snapshot(self.shape, self.view_cls, *children)
 
     def __repr__(self) -> str:
         return f"Snapshot({self.shape.__name__})"

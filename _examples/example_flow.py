@@ -25,11 +25,6 @@ class Print(Flow):
         super().__init__(child)
         self.label = label
 
-    def with_children(self, *children):
-        if children == self._children:
-            return self
-        return Print(self.label, *children)
-
     async def execute(self, ctx) -> None:
         value = await self.children[0].execute(ctx)
         print(f"  [{self.label}] {value!r}")

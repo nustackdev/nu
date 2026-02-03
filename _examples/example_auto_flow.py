@@ -25,11 +25,6 @@ class Print(Flow):
         super().__init__(child)
         self.label = label
 
-    def with_children(self, *children):
-        if children == self._children:
-            return self
-        return Print(self.label, *children)
-
     async def execute(self, ctx) -> None:
         value = await self.children[0].execute(ctx)
         print(f"  [{self.label}] {value!r}")
@@ -71,8 +66,15 @@ async def main():
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)
-        for demo in demos:
-            await e.auto_atomic(demo, AppState, DictView).execute(ctx)
+        for i in range(len(demos)):
+            # Get the tree
+            tree = demos[i]
+            # Add atomicity
+            tree = e.auto_atomic(tree, AppState, DictView)
+            # Add other features
+            ...
+            # Execute the tree
+            await tree.execute(ctx)
 
 
 if __name__ == "__main__":

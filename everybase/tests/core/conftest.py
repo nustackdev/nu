@@ -16,12 +16,6 @@ class SimpleNode(Node):
     def label(self):
         return self._label
 
-    def with_children(self, *children):
-        """Preserve label when reconstructing."""
-        if children == self._children:
-            return self
-        return SimpleNode(self._label, *children)
-
     def __repr__(self):
         if self._children:
             return f"SimpleNode({self._label!r}, ...{len(self._children)})"

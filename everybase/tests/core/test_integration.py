@@ -47,10 +47,6 @@ class Lit(Term):
     async def execute(self, ctx):
         return self._value
 
-    def with_children(self, *children):
-        """Lit is always a leaf, preserve value."""
-        return self
-
 
 class Seq(Flow):
     """Sequential flow."""
