@@ -20,7 +20,7 @@ from everybase import (
 )
 from everyshape import ReactiveShapesDictRefBase, Shape, Slot
 
-from .base import RefBase, ViewRef
+from .base import ViewRef
 from .shape import ShapeRef
 
 
@@ -73,11 +73,11 @@ class ShapesDictRef[
         key_value_type: type[KeyValueT],
         shape_type: type[T],
         view_type: type[MutableMappingView],
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize mapping shape reference."""
-        super().__init__(address, view_type, parent, shape)
+        super().__init__(address, view_type, parent, owner_shape)
         self.value_type = dict
         self.key_type = key_type
         self.key_value_type = key_value_type
@@ -92,7 +92,7 @@ class ShapesDictRef[
             shape_type=self._shape_type,
             view_type=DictView,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

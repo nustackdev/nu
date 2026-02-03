@@ -93,10 +93,10 @@ class MappingRef[
         key_value_type: type,
         value_value_type: type,
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize mapping reference."""
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self.value_type = value_type
         self.key_type = key_type
         self.key_value_type = key_value_type
@@ -109,7 +109,7 @@ class MappingRef[
             value_type=self.value_type,
             value_value_type=self.value_value_type,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

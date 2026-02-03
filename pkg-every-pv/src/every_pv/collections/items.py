@@ -66,10 +66,10 @@ class IntRef(PrimitiveRef[int], IntType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV int ref."""
-        super().__init__(address, int, parent, shape)
+        super().__init__(address, int, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -89,10 +89,10 @@ class StrRef(PrimitiveRef[str], StrType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV str ref."""
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -112,10 +112,10 @@ class FloatRef(PrimitiveRef[float], FloatType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV float ref."""
-        super().__init__(address, float, parent, shape)
+        super().__init__(address, float, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -135,10 +135,10 @@ class BoolRef(PrimitiveRef[bool], BoolType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bool ref."""
-        super().__init__(address, bool, parent, shape)
+        super().__init__(address, bool, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -158,10 +158,10 @@ class BytesRef(PrimitiveRef[bytes], BytesType):
         self,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bytes ref."""
-        super().__init__(address, bytes, parent, shape)
+        super().__init__(address, bytes, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -190,10 +190,10 @@ class ItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize item reference."""
-        super().__init__(address, value_type, parent, shape)
+        super().__init__(address, value_type, parent, owner_shape)
         self._value_value_type = value_value_type
 
     @classmethod
@@ -230,10 +230,10 @@ class ListItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize list item reference."""
-        super().__init__(address, value_type, parent, shape)
+        super().__init__(address, value_type, parent, owner_shape)
         self._value_value_type = value_value_type
 
     @classmethod
@@ -270,10 +270,10 @@ class DictItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict item reference."""
-        super().__init__(address, value_type, parent, shape)
+        super().__init__(address, value_type, parent, owner_shape)
         self._value_value_type = value_value_type
 
     @classmethod

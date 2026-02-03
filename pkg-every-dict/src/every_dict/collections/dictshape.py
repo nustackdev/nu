@@ -63,10 +63,10 @@ class ShapesDictRef[K, T: Shape](
         key_value_type: type,
         shape_type: type[T],
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize shapes dict reference."""
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self.value_type = dict
         self.key_type = key_type
         self.key_value_type = key_value_type
@@ -78,7 +78,7 @@ class ShapesDictRef[K, T: Shape](
             address=ensure_term(key),
             shape_type=self._shape_type,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

@@ -60,10 +60,10 @@ class ItemRef[T, ValueT: Value](
         value_type: type[T],
         value_value_type: type[ValueT],
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize item reference."""
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self._value_type = value_type
         self._value_value_type = value_value_type
 
@@ -98,10 +98,10 @@ class IntRef(ItemRef[int, IntValue], IntType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict int ref."""
-        super().__init__(address, int, IntValue, parent, shape)
+        super().__init__(address, int, IntValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -121,10 +121,10 @@ class StrRef(ItemRef[str, StrValue], StrType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict str ref."""
-        super().__init__(address, str, StrValue, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -144,10 +144,10 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict float ref."""
-        super().__init__(address, float, FloatValue, parent, shape)
+        super().__init__(address, float, FloatValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -167,10 +167,10 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict bool ref."""
-        super().__init__(address, bool, BoolValue, parent, shape)
+        super().__init__(address, bool, BoolValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -190,10 +190,10 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
         self,
         address: str | int | Term,
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize dict bytes ref."""
-        super().__init__(address, bytes, BytesValue, parent, shape)
+        super().__init__(address, bytes, BytesValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]

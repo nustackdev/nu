@@ -74,10 +74,10 @@ class SequenceRef[T](
         item_type: type[T],
         item_value_type: type,
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize sequence reference."""
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self.item_type = item_type
         self.item_value_type = item_value_type
 
@@ -88,7 +88,7 @@ class SequenceRef[T](
             value_type=self.item_type,
             value_value_type=self.item_value_type,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

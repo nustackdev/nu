@@ -39,10 +39,10 @@ class ShapesListRef[T: Shape](
         shape_type: type[T],
         view_type: type[MutableSequenceView],
         parent: ViewRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize sequence shape reference."""
-        super().__init__(address, view_type, parent, shape)
+        super().__init__(address, view_type, parent, owner_shape)
         self._shape_type = shape_type
         self.item_type = dict
 
@@ -55,7 +55,7 @@ class ShapesListRef[T: Shape](
             shape_type=self._shape_type,
             view_type=DictView,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

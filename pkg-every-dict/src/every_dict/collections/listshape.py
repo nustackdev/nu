@@ -34,10 +34,10 @@ class ShapesListRef[T: Shape](
         address: str | int | Term,
         shape_type: type[T],
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize shapes list reference."""
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self._shape_type = shape_type
         self.item_type = dict
 
@@ -47,7 +47,7 @@ class ShapesListRef[T: Shape](
             address=ensure_term(index),
             shape_type=self._shape_type,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

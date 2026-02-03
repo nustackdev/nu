@@ -57,7 +57,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         address: Arg[path.PathAddress],
         view_type: type[ViewT],
         parent: Ref | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize view ref.
 
@@ -65,9 +65,9 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
             address: Key/address for this view
             view_type: The View class type
             parent: Parent ref in navigation chain
-            shape: Shape class for context lookup
+            owner_shape: Shape class for context lookup
         """
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self._view_type = view_type
 
     @property
@@ -139,7 +139,7 @@ class PrimitiveRef[T](Ref[T]):
         address: Arg[path.PathAddress],
         value_type: type[T],
         parent: Ref | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize primitive ref.
 
@@ -147,9 +147,9 @@ class PrimitiveRef[T](Ref[T]):
             address: Key/address for this value
             value_type: The Python type of the value
             parent: Parent ref in navigation chain
-            shape: Shape class for context lookup
+            owner_shape: Shape class for context lookup
         """
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self._value_type = value_type
 
     @property

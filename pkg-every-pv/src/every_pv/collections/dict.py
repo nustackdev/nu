@@ -21,7 +21,7 @@ from everybase import (
 )
 from everyshape import ReactiveMappingRefBase, Shape, Slot
 
-from .base import RefBase, ViewRef
+from .base import ViewRef
 from .items import DictItemRef
 
 
@@ -102,11 +102,11 @@ class DictRef[
         view_type: type[MutableMappingView],
         key_value_type: type,
         value_value_type: type,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize mapping reference."""
-        super().__init__(address, view_type, parent, shape)
+        super().__init__(address, view_type, parent, owner_shape)
         self.value_type = value_type
         self.key_type = key_type
         self.key_value_type = key_value_type
@@ -119,7 +119,7 @@ class DictRef[
             value_type=self.value_type,
             value_value_type=self.value_value_type,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

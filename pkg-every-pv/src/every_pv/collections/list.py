@@ -89,10 +89,10 @@ class ListRef[
         item_value_type: type[ItemValueT],
         view_type: type[MutableSequenceView],
         parent: ViewRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize sequence reference."""
-        super().__init__(address, view_type, parent, shape)
+        super().__init__(address, view_type, parent, owner_shape)
         self.item_type = item_type
         self.item_value_type = item_value_type
 
@@ -105,7 +105,7 @@ class ListRef[
             value_type=self.item_type,
             value_value_type=self.item_value_type,
             parent=self,
-            shape=self._shape,
+            owner_shape=self._owner_shape,
         )
 
     @classmethod

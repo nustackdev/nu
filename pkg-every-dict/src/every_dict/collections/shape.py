@@ -34,10 +34,10 @@ class ShapeRef[T: Shape](
         address: str | int | Term,
         shape_type: type[T],
         parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize shape reference."""
-        super().__init__(address, parent, shape)
+        super().__init__(address, parent, owner_shape)
         self._shape_type = shape_type
         self.key_type: type = str
         self.value_type: type = object

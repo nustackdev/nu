@@ -17,7 +17,7 @@ Collections:
     ShapesDictRef   mapping of homogeneous shapes
 """
 
-from .base import PrimitiveRef, RefBase, ViewRef
+from .base import PrimitiveRef, ViewRef
 from .dict import DictRef
 from .dictshape import ShapesDictRef
 from .items import (
@@ -46,8 +46,6 @@ __all__ = [
     "ListItemRef",
     "ListRef",
     "PrimitiveRef",
-    "RefBase",
-    "SequenceRef",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",

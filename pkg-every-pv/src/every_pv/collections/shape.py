@@ -50,10 +50,10 @@ class ShapeRef[T: Shape](
         shape_type: type[T],
         view_type: type[MutableMappingView],
         parent: ViewRef | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize shape reference."""
-        super().__init__(address, view_type, parent, shape)
+        super().__init__(address, view_type, parent, owner_shape)
         self._shape_type = shape_type
         self.key_type: type = str
         self.value_type: type = object
