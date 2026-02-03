@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import every_pv as e
-from every_pv.views import DictView
 from everybase import Context, Flow, Term
 
 
@@ -63,6 +62,7 @@ async def main():
 
     from every_pv.adapters.codecs import TextCodec as Codec
     from every_pv.adapters.storages.textdb import TextStorage as Storage
+    from every_pv.views import DictView
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..core.tree import Node
+    from ..tree import Node
 
 
 __all__ = [

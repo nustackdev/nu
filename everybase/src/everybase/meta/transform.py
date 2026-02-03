@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Literal, TypeAlias
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .node import Node
+    from ..tree import Node
 
 Transform: TypeAlias = "Callable[[Node], Node]"  # noqa: UP040
 """A tree transform: takes a node tree and returns a new node tree."""

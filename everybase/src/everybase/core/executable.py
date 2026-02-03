@@ -1,8 +1,11 @@
-"""Executable -- base for all topology nodes."""
+"""Executable — base for all topology nodes."""
 
 from __future__ import annotations
 
-from .node import Node
+from abc import abstractmethod
+from typing import Any
+
+from ..tree import Node
 
 
 __all__ = [
@@ -17,7 +20,10 @@ class Executable[ChildT: Executable](Node[ChildT]):
     ``with_children``, ``children``, ``__getitem__``, etc.) return
     ``Executable``-typed values instead of bare ``Node``.
 
-    Downstream packages add semantic behavior (needs, provides, etc.).
+    All topology nodes must implement ``execute(ctx)``.
     """
 
-    pass
+    @abstractmethod
+    async def execute(self, ctx: Any) -> Any:  # noqa: ANN401
+        """Execute this node within a context."""
+        ...

@@ -1,17 +1,18 @@
-"""everyabc -- Abstract tree construction, traversal, and transformation.
+"""everybase.core — Computation layer.
 
 Packages:
-
-    tree/     -- pure tree (Node, Executable, walk, transform, query)
     term/     -- computation (Term, Ref, Morphism, Sentinel)
     flow/     -- ordering (Flow)
-    span/     -- cohesion (Span)
+    span/     -- grouping (Span)
     context/  -- runtime (Context, Handle)
+    exec      -- Executable base
 """
 
 from __future__ import annotations
 
+from ..tree import Node
 from .context import Context, Handle
+from .executable import Executable
 from .flow import Flow
 from .model import Model
 from .span import Span
@@ -57,30 +58,6 @@ from .term import (
     is_invalid,
     is_sentinel,
     propagate_special,
-)
-from .tree import (
-    Executable,
-    Node,
-    Transform,
-    ancestors,
-    apply,
-    bfs,
-    compose,
-    count,
-    depth,
-    find,
-    find_first,
-    graft,
-    leaves,
-    map_children,
-    map_nodes,
-    postorder,
-    preorder,
-    prune,
-    replace,
-    size,
-    unwrap,
-    wrap,
 )
 
 
@@ -140,27 +117,4 @@ __all__ = [  # noqa: RUF022
     # Context
     "Context",
     "Handle",
-    # Walk
-    "preorder",
-    "postorder",
-    "bfs",
-    "leaves",
-    "ancestors",
-    # Transform
-    "Transform",
-    "compose",
-    "apply",
-    "map_children",
-    "map_nodes",
-    "replace",
-    "wrap",
-    "unwrap",
-    "graft",
-    "prune",
-    # Query
-    "find",
-    "find_first",
-    "count",
-    "size",
-    "depth",
 ]

@@ -10,7 +10,7 @@ from .walk import preorder
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .node import Node
+    from ..tree import Node
 
 
 __all__ = [

@@ -1,7 +1,9 @@
 """everybase — Core library for the every ecosystem.
 
 Subpackages:
-    core/  -- abstract tree/term/flow/span/context contracts
+    tree/  -- immutable tree nodes
+    core/  -- computation layer (term/flow/span/context/exec)
+    meta/  -- tree meta-tools (walk, query, transform, rewrites)
     abc/   -- base implementations: types, values, morphisms, capabilities
 """
 
@@ -34,7 +36,6 @@ from .core import (
     NAryCommand,
     NAryMorphism,
     NAryOperation,
-    Node,
     NoneArg,
     Operation,
     Ref,
@@ -47,12 +48,18 @@ from .core import (
     TernaryCommand,
     TernaryMorphism,
     TernaryOperation,
-    Transform,
     TupleArg,
     UnaryCommand,
     UnaryMorphism,
     UnaryOperation,
     Value,
+    is_empty,
+    is_invalid,
+    is_sentinel,
+    propagate_special,
+)
+from .meta import (
+    Transform,
     ancestors,
     apply,
     bfs,
@@ -62,21 +69,18 @@ from .core import (
     find,
     find_first,
     graft,
-    is_empty,
-    is_invalid,
-    is_sentinel,
     leaves,
     map_children,
     map_nodes,
     postorder,
     preorder,
-    propagate_special,
     prune,
     replace,
     size,
     unwrap,
     wrap,
 )
+from .tree import Node
 
 
 __all__ = [  # noqa: RUF022
