@@ -1,19 +1,13 @@
-# ruff: noqa: D102
 """Sequence collection bases — three tiers for the document model.
 
 SequenceBase         = everybase.SequenceBase + Existable + Extractable
 MutableSequenceBase  = everybase.MutableSequenceBase + SequenceBase + Lengthable + Clearable + Storable
 ReactiveSequenceBase = MutableSequenceBase + ViewObservable
 
-These provide the bridge between everybase's _wrap_* hooks and everyshape's
-simpler result()/element_result() abstracts. Downstream substrates only need
-to implement result() and element_result().
+Substrates implement _wrap_* methods and result() directly on their concrete refs.
 """
 
 from __future__ import annotations
-
-from abc import abstractmethod
-from typing import TYPE_CHECKING
 
 from everybase.collections import MutableSequenceBase as _EB_MutableSequenceBase
 from everybase.collections import SequenceBase as _EB_SequenceBase
@@ -25,10 +19,6 @@ from everyshape.capabilities import (
     CollectionStorableBase,
     ViewObservableBase,
 )
-
-
-if TYPE_CHECKING:
-    from everyabc import Term
 
 
 __all__ = [
@@ -50,30 +40,11 @@ class SequenceBase[T, CollectionValueT, ItemValueT](
 ):
     """Base for sequences — ordered containers in the document model.
 
-    Bridges everybase's _wrap_* hooks to two abstract methods:
-        result(op) -> CollectionValueT       (collection-level ops)
-        element_result(op) -> ItemValueT     (element-level ops)
+    Combines everybase sequence ops (map_, filter_, first, last, etc.)
+    with everyshape capabilities (exists, get/extract).
 
-    Substrates implement result() and element_result() to get all
-    everybase sequence ops (map_, filter_, first, last, etc.) plus
-    everyshape capabilities (exists, get/extract).
+    Substrates implement _wrap_* and result() on their concrete refs.
     """
-
-    # -- Bridge: everybase _wrap_* → everyshape abstracts --
-
-    def _wrap_iterable_result(self, operand: Term) -> CollectionValueT:
-        return self.result(operand)
-
-    def _wrap_sliceable_result(self, operand: Term) -> CollectionValueT:
-        return self.result(operand)
-
-    def _wrap_element_result(self, operand: Term) -> ItemValueT:
-        return self.element_result(operand)
-
-    # -- Abstract: downstream substrates implement these --
-
-    @abstractmethod
-    def element_result(self, op: Term) -> ItemValueT: ...
 
 
 class MutableSequenceBase[T, CollectionValueT, ItemValueT](

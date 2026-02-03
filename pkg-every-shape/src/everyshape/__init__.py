@@ -83,8 +83,7 @@ from everyshape.refs import (
     ShapesDictRefBase,
     ShapesListRefBase,
 )
-from everyshape.shape import Shape, ShapeMeta, SlotDescriptor
-from everyshape.slot import Slot
+from everyshape.shape import Shape, ShapeMeta, Slot, SlotDescriptor
 
 
 __all__ = [  # noqa: RUF022

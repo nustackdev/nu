@@ -1,7 +1,7 @@
 """Slot -- field definition that creates Refs.
 
 Slot is the universal implementation that creates any Ref type.
-Used internally by Ref.slot() — users call Ref.slot(), not Slot() directly.
+Used internally by Ref.slot() -- users call Ref.slot(), not Slot() directly.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .refs.base import Ref
+    from ..refs.base import Ref
     from .shape import Shape
 
 

@@ -148,8 +148,16 @@ class ShapeRef[T: PVShape](
 
 
 class DictRef[K: int | str, V: StorageValue](
-    ReactiveMappingRefBase[K, V, DictValue[K, V], AnyValue],
-    ViewRef[dict[K, V], MutableMappingView],
+    ReactiveMappingRefBase[
+        K,
+        V,
+        DictValue[K, V],
+        AnyValue,
+    ],
+    ViewRef[
+        dict[K, V],
+        MutableMappingView,
+    ],
 ):
     """PV mapping reference — document model + PV substrate.
 
@@ -159,11 +167,23 @@ class DictRef[K: int | str, V: StorageValue](
     def result(self, op: Term) -> DictValue[K, V]:
         return DictValue(op)
 
-    def element_result(self, op: Term) -> AnyValue:
-        return AnyValue(op)
+    def _wrap_keys_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
 
-    def iterable_result(self, op: Term) -> ListValue:
-        return ListValue(op)
+    def _wrap_values_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_items_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_iterable_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_value_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
 
     def __init__(
         self,
@@ -239,8 +259,14 @@ class ListRef[T, ItemValueT](
     def result(self, op: Term) -> ListValue[T]:
         return ListValue(op)
 
-    def element_result(self, op: Term) -> AnyValue:
-        return AnyValue(op)
+    def _wrap_iterable_result(self, operand: Term) -> ListValue[T]:
+        return ListValue(operand)
+
+    def _wrap_sliceable_result(self, operand: Term) -> ListValue[T]:
+        return ListValue(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
 
     def __init__(
         self,

@@ -9,8 +9,8 @@ Example::
         price = FloatRef.slot()
         volume = IntRef.slot()
 
-    Order.price   # → ref
-    Order.volume  # → ref
+    Order.price   # -> ref
+    Order.volume  # -> ref
 """
 
 from __future__ import annotations
@@ -148,8 +148,8 @@ class Shape(Model, metaclass=ShapeMeta):
             name = StrRef.slot()
             profile = ShapeRef.slot(Profile)
 
-        User.name            # → ref
-        User.profile.email   # → ref (nested)
+        User.name            # -> ref
+        User.profile.email   # -> ref (nested)
     """
 
     _slots: ClassVar[dict[str, Slot]] = {}

@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from everyabc import Sentinel
 
     from ..shape import Shape as ShapeBase
-    from ..slot import Slot
+    from ..shape import Slot
 
 
 __all__ = [
