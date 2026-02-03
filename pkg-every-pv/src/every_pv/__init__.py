@@ -7,8 +7,8 @@ Key Classes:
     Typed Refs (with operators):
         - IntRef, StrRef, FloatRef, BoolRef, BytesRef
 
-    Generic Item Refs:
-        - ItemRef, ListItemRef, DictItemRef
+    Generic Item Ref:
+        - ItemRef
 
     Collection Refs:
         - DictRef, ListRef
@@ -30,12 +30,10 @@ Usage:
 from every_pv.collections import (
     BoolRef,
     BytesRef,
-    DictItemRef,
     DictRef,
     FloatRef,
     IntRef,
     ItemRef,
-    ListItemRef,
     ListRef,
     PrimitiveRef,
     ShapeRef,
@@ -68,14 +66,12 @@ __all__ = [
     # Typed refs (with operators)
     "BoolRef",
     "BytesRef",
-    # Generic item refs
-    "DictItemRef",
     # Collection refs
     "DictRef",
     "FloatRef",
     "IntRef",
+    # Generic item ref
     "ItemRef",
-    "ListItemRef",
     "ListRef",
     # Stdtypes refs
     "PVBasisPointRef",

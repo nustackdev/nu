@@ -180,7 +180,6 @@ if __name__ == "__main__":
     from every_pv.adapters.codecs import TextCodec
     from every_pv.adapters.storages.textdb import TextStorage
     from every_pv.views import DictView
-    from everyshape import Shape
 
     async def main() -> None:
         with (
@@ -188,7 +187,9 @@ if __name__ == "__main__":
             storage.transaction() as tx,
         ):
             root = DictView.open_root(tx)
-            ctx = Context().with_handle(View, root, Shape)
+            ctx = Context().with_handle(View, root, SymbolInfo)
+            ctx = Context().with_handle(View, root, Order)
+            ctx = Context().with_handle(View, root, Market)
 
             set_res = SymbolInfo.volume.set(12)
             set_res = await set_res.execute(ctx)

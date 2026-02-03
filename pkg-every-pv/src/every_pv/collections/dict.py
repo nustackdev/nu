@@ -22,7 +22,7 @@ from everybase import (
 from everyshape import ReactiveMappingRefBase, Shape, Slot
 
 from .base import ViewRef
-from .items import DictItemRef
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
@@ -112,9 +112,9 @@ class DictRef[
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> DictItemRef[V, ...]:
+    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ItemRef:
         """Create a reference to a child at the given key."""
-        return DictItemRef(
+        return ItemRef(
             address=ensure_term(key),
             value_type=self.value_type,
             value_value_type=self.value_value_type,

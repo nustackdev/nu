@@ -22,7 +22,7 @@ from everybase import (
 from everyshape import ReactiveSequenceRefBase, Shape, Slot
 
 from .base import ViewRef
-from .items import ListItemRef
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
@@ -98,9 +98,9 @@ class ListRef[
 
     def _create_item_ref(
         self, index: int | Sentinel | Term[int | Sentinel]
-    ) -> ListItemRef[T, ItemValueT]:
+    ) -> ItemRef[T, ItemValueT]:
         """Create a reference to an item at the given index."""
-        return ListItemRef(
+        return ItemRef(
             address=ensure_term(index),
             value_type=self.item_type,
             value_value_type=self.item_value_type,

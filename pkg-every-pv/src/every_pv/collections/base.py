@@ -202,7 +202,7 @@ class PrimitiveRef[T](Ref[T]):
             The parent view object
         """
         value_path = await self.resolve(ctx)
-        shape = self.get_root_shape()
+        shape = self.owner_shape
         root_view = ctx.get(View, shape=shape)
         parent_view, _key = path.navigate_value(root_view, value_path)
         return parent_view
