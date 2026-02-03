@@ -7,7 +7,7 @@ from every_pv.views import DictView
 from everybase import Context, Flow, Term
 
 
-# --- Shape ---
+# --- Shapes ---
 
 
 class AppState(e.Shape):
@@ -15,7 +15,7 @@ class AppState(e.Shape):
     age = e.IntRef.slot()
 
 
-# --- Minimal concrete nodes (not in everyabc — defined per app) ---
+# --- Minimal concrete Flows ---
 
 
 class Print(Flow):
@@ -41,6 +41,28 @@ class Seq(Flow):
     pass
 
 
+# --- Minimal concrete apps ---
+
+
+demos = [
+    Seq(
+        AppState.name.set("Alice"),
+        AppState.age.set(30),
+    ),
+    Seq(
+        Print("name", AppState.name.get()),
+        Print("age", AppState.age.get()),
+    ),
+    Seq(
+        AppState.age.set(31),
+        Print("name", AppState.name.get()),
+        Print("age", AppState.age.get()),
+    ),
+]
+
+# --- Run ---
+
+
 async def main():
     from tkv.tkv.storage import StorageProtocol
 
@@ -49,37 +71,8 @@ async def main():
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)
-
-        # Pure topology — no Atomic wrapping needed.
-        # auto_atomic injects Atomic spans around Term-only subtrees.
-
-        await e.auto_atomic(
-            Seq(
-                AppState.name.set("Alice"),
-                AppState.age.set(30),
-            ),
-            AppState,
-            DictView,
-        ).execute(ctx)
-
-        await e.auto_atomic(
-            Seq(
-                Print("name", AppState.name.get()),
-                Print("age", AppState.age.get()),
-            ),
-            AppState,
-            DictView,
-        ).execute(ctx)
-
-        await e.auto_atomic(
-            Seq(
-                AppState.age.set(31),
-                Print("name", AppState.name.get()),
-                Print("age", AppState.age.get()),
-            ),
-            AppState,
-            DictView,
-        ).execute(ctx)
+        for demo in demos:
+            await e.auto_atomic(demo, AppState, DictView).execute(ctx)
 
 
 if __name__ == "__main__":

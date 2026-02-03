@@ -1,11 +1,22 @@
 # Concepts and Rules
 
+## Primitives
+
+There are two kinds of nodes and one grouping mechanism:
+
+- **Term** — *what*. Computes and returns a value. Children are Terms (closed algebra).
+- **Flow** — *when*. Orders child execution. Returns nothing. Children can be Terms, Flows, or Spans.
+- **Span** — *grouping*. Scopes context for children. Returns the last child's result (transparent). Children can be Terms, Flows, or Spans.
+
+Span is dimensionless — it's a bracket, not a computational primitive.
+The real structure is Term (what) and Flow (when), with Span as a transparent wrapper.
+
 ## Hierarchy
 
 ```text
 Node[ChildT]                          # immutable tree node
  └── Executable[ChildT: Executable]   # typed subtree
-      ├── Term[ResultT]               # computation
+      ├── Term[ResultT]               # computation (what)
       │    ├── LValue[T]              # addressable location
       │    │    └── Ref[T]            # typed reference
       │    └── RValue[ResultT]        # evaluable expression
@@ -14,8 +25,8 @@ Node[ChildT]                          # immutable tree node
       │                   ├── UnaryMorphism[T]
       │                   ├── BinaryMorphism[T]
       │                   └── TernaryMorphism[T]
-      ├── Flow                        # ordering
-      └── Span                        # cohesion boundary
+      ├── Flow                        # ordering (when)
+      └── Span                        # grouping (context boundary)
 ```
 
 Orthogonal purity mixins (first in MRO):
@@ -79,7 +90,7 @@ This is especially dangerous because the error only surfaces when something trav
 
 ## Term
 
-Executable computation node.
+Computation node. Produces a value when executed.
 
 ```text
 Term[ResultT](Executable, ABC)
@@ -87,6 +98,8 @@ Term[ResultT](Executable, ABC)
   abstract  is_self_pure    -> bool       # this node only
   concrete  is_subtree_pure -> bool       # self + all descendant Terms
 ```
+
+Children are Terms (closed algebra — computation doesn't impose order).
 
 ### LValue / Ref
 
@@ -143,12 +156,14 @@ Command.is_self_pure   -> False   (order-dependent, transactional)
 
 ## Flow
 
-Ordering constraint. Controls how children execute.
+Ordering node. Controls when children execute. Returns nothing.
 
 ```text
 Flow(Executable[Executable], ABC)
   concrete  execute(ctx) -> None          # sequential by default
 ```
+
+Children can be Terms, Flows, or Spans (anything that needs ordering).
 
 Concrete flows:
 
@@ -163,15 +178,22 @@ Concrete flows:
 
 ## Span
 
-Cohesion boundary. Shapes context for a subtree.
+Grouping node. Scopes context for children. Returns the last child's result.
 
 ```text
 Span(Executable[Executable], ABC)
   concrete  enter(ctx)                -> Context    # scope context (default: passthrough)
   concrete  exit_success(ctx)         -> None       # cleanup on success (default: noop)
   concrete  exit_failure(ctx, error)  -> None       # cleanup on failure (default: noop)
-  concrete  execute(ctx)              -> None       # enter -> run children -> exit
+  concrete  execute(ctx)              -> object     # enter -> run children -> exit; returns last result
 ```
+
+Spans are transparent — removing a Span doesn't change what is computed,
+only what is shared during computation. Returning the last child's result
+is part of this transparency: inserting or removing a Span doesn't break
+data flow.
+
+Children can be Terms, Flows, or Spans.
 
 ---
 
@@ -263,6 +285,12 @@ compose(*transforms)                left-to-right composition
 apply(root, *transforms)            apply transforms in order
 ```
 
+### Meta-transforms (everybase.meta)
+
+```text
+conditional_wrap(root, pred, wrapper)   group contiguous matching children, wrap each group
+```
+
 ### Query
 
 ```text
@@ -300,28 +328,23 @@ R2.  Flow.children() → list[Executable]     Flows compose with any Executable.
 R3.  Span.children() → list[Executable]     Spans compose with any Executable.
 ```
 
+The key constraint is one-directional: Flow can contain Terms
+(ordering computation), but Terms can't contain Flows
+(computation doesn't impose order). Span is orthogonal —
+it wraps either.
+
 ## Structure
 
-**S1. Implicit grouping.**
-Every direct Term child of a Flow is implicitly wrapped in an Atomic span.
-An expression tree is indivisible — like a function call.
-
-```
-F(T₁, T₂, ...) is treated as F(Atomic(T₁), Atomic(T₂), ...)
-```
-
-**S2. Span transparency.**
-A Span is not a computation. It passes through the value of its contents.
+**S1. Span transparency.**
+A Span is not a computation. It returns the last child's result.
 Removing all Spans from a tree does not change what is computed,
 only what is shared during computation.
 
-**S3. Term closure.**
+**S2. Term closure.**
 Composing Terms yields a Term. The Term algebra is closed.
 
-**S4. Orthogonality.**
-Flow does not compute — it only orders.
-Span does not order — it only declares cohesion.
-Term does not order or share — it only computes.
+**S3. Orthogonality.**
+Term computes (what). Flow orders (when). Span groups (context).
 Each primitive owns exactly one concern.
 
 ## Resolution
@@ -337,7 +360,7 @@ First Span that provides a matching context wins.
 **B3. Ephemeral fallback.**
 If no Span provides what a Term needs, the executor creates
 an ephemeral context from the nearest Substrate. Scoped to the
-single expression (per S1).
+single expression.
 
 **B4. Innermost wins.**
 Nested Spans override. Inner Span's context shadows outer
@@ -359,21 +382,17 @@ only reads → Snapshot, any writes → Transaction, no needs → nothing opened
 
 ## What Follows
 
-**From S1 + C3:**
-Ungrouped Terms in a Flow automatically get optimal context.
-No annotation needed. Zero cost when the substrate doesn't need it.
+**From S1:**
+Spans can be inserted or removed without breaking data flow.
+They only affect resource sharing and consistency guarantees.
+The computation topology (Terms + Flows) is Span-invariant.
 
-**From S4 + S1:**
+**From S3:**
 Flow controls order. Span controls sharing. These compose freely.
 `Atomic(Seq(...))` and `Seq(Atomic(...))` are both valid, mean different things.
 
 **From B2 + B4:**
 Context scoping is lexical. Innermost binding wins.
-
-**From S2:**
-Spans can be added or removed without changing computation.
-They only affect resource sharing and consistency guarantees.
-The computation topology (Terms + Flows) is Span-invariant.
 
 Note: Span-invariance holds cleanly for pure computations.
 For impure computations, Spans affect consistency guarantees

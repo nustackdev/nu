@@ -1,4 +1,4 @@
-"""Span -- cohesion boundary (2-cell / region)."""
+"""Span — grouping (context boundary)."""
 
 from __future__ import annotations
 
@@ -18,39 +18,34 @@ __all__ = [
 
 
 class Span(Executable[Executable], ABC):
-    """Cohesion boundary (2-cell). Context shaper.
+    """Grouping node. Scopes context for children.
 
-    Spans scope context for their children via enter/exit lifecycle.
-    On execution:
-        1. enter(ctx) → child_ctx (add handles, factories)
-        2. Execute children with child_ctx
-        3. exit_success(child_ctx) or exit_failure(child_ctx, error)
+    Spans group children under a shared context boundary
+    via an enter/exit lifecycle. They are transparent —
+    removing a Span doesn't change what is computed, only
+    what is shared during computation.
 
+    Returns the last child's result (value-transparent).
+
+    Children can be Terms, Flows, or Spans.
     Subclasses override enter/exit to shape context.
-    Default implementations are transparent (pass-through).
-
-    Concrete spans (PVAtomic, PVSnapshot, Traced, etc.)
-    are defined downstream.
-
-    Design rules:
-        S2: Span transparency -- removing spans doesn't change computation.
-        S4: Spans own exactly one concern -- cohesion (what's shared).
     """
 
-    async def execute(self, ctx: Context) -> None:
+    async def execute(self, ctx: Context) -> object:
         """Execute span: enter → run children → exit.
 
-        Calls enter() to scope context, executes children sequentially,
-        then calls exit_success/exit_failure for cleanup.
+        Returns the last child's result for value transparency.
         """
         child_ctx = self.enter(ctx)
+        result = None
         try:
             for child in self.children:
-                await child.execute(child_ctx)
+                result = await child.execute(child_ctx)
             self.exit_success(child_ctx)
         except Exception as e:
             self.exit_failure(child_ctx, e)
             raise
+        return result
 
     def enter(self, ctx: Context) -> Context:
         """Scope context for children. Override to add handles/factories."""

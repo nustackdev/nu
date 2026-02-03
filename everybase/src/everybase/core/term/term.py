@@ -1,7 +1,7 @@
-"""Term — computation node (0-cell / point).
+"""Term — computation (what).
 
-Terms are executable nodes that produce values. They form
-the leaves of the topology tree — the actual computation.
+Terms are executable nodes that produce values.
+They are the computation layer of the tree.
 
 Hierarchy:
     Term[ResultT]           — base: execute(context) -> ResultT
@@ -11,9 +11,8 @@ Hierarchy:
         ├── Value[T]        — typed value holder (see value.py)
         └── Morphism[T]     — transformation (see morphism.py)
 
-Design rules:
-    R1: Term children are Terms (closed algebra).
-    S4: Terms own exactly one concern — computation (what).
+Term children are Terms (closed algebra — computation
+doesn't impose order or grouping).
 """
 
 from __future__ import annotations
@@ -37,20 +36,15 @@ __all__ = [
 
 
 class Term(Executable["Term"], Generic[T_co], ABC):  # noqa: UP046
-    """Base contract for all executable semantic nodes.
+    """Computation node. Produces a value when executed.
 
-    Everything in the topology that computes is a Term:
+    Everything that computes is a Term:
     - Locations (refs to data)
     - Operations (pure computations)
     - Commands (mutations)
 
     Terms execute within a Context to produce results.
-    Context provides resolved Handles for resource access.
-
-    Inherits from defs.Term which provides:
-    - is_self_pure: abstract property (this node only)
-    - is_subtree_pure: concrete property (this node + all descendants)
-    - children: property returning tuple[Term, ...]
+    Children are Terms (closed algebra).
     """
 
     @abstractmethod

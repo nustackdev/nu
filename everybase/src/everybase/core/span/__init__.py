@@ -1,6 +1,6 @@
-"""Span — cohesion boundary (2-cell).
+"""Span — grouping (context boundary).
 
-Spans declare shared properties among children.
+Spans scope context for children and return the last child's result.
 Concrete spans (Atomic, etc.) defined downstream.
 """
 

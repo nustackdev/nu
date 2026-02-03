@@ -1,4 +1,4 @@
-"""Flow -- ordering constraint (1-cell / path)."""
+"""Flow — ordering (when)."""
 
 from __future__ import annotations
 
@@ -18,17 +18,13 @@ __all__ = [
 
 
 class Flow(Executable[Executable], ABC):
-    """Ordering constraint (1-cell). Controls child execution.
+    """Ordering node. Controls when children execute.
 
-    Flows define when children execute relative to each other.
+    Flows define execution order — sequential, parallel,
+    conditional, looping. They do not compute values.
+
+    Children can be Terms, Flows, or Spans.
     Default execute() runs children sequentially.
-
-    Concrete flows (Seq, Par, Cond, etc.) override execute()
-    to provide specific ordering semantics.
-
-    Design rules:
-        R2: Flow children can be any Executable.
-        S4: Flows own exactly one concern -- ordering (when).
     """
 
     async def execute(self, ctx: Context) -> None:

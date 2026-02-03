@@ -1,6 +1,6 @@
-"""Term system — semantic contracts for executable nodes.
+"""Term system — computation layer.
 
-    Term[ResultT]           — executable node (0-cell)
+    Term[ResultT]           — computation (what)
     ├── LValue[T]           — addressable location
     │   └── Ref[T]          — typed reference
     └── RValue[ResultT]     — evaluable expression
