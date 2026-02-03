@@ -24,6 +24,21 @@ Protocols declare the public interface; Bases provide morphism-wrapping implemen
     Clearable:   ClearableBase/Protocol        = clear()
 """
 
+from everybase.collections import (
+    MappingBase,
+    MappingProtocol,
+    MutableMappingBase,
+    MutableMappingProtocol,
+    MutableSequenceBase,
+    MutableSequenceProtocol,
+    MutableSetBase,
+    MutableSetProtocol,
+    SequenceBase,
+    SequenceProtocol,
+    SetLikeBase,
+    SetLikeProtocol,
+)
+
 from .col_atoms import (
     ContainableBase,
     ContainableProtocol,
@@ -43,24 +58,6 @@ from .col_collection import (
 from .col_iterable import (
     IterableBase,
     IterableProtocol,
-)
-from .col_mapping import (
-    MappingBase,
-    MappingProtocol,
-    MutableMappingBase,
-    MutableMappingProtocol,
-)
-from .col_sequence import (
-    MutableSequenceBase,
-    MutableSequenceProtocol,
-    SequenceBase,
-    SequenceProtocol,
-)
-from .col_set import (
-    MutableSetBase,
-    MutableSetProtocol,
-    SetLikeBase,
-    SetLikeProtocol,
 )
 from .gen_arithmetic import (
     AddableBase,
@@ -115,30 +112,6 @@ from .gen_logical import (
     NotableProtocol,
     OrableBase,
     OrableProtocol,
-)
-from .loc import (
-    LocationDeletableProtocol,
-    LocationExistableProtocol,
-    LocationGettableProtocol,
-    LocationObservableProtocol,
-    LocationSettableProtocol,
-)
-from .loc_collection import (
-    CollectionClearableBase,
-    CollectionExistableBase,
-    CollectionExtractableBase,
-    CollectionLengthableBase,
-    CollectionStorableBase,
-)
-from .loc_item import (
-    ItemDeletableBase,
-    ItemExistableBase,
-    ItemGettableBase,
-    ItemSettableBase,
-)
-from .loc_reactive import (
-    PrimitiveObservableBase,
-    ViewObservableBase,
 )
 
 
@@ -248,32 +221,4 @@ __all__ = [  # noqa: RUF022
     # =========================================================================
     "ClearableBase",
     "ClearableProtocol",
-    # =========================================================================
-    # LOCATION CAPABILITIES (protocol-only)
-    # =========================================================================
-    "LocationGettableProtocol",
-    "LocationSettableProtocol",
-    "LocationExistableProtocol",
-    "LocationDeletableProtocol",
-    "LocationObservableProtocol",
-    # =========================================================================
-    # LOCATION: ITEM ACCESS (bases)
-    # =========================================================================
-    "ItemGettableBase",
-    "ItemSettableBase",
-    "ItemDeletableBase",
-    "ItemExistableBase",
-    # =========================================================================
-    # LOCATION: COLLECTION (bases)
-    # =========================================================================
-    "CollectionExtractableBase",
-    "CollectionStorableBase",
-    "CollectionLengthableBase",
-    "CollectionClearableBase",
-    "CollectionExistableBase",
-    # =========================================================================
-    # LOCATION: REACTIVE (bases)
-    # =========================================================================
-    "PrimitiveObservableBase",
-    "ViewObservableBase",
 ]

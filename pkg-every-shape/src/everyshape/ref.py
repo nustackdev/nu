@@ -23,9 +23,13 @@ from typing import TYPE_CHECKING, Self
 
 from everyabc import Ref as RefABC
 from everyabc import Term
+from everybase import ensure_term
+from everybase.values import AnyValue
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from everyabc import Context
 
     from .shape import Shape
@@ -50,35 +54,39 @@ class Ref[T](RefABC[T]):
     - every_pv.RefBase: PV view navigation
 
     Attributes:
-        _address: Location identifier within parent
-        _parent: Parent ref for path composition
-        _shape: Owning Shape class for context lookup
+        address: Location identifier within parent
+        parent: Parent ref for path composition
+        shape: Owning Shape class for context lookup
     """
 
     def __init__(
         self,
-        address: str | int | Term | None = None,
+        address: object,
         parent: Ref | None = None,
-        shape: type[Shape] | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize ref.
 
         Args:
-            address: Key/index for this segment (or Term for dynamic)
-            parent: Parent ref in navigation chain
-            shape: Shape class for context lookup
+            address: Address of this filed in parent's domain
+            parent: Parent reference in navigation chain
+            owner_shape: Shape class this ref belongs to
         """
-        super().__init__()
-        self._address = address
+        try:
+            address_term = ensure_term(address)
+        except TypeError:
+            address_term = AnyValue(address)
+
+        super().__init__(address_term)
         self._parent = parent
-        self._shape = shape
+        self._owner_shape = owner_shape
 
     # =========================================================================
     # CORE PROPERTIES — Location Identity
     # =========================================================================
 
     @property
-    def address(self) -> str | int | Term | None:
+    def address(self) -> Term[object]:
         """Location identifier within parent.
 
         Can be:
@@ -87,7 +95,7 @@ class Ref[T](RefABC[T]):
         - Term: computed address (resolved at execution time)
         - None: root ref with no address
         """
-        return self._address
+        return self.children[0]
 
     @property
     def parent(self) -> Ref | None:
@@ -98,18 +106,18 @@ class Ref[T](RefABC[T]):
         return self._parent
 
     @property
-    def shape(self) -> type[Shape] | None:
+    def owner_shape(self) -> type[Shape] | None:
         """Owning Shape class for context lookup.
 
-        Used to find the right Storage handle at execution time.
+        Used to retrieve Context handler at execution time.
         """
-        return self._shape
+        return self._owner_shape
 
     # =========================================================================
     # PATH COMPOSITION — Building Full Paths
     # =========================================================================
 
-    async def resolve_address(self, ctx: Context) -> str | int:
+    async def resolve_address(self, ctx: Context) -> object:
         """Resolve this segment's address to concrete value.
 
         Handles dynamic (Term) addresses by executing them.
@@ -124,20 +132,6 @@ class Ref[T](RefABC[T]):
         if isinstance(addr, Term):
             return await addr.execute(ctx)
         return addr
-
-    def get_root_shape(self) -> type[Shape] | None:
-        """Traverse parent chain to find root shape.
-
-        Used when a nested ref needs the storage context.
-
-        Returns:
-            Root shape class, or None if no shape in chain.
-        """
-        if self.shape is not None:
-            return self.shape
-        if self.parent is not None:
-            return self.parent.get_root_shape()
-        return None
 
     def get_path_segments(self) -> list[Ref]:
         """Get all refs from root to self (inclusive).
@@ -156,7 +150,7 @@ class Ref[T](RefABC[T]):
         return list(reversed(segments))
 
     # =========================================================================
-    # PARENT CONTAINER ACCESS
+    # RESOLUTION
     # =========================================================================
 
     @abstractmethod
@@ -174,9 +168,17 @@ class Ref[T](RefABC[T]):
         """
         ...
 
-    # =========================================================================
-    # SLOT FACTORY — Creating Slots for Shape Definitions
-    # =========================================================================
+    @abstractmethod
+    async def resolve(self, ctx: Context) -> Iterable:
+        """Resolve returns an iterable identifier (full chain of parents + self).
+
+        Args:
+            ctx: Execution context
+
+        Returns:
+            Value reference
+        """
+        ...
 
     @classmethod
     @abstractmethod
@@ -208,11 +210,11 @@ class Ref[T](RefABC[T]):
     def __repr__(self) -> str:
         """Debug representation showing address and parent chain."""
         if self._parent:
-            return f"<{self.__class__.__name__}: {self._parent!r} -> {self._address!r}>"
-        return f"<{self.__class__.__name__}: {self._address!r}>"
+            return f"<{self.__class__.__name__}: {self._parent!r} -> {self.children[0]!r}>"
+        return f"<{self.__class__.__name__}: {self.children[0]!r}>"
 
     def __str__(self) -> str:
         """String representation showing address and parent chain."""
         if self._parent:
-            return f"{self.__class__.__name__}({self._parent!s} -> {self._address!s})"
-        return f"{self.__class__.__name__}({self._address!s})"
+            return f"{self.__class__.__name__}({self._parent!s} -> {self.children[0]!s})"
+        return f"{self.__class__.__name__}({self.children[0]!s})"

@@ -18,7 +18,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from every_pv.ref import PrimitiveRef
 from everybase.types import (
     BoolType,
     BytesType,
@@ -26,7 +25,10 @@ from everybase.types import (
     IntType,
     StrType,
 )
-from everyshape import ReactiveItemRef, Slot
+from everyshape import Slot
+from everyshape.collections import ReactiveItemRef
+
+from .ref import PrimitiveRef
 
 
 if TYPE_CHECKING:

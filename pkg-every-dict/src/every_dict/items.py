@@ -25,7 +25,8 @@ from everybase import (
     StrType,
     StrValue,
 )
-from everyshape import MutableItemRef, Slot
+from everyshape import Slot
+from everyshape.collections import MutableItemRef
 
 
 if TYPE_CHECKING:

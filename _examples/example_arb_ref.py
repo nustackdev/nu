@@ -25,8 +25,6 @@ from everybase import (
     FloatType,
     FloatValue,
     FuncCallOp,
-    ItemGetOp,
-    ItemSetCmd,
     MethodCallOp,
     StrType,
     StrValue,
@@ -37,6 +35,7 @@ from everybase import (
     ensure_term,
 )
 from everyshape import ItemRef, Slot
+from everyshape.morphisms import ItemGetOp, ItemSetCmd
 
 
 # =============================================

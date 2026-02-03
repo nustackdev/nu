@@ -1,3 +1,4 @@
+# ruff: noqa: D102
 """Concrete PV collection ref implementations.
 
 PV collection refs combine everyshape document model bases (navigation,
@@ -22,15 +23,13 @@ from everybase import ensure_term
 from everyshape import Shape as PVShape
 from everyshape import Slot
 from everyshape.collections import (
-    ReactiveMappingRef,
-    ReactiveSequenceRef,
-    ReactiveShapeRef,
-    ReactiveShapesDictRef,
-    ReactiveShapesListRef,
+    ReactiveMappingRefBase,
+    ReactiveSequenceRefBase,
+    ReactiveShapesDictRefBase,
+    ReactiveShapesListRefBase,
 )
-from everyshape.collections import (
-    ShapeRef as _BaseShapeRef,
-)
+from everyshape.ref_structured import ReactiveShapeRef
+from everyshape.ref_structured import ShapeRef as _BaseShapeRef
 
 
 if TYPE_CHECKING:
@@ -149,13 +148,22 @@ class ShapeRef[T: PVShape](
 
 
 class DictRef[K: int | str, V: StorageValue](
-    ReactiveMappingRef[K, V],
+    ReactiveMappingRefBase[K, V, DictValue[K, V], AnyValue],
     ViewRef[dict[K, V], MutableMappingView],
 ):
     """PV mapping reference — document model + PV substrate.
 
     Operations work lazily on PV views without loading into memory.
     """
+
+    def result(self, op: Term) -> DictValue[K, V]:
+        return DictValue(op)
+
+    def element_result(self, op: Term) -> AnyValue:
+        return AnyValue(op)
+
+    def iterable_result(self, op: Term) -> ListValue:
+        return ListValue(op)
 
     def __init__(
         self,
@@ -220,13 +228,19 @@ class DictRef[K: int | str, V: StorageValue](
 
 
 class ListRef[T, ItemValueT](
-    ReactiveSequenceRef[T],
+    ReactiveSequenceRefBase[T, ListValue[T], ItemValueT],
     ViewRef[list[T], MutableSequenceView],
 ):
     """PV sequence reference — document model + PV substrate.
 
     Operations work lazily on PV views without loading into memory.
     """
+
+    def result(self, op: Term) -> ListValue[T]:
+        return ListValue(op)
+
+    def element_result(self, op: Term) -> AnyValue:
+        return AnyValue(op)
 
     def __init__(
         self,
@@ -285,7 +299,7 @@ class ListRef[T, ItemValueT](
 
 
 class ShapesListRef[T: PVShape](
-    ReactiveShapesListRef[T],
+    ReactiveShapesListRefBase[T],
     ViewRef[list[dict], MutableSequenceView],
 ):
     """PV shapes list reference — document model + PV substrate."""
@@ -345,7 +359,7 @@ class ShapesListRef[T: PVShape](
 
 
 class ShapesDictRef[K: int | str, T: PVShape, KeyValueT](
-    ReactiveShapesDictRef[K, T],
+    ReactiveShapesDictRefBase[K, T],
     ViewRef[dict[K, dict], MutableMappingView],
 ):
     """PV shapes dict reference — document model + PV substrate."""

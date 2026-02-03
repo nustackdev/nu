@@ -1,3 +1,4 @@
+# ruff: noqa: D102
 """Dict substrate collection refs — containers in nested dicts.
 
 These combine everyshape document model bases (navigation, capabilities)
@@ -31,13 +32,13 @@ from everybase import (
 )
 from everyshape import Slot
 from everyshape.collections import (
-    MutableMappingRef,
-    MutableSequenceRef,
-    MutableShapeRef,
-    MutableShapesDictRef,
-    MutableShapesListRef,
+    MutableMappingRefBase,
+    MutableSequenceRefBase,
+    MutableShapesDictRefBase,
+    MutableShapesListRefBase,
 )
-from everyshape.collections import ShapeRef as _BaseShapeRef
+from everyshape.ref_structured import MutableShapeRef
+from everyshape.ref_structured import ShapeRef as _BaseShapeRef
 
 
 if TYPE_CHECKING:
@@ -116,10 +117,19 @@ class ShapeRef[T: ShapeBase](
 
 
 class MappingRef[K, V](
-    MutableMappingRef[K, V],
+    MutableMappingRefBase[K, V, DictValue[K, V], AnyValue],
     RefBase[dict[K, V]],
 ):
     """Dict mapping reference — key-value container backed by nested dict."""
+
+    def result(self, op: Term) -> DictValue[K, V]:
+        return DictValue(op)
+
+    def element_result(self, op: Term) -> AnyValue:
+        return AnyValue(op)
+
+    def iterable_result(self, op: Term) -> ListValue:
+        return ListValue(op)
 
     def __init__(
         self,
@@ -174,10 +184,16 @@ class MappingRef[K, V](
 
 
 class SequenceRef[T](
-    MutableSequenceRef[T],
+    MutableSequenceRefBase[T, ListValue[T], AnyValue],
     RefBase[list[T]],
 ):
     """Dict sequence reference — ordered container backed by nested list."""
+
+    def result(self, op: Term) -> ListValue[T]:
+        return ListValue(op)
+
+    def element_result(self, op: Term) -> AnyValue:
+        return AnyValue(op)
 
     def __init__(
         self,
@@ -225,7 +241,7 @@ class SequenceRef[T](
 
 
 class ShapesListRef[T: ShapeBase](
-    MutableShapesListRef[T],
+    MutableShapesListRefBase[T],
     RefBase[list[dict]],
 ):
     """Dict shapes list reference — sequence of homogeneous shapes."""
@@ -270,7 +286,7 @@ class ShapesListRef[T: ShapeBase](
 
 
 class ShapesDictRef[K, T: ShapeBase](
-    MutableShapesDictRef[K, T],
+    MutableShapesDictRefBase[K, T],
     RefBase[dict[K, dict]],
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""

@@ -1,0 +1,110 @@
+# ruff: noqa: D102
+"""Mapping collection RefBases — three tiers for the document model.
+
+MappingRefBase         = everybase.MappingBase + Existable + Extractable + Ref
+MutableMappingRefBase  = everybase.MutableMappingBase + MappingRefBase + Lengthable + Clearable + Storable
+ReactiveMappingRefBase = MutableMappingRefBase + ViewObservable
+
+These provide the bridge between everybase's _wrap_* hooks and everyshape's
+simpler result()/element_result()/iterable_result() abstracts.
+"""
+
+from __future__ import annotations
+
+from abc import abstractmethod
+from typing import TYPE_CHECKING
+
+from everybase.collections import MappingBase, MutableMappingBase
+from everyshape.capabilities import (
+    CollectionClearableBase,
+    CollectionExistableBase,
+    CollectionExtractableBase,
+    CollectionLengthableBase,
+    CollectionStorableBase,
+    ViewObservableBase,
+)
+
+from ..ref import Ref
+
+
+if TYPE_CHECKING:
+    from everyabc import Term
+
+
+__all__ = [
+    "MappingRefBase",
+    "MutableMappingRefBase",
+    "ReactiveMappingRefBase",
+]
+
+
+# =============================================================================
+# MAPPING REF — three tiers
+# =============================================================================
+
+
+class MappingRefBase[K, V, CollectionValueT, ValueValueT](
+    MappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
+    CollectionExistableBase,
+    CollectionExtractableBase[CollectionValueT],
+    Ref[dict[K, V]],
+):
+    """Base for mapping refs — key-value containers in the document model.
+
+    Bridges everybase's _wrap_* hooks to three abstract methods:
+        result(op) -> CollectionValueT       (extract/store)
+        element_result(op) -> ValueValueT    (single-value ops: get_, set_, delete)
+        iterable_result(op) -> object        (keys_, values_, items_, map_, filter_)
+
+    Substrates implement these three to get all everybase mapping ops
+    plus everyshape capabilities (exists, get/extract).
+    """
+
+    # -- Bridge: everybase _wrap_* → everyshape abstracts --
+
+    def _wrap_keys_result(self, operand: Term) -> object:
+        return self.iterable_result(operand)
+
+    def _wrap_values_result(self, operand: Term) -> object:
+        return self.iterable_result(operand)
+
+    def _wrap_items_result(self, operand: Term) -> object:
+        return self.iterable_result(operand)
+
+    def _wrap_iterable_result(self, operand: Term) -> object:
+        return self.iterable_result(operand)
+
+    def _wrap_value_result(self, operand: Term) -> ValueValueT:
+        return self.element_result(operand)
+
+    def _wrap_element_result(self, operand: Term) -> ValueValueT:
+        return self.element_result(operand)
+
+    # -- Abstract: downstream substrates implement these --
+
+    @abstractmethod
+    def element_result(self, op: Term) -> ValueValueT: ...
+
+    @abstractmethod
+    def iterable_result(self, op: Term) -> object: ...
+
+
+class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT](
+    MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
+    MappingRefBase[K, V, CollectionValueT, ValueValueT],
+    CollectionLengthableBase,
+    CollectionClearableBase,
+    CollectionStorableBase[CollectionValueT, dict[K, V]],
+):
+    """Mutable mapping ref — adds set_, delete, update_.
+
+    Also adds length(), clear(), store() from everyshape capabilities.
+    Diamond at MappingBase resolved by C3 linearization.
+    """
+
+
+class ReactiveMappingRefBase[K, V, CollectionValueT, ValueValueT](
+    MutableMappingRefBase[K, V, CollectionValueT, ValueValueT],
+    ViewObservableBase,
+):
+    """Reactive mapping ref — adds on_change, on_child_change, etc."""

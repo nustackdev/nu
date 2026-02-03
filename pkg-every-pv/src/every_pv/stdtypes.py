@@ -57,7 +57,8 @@ from every_math import (
 )
 from every_path import PathType, PathValue
 from every_uuid import UUIDType, UUIDValue
-from everybase import FuncCallOp, ItemSetCmd, MethodCallOp, ensure_term
+from everybase import FuncCallOp, MethodCallOp, ensure_term
+from everyshape.morphisms import ItemSetCmd
 
 from .primitives import Slot
 from .ref import PrimitiveRef

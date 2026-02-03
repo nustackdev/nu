@@ -1,9 +1,8 @@
 # ruff: noqa: D102
-"""Collection-level capability bases — extract, store, length, clear, exists.
+"""Collection-level capability bases — extract, store, clear, exists.
 
 CollectionExtractableBase: .get() wrapping ExtractOp
 CollectionStorableBase: .store(data) wrapping StoreCmd
-CollectionLengthableBase: .length() wrapping CollectionLenOp
 CollectionClearableBase: .clear() wrapping CollectionClearCmd
 CollectionExistableBase: .exists(), .missing()
 
@@ -13,7 +12,7 @@ The ref must implement fetch(ctx) -> storage object.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from everybase.values import BoolValue, IntValue, NoneValue
@@ -39,17 +38,17 @@ class CollectionExistableBase:
     """
 
     def exists(self) -> BoolValue:
-        from everybase.morphisms.loc_collection import CollectionExistsOp
+        from everyshape.morphisms.collection import CollectionExistsOp
 
         return BoolValue(CollectionExistsOp(self))
 
     def missing(self) -> BoolValue:
-        from everybase.morphisms.loc_collection import CollectionMissingOp
+        from everyshape.morphisms.collection import CollectionMissingOp
 
         return BoolValue(CollectionMissingOp(self))
 
 
-class CollectionExtractableBase[CollectionTypeT](ABC):
+class CollectionExtractableBase[CollectionTypeT]:
     """Base for collection refs that can extract their contents as a Python value.
 
     Provides get() using ExtractOp. Subclasses must implement result()
@@ -60,12 +59,12 @@ class CollectionExtractableBase[CollectionTypeT](ABC):
     def result(self, op: Term) -> CollectionTypeT: ...
 
     def get(self) -> CollectionTypeT:
-        from everybase.morphisms.loc_collection import ExtractOp
+        from everyshape.morphisms.collection import ExtractOp
 
         return self.result(ExtractOp(self))
 
 
-class CollectionStorableBase[CollectionTypeT, CollectionT](ABC):
+class CollectionStorableBase[CollectionTypeT, CollectionT]:
     """Base for collection refs that can replace their contents.
 
     Provides store(data) using StoreCmd. Subclasses must implement result()
@@ -78,8 +77,8 @@ class CollectionStorableBase[CollectionTypeT, CollectionT](ABC):
     def store(
         self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]
     ) -> CollectionTypeT:
-        from everybase.morphisms.loc_collection import StoreCmd
         from everybase.utils import ensure_term
+        from everyshape.morphisms.collection import StoreCmd
 
         return self.result(StoreCmd(self, ensure_term(value)))
 
@@ -91,7 +90,7 @@ class CollectionLengthableBase:
     """
 
     def length(self) -> IntValue:
-        from everybase.morphisms.loc_collection import CollectionLenOp
+        from everyshape.morphisms.collection import CollectionLenOp
 
         return IntValue(CollectionLenOp(self))
 
@@ -103,6 +102,6 @@ class CollectionClearableBase:
     """
 
     def clear(self) -> NoneValue:
-        from everybase.morphisms.loc_collection import CollectionClearCmd
+        from everyshape.morphisms.collection import CollectionClearCmd
 
         return NoneValue(CollectionClearCmd(self))

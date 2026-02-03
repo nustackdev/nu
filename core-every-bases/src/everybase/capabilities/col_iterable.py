@@ -2,6 +2,13 @@
 """Iterable capability — protocol + base.
 
 IterableProtocol/Base: map_(), filter_(), reduce_(), sum_(), min_(), max_(), any_(), all_()
+
+Type Parameters:
+    ElementT: Native Python element type (int, str, dict, etc.)
+    CollectionResultT: Wrapped result for collection-level operations
+        (map_, filter_ — return collections of the same shape)
+    ElementResultT: Wrapped result for element-level operations
+        (sum_, min_, max_ — return a single extracted element)
 """
 
 from __future__ import annotations
@@ -28,15 +35,23 @@ __all__ = [
 
 
 @runtime_checkable
-class IterableProtocol[ElementT, ResultT](Protocol):
-    """Protocol for values that support functional iteration operations."""
+class IterableProtocol[ElementT, CollectionResultT, ElementResultT](Protocol):
+    """Protocol for values that support functional iteration operations.
 
-    def map_[R](self, func: Callable[[ElementT], R]) -> ResultT: ...
-    def filter_(self, predicate: Callable[[ElementT], bool]) -> ResultT: ...
+    Type Parameters:
+        ElementT: Native Python element type (int, str, dict, etc.)
+        CollectionResultT: Result type for ops that return collections
+            (map_, filter_)
+        ElementResultT: Result type for ops that extract single elements
+            (sum_, min_, max_)
+    """
+
+    def map_[R](self, func: Callable[[ElementT], R]) -> CollectionResultT: ...
+    def filter_(self, predicate: Callable[[ElementT], bool]) -> CollectionResultT: ...
     def reduce_[R](self, func: Callable[[R, ElementT], R], initial: R) -> object: ...
-    def sum_(self) -> ResultT: ...
-    def min_(self) -> ResultT: ...
-    def max_(self) -> ResultT: ...
+    def sum_(self) -> ElementResultT: ...
+    def min_(self) -> ElementResultT: ...
+    def max_(self) -> ElementResultT: ...
     def any_(self) -> BoolValue: ...
     def all_(self) -> BoolValue: ...
 
@@ -46,28 +61,40 @@ class IterableProtocol[ElementT, ResultT](Protocol):
 # =============================================================================
 
 
-class IterableBase[ElementT, ResultT]:
-    """Base for values that support functional iteration operations."""
+class IterableBase[ElementT, CollectionResultT, ElementResultT]:
+    """Base for values that support functional iteration operations.
 
-    def _wrap_iterable_result(self, operand: Term) -> Term:
+    Subclasses must override:
+        _wrap_iterable_result(operand) -> CollectionResultT
+            Wrap a morphism result in the appropriate collection type.
+        _wrap_element_result(operand) -> ElementResultT
+            Wrap a morphism result in the appropriate element type.
+
+    Type Parameters:
+        ElementT: Native Python element type (int, str, dict, etc.)
+        CollectionResultT: Result type for ops that return collections
+        ElementResultT: Result type for ops that extract single elements
+    """
+
+    def _wrap_iterable_result(self, operand: Term) -> CollectionResultT:
         """Override in subclass to wrap result in appropriate collection type."""
         raise NotImplementedError()
 
-    def _wrap_element_result(self, operand: Term) -> Term:
+    def _wrap_element_result(self, operand: Term) -> ElementResultT:
         """Override in subclass to wrap result in appropriate element type."""
         raise NotImplementedError()
 
-    def map_[R](self, func: Callable[[ElementT], R]) -> ResultT:
+    def map_[R](self, func: Callable[[ElementT], R]) -> CollectionResultT:
         """Map function over elements."""
         from everybase.morphisms import MapOp
 
-        return cast("ResultT", self._wrap_iterable_result(MapOp(self, func)))
+        return cast("CollectionResultT", self._wrap_iterable_result(MapOp(self, func)))
 
-    def filter_(self, predicate: Callable[[ElementT], bool]) -> ResultT:
+    def filter_(self, predicate: Callable[[ElementT], bool]) -> CollectionResultT:
         """Filter elements by predicate."""
         from everybase.morphisms import FilterOp
 
-        return cast("ResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
+        return cast("CollectionResultT", self._wrap_iterable_result(FilterOp(self, predicate)))
 
     @overload
     def reduce_(self, func: Callable[[int, ElementT], int], initial: int) -> IntValue: ...
@@ -98,23 +125,23 @@ class IterableBase[ElementT, ResultT]:
 
         return AnyValue(ReduceOp(self, func, initial))
 
-    def sum_(self) -> ResultT:
+    def sum_(self) -> ElementResultT:
         """Sum all elements."""
         from everybase.morphisms import SumOp
 
-        return cast("ResultT", self._wrap_element_result(SumOp(self)))
+        return cast("ElementResultT", self._wrap_element_result(SumOp(self)))
 
-    def min_(self) -> ResultT:
+    def min_(self) -> ElementResultT:
         """Get minimum element."""
         from everybase.morphisms import MinOp
 
-        return cast("ResultT", self._wrap_element_result(MinOp(self)))
+        return cast("ElementResultT", self._wrap_element_result(MinOp(self)))
 
-    def max_(self) -> ResultT:
+    def max_(self) -> ElementResultT:
         """Get maximum element."""
         from everybase.morphisms import MaxOp
 
-        return cast("ResultT", self._wrap_element_result(MaxOp(self)))
+        return cast("ElementResultT", self._wrap_element_result(MaxOp(self)))
 
     def any_(self) -> BoolValue:
         """Check if any element is truthy."""

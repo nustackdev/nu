@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from everyabc import Model
 
-from .slot import Slot, _SlotBase
+from .slot import Slot
 
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class SlotDescriptor:
         slot.create_ref(owner_shape=Market, parent_ref=None)
     """
 
-    def __init__(self, name: str, slot: _SlotBase) -> None:
+    def __init__(self, name: str, slot: Slot) -> None:
         """Initialize descriptor.
 
         Args:
@@ -106,7 +106,7 @@ class ShapeMeta(ABCMeta):
         **kwargs: object,
     ) -> type:
         """Create shape class with slot processing."""
-        slots: dict[str, _SlotBase] = {}
+        slots: dict[str, Slot] = {}
 
         # 1. Collect slots from base classes (inheritance)
         for base in bases:
@@ -115,7 +115,7 @@ class ShapeMeta(ABCMeta):
 
         # 2. Scan namespace for Slot instances
         for field_name, value in namespace.items():
-            if isinstance(value, _SlotBase):
+            if isinstance(value, Slot):
                 value.name = field_name
                 slots[field_name] = value
 

@@ -22,11 +22,12 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import pv.traits as view_traits
+from pv import Empty as PVEmpty
 from pv.loc import path
 from pv.view import View
 
-from everyabc import EMPTY, Context, Sentinel, Term
-from everyshape import Ref
+from everyabc import EMPTY, Arg, Context, Sentinel
+from everyshape import Ref as RefShape
 
 
 if TYPE_CHECKING:
@@ -46,7 +47,7 @@ ViewT = TypeVar("ViewT", bound="View")
 logger = getLogger(__name__)
 
 
-class RefBase[T](Ref[T]):
+class RefBase[T](RefShape[T]):
     """Base for all PV storage refs.
 
     PV refs navigate through a view hierarchy to access values.
@@ -61,6 +62,88 @@ class RefBase[T](Ref[T]):
         ...
 
 
+class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
+    """PV ref to a container view.
+
+    Used for collection types like dict, list, set views.
+    fetch() navigates to and returns the view itself.
+    """
+
+    def __init__(
+        self,
+        address: Arg[path.PathAddress],
+        view_type: type[ViewT],
+        parent: RefShape | None = None,
+        shape: type[Shape] | None = None,
+    ) -> None:
+        """Initialize view ref.
+
+        Args:
+            address: Key/address for this view
+            view_type: The View class type
+            parent: Parent ref in navigation chain
+            shape: Shape class for context lookup
+        """
+        super().__init__(address, parent, shape)
+        self._view_type = view_type
+
+    @property
+    def view_type(self) -> type[ViewT]:
+        """The View class type at this location."""
+        return self._view_type
+
+    @property
+    def _type_marker(self) -> type:
+        return self._view_type
+
+    async def resolve(self, ctx: Context) -> path.PathToView:
+        """Build path from parent chain ending at this view.
+
+        Args:
+            ctx: Execution context
+
+        Returns:
+            Path tuple ending with (address, view_type)
+        """
+        address = await self.resolve_address(ctx)
+
+        if self._parent is None:
+            resolved_path = ((address, self._view_type),)
+        else:
+            parent_path = await self._parent.resolve(ctx)
+            resolved_path = (*parent_path, (address, self._view_type))
+
+        logger.debug(
+            "ViewRef resolved",
+            extra={
+                "address": address,
+                "view_type": self._view_type.__name__,
+                "has_parent": self._parent is not None,
+                "resolved_path": resolved_path,
+            },
+        )
+        return resolved_path
+
+    async def fetch(self, ctx: Context) -> ViewT | Sentinel:
+        """Fetch the view from PV storage.
+
+        Navigates through the view hierarchy to get this view.
+
+        Args:
+            ctx: Execution context with root_view access
+
+        Returns:
+            The view instance
+        """
+        view_path = await self.resolve(ctx)
+        shape = self.get_root_shape()
+        root_view = ctx.get(View, shape=shape)
+
+        if not view_path:
+            return root_view  # type: ignore
+        return path.navigate_view(root_view, view_path)  # type: ignore
+
+
 class PrimitiveRef[T](RefBase[T]):
     """PV ref to a primitive/leaf value.
 
@@ -70,9 +153,9 @@ class PrimitiveRef[T](RefBase[T]):
 
     def __init__(
         self,
-        address: path.PathAddress | Term,
+        address: Arg[path.PathAddress],
         value_type: type[T],
-        parent: RefBase | None = None,
+        parent: RefShape | None = None,
         shape: type[Shape] | None = None,
     ) -> None:
         """Initialize primitive ref.
@@ -160,89 +243,8 @@ class PrimitiveRef[T](RefBase[T]):
         try:
             parent_view, key = path.navigate_value(root_view, value_path)
             if isinstance(parent_view, view_traits.Subscriptable):
-                return parent_view[key]
+                val = parent_view[key]
+                return val if not isinstance(val, PVEmpty) else EMPTY
             raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
         except (KeyError, IndexError):
             return EMPTY
-
-
-class ViewRef(Generic[T, ViewT], RefBase[T]):  # noqa: UP046
-    """PV ref to a container view.
-
-    Used for collection types like dict, list, set views.
-    fetch() navigates to and returns the view itself.
-    """
-
-    def __init__(
-        self,
-        address: path.PathAddress | Term,
-        view_type: type[ViewT],
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
-    ) -> None:
-        """Initialize view ref.
-
-        Args:
-            address: Key/address for this view
-            view_type: The View class type
-            parent: Parent ref in navigation chain
-            shape: Shape class for context lookup
-        """
-        super().__init__(address, parent, shape)
-        self._view_type = view_type
-
-    @property
-    def view_type(self) -> type[ViewT]:
-        """The View class type at this location."""
-        return self._view_type
-
-    @property
-    def _type_marker(self) -> type:
-        return self._view_type
-
-    async def resolve(self, ctx: Context) -> path.PathToView:
-        """Build path from parent chain ending at this view.
-
-        Args:
-            ctx: Execution context
-
-        Returns:
-            Path tuple ending with (address, view_type)
-        """
-        address = await self.resolve_address(ctx)
-
-        if self._parent is None:
-            resolved_path = ((address, self._view_type),)
-        else:
-            parent_path = await self._parent.resolve(ctx)
-            resolved_path = (*parent_path, (address, self._view_type))
-
-        logger.debug(
-            "ViewRef resolved",
-            extra={
-                "address": address,
-                "view_type": self._view_type.__name__,
-                "has_parent": self._parent is not None,
-                "resolved_path": resolved_path,
-            },
-        )
-        return resolved_path
-
-    async def fetch(self, ctx: Context) -> ViewT:
-        """Fetch the view from PV storage.
-
-        Navigates through the view hierarchy to get this view.
-
-        Args:
-            ctx: Execution context with root_view access
-
-        Returns:
-            The view instance
-        """
-        view_path = await self.resolve(ctx)
-        shape = self.get_root_shape()
-        root_view = ctx.get(View, shape=shape)
-
-        if not view_path:
-            return root_view  # type: ignore
-        return path.navigate_view(root_view, view_path)  # type: ignore

@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import ClearableBase, ComparableBase, MutableSetBase, SetLikeBase
+from everybase.capabilities import ClearableBase, ComparableBase
+from everybase.collections import MutableSetBase, SetLikeBase
 
 from .base import TypeBase
 
@@ -27,7 +28,7 @@ __all__ = [
 
 
 class SetType[T](
-    MutableSetBase[T, "SetValue[T]"],
+    MutableSetBase[set[T], T, "SetValue[T]", "AnyValue"],
     ClearableBase,
     ComparableBase["set[T] | SetValue[T]"],
     TypeBase[set[T]],
@@ -59,7 +60,7 @@ class SetType[T](
 
 
 class FrozenSetType[T](
-    SetLikeBase[T, "FrozenSetValue[T]"],
+    SetLikeBase[frozenset[T], T, "FrozenSetValue[T]", "AnyValue"],
     ComparableBase["frozenset[T] | FrozenSetValue[T]"],
     TypeBase[frozenset[T]],
 ):

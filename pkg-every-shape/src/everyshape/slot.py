@@ -6,13 +6,12 @@ Used internally by Ref.slot() — users call Ref.slot(), not Slot() directly.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from .ref import Ref
     from .shape import Shape
-    from .shape_ref import Ref
 
 
 __all__ = [
@@ -20,26 +19,7 @@ __all__ = [
 ]
 
 
-class _SlotBase(ABC):
-    """Abstract base for slots (internal, for isinstance checks)."""
-
-    def __init__(self) -> None:
-        self.name: str | None = None
-
-    @abstractmethod
-    def create_ref(
-        self,
-        owner_shape: type[Shape],
-        parent_ref: Ref | None = None,
-    ) -> Ref:
-        """Create ref for this slot."""
-        ...
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} name={self.name!r}>"
-
-
-class Slot[RefT: Ref](_SlotBase):
+class Slot[RefT: Ref]:
     """Universal slot that creates any Ref type.
 
     Used internally by Ref.slot() implementations.
@@ -61,7 +41,7 @@ class Slot[RefT: Ref](_SlotBase):
             ref_cls: The Ref class this slot will create
             **kwargs: Additional arguments passed to ref constructor
         """
-        super().__init__()
+        self.name: str | None = None
         self.ref_cls = ref_cls
         self.kwargs = kwargs
 
@@ -74,7 +54,7 @@ class Slot[RefT: Ref](_SlotBase):
         return self.ref_cls(
             address=self.name,
             parent=parent_ref,
-            shape=owner_shape,
+            owner_shape=owner_shape,
             **self.kwargs,
         )
 

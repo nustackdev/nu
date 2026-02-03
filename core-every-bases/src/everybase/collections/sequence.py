@@ -1,0 +1,201 @@
+# ruff: noqa: D102
+"""Sequence collection — protocols + bases + mutations.
+
+SequenceProtocol/Base = Collection + Sliceable + first/last/sorted/join/index/find_index/count
+MutableSequenceProtocol/Base = Sequence + append/insert/pop/extend/remove
+
+Follows Python's collections.abc.Sequence / MutableSequence pattern.
+
+Type Parameters:
+    CollectionT: Native Python collection type (list[int], tuple[str, ...], etc.)
+    ElementT: Native Python element type (int, str, dict, etc.)
+    CollectionResultT: Wrapped result for collection-level operations
+        (map_, filter_, reversed_, sorted_, slice_, append, insert, extend, remove)
+    ElementResultT: Wrapped result for element-level operations
+        (first, last, pop, sum_, min_, max_)
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol, cast
+
+from everybase.capabilities.col_atoms import SliceableBase, SliceableProtocol
+from everybase.capabilities.col_collection import CollectionBase, CollectionProtocol
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from everyabc import BoolArg, StrArg
+    from everybase.values import IntValue, StrValue
+
+
+__all__ = [
+    "MutableSequenceBase",
+    "MutableSequenceProtocol",
+    "SequenceBase",
+    "SequenceProtocol",
+]
+
+
+# =============================================================================
+# PROTOCOLS
+# =============================================================================
+
+
+class SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    CollectionProtocol[ElementT, CollectionResultT, ElementResultT],
+    SliceableProtocol[CollectionResultT],
+    Protocol,
+):
+    """Protocol for sequence values — like collections.abc.Sequence.
+
+    Type Parameters:
+        CollectionT: Native Python collection type (list[int], tuple[str, ...])
+        ElementT: Native Python element type
+        CollectionResultT: Result for collection-level ops (map_, filter_, reversed_, sorted_)
+        ElementResultT: Result for element-level ops (first, last, sum_, min_, max_)
+    """
+
+    def first(self) -> ElementResultT: ...
+    def last(self) -> ElementResultT: ...
+    def reversed_(self) -> CollectionResultT: ...
+    def sorted_(self, reverse: BoolArg = False) -> CollectionResultT: ...
+    def join(self, separator: StrArg) -> StrValue: ...
+    def index(self, value: ElementT) -> IntValue: ...
+    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue: ...
+    def count(self, value: ElementT) -> IntValue: ...
+
+
+class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT],
+    Protocol,
+):
+    """Protocol for mutable sequence values — like collections.abc.MutableSequence.
+
+    Type Parameters:
+        CollectionT: Native Python collection type
+        ElementT: Native Python element type
+        CollectionResultT: Result for collection-level ops (append, extend, insert, remove)
+        ElementResultT: Result for element-level ops (pop)
+    """
+
+    def append(self, value: ElementT) -> CollectionResultT: ...
+    def extend(self, other: Iterable[ElementT]) -> CollectionResultT: ...
+    def insert(self, index: int, value: ElementT) -> CollectionResultT: ...
+    def pop(self, index: int = -1) -> ElementResultT: ...
+    def remove(self, value: ElementT) -> CollectionResultT: ...
+
+
+# =============================================================================
+# BASES
+# =============================================================================
+
+
+class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    CollectionBase[ElementT, CollectionResultT, ElementResultT],
+    SliceableBase[CollectionResultT],
+):
+    """Base for sequence values — like collections.abc.Sequence.
+
+    Type Parameters:
+        CollectionT: Native Python collection type (list[int], tuple[str, ...])
+        ElementT: Native Python element type
+        CollectionResultT: Result for collection-level ops (map_, filter_, reversed_, sorted_)
+        ElementResultT: Result for element-level ops (first, last, sum_, min_, max_)
+    """
+
+    def first(self) -> ElementResultT:
+        """Get first element."""
+        from everybase.morphisms import FirstOp
+
+        return cast("ElementResultT", self._wrap_element_result(FirstOp(self)))
+
+    def last(self) -> ElementResultT:
+        """Get last element."""
+        from everybase.morphisms import LastOp
+
+        return cast("ElementResultT", self._wrap_element_result(LastOp(self)))
+
+    def reversed_(self) -> CollectionResultT:
+        """Get reversed sequence."""
+        from everybase.morphisms import ReversedOp
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(ReversedOp(self)))
+
+    def sorted_(self, reverse: BoolArg = False) -> CollectionResultT:
+        """Get sorted sequence."""
+        from everybase.morphisms import SortedOp
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(SortedOp(self, reverse)))
+
+    def join(self, separator: StrArg) -> StrValue:
+        """Join string elements."""
+        from everybase.morphisms import JoinOp
+        from everybase.values import StrValue
+
+        return StrValue(JoinOp(self, separator))
+
+    def index(self, value: ElementT) -> IntValue:
+        """Find index of value."""
+        from everybase.morphisms import IndexOfOp
+        from everybase.values import IntValue
+
+        return IntValue(IndexOfOp(self, value))
+
+    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue:
+        """Find index of first match."""
+        from everybase.morphisms import FindIndexOp
+        from everybase.values import IntValue
+
+        return IntValue(FindIndexOp(self, predicate))
+
+    def count(self, value: ElementT) -> IntValue:
+        """Count occurrences."""
+        from everybase.morphisms import CountOp
+        from everybase.values import IntValue
+
+        return IntValue(CountOp(self, value))
+
+
+class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT],
+):
+    """Base for mutable sequence values — like collections.abc.MutableSequence.
+
+    Type Parameters:
+        CollectionT: Native Python collection type
+        ElementT: Native Python element type
+        CollectionResultT: Result for collection-level ops (append, extend, insert, remove)
+        ElementResultT: Result for element-level ops (pop)
+    """
+
+    def append(self, value: ElementT) -> CollectionResultT:
+        """Append item to end of sequence."""
+        from everybase.morphisms.abc_sequence import AppendCmd
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(AppendCmd(self, value)))
+
+    def extend(self, other: Iterable[ElementT]) -> CollectionResultT:
+        """Extend sequence with elements from iterable."""
+        from everybase.morphisms.abc_sequence import ExtendCmd
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(ExtendCmd(self, other)))
+
+    def insert(self, index: int, value: ElementT) -> CollectionResultT:
+        """Insert item at index."""
+        from everybase.morphisms.abc_sequence import InsertCmd
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(InsertCmd(self, index, value)))
+
+    def pop(self, index: int = -1) -> ElementResultT:
+        """Remove and return item at index (default: last)."""
+        from everybase.morphisms.abc_sequence import PopCmd
+
+        return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
+
+    def remove(self, value: ElementT) -> CollectionResultT:
+        """Remove first occurrence of value."""
+        from everybase.morphisms.abc_sequence import RemoveValueCmd
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(RemoveValueCmd(self, value)))

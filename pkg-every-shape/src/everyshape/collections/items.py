@@ -11,15 +11,15 @@ Substrates extend these with their own storage mechanisms.
 from __future__ import annotations
 
 from everyabc import Value
-from everybase.capabilities.loc_item import (
+from everyshape.capabilities import (
     ItemDeletableBase,
     ItemExistableBase,
     ItemGettableBase,
     ItemSettableBase,
+    PrimitiveObservableBase,
 )
-from everybase.capabilities.loc_reactive import PrimitiveObservableBase
 
-from .shape_ref import Ref
+from ..ref import Ref
 
 
 __all__ = [

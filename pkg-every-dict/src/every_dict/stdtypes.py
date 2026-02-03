@@ -57,8 +57,9 @@ from every_math import (
 )
 from every_path import PathType, PathValue
 from every_uuid import UUIDType, UUIDValue
-from everybase import FuncCallOp, ItemSetCmd, MethodCallOp, ensure_term
+from everybase import FuncCallOp, MethodCallOp, ensure_term
 from everyshape import Slot
+from everyshape.morphisms import ItemSetCmd
 
 from .ref import RefBase
 

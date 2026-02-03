@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from everybase.capabilities import ComparableBase, SequenceBase
+from everybase.capabilities import ComparableBase
+from everybase.collections import SequenceBase
 
 from .base import TypeBase
 
@@ -25,7 +26,7 @@ __all__ = [
 
 
 class TupleType[*Ts](
-    SequenceBase[object, "ListValue[object]"],
+    SequenceBase[tuple[*Ts], object, "ListValue[object]", "AnyValue"],
     ComparableBase["tuple"],
     TypeBase[tuple[*Ts]],
 ):

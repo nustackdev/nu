@@ -16,59 +16,104 @@ Ref Hierarchy:
 Item Refs (typed values):
     ItemRef -> MutableItemRef -> ReactiveItemRef
 
-Collection Refs (containers):
+Shape Refs (structured containers):
     ShapeRef -> MutableShapeRef -> ReactiveShapeRef
-    MappingRef -> MutableMappingRef -> ReactiveMappingRef
-    SequenceRef -> MutableSequenceRef -> ReactiveSequenceRef
-    ShapesListRef -> MutableShapesListRef -> ReactiveShapesListRef
-    ShapesDictRef -> MutableShapesDictRef -> ReactiveShapesDictRef
+
+Collection RefBases (containers — substrates inherit these):
+    SequenceRefBase -> MutableSequenceRefBase -> ReactiveSequenceRefBase
+    MappingRefBase -> MutableMappingRefBase -> ReactiveMappingRefBase
+    ShapesListRefBase -> MutableShapesListRefBase -> ReactiveShapesListRefBase
+    ShapesDictRefBase -> MutableShapesDictRefBase -> ReactiveShapesDictRefBase
 """
 
-from everyshape.collections import (
-    MappingRef,
-    MutableMappingRef,
-    MutableSequenceRef,
-    MutableShapeRef,
-    MutableShapesDictRef,
-    MutableShapesListRef,
-    ReactiveMappingRef,
-    ReactiveSequenceRef,
-    ReactiveShapeRef,
-    ReactiveShapesDictRef,
-    ReactiveShapesListRef,
-    SequenceRef,
-    ShapeRef,
-    ShapesDictRef,
-    ShapesListRef,
+from everyshape.capabilities import (
+    CollectionClearableBase,
+    CollectionExistableBase,
+    CollectionExtractableBase,
+    CollectionLengthableBase,
+    CollectionStorableBase,
+    ItemDeletableBase,
+    ItemExistableBase,
+    ItemGettableBase,
+    ItemSettableBase,
+    LocationDeletableProtocol,
+    LocationExistableProtocol,
+    LocationGettableProtocol,
+    LocationObservableProtocol,
+    LocationSettableProtocol,
+    PrimitiveObservableBase,
+    ViewObservableBase,
 )
-from everyshape.items import ItemRef, MutableItemRef, ReactiveItemRef
+from everyshape.collections import (
+    ItemRef,
+    MappingRefBase,
+    MutableItemRef,
+    MutableMappingRefBase,
+    MutableSequenceRefBase,
+    MutableShapesDictRefBase,
+    MutableShapesListRefBase,
+    ReactiveItemRef,
+    ReactiveMappingRefBase,
+    ReactiveSequenceRefBase,
+    ReactiveShapesDictRefBase,
+    ReactiveShapesListRefBase,
+    SequenceRefBase,
+    ShapesDictRefBase,
+    ShapesListRefBase,
+)
+from everyshape.ref import Ref
+from everyshape.ref_structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
 from everyshape.shape import Shape, ShapeMeta, SlotDescriptor
-from everyshape.shape_ref import Ref
 from everyshape.slot import Slot
 
 
-__all__ = [
-    "ItemRef",
-    "MappingRef",
-    "MutableItemRef",
-    "MutableMappingRef",
-    "MutableSequenceRef",
-    "MutableShapeRef",
-    "MutableShapesDictRef",
-    "MutableShapesListRef",
-    "ReactiveItemRef",
-    "ReactiveMappingRef",
-    "ReactiveSequenceRef",
-    "ReactiveShapeRef",
-    "ReactiveShapesDictRef",
-    "ReactiveShapesListRef",
+__all__ = [  # noqa: RUF022
+    # Capabilities — Location protocols
+    "LocationDeletableProtocol",
+    "LocationExistableProtocol",
+    "LocationGettableProtocol",
+    "LocationObservableProtocol",
+    "LocationSettableProtocol",
+    # Capabilities — Item bases
+    "ItemDeletableBase",
+    "ItemExistableBase",
+    "ItemGettableBase",
+    "ItemSettableBase",
+    # Capabilities — Collection bases
+    "CollectionClearableBase",
+    "CollectionExistableBase",
+    "CollectionExtractableBase",
+    "CollectionLengthableBase",
+    "CollectionStorableBase",
+    # Capabilities — Reactive bases
+    "PrimitiveObservableBase",
+    "ViewObservableBase",
+    # Ref base
     "Ref",
-    "SequenceRef",
+    # Item refs
+    "ItemRef",
+    "MutableItemRef",
+    "ReactiveItemRef",
+    # Shape refs
+    "ShapeRef",
+    "MutableShapeRef",
+    "ReactiveShapeRef",
+    # Collection RefBases
+    "MappingRefBase",
+    "MutableMappingRefBase",
+    "ReactiveMappingRefBase",
+    "SequenceRefBase",
+    "MutableSequenceRefBase",
+    "ReactiveSequenceRefBase",
+    "ShapesListRefBase",
+    "MutableShapesListRefBase",
+    "ReactiveShapesListRefBase",
+    "ShapesDictRefBase",
+    "MutableShapesDictRefBase",
+    "ReactiveShapesDictRefBase",
+    # Shape system
     "Shape",
     "ShapeMeta",
-    "ShapeRef",
-    "ShapesDictRef",
-    "ShapesListRef",
-    "Slot",
     "SlotDescriptor",
+    "Slot",
 ]

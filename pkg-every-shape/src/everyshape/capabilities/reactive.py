@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from everyabc import Sentinel, Term
-    from everybase.morphisms.loc_reactive import (
+    from everyshape.morphisms.reactive import (
         OnChangeOp,
         OnChildChangeOp,
         OnChildrenChangeOp,
@@ -40,7 +40,7 @@ class PrimitiveObservableBase:
     """
 
     def on_change(self) -> OnPrimitiveChangeOp:
-        from everybase.morphisms.loc_reactive import OnPrimitiveChangeOp
+        from everyshape.morphisms.reactive import OnPrimitiveChangeOp
 
         return OnPrimitiveChangeOp(self)
 
@@ -56,21 +56,21 @@ class ViewObservableBase:
     """
 
     def on_change(self) -> OnChangeOp:
-        from everybase.morphisms.loc_reactive import OnChangeOp
+        from everyshape.morphisms.reactive import OnChangeOp
 
         return OnChangeOp(self)
 
     def on_child_change(self, address: str | Sentinel | Term[str | Sentinel]) -> OnChildChangeOp:
-        from everybase.morphisms.loc_reactive import OnChildChangeOp
+        from everyshape.morphisms.reactive import OnChildChangeOp
 
         return OnChildChangeOp(self, address)
 
     def on_children_change(self) -> OnChildrenChangeOp:
-        from everybase.morphisms.loc_reactive import OnChildrenChangeOp
+        from everyshape.morphisms.reactive import OnChildrenChangeOp
 
         return OnChildrenChangeOp(self)
 
     def on_descendants_change(self, *pattern: object) -> OnDescendantsChangeOp:
-        from everybase.morphisms.loc_reactive import OnDescendantsChangeOp
+        from everyshape.morphisms.reactive import OnDescendantsChangeOp
 
         return OnDescendantsChangeOp(self, *pattern)

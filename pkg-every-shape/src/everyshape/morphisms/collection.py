@@ -91,22 +91,19 @@ class StoreCmd[T](Command, Morphism[T]):
         return f"StoreCmd({self.ref!r}, {self.data_expr!r})"
 
 
-class CollectionLenOp(Operation, Morphism[int | Sentinel]):
+class CollectionLenOp(Operation, Morphism[int]):
     """Get collection length: len(view).
 
     The ref must implement:
-        fetch(ctx) -> sized storage object
+        fetch(ctx) -> storage object supporting __len__
     """
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> int | Sentinel:
-        try:
-            view = await self.ref.fetch(ctx)
-        except (KeyError, IndexError):
-            return EMPTY
+    async def execute(self, ctx: Context) -> int:
+        view = await self.ref.fetch(ctx)
         return len(view)
 
     def __repr__(self) -> str:

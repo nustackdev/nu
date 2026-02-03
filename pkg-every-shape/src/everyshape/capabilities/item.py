@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from everybase.values import (
+from everybase import (
     BoolValue,
     BytesValue,
     DictValue,
@@ -46,12 +46,12 @@ class ItemExistableBase:
     """
 
     def exists(self) -> BoolValue:
-        from everybase.morphisms.loc_item import ItemExistsOp
+        from everyshape.morphisms.item import ItemExistsOp
 
         return BoolValue(ItemExistsOp(self))
 
     def missing(self) -> BoolValue:
-        from everybase.morphisms.loc_item import ItemMissingOp
+        from everyshape.morphisms.item import ItemMissingOp
 
         return BoolValue(ItemMissingOp(self))
 
@@ -93,8 +93,8 @@ class ItemGettableBase[ValueT]:
     def get[V](self: ItemGettableBase[set[V]]) -> SetValue[V]: ...
 
     def get(self) -> object:
-        from everybase.morphisms.loc_item import ItemGetOp
         from everybase.utils import typed_value
+        from everyshape.morphisms.item import ItemGetOp
 
         return typed_value(self.value_type, ItemGetOp(self))
 
@@ -154,8 +154,8 @@ class ItemSettableBase[ValueT]:
     ) -> SetValue[V]: ...
 
     def set(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> object:
-        from everybase.morphisms.loc_item import ItemSetCmd
         from everybase.utils import ensure_term, typed_value
+        from everyshape.morphisms.item import ItemSetCmd
 
         return typed_value(self.value_type, ItemSetCmd(self, ensure_term(value)))
 
@@ -167,6 +167,6 @@ class ItemDeletableBase:
     """
 
     def remove(self) -> NoneValue:
-        from everybase.morphisms.loc_item import ItemDeleteCmd
+        from everyshape.morphisms.item import ItemDeleteCmd
 
         return NoneValue(ItemDeleteCmd(self))

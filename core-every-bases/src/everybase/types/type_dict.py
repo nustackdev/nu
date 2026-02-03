@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase.capabilities import ClearableBase, ComparableBase, MutableMappingBase
+from everybase.capabilities import ClearableBase, ComparableBase
+from everybase.collections import MutableMappingBase
 
 from .base import TypeBase
 
@@ -25,7 +26,7 @@ __all__ = [
 
 
 class DictType[K, V](
-    MutableMappingBase[K, V, "DictValue[K, V]"],
+    MutableMappingBase[dict[K, V], K, V, "DictValue[K, V]", "AnyValue"],
     ClearableBase,
     ComparableBase["dict[K, V] | DictValue[K, V]"],
     TypeBase[dict[K, V]],
