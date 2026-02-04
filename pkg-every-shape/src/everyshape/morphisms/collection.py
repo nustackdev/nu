@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everybase import EMPTY, Command, Morphism, Operation, Sentinel
+from everyshape.protocols import ClearableProtocol, ExtractableProtocol, StorableProtocol
 
 
 if TYPE_CHECKING:
@@ -52,7 +53,7 @@ class ExtractOp[T](Operation, Morphism[T | Sentinel]):
         except (KeyError, IndexError):
             return EMPTY
 
-        if not hasattr(view, "extract"):
+        if not isinstance(view, ExtractableProtocol):
             raise TypeError(f"{type(view).__name__} does not support extract()")
         return view.extract()
 
@@ -81,7 +82,7 @@ class StoreCmd[T](Command, Morphism[T]):
 
         view = await self.ref.fetch(ctx)
 
-        if not hasattr(view, "store"):
+        if not isinstance(view, StorableProtocol):
             raise TypeError(f"{type(view).__name__} does not support store()")
         view.store(data)
         return data
@@ -103,7 +104,7 @@ class CollectionClearCmd(Command, Morphism[None]):
 
     async def execute(self, ctx: Context) -> None:
         view = await self.ref.fetch(ctx)
-        if not hasattr(view, "clear"):
+        if not isinstance(view, ClearableProtocol):
             raise TypeError(f"{type(view).__name__} does not support clear()")
         view.clear()
         return None

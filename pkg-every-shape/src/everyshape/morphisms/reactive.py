@@ -18,6 +18,12 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from everybase import Morphism, Operation, Term
+from everyshape.protocols import (
+    ChildObservableProtocol,
+    ChildrenObservableProtocol,
+    DescendantsObservableProtocol,
+    ObservableProtocol,
+)
 
 
 if TYPE_CHECKING:
@@ -60,8 +66,8 @@ class OnChangeOp(ChangeOp):
 
     async def execute(self, ctx: Context) -> object:
         view = await self.ref.fetch(ctx)
-        if not hasattr(view, "on_change"):
-            raise TypeError(f"{type(view).__name__} does not implement Observable protocol")
+        if not isinstance(view, ObservableProtocol):
+            raise TypeError(f"{type(view).__name__} does not implement ObservableProtocol")
         return view.on_change()
 
     def __repr__(self) -> str:
@@ -86,8 +92,8 @@ class OnPrimitiveChangeOp(ChangeOp):
     async def execute(self, ctx: Context) -> object:
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
-        if not hasattr(parent, "on_child_change"):
-            raise TypeError(f"{type(parent).__name__} does not implement ChildObservable protocol")
+        if not isinstance(parent, ChildObservableProtocol):
+            raise TypeError(f"{type(parent).__name__} does not implement ChildObservableProtocol")
         return parent.on_child_change(address)
 
     def __repr__(self) -> str:
@@ -115,8 +121,8 @@ class OnChildChangeOp[A](ChangeOp):
             address = self.address
 
         view = await self.ref.fetch(ctx)
-        if not hasattr(view, "on_child_change"):
-            raise TypeError(f"{type(view).__name__} does not implement ChildObservable protocol")
+        if not isinstance(view, ChildObservableProtocol):
+            raise TypeError(f"{type(view).__name__} does not implement ChildObservableProtocol")
         return view.on_child_change(address)
 
     def __repr__(self) -> str:
@@ -138,8 +144,8 @@ class OnChildrenChangeOp(ChangeOp):
 
     async def execute(self, ctx: Context) -> object:
         view = await self.ref.fetch(ctx)
-        if not hasattr(view, "on_children_change"):
-            raise TypeError(f"{type(view).__name__} does not implement ChildObservable protocol")
+        if not isinstance(view, ChildrenObservableProtocol):
+            raise TypeError(f"{type(view).__name__} does not implement ChildrenObservableProtocol")
         return view.on_children_change()
 
     def __repr__(self) -> str:
@@ -165,9 +171,9 @@ class OnDescendantsChangeOp(ChangeOp):
             raise ValueError("Pattern cannot be empty for on_descendants_change")
 
         view = await self.ref.fetch(ctx)
-        if not hasattr(view, "on_descendents_change"):
+        if not isinstance(view, DescendantsObservableProtocol):
             raise TypeError(
-                f"{type(view).__name__} does not implement DescendantsObservable protocol"
+                f"{type(view).__name__} does not implement DescendantsObservableProtocol"
             )
         return view.on_descendents_change(self.pattern[0], *self.pattern[1:])
 

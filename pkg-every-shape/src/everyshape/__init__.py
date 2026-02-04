@@ -43,11 +43,6 @@ from everyshape.capabilities import (
     ItemExistableBase,
     ItemGettableBase,
     ItemSettableBase,
-    # LocationDeletableProtocol,
-    # LocationExistableProtocol,
-    # LocationGettableProtocol,
-    # LocationObservableProtocol,
-    # LocationSettableProtocol,
     PrimitiveObservableBase,
     ViewObservableBase,
 )
@@ -63,6 +58,15 @@ from everyshape.collections import (
     ReactiveSequenceBase,
     SequenceBase,
     SetLikeBase,
+)
+from everyshape.protocols import (
+    ChildObservableProtocol,
+    ChildrenObservableProtocol,
+    ClearableProtocol,
+    DescendantsObservableProtocol,
+    ExtractableProtocol,
+    ObservableProtocol,
+    StorableProtocol,
 )
 from everyshape.refs import (
     ItemRef,
@@ -102,12 +106,15 @@ from everyshape.types import (
 
 
 __all__ = [  # noqa: RUF022
-    # Capabilities — Location protocols
-    "LocationDeletableProtocol",
-    "LocationExistableProtocol",
-    "LocationGettableProtocol",
-    "LocationObservableProtocol",
-    "LocationSettableProtocol",
+    # Protocols — Collection view
+    "ClearableProtocol",
+    "ExtractableProtocol",
+    "StorableProtocol",
+    # Protocols — Reactive view
+    "ChildObservableProtocol",
+    "ChildrenObservableProtocol",
+    "DescendantsObservableProtocol",
+    "ObservableProtocol",
     # Capabilities — Item bases
     "ItemDeletableBase",
     "ItemExistableBase",
@@ -117,7 +124,6 @@ __all__ = [  # noqa: RUF022
     "CollectionClearableBase",
     "CollectionExistableBase",
     "CollectionExtractableBase",
-    "CollectionLengthableBase",
     "CollectionStorableBase",
     # Capabilities — Reactive bases
     "PrimitiveObservableBase",
