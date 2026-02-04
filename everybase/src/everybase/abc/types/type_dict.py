@@ -15,7 +15,7 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import DictArg, Term  # noqa: F401
 
     from ..values import AnyValue, BoolValue, DictValue, ListValue  # noqa: F401
 
@@ -27,7 +27,7 @@ __all__ = [
 
 class DictType[K, V](
     MutableMappingBase[dict[K, V], K, V, "DictValue[K, V]", "AnyValue"],
-    ComparableBase["dict[K, V] | DictValue[K, V]"],
+    ComparableBase["DictArg[K, V]"],
     TypeBase[dict[K, V]],
 ):
     """Abstract base for dict refs.

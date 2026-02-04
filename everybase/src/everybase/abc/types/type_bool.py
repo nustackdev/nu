@@ -12,7 +12,7 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import BoolArg, Term  # noqa: F401
 
     from ..values import BoolValue
 
@@ -23,8 +23,8 @@ __all__ = [
 
 
 class BoolType(
-    LogicalBase["bool | BoolValue", "BoolValue"],
-    ComparableBase["bool | BoolValue"],
+    LogicalBase["BoolArg", "BoolValue"],
+    ComparableBase["BoolArg"],
     TypeBase[bool],
 ):
     """Abstract base for boolean refs.

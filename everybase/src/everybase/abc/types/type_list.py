@@ -15,7 +15,7 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import IntArg, ListArg, Term
 
     from ..values import AnyValue, BoolValue, ListValue
 
@@ -28,7 +28,7 @@ __all__ = [
 class ListType[T](
     MutableSequenceBase[list[T], T, "ListValue[T]", "AnyValue"],
     # ClearableBase,
-    ComparableBase["list[T] | ListValue[T]"],
+    ComparableBase["ListArg[T]"],
     TypeBase[list[T]],
 ):
     """Abstract base for list refs.
@@ -56,23 +56,23 @@ class ListType[T](
 
         return AnyValue(operand)
 
-    def __add__(self, other: list[T] | ListType[T]) -> ListValue[T]:
+    def __add__(self, other: ListArg[T]) -> ListValue[T]:
         from ..morphisms import AddOp
         from ..values import ListValue
 
         return ListValue(AddOp[list[T]](self, other))
 
-    def __radd__(self, other: list[T]) -> ListValue[T]:
+    def __radd__(self, other: ListArg[T]) -> ListValue[T]:
         from ..morphisms import AddOp
         from ..values import ListValue
 
         return ListValue(AddOp(other, self))
 
     @overload
-    def __getitem__(self, key: int) -> AnyValue: ...
+    def __getitem__(self, key: IntArg) -> AnyValue: ...
     @overload
     def __getitem__(self, key: slice) -> ListValue[T]: ...
-    def __getitem__(self, key: int | slice) -> AnyValue | ListValue[T]:
+    def __getitem__(self, key: IntArg | slice) -> AnyValue | ListValue[T]:
         from ..morphisms import AtOp, SliceOp
         from ..values import AnyValue, ListValue
 

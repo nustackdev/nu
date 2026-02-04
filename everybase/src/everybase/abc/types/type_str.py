@@ -32,12 +32,12 @@ __all__ = [
 
 
 class StrType(
-    AddableBase[str, "StrValue"],
+    AddableBase["StrArg", "StrValue"],
     LengthableBase,
     SliceableBase["StrValue"],
-    ContainableBase[str],
-    ComparableBase["str | StrValue"],
-    LogicalBase["str | StrValue", "BoolValue"],
+    ContainableBase["StrArg"],
+    ComparableBase["StrArg"],
+    LogicalBase["StrArg", "BoolValue"],
     TypeBase[str],
 ):
     """Abstract base for string refs.

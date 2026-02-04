@@ -15,7 +15,7 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import IntArg, Term, TupleArg  # noqa: F401
 
     from ..values import AnyValue, BoolValue, ListValue, TupleValue
 
@@ -27,7 +27,7 @@ __all__ = [
 
 class TupleType[*Ts](
     SequenceBase[tuple[*Ts], object, "ListValue[object]", "AnyValue"],
-    ComparableBase["tuple"],
+    ComparableBase["TupleArg[*Ts]"],
     TypeBase[tuple[*Ts]],
 ):
     """Abstract base for tuple refs.
@@ -56,10 +56,10 @@ class TupleType[*Ts](
         return AnyValue(operand)
 
     @overload
-    def __getitem__(self, key: int) -> AnyValue: ...
+    def __getitem__(self, key: IntArg) -> AnyValue: ...
     @overload
     def __getitem__(self, key: slice) -> TupleValue: ...
-    def __getitem__(self, key: int | slice) -> AnyValue | TupleValue:
+    def __getitem__(self, key: IntArg | slice) -> AnyValue | TupleValue:
         from ..morphisms import AtOp, SliceOp
         from ..values import AnyValue, TupleValue
 

@@ -14,7 +14,7 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import BoolArg, FloatArg, IntArg, Term  # noqa: F401
 
     from ..values import BoolValue, FloatValue, IntValue
 
@@ -25,9 +25,9 @@ __all__ = [
 
 
 class IntType(
-    ComparableBase["int | float | IntValue | FloatValue"],
-    LogicalBase["bool | int | BoolValue | IntValue", "BoolValue"],
-    BitwiseBase["int | IntValue", "IntValue"],
+    ComparableBase["IntArg | FloatArg"],
+    LogicalBase["BoolArg | IntArg", "BoolValue"],
+    BitwiseBase["IntArg", "IntValue"],
     TypeBase[int],
 ):
     """Abstract base for integer refs.
@@ -50,10 +50,10 @@ class IntType(
     # =========================================================================
 
     @overload
-    def __add__(self, other: int | IntValue) -> IntValue: ...
+    def __add__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __add__(self, other: float | FloatValue) -> FloatValue: ...
-    def __add__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+    def __add__(self, other: FloatArg) -> FloatValue: ...
+    def __add__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import AddOp
         from ..values import FloatValue, IntValue
 
@@ -62,10 +62,10 @@ class IntType(
         return IntValue(AddOp(self, other))
 
     @overload
-    def __radd__(self, other: int) -> IntValue: ...
+    def __radd__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __radd__(self, other: float) -> FloatValue: ...
-    def __radd__(self, other: int | float) -> IntValue | FloatValue:
+    def __radd__(self, other: FloatArg) -> FloatValue: ...
+    def __radd__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import AddOp
         from ..values import FloatValue, IntValue
 
@@ -74,10 +74,10 @@ class IntType(
         return IntValue(AddOp(other, self))
 
     @overload
-    def __sub__(self, other: int | IntValue) -> IntValue: ...
+    def __sub__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __sub__(self, other: float | FloatValue) -> FloatValue: ...
-    def __sub__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+    def __sub__(self, other: FloatArg) -> FloatValue: ...
+    def __sub__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import SubOp
         from ..values import FloatValue, IntValue
 
@@ -86,10 +86,10 @@ class IntType(
         return IntValue(SubOp(self, other))
 
     @overload
-    def __rsub__(self, other: int) -> IntValue: ...
+    def __rsub__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __rsub__(self, other: float) -> FloatValue: ...
-    def __rsub__(self, other: int | float) -> IntValue | FloatValue:
+    def __rsub__(self, other: FloatArg) -> FloatValue: ...
+    def __rsub__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import SubOp
         from ..values import FloatValue, IntValue
 
@@ -98,10 +98,10 @@ class IntType(
         return IntValue(SubOp(other, self))
 
     @overload
-    def __mul__(self, other: int | IntValue) -> IntValue: ...
+    def __mul__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __mul__(self, other: float | FloatValue) -> FloatValue: ...
-    def __mul__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+    def __mul__(self, other: FloatArg) -> FloatValue: ...
+    def __mul__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import MulOp
         from ..values import FloatValue, IntValue
 
@@ -110,10 +110,10 @@ class IntType(
         return IntValue(MulOp(self, other))
 
     @overload
-    def __rmul__(self, other: int) -> IntValue: ...
+    def __rmul__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __rmul__(self, other: float) -> FloatValue: ...
-    def __rmul__(self, other: int | float) -> IntValue | FloatValue:
+    def __rmul__(self, other: FloatArg) -> FloatValue: ...
+    def __rmul__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import MulOp
         from ..values import FloatValue, IntValue
 
@@ -121,23 +121,23 @@ class IntType(
             return FloatValue(MulOp(other, self))
         return IntValue(MulOp(other, self))
 
-    def __truediv__(self, other: int | float | IntValue | FloatValue) -> FloatValue:
+    def __truediv__(self, other: IntArg | FloatArg) -> FloatValue:
         from ..morphisms import DivOp
         from ..values import FloatValue
 
         return FloatValue(DivOp(self, other))
 
-    def __rtruediv__(self, other: int | float) -> FloatValue:
+    def __rtruediv__(self, other: IntArg | FloatArg) -> FloatValue:
         from ..morphisms import DivOp
         from ..values import FloatValue
 
         return FloatValue(DivOp(other, self))
 
     @overload
-    def __floordiv__(self, other: int | IntValue) -> IntValue: ...
+    def __floordiv__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __floordiv__(self, other: float | FloatValue) -> FloatValue: ...
-    def __floordiv__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+    def __floordiv__(self, other: FloatArg) -> FloatValue: ...
+    def __floordiv__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import FloorDivOp
         from ..values import FloatValue, IntValue
 
@@ -146,10 +146,10 @@ class IntType(
         return IntValue(FloorDivOp(self, other))
 
     @overload
-    def __rfloordiv__(self, other: int) -> IntValue: ...
+    def __rfloordiv__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __rfloordiv__(self, other: float) -> FloatValue: ...
-    def __rfloordiv__(self, other: int | float) -> IntValue | FloatValue:
+    def __rfloordiv__(self, other: FloatArg) -> FloatValue: ...
+    def __rfloordiv__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import FloorDivOp
         from ..values import FloatValue, IntValue
 
@@ -158,10 +158,10 @@ class IntType(
         return IntValue(FloorDivOp(other, self))
 
     @overload
-    def __mod__(self, other: int | IntValue) -> IntValue: ...
+    def __mod__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __mod__(self, other: float | FloatValue) -> FloatValue: ...
-    def __mod__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+    def __mod__(self, other: FloatArg) -> FloatValue: ...
+    def __mod__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import ModOp
         from ..values import FloatValue, IntValue
 
@@ -170,10 +170,10 @@ class IntType(
         return IntValue(ModOp(self, other))
 
     @overload
-    def __rmod__(self, other: int) -> IntValue: ...
+    def __rmod__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __rmod__(self, other: float) -> FloatValue: ...
-    def __rmod__(self, other: int | float) -> IntValue | FloatValue:
+    def __rmod__(self, other: FloatArg) -> FloatValue: ...
+    def __rmod__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import ModOp
         from ..values import FloatValue, IntValue
 
@@ -182,10 +182,10 @@ class IntType(
         return IntValue(ModOp(other, self))
 
     @overload
-    def __pow__(self, other: int | IntValue) -> IntValue: ...
+    def __pow__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __pow__(self, other: float | FloatValue) -> FloatValue: ...
-    def __pow__(self, other: int | float | IntValue | FloatValue) -> IntValue | FloatValue:
+    def __pow__(self, other: FloatArg) -> FloatValue: ...
+    def __pow__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import PowOp
         from ..values import FloatValue, IntValue
 
@@ -194,10 +194,10 @@ class IntType(
         return IntValue(PowOp(self, other))
 
     @overload
-    def __rpow__(self, other: int) -> IntValue: ...
+    def __rpow__(self, other: IntArg) -> IntValue: ...
     @overload
-    def __rpow__(self, other: float) -> FloatValue: ...
-    def __rpow__(self, other: int | float) -> IntValue | FloatValue:
+    def __rpow__(self, other: FloatArg) -> FloatValue: ...
+    def __rpow__(self, other: IntArg | FloatArg) -> IntValue | FloatValue:
         from ..morphisms import PowOp
         from ..values import FloatValue, IntValue
 

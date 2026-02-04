@@ -12,9 +12,9 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import BoolArg, FloatArg, IntArg, Term  # noqa: F401
 
-    from ..values import BoolValue, FloatValue, IntValue  # noqa: F401
+    from ..values import BoolValue, FloatValue
 
 
 __all__ = [
@@ -23,9 +23,9 @@ __all__ = [
 
 
 class FloatType(
-    NumericBase["int | float | IntValue | FloatValue", "FloatValue"],
-    ComparableBase["int | float | IntValue | FloatValue"],
-    LogicalBase["bool | float | BoolValue | FloatValue", "BoolValue"],
+    NumericBase["IntArg | FloatArg", "FloatValue"],
+    ComparableBase["IntArg | FloatArg"],
+    LogicalBase["BoolArg | FloatArg", "BoolValue"],
     TypeBase[float],
 ):
     """Abstract base for float refs.

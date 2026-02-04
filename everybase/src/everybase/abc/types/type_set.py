@@ -16,7 +16,7 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import FrozenSetArg, SetArg, Term  # noqa: F401
 
     from ..values import AnyValue, BoolValue, FrozenSetValue, ListValue, SetValue
 
@@ -30,7 +30,7 @@ __all__ = [
 class SetType[T](
     MutableSetBase[set[T], T, "SetValue[T]", "AnyValue"],
     # ClearableBase,
-    ComparableBase["set[T] | SetValue[T]"],
+    ComparableBase["SetArg[T]"],
     TypeBase[set[T]],
 ):
     """Abstract base for set refs.
@@ -61,7 +61,7 @@ class SetType[T](
 
 class FrozenSetType[T](
     SetLikeBase[frozenset[T], T, "FrozenSetValue[T]", "AnyValue"],
-    ComparableBase["frozenset[T] | FrozenSetValue[T]"],
+    ComparableBase["FrozenSetArg[T]"],
     TypeBase[frozenset[T]],
 ):
     """Abstract base for frozenset refs.

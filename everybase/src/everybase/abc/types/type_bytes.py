@@ -33,9 +33,9 @@ __all__ = [
 class BytesType(
     LengthableBase,
     SliceableBase["BytesValue"],
-    ContainableBase["int | bytes"],
-    ComparableBase["bytes | BytesValue"],
-    LogicalBase["bytes | BytesValue", "BoolValue"],
+    ContainableBase["IntArg | BytesArg"],
+    ComparableBase["BytesArg"],
+    LogicalBase["BytesArg", "BoolValue"],
     TypeBase[bytes],
 ):
     """Abstract base for bytes refs.
@@ -63,23 +63,23 @@ class BytesType(
 
         return BytesValue(operand)
 
-    def __add__(self, other: bytes | BytesType) -> BytesValue:
+    def __add__(self, other: BytesArg) -> BytesValue:
         from ..morphisms import AddOp
         from ..values import BytesValue
 
         return BytesValue(AddOp(self, other))
 
-    def __radd__(self, other: bytes) -> BytesValue:
+    def __radd__(self, other: BytesArg) -> BytesValue:
         from ..morphisms import AddOp
         from ..values import BytesValue
 
         return BytesValue(AddOp(other, self))
 
     @overload
-    def __getitem__(self, key: int) -> IntValue: ...
+    def __getitem__(self, key: IntArg) -> IntValue: ...
     @overload
     def __getitem__(self, key: slice) -> BytesValue: ...
-    def __getitem__(self, key: int | slice) -> BytesValue | IntValue:
+    def __getitem__(self, key: IntArg | slice) -> BytesValue | IntValue:
         from ..morphisms import AtOp, SliceOp
         from ..values import BytesValue, IntValue
 

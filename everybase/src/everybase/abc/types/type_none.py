@@ -14,7 +14,7 @@ from .base import TypeBase
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import NoneArg, Term  # noqa: F401
 
     from ..values import BoolValue, NoneValue  # noqa: F401
 
@@ -25,7 +25,7 @@ __all__ = [
 
 
 class NoneType(
-    LogicalBase["None | NoneValue", "BoolValue"],
+    LogicalBase["NoneArg", "BoolValue"],
     TypeBase[None],
 ):
     """Abstract base for None/nil refs.
