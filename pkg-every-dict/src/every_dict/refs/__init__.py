@@ -20,6 +20,20 @@ from .base import RefBase
 from .dict import MappingRef
 from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
+from .items_extended import (
+    BasisPointRef,
+    ComplexRef,
+    DateRef,
+    DatetimeRef,
+    DecimalRef,
+    FractionRef,
+    PathRef,
+    PercentageRef,
+    TimedeltaRef,
+    TimeRef,
+    TimezoneRef,
+    UUIDRef,
+)
 from .listshape import ShapesListRef
 from .sequence import SequenceRef
 from .set import SetRef
@@ -27,12 +41,20 @@ from .shape import ShapeRef
 
 
 __all__ = [
+    "BasisPointRef",
     "BoolRef",
     "BytesRef",
+    "ComplexRef",
+    "DateRef",
+    "DatetimeRef",
+    "DecimalRef",
     "FloatRef",
+    "FractionRef",
     "IntRef",
     "ItemRef",
     "MappingRef",
+    "PathRef",
+    "PercentageRef",
     "RefBase",
     "SequenceRef",
     "SetRef",
@@ -40,4 +62,8 @@ __all__ = [
     "ShapesDictRef",
     "ShapesListRef",
     "StrRef",
+    "TimeRef",
+    "TimedeltaRef",
+    "TimezoneRef",
+    "UUIDRef",
 ]

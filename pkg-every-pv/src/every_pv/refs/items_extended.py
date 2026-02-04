@@ -1,9 +1,9 @@
-"""Dict storage refs for standard library types.
+"""PV storage refs for standard library types.
 
-These refs store values in nested Python dicts with serialization/deserialization.
-Pattern: Dict*Ref = RefBase + *Type + get/set methods
+These refs store values in PV storage with serialization/deserialization.
+Pattern: PV*Ref = ItemRef[StorageType, StrValue] + *Type + get/set methods
 
-Storage formats (same as PV):
+Storage formats:
 - Decimal: str (exact representation)
 - Fraction: str ("numerator/denominator")
 - Complex: str ("real,imag")
@@ -57,51 +57,55 @@ from every_math import (
 )
 from every_path import PathType, PathValue
 from every_uuid import UUIDType, UUIDValue
-from everybase.abc import FuncCallOp, MethodCallOp, ensure_term
+from everybase.abc import FloatValue, FuncCallOp, IntValue, MethodCallOp, StrValue, ensure_term
 from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
 
-from .refs.base import RefBase
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
     from typing import Self
 
+    from pv.loc import path
+
     from everybase import Term
     from everyshape import Shape
 
+    from .base import ViewRef
+
 
 __all__ = [
-    "DictBasisPointRef",
-    "DictComplexRef",
-    "DictDateRef",
-    "DictDatetimeRef",
-    "DictDecimalRef",
-    "DictFractionRef",
-    "DictPathRef",
-    "DictPercentageRef",
-    "DictTimeRef",
-    "DictTimedeltaRef",
-    "DictTimezoneRef",
-    "DictUUIDRef",
+    "BasisPointRef",
+    "ComplexRef",
+    "DateRef",
+    "DatetimeRef",
+    "DecimalRef",
+    "FractionRef",
+    "PathRef",
+    "PercentageRef",
+    "TimeRef",
+    "TimedeltaRef",
+    "TimezoneRef",
+    "UUIDRef",
 ]
 
 
 # =============================================================================
-# NUMERIC DICT REFS
+# NUMERIC PV REFS
 # =============================================================================
 
 
-class DictDecimalRef(RefBase[str], DecimalType):
-    """Dict storage ref for Decimal values. Stores as str."""
+class DecimalRef(ItemRef[str, StrValue], DecimalType):
+    """PV storage ref for Decimal values. Stores as str."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -123,16 +127,16 @@ class DictDecimalRef(RefBase[str], DecimalType):
         return DecimalValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictFractionRef(RefBase[str], FractionType):
-    """Dict storage ref for Fraction values. Stores as str."""
+class FractionRef(ItemRef[str, StrValue], FractionType):
+    """PV storage ref for Fraction values. Stores as str."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -154,16 +158,16 @@ class DictFractionRef(RefBase[str], FractionType):
         return FractionValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictComplexRef(RefBase[str], ComplexType):
-    """Dict storage ref for complex values. Stores as str ("real,imag")."""
+class ComplexRef(ItemRef[str, StrValue], ComplexType):
+    """PV storage ref for complex values. Stores as str ("real,imag")."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -194,16 +198,16 @@ class DictComplexRef(RefBase[str], ComplexType):
         return ComplexValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictBasisPointRef(RefBase[int], BasisPointType):
-    """Dict storage ref for BasisPoint values. Stores as int."""
+class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
+    """PV storage ref for BasisPoint values. Stores as int."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, int, IntValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -225,16 +229,16 @@ class DictBasisPointRef(RefBase[int], BasisPointType):
         return BasisPointValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictPercentageRef(RefBase[float], PercentageType):
-    """Dict storage ref for Percentage values. Stores as float."""
+class PercentageRef(ItemRef[float, FloatValue], PercentageType):
+    """PV storage ref for Percentage values. Stores as float."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, float, FloatValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -257,20 +261,20 @@ class DictPercentageRef(RefBase[float], PercentageType):
 
 
 # =============================================================================
-# DATETIME DICT REFS
+# DATETIME PV REFS
 # =============================================================================
 
 
-class DictDateRef(RefBase[str], DateType):
-    """Dict storage ref for date values. Stores as str (ISO format)."""
+class DateRef(ItemRef[str, StrValue], DateType):
+    """PV storage ref for date values. Stores as str (ISO format)."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -292,16 +296,16 @@ class DictDateRef(RefBase[str], DateType):
         return DateValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictDatetimeRef(RefBase[str], DatetimeType):
-    """Dict storage ref for datetime values. Stores as str (ISO format)."""
+class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
+    """PV storage ref for datetime values. Stores as str (ISO format)."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -323,16 +327,16 @@ class DictDatetimeRef(RefBase[str], DatetimeType):
         return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictTimeRef(RefBase[str], TimeType):
-    """Dict storage ref for time values. Stores as str (ISO format)."""
+class TimeRef(ItemRef[str, StrValue], TimeType):
+    """PV storage ref for time values. Stores as str (ISO format)."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -354,16 +358,16 @@ class DictTimeRef(RefBase[str], TimeType):
         return TimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictTimedeltaRef(RefBase[float], TimedeltaType):
-    """Dict storage ref for timedelta values. Stores as float (seconds)."""
+class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
+    """PV storage ref for timedelta values. Stores as float (seconds)."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, float, FloatValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -385,16 +389,16 @@ class DictTimedeltaRef(RefBase[float], TimedeltaType):
         return TimedeltaValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictTimezoneRef(RefBase[str], TimezoneType):
-    """Dict storage ref for timezone values. Stores as str (offset)."""
+class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
+    """PV storage ref for timezone values. Stores as str (offset)."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -454,20 +458,20 @@ class DictTimezoneRef(RefBase[str], TimezoneType):
 
 
 # =============================================================================
-# PATH AND UUID DICT REFS
+# PATH AND UUID PV REFS
 # =============================================================================
 
 
-class DictPathRef(RefBase[str], PathType):
-    """Dict storage ref for Path values. Stores as str."""
+class PathRef(ItemRef[str, StrValue], PathType):
+    """PV storage ref for Path values. Stores as str."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -489,16 +493,16 @@ class DictPathRef(RefBase[str], PathType):
         return PathValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class DictUUIDRef(RefBase[str], UUIDType):
-    """Dict storage ref for UUID values. Stores as str."""
+class UUIDRef(ItemRef[str, StrValue], UUIDType):
+    """PV storage ref for UUID values. Stores as str."""
 
     def __init__(
         self,
-        address: str | Term,
-        parent: RefBase | None = None,
-        shape: type[Shape] | None = None,
+        address: path.PathAddress | Term,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, parent, shape)
+        super().__init__(address, str, StrValue, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:

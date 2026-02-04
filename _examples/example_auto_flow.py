@@ -12,23 +12,19 @@ from everyshape import Shape
 class AppState(Shape):
     name = pv.StrRef.slot()
     age = pv.IntRef.slot()
-    time = pv.PVDatetimeRef.slot()
+    online = pv.DatetimeRef.slot()
 
 
 demos = [
-    AppState.time.set(datetime.now()),
     f.Seq(
         AppState.name.set("Alice"),
         AppState.age.set(30),
+        AppState.online.set(datetime.now()),
     ),
     f.Seq(
-        f.Print("name", AppState.name.get()),
-        f.Print("age", AppState.age.get()),
-    ),
-    f.Seq(
-        AppState.age.set(31),
-        f.Print("name", AppState.name.get()),
-        f.Print("age", AppState.age.get()),
+        f.Print("name", AppState.name),
+        f.Print("age", AppState.age),
+        f.Print("online", AppState.online),
     ),
 ]
 

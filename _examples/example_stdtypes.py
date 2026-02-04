@@ -12,13 +12,13 @@ from decimal import Decimal
 from pathlib import Path
 
 from every_dict import (
-    DictDatetimeRef,
-    DictDecimalRef,
-    DictPathRef,
-    DictPercentageRef,
-    DictTimedeltaRef,
-    DictUUIDRef,
+    DatetimeRef,
+    DecimalRef,
     IntRef,
+    PathRef,
+    PercentageRef,
+    TimedeltaRef,
+    UUIDRef,
 )
 from everybase import Context
 from everyshape import Shape
@@ -31,12 +31,12 @@ from everyshape import Shape
 
 class Invoice(Shape):
     number = IntRef.slot()
-    id = DictUUIDRef.slot()
-    amount = DictDecimalRef.slot()
-    tax_rate = DictPercentageRef.slot()
-    created_at = DictDatetimeRef.slot()
-    due_in = DictTimedeltaRef.slot()
-    receipt_path = DictPathRef.slot()
+    id = UUIDRef.slot()
+    amount = DecimalRef.slot()
+    tax_rate = PercentageRef.slot()
+    created_at = DatetimeRef.slot()
+    due_in = TimedeltaRef.slot()
+    receipt_path = PathRef.slot()
 
 
 # =============================================
