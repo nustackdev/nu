@@ -1,7 +1,7 @@
 """PV storage refs for standard library types.
 
 These refs store values in PV storage with serialization/deserialization.
-Pattern: PV*Ref = PrimitiveRef[StorageType] + *Type + get/set methods
+Pattern: PV*Ref = ItemRef[StorageType, StrValue] + *Type + get/set methods
 
 Storage formats:
 - Decimal: str (exact representation)
@@ -57,11 +57,11 @@ from every_math import (
 )
 from every_path import PathType, PathValue
 from every_uuid import UUIDType, UUIDValue
-from everybase.abc import FuncCallOp, MethodCallOp, ensure_term
+from everybase.abc import FloatValue, FuncCallOp, IntValue, MethodCallOp, StrValue, ensure_term
 from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
 
-from .collections.base import PrimitiveRef
+from .refs import ItemRef, ViewRef
 
 
 if TYPE_CHECKING:
@@ -69,7 +69,8 @@ if TYPE_CHECKING:
 
     from pv.loc import path
 
-    from everybase import Shape, Term
+    from everybase import Term
+    from everyshape import Shape
 
 
 __all__ = [
@@ -93,16 +94,16 @@ __all__ = [
 # =============================================================================
 
 
-class PVDecimalRef(PrimitiveRef[str], DecimalType):
+class PVDecimalRef(ItemRef[str, StrValue], DecimalType):
     """PV storage ref for Decimal values. Stores as str."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -124,16 +125,16 @@ class PVDecimalRef(PrimitiveRef[str], DecimalType):
         return DecimalValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVFractionRef(PrimitiveRef[str], FractionType):
+class PVFractionRef(ItemRef[str, StrValue], FractionType):
     """PV storage ref for Fraction values. Stores as str."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -155,16 +156,16 @@ class PVFractionRef(PrimitiveRef[str], FractionType):
         return FractionValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVComplexRef(PrimitiveRef[str], ComplexType):
+class PVComplexRef(ItemRef[str, StrValue], ComplexType):
     """PV storage ref for complex values. Stores as str ("real,imag")."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -195,16 +196,16 @@ class PVComplexRef(PrimitiveRef[str], ComplexType):
         return ComplexValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVBasisPointRef(PrimitiveRef[int], BasisPointType):
+class PVBasisPointRef(ItemRef[int, IntValue], BasisPointType):
     """PV storage ref for BasisPoint values. Stores as int."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, int, parent, shape)
+        super().__init__(address, int, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -226,16 +227,16 @@ class PVBasisPointRef(PrimitiveRef[int], BasisPointType):
         return BasisPointValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVPercentageRef(PrimitiveRef[float], PercentageType):
+class PVPercentageRef(ItemRef[float, FloatValue], PercentageType):
     """PV storage ref for Percentage values. Stores as float."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, float, parent, shape)
+        super().__init__(address, float, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -262,16 +263,16 @@ class PVPercentageRef(PrimitiveRef[float], PercentageType):
 # =============================================================================
 
 
-class PVDateRef(PrimitiveRef[str], DateType):
+class PVDateRef(ItemRef[str, StrValue], DateType):
     """PV storage ref for date values. Stores as str (ISO format)."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -293,16 +294,16 @@ class PVDateRef(PrimitiveRef[str], DateType):
         return DateValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVDatetimeRef(PrimitiveRef[str], DatetimeType):
+class PVDatetimeRef(ItemRef[str, StrValue], DatetimeType):
     """PV storage ref for datetime values. Stores as str (ISO format)."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -324,16 +325,16 @@ class PVDatetimeRef(PrimitiveRef[str], DatetimeType):
         return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVTimeRef(PrimitiveRef[str], TimeType):
+class PVTimeRef(ItemRef[str, StrValue], TimeType):
     """PV storage ref for time values. Stores as str (ISO format)."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -355,16 +356,16 @@ class PVTimeRef(PrimitiveRef[str], TimeType):
         return TimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVTimedeltaRef(PrimitiveRef[float], TimedeltaType):
+class PVTimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
     """PV storage ref for timedelta values. Stores as float (seconds)."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, float, parent, shape)
+        super().__init__(address, float, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -386,16 +387,16 @@ class PVTimedeltaRef(PrimitiveRef[float], TimedeltaType):
         return TimedeltaValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVTimezoneRef(PrimitiveRef[str], TimezoneType):
+class PVTimezoneRef(ItemRef[str, StrValue], TimezoneType):
     """PV storage ref for timezone values. Stores as str (offset)."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -459,16 +460,16 @@ class PVTimezoneRef(PrimitiveRef[str], TimezoneType):
 # =============================================================================
 
 
-class PVPathRef(PrimitiveRef[str], PathType):
+class PVPathRef(ItemRef[str, StrValue], PathType):
     """PV storage ref for Path values. Stores as str."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:
@@ -490,16 +491,16 @@ class PVPathRef(PrimitiveRef[str], PathType):
         return PathValue(ItemSetCmd(self, ensure_term(val)))
 
 
-class PVUUIDRef(PrimitiveRef[str], UUIDType):
+class PVUUIDRef(ItemRef[str, StrValue], UUIDType):
     """PV storage ref for UUID values. Stores as str."""
 
     def __init__(
         self,
         address: path.PathAddress | Term,
-        parent: PrimitiveRef | None = None,
-        shape: type[Shape] | None = None,
+        parent: ViewRef | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, parent, shape)
+        super().__init__(address, str, parent, owner_shape)
 
     @classmethod
     def slot(cls) -> Self:

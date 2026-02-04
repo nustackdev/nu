@@ -21,7 +21,7 @@ Usage::
     name_val = await root.name.get().execute(ctx)
 """
 
-from every_dict.collections import (
+from every_dict.refs import (
     BoolRef,
     BytesRef,
     FloatRef,
@@ -50,14 +50,11 @@ from every_dict.stdtypes import (
     DictTimezoneRef,
     DictUUIDRef,
 )
-from everyshape import Shape, ShapeMeta, SlotDescriptor
 
 
 __all__ = [
-    # Typed item refs
     "BoolRef",
     "BytesRef",
-    # Stdtypes refs
     "DictBasisPointRef",
     "DictComplexRef",
     "DictDateRef",
@@ -73,18 +70,12 @@ __all__ = [
     "FloatRef",
     "IntRef",
     "ItemRef",
-    # Collection refs
     "MappingRef",
-    # Base ref
     "RefBase",
     "SequenceRef",
     "SetRef",
-    # Shape (re-exported from everyshape)
-    "Shape",
-    "ShapeMeta",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
-    "SlotDescriptor",
     "StrRef",
 ]

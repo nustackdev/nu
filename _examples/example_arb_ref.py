@@ -17,7 +17,6 @@ from datetime import datetime
 from typing import Self
 
 from every_dict import RefBase as DictRefBase
-from every_dict import Shape
 from every_pv import PrimitiveRef
 from everybase import Arg, FloatArg, Sentinel, StrArg
 from everybase.abc import (
@@ -34,7 +33,7 @@ from everybase.abc import (
     ValueBase,
     ensure_term,
 )
-from everyshape import ItemRef, Slot
+from everyshape import ItemRef, Shape, Slot
 from everyshape.morphisms import ItemGetOp, ItemSetCmd
 
 

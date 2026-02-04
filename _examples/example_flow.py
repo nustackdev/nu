@@ -6,12 +6,13 @@ import every_pv as e
 from every_flow import Print, Seq
 from every_pv.views import DictView
 from everybase import Context
+from everyshape import Shape
 
 
 # --- Shape ---
 
 
-class AppState(e.Shape):
+class AppState(Shape):
     name = e.StrRef.slot()
     age = e.IntRef.slot()
 

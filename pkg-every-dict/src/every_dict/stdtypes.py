@@ -61,13 +61,14 @@ from everybase.abc import FuncCallOp, MethodCallOp, ensure_term
 from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
 
-from .collections.base import RefBase
+from .refs.base import RefBase
 
 
 if TYPE_CHECKING:
     from typing import Self
 
-    from everybase import Shape, Term
+    from everybase import Term
+    from everyshape import Shape
 
 
 __all__ = [

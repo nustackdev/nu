@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import every_flow as f
 import every_pv as pv
+from everyshape import Shape
 
 
-class AppState(pv.Shape):
+class AppState(Shape):
     name = pv.StrRef.slot()
     age = pv.IntRef.slot()
+    time = pv.PVDatetimeRef.slot()
 
 
 demos = [
+    AppState.time.set(datetime.now()),
     f.Seq(
         AppState.name.set("Alice"),
         AppState.age.set(30),

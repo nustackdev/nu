@@ -5,19 +5,20 @@ from __future__ import annotations
 import every_dict as mem
 import every_flow as f
 import every_pv as pv
+from everyshape import Shape
 
 
 # --- Shapes ---
 
 
-class Counters(mem.Shape):
+class Counters(Shape):
     """In-memory counters (dict substrate)."""
 
     a = mem.IntRef.slot()
     b = mem.IntRef.slot()
 
 
-class Results(pv.Shape):
+class Results(Shape):
     """Persisted results (PV substrate)."""
 
     total = pv.IntRef.slot()

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import every_pv as e
 from everybase import Context
+from everyshape import Shape
 
 
 # =============================================================================
@@ -13,7 +14,7 @@ from everybase import Context
 # =============================================================================
 
 
-class SymbolInfo(e.Shape):
+class SymbolInfo(Shape):
     """Individual symbol information."""
 
     price = e.FloatRef.slot()
@@ -21,7 +22,7 @@ class SymbolInfo(e.Shape):
     exchange = e.StrRef.slot()
 
 
-class Order(e.Shape):
+class Order(Shape):
     """Order information."""
 
     id = e.StrRef.slot()
@@ -30,7 +31,7 @@ class Order(e.Shape):
     price = e.FloatRef.slot()
 
 
-class Market(e.Shape):
+class Market(Shape):
     """Market data with various collection types."""
 
     misc_val = e.IntRef.slot()

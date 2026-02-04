@@ -27,7 +27,8 @@ Usage:
         profile = ShapeRef.slot(Profile)
 """
 
-from every_pv.collections import (
+from every_pv.meta import auto_atomic
+from every_pv.refs import (
     BoolRef,
     BytesRef,
     DictRef,
@@ -43,7 +44,6 @@ from every_pv.collections import (
     StrRef,
     ViewRef,
 )
-from every_pv.meta import auto_atomic
 from every_pv.spans import Atomic, Snapshot
 from every_pv.stdtypes import (
     PVBasisPointRef,
@@ -59,25 +59,18 @@ from every_pv.stdtypes import (
     PVTimezoneRef,
     PVUUIDRef,
 )
-from everyshape import Shape, ShapeMeta, SlotDescriptor
 
 
 __all__ = [  # noqa: RUF022
-    # Meta
     "auto_atomic",
-    # Spans
     "Atomic",
-    # Typed refs (with operators)
     "BoolRef",
     "BytesRef",
-    # Collection refs
     "DictRef",
     "FloatRef",
     "IntRef",
-    # Generic item ref
     "ItemRef",
     "ListRef",
-    # Stdtypes refs
     "PVBasisPointRef",
     "PVComplexRef",
     "PVDateRef",
@@ -90,17 +83,11 @@ __all__ = [  # noqa: RUF022
     "PVTimedeltaRef",
     "PVTimezoneRef",
     "PVUUIDRef",
-    # Set ref
     "SetRef",
-    # Abstract refs
     "PrimitiveRef",
-    # Shape (re-exported from everyshape)
-    "Shape",
-    "ShapeMeta",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
-    "SlotDescriptor",
     "Snapshot",
     "StrRef",
     "ViewRef",

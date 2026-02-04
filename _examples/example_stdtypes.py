@@ -19,9 +19,9 @@ from every_dict import (
     DictTimedeltaRef,
     DictUUIDRef,
     IntRef,
-    Shape,
 )
 from everybase import Context
+from everyshape import Shape
 
 
 # =============================================
