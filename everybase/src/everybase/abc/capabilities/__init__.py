@@ -3,62 +3,19 @@
 Each capability has a paired Protocol (structural type contract) and Base (mixin implementation).
 Protocols declare the public interface; Bases provide morphism-wrapping implementations.
 
-    GENERAL OPERATIONS (gen_*)
+    GENERAL OPERATIONS
     ──────────────────────────
     Arithmetic:  AddableBase/Protocol … NumericBase/Protocol
     Comparison:  OrderableBase/Protocol, EqualableBase/Protocol, ComparableBase/Protocol
     Logical:     AndableBase/Protocol … LogicalBase/Protocol
     Bitwise:     BitwiseAndableBase/Protocol … BitwiseBase/Protocol
 
-    COLLECTION OPERATIONS (col_*)
+    COLLECTION OPERATIONS
     ─────────────────────────────
     Atoms:       ContainableBase/Protocol, LengthableBase/Protocol, IndexableBase/Protocol, SliceableBase/Protocol
-    Iterable:    IterableBase/Protocol
-    Collection:  CollectionBase/Protocol       = Containable + Lengthable + Iterable
-    Sequence:    SequenceBase/Protocol         = Collection + Sliceable + first/last/sorted/...
-      Mutable:   MutableSequenceBase/Protocol = Sequence + append/insert/pop
-    Mapping:     MappingBase/Protocol          = Collection + keys_/values_/items_/get_
-      Mutable:   MutableMappingBase/Protocol  = Mapping + set_/delete/update_
-    SetLike:     SetLikeBase/Protocol          = Collection + union/intersection/difference/...
-      Mutable:   MutableSetBase/Protocol      = SetLike + add/remove/discard
-    Clearable:   ClearableBase/Protocol        = clear()
 """
 
-from ..collections import (
-    MappingBase,
-    MappingProtocol,
-    MutableMappingBase,
-    MutableMappingProtocol,
-    MutableSequenceBase,
-    MutableSequenceProtocol,
-    MutableSetBase,
-    MutableSetProtocol,
-    SequenceBase,
-    SequenceProtocol,
-    SetLikeBase,
-    SetLikeProtocol,
-)
-from .col_atoms import (
-    ContainableBase,
-    ContainableProtocol,
-    IndexableBase,
-    IndexableProtocol,
-    LengthableBase,
-    LengthableProtocol,
-    SliceableBase,
-    SliceableProtocol,
-)
-from .col_collection import (
-    ClearableBase,
-    ClearableProtocol,
-    CollectionBase,
-    CollectionProtocol,
-)
-from .col_iterable import (
-    IterableBase,
-    IterableProtocol,
-)
-from .gen_arithmetic import (
+from .arithmetic import (
     AddableBase,
     AddableProtocol,
     AdditiveBase,
@@ -80,7 +37,7 @@ from .gen_arithmetic import (
     SubtractableBase,
     SubtractableProtocol,
 )
-from .gen_bitwise import (
+from .bitwise import (
     BitwiseAndableBase,
     BitwiseAndableProtocol,
     BitwiseBase,
@@ -94,7 +51,17 @@ from .gen_bitwise import (
     ShiftableBase,
     ShiftableProtocol,
 )
-from .gen_comparison import (
+from .collection import (
+    ContainableBase,
+    ContainableProtocol,
+    IndexableBase,
+    IndexableProtocol,
+    LengthableBase,
+    LengthableProtocol,
+    SliceableBase,
+    SliceableProtocol,
+)
+from .comparison import (
     ComparableBase,
     ComparableProtocol,
     EqualableBase,
@@ -102,7 +69,7 @@ from .gen_comparison import (
     OrderableBase,
     OrderableProtocol,
 )
-from .gen_logical import (
+from .logical import (
     AndableBase,
     AndableProtocol,
     LogicalBase,
@@ -184,40 +151,4 @@ __all__ = [  # noqa: RUF022
     "IndexableProtocol",
     "SliceableBase",
     "SliceableProtocol",
-    # =========================================================================
-    # COLLECTION: ITERABLE
-    # =========================================================================
-    "IterableBase",
-    "IterableProtocol",
-    # =========================================================================
-    # COLLECTION: COLLECTION
-    # =========================================================================
-    "CollectionBase",
-    "CollectionProtocol",
-    # =========================================================================
-    # COLLECTION: SEQUENCE (+ Mutable)
-    # =========================================================================
-    "SequenceBase",
-    "SequenceProtocol",
-    "MutableSequenceBase",
-    "MutableSequenceProtocol",
-    # =========================================================================
-    # COLLECTION: MAPPING (+ Mutable)
-    # =========================================================================
-    "MappingBase",
-    "MappingProtocol",
-    "MutableMappingBase",
-    "MutableMappingProtocol",
-    # =========================================================================
-    # COLLECTION: SET (+ Mutable)
-    # =========================================================================
-    "SetLikeBase",
-    "SetLikeProtocol",
-    "MutableSetBase",
-    "MutableSetProtocol",
-    # =========================================================================
-    # COLLECTION: CLEARABLE
-    # =========================================================================
-    "ClearableBase",
-    "ClearableProtocol",
 ]

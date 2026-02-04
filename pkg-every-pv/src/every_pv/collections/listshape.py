@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from pv.collections import MutableSequenceView
 
 from everybase.abc import AnyValue, ListValue, ensure_term
-from everyshape import ReactiveShapesListRefBase, Shape, Slot
+from everyshape import ReactiveShapesSequenceRefBase, Shape, Slot
 
 from .base import ViewRef
 from .shape import ShapeRef
@@ -26,7 +26,7 @@ __all__ = [
 
 
 class ShapesListRef[T: Shape](
-    ReactiveShapesListRefBase[T],
+    ReactiveShapesSequenceRefBase[T],
     ViewRef[
         list[dict],
         MutableSequenceView,

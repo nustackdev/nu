@@ -1,37 +1,29 @@
 """FrozenSet type — immutable set.
 
-FrozenSetBase         = everybase.SetLikeBase + capabilities (frozenset IS immutable)
-ReactiveFrozenSetBase = FrozenSetBase + ViewObservable
+FrozenSetType = everybase.SetLikeBase + capabilities (frozenset IS immutable)
 
-Goes directly to everybase since there is no everyshape set collection base yet.
+Goes directly to everybase since everyshape's SetLikeBase is set-specific.
 """
 
 from __future__ import annotations
 
 from everybase.abc import SetLikeBase as _EB_SetLikeBase
+from everybase.abc import TypeBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,
-    ViewObservableBase,
 )
 
 
 __all__ = [
-    "FrozenSetBase",
-    "ReactiveFrozenSetBase",
+    "FrozenSetType",
 ]
 
 
-class FrozenSetBase[T](
+class FrozenSetType[T](
     _EB_SetLikeBase[frozenset[T], T, object, object],
     CollectionExistableBase,
     CollectionExtractableBase[object],
+    TypeBase[frozenset],
 ):
     """FrozenSet — immutable set."""
-
-
-class ReactiveFrozenSetBase[T](
-    FrozenSetBase[T],
-    ViewObservableBase,
-):
-    """Reactive frozenset — immutable + observable."""

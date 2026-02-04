@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, cast
 
-from ..capabilities.col_collection import CollectionBase, CollectionProtocol
+from .collection import CollectionBase, CollectionProtocol
 
 
 if TYPE_CHECKING:

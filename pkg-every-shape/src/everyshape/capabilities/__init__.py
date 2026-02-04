@@ -9,7 +9,6 @@ from .collection import (
     CollectionClearableBase,
     CollectionExistableBase,
     CollectionExtractableBase,
-    CollectionLengthableBase,
     CollectionStorableBase,
 )
 from .item import (
@@ -18,13 +17,14 @@ from .item import (
     ItemGettableBase,
     ItemSettableBase,
 )
-from .loc import (
-    LocationDeletableProtocol,
-    LocationExistableProtocol,
-    LocationGettableProtocol,
-    LocationObservableProtocol,
-    LocationSettableProtocol,
-)
+
+# from .loc import (
+#     LocationDeletableProtocol,
+#     LocationExistableProtocol,
+#     LocationGettableProtocol,
+#     LocationObservableProtocol,
+#     LocationSettableProtocol,
+# )
 from .reactive import (
     PrimitiveObservableBase,
     ViewObservableBase,
@@ -32,12 +32,6 @@ from .reactive import (
 
 
 __all__ = [  # noqa: RUF022
-    # Location protocols
-    "LocationDeletableProtocol",
-    "LocationExistableProtocol",
-    "LocationGettableProtocol",
-    "LocationObservableProtocol",
-    "LocationSettableProtocol",
     # Item access bases
     "ItemDeletableBase",
     "ItemExistableBase",
@@ -47,7 +41,6 @@ __all__ = [  # noqa: RUF022
     "CollectionClearableBase",
     "CollectionExistableBase",
     "CollectionExtractableBase",
-    "CollectionLengthableBase",
     "CollectionStorableBase",
     # Reactive bases
     "PrimitiveObservableBase",

@@ -19,7 +19,7 @@ from everybase.abc import (
     StrValue,
     ensure_term,
 )
-from everyshape import ReactiveShapesDictRefBase, Shape, Slot
+from everyshape import ReactiveShapesMappingRefBase, Shape, Slot
 
 from .base import ViewRef
 from .shape import ShapeRef
@@ -56,7 +56,7 @@ class ShapesDictRef[
     T: Shape,
     KeyValueT,
 ](
-    ReactiveShapesDictRefBase[
+    ReactiveShapesMappingRefBase[
         K,
         T,
     ],

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everybase.abc import ensure_term
-from everyshape import ShapesListRefBase, Slot
+from everyshape import MutableShapesSequenceRefBase, Slot
 
 from .base import RefBase
 from .shape import ShapeRef
@@ -24,7 +24,7 @@ __all__ = [
 
 
 class ShapesListRef[T: Shape](
-    ShapesListRefBase[T],
+    MutableShapesSequenceRefBase[T],
     RefBase[list[dict]],
 ):
     """Dict shapes list reference — sequence of homogeneous shapes."""

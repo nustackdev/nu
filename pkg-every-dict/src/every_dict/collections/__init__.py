@@ -11,6 +11,7 @@ Collections:
     ShapeRef        structured container with named slots
     MappingRef      key-value container (child ref creation)
     SequenceRef     ordered container (item ref creation)
+    SetRef          unordered unique-element container
     ShapesListRef   sequence of homogeneous shapes
     ShapesDictRef   mapping of homogeneous shapes
 """
@@ -21,6 +22,7 @@ from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
 from .listshape import ShapesListRef
 from .sequence import SequenceRef
+from .set import SetRef
 from .shape import ShapeRef
 
 
@@ -33,6 +35,7 @@ __all__ = [
     "MappingRef",
     "RefBase",
     "SequenceRef",
+    "SetRef",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",

@@ -47,7 +47,8 @@ class SequenceBase[T, CollectionValueT, ItemValueT](
 
 class MutableSequenceBase[T, CollectionValueT, ItemValueT](
     _EB_MutableSequenceBase[list[T], T, CollectionValueT, ItemValueT],
-    SequenceBase[T, CollectionValueT, ItemValueT],
+    CollectionExistableBase,
+    CollectionExtractableBase[CollectionValueT],
     CollectionStorableBase[CollectionValueT, list[T]],
 ):
     """Mutable sequence — adds append, extend, insert, pop, remove."""

@@ -1,18 +1,14 @@
-"""Collection ref hierarchy — containers in a document model.
+"""Shape ref hierarchy — structured containers with named slots.
 
-Structural types:
-    ShapeRef        structured container with named slots (attribute navigation)
-    MappingRef      key-value container (child ref creation)
-    SequenceRef     ordered container (item ref creation)
-    ShapesListRef   sequence of homogeneous shapes
-    ShapesDictRef   mapping of homogeneous shapes
+ShapeRef         = MappingBase[str, object, ...] + Ref
+MutableShapeRef  = MutableMappingBase[str, object, ...] + ShapeRef
+ReactiveShapeRef = ReactiveMappingBase[str, object, ...] + MutableShapeRef
 
-Each has three capability levels:
-    Base            structural identity + navigation + extract
-    Mutable         + store/exists/length/clear + mapping mutations
-    Reactive        + change observation
-
+A shape is a mapping (dict[str, object]) with attribute-based slot navigation.
 Substrates extend these with their own storage mechanisms.
+
+Type Parameters:
+    T: Shape type (bound to ShapeBase)
 """
 
 from __future__ import annotations

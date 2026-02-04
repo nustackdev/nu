@@ -30,6 +30,7 @@ from every_dict.collections import (
     MappingRef,
     RefBase,
     SequenceRef,
+    SetRef,
     ShapeRef,
     ShapesDictRef,
     ShapesListRef,
@@ -77,6 +78,7 @@ __all__ = [
     # Base ref
     "RefBase",
     "SequenceRef",
+    "SetRef",
     # Shape (re-exported from everyshape)
     "Shape",
     "ShapeMeta",

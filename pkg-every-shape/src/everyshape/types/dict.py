@@ -1,28 +1,31 @@
 """Dict type — mutable mapping.
 
-DictBase         = MutableMappingBase (dict IS mutable)
-ReactiveDictBase = DictBase + ViewObservable
+DictType         = MutableMappingBase (dict IS mutable)
+ReactiveDictType = DictType + ViewObservable
 """
 
 from __future__ import annotations
 
+from everybase.abc import TypeBase
 from everyshape.collections import MutableMappingBase, ReactiveMappingBase
 
 
 __all__ = [
-    "DictBase",
-    "ReactiveDictBase",
+    "DictType",
+    "ReactiveDictType",
 ]
 
 
-class DictBase[K, V](
+class DictType[K, V](
     MutableMappingBase[K, V, object, object],
+    TypeBase[dict],
 ):
     """Dict — mutable mapping."""
 
 
-class ReactiveDictBase[K, V](
+class ReactiveDictType[K, V](
+    DictType[K, V],
     ReactiveMappingBase[K, V, object, object],
-    DictBase[K, V],
+    TypeBase[dict],
 ):
     """Reactive dict — mutable + observable."""

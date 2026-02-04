@@ -1,7 +1,6 @@
 """Tuple type — immutable sequence.
 
-TupleBase         = everybase.SequenceBase + capabilities (tuple IS immutable)
-ReactiveTupleBase = TupleBase + ViewObservable
+TupleType = everybase.SequenceBase + capabilities (tuple IS immutable)
 
 Goes directly to everybase since everyshape's SequenceBase is list-specific.
 """
@@ -9,29 +8,22 @@ Goes directly to everybase since everyshape's SequenceBase is list-specific.
 from __future__ import annotations
 
 from everybase.abc import SequenceBase as _EB_SequenceBase
+from everybase.abc import TypeBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,
-    ViewObservableBase,
 )
 
 
 __all__ = [
-    "ReactiveTupleBase",
-    "TupleBase",
+    "TupleType",
 ]
 
 
-class TupleBase[T](
+class TupleType[T](
     _EB_SequenceBase[tuple[T, ...], T, object, object],
     CollectionExistableBase,
     CollectionExtractableBase[object],
+    TypeBase[tuple],
 ):
     """Tuple — immutable sequence."""
-
-
-class ReactiveTupleBase[T](
-    TupleBase[T],
-    ViewObservableBase,
-):
-    """Reactive tuple — immutable + observable."""

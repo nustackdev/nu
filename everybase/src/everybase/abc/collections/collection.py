@@ -1,4 +1,3 @@
-# ruff: noqa: D102
 """Collection + Clearable capabilities — protocols + bases.
 
 CollectionProtocol/Base = Containable + Lengthable + Iterable
@@ -14,19 +13,18 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol
 
-from .col_atoms import ContainableBase, ContainableProtocol, LengthableBase, LengthableProtocol
-from .col_iterable import IterableBase, IterableProtocol
-
-
-if TYPE_CHECKING:
-    from ..values import AnyValue
+from ..capabilities.collection import (
+    ContainableBase,
+    ContainableProtocol,
+    LengthableBase,
+    LengthableProtocol,
+)
+from .iterable import IterableBase, IterableProtocol
 
 
 __all__ = [
-    "ClearableBase",
-    "ClearableProtocol",
     "CollectionBase",
     "CollectionProtocol",
 ]
@@ -68,25 +66,3 @@ class CollectionBase[ElementT, CollectionResultT, ElementResultT](
     """
 
     pass
-
-
-# =============================================================================
-# CLEARABLE
-# =============================================================================
-
-
-class ClearableProtocol(Protocol):
-    """Protocol for clearable collections."""
-
-    def clear(self) -> None: ...
-
-
-class ClearableBase:
-    """Base for clearable collections."""
-
-    def clear(self) -> AnyValue:
-        """Clear all items from this collection."""
-        from ..morphisms.cmd_collection import ClearCmd
-        from ..values import AnyValue
-
-        return AnyValue(ClearCmd(self))

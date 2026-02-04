@@ -11,7 +11,7 @@ Key Classes:
         - ItemRef
 
     Collection Refs:
-        - DictRef, ListRef
+        - DictRef, ListRef, SetRef
         - ShapeRef, ShapesListRef, ShapesDictRef
 
     Spans:
@@ -36,6 +36,7 @@ from every_pv.collections import (
     ItemRef,
     ListRef,
     PrimitiveRef,
+    SetRef,
     ShapeRef,
     ShapesDictRef,
     ShapesListRef,
@@ -89,6 +90,8 @@ __all__ = [  # noqa: RUF022
     "PVTimedeltaRef",
     "PVTimezoneRef",
     "PVUUIDRef",
+    # Set ref
+    "SetRef",
     # Abstract refs
     "PrimitiveRef",
     # Shape (re-exported from everyshape)

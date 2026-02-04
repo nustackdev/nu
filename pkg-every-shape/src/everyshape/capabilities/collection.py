@@ -15,7 +15,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from everybase.abc import BoolValue, IntValue, NoneValue
+from everybase.abc import BoolValue, NoneValue
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,6 @@ __all__ = [
     "CollectionClearableBase",
     "CollectionExistableBase",
     "CollectionExtractableBase",
-    "CollectionLengthableBase",
     "CollectionStorableBase",
 ]
 
@@ -81,18 +80,6 @@ class CollectionStorableBase[CollectionTypeT, CollectionT]:
         from everyshape.morphisms.collection import StoreCmd
 
         return self.result(StoreCmd(self, ensure_term(value)))
-
-
-class CollectionLengthableBase:
-    """Base for collection refs that can report their length.
-
-    Provides length() using CollectionLenOp.
-    """
-
-    def length(self) -> IntValue:
-        from everyshape.morphisms.collection import CollectionLenOp
-
-        return IntValue(CollectionLenOp(self))
 
 
 class CollectionClearableBase:

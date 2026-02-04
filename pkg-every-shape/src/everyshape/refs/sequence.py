@@ -1,8 +1,13 @@
 """Sequence ref hierarchy — sequence bases + Ref navigation.
 
 SequenceRefBase         = SequenceBase + Ref
-MutableSequenceRefBase  = MutableSequenceBase + SequenceRefBase
-ReactiveSequenceRefBase = ReactiveSequenceBase + MutableSequenceRefBase
+MutableSequenceRefBase  = MutableSequenceBase + Ref
+ReactiveSequenceRefBase = ReactiveSequenceBase + Ref
+
+Type Parameters:
+    T:               Native element type (int, str, etc.)
+    CollectionValueT: Wrapped result for collection-level ops (extract, store)
+    ItemValueT:       Wrapped result for item-level ops (get, set) — Value subclass
 """
 
 from __future__ import annotations
@@ -47,7 +52,7 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT: Value](
 
 class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     MutableSequenceBase[T, CollectionValueT, ItemValueT],
-    Ref[list[T]],
+    SequenceRefBase[T, CollectionValueT, ItemValueT],
 ):
     """Mutable sequence ref — mutations + navigation."""
 
@@ -63,7 +68,7 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
 
 class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     ReactiveSequenceBase[T, CollectionValueT, ItemValueT],
-    Ref[list[T]],
+    SequenceRefBase[T, CollectionValueT, ItemValueT],
 ):
     """Reactive sequence ref — observation + mutations + navigation."""
 

@@ -14,13 +14,14 @@ Collection Bases (pure, no Ref — everyshape.collections):
     ItemBase -> MutableItemBase -> ReactiveItemBase
     SequenceBase -> MutableSequenceBase -> ReactiveSequenceBase
     MappingBase -> MutableMappingBase -> ReactiveMappingBase
+    SetLikeBase -> MutableSetBase -> ReactiveSetBase
 
 Types (concrete Python types — everyshape.types):
-    ListBase -> ReactiveListBase          (mutable sequence)
-    TupleBase -> ReactiveTupleBase        (immutable sequence)
-    DictBase -> ReactiveDictBase          (mutable mapping)
-    SetBase -> ReactiveSetBase            (mutable set)
-    FrozenSetBase -> ReactiveFrozenSetBase (immutable set)
+    ListType -> ReactiveListType      (mutable sequence)
+    TupleType                         (immutable sequence)
+    DictType -> ReactiveDictType      (mutable mapping)
+    SetType -> ReactiveSetType        (mutable set)
+    FrozenSetType                     (immutable set)
 
 Refs (collection bases + Ref — everyshape.refs):
     Ref: Base for all document-model refs.
@@ -28,25 +29,25 @@ Refs (collection bases + Ref — everyshape.refs):
     ShapeRef -> MutableShapeRef -> ReactiveShapeRef
     SequenceRefBase -> MutableSequenceRefBase -> ReactiveSequenceRefBase
     MappingRefBase -> MutableMappingRefBase -> ReactiveMappingRefBase
-    ShapesListRefBase -> ReactiveShapesListRefBase
-    ShapesDictRefBase -> ReactiveShapesDictRefBase
+    SetLikeRefBase -> MutableSetRefBase -> ReactiveSetRefBase
+    ShapesSequenceRefBase -> MutableShapesSequenceRefBase -> ReactiveShapesSequenceRefBase
+    ShapesMappingRefBase -> MutableShapesMappingRefBase -> ReactiveShapesMappingRefBase
 """
 
 from everyshape.capabilities import (
     CollectionClearableBase,
     CollectionExistableBase,
     CollectionExtractableBase,
-    CollectionLengthableBase,
     CollectionStorableBase,
     ItemDeletableBase,
     ItemExistableBase,
     ItemGettableBase,
     ItemSettableBase,
-    LocationDeletableProtocol,
-    LocationExistableProtocol,
-    LocationGettableProtocol,
-    LocationObservableProtocol,
-    LocationSettableProtocol,
+    # LocationDeletableProtocol,
+    # LocationExistableProtocol,
+    # LocationGettableProtocol,
+    # LocationObservableProtocol,
+    # LocationSettableProtocol,
     PrimitiveObservableBase,
     ViewObservableBase,
 )
@@ -56,10 +57,12 @@ from everyshape.collections import (
     MutableItemBase,
     MutableMappingBase,
     MutableSequenceBase,
+    MutableSetBase,
     ReactiveItemBase,
     ReactiveMappingBase,
     ReactiveSequenceBase,
     SequenceBase,
+    SetLikeBase,
 )
 from everyshape.refs import (
     ItemRef,
@@ -67,31 +70,34 @@ from everyshape.refs import (
     MutableItemRef,
     MutableMappingRefBase,
     MutableSequenceRefBase,
+    MutableSetRefBase,
     MutableShapeRef,
+    MutableShapesMappingRefBase,
+    MutableShapesSequenceRefBase,
     ReactiveItemRef,
     ReactiveMappingRefBase,
     ReactiveSequenceRefBase,
+    ReactiveSetRefBase,
     ReactiveShapeRef,
-    ReactiveShapesDictRefBase,
-    ReactiveShapesListRefBase,
+    ReactiveShapesMappingRefBase,
+    ReactiveShapesSequenceRefBase,
     Ref,
     SequenceRefBase,
+    SetLikeRefBase,
     ShapeRef,
-    ShapesDictRefBase,
-    ShapesListRefBase,
+    ShapesMappingRefBase,
+    ShapesSequenceRefBase,
 )
 from everyshape.shape import Shape, ShapeMeta, Slot, SlotDescriptor
 from everyshape.types import (
-    DictBase,
-    FrozenSetBase,
-    ListBase,
-    ReactiveDictBase,
-    ReactiveFrozenSetBase,
-    ReactiveListBase,
-    ReactiveSetBase,
-    ReactiveTupleBase,
-    SetBase,
-    TupleBase,
+    DictType,
+    FrozenSetType,
+    ListType,
+    ReactiveDictType,
+    ReactiveListType,
+    ReactiveSetType,
+    SetType,
+    TupleType,
 )
 
 
@@ -128,34 +134,45 @@ __all__ = [  # noqa: RUF022
     "MappingBase",
     "MutableMappingBase",
     "ReactiveMappingBase",
+    "SetLikeBase",
+    "MutableSetBase",
     # Types (concrete Python types)
-    "ListBase",
-    "ReactiveListBase",
-    "TupleBase",
-    "ReactiveTupleBase",
-    "DictBase",
-    "ReactiveDictBase",
-    "SetBase",
-    "ReactiveSetBase",
-    "FrozenSetBase",
-    "ReactiveFrozenSetBase",
-    # Refs
+    "ListType",
+    "ReactiveListType",
+    "TupleType",
+    "DictType",
+    "ReactiveDictType",
+    "SetType",
+    "ReactiveSetType",
+    "FrozenSetType",
+    # Refs — Item
     "ItemRef",
     "MutableItemRef",
     "ReactiveItemRef",
+    # Refs — Shape
     "ShapeRef",
     "MutableShapeRef",
     "ReactiveShapeRef",
-    "MappingRefBase",
-    "MutableMappingRefBase",
-    "ReactiveMappingRefBase",
+    # Refs — Sequence
     "SequenceRefBase",
     "MutableSequenceRefBase",
     "ReactiveSequenceRefBase",
-    "ShapesListRefBase",
-    "ReactiveShapesListRefBase",
-    "ShapesDictRefBase",
-    "ReactiveShapesDictRefBase",
+    # Refs — Mapping
+    "MappingRefBase",
+    "MutableMappingRefBase",
+    "ReactiveMappingRefBase",
+    # Refs — Set
+    "SetLikeRefBase",
+    "MutableSetRefBase",
+    "ReactiveSetRefBase",
+    # Refs — ShapesSequence
+    "ShapesSequenceRefBase",
+    "MutableShapesSequenceRefBase",
+    "ReactiveShapesSequenceRefBase",
+    # Refs — ShapesMapping
+    "ShapesMappingRefBase",
+    "MutableShapesMappingRefBase",
+    "ReactiveShapesMappingRefBase",
     # Shape system
     "Shape",
     "ShapeMeta",

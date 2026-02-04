@@ -1,4 +1,4 @@
-"""Document-model collection bases — items, sequences, mappings.
+"""Document-model collection bases — items, sequences, mappings, sets.
 
 Pure bases without Ref semantics. These combine everybase's pythonic
 collection ops with everyshape's document-model capabilities (existable,
@@ -14,6 +14,7 @@ combine these bases with Ref.
 from .items import ItemBase, MutableItemBase, ReactiveItemBase
 from .mapping import MappingBase, MutableMappingBase, ReactiveMappingBase
 from .sequence import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
+from .set import MutableSetBase, ReactiveSetBase, SetLikeBase
 
 
 __all__ = [  # noqa: RUF022
@@ -29,4 +30,8 @@ __all__ = [  # noqa: RUF022
     "MappingBase",
     "MutableMappingBase",
     "ReactiveMappingBase",
+    # Set bases
+    "MutableSetBase",
+    "ReactiveSetBase",
+    "SetLikeBase",
 ]

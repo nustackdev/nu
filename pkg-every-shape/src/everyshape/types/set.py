@@ -1,39 +1,32 @@
 """Set type — mutable set.
 
-SetBase         = everybase.MutableSetBase + capabilities (set IS mutable)
-ReactiveSetBase = SetBase + ViewObservable
-
-Goes directly to everybase since there is no everyshape set collection base yet.
+SetType         = MutableSetBase (set IS mutable)
+ReactiveSetType = SetType + ViewObservable
 """
 
 from __future__ import annotations
 
-from everybase.abc import MutableSetBase as _EB_MutableSetBase
-from everyshape.capabilities import (
-    CollectionExistableBase,
-    CollectionExtractableBase,
-    CollectionStorableBase,
-    ViewObservableBase,
-)
+from everybase.abc import TypeBase
+from everyshape.collections.set import MutableSetBase as _MutableSetBase
+from everyshape.collections.set import ReactiveSetBase as _ReactiveSetBase
 
 
 __all__ = [
-    "ReactiveSetBase",
-    "SetBase",
+    "ReactiveSetType",
+    "SetType",
 ]
 
 
-class SetBase[T](
-    _EB_MutableSetBase[set[T], T, object, object],
-    CollectionExistableBase,
-    CollectionExtractableBase[object],
-    CollectionStorableBase[object, set[T]],
+class SetType[T](
+    _MutableSetBase[T, object, object],
+    TypeBase[set],
 ):
     """Set — mutable set."""
 
 
-class ReactiveSetBase[T](
-    SetBase[T],
-    ViewObservableBase,
+class ReactiveSetType[T](
+    SetType[T],
+    _ReactiveSetBase[T, object, object],
+    TypeBase[set],
 ):
     """Reactive set — mutable + observable."""

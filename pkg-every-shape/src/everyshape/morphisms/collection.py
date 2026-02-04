@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 __all__ = [
     "CollectionClearCmd",
     "CollectionExistsOp",
-    "CollectionLenOp",
     "CollectionMissingOp",
     "ExtractOp",
     "StoreCmd",
@@ -89,25 +88,6 @@ class StoreCmd[T](Command, Morphism[T]):
 
     def __repr__(self) -> str:
         return f"StoreCmd({self.ref!r}, {self.data_expr!r})"
-
-
-class CollectionLenOp(Operation, Morphism[int]):
-    """Get collection length: len(view).
-
-    The ref must implement:
-        fetch(ctx) -> storage object supporting __len__
-    """
-
-    def __init__(self, ref: object) -> None:
-        super().__init__(ref)
-        self.ref = ref
-
-    async def execute(self, ctx: Context) -> int:
-        view = await self.ref.fetch(ctx)
-        return len(view)
-
-    def __repr__(self) -> str:
-        return f"CollectionLenOp({self.ref!r})"
 
 
 class CollectionClearCmd(Command, Morphism[None]):

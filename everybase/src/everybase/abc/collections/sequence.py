@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, cast
 
-from ..capabilities.col_atoms import SliceableBase, SliceableProtocol
-from ..capabilities.col_collection import CollectionBase, CollectionProtocol
+from ..capabilities.collection import SliceableBase, SliceableProtocol
+from .collection import CollectionBase, CollectionProtocol
 
 
 if TYPE_CHECKING:

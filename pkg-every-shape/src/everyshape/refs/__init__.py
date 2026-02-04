@@ -7,11 +7,20 @@ Substrates (every_pv, every_dict) inherit from these.
 """
 
 from .base import Ref
-from .dict import MappingRefBase, MutableMappingRefBase, ReactiveMappingRefBase
-from .dictshape import ReactiveShapesDictRefBase, ShapesDictRefBase
 from .items import ItemRef, MutableItemRef, ReactiveItemRef
-from .list import MutableSequenceRefBase, ReactiveSequenceRefBase, SequenceRefBase
-from .listshape import ReactiveShapesListRefBase, ShapesListRefBase
+from .mapping import MappingRefBase, MutableMappingRefBase, ReactiveMappingRefBase
+from .sequence import MutableSequenceRefBase, ReactiveSequenceRefBase, SequenceRefBase
+from .set import MutableSetRefBase, ReactiveSetRefBase, SetLikeRefBase
+from .shapesmapping import (
+    MutableShapesMappingRefBase,
+    ReactiveShapesMappingRefBase,
+    ShapesMappingRefBase,
+)
+from .shapessequence import (
+    MutableShapesSequenceRefBase,
+    ReactiveShapesSequenceRefBase,
+    ShapesSequenceRefBase,
+)
 from .structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
@@ -27,17 +36,23 @@ __all__ = [  # noqa: RUF022
     "MutableShapeRef",
     "ReactiveShapeRef",
     # Sequence refs
+    "SequenceRefBase",
     "MutableSequenceRefBase",
     "ReactiveSequenceRefBase",
-    "SequenceRefBase",
     # Mapping refs
     "MappingRefBase",
     "MutableMappingRefBase",
     "ReactiveMappingRefBase",
-    # ShapesList refs
-    "ReactiveShapesListRefBase",
-    "ShapesListRefBase",
-    # ShapesDict refs
-    "ReactiveShapesDictRefBase",
-    "ShapesDictRefBase",
+    # Set refs
+    "SetLikeRefBase",
+    "MutableSetRefBase",
+    "ReactiveSetRefBase",
+    # ShapesSequence refs
+    "ShapesSequenceRefBase",
+    "MutableShapesSequenceRefBase",
+    "ReactiveShapesSequenceRefBase",
+    # ShapesMapping refs
+    "ShapesMappingRefBase",
+    "MutableShapesMappingRefBase",
+    "ReactiveShapesMappingRefBase",
 ]

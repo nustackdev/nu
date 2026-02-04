@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from ..capabilities import ClearableBase, ComparableBase
+from ..capabilities import ComparableBase
 from ..collections import MutableSequenceBase
 from .base import TypeBase
 
@@ -27,7 +27,7 @@ __all__ = [
 
 class ListType[T](
     MutableSequenceBase[list[T], T, "ListValue[T]", "AnyValue"],
-    ClearableBase,
+    # ClearableBase,
     ComparableBase["list[T] | ListValue[T]"],
     TypeBase[list[T]],
 ):

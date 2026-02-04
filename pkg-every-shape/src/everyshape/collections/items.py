@@ -32,12 +32,20 @@ __all__ = [
 # =============================================================================
 
 
-class ItemBase[T, ValueT: Value]:
+class ItemBase[T, ValueT: Value](
+    ItemExistableBase,
+    ItemGettableBase[T],
+):
     """Item in a document — holds a typed value.
 
     An item is the leaf node of the document model: a single typed value
     at an addressable location (e.g., a field in a shape, an element in
     a list, a value in a mapping).
+
+    Provides:
+        get() -> typed Value
+        exists() -> BoolValue
+        missing() -> BoolValue
 
     Substrates must provide:
         __init__: set _value_type and _value_value_type
@@ -60,19 +68,15 @@ class ItemBase[T, ValueT: Value]:
 
 class MutableItemBase[T, ValueT: Value](
     ItemBase[T, ValueT],
-    ItemExistableBase,
-    ItemGettableBase[T],
     ItemSettableBase[T],
     ItemDeletableBase,
 ):
-    """Item with CRUD capabilities.
+    """Item with mutable capabilities.
 
     Provides:
-        get() -> typed Value
+        immutable capabilities +
         set(value) -> typed Value
         remove() -> NoneValue
-        exists() -> BoolValue
-        missing() -> BoolValue
     """
 
 

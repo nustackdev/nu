@@ -3,6 +3,12 @@
 MappingRefBase         = MappingBase + Ref
 MutableMappingRefBase  = MutableMappingBase + MappingRefBase
 ReactiveMappingRefBase = ReactiveMappingBase + MutableMappingRefBase
+
+Type Parameters:
+    K:              Native key type (str, int, etc.)
+    V:              Native value type (int, str, dict[str, object], etc.)
+    CollectionValueT: Wrapped result for collection-level ops (extract, store)
+    ValueValueT:     Wrapped result for value-level ops (get, set) — Value subclass
 """
 
 from __future__ import annotations
