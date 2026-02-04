@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..tree import Node
 from .walk import preorder
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from ..tree import Node
 
 
 __all__ = [
@@ -22,16 +21,16 @@ __all__ = [
 ]
 
 
-def find(root: Node, pred: Callable[[Node], bool]) -> list[Node]:
+def find[N: Node](root: N, pred: Callable[[Node], bool]) -> list[N]:
     """Find all nodes matching predicate (pre-order)."""
-    return [node for node in preorder(root) if pred(node)]
+    return [node for node in preorder(root) if pred(node)]  # type: ignore[misc]
 
 
-def find_first(root: Node, pred: Callable[[Node], bool]) -> Node | None:
+def find_first[N: Node](root: N, pred: Callable[[Node], bool]) -> N | None:
     """Find first matching node (pre-order), or None."""
     for node in preorder(root):
         if pred(node):
-            return node
+            return node  # type: ignore[return-value]
     return None
 
 

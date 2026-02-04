@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..tree import Node
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from ..tree import Node
 
 
 __all__ = [
@@ -21,11 +21,11 @@ __all__ = [
 ]
 
 
-def conditional_wrap(
-    root: Node,
+def conditional_wrap[N: Node](
+    root: N,
     pred: Callable[[Node], bool],
     wrapper: Callable[[Node], Node],
-) -> Node:
+) -> N:
     """Wrap each matching child, bottom-up.
 
     At each node, matching children are wrapped individually via
@@ -61,4 +61,4 @@ def conditional_wrap(
         else:
             new_children.append(conditional_wrap(child, pred, wrapper))
 
-    return root.with_children(*new_children)
+    return root.with_children(*new_children)  # type: ignore[arg-type]

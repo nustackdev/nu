@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-def auto_atomic(tree: Node, shape: type, view_cls: type[View]) -> Node:
+def auto_atomic[N: Node](tree: N, shape: type, view_cls: type[View]) -> N:
     """Wrap each Term subtree in its own ``Atomic`` span.
 
     Walks *tree* bottom-up. Each Term child gets wrapped individually
