@@ -1,0 +1,218 @@
+# Defining Your Own Type
+
+How to add a custom domain type to everybase, from abstract operations to substrate-specific Refs.
+
+## Pattern
+
+Every custom type follows this structure:
+
+```
+1. Type class   — abstract operations (what you can do with the type)
+2. Value class  — computed result (lives in Python memory)
+3. RefBase      — get/set methods (how to read/write storage)
+4. Substrate Refs — concrete Refs with .slot() for each substrate
+```
+
+## Step-by-Step: Solana Pubkey Type
+
+### 1. Define the Type
+
+The Type class inherits from `TypeBase[T]` and optional capability bases. It defines all operations the type supports:
+
+```python
+from everybase import Sentinel, StrArg
+from everybase.abc import (
+    EqualableBase,  # for == and !=
+    TypeBase,
+    FuncCallOp,
+    MethodCallOp,
+    BoolValue,
+    BytesValue,
+    StrValue,
+)
+from solders.pubkey import Pubkey
+
+
+class PubkeyType(EqualableBase["Pubkey | PubkeyType"], TypeBase[Pubkey | Sentinel]):
+    """What you can do with a Pubkey."""
+
+    # --- Constructors (classmethods return Value) ---
+
+    @classmethod
+    def from_string(cls, value: StrArg) -> PubkeyValue:
+        return PubkeyValue(FuncCallOp(Pubkey.from_string, value))
+
+    @classmethod
+    def from_bytes(cls, b: bytes) -> PubkeyValue:
+        return PubkeyValue(FuncCallOp(Pubkey, b))
+
+    # --- Instance methods (return typed Values) ---
+
+    def to_json(self) -> StrValue:
+        return StrValue(MethodCallOp(self, "to_json"))
+
+    def to_bytes(self) -> BytesValue:
+        return BytesValue(MethodCallOp(self, "__bytes__"))
+
+    def is_on_curve(self) -> BoolValue:
+        return BoolValue(MethodCallOp(self, "is_on_curve"))
+```
+
+Key points:
+
+- `TypeBase[Pubkey | Sentinel]` — the Python type this wraps, plus Sentinel for absent values
+- `EqualableBase` — gives `==` and `!=` operators for free
+- Use `ComparableBase` instead if you also want `<`, `>`, `<=`, `>=`
+- Constructors are `@classmethod` and return `*Value`
+- Methods wrap operations in appropriate Value types
+
+### 2. Define the Value
+
+The Value class is trivial — just dual inheritance:
+
+```python
+from everybase.abc import ValueBase
+
+class PubkeyValue(ValueBase, PubkeyType):
+    pass
+```
+
+That's it. `ValueBase` provides the execution machinery. `PubkeyType` provides all the methods. A Value holds either a literal (`PubkeyValue(some_pubkey)`) or a computation source (`PubkeyValue(FuncCallOp(...))`).
+
+### 3. Define the RefBase
+
+The RefBase defines how to read from and write to storage. Use everyshape tools to buld Refs for Shape substrate without much biolerplate.
+
+```python
+from everybase import Arg
+from everybase.abc import ensure_term
+from everyshape import ItemRef
+from everyshape import ItemGetOp, ItemSetCmd
+
+
+class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
+    """How to get/set a Pubkey in any storage."""
+
+    def set(self, value: Arg[Pubkey] | StrArg) -> PubkeyValue:
+        # Convert to storage format (base58 string)
+        if isinstance(value, Pubkey):
+            val = str(value)
+        elif isinstance(value, PubkeyType):
+            val = value.to_json()
+        elif isinstance(value, str):
+            val = value
+        else:
+            val = value
+        return PubkeyValue(ItemSetCmd(self, ensure_term(val)))
+
+    def get(self) -> PubkeyValue:
+        # Read from storage (base58 string) and convert back
+        return PubkeyValue.from_string(StrValue(ItemGetOp(self)))
+```
+
+Key points:
+
+- `ItemRef[Pubkey, PubkeyValue]` — storage type and value type
+- Inherits `PubkeyType` so you can call methods directly on the ref: `MyShape.pubkey.is_on_curve()`
+- `set()` converts to storage format, `get()` converts back
+- Both return `PubkeyValue` — they're lazy terms, not immediate results
+
+### 4. Create Substrate-Specific Refs
+
+For each substrate, create a concrete Ref with `.slot()`:
+
+```python
+from typing import Self
+from every_pv import PrimitiveRef
+from every_dict import RefBase as DictRefBase
+from everyshape import Slot
+
+
+# PV substrate (persistent, reactive)
+class PVPubkeyRef(PubkeyRefBase, PrimitiveRef):
+    @classmethod
+    def slot(cls) -> Self:
+        return Slot(cls, value_type=str)  # stored as string in KV store
+
+
+# Dict substrate (in-memory, simple)
+class DictPubkeyRef(PubkeyRefBase, DictRefBase):
+    @classmethod
+    def slot(cls) -> Self:
+        return Slot(cls)  # stored in plain dict
+```
+
+### 5. Use in Shapes
+
+```python
+from everyshape import Shape
+
+class Token(Shape):
+    mint = DictPubkeyRef.slot()
+    owner = DictPubkeyRef.slot()
+    authority = DictPubkeyRef.slot()
+```
+
+### 6. Use in Expressions
+
+```python
+from everybase import Context
+
+data = {}
+ctx = Context().with_handle(dict, data, shape=Token)
+
+# Set
+await Token.mint.set("So11111111111111111111111111111111111111112").execute(ctx)
+
+# Get
+mint = await Token.mint.get().execute(ctx)
+
+# Operations (all lazy until .execute())
+is_valid = Token.mint.is_on_curve()
+as_json = Token.mint.to_json()
+are_equal = Token.mint.get() == Token.owner.get()
+```
+
+## Capability Bases Reference
+
+Choose which bases to inherit depending on what your type supports:
+
+| Base | Gives you | Use when |
+|------|-----------|----------|
+| `EqualableBase` | `==`, `!=` | Type supports equality |
+| `ComparableBase` | `==`, `!=`, `<`, `>`, `<=`, `>=` | Type is orderable |
+| `TypeBase[T]` | Core type machinery | Always required |
+
+For numeric types, add arithmetic:
+
+| Base | Gives you |
+|------|-----------|
+| `Numeric` | `+`, `-`, `*`, `/`, `//`, `%`, `**`, `-unary` |
+| `Logical` | `&`, `|`, `~`, `and_()`, `or_()`, `not_()` |
+| `Bitwise` | `&`, `|`, `^`, `<<`, `>>` |
+
+## Operation Wrappers Reference
+
+| Wrapper | Use |
+|---------|-----|
+| `FuncCallOp(fn, *args)` | Call any Python function |
+| `MethodCallOp(self, "method", *args)` | Call a method on the value |
+| `AddOp(left, right)` | `left + right` |
+| `SubOp(left, right)` | `left - right` |
+| `MulOp(left, right)` | `left * right` |
+| `DivOp(left, right)` | `left / right` |
+| `EqOp(left, right)` | `left == right` |
+| `LtOp(left, right)` | `left < right` |
+| `ToStrOp(value)` | `str(value)` |
+| `ToIntOp(value)` | `int(value)` |
+| `ToFloatOp(value)` | `float(value)` |
+
+## Full Example: Datetime Type
+
+See `_examples/example_arb_ref.py` for a complete datetime type with:
+
+- `DatetimeType` with `from_timestamp()`, `from_iso()`, `to_timestamp()`, `__add__()`
+- `DatetimeValue(ValueBase, DatetimeType)`
+- `DatetimeRefBase(ItemRef, DatetimeType)` with `get()`/`set()`
+- `PVDatetimeRef` and `DictDatetimeRef` substrate refs
+- Mixed-substrate usage (PV + dict in one tree)
