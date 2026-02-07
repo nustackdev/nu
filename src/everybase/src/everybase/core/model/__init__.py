@@ -2,8 +2,8 @@
 
 Model:
     Abstract base for all data models. Substrate packages extend this:
-    - everyshape.Shape: document model (hierarchical key-value)
-    - everytable.Table: relational model (future)
+    - eb_shape.Shape: document model (hierarchical key-value)
+    - eb_table.Table: relational model (future)
 """
 
 from __future__ import annotations

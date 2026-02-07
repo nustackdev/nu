@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-from every_dict import (
+from eb_dict import (
     DatetimeRef,
     DecimalRef,
     IntRef,
@@ -20,8 +20,8 @@ from every_dict import (
     TimedeltaRef,
     UUIDRef,
 )
+from eb_shape import Shape
 from everybase import Context
-from everyshape import Shape
 
 
 # =============================================

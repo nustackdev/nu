@@ -14,8 +14,8 @@ class Model:
     Model is the substrate-agnostic base class. Model packages
     extend it with their own field machinery:
 
-    - Shape (everyshape): document model with slots for hierarchical KV structures
-    - Table (everytable): relational model (future)
+    - Shape (eb_shape): document model with slots for hierarchical KV structures
+    - Table (eb_table): relational model (future)
 
     Models define *what exists and where it lives*.
     They are purely structural -- no behavior or validation logic.

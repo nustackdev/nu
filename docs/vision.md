@@ -14,9 +14,9 @@ every_*           substrates — actual storage implementations
 
 **Substrates** are where data actually lives:
 
-- `every_pv` — polymorphic views over KV stores (RocksDB, etc.)
-- `every_dict` (future) — Python dict as a bag, in-memory
-- `every_notion` (future) — Notion API as storage backend
+- `eb_pv` — polymorphic views over KV stores (RocksDB, etc.)
+- `eb_dict` (future) — Python dict as a bag, in-memory
+- `eb_notion` (future) — Notion API as storage backend
 - `every_sqlite` (future) — SQLite as storage
 
 Each substrate provides its own refs, spans, and capability wiring. Each reuses everybase.abc's type algebra and common morphisms where applicable.

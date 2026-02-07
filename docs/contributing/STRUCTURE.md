@@ -16,19 +16,19 @@ everybase/
 │   └── tests/
 │
 ├── substrates/             # Integration substrates
-│   ├── pkg-every-shape/    #   everyshape (hierarchical, uniform CRUD)
-│   ├── pkg-every-service/  #   everyservice (flat RPC)
-│   ├── pkg-every-table/    #   everytable (relational)
-│   ├── pkg-every-rest/     #   everyrest (HTTP, CRUD + actions)
-│   ├── pkg-every-stream/   #   everystream (event streams)
-│   └── pkg-every-gql/      #   every-gql (GraphQL)
+│   ├── eb-shape/    #   eb_shape (hierarchical, uniform CRUD)
+│   ├── eb-service/  #   eb_service (flat RPC)
+│   ├── eb-table/    #   eb_table (relational)
+│   ├── eb-rest/     #   eb_rest (HTTP, CRUD + actions)
+│   ├── eb-stream/   #   eb_stream (event streams)
+│   └── eb-gql/      #   eb-gql (GraphQL)
 │
 ├── pkgs/                   # Utility + extension packages
-│   ├── pkg-every-pv/       #   PV storage substrate
-│   ├── pkg-every-dict/     #   Dict substrate
-│   ├── pkg-every-flow/     #   Flow primitives
-│   ├── pkg-every-flow-ext/ #   Flow extensions
-│   ├── pkg-every-notion/   #   Notion integration
+│   ├── eb-pv/       #   PV storage substrate
+│   ├── eb-dict/     #   Dict substrate
+│   ├── eb-flow/     #   Flow primitives
+│   ├── eb-flow-ext/ #   Flow extensions
+│   ├── eb-notion/   #   Notion integration
 │   └── ...                 #   datetime, math, fin, path, uuid
 │
 ├── docs/                   # Documentation
@@ -57,24 +57,24 @@ Models, substrates, extensions, and integrations.
 
 | Directory | Package | Purpose |
 |-----------|---------|---------|
-| `pkg-every-shape` | `everyshape` | Document model - shapes, slots, items, collections |
-| `pkg-every-table` | `everytable` | Relational model - tables, columns, queries |
-| `pkg-every-pv` | `every-pv` | PV storage substrate + views + adapters |
-| `pkg-every-dict` | `every-dict` | Dict substrate (plain nested dicts, no persistence) |
-| `pkg-every-flow` | `every-flow` | Flow primitives (Seq, If, While, etc.) |
-| `pkg-every-flow-ext` | `every-flow-ext` | Flow extensions (cancellation, progress) |
+| `eb-shape` | `eb_shape` | Document model - shapes, slots, items, collections |
+| `eb-table` | `eb_table` | Relational model - tables, columns, queries |
+| `eb-pv` | `eb-pv` | PV storage substrate + views + adapters |
+| `eb-dict` | `eb-dict` | Dict substrate (plain nested dicts, no persistence) |
+| `eb-flow` | `eb-flow` | Flow primitives (Seq, If, While, etc.) |
+| `eb-flow-ext` | `eb-flow-ext` | Flow extensions (cancellation, progress) |
 | `pkg-every-stdtypes` | `every-type` | Extended type refs (Date, Decimal, UUID, etc.) |
-| `pkg-every-notion` | `every-notion` | Notion API integration |
+| `eb-notion` | `eb-notion` | Notion API integration |
 
 ## Dependency Graph
 
 ```
 everybase (contracts + base impl)
-  ├── everyshape (document model)
-  │     ├── every-pv (PV substrate + views)
-  │     └── every-dict (dict substrate)
-  └── everytable (relational model)
-        └── every-notion, etc.
+  ├── eb_shape (document model)
+  │     ├── eb-pv (PV substrate + views)
+  │     └── eb-dict (dict substrate)
+  └── eb_table (relational model)
+        └── eb-notion, etc.
 ```
 
 ## Key Files
@@ -90,7 +90,7 @@ everybase (contracts + base impl)
 
 | Context | Style | Example |
 |---------|-------|---------|
-| Directory | `pkg-` prefix | `pkg-every-pv/` |
-| Import | underscore | `from every_pv import ...` |
-| PyPI name | hyphen | `every-pv` |
-| pyproject.toml name | hyphen | `name = "every-pv"` |
+| Directory | `pkg-` prefix | `eb-pv/` |
+| Import | underscore | `from eb_pv import ...` |
+| PyPI name | hyphen | `eb-pv` |
+| pyproject.toml name | hyphen | `name = "eb-pv"` |

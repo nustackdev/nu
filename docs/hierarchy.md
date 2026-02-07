@@ -6,14 +6,14 @@
 everybase            unified core — contracts + toolbox
   everybase.core     contracts — Term, Flow, Span, Ref, Model, Context
   everybase.abc      toolbox — types, values, morphisms, capabilities, utilities
-    ├── everyshape    document model — shapes, items, collections, navigation
-    │     ├── every-pv      PV storage substrate (path resolution, views, spans, adapters)
-    │     └── every-dict    dict substrate (plain nested dicts, no persistence)
-    └── everytable    relational model — (TBD)
-          └── every-notion    Notion API integration
+    ├── eb_shape    document model — shapes, items, collections, navigation
+    │     ├── eb-pv      PV storage substrate (path resolution, views, spans, adapters)
+    │     └── eb-dict    dict substrate (plain nested dicts, no persistence)
+    └── eb_table    relational model — (TBD)
+          └── eb-notion    Notion API integration
   │
-  ├── every-flow        flow primitives (Seq, Par, Cond, Loop)
-  ├── every-flow-ext    flow extensions (cancellation, progress)
+  ├── eb-flow        flow primitives (Seq, Par, Cond, Loop)
+  ├── eb-flow-ext    flow extensions (cancellation, progress)
   └── every-type        extended type refs (Decimal, UUID, datetime, Path)
 ```
 
@@ -21,13 +21,13 @@ everybase            unified core — contracts + toolbox
 
 ```
 everybase/            everybase (everybase.core + everybase.abc)
-pkg-every-shape/      everyshape
-pkg-every-table/      everytable
-pkg-every-dict/       every-dict
-pkg-every-flow/       every-flow
-pkg-every-flow-ext/   every-flow-ext
-pkg-every-notion/     every-notion
-pkg-every-pv/         every-pv
+eb-shape/      eb_shape
+eb-table/      eb_table
+eb-dict/       eb-dict
+eb-flow/       eb-flow
+eb-flow-ext/   eb-flow-ext
+eb-notion/     eb-notion
+eb-pv/         eb-pv
 pkg-every-stdtypes/   every-type
 ```
 
@@ -70,7 +70,7 @@ Morphisms       base morphism implementations
 Utilities       ensure_term, tree walking, etc.
 ```
 
-### everyshape
+### eb_shape
 
 Document model. Depends on everybase.
 
@@ -97,7 +97,7 @@ Collections     ShapeRef -> MutableShapeRef -> ReactiveShapeRef
                 (homogeneous shape collections)
 ```
 
-### everytable
+### eb_table
 
 Abstract relational model. Depends on everybase. (TBD)
 
@@ -107,20 +107,20 @@ Abstract relational model. Depends on everybase. (TBD)
                     everybase
                   (core + abc)
                     /       \
-            everyshape    everytable
+            eb_shape    eb_table
                 |             |
-            every-pv     everytable
-            every-dict       |
-                |        every-notion
-          every-type  every-flow
-          every-flow-ext
+            eb-pv     eb_table
+            eb-dict       |
+                |        eb-notion
+          every-type  eb-flow
+          eb-flow-ext
 ```
 
 Key constraints:
 
-- everyshape and everytable are siblings -- both depend on everybase
-- everyshape has zero PV imports -- substrate-independent document model
-- everytable has zero PV imports -- independent data model
-- every-pv depends on everyshape (PV substrate: persistent, reactive)
-- every-dict depends on everyshape (dict substrate: plain dicts, no reactivity)
-- every-notion will depend on everytable (relational adapter)
+- eb_shape and eb_table are siblings -- both depend on everybase
+- eb_shape has zero PV imports -- substrate-independent document model
+- eb_table has zero PV imports -- independent data model
+- eb-pv depends on eb_shape (PV substrate: persistent, reactive)
+- eb-dict depends on eb_shape (dict substrate: plain dicts, no reactivity)
+- eb-notion will depend on eb_table (relational adapter)

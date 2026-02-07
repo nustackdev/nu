@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import every_pv as e
+import eb_pv as e
+from eb_shape import Shape
 from everybase import Context
-from everyshape import Shape
 
 
 # =============================================================================
@@ -119,9 +119,9 @@ if __name__ == "__main__":
 
     from pv import View
 
-    from every_pv.adapters.codecs import TextCodec
-    from every_pv.adapters.storages.textdb import TextStorage
-    from every_pv.views import DictView
+    from eb_pv.adapters.codecs import TextCodec
+    from eb_pv.adapters.storages.textdb import TextStorage
+    from eb_pv.views import DictView
 
     async def main() -> None:
         with (

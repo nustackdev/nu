@@ -80,8 +80,8 @@ The execute cycle for a morphism:
 Refs are LValues — they point to a location in storage. The substrate determines how they resolve:
 
 ```python
-from every_dict import IntRef, StrRef
-from everyshape import Shape
+from eb_dict import IntRef, StrRef
+from eb_shape import Shape
 
 class Counter(Shape):
     value = IntRef.slot()
@@ -114,8 +114,8 @@ This matters for Spans — a pure subtree can use a read-only snapshot instead o
 ## Example: Expression Tree
 
 ```python
-from every_dict import IntRef, StrRef
-from everyshape import Shape
+from eb_dict import IntRef, StrRef
+from eb_shape import Shape
 from everybase import Context
 
 class Wallet(Shape):

@@ -14,27 +14,27 @@ pkgs/              utility + extension packages
 
 | Package | Topology | Status |
 |---|---|---|
-| `everyshape` | hierarchical, in-house | exists |
-| `everyservice` | flat RPC | wip |
-| `everytable` | relational | todo |
-| `everyrest` | hierarchical, HTTP | todo |
-| `everystream` | push-based events | todo |
-| `every-gql` | schema graph | todo |
+| `eb_shape` | hierarchical, in-house | exists |
+| `eb_service` | flat RPC | wip |
+| `eb_table` | relational | todo |
+| `eb_rest` | hierarchical, HTTP | todo |
+| `eb_stream` | push-based events | todo |
+| `eb-gql` | schema graph | todo |
 
 ### Packages (`pkgs/`)
 
 | Package | Description |
 |---|---|
-| `every-pv` | Polymorphic views over KV storages |
-| `every-dict` | Plain nested dicts |
-| `every-flow` | Flow primitives — Seq, Par, Cond, Loop |
-| `every-flow-ext` | Flow extensions |
-| `every-datetime` | Datetime types |
-| `every-math` | Math types |
-| `every-fin` | Financial types |
-| `every-path` | Path types |
-| `every-uuid` | UUID types |
-| `every-notion` | Notion API integration |
+| `eb-pv` | Polymorphic views over KV storages |
+| `eb-dict` | Plain nested dicts |
+| `eb-flow` | Flow primitives — Seq, Par, Cond, Loop |
+| `eb-flow-ext` | Flow extensions |
+| `eb-datetime` | Datetime types |
+| `eb-math` | Math types |
+| `eb-fin` | Financial types |
+| `eb-path` | Path types |
+| `eb-uuid` | UUID types |
+| `eb-notion` | Notion API integration |
 
 ## Development
 

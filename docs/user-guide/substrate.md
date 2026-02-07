@@ -12,14 +12,14 @@ Everything else comes from everybase for free: type algebra, values, morphisms, 
 
 ## Available Substrates
 
-### every-dict (simple, in-memory)
+### eb-dict (simple, in-memory)
 
 Plain nested Python dicts. No persistence, no reactivity.
 
 ```python
-from every_dict import IntRef, StrRef, FloatRef, ListRef, DictRef
-from every_dict import ShapeRef, ShapesListRef, ShapesDictRef
-from everyshape import Shape
+from eb_dict import IntRef, StrRef, FloatRef, ListRef, DictRef
+from eb_dict import ShapeRef, ShapesListRef, ShapesDictRef
+from eb_shape import Shape
 from everybase import Context
 
 class Counter(Shape):
@@ -36,16 +36,16 @@ print(data)  # {"value": 42, "label": "clicks"}
 
 Use when: prototyping, ephemeral state, in-memory counters.
 
-### every-pv (persistent, reactive)
+### eb-pv (persistent, reactive)
 
 Polymorphic Views over KV stores (RocksDB, LMDB, etc.). Full persistence and reactivity.
 
 ```python
-from every_pv import IntRef, StrRef, FloatRef, Atomic
-from every_pv.views import DictView
-from every_pv.adapters.codecs import TextCodec as Codec
-from every_pv.adapters.storages.textdb import TextStorage as Storage
-from everyshape import Shape
+from eb_pv import IntRef, StrRef, FloatRef, Atomic
+from eb_pv.views import DictView
+from eb_pv.adapters.codecs import TextCodec as Codec
+from eb_pv.adapters.storages.textdb import TextStorage as Storage
+from eb_shape import Shape
 from everybase import Context
 
 class AppState(Shape):
@@ -82,8 +82,8 @@ ValueBase          computed result (Python memory)
     |
 ItemRef[T, V]      storage contract (get/set)
     |
-    +-- PrimitiveRef (every_pv)     persistent leaf ref
-    +-- DictRefBase (every_dict)    dict leaf ref
+    +-- PrimitiveRef (eb_pv)     persistent leaf ref
+    +-- DictRefBase (eb_dict)    dict leaf ref
 ```
 
 ### Concrete Example: Making a Pubkey Ref
@@ -104,8 +104,8 @@ class PubkeyValue(ValueBase, PubkeyType):
 **Step 2: RefBase** (substrate-agnostic, defines get/set):
 
 ```python
-from everyshape import ItemRef
-from everyshape.morphisms import ItemGetOp, ItemSetCmd
+from eb_shape import ItemRef
+from eb_shape.morphisms import ItemGetOp, ItemSetCmd
 
 class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
     def get(self) -> PubkeyValue:
@@ -118,9 +118,9 @@ class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
 **Step 3: Substrate Refs** (one per substrate):
 
 ```python
-from every_pv import PrimitiveRef
-from every_dict import RefBase as DictRefBase
-from everyshape import Slot
+from eb_pv import PrimitiveRef
+from eb_dict import RefBase as DictRefBase
+from eb_shape import Slot
 
 class PVPubkeyRef(PubkeyRefBase, PrimitiveRef):
     @classmethod
@@ -147,8 +147,8 @@ class Token(Shape):
 Different shapes can use different substrates in the same tree:
 
 ```python
-from every_pv import StrRef as PVStrRef
-from every_dict import IntRef as MemIntRef
+from eb_pv import StrRef as PVStrRef
+from eb_dict import IntRef as MemIntRef
 
 class PersistentData(Shape):
     """Stored on disk."""
@@ -183,7 +183,7 @@ Context routes each ref to the correct store via shape association.
 
 Both substrates provide the same ref types:
 
-| Ref Type | Dict (`every_dict`) | PV (`every_pv`) |
+| Ref Type | Dict (`eb_dict`) | PV (`eb_pv`) |
 |----------|-------|------|
 | Primitives | `IntRef`, `StrRef`, `FloatRef`, `BoolRef`, `BytesRef` | same names |
 | Extended | `DecimalRef`, `DatetimeRef`, `UUIDRef`, `PathRef`, etc. | same names |
@@ -194,8 +194,8 @@ Both substrates provide the same ref types:
 Import from the substrate you want:
 
 ```python
-from every_dict import IntRef, StrRef, ShapesListRef  # in-memory
-from every_pv import IntRef, StrRef, ShapesListRef    # persistent
+from eb_dict import IntRef, StrRef, ShapesListRef  # in-memory
+from eb_pv import IntRef, StrRef, ShapesListRef    # persistent
 ```
 
 ## Building a New Substrate

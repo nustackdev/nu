@@ -7,12 +7,12 @@ The distinction is by **modeling topology** — how resources are addressed and 
 ```
 Substrate        Topology                  Status
 ─────────        ────────                  ──────
-everyshape       hierarchical, in-house    exists
-everyservice     flat                      wip
-everytable       relational                todo
-everyrest        hierarchical, HTTP        todo
-everystream      push-based                todo
-every-gql        schema graph              todo
+eb_shape       hierarchical, in-house    exists
+eb_service     flat                      wip
+eb_table       relational                todo
+eb_rest        hierarchical, HTTP        todo
+eb_stream      push-based                todo
+eb-gql        schema graph              todo
 ```
 
 See [`docs/substrate-taxonomy.md`](../docs/substrate-taxonomy.md) for the full paradigm map.

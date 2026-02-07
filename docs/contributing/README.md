@@ -30,8 +30,8 @@ make format  # fix lint issues
 
 | Package | Purpose |
 |---------|---------|
-| `every-pv` | PV storage adapter + views |
-| `every-flow` | Flow primitives |
+| `eb-pv` | PV storage adapter + views |
+| `eb-flow` | Flow primitives |
 | `every-type` | Extended type refs |
 | `every-adapters` | Storage/codec backends |
-| `every-notion` | Notion integration |
+| `eb-notion` | Notion integration |

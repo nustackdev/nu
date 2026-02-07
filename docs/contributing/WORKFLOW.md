@@ -30,7 +30,7 @@ make help               # All commands
 
 ```bash
 # Add to specific package
-cd packages/every-pv
+cd packages/eb-pv
 uv add attrs
 
 # Add dev dependency (workspace-wide)

@@ -16,8 +16,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self
 
-from every_dict import RefBase as DictRefBase
-from every_pv import PrimitiveRef
+from eb_dict import RefBase as DictRefBase
+from eb_pv import PrimitiveRef
+from eb_shape import ItemRef, Shape, Slot
+from eb_shape.morphisms import ItemGetOp, ItemSetCmd
 from everybase import Arg, FloatArg, Sentinel, StrArg
 from everybase.abc import (
     AddOp,
@@ -33,8 +35,6 @@ from everybase.abc import (
     ValueBase,
     ensure_term,
 )
-from everyshape import ItemRef, Shape, Slot
-from everyshape.morphisms import ItemGetOp, ItemSetCmd
 
 
 # =============================================
@@ -199,9 +199,9 @@ async def main():
 
     from pv import View
 
-    from every_pv.adapters.codecs import TextCodec as Codec
-    from every_pv.adapters.storages.textdb import TextStorage as Storage
-    from every_pv.views import DictView
+    from eb_pv.adapters.codecs import TextCodec as Codec
+    from eb_pv.adapters.storages.textdb import TextStorage as Storage
+    from eb_pv.views import DictView
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context()
