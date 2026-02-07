@@ -1,6 +1,6 @@
 # everybase
 
-Computation modeln and common base classes.
+Computation model and common base classes.
 
 ## What
 

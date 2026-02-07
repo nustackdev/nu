@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["everybase", "everyshape", "everyservice", "everytable", "every-datetime", "every-dict", "every-fin", "every-flow", "every-flow-ext", "every-math", "every-notion", "every-path", "every-pv", "every-uuid"]
+dependencies = ["everybase", "everyshape", "everyservice", "everytable", "everyrest", "everystream", "every-gql", "every-datetime", "every-dict", "every-fin", "every-flow", "every-flow-ext", "every-math", "every-notion", "every-path", "every-pv", "every-uuid"]
 
 # =============================================================================
 # UV Workspace
@@ -18,9 +18,16 @@ dependencies = ["everybase", "everyshape", "everyservice", "everytable", "every-
 [tool.uv.workspace]
 members = [
     "everybase",
-    "pkg-every-service",
-    "pkg-every-shape",
-    "pkg-every-table",
+
+    # Substrates
+    "substrates/pkg-every-shape",
+    "substrates/pkg-every-service",
+    "substrates/pkg-every-table",
+    "substrates/pkg-every-rest",
+    "substrates/pkg-every-stream",
+    "substrates/pkg-every-gql",
+
+    # Packages
     "pkg-every-datetime",
     "pkg-every-dict",
     "pkg-every-fin",
@@ -30,12 +37,19 @@ members = [
     "pkg-every-notion",
     "pkg-every-path",
     "pkg-every-pv",
-
     "pkg-every-uuid",
 ]
 
 [tool.uv.sources]
 everybase = { workspace = true }
+# Substrates
+everyshape = { workspace = true }
+everyservice = { workspace = true }
+everytable = { workspace = true }
+everyrest = { workspace = true }
+everystream = { workspace = true }
+every-gql = { workspace = true }
+# Packages
 every-datetime = { workspace = true }
 every-dict = { workspace = true }
 every-fin = { workspace = true }
@@ -46,9 +60,6 @@ every-notion = { workspace = true }
 every-path = { workspace = true }
 every-pv = { workspace = true }
 every-uuid = { workspace = true }
-everyservice = { workspace = true }
-everyshape = { workspace = true }
-everytable = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -67,7 +78,7 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["everybase", "pkg-every-service", "pkg-every-shape", "pkg-every-table", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
+testpaths = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -82,7 +93,7 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["everybase", "pkg-every-service", "pkg-every-shape", "pkg-every-table", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
+source = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -113,7 +124,7 @@ directory = "reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["everybase", "pkg-every-service", "pkg-every-shape", "pkg-every-table", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
+src = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -183,7 +194,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "everyservice", "everyshape", "everytable", "every_datetime", "every_dict", "every_fin", "every_flow", "every_flow_leg", "every_flow_ext", "every_math", "every_notion", "every_path", "every_pv", "every_uuid"]
+known-first-party = ["everybase", "everyshape", "everyservice", "everytable", "everyrest", "everystream", "every_gql", "every_datetime", "every_dict", "every_fin", "every_flow", "every_flow_leg", "every_flow_ext", "every_math", "every_notion", "every_path", "every_pv", "every_uuid"]
 force-single-line = false
 lines-after-imports = 2
 

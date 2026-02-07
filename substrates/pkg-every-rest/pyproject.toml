@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "everyrest"
+version = "0.1.0"
+description = "REST/HTTP API substrate for everybase - resources with CRUD + unique actions"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["everybase>=0.1.0"]
+
+[project.urls]
+Repository = "https://github.com/everyabc/everybase"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/everyrest"]
