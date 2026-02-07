@@ -2,7 +2,7 @@
 # Root pyproject.toml - Monorepo Workspace (Virtual)
 # =============================================================================
 # This is a virtual workspace root - not a package itself.
-# Individual packages are in everybase/, substrates/, and pkgs/ directories.
+# Individual packages are in src/, substrates/, and pkgs/ directories.
 # =============================================================================
 
 [project]
@@ -17,7 +17,7 @@ dependencies = ["everybase", "everyshape", "everyservice", "everytable", "everyr
 # =============================================================================
 [tool.uv.workspace]
 members = [
-    "everybase",
+    "src/everybase",
 
     # Substrates
     "substrates/pkg-every-shape",
@@ -78,7 +78,7 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
+testpaths = ["src/everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -93,7 +93,7 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
+source = ["src/everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -124,7 +124,7 @@ directory = "reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
+src = ["src/everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -176,7 +176,7 @@ convention = "google"
     "N806",
     "B017",
 ]
-"_examples/**/*.py" = [
+"examples/**/*.py" = [
     "S101",
     "T20",
     "D",
@@ -221,4 +221,4 @@ exclude = [
 # Security
 # ============================================================================
 [tool.bandit]
-exclude_dirs = ["_examples/", "_docs/"]
+exclude_dirs = ["examples/", "docs/"]

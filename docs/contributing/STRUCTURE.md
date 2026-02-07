@@ -10,32 +10,30 @@ everybase/
 ├── Makefile                # Dev commands
 ├── uv.lock                 # Lockfile (generated)
 │
-├── everybase/              # Core package (everybase)
-│   ├── pyproject.toml      #   everybase.core = contracts (was everyabc)
-│   ├── src/everybase/      #   everybase.abc  = base implementations (was everybase)
-│   └── tests/
-│
-├── pkg-every-shape/        # Document model (everyshape)
+├── src/everybase/          # Core package (everybase)
 │   ├── pyproject.toml
-│   ├── src/everyshape/
+│   ├── src/everybase/
 │   └── tests/
 │
-├── pkg-every-table/        # Relational model (everytable)
-│   ├── pyproject.toml
-│   ├── src/everytable/
-│   └── tests/
+├── substrates/             # Integration substrates
+│   ├── pkg-every-shape/    #   everyshape (hierarchical, uniform CRUD)
+│   ├── pkg-every-service/  #   everyservice (flat RPC)
+│   ├── pkg-every-table/    #   everytable (relational)
+│   ├── pkg-every-rest/     #   everyrest (HTTP, CRUD + actions)
+│   ├── pkg-every-stream/   #   everystream (event streams)
+│   └── pkg-every-gql/      #   every-gql (GraphQL)
 │
-├── pkg-every-dict/         # Dict substrate
-├── pkg-every-flow/         # Flow primitives
-├── pkg-every-flow-ext/     # Flow extensions
-├── pkg-every-notion/       # Notion integration
-├── pkg-every-pv/           # PV storage substrate
-├── pkg-every-stdtypes/     # Extended type refs
+├── pkgs/                   # Utility + extension packages
+│   ├── pkg-every-pv/       #   PV storage substrate
+│   ├── pkg-every-dict/     #   Dict substrate
+│   ├── pkg-every-flow/     #   Flow primitives
+│   ├── pkg-every-flow-ext/ #   Flow extensions
+│   ├── pkg-every-notion/   #   Notion integration
+│   └── ...                 #   datetime, math, fin, path, uuid
 │
-├── _docs/                  # Documentation
-│   ├── contributing/       # Dev setup, structure, conventions
-│   └── hierarchy.md        # Architecture
-├── _examples/              # Example scripts
+├── docs/                   # Documentation
+│   └── contributing/
+├── examples/               # Example scripts
 │
 └── tests/                  # Integration tests
 ```

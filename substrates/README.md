@@ -15,4 +15,4 @@ everystream      push-based                todo
 every-gql        schema graph              todo
 ```
 
-See [`_docs/substrate-taxonomy.md`](../_docs/substrate-taxonomy.md) for the full paradigm map.
+See [`docs/substrate-taxonomy.md`](../docs/substrate-taxonomy.md) for the full paradigm map.

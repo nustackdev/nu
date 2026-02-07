@@ -209,7 +209,7 @@ For numeric types, add arithmetic:
 
 ## Full Example: Datetime Type
 
-See `_examples/example_arb_ref.py` for a complete datetime type with:
+See `examples/example_arb_ref.py` for a complete datetime type with:
 
 - `DatetimeType` with `from_timestamp()`, `from_iso()`, `to_timestamp()`, `__add__()`
 - `DatetimeValue(ValueBase, DatetimeType)`
