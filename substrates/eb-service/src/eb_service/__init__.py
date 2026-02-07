@@ -16,10 +16,12 @@ Architecture::
 from __future__ import annotations
 
 from .interface import Interface
+from .method import method
 from .morphisms import ServiceMethodCall
 
 
 __all__ = [
     "Interface",
     "ServiceMethodCall",
+    "method",
 ]
