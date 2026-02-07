@@ -2,31 +2,39 @@
 
 Term Programming platform for Python — build distributed, persistent and reactive applications with declarative simplicity.
 
-## Packages
+## Structure
 
-| | Package | Description |
+```
+everybase/         core — contracts + base implementations
+substrates/        integration substrates by modeling topology
+pkgs/              utility + extension packages
+```
+
+### Substrates (`substrates/`)
+
+| Package | Topology | Status |
 |---|---|---|
-| **Core** | `everybase` | Contracts + base implementations — Term, Flow, Ref, Shape, types, values, morphisms |
-| | `everybase.core` | Contracts — Term, Flow, Ref, Shape, Slot, Context, Sentinel |
-| | `everybase.abc` | Base implementations — types, values, morphisms, capabilities |
-| **Models** | `everyshape` | Document model — shapes, items, collections |
-| | `everytable` | Relational model — tables, columns, queries |
-| **Substrates** | `every-pv` | Persistent + reactive — polymorphic views over KV storages |
-| | `every-dict` | Plain nested dicts — no storage, no reactivity |
-| **Extensions** | `every-flow` | Flow primitives — Seq, Par, Cond, Loop |
-| | `every-flow-ext` | Flow extensions — cancellation, progress |
-| | `every-type` | Extended types — Decimal, UUID, datetime, Path |
-| | `every-notion` | Notion API integration |
+| `everyshape` | hierarchical, in-house | exists |
+| `everyservice` | flat RPC | wip |
+| `everytable` | relational | todo |
+| `everyrest` | hierarchical, HTTP | todo |
+| `everystream` | push-based events | todo |
+| `every-gql` | schema graph | todo |
 
-## Architecture
+### Packages (`pkgs/`)
 
-```
-everybase
-  ├── everybase.core (contracts)
-  ├── everybase.abc (base impl)
-  ├── everyshape ── every-pv, every-dict
-  └── everytable ── every-notion
-```
+| Package | Description |
+|---|---|
+| `every-pv` | Polymorphic views over KV storages |
+| `every-dict` | Plain nested dicts |
+| `every-flow` | Flow primitives — Seq, Par, Cond, Loop |
+| `every-flow-ext` | Flow extensions |
+| `every-datetime` | Datetime types |
+| `every-math` | Math types |
+| `every-fin` | Financial types |
+| `every-path` | Path types |
+| `every-uuid` | UUID types |
+| `every-notion` | Notion API integration |
 
 ## Development
 

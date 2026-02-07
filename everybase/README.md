@@ -37,9 +37,9 @@ from everybase.abc import IntValue, StrValue, FloatValue
 ## Layer stack
 
 ```
-everybase      — contracts + base implementations
-everyshape     — document model (shapes, collections)
-every_*        — substrates (PV, dict, etc.)
+everybase/      — contracts + base implementations
+substrates/     — integration substrates (everyshape, everyservice, everyrest, ...)
+pkgs/           — utility + extension packages (every-pv, every-flow, ...)
 ```
 
 ## Development

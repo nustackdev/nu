@@ -2,7 +2,7 @@
 # Root pyproject.toml - Monorepo Workspace (Virtual)
 # =============================================================================
 # This is a virtual workspace root - not a package itself.
-# Individual packages are in core-* and pkg-* directories.
+# Individual packages are in everybase/, substrates/, and pkgs/ directories.
 # =============================================================================
 
 [project]
@@ -28,16 +28,16 @@ members = [
     "substrates/pkg-every-gql",
 
     # Packages
-    "pkg-every-datetime",
-    "pkg-every-dict",
-    "pkg-every-fin",
-    "pkg-every-flow",
-    "pkg-every-flow-ext",
-    "pkg-every-math",
-    "pkg-every-notion",
-    "pkg-every-path",
-    "pkg-every-pv",
-    "pkg-every-uuid",
+    "pkgs/pkg-every-datetime",
+    "pkgs/pkg-every-dict",
+    "pkgs/pkg-every-fin",
+    "pkgs/pkg-every-flow",
+    "pkgs/pkg-every-flow-ext",
+    "pkgs/pkg-every-math",
+    "pkgs/pkg-every-notion",
+    "pkgs/pkg-every-path",
+    "pkgs/pkg-every-pv",
+    "pkgs/pkg-every-uuid",
 ]
 
 [tool.uv.sources]
@@ -78,7 +78,7 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
+testpaths = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -93,7 +93,7 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
+source = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -124,7 +124,7 @@ directory = "reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkg-every-datetime", "pkg-every-dict", "pkg-every-fin", "pkg-every-flow", "pkg-every-flow-ext", "pkg-every-math", "pkg-every-notion", "pkg-every-path", "pkg-every-pv", "pkg-every-uuid"]
+src = ["everybase", "substrates/pkg-every-shape", "substrates/pkg-every-service", "substrates/pkg-every-table", "substrates/pkg-every-rest", "substrates/pkg-every-stream", "substrates/pkg-every-gql", "pkgs/pkg-every-datetime", "pkgs/pkg-every-dict", "pkgs/pkg-every-fin", "pkgs/pkg-every-flow", "pkgs/pkg-every-flow-ext", "pkgs/pkg-every-math", "pkgs/pkg-every-notion", "pkgs/pkg-every-path", "pkgs/pkg-every-pv", "pkgs/pkg-every-uuid"]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -182,13 +182,13 @@ convention = "google"
     "D",
     "ANN",
 ]
-"pkg-every-flow/**/*.py" = [
+"pkgs/pkg-every-flow/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
-"pkg-every-flow-ext/**/*.py" = [
+"pkgs/pkg-every-flow-ext/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
-"pkg-every-notion/**/*.py" = [
+"pkgs/pkg-every-notion/**/*.py" = [
     "ANN401",  # Any type needed for Notion's dynamic JSON API
     "D107",    # __init__ docstrings covered by class docstring
 ]
