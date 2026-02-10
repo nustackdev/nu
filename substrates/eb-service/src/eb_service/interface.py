@@ -23,7 +23,7 @@ from .morphisms import ServiceMethodCall
 
 if TYPE_CHECKING:
     from everybase import Context
-    from everybase.abc import ValueBase
+    from everybase.abc.values import ValueBase
 
 
 __all__ = [
@@ -53,9 +53,9 @@ class Interface(Model):
 
     _service_type: ClassVar[type]
 
-    def call(
-        self, value_type: type[ValueBase], method_name: str, *args: object, **kwargs: object
-    ) -> ValueBase:
+    def call[V: ValueBase](
+        self, value_type: type[V], method_name: str, *args: object, **kwargs: object
+    ) -> V:
         """Build a lazy Value term for a service method call.
 
         Args:
