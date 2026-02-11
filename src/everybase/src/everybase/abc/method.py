@@ -1,27 +1,8 @@
-"""method descriptor and AutoInterface for declarative method proxying.
+"""method and prop descriptors, AutoInterface for declarative proxying.
 
 method: Descriptor that proxies method calls to underlying Python objects.
+prop:   Descriptor that proxies property/attribute access.
 AutoInterface: Base class that auto-creates method descriptors from annotations.
-
-Usage — explicit descriptors on instance types::
-
-    class StrHelpers(TypeBase[str]):
-        upper = method(StrValue, pure=True)
-        strip = method(StrValue, pure=True)
-
-Usage — explicit descriptors with ref factory (class-level access)::
-
-    class Solana(Service):
-        get_slot = method(IntValue, "getSlot")
-
-    Solana.get_slot()  # → IntValue term with ServiceRef inside
-
-Usage — auto from annotations::
-
-    class StrHelpers(AutoInterface, TypeBase[str], pure=True):
-        upper: StrValue
-        lower: StrValue
-        strip: StrValue
 """
 
 from __future__ import annotations
@@ -32,7 +13,7 @@ from typing import TYPE_CHECKING, overload
 from everybase.abc.values import ValueBase
 from everybase.core import Ref
 
-from .morphisms import MethodCallCmd, MethodCallOp
+from .morphisms import GetAttrOp, MethodCallCmd, MethodCallOp
 
 
 if TYPE_CHECKING:
@@ -44,6 +25,7 @@ if TYPE_CHECKING:
 __all__ = [
     "AutoInterface",
     "method",
+    "prop",
 ]
 
 
@@ -170,6 +152,56 @@ class method[V: ValueBase]:  # noqa: N801
         name = self._method_name or self._explicit_name or "?"
         purity = "pure" if self._pure else "impure"
         return f"method({self._value_type.__name__}, {name!r}, {purity})"
+
+
+class prop[V: ValueBase]:  # noqa: N801
+    """Descriptor that proxies property/attribute access.
+
+    Generic in V (a ValueBase subclass). Pyright infers the return type.
+
+    Two access modes:
+    - Instance access (e.g., my_obj.url): creates GetAttrOp with
+      the instance as target.
+    - Class access with ref factory: creates GetAttrOp with a ref
+      from the factory as target (context-resolved at execution time).
+
+    Uses __set_name__ to auto-infer the property name from the Python
+    attribute name. An explicit name can be provided for properties with
+    different naming conventions (e.g., ``url = prop(StrValue, "_url")``).
+    """
+
+    def __init__(self, value_type: type[V], name: str | None = None) -> None:
+        self._value_type = value_type
+        self._explicit_name = name
+        self._attr_name: str = ""
+        self._prop_name: str = name or ""
+        self._ref_factory: Callable[[], Term] | None = None
+
+    def __set_name__(self, owner: type, attr_name: str) -> None:
+        self._attr_name = attr_name
+        self._prop_name = self._explicit_name or attr_name
+
+    def bind_ref_factory(self, factory: Callable[[], Term]) -> None:
+        """Set the ref factory for class-level access."""
+        self._ref_factory = factory
+
+    @overload
+    def __get__(self, obj: None, objtype: type) -> V: ...
+    @overload
+    def __get__(self, obj: object, objtype: type | None = None) -> V: ...
+
+    def __get__(self, obj: object | None, objtype: type | None = None) -> prop[V] | V:
+        if obj is None:
+            if self._ref_factory is not None:
+                return self._value_type(GetAttrOp(self._ref_factory(), self._prop_name))
+            if objtype is not None and issubclass(objtype, Ref):
+                return self._value_type(GetAttrOp(objtype(), self._prop_name))
+            return self
+        return self._value_type(GetAttrOp(obj, self._prop_name))
+
+    def __repr__(self) -> str:
+        name = self._prop_name or self._explicit_name or "?"
+        return f"prop({self._value_type.__name__}, {name!r})"
 
 
 class AutoInterface:

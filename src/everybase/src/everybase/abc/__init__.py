@@ -83,7 +83,7 @@ from .collections import (
     SetLikeProtocol,
 )
 from .combiners import all_, and_, any_, coalesce, ifelse, none_, or_
-from .method import AutoInterface, method
+from .method import AutoInterface, method, prop
 from .morphisms import (
     AbsOp,
     AddCmd,
@@ -497,6 +497,7 @@ __all__ = [  # noqa: RUF022
     "coalesce",
     "ensure_term",
     "method",
+    "prop",
     "ifelse",
     "none_",
     "or_",

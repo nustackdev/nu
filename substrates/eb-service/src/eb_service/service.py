@@ -9,35 +9,13 @@ Two-part design (like Shape / ShapeRef in eb-shape):
     Service     — declarative entry point users subclass.
                   Holds method() descriptors, never instantiated.
                   Creates a ServiceRef subclass behind the scenes.
-
-Direct ServiceRef usage (imperative)::
-
-    class SolanaRef(ServiceRef):
-        SERVICE_CLS = SolanaClient
-        get_slot = method(IntValue, "getSlot")
-
-    SolanaRef.get_slot()          # class-level access (Ref auto-detection)
-
-Service usage (declarative)::
-
-    class Solana(Service):
-        SERVICE_CLS = SolanaClient
-        get_slot = method(IntValue, "getSlot")
-
-    Solana.get_slot()             # class-level access (ref factory)
-
-Both produce the same term tree::
-
-    IntValue(MethodCallCmd(<ref>(), "getSlot"))
-    → at execution: ref.fetch(ctx) → ctx.get(SolanaClient) → client
-    → client.getSlot() → result
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase.abc.method import method
+from everybase.abc.method import method, prop
 from everybase.core import Model, Ref
 
 
@@ -127,7 +105,7 @@ class Service:
         )
         cls._ref_cls = ref_cls
 
-        # Wire each method descriptor with the ref factory
+        # Wire each method/prop descriptor with the ref factory
         for attr in cls.__dict__.values():
-            if isinstance(attr, method):
+            if isinstance(attr, (method, prop)):
                 attr.bind_ref_factory(ref_cls)
