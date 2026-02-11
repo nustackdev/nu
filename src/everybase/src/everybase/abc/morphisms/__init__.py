@@ -13,7 +13,7 @@ fn_  — Builtin functions & higher-order
   fn_search.py: FindOp, FindIndexOp
   fn_aggregate.py: SumOp, MinOp, MaxOp, AnyOp, AllOp
   fn_conversion.py: ToIntOp, ToStrOp, ToBoolOp, ToFloatOp, ToBytesOp, etc.
-  fn_call.py: FuncCallOp, MethodCallOp
+  fn_call.py: FuncCall/Op/Cmd, MethodCall/Op/Cmd
 
 gen_ — General patterns (protocol-level)
   gen_access.py: AtOp, SliceOp, LenOp, ContainsOp
@@ -77,7 +77,14 @@ from .fn_aggregate import (
     MinOp,
     SumOp,
 )
-from .fn_call import FuncCallOp, MethodCallOp
+from .fn_call import (
+    FuncCall,
+    FuncCallCmd,
+    FuncCallOp,
+    MethodCall,
+    MethodCallCmd,
+    MethodCallOp,
+)
 from .fn_conversion import (
     ToBoolOp,
     ToBytesOp,
@@ -222,7 +229,11 @@ __all__ = [  # noqa: RUF022
     "MaxOp",
     "MinOp",
     "SumOp",
+    "FuncCall",
+    "FuncCallCmd",
     "FuncCallOp",
+    "MethodCall",
+    "MethodCallCmd",
     "MethodCallOp",
     "ToBoolOp",
     "ToBytesOp",

@@ -1,6 +1,7 @@
 """eb_service demo — Solana JSON-RPC against mainnet.
 
-Shows: method descriptors, typed returns via custom Type/Value, live RPC calls.
+Shows: Service (declarative) vs ServiceRef (direct), method descriptors,
+typed returns, lazy term trees, live RPC calls.
 """
 
 from __future__ import annotations
@@ -9,9 +10,9 @@ import asyncio
 
 import httpx
 
-from eb_service import Interface, method
-from everybase import Context
-from everybase.abc import DictValue, IntValue, StrValue
+from eb_service import Service
+from everybase import Context, print_tree
+from everybase.abc import DictValue, IntValue, StrValue, method
 from everybase.abc.morphisms import AtOp
 from everybase.abc.types import TypeBase
 from everybase.abc.values import ValueBase
@@ -78,18 +79,29 @@ class TransactionValue(ValueBase[dict], TransactionType):
 
 
 # =============================================================================
-# INTERFACE
+# SERVICE — declarative (like Shape for ShapeRef)
 # =============================================================================
 
 
-class Solana(Interface):
-    _service_type = SolanaClient
+class Solana(Service):
+    SERVICE_CLS = SolanaClient
 
     get_slot = method(IntValue, "getSlot")
     get_block = method(DictValue, "getBlock")
     get_transaction = method(TransactionValue, "getTransaction")
     get_latest_blockhash = method(DictValue, "getLatestBlockhash")
     get_balance = method(DictValue, "getBalance")
+
+
+# Alternative: direct ServiceRef subclass (imperative, full Ref)
+#
+# class SolanaRef(ServiceRef):
+#     SERVICE_CLS = SolanaClient
+#     get_slot = method(IntValue, "getSlot")
+#     ...
+#
+# Both produce identical term trees. Service is the declarative
+# entry point; ServiceRef is the ref term that lives in the tree.
 
 
 # =============================================================================
@@ -99,40 +111,50 @@ class Solana(Interface):
 
 async def main():
     client = SolanaClient()
-    ctx = Context().with_handle(SolanaClient, client)
-    sol = Solana()
 
-    # --- basic calls ---
-    slot = await sol.get_slot().execute(ctx)
+    # Bind: service client → context
+    ctx = Context().with_handle(SolanaClient, client)
+
+    # --- print term trees ---
+    print("get_slot() tree:")
+    print_tree(Solana.get_slot())
+    print()
+
+    print("get_balance(pubkey) tree:")
+    print_tree(Solana.get_balance("So11111111111111111111111111111111111111112"))
+    print()
+
+    # --- basic calls (class-level access) ---
+    slot = await Solana.get_slot().execute(ctx)
     print(f"Current slot: {slot}")
 
-    bh = await sol.get_latest_blockhash().execute(ctx)
+    bh = await Solana.get_latest_blockhash().execute(ctx)
     print(f"Latest blockhash: {bh['value']['blockhash']}")
 
-    pubkey = "So11111111111111111111111111111111111111112"
-    balance = await sol.get_balance(pubkey).execute(ctx)
-    print(f"Balance: {balance['value'] / 1e9:.4f} SOL")
+    # pubkey = "So11111111111111111111111111111111111111112"
+    # balance = await Solana.get_balance(pubkey).execute(ctx)
+    # print(f"Balance: {balance['value'] / 1e9:.4f} SOL")
 
-    # --- get a recent block to find a transaction ---
-    block = await sol.get_block(
-        slot - 5,
-        {"encoding": "json", "transactionDetails": "signatures", "rewards": False},
-    ).execute(ctx)
-    sig = block["signatures"][0]
-    print(f"\nRecent block {slot - 5}: {len(block['signatures'])} txns")
+    # # --- get a recent block to find a transaction ---
+    # block = await Solana.get_block(
+    #     slot - 5,
+    #     {"encoding": "json", "transactionDetails": "signatures", "rewards": False},
+    # ).execute(ctx)
+    # sig = block["signatures"][0]
+    # print(f"\nRecent block {slot - 5}: {len(block['signatures'])} txns")
 
-    # --- typed return: TransactionValue ---
-    # tx is a lazy term — field access composes BEFORE execution
-    tx = sol.get_transaction(sig, {"encoding": "json"})
-    tx_slot = await tx.slot.execute(ctx)
-    tx_fee = await tx.fee.execute(ctx)
-    print(f"\nTransaction {sig[:20]}...:")
-    print(f"  slot: {tx_slot}")
-    print(f"  fee:  {tx_fee} lamports")
+    # # --- typed return: TransactionValue ---
+    # # tx is a lazy term — field access composes BEFORE execution
+    # tx = Solana.get_transaction(sig, {"encoding": "json"})
+    # tx_slot = await tx.slot.execute(ctx)
+    # tx_fee = await tx.fee.execute(ctx)
+    # print(f"\nTransaction {sig[:20]}...:")
+    # print(f"  slot: {tx_slot}")
+    # print(f"  fee:  {tx_fee} lamports")
 
-    # lazy composition: fee_term is a pure expression tree, no RPC until execute()
-    fee_term = tx.fee
-    print(f"\nLazy term: {fee_term!r}")
+    # # lazy composition: fee_term is a pure expression tree, no RPC until execute()
+    # fee_term = tx.fee
+    # print(f"\nLazy term: {fee_term!r}")
 
 
 if __name__ == "__main__":

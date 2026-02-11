@@ -68,12 +68,14 @@ from .meta import (
     depth,
     find,
     find_first,
+    format_tree,
     graft,
     leaves,
     map_children,
     map_nodes,
     postorder,
     preorder,
+    print_tree,
     prune,
     replace,
     size,
@@ -162,4 +164,7 @@ __all__ = [  # noqa: RUF022
     "count",
     "size",
     "depth",
+    # Display
+    "format_tree",
+    "print_tree",
 ]

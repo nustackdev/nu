@@ -3,6 +3,7 @@
 Walk, query, transform, and structural rewrites.
 """
 
+from .display import format_tree, print_tree
 from .query import count, depth, find, find_first, size
 from .transform import (
     Transform,
@@ -44,6 +45,9 @@ __all__ = [  # noqa: RUF022
     "count",
     "size",
     "depth",
+    # Display
+    "format_tree",
+    "print_tree",
     # Meta-transforms
     "conditional_wrap",
 ]
