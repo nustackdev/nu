@@ -118,11 +118,9 @@ class Ref[T](RefABC[T]):
         Returns the shape of the topmost ref in the hierarchy.
         Used to look up the correct context handle for storage access.
         """
-        if self._owner_shape is not None:
-            return self._owner_shape
         if self._parent is not None:
             return self._parent.get_root_shape()
-        return None
+        return self._owner_shape
 
     # =========================================================================
     # PATH COMPOSITION — Building Full Paths
