@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TREE_TITLE__</title>
+<style>
+/* ================================================================
+   DESIGN TOKENS
+   ================================================================ */
+:root {
+  --bg: #1e1e1e;
+  --bg-warm: #1f1f1e;
+  --panel: #252526;
+  --panel-raised: #2d2d2d;
+  --border: #3c3c3c;
+  --border-subtle: #333333;
+  --text: #cccccc;
+  --text-bright: #e0e0e0;
+  --muted: #858585;
+  --faint: #555555;
+  --selection: #264f78;
+  --hover: #2a2d2e;
+  --focus-border: #007fd4;
+  --font: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+
+  /* category colors */
+  --c-value: #4ec9b0;
+  --c-value-dim: #3a9985;
+  --c-ref: #dcdcaa;
+  --c-ref-dim: #b0a86e;
+  --c-op: #6a9955;
+  --c-op-dim: #4d7340;
+  --c-cmd: #f44747;
+  --c-cmd-dim: #c03030;
+  --c-flow: #569cd6;
+  --c-flow-dim: #3d7ab5;
+  --c-span: #c586c0;
+  --c-span-dim: #9a6596;
+
+  /* semantic */
+  --c-string: #ce9178;
+  --c-number: #b5cea8;
+  --c-shape: #9cdcfe;
+  --c-method: #dcdcaa;
+  --c-keyword: #c586c0;
+
+  /* category bg (very subtle, for badges) */
+  --c-value-bg: rgba(78, 201, 176, 0.10);
+  --c-ref-bg: rgba(220, 220, 170, 0.10);
+  --c-op-bg: rgba(106, 153, 85, 0.10);
+  --c-cmd-bg: rgba(244, 71, 71, 0.10);
+  --c-flow-bg: rgba(86, 156, 214, 0.10);
+  --c-span-bg: rgba(197, 134, 192, 0.10);
+}
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* --- Header --- */
+#header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+#header-logo .logo-icon {
+  font-size: 14px;
+  color: var(--c-span);
+}
+#header-logo h1 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+#search-wrap {
+  flex: 1;
+  max-width: 340px;
+  position: relative;
+}
+#search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--faint);
+  font-size: 11px;
+  pointer-events: none;
+}
+#search-box {
+  width: 100%;
+  padding: 4px 8px 4px 26px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  outline: none;
+}
+#search-box:focus { border-color: var(--focus-border); }
+#search-box::placeholder { color: var(--faint); }
+#search-count {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--muted);
+}
+.header-btn {
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.1s;
+}
+.header-btn:hover { color: var(--text); border-color: var(--muted); background: var(--hover); }
+.header-btn:active { background: var(--border-subtle); }
+
+/* --- Main panels --- */
+#main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+#tree-panel {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 0;
+  border-right: 1px solid var(--border);
+  outline: none;
+}
+#detail-panel {
+  width: 320px;
+  flex-shrink: 0;
+  overflow: auto;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Status bar --- */
+#status-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 16px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-pill .stat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ================================================================
+   TREE ROWS
+   ================================================================ */
+.tree-row {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px 0 0;
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+  border-left: 2px solid transparent;
+  transition: background 0.06s;
+}
+.tree-row:hover { background: var(--hover); }
+.tree-row.selected {
+  background: var(--selection);
+}
+.tree-row.dimmed { opacity: 0.2; }
+.tree-row.highlighted .node-label-wrap {
+  background: rgba(255, 200, 50, 0.12);
+  border-radius: 3px;
+}
+
+/* Category left-border accent on selection */
+.tree-row.selected.cat-value  { border-left-color: var(--c-value); }
+.tree-row.selected.cat-ref    { border-left-color: var(--c-ref); }
+.tree-row.selected.cat-op     { border-left-color: var(--c-op); }
+.tree-row.selected.cat-cmd    { border-left-color: var(--c-cmd); }
+.tree-row.selected.cat-flow   { border-left-color: var(--c-flow); }
+.tree-row.selected.cat-span   { border-left-color: var(--c-span); }
+
+/* --- Indent guides --- */
+.indent-unit {
+  display: inline-block;
+  width: 22px;
+  flex-shrink: 0;
+  position: relative;
+}
+.indent-unit.guide::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-subtle);
+}
+.tree-row:hover .indent-unit.guide::before {
+  background: var(--faint);
+}
+
+/* --- Chevron --- */
+.chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+  color: var(--faint);
+  font-size: 9px;
+  cursor: pointer;
+  transition: color 0.1s, transform 0.12s;
+}
+.chevron:hover { color: var(--text); }
+.chevron.leaf { visibility: hidden; }
+.chevron.open { color: var(--muted); }
+
+/* --- Category icon --- */
+.cat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  font-size: 10px;
+  border-radius: 3px;
+  margin-right: 2px;
+}
+.cat-value .cat-icon  { color: var(--c-value); background: var(--c-value-bg); }
+.cat-ref .cat-icon    { color: var(--c-ref);   background: var(--c-ref-bg); }
+.cat-op .cat-icon     { color: var(--c-op);    background: var(--c-op-bg); }
+.cat-cmd .cat-icon    { color: var(--c-cmd);   background: var(--c-cmd-bg); }
+.cat-flow .cat-icon   { color: var(--c-flow);  background: var(--c-flow-bg); }
+.cat-span .cat-icon   { color: var(--c-span);  background: var(--c-span-bg); }
+
+/* --- Node label (rich parts) --- */
+.node-label-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  padding: 0 4px;
+  font-size: 13px;
+  border-radius: 3px;
+}
+
+.lbl-type { font-weight: 600; }
+.cat-value .lbl-type  { color: var(--c-value); }
+.cat-ref .lbl-type    { color: var(--c-ref); }
+.cat-op .lbl-type     { color: var(--c-op); }
+.cat-cmd .lbl-type    { color: var(--c-cmd); }
+.cat-flow .lbl-type   { color: var(--c-flow); }
+.cat-span .lbl-type   { color: var(--c-span); }
+
+.lbl-bracket  { color: var(--muted); font-weight: 400; }
+.lbl-shape    { color: var(--c-shape); font-weight: 400; }
+.lbl-at       { color: var(--faint); font-weight: 400; }
+.lbl-address  { color: var(--c-string); font-weight: 400; }
+.lbl-paren    { color: var(--muted); font-weight: 400; }
+.lbl-method   { color: var(--c-method); font-weight: 400; font-style: italic; }
+.lbl-func     { color: var(--c-method); font-weight: 400; }
+.lbl-literal  { color: var(--c-string); font-weight: 400; }
+
+/* --- Child count badge --- */
+.child-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 10px;
+  color: var(--faint);
+  background: var(--bg);
+  border-radius: 8px;
+  line-height: 16px;
+  vertical-align: middle;
+}
+.tree-row:hover .child-count { color: var(--muted); }
+
+/* --- Purity badge (for morphisms) --- */
+.purity-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  line-height: 16px;
+  vertical-align: middle;
+}
+.purity-badge.pure {
+  color: var(--c-op);
+  background: var(--c-op-bg);
+}
+.purity-badge.impure {
+  color: var(--c-cmd);
+  background: var(--c-cmd-bg);
+}
+
+/* ================================================================
+   DETAIL PANEL
+   ================================================================ */
+#detail-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#detail-node-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+#detail-node-title .detail-type-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+.detail-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#breadcrumb {
+  font-size: 11px;
+  color: var(--muted);
+  word-wrap: break-word;
+  line-height: 1.6;
+}
+#breadcrumb span[data-id] { cursor: pointer; }
+#breadcrumb span[data-id]:hover { color: var(--text); text-decoration: underline; }
+#breadcrumb .sep { color: var(--faint); cursor: default; }
+#breadcrumb .sep:hover { color: var(--faint); text-decoration: none; }
+
+#detail-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px;
+}
+.detail-section {
+  margin-bottom: 16px;
+}
+.detail-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.detail-row {
+  display: flex;
+  padding: 3px 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.detail-key {
+  color: var(--muted);
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.detail-val {
+  color: var(--text);
+  word-break: break-all;
+}
+.detail-val.val-string { color: var(--c-string); }
+.detail-val.val-shape  { color: var(--c-shape); }
+.detail-val.val-method { color: var(--c-method); font-style: italic; }
+.detail-val.val-pure   { color: var(--c-op); }
+.detail-val.val-impure { color: var(--c-cmd); }
+
+/* Empty state */
+#detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--faint);
+  font-size: 12px;
+  gap: 8px;
+}
+#detail-empty .empty-icon { font-size: 24px; opacity: 0.4; }
+
+/* ================================================================
+   LEGEND (in status bar)
+   ================================================================ */
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+}
+.legend-item .legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* Keyboard hint bar */
+#hint-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 10px;
+  color: var(--faint);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.hint-key {
+  display: inline-block;
+  padding: 0 4px;
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 15px;
+  color: var(--muted);
+  font-family: var(--font);
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div id="header">
+    <div id="header-logo">
+      <span class="logo-icon">&#9670;</span>
+      <h1>__TREE_TITLE__</h1>
+    </div>
+    <div id="search-wrap">
+      <span id="search-icon">&#9906;</span>
+      <input id="search-box" type="text" placeholder="Filter nodes..." autocomplete="off" spellcheck="false">
+      <span id="search-count"></span>
+    </div>
+    <button class="header-btn" id="btn-expand-all">Expand All</button>
+    <button class="header-btn" id="btn-collapse-all">Collapse All</button>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="tree-panel" tabindex="0"></div>
+    <div id="detail-panel">
+      <div id="detail-header" style="display:none">
+        <div id="detail-node-title"></div>
+        <div id="breadcrumb"></div>
+      </div>
+      <div id="detail-body">
+        <div id="detail-empty">
+          <span class="empty-icon">&#9670;</span>
+          <span>Select a node</span>
+        </div>
+        <div id="detail-content" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="status-bar"></div>
+  <div id="hint-bar">
+    <span><span class="hint-key">&uarr;&darr;</span> navigate</span>
+    <span><span class="hint-key">&larr;&rarr;</span> collapse/expand</span>
+    <span><span class="hint-key">Space</span> toggle</span>
+    <span><span class="hint-key">Enter</span> expand subtree</span>
+    <span><span class="hint-key">[ ]</span> prev/next sibling</span>
+    <span><span class="hint-key">/</span> search</span>
+    <span><span class="hint-key">Esc</span> clear/back</span>
+    <span><span class="hint-key">*</span> expand all</span>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// DATA
+// ================================================================
+const TREE_DATA = __TREE_DATA__;
+
+// ================================================================
+// CONSTANTS
+// ================================================================
+const CAT_META = {
+  span:  { icon: "\u25c7", label: "Span",  full: "Span (lifecycle boundary)" },
+  flow:  { icon: "\u25b7", label: "Flow",  full: "Flow (control)" },
+  ref:   { icon: "\u25c8", label: "Ref",   full: "Ref (state pointer)" },
+  op:    { icon: "\u25cf", label: "Op",    full: "Operation (pure morphism)" },
+  cmd:   { icon: "\u25c6", label: "Cmd",   full: "Command (impure morphism)" },
+  value: { icon: "\u25cb", label: "Value", full: "Value (data)" },
+};
+
+// ================================================================
+// STATE
+// ================================================================
+const state = {
+  expanded: new Set(),
+  selectedId: null,
+  flatNodes: [],
+  nodeMap: new Map(),
+  parentMap: new Map(),
+  depthMap: new Map(),
+  searchQuery: "",
+  matchIds: new Set(),
+  matchAncestors: new Set(),
+};
+
+// ================================================================
+// INDEX TREE
+// ================================================================
+function indexTree(node, parentId, depth) {
+  state.nodeMap.set(node.id, node);
+  state.depthMap.set(node.id, depth);
+  if (parentId !== null) state.parentMap.set(node.id, parentId);
+  for (const child of node.children) {
+    indexTree(child, node.id, depth + 1);
+  }
+}
+indexTree(TREE_DATA, null, 0);
+
+// Default: expand all nodes
+for (const [id, node] of state.nodeMap) {
+  if (node.children.length > 0) state.expanded.add(id);
+}
+
+// ================================================================
+// STATS
+// ================================================================
+function computeStats() {
+  let total = 0, maxDepth = 0;
+  const cats = {};
+  function walk(node, depth) {
+    total++;
+    if (depth > maxDepth) maxDepth = depth;
+    cats[node.category] = (cats[node.category] || 0) + 1;
+    for (const c of node.children) walk(c, depth + 1);
+  }
+  walk(TREE_DATA, 0);
+  return { total, maxDepth, cats };
+}
+
+function renderStatusBar() {
+  const { total, maxDepth, cats } = computeStats();
+  const bar = document.getElementById("status-bar");
+  const catColors = {
+    span: "var(--c-span)", flow: "var(--c-flow)", ref: "var(--c-ref)",
+    op: "var(--c-op)", cmd: "var(--c-cmd)", value: "var(--c-value)",
+  };
+  const catLabels = { span: "spans", flow: "flows", ref: "refs", op: "ops", cmd: "cmds", value: "values" };
+
+  let html = `<span>${total} nodes \u00b7 depth ${maxDepth}</span>`;
+  html += '<span style="flex:1"></span>';
+  for (const [k, label] of Object.entries(catLabels)) {
+    if (cats[k]) {
+      html += `<span class="legend-item"><span class="legend-dot" style="background:${catColors[k]}"></span>${cats[k]} ${label}</span>`;
+    }
+  }
+  bar.innerHTML = html;
+}
+
+// ================================================================
+// SEARCH
+// ================================================================
+function updateSearch(query) {
+  state.searchQuery = query.toLowerCase().trim();
+  state.matchIds.clear();
+  state.matchAncestors.clear();
+
+  if (!state.searchQuery) {
+    document.getElementById("search-count").textContent = "";
+    return;
+  }
+
+  for (const [id, node] of state.nodeMap) {
+    const q = state.searchQuery;
+    const searchable = [
+      node.label, node.type, node.category,
+      ...Object.values(node.attrs).map(v => String(v)),
+    ].join(" ").toLowerCase();
+
+    if (searchable.includes(q)) {
+      state.matchIds.add(id);
+      let pid = state.parentMap.get(id);
+      while (pid !== undefined) {
+        state.matchAncestors.add(pid);
+        state.expanded.add(pid);
+        pid = state.parentMap.get(pid);
+      }
+    }
+  }
+
+  document.getElementById("search-count").textContent =
+    state.matchIds.size > 0 ? `${state.matchIds.size} found` : "no match";
+}
+
+// ================================================================
+// FLATTEN
+// ================================================================
+// Track which indents should show guide lines
+function flatten() {
+  state.flatNodes = [];
+  function walk(node, depth, parentHasMoreSiblings) {
+    state.flatNodes.push({ id: node.id, depth, node, guides: [...parentHasMoreSiblings] });
+    if (state.expanded.has(node.id)) {
+      const kids = node.children;
+      for (let i = 0; i < kids.length; i++) {
+        walk(kids[i], depth + 1, [...parentHasMoreSiblings, i < kids.length - 1]);
+      }
+    }
+  }
+  walk(TREE_DATA, 0, []);
+}
+
+// ================================================================
+// LABEL PARSING  (structured rendering from label string + attrs)
+// ================================================================
+function renderLabel(node) {
+  // Parse label patterns:
+  //   "Atomic[AppState]"       → type[shape]
+  //   "IntRef[Slot]@'name'"    → type[shape]@address
+  //   "SetCmd(.set)"           → type(.method)
+  //   "FuncCallOp(my_func)"   → type(func)
+  //   "IntValue(42)"           → type(literal)
+  //   "Seq"                    → type
+
+  const frag = document.createDocumentFragment();
+  const label = node.label;
+  const cat = node.category;
+
+  // Pattern: Type[Shape]@Address
+  const mRef = label.match(/^(\w+)(\[(\w+)\])?(@(.+))?$/);
+  if (mRef) {
+    const typeName = mRef[1];
+    const shape = mRef[3];
+    const address = mRef[5];
+
+    const typeEl = el("span", "lbl-type", typeName);
+    frag.appendChild(typeEl);
+
+    if (shape) {
+      frag.appendChild(el("span", "lbl-bracket", "["));
+      frag.appendChild(el("span", "lbl-shape", shape));
+      frag.appendChild(el("span", "lbl-bracket", "]"));
+    }
+
+    if (address) {
+      frag.appendChild(el("span", "lbl-at", "@"));
+      frag.appendChild(el("span", "lbl-address", address));
+    }
+
+    return frag;
+  }
+
+  // Pattern: Type(.method) or Type(func_name) or Type(literal)
+  const mCall = label.match(/^(\w+)\((.+)\)$/);
+  if (mCall) {
+    const typeName = mCall[1];
+    const inner = mCall[2];
+
+    frag.appendChild(el("span", "lbl-type", typeName));
+    frag.appendChild(el("span", "lbl-paren", "("));
+
+    if (inner.startsWith(".")) {
+      // method call
+      frag.appendChild(el("span", "lbl-method", inner));
+    } else if (cat === "value") {
+      // literal value
+      frag.appendChild(el("span", "lbl-literal", inner));
+    } else {
+      // func name
+      frag.appendChild(el("span", "lbl-func", inner));
+    }
+
+    frag.appendChild(el("span", "lbl-paren", ")"));
+    return frag;
+  }
+
+  // Fallback: just type name
+  frag.appendChild(el("span", "lbl-type", label));
+  return frag;
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text) e.textContent = text;
+  return e;
+}
+
+// ================================================================
+// RENDER TREE
+// ================================================================
+const treePanel = document.getElementById("tree-panel");
+
+function render() {
+  flatten();
+  const fragment = document.createDocumentFragment();
+
+  for (const { id, depth, node, guides } of state.flatNodes) {
+    const row = document.createElement("div");
+    row.className = "tree-row cat-" + node.category;
+    row.dataset.id = id;
+
+    if (id === state.selectedId) row.classList.add("selected");
+
+    if (state.searchQuery) {
+      if (state.matchIds.has(id)) {
+        row.classList.add("highlighted");
+      } else if (!state.matchAncestors.has(id)) {
+        row.classList.add("dimmed");
+      }
+    }
+
+    // Indent guides
+    for (let i = 0; i < depth; i++) {
+      const indent = document.createElement("span");
+      indent.className = "indent-unit";
+      // Show guide line if this level's parent has more siblings
+      if (i < guides.length && guides[i]) {
+        indent.classList.add("guide");
+      }
+      row.appendChild(indent);
+    }
+
+    // Chevron
+    const chevron = document.createElement("span");
+    chevron.className = "chevron";
+    if (node.children.length === 0) {
+      chevron.classList.add("leaf");
+    } else {
+      chevron.textContent = state.expanded.has(id) ? "\u25be" : "\u25b8";
+      if (state.expanded.has(id)) chevron.classList.add("open");
+    }
+    row.appendChild(chevron);
+
+    // Category icon
+    const meta = CAT_META[node.category] || CAT_META.value;
+    const icon = document.createElement("span");
+    icon.className = "cat-icon";
+    icon.textContent = meta.icon;
+    icon.title = meta.full;
+    row.appendChild(icon);
+
+    // Rich label
+    const labelWrap = document.createElement("span");
+    labelWrap.className = "node-label-wrap";
+    labelWrap.appendChild(renderLabel(node));
+    row.appendChild(labelWrap);
+
+    // Purity badge for morphisms
+    if (node.pure !== null) {
+      const pb = document.createElement("span");
+      pb.className = "purity-badge " + (node.pure ? "pure" : "impure");
+      pb.textContent = node.pure ? "pure" : "impure";
+      row.appendChild(pb);
+    }
+
+    // Child count
+    if (node.children.length > 0 && !state.expanded.has(id)) {
+      const cc = document.createElement("span");
+      cc.className = "child-count";
+      cc.textContent = node.children.length;
+      row.appendChild(cc);
+    }
+
+    fragment.appendChild(row);
+  }
+
+  treePanel.innerHTML = "";
+  treePanel.appendChild(fragment);
+  renderStatusBar();
+}
+
+// ================================================================
+// RENDER DETAIL
+// ================================================================
+function renderDetail(nodeId) {
+  const detailHeader = document.getElementById("detail-header");
+  const detailContent = document.getElementById("detail-content");
+  const detailEmpty = document.getElementById("detail-empty");
+  const breadcrumbEl = document.getElementById("breadcrumb");
+
+  const node = state.nodeMap.get(nodeId);
+  if (!node) {
+    detailHeader.style.display = "none";
+    detailContent.style.display = "none";
+    detailEmpty.style.display = "flex";
+    return;
+  }
+
+  detailHeader.style.display = "block";
+  detailContent.style.display = "block";
+  detailEmpty.style.display = "none";
+
+  const meta = CAT_META[node.category] || CAT_META.value;
+  const catColor = `var(--c-${node.category})`;
+  const catBg = `var(--c-${node.category}-bg)`;
+
+  // Title
+  const titleEl = document.getElementById("detail-node-title");
+  titleEl.innerHTML = `<span class="detail-type-name" style="color:${catColor}">${esc(node.type)}</span>` +
+    `<span class="detail-cat-badge" style="color:${catColor};background:${catBg}">${meta.icon} ${meta.label}</span>`;
+
+  // Breadcrumb
+  const path = [];
+  let cur = nodeId;
+  while (cur !== undefined) {
+    path.unshift(cur);
+    cur = state.parentMap.get(cur);
+  }
+  breadcrumbEl.innerHTML = path.map((pid, i) => {
+    const n = state.nodeMap.get(pid);
+    const catCol = `var(--c-${n.category})`;
+    const sep = i < path.length - 1 ? ' <span class="sep">\u203a</span> ' : '';
+    return `<span data-id="${pid}" style="color:${catCol}">${esc(n.type)}</span>${sep}`;
+  }).join("");
+
+  // Sections
+  let html = "";
+
+  // Identity
+  html += sectionStart("Identity");
+  html += row("Type", node.type);
+  html += row("Category", meta.full, `color:${catColor}`);
+  html += row("Label", node.label);
+  if (node.pure !== null) {
+    const pClass = node.pure ? "val-pure" : "val-impure";
+    const pText = node.pure ? "\u25cf pure" : "\u25c6 impure";
+    html += `<div class="detail-row"><span class="detail-key">Purity</span><span class="detail-val ${pClass}">${pText}</span></div>`;
+  }
+  html += sectionEnd();
+
+  // Structure
+  html += sectionStart("Structure");
+  html += row("Children", String(node.children.length));
+  html += row("Leaf", node.leaf ? "yes" : "no");
+  html += row("Depth", String(state.depthMap.get(nodeId) || 0));
+
+  if (node.children.length > 0) {
+    const childCats = {};
+    for (const c of node.children) {
+      childCats[c.category] = (childCats[c.category] || 0) + 1;
+    }
+    const childBreakdown = Object.entries(childCats)
+      .map(([k, v]) => `${v} ${(CAT_META[k] || CAT_META.value).label.toLowerCase()}`)
+      .join(", ");
+    html += row("Breakdown", childBreakdown);
+  }
+  html += sectionEnd();
+
+  // Attributes (if any)
+  const attrEntries = Object.entries(node.attrs);
+  if (attrEntries.length > 0) {
+    html += sectionStart("Attributes");
+    for (const [k, v] of attrEntries) {
+      const display = Array.isArray(v) ? v.join(", ") : String(v);
+      let valCls = "";
+      if (k === "shape" || k === "owner_shape" || k === "view_cls") valCls = "val-shape";
+      else if (k === "address" || k === "source") valCls = "val-string";
+      else if (k === "method") valCls = "val-method";
+      else if (k === "purity") valCls = v === "pure" ? "val-pure" : "val-impure";
+      html += `<div class="detail-row"><span class="detail-key">${esc(k)}</span><span class="detail-val ${valCls}">${esc(display)}</span></div>`;
+    }
+    html += sectionEnd();
+  }
+
+  detailContent.innerHTML = html;
+}
+
+function sectionStart(title) {
+  return `<div class="detail-section"><div class="detail-section-title">${title}</div>`;
+}
+function sectionEnd() {
+  return `</div>`;
+}
+function row(key, val, style) {
+  const s = style ? ` style="${style}"` : "";
+  return `<div class="detail-row"><span class="detail-key">${esc(key)}</span><span class="detail-val"${s}>${esc(val)}</span></div>`;
+}
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// ================================================================
+// SELECTION
+// ================================================================
+function selectNode(id) {
+  state.selectedId = id;
+  for (const row of treePanel.children) {
+    row.classList.toggle("selected", Number(row.dataset.id) === id);
+  }
+  renderDetail(id);
+}
+
+function toggleExpand(id) {
+  if (state.expanded.has(id)) {
+    state.expanded.delete(id);
+  } else {
+    state.expanded.add(id);
+  }
+  render();
+  if (state.selectedId !== null) {
+    for (const r of treePanel.children) {
+      r.classList.toggle("selected", Number(r.dataset.id) === state.selectedId);
+    }
+  }
+}
+
+// ================================================================
+// NAVIGATION HELPERS
+// ================================================================
+function scrollToSelected() {
+  const row = treePanel.querySelector(".tree-row.selected");
+  if (row) row.scrollIntoView({ block: "nearest" });
+}
+
+function selectAndScroll(id) {
+  selectNode(id);
+  scrollToSelected();
+}
+
+function selectedIndex() {
+  return state.flatNodes.findIndex(n => n.id === state.selectedId);
+}
+
+// Ensure selection exists; if nothing selected, pick first visible node
+function ensureSelection() {
+  if (state.selectedId === null && state.flatNodes.length > 0) {
+    selectAndScroll(state.flatNodes[0].id);
+  }
+}
+
+function expandAll() {
+  for (const [id, node] of state.nodeMap) {
+    if (node.children.length > 0) state.expanded.add(id);
+  }
+  render();
+  if (state.selectedId !== null) selectNode(state.selectedId);
+}
+
+function collapseAll() {
+  state.expanded.clear();
+  state.expanded.add(TREE_DATA.id);
+  render();
+  if (state.selectedId !== null) selectNode(state.selectedId);
+}
+
+// Collapse this node and all its descendants recursively
+function collapseSubtree(id) {
+  state.expanded.delete(id);
+  const node = state.nodeMap.get(id);
+  if (node) {
+    for (const child of node.children) collapseSubtree(child.id);
+  }
+}
+
+// Expand this node and all its descendants recursively
+function expandSubtree(id) {
+  const node = state.nodeMap.get(id);
+  if (node && node.children.length > 0) {
+    state.expanded.add(id);
+    for (const child of node.children) expandSubtree(child.id);
+  }
+}
+
+// Jump to next/prev sibling at same level
+function nextSibling(direction) {
+  if (state.selectedId === null) return;
+  const pid = state.parentMap.get(state.selectedId);
+  if (pid === undefined) return; // root has no siblings
+  const parent = state.nodeMap.get(pid);
+  const siblings = parent.children;
+  const curIdx = siblings.findIndex(c => c.id === state.selectedId);
+  const nextIdx = curIdx + direction;
+  if (nextIdx >= 0 && nextIdx < siblings.length) {
+    // Ensure parent is expanded so sibling is visible
+    state.expanded.add(pid);
+    render();
+    selectAndScroll(siblings[nextIdx].id);
+  }
+}
+
+// ================================================================
+// EVENTS: MOUSE
+// ================================================================
+treePanel.addEventListener("click", (e) => {
+  const row = e.target.closest(".tree-row");
+  if (!row) return;
+  const id = Number(row.dataset.id);
+
+  if (e.target.classList.contains("chevron") && !e.target.classList.contains("leaf")) {
+    toggleExpand(id);
+    selectNode(id);
+    return;
+  }
+  selectNode(id);
+  treePanel.focus(); // keep keyboard nav active after click
+});
+
+treePanel.addEventListener("dblclick", (e) => {
+  const row = e.target.closest(".tree-row");
+  if (!row) return;
+  const id = Number(row.dataset.id);
+  const node = state.nodeMap.get(id);
+  if (node && node.children.length > 0) toggleExpand(id);
+});
+
+document.getElementById("breadcrumb").addEventListener("click", (e) => {
+  const span = e.target.closest("span[data-id]");
+  if (!span) return;
+  const id = Number(span.dataset.id);
+  // Ensure ancestors are expanded
+  let pid = state.parentMap.get(id);
+  while (pid !== undefined) {
+    state.expanded.add(pid);
+    pid = state.parentMap.get(pid);
+  }
+  render();
+  selectAndScroll(id);
+  treePanel.focus();
+});
+
+// ================================================================
+// EVENTS: KEYBOARD (tree panel)
+// ================================================================
+//
+//  Arrows       — navigate / expand / collapse (standard tree)
+//  Space        — toggle expand/collapse
+//  Enter        — expand subtree recursively (Shift+Enter: collapse subtree)
+//  Home / End   — jump to first / last visible node
+//  PageUp/Down  — jump 10 rows
+//  [ / ]        — prev / next sibling
+//  *            — expand all
+//  /            — focus search box
+//  Escape       — clear search (if active) or deselect
+//
+treePanel.addEventListener("keydown", (e) => {
+  // '/' focuses search from anywhere in the tree
+  if (e.key === "/") {
+    e.preventDefault();
+    searchBox.focus();
+    searchBox.select();
+    return;
+  }
+
+  const idx = selectedIndex();
+
+  switch (e.key) {
+    // --- Basic movement ---
+    case "ArrowDown":
+    case "j": {
+      e.preventDefault();
+      if (idx < state.flatNodes.length - 1) {
+        selectAndScroll(state.flatNodes[idx + 1].id);
+      }
+      break;
+    }
+    case "ArrowUp":
+    case "k": {
+      e.preventDefault();
+      if (idx > 0) {
+        selectAndScroll(state.flatNodes[idx - 1].id);
+      }
+      break;
+    }
+
+    // --- Expand / collapse / enter child ---
+    case "ArrowRight":
+    case "l": {
+      e.preventDefault();
+      if (state.selectedId === null) break;
+      const node = state.nodeMap.get(state.selectedId);
+      if (node && node.children.length > 0) {
+        if (!state.expanded.has(state.selectedId)) {
+          state.expanded.add(state.selectedId);
+          render();
+          selectNode(state.selectedId);
+        } else {
+          // Already expanded — move to first child
+          const newIdx = state.flatNodes.findIndex(n => n.id === state.selectedId);
+          if (newIdx < state.flatNodes.length - 1) {
+            selectAndScroll(state.flatNodes[newIdx + 1].id);
+          }
+        }
+      }
+      break;
+    }
+    case "ArrowLeft":
+    case "h": {
+      e.preventDefault();
+      if (state.selectedId === null) break;
+      if (state.expanded.has(state.selectedId)) {
+        state.expanded.delete(state.selectedId);
+        render();
+        selectNode(state.selectedId);
+      } else {
+        // Go to parent
+        const pid = state.parentMap.get(state.selectedId);
+        if (pid !== undefined) {
+          selectAndScroll(pid);
+        }
+      }
+      break;
+    }
+
+    // --- Toggle expand ---
+    case " ": {
+      e.preventDefault();
+      if (state.selectedId === null) break;
+      const node = state.nodeMap.get(state.selectedId);
+      if (node && node.children.length > 0) {
+        toggleExpand(state.selectedId);
+        selectNode(state.selectedId);
+      }
+      break;
+    }
+
+    // --- Recursive expand/collapse ---
+    case "Enter": {
+      e.preventDefault();
+      if (state.selectedId === null) break;
+      if (e.shiftKey) {
+        collapseSubtree(state.selectedId);
+      } else {
+        expandSubtree(state.selectedId);
+      }
+      render();
+      selectNode(state.selectedId);
+      break;
+    }
+
+    // --- Jump to first / last ---
+    case "Home": {
+      e.preventDefault();
+      if (state.flatNodes.length > 0) {
+        selectAndScroll(state.flatNodes[0].id);
+      }
+      break;
+    }
+    case "End": {
+      e.preventDefault();
+      if (state.flatNodes.length > 0) {
+        selectAndScroll(state.flatNodes[state.flatNodes.length - 1].id);
+      }
+      break;
+    }
+
+    // --- Page up / down (10 rows) ---
+    case "PageDown": {
+      e.preventDefault();
+      const target = Math.min(idx + 10, state.flatNodes.length - 1);
+      if (target >= 0) selectAndScroll(state.flatNodes[target].id);
+      break;
+    }
+    case "PageUp": {
+      e.preventDefault();
+      const target = Math.max(idx - 10, 0);
+      if (state.flatNodes.length > 0) selectAndScroll(state.flatNodes[target].id);
+      break;
+    }
+
+    // --- Sibling nav ---
+    case "[": {
+      e.preventDefault();
+      nextSibling(-1);
+      break;
+    }
+    case "]": {
+      e.preventDefault();
+      nextSibling(1);
+      break;
+    }
+
+    // --- Expand all ---
+    case "*": {
+      e.preventDefault();
+      expandAll();
+      break;
+    }
+
+    // --- Escape: clear search or deselect ---
+    case "Escape": {
+      e.preventDefault();
+      if (state.searchQuery) {
+        searchBox.value = "";
+        updateSearch("");
+        render();
+        if (state.selectedId !== null) selectNode(state.selectedId);
+      } else {
+        state.selectedId = null;
+        for (const r of treePanel.children) r.classList.remove("selected");
+        renderDetail(null);
+      }
+      break;
+    }
+  }
+});
+
+// ================================================================
+// EVENTS: KEYBOARD (search box)
+// ================================================================
+const searchBox = document.getElementById("search-box");
+
+searchBox.addEventListener("input", () => {
+  updateSearch(searchBox.value);
+  render();
+  if (state.selectedId !== null) selectNode(state.selectedId);
+});
+
+searchBox.addEventListener("keydown", (e) => {
+  // Escape: clear search and return to tree
+  if (e.key === "Escape") {
+    e.preventDefault();
+    if (searchBox.value) {
+      searchBox.value = "";
+      updateSearch("");
+      render();
+      if (state.selectedId !== null) selectNode(state.selectedId);
+    }
+    treePanel.focus();
+    return;
+  }
+
+  // Enter in search: jump to first (or next) match
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (state.matchIds.size === 0) return;
+    const matchArr = [...state.matchIds].sort((a, b) => a - b);
+
+    if (e.shiftKey) {
+      // Shift+Enter: prev match
+      const cur = state.selectedId;
+      const prev = matchArr.reverse().find(id => id < cur) ?? matchArr[0];
+      render();
+      selectAndScroll(prev);
+    } else {
+      // Enter: next match
+      const cur = state.selectedId;
+      const next = matchArr.find(id => id > cur) ?? matchArr[0];
+      render();
+      selectAndScroll(next);
+    }
+    return;
+  }
+
+  // ArrowDown/Up: navigate tree without leaving search
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    const idx = selectedIndex();
+    if (idx < state.flatNodes.length - 1) selectAndScroll(state.flatNodes[idx + 1].id);
+    return;
+  }
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    const idx = selectedIndex();
+    if (idx > 0) selectAndScroll(state.flatNodes[idx - 1].id);
+    return;
+  }
+});
+
+// ================================================================
+// EVENTS: BUTTONS
+// ================================================================
+document.getElementById("btn-expand-all").addEventListener("click", () => {
+  expandAll();
+  treePanel.focus();
+});
+
+document.getElementById("btn-collapse-all").addEventListener("click", () => {
+  collapseAll();
+  treePanel.focus();
+});
+
+// ================================================================
+// INIT
+// ================================================================
+render();
+// Select root and focus tree
+selectNode(TREE_DATA.id);
+treePanel.focus();
+</script>
+</body>
+</html>

@@ -29,7 +29,7 @@ classifiers = [
 Repository = "https://github.com/everyabc/everybase"
 
 [tool.hatch.build]
-artifacts = ["src/eb_tree_view/template.html"]
+artifacts = ["src/eb_tree_view/explorer.html.tmpl"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/eb_tree_view"]

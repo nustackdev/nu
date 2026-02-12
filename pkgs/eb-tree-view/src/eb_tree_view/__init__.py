@@ -25,7 +25,7 @@ __all__ = [
 def render_html(root: Node, *, title: str = "everybase tree explorer") -> str:
     """Serialize tree and embed in HTML template. Returns complete HTML string."""
     data = serialize(root)
-    template = files("eb_tree_view").joinpath("template.html").read_text(encoding="utf-8")
+    template = files("eb_tree_view").joinpath("explorer.html.tmpl").read_text(encoding="utf-8")
     tree_json = json.dumps(data, indent=2)
     html = template.replace("__TREE_DATA__", tree_json)
     html = html.replace("__TREE_TITLE__", title)
