@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pv.container import (
@@ -145,6 +146,10 @@ class DictView(
             True if key exists
         """
         return self.container.exists_child(obj)
+
+    def __iter__(self) -> Generator[str | int, None, None]:
+        """Iterate over keys."""
+        yield from self.keys()
 
     def keys(self) -> Generator[str | int, None, None]:
         """Get all keys.
@@ -481,6 +486,9 @@ class DictISliceView:
     def extract(self) -> dict[str | int, object]:
         """Extract slice as dict."""
         return {k: self._parent[k] for k in self._get_sliced_keys()}
+
+
+MutableMapping.register(DictView)
 
 
 if TYPE_CHECKING:

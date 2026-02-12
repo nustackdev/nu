@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
 from pv.container import (
@@ -213,6 +214,9 @@ class TupleView(
         child_site = key_.join_segment(self.container.site, normalized)
         child_container = Container(ctx=self.container.ctx, site=child_site)
         return view(child_container, self.registry)
+
+
+Sequence.register(TupleView)
 
 
 if TYPE_CHECKING:

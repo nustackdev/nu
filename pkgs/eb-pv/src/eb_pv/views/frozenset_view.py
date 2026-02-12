@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import pickle  # nosec: F401
+from collections.abc import Set as SetABC
 from typing import TYPE_CHECKING, ClassVar
 
 from pv.container import ContainerProtocol, ContainerStructure
@@ -125,6 +126,30 @@ class FrozenSetView(
         """
         return all(value in self for value in other)
 
+    def __or__(self, other: object) -> frozenset[object]:
+        """Set union: self | other."""
+        return frozenset(self) | frozenset(other)
+
+    def __and__(self, other: object) -> frozenset[object]:
+        """Set intersection: self & other."""
+        return frozenset(self) & frozenset(other)
+
+    def __sub__(self, other: object) -> frozenset[object]:
+        """Set difference: self - other."""
+        return frozenset(self) - frozenset(other)
+
+    def __xor__(self, other: object) -> frozenset[object]:
+        """Set symmetric difference: self ^ other."""
+        return frozenset(self) ^ frozenset(other)
+
+    def __le__(self, other: object) -> bool:
+        """Test if subset: self <= other."""
+        return self.issubset(other)
+
+    def __ge__(self, other: object) -> bool:
+        """Test if superset: self >= other."""
+        return self.issuperset(other)
+
     def extract(self) -> frozenset[object]:
         """Extract all values as frozenset.
 
@@ -146,6 +171,9 @@ class FrozenSetView(
         for item in value:
             key = self._make_key(item)
             self._set_child_value(key, item)
+
+
+SetABC.register(FrozenSetView)
 
 
 if TYPE_CHECKING:

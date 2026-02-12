@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, ClassVar, overload
 
 from pv.container import (
@@ -267,6 +268,35 @@ class ListView(
         self.container.clear_children()
         # Reset length metadata
         self._set_length(0)
+
+    def extend(self, values: Iterable[object]) -> None:
+        """Extend list with items from iterable.
+
+        Args:
+            values: Iterable of values to append
+        """
+        for value in values:
+            self.append(value)
+
+    def remove(self, value: object) -> None:
+        """Remove first occurrence of value.
+
+        Args:
+            value: Value to remove
+
+        Raises:
+            ValueError: If value not found
+        """
+        for i, item in enumerate(self):
+            if item == value:
+                del self[i]
+                return
+        raise ValueError(f"{value!r} is not in list")
+
+    def __reversed__(self) -> Generator[object, None, None]:
+        """Iterate in reverse order."""
+        for i in range(len(self) - 1, -1, -1):
+            yield self[i]
 
     # =========================================================================
     # FUNCTIONAL OPERATIONS
@@ -637,6 +667,9 @@ class ListSliceView(ListView):
     def store(self, value: Iterable[object]) -> None:
         """Not supported on slice views."""
         raise TypeError("ListSliceView does not support store")
+
+
+MutableSequence.register(ListView)
 
 
 if TYPE_CHECKING:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Generator, MutableSequence
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pv.container import ContainerProtocol, ContainerStructure
@@ -120,6 +120,22 @@ class ByteArrayView(
         for i in range(len(self)):
             yield self[i]
 
+    def __contains__(self, value: object) -> bool:
+        """Check if byte value exists."""
+        for byte in self:
+            if byte == value:
+                return True
+        return False
+
+    def __reversed__(self) -> Generator[int, None, None]:
+        """Iterate over bytes in reverse."""
+        for i in range(len(self) - 1, -1, -1):
+            yield self[i]
+
+    def __delitem__(self, address: int) -> None:
+        """Delete byte at index. Not supported — requires element shifting."""
+        raise NotImplementedError("ByteArrayView does not support item deletion")
+
     def append(self, value: int) -> None:
         """Append byte to end.
 
@@ -135,6 +151,38 @@ class ByteArrayView(
         self.ensure_created()
         index = len(self)
         self.container.put_child_primitive(index, value)
+
+    def insert(self, index: int, value: int) -> None:
+        """Insert byte at index. Not supported — requires element shifting."""
+        raise NotImplementedError("ByteArrayView does not support insert")
+
+    def pop(self, index: int = -1) -> int:
+        """Remove and return byte at index. Not supported — requires element shifting."""
+        raise NotImplementedError("ByteArrayView does not support pop")
+
+    def extend(self, values: Iterable[int]) -> None:
+        """Extend with bytes from iterable."""
+        for value in values:
+            self.append(value)
+
+    def remove(self, value: int) -> None:
+        """Remove first occurrence of byte value. Not supported — requires element shifting."""
+        raise NotImplementedError("ByteArrayView does not support remove")
+
+    def index(self, value: int) -> int:
+        """Find index of first occurrence of byte value.
+
+        Raises:
+            ValueError: If value not found
+        """
+        for i, byte in enumerate(self):
+            if byte == value:
+                return i
+        raise ValueError(f"{value!r} is not in bytearray")
+
+    def count(self, value: int) -> int:
+        """Count occurrences of byte value."""
+        return sum(1 for byte in self if byte == value)
 
     def clear(self) -> None:
         """Remove all bytes."""
@@ -161,6 +209,9 @@ class ByteArrayView(
 
         for index, byte in enumerate(value):
             self.container.put_child_primitive(index, byte)
+
+
+MutableSequence.register(ByteArrayView)
 
 
 if TYPE_CHECKING:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import pickle  # nosec: F401
+from collections.abc import MutableSet
 from typing import TYPE_CHECKING, ClassVar
 
 from pv.container import ContainerProtocol, ContainerStructure
@@ -190,6 +191,30 @@ class SetView(
         """
         return all(value in self for value in other)
 
+    def __or__(self, other: object) -> set[object]:
+        """Set union: self | other."""
+        return set(self) | set(other)
+
+    def __and__(self, other: object) -> set[object]:
+        """Set intersection: self & other."""
+        return set(self) & set(other)
+
+    def __sub__(self, other: object) -> set[object]:
+        """Set difference: self - other."""
+        return set(self) - set(other)
+
+    def __xor__(self, other: object) -> set[object]:
+        """Set symmetric difference: self ^ other."""
+        return set(self) ^ set(other)
+
+    def __le__(self, other: object) -> bool:
+        """Test if subset: self <= other."""
+        return self.issubset(other)
+
+    def __ge__(self, other: object) -> bool:
+        """Test if superset: self >= other."""
+        return self.issuperset(other)
+
     # =========================================================================
     # VIEW INTERFACE
     # =========================================================================
@@ -220,6 +245,9 @@ class SetView(
 
         # Set final length metadata
         self._set_length(count)
+
+
+MutableSet.register(SetView)
 
 
 if TYPE_CHECKING:

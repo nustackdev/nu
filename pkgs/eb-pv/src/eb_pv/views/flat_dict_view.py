@@ -9,6 +9,7 @@ Lightweight dict view with:
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pv.container import ContainerProtocol, ContainerStructure
@@ -101,6 +102,10 @@ class FlatDictView(MetadataBasedChildrenCountBase, StdView):
         """Check if key exists."""
         return self.container.exists_child(key)
 
+    def __iter__(self) -> Generator[str | int, None, None]:
+        """Iterate over keys."""
+        yield from self.keys()
+
     def get(self, key: str | int, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value with default fallback."""
         try:
@@ -172,3 +177,6 @@ class FlatDictView(MetadataBasedChildrenCountBase, StdView):
         else:
             # When appending, adjust length for actually new keys
             self._update_count()
+
+
+MutableMapping.register(FlatDictView)

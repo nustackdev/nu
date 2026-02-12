@@ -10,6 +10,7 @@ Ultra-lightweight dict view with no:
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pv.container import ContainerProtocol, ContainerStructure
@@ -96,6 +97,14 @@ class LightDictView(StdView):
         """Check if key exists."""
         return self.container.exists_child(key)
 
+    def __len__(self) -> int:
+        """Count number of keys."""
+        return sum(1 for _ in self.keys())
+
+    def __iter__(self) -> Generator[str | int, None, None]:
+        """Iterate over keys."""
+        yield from self.keys()
+
     def get(self, key: str | int, default: Value | Empty = EMPTY) -> Value | Empty:
         """Get value with default fallback."""
         try:
@@ -146,3 +155,6 @@ class LightDictView(StdView):
             self.clear()
         for key, val in value.items():
             self[key] = val
+
+
+MutableMapping.register(LightDictView)
