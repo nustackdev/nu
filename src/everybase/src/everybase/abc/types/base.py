@@ -15,10 +15,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from everybase.core import BoolArg, Sentinel, Term
-
     from ..values import (
-        AnyValue,
         BoolValue,
         BytesValue,
         FloatValue,
@@ -77,27 +74,6 @@ class TypeBase[T]:
     def not_invalid(self) -> BoolValue:
         """Check if this value is not Invalid."""
         return self.is_invalid().not_()
-
-    # =========================================================================
-    # CONDITIONAL OPERATIONS
-    # =========================================================================
-
-    def ifelse[ElseT](
-        self,
-        condition: BoolArg,
-        otherwise: ElseT | Term[ElseT | Sentinel],
-    ) -> AnyValue:
-        """Conditional/ternary: if condition then self else otherwise."""
-        from ..morphisms import ConditionalOp
-        from ..values import AnyValue
-
-        return AnyValue(ConditionalOp(self, condition, otherwise))
-
-    def or_default[DefaultT](self, default: DefaultT | Term[DefaultT]) -> AnyValue:
-        """Return self if not empty/invalid, otherwise return default."""
-        from ..values import AnyValue
-
-        return AnyValue(self.ifelse(self.is_sentinel().not_(), default))
 
     # =========================================================================
     # TYPE CONVERSIONS

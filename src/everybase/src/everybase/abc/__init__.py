@@ -82,7 +82,7 @@ from .collections import (
     SetLikeBase,
     SetLikeProtocol,
 )
-from .combiners import all_, and_, any_, coalesce, ifelse, none_, or_
+from .combiners import all_, and_, any_, none_, or_
 from .method import AutoInterface, method, prop
 from .morphisms import (
     AbsOp,
@@ -111,7 +111,6 @@ from .morphisms import (
     CapitalizeOp,
     CenterOp,
     ClearCmd,
-    ConditionalOp,
     ContainsOp,
     CountOp,
     CountSubstringOp,
@@ -310,7 +309,6 @@ __all__ = [  # noqa: RUF022
     "CollectionProtocol",
     "ComparableBase",
     "ComparableProtocol",
-    "ConditionalOp",
     "ContainableBase",
     "ContainableProtocol",
     "ContainsOp",
@@ -494,11 +492,9 @@ __all__ = [  # noqa: RUF022
     "all_",
     "and_",
     "any_",
-    "coalesce",
     "ensure_term",
     "method",
     "prop",
-    "ifelse",
     "none_",
     "or_",
     "typed_value",

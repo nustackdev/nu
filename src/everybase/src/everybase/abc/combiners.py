@@ -52,8 +52,6 @@ from .capabilities import AndableProtocol, OrableProtocol
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
-
     from .values import BoolValue as BoolType
 
 
@@ -61,8 +59,6 @@ __all__ = [
     "all_",
     "and_",
     "any_",
-    "coalesce",
-    "ifelse",
     "none_",
     "or_",
 ]
@@ -200,71 +196,3 @@ def none_(*conditions: object) -> BoolType:
         raise ValueError("none_() requires at least one condition")
 
     return any_(*conditions).not_()
-
-
-# =============================================================================
-# CONDITIONAL COMBINERS
-# =============================================================================
-
-
-def ifelse(condition: object, then_value: object, else_value: object) -> Term:
-    """Ternary conditional: if condition then then_value else else_value.
-
-    Similar to Python's ternary operator: `x if condition else y`
-
-    Args:
-        condition: Condition to evaluate
-        then_value: Value to return if condition is true
-        else_value: Value to return if condition is false
-
-    Returns:
-        RValue that evaluates to then_value or else_value based on condition
-
-    Example:
-        >>> display_price = ifelse(is_sale, sale_price, regular_price)
-        >>> status_text = ifelse(is_active, "Active", "Inactive")
-    """
-    from .utils import ensure_term
-
-    # Use the ifelse method from CoreBase via the then_value
-    # ifelse(cond, then, else) -> then.ifelse(cond, else)
-    return ensure_term(then_value).ifelse(ensure_term(condition), ensure_term(else_value))
-
-
-def coalesce(*values: object) -> Term:
-    """Return first non-empty/non-invalid value.
-
-    Similar to SQL's COALESCE or nullish coalescing.
-    Checks each value in order, returning the first that is
-    neither empty nor Invalid.
-
-    Args:
-        *values: Variable number of values to check
-
-    Returns:
-        RValue representing the first non-empty/non-invalid value
-
-    Raises:
-        ValueError: If no values provided
-
-    Example:
-        >>> name = coalesce(preferred_name, display_name, username)
-        >>> price = coalesce(sale_price, regular_price, default_price)
-    """
-    if not values:
-        raise ValueError("coalesce() requires at least one value")
-
-    if len(values) == 1:
-        from .utils import ensure_term
-
-        return ensure_term(values[0])
-
-    from .utils import ensure_term
-
-    # Build chain: v1.or_default(v2.or_default(v3...))
-    # Start from the end and work backwards
-    result = ensure_term(values[-1])
-    for value in reversed(values[:-1]):
-        result = ensure_term(value).or_default(result)
-
-    return result

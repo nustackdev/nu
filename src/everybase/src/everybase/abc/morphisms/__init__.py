@@ -115,7 +115,6 @@ from .gen_access import (
     SliceOp,
 )
 from .gen_attr import DelAttrOp, GetAttrOp, SetAttrOp
-from .gen_conditional import ConditionalOp
 from .gen_special import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
 
 # ── op_ — Python operators ──────────────────────────────────────────────────
@@ -263,7 +262,6 @@ __all__ = [  # noqa: RUF022
     "DelAttrOp",
     "GetAttrOp",
     "SetAttrOp",
-    "ConditionalOp",
     "IsEmptyOp",
     "IsNaNOp",
     "NotEmptyOp",
