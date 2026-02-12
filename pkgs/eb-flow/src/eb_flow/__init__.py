@@ -81,7 +81,7 @@ from .error import Assert, Retry, TryCatch
 from .io import Debug, Log, Print
 
 # Iteration
-from .iteration import ForEach, ForEachParallel, ForRange
+from .iteration import ForEach, ForRange
 
 # Parallel
 from .parallel import All, Any, Parallel, Race
@@ -108,7 +108,6 @@ __all__ = [  # noqa: RUF022
     "Race",
     # Iteration
     "ForEach",
-    "ForEachParallel",
     "ForRange",
     # Error handling
     "Assert",

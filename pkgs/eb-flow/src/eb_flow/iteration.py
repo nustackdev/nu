@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING, Any
 
 from everybase import Flow
 from everybase.abc import ensure_term
+
+from .control import Seq
 
 
 if TYPE_CHECKING:
@@ -15,7 +16,6 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ForEach",
-    "ForEachParallel",
     "ForRange",
 ]
 
@@ -23,11 +23,18 @@ __all__ = [
 class ForRange(Flow):
     """Counted loop over ``range(start, stop, step)``.
 
-    Children layout: ``[start, stop, step, body]``
+    Children layout (no index): ``[start, stop, step, body]``
+    Children layout (with index): ``[start, stop, step, init, body]``
 
     Start, stop and step are auto-wrapped via ``ensure_term`` if literals are
     passed.  Optional ``index`` Ref is set with the current loop value
     at each iteration.
+
+    When ``index`` is provided, the body is meta-adjusted at construction
+    time: ``body = Seq(body, index.set(index + step))``, and an init node
+    ``index.set(start)`` is prepended as a child.  This makes the index
+    setter a tree-visible child, so meta-transforms (auto_atomic, etc.)
+    can see and wrap it.
 
     Args:
         start: Start of range (inclusive), int or Term.
@@ -61,36 +68,48 @@ class ForRange(Flow):
             step: Step increment, int or Term. Default ``1``.
             index: Optional Ref[int] set with current value each iteration.
         """
-        super().__init__(
-            ensure_term(start),
-            ensure_term(stop),
-            ensure_term(step),
-            body,
-        )
-        self._index = index
+        start_t = ensure_term(start)
+        stop_t = ensure_term(stop)
+        step_t = ensure_term(step)
+
+        self._has_index = index is not None
+
+        if index is not None:
+            init = index.set(ensure_term(start))
+            body = Seq(body, index.set(index + ensure_term(step)))
+            super().__init__(start_t, stop_t, step_t, init, body)
+        else:
+            super().__init__(start_t, stop_t, step_t, body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute body for each value in range."""
         start = await self.children[0].execute(ctx)
         stop = await self.children[1].execute(ctx)
         step = await self.children[2].execute(ctx)
-        body = self.children[3]
 
-        for i in range(start, stop, step):
-            if self._index is not None:
-                await self._index.set(i).execute(ctx)  # type: ignore[union-attr]
+        if self._has_index:
+            await self.children[3].execute(ctx)  # init index
+            body = self.children[4]
+        else:
+            body = self.children[3]
+
+        for _i in range(start, stop, step):
             await body.execute(ctx)
 
 
 class ForEach(Flow):
     """Iterate over a sequence, executing body for each item.
 
-    Children layout: ``[items, body]``
+    Children layout (no index): ``[items, body]``
+    Children layout (with index): ``[items, init, body]``
 
     The ``items`` parameter is auto-wrapped via ``ensure_term`` if a literal is
     passed -- it can be a plain list, a ``Ref.get()``, or any Term that
     resolves to an iterable.  Optional ``index`` Ref is set with the
     current iteration index.
+
+    When ``index`` is provided, the body is meta-adjusted:
+    ``body = Seq(body, index.set(index + 1))``, init ``index.set(0)``.
 
     Args:
         items: Iterable (or Term resolving to one) to iterate over.
@@ -117,74 +136,24 @@ class ForEach(Flow):
             body: Executable run for each item.
             index: Optional Ref[int] set with current iteration index.
         """
-        super().__init__(ensure_term(items), body)
-        self._index = index
+        self._has_index = index is not None
+
+        if index is not None:
+            init = index.set(0)
+            body = Seq(body, index.set(index + 1))
+            super().__init__(ensure_term(items), init, body)
+        else:
+            super().__init__(ensure_term(items), body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute body for each item in the resolved sequence."""
         items = await self.children[0].execute(ctx)
-        body = self.children[1]
 
-        for i, _item in enumerate(items):
-            if self._index is not None:
-                await self._index.set(i).execute(ctx)  # type: ignore[union-attr]
+        if self._has_index:
+            await self.children[1].execute(ctx)  # init index
+            body = self.children[2]
+        else:
+            body = self.children[1]
+
+        for _i, _item in enumerate(items):
             await body.execute(ctx)
-
-
-class ForEachParallel(Flow):
-    """Parallel iteration over a sequence with concurrency limit.
-
-    Children layout: ``[items, body]``
-
-    The ``items`` parameter is auto-wrapped via ``ensure_term`` if a literal is
-    passed.  Body is executed concurrently for each item, limited by a
-    semaphore of size ``max_parallel``.
-
-    The optional ``index`` Ref is set with the current iteration index.
-    Note: concurrent writes to ``index`` are a known limitation -- the
-    value is non-deterministic when multiple workers run simultaneously.
-
-    Args:
-        items: Iterable (or Term resolving to one) to iterate over.
-        body: Executable run for each item.
-        index: Optional Ref[int] set with current iteration index.
-        max_parallel: Maximum number of concurrent workers. Default ``10``.
-
-    Example::
-
-        ForEachParallel(urls, fetch_url, max_parallel=5)
-    """
-
-    def __init__(
-        self,
-        items: Any,
-        body: Executable,
-        *,
-        index: Ref[int] | None = None,
-        max_parallel: int = 10,
-    ) -> None:
-        """Initialize parallel for-each loop.
-
-        Args:
-            items: Iterable or Term resolving to an iterable.
-            body: Executable run for each item.
-            index: Optional Ref[int] set with current iteration index.
-            max_parallel: Maximum concurrent workers. Default ``10``.
-        """
-        super().__init__(ensure_term(items), body)
-        self._index = index
-        self._max_parallel = max_parallel
-
-    async def execute(self, ctx: Context) -> None:
-        """Execute body concurrently for each item with semaphore limit."""
-        items = await self.children[0].execute(ctx)
-        body = self.children[1]
-        sem = asyncio.Semaphore(self._max_parallel)
-
-        async def worker(idx: int) -> None:
-            async with sem:
-                if self._index is not None:
-                    await self._index.set(idx).execute(ctx)  # type: ignore[union-attr]
-                await body.execute(ctx)
-
-        await asyncio.gather(*(worker(i) for i in range(len(items))))

@@ -10,7 +10,7 @@ from everybase.abc import ensure_term
 
 
 if TYPE_CHECKING:
-    from everybase import Context, Executable, FloatArg, IntArg, Ref
+    from everybase import Context, Executable, FloatArg, IntArg
 
 
 __all__ = [
@@ -46,8 +46,6 @@ class TryCatch(Flow):
         body: Executable,
         catch: Executable | None = None,
         finally_: Executable | None = None,
-        *,
-        error: Ref[str] | None = None,
     ) -> None:
         """Initialize try/catch/finally flow.
 
@@ -55,17 +53,18 @@ class TryCatch(Flow):
             body: Main execution body.
             catch: Executed on exception (optional).
             finally_: Executed always after body/catch (optional).
-            error: Ref written with ``str(exception)`` on catch (optional).
         """
         children: list[Executable] = [body]
+
         self._has_catch = catch is not None
         self._has_finally = finally_ is not None
+
         if catch is not None:
             children.append(catch)
         if finally_ is not None:
             children.append(finally_)
+
         super().__init__(*children)
-        self._error = error
 
     async def execute(self, ctx: Context) -> None:
         """Execute with try/catch/finally semantics."""
@@ -81,8 +80,6 @@ class TryCatch(Flow):
         except Exception as e:
             caught = e
             if catch_idx is not None:
-                if self._error is not None:
-                    await self._error.set(str(e)).execute(ctx)  # type: ignore[union-attr]
                 await self.children[catch_idx].execute(ctx)
         finally:
             if finally_idx is not None:
@@ -123,7 +120,6 @@ class Retry(Flow):
         delay: FloatArg = 0.0,
         backoff: FloatArg = 1.0,
         on_retry: Executable | None = None,
-        attempt: Ref[int] | None = None,
     ) -> None:
         """Initialize retry flow.
 
@@ -133,7 +129,7 @@ class Retry(Flow):
             delay: Initial delay in seconds between retries (float or Term).
             backoff: Multiplier applied to delay after each retry (float or Term).
             on_retry: Executed after each failed attempt before sleeping (optional).
-            attempt: Ref written with current attempt number, 1-based (optional).
+
         """
         children: list[Executable] = [
             body,
@@ -145,7 +141,6 @@ class Retry(Flow):
         if on_retry is not None:
             children.append(on_retry)
         super().__init__(*children)
-        self._attempt = attempt
 
     async def execute(self, ctx: Context) -> None:
         """Execute body with retry logic and exponential backoff."""
@@ -155,8 +150,6 @@ class Retry(Flow):
         backoff = await self.children[3].execute(ctx)
 
         for attempt in range(1, max_attempts + 1):
-            if self._attempt is not None:
-                await self._attempt.set(attempt).execute(ctx)  # type: ignore[union-attr]
             try:
                 await body.execute(ctx)
                 return
