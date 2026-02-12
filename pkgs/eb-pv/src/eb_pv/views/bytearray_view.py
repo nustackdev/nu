@@ -107,6 +107,7 @@ class ByteArrayView(
         if not isinstance(value, int) or not 0 <= value <= 255:
             raise ValueError("byte must be in range(0, 256)")
 
+        self.ensure_created()
         normalized = self.normalize_address(address)
         self.container.put_child_primitive(normalized, value)
 
@@ -131,11 +132,13 @@ class ByteArrayView(
         if not isinstance(value, int) or not 0 <= value <= 255:
             raise ValueError("byte must be in range(0, 256)")
 
+        self.ensure_created()
         index = len(self)
         self.container.put_child_primitive(index, value)
 
     def clear(self) -> None:
         """Remove all bytes."""
+        self.ensure_created()
         self.container.clear_children()
 
     def extract(self) -> bytearray:
@@ -153,6 +156,7 @@ class ByteArrayView(
             value: Bytes or bytearray to store
             replace: If True, clear existing content first
         """
+        self.ensure_created()
         self.clear()
 
         for index, byte in enumerate(value):

@@ -78,6 +78,7 @@ class FlatDictView(MetadataBasedChildrenCountBase, StdView):
             key: Key to set
             value: Primitive value to store
         """
+        self.ensure_created()
         is_new = not self.container.exists_child(key)
         self.container.put_child_primitive(key, value)
         if is_new:
@@ -92,6 +93,7 @@ class FlatDictView(MetadataBasedChildrenCountBase, StdView):
         Raises:
             KeyError: If key not found
         """
+        self.ensure_created()
         self.container.delete_child(key)
         self._update_count()
 
@@ -133,6 +135,7 @@ class FlatDictView(MetadataBasedChildrenCountBase, StdView):
 
     def clear(self) -> None:
         """Remove all items."""
+        self.ensure_created()
         self.container.clear_children(validate=False)
         self._set_length(0)
 
@@ -155,6 +158,7 @@ class FlatDictView(MetadataBasedChildrenCountBase, StdView):
             value: Mapping to store
             replace: If True, clear existing content first
         """
+        self.ensure_created()
         if replace:
             self.clear()
 

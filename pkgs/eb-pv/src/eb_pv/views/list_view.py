@@ -24,6 +24,7 @@ from .base import StdView
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterable
+    from collections.abc import Sequence as PySequence
 
     from pv.collections import MutableSequenceView
     from pv.traits import (
@@ -149,6 +150,7 @@ class ListView(
         Raises:
             IndexError: If index out of bounds
         """
+        self.ensure_created()
         normalized = self.normalize_address(address)
         length = len(self)
 
@@ -234,6 +236,7 @@ class ListView(
             address: Index to insert at
             value: Value to insert
         """
+        self.ensure_created()
         length = len(self)
 
         # Clamp index to valid range
@@ -260,6 +263,7 @@ class ListView(
 
     def clear(self) -> None:
         """Remove all items."""
+        self.ensure_created()
         self.container.clear_children()
         # Reset length metadata
         self._set_length(0)
@@ -648,5 +652,8 @@ if TYPE_CHECKING:
     _clearable: type[Clearable] = ListView
     _appendable: type[Appendable[object]] = ListView
     _mutable_sequence: type[MutableSequenceView[object]] = ListView
-    _Observable: type[Observable] = ListView
-    _Observable_children: type[ChildObservable] = ListView
+    _observable: type[Observable] = ListView
+    _observable_children: type[ChildObservable] = ListView
+    # Python types
+    _py_seq: type[PySequence[object]] = ListView
+    _py_iter: type[Iterable] = ListView

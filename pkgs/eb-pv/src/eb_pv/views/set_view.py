@@ -108,6 +108,7 @@ class SetView(
         Raises:
             KeyError: If value not in set
         """
+        self.ensure_created()
         key = self._make_key(value)
         if not self.container.exists_child(key):
             raise KeyError(value)
@@ -120,6 +121,7 @@ class SetView(
         Args:
             value: Value to remove
         """
+        self.ensure_created()
         key = self._make_key(value)
         if self.container.exists_child(key):
             self.container.delete_child(key)
@@ -150,6 +152,7 @@ class SetView(
 
     def clear(self) -> None:
         """Remove all values."""
+        self.ensure_created()
         self.container.clear_children()
         # Reset length metadata
         self._set_length(0)

@@ -186,6 +186,7 @@ class TupleView(
             value: Sequence to store
             replace: If True, clear existing content first
         """
+        self.ensure_created()
         self.container.clear_children()
 
         count = 0
@@ -199,6 +200,8 @@ class TupleView(
     def open_child[ViewT: View](self, address: int, view: type[ViewT]) -> ViewT:
         """Open child view at index.
 
+        Pure navigation — does not write to storage.
+
         Args:
             address: Child container index
             view: View class for child
@@ -207,12 +210,8 @@ class TupleView(
             View instance for child container
         """
         normalized = self.normalize_address(address)
-        child_container = Container.create(
-            key_.join_segment(self.container.site, normalized),
-            self.container.ctx,
-            view.get_structure(),
-            view.get_protocol(),
-        )
+        child_site = key_.join_segment(self.container.site, normalized)
+        child_container = Container(ctx=self.container.ctx, site=child_site)
         return view(child_container, self.registry)
 
 

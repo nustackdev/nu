@@ -140,6 +140,7 @@ class FrozenSetView(
             value: Iterable to store
             replace: If True, clear existing content first
         """
+        self.ensure_created()
         self.container.clear_children()
 
         for item in value:

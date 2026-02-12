@@ -77,6 +77,7 @@ class LightDictView(StdView):
             key: Key to set
             value: Primitive value to store
         """
+        self.ensure_created()
         self.container.put_child_primitive(key, value)
 
     def __delitem__(self, key: str | int) -> None:
@@ -88,6 +89,7 @@ class LightDictView(StdView):
         Raises:
             KeyError: If key not found
         """
+        self.ensure_created()
         self.container.delete_child(key)
 
     def __contains__(self, key: str | int) -> bool:
@@ -117,6 +119,7 @@ class LightDictView(StdView):
 
     def clear(self) -> None:
         """Remove all items."""
+        self.ensure_created()
         self.container.clear_children(validate=False)
 
     def update(self, other: PyMapping[str | int, Value] | None = None, **kwargs: Value) -> None:
@@ -138,6 +141,7 @@ class LightDictView(StdView):
             value: Mapping to store
             replace: If True, clear existing content first
         """
+        self.ensure_created()
         if replace:
             self.clear()
         for key, val in value.items():

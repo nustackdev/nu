@@ -130,6 +130,7 @@ class DictView(
         Raises:
             KeyError: If key not found
         """
+        self.ensure_created()
         self.container.delete_child(address)
         # Update length metadata
         self._update_count()
@@ -218,6 +219,7 @@ class DictView(
 
     def clear(self) -> None:
         """Remove all items."""
+        self.ensure_created()
         self.container.clear_children(validate=True)
         # Reset length metadata
         self._set_length(0)
@@ -387,6 +389,7 @@ class DictView(
             value: Mapping to store
             replace: If True, clear existing content first (default True)
         """
+        self.ensure_created()
         # Optimization: only clear if container has children
         if replace:
             current_len = cast("int", self.container.get_metadata("__len__", default=0))
