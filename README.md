@@ -2,6 +2,8 @@
 
 Term Programming platform for Python — build distributed, persistent and reactive applications with declarative simplicity.
 
+<img width="1314" height="977" alt="image" src="https://github.com/user-attachments/assets/ceeb7f09-29d8-4198-aa19-7a19db8ae9c7" />
+
 ## Structure
 
 ```
