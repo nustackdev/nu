@@ -84,7 +84,7 @@ class React(Flow):
             loop.call_soon_threadsafe(event.set)
 
         sub = await self.children[0].execute(ctx)
-        sub.subscribe(on_change)
+        sub.bind(on_change)
         try:
             await event.wait()
 
@@ -94,7 +94,8 @@ class React(Flow):
             if self.child_count > 1:
                 await self.children[1].execute(ctx)
         finally:
-            sub.unsubscribe(on_change)
+            sub.unbind(on_change)
+            sub.close()
 
 
 class ReactForever(Flow):
@@ -149,7 +150,7 @@ class ReactForever(Flow):
             loop.call_soon_threadsafe(event.set)
 
         sub = await self.children[0].execute(ctx)
-        sub.subscribe(on_change)
+        sub.bind(on_change)
         try:
             while True:
                 await event.wait()
@@ -160,7 +161,8 @@ class ReactForever(Flow):
 
                 await self.children[1].execute(ctx)
         finally:
-            sub.unsubscribe(on_change)
+            sub.unbind(on_change)
+            sub.close()
 
 
 class ReactWhile(Flow):
