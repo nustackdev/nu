@@ -4,7 +4,7 @@
 
 - **React** + **TypeScript** (strict mode)
 - **Vite** — build + dev server with HMR
-- **ESLint** + **Prettier**
+- **Biome** — lint + format (single tool, replaces ESLint + Prettier)
 - Single-page app. No SSR, no Next.js.
 - `package-lock.json` committed
 
