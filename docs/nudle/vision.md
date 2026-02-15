@@ -2,25 +2,18 @@
 
 ## What
 
-Delightful UI for everybase. Kibana-level utility, Notion-level UX.
+everylens is the UI for everybase.
 
-## Why
+everybase is a programmable database where data topology is the program — Shapes declare structure, Terms describe computation. No existing tool can see into it. everylens is the lens.
 
-everybase is a new kind of database — trees of typed containers, not tables and rows. No existing tool can browse it. everylens is the first interface humans have into this data.
+## How
 
-## Three Writers, One Tree
+The UI is a Term builder and a result renderer. Every interaction — navigating, editing, filtering, slicing — constructs a Term. The backend evaluates it. The frontend draws the result. That's the entire loop.
 
-**Human**, **agent**, and **machine** are equal participants writing into the same tree. everylens is the human's interface — but everything is visible, inspectable, and editable, regardless of who wrote it.
+## Who
 
-## Goals
+Three writers share the tree: **human**, **agent**, **machine**. everylens is the human's interface. Everything in the tree is visible and editable — regardless of who wrote it, how it got there, or what substrate it lives on.
 
-- Inspect and visualize Shapes
-- Manipulate and edit Shapes
-- Flow visualization and management (tbd)
+## Bar
 
-## Non-Goals (For Now)
-
-- Multi-user / auth — single-user first
-- Self-hosting / deployment — localhost first
-- OSS vs Pro split — decide later based on what emerges
-- Recursive spaces — start with one tree, evolve
+Delightful UX is not optional. This is not an admin panel. This is how humans experience everybase.
