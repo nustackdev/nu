@@ -1,4 +1,4 @@
-# Architecture — Flow
+# Design — Flow
 
 ## On Connect
 

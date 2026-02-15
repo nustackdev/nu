@@ -1,4 +1,4 @@
-# Architecture — Live Updates
+# Design — Live Updates
 
 Hard problem. Parked here for thinking.
 
