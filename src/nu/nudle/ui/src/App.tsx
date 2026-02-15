@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Status = "connecting" | "connected" | "disconnected";
+
+const statusConfig = {
+	connecting: { label: "connecting", variant: "outline" as const },
+	connected: { label: "connected", variant: "default" as const },
+	disconnected: { label: "disconnected", variant: "destructive" as const },
+} satisfies Record<Status, { label: string; variant: "outline" | "default" | "destructive" }>;
 
 function App() {
 	const [status, setStatus] = useState<Status>("connecting");
@@ -29,24 +37,23 @@ function App() {
 		};
 	}, []);
 
+	const { label, variant } = statusConfig[status];
+
 	return (
-		<div className="flex h-screen items-center justify-center bg-zinc-950 text-zinc-100">
-			<div className="flex flex-col items-center gap-4">
-				<h1 className="text-2xl font-semibold tracking-tight">everylens</h1>
-				<div className="flex items-center gap-2 text-sm">
-					<span
-						className={`inline-block h-2 w-2 rounded-full ${
-							status === "connected"
-								? "bg-emerald-400"
-								: status === "connecting"
-									? "bg-amber-400"
-									: "bg-red-400"
-						}`}
-					/>
-					<span className="text-zinc-400">{status}</span>
-				</div>
-				{message && <p className="text-sm text-zinc-500">{message}</p>}
-			</div>
+		<div className="flex h-screen items-center justify-center">
+			<Card className="w-80">
+				<CardHeader>
+					<CardTitle className="flex items-center justify-between">
+						everylens
+						<Badge variant={variant}>{label}</Badge>
+					</CardTitle>
+				</CardHeader>
+				{message && (
+					<CardContent>
+						<p className="text-sm text-muted-foreground font-mono">{message}</p>
+					</CardContent>
+				)}
+			</Card>
 		</div>
 	);
 }
