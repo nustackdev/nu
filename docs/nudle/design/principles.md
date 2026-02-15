@@ -22,11 +22,13 @@ Nothing loads until the user navigates to it. No upfront tree walk. No preloadin
 
 The UI has zero knowledge of any specific Shape. It cannot tell the difference between a `Market` Shape and a `Config` Shape. Both render through the same generic pipeline. If you find yourself writing a component that checks the Shape name — stop. The abstraction is wrong.
 
-## Density Over Chrome
+## Devtool, Not App
 
-Show data. Decorate only without harming readability.
+This is a developer instrument — closer to VS Code than Notion. Type colors, badges, tree lines, keyboard shortcuts, detail panels. The user should subconsciously know what they're looking at through visual cues before reading any text. Density serves understanding, decoration serves recognition.
 
-Every pixel earns its place by showing information or enabling interaction.
+## Keyboard-First Ergonomics
+
+The mouse is optional. Every action — navigate, expand, collapse, edit, search, go back — must be reachable from the keyboard. Navigation follows spatial logic: arrows move through the tree, Enter drills in, Esc goes back, `/` searches. No key combo should feel awkward or require looking up. If a power user can't fly through the tree without touching the mouse, the UX has failed.
 
 ## Respond, Don't Acknowledge
 

@@ -4,6 +4,8 @@
 
 - **React** + **TypeScript** (strict mode)
 - **Vite** — build + dev server with HMR
+- **Tailwind CSS** — utility-first styling
+- **shadcn/ui** — component primitives (Radix UI + Tailwind, copy-paste, full control)
 - **Biome** — lint + format (single tool, replaces ESLint + Prettier)
 - Single-page app. No SSR, no Next.js.
 - `package-lock.json` committed
@@ -30,5 +32,5 @@
 ## CI
 
 - Lint + typecheck + test on every push
-- Frontend: `tsc --noEmit`, ESLint, Vitest
+- Frontend: `tsc --noEmit`, Biome, Vitest
 - Backend: Ruff, pytest
