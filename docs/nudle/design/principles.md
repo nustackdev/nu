@@ -30,5 +30,5 @@ Every pixel earns its place by showing information or enabling interaction.
 
 ## Respond, Don't Acknowledge
 
-When the user edits a value, the result should be visible immediately. No success toasts, no "saving..." spinners, no confirmation dialogs for reversible actions. 
+When the user edits a value, the result should be visible immediately. No success toasts, no "saving..." spinners, no confirmation dialogs for reversible actions.
 The UI is a live projection — the change is the feedback.

@@ -1,6 +1,6 @@
 # Engineering — Project Structure
 
-```
+```text
 everylens/
 ├── docs/
 │   ├── vision.md
