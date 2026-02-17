@@ -57,7 +57,7 @@ class CollectionExtractableBase[CollectionTypeT]:
     @abstractmethod
     def result(self, op: Term) -> CollectionTypeT: ...
 
-    def extract(self) -> CollectionTypeT:
+    def get(self) -> CollectionTypeT:
         from eb_shape.morphisms.collection import ExtractOp
 
         return self.result(ExtractOp(self))

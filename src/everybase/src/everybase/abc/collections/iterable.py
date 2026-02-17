@@ -49,10 +49,15 @@ class IterableProtocol[ElementT, CollectionResultT, ElementResultT](Protocol):
 
     def map_[R](self, func: Callable[[ElementT], R]) -> CollectionResultT: ...
     def filter_(self, predicate: Callable[[ElementT], bool]) -> CollectionResultT: ...
+    def filter_by_(self, field: object, value: object) -> CollectionResultT: ...
     def reduce_[R](self, func: Callable[[R, ElementT], R], initial: R) -> object: ...
+    def pluck_[R](self, field: object) -> CollectionResultT: ...
+    def to_dict_[K, V](
+        self, key_fn: Callable[[ElementT], K], val_fn: Callable[[ElementT], V]
+    ) -> DictValue[K, V]: ...
     def sum_(self) -> ElementResultT: ...
-    def min_(self) -> ElementResultT: ...
-    def max_(self) -> ElementResultT: ...
+    def min_(self, key: Callable[[ElementT], object] | None = None) -> ElementResultT: ...
+    def max_(self, key: Callable[[ElementT], object] | None = None) -> ElementResultT: ...
     def any_(self) -> BoolValue: ...
     def all_(self) -> BoolValue: ...
 
@@ -132,17 +137,40 @@ class IterableBase[ElementT, CollectionResultT, ElementResultT]:
 
         return cast("ElementResultT", self._wrap_element_result(SumOp(self)))
 
-    def min_(self) -> ElementResultT:
-        """Get minimum element."""
+    def min_(self, key: Callable[[ElementT], object] | None = None) -> ElementResultT:
+        """Get minimum element, optionally by key function."""
         from ..morphisms import MinOp
 
-        return cast("ElementResultT", self._wrap_element_result(MinOp(self)))
+        return cast("ElementResultT", self._wrap_element_result(MinOp(self, key)))
 
-    def max_(self) -> ElementResultT:
-        """Get maximum element."""
+    def max_(self, key: Callable[[ElementT], object] | None = None) -> ElementResultT:
+        """Get maximum element, optionally by key function."""
         from ..morphisms import MaxOp
 
-        return cast("ElementResultT", self._wrap_element_result(MaxOp(self)))
+        return cast("ElementResultT", self._wrap_element_result(MaxOp(self, key)))
+
+    def pluck_(self, field: object) -> CollectionResultT:
+        """Extract a field from each element."""
+        from ..morphisms import PluckOp
+
+        return cast("CollectionResultT", self._wrap_iterable_result(PluckOp(self, field)))
+
+    def to_dict_[K, V](
+        self,
+        key_fn: Callable[[ElementT], K],
+        val_fn: Callable[[ElementT], V],
+    ) -> DictValue[K, V]:
+        """Build dict from sequence using key/value extractors."""
+        from ..morphisms import ToDictOp
+        from ..values import DictValue
+
+        return DictValue(ToDictOp(self, key_fn, val_fn))
+
+    def filter_by_(self, field: object, value: object) -> CollectionResultT:
+        """Filter elements where field equals value (both resolved at runtime)."""
+        from ..morphisms import FilterByOp
+
+        return cast("CollectionResultT", self._wrap_iterable_result(FilterByOp(self, field, value)))
 
     def any_(self) -> BoolValue:
         """Check if any element is truthy."""

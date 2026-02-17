@@ -18,7 +18,7 @@ dependencies = [
     "everybase>=0.1.0",
     "eb-shape>=0.1.0",
     "pv",
-    "tkv>=0.1.0",
+    "tkv",
 ]
 keywords = ["every", "pv", "refs", "kv", "polymorphic"]
 classifiers = [

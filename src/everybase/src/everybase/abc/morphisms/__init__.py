@@ -100,11 +100,14 @@ from .fn_search import (
     FindOp,
 )
 from .fn_transform import (
+    FilterByOp,
     FilterOp,
     MapOp,
+    PluckOp,
     ReduceOp,
     ReversedOp,
     SortedOp,
+    ToDictOp,
 )
 
 # ── gen_ — General patterns ─────────────────────────────────────────────────
@@ -249,11 +252,14 @@ __all__ = [  # noqa: RUF022
     "IndexOfOp",
     "JoinOp",
     "LastOp",
+    "FilterByOp",
     "FilterOp",
     "MapOp",
+    "PluckOp",
     "ReduceOp",
     "ReversedOp",
     "SortedOp",
+    "ToDictOp",
     # gen_ — General patterns
     "AtOp",
     "ContainsOp",

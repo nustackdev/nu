@@ -68,7 +68,7 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
 
 class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
     ReactiveSequenceBase[T, CollectionValueT, ItemValueT],
-    SequenceRefBase[T, CollectionValueT, ItemValueT],
+    MutableSequenceRefBase[T, CollectionValueT, ItemValueT],
 ):
     """Reactive sequence ref — observation + mutations + navigation."""
 
