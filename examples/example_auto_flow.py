@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import eb_flow as f
 import eb_pv as pv
+import everybase.abc as f
 from eb_shape import Shape
 
 

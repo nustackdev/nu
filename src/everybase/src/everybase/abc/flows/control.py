@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from everybase import Flow
-from everybase.abc import ensure_term
+
+from ..utils import ensure_term
 
 
 if TYPE_CHECKING:

@@ -7,7 +7,8 @@ import time
 from typing import TYPE_CHECKING
 
 from everybase import Flow
-from everybase.abc import ensure_term
+
+from ..utils import ensure_term
 
 
 if TYPE_CHECKING:

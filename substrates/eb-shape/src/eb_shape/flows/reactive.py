@@ -15,9 +15,10 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from eb_shape.morphisms import ChangeOp  # noqa: TC001 - runtime dependency
 from everybase import Flow
 from everybase.abc import ensure_term
+
+from ..morphisms import ChangeOp  # noqa: TC001 - runtime dependency
 
 
 if TYPE_CHECKING:

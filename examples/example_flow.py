@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import eb_pv as e
-from eb_flow import Print, Seq
 from eb_pv.views import DictView
 from eb_shape import Shape
 from everybase import Context
+from everybase.abc import Print, Seq
 
 
 # --- Shape ---

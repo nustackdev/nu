@@ -59,6 +59,7 @@ from eb_shape.collections import (
     SequenceBase,
     SetLikeBase,
 )
+from eb_shape.flows import React, ReactForever, ReactWhile
 from eb_shape.protocols import (
     ChildObservableProtocol,
     ChildrenObservableProtocol,
@@ -184,4 +185,8 @@ __all__ = [  # noqa: RUF022
     "ShapeMeta",
     "SlotDescriptor",
     "Slot",
+    # Reactive flows
+    "React",
+    "ReactForever",
+    "ReactWhile",
 ]

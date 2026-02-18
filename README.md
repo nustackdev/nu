@@ -25,8 +25,6 @@ pkgs/              utility + extension packages
 | Package | Description |
 |---|---|
 | `eb-pv` | Polymorphic views over KV storages |
-| `eb-flow` | Flow primitives — Seq, Par, Cond, Loop |
-| `eb-flow-ext` | Flow extensions |
 | `eb-datetime` | Datetime types |
 | `eb-math` | Math types |
 | `eb-fin` | Financial types |
