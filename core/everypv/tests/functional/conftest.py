@@ -9,21 +9,19 @@ from tkv.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtoc
 
 from everybase import Context
 from everypv import (
-    PVComplexRef,
-    PVDateRef,
-    PVDatetimeRef,
-    PVDecimalRef,
-    PVFractionRef,
-    PVPathRef,
-    PVPercentageRef,
-    PVTimedeltaRef,
-    PVTimeRef,
-    PVTimezoneRef,
-    PVUUIDRef,
+    ComplexRef,
+    DateRef,
+    DatetimeRef,
+    DecimalRef,
+    FractionRef,
+    PathRef,
+    PercentageRef,
+    TimedeltaRef,
+    TimeRef,
+    TimezoneRef,
+    UUIDRef,
 )
-from everypv import (
-    Shape as PVShape,
-)
+from everyshape import Shape
 
 
 # ============================================================================
@@ -172,131 +170,131 @@ def ctx(root_view: View, tx: TransactionProtocol) -> Context:
 
 
 @pytest.fixture
-def date_shape() -> type[PVShape]:
+def date_shape() -> type[Shape]:
     """Shape with DateSlot."""
 
-    class Event(PVShape):
-        event_date = PVDateRef.slot()
-        start_date = PVDateRef.slot()
-        end_date = PVDateRef.slot()
+    class Event(Shape):
+        event_date = DateRef.slot()
+        start_date = DateRef.slot()
+        end_date = DateRef.slot()
 
     return Event
 
 
 @pytest.fixture
-def datetime_shape() -> type[PVShape]:
+def datetime_shape() -> type[Shape]:
     """Shape with DatetimeSlot."""
 
-    class Event(PVShape):
-        created_at = PVDatetimeRef.slot()
-        updated_at = PVDatetimeRef.slot()
-        scheduled_at = PVDatetimeRef.slot()
+    class Event(Shape):
+        created_at = DatetimeRef.slot()
+        updated_at = DatetimeRef.slot()
+        scheduled_at = DatetimeRef.slot()
 
     return Event
 
 
 @pytest.fixture
-def decimal_shape() -> type[PVShape]:
+def decimal_shape() -> type[Shape]:
     """Shape with DecimalSlot."""
 
-    class Account(PVShape):
-        balance = PVDecimalRef.slot()
-        credit = PVDecimalRef.slot()
-        debit = PVDecimalRef.slot()
+    class Account(Shape):
+        balance = DecimalRef.slot()
+        credit = DecimalRef.slot()
+        debit = DecimalRef.slot()
 
     return Account
 
 
 @pytest.fixture
-def path_shape() -> type[PVShape]:
+def path_shape() -> type[Shape]:
     """Shape with PathSlot."""
 
-    class Config(PVShape):
-        config_path = PVPathRef.slot()
-        data_dir = PVPathRef.slot()
-        log_file = PVPathRef.slot()
+    class Config(Shape):
+        config_path = PathRef.slot()
+        data_dir = PathRef.slot()
+        log_file = PathRef.slot()
 
     return Config
 
 
 @pytest.fixture
-def time_shape() -> type[PVShape]:
+def time_shape() -> type[Shape]:
     """Shape with TimeSlot."""
 
-    class Schedule(PVShape):
-        start_time = PVTimeRef.slot()
-        end_time = PVTimeRef.slot()
-        break_time = PVTimeRef.slot()
+    class Schedule(Shape):
+        start_time = TimeRef.slot()
+        end_time = TimeRef.slot()
+        break_time = TimeRef.slot()
 
     return Schedule
 
 
 @pytest.fixture
-def timedelta_shape() -> type[PVShape]:
+def timedelta_shape() -> type[Shape]:
     """Shape with TimedeltaSlot."""
 
-    class Task(PVShape):
-        duration = PVTimedeltaRef.slot()
-        timeout = PVTimedeltaRef.slot()
-        interval = PVTimedeltaRef.slot()
+    class Task(Shape):
+        duration = TimedeltaRef.slot()
+        timeout = TimedeltaRef.slot()
+        interval = TimedeltaRef.slot()
 
     return Task
 
 
 @pytest.fixture
-def timezone_shape() -> type[PVShape]:
+def timezone_shape() -> type[Shape]:
     """Shape with TimezoneSlot."""
 
-    class Location(PVShape):
-        local_tz = PVTimezoneRef.slot()
-        display_tz = PVTimezoneRef.slot()
+    class Location(Shape):
+        local_tz = TimezoneRef.slot()
+        display_tz = TimezoneRef.slot()
 
     return Location
 
 
 @pytest.fixture
-def uuid_shape() -> type[PVShape]:
+def uuid_shape() -> type[Shape]:
     """Shape with UUIDSlot."""
 
-    class Entity(PVShape):
-        id = PVUUIDRef.slot()
-        parent_id = PVUUIDRef.slot()
-        correlation_id = PVUUIDRef.slot()
+    class Entity(Shape):
+        id = UUIDRef.slot()
+        parent_id = UUIDRef.slot()
+        correlation_id = UUIDRef.slot()
 
     return Entity
 
 
 @pytest.fixture
-def complex_shape() -> type[PVShape]:
+def complex_shape() -> type[Shape]:
     """Shape with ComplexSlot."""
 
-    class Signal(PVShape):
-        amplitude = PVComplexRef.slot()
-        phase = PVComplexRef.slot()
-        coefficient = PVComplexRef.slot()
+    class Signal(Shape):
+        amplitude = ComplexRef.slot()
+        phase = ComplexRef.slot()
+        coefficient = ComplexRef.slot()
 
     return Signal
 
 
 @pytest.fixture
-def fraction_shape() -> type[PVShape]:
+def fraction_shape() -> type[Shape]:
     """Shape with FractionSlot."""
 
-    class Ratio(PVShape):
-        portion = PVFractionRef.slot()
-        scale = PVFractionRef.slot()
-        multiplier = PVFractionRef.slot()
+    class Ratio(Shape):
+        portion = FractionRef.slot()
+        scale = FractionRef.slot()
+        multiplier = FractionRef.slot()
 
     return Ratio
 
 
 @pytest.fixture
-def percentage_shape() -> type[PVShape]:
+def percentage_shape() -> type[Shape]:
     """Shape with PercentageSlot."""
 
-    class Metrics(PVShape):
-        completion = PVPercentageRef.slot()
-        discount = PVPercentageRef.slot()
-        tax_rate = PVPercentageRef.slot()
+    class Metrics(Shape):
+        completion = PercentageRef.slot()
+        discount = PercentageRef.slot()
+        tax_rate = PercentageRef.slot()
 
     return Metrics
