@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import everypv as e
 from everybase import Context
 from everyshape import Shape
@@ -66,10 +64,10 @@ async def run(ctx: Context) -> None:
     await Market.prices.store([100.5, 101.2, 99.8]).execute(ctx)
     print("price[0]:", await Market.prices[0].get().execute(ctx))
     print("price[1]:", await Market.prices[1].get().execute(ctx))
-    print("prices:", await Market.prices.extract().execute(ctx))
+    print("prices:", await Market.prices.get().execute(ctx))
     print(
         "map+filter:",
-        await Market.prices.extract().map_(lambda x: x * 2).filter_(lambda x: x > 200).execute(ctx),
+        await Market.prices.get().map_(lambda x: x * 2).filter_(lambda x: x > 200).execute(ctx),
     )
     print(
         "dynamic idx:", await (Market.prices[Market.misc_val.get()].get() + 12 > 100).execute(ctx)
@@ -119,22 +117,13 @@ if __name__ == "__main__":
 
     from pv import View
 
-    from everypv.adapters.codecs import TextCodec
-    from everypv.adapters.storages.textdb import TextStorage
+    from everypv.adapters.storage import text_storage
     from everypv.views import DictView
 
     async def main() -> None:
-        with (
-            TextStorage(path=Path(".db_shape"), codec=TextCodec()) as storage,
-            storage.transaction() as tx,
-        ):
+        with text_storage(path=".db-shape") as storage, storage.transaction() as tx:
             root = DictView.open_root(tx)
-            ctx = (
-                Context()
-                .with_handle(View, root, SymbolInfo)
-                .with_handle(View, root, Order)
-                .with_handle(View, root, Market)
-            )
+            ctx = Context().with_handle(View, root)
             await run(ctx)
 
     asyncio.run(main())

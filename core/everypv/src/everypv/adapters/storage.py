@@ -22,10 +22,10 @@ __all__ = [
 
 @contextmanager
 def memory_storage() -> Generator[StorageProtocol, None, None]:
-    """Create in-memory storage with binary codec and in-memory observer.
+    """Create in-memory storage with no-op codec and in-memory observer.
 
-    No persistence — all data lost on close. Useful for testing,
-    prototyping, and ephemeral computations.
+    No persistence, no serialization — Python objects stored as-is.
+    Useful for testing, prototyping, and ephemeral service handles.
 
     Yields:
         Configured in-memory storage instance
@@ -33,16 +33,16 @@ def memory_storage() -> Generator[StorageProtocol, None, None]:
     Example:
         >>> with memory_storage() as storage:
         ...     with storage.transaction() as txn:
-        ...         txn.put(b"key", b"value")
+        ...         txn.put("key", value)
     """
-    from tkv.codecs import BinaryCodec
+    from tkv.codecs import NoOpCodec
     from tkv.observers.mem import InMemoryObserver
     from tkv.storages.mem import InMemoryStorage
 
     with (
-        InMemoryObserver(codec=BinaryCodec()) as observer,
+        InMemoryObserver(codec=NoOpCodec()) as observer,
         InMemoryStorage(
-            codec=BinaryCodec(),
+            codec=NoOpCodec(),
             observer=observer,
         ) as storage,
     ):

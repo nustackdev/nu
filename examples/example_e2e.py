@@ -167,7 +167,7 @@ async def main() -> None:
                     Print(">> small sum"),
                 ),
             )
-            calc_flow = auto_atomic(calc_flow)
+            calc_flow = auto_atomic(calc_flow, scope=Services)
             await calc_flow.execute(ctx)
 
 

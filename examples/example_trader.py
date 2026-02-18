@@ -18,9 +18,8 @@ import httpx
 
 import everypv as pv
 from everybase import Context
-from everybase.abc import DictValue, IntValue, method
+from everybase.abc import DictValue, IntValue, TypeBase, ValueBase, method
 from everybase.abc.flows import Delay, ForRange, Print, Race, Seq
-from everybase.core import Ref
 from everyshape import Shape
 from everyshape.flows import ReactWhile
 
@@ -36,6 +35,9 @@ class SolanaClient:
         self._id = 0
 
     def __getattr__(self, name: str):
+        if name.startswith("_"):
+            raise AttributeError(name)
+
         async def rpc_call(*params: object) -> object:
             self._id += 1
             payload = {"jsonrpc": "2.0", "id": self._id, "method": name, "params": list(params)}
@@ -49,22 +51,54 @@ class SolanaClient:
         return rpc_call
 
 
-class SolanaRef(Ref[SolanaClient]):
-    """Ref that resolves a SolanaClient from context."""
+class SolanaType(TypeBase):
+    """Solana RPC typed interface."""
 
-    async def resolve(self, ctx: Context) -> str:
-        return "solana"
-
-    async def fetch(self, ctx: Context) -> SolanaClient:
-        return ctx.get(SolanaClient)
-
-
-class Solana(SolanaRef):
     get_slot = method(IntValue, "getSlot")
     get_latest_blockhash = method(DictValue, "getLatestBlockhash")
 
 
+class SolanaValue(SolanaType, ValueBase):
+    """Computed Value."""
+
+
+class SolanaRef(pv.ItemRef[SolanaClient, SolanaValue], SolanaType):
+    """Ref that resolves a SolanaClient from PV storage."""
+
+    def __init__(
+        self,
+        address: object,
+        parent: object,
+        owner_shape: type | None = None,
+    ) -> None:
+        super().__init__(address, SolanaClient, SolanaValue, parent, owner_shape)
+
+    @classmethod
+    def slot(cls) -> SolanaRef:
+        from everyshape import Slot
+
+        return Slot(cls)  # type: ignore[return-value]
+
+    def get(self) -> SolanaValue:
+        return SolanaValue(self)
+
+    def set(self, value: object) -> SolanaValue:
+        from everyshape import ItemSetCmd
+
+        if isinstance(value, SolanaClient):
+            val = SolanaValue(value)
+        else:
+            val = value
+        return SolanaValue(ItemSetCmd(self, val))
+
+
 # ---- Shapes ----
+
+
+class Services(Shape):
+    """External service handles (in-memory, ephemeral)."""
+
+    solana = SolanaRef.slot()
 
 
 class SlotData(Shape):
@@ -90,7 +124,8 @@ POLL_INTERVAL = 2.0
 
 tracker = Seq(
     # Seed
-    SlotData.current.set(Solana.get_slot()),
+    Services.solana.set(SolanaClient()),
+    SlotData.current.set(Services.solana.get_slot()),
     SlotData.previous.set(SlotData.current),
     Stats.polls.set(1),
     Print("start slot", SlotData.current),
@@ -103,7 +138,7 @@ tracker = Seq(
             Seq(
                 Delay(POLL_INTERVAL),
                 SlotData.previous.set(SlotData.current),
-                SlotData.current.set(Solana.get_slot()),
+                SlotData.current.set(Services.solana.get_slot()),
                 Stats.polls.set(Stats.polls + 1),
             ),
         ),
@@ -126,15 +161,19 @@ tracker = Seq(
 async def main():
     from tkv.tkv.storage import StorageProtocol
 
-    from everypv.adapters.storage import text_storage
+    from everypv.adapters.storage import memory_storage, text_storage
 
-    client = SolanaClient()
+    with text_storage(".db-trader") as data_store:
+        with memory_storage() as service_store:
+            ctx = (
+                Context()
+                .with_handle(StorageProtocol, data_store)
+                .with_handle(StorageProtocol, service_store, scope=Services)
+            )
 
-    with text_storage(".db-trader") as storage:
-        ctx = Context().with_handle(SolanaClient, client).with_handle(StorageProtocol, storage)
-
-        tree = pv.auto_atomic(tracker)
-        await tree.execute(ctx)
+            tree = pv.auto_atomic(tracker, scope=Services)
+            tree = pv.auto_atomic(tree)
+            await tree.execute(ctx)
 
 
 if __name__ == "__main__":
