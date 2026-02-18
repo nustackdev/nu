@@ -53,6 +53,9 @@ eb-path = { workspace = true }
 eb-uuid = { workspace = true }
 eb-shape-lens = { workspace = true }
 eb-tree-view = { workspace = true }
+# In-house libs (local editable)
+pv = { path = "../pv", editable = true }
+tkv = { path = "../tkv", editable = true }
 
 [dependency-groups]
 dev = [

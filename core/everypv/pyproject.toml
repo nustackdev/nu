@@ -37,9 +37,5 @@ rocksdb = ["rdbpython"]
 redis = ["redis"]
 msgpack = ["msgpack"]
 
-[tool.uv.sources]
-pv = { git = "https://github.com/everyabc/pv" }
-tkv = { git = "https://github.com/everyabc/tkv" }
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/everypv"]

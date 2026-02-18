@@ -1,23 +1,14 @@
-# eb_shape
+# everyshape
 
-Declarative document model for everybase — shapes, slots, and descriptors.
-
-## Install
-
-```bash
-pip install eb_shape
-```
+Declarative document model for everybase — shapes, slots, refs, and reactive flows.
 
 ## Usage
 
 ```python
-from eb_shape import ShapeBase, ShapeMeta, SlotDescriptor
+from everyshape import Shape
+from everyshape.flows import React, ReactForever, ReactWhile
 ```
 
 ## Development
 
 Part of [everybase](https://github.com/everyabc/everybase).
-
-```bash
-make test-pkg PKG=core/eb_shape
-```

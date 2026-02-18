@@ -4,17 +4,17 @@ Computation model and common base classes.
 
 ## What
 
-Two subpackages -- contracts and base implementations:
+Two subpackages — contracts and base implementations:
 
 ```
 everybase/
 ├── core/   — contracts: Node, Exec, Term, Flow, Span, Sentinel, Ref, Context
-└── abc/    — base implementations: types, values, morphisms, capabilities
+└── abc/    — base implementations: types, values, morphisms, capabilities, flows
 ```
 
-**core/** defines the computation model. `Term` (computation), `Flow` (ordering), `Span` (grouping) are abstract -- concrete implementations live downstream.
+**core/** defines the computation model. `Term` (computation), `Flow` (ordering), `Span` (grouping) are abstract — concrete implementations live downstream.
 
-**abc/** provides reusable building blocks -- type bases, value wrappers, capability protocol+base pairs, common morphisms, and utilities.
+**abc/** provides reusable building blocks — type bases, value wrappers, capability protocol+base pairs, common morphisms, flow primitives, and utilities.
 
 ## API
 
@@ -37,9 +37,13 @@ from everybase.abc import IntValue, StrValue, FloatValue
 ## Layer stack
 
 ```
-everybase/      — contracts + base implementations
-substrates/     — integration substrates (eb_shape, eb_table, eb_stream)
-pkgs/           — utility + extension packages (eb-pv, eb-flow, ...)
+core/everybase      — contracts + base implementations
+core/everyshape     — declarative document model
+core/everypv        — polymorphic views over KV storages
+core/everytable     — relational data model (stub)
+core/everystream    — push-based event streams (stub)
+core/everygraph     — graph data model (stub)
+pkgs/               — optional type + tool packages
 ```
 
 ## Development

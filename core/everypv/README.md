@@ -1,37 +1,35 @@
-# eb-pv
+# everypv
 
-Specialized Ref implementations for polymorphic views (PV) over KV storages.
+Polymorphic view refs for everybase — persistent, observable storage over KV backends.
 
 ## What's Here
 
-- **refs/** - Ref implementations for PV structures
-  - `DictRef`, `ListRef` - Collection refs
-  - `IntRef`, `StrRef`, `BoolRef` - Primitive refs
-  - Base mixins for capabilities (Gettable, Settable, etc.)
-- **slots/** - Slot definitions for shapes
-
-## Install
-
-```bash
-pip install eb-pv
-```
+- **refs/** — Ref implementations for PV structures (IntRef, StrRef, DictRef, ListRef, ShapeRef, etc.)
+- **views/** — View implementations (DictView, ListView, SetView, TupleView, etc.)
+- **adapters/** — Storage backends (RocksDB, InMemory, Text), codecs (JSON, MsgPack, Pickle, Passthrough), observers
+- **spans.py** — Atomic and Snapshot span boundaries
+- **meta/** — auto_atomic tree transform
 
 ## Usage
 
 ```python
-from eb_pv.refs import DictRef, ListRef, StrRef
+import everypv as pv
+from everyshape import Shape
+
+class AppState(Shape):
+    name = pv.StrRef.slot()
+    age = pv.IntRef.slot()
+    scores = pv.ListRef.slot(item_type=float)
 ```
 
 ## Dependencies
 
-- `every` - Core protocols
-- `everybase` - Base type implementations
-- `pv` - Polymorphic views library
+- `everybase` — core contracts
+- `everyshape` — document model
+- `pv` — polymorphic views library (in-house, editable)
+- `tkv` — tuple-key-value protocol (in-house, editable)
+- `rdbpython` — RocksDB bindings (PyPI, optional)
 
 ## Development
 
-Part of [everybase monorepo](https://github.com/everyabc/everybase).
-
-```bash
-make test-pkg PKG=std/eb_pv
-```
+Part of [everybase](https://github.com/everyabc/everybase).
