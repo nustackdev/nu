@@ -7,7 +7,7 @@ A Flow controls execution order. It answers: **when** things run.
 Flows order children. They return nothing — they're transparent wrappers that control sequencing, branching, parallelism, and repetition.
 
 ```python
-import eb_flow as f
+import everybase.abc as f
 
 tree = f.Seq(
     User.name.set("Alice"),
@@ -21,7 +21,7 @@ Flows can contain Terms, other Flows, or Spans. Terms cannot contain Flows — c
 
 ## Built-in Flows
 
-All flows live in the `eb_flow` package.
+All flows live in the `everybase.abc` package.
 
 ### Control
 
@@ -144,10 +144,10 @@ f.SkipIfEmpty(results, process_results)   # skip if empty
 ## Example: Producer-Consumer with Reactive Monitoring
 
 ```python
-import eb_flow as f
-from eb_pv import IntRef, FloatRef
+import everybase.abc as f
+from everypv import IntRef, FloatRef
 from eb_dict import IntRef as MemIntRef
-from eb_shape import Shape
+from everyshape import Shape
 
 class Sensor(Shape):
     temperature = FloatRef.slot()
@@ -188,7 +188,7 @@ station = f.Seq(
 ## Example: Retry with Fallback
 
 ```python
-import eb_flow as f
+import everybase.abc as f
 
 fetch_with_retry = f.TryCatch(
     f.Retry(

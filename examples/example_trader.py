@@ -1,12 +1,13 @@
-"""Solana slot tracker — service + PV + dict with reactive terminal output.
+"""Solana slot tracker — Ref + PV with reactive terminal output.
 
 Polls Solana mainnet for the current slot, persists to PV storage,
-tracks poll stats in memory, reacts to slot changes on terminal.
+tracks poll stats, reacts to slot changes on terminal.
 
-Substrates:
-  eb-service  → Solana JSON-RPC client
-  eb-pv       → slot data (persistent, observable)
-  eb-dict     → poll counters (ephemeral)
+Uses:
+  Ref + method   → Solana JSON-RPC client
+  everypv        → slot data (persistent, observable)
+  everybase.abc  → flows (Seq, ForRange, Race, Delay, Print)
+  everyshape     → reactive flows (ReactWhile)
 """
 
 from __future__ import annotations
@@ -15,13 +16,13 @@ import asyncio
 
 import httpx
 
-import eb_dict as mem
-import eb_flow as f
-import eb_pv as pv
-from eb_service import Service
-from eb_shape import Shape
+import everypv as pv
 from everybase import Context
 from everybase.abc import DictValue, IntValue, method
+from everybase.abc.flows import Delay, ForRange, Print, Race, Seq
+from everybase.core import Ref
+from everyshape import Shape
+from everyshape.flows import ReactWhile
 
 
 # ---- Solana RPC ----
@@ -48,9 +49,17 @@ class SolanaClient:
         return rpc_call
 
 
-class Solana(Service):
-    SERVICE_CLS = SolanaClient
+class SolanaRef(Ref[SolanaClient]):
+    """Ref that resolves a SolanaClient from context."""
 
+    async def resolve(self, ctx: Context) -> str:
+        return "solana"
+
+    async def fetch(self, ctx: Context) -> SolanaClient:
+        return ctx.get(SolanaClient)
+
+
+class Solana(SolanaRef):
     get_slot = method(IntValue, "getSlot")
     get_latest_blockhash = method(DictValue, "getLatestBlockhash")
 
@@ -66,9 +75,9 @@ class SlotData(Shape):
 
 
 class Stats(Shape):
-    """Poll counters (dict — ephemeral)."""
+    """Poll counters (PV)."""
 
-    polls = mem.IntRef.slot()
+    polls = pv.IntRef.slot()
 
 
 # ---- Config ----
@@ -79,35 +88,35 @@ POLL_INTERVAL = 2.0
 
 # ---- Tree ----
 
-tracker = f.Seq(
+tracker = Seq(
     # Seed
     SlotData.current.set(Solana.get_slot()),
     SlotData.previous.set(SlotData.current),
     Stats.polls.set(1),
-    f.Print("start slot", SlotData.current),
+    Print("start slot", SlotData.current),
     # Poll + react
-    f.Race(
+    Race(
         # Producer: poll slot in a loop
-        f.ForRange(
+        ForRange(
             0,
             N_POLLS - 1,
-            f.Seq(
-                f.Delay(POLL_INTERVAL),
+            Seq(
+                Delay(POLL_INTERVAL),
                 SlotData.previous.set(SlotData.current),
                 SlotData.current.set(Solana.get_slot()),
                 Stats.polls.set(Stats.polls + 1),
             ),
         ),
         # Consumer: react to slot changes
-        f.ReactWhile(
+        ReactWhile(
             SlotData.current.on_change(),
             Stats.polls < N_POLLS,
-            f.Print("slot", SlotData.current, "delta", SlotData.current - SlotData.previous),
+            Print("slot", SlotData.current, "delta", SlotData.current - SlotData.previous),
         ),
     ),
     # Final report
-    f.Print("final slot", SlotData.current),
-    f.Print("total polls", Stats.polls),
+    Print("final slot", SlotData.current),
+    Print("total polls", Stats.polls),
 )
 
 
@@ -117,14 +126,13 @@ tracker = f.Seq(
 async def main():
     from tkv.tkv.storage import StorageProtocol
 
-    from eb_pv.adapters.codecs import TextCodec as Codec
-    from eb_pv.adapters.observers.in_memory import InMemoryObserver
-    from eb_pv.adapters.storages.textdb import TextStorage as Storage
-    from eb_pv.views import DictView
+    from everypv.adapters.codecs import TextCodec as Codec
+    from everypv.adapters.observers.in_memory import InMemoryObserver
+    from everypv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.views import DictView
 
     # Init services
     client = SolanaClient()
-    counters: dict = {}
     observer = InMemoryObserver(codec=Codec())
     storage = Storage(".db-trader", codec=Codec(), observer=observer)
     observer.connect()
@@ -134,13 +142,13 @@ async def main():
     ctx = (
         Context()
         .with_handle(SolanaClient, client)
-        .with_handle(dict, counters, shape=Stats)
         .with_handle(StorageProtocol, storage, shape=SlotData)
+        .with_handle(StorageProtocol, storage, shape=Stats)
     )
 
     # Add tree extensions
     tree = pv.auto_atomic(tracker, SlotData, DictView)
-    # ...
+    tree = pv.auto_atomic(tree, Stats, DictView)
 
     # Execute
     await tree.execute(ctx)

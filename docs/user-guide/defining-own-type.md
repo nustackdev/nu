@@ -81,13 +81,13 @@ That's it. `ValueBase` provides the execution machinery. `PubkeyType` provides a
 
 ### 3. Define the RefBase
 
-The RefBase defines how to read from and write to storage. Use eb_shape tools to buld Refs for Shape substrate without much biolerplate.
+The RefBase defines how to read from and write to storage. Use everyshape tools to buld Refs for Shape substrate without much biolerplate.
 
 ```python
 from everybase import Arg
 from everybase.abc import ensure_term
-from eb_shape import ItemRef
-from eb_shape import ItemGetOp, ItemSetCmd
+from everyshape import ItemRef
+from everyshape import ItemGetOp, ItemSetCmd
 
 
 class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
@@ -123,9 +123,9 @@ For each substrate, create a concrete Ref with `.slot()`:
 
 ```python
 from typing import Self
-from eb_pv import PrimitiveRef
+from everypv import PrimitiveRef
 from eb_dict import RefBase as DictRefBase
-from eb_shape import Slot
+from everyshape import Slot
 
 
 # PV substrate (persistent, reactive)
@@ -145,7 +145,7 @@ class DictPubkeyRef(PubkeyRefBase, DictRefBase):
 ### 5. Use in Shapes
 
 ```python
-from eb_shape import Shape
+from everyshape import Shape
 
 class Token(Shape):
     mint = DictPubkeyRef.slot()

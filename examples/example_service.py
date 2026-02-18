@@ -1,6 +1,6 @@
-"""eb_service demo — Solana JSON-RPC against mainnet.
+"""Solana JSON-RPC demo — Ref with method descriptors against mainnet.
 
-Shows: Service (declarative) vs ServiceRef (direct), method descriptors,
+Shows: Ref-based service access, method descriptors,
 typed returns, lazy term trees, live RPC calls.
 """
 
@@ -10,12 +10,12 @@ import asyncio
 
 import httpx
 
-from eb_service import Service
 from everybase import Context, print_tree
 from everybase.abc import DictValue, IntValue, StrValue, method
 from everybase.abc.morphisms import AtOp
 from everybase.abc.types import TypeBase
 from everybase.abc.values import ValueBase
+from everybase.core import Ref
 
 
 # =============================================================================
@@ -79,29 +79,28 @@ class TransactionValue(ValueBase[dict], TransactionType):
 
 
 # =============================================================================
-# SERVICE — declarative (like Shape for ShapeRef)
+# REF — context-resolved Solana client
 # =============================================================================
 
 
-class Solana(Service):
-    SERVICE_CLS = SolanaClient
+class SolanaRef(Ref[SolanaClient]):
+    """Ref that resolves a SolanaClient from context."""
+
+    async def resolve(self, ctx: Context) -> str:
+        return "solana"
+
+    async def fetch(self, ctx: Context) -> SolanaClient:
+        return ctx.get(SolanaClient)
+
+
+class Solana(SolanaRef):
+    """Solana service with typed method descriptors."""
 
     get_slot = method(IntValue, "getSlot")
     get_block = method(DictValue, "getBlock")
     get_transaction = method(TransactionValue, "getTransaction")
     get_latest_blockhash = method(DictValue, "getLatestBlockhash")
     get_balance = method(DictValue, "getBalance")
-
-
-# Alternative: direct ServiceRef subclass (imperative, full Ref)
-#
-# class SolanaRef(ServiceRef):
-#     SERVICE_CLS = SolanaClient
-#     get_slot = method(IntValue, "getSlot")
-#     ...
-#
-# Both produce identical term trees. Service is the declarative
-# entry point; ServiceRef is the ref term that lives in the tree.
 
 
 # =============================================================================
@@ -130,31 +129,6 @@ async def main():
 
     bh = await Solana.get_latest_blockhash().execute(ctx)
     print(f"Latest blockhash: {bh['value']['blockhash']}")
-
-    # pubkey = "So11111111111111111111111111111111111111112"
-    # balance = await Solana.get_balance(pubkey).execute(ctx)
-    # print(f"Balance: {balance['value'] / 1e9:.4f} SOL")
-
-    # # --- get a recent block to find a transaction ---
-    # block = await Solana.get_block(
-    #     slot - 5,
-    #     {"encoding": "json", "transactionDetails": "signatures", "rewards": False},
-    # ).execute(ctx)
-    # sig = block["signatures"][0]
-    # print(f"\nRecent block {slot - 5}: {len(block['signatures'])} txns")
-
-    # # --- typed return: TransactionValue ---
-    # # tx is a lazy term — field access composes BEFORE execution
-    # tx = Solana.get_transaction(sig, {"encoding": "json"})
-    # tx_slot = await tx.slot.execute(ctx)
-    # tx_fee = await tx.fee.execute(ctx)
-    # print(f"\nTransaction {sig[:20]}...:")
-    # print(f"  slot: {tx_slot}")
-    # print(f"  fee:  {tx_fee} lamports")
-
-    # # lazy composition: fee_term is a pure expression tree, no RPC until execute()
-    # fee_term = tx.fee
-    # print(f"\nLazy term: {fee_term!r}")
 
 
 if __name__ == "__main__":

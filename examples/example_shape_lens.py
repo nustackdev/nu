@@ -1,18 +1,16 @@
 """Shape lens demo — visualize shape storage data in the terminal.
 
-Shows print_shape with both dict and PV substrates.
+Shows print_shape with the PV substrate.
 """
 
 from __future__ import annotations
 
 import asyncio
 
+import everypv as pv
 from eb_shape_lens import print_shape
-
-import eb_dict as mem
-import eb_pv as pv
-from eb_shape import Shape
 from everybase import Context
+from everyshape import Shape
 
 
 # ── Shapes ────────────────────────────────────────────────────────────────────
@@ -40,47 +38,6 @@ class Market(Shape):
     last_order = pv.ShapeRef.slot(shape_type=Order)
 
 
-# ── Dict substrate demo ──────────────────────────────────────────────────────
-
-
-class MemSymbolInfo(Shape):
-    price = mem.FloatRef.slot()
-    volume = mem.IntRef.slot()
-    exchange = mem.StrRef.slot()
-
-
-class MemOrder(Shape):
-    id = mem.StrRef.slot()
-    symbol = mem.StrRef.slot()
-    quantity = mem.IntRef.slot()
-    price = mem.FloatRef.slot()
-
-
-class MemMarket(Shape):
-    misc_val = mem.IntRef.slot()
-    signals = mem.MappingRef.slot(value_type=float)
-    prices = mem.SequenceRef.slot(item_type=float)
-    symbols = mem.ShapesDictRef.slot(shape_type=MemSymbolInfo)
-    orders = mem.ShapesListRef.slot(shape_type=MemOrder)
-    last_order = mem.ShapeRef.slot(shape_type=MemOrder)
-
-
-dict_storage: dict = {
-    "misc_val": 42,
-    "signals": {"vix": 23.5, "sentiment": 0.75, "rsi": 67.2},
-    "prices": [100.5, 101.2, 99.8, 102.0, 98.7],
-    "symbols": {
-        "AAPL": {"price": 150.25, "volume": 1_000_000, "exchange": "NASDAQ"},
-        "GOOGL": {"price": 2800.0, "volume": 500_000, "exchange": "NASDAQ"},
-    },
-    "orders": [
-        {"id": "ORD-001", "symbol": "AAPL", "quantity": 100, "price": 150.0},
-        {"id": "ORD-002", "symbol": "GOOGL", "quantity": 50, "price": 2800.0},
-    ],
-    "last_order": {"id": "ORD-002", "symbol": "GOOGL", "quantity": 50, "price": 2800.0},
-}
-
-
 # ── PV substrate demo ────────────────────────────────────────────────────────
 
 
@@ -89,8 +46,8 @@ async def run_pv() -> None:
 
     from pv import View
 
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
-    from eb_pv.views import DictView
+    from everypv.adapters.storage import rocksdb_storage_inmemory
+    from everypv.views import DictView
 
     db_path = ".db_shape_lens"
 
@@ -144,11 +101,6 @@ async def run_pv() -> None:
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("=== Dict substrate ===")
-    print()
-    print_shape(MemMarket, dict_storage)
-    print()
-
     print("=== PV substrate ===")
     print()
     asyncio.run(run_pv())

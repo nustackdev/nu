@@ -29,7 +29,7 @@ classifiers = [
 Repository = "https://github.com/everyabc/everybase"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/everybase"]
+packages = ["core/everybase"]
 ```
 
 ## pyproject.toml - Standard Package (packages/)

@@ -1,11 +1,11 @@
 """Example demonstrating custom Ref types with the Ref.slot() pattern.
 
-This example shows how to add a custom type (datetime) across substrates.
+This example shows how to add a custom type (datetime) to the PV substrate.
 The pattern:
     1. Define a Type class with operators (DatetimeType)
     2. Define a Value class for computed results (DatetimeValue)
     3. Define a RefBase with get/set methods (DatetimeRefBase)
-    4. For each substrate, subclass RefBase and add .slot()
+    4. Subclass RefBase with the substrate's PrimitiveRef and add .slot()
 
 The .slot() classmethod uses Slot internally — users never
 need to create Slot classes manually.
@@ -16,10 +16,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self
 
-from eb_dict import RefBase as DictRefBase
-from eb_pv import PrimitiveRef
-from eb_shape import ItemRef, Shape, Slot
-from eb_shape.morphisms import ItemGetOp, ItemSetCmd
+import everypv as pv
 from everybase import Arg, FloatArg, Sentinel, StrArg
 from everybase.abc import (
     AddOp,
@@ -35,6 +32,9 @@ from everybase.abc import (
     ValueBase,
     ensure_term,
 )
+from everyshape import Shape
+from everyshape.morphisms import ItemGetOp, ItemSetCmd
+from everyshape.refs import ItemRef, Slot
 
 
 # =============================================
@@ -116,14 +116,11 @@ class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
 
 
 # =============================================
-# Substrate-specific Refs with .slot() pattern
+# PV Ref with .slot() pattern
 # =============================================
-#
-# Each Ref class implements .slot() classmethod that returns a Slot.
-# This eliminates the need for manual Slot classes per type per substrate.
 
 
-class PVDatetimeRef(DatetimeRefBase, PrimitiveRef):
+class PVDatetimeRef(DatetimeRefBase, pv.PrimitiveRef):
     """PV substrate datetime ref with .slot() factory."""
 
     @classmethod
@@ -132,24 +129,9 @@ class PVDatetimeRef(DatetimeRefBase, PrimitiveRef):
         return Slot(cls, value_type=str)  # type: ignore[return-value]
 
 
-class DictDatetimeRef(DatetimeRefBase, DictRefBase):
-    """Dict substrate datetime ref with .slot() factory."""
-
-    @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for this ref type."""
-        return Slot(cls)  # type: ignore[return-value]
-
-
 # =============================================
-# Shape definitions using Ref.slot()
+# Shape definition using Ref.slot()
 # =============================================
-
-
-class SymbolInfo(Shape):
-    """Symbol info using dict substrate."""
-
-    test_dt = DictDatetimeRef.slot()
 
 
 class PVSymbolInfo(Shape):
@@ -164,44 +146,12 @@ class PVSymbolInfo(Shape):
 
 
 async def main():
-    from time import perf_counter
-
-    from everybase import Context
-
-    # ============
-    # DICT
-    # ============
-
-    data: dict = {}
-    ctx = Context().with_handle(dict, data, shape=SymbolInfo)
-
-    print(data)
-
-    start = perf_counter()
-    set_expr = SymbolInfo.test_dt.set(datetime.now())
-    for _ in range(100_000):
-        await set_expr.execute(ctx)
-    print("Took: ", perf_counter() - start)
-    start = perf_counter()
-
-    dd = {}
-    dtn = datetime.now()
-    for _ in range(100_000):
-        dd["a"] = str(dtn)
-    print("Took: ", perf_counter() - start)
-    print(data)
-
-    print("Get: ", await SymbolInfo.test_dt.get().execute(ctx))
-
-    # ============
-    # PV
-    # ============
-
     from pv import View
 
-    from eb_pv.adapters.codecs import TextCodec as Codec
-    from eb_pv.adapters.storages.textdb import TextStorage as Storage
-    from eb_pv.views import DictView
+    from everybase import Context
+    from everypv.adapters.codecs import TextCodec as Codec
+    from everypv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.views import DictView
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context()
@@ -213,29 +163,6 @@ async def main():
 
             await PVSymbolInfo.test_dt.set(datetime.now()).execute(ctx)
             print("Get: ", await PVSymbolInfo.test_dt.get().execute(ctx))
-
-    # ============
-    # MIXED (O_o)
-    # ============
-
-    data: dict = {}
-    ctx = Context().with_handle(dict, data, shape=SymbolInfo)
-
-    with Storage(".db2", codec=Codec()) as storage:
-        print("=== Write (Atomic → transaction) ===")
-        with storage.transaction() as tx:
-            root_view = DictView.open_root(tx)
-            ctx = ctx.with_handle(View, root_view, PVSymbolInfo)
-
-            await PVSymbolInfo.test_dt.set(datetime.now()).execute(ctx)
-            await SymbolInfo.test_dt.set(PVSymbolInfo.test_dt.get()).execute(ctx)
-
-            print("Get 1: ", await PVSymbolInfo.test_dt.get().execute(ctx))
-            print("Get 2: ", await SymbolInfo.test_dt.get().execute(ctx))
-            print(
-                "Get +: ",
-                await (SymbolInfo.test_dt.get() + PVSymbolInfo.test_dt.get()).execute(ctx),
-            )
 
 
 if __name__ == "__main__":

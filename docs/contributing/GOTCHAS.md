@@ -23,10 +23,10 @@ To install, also add to root `dependencies`:
 ```toml
 # pyproject.toml (root)
 [project]
-dependencies = ["everybase", "eb-pv"]  # <- add here
+dependencies = ["everybase", "everypv"]  # <- add here
 
 [tool.uv.workspace]
-members = ["everybase", "packages/eb-pv"]  # <- and here
+members = ["everybase", "packages/everypv"]  # <- and here
 ```
 
 ## VS Code / Pylance
@@ -36,7 +36,7 @@ When adding new packages, update `.vscode/settings.json`:
 ```json
 "python.analysis.extraPaths": [
   "everybase/src",
-  "packages/eb-pv/src"
+  "packages/everypv/src"
 ]
 ```
 
@@ -46,10 +46,10 @@ Then reload VS Code window.
 
 | Context | Style | Example |
 |---------|-------|---------|
-| Directory | hyphen | `packages/eb-pv/` |
-| Import | underscore | `from eb_pv import ...` |
-| PyPI name | hyphen | `eb-pv` |
-| pyproject.toml name | hyphen | `name = "eb-pv"` |
+| Directory | hyphen | `packages/everypv/` |
+| Import | underscore | `from everypv import ...` |
+| PyPI name | hyphen | `everypv` |
+| pyproject.toml name | hyphen | `name = "everypv"` |
 
 ## isort First-Party
 
@@ -57,5 +57,5 @@ When adding packages, update root `pyproject.toml`:
 
 ```toml
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "eb_pv"]  # <- underscore
+known-first-party = ["everybase", "everypv"]  # <- underscore
 ```

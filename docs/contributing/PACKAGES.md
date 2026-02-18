@@ -2,10 +2,18 @@
 
 ## 1. Create Structure
 
+For a core package:
 ```bash
-mkdir -p packages/every-foo/{src/every_foo,tests}
-touch packages/every-foo/{pyproject.toml,README.md}
-touch packages/every-foo/src/every_foo/__init__.py
+mkdir -p core/everyfoo/{src/everyfoo,tests}
+touch core/everyfoo/{pyproject.toml,README.md}
+touch core/everyfoo/src/everyfoo/__init__.py
+```
+
+For an optional extension package:
+```bash
+mkdir -p pkgs/eb-foo/{src/eb_foo,tests}
+touch pkgs/eb-foo/{pyproject.toml,README.md}
+touch pkgs/eb-foo/src/eb_foo/__init__.py
 ```
 
 ## 2. Create pyproject.toml
@@ -20,14 +28,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "every-foo"
+name = "everyfoo"  # or "eb-foo" for pkgs/
 version = "0.1.0"
-description = "Foo for every"
+description = "Foo for everybase"
 requires-python = ">=3.10"
 dependencies = ["everybase"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/every_foo"]
+packages = ["src/everyfoo"]  # or ["src/eb_foo"]
 ```
 
 ## 3. Register in Workspace
@@ -37,8 +45,7 @@ Edit root `pyproject.toml`:
 ```toml
 [tool.uv.workspace]
 members = [
-    "everybase",
-    "packages/every-foo",  # Add here
+    "core/everyfoo",  # Add here (or "pkgs/eb-foo")
 ]
 ```
 
@@ -46,8 +53,7 @@ If other packages depend on it:
 
 ```toml
 [tool.uv.sources]
-everybase = { workspace = true }
-every-foo = { workspace = true }  # Add here
+everyfoo = { workspace = true }  # Add here
 ```
 
 ## 4. Sync
@@ -58,13 +64,14 @@ uv sync
 
 ## Naming
 
-| Directory name | Import name | PyPI name |
-|----------------|-------------|-----------|
-| `every-foo` | `every_foo` | `every-foo` |
+| Tier | Directory | Import | PyPI name |
+|------|-----------|--------|-----------|
+| Core | `core/everyfoo/` | `everyfoo` | `everyfoo` |
+| Pkg | `pkgs/eb-foo/` | `eb_foo` | `eb-foo` |
 
-Use hyphens in directory names, underscores in imports/package dirs, hyphens in PyPI names.
+Use hyphens in directory/PyPI names, underscores in import names.
 
 ## Dependencies
 
-- Core (`everybase/`) should have minimal deps
-- Packages (`packages/`) depend on everybase and may have external deps
+- Core (`core/`) packages should have minimal deps
+- Extension packages (`pkgs/`) depend on everybase and may have external deps

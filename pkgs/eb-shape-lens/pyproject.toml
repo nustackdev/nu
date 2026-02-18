@@ -14,7 +14,7 @@ license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
-    "eb-shape>=0.1.0",
+    "everyshape>=0.1.0",
 ]
 keywords = ["every", "shape", "lens", "viewer", "devtools"]
 classifiers = [
