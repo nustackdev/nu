@@ -22,10 +22,9 @@ class AppState(Shape):
 async def main():
     from tkv.tkv.storage import StorageProtocol
 
-    from everypv.adapters.codecs import TextCodec as Codec
-    from everypv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.adapters.storage import text_storage
 
-    with Storage(".db", codec=Codec()) as storage:
+    with text_storage(".db") as storage:
         ctx = Context().with_handle(StorageProtocol, storage)
 
         await e.Atomic(Seq(AppState.name.set("Alice"), AppState.age.set(30))).execute(ctx)

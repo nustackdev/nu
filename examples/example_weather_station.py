@@ -103,18 +103,13 @@ async def main():
     from tkv.tkv.storage import StorageProtocol
 
     from everybase import Context
-    from everypv.adapters.codecs import TextCodec as Codec
-    from everypv.adapters.observers.in_memory import InMemoryObserver
-    from everypv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.adapters.storage import text_storage
 
-    observer = InMemoryObserver(codec=Codec())
-    observer.connect()
-    with Storage(".db-weather", codec=Codec(), observer=observer) as storage:
+    with text_storage(".db-weather") as storage:
         ctx = Context().with_handle(StorageProtocol, storage)
 
         tree = pv.auto_atomic(station)
         await tree.execute(ctx)
-    observer.disconnect()
 
 
 if __name__ == "__main__":

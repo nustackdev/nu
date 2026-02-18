@@ -126,29 +126,15 @@ tracker = Seq(
 async def main():
     from tkv.tkv.storage import StorageProtocol
 
-    from everypv.adapters.codecs import TextCodec as Codec
-    from everypv.adapters.observers.in_memory import InMemoryObserver
-    from everypv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.adapters.storage import text_storage
 
-    # Init services
     client = SolanaClient()
-    observer = InMemoryObserver(codec=Codec())
-    storage = Storage(".db-trader", codec=Codec(), observer=observer)
-    observer.connect()
-    storage.open()
 
-    # Create execution context
-    ctx = Context().with_handle(SolanaClient, client).with_handle(StorageProtocol, storage)
+    with text_storage(".db-trader") as storage:
+        ctx = Context().with_handle(SolanaClient, client).with_handle(StorageProtocol, storage)
 
-    # Add tree extensions
-    tree = pv.auto_atomic(tracker)
-
-    # Execute
-    await tree.execute(ctx)
-
-    # Close services
-    storage.close()
-    observer.disconnect()
+        tree = pv.auto_atomic(tracker)
+        await tree.execute(ctx)
 
 
 if __name__ == "__main__":
