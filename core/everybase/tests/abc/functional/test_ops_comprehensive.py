@@ -23,7 +23,6 @@ from everybase.abc import (
     TupleValue,
     all_,
     any_,
-    ifelse,
     none_,
 )
 
@@ -783,35 +782,6 @@ class TestSetOps:
     async def test_isdisjoint_false(self, ctx):
         """{1,2}.isdisjoint({2,3}) = False."""
         assert await SetValue({1, 2}).isdisjoint({2, 3}).execute(ctx) is False
-
-
-# =============================================================================
-# CONDITIONAL OPERATIONS
-# =============================================================================
-
-
-class TestConditionalOps:
-    """Test conditional operations."""
-
-    async def test_ifelse_true(self, ctx):
-        """ifelse(True, 100, 0) = 100."""
-        result = await ifelse(BoolValue(True), IntValue(100), IntValue(0)).execute(ctx)
-        assert result == 100
-
-    async def test_ifelse_false(self, ctx):
-        """ifelse(False, 100, 0) = 0."""
-        result = await ifelse(BoolValue(False), IntValue(100), IntValue(0)).execute(ctx)
-        assert result == 0
-
-    async def test_ifelse_with_comparison(self, ctx):
-        """ifelse(10 > 5, 'yes', 'no') = 'yes'."""
-        result = await ifelse(IntValue(10) > 5, StrValue("yes"), StrValue("no")).execute(ctx)
-        assert result == "yes"
-
-    async def test_or_default(self, ctx):
-        """Value.or_default() returns value if not sentinel."""
-        result = await IntValue(42).or_default(0).execute(ctx)
-        assert result == 42
 
 
 # =============================================================================

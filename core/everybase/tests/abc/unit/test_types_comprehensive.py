@@ -320,22 +320,6 @@ class TestIntRefSpecialChecks:
         assert isinstance(result, BoolValue)
 
 
-class TestIntRefConditional:
-    """IntValue conditional operations."""
-
-    def test_ifelse(self):
-        """IntValue.ifelse() returns AnyValue."""
-        x = IntValue(100)
-        result = x.ifelse(BoolValue(True), IntValue(0))
-        assert isinstance(result, AnyValue)
-
-    def test_or_default(self):
-        """IntValue.or_default() returns AnyValue."""
-        x = IntValue(42)
-        result = x.or_default(0)
-        assert isinstance(result, AnyValue)
-
-
 # =============================================================================
 # FLOAT TYPE TESTS
 # =============================================================================

@@ -17,7 +17,6 @@ from everybase.abc import (
     StrValue,
     all_,
     any_,
-    ifelse,
 )
 
 
@@ -248,36 +247,6 @@ class TestCollectionChains:
 
 
 # =============================================================================
-# CONDITIONAL EXPRESSION CHAINS
-# =============================================================================
-
-
-class TestConditionalChains:
-    """Test conditional expressions."""
-
-    async def test_nested_ifelse(self, ctx):
-        """Nested conditional: ifelse(x > 10, 'large', ifelse(x > 5, 'medium', 'small'))."""
-        x = IntValue(7)
-        inner = ifelse(x > 5, StrValue("medium"), StrValue("small"))
-        outer = ifelse(x > 10, StrValue("large"), inner)
-        assert await outer.execute(ctx) == "medium"
-
-    async def test_conditional_with_arithmetic(self, ctx):
-        """ifelse(x > 0, x * 2, x * -1)."""
-        x = IntValue(5)
-        result = await ifelse(x > 0, x * 2, x * IntValue(-1)).execute(ctx)
-        assert result == 10
-
-    async def test_conditional_in_comparison(self, ctx):
-        """ifelse(a > b, a, b) > 5 where a=3, b=7."""
-        a = IntValue(3)
-        b = IntValue(7)
-        max_val = ifelse(a > b, a, b)
-        result = await (max_val > 5).execute(ctx)
-        assert result is True  # 7 > 5
-
-
-# =============================================================================
 # COMBINER CHAINS
 # =============================================================================
 
@@ -328,21 +297,6 @@ class TestRealWorldScenarios:
         tax_rate = FloatValue(0.08)  # 8% tax
         total = price * (FloatValue(1.0) + tax_rate)
         assert await total.execute(ctx) == 108.0
-
-    async def test_grade_classification(self, ctx):
-        """Classify grade based on score."""
-        score = IntValue(85)
-        # A: >= 90, B: >= 80, C: >= 70, else F
-        is_a = score >= 90
-        is_b = (score >= 80).and_(score < 90)
-        is_c = (score >= 70).and_(score < 80)
-
-        grade = ifelse(
-            is_a,
-            StrValue("A"),
-            ifelse(is_b, StrValue("B"), ifelse(is_c, StrValue("C"), StrValue("F"))),
-        )
-        assert await grade.execute(ctx) == "B"
 
     async def test_age_validation(self, ctx):
         """Validate age is reasonable."""

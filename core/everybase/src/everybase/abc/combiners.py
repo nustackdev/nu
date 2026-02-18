@@ -12,16 +12,11 @@ Combiners provide a cleaner syntax:
     result = all_(cond1, cond2, cond3, cond4, cond5)
 
 Available combiners:
-    Logical combiners:
     - and_(left, right): Combine two conditions with AND
     - or_(left, right): Combine two conditions with OR
     - all_(*conditions): All conditions must be true (AND)
     - any_(*conditions): At least one condition must be true (OR)
     - none_(*conditions): None of the conditions should be true
-
-    Conditional combiners:
-    - ifelse(condition, then_value, else_value): Ternary conditional
-    - coalesce(*values): First non-empty/non-invalid value
 
 Example:
     >>> price = item.price.get()
@@ -35,12 +30,6 @@ Example:
     >>> can_ship = any_(
     ...     status.eq("ready"), status.eq("pending"), status.eq("processing")
     ... )
-    >>>
-    >>> # Conditional value selection
-    >>> display_price = ifelse(is_sale, sale_price, regular_price)
-    >>>
-    >>> # First non-empty value
-    >>> name = coalesce(preferred_name, display_name, username)
 """
 
 from __future__ import annotations

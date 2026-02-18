@@ -34,7 +34,6 @@ class EmptyType(SentinelType[Empty]):
     Represents absence of a value, distinct from None.
     Key properties:
     - is_empty() always returns True
-    - or_default(x) always returns x
     """
 
     pass

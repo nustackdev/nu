@@ -3,7 +3,6 @@
 TypeBase provides core ergonomics for all typed refs:
 - Sentinel checks (is_empty, is_invalid, etc.)
 - Type conversions (to_int, to_str, etc.)
-- Conditional operations (ifelse, or_default)
 
 Substrate-specific bases (PyRef, PVRefBase) implement fetch().
 Type-specific bases (IntType, etc.) add operator traits.

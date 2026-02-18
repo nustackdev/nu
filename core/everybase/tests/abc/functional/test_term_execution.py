@@ -8,7 +8,7 @@ don't require storage access.
 import pytest
 
 from everybase import INVALID, Context
-from everybase.abc import BoolValue, FloatValue, IntValue, ListValue, StrValue, all_, any_, ifelse
+from everybase.abc import BoolValue, FloatValue, IntValue, ListValue, StrValue, all_, any_
 
 
 @pytest.fixture
@@ -275,7 +275,7 @@ class TestListExecution:
 
 
 class TestCombinerExecution:
-    """Tests for combiner functions (all_, any_, ifelse, coalesce)."""
+    """Tests for combiner functions (all_, any_)."""
 
     async def test_all_true(self, ctx):
         """all_() with all true conditions returns True."""
@@ -312,24 +312,6 @@ class TestCombinerExecution:
             BoolValue(False),
         ).execute(ctx)
         assert result is False
-
-    async def test_ifelse_true_branch(self, ctx):
-        """ifelse() returns then_value when condition is true."""
-        result = await ifelse(
-            IntValue(10) > 5,
-            IntValue(100),
-            IntValue(0),
-        ).execute(ctx)
-        assert result == 100
-
-    async def test_ifelse_false_branch(self, ctx):
-        """ifelse() returns else_value when condition is false."""
-        result = await ifelse(
-            IntValue(10) < 5,
-            IntValue(100),
-            IntValue(0),
-        ).execute(ctx)
-        assert result == 0
 
 
 class TestSpecialValues:

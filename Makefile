@@ -8,8 +8,8 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-CORE_DIRS := everybase
-PKG_DIRS := pkg-every-dict pkg-every-flow pkg-every-flow-ext pkg-every-notion pkg-every-pv pkg-every-shape pkg-every-stdtypes pkg-every-table
+CORE_DIRS := core/everybase core/everyshape core/everypv core/everytable core/everystream core/everygraph
+PKG_DIRS := pkgs/eb-datetime pkgs/eb-fin pkgs/eb-math pkgs/eb-path pkgs/eb-uuid pkgs/eb-shape-lens pkgs/eb-tree-view
 ALL_DIRS := $(CORE_DIRS) $(PKG_DIRS)
 
 # =============================================================================
@@ -25,9 +25,9 @@ help:
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
 	@echo "  make test            Run all tests"
-	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=core-every)"
-	@echo "  make test-core       Run core-* tests"
-	@echo "  make test-packages   Run pkg-* tests"
+	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=core/everybase)"
+	@echo "  make test-core       Run core/ tests"
+	@echo "  make test-packages   Run pkgs/ tests"
 	@echo "  make test-cov        Run tests with coverage"
 	@echo "  make test-fast       Run tests (fail fast, no slow)"
 	@echo ""
@@ -73,18 +73,28 @@ test:
 
 test-pkg:
 ifndef PKG
-	$(error PKG not set. Usage: make test-pkg PKG=core-every)
+	$(error PKG not set. Usage: make test-pkg PKG=core/everybase)
 endif
 	@echo "$(BLUE)Testing $(PKG)...$(NC)"
 	uv run pytest $(PKG)/tests -v
 
 test-core:
-	@echo "$(BLUE)Running core-* tests...$(NC)"
-	uv run pytest $(CORE_DIRS) -v
+	@echo "$(BLUE)Running core/ tests...$(NC)"
+	@for dir in $(CORE_DIRS); do \
+		if [ -d "$$dir/tests" ]; then \
+			echo "$(YELLOW)  $$dir$(NC)"; \
+			uv run pytest $$dir/tests -q || exit 1; \
+		fi; \
+	done
 
 test-packages:
-	@echo "$(BLUE)Running pkg-* tests...$(NC)"
-	uv run pytest $(PKG_DIRS) -v
+	@echo "$(BLUE)Running pkgs/ tests...$(NC)"
+	@for dir in $(PKG_DIRS); do \
+		if [ -d "$$dir/tests" ]; then \
+			echo "$(YELLOW)  $$dir$(NC)"; \
+			uv run pytest $$dir/tests -q || exit 1; \
+		fi; \
+	done
 
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
@@ -121,15 +131,15 @@ check: format-check lint
 list:
 	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(GREEN)core-*:$(NC)"
-	@ls -d core-*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)core/:$(NC)"
+	@ls -d core/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 	@echo ""
-	@echo "$(GREEN)pkg-*:$(NC)"
-	@ls -d pkg-*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)pkgs/:$(NC)"
+	@ls -d pkgs/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 
 build:
 ifndef PKG
-	$(error PKG not set. Usage: make build PKG=core-every)
+	$(error PKG not set. Usage: make build PKG=core/everybase)
 endif
 	@echo "$(BLUE)Building $(PKG)...$(NC)"
 	cd $(PKG) && uv build
