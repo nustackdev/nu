@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 
-import eb_pv as pv
-from eb_pv.views import DictView
-from eb_shape import Shape
+import everypv as pv
+from everypv.views import DictView
+from everyshape import Shape
 
 
 logging.basicConfig(level=logging.INFO)

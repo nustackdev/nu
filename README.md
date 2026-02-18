@@ -7,29 +7,39 @@ Term Programming platform for Python — build distributed, persistent and react
 ## Structure
 
 ```
-everybase/         core — contracts + base implementations
-substrates/        integration substrates by modeling topology
-pkgs/              utility + extension packages
+core/              core libraries
+pkgs/              optional extension packages
 ```
 
-### Substrates (`substrates/`)
+### Core (`core/`)
 
-| Package | Topology | Status |
+| Package | Description | Status |
 |---|---|---|
-| `eb_shape` | hierarchical, in-house | exists |
-| `eb_table` | relational | todo |
-| `eb_stream` | push-based events | todo |
+| `everybase` | Contracts + base implementations | exists |
+| `everyshape` | Declarative document model (shapes, slots, refs) | exists |
+| `everypv` | Polymorphic views over KV storages | exists |
+| `everytable` | Relational data model | todo |
+| `everystream` | Push-based event streams | todo |
+| `everygraph` | Graph data model | todo |
 
 ### Packages (`pkgs/`)
 
+**Types:**
+
 | Package | Description |
 |---|---|
-| `eb-pv` | Polymorphic views over KV storages |
 | `eb-datetime` | Datetime types |
 | `eb-math` | Math types |
 | `eb-fin` | Financial types |
 | `eb-path` | Path types |
 | `eb-uuid` | UUID types |
+
+**Tools:**
+
+| Package | Description |
+|---|---|
+| `eb-shape-lens` | Terminal shape viewer |
+| `eb-tree-view` | HTML tree explorer |
 
 ## Development
 

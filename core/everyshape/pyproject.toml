@@ -1,5 +1,5 @@
 # =============================================================================
-# packages/eb-shape-lens - Terminal data viewer for Shapes
+# core/everyshape - Declarative Document Model
 # =============================================================================
 
 [build-system]
@@ -7,16 +7,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "eb-shape-lens"
+name = "everyshape"
 version = "0.1.0"
-description = "Terminal data viewer for everybase Shapes"
+description = "Declarative document model for everybase - shapes, slots, and descriptors"
+readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
-    "everyshape>=0.1.0",
+    "everybase>=0.1.0",
 ]
-keywords = ["every", "shape", "lens", "viewer", "devtools"]
+keywords = ["every", "shape", "document", "model", "declarative"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
@@ -29,4 +30,4 @@ classifiers = [
 Repository = "https://github.com/everyabc/everybase"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/eb_shape_lens"]
+packages = ["src/everyshape"]

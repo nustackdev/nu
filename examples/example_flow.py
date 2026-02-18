@@ -1,12 +1,12 @@
-"""E2E Demo: eb_pv with Shapes and Slots."""
+"""E2E Demo: everypv with Shapes and Slots."""
 
 from __future__ import annotations
 
-import eb_pv as e
-from eb_pv.views import DictView
-from eb_shape import Shape
+import everypv as e
 from everybase import Context
 from everybase.abc import Print, Seq
+from everypv.views import DictView
+from everyshape import Shape
 
 
 # --- Shape ---
@@ -23,8 +23,8 @@ class AppState(Shape):
 async def main():
     from tkv.tkv.storage import StorageProtocol
 
-    from eb_pv.adapters.codecs import TextCodec as Codec
-    from eb_pv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.adapters.codecs import TextCodec as Codec
+    from everypv.adapters.storages.textdb import TextStorage as Storage
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)

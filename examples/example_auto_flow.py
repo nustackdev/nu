@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import eb_pv as pv
 import everybase.abc as f
-from eb_shape import Shape
+import everypv as pv
+from everyshape import Shape
 
 
 class AppState(Shape):
@@ -34,10 +34,10 @@ demos = [
 async def main():
     from tkv.tkv.storage import StorageProtocol
 
-    from eb_pv.adapters.codecs import TextCodec as Codec
-    from eb_pv.adapters.storages.textdb import TextStorage as Storage
-    from eb_pv.views import DictView
     from everybase import Context
+    from everypv.adapters.codecs import TextCodec as Codec
+    from everypv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.views import DictView
 
     with Storage(".db", codec=Codec()) as storage:
         ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)

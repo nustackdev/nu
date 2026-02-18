@@ -1,5 +1,5 @@
 # =============================================================================
-# packages/eb-shape-lens - Terminal data viewer for Shapes
+# core/everypv - Polymorphic View Refs
 # =============================================================================
 
 [build-system]
@@ -7,16 +7,20 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "eb-shape-lens"
+name = "everypv"
 version = "0.1.0"
-description = "Terminal data viewer for everybase Shapes"
+description = "Specialized refs for polymorphic views over KV storages"
+readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
+    "everybase>=0.1.0",
     "everyshape>=0.1.0",
+    "pv",
+    "tkv",
 ]
-keywords = ["every", "shape", "lens", "viewer", "devtools"]
+keywords = ["every", "pv", "refs", "kv", "polymorphic"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
@@ -28,5 +32,14 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/everyabc/everybase"
 
+[project.optional-dependencies]
+rocksdb = ["rdbpython"]
+redis = ["redis"]
+msgpack = ["msgpack"]
+
+[tool.uv.sources]
+pv = { git = "https://github.com/everyabc/pv" }
+tkv = { git = "https://github.com/everyabc/tkv" }
+
 [tool.hatch.build.targets.wheel]
-packages = ["src/eb_shape_lens"]
+packages = ["src/everypv"]
