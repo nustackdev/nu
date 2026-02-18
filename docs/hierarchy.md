@@ -5,30 +5,33 @@
 ```
 everybase            unified core — contracts + toolbox
   everybase.core     contracts — Term, Flow, Span, Ref, Model, Context
-  everybase.abc      toolbox — types, values, morphisms, capabilities, utilities
-    ├── eb_shape    document model — shapes, items, collections, navigation
-    │     ├── eb-pv      PV storage substrate (path resolution, views, spans, adapters)
-    │     └── eb-dict    dict substrate (plain nested dicts, no persistence)
-    └── eb_table    relational model — (TBD)
-          └── eb-notion    Notion API integration
-  │
-  ├── eb-flow        flow primitives (Seq, Par, Cond, Loop)
-  ├── eb-flow-ext    flow extensions (cancellation, progress)
-  └── every-type        extended type refs (Decimal, UUID, datetime, Path)
+  everybase.abc      toolbox — types, values, morphisms, capabilities, flows
+    ├── everyshape    document model — shapes, items, collections, reactive flows
+    │     └── everypv      PV storage substrate (path resolution, views, spans, adapters)
+    ├── everytable    relational model — (TBD)
+    ├── everystream   push-based event streams — (TBD)
+    └── everygraph    graph data model — (TBD)
 ```
 
 ## Directory Layout
 
 ```
-everybase/            everybase (everybase.core + everybase.abc)
-eb-shape/      eb_shape
-eb-table/      eb_table
-eb-dict/       eb-dict
-eb-flow/       eb-flow
-eb-flow-ext/   eb-flow-ext
-eb-notion/     eb-notion
-eb-pv/         eb-pv
-pkg-every-stdtypes/   every-type
+core/
+├── everybase/      everybase (everybase.core + everybase.abc)
+├── everyshape/     everyshape
+├── everypv/        everypv
+├── everytable/     everytable (stub)
+├── everystream/    everystream (stub)
+└── everygraph/     everygraph (stub)
+
+pkgs/
+├── eb-datetime/    Datetime types
+├── eb-math/        Math types
+├── eb-fin/         Financial types
+├── eb-path/        Path types
+├── eb-uuid/        UUID types
+├── eb-shape-lens/  Terminal shape viewer
+└── eb-tree-view/   HTML tree explorer
 ```
 
 ## Core Package
@@ -67,10 +70,11 @@ Capabilities    loc_item (get/set/delete/exists)
                 loc_collection (extract/store/length/clear/exists)
                 loc_reactive (on_change observers)
 Morphisms       base morphism implementations
+Flows           Seq, If, While, ForRange, Parallel, TryCatch, etc.
 Utilities       ensure_term, tree walking, etc.
 ```
 
-### eb_shape
+### everyshape
 
 Document model. Depends on everybase.
 
@@ -95,9 +99,11 @@ Collections     ShapeRef -> MutableShapeRef -> ReactiveShapeRef
 
                 ShapesListRef / ShapesDictRef (+ Mutable / Reactive)
                 (homogeneous shape collections)
+
+Flows           React, ReactForever, ReactWhile (reactive flows)
 ```
 
-### eb_table
+### everytable
 
 Abstract relational model. Depends on everybase. (TBD)
 
@@ -106,21 +112,16 @@ Abstract relational model. Depends on everybase. (TBD)
 ```
                     everybase
                   (core + abc)
-                    /       \
-            eb_shape    eb_table
-                |             |
-            eb-pv     eb_table
-            eb-dict       |
-                |        eb-notion
-          every-type  eb-flow
-          eb-flow-ext
+                  /     |     \
+          everyshape  everytable  everystream  everygraph
+              |
+          everypv
 ```
 
 Key constraints:
 
-- eb_shape and eb_table are siblings -- both depend on everybase
-- eb_shape has zero PV imports -- substrate-independent document model
-- eb_table has zero PV imports -- independent data model
-- eb-pv depends on eb_shape (PV substrate: persistent, reactive)
-- eb-dict depends on eb_shape (dict substrate: plain dicts, no reactivity)
-- eb-notion will depend on eb_table (relational adapter)
+- everyshape, everytable, everystream, everygraph are siblings — all depend on everybase
+- everyshape has zero PV imports — substrate-independent document model
+- everytable has zero PV imports — independent data model
+- everypv depends on everyshape (PV substrate: persistent, reactive)
+- Flows live in everybase.abc (non-reactive) and everyshape (reactive)

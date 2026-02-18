@@ -39,8 +39,8 @@ order_db = ctx.get(StorageProtocol, shape=OrderShape)  # different store
 The PV substrate's transaction boundary:
 
 ```python
-from eb_pv import Atomic
-from eb_pv.views import DictView
+from everypv import Atomic
+from everypv.views import DictView
 
 tree = Atomic(UserShape, DictView,
     Seq(
@@ -70,9 +70,9 @@ Smart behavior:
 ## Example: Multi-Store Transaction
 
 ```python
-from eb_pv import Atomic
-from eb_pv.views import DictView
-from eb_flow import Seq
+from everypv import Atomic
+from everypv.views import DictView
+from everybase.abc import Seq
 
 tree = Seq(
     # Transaction on user store
@@ -101,7 +101,7 @@ Spans are structural — they can be added/removed via tree transforms:
 
 ```python
 from everybase.tree import find, map_nodes
-from eb_pv import Atomic
+from everypv import Atomic
 
 def atomicize(tree, shape):
     """Wrap subtrees that access storage in atomic boundaries."""

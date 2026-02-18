@@ -30,7 +30,7 @@ make format  # fix lint issues
 
 | Package | Purpose |
 |---------|---------|
-| `eb-pv` | PV storage adapter + views |
+| `everypv` | PV storage adapter + views |
 | `eb-flow` | Flow primitives |
 | `every-type` | Extended type refs |
 | `every-adapters` | Storage/codec backends |

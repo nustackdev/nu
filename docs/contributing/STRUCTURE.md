@@ -10,32 +10,31 @@ everybase/
 ├── Makefile                # Dev commands
 ├── uv.lock                 # Lockfile (generated)
 │
-├── src/everybase/          # Core package (everybase)
-│   ├── pyproject.toml
-│   ├── src/everybase/
-│   └── tests/
+├── core/                   # Core packages (every* prefix)
+│   ├── everybase/          #   Foundation: contracts + base implementations
+│   │   ├── pyproject.toml
+│   │   ├── src/everybase/
+│   │   └── tests/
+│   ├── everyshape/         #   Declarative document model (shapes, slots, refs)
+│   ├── everypv/            #   Polymorphic views over KV storages
+│   ├── everytable/         #   Relational data model (stub)
+│   ├── everystream/        #   Push-based event streams (stub)
+│   └── everygraph/         #   Graph data model (stub)
 │
-├── substrates/             # Integration substrates
-│   ├── eb-shape/    #   eb_shape (hierarchical, uniform CRUD)
-│   ├── eb-service/  #   eb_service (flat RPC)
-│   ├── eb-table/    #   eb_table (relational)
-│   ├── eb-rest/     #   eb_rest (HTTP, CRUD + actions)
-│   ├── eb-stream/   #   eb_stream (event streams)
-│   └── eb-gql/      #   eb-gql (GraphQL)
-│
-├── pkgs/                   # Utility + extension packages
-│   ├── eb-pv/       #   PV storage substrate
-│   ├── eb-dict/     #   Dict substrate
-│   ├── eb-flow/     #   Flow primitives
-│   ├── eb-flow-ext/ #   Flow extensions
-│   ├── eb-notion/   #   Notion integration
-│   └── ...                 #   datetime, math, fin, path, uuid
+├── pkgs/                   # Optional extension packages (eb-* prefix)
+│   ├── eb-datetime/        #   Datetime types
+│   ├── eb-math/            #   Math types
+│   ├── eb-fin/             #   Financial types
+│   ├── eb-path/            #   Path types
+│   ├── eb-uuid/            #   UUID types
+│   ├── eb-shape-lens/      #   Terminal shape viewer
+│   └── eb-tree-view/       #   HTML tree explorer
 │
 ├── docs/                   # Documentation
 │   └── contributing/
 ├── examples/               # Example scripts
 │
-└── tests/                  # Integration tests
+└── .agent/                 # Agent context and tasks
 ```
 
 ## Package Tiers
@@ -47,34 +46,31 @@ The unified core package. Minimal deps. Contains two subpackages:
 | Subpackage | Purpose | Import |
 |------------|---------|--------|
 | `everybase.core` | Protocols - Term, Flow, Ref, Model, Sentinel | `from everybase import ...` |
-| `everybase.abc` | Base implementations - Python types, computations | `from everybase.abc import ...` |
+| `everybase.abc` | Base implementations - Python types, computations, flows | `from everybase.abc import ...` |
 
 `everybase.__init__` re-exports everything from `everybase.core`, so top-level imports work directly.
 
-### pkg-* — Everything Else
+### Core packages — Data substrates
 
-Models, substrates, extensions, and integrations.
+| Package | Import | Purpose |
+|---------|--------|---------|
+| `everyshape` | `from everyshape import ...` | Document model - shapes, slots, items, collections |
+| `everypv` | `from everypv import ...` | PV storage substrate + views + adapters |
+| `everytable` | `from everytable import ...` | Relational model (stub) |
+| `everystream` | `from everystream import ...` | Event streams (stub) |
+| `everygraph` | `from everygraph import ...` | Graph data model (stub) |
 
-| Directory | Package | Purpose |
-|-----------|---------|---------|
-| `eb-shape` | `eb_shape` | Document model - shapes, slots, items, collections |
-| `eb-table` | `eb_table` | Relational model - tables, columns, queries |
-| `eb-pv` | `eb-pv` | PV storage substrate + views + adapters |
-| `eb-dict` | `eb-dict` | Dict substrate (plain nested dicts, no persistence) |
-| `eb-flow` | `eb-flow` | Flow primitives (Seq, If, While, etc.) |
-| `eb-flow-ext` | `eb-flow-ext` | Flow extensions (cancellation, progress) |
-| `pkg-every-stdtypes` | `every-type` | Extended type refs (Date, Decimal, UUID, etc.) |
-| `eb-notion` | `eb-notion` | Notion API integration |
+### pkgs/ — Optional extensions
+
+Types (`eb-datetime`, `eb-math`, `eb-fin`, `eb-path`, `eb-uuid`) and tools (`eb-shape-lens`, `eb-tree-view`).
 
 ## Dependency Graph
 
 ```
 everybase (contracts + base impl)
-  ├── eb_shape (document model)
-  │     ├── eb-pv (PV substrate + views)
-  │     └── eb-dict (dict substrate)
-  └── eb_table (relational model)
-        └── eb-notion, etc.
+  ├── everyshape (document model, reactive flows)
+  │     └── everypv (PV substrate + views)
+  └── everytable, everystream, everygraph (stubs)
 ```
 
 ## Key Files
@@ -88,9 +84,7 @@ everybase (contracts + base impl)
 
 ## Naming Convention
 
-| Context | Style | Example |
-|---------|-------|---------|
-| Directory | `pkg-` prefix | `eb-pv/` |
-| Import | underscore | `from eb_pv import ...` |
-| PyPI name | hyphen | `eb-pv` |
-| pyproject.toml name | hyphen | `name = "eb-pv"` |
+| Tier | Directory | Import | PyPI name |
+|------|-----------|--------|-----------|
+| Core | `core/everyshape/` | `from everyshape import ...` | `everyshape` |
+| Pkg | `pkgs/eb-math/` | `from eb_math import ...` | `eb-math` |

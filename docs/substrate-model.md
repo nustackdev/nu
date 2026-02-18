@@ -17,10 +17,10 @@ Each substrate introduces Ref types that express its native topology:
 
 | Substrate | Ref types | Topology expressed |
 |---|---|---|
-| eb_shape | ItemRef, ShapeRef, ShapesMappingRef | Hierarchical containment |
+| everyshape | ItemRef, ShapeRef, ShapesMappingRef | Hierarchical containment |
 | eb_rest | ResourceRef, ShapesDictRef | HTTP resource hierarchy |
 | eb_service | (none — flat) | Flat method dispatch |
-| eb_table (future) | ForeignKeyRef, JoinRef | Relational references |
+| everytable (future) | ForeignKeyRef, JoinRef | Relational references |
 
 The Ref IS the topology. Not metadata about it. Not a label. The actual structural relationship between data.
 
@@ -31,11 +31,11 @@ The substrate taxonomy classifies integration paradigms by their **modeling topo
 ```
 Topology                 Substrate       Atomic unit      Refs?
 ──────────────────       ─────────       ───────────      ─────
-Hierarchical, in-house   eb_shape        item             yes — parent chains, item-level CRUD
+Hierarchical, in-house   everyshape        item             yes — parent chains, item-level CRUD
 Hierarchical, HTTP       eb_rest         resource         yes — parent chains, resource-level CRUD
 Flat (RPC)               eb_service      method call      no — no persistent addressing
-Relational               eb_table        row              yes — foreign keys, joins
-Push-based               eb_stream       event            TBD
+Relational               everytable        row              yes — foreign keys, joins
+Push-based               everystream       event            TBD
 Schema graph             eb_gql          query            TBD
 ```
 
@@ -46,15 +46,15 @@ Flat topology (eb_service) has no Refs because there's nothing to persistently a
 Every substrate follows the same layered architecture:
 
 ```
-Layer       What it provides                    Example (eb_shape)
+Layer       What it provides                    Example (everyshape)
 ─────       ────────────────                    ──────────────────
 1. core     Term, Ref, Value, Morphism,         everybase
             Context, Model
 
-2. model    Ref types, morphisms,               eb_shape
+2. model    Ref types, morphisms,               everyshape
             capabilities for the topology       (ItemRef, ItemGetOp, ShapesMappingRef)
 
-3. adapter  Concrete storage wiring             eb_pv (KV views)
+3. adapter  Concrete storage wiring             everypv (KV views)
             (resolve → location, fetch → data)  eb_dict (plain dicts)
 
 4. app      Domain-specific definitions         weather station, trading app
@@ -69,11 +69,11 @@ Each layer answers a different question:
 
 ### How This Plays Out Per Substrate
 
-**eb_shape** (hierarchical, in-house):
+**everyshape** (hierarchical, in-house):
 ```
 core     → everybase (Term, Ref, Context)
-model    → eb_shape (ItemRef, ShapesMappingRef, ItemGetOp, Shape)
-adapter  → eb_pv (KV views, transactions) | eb_dict (plain dicts)
+model    → everyshape (ItemRef, ShapesMappingRef, ItemGetOp, Shape)
+adapter  → everypv (KV views, transactions) | eb_dict (plain dicts)
 app      → Market(Shape), WeatherStation(Shape), etc.
 ```
 
@@ -93,15 +93,15 @@ adapter  → (none — service client baked in)
 app      → SolanaRpc, gRPC services, etc.
 ```
 
-**eb_table** (relational, future):
+**everytable** (relational, future):
 ```
 core     → everybase
-model    → eb_table (ForeignKeyRef, JoinRef, QueryMorphism, Table)
+model    → everytable (ForeignKeyRef, JoinRef, QueryMorphism, Table)
 adapter  → eb_postgres, eb_sqlite, eb_notion, etc.
 app      → UserTable, OrderTable, etc.
 ```
 
-Note: eb_rest and eb_service have no adapter layer. REST always uses HTTP. RPC always uses the service client. There's no alternative backend — the transport IS the substrate. In contrast, eb_shape and eb_table are storage-agnostic models with pluggable adapters.
+Note: eb_rest and eb_service have no adapter layer. REST always uses HTTP. RPC always uses the service client. There's no alternative backend — the transport IS the substrate. In contrast, everyshape and everytable are storage-agnostic models with pluggable adapters.
 
 ## One Algebra, Every Backend
 
@@ -112,10 +112,10 @@ The same expression tree can span multiple substrates:
 await Seq(
     LocalCache.repo.set(
         GitHub.repos["octocat/hello"].get()    # eb_rest → HTTP
-    ),                                          # eb_shape → PV storage
+    ),                                          # everyshape → PV storage
     Analytics.downloads.set(
-        DB.repos.where(name="hello").count()    # eb_table → SQL
-    ),                                          # eb_shape → PV storage
+        DB.repos.where(name="hello").count()    # everytable → SQL
+    ),                                          # everyshape → PV storage
 ).execute(ctx)
 ```
 
@@ -126,13 +126,13 @@ This works because every substrate produces Terms. Terms compose. Context resolv
 Collection refs deserve special attention — they express the **one-to-many relationship** that appears across every topology:
 
 ```python
-# eb_shape: dict of shapes
+# everyshape: dict of shapes
 Market.symbols["AAPL"]              # ShapesMappingRef → ShapeRef
 
 # eb_rest: collection of resources
 GitHub.repos["octocat/hello"]       # ShapesDictRef → ResourceRef
 
-# eb_table (future): foreign key relation
+# everytable (future): foreign key relation
 Order.items[42]                     # ForeignKeyRef → RowRef
 ```
 
