@@ -203,15 +203,15 @@ Type-keyed handle container. Immutable (returns new Context on mutation).
 
 ```text
 Context
-  .get(handle_type, shape=None)          -> T         # lookup, raises if missing
-  .has(handle_type, shape=None)          -> bool
-  .was_opened(handle_type, shape=None)   -> bool      # lazy factory was materialized
+  .get(handle_type, scope=None)          -> T         # lookup, raises if missing
+  .has(handle_type, scope=None)          -> bool
+  .was_opened(handle_type, scope=None)   -> bool      # lazy factory was materialized
 
-  .with_handle(handle_type, handle, shape=None)   -> Context   # eager
-  .with_factory(handle_type, factory, shape=None) -> Context   # lazy
+  .with_handle(handle_type, handle, scope=None)   -> Context   # eager
+  .with_factory(handle_type, factory, scope=None) -> Context   # lazy
 ```
 
-Key: `type` or `(type, shape_type)` for multi-store discrimination.
+Key: `type` or `(type, scope)` for multi-store discrimination.
 
 ---
 

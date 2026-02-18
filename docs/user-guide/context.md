@@ -8,11 +8,11 @@ from everybase import Context
 # Register handles by type
 ctx = Context()
 ctx = ctx.with_handle(SolanaRpc, rpc_client)
-ctx = ctx.with_handle(dict, data, shape=MyShape)
+ctx = ctx.with_handle(dict, data, scope=MyShape)
 
 # Look up by type
 rpc = ctx.get(SolanaRpc)
-data = ctx.get(dict, shape=MyShape)
+data = ctx.get(dict, scope=MyShape)
 
 # Lazy factories (created on first access)
 ctx = ctx.with_factory(SolanaRpc, create_rpc)
@@ -22,16 +22,16 @@ rpc = ctx.get(SolanaRpc)  # factory called here, not before
 ctx.was_opened(SolanaRpc)  # True if accessed
 ```
 
-Shape discrimination enables multi-store:
+Scope discrimination enables multi-store:
 
 ```python
 ctx = (Context()
-    .with_handle(StorageProtocol, user_db, shape=UserShape)
-    .with_handle(StorageProtocol, order_db, shape=OrderShape)
+    .with_handle(StorageProtocol, user_db, scope=UserShape)
+    .with_handle(StorageProtocol, order_db, scope=OrderShape)
 )
 
-user_db = ctx.get(StorageProtocol, shape=UserShape)   # different store
-order_db = ctx.get(StorageProtocol, shape=OrderShape)  # different store
+user_db = ctx.get(StorageProtocol, scope=UserShape)   # different store
+order_db = ctx.get(StorageProtocol, scope=OrderShape)  # different store
 ```
 
 ## Example: PVAtomic
@@ -42,18 +42,19 @@ The PV substrate's transaction boundary:
 from everypv import Atomic
 from everypv.views import DictView
 
-tree = Atomic(UserShape, DictView,
+tree = Atomic(
     Seq(
         UserShape.name.set("Alice"),
         UserShape.age.set(30),
     ),
+    scope=UserShape,
 )
 await tree.execute(ctx)
 ```
 
 What `Atomic` does on enter:
 
-1. Gets `StorageProtocol` from context (by shape)
+1. Gets `StorageProtocol` from context (by scope)
 2. Registers lazy factory for `TransactionProtocol`
 3. Registers lazy factory for `View` (depends on transaction)
 
@@ -76,18 +77,20 @@ from everybase.abc import Seq
 
 tree = Seq(
     # Transaction on user store
-    Atomic(UserShape, DictView,
+    Atomic(
         user.name.set("Alice"),
+        scope=UserShape,
     ),
     # Separate transaction on order store
-    Atomic(OrderShape, DictView,
+    Atomic(
         order.total.set(price.get()),
+        scope=OrderShape,
     ),
 )
 
 ctx = (Context()
-    .with_handle(StorageProtocol, user_db, shape=UserShape)
-    .with_handle(StorageProtocol, order_db, shape=OrderShape)
+    .with_handle(StorageProtocol, user_db, scope=UserShape)
+    .with_handle(StorageProtocol, order_db, scope=OrderShape)
 )
 
 await tree.execute(ctx)
@@ -113,7 +116,7 @@ def atomicize(tree, shape):
                 and n.ref.get_root_shape() == shape
             ))
             if refs:
-                return Atomic(shape, DictView, node)
+                return Atomic(node, scope=shape)
         return node
     return map_nodes(tree, wrap_if_needed)
 

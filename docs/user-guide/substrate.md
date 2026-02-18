@@ -27,7 +27,7 @@ class Counter(Shape):
     label = StrRef.slot()
 
 data = {}
-ctx = Context().with_handle(dict, data, shape=Counter)
+ctx = Context().with_handle(dict, data, scope=Counter)
 
 await Counter.value.set(42).execute(ctx)
 await Counter.label.set("clicks").execute(ctx)
@@ -53,19 +53,21 @@ class AppState(Shape):
     age = IntRef.slot()
 
 with Storage(".db", codec=Codec()) as storage:
-    ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)
+    ctx = Context().with_handle(StorageProtocol, storage, scope=AppState)
 
     # Write (opens transaction)
-    await Atomic(AppState, DictView,
+    await Atomic(
         Seq(
             AppState.name.set("Alice"),
             AppState.age.set(30),
         ),
+        scope=AppState,
     ).execute(ctx)
 
     # Read (opens snapshot — pure subtree)
-    await Atomic(AppState, DictView,
+    await Atomic(
         Print("name", AppState.name.get()),
+        scope=AppState,
     ).execute(ctx)
 ```
 
@@ -160,15 +162,16 @@ class EphemeralCounters(Shape):
 
 # Setup both
 data = {}
-ctx = Context().with_handle(dict, data, shape=EphemeralCounters)
+ctx = Context().with_handle(dict, data, scope=EphemeralCounters)
 
 with Storage(".db", codec=Codec()) as storage:
-    ctx = ctx.with_handle(StorageProtocol, storage, shape=PersistentData)
+    ctx = ctx.with_handle(StorageProtocol, storage, scope=PersistentData)
 
     # Both substrates in one tree
     tree = Seq(
-        Atomic(PersistentData, DictView,
+        Atomic(
             PersistentData.name.set("Alice"),
+            scope=PersistentData,
         ),
         EphemeralCounters.requests.set(
             EphemeralCounters.requests.get() + 1,
@@ -177,7 +180,7 @@ with Storage(".db", codec=Codec()) as storage:
     await tree.execute(ctx)
 ```
 
-Context routes each ref to the correct store via shape association.
+Context routes each ref to the correct store via scope.
 
 ## Ref Hierarchy per Substrate
 

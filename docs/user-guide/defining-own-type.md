@@ -159,7 +159,7 @@ class Token(Shape):
 from everybase import Context
 
 data = {}
-ctx = Context().with_handle(dict, data, shape=Token)
+ctx = Context().with_handle(dict, data, scope=Token)
 
 # Set
 await Token.mint.set("So11111111111111111111111111111111111111112").execute(ctx)

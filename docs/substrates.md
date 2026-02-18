@@ -22,27 +22,27 @@ Span.enter(ctx)        -> child_ctx      # add handles for children
 Span.exit_success(ctx) -> cleanup        # or exit_failure on error
 ```
 
-Context is a type-keyed bag of handles with optional **shape discrimination** for multi-store scenarios:
+Context is a type-keyed bag of handles with optional **scope discrimination** for multi-store scenarios:
 
 ```python
 # Singleton handle (one per type)
 ctx = Context().with_handle(NotionClient, client)
 client = ctx.get(NotionClient)
 
-# Shape-scoped handle (one per type+shape)
-ctx = ctx.with_handle(StorageProtocol, user_db, shape=UserShape)
-ctx = ctx.with_handle(StorageProtocol, order_db, shape=OrderShape)
-user_db = ctx.get(StorageProtocol, shape=UserShape)
+# Scope-discriminated handle (one per type+scope)
+ctx = ctx.with_handle(StorageProtocol, user_db, scope=UserShape)
+ctx = ctx.with_handle(StorageProtocol, order_db, scope=OrderShape)
+user_db = ctx.get(StorageProtocol, scope=UserShape)
 
 # Lazy factory (created on first access)
-ctx = ctx.with_factory(TransactionProtocol, lambda: db.begin_txn(), shape=UserShape)
-txn = ctx.get(TransactionProtocol, shape=UserShape)  # opens on first call
+ctx = ctx.with_factory(TransactionProtocol, lambda: db.begin_txn(), scope=UserShape)
+txn = ctx.get(TransactionProtocol, scope=UserShape)  # opens on first call
 
 # Check if lazy handle was actually opened
-ctx.was_opened(TransactionProtocol, shape=UserShape)  # True if accessed
+ctx.was_opened(TransactionProtocol, scope=UserShape)  # True if accessed
 ```
 
-Each ref knows its shape via `ref.get_root_shape()` and uses it to look up the correct handle.
+Each ref knows its scope via `ref.get_root_shape()` and uses it to look up the correct handle.
 
 
 ## Example: PV Substrate (everypv)
@@ -62,7 +62,7 @@ TransactionProtocol / SnapshotProtocol (short-lived, span-scoped)
     v
 View (stateless accessor over storage context)
     |
-    |  ctx.get(View, shape=S) consumed by:
+    |  ctx.get(View, scope=S) consumed by:
     v
 Term.execute(ctx) -> result
 ```
@@ -82,7 +82,7 @@ class PVAtomic(Span):
     """Atomic transaction boundary for PV operations.
 
     On enter:
-      1. Gets StorageProtocol from context (by shape)
+      1. Gets StorageProtocol from context (by scope)
       2. Registers lazy factory for TransactionProtocol
       3. Registers lazy factory for View (depends on transaction)
 
@@ -93,27 +93,28 @@ class PVAtomic(Span):
     Lazy: if no child accesses storage, no transaction is opened.
     """
 
-    def __init__(self, shape: type, view_type: type, *children):
+    def __init__(self, *children, scope=None, view_cls=DictView):
         super().__init__(*children)
-        self.shape = shape
+        self.scope = scope
+        self.view_cls = view_cls
         self._txn = None
 
     def enter(self, ctx: Context) -> Context:
-        storage = ctx.get(StorageProtocol, shape=self.shape)
+        storage = ctx.get(StorageProtocol, scope=self.scope)
 
         def open_txn():
             self._txn = storage.begin_transaction()
             return self._txn
 
         def open_view():
-            txn = ctx_with_txn.get(TransactionProtocol, shape=self.shape)
-            return ViewCls.open_root(txn)
+            txn = ctx_with_txn.get(TransactionProtocol, scope=self.scope)
+            return self.view_cls.open_root(txn)
 
         ctx_with_txn = ctx.with_factory(
-            TransactionProtocol, open_txn, shape=self.shape
+            TransactionProtocol, open_txn, scope=self.scope
         )
         return ctx_with_txn.with_factory(
-            View, open_view, shape=self.shape
+            View, open_view, scope=self.scope
         )
 
     def exit_success(self, ctx: Context) -> None:
@@ -168,7 +169,7 @@ Primitive refs mix in everybase.abc type bases (IntType, StrType, ...) to get op
 ```
 1. Setup
    ├─ Create storage connections
-   ├─ Build initial Context with storages (shape-scoped)
+   ├─ Build initial Context with storages (scope-keyed)
    └─ Build topology tree
 
 2. Execute
@@ -179,7 +180,7 @@ Primitive refs mix in everybase.abc type bases (IntType, StrType, ...) to get op
    │   └─ Returns child_ctx
    │
    ├─ Term.execute(child_ctx)
-   │   ├─ ctx.get(View, shape=S)  <- triggers View factory
+   │   ├─ ctx.get(View, scope=S)  <- triggers View factory
    │   │   └─ View factory calls ctx.get(TransactionProtocol)  <- triggers txn factory
    │   │       └─ txn factory calls storage.begin_transaction()
    │   ├─ Navigates view, reads/writes data
@@ -200,22 +201,24 @@ class AppState(Shape):
     age = IntRef.slot()
 
 with Storage(".db", codec=Codec()) as storage:
-    ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)
+    ctx = Context().with_handle(StorageProtocol, storage, scope=AppState)
 
     # Write (transaction)
-    await PVAtomic(AppState, DictView,
+    await PVAtomic(
         Seq(
             AppState.name.set("Alice"),
             AppState.age.set(30),
-        )
+        ),
+        scope=AppState,
     ).execute(ctx)
 
     # Read (snapshot -- pure subtree)
-    await PVAtomic(AppState, DictView,
+    await PVAtomic(
         Seq(
             Print("name", AppState.name.get()),
             Print("age", AppState.age.get()),
-        )
+        ),
+        scope=AppState,
     ).execute(ctx)
 ```
 
@@ -238,7 +241,7 @@ def atomicize(tree: Executable, shape: type) -> Executable:
                 and n.ref.get_root_shape() == shape
             ))
             if refs:
-                return PVAtomic(shape, node)
+                return PVAtomic(node, scope=shape)
         return node
     return map_nodes(tree, wrap_if_needed)
 ```
@@ -276,27 +279,29 @@ def add_checkpoints(tree: Executable, state_store) -> Executable:
 
 ## Multi-Store
 
-Multiple stores are supported via shape-scoped handles:
+Multiple stores are supported via scope-discriminated handles:
 
 ```python
 class UserShape(Shape): ...
 class OrderShape(Shape): ...
 
 ctx = (Context()
-    .with_handle(StorageProtocol, rocksdb_users, shape=UserShape)
-    .with_handle(StorageProtocol, rocksdb_orders, shape=OrderShape)
-    .with_handle(NotionClient, notion)  # singleton, no shape
+    .with_handle(StorageProtocol, rocksdb_users, scope=UserShape)
+    .with_handle(StorageProtocol, rocksdb_orders, scope=OrderShape)
+    .with_handle(NotionClient, notion)  # singleton, no scope
 )
 
 tree = Seq(
-    PVAtomic(UserShape, DictView,
+    PVAtomic(
         user_ref.name.set("Alice"),
+        scope=UserShape,
     ),
-    PVAtomic(OrderShape, DictView,
+    PVAtomic(
         order_ref.total.set(price_ref.get()),
+        scope=OrderShape,
     ),
     Notion.Insert(table, user_ref.name.get()),
 )
 ```
 
-Each PVAtomic opens its own transaction on its own store. Refs resolve to the correct store via their shape. Cross-store operations work because Context holds all handles.
+Each PVAtomic opens its own transaction on its own store. Refs resolve to the correct store via their scope. Cross-store operations work because Context holds all handles.

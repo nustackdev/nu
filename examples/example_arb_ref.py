@@ -32,9 +32,7 @@ from everybase.abc import (
     ValueBase,
     ensure_term,
 )
-from everyshape import Shape
-from everyshape.morphisms import ItemGetOp, ItemSetCmd
-from everyshape.refs import ItemRef, Slot
+from everyshape import ItemGetOp, ItemRef, ItemSetCmd, Shape, Slot
 
 
 # =============================================
@@ -149,11 +147,10 @@ async def main():
     from pv import View
 
     from everybase import Context
-    from everypv.adapters.codecs import TextCodec as Codec
-    from everypv.adapters.storages.textdb import TextStorage as Storage
+    from everypv.adapters.storage import text_storage
     from everypv.views import DictView
 
-    with Storage(".db", codec=Codec()) as storage:
+    with text_storage(".db") as storage:
         ctx = Context()
 
         print("=== Write (Atomic → transaction) ===")

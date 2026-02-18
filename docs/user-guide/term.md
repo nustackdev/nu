@@ -124,7 +124,7 @@ class Wallet(Shape):
 
 # Build context
 data = {}
-ctx = Context().with_handle(dict, data, shape=Wallet)
+ctx = Context().with_handle(dict, data, scope=Wallet)
 
 # Build expression tree (nothing executes)
 deposit = Wallet.balance.set(Wallet.balance.get() + 100)
