@@ -7,7 +7,7 @@ extractable, storable, observable).
 For concrete Python types (list, dict, tuple, set, frozenset), see eb_shape.types.
 For Ref versions (with address/parent/shape navigation), see eb_shape.refs.
 
-Substrates (eb_pv, eb_dict) inherit from eb_shape.refs, which
+Substrates (eb_pv) inherit from eb_shape.refs, which
 combine these bases with Ref.
 """
 

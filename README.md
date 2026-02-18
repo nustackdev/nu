@@ -17,18 +17,14 @@ pkgs/              utility + extension packages
 | Package | Topology | Status |
 |---|---|---|
 | `eb_shape` | hierarchical, in-house | exists |
-| `eb_service` | flat RPC | wip |
 | `eb_table` | relational | todo |
-| `eb_rest` | hierarchical, HTTP | todo |
 | `eb_stream` | push-based events | todo |
-| `eb-gql` | schema graph | todo |
 
 ### Packages (`pkgs/`)
 
 | Package | Description |
 |---|---|
 | `eb-pv` | Polymorphic views over KV storages |
-| `eb-dict` | Plain nested dicts |
 | `eb-flow` | Flow primitives — Seq, Par, Cond, Loop |
 | `eb-flow-ext` | Flow extensions |
 | `eb-datetime` | Datetime types |
@@ -36,7 +32,6 @@ pkgs/              utility + extension packages
 | `eb-fin` | Financial types |
 | `eb-path` | Path types |
 | `eb-uuid` | UUID types |
-| `eb-notion` | Notion API integration |
 
 ## Development
 

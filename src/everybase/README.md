@@ -38,7 +38,7 @@ from everybase.abc import IntValue, StrValue, FloatValue
 
 ```
 everybase/      — contracts + base implementations
-substrates/     — integration substrates (eb_shape, eb_service, eb_rest, ...)
+substrates/     — integration substrates (eb_shape, eb_table, eb_stream)
 pkgs/           — utility + extension packages (eb-pv, eb-flow, ...)
 ```
 

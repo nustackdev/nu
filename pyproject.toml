@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["everybase", "eb-shape", "eb-service", "eb-table", "eb-rest", "eb-stream", "eb-gql", "eb-datetime", "eb-dict", "eb-fin", "eb-flow", "eb-flow-ext", "eb-math", "eb-notion", "eb-path", "eb-pv", "eb-uuid"]
+dependencies = ["everybase", "eb-shape", "eb-table", "eb-stream", "eb-datetime", "eb-fin", "eb-flow", "eb-flow-ext", "eb-math", "eb-path", "eb-pv", "eb-uuid"]
 
 # =============================================================================
 # UV Workspace
@@ -21,20 +21,15 @@ members = [
 
     # Substrates
     "substrates/eb-shape",
-    "substrates/eb-service",
     "substrates/eb-table",
-    "substrates/eb-rest",
     "substrates/eb-stream",
-    "substrates/eb-gql",
 
     # Packages
     "pkgs/eb-datetime",
-    "pkgs/eb-dict",
     "pkgs/eb-fin",
     "pkgs/eb-flow",
     "pkgs/eb-flow-ext",
     "pkgs/eb-math",
-    "pkgs/eb-notion",
     "pkgs/eb-path",
     "pkgs/eb-pv",
     "pkgs/eb-uuid",
@@ -44,19 +39,14 @@ members = [
 everybase = { workspace = true }
 # Substrates
 eb-shape = { workspace = true }
-eb-service = { workspace = true }
 eb-table = { workspace = true }
-eb-rest = { workspace = true }
 eb-stream = { workspace = true }
-eb-gql = { workspace = true }
 # Packages
 eb-datetime = { workspace = true }
-eb-dict = { workspace = true }
 eb-fin = { workspace = true }
 eb-flow = { workspace = true }
 eb-flow-ext = { workspace = true }
 eb-math = { workspace = true }
-eb-notion = { workspace = true }
 eb-path = { workspace = true }
 eb-pv = { workspace = true }
 eb-uuid = { workspace = true }
@@ -78,7 +68,7 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["src/everybase", "substrates/eb-shape", "substrates/eb-service", "substrates/eb-table", "substrates/eb-rest", "substrates/eb-stream", "substrates/eb-gql", "pkgs/eb-datetime", "pkgs/eb-dict", "pkgs/eb-fin", "pkgs/eb-flow", "pkgs/eb-flow-ext", "pkgs/eb-math", "pkgs/eb-notion", "pkgs/eb-path", "pkgs/eb-pv", "pkgs/eb-uuid"]
+testpaths = ["src/everybase", "substrates/eb-shape", "substrates/eb-table", "substrates/eb-stream", "pkgs/eb-datetime", "pkgs/eb-fin", "pkgs/eb-flow", "pkgs/eb-flow-ext", "pkgs/eb-math", "pkgs/eb-path", "pkgs/eb-pv", "pkgs/eb-uuid"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -93,7 +83,7 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["src/everybase", "substrates/eb-shape", "substrates/eb-service", "substrates/eb-table", "substrates/eb-rest", "substrates/eb-stream", "substrates/eb-gql", "pkgs/eb-datetime", "pkgs/eb-dict", "pkgs/eb-fin", "pkgs/eb-flow", "pkgs/eb-flow-ext", "pkgs/eb-math", "pkgs/eb-notion", "pkgs/eb-path", "pkgs/eb-pv", "pkgs/eb-uuid"]
+source = ["src/everybase", "substrates/eb-shape", "substrates/eb-table", "substrates/eb-stream", "pkgs/eb-datetime", "pkgs/eb-fin", "pkgs/eb-flow", "pkgs/eb-flow-ext", "pkgs/eb-math", "pkgs/eb-path", "pkgs/eb-pv", "pkgs/eb-uuid"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -124,7 +114,7 @@ directory = "reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src/everybase", "substrates/eb-shape", "substrates/eb-service", "substrates/eb-table", "substrates/eb-rest", "substrates/eb-stream", "substrates/eb-gql", "pkgs/eb-datetime", "pkgs/eb-dict", "pkgs/eb-fin", "pkgs/eb-flow", "pkgs/eb-flow-ext", "pkgs/eb-math", "pkgs/eb-notion", "pkgs/eb-path", "pkgs/eb-pv", "pkgs/eb-uuid"]
+src = ["src/everybase", "substrates/eb-shape", "substrates/eb-table", "substrates/eb-stream", "pkgs/eb-datetime", "pkgs/eb-fin", "pkgs/eb-flow", "pkgs/eb-flow-ext", "pkgs/eb-math", "pkgs/eb-path", "pkgs/eb-pv", "pkgs/eb-uuid"]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -188,13 +178,9 @@ convention = "google"
 "pkgs/eb-flow-ext/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic ref/value parameters
 ]
-"pkgs/eb-notion/**/*.py" = [
-    "ANN401",  # Any type needed for Notion's dynamic JSON API
-    "D107",    # __init__ docstrings covered by class docstring
-]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "eb_shape", "eb_service", "eb_table", "eb_rest", "eb_stream", "eb_gql", "eb_datetime", "eb_dict", "eb_fin", "eb_flow", "eb_flow_ext", "eb_math", "eb_notion", "eb_path", "eb_pv", "eb_uuid"]
+known-first-party = ["everybase", "eb_shape", "eb_table", "eb_stream", "eb_datetime", "eb_fin", "eb_flow", "eb_flow_ext", "eb_math", "eb_path", "eb_pv", "eb_uuid"]
 force-single-line = false
 lines-after-imports = 2
 

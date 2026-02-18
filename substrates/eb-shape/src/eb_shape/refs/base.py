@@ -49,7 +49,6 @@ class Ref[T](RefABC[T]):
     - Slot factory protocol
 
     Substrates extend this with storage-specific mechanics:
-    - eb_dict.RefBase: dict navigation
     - eb_pv.RefBase: PV view navigation
 
     Attributes:
