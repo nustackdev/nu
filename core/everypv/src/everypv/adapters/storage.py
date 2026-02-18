@@ -13,12 +13,40 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    # "regular_provider",
+    "memory_storage",
     "rocksdb_storage",
     "rocksdb_storage_inmemory",
-    # "sharded_provider",
     "text_storage",
 ]
+
+
+@contextmanager
+def memory_storage() -> Generator[StorageProtocol, None, None]:
+    """Create in-memory storage with binary codec and in-memory observer.
+
+    No persistence — all data lost on close. Useful for testing,
+    prototyping, and ephemeral computations.
+
+    Yields:
+        Configured in-memory storage instance
+
+    Example:
+        >>> with memory_storage() as storage:
+        ...     with storage.transaction() as txn:
+        ...         txn.put(b"key", b"value")
+    """
+    from tkv.codecs import BinaryCodec
+    from tkv.observers.mem import InMemoryObserver
+    from tkv.storages.mem import InMemoryStorage
+
+    with (
+        InMemoryObserver(codec=BinaryCodec()) as observer,
+        InMemoryStorage(
+            codec=BinaryCodec(),
+            observer=observer,
+        ) as storage,
+    ):
+        yield storage
 
 
 @contextmanager
@@ -134,34 +162,3 @@ def rocksdb_storage(
         ) as storage,
     ):
         yield storage
-
-
-# def regular_provider(storage: StorageProtocol):
-#     return StorageProvider(
-#         (storage,),
-#         {
-#             None: (DictView, ("/",), 0),
-#             FlowState: (DictView, ("/", "__flow__"), 0),
-#         },
-#     )
-
-
-# def sharded_provider(storage: StorageProtocol, *ext: tuple[type[Shape], key.Key, StorageProtocol]):
-#     config = {
-#         None: (DictView, ("/",), 0),
-#         FlowState: (DictView, ("/", "__flow__"), 0),
-#     }
-
-#     storages: list[StorageProtocol] = []
-
-#     storages.append(storage)
-
-#     for shape, shape_key, shape_storage in ext:
-#         if shape_storage not in storages:
-#             storages.append(shape_storage)
-#         config.setdefault(shape, (DictView, shape_key, storages.index(shape_storage)))
-
-#     return StorageProvider(
-#         tuple(storages),
-#         config,
-#     )

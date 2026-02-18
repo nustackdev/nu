@@ -19,5 +19,5 @@ Import directly from submodules:
     from everypv.adapters.observers.redis_pubsub import RedisObserver
 
     # Storage presets
-    from everypv.adapters.storage import text_storage, rocksdb_storage, rocksdb_storage_inmemory
+    from everypv.adapters.storage import memory_storage, text_storage, rocksdb_storage, rocksdb_storage_inmemory
 """

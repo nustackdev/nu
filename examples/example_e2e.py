@@ -11,50 +11,25 @@ from __future__ import annotations
 
 import asyncio
 
-from everybase import Context
+from everybase import Arg, Context, Term
 from everybase.abc import (
     FloatValue,
+    ForRange,
+    If,
     IntValue,
+    Print,
+    Seq,
+    TypeBase,
+    ValueBase,
     method,
     prop,
 )
-from everybase.abc.flows import ForRange, If, Print, Seq
-from everybase.core import Ref
+from everypv import ItemRef, auto_atomic
+from everyshape import ItemSetCmd, Shape, Slot
 
 
 # =============================================================================
-# 1. TERM VALUES — lazy composition
-# =============================================================================
-# Values compose into expression trees. Nothing executes until .execute(ctx).
-
-price = FloatValue(99.95)
-quantity = IntValue(3)
-tax_rate = FloatValue(0.08)
-
-subtotal = price * quantity  # FloatValue(MulOp(...))
-tax = subtotal * tax_rate
-total = subtotal + tax
-
-is_expensive = total > 250
-
-
-# =============================================================================
-# 2. FLOWS — structured execution
-# =============================================================================
-# Flows are also terms. They compose and execute the same way.
-
-checkout_flow = Seq(
-    Print("subtotal", subtotal),
-    Print("tax", tax),
-    Print("total", total),
-    If(is_expensive, Print(">> expensive order!"), Print(">> regular order")),
-)
-
-tick_flow = ForRange(IntValue(0), IntValue(3), Print("tick!"))
-
-
-# =============================================================================
-# 3. REF + METHOD DESCRIPTORS — context-resolved Type access
+# REF + METHOD DESCRIPTORS — context-resolved Type access
 # =============================================================================
 # A Ref subclass resolves its target from Context at execution time.
 # method() and prop() descriptors create term expressions that proxy calls
@@ -74,8 +49,8 @@ class Calculator:
         return round(a * b, self.precision)
 
 
-class CalculatorRef(Ref[Calculator]):
-    """Ref that resolves a Calculator from context.
+class CalculatorType(TypeBase):
+    """Calculator typed interfaces - Type.
 
     method() descriptors declare what the underlying object can do.
     Class-level access (CalculatorRef.add(...)) creates lazy term
@@ -86,11 +61,79 @@ class CalculatorRef(Ref[Calculator]):
     multiply = method(FloatValue, "multiply")
     precision = prop(IntValue, "precision")
 
-    async def resolve(self, ctx: Context) -> str:
-        return "calculator"
 
-    async def fetch(self, ctx: Context) -> Calculator:
-        return ctx.get(Calculator)
+class CalculatorValue(CalculatorType, ValueBase):
+    """Computed Value"""
+
+
+class CalculatorRef(ItemRef[Calculator, CalculatorValue], CalculatorType):
+    """Ref that resolves a Calculator from context."""
+
+    def __init__(
+        self,
+        address: object,
+        parent: object,
+        owner_shape: type | None = None,
+    ) -> None:
+        super().__init__(address, Calculator, CalculatorValue, parent, owner_shape)
+
+    @classmethod
+    def slot(cls) -> CalculatorRef:
+        """Create a slot for Fraction values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+    def get(self) -> CalculatorValue:
+        """Get the Calculator value."""
+        return CalculatorValue(self)
+
+    def set(self, value: Arg[Calculator]) -> CalculatorValue:
+        """Set the Calculator value."""
+        if isinstance(value, Calculator):
+            val = CalculatorValue(value)
+        elif isinstance(value, Term):
+            val = value
+        return CalculatorValue(ItemSetCmd(self, val))
+
+
+# =============================================================================
+# Shapes
+# =============================================================================
+# Structures for data
+
+
+class Services(Shape):
+    calc = CalculatorRef.slot()
+
+
+# =============================================================================
+# TERM VALUES — lazy composition
+# =============================================================================
+# Values compose into expression trees. Nothing executes until .execute(ctx).
+
+price = FloatValue(99.95)
+quantity = IntValue(3)
+tax_rate = FloatValue(0.08)
+
+subtotal = price * quantity  # FloatValue(MulOp(...))
+tax = subtotal * tax_rate
+total = subtotal + tax
+
+is_expensive = total > 250
+
+
+# =============================================================================
+# FLOWS — structured execution
+# =============================================================================
+# Flows are also terms. They compose and execute the same way.
+
+checkout_flow = Seq(
+    Print("subtotal", subtotal),
+    Print("tax", tax),
+    Print("total", total),
+    If(is_expensive, Print(">> expensive order!"), Print(">> regular order")),
+)
+
+tick_flow = ForRange(IntValue(0), IntValue(3), Print("tick!"))
 
 
 # =============================================================================
@@ -99,51 +142,69 @@ class CalculatorRef(Ref[Calculator]):
 
 
 async def main() -> None:
-    ctx = Context()
+    from tkv.tkv.storage import StorageProtocol
 
-    # --- Pure term expressions ---
-    print("=== Term Expressions ===")
-    print(f"subtotal = {await subtotal.execute(ctx)}")
-    print(f"tax      = {await tax.execute(ctx)}")
-    print(f"total    = {await total.execute(ctx)}")
-    print(f"expensive? {await is_expensive.execute(ctx)}")
-    print()
+    from everypv.adapters.storage import memory_storage, rocksdb_storage_inmemory
 
-    # --- Flows ---
-    print("=== Flows ===")
-    await checkout_flow.execute(ctx)
-    print()
-    await tick_flow.execute(ctx)
-    print()
+    with rocksdb_storage_inmemory(".db-e2e-test") as rocksdb:
+        with memory_storage() as memdb:
+            ctx = Context()
 
-    # --- Ref-based class access ---
-    print("=== Ref-based Class Access ===")
-    ctx_with_calc = ctx.with_handle(Calculator, Calculator(precision=2))
+            ctx = ctx.with_handle(StorageProtocol, rocksdb)
+            ctx = ctx.with_handle(
+                StorageProtocol, memdb, scope=Services
+            )  # sharded: Services on memdb
 
-    # Class-level access creates context-resolved expressions
-    result = await CalculatorRef.add(FloatValue(10.5), FloatValue(20.3)).execute(ctx_with_calc)
-    print(f"CalculatorRef.add(10.5, 20.3) = {result}")
-
-    result = await CalculatorRef.multiply(FloatValue(7.0), FloatValue(6.0)).execute(ctx_with_calc)
-    print(f"CalculatorRef.multiply(7.0, 6.0) = {result}")
-
-    prec = await CalculatorRef.precision.execute(ctx_with_calc)
-    print(f"CalculatorRef.precision = {prec}")
-    print()
-
-    # --- Compose ref methods into flows ---
-    print("=== Ref Methods in Flows ===")
-    calc_flow = Seq(
-        Print("add", CalculatorRef.add(FloatValue(1.0), FloatValue(2.0))),
-        Print("mul", CalculatorRef.multiply(FloatValue(3.0), FloatValue(4.0))),
-        If(
-            CalculatorRef.add(FloatValue(100.0), FloatValue(200.0)) > 250,
-            Print(">> big sum!"),
-            Print(">> small sum"),
-        ),
-    )
-    await calc_flow.execute(ctx_with_calc)
+            # --- Compose ref methods into flows ---
+            print("=== Ref Methods in Flows ===")
+            calc_flow = Seq(
+                Services.calc.set(Calculator(4)),
+                Print("add", Services.calc.add(FloatValue(1.0), FloatValue(2.0))),
+                Print("mul", Services.calc.multiply(FloatValue(3.0), FloatValue(4.0))),
+                If(
+                    Services.calc.add(FloatValue(100.0), FloatValue(200.0)) > 250,
+                    Print(">> big sum!"),
+                    Print(">> small sum"),
+                ),
+            )
+            calc_flow = auto_atomic(calc_flow)
+            await calc_flow.execute(ctx)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+# # --- Pure term expressions ---
+# print("=== Term Expressions ===")
+# print(f"subtotal = {await subtotal.execute(ctx)}")
+# print(f"tax      = {await tax.execute(ctx)}")
+# print(f"total    = {await total.execute(ctx)}")
+# print(f"expensive? {await is_expensive.execute(ctx)}")
+# print()
+
+# # --- Flows ---
+# print("=== Flows ===")
+# await checkout_flow.execute(ctx)
+# print()
+# await tick_flow.execute(ctx)
+# print()
+
+# # --- Ref-based class access ---
+# print("=== Ref-based Class Access ===")
+# ctx_with_calc = ctx.with_handle(Calculator, Calculator(precision=2))
+
+# # Class-level access creates context-resolved expressions
+# result = await CalculatorRef.add(FloatValue(10.5), FloatValue(20.3)).execute(
+#     ctx_with_calc
+# )
+# print(f"CalculatorRef.add(10.5, 20.3) = {result}")
+
+# result = await CalculatorRef.multiply(FloatValue(7.0), FloatValue(6.0)).execute(
+#     ctx_with_calc
+# )
+# print(f"CalculatorRef.multiply(7.0, 6.0) = {result}")
+
+# prec = await CalculatorRef.precision.execute(ctx_with_calc)
+# print(f"CalculatorRef.precision = {prec}")
+# print()

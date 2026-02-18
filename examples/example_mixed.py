@@ -43,17 +43,11 @@ async def main():
     from everybase import Context
     from everypv.adapters.codecs import TextCodec as Codec
     from everypv.adapters.storages.textdb import TextStorage as Storage
-    from everypv.views import DictView
 
     with Storage(".db-mixed", codec=Codec()) as storage:
-        ctx = (
-            Context()
-            .with_handle(StorageProtocol, storage, shape=Counters)
-            .with_handle(StorageProtocol, storage, shape=Results)
-        )
+        ctx = Context().with_handle(StorageProtocol, storage)
 
-        wrapped = pv.auto_atomic(tree, Counters, DictView)
-        wrapped = pv.auto_atomic(wrapped, Results, DictView)
+        wrapped = pv.auto_atomic(tree)
         await wrapped.execute(ctx)
 
 

@@ -11,6 +11,8 @@ from ..spans import Atomic
 
 
 if TYPE_CHECKING:
+    from collections.abc import Hashable
+
     from pv.view import View
 
     from everybase import Node
@@ -21,26 +23,33 @@ __all__ = [
 ]
 
 
-def auto_atomic[N: Node](tree: N, shape: type, view_cls: type[View]) -> N:
+def auto_atomic[N: Node](
+    tree: N,
+    scope: Hashable | None = None,
+    view_cls: type[View] | None = None,
+) -> N:
     """Wrap each Term subtree in its own ``Atomic`` span.
 
     Walks *tree* bottom-up. Each Term child gets wrapped individually
-    in ``Atomic(shape, view_cls, term)``. Non-Term children are
+    in ``Atomic(term, scope=..., view_cls=...)``. Non-Term children are
     recursed into so their inner Terms get wrapped at their level.
-
-    Works because Spans are value-transparent — ``Atomic(get())``
-    returns the get result.
 
     Args:
         tree: Expression tree to rewrite.
-        shape: Shape class for storage context lookup.
-        view_cls: View class to open on top of the storage context.
+        scope: Scope for storage context lookup. None = unscoped (default).
+        view_cls: View class to open. If None, uses Atomic default (DictView).
 
     Returns:
         New tree with Atomic spans injected.
     """
+    kwargs: dict = {}
+    if scope is not None:
+        kwargs["scope"] = scope
+    if view_cls is not None:
+        kwargs["view_cls"] = view_cls
+
     return conditional_wrap(
         tree,
         lambda n: isinstance(n, Term),
-        lambda term: Atomic(shape, view_cls, term),
+        lambda term: Atomic(term, **kwargs),
     )

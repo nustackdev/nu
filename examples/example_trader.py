@@ -129,7 +129,6 @@ async def main():
     from everypv.adapters.codecs import TextCodec as Codec
     from everypv.adapters.observers.in_memory import InMemoryObserver
     from everypv.adapters.storages.textdb import TextStorage as Storage
-    from everypv.views import DictView
 
     # Init services
     client = SolanaClient()
@@ -139,16 +138,10 @@ async def main():
     storage.open()
 
     # Create execution context
-    ctx = (
-        Context()
-        .with_handle(SolanaClient, client)
-        .with_handle(StorageProtocol, storage, shape=SlotData)
-        .with_handle(StorageProtocol, storage, shape=Stats)
-    )
+    ctx = Context().with_handle(SolanaClient, client).with_handle(StorageProtocol, storage)
 
     # Add tree extensions
-    tree = pv.auto_atomic(tracker, SlotData, DictView)
-    tree = pv.auto_atomic(tree, Stats, DictView)
+    tree = pv.auto_atomic(tracker)
 
     # Execute
     await tree.execute(ctx)

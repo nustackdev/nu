@@ -37,15 +37,14 @@ async def main():
     from everybase import Context
     from everypv.adapters.codecs import TextCodec as Codec
     from everypv.adapters.storages.textdb import TextStorage as Storage
-    from everypv.views import DictView
 
     with Storage(".db", codec=Codec()) as storage:
-        ctx = Context().with_handle(StorageProtocol, storage, shape=AppState)
+        ctx = Context().with_handle(StorageProtocol, storage)
         for i in range(len(demos)):
             # Get the tree
             tree = demos[i]
             # Add atomicity
-            tree = pv.auto_atomic(tree, AppState, DictView)
+            tree = pv.auto_atomic(tree)
             # Add other features
             ...
             # Execute the tree

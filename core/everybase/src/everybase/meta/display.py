@@ -123,12 +123,12 @@ def _get_category_color(node: Node) -> str:
 
 
 def _format_span_label(node: Node) -> str:
-    """Format label for Span nodes: Atomic[ShapeName]."""
+    """Format label for Span nodes: Atomic[ScopeName]."""
     cls = type(node).__name__
-    if hasattr(node, "shape"):
-        shape = node.shape
-        shape_name = shape.__name__ if hasattr(shape, "__name__") else str(shape)
-        return f"{cls}[{shape_name}]"
+    if hasattr(node, "scope") and node.scope is not None:
+        scope = node.scope
+        scope_name = scope.__name__ if hasattr(scope, "__name__") else str(scope)
+        return f"{cls}[{scope_name}]"
     return cls
 
 

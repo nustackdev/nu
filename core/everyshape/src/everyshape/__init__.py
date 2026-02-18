@@ -60,6 +60,24 @@ from everyshape.collections import (
     SetLikeBase,
 )
 from everyshape.flows import React, ReactForever, ReactWhile
+from everyshape.morphisms import (
+    ChangeOp,
+    CollectionClearCmd,
+    CollectionExistsOp,
+    CollectionMissingOp,
+    ExtractOp,
+    ItemDeleteCmd,
+    ItemExistsOp,
+    ItemGetOp,
+    ItemMissingOp,
+    ItemSetCmd,
+    OnChangeOp,
+    OnChildChangeOp,
+    OnChildrenChangeOp,
+    OnDescendantsChangeOp,
+    OnPrimitiveChangeOp,
+    StoreCmd,
+)
 from everyshape.protocols import (
     ChildObservableProtocol,
     ChildrenObservableProtocol,
@@ -189,4 +207,23 @@ __all__ = [  # noqa: RUF022
     "React",
     "ReactForever",
     "ReactWhile",
+    # Morphisms — Item
+    "ItemGetOp",
+    "ItemSetCmd",
+    "ItemDeleteCmd",
+    "ItemExistsOp",
+    "ItemMissingOp",
+    # Morphisms — Collection
+    "ExtractOp",
+    "StoreCmd",
+    "CollectionClearCmd",
+    "CollectionExistsOp",
+    "CollectionMissingOp",
+    # Morphisms — Reactive
+    "ChangeOp",
+    "OnChangeOp",
+    "OnPrimitiveChangeOp",
+    "OnChildChangeOp",
+    "OnChildrenChangeOp",
+    "OnDescendantsChangeOp",
 ]
