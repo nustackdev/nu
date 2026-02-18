@@ -1,4 +1,4 @@
-"""method and prop descriptors, AutoInterface for declarative proxying.
+"""method and prop descriptors, AutoInterface for declarative Type construction.
 
 method: Descriptor that proxies method calls to underlying Python objects.
 prop:   Descriptor that proxies property/attribute access.
@@ -8,18 +8,12 @@ AutoInterface: Base class that auto-creates method descriptors from annotations.
 from __future__ import annotations
 
 import typing
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
 from everybase.abc.values import ValueBase
 from everybase.core import Ref
 
 from .morphisms import GetAttrOp, MethodCallCmd, MethodCallOp
-
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from everybase.core import Term
 
 
 __all__ = [
@@ -53,57 +47,70 @@ class _BoundMethod[V: ValueBase]:
 
 
 class _ClassBoundMethod[V: ValueBase]:
-    """Method descriptor bound to a class via a ref factory.
+    """Method descriptor bound to a Ref subclass.
 
-    The factory creates a ref term (e.g., ServiceRef) that resolves
-    the target object from context at execution time.
+    The Ref subclass itself acts as the factory — calling it creates a
+    ref term that resolves the target object from context at execution time.
 
-    Solana.get_slot() creates:
-        IntValue(MethodCallCmd(SolanaRef(), "getSlot"))
-    where SolanaRef() is a ref term that does ctx.get(SolanaClient).
+    Example::
+
+        class Solana(Ref):
+            get_slot = method(IntValue, "getSlot")
+
+        Solana.get_slot()  # → IntValue(MethodCallCmd(Solana(), "getSlot"))
     """
 
-    __slots__ = ("_method_name", "_pure", "_ref_factory", "_value_type")
+    __slots__ = ("_method_name", "_pure", "_ref_cls", "_value_type")
 
     def __init__(
         self,
-        ref_factory: Callable[[], Term],
+        ref_cls: type[Ref],
         value_type: type[V],
         method_name: str,
         *,
         pure: bool,
     ) -> None:
-        self._ref_factory = ref_factory
+        self._ref_cls = ref_cls
         self._value_type = value_type
         self._method_name = method_name
         self._pure = pure
 
     def __call__(self, *args: object, **kwargs: object) -> V:
-        target = self._ref_factory()
+        target = self._ref_cls()
         morph_cls = MethodCallOp if self._pure else MethodCallCmd
         return self._value_type(morph_cls(target, self._method_name, *args, **kwargs))
 
     def __repr__(self) -> str:
-        return f"<class>.{self._method_name}"
+        return f"{self._ref_cls.__name__}.{self._method_name}"
 
 
 class method[V: ValueBase]:  # noqa: N801
-    """Descriptor that proxies method calls.
+    """Descriptor that proxies method calls to a Type's underlying object.
 
     Generic in V (a ValueBase subclass). Pyright infers the return type.
 
     Two access modes:
-    - Instance access (e.g., my_str.upper()): creates MethodCall with
+
+    - **Instance access** (e.g., ``my_str.upper()``): creates MethodCall with
       the instance as target.
-    - Class access with ref factory: creates MethodCall with a ref
-      from the factory as target (context-resolved at execution time).
+    - **Class access on Ref subclass** (e.g., ``Solana.get_slot()``): creates
+      MethodCall with a new Ref instance as target (resolved from context
+      at execution time).
 
-    The ref factory is set externally (e.g., by Interface.__init_subclass__)
-    via the ``bind_ref_factory()`` method.
-
-    Uses __set_name__ to auto-infer the method name from the Python
+    Uses ``__set_name__`` to auto-infer the method name from the Python
     attribute name. An explicit name can be provided for APIs with
     different naming conventions.
+
+    Half-code usage::
+
+        class SolanaType(TypeBase[SolanaClient]):
+            get_slot = method(IntValue, "getSlot")
+
+    Zero-code usage (via AutoInterface)::
+
+        class StrOps(AutoInterface, TypeBase[str], pure=True):
+            upper: StrValue
+            lower: StrValue
     """
 
     def __init__(self, value_type: type[V], name: str | None = None, *, pure: bool = False) -> None:
@@ -112,19 +119,10 @@ class method[V: ValueBase]:  # noqa: N801
         self._pure = pure
         self._attr_name: str = ""
         self._method_name: str = name or ""
-        self._ref_factory: Callable[[], Term] | None = None
 
     def __set_name__(self, owner: type, attr_name: str) -> None:
         self._attr_name = attr_name
         self._method_name = self._explicit_name or attr_name
-
-    def bind_ref_factory(self, factory: Callable[[], Term]) -> None:
-        """Set the ref factory for class-level access.
-
-        Called by base classes (e.g., Interface.__init_subclass__)
-        to wire up context resolution.
-        """
-        self._ref_factory = factory
 
     @overload
     def __get__(self, obj: None, objtype: type) -> _ClassBoundMethod[V]: ...
@@ -135,12 +133,6 @@ class method[V: ValueBase]:  # noqa: N801
         self, obj: object | None, objtype: type | None = None
     ) -> method[V] | _BoundMethod[V] | _ClassBoundMethod[V]:
         if obj is None:
-            # 1. Explicit ref factory (set by Interface.__init_subclass__)
-            if self._ref_factory is not None:
-                return _ClassBoundMethod(
-                    self._ref_factory, self._value_type, self._method_name, pure=self._pure
-                )
-            # 2. Owner is a Ref subclass — use it directly as factory
             if objtype is not None and issubclass(objtype, Ref):
                 return _ClassBoundMethod(
                     objtype, self._value_type, self._method_name, pure=self._pure
@@ -155,17 +147,19 @@ class method[V: ValueBase]:  # noqa: N801
 
 
 class prop[V: ValueBase]:  # noqa: N801
-    """Descriptor that proxies property/attribute access.
+    """Descriptor that proxies property/attribute access on a Type's underlying object.
 
     Generic in V (a ValueBase subclass). Pyright infers the return type.
 
     Two access modes:
-    - Instance access (e.g., my_obj.url): creates GetAttrOp with
-      the instance as target.
-    - Class access with ref factory: creates GetAttrOp with a ref
-      from the factory as target (context-resolved at execution time).
 
-    Uses __set_name__ to auto-infer the property name from the Python
+    - **Instance access** (e.g., ``my_obj.url``): creates GetAttrOp with
+      the instance as target.
+    - **Class access on Ref subclass** (e.g., ``MyService.url``): creates
+      GetAttrOp with a new Ref instance as target (resolved from context
+      at execution time).
+
+    Uses ``__set_name__`` to auto-infer the property name from the Python
     attribute name. An explicit name can be provided for properties with
     different naming conventions (e.g., ``url = prop(StrValue, "_url")``).
     """
@@ -175,15 +169,10 @@ class prop[V: ValueBase]:  # noqa: N801
         self._explicit_name = name
         self._attr_name: str = ""
         self._prop_name: str = name or ""
-        self._ref_factory: Callable[[], Term] | None = None
 
     def __set_name__(self, owner: type, attr_name: str) -> None:
         self._attr_name = attr_name
         self._prop_name = self._explicit_name or attr_name
-
-    def bind_ref_factory(self, factory: Callable[[], Term]) -> None:
-        """Set the ref factory for class-level access."""
-        self._ref_factory = factory
 
     @overload
     def __get__(self, obj: None, objtype: type) -> V: ...
@@ -192,8 +181,6 @@ class prop[V: ValueBase]:  # noqa: N801
 
     def __get__(self, obj: object | None, objtype: type | None = None) -> prop[V] | V:
         if obj is None:
-            if self._ref_factory is not None:
-                return self._value_type(GetAttrOp(self._ref_factory(), self._prop_name))
             if objtype is not None and issubclass(objtype, Ref):
                 return self._value_type(GetAttrOp(objtype(), self._prop_name))
             return self
