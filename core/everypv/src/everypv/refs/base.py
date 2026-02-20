@@ -90,10 +90,11 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         """
         address = await self.resolve_address(ctx)
 
-        if self._parent is None:
+        parent = self.parent
+        if parent is None:
             resolved_path = ((address, self._view_type),)
         else:
-            parent_path = await self._parent.resolve(ctx)
+            parent_path = await parent.resolve(ctx)
             resolved_path = (*parent_path, (address, self._view_type))
 
         logger.debug(
@@ -101,7 +102,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
             extra={
                 "address": address,
                 "view_type": self._view_type.__name__,
-                "has_parent": self._parent is not None,
+                "has_parent": parent is not None,
                 "resolved_path": resolved_path,
             },
         )
@@ -115,9 +116,10 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         """
         scope = self.get_root_shape()
         root_view = ctx.get(View, scope=scope)
-        if self._parent is None:
+        parent = self.parent
+        if parent is None:
             return root_view
-        return await self._parent.fetch(ctx)
+        return await parent.fetch(ctx)
 
     async def fetch(self, ctx: Context) -> ViewT | Sentinel:
         """Fetch the view from PV storage.
@@ -185,10 +187,11 @@ class PrimitiveRef[T](Ref[T]):
         """
         address = await self.resolve_address(ctx)
 
-        if self._parent is None:
+        parent = self.parent
+        if parent is None:
             resolved_path = ((address, self._value_type),)
         else:
-            parent_path = await self._parent.resolve(ctx)
+            parent_path = await parent.resolve(ctx)
             resolved_path = (*parent_path, (address, self._value_type))
 
         logger.debug(
@@ -196,7 +199,7 @@ class PrimitiveRef[T](Ref[T]):
             extra={
                 "address": address,
                 "value_type": self._value_type.__name__,
-                "has_parent": self._parent is not None,
+                "has_parent": parent is not None,
                 "resolved_path": resolved_path,
             },
         )

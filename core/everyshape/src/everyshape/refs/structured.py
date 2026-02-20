@@ -75,7 +75,6 @@ class ShapeRef[T: ShapeBase](
             "address",
             "_address",
             "parent",
-            "_parent",
             "shape",
             "_shape",
             "resolve",

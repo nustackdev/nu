@@ -6,6 +6,14 @@ Ref captures invariants shared by all Shape-aware refs:
 - Shape context association
 - Slot factory protocol
 
+Tree structure:
+    children[0] = address term (always present)
+    children[1] = parent ref (present when parent is not None)
+
+The parent ref is a tree child so that tree traversal (find, preorder)
+naturally discovers the full ref chain — including cross-scope address
+dependencies like ``PersShape.tokens[MemShape.cursor]``.
+
 Hierarchy:
     everyabc.Ref[T]              # Pure protocol: resolve, fetch, execute
         |
@@ -48,13 +56,17 @@ class Ref[T](RefABC[T]):
     - Shape context association
     - Slot factory protocol
 
+    Tree children:
+        children[0]: address term — location within parent
+        children[1]: parent ref — parent in navigation chain (if any)
+
     Substrates extend this with storage-specific mechanics:
     - everypv.RefBase: PV view navigation
 
     Attributes:
-        address: Location identifier within parent
-        parent: Parent ref for path composition
-        shape: Owning Shape class for context lookup
+        address: Location identifier within parent (children[0])
+        parent: Parent ref for path composition (children[1] or None)
+        owner_shape: Owning Shape class for context lookup
     """
 
     def __init__(
@@ -66,7 +78,7 @@ class Ref[T](RefABC[T]):
         """Initialize ref.
 
         Args:
-            address: Address of this filed in parent's domain
+            address: Address of this field in parent's domain
             parent: Parent reference in navigation chain
             owner_shape: Shape class this ref belongs to
         """
@@ -75,8 +87,10 @@ class Ref[T](RefABC[T]):
         except TypeError:
             address_term = AnyValue(address)
 
-        super().__init__(address_term)
-        self._parent = parent
+        if parent is not None:
+            super().__init__(address_term, parent)
+        else:
+            super().__init__(address_term)
         self._owner_shape = owner_shape
 
     # =========================================================================
@@ -100,8 +114,11 @@ class Ref[T](RefABC[T]):
         """Parent ref in the navigation hierarchy.
 
         None for root refs (entry points from Storage).
+        Stored as children[1] in the Node tree.
         """
-        return self._parent
+        if len(self.children) > 1:
+            return self.children[1]
+        return None
 
     @property
     def owner_shape(self) -> type[Shape] | None:
@@ -117,8 +134,9 @@ class Ref[T](RefABC[T]):
         Returns the shape of the topmost ref in the hierarchy.
         Used to look up the correct context handle for storage access.
         """
-        if self._parent is not None:
-            return self._parent.get_root_shape()
+        parent = self.parent
+        if parent is not None:
+            return parent.get_root_shape()
         return self._owner_shape
 
     # =========================================================================
@@ -217,12 +235,14 @@ class Ref[T](RefABC[T]):
 
     def __repr__(self) -> str:
         """Debug representation showing address and parent chain."""
-        if self._parent:
-            return f"<{self.__class__.__name__}: {self._parent!r} -> {self.children[0]!r}>"
+        parent = self.parent
+        if parent:
+            return f"<{self.__class__.__name__}: {parent!r} -> {self.children[0]!r}>"
         return f"<{self.__class__.__name__}: {self.children[0]!r}>"
 
     def __str__(self) -> str:
         """String representation showing address and parent chain."""
-        if self._parent:
-            return f"{self.__class__.__name__}({self._parent!s} -> {self.children[0]!s})"
+        parent = self.parent
+        if parent:
+            return f"{self.__class__.__name__}({parent!s} -> {self.children[0]!s})"
         return f"{self.__class__.__name__}({self.children[0]!s})"
