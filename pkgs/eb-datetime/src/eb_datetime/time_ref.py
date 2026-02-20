@@ -49,7 +49,14 @@ class TimeType(
         """Create a TimeValue from an ISO format string (HH:MM:SS[.ffffff])."""
         from everybase.abc import FuncCallOp
 
-        return TimeValue(FuncCallOp(time.fromisoformat, iso_str))
+        def _safe_fromisoformat(s: object) -> time | Sentinel:
+            if not isinstance(s, str):
+                from everybase import EMPTY
+
+                return EMPTY
+            return time.fromisoformat(s)
+
+        return TimeValue(FuncCallOp(_safe_fromisoformat, iso_str))
 
     @classmethod
     def from_components(

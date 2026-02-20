@@ -89,7 +89,14 @@ class DatetimeType(
         """Create a DatetimeValue from an ISO format string."""
         from everybase.abc import FuncCallOp
 
-        return DatetimeValue(FuncCallOp(datetime.fromisoformat, iso_str))
+        def _safe_fromisoformat(s: object) -> datetime | Sentinel:
+            if not isinstance(s, str):
+                from everybase import EMPTY
+
+                return EMPTY
+            return datetime.fromisoformat(s)
+
+        return DatetimeValue(FuncCallOp(_safe_fromisoformat, iso_str))
 
     # =========================================================================
     # COMPONENT ACCESSORS

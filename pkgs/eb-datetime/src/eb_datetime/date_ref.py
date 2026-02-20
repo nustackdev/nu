@@ -58,7 +58,14 @@ class DateType(
         """Create a DateValue from an ISO format string (YYYY-MM-DD)."""
         from everybase.abc import FuncCallOp
 
-        return DateValue(FuncCallOp(date.fromisoformat, iso_str))
+        def _safe_fromisoformat(s: object) -> date | Sentinel:
+            if not isinstance(s, str):
+                from everybase import EMPTY
+
+                return EMPTY
+            return date.fromisoformat(s)
+
+        return DateValue(FuncCallOp(_safe_fromisoformat, iso_str))
 
     @classmethod
     def from_ordinal(cls, ordinal: int | Term[int]) -> DateValue:
