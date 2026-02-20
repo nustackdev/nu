@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from pv.collections import MutableMappingView
 
@@ -123,7 +123,7 @@ class ShapesDictRef[
         shape_type: type[T],
         view_type: type[MutableMappingView] | None = None,
         key_type: type[K] = str,
-    ) -> T:
+    ) -> Self:
         """Create a slot for this shapes dict ref type.
 
         Args:
