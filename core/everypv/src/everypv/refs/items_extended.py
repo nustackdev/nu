@@ -57,6 +57,7 @@ from eb_math import (
 )
 from eb_path import PathType, PathValue
 from eb_uuid import UUIDType, UUIDValue
+from everybase import Term
 from everybase.abc import FloatValue, FuncCallOp, IntValue, MethodCallOp, StrValue, ensure_term
 from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
@@ -291,6 +292,8 @@ class DateRef(ItemRef[str, StrValue], DateType):
             val = value.isoformat()
         elif isinstance(value, str):
             val = value
+        elif isinstance(value, Term):
+            val = value  # PV ref — already stores as ISO string
         else:
             val = MethodCallOp(value, "isoformat")
         return DateValue(ItemSetCmd(self, ensure_term(val)))
@@ -322,6 +325,8 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
             val = value.isoformat()
         elif isinstance(value, str):
             val = value
+        elif isinstance(value, Term):
+            val = value  # PV ref — already stores as ISO string
         else:
             val = MethodCallOp(value, "isoformat")
         return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
@@ -353,6 +358,8 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
             val = value.isoformat()
         elif isinstance(value, str):
             val = value
+        elif isinstance(value, Term):
+            val = value  # PV ref — already stores as ISO string
         else:
             val = MethodCallOp(value, "isoformat")
         return TimeValue(ItemSetCmd(self, ensure_term(val)))
