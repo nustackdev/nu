@@ -293,6 +293,28 @@ class ListView(
                 return
         raise ValueError(f"{value!r} is not in list")
 
+    def __add__(self, other: Iterable[object]) -> list[object]:
+        """Concatenate with another iterable, returning a plain list.
+
+        Args:
+            other: Iterable to concatenate
+
+        Returns:
+            New plain list with items from both
+        """
+        return list(self) + list(other)
+
+    def __radd__(self, other: Iterable[object]) -> list[object]:
+        """Support ``other + list_view``.
+
+        Args:
+            other: Iterable to prepend
+
+        Returns:
+            New plain list with items from both
+        """
+        return list(other) + list(self)
+
     def __reversed__(self) -> Generator[object, None, None]:
         """Iterate in reverse order."""
         for i in range(len(self) - 1, -1, -1):
