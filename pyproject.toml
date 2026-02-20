@@ -178,6 +178,13 @@ convention = "google"
     "D",
     "ANN",
 ]
+"benchmarks/**/*.py" = [
+    "S101",
+    "T20",
+    "D",
+    "ANN",
+    "B007",
+]
 "**/abc/flows/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic flow parameters
 ]
