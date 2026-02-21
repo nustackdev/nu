@@ -4,9 +4,9 @@ Real-world pattern: nested shapes, compound .store(), pre-built trees.
 Trees are built once outside the timed section. Only .execute(ctx) is measured.
 
 Benchmarks:
-  store  -- populate entire catalog (200+ values) in 1 Atomic
-  read   -- read all product fields in 1 Atomic
-  update -- update all prices in 1 Atomic
+  store  -- populate entire catalog (200+ values) via auto_atomic
+  read   -- read all product fields via auto_atomic
+  update -- update all prices via auto_atomic
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from utils import (
 import everypv as pv
 from everybase import Context
 from everybase.abc import Seq
-from everypv import Atomic
+from everypv import auto_atomic
 from everyshape import Shape
 
 
@@ -79,11 +79,11 @@ CATEGORIES = {
 
 # ── Trees (built once) ───────────────────────────────────────────────────────
 
-store_tree = Atomic(
+store_tree = auto_atomic(
     Seq(*[Catalog.categories[cat_key].store(cat_data) for cat_key, cat_data in CATEGORIES.items()])
 )
 
-read_tree = Atomic(
+read_tree = auto_atomic(
     Seq(
         *[
             term
@@ -99,7 +99,7 @@ read_tree = Atomic(
     )
 )
 
-update_tree = Atomic(
+update_tree = auto_atomic(
     Seq(
         *[
             Catalog.categories[cat_key].products[prod_key].price.set(0.99)
@@ -116,7 +116,7 @@ N = 50  # iterations (heavier trees, fewer reps)
 
 
 async def bench_store(ctx: Context) -> TimingResult:
-    """Store entire catalog (200+ values) in 1 Atomic, N times."""
+    """Store entire catalog (200+ values) via auto_atomic, N times."""
     # Warm up
     await store_tree.execute(ctx)
     get_counters().reset()
@@ -128,7 +128,7 @@ async def bench_store(ctx: Context) -> TimingResult:
 
 
 async def bench_read(ctx: Context) -> TimingResult:
-    """Read all product fields (200) in 1 Atomic, N times."""
+    """Read all product fields (200) via auto_atomic, N times."""
     await store_tree.execute(ctx)
     get_counters().reset()
 
@@ -139,7 +139,7 @@ async def bench_read(ctx: Context) -> TimingResult:
 
 
 async def bench_update(ctx: Context) -> TimingResult:
-    """Update all 50 prices in 1 Atomic, N times."""
+    """Update all 50 prices via auto_atomic, N times."""
     await store_tree.execute(ctx)
     get_counters().reset()
 

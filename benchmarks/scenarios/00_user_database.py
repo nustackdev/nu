@@ -4,9 +4,9 @@ Real-world pattern: shapes -> data -> trees (pre-built) -> benchmark (execution 
 Trees are built once outside the timed section. Only .execute(ctx) is measured.
 
 Benchmarks:
-  store  -- 150 values in 1 Atomic (10 users x 15 values)
-  read   -- 60 field reads in 1 Atomic (10 users x 6 fields)
-  update -- 10 field updates in 1 Atomic
+  store  -- 150 values via auto_atomic (10 users x 15 values)
+  read   -- 60 field reads via auto_atomic (10 users x 6 fields)
+  update -- 10 field updates via auto_atomic
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from utils import (
 import everypv as pv
 from everybase import Context
 from everybase.abc import Seq
-from everypv import Atomic
+from everypv import auto_atomic
 from everyshape import Shape
 
 
@@ -72,9 +72,9 @@ USERS = {
 
 # ── Trees (built once) ───────────────────────────────────────────────────────
 
-store_tree = Atomic(Seq(*[UserDB.users[k].store(v) for k, v in USERS.items()]))
+store_tree = auto_atomic(Seq(*[UserDB.users[k].store(v) for k, v in USERS.items()]))
 
-read_tree = Atomic(
+read_tree = auto_atomic(
     Seq(
         *[
             term
@@ -91,7 +91,7 @@ read_tree = Atomic(
     )
 )
 
-update_tree = Atomic(Seq(*[UserDB.users[k].score.set(99.0) for k in USERS]))
+update_tree = auto_atomic(Seq(*[UserDB.users[k].score.set(99.0) for k in USERS]))
 
 
 # ── Benchmarks ────────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ N = 100  # iterations
 
 
 async def bench_store(ctx: Context) -> TimingResult:
-    """Store all 10 users (150 values) in 1 Atomic, N times."""
+    """Store all 10 users (150 values) via auto_atomic, N times."""
     # Warm up
     await store_tree.execute(ctx)
     get_counters().reset()
@@ -112,7 +112,7 @@ async def bench_store(ctx: Context) -> TimingResult:
 
 
 async def bench_read(ctx: Context) -> TimingResult:
-    """Read 60 fields (10 users x 6) in 1 Atomic, N times."""
+    """Read 60 fields (10 users x 6) via auto_atomic, N times."""
     # Ensure data exists
     await store_tree.execute(ctx)
     get_counters().reset()
@@ -124,7 +124,7 @@ async def bench_read(ctx: Context) -> TimingResult:
 
 
 async def bench_update(ctx: Context) -> TimingResult:
-    """Update 10 scores in 1 Atomic, N times."""
+    """Update 10 scores via auto_atomic, N times."""
     # Ensure data exists
     await store_tree.execute(ctx)
     get_counters().reset()
