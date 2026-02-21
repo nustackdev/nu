@@ -11,20 +11,18 @@ from pathlib import Path
 
 
 _HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(_HERE.parent))  # benchmarks/ — for utils
-sys.path.insert(0, str(_HERE))  # benchmarks/point/ — for scenario modules
+sys.path.insert(0, str(_HERE.parent))  # benchmarks/ -- for utils
+sys.path.insert(0, str(_HERE))  # benchmarks/point/ -- for scenario modules
 
 from utils import TimingResult, format_counter_table, format_result_table  # noqa: E402
 
 
 SCENARIOS = [
-    ("Scenario 1: Flat Writes", "01_flat_writes"),
-    ("Scenario 2: Nested Shape Navigation", "02_nested_nav"),
-    ("Scenario 3: Dict-of-Shapes CRUD", "03_dict_shapes"),
-    ("Scenario 4: List Append & Iteration", "04_list_ops"),
-    ("Scenario 5: Mixed Read/Write Flow", "05_mixed_flow"),
-    ("Scenario 6: Auto-Atomic Granularity", "06_atomic_granularity"),
-    ("Scenario 7: Observer Overhead", "07_observer_overhead"),
+    ("Flat Writes", "00_flat_writes"),
+    ("Nested Shape Navigation", "01_nested_nav"),
+    ("Dict-of-Shapes CRUD", "02_dict_shapes"),
+    ("List Ops", "03_list_ops"),
+    ("Atomic Granularity", "04_atomic_granularity"),
 ]
 
 
@@ -32,7 +30,7 @@ async def main() -> None:
     all_results: dict[str, list[TimingResult]] = {}
 
     print("=" * 70)
-    print("  EVERYBASE DATA LAYER BENCHMARKS — Point Suite")
+    print("  EVERYBASE POINT BENCHMARKS")
     print("=" * 70)
     print()
 
@@ -48,7 +46,7 @@ async def main() -> None:
 
     # Generate RESULTS.md
     lines = [
-        "# Everybase Data Layer Benchmark Results — Point Suite",
+        "# Everybase Point Benchmark Results",
         "",
         f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  ",
         f"**Total runtime:** {total_time:.1f}s  ",
@@ -76,52 +74,30 @@ async def main() -> None:
     lines.append("## Key Observations")
     lines.append("")
 
-    # auto_atomic vs single atomic comparison (from scenario 6)
-    s6 = all_results.get("Scenario 6: Auto-Atomic Granularity", [])
-    if len(s6) >= 3:
-        auto = next((r for r in s6 if "auto_atomic_per_term" in r.name), None)
-        single = next((r for r in s6 if r.name.startswith("single_atomic")), None)
-        raw = next((r for r in s6 if "raw_dictview" in r.name), None)
-        if auto and single and raw:
+    # auto_atomic vs single atomic comparison
+    s_atomic = all_results.get("Atomic Granularity", [])
+    if len(s_atomic) >= 2:
+        auto = next((r for r in s_atomic if "auto_atomic_per_term" in r.name), None)
+        single = next((r for r in s_atomic if r.name.startswith("single_atomic")), None)
+        if auto and single:
             lines.append(
-                f"- **auto_atomic per-term overhead:** {auto.per_op_ms:.3f}ms/op "
-                f"({auto.counters.get('storage.begin_transaction', 0)} txns/op)"
+                f"- **auto_atomic per-term:** {auto.per_op_ms:.3f}ms/op "
+                f"({auto.counters.get('storage.begin_transaction', 0)} txns)"
             )
             lines.append(
                 f"- **Single Atomic:** {single.per_op_ms:.3f}ms/op "
-                f"({single.counters.get('storage.begin_transaction', 0)} txns/op)"
+                f"({single.counters.get('storage.begin_transaction', 0)} txns)"
             )
-            lines.append(
-                f"- **Raw DictView:** {raw.per_op_ms:.3f}ms/op "
-                f"({raw.counters.get('storage.begin_transaction', 0)} txns/op)"
-            )
-            if raw.per_op_ms > 0:
-                lines.append(
-                    f"- **Framework overhead vs raw:** "
-                    f"{auto.per_op_ms / raw.per_op_ms:.1f}x (auto_atomic), "
-                    f"{single.per_op_ms / raw.per_op_ms:.1f}x (single Atomic)"
-                )
 
-    # Nesting depth impact (from scenario 2)
-    s2 = all_results.get("Scenario 2: Nested Shape Navigation", [])
-    d2_w = next((r for r in s2 if "depth_2_write" in r.name), None)
-    d6_w = next((r for r in s2 if "depth_6_write" in r.name), None)
+    # Nesting depth impact
+    s_nav = all_results.get("Nested Shape Navigation", [])
+    d2_w = next((r for r in s_nav if "depth_2_write" in r.name), None)
+    d6_w = next((r for r in s_nav if "depth_6_write" in r.name), None)
     if d2_w and d6_w:
         lines.append(
             f"- **Nesting depth cost:** depth-2 write = {d2_w.per_op_ms:.3f}ms, "
             f"depth-6 write = {d6_w.per_op_ms:.3f}ms "
             f"({d6_w.per_op_ms / d2_w.per_op_ms:.1f}x)"
-        )
-
-    # Observer impact (from scenario 7)
-    s7 = all_results.get("Scenario 7: Observer Overhead", [])
-    with_obs = next((r for r in s7 if r.name.startswith("with_observer")), None)
-    without_obs = next((r for r in s7 if r.name.startswith("without_observer")), None)
-    if with_obs and without_obs:
-        lines.append(
-            f"- **Observer overhead:** with={with_obs.per_op_ms:.3f}ms, "
-            f"without={without_obs.per_op_ms:.3f}ms "
-            f"(delta={with_obs.per_op_ms - without_obs.per_op_ms:.3f}ms)"
         )
 
     lines.append("")

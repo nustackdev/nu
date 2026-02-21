@@ -14,14 +14,12 @@ benchmarks/
 │   ├── 02_raw_tkv.py           # Raw TKV RocksDB baseline (absolute storage floor)
 │   └── RESULTS.md              # Layer overhead results
 │
-├── point/                      # Point benchmarks -- isolate one dimension
-│   ├── 01_flat_writes.py       # Flat shape write throughput
-│   ├── 02_nested_nav.py        # Nested shape navigation at depth 2/4/6
-│   ├── 03_dict_shapes.py       # Dict-of-Shapes CRUD
-│   ├── 04_list_ops.py          # ListRef store/append/iteration
-│   ├── 05_mixed_flow.py        # Mixed read/write with term resolution
-│   ├── 06_atomic_granularity.py  # auto_atomic vs manual Atomic vs raw
-│   ├── 07_observer_overhead.py   # Observer enabled vs disabled
+├── point/                      # Point benchmarks -- isolate one everybase dimension
+│   ├── 00_flat_writes.py       # Flat shape write throughput
+│   ├── 01_nested_nav.py        # Nested shape navigation at depth 2/4/6
+│   ├── 02_dict_shapes.py       # Dict-of-Shapes CRUD
+│   ├── 03_list_ops.py          # ListRef store/append/iteration
+│   ├── 04_atomic_granularity.py  # auto_atomic vs manual Atomic vs batched
 │   ├── run_all.py              # Run all point benchmarks
 │   └── RESULTS.md              # Point benchmark results
 │
@@ -38,7 +36,7 @@ Layer-by-layer overhead analysis. Measures put/get cost at each abstraction laye
 
 ### Point (`point/`)
 
-Clinical, single-dimension benchmarks. Each isolates one exact aspect -- flat writes, nesting depth, dict/list operations, atomic granularity, observer cost. Used to find bottlenecks.
+Everybase-layer-only benchmarks. Each isolates one exact aspect of the shape/term API -- flat writes, nesting depth, dict/list operations, atomic wrapping strategies. All term trees are pre-built; loops measure only `.execute(ctx)`.
 
 ### Scenarios (`scenarios/`)
 
@@ -56,7 +54,7 @@ uv run python benchmarks/layers/02_raw_tkv.py
 uv run python benchmarks/point/run_all.py
 
 # Point -- single scenario
-uv run python benchmarks/point/01_flat_writes.py
+uv run python benchmarks/point/00_flat_writes.py
 
 # Scenarios
 uv run python benchmarks/scenarios/00_user_database.py
