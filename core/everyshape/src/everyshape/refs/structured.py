@@ -96,21 +96,21 @@ class ShapeRef[T: ShapeBase](
 
     def __init__(
         self,
+        *,
         shape_type: type[T],
-        address: object = None,
-        parent: Ref | None = None,
-        shape: type[ShapeBase] | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize ref.
 
         Args:
             shape_type: Type of Shape this Ref points to
-            address: Segment address
-            parent: Parent ref in navigation chain
-            shape: Shape class for context lookup
+            **kwargs: Passed to super (address, parent, owner_shape, etc.)
         """
-        super().__init__(address, parent, shape)
+        # Set before super() — __getattribute__ checks _shape_type during
+        # parent chain traversal triggered by downstream __init__ (e.g.
+        # ViewRef._try_build_static_path).
         self._shape_type = shape_type
+        super().__init__(**kwargs)
 
     @property
     def shape_type(self) -> type[T]:

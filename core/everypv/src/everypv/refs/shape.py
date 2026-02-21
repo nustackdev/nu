@@ -9,7 +9,6 @@ from pv.types import Value as StorageValue
 
 from everybase.abc import AnyValue, DictValue, ListValue
 from everyshape import ReactiveShapeRef, Shape, Slot
-from everyshape import Ref as EveryshapeRef
 
 from .base import ViewRef
 
@@ -71,21 +70,21 @@ class ShapeRef[T: Shape](
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         shape_type: type[T],
         view_type: type[MutableMappingView],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        """Initialize shape reference.
-
-        Bypasses cooperative super().__init__() because the diamond MRO
-        mangles positional args between everyshape.ShapeRef (shape_type first)
-        and ViewRef (address first).
-        """
-        EveryshapeRef.__init__(self, address, parent, owner_shape)
-        self._shape_type = shape_type
-        self._view_type = view_type
+        """Initialize shape reference."""
+        super().__init__(
+            address=address,
+            shape_type=shape_type,
+            view_type=view_type,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
         self.key_type: type = str
         self.value_type: type = object
 

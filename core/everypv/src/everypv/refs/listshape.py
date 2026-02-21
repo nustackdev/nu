@@ -48,6 +48,7 @@ class ShapesListRef[T: Shape](
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         shape_type: type[T],
         view_type: type[MutableSequenceView],
@@ -55,7 +56,9 @@ class ShapesListRef[T: Shape](
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize sequence shape reference."""
-        super().__init__(address, view_type, parent, owner_shape)
+        super().__init__(
+            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
+        )
         self._shape_type = shape_type
         self.item_type = dict
 

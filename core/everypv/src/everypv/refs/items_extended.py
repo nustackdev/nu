@@ -70,7 +70,6 @@ if TYPE_CHECKING:
 
     from pv.loc import path
 
-    from everybase import Term
     from everyshape import Shape
 
     from .base import ViewRef
@@ -102,11 +101,18 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -133,11 +139,18 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -164,11 +177,18 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -204,11 +224,18 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, int, IntValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=int,
+            value_value_type=IntValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -235,11 +262,18 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, float, FloatValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=float,
+            value_value_type=FloatValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -271,11 +305,18 @@ class DateRef(ItemRef[str, StrValue], DateType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -304,11 +345,18 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -337,11 +385,18 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -370,11 +425,18 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, float, FloatValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=float,
+            value_value_type=FloatValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -401,11 +463,18 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -474,11 +543,18 @@ class PathRef(ItemRef[str, StrValue], PathType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:
@@ -505,11 +581,18 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:

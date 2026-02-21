@@ -18,19 +18,15 @@ Core vocabulary:
 from __future__ import annotations
 
 from logging import getLogger
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import Generic, TypeVar
 
 import pv.traits as view_traits
 from pv import Empty as PVEmpty
 from pv.loc import path
 from pv.view import View
 
-from everybase import EMPTY, Arg, Context, Sentinel
+from everybase import EMPTY, Context, Sentinel
 from everyshape import Ref
-
-
-if TYPE_CHECKING:
-    from everyshape import Shape
 
 
 __all__ = [
@@ -75,20 +71,17 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
 
     def __init__(
         self,
-        address: Arg[path.PathAddress],
+        *,
         view_type: type[ViewT],
-        parent: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize view ref.
 
         Args:
-            address: Key/address for this view
             view_type: The View class type
-            parent: Parent ref in navigation chain
-            owner_shape: Shape class for context lookup
+            **kwargs: Passed to super (address, parent, owner_shape, etc.)
         """
-        super().__init__(address, parent, owner_shape)
+        super().__init__(**kwargs)
         self._view_type = view_type
         self._static_path = _try_build_static_path(self)
 
@@ -176,20 +169,17 @@ class PrimitiveRef[T](Ref[T]):
 
     def __init__(
         self,
-        address: Arg[path.PathAddress],
+        *,
         value_type: type[T],
-        parent: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize primitive ref.
 
         Args:
-            address: Key/address for this value
             value_type: The Python type of the value
-            parent: Parent ref in navigation chain
-            owner_shape: Shape class for context lookup
+            **kwargs: Passed to super (address, parent, owner_shape, etc.)
         """
-        super().__init__(address, parent, owner_shape)
+        super().__init__(**kwargs)
         self._value_type = value_type
         self._static_path = _try_build_static_path(self)
 

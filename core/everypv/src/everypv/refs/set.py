@@ -44,6 +44,7 @@ class SetRef[T](
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         item_type: type[T],
         view_type: type[MutableSetView],
@@ -51,7 +52,9 @@ class SetRef[T](
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize set reference."""
-        super().__init__(address, view_type, parent, owner_shape)
+        super().__init__(
+            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
+        )
         self.item_type = item_type
 
     @classmethod

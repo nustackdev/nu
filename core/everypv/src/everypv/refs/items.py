@@ -69,14 +69,12 @@ class ItemRef[T, ValueT: Value](
 
     def __init__(
         self,
-        address: path.PathAddress | Term,
-        value_type: type[T],
+        *,
         value_value_type: type[ValueT],
-        parent: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize item reference."""
-        super().__init__(address, value_type, parent, owner_shape)
+        super().__init__(**kwargs)
         self._value_value_type = value_value_type
 
     @classmethod
@@ -112,12 +110,19 @@ class IntRef(ItemRef[int, IntValue], IntType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV int ref."""
-        super().__init__(address, int, IntValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=int,
+            value_value_type=IntValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -135,12 +140,19 @@ class StrRef(ItemRef[str, StrValue], StrType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV str ref."""
-        super().__init__(address, str, StrValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=str,
+            value_value_type=StrValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -158,12 +170,19 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV float ref."""
-        super().__init__(address, float, FloatValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=float,
+            value_value_type=FloatValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -181,12 +200,19 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bool ref."""
-        super().__init__(address, bool, BoolValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=bool,
+            value_value_type=BoolValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
@@ -204,12 +230,19 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize PV bytes ref."""
-        super().__init__(address, bytes, BytesValue, parent, owner_shape)
+        super().__init__(
+            address=address,
+            value_type=bytes,
+            value_value_type=BytesValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]

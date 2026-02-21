@@ -71,9 +71,11 @@ class Ref[T](RefABC[T]):
 
     def __init__(
         self,
+        *,
         address: object,
         parent: Ref | None = None,
         owner_shape: type[Shape] | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize ref.
 
@@ -81,6 +83,7 @@ class Ref[T](RefABC[T]):
             address: Address of this field in parent's domain
             parent: Parent reference in navigation chain
             owner_shape: Shape class this ref belongs to
+            **kwargs: Passed to super for cooperative MRO
         """
         # Store raw address before wrapping — lets substrates detect static
         # (literal str/int) vs dynamic (Term) addresses for fast-path optimisation.

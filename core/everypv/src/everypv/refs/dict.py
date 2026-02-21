@@ -96,6 +96,7 @@ class DictRef[
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         value_type: type[V],
         key_type: type[K],
@@ -106,7 +107,9 @@ class DictRef[
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize mapping reference."""
-        super().__init__(address, view_type, parent, owner_shape)
+        super().__init__(
+            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
+        )
         self.value_type = value_type
         self.key_type = key_type
         self.key_value_type = key_value_type

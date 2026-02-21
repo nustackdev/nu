@@ -90,6 +90,7 @@ class ShapesDictRef[
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         key_type: type[K],
         key_value_type: type[KeyValueT],
@@ -99,7 +100,9 @@ class ShapesDictRef[
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize mapping shape reference."""
-        super().__init__(address, view_type, parent, owner_shape)
+        super().__init__(
+            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
+        )
         self.value_type = dict
         self.key_type = key_type
         self.key_value_type = key_value_type

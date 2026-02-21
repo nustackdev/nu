@@ -84,6 +84,7 @@ class ListRef[
 
     def __init__(
         self,
+        *,
         address: path.PathAddress | Term,
         item_type: type[T],
         item_value_type: type[ItemValueT],
@@ -92,7 +93,9 @@ class ListRef[
         owner_shape: type[Shape] | None = None,
     ) -> None:
         """Initialize sequence reference."""
-        super().__init__(address, view_type, parent, owner_shape)
+        super().__init__(
+            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
+        )
         self.item_type = item_type
         self.item_value_type = item_value_type
 
