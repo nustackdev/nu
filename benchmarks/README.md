@@ -28,15 +28,73 @@ benchmarks/
     └── 01_market.py            # 5 categories x 10 products x 4 fields
 ```
 
-## Measurement Modes (Layer Benchmarks)
+## Measurement Dimensions
 
-The layer overhead benchmark (`layers/00_overhead.py`) measures each layer in two modes:
+Every benchmark result is shaped by three independent dimensions. Mixing them
+silently produces misleading numbers. Each benchmark must be explicit about
+where it sits on each axis.
 
-**Mode A: Pure R/W (1 txn, N ops)** -- Transaction opened ONCE, all ops inside, commit ONCE. Isolates the pure per-layer code cost without transaction open/close overhead.
+### 1. Transaction granularity
 
-**Mode B: Per-op cost (N txns, N ops)** -- One transaction per operation. Measures real-world per-op cost including transaction overhead.
+How many operations share one transaction/snapshot boundary.
 
-Both modes are clearly labeled in output and results.
+| Label | Pattern | What it measures |
+|-------|---------|------------------|
+| **1 txn** | open txn, N ops, commit | Pure per-layer code cost. Txn overhead amortized to ~zero. |
+| **1 txn/op** | for each op: open txn, 1 op, commit | Real-world single-op cost. Txn open/close/commit included. |
+
+Layer benchmarks run both as **Mode A** (1 txn) and **Mode B** (1 txn/op).
+
+The difference between Mode A and Mode B *for the same layer* reveals how much
+of the per-op cost is transaction overhead vs actual layer code.
+
+### 2. Operation scope
+
+What work is included in the timed region beyond the raw read/write.
+
+| Label | What's inside the timed loop | Example |
+|-------|------------------------------|---------|
+| **pure op** | Only the get/put call itself | `root.put_child_primitive(key, val)` with `root` already resolved |
+| **init + op** | Container/View/Shape resolution + the op | `Container.get(path, tx)` then `put_child_primitive(...)` |
+| **full execute** | Term tree `.execute(ctx)` which opens span, resolves view, does op, commits | `Atomic(Shape.field.set(v)).execute(ctx)` |
+
+Higher layers inherently bundle more init work — you can't call
+`DictView.__setitem__` without first calling `open_root()`, and you can't use
+Shape without `Atomic.execute()`. So the scope is dictated by the layer's API.
+Be explicit about what's included.
+
+At L2+, "init + op" is the natural unit. At L4, "full execute" is the only
+meaningful unit — the term tree is the API.
+
+### 3. Tree construction vs execution
+
+Term trees (`Atomic(Seq(Shape.f.set(v), ...))`) have two costs:
+
+| Phase | What happens | When to measure |
+|-------|-------------|-----------------|
+| **Construction** | Python objects allocated, tree assembled | Once at startup (or once per unique operation) |
+| **Execution** | `.execute(ctx)` — opens spans, resolves storage, does I/O, commits | Every call |
+
+All benchmarks in this suite **pre-build trees** outside the timed section.
+Loops measure execution only. This matters because construction is a one-time
+cost in real usage (trees are typically built once, executed many times).
+
+If a benchmark *does* include construction in the loop, it must say so
+explicitly — otherwise results are contaminated by Python object allocation
+that wouldn't occur in real workloads.
+
+### Reading results with these dimensions
+
+When comparing two numbers, check all three axes match. For example:
+
+- "L4 is 14x slower than L0" — only meaningful if both use the same txn
+  granularity. Mode A (1 txn) gives the pure layer overhead; Mode B (1 txn/op)
+  adds txn cost that may dominate at lower layers.
+- "auto_atomic is 2x slower than manual Atomic" — because auto_atomic uses
+  1 txn/op while manual Atomic batches into 1 txn. The layer code is identical;
+  the txn granularity drives the difference.
+- "10 separate Atomics vs 1 batched Atomic" — same layer, same ops, different
+  txn granularity. The delta is pure txn overhead x9.
 
 ## Suites
 
