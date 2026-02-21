@@ -1,7 +1,9 @@
-"""Scenario 0: Raw TKV RocksDB — absolute storage floor.
+"""Raw TKV RocksDB -- absolute storage floor.
 
-Measures: pure RocksDB get/put/commit throughput via tkv layer.
-No PV containers, no shapes, no term trees — just key-value I/O.
+Measures pure RocksDB get/put/commit throughput via the tkv layer.
+No PV containers, no shapes, no term trees -- just key-value I/O.
+
+All keys are pre-built. Benchmark loops measure only execution.
 """
 
 from __future__ import annotations
@@ -24,25 +26,34 @@ from utils import (
 )
 
 
-# --------------------------------------------------------------------------
-# Helpers
-# --------------------------------------------------------------------------
+# ── Pre-built keys ───────────────────────────────────────────────────
+
+N = 1000
+
+# Single-key operations
+KEYS_1 = [("/", "k", str(i)) for i in range(N)]
+
+# 5-field operations (simulates shape with 5 fields)
+KEYS_5 = [(("/", f"f{f}", str(i)) for f in range(5)) for i in range(N)]
+# Pre-materialize so no generator overhead in loops
+KEYS_5 = [list(group) for group in KEYS_5]
+
+# Fixed 5-field keys for overwrite benchmark
+KEYS_FIXED = [("/", f"f{f}") for f in range(5)]
 
 
-# tkv BinaryCodec expects tuple keys like ('/', 'segment', ...)
-def _key(name: str, i: int | None = None) -> tuple[str, ...]:
-    if i is not None:
-        return ("/", name, str(i))
-    return ("/", name)
+# ── Helpers ──────────────────────────────────────────────────────────
+
+VALUES_INT = list(range(N))
+VALUES_STR = [f"v{i}" for i in range(N)]
+VALUES_FLOAT = [float(i) * 0.1 for i in range(N)]
 
 
-# --------------------------------------------------------------------------
-# Benchmarks
-# --------------------------------------------------------------------------
+# ── Benchmarks ───────────────────────────────────────────────────────
 
 
 async def bench_raw_put(n: int) -> TimingResult:
-    """Raw txn.put() — 5 keys per op, one commit per op."""
+    """Raw txn.put() -- 5 keys per op, one commit per op."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
 
@@ -53,18 +64,19 @@ async def bench_raw_put(n: int) -> TimingResult:
             with timed_run(f"raw_put_5keys x{n}", n) as results:
                 for i in range(n):
                     with storage.transaction() as tx:
-                        tx.put(_key("f0", i), i)
-                        tx.put(_key("f1", i), i * 2)
-                        tx.put(_key("f2", i), f"v{i}")
-                        tx.put(_key("f3", i), float(i) * 0.1)
-                        tx.put(_key("f4", i), i + 100)
+                        keys = KEYS_5[i]
+                        tx.put(keys[0], VALUES_INT[i])
+                        tx.put(keys[1], VALUES_INT[i] * 2)
+                        tx.put(keys[2], VALUES_STR[i])
+                        tx.put(keys[3], VALUES_FLOAT[i])
+                        tx.put(keys[4], VALUES_INT[i] + 100)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
 async def bench_raw_put_1key(n: int) -> TimingResult:
-    """Raw txn.put() — 1 key per txn."""
+    """Raw txn.put() -- 1 key per txn."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
 
@@ -75,14 +87,14 @@ async def bench_raw_put_1key(n: int) -> TimingResult:
             with timed_run(f"raw_put_1key x{n}", n) as results:
                 for i in range(n):
                     with storage.transaction() as tx:
-                        tx.put(_key("k", i), i)
+                        tx.put(KEYS_1[i], VALUES_INT[i])
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
 async def bench_raw_get(n: int) -> TimingResult:
-    """Raw snapshot.get() — read 5 keys per op."""
+    """Raw snapshot.get() -- read 5 keys per op."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
 
@@ -92,21 +104,23 @@ async def bench_raw_get(n: int) -> TimingResult:
             # Seed data
             with storage.transaction() as tx:
                 for i in range(n):
-                    tx.put(_key("f0", i), i)
-                    tx.put(_key("f1", i), i * 2)
-                    tx.put(_key("f2", i), f"v{i}")
-                    tx.put(_key("f3", i), float(i) * 0.1)
-                    tx.put(_key("f4", i), i + 100)
+                    keys = KEYS_5[i]
+                    tx.put(keys[0], VALUES_INT[i])
+                    tx.put(keys[1], VALUES_INT[i] * 2)
+                    tx.put(keys[2], VALUES_STR[i])
+                    tx.put(keys[3], VALUES_FLOAT[i])
+                    tx.put(keys[4], VALUES_INT[i] + 100)
 
             get_counters().reset()
             with timed_run(f"raw_get_5keys x{n}", n) as results:
                 for i in range(n):
+                    keys = KEYS_5[i]
                     snap = storage.begin_snapshot()
-                    snap.get(_key("f0", i))
-                    snap.get(_key("f1", i))
-                    snap.get(_key("f2", i))
-                    snap.get(_key("f3", i))
-                    snap.get(_key("f4", i))
+                    snap.get(keys[0])
+                    snap.get(keys[1])
+                    snap.get(keys[2])
+                    snap.get(keys[3])
+                    snap.get(keys[4])
                     snap.close()
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -114,7 +128,7 @@ async def bench_raw_get(n: int) -> TimingResult:
 
 
 async def bench_raw_put_single_txn(n: int) -> TimingResult:
-    """Raw txn.put() — 5 keys x N ops in a SINGLE transaction (1 commit total)."""
+    """Raw txn.put() -- 5 keys x N ops in a SINGLE transaction (1 commit total)."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
 
@@ -125,18 +139,19 @@ async def bench_raw_put_single_txn(n: int) -> TimingResult:
             with timed_run(f"raw_put_5keys_1txn x{n}", n) as results:
                 with storage.transaction() as tx:
                     for i in range(n):
-                        tx.put(_key("f0", i), i)
-                        tx.put(_key("f1", i), i * 2)
-                        tx.put(_key("f2", i), f"v{i}")
-                        tx.put(_key("f3", i), float(i) * 0.1)
-                        tx.put(_key("f4", i), i + 100)
+                        keys = KEYS_5[i]
+                        tx.put(keys[0], VALUES_INT[i])
+                        tx.put(keys[1], VALUES_INT[i] * 2)
+                        tx.put(keys[2], VALUES_STR[i])
+                        tx.put(keys[3], VALUES_FLOAT[i])
+                        tx.put(keys[4], VALUES_INT[i] + 100)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
 async def bench_raw_overwrite(n: int) -> TimingResult:
-    """Raw txn.put() overwriting same 5 keys — simulates shape field updates."""
+    """Raw txn.put() overwriting same 5 keys -- simulates shape field updates."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
 
@@ -145,31 +160,27 @@ async def bench_raw_overwrite(n: int) -> TimingResult:
         with RocksDBStorage(path=tmpdir, codec=BinaryCodec(), observer=None) as storage:
             # Seed initial values
             with storage.transaction() as tx:
-                tx.put(_key("f0"), 0)
-                tx.put(_key("f1"), 0)
-                tx.put(_key("f2"), "init")
-                tx.put(_key("f3"), 0.0)
-                tx.put(_key("f4"), 0)
+                tx.put(KEYS_FIXED[0], 0)
+                tx.put(KEYS_FIXED[1], 0)
+                tx.put(KEYS_FIXED[2], "init")
+                tx.put(KEYS_FIXED[3], 0.0)
+                tx.put(KEYS_FIXED[4], 0)
 
             get_counters().reset()
             with timed_run(f"raw_overwrite_5keys x{n}", n) as results:
                 for i in range(n):
                     with storage.transaction() as tx:
-                        tx.put(_key("f0"), i)
-                        tx.put(_key("f1"), i * 2)
-                        tx.put(_key("f2"), f"v{i}")
-                        tx.put(_key("f3"), float(i) * 0.1)
-                        tx.put(_key("f4"), i + 100)
+                        tx.put(KEYS_FIXED[0], VALUES_INT[i])
+                        tx.put(KEYS_FIXED[1], VALUES_INT[i] * 2)
+                        tx.put(KEYS_FIXED[2], VALUES_STR[i])
+                        tx.put(KEYS_FIXED[3], VALUES_FLOAT[i])
+                        tx.put(KEYS_FIXED[4], VALUES_INT[i] + 100)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
-# --------------------------------------------------------------------------
-# Runner
-# --------------------------------------------------------------------------
-
-N = 1000
+# ── Runner ───────────────────────────────────────────────────────────
 
 
 async def run_all() -> list[TimingResult]:
@@ -183,7 +194,7 @@ async def run_all() -> list[TimingResult]:
     results.append(await bench_raw_put_single_txn(N))
 
     uninstall_counters()
-    print_results("Scenario 0: Raw TKV RocksDB", results)
+    print_results("Raw TKV RocksDB", results)
     return results
 
 

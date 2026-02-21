@@ -3,6 +3,9 @@
 Runs cProfile on each layer's hot loop and prints the top cumulative
 callers, so we can see exactly what functions eat the delta at each step.
 
+All keys and term trees are pre-built. Profiled sections measure
+pure execution only -- no construction overhead.
+
 L4 uses a single event loop (asyncio.run once) to avoid profiling
 asyncio create/teardown noise.
 """
@@ -30,16 +33,26 @@ from everyshape import Shape
 
 
 N = 500
+VALUE = 42
 
 
-# ── Shapes ──────────────────────────────────────────────────────────────
+# ── Pre-built keys & terms ────────────────────────────────────────────
 
 
 class FlatShape(Shape):
     value = pv.IntRef.slot()
 
 
-# ── Profiling helper ────────────────────────────────────────────────────
+L0_KEYS = [f"k:{i}".encode() for i in range(N)]
+L1_KEYS = [("/", "k", str(i)) for i in range(N)]
+STR_KEYS = [f"k{i}" for i in range(N)]
+
+L4_PUT = Atomic(FlatShape.value.set(VALUE))
+L4_GET = Atomic(FlatShape.value.get())
+L4_SEED = Atomic(FlatShape.value.set(VALUE))
+
+
+# ── Profiling helper ──────────────────────────────────────────────────
 
 
 def profile_sync(name: str, func, top: int = 25) -> None:
@@ -73,7 +86,7 @@ def _print_stats(name: str, pr: cProfile.Profile, top: int) -> None:
     print(buf.getvalue())
 
 
-# ── L0: Raw rdbpy ──────────────────────────────────────────────────────
+# ── L0: Raw rdbpy ────────────────────────────────────────────────────
 
 
 def run_l0_put():
@@ -83,7 +96,7 @@ def run_l0_put():
         db = rdbpy.TransactionDB(tmpdir, opts)
         for i in range(N):
             txn = db.begin_transaction()
-            txn.put(f"k:{i}".encode(), b"42")
+            txn.put(L0_KEYS[i], b"42")
             txn.commit()
             txn.close()
         db.close()
@@ -98,12 +111,12 @@ def run_l0_get():
         db = rdbpy.TransactionDB(tmpdir, opts)
         txn = db.begin_transaction()
         for i in range(N):
-            txn.put(f"k:{i}".encode(), b"42")
+            txn.put(L0_KEYS[i], b"42")
         txn.commit()
         txn.close()
         for i in range(N):
             txn = db.begin_transaction()
-            txn.get(f"k:{i}".encode())
+            txn.get(L0_KEYS[i])
             txn.rollback()
             txn.close()
         db.close()
@@ -111,7 +124,7 @@ def run_l0_get():
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-# ── L1: TKV ────────────────────────────────────────────────────────────
+# ── L1: TKV ──────────────────────────────────────────────────────────
 
 
 def run_l1_put():
@@ -123,7 +136,7 @@ def run_l1_put():
         with RocksDBStorage(path=tmpdir, codec=BinaryCodec(), observer=None) as storage:
             for i in range(N):
                 with storage.transaction() as tx:
-                    tx.put(("/", "k", str(i)), 42)
+                    tx.put(L1_KEYS[i], VALUE)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -137,16 +150,16 @@ def run_l1_get():
         with RocksDBStorage(path=tmpdir, codec=BinaryCodec(), observer=None) as storage:
             with storage.transaction() as tx:
                 for i in range(N):
-                    tx.put(("/", "k", str(i)), 42)
+                    tx.put(L1_KEYS[i], VALUE)
             for i in range(N):
                 snap = storage.begin_snapshot()
-                snap.get(("/", "k", str(i)))
+                snap.get(L1_KEYS[i])
                 snap.close()
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-# ── L2: Container ──────────────────────────────────────────────────────
+# ── L2: Container ────────────────────────────────────────────────────
 
 
 def run_l2_put():
@@ -169,7 +182,7 @@ def run_l2_put():
             for i in range(N):
                 with storage.transaction() as tx:
                     root = Container.get(("/",), tx)
-                    root.put_child_primitive(f"k{i}", 42)
+                    root.put_child_primitive(STR_KEYS[i], VALUE)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -193,17 +206,17 @@ def run_l2_get():
                 )
                 root = Container.get(("/",), tx)
                 for i in range(N):
-                    root.put_child_primitive(f"k{i}", 42)
+                    root.put_child_primitive(STR_KEYS[i], VALUE)
             for i in range(N):
                 snap = storage.begin_snapshot()
                 root = Container.get(("/",), snap)
-                root.get_child_primitive(f"k{i}")
+                root.get_child_primitive(STR_KEYS[i])
                 snap.close()
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-# ── L3: DictView ───────────────────────────────────────────────────────
+# ── L3: DictView ─────────────────────────────────────────────────────
 
 
 def run_l3_put():
@@ -219,7 +232,7 @@ def run_l3_put():
             for i in range(N):
                 with storage.transaction() as tx:
                     root = DictView.open_root(tx)
-                    root[f"k{i}"] = 42
+                    root[STR_KEYS[i]] = VALUE
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -234,17 +247,17 @@ def run_l3_get():
             with storage.transaction() as tx:
                 root = DictView.open_root(tx)
                 for i in range(N):
-                    root[f"k{i}"] = 42
+                    root[STR_KEYS[i]] = VALUE
             for i in range(N):
                 snap = storage.begin_snapshot()
                 root = DictView.open_root(snap)
-                _ = root[f"k{i}"]
+                _ = root[STR_KEYS[i]]
                 snap.close()
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-# ── L4: Shape/Ref via Atomic (single event loop) ──────────────────────
+# ── L4: Shape/Ref via Atomic -- pre-built terms, execute only ────────
 
 
 async def run_l4_put():
@@ -254,9 +267,9 @@ async def run_l4_put():
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().with_handle(StorageProtocol, storage)
-            await Atomic(FlatShape.value.set(0)).execute(ctx)
-            for i in range(N):
-                await Atomic(FlatShape.value.set(i)).execute(ctx)
+            await L4_PUT.execute(ctx)  # warm up
+            for _ in range(N):
+                await L4_PUT.execute(ctx)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -268,14 +281,14 @@ async def run_l4_get():
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().with_handle(StorageProtocol, storage)
-            await Atomic(FlatShape.value.set(42)).execute(ctx)
-            for i in range(N):
-                await Atomic(FlatShape.value.get()).execute(ctx)
+            await L4_SEED.execute(ctx)  # seed data
+            for _ in range(N):
+                await L4_GET.execute(ctx)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-# ── Main ───────────────────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────────────────────────
 
 
 def main() -> None:

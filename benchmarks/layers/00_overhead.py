@@ -1,14 +1,14 @@
-"""Layer-by-Layer Overhead — from raw rdbpy to term trees.
+"""Layer-by-Layer Overhead -- pure execution cost at each abstraction layer.
 
-Single-file benchmark that measures put/get at every abstraction layer:
+Measures put/get at every layer with all construction done upfront:
   L0  raw rdbpy binary put/get (C++ bindings, zero Python overhead)
   L1  tkv RocksDBStorage put/get (codec, tuple keys, transaction wrapper)
   L2  pv Container put_child_primitive / get_child_primitive
   L3  pv DictView __setitem__ / __getitem__
-  L4  Shape/Ref via Atomic (term tree, span open/close)
+  L4  Shape/Ref via Atomic (term tree execution, span open/close)
 
-Each layer builds on the previous. The report makes the per-layer cost delta
-explicit so we can see exactly where overhead lives.
+Keys and term trees are pre-built before any timed section.
+Benchmark loops measure only execution -- no construction overhead.
 """
 
 from __future__ import annotations
@@ -44,18 +44,45 @@ from everyshape import Shape
 # CONFIG
 # ============================================================================
 
-N = 500  # ops per benchmark (enough for stable μs-level timings)
-VALUE = 42  # integer value written/read
-VALUE_B = b"42"  # same as raw bytes
+N = 500  # ops per benchmark
+VALUE = 42
+VALUE_B = b"42"
 
 
 # ============================================================================
-# L0: Raw rdbpy — binary put/get on TransactionDB
+# PRE-BUILT KEYS & TERMS
+#
+# Everything needed for the benchmark loops is constructed here, once.
+# The timed sections below execute only -- no allocation, no formatting.
+# ============================================================================
+
+
+class FlatShape(Shape):
+    value = pv.IntRef.slot()
+
+
+# L0: raw bytes keys
+L0_KEYS = [f"k:{i}".encode() for i in range(N)]
+
+# L1: tkv tuple keys
+L1_KEYS = [("/", "k", str(i)) for i in range(N)]
+
+# L2/L3: string keys
+STR_KEYS = [f"k{i}" for i in range(N)]
+
+# L4: pre-built term trees
+L4_PUT = Atomic(FlatShape.value.set(VALUE))
+L4_GET = Atomic(FlatShape.value.get())
+L4_SEED = Atomic(FlatShape.value.set(VALUE))
+
+
+# ============================================================================
+# L0: Raw rdbpy
 # ============================================================================
 
 
 def bench_l0_put(n: int) -> TimingResult:
-    """L0: raw rdbpy txn.put(bytes, bytes) — one key per txn."""
+    """L0: raw rdbpy txn.put(bytes, bytes) -- one key per txn."""
     tmpdir = tempfile.mkdtemp(prefix="bench_l0_")
     try:
         opts = rdbpy.Options(create_if_missing=True)
@@ -65,7 +92,7 @@ def bench_l0_put(n: int) -> TimingResult:
         with timed_run(f"L0 rdbpy put x{n}", n) as results:
             for i in range(n):
                 txn = db.begin_transaction()
-                txn.put(f"k:{i}".encode(), VALUE_B)
+                txn.put(L0_KEYS[i], VALUE_B)
                 txn.commit()
                 txn.close()
 
@@ -76,7 +103,7 @@ def bench_l0_put(n: int) -> TimingResult:
 
 
 def bench_l0_get(n: int) -> TimingResult:
-    """L0: raw rdbpy txn.get(bytes) — one key per txn."""
+    """L0: raw rdbpy txn.get(bytes) -- one key per txn."""
     tmpdir = tempfile.mkdtemp(prefix="bench_l0_")
     try:
         opts = rdbpy.Options(create_if_missing=True)
@@ -85,7 +112,7 @@ def bench_l0_get(n: int) -> TimingResult:
         # Seed
         txn = db.begin_transaction()
         for i in range(n):
-            txn.put(f"k:{i}".encode(), VALUE_B)
+            txn.put(L0_KEYS[i], VALUE_B)
         txn.commit()
         txn.close()
 
@@ -93,7 +120,7 @@ def bench_l0_get(n: int) -> TimingResult:
         with timed_run(f"L0 rdbpy get x{n}", n) as results:
             for i in range(n):
                 txn = db.begin_transaction()
-                txn.get(f"k:{i}".encode())
+                txn.get(L0_KEYS[i])
                 txn.rollback()
                 txn.close()
 
@@ -104,12 +131,12 @@ def bench_l0_get(n: int) -> TimingResult:
 
 
 # ============================================================================
-# L1: TKV RocksDBStorage — tuple keys, codec, observer
+# L1: TKV RocksDBStorage
 # ============================================================================
 
 
 def bench_l1_put(n: int) -> TimingResult:
-    """L1: tkv storage transaction put — tuple key, codec encode, one key per txn."""
+    """L1: tkv storage put -- tuple key, codec encode, one key per txn."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
 
@@ -120,14 +147,14 @@ def bench_l1_put(n: int) -> TimingResult:
             with timed_run(f"L1 tkv put x{n}", n) as results:
                 for i in range(n):
                     with storage.transaction() as tx:
-                        tx.put(("/", "k", str(i)), VALUE)
+                        tx.put(L1_KEYS[i], VALUE)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
 def bench_l1_get(n: int) -> TimingResult:
-    """L1: tkv storage snapshot get — tuple key, codec decode."""
+    """L1: tkv storage get -- tuple key, codec decode."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
 
@@ -137,13 +164,13 @@ def bench_l1_get(n: int) -> TimingResult:
             # Seed
             with storage.transaction() as tx:
                 for i in range(n):
-                    tx.put(("/", "k", str(i)), VALUE)
+                    tx.put(L1_KEYS[i], VALUE)
 
             get_counters().reset()
             with timed_run(f"L1 tkv get x{n}", n) as results:
                 for i in range(n):
                     snap = storage.begin_snapshot()
-                    snap.get(("/", "k", str(i)))
+                    snap.get(L1_KEYS[i])
                     snap.close()
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -151,12 +178,12 @@ def bench_l1_get(n: int) -> TimingResult:
 
 
 # ============================================================================
-# L2: PV Container — create_container + put_child_primitive / get_child_primitive
+# L2: PV Container
 # ============================================================================
 
 
 def bench_l2_put(n: int) -> TimingResult:
-    """L2: pv container put_child_primitive — container marker, node ops."""
+    """L2: pv container put_child_primitive."""
     from pv.container.container import Container
     from pv.container.container_ops import create_container
     from pv.container.types import ContainerProtocol, ContainerStructure
@@ -166,7 +193,6 @@ def bench_l2_put(n: int) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_l2_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            # Warm up: create root container
             with storage.transaction() as tx:
                 create_container(
                     ("/",),
@@ -180,7 +206,7 @@ def bench_l2_put(n: int) -> TimingResult:
                 for i in range(n):
                     with storage.transaction() as tx:
                         root = Container.get(("/",), tx)
-                        root.put_child_primitive(f"k{i}", VALUE)
+                        root.put_child_primitive(STR_KEYS[i], VALUE)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
@@ -197,7 +223,6 @@ def bench_l2_get(n: int) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_l2_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            # Seed
             with storage.transaction() as tx:
                 create_container(
                     ("/",),
@@ -207,14 +232,14 @@ def bench_l2_get(n: int) -> TimingResult:
                 )
                 root = Container.get(("/",), tx)
                 for i in range(n):
-                    root.put_child_primitive(f"k{i}", VALUE)
+                    root.put_child_primitive(STR_KEYS[i], VALUE)
 
             get_counters().reset()
             with timed_run(f"L2 container get x{n}", n) as results:
                 for i in range(n):
                     snap = storage.begin_snapshot()
                     root = Container.get(("/",), snap)
-                    root.get_child_primitive(f"k{i}")
+                    root.get_child_primitive(STR_KEYS[i])
                     snap.close()
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -222,19 +247,18 @@ def bench_l2_get(n: int) -> TimingResult:
 
 
 # ============================================================================
-# L3: PV DictView — __setitem__ / __getitem__
+# L3: PV DictView
 # ============================================================================
 
 
 def bench_l3_put(n: int) -> TimingResult:
-    """L3: DictView['key'] = value — ensure_created, metadata, setitem."""
+    """L3: DictView['key'] = value."""
     from everypv.adapters.storage import rocksdb_storage_inmemory
     from everypv.views import DictView
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            # Warm up: create root
             with storage.transaction() as tx:
                 root = DictView.open_root(tx)
                 root["_warmup"] = 0
@@ -244,32 +268,31 @@ def bench_l3_put(n: int) -> TimingResult:
                 for i in range(n):
                     with storage.transaction() as tx:
                         root = DictView.open_root(tx)
-                        root[f"k{i}"] = VALUE
+                        root[STR_KEYS[i]] = VALUE
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
 def bench_l3_get(n: int) -> TimingResult:
-    """L3: DictView['key'] — getitem with node_info checks."""
+    """L3: DictView['key'] -- getitem."""
     from everypv.adapters.storage import rocksdb_storage_inmemory
     from everypv.views import DictView
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            # Seed
             with storage.transaction() as tx:
                 root = DictView.open_root(tx)
                 for i in range(n):
-                    root[f"k{i}"] = VALUE
+                    root[STR_KEYS[i]] = VALUE
 
             get_counters().reset()
             with timed_run(f"L3 dictview get x{n}", n) as results:
                 for i in range(n):
                     snap = storage.begin_snapshot()
                     root = DictView.open_root(snap)
-                    _ = root[f"k{i}"]
+                    _ = root[STR_KEYS[i]]
                     snap.close()
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -277,51 +300,43 @@ def bench_l3_get(n: int) -> TimingResult:
 
 
 # ============================================================================
-# L4: Shape/Ref via Atomic — term tree + span
+# L4: Shape/Ref via Atomic -- pre-built terms, execute only
 # ============================================================================
 
 
-class FlatShape(Shape):
-    value = pv.IntRef.slot()
-
-
 async def bench_l4_put(n: int) -> TimingResult:
-    """L4: Atomic(Shape.field.set(v)).execute() — pre-built term, only execution timed."""
+    """L4: pre-built Atomic(Shape.field.set(v)).execute() -- execution only."""
     from everypv.adapters.storage import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().with_handle(StorageProtocol, storage)
-            term = Atomic(FlatShape.value.set(VALUE))
-            # Warm up
-            await term.execute(ctx)
+            await L4_PUT.execute(ctx)  # warm up
 
             get_counters().reset()
             with timed_run(f"L4 shape put x{n}", n) as results:
                 for _ in range(n):
-                    await term.execute(ctx)
+                    await L4_PUT.execute(ctx)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
 async def bench_l4_get(n: int) -> TimingResult:
-    """L4: Atomic(Shape.field.get()).execute() — pre-built term, only execution timed."""
+    """L4: pre-built Atomic(Shape.field.get()).execute() -- execution only."""
     from everypv.adapters.storage import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().with_handle(StorageProtocol, storage)
-            # Seed
-            await Atomic(FlatShape.value.set(VALUE)).execute(ctx)
+            await L4_SEED.execute(ctx)  # seed data
 
-            term = Atomic(FlatShape.value.get())
             get_counters().reset()
             with timed_run(f"L4 shape get x{n}", n) as results:
                 for _ in range(n):
-                    await term.execute(ctx)
+                    await L4_GET.execute(ctx)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
@@ -335,33 +350,22 @@ async def bench_l4_get(n: int) -> TimingResult:
 async def run_all() -> None:
     install_counters()
 
-    # --- L0 (no counters needed, rdbpy is below tkv instrumentation) ---
     r_l0_put = bench_l0_put(N)
     r_l0_get = bench_l0_get(N)
-
-    # --- L1 ---
     r_l1_put = bench_l1_put(N)
     r_l1_get = bench_l1_get(N)
-
-    # --- L2 ---
     r_l2_put = bench_l2_put(N)
     r_l2_get = bench_l2_get(N)
-
-    # --- L3 ---
     r_l3_put = bench_l3_put(N)
     r_l3_get = bench_l3_get(N)
-
-    # --- L4 ---
     r_l4_put = await bench_l4_put(N)
     r_l4_get = await bench_l4_get(N)
 
     uninstall_counters()
 
-    # Collect layer results for summary
     put_layers = [r_l0_put, r_l1_put, r_l2_put, r_l3_put, r_l4_put]
     get_layers = [r_l0_get, r_l1_get, r_l2_get, r_l3_get, r_l4_get]
 
-    # ---- Print to stdout ----
     print_results("Layer-by-Layer PUT", put_layers)
     print_results("Layer-by-Layer GET", get_layers)
 
@@ -370,17 +374,14 @@ async def run_all() -> None:
     lines.append("# Layer-by-Layer Overhead (L0-L4)\n")
     lines.append(f"N = {N} ops per benchmark\n")
 
-    # -- PUT summary --
-    lines.append("## PUT — layer progression\n")
+    lines.append("## PUT -- layer progression\n")
     lines.append(_layer_table(put_layers, r_l0_put))
     lines.append("")
 
-    # -- GET summary --
-    lines.append("## GET — layer progression\n")
+    lines.append("## GET -- layer progression\n")
     lines.append(_layer_table(get_layers, r_l0_get))
     lines.append("")
 
-    # -- Counter details --
     lines.append("## PUT counters\n")
     lines.append(format_counter_table(put_layers))
     lines.append("")
@@ -388,7 +389,6 @@ async def run_all() -> None:
     lines.append(format_counter_table(get_layers))
     lines.append("")
 
-    # -- Interpretation --
     lines.append("## Interpretation\n")
     lines.append("Each layer row shows:")
     lines.append("- **per-op (ms)**: average wall time per single put or get")
@@ -400,7 +400,6 @@ async def run_all() -> None:
     report = "\n".join(lines)
     print("\n" + report)
 
-    # Write report file
     results_path = Path(__file__).resolve().parent / "RESULTS.md"
     results_path.write_text(report + "\n")
     print(f"\n(Report written to {results_path})")
