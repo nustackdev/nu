@@ -45,6 +45,27 @@ ViewT = TypeVar("ViewT", bound="View")
 logger = getLogger(__name__)
 
 
+def _try_build_static_path(ref: Ref) -> tuple | None:
+    """Build full path tuple at construction time if all addresses are static.
+
+    Walks the parent chain collecting (raw_address, type_marker) segments.
+    Returns None if any address in the chain is dynamic (i.e. a Term)
+    or if any ref lacks a type marker (non-PV ref in the chain).
+    """
+    segments: list[tuple] = []
+    current: Ref | None = ref
+    while current is not None:
+        raw = current._raw_address  # type: ignore[attr-defined]
+        if raw is None:
+            return None  # Dynamic address — cannot pre-compute
+        marker = getattr(current, "_type_marker", None)
+        if marker is None:
+            return None  # Non-PV ref in chain — bail out
+        segments.append((raw, marker))
+        current = current.parent
+    return tuple(reversed(segments))
+
+
 class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
     """PV ref to a container view.
 
@@ -69,6 +90,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         """
         super().__init__(address, parent, owner_shape)
         self._view_type = view_type
+        self._static_path = _try_build_static_path(self)
 
     @property
     def view_type(self) -> type[ViewT]:
@@ -88,6 +110,9 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         Returns:
             Path tuple ending with (address, view_type)
         """
+        if self._static_path is not None:
+            return self._static_path
+
         address = await self.resolve_address(ctx)
 
         parent = self.parent
@@ -114,7 +139,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         Returns:
             The parent view, or root view if this is a top-level ref.
         """
-        scope = self.get_root_shape()
+        scope = self._root_shape
         root_view = ctx.get(View, scope=scope)
         parent = self.parent
         if parent is None:
@@ -133,7 +158,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
             The view instance
         """
         view_path = await self.resolve(ctx)
-        scope = self.get_root_shape()
+        scope = self._root_shape
         root_view = ctx.get(View, scope=scope)
 
         if not view_path:
@@ -166,6 +191,7 @@ class PrimitiveRef[T](Ref[T]):
         """
         super().__init__(address, parent, owner_shape)
         self._value_type = value_type
+        self._static_path = _try_build_static_path(self)
 
     @property
     def value_type(self) -> type[T]:
@@ -185,6 +211,9 @@ class PrimitiveRef[T](Ref[T]):
         Returns:
             Path tuple ending with (address, value_type)
         """
+        if self._static_path is not None:
+            return self._static_path  # type: ignore
+
         address = await self.resolve_address(ctx)
 
         parent = self.parent
@@ -218,7 +247,7 @@ class PrimitiveRef[T](Ref[T]):
             The parent view object
         """
         value_path = await self.resolve(ctx)
-        scope = self.get_root_shape()
+        scope = self._root_shape
         root_view = ctx.get(View, scope=scope)
         parent_view, _key = path.navigate_value(root_view, value_path)
         return parent_view
@@ -236,7 +265,7 @@ class PrimitiveRef[T](Ref[T]):
             The value, or Empty if not found
         """
         value_path = await self.resolve(ctx)
-        scope = self.get_root_shape()
+        scope = self._root_shape
         root_view = ctx.get(View, scope=scope)
 
         try:

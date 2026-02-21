@@ -82,6 +82,10 @@ class Ref[T](RefABC[T]):
             parent: Parent reference in navigation chain
             owner_shape: Shape class this ref belongs to
         """
+        # Store raw address before wrapping — lets substrates detect static
+        # (literal str/int) vs dynamic (Term) addresses for fast-path optimisation.
+        self._raw_address = address if not isinstance(address, Term) else None
+
         try:
             address_term = ensure_term(address)
         except TypeError:
@@ -92,6 +96,11 @@ class Ref[T](RefABC[T]):
         else:
             super().__init__(address_term)
         self._owner_shape = owner_shape
+
+        # Cache root shape — identical for entire ref chain, avoids O(depth) walk.
+        self._root_shape: type[Shape] | None = (
+            parent._root_shape if parent is not None else owner_shape
+        )
 
     # =========================================================================
     # CORE PROPERTIES — Location Identity
@@ -129,15 +138,12 @@ class Ref[T](RefABC[T]):
         return self._owner_shape
 
     def get_root_shape(self) -> type[Shape] | None:
-        """Walk up parent chain to find the root shape.
+        """Return root shape (cached at construction time).
 
         Returns the shape of the topmost ref in the hierarchy.
         Used to look up the correct context handle for storage access.
         """
-        parent = self.parent
-        if parent is not None:
-            return parent.get_root_shape()
-        return self._owner_shape
+        return self._root_shape
 
     # =========================================================================
     # PATH COMPOSITION — Building Full Paths
