@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 __all__ = [
     "Atomic",
     "Snapshot",
+    "Transaction",
 ]
 
 
@@ -199,3 +200,63 @@ class Snapshot(Span):
     def __repr__(self) -> str:
         scope_name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
         return f"Snapshot({scope_name})"
+
+
+class Transaction(Span):
+    """Write transaction boundary for PV operations.
+
+    Like Atomic but always opens a transaction, never a snapshot.
+    Use when you know the subtree has writes — skips the purity check.
+
+    On enter:
+      1. Gets StorageProtocol from context (by scope)
+      2. Registers lazy factory for TransactionProtocol
+      3. Registers lazy factory for View (opened on top of transaction)
+
+    On exit:
+      - Success: commit transaction (if it was opened)
+      - Failure: abort transaction (if it was opened)
+    """
+
+    def __init__(
+        self,
+        *children: Executable,
+        scope: Hashable | None = None,
+        view_cls: type[View] = DictView,
+    ) -> None:
+        super().__init__(*children)
+        self.scope = scope
+        self.view_cls = view_cls
+        self._txn: TransactionProtocol | None = None
+
+    def enter(self, ctx: Context) -> Context:
+        """Scope context: register lazy transaction factory."""
+        storage = ctx.get(StorageProtocol, scope=self.scope)
+        view_cls = self.view_cls
+        scope = self.scope
+
+        def open_txn() -> TransactionProtocol:
+            self._txn = storage.begin_transaction()
+            return self._txn
+
+        child_ctx = ctx.with_factory(TransactionProtocol, open_txn, scope=scope)
+
+        def open_view() -> View:
+            txn = child_ctx.get(TransactionProtocol, scope=scope)
+            return view_cls.open_root(txn)
+
+        return child_ctx.with_factory(View, open_view, scope=scope)
+
+    def exit_success(self, ctx: Context) -> None:
+        """Commit transaction if opened."""
+        if self._txn is not None:
+            self._txn.commit()
+
+    def exit_failure(self, ctx: Context, error: Exception) -> None:
+        """Abort transaction if opened."""
+        if self._txn is not None:
+            self._txn.abort()
+
+    def __repr__(self) -> str:
+        scope_name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
+        return f"Transaction({scope_name})"

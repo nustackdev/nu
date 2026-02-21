@@ -56,7 +56,7 @@ from everypv.refs import (
     UUIDRef,
     ViewRef,
 )
-from everypv.spans import Atomic, Snapshot
+from everypv.spans import Atomic, Snapshot, Transaction
 
 
 __all__ = [  # noqa: RUF022
@@ -83,6 +83,7 @@ __all__ = [  # noqa: RUF022
     "ShapesDictRef",
     "ShapesListRef",
     "Snapshot",
+    "Transaction",
     "StrRef",
     "TimedeltaRef",
     "TimeRef",
