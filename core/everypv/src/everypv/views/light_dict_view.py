@@ -50,6 +50,11 @@ class LightDictView(StdView):
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.MAPPING | ContainerProtocol.MUTABLE
     CONTAINER_CLS: ClassVar[type] = dict
 
+    @classmethod
+    def is_address_static(cls, address: object) -> bool:
+        """Dict keys are always passthrough — no normalization needed."""
+        return True
+
     def normalize_address(self, address: str | int) -> str | int:
         """Passthrough - no normalization needed."""
         return address

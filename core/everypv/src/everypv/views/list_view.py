@@ -81,6 +81,11 @@ class ListView(
     )
     CONTAINER_CLS: ClassVar[type] = list
 
+    @classmethod
+    def is_address_static(cls, address: object) -> bool:
+        """Positive int indices are passthrough; negative need len() lookup."""
+        return isinstance(address, int) and address >= 0
+
     def normalize_address(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
@@ -544,6 +549,11 @@ class ListSliceView(ListView):
             Absolute index in the parent list
         """
         return self._slice_start + address * self._slice_step
+
+    @classmethod
+    def is_address_static(cls, address: object) -> bool:
+        """Slice views always remap to parent indices."""
+        return False
 
     def normalize_address(self, address: int) -> int:
         """Normalize index and convert to parent index.

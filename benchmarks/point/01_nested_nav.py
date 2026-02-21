@@ -1,6 +1,10 @@
-"""Nested Shape Navigation -- read/write at different depths.
+"""Nested Shape Navigation -- read/write at different depths and view types.
 
-Measures: path navigation cost at depth 2/4/6.
+Measures:
+- Dict-only paths at depth 2/4/6 (static addresses → fast path)
+- Mixed dict+list paths (static positive index → fast path)
+- Negative list index paths (dynamic normalization → slow path)
+
 All term trees are pre-built. Benchmark loops measure only execution.
 """
 
@@ -26,6 +30,7 @@ from utils import (
 
 import everypv as pv
 from everybase import Context
+from everybase.abc import Seq
 from everypv import Atomic
 from everyshape import Shape
 
@@ -33,39 +38,56 @@ from everyshape import Shape
 # ── Shapes ────────────────────────────────────────────────────────────
 
 
-class Level6(Shape):
+class Leaf(Shape):
     value = pv.IntRef.slot()
     label = pv.StrRef.slot()
 
 
-class Level5(Shape):
-    inner = pv.ShapeRef.slot(shape_type=Level6)
+class L5(Shape):
+    inner = pv.ShapeRef.slot(shape_type=Leaf)
     count = pv.IntRef.slot()
 
 
-class Level4(Shape):
-    inner = pv.ShapeRef.slot(shape_type=Level5)
+class L4(Shape):
+    inner = pv.ShapeRef.slot(shape_type=L5)
     count = pv.IntRef.slot()
 
 
-class Level3(Shape):
-    inner = pv.ShapeRef.slot(shape_type=Level4)
+class L3(Shape):
+    inner = pv.ShapeRef.slot(shape_type=L4)
     count = pv.IntRef.slot()
 
 
-class Level2(Shape):
-    inner = pv.ShapeRef.slot(shape_type=Level3)
+class L2(Shape):
+    inner = pv.ShapeRef.slot(shape_type=L3)
     count = pv.IntRef.slot()
 
 
 class Root(Shape):
-    inner = pv.ShapeRef.slot(shape_type=Level2)
+    inner = pv.ShapeRef.slot(shape_type=L2)
     count = pv.IntRef.slot()
+
+
+# ── Shapes with lists ────────────────────────────────────────────────
+
+
+class ItemShape(Shape):
+    value = pv.IntRef.slot()
+
+
+class WithList(Shape):
+    items = pv.ListRef.slot(item_type=int)
+    nested = pv.ShapeRef.slot(shape_type=ItemShape)
+
+
+class ListRoot(Shape):
+    data = pv.ShapeRef.slot(shape_type=WithList)
 
 
 # ── Pre-built terms ──────────────────────────────────────────────────
 
-TERMS = {
+# Dict-only paths (all static addresses)
+DICT_TERMS = {
     "d2_write": Atomic(Root.inner.count.set(42)),
     "d4_write": Atomic(Root.inner.inner.inner.count.set(42)),
     "d6_write": Atomic(Root.inner.inner.inner.inner.inner.value.set(42)),
@@ -74,11 +96,29 @@ TERMS = {
     "d6_read": Atomic(Root.inner.inner.inner.inner.inner.value.get()),
 }
 
-# Seed terms (write initial data so reads work)
-SEEDS = {
+DICT_SEEDS = {
     "d2": Atomic(Root.inner.count.set(42)),
     "d4": Atomic(Root.inner.inner.inner.count.set(42)),
     "d6": Atomic(Root.inner.inner.inner.inner.inner.value.set(42)),
+}
+
+# List paths — positive index (static address → fast path)
+LIST_SEED = Atomic(
+    Seq(
+        ListRoot.data.nested.value.set(99),
+        ListRoot.data.items.store([10, 20, 30, 40, 50]),
+    )
+)
+
+LIST_TERMS = {
+    "list_pos_read": Atomic(ListRoot.data.items[0].get()),
+    "list_pos_write": Atomic(ListRoot.data.items[2].set(999)),
+    # Negative index — triggers normalize_address (slow path)
+    "list_neg_read": Atomic(ListRoot.data.items[-1].get()),
+    "list_neg_write": Atomic(ListRoot.data.items[-1].set(999)),
+    # Mixed: dict nav + list access
+    "mixed_pos_read": Atomic(ListRoot.data.items[4].get()),
+    "mixed_neg_read": Atomic(ListRoot.data.items[-2].get()),
 }
 
 
@@ -87,7 +127,7 @@ SEEDS = {
 N = 100
 
 
-async def _bench(label: str, term, seed_key: str) -> TimingResult:
+async def _bench(label: str, term, seed_term, seed_key: str | None = None) -> TimingResult:
     """Benchmark with fresh db per measurement."""
     tmpdir = tempfile.mkdtemp(prefix="bench_nested_")
     try:
@@ -95,7 +135,7 @@ async def _bench(label: str, term, seed_key: str) -> TimingResult:
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().with_handle(StorageProtocol, storage)
-            await SEEDS[seed_key].execute(ctx)
+            await seed_term.execute(ctx)
             get_counters().reset()
 
             with timed_run(label, N) as results:
@@ -113,12 +153,25 @@ async def run_all() -> list[TimingResult]:
     install_counters()
     results = []
 
-    results.append(await _bench(f"depth_2_write x{N}", TERMS["d2_write"], "d2"))
-    results.append(await _bench(f"depth_4_write x{N}", TERMS["d4_write"], "d4"))
-    results.append(await _bench(f"depth_6_write x{N}", TERMS["d6_write"], "d6"))
-    results.append(await _bench(f"depth_2_read x{N}", TERMS["d2_read"], "d2"))
-    results.append(await _bench(f"depth_4_read x{N}", TERMS["d4_read"], "d4"))
-    results.append(await _bench(f"depth_6_read x{N}", TERMS["d6_read"], "d6"))
+    # --- Dict-only paths (static) ---
+    for key in ("d2_write", "d4_write", "d6_write"):
+        depth = key.split("_")[0]
+        results.append(await _bench(f"{key} x{N}", DICT_TERMS[key], DICT_SEEDS[depth]))
+
+    for key in ("d2_read", "d4_read", "d6_read"):
+        depth = key.split("_")[0]
+        results.append(await _bench(f"{key} x{N}", DICT_TERMS[key], DICT_SEEDS[depth]))
+
+    # --- List paths ---
+    for key in (
+        "list_pos_read",
+        "list_pos_write",
+        "list_neg_read",
+        "list_neg_write",
+        "mixed_pos_read",
+        "mixed_neg_read",
+    ):
+        results.append(await _bench(f"{key} x{N}", LIST_TERMS[key], LIST_SEED))
 
     uninstall_counters()
     print_results("Nested Shape Navigation", results)

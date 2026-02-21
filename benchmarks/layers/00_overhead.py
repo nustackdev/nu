@@ -683,10 +683,6 @@ async def run_all() -> None:
     report = "\n".join(lines)
     print("\n" + report)
 
-    results_path = Path(__file__).resolve().parent / "RESULTS.md"
-    results_path.write_text(report + "\n")
-    print(f"\n(Report written to {results_path})")
-
 
 def _layer_table(results: list[TimingResult], baseline: TimingResult) -> str:
     """Format a layer-progression table with vs-L0 ratio."""

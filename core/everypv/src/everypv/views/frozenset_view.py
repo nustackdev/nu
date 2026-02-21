@@ -66,6 +66,11 @@ class FrozenSetView(
         # Returns int for use in hash tables, or use .hexdigest() for string
         return hashlib.sha256(pickled).hexdigest()[:64]
 
+    @classmethod
+    def is_address_static(cls, address: object) -> bool:
+        """Frozenset addresses are hashed — never passthrough."""
+        return False
+
     def normalize_address(self, address: object) -> key_.KeySegment:
         """Normalize value address to an internal storage key."""
         return self._make_key(address)

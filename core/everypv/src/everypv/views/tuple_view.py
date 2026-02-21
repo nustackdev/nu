@@ -68,6 +68,11 @@ class TupleView(
     PROTOCOL: ClassVar[ContainerProtocol] = ContainerProtocol.INDEXED | ContainerProtocol.SIZED
     CONTAINER_CLS: ClassVar[type] = tuple
 
+    @classmethod
+    def is_address_static(cls, address: object) -> bool:
+        """Positive int indices are passthrough; negative need len() lookup."""
+        return isinstance(address, int) and address >= 0
+
     def normalize_address(self, address: int) -> int:
         """Normalize index, handling negative indices.
 
