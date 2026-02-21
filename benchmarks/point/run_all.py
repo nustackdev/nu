@@ -18,7 +18,6 @@ from utils import TimingResult, format_counter_table, format_result_table  # noq
 
 
 SCENARIOS = [
-    ("Scenario 0: Raw TKV RocksDB", "00_raw_tkv"),
     ("Scenario 1: Flat Writes", "01_flat_writes"),
     ("Scenario 2: Nested Shape Navigation", "02_nested_nav"),
     ("Scenario 3: Dict-of-Shapes CRUD", "03_dict_shapes"),
@@ -76,27 +75,6 @@ async def main() -> None:
     # Summary
     lines.append("## Key Observations")
     lines.append("")
-
-    # Raw TKV baseline (from scenario 0)
-    s0 = all_results.get("Scenario 0: Raw TKV RocksDB", [])
-    raw_5k = next((r for r in s0 if "raw_put_5keys x" in r.name and "1txn" not in r.name), None)
-    raw_1txn = next((r for r in s0 if "1txn" in r.name), None)
-    raw_get = next((r for r in s0 if "raw_get" in r.name), None)
-    if raw_5k:
-        lines.append(
-            f"- **Raw TKV RocksDB (5 puts, 1 txn each):** {raw_5k.ops_per_sec:,.0f} ops/sec "
-            f"({raw_5k.per_op_ms:.3f}ms/op)"
-        )
-    if raw_1txn:
-        lines.append(
-            f"- **Raw TKV RocksDB (5 puts, single txn):** {raw_1txn.ops_per_sec:,.0f} ops/sec "
-            f"({raw_1txn.per_op_ms:.3f}ms/op)"
-        )
-    if raw_get:
-        lines.append(
-            f"- **Raw TKV RocksDB (5 gets):** {raw_get.ops_per_sec:,.0f} ops/sec "
-            f"({raw_get.per_op_ms:.3f}ms/op)"
-        )
 
     # auto_atomic vs single atomic comparison (from scenario 6)
     s6 = all_results.get("Scenario 6: Auto-Atomic Granularity", [])

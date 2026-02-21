@@ -20,7 +20,7 @@ import tempfile
 from pathlib import Path
 
 
-sys.path.insert(0, "benchmarks")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import rdbpy
 from tkv.tkv.storage import StorageProtocol
@@ -401,8 +401,9 @@ async def run_all() -> None:
     print("\n" + report)
 
     # Write report file
-    Path("benchmarks/RESULTS_LAYERS.md").write_text(report + "\n")
-    print("\n(Report written to benchmarks/RESULTS_LAYERS.md)")
+    results_path = Path(__file__).resolve().parent / "RESULTS.md"
+    results_path.write_text(report + "\n")
+    print(f"\n(Report written to {results_path})")
 
 
 def _layer_table(results: list[TimingResult], baseline: TimingResult) -> str:

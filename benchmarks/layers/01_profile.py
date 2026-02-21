@@ -18,7 +18,7 @@ import tempfile
 from io import StringIO
 
 
-sys.path.insert(0, "benchmarks")
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
 import rdbpy
 from tkv.tkv.storage import StorageProtocol
