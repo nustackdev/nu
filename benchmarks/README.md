@@ -9,10 +9,10 @@ benchmarks/
 ├── utils.py                    # Shared: counters, timed_run, reporting
 │
 ├── layers/                     # Layer benchmarks -- isolate per-layer and inter-layer cost
-│   ├── 00_overhead.py          # L0-L4 layer-by-layer overhead (Mode A + Mode B)
-│   ├── 01_profile.py           # L0-L4 cProfile profiling
-│   ├── 02_raw_tkv.py           # Raw TKV RocksDB baseline (absolute storage floor)
-│   └── RESULTS.md              # Layer overhead results
+│   ├── overhead.py             # L0-L4 layer-by-layer overhead (Mode A + Mode B)
+│   ├── read_throughput.py      # Peak read throughput ceiling (single snapshot, N reads)
+│   ├── profile.py              # L0-L4 cProfile profiling
+│   └── raw_tkv.py              # Raw TKV RocksDB baseline (absolute storage floor)
 │
 ├── point/                      # Point benchmarks -- isolate one everybase dimension
 │   ├── 00_flat_writes.py       # Flat shape write throughput
@@ -115,10 +115,11 @@ Real-world usage patterns. Shapes -> data -> trees (pre-built) -> benchmark (exe
 ## Quick Start
 
 ```bash
-# Layers -- overhead (Mode A + B) and profiling
-uv run python benchmarks/layers/00_overhead.py
-uv run python benchmarks/layers/01_profile.py
-uv run python benchmarks/layers/02_raw_tkv.py
+# Layers -- overhead, throughput, profiling
+uv run python benchmarks/layers/overhead.py
+uv run python benchmarks/layers/read_throughput.py
+uv run python benchmarks/layers/profile.py
+uv run python benchmarks/layers/raw_tkv.py
 
 # Point -- all scenarios
 uv run python benchmarks/point/run_all.py
