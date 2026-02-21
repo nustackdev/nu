@@ -105,71 +105,53 @@ TERM_10_AUTO = auto_atomic(
 N = 100
 
 
-async def bench_single_field_write(ctx: Context) -> TimingResult:
-    """Write a single int field N times (pre-built Atomic)."""
-    await TERM_SINGLE.execute(ctx)  # warm up
-    get_counters().reset()
-
-    with timed_run(f"single_field x{N}", N) as results:
-        for _ in range(N):
-            await TERM_SINGLE.execute(ctx)
-    return results[0]
-
-
-async def bench_10_field_write_separate_atomic(ctx: Context) -> TimingResult:
-    """Write 10 fields, each in separate pre-built Atomic."""
-    await TERM_SINGLE.execute(ctx)  # warm up
-    get_counters().reset()
-
-    with timed_run(f"10_fields_separate_atomic x{N}", N) as results:
-        for _ in range(N):
-            for term in TERMS_10_SEPARATE:
-                await term.execute(ctx)
-    return results[0]
-
-
-async def bench_10_field_write_single_atomic(ctx: Context) -> TimingResult:
-    """Write 10 fields in a single pre-built Atomic (batched transaction)."""
-    await TERM_SINGLE.execute(ctx)  # warm up
-    get_counters().reset()
-
-    with timed_run(f"10_fields_single_atomic x{N}", N) as results:
-        for _ in range(N):
-            await TERM_10_SINGLE.execute(ctx)
-    return results[0]
-
-
-async def bench_auto_atomic_10_fields(ctx: Context) -> TimingResult:
-    """Write 10 fields via pre-built auto_atomic tree."""
-    await TERM_SINGLE.execute(ctx)  # warm up
-    get_counters().reset()
-
-    with timed_run(f"10_fields_auto_atomic x{N}", N) as results:
-        for _ in range(N):
-            await TERM_10_AUTO.execute(ctx)
-    return results[0]
-
-
-# ── Runner ───────────────────────────────────────────────────────────
-
-
-async def run_all() -> list[TimingResult]:
-    install_counters()
-    results = []
-
+async def _bench(label: str, loop_body) -> TimingResult:
+    """Benchmark with fresh db per measurement."""
     tmpdir = tempfile.mkdtemp(prefix="bench_flat_")
     try:
         from everypv.adapters.storage import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().with_handle(StorageProtocol, storage)
+            await TERM_SINGLE.execute(ctx)  # warm up
+            get_counters().reset()
 
-            results.append(await bench_single_field_write(ctx))
-            results.append(await bench_10_field_write_separate_atomic(ctx))
-            results.append(await bench_10_field_write_single_atomic(ctx))
-            results.append(await bench_auto_atomic_10_fields(ctx))
+            with timed_run(label, N) as results:
+                for _ in range(N):
+                    await loop_body(ctx)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+    return results[0]
+
+
+# ── Runner ───────────────────────────────────────────────────────────
+
+
+async def _run_single_field(ctx: Context) -> None:
+    await TERM_SINGLE.execute(ctx)
+
+
+async def _run_10_separate(ctx: Context) -> None:
+    for term in TERMS_10_SEPARATE:
+        await term.execute(ctx)
+
+
+async def _run_10_single(ctx: Context) -> None:
+    await TERM_10_SINGLE.execute(ctx)
+
+
+async def _run_10_auto(ctx: Context) -> None:
+    await TERM_10_AUTO.execute(ctx)
+
+
+async def run_all() -> list[TimingResult]:
+    install_counters()
+    results = []
+
+    results.append(await _bench(f"single_field x{N}", _run_single_field))
+    results.append(await _bench(f"10_fields_separate_atomic x{N}", _run_10_separate))
+    results.append(await _bench(f"10_fields_single_atomic x{N}", _run_10_single))
+    results.append(await _bench(f"10_fields_auto_atomic x{N}", _run_10_auto))
 
     uninstall_counters()
     print_results("Flat Writes", results)

@@ -75,38 +75,21 @@ TERM_BATCH_50 = _build_batched_term(50)
 # ── Benchmarks ───────────────────────────────────────────────────────
 
 
-async def bench_auto_atomic_per_term(ctx: Context) -> TimingResult:
-    """auto_atomic wraps each Term individually (pre-built tree)."""
-    await TERM_SEED.execute(ctx)  # warm up
-    get_counters().reset()
+async def _bench(label: str, loop_body, n_ops: int = N) -> TimingResult:
+    """Benchmark with fresh db per measurement."""
+    tmpdir = tempfile.mkdtemp(prefix="bench_atomic_")
+    try:
+        from everypv.adapters.storage import rocksdb_storage_inmemory
 
-    with timed_run(f"auto_atomic_per_term x{N}", N) as results:
-        for _ in range(N):
-            await TERM_AUTO_ATOMIC.execute(ctx)
-    return results[0]
+        with rocksdb_storage_inmemory(tmpdir) as storage:
+            ctx = Context().with_handle(StorageProtocol, storage)
+            await TERM_SEED.execute(ctx)  # warm up
+            get_counters().reset()
 
-
-async def bench_single_atomic(ctx: Context) -> TimingResult:
-    """Single manual Atomic wrapping all writes (pre-built tree)."""
-    await TERM_SEED.execute(ctx)  # warm up
-    get_counters().reset()
-
-    with timed_run(f"single_atomic x{N}", N) as results:
-        for _ in range(N):
-            await TERM_SINGLE_ATOMIC.execute(ctx)
-    return results[0]
-
-
-async def bench_batched_atomic(ctx: Context, batch_size: int, term: Atomic) -> TimingResult:
-    """Batched Atomic with batch_size ops per execute (pre-built tree)."""
-    await TERM_SEED.execute(ctx)  # warm up
-    get_counters().reset()
-
-    n_executions = N // batch_size
-
-    with timed_run(f"batched_atomic_bs{batch_size} x{N}", N) as results:
-        for _ in range(n_executions):
-            await term.execute(ctx)
+            with timed_run(label, n_ops) as results:
+                await loop_body(ctx)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
@@ -117,19 +100,26 @@ async def run_all() -> list[TimingResult]:
     install_counters()
     results = []
 
-    tmpdir = tempfile.mkdtemp(prefix="bench_atomic_")
-    try:
-        from everypv.adapters.storage import rocksdb_storage_inmemory
+    async def run_auto_atomic(ctx: Context) -> None:
+        for _ in range(N):
+            await TERM_AUTO_ATOMIC.execute(ctx)
 
-        with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+    async def run_single_atomic(ctx: Context) -> None:
+        for _ in range(N):
+            await TERM_SINGLE_ATOMIC.execute(ctx)
 
-            results.append(await bench_auto_atomic_per_term(ctx))
-            results.append(await bench_single_atomic(ctx))
-            results.append(await bench_batched_atomic(ctx, 10, TERM_BATCH_10))
-            results.append(await bench_batched_atomic(ctx, 50, TERM_BATCH_50))
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+    async def run_batched_10(ctx: Context) -> None:
+        for _ in range(N // 10):
+            await TERM_BATCH_10.execute(ctx)
+
+    async def run_batched_50(ctx: Context) -> None:
+        for _ in range(N // 50):
+            await TERM_BATCH_50.execute(ctx)
+
+    results.append(await _bench(f"auto_atomic_per_term x{N}", run_auto_atomic))
+    results.append(await _bench(f"single_atomic x{N}", run_single_atomic))
+    results.append(await _bench(f"batched_atomic_bs10 x{N}", run_batched_10))
+    results.append(await _bench(f"batched_atomic_bs50 x{N}", run_batched_50))
 
     uninstall_counters()
     print_results("Atomic Granularity", results)

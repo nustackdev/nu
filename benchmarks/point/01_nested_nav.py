@@ -87,69 +87,22 @@ SEEDS = {
 N = 100
 
 
-async def bench_depth_2_write(ctx: Context) -> TimingResult:
-    """Write at depth 2: Root.inner.count."""
-    await SEEDS["d2"].execute(ctx)
-    get_counters().reset()
+async def _bench(label: str, term, seed_key: str) -> TimingResult:
+    """Benchmark with fresh db per measurement."""
+    tmpdir = tempfile.mkdtemp(prefix="bench_nested_")
+    try:
+        from everypv.adapters.storage import rocksdb_storage_inmemory
 
-    with timed_run(f"depth_2_write x{N}", N) as results:
-        for _ in range(N):
-            await TERMS["d2_write"].execute(ctx)
-    return results[0]
+        with rocksdb_storage_inmemory(tmpdir) as storage:
+            ctx = Context().with_handle(StorageProtocol, storage)
+            await SEEDS[seed_key].execute(ctx)
+            get_counters().reset()
 
-
-async def bench_depth_4_write(ctx: Context) -> TimingResult:
-    """Write at depth 4: Root.inner.inner.inner.count."""
-    await SEEDS["d4"].execute(ctx)
-    get_counters().reset()
-
-    with timed_run(f"depth_4_write x{N}", N) as results:
-        for _ in range(N):
-            await TERMS["d4_write"].execute(ctx)
-    return results[0]
-
-
-async def bench_depth_6_write(ctx: Context) -> TimingResult:
-    """Write at depth 6: Root.inner...inner.value."""
-    await SEEDS["d6"].execute(ctx)
-    get_counters().reset()
-
-    with timed_run(f"depth_6_write x{N}", N) as results:
-        for _ in range(N):
-            await TERMS["d6_write"].execute(ctx)
-    return results[0]
-
-
-async def bench_depth_2_read(ctx: Context) -> TimingResult:
-    """Read at depth 2: Root.inner.count."""
-    await SEEDS["d2"].execute(ctx)
-    get_counters().reset()
-
-    with timed_run(f"depth_2_read x{N}", N) as results:
-        for _ in range(N):
-            await TERMS["d2_read"].execute(ctx)
-    return results[0]
-
-
-async def bench_depth_4_read(ctx: Context) -> TimingResult:
-    """Read at depth 4: Root.inner.inner.inner.count."""
-    await SEEDS["d4"].execute(ctx)
-    get_counters().reset()
-
-    with timed_run(f"depth_4_read x{N}", N) as results:
-        for _ in range(N):
-            await TERMS["d4_read"].execute(ctx)
-    return results[0]
-
-
-async def bench_depth_6_read(ctx: Context) -> TimingResult:
-    """Read at depth 6: Root.inner...inner.value."""
-    await SEEDS["d6"].execute(ctx)
-    get_counters().reset()
-
-    with timed_run(f"depth_6_read x{N}", N) as results:
-        for _ in range(N):
-            await TERMS["d6_read"].execute(ctx)
+            with timed_run(label, N) as results:
+                for _ in range(N):
+                    await term.execute(ctx)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
@@ -160,21 +113,12 @@ async def run_all() -> list[TimingResult]:
     install_counters()
     results = []
 
-    tmpdir = tempfile.mkdtemp(prefix="bench_nested_")
-    try:
-        from everypv.adapters.storage import rocksdb_storage_inmemory
-
-        with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
-
-            results.append(await bench_depth_2_write(ctx))
-            results.append(await bench_depth_4_write(ctx))
-            results.append(await bench_depth_6_write(ctx))
-            results.append(await bench_depth_2_read(ctx))
-            results.append(await bench_depth_4_read(ctx))
-            results.append(await bench_depth_6_read(ctx))
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+    results.append(await _bench(f"depth_2_write x{N}", TERMS["d2_write"], "d2"))
+    results.append(await _bench(f"depth_4_write x{N}", TERMS["d4_write"], "d4"))
+    results.append(await _bench(f"depth_6_write x{N}", TERMS["d6_write"], "d6"))
+    results.append(await _bench(f"depth_2_read x{N}", TERMS["d2_read"], "d2"))
+    results.append(await _bench(f"depth_4_read x{N}", TERMS["d4_read"], "d4"))
+    results.append(await _bench(f"depth_6_read x{N}", TERMS["d6_read"], "d6"))
 
     uninstall_counters()
     print_results("Nested Shape Navigation", results)
