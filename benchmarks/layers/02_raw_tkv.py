@@ -8,7 +8,6 @@ All keys are pre-built. Benchmark loops measure only execution.
 
 from __future__ import annotations
 
-import asyncio
 import shutil
 import sys
 import tempfile
@@ -26,7 +25,7 @@ from utils import (
 )
 
 
-# ── Pre-built keys ───────────────────────────────────────────────────
+# -- Pre-built keys -----------------------------------------------------------
 
 N = 1000
 
@@ -34,25 +33,23 @@ N = 1000
 KEYS_1 = [("/", "k", str(i)) for i in range(N)]
 
 # 5-field operations (simulates shape with 5 fields)
-KEYS_5 = [(("/", f"f{f}", str(i)) for f in range(5)) for i in range(N)]
-# Pre-materialize so no generator overhead in loops
-KEYS_5 = [list(group) for group in KEYS_5]
+KEYS_5 = [[("/", f"f{f}", str(i)) for f in range(5)] for i in range(N)]
 
 # Fixed 5-field keys for overwrite benchmark
 KEYS_FIXED = [("/", f"f{f}") for f in range(5)]
 
 
-# ── Helpers ──────────────────────────────────────────────────────────
+# -- Helpers -------------------------------------------------------------------
 
 VALUES_INT = list(range(N))
 VALUES_STR = [f"v{i}" for i in range(N)]
 VALUES_FLOAT = [float(i) * 0.1 for i in range(N)]
 
 
-# ── Benchmarks ───────────────────────────────────────────────────────
+# -- Benchmarks ----------------------------------------------------------------
 
 
-async def bench_raw_put(n: int) -> TimingResult:
+def bench_raw_put(n: int) -> TimingResult:
     """Raw txn.put() -- 5 keys per op, one commit per op."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
@@ -75,7 +72,7 @@ async def bench_raw_put(n: int) -> TimingResult:
     return results[0]
 
 
-async def bench_raw_put_1key(n: int) -> TimingResult:
+def bench_raw_put_1key(n: int) -> TimingResult:
     """Raw txn.put() -- 1 key per txn."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
@@ -93,7 +90,7 @@ async def bench_raw_put_1key(n: int) -> TimingResult:
     return results[0]
 
 
-async def bench_raw_get(n: int) -> TimingResult:
+def bench_raw_get(n: int) -> TimingResult:
     """Raw snapshot.get() -- read 5 keys per op."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
@@ -127,7 +124,7 @@ async def bench_raw_get(n: int) -> TimingResult:
     return results[0]
 
 
-async def bench_raw_put_single_txn(n: int) -> TimingResult:
+def bench_raw_put_single_txn(n: int) -> TimingResult:
     """Raw txn.put() -- 5 keys x N ops in a SINGLE transaction (1 commit total)."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
@@ -150,7 +147,7 @@ async def bench_raw_put_single_txn(n: int) -> TimingResult:
     return results[0]
 
 
-async def bench_raw_overwrite(n: int) -> TimingResult:
+def bench_raw_overwrite(n: int) -> TimingResult:
     """Raw txn.put() overwriting same 5 keys -- simulates shape field updates."""
     from tkv.codecs import BinaryCodec
     from tkv.storages.rocksdb import RocksDBStorage
@@ -180,18 +177,18 @@ async def bench_raw_overwrite(n: int) -> TimingResult:
     return results[0]
 
 
-# ── Runner ───────────────────────────────────────────────────────────
+# -- Runner --------------------------------------------------------------------
 
 
-async def run_all() -> list[TimingResult]:
+def run_all() -> list[TimingResult]:
     install_counters()
     results = []
 
-    results.append(await bench_raw_put_1key(N))
-    results.append(await bench_raw_put(N))
-    results.append(await bench_raw_overwrite(N))
-    results.append(await bench_raw_get(N))
-    results.append(await bench_raw_put_single_txn(N))
+    results.append(bench_raw_put_1key(N))
+    results.append(bench_raw_put(N))
+    results.append(bench_raw_overwrite(N))
+    results.append(bench_raw_get(N))
+    results.append(bench_raw_put_single_txn(N))
 
     uninstall_counters()
     print_results("Raw TKV RocksDB", results)
@@ -199,4 +196,4 @@ async def run_all() -> list[TimingResult]:
 
 
 if __name__ == "__main__":
-    asyncio.run(run_all())
+    run_all()

@@ -112,7 +112,7 @@ update_tree = auto_atomic(
 
 # ── Benchmarks ────────────────────────────────────────────────────────────────
 
-N = 50  # iterations (heavier trees, fewer reps)
+N = 200  # iterations
 
 
 async def bench_store(ctx: Context) -> TimingResult:

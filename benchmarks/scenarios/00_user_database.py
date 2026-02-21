@@ -96,7 +96,7 @@ update_tree = auto_atomic(Seq(*[UserDB.users[k].score.set(99.0) for k in USERS])
 
 # ── Benchmarks ────────────────────────────────────────────────────────────────
 
-N = 100  # iterations
+N = 500  # iterations
 
 
 async def bench_store(ctx: Context) -> TimingResult:
