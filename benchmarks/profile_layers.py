@@ -3,7 +3,7 @@
 Runs cProfile on each layer's hot loop and prints the top cumulative
 callers, so we can see exactly what functions eat the delta at each step.
 
-L4/L5 use a single event loop (asyncio.run once) to avoid profiling
+L4 uses a single event loop (asyncio.run once) to avoid profiling
 asyncio create/teardown noise.
 """
 
@@ -37,25 +37,6 @@ N = 500
 
 class FlatShape(Shape):
     value = pv.IntRef.slot()
-
-
-class Inner3(Shape):
-    val = pv.IntRef.slot()
-
-
-class Inner2(Shape):
-    c = pv.ShapeRef.slot(shape_type=Inner3)
-    val = pv.IntRef.slot()
-
-
-class Inner1(Shape):
-    b = pv.ShapeRef.slot(shape_type=Inner2)
-    val = pv.IntRef.slot()
-
-
-class Root(Shape):
-    a = pv.ShapeRef.slot(shape_type=Inner1)
-    val = pv.IntRef.slot()
 
 
 # ── Profiling helper ────────────────────────────────────────────────────
@@ -294,37 +275,6 @@ async def run_l4_get():
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-# ── L5: Nested depth-3 (single event loop) ────────────────────────────
-
-
-async def run_l5_put_deep():
-    from everypv.adapters.storage import rocksdb_storage_inmemory
-
-    tmpdir = tempfile.mkdtemp(prefix="prof_l5_")
-    try:
-        with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
-            await Atomic(Root.a.b.c.val.set(0)).execute(ctx)
-            for i in range(N):
-                await Atomic(Root.a.b.c.val.set(i)).execute(ctx)
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
-
-
-async def run_l5_get_deep():
-    from everypv.adapters.storage import rocksdb_storage_inmemory
-
-    tmpdir = tempfile.mkdtemp(prefix="prof_l5_")
-    try:
-        with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
-            await Atomic(Root.a.b.c.val.set(42)).execute(ctx)
-            for i in range(N):
-                await Atomic(Root.a.b.c.val.get()).execute(ctx)
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
-
-
 # ── Main ───────────────────────────────────────────────────────────────
 
 
@@ -334,7 +284,6 @@ def main() -> None:
     profile_sync("L2 container PUT", run_l2_put)
     profile_sync("L3 dictview PUT", run_l3_put)
     profile_async("L4 shape/atomic PUT", run_l4_put)
-    profile_async("L5 depth-3 shape PUT", run_l5_put_deep)
 
     print("\n" + "#" * 70)
     print("#  GET PROFILES")
@@ -345,7 +294,6 @@ def main() -> None:
     profile_sync("L2 container GET", run_l2_get)
     profile_sync("L3 dictview GET", run_l3_get)
     profile_async("L4 shape/atomic GET", run_l4_get)
-    profile_async("L5 depth-3 shape GET", run_l5_get_deep)
 
 
 if __name__ == "__main__":

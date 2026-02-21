@@ -1,4 +1,4 @@
-"""Scenario 8: Layer-by-Layer Overhead — from raw rdbpy to term trees.
+"""Layer-by-Layer Overhead — from raw rdbpy to term trees.
 
 Single-file benchmark that measures put/get at every abstraction layer:
   L0  raw rdbpy binary put/get (C++ bindings, zero Python overhead)
@@ -6,7 +6,6 @@ Single-file benchmark that measures put/get at every abstraction layer:
   L2  pv Container put_child_primitive / get_child_primitive
   L3  pv DictView __setitem__ / __getitem__
   L4  Shape/Ref via Atomic (term tree, span open/close)
-  L5  10 inline nested shape scenarios (a.b.set, a.b.c.get, dict[key], etc.)
 
 Each layer builds on the previous. The report makes the per-layer cost delta
 explicit so we can see exactly where overhead lives.
@@ -18,7 +17,6 @@ import asyncio
 import shutil
 import sys
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -29,7 +27,6 @@ from tkv.tkv.storage import StorageProtocol
 from utils import (
     TimingResult,
     format_counter_table,
-    format_result_table,
     get_counters,
     install_counters,
     print_results,
@@ -289,27 +286,28 @@ class FlatShape(Shape):
 
 
 async def bench_l4_put(n: int) -> TimingResult:
-    """L4: Atomic(Shape.field.set(v)) — term tree build + execute + span."""
+    """L4: Atomic(Shape.field.set(v)).execute() — pre-built term, only execution timed."""
     from everypv.adapters.storage import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().with_handle(StorageProtocol, storage)
+            term = Atomic(FlatShape.value.set(VALUE))
             # Warm up
-            await Atomic(FlatShape.value.set(0)).execute(ctx)
+            await term.execute(ctx)
 
             get_counters().reset()
             with timed_run(f"L4 shape put x{n}", n) as results:
-                for i in range(n):
-                    await Atomic(FlatShape.value.set(i)).execute(ctx)
+                for _ in range(n):
+                    await term.execute(ctx)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
 
 
 async def bench_l4_get(n: int) -> TimingResult:
-    """L4: Atomic(Shape.field.get()) — term tree + snapshot span."""
+    """L4: Atomic(Shape.field.get()).execute() — pre-built term, only execution timed."""
     from everypv.adapters.storage import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4_")
@@ -319,107 +317,14 @@ async def bench_l4_get(n: int) -> TimingResult:
             # Seed
             await Atomic(FlatShape.value.set(VALUE)).execute(ctx)
 
+            term = Atomic(FlatShape.value.get())
             get_counters().reset()
             with timed_run(f"L4 shape get x{n}", n) as results:
                 for _ in range(n):
-                    await Atomic(FlatShape.value.get()).execute(ctx)
+                    await term.execute(ctx)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
     return results[0]
-
-
-# ============================================================================
-# L5: Nested Shape Scenarios — 10 diverse access patterns
-# ============================================================================
-
-
-class Inner3(Shape):
-    val = pv.IntRef.slot()
-    tag = pv.StrRef.slot()
-
-
-class Inner2(Shape):
-    c = pv.ShapeRef.slot(shape_type=Inner3)
-    val = pv.IntRef.slot()
-
-
-class Inner1(Shape):
-    b = pv.ShapeRef.slot(shape_type=Inner2)
-    val = pv.IntRef.slot()
-
-
-class Root(Shape):
-    a = pv.ShapeRef.slot(shape_type=Inner1)
-    val = pv.IntRef.slot()
-    label = pv.StrRef.slot()
-    items = pv.DictRef.slot(value_type=int)
-
-
-@dataclass
-class L5Scenario:
-    name: str
-    put_term: object  # Term
-    get_term: object  # Term
-
-
-def _l5_scenarios() -> list[L5Scenario]:
-    """10 diverse nested access patterns."""
-    return [
-        # 1. flat field: Root.val
-        L5Scenario("flat Root.val", Root.val.set(1), Root.val.get()),
-        # 2. flat string: Root.label
-        L5Scenario("flat Root.label", Root.label.set("x"), Root.label.get()),
-        # 3. depth-1: Root.a.val
-        L5Scenario("depth-1 a.val", Root.a.val.set(2), Root.a.val.get()),
-        # 4. depth-2: Root.a.b.val
-        L5Scenario("depth-2 a.b.val", Root.a.b.val.set(3), Root.a.b.val.get()),
-        # 5. depth-3: Root.a.b.c.val
-        L5Scenario("depth-3 a.b.c.val", Root.a.b.c.val.set(4), Root.a.b.c.val.get()),
-        # 6. depth-3 string: Root.a.b.c.tag
-        L5Scenario("depth-3 a.b.c.tag", Root.a.b.c.tag.set("t"), Root.a.b.c.tag.get()),
-        # 7. dict put/get: Root.items["k0"]
-        L5Scenario("dict items[k0]", Root.items["k0"].set(10), Root.items["k0"].get()),
-        # 8. dict another key: Root.items["k1"]
-        L5Scenario("dict items[k1]", Root.items["k1"].set(20), Root.items["k1"].get()),
-        # 9. mixed depth: set a.b.c.val then get a.val (two separate ops)
-        L5Scenario("set a.b.c / get a", Root.a.b.c.val.set(5), Root.a.val.get()),
-        # 10. set flat + get deep
-        L5Scenario("set flat / get deep", Root.val.set(99), Root.a.b.c.val.get()),
-    ]
-
-
-async def bench_l5_all(n: int) -> list[TimingResult]:
-    """Run all 10 nested scenarios."""
-    from everypv.adapters.storage import rocksdb_storage_inmemory
-
-    results = []
-    scenarios = _l5_scenarios()
-
-    tmpdir = tempfile.mkdtemp(prefix="bench_l5_")
-    try:
-        with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
-
-            for sc in scenarios:
-                # Warm up
-                await Atomic(sc.put_term).execute(ctx)
-                await Atomic(sc.get_term).execute(ctx)
-                get_counters().reset()
-
-                with timed_run(f"L5 put {sc.name} x{n}", n) as put_res:
-                    for i in range(n):
-                        await Atomic(sc.put_term).execute(ctx)
-                results.append(put_res[0])
-
-                get_counters().reset()
-                with timed_run(f"L5 get {sc.name} x{n}", n) as get_res:
-                    for _ in range(n):
-                        await Atomic(sc.get_term).execute(ctx)
-                results.append(get_res[0])
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
-
-    return results
 
 
 # ============================================================================
@@ -450,9 +355,6 @@ async def run_all() -> None:
     r_l4_put = await bench_l4_put(N)
     r_l4_get = await bench_l4_get(N)
 
-    # --- L5 ---
-    r_l5 = await bench_l5_all(N)
-
     uninstall_counters()
 
     # Collect layer results for summary
@@ -462,11 +364,10 @@ async def run_all() -> None:
     # ---- Print to stdout ----
     print_results("Layer-by-Layer PUT", put_layers)
     print_results("Layer-by-Layer GET", get_layers)
-    print_results("L5: Nested Scenarios", r_l5)
 
     # ---- Generate markdown report ----
     lines = []
-    lines.append("# Scenario 8: Layer-by-Layer Overhead\n")
+    lines.append("# Layer-by-Layer Overhead (L0-L4)\n")
     lines.append(f"N = {N} ops per benchmark\n")
 
     # -- PUT summary --
@@ -487,14 +388,6 @@ async def run_all() -> None:
     lines.append(format_counter_table(get_layers))
     lines.append("")
 
-    # -- L5 nested scenarios --
-    lines.append("## L5: Nested shape scenarios\n")
-    lines.append(format_result_table(r_l5))
-    lines.append("")
-    lines.append("### L5 counters\n")
-    lines.append(format_counter_table(r_l5))
-    lines.append("")
-
     # -- Interpretation --
     lines.append("## Interpretation\n")
     lines.append("Each layer row shows:")
@@ -503,9 +396,6 @@ async def run_all() -> None:
     lines.append("- **delta (ms)**: marginal cost added by *this* layer alone")
     lines.append("")
     lines.append("The delta column reveals where overhead actually lives.")
-    lines.append("L5 scenarios show that nesting depth has near-zero marginal cost")
-    lines.append("once the first container exists — the dominant cost is transaction")
-    lines.append("setup and term tree execution, not path navigation.")
 
     report = "\n".join(lines)
     print("\n" + report)

@@ -1,4 +1,4 @@
-"""Run all benchmark scenarios and collect results into RESULTS.md."""
+"""Run all point benchmark scenarios and collect results into RESULTS.md."""
 
 from __future__ import annotations
 
@@ -7,11 +7,14 @@ import importlib
 import sys
 import time
 from datetime import datetime
+from pathlib import Path
 
 
-sys.path.insert(0, "benchmarks")
+_HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(_HERE.parent))  # benchmarks/ — for utils
+sys.path.insert(0, str(_HERE))  # benchmarks/point/ — for scenario modules
 
-from utils import TimingResult, format_counter_table, format_result_table
+from utils import TimingResult, format_counter_table, format_result_table  # noqa: E402
 
 
 SCENARIOS = [
@@ -30,7 +33,7 @@ async def main() -> None:
     all_results: dict[str, list[TimingResult]] = {}
 
     print("=" * 70)
-    print("  EVERYBASE DATA LAYER BENCHMARKS")
+    print("  EVERYBASE DATA LAYER BENCHMARKS — Point Suite")
     print("=" * 70)
     print()
 
@@ -46,7 +49,7 @@ async def main() -> None:
 
     # Generate RESULTS.md
     lines = [
-        "# Everybase Data Layer Benchmark Results",
+        "# Everybase Data Layer Benchmark Results — Point Suite",
         "",
         f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  ",
         f"**Total runtime:** {total_time:.1f}s  ",
@@ -147,12 +150,11 @@ async def main() -> None:
 
     md = "\n".join(lines)
 
-    from pathlib import Path
-
-    Path("benchmarks/RESULTS.md").write_text(md)
+    results_path = _HERE / "RESULTS.md"
+    results_path.write_text(md)
 
     print("=" * 70)
-    print(f"  Results written to benchmarks/RESULTS.md ({total_time:.1f}s total)")
+    print(f"  Results written to {results_path} ({total_time:.1f}s total)")
     print("=" * 70)
 
 
