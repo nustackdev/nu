@@ -1,13 +1,14 @@
-"""Throughput demo — 100K writes and reads through the Shape term system.
+"""Throughput demo — fast writes and reads through the Shape term system.
 
-Builds two term trees (one write, one read), each containing 100K
-operations batched under a single Transaction/Snapshot span.
+Builds term trees for writing and reading Shape fields, executed under
+a single Transaction (writes) or Snapshot (reads).
 
-Trees are built once, executed once. This measures pure execution
-throughput — the ceiling for batched Shape field access.
+Uses unsafe primitive writes (InitCmd + ItemPrimitiveSetUnsafeCmd)
+which skip redundant validation reads — safe because the Shape schema
+guarantees field types at definition time.
 
 Uses:
-  everyshape     → Shape definition
+  everyshape     → Shape, InitCmd, ItemPrimitiveSetUnsafeCmd
   everypv        → Ref slots, Transaction/Snapshot spans
   everybase.abc  → Seq (sequential composition)
 """
@@ -22,23 +23,42 @@ import time
 import everypv as pv
 from everybase import Context
 from everybase.abc import Seq
+from everybase.abc.utils import ensure_term
 from everypv import Snapshot, Transaction
 from everyshape import Shape
+from everyshape.morphisms.item import InitCmd, ItemPrimitiveSetUnsafeCmd
 
 
 # ── Shape ─────────────────────────────────────────────────────────────
 
 
 class Record(Shape):
-    value = pv.IntRef.slot()
+    a = pv.IntRef.slot()
+    b = pv.IntRef.slot()
+    c = pv.IntRef.slot()
+    d = pv.IntRef.slot()
 
+
+FIELDS = [Record.a, Record.b, Record.c, Record.d]
+N = 25_000
+TOTAL = N * len(FIELDS)
 
 # ── Trees ─────────────────────────────────────────────────────────────
 
-N = 100_000
+writes = Transaction(
+    Seq(
+        # Materialize containers once
+        *[InitCmd(f) for f in FIELDS],
+        # Then raw writes — no validation, no ensure_created
+        *[ItemPrimitiveSetUnsafeCmd(f, ensure_term(i)) for i in range(N) for f in FIELDS],
+    ),
+    scope=Record,
+)
 
-writes = Transaction(Seq(*[Record.value.set(i) for i in range(N)]), scope=Record)
-reads = Snapshot(Seq(*[Record.value.get() for _ in range(N)]), scope=Record)
+reads = Snapshot(
+    Seq(*[f.get() for i in range(N) for f in FIELDS]),
+    scope=Record,
+)
 
 
 # ── Run ───────────────────────────────────────────────────────────────
@@ -47,7 +67,7 @@ reads = Snapshot(Seq(*[Record.value.get() for _ in range(N)]), scope=Record)
 def report(label: str, elapsed: float, n: int) -> None:
     us = (elapsed / n) * 1_000_000
     ops = n / elapsed
-    print(f"  {label:<12s} {elapsed:>8.3f}s    {us:>6.1f} us/op    {ops:>10,.0f} ops/sec")
+    print(f"  {label:<8s} {elapsed:>7.3f}s    {us:>5.1f} us/op    {ops:>10,.0f} ops/sec")
 
 
 async def main() -> None:
@@ -70,9 +90,9 @@ async def main() -> None:
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
-    print(f"\n  {N:,} Shape field ops — single span, batched\n")
-    report("writes", t_write, N)
-    report("reads", t_read, N)
+    print(f"\n  {TOTAL:,} Shape field ops ({N:,} records x {len(FIELDS)} fields)\n")
+    report("writes", t_write, TOTAL)
+    report("reads", t_read, TOTAL)
     print()
 
 
