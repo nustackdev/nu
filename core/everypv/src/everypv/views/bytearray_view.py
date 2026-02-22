@@ -9,6 +9,7 @@ from pv.container import ContainerProtocol, ContainerStructure
 from pv.types import is_empty
 from pv.view import (
     ChildObservableBase,
+    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
     ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
@@ -36,6 +37,7 @@ class ByteArrayView(
     ObservableBase,
     ChildObservableBase[int],
     MetadataBasedChildrenCountBase,
+    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
     ChildPrimitiveUnsafeSetBase,
     StdView,

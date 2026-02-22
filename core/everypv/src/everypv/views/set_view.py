@@ -12,6 +12,7 @@ from pv.types import is_empty
 from pv.view import (
     ChildNestedSetBase,
     ChildObservableBase,
+    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
     ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
@@ -45,6 +46,7 @@ class SetView(
     ChildObservableBase[object],
     MetadataBasedChildrenCountBase,
     ChildNestedSetBase,
+    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
     ChildPrimitiveUnsafeSetBase,
     StdView,

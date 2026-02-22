@@ -32,6 +32,7 @@ __all__ = [
     "ItemExistsOp",
     "ItemGetOp",
     "ItemMissingOp",
+    "ItemPrimitiveGetOp",
     "ItemPrimitiveSetCmd",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemSetCmd",
@@ -87,6 +88,34 @@ class ItemGetOp[T](Operation, Morphism[T | Sentinel]):
 
     def __repr__(self) -> str:
         return f"ItemGetOp({self.ref!r})"
+
+
+class ItemPrimitiveGetOp[T](Operation, Morphism[T | Sentinel]):
+    """Read primitive value via _get_primitive() on the parent view.
+
+    Uses ChildPrimitiveGetBase._get_primitive() which performs a raw
+    storage read — no marker parsing, no type checks. Returns EMPTY
+    if the value doesn't exist.
+
+    The ref must implement:
+        fetch_parent(ctx) -> view with _get_primitive()
+        resolve_address(ctx) -> key/index
+    """
+
+    def __init__(self, ref: object) -> None:
+        super().__init__(ref)
+        self.ref = ref
+
+    async def execute(self, ctx: Context) -> T | Sentinel:
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        value = parent._get_primitive(address)
+        if isinstance(value, Sentinel):
+            return EMPTY
+        return value
+
+    def __repr__(self) -> str:
+        return f"ItemPrimitiveGetOp({self.ref!r})"
 
 
 class ItemSetCmd[T](Command, Morphism[T]):

@@ -26,7 +26,7 @@ from everybase.abc import Seq
 from everybase.abc.utils import ensure_term
 from everypv import Snapshot, Transaction
 from everyshape import Shape
-from everyshape.morphisms.item import InitCmd, ItemPrimitiveSetUnsafeCmd
+from everyshape.morphisms.item import InitCmd, ItemPrimitiveGetOp, ItemPrimitiveSetUnsafeCmd
 
 
 # ── Shape ─────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ writes = Transaction(
 )
 
 reads = Snapshot(
-    Seq(*[f.get() for i in range(N) for f in FIELDS]),
+    Seq(*[ItemPrimitiveGetOp(f) for i in range(N) for f in FIELDS]),
     scope=Record,
 )
 
