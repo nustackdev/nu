@@ -114,14 +114,14 @@ class DeleteItemCmd[K](BinaryCommand[None]):
         return None
 
 
-class UpdateCmd[K, V](BinaryCommand[dict[K, V]]):
-    """Update mapping with another: mapping.update(other). Returns mutated mapping."""
+class UpdateCmd[K, V](BinaryCommand[None]):
+    """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, other: object) -> dict[K, V] | Sentinel:
+    def apply(self, operand: object, other: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableMapping):
             raise TypeError(f"update() requires mutable mapping, got {type(operand).__name__}")
         if not isinstance(other, Mapping):
             return INVALID
         operand.update(other)
-        return dict(operand)  # type: ignore[arg-type]
+        return None

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     from everybase.core import BoolArg, StrArg
 
-    from ..values import IntValue, StrValue
+    from ..values import IntValue, NoneValue, StrValue
 
 
 __all__ = [
@@ -81,11 +81,11 @@ class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementR
         ElementResultT: Result for element-level ops (pop)
     """
 
-    def append(self, value: ElementT) -> CollectionResultT: ...
-    def extend(self, other: Iterable[ElementT]) -> CollectionResultT: ...
-    def insert(self, index: int, value: ElementT) -> CollectionResultT: ...
+    def append(self, value: ElementT) -> NoneValue: ...
+    def extend(self, other: Iterable[ElementT]) -> NoneValue: ...
+    def insert(self, index: int, value: ElementT) -> NoneValue: ...
     def pop(self, index: int = -1) -> ElementResultT: ...
-    def remove(self, value: ElementT) -> CollectionResultT: ...
+    def remove(self, value: ElementT) -> NoneValue: ...
 
 
 # =============================================================================
@@ -171,23 +171,26 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
         ElementResultT: Result for element-level ops (pop)
     """
 
-    def append(self, value: ElementT) -> CollectionResultT:
+    def append(self, value: ElementT) -> NoneValue:
         """Append item to end of sequence."""
         from ..morphisms.abc_sequence import AppendCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_sliceable_result(AppendCmd(self, value)))
+        return NoneValue(AppendCmd(self, value))
 
-    def extend(self, other: Iterable[ElementT]) -> CollectionResultT:
+    def extend(self, other: Iterable[ElementT]) -> NoneValue:
         """Extend sequence with elements from iterable."""
         from ..morphisms.abc_sequence import ExtendCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_sliceable_result(ExtendCmd(self, other)))
+        return NoneValue(ExtendCmd(self, other))
 
-    def insert(self, index: int, value: ElementT) -> CollectionResultT:
+    def insert(self, index: int, value: ElementT) -> NoneValue:
         """Insert item at index."""
         from ..morphisms.abc_sequence import InsertCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_sliceable_result(InsertCmd(self, index, value)))
+        return NoneValue(InsertCmd(self, index, value))
 
     def pop(self, index: int = -1) -> ElementResultT:
         """Remove and return item at index (default: last)."""
@@ -195,8 +198,9 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
         return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
 
-    def remove(self, value: ElementT) -> CollectionResultT:
+    def remove(self, value: ElementT) -> NoneValue:
         """Remove first occurrence of value."""
         from ..morphisms.abc_sequence import RemoveValueCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_sliceable_result(RemoveValueCmd(self, value)))
+        return NoneValue(RemoveValueCmd(self, value))

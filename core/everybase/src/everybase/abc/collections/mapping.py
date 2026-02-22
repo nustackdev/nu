@@ -26,6 +26,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from everybase.abc.values import NoneValue
     from everybase.core import Term
 
 
@@ -78,7 +79,7 @@ class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, Value
 
     def set_(self, key: KeyT, value: ValueT) -> ValueResultT: ...
     def delete(self, key: KeyT) -> ValueResultT: ...
-    def update_(self, other: Mapping[KeyT, ValueT]) -> CollectionResultT: ...
+    def update_(self, other: Mapping[KeyT, ValueT]) -> NoneValue: ...
 
 
 # =============================================================================
@@ -171,8 +172,9 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
         return cast("ValueResultT", self._wrap_value_result(DeleteItemCmd(self, key)))
 
-    def update_(self, other: Mapping[KeyT, ValueT]) -> CollectionResultT:
+    def update_(self, other: Mapping[KeyT, ValueT]) -> NoneValue:
         """Update mapping with another mapping."""
         from ..morphisms.abc_mapping import UpdateCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_iterable_result(UpdateCmd(self, other)))
+        return NoneValue(UpdateCmd(self, other))

@@ -25,7 +25,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from everybase.core import Term
 
-    from ..values import BoolValue
+    from ..values import BoolValue, NoneValue
 
 
 __all__ = [
@@ -82,9 +82,9 @@ class MutableSetProtocol[CollectionT, ElementT, CollectionResultT, ElementResult
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def add(self, value: ElementT) -> CollectionResultT: ...
-    def remove(self, value: ElementT) -> CollectionResultT: ...
-    def discard(self, value: ElementT) -> CollectionResultT: ...
+    def add(self, value: ElementT) -> NoneValue: ...
+    def remove(self, value: ElementT) -> NoneValue: ...
+    def discard(self, value: ElementT) -> NoneValue: ...
 
 
 # =============================================================================
@@ -171,20 +171,23 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def add(self, value: ElementT) -> CollectionResultT:
+    def add(self, value: ElementT) -> NoneValue:
         """Add element to set."""
         from ..morphisms.abc_set import AddCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_set_result(AddCmd(self, value)))
+        return NoneValue(AddCmd(self, value))
 
-    def remove(self, value: ElementT) -> CollectionResultT:
+    def remove(self, value: ElementT) -> NoneValue:
         """Remove element from set. Returns INVALID if not found."""
         from ..morphisms.abc_set import RemoveCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_set_result(RemoveCmd(self, value)))
+        return NoneValue(RemoveCmd(self, value))
 
-    def discard(self, value: ElementT) -> CollectionResultT:
+    def discard(self, value: ElementT) -> NoneValue:
         """Remove element if present (no error if absent)."""
         from ..morphisms.abc_set import DiscardCmd
+        from ..values import NoneValue
 
-        return cast("CollectionResultT", self._wrap_set_result(DiscardCmd(self, value)))
+        return NoneValue(DiscardCmd(self, value))

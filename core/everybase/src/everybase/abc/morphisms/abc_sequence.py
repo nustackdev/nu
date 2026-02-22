@@ -98,28 +98,28 @@ class CountOp(BinaryOperation[int]):
 # =============================================================================
 
 
-class AppendCmd[T](BinaryCommand[list[T]]):
-    """Append item to end: seq.append(value). Returns mutated list."""
+class AppendCmd[T](BinaryCommand[None]):
+    """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, value: object) -> list[T] | Sentinel:
+    def apply(self, operand: object, value: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSequence):
             raise TypeError(f"append() requires mutable sequence, got {type(operand).__name__}")
         operand.append(value)
-        return list(operand)  # type: ignore[arg-type]
+        return None
 
 
-class InsertCmd[T](TernaryCommand[list[T]]):
-    """Insert item at index: seq.insert(index, value). Returns mutated list."""
+class InsertCmd[T](TernaryCommand[None]):
+    """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, index: object, value: object) -> list[T] | Sentinel:
+    def apply(self, operand: object, index: object, value: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSequence):
             raise TypeError(f"insert() requires mutable sequence, got {type(operand).__name__}")
         if not isinstance(index, int):
             return INVALID
         operand.insert(index, value)
-        return list(operand)  # type: ignore[arg-type]
+        return None
 
 
 class PopCmd[T](BinaryCommand[T]):
@@ -140,23 +140,23 @@ class PopCmd[T](BinaryCommand[T]):
             return INVALID
 
 
-class ExtendCmd[T](BinaryCommand[list[T]]):
-    """Extend sequence with iterable: seq.extend(other). Returns mutated list."""
+class ExtendCmd[T](BinaryCommand[None]):
+    """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, other: object) -> list[T] | Sentinel:
+    def apply(self, operand: object, other: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSequence):
             raise TypeError(f"extend() requires mutable sequence, got {type(operand).__name__}")
         if not isinstance(other, Iterable):
             return INVALID
         operand.extend(other)
-        return list(operand)  # type: ignore[arg-type]
+        return None
 
 
-class RemoveValueCmd[T](BinaryCommand[list[T]]):
-    """Remove first occurrence of value: seq.remove(value). Returns INVALID if not found."""
+class RemoveValueCmd[T](BinaryCommand[None]):
+    """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
 
-    def apply(self, operand: object, value: object) -> list[T] | Sentinel:
+    def apply(self, operand: object, value: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSequence):
             raise TypeError(f"remove() requires mutable sequence, got {type(operand).__name__}")
@@ -164,4 +164,4 @@ class RemoveValueCmd[T](BinaryCommand[list[T]]):
             operand.remove(value)
         except ValueError:
             return INVALID
-        return list(operand)  # type: ignore[arg-type]
+        return None

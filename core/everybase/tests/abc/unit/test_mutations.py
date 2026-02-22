@@ -33,6 +33,7 @@ from everybase.abc import (
     KeysOp,
     LastOp,
     ListValue,
+    NoneValue,
     PopCmd,
     RemoveCmd,
     RemoveValueCmd,
@@ -278,12 +279,12 @@ class TestAppendCmd:
     async def test_execute_appends(self, ctx):
         cmd = AppendCmd[int](ListValue([1, 2, 3]), 4)
         result = await cmd.execute(ctx)
-        assert result == [1, 2, 3, 4]
+        assert result is None
 
     async def test_execute_appends_to_empty(self, ctx):
         cmd = AppendCmd[int](ListValue([]), 1)
         result = await cmd.execute(ctx)
-        assert result == [1]
+        assert result is None
 
 
 class TestInsertCmd:
@@ -292,12 +293,12 @@ class TestInsertCmd:
     async def test_execute_inserts_at_index(self, ctx):
         cmd = InsertCmd[int](ListValue([1, 3]), 1, 2)
         result = await cmd.execute(ctx)
-        assert result == [1, 2, 3]
+        assert result is None
 
     async def test_execute_inserts_at_zero(self, ctx):
         cmd = InsertCmd[str](ListValue(["b", "c"]), 0, "a")
         result = await cmd.execute(ctx)
-        assert result == ["a", "b", "c"]
+        assert result is None
 
 
 class TestPopCmd:
@@ -320,17 +321,17 @@ class TestExtendCmd:
     async def test_execute_extends(self, ctx):
         cmd = ExtendCmd[int](ListValue([1, 2]), [3, 4])
         result = await cmd.execute(ctx)
-        assert result == [1, 2, 3, 4]
+        assert result is None
 
     async def test_execute_extends_empty(self, ctx):
         cmd = ExtendCmd[int](ListValue([]), [1, 2])
         result = await cmd.execute(ctx)
-        assert result == [1, 2]
+        assert result is None
 
     async def test_execute_extends_with_empty(self, ctx):
         cmd = ExtendCmd[int](ListValue([1, 2]), [])
         result = await cmd.execute(ctx)
-        assert result == [1, 2]
+        assert result is None
 
 
 class TestRemoveValueCmd:
@@ -339,12 +340,12 @@ class TestRemoveValueCmd:
     async def test_execute_removes_first(self, ctx):
         cmd = RemoveValueCmd[int](ListValue([1, 2, 3, 2]), 2)
         result = await cmd.execute(ctx)
-        assert result == [1, 3, 2]
+        assert result is None
 
     async def test_execute_removes_only(self, ctx):
         cmd = RemoveValueCmd[int](ListValue([1, 2, 3]), 2)
         result = await cmd.execute(ctx)
-        assert result == [1, 3]
+        assert result is None
 
     async def test_execute_missing_returns_invalid(self, ctx):
         cmd = RemoveValueCmd[int](ListValue([1, 2, 3]), 99)
@@ -386,7 +387,7 @@ class TestUpdateCmd:
     async def test_execute_updates_mapping(self, ctx):
         cmd = UpdateCmd[str, int](DictValue({"a": 1}), DictValue({"b": 2}))
         result = await cmd.execute(ctx)
-        assert result == {"a": 1, "b": 2}
+        assert result is None
 
 
 # =============================================================================
@@ -400,12 +401,12 @@ class TestAddCmd:
     async def test_execute_adds_element(self, ctx):
         cmd = AddCmd[int](SetValue({1, 2}), 3)
         result = await cmd.execute(ctx)
-        assert result == {1, 2, 3}
+        assert result is None
 
     async def test_execute_add_existing(self, ctx):
         cmd = AddCmd[int](SetValue({1, 2}), 2)
         result = await cmd.execute(ctx)
-        assert result == {1, 2}
+        assert result is None
 
 
 class TestRemoveCmd:
@@ -414,7 +415,7 @@ class TestRemoveCmd:
     async def test_execute_removes_element(self, ctx):
         cmd = RemoveCmd[int](SetValue({1, 2, 3}), 2)
         result = await cmd.execute(ctx)
-        assert result == {1, 3}
+        assert result is None
 
 
 class TestDiscardCmd:
@@ -423,12 +424,12 @@ class TestDiscardCmd:
     async def test_execute_discards_element(self, ctx):
         cmd = DiscardCmd[int](SetValue({1, 2, 3}), 2)
         result = await cmd.execute(ctx)
-        assert result == {1, 3}
+        assert result is None
 
     async def test_execute_discards_missing(self, ctx):
         cmd = DiscardCmd[int](SetValue({1, 2}), 99)
         result = await cmd.execute(ctx)
-        assert result == {1, 2}
+        assert result is None
 
 
 # =============================================================================
@@ -463,30 +464,30 @@ class TestClearCmd:
 class TestListTypeMutations:
     """ListType exposes mutation methods via MutableSequenceBase."""
 
-    def test_append_returns_list_value(self):
+    def test_append_returns_none_value(self):
         lst = ListValue([1, 2, 3])
         result = lst.append(4)
-        assert isinstance(result, ListValue)
+        assert isinstance(result, NoneValue)
 
-    def test_insert_returns_list_value(self):
+    def test_insert_returns_none_value(self):
         lst = ListValue([1, 3])
         result = lst.insert(1, 2)
-        assert isinstance(result, ListValue)
+        assert isinstance(result, NoneValue)
 
-    def test_extend_returns_list_value(self):
+    def test_extend_returns_none_value(self):
         lst = ListValue([1, 2])
         result = lst.extend([3, 4])
-        assert isinstance(result, ListValue)
+        assert isinstance(result, NoneValue)
 
     def test_pop_returns_any_value(self):
         lst = ListValue([1, 2, 3])
         result = lst.pop()
         assert isinstance(result, AnyValue)
 
-    def test_remove_returns_list_value(self):
+    def test_remove_returns_none_value(self):
         lst = ListValue([1, 2, 3])
         result = lst.remove(2)
-        assert isinstance(result, ListValue)
+        assert isinstance(result, NoneValue)
 
     def test_clear_returns_value(self):
         lst = ListValue([1, 2, 3])
@@ -507,10 +508,10 @@ class TestDictTypeMutations:
         result = d.delete("a")
         assert isinstance(result, AnyValue)
 
-    def test_update_returns_any_value(self):
+    def test_update_returns_none_value(self):
         d = DictValue({"a": 1})
         result = d.update_({"b": 2})
-        assert isinstance(result, AnyValue)
+        assert isinstance(result, NoneValue)
 
     def test_clear_returns_value(self):
         d = DictValue({"a": 1})
@@ -521,20 +522,20 @@ class TestDictTypeMutations:
 class TestSetTypeMutations:
     """SetType exposes mutation methods via MutableSetBase."""
 
-    def test_add_returns_set_value(self):
+    def test_add_returns_none_value(self):
         s = SetValue({1, 2})
         result = s.add(3)
-        assert isinstance(result, SetValue)
+        assert isinstance(result, NoneValue)
 
-    def test_remove_returns_set_value(self):
+    def test_remove_returns_none_value(self):
         s = SetValue({1, 2, 3})
         result = s.remove(2)
-        assert isinstance(result, SetValue)
+        assert isinstance(result, NoneValue)
 
-    def test_discard_returns_set_value(self):
+    def test_discard_returns_none_value(self):
         s = SetValue({1, 2, 3})
         result = s.discard(2)
-        assert isinstance(result, SetValue)
+        assert isinstance(result, NoneValue)
 
     def test_clear_returns_value(self):
         s = SetValue({1, 2, 3})
@@ -553,17 +554,17 @@ class TestMutationExecution:
     async def test_list_append_execute(self, ctx):
         lst = ListValue([1, 2])
         result = await lst.append(3).execute(ctx)
-        assert result == [1, 2, 3]
+        assert result is None
 
     async def test_list_insert_execute(self, ctx):
         lst = ListValue([1, 3])
         result = await lst.insert(1, 2).execute(ctx)
-        assert result == [1, 2, 3]
+        assert result is None
 
     async def test_list_extend_execute(self, ctx):
         lst = ListValue([1, 2])
         result = await lst.extend([3, 4]).execute(ctx)
-        assert result == [1, 2, 3, 4]
+        assert result is None
 
     async def test_list_pop_execute(self, ctx):
         lst = ListValue([1, 2, 3])
@@ -573,7 +574,7 @@ class TestMutationExecution:
     async def test_list_remove_execute(self, ctx):
         lst = ListValue([1, 2, 3])
         result = await lst.remove(2).execute(ctx)
-        assert result == [1, 3]
+        assert result is None
 
     async def test_dict_set_execute(self, ctx):
         d = DictValue({"a": 1})
@@ -588,22 +589,22 @@ class TestMutationExecution:
     async def test_dict_update_execute(self, ctx):
         d = DictValue({"a": 1})
         result = await d.update_({"b": 2}).execute(ctx)
-        assert result == {"a": 1, "b": 2}
+        assert result is None
 
     async def test_set_add_execute(self, ctx):
         s = SetValue({1, 2})
         result = await s.add(3).execute(ctx)
-        assert result == {1, 2, 3}
+        assert result is None
 
     async def test_set_remove_execute(self, ctx):
         s = SetValue({1, 2, 3})
         result = await s.remove(2).execute(ctx)
-        assert result == {1, 3}
+        assert result is None
 
     async def test_set_discard_execute(self, ctx):
         s = SetValue({1, 2, 3})
         result = await s.discard(99).execute(ctx)
-        assert result == {1, 2, 3}
+        assert result is None
 
     async def test_list_clear_execute(self, ctx):
         lst = ListValue([1, 2, 3])

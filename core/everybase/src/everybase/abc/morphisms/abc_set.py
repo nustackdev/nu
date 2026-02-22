@@ -111,21 +111,21 @@ class IsDisjointOp(BinaryOperation[bool]):
 # =============================================================================
 
 
-class AddCmd[T](BinaryCommand[set[T]]):
-    """Add element to set: s.add(value). Returns mutated set."""
+class AddCmd[T](BinaryCommand[None]):
+    """Add element to set: s.add(value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, value: object) -> set[T] | Sentinel:
+    def apply(self, operand: object, value: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSet):
             raise TypeError(f"add() requires mutable set, got {type(operand).__name__}")
         operand.add(value)
-        return set(operand)  # type: ignore[arg-type]
+        return None
 
 
-class RemoveCmd[T](BinaryCommand[set[T]]):
-    """Remove element from set: s.remove(value). Returns INVALID if not found."""
+class RemoveCmd[T](BinaryCommand[None]):
+    """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
 
-    def apply(self, operand: object, value: object) -> set[T] | Sentinel:
+    def apply(self, operand: object, value: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSet):
             raise TypeError(f"remove() requires mutable set, got {type(operand).__name__}")
@@ -133,15 +133,15 @@ class RemoveCmd[T](BinaryCommand[set[T]]):
             operand.remove(value)
         except KeyError:
             return INVALID
-        return set(operand)  # type: ignore[arg-type]
+        return None
 
 
-class DiscardCmd[T](BinaryCommand[set[T]]):
-    """Discard element from set: s.discard(value). Returns mutated set (no error if absent)."""
+class DiscardCmd[T](BinaryCommand[None]):
+    """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, value: object) -> set[T] | Sentinel:
+    def apply(self, operand: object, value: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSet):
             raise TypeError(f"discard() requires mutable set, got {type(operand).__name__}")
         operand.discard(value)
-        return set(operand)  # type: ignore[arg-type]
+        return None
