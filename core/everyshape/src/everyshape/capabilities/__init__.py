@@ -9,6 +9,7 @@ from .collection import (
     CollectionClearableBase,
     CollectionExistableBase,
     CollectionExtractableBase,
+    CollectionInitializableBase,
     CollectionStorableBase,
 )
 from .item import (
@@ -41,6 +42,7 @@ __all__ = [  # noqa: RUF022
     "CollectionClearableBase",
     "CollectionExistableBase",
     "CollectionExtractableBase",
+    "CollectionInitializableBase",
     "CollectionStorableBase",
     # Reactive bases
     "PrimitiveObservableBase",

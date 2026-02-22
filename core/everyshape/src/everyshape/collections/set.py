@@ -14,6 +14,7 @@ from everybase.abc import SetLikeBase as _EB_SetLikeBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,
+    CollectionInitializableBase,
     CollectionStorableBase,
     ViewObservableBase,
 )
@@ -49,6 +50,7 @@ class MutableSetBase[T, CollectionValueT, ElementValueT](
     _EB_MutableSetBase[set[T], T, CollectionValueT, ElementValueT],
     CollectionExistableBase,
     CollectionExtractableBase[CollectionValueT],
+    CollectionInitializableBase,
     CollectionStorableBase[CollectionValueT, set[T]],
 ):
     """Mutable set — adds add, remove, discard."""

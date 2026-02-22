@@ -27,12 +27,39 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "InitCmd",
     "ItemDeleteCmd",
     "ItemExistsOp",
     "ItemGetOp",
     "ItemMissingOp",
+    "ItemPrimitiveSetCmd",
+    "ItemPrimitiveSetUnsafeCmd",
     "ItemSetCmd",
 ]
+
+
+class InitCmd(Command, Morphism[None]):
+    """Materialize container chain for a ViewRef.
+
+    Navigates the view hierarchy via fetch(), triggering ensure_created()
+    along the way. This guarantees all parent containers exist in storage,
+    allowing subsequent unsafe writes to skip validation reads.
+
+    The ref must implement:
+        fetch(ctx) -> view object
+    """
+
+    def __init__(self, ref: object) -> None:
+        super().__init__(ref)
+        self.ref = ref
+
+    async def execute(self, ctx: Context) -> None:
+        # fetch() navigates the view hierarchy, triggering ensure_created() along the way
+        await self.ref.fetch(ctx)
+        return None
+
+    def __repr__(self) -> str:
+        return f"InitCmd({self.ref!r})"
 
 
 class ItemGetOp[T](Operation, Morphism[T | Sentinel]):
@@ -88,6 +115,65 @@ class ItemSetCmd[T](Command, Morphism[T]):
 
     def __repr__(self) -> str:
         return f"ItemSetCmd({self.ref!r}, {self.value_expr!r})"
+
+
+class ItemPrimitiveSetCmd[T](Command, Morphism[T]):
+    """Set primitive value via _set_primitive() on the parent view.
+
+    Uses the ChildPrimitiveSetBase._set_primitive() method which
+    materializes containers and writes with full validation.
+
+    The ref must implement:
+        fetch_parent(ctx) -> view with _set_primitive()
+        resolve_address(ctx) -> key/index
+    """
+
+    def __init__(self, ref: object, value: Term[T | Sentinel]) -> None:
+        super().__init__(ref, value)
+        self.ref = ref
+        self.value_expr = value
+
+    async def execute(self, ctx: Context) -> T:
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        value = await self.value_expr.execute(ctx)
+        if isinstance(value, Sentinel):
+            raise ValueError(f"Cannot store sentinel value: {value}")
+        parent._set_primitive(address, value)
+        return value
+
+    def __repr__(self) -> str:
+        return f"ItemPrimitiveSetCmd({self.ref!r}, {self.value_expr!r})"
+
+
+class ItemPrimitiveSetUnsafeCmd[T](Command, Morphism[T]):
+    """Set primitive value skipping validation reads.
+
+    Uses the ChildPrimitiveUnsafeSetBase._set_primitive_unsafe() method
+    which materializes containers but skips the 2 validation storage reads
+    (validate_is_container on parent + get_node_info on child).
+
+    The ref must implement:
+        fetch_parent(ctx) -> view with _set_primitive_unsafe()
+        resolve_address(ctx) -> key/index
+    """
+
+    def __init__(self, ref: object, value: Term[T | Sentinel]) -> None:
+        super().__init__(ref, value)
+        self.ref = ref
+        self.value_expr = value
+
+    async def execute(self, ctx: Context) -> T:
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        value = await self.value_expr.execute(ctx)
+        if isinstance(value, Sentinel):
+            raise ValueError(f"Cannot store sentinel value: {value}")
+        parent._set_primitive_unsafe(address, value)
+        return value
+
+    def __repr__(self) -> str:
+        return f"ItemPrimitiveSetUnsafeCmd({self.ref!r}, {self.value_expr!r})"
 
 
 class ItemDeleteCmd(Command, Morphism[None]):

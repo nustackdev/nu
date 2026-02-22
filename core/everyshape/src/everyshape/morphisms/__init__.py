@@ -8,10 +8,13 @@ from .collection import (
     StoreCmd,
 )
 from .item import (
+    InitCmd,
     ItemDeleteCmd,
     ItemExistsOp,
     ItemGetOp,
     ItemMissingOp,
+    ItemPrimitiveSetCmd,
+    ItemPrimitiveSetUnsafeCmd,
     ItemSetCmd,
 )
 from .reactive import (
@@ -30,10 +33,13 @@ __all__ = [
     "CollectionExistsOp",
     "CollectionMissingOp",
     "ExtractOp",
+    "InitCmd",
     "ItemDeleteCmd",
     "ItemExistsOp",
     "ItemGetOp",
     "ItemMissingOp",
+    "ItemPrimitiveSetCmd",
+    "ItemPrimitiveSetUnsafeCmd",
     "ItemSetCmd",
     "OnChangeOp",
     "OnChildChangeOp",

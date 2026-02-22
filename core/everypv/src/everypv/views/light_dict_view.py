@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 from pv.container import ContainerProtocol, ContainerStructure
 from pv.types import EMPTY, Empty, Value
+from pv.view import ChildPrimitiveSetBase, ChildPrimitiveUnsafeSetBase
 
 from .base import StdView
 
@@ -29,7 +30,11 @@ __all__ = [
 ]
 
 
-class LightDictView(StdView):
+class LightDictView(
+    ChildPrimitiveSetBase,
+    ChildPrimitiveUnsafeSetBase,
+    StdView,
+):
     """Ultra-lightweight dict view for maximum performance.
 
     Stores only primitive values (int, float, str, bool, bytes, None).

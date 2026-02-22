@@ -26,8 +26,22 @@ __all__ = [
     "CollectionClearableBase",
     "CollectionExistableBase",
     "CollectionExtractableBase",
+    "CollectionInitializableBase",
     "CollectionStorableBase",
 ]
+
+
+class CollectionInitializableBase:
+    """Base for collection refs that can materialize their container chain.
+
+    Provides init() using InitCmd. Ensures all parent containers exist
+    in storage, enabling subsequent unsafe writes to skip validation reads.
+    """
+
+    def init(self) -> NoneValue:
+        from everyshape.morphisms.item import InitCmd
+
+        return NoneValue(InitCmd(self))
 
 
 class CollectionExistableBase:

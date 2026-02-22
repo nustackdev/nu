@@ -17,6 +17,8 @@ from pv.view import (
     ChildNestedGetBase,
     ChildNestedSetBase,
     ChildObservableBase,
+    ChildPrimitiveSetBase,
+    ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
     ObservableBase,
 )
@@ -56,6 +58,8 @@ class DictView(
     ChildNavigationBase[str | int],
     ChildNestedGetBase,
     ChildNestedSetBase,
+    ChildPrimitiveSetBase,
+    ChildPrimitiveUnsafeSetBase,
     StdView,
 ):
     """Dict-like view over container.

@@ -12,6 +12,8 @@ from pv.types import is_empty
 from pv.view import (
     ChildNestedSetBase,
     ChildObservableBase,
+    ChildPrimitiveSetBase,
+    ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
     ObservableBase,
 )
@@ -43,6 +45,8 @@ class SetView(
     ChildObservableBase[object],
     MetadataBasedChildrenCountBase,
     ChildNestedSetBase,
+    ChildPrimitiveSetBase,
+    ChildPrimitiveUnsafeSetBase,
     StdView,
 ):
     """Set-like view over container.

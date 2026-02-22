@@ -26,8 +26,9 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from everybase.abc.values import NoneValue
     from everybase.core import Term
+
+    from ..values import NoneValue
 
 
 __all__ = [
