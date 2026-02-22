@@ -14,7 +14,6 @@ from everybase.abc import MutableMappingBase as _EB_MutableMappingBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,
-    CollectionInitializableBase,
     CollectionStorableBase,
     ViewObservableBase,
 )
@@ -50,7 +49,6 @@ class MutableMappingBase[K, V, CollectionValueT, ValueValueT](
     _EB_MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     CollectionExistableBase,
     CollectionExtractableBase[CollectionValueT],
-    CollectionInitializableBase,
     CollectionStorableBase[CollectionValueT, dict[K, V]],
 ):
     """Mutable mapping — adds set_, delete, update_."""

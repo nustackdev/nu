@@ -14,7 +14,6 @@ from everybase.abc import SequenceBase as _EB_SequenceBase
 from everyshape.capabilities import (
     CollectionExistableBase,
     CollectionExtractableBase,
-    CollectionInitializableBase,
     CollectionStorableBase,
     ViewObservableBase,
 )
@@ -50,7 +49,6 @@ class MutableSequenceBase[T, CollectionValueT, ItemValueT](
     _EB_MutableSequenceBase[list[T], T, CollectionValueT, ItemValueT],
     CollectionExistableBase,
     CollectionExtractableBase[CollectionValueT],
-    CollectionInitializableBase,
     CollectionStorableBase[CollectionValueT, list[T]],
 ):
     """Mutable sequence — adds append, extend, insert, pop, remove."""

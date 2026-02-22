@@ -3,13 +3,15 @@
 These capabilities are specific to the shape/document model (refs with
 fetch/fetch_parent/resolve_address). Pure pythonic capabilities live in
 everybase.capabilities.
+
+PV-specific capabilities (CollectionInitializableBase, CollectionScanPrimitivesBase,
+CollectionClearPrimitivesBase, ItemPrimitive*Base) live in everypv.capabilities.
 """
 
 from .collection import (
     CollectionClearableBase,
     CollectionExistableBase,
     CollectionExtractableBase,
-    CollectionInitializableBase,
     CollectionStorableBase,
 )
 from .item import (
@@ -42,7 +44,6 @@ __all__ = [  # noqa: RUF022
     "CollectionClearableBase",
     "CollectionExistableBase",
     "CollectionExtractableBase",
-    "CollectionInitializableBase",
     "CollectionStorableBase",
     # Reactive bases
     "PrimitiveObservableBase",

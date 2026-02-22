@@ -3,13 +3,13 @@
 Builds term trees for writing and reading Shape fields, executed under
 a single Transaction (writes) or Snapshot (reads).
 
-Uses unsafe primitive writes (InitCmd + ItemPrimitiveSetUnsafeCmd)
+Uses unsafe primitive writes (InitCmd + ItemPrimitiveSetUnsafeParentSkipCmd)
 which skip redundant validation reads — safe because the Shape schema
 guarantees field types at definition time.
 
 Uses:
-  everyshape     → Shape, InitCmd, ItemPrimitiveSetUnsafeCmd
-  everypv        → Ref slots, Transaction/Snapshot spans
+  everypv        → Ref slots, Transaction/Snapshot spans, unsafe morphisms
+  everyshape     → Shape
   everybase.abc  → Seq (sequential composition)
 """
 
@@ -25,8 +25,12 @@ from everybase import Context
 from everybase.abc import Seq
 from everybase.abc.utils import ensure_term
 from everypv import Snapshot, Transaction
+from everypv.morphisms.item import (
+    InitCmd,
+    ItemPrimitiveGetUnsafeOp,
+    ItemPrimitiveSetUnsafeParentSkipCmd,
+)
 from everyshape import Shape
-from everyshape.morphisms.item import InitCmd, ItemPrimitiveGetOp, ItemPrimitiveSetUnsafeCmd
 
 
 # ── Shape ─────────────────────────────────────────────────────────────
@@ -50,13 +54,13 @@ writes = Transaction(
         # Materialize containers once
         *[InitCmd(f) for f in FIELDS],
         # Then raw writes — no validation, no ensure_created
-        *[ItemPrimitiveSetUnsafeCmd(f, ensure_term(i)) for i in range(N) for f in FIELDS],
+        *[ItemPrimitiveSetUnsafeParentSkipCmd(f, ensure_term(i)) for i in range(N) for f in FIELDS],
     ),
     scope=Record,
 )
 
 reads = Snapshot(
-    Seq(*[ItemPrimitiveGetOp(f) for i in range(N) for f in FIELDS]),
+    Seq(*[ItemPrimitiveGetUnsafeOp(f) for i in range(N) for f in FIELDS]),
     scope=Record,
 )
 

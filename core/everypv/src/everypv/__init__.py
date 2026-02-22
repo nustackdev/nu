@@ -28,6 +28,15 @@ Usage:
 """
 
 from everypv.meta import auto_atomic
+from everypv.morphisms import (
+    ClearPrimitivesUnsafeCmd,
+    InitCmd,
+    ItemPrimitiveDeleteUnsafeCmd,
+    ItemPrimitiveGetUnsafeOp,
+    ItemPrimitiveSetUnsafeCmd,
+    ItemPrimitiveSetUnsafeParentSkipCmd,
+    ScanPrimitivesUnsafeOp,
+)
 from everypv.refs import (
     BasisPointRef,
     BoolRef,
@@ -60,6 +69,16 @@ from everypv.spans import Atomic, Snapshot, Transaction
 
 
 __all__ = [  # noqa: RUF022
+    # Morphisms — Item
+    "InitCmd",
+    "ItemPrimitiveGetUnsafeOp",
+    "ItemPrimitiveSetUnsafeCmd",
+    "ItemPrimitiveSetUnsafeParentSkipCmd",
+    "ItemPrimitiveDeleteUnsafeCmd",
+    # Morphisms — Collection
+    "ScanPrimitivesUnsafeOp",
+    "ClearPrimitivesUnsafeCmd",
+    # Meta
     "auto_atomic",
     "Atomic",
     "BasisPointRef",

@@ -1,4 +1,8 @@
-"""Shape-model morphisms — item CRUD, collection ops, reactive subscriptions."""
+"""Shape-model morphisms — item CRUD, collection ops, reactive subscriptions.
+
+PV-specific morphisms (InitCmd, ItemPrimitive*, ScanPrimitivesOp,
+ClearPrimitivesCmd) live in everypv.morphisms.
+"""
 
 from .collection import (
     CollectionClearCmd,
@@ -8,14 +12,10 @@ from .collection import (
     StoreCmd,
 )
 from .item import (
-    InitCmd,
     ItemDeleteCmd,
     ItemExistsOp,
     ItemGetOp,
     ItemMissingOp,
-    ItemPrimitiveGetOp,
-    ItemPrimitiveSetCmd,
-    ItemPrimitiveSetUnsafeCmd,
     ItemSetCmd,
 )
 from .reactive import (
@@ -34,14 +34,10 @@ __all__ = [
     "CollectionExistsOp",
     "CollectionMissingOp",
     "ExtractOp",
-    "InitCmd",
     "ItemDeleteCmd",
     "ItemExistsOp",
     "ItemGetOp",
     "ItemMissingOp",
-    "ItemPrimitiveGetOp",
-    "ItemPrimitiveSetCmd",
-    "ItemPrimitiveSetUnsafeCmd",
     "ItemSetCmd",
     "OnChangeOp",
     "OnChildChangeOp",

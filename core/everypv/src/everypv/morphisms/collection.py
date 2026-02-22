@@ -1,0 +1,73 @@
+"""PV collection morphisms — unsafe scan and clear primitives.
+
+ScanPrimitivesUnsafeOp: Scan all primitive children — _unsafe_primitive_scan_values()
+ClearPrimitivesUnsafeCmd: Clear all primitive children — _unsafe_primitive_clear()
+
+These require PV views with UnsafePrimitiveOpsBase in MRO.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from everybase import EMPTY, Command, Morphism, Operation, Sentinel
+
+
+if TYPE_CHECKING:
+    from everybase import Context
+
+
+__all__ = [
+    "ClearPrimitivesUnsafeCmd",
+    "ScanPrimitivesUnsafeOp",
+]
+
+
+class ScanPrimitivesUnsafeOp[T](Operation, Morphism[list[T] | Sentinel]):
+    """Scan all direct primitive child values via _unsafe_primitive_scan_values().
+
+    Single ctx.scan() call — no marker parsing, no type checks.
+    Returns list of raw values.
+
+    The ref must implement:
+        fetch(ctx) -> view with _unsafe_primitive_scan_values() method
+    """
+
+    def __init__(self, ref: object) -> None:
+        super().__init__(ref)
+        self.ref = ref
+
+    async def execute(self, ctx: Context) -> list[T] | Sentinel:
+        """Scan all primitive children via raw storage scan."""
+        try:
+            view = await self.ref.fetch(ctx)
+        except (KeyError, IndexError):
+            return EMPTY
+        return list(view._unsafe_primitive_scan_values())
+
+    def __repr__(self) -> str:
+        return f"ScanPrimitivesUnsafeOp({self.ref!r})"
+
+
+class ClearPrimitivesUnsafeCmd(Command, Morphism[None]):
+    """Clear all primitive children via _unsafe_primitive_clear().
+
+    Scan + ctx.delete() each — no validation, no descendant cleanup.
+    The caller must know all children are primitives.
+
+    The ref must implement:
+        fetch(ctx) -> view with _unsafe_primitive_clear() method
+    """
+
+    def __init__(self, ref: object) -> None:
+        super().__init__(ref)
+        self.ref = ref
+
+    async def execute(self, ctx: Context) -> None:
+        """Clear all primitive children via scan + delete."""
+        view = await self.ref.fetch(ctx)
+        view._unsafe_primitive_clear()
+        return None
+
+    def __repr__(self) -> str:
+        return f"ClearPrimitivesUnsafeCmd({self.ref!r})"

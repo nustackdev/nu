@@ -16,10 +16,9 @@ from pv.view import (
     ChildNavigationBase,
     ChildNestedGetBase,
     ChildNestedSetBase,
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
+    UnsafePrimitiveOpsBase,
     View,
 )
 
@@ -48,9 +47,8 @@ class TupleView(
     ChildNavigationBase[int],
     ChildNestedGetBase,
     ChildNestedSetBase,
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
+    UnsafePrimitiveOpsBase,
     StdView,
 ):
     """Tuple-like view over container (immutable sequence).

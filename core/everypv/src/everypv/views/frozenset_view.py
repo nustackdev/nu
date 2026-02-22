@@ -11,10 +11,9 @@ from pv.container import ContainerProtocol, ContainerStructure
 from pv.types import is_empty
 from pv.view import (
     ChildNestedSetBase,
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
+    UnsafePrimitiveOpsBase,
 )
 
 from .base import StdView
@@ -35,9 +34,8 @@ __all__ = ["FrozenSetView"]
 class FrozenSetView(
     MetadataBasedChildrenCountBase,
     ChildNestedSetBase,
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
+    UnsafePrimitiveOpsBase,
     StdView,
 ):
     """Frozenset-like view over container (immutable set).

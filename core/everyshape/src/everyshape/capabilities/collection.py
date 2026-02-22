@@ -8,6 +8,10 @@ CollectionExistableBase: .exists(), .missing()
 
 These bases are for refs that represent collections/views.
 The ref must implement fetch(ctx) -> storage object.
+
+PV-specific collection capabilities (CollectionInitializableBase,
+CollectionScanPrimitivesBase, CollectionClearPrimitivesBase) live
+in everypv.capabilities.collection.
 """
 
 from __future__ import annotations
@@ -26,22 +30,8 @@ __all__ = [
     "CollectionClearableBase",
     "CollectionExistableBase",
     "CollectionExtractableBase",
-    "CollectionInitializableBase",
     "CollectionStorableBase",
 ]
-
-
-class CollectionInitializableBase:
-    """Base for collection refs that can materialize their container chain.
-
-    Provides init() using InitCmd. Ensures all parent containers exist
-    in storage, enabling subsequent unsafe writes to skip validation reads.
-    """
-
-    def init(self) -> NoneValue:
-        from everyshape.morphisms.item import InitCmd
-
-        return NoneValue(InitCmd(self))
 
 
 class CollectionExistableBase:

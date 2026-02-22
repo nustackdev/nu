@@ -15,10 +15,9 @@ from typing import TYPE_CHECKING, ClassVar, cast
 from pv.container import ContainerProtocol, ContainerStructure
 from pv.types import EMPTY, Empty, Value, is_empty
 from pv.view import (
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
+    UnsafePrimitiveOpsBase,
 )
 
 from .base import StdView
@@ -36,9 +35,8 @@ __all__ = [
 
 class FlatDictView(
     MetadataBasedChildrenCountBase,
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
+    UnsafePrimitiveOpsBase,
     StdView,
 ):
     """Flat dict view with length tracking but no nested containers.

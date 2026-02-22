@@ -16,11 +16,10 @@ from pv.view import (
     ChildNestedGetBase,
     ChildNestedSetBase,
     ChildObservableBase,
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
     MetadataBasedChildrenCountBase,
     ObservableBase,
+    UnsafePrimitiveOpsBase,
 )
 
 from .base import StdView
@@ -58,9 +57,8 @@ class ListView(
     ChildNavigationBase[int],
     ChildNestedGetBase,
     ChildNestedSetBase,
-    ChildPrimitiveGetBase,
     ChildPrimitiveSetBase,
-    ChildPrimitiveUnsafeSetBase,
+    UnsafePrimitiveOpsBase,
     StdView,
 ):
     """List-like view over container.

@@ -11,6 +11,9 @@ CollectionMissingOp: Inverse of CollectionExistsOp
 These operate on refs that implement fetch(ctx) -> storage object.
 The storage object must support the relevant protocol (extract(), store(),
 __len__, clear()).
+
+PV-specific collection morphisms (ScanPrimitivesOp, ClearPrimitivesCmd)
+live in everypv.morphisms.collection.
 """
 
 from __future__ import annotations
