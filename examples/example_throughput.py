@@ -1,39 +1,11 @@
-"""Throughput demo — fast writes and reads through the Shape term system.
-
-Builds term trees for writing and reading Shape fields, executed under
-a single Transaction (writes) or Snapshot (reads).
-
-Uses unsafe primitive writes (InitCmd + ItemPrimitiveSetUnsafeParentSkipCmd)
-which skip redundant validation reads — safe because the Shape schema
-guarantees field types at definition time.
-
-Uses:
-  everypv        → Ref slots, Transaction/Snapshot spans, unsafe morphisms
-  everyshape     → Shape
-  everybase.abc  → Seq (sequential composition)
-"""
+"""Tree deformations — swap standard morphisms for faster PV primitives."""
 
 from __future__ import annotations
 
-import asyncio
-import shutil
-import tempfile
-import time
-
 import everypv as pv
-from everybase import Context
 from everybase.abc import Seq
-from everybase.abc.utils import ensure_term
-from everypv import Snapshot, Transaction
-from everypv.morphisms.item import (
-    InitCmd,
-    ItemPrimitiveGetUnsafeOp,
-    ItemPrimitiveSetUnsafeParentSkipCmd,
-)
+from everypv import Snapshot, Transaction, deform_reads, deform_writes
 from everyshape import Shape
-
-
-# ── Shape ─────────────────────────────────────────────────────────────
 
 
 class Record(Shape):
@@ -45,60 +17,57 @@ class Record(Shape):
 
 FIELDS = [Record.a, Record.b, Record.c, Record.d]
 N = 25_000
-TOTAL = N * len(FIELDS)
 
-# ── Trees ─────────────────────────────────────────────────────────────
 
-writes = Transaction(
+write_flow = Transaction(
     Seq(
-        # Materialize containers once
-        *[InitCmd(f) for f in FIELDS],
-        # Then raw writes — no validation, no ensure_created
-        *[ItemPrimitiveSetUnsafeParentSkipCmd(f, ensure_term(i)) for i in range(N) for f in FIELDS],
-    ),
-    scope=Record,
+        *[f.set(i) for i in range(N) for f in FIELDS],
+    )
 )
-
-reads = Snapshot(
-    Seq(*[ItemPrimitiveGetUnsafeOp(f) for i in range(N) for f in FIELDS]),
-    scope=Record,
+read_flow = Snapshot(
+    Seq(
+        *[f.get() for i in range(N) for f in FIELDS],
+    )
 )
-
-
-# ── Run ───────────────────────────────────────────────────────────────
-
-
-def report(label: str, elapsed: float, n: int) -> None:
-    us = (elapsed / n) * 1_000_000
-    ops = n / elapsed
-    print(f"  {label:<8s} {elapsed:>7.3f}s    {us:>5.1f} us/op    {ops:>10,.0f} ops/sec")
 
 
 async def main() -> None:
+    """Run."""
+    import shutil
+    import tempfile
+    import time
+
     from tkv.tkv.storage import StorageProtocol
 
+    from everybase import Context
     from everypv.adapters.storage import rocksdb_storage_inmemory
 
-    tmpdir = tempfile.mkdtemp(prefix="throughput_")
-    try:
-        with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+    total = N * len(FIELDS)
+    variants = [
+        ("baseline", write_flow, read_flow),
+        ("optimized", deform_writes(write_flow), deform_reads(read_flow)),
+    ]
 
-            t0 = time.perf_counter()
-            await writes.execute(ctx)
-            t_write = time.perf_counter() - t0
+    for label, wt, rt in variants:
+        tmpdir = tempfile.mkdtemp(prefix="tp_")
+        try:
+            with rocksdb_storage_inmemory(tmpdir) as storage:
+                ctx = Context().with_handle(StorageProtocol, storage)
 
-            t0 = time.perf_counter()
-            await reads.execute(ctx)
-            t_read = time.perf_counter() - t0
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+                t0 = time.perf_counter()
+                await wt.execute(ctx)
+                w = total / (time.perf_counter() - t0)
 
-    print(f"\n  {TOTAL:,} Shape field ops ({N:,} records x {len(FIELDS)} fields)\n")
-    report("writes", t_write, TOTAL)
-    report("reads", t_read, TOTAL)
-    print()
+                t0 = time.perf_counter()
+                await rt.execute(ctx)
+                r = total / (time.perf_counter() - t0)
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+        print(f"  {label:<10s}  writes {w:>8,.0f} ops/sec   reads {r:>8,.0f} ops/sec")
 
 
 if __name__ == "__main__":
+    import asyncio
+
     asyncio.run(main())
