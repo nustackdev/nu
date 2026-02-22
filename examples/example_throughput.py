@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import everypv as pv
 from everybase.abc import Seq
-from everypv import Snapshot, Transaction, deform_reads, deform_writes
+from everypv import Snapshot, Transaction, optimize_primitive_reads, optimize_primitive_writes
 from everyshape import Shape
 
 
@@ -45,7 +45,7 @@ async def main() -> None:
     total = N * len(FIELDS)
     variants = [
         ("baseline", write_flow, read_flow),
-        ("optimized", deform_writes(write_flow), deform_reads(read_flow)),
+        ("optimized", optimize_primitive_writes(write_flow), optimize_primitive_reads(read_flow)),
     ]
 
     for label, wt, rt in variants:

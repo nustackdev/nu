@@ -1,39 +1,35 @@
 """PV deformations — semantics-preserving tree transforms for PV optimization.
 
-deform_reads:  Value(ItemGetOp) → ItemPrimitiveGetUnsafeOp
-deform_writes: Value(ItemSetCmd) → ItemPrimitiveSetUnsafeCmd
+optimize_primitive_reads:  ItemGetOp → ItemPrimitiveGetUnsafeOp
+optimize_primitive_writes: ItemSetCmd → ItemPrimitiveSetUnsafeCmd
 """
 
 from __future__ import annotations
 
-from everybase import Node, Value, replace
+from everybase import Node, replace
 from everypv.morphisms.item import ItemPrimitiveGetUnsafeOp, ItemPrimitiveSetUnsafeCmd
 from everyshape.morphisms.item import ItemGetOp, ItemSetCmd
 
 
 __all__ = [
-    "deform_reads",
-    "deform_writes",
+    "optimize_primitive_reads",
+    "optimize_primitive_writes",
 ]
 
 
-def deform_reads[N: Node](tree: N) -> N:
-    """Value(ItemGetOp) → ItemPrimitiveGetUnsafeOp."""
+def optimize_primitive_reads[N: Node](tree: N) -> N:
+    """ItemGetOp → ItemPrimitiveGetUnsafeOp."""
     return replace(
         tree,
-        lambda n: isinstance(n, Value)
-        and n.child_count == 1
-        and isinstance(n.children[0], ItemGetOp),
-        lambda n: ItemPrimitiveGetUnsafeOp(n.children[0].ref),
+        lambda n: isinstance(n, ItemGetOp),
+        lambda n: ItemPrimitiveGetUnsafeOp(n.ref),
     )
 
 
-def deform_writes[N: Node](tree: N) -> N:
-    """Value(ItemSetCmd) → ItemPrimitiveSetUnsafeCmd."""
+def optimize_primitive_writes[N: Node](tree: N) -> N:
+    """ItemSetCmd → ItemPrimitiveSetUnsafeCmd."""
     return replace(
         tree,
-        lambda n: isinstance(n, Value)
-        and n.child_count == 1
-        and isinstance(n.children[0], ItemSetCmd),
-        lambda n: ItemPrimitiveSetUnsafeCmd(n.children[0].ref, n.children[0].value_expr),
+        lambda n: isinstance(n, ItemSetCmd),
+        lambda n: ItemPrimitiveSetUnsafeCmd(n.ref, n.value_expr),
     )

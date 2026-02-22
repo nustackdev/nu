@@ -27,7 +27,7 @@ Usage:
         profile = ShapeRef.slot(Profile)
 """
 
-from everypv.meta import auto_atomic, deform_reads, deform_writes
+from everypv.meta import auto_atomic, optimize_primitive_reads, optimize_primitive_writes
 from everypv.morphisms import (
     ClearPrimitivesUnsafeCmd,
     InitCmd,
@@ -80,8 +80,8 @@ __all__ = [  # noqa: RUF022
     "ClearPrimitivesUnsafeCmd",
     # Meta
     "auto_atomic",
-    "deform_reads",
-    "deform_writes",
+    "optimize_primitive_reads",
+    "optimize_primitive_writes",
     "Atomic",
     "BasisPointRef",
     "BoolRef",
