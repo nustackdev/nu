@@ -34,8 +34,8 @@ from .items_extended import (
     TimezoneRef,
     UUIDRef,
 )
+from .list import ListRef
 from .listshape import ShapesListRef
-from .sequence import ListRef
 from .set import SetRef
 from .shape import ShapeRef
 

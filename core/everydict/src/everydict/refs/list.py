@@ -17,7 +17,7 @@ from everybase.abc import (
     StrValue,
     ensure_term,
 )
-from everyshape import MutableListRefBase, Slot
+from everyshape import MutableSequenceRefBase, Slot
 
 from .base import RefBase
 from .items import ItemRef
@@ -48,7 +48,7 @@ __all__ = [
 
 
 class ListRef[T](
-    MutableListRefBase[T, ListValue[T], AnyValue],
+    MutableSequenceRefBase[T, ListValue[T], AnyValue],
     RefBase[list[T]],
 ):
     """Dict sequence reference — ordered container backed by nested list."""

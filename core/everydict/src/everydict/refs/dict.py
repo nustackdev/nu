@@ -17,7 +17,7 @@ from everybase.abc import (
     StrValue,
     ensure_term,
 )
-from everyshape import MutableDictRefBase, Slot
+from everyshape import MutableMappingRefBase, Slot
 
 from .base import RefBase
 from .items import ItemRef
@@ -48,7 +48,7 @@ __all__ = [
 
 
 class DictRef[K, V](
-    MutableDictRefBase[K, V, DictValue[K, V], AnyValue],
+    MutableMappingRefBase[K, V, DictValue[K, V], AnyValue],
     RefBase[dict[K, V]],
 ):
     """Dict mapping reference — key-value container backed by nested dict."""
