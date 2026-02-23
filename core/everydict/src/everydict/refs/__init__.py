@@ -40,6 +40,9 @@ from .set import SetRef
 from .shape import ShapeRef
 
 
+ListRef = SequenceRef
+
+
 __all__ = [
     "BasisPointRef",
     "BoolRef",
@@ -52,6 +55,7 @@ __all__ = [
     "FractionRef",
     "IntRef",
     "ItemRef",
+    "ListRef",
     "MappingRef",
     "PathRef",
     "PercentageRef",

@@ -17,6 +17,7 @@ Usage::
     ctx = Context().with_handle(dict, data, scope=User)
 """
 
+from everydict.meta import inline_refs
 from everydict.refs import (
     BasisPointRef,
     BoolRef,
@@ -29,6 +30,7 @@ from everydict.refs import (
     FractionRef,
     IntRef,
     ItemRef,
+    ListRef,
     MappingRef,
     PathRef,
     PercentageRef,
@@ -58,6 +60,7 @@ __all__ = [
     "FractionRef",
     "IntRef",
     "ItemRef",
+    "ListRef",
     "MappingRef",
     "PathRef",
     "PercentageRef",
@@ -72,4 +75,5 @@ __all__ = [
     "TimedeltaRef",
     "TimezoneRef",
     "UUIDRef",
+    "inline_refs",
 ]

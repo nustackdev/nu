@@ -37,6 +37,7 @@ from ..types import (
 if TYPE_CHECKING:
     from everybase.core import Context
 
+_NO_LITERAL = object()  # sentinel: "this Value is Term-backed, no literal"
 
 __all__ = [
     "AnyValue",
@@ -67,7 +68,8 @@ class ValueBase[T](Value[T | Sentinel]):
     """Value substrate base for Python runtime memory.
 
     Provides:
-    - _source: Storage for literal value or Term computation
+    - _source: Back-compat property (Term child or literal)
+    - _literal: Stores non-Term sources (_NO_LITERAL when Term-backed)
     - fetch(): Evaluates source and returns value
     - resolve(): Returns simple identity
 
@@ -75,10 +77,12 @@ class ValueBase[T](Value[T | Sentinel]):
         class IntValue(ValueBase[int], IntType):
             pass
 
-    The fetch() implementation evaluates the source:
-    - If source is a Term, executes it
-    - Otherwise returns the literal value
+    For Term sources, the Term is stored as children[0]. with_children()
+    automatically updates it — no manual sync needed.
+    For literal sources, the value is stored in _literal.
     """
+
+    _literal: object  # T or _NO_LITERAL
 
     def __init__(self, source: Arg[T]) -> None:
         """Initialize with source.
@@ -88,15 +92,22 @@ class ValueBase[T](Value[T | Sentinel]):
         """
         if isinstance(source, Term):
             super().__init__(source)
+            self._literal = _NO_LITERAL
         else:
             super().__init__()
+            self._literal = source
 
-        self._source = source
+    @property
+    def _source(self) -> Arg[T]:
+        """Back-compat property. Returns the source (Term child or literal)."""
+        if self._literal is not _NO_LITERAL:
+            return self._literal  # type: ignore[return-value]
+        return self.children[0] if self.children else _NO_LITERAL  # type: ignore[return-value]
 
     async def execute(self, ctx: Context) -> T | Sentinel:
         """Get the value by evaluating the source.
 
-        - Term source: execute the term
+        - Term source: execute children[0]
         - Literal source: return directly
 
         Args:
@@ -105,9 +116,9 @@ class ValueBase[T](Value[T | Sentinel]):
         Returns:
             The value, or Sentinel if computation returns one
         """
-        if isinstance(self._source, Term):
-            return await self._source.execute(ctx)
-        return self._source
+        if self._literal is not _NO_LITERAL:
+            return self._literal  # type: ignore[return-value]
+        return await self.children[0].execute(ctx)
 
 
 # =============================================================================

@@ -1,4 +1,4 @@
-"""PV deformations — semantics-preserving tree transforms for PV optimization.
+"""optimize_primitives — replace standard morphisms with unsafe PV-native ops.
 
 optimize_primitive_reads:  ItemGetOp → ItemPrimitiveGetUnsafeOp
 optimize_primitive_writes: ItemSetCmd → ItemPrimitiveSetUnsafeCmd
