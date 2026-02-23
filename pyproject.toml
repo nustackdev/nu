@@ -10,7 +10,7 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["everybase", "everyshape", "everytable", "everystream", "everypv", "everygraph", "eb-datetime", "eb-fin", "eb-math", "eb-path", "eb-uuid", "eb-shape-lens", "eb-tree-view"]
+dependencies = ["everybase", "everyshape", "everytable", "everystream", "everypv", "everydict", "everygraph", "eb-datetime", "eb-fin", "eb-math", "eb-path", "eb-uuid", "eb-shape-lens", "eb-tree-view"]
 
 # =============================================================================
 # UV Workspace
@@ -23,6 +23,7 @@ members = [
     "core/everytable",
     "core/everystream",
     "core/everypv",
+    "core/everydict",
     "core/everygraph",
 
     # Packages — types
@@ -44,6 +45,7 @@ everyshape = { workspace = true }
 everytable = { workspace = true }
 everystream = { workspace = true }
 everypv = { workspace = true }
+everydict = { workspace = true }
 everygraph = { workspace = true }
 # Packages
 eb-datetime = { workspace = true }
