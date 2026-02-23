@@ -80,7 +80,7 @@ def _is_ref(node: Node) -> bool:
 
 
 def _is_value(node: Node) -> bool:
-    """Values have _source OR are Value subclass (is_self_pure True, not morphism)."""
+    """Values have source OR are Value subclass (is_self_pure True, not morphism)."""
     # Values have is_self_pure = True and no apply method (morphisms have apply).
     return hasattr(node, "is_self_pure") and not hasattr(node, "apply") and not _is_ref(node)
 
@@ -113,9 +113,9 @@ def _get_category_color(node: Node) -> str:
     if _is_morphism(node):
         return GREEN if _is_pure(node) else RED
     if _is_value(node):
-        # Literal values (leaf with _source) get bright cyan;
+        # Literal values (leaf with source) get bright cyan;
         # computed values (wrapping children) get dim cyan.
-        if hasattr(node, "_source") and node.is_leaf:
+        if hasattr(node, "source") and node.is_leaf:
             return CYAN
         return DIM_CYAN
     # Fallback: no special color
@@ -140,11 +140,11 @@ def _format_ref_label(node: Node) -> str:
     addr_repr = None
     if hasattr(node, "address"):
         addr = node.address
-        # If address is itself a Value leaf with _source, show the source
-        if hasattr(addr, "_source") and hasattr(addr, "is_leaf") and addr.is_leaf:
-            addr_repr = repr(addr._source)
-        elif hasattr(addr, "_source"):
-            addr_repr = repr(addr._source)
+        # If address is itself a Value leaf with source, show the source
+        if hasattr(addr, "source") and hasattr(addr, "is_leaf") and addr.is_leaf:
+            addr_repr = repr(addr.source)
+        elif hasattr(addr, "source"):
+            addr_repr = repr(addr.source)
 
     # Try to show parent chain (shape info)
     shape_str = ""
@@ -166,8 +166,8 @@ def _format_ref_label(node: Node) -> str:
 def _format_value_label(node: Node) -> str:
     """Format label for Value nodes: IntValue(42) or IntValue."""
     cls = type(node).__name__
-    if hasattr(node, "_source") and node.is_leaf:
-        src = node._source
+    if hasattr(node, "source") and node.is_leaf:
+        src = node.source
         return f"{cls}({src!r})"
     return cls
 

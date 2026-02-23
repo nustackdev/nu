@@ -228,7 +228,7 @@ class TestBasisPointRefConstruction:
         """Create from int literal."""
         bpt = BasisPointRef.from_int(500)
         assert isinstance(bpt, BasisPointRef)
-        assert isinstance(bpt._source, FuncCallOp)
+        assert isinstance(bpt.source, FuncCallOp)
 
     def test_from_pct(self):
         """Create from percentage."""
@@ -293,25 +293,25 @@ class TestBasisPointRefArithmetic:
         bpt = BasisPointRef.from_int(300)
         result = bpt + 200
         assert isinstance(result, BasisPointRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_sub_returns_basispointref(self):
         """Subtraction returns BasisPointRef."""
         bpt = BasisPointRef.from_int(500)
         result = bpt - 200
         assert isinstance(result, BasisPointRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_mul_returns_basispointref(self):
         """Multiplication returns BasisPointRef."""
         bpt = BasisPointRef.from_int(100)
         result = bpt * 3
         assert isinstance(result, BasisPointRef)
-        assert isinstance(result._source, MulOp)
+        assert isinstance(result.source, MulOp)
 
     def test_truediv_returns_basispointref(self):
         """Division returns BasisPointRef."""
         bpt = BasisPointRef.from_int(300)
         result = bpt / 3
         assert isinstance(result, BasisPointRef)
-        assert isinstance(result._source, DivOp)
+        assert isinstance(result.source, DivOp)

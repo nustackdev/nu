@@ -83,8 +83,8 @@ def _label(node: _Node) -> str:
         addr_repr = None
         if hasattr(node, "address"):
             addr = node.address
-            if hasattr(addr, "_source"):
-                addr_repr = repr(addr._source)
+            if hasattr(addr, "source"):
+                addr_repr = repr(addr.source)
         shape_str = ""
         if hasattr(node, "owner_shape") and node.owner_shape is not None:
             shape_str = f"[{node.owner_shape.__name__}]"
@@ -109,8 +109,8 @@ def _label(node: _Node) -> str:
         return cls
 
     if _is_value(node):
-        if hasattr(node, "_source") and node.is_leaf:
-            return f"{cls}({node._source!r})"
+        if hasattr(node, "source") and node.is_leaf:
+            return f"{cls}({node.source!r})"
         return cls
 
     return cls
@@ -133,8 +133,8 @@ def _attrs(node: _Node) -> dict[str, Any]:
 
     if hasattr(node, "address"):
         addr = node.address
-        if hasattr(addr, "_source"):
-            attrs["address"] = repr(addr._source)
+        if hasattr(addr, "source"):
+            attrs["address"] = repr(addr.source)
 
     if hasattr(node, "_method_name"):
         attrs["method"] = node._method_name
@@ -143,8 +143,8 @@ def _attrs(node: _Node) -> dict[str, Any]:
         func = node._func
         attrs["func"] = getattr(func, "__name__", repr(func))
 
-    if hasattr(node, "_source") and node.is_leaf:
-        attrs["source"] = repr(node._source)
+    if hasattr(node, "source") and node.is_leaf:
+        attrs["source"] = repr(node.source)
 
     if hasattr(node, "is_self_pure"):
         attrs["purity"] = "pure" if node.is_self_pure else "impure"

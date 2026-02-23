@@ -31,7 +31,7 @@ class TestTimezoneRefConstruction:
         """Create TimezoneRef from hour offset."""
         tz = TimezoneRef.from_offset(hours=5)
         assert isinstance(tz, TimezoneRef)
-        assert isinstance(tz._source, FuncCallOp)
+        assert isinstance(tz.source, FuncCallOp)
 
     def test_from_offset_hours_and_minutes(self):
         """Create TimezoneRef from hours and minutes offset."""

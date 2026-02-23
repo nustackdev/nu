@@ -24,7 +24,7 @@ class TestComplexRefConstruction:
         """Create from real and imaginary components."""
         ct = ComplexRef.from_components(3, 4)
         assert isinstance(ct, ComplexRef)
-        assert isinstance(ct._source, FuncCallOp)
+        assert isinstance(ct.source, FuncCallOp)
 
     def test_from_components_real_only(self):
         """Create with real component only."""
@@ -76,7 +76,7 @@ class TestComplexRefArithmetic:
         ct = ComplexRef.from_components(3, 4)
         result = ct + complex(1, 2)
         assert isinstance(result, ComplexRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_radd(self):
         """Right addition works."""
@@ -89,7 +89,7 @@ class TestComplexRefArithmetic:
         ct = ComplexRef.from_components(3, 4)
         result = ct - complex(1, 2)
         assert isinstance(result, ComplexRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_rsub(self):
         """Right subtraction works."""
@@ -102,7 +102,7 @@ class TestComplexRefArithmetic:
         ct = ComplexRef.from_components(3, 4)
         result = ct * complex(1, 2)
         assert isinstance(result, ComplexRef)
-        assert isinstance(result._source, MulOp)
+        assert isinstance(result.source, MulOp)
 
     def test_rmul(self):
         """Right multiplication works."""
@@ -115,7 +115,7 @@ class TestComplexRefArithmetic:
         ct = ComplexRef.from_components(3, 4)
         result = ct / complex(1, 2)
         assert isinstance(result, ComplexRef)
-        assert isinstance(result._source, DivOp)
+        assert isinstance(result.source, DivOp)
 
     def test_rtruediv(self):
         """Right division works."""
@@ -128,7 +128,7 @@ class TestComplexRefArithmetic:
         ct = ComplexRef.from_components(2, 0)
         result = ct**3
         assert isinstance(result, ComplexRef)
-        assert isinstance(result._source, PowOp)
+        assert isinstance(result.source, PowOp)
 
     def test_rpow(self):
         """Right power works."""

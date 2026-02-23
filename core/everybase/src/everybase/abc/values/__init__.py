@@ -68,7 +68,7 @@ class ValueBase[T](Value[T | Sentinel]):
     """Value substrate base for Python runtime memory.
 
     Provides:
-    - _source: Back-compat property (Term child or literal)
+    - source: Public property — the source (Term child or literal)
     - _literal: Stores non-Term sources (_NO_LITERAL when Term-backed)
     - fetch(): Evaluates source and returns value
     - resolve(): Returns simple identity
@@ -98,8 +98,8 @@ class ValueBase[T](Value[T | Sentinel]):
             self._literal = source
 
     @property
-    def _source(self) -> Arg[T]:
-        """Back-compat property. Returns the source (Term child or literal)."""
+    def source(self) -> Arg[T]:
+        """The source of this value — either a Term child or a literal."""
         if self._literal is not _NO_LITERAL:
             return self._literal  # type: ignore[return-value]
         return self.children[0] if self.children else _NO_LITERAL  # type: ignore[return-value]

@@ -22,7 +22,7 @@ class TestTimeRefConstruction:
         """Create from ISO format string."""
         tt = TimeRef.from_iso("10:30:00")
         assert isinstance(tt, TimeRef)
-        assert isinstance(tt._source, FuncCallOp)
+        assert isinstance(tt.source, FuncCallOp)
 
     def test_from_components(self):
         """Create from hour, minute, second components."""
@@ -118,7 +118,7 @@ class TestTimeRefManipulation:
         tt = TimeRef.from_iso("10:30:45")
         result = tt.replace(hour=15)
         assert isinstance(result, TimeRef)
-        assert isinstance(result._source, MethodCallOp)
+        assert isinstance(result.source, MethodCallOp)
 
     def test_replace_minute(self):
         """replace() with minute returns TimeRef."""

@@ -43,7 +43,7 @@ def extract_static_address(ref: Ref) -> object | None:
     # Slow path: address is a Value wrapping a literal (e.g. AnyValue("cat_0"))
     # This happens when _create_child_ref calls ensure_term(key) on a literal.
     addr = ref.address  # children[0], a Term
-    source = getattr(addr, "_source", None)
+    source = getattr(addr, "source", None)
     if source is not None and not isinstance(source, Term):
         return source  # literal value inside the Value wrapper
 

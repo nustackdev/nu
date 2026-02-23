@@ -25,7 +25,7 @@ class TestUUIDRefConstruction:
         """Create random UUID (version 4)."""
         ut = UUIDRef.uuid4()
         assert isinstance(ut, UUIDRef)
-        assert isinstance(ut._source, FuncCallOp)
+        assert isinstance(ut.source, FuncCallOp)
 
     def test_uuid1(self):
         """Create UUID from host ID and time (version 1)."""

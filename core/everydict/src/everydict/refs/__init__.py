@@ -9,15 +9,15 @@ Items:
 
 Collections:
     ShapeRef        structured container with named slots
-    MappingRef      key-value container
-    SequenceRef     ordered container
+    DictRef         key-value container
+    ListRef         ordered container
     SetRef          unordered unique-element container
     ShapesListRef   sequence of homogeneous shapes
     ShapesDictRef   mapping of homogeneous shapes
 """
 
 from .base import RefBase
-from .dict import MappingRef
+from .dict import DictRef
 from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
 from .items_extended import (
@@ -35,12 +35,9 @@ from .items_extended import (
     UUIDRef,
 )
 from .listshape import ShapesListRef
-from .sequence import SequenceRef
+from .sequence import ListRef
 from .set import SetRef
 from .shape import ShapeRef
-
-
-ListRef = SequenceRef
 
 
 __all__ = [
@@ -51,16 +48,15 @@ __all__ = [
     "DateRef",
     "DatetimeRef",
     "DecimalRef",
+    "DictRef",
     "FloatRef",
     "FractionRef",
     "IntRef",
     "ItemRef",
     "ListRef",
-    "MappingRef",
     "PathRef",
     "PercentageRef",
     "RefBase",
-    "SequenceRef",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",

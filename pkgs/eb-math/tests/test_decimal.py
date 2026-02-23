@@ -34,7 +34,7 @@ class TestDecimalRefConstruction:
         """Create from string."""
         dt = DecimalRef.from_str("123.456")
         assert isinstance(dt, DecimalRef)
-        assert isinstance(dt._source, FuncCallOp)
+        assert isinstance(dt.source, FuncCallOp)
 
     def test_from_int(self):
         """Create from integer."""
@@ -60,7 +60,7 @@ class TestDecimalRefArithmetic:
         dt = DecimalRef.from_str("10.00")
         result = dt + Decimal("5.00")
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_radd(self):
         """Right addition works."""
@@ -73,7 +73,7 @@ class TestDecimalRefArithmetic:
         dt = DecimalRef.from_str("10.00")
         result = dt - Decimal("3.00")
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_rsub(self):
         """Right subtraction works."""
@@ -86,7 +86,7 @@ class TestDecimalRefArithmetic:
         dt = DecimalRef.from_str("10.00")
         result = dt * Decimal("2.00")
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, MulOp)
+        assert isinstance(result.source, MulOp)
 
     def test_rmul(self):
         """Right multiplication works."""
@@ -99,7 +99,7 @@ class TestDecimalRefArithmetic:
         dt = DecimalRef.from_str("10.00")
         result = dt / Decimal("2.00")
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, DivOp)
+        assert isinstance(result.source, DivOp)
 
     def test_rtruediv(self):
         """Right division works."""
@@ -112,21 +112,21 @@ class TestDecimalRefArithmetic:
         dt = DecimalRef.from_str("10.00")
         result = dt // Decimal("3.00")
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, FloorDivOp)
+        assert isinstance(result.source, FloorDivOp)
 
     def test_mod_returns_decimalref(self):
         """Modulo returns DecimalRef."""
         dt = DecimalRef.from_str("10.00")
         result = dt % Decimal("3.00")
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, ModOp)
+        assert isinstance(result.source, ModOp)
 
     def test_pow_returns_decimalref(self):
         """Power returns DecimalRef."""
         dt = DecimalRef.from_str("2.00")
         result = dt**3
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, PowOp)
+        assert isinstance(result.source, PowOp)
 
     def test_neg(self):
         """Negation returns DecimalRef."""
@@ -148,7 +148,7 @@ class TestDecimalRefRounding:
         dt = DecimalRef.from_str("123.456")
         result = dt.quantize("0.01")
         assert isinstance(result, DecimalRef)
-        assert isinstance(result._source, MethodCallOp)
+        assert isinstance(result.source, MethodCallOp)
 
     def test_quantize_with_rounding(self):
         """quantize() with rounding mode returns DecimalRef."""

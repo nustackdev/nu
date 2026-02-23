@@ -25,13 +25,13 @@ class TestDateRefConstruction:
         """Create DateRef for today."""
         dt = DateRef.today()
         assert isinstance(dt, DateRef)
-        assert isinstance(dt._source, FuncCallOp)
+        assert isinstance(dt.source, FuncCallOp)
 
     def test_from_iso(self):
         """Create from ISO format string."""
         dt = DateRef.from_iso("2024-01-15")
         assert isinstance(dt, DateRef)
-        assert isinstance(dt._source, FuncCallOp)
+        assert isinstance(dt.source, FuncCallOp)
 
     def test_from_ordinal(self):
         """Create from Gregorian ordinal."""
@@ -75,7 +75,7 @@ class TestDateRefAccessors:
         dt = DateRef.from_iso("2024-03-15")
         result = dt.weekday()
         assert isinstance(result, IntRef)
-        assert isinstance(result._source, MethodCallOp)
+        assert isinstance(result.source, MethodCallOp)
 
     def test_isoweekday_returns_intref(self):
         """isoweekday() returns IntRef."""
@@ -163,14 +163,14 @@ class TestDateRefArithmetic:
         dt = DateRef.from_iso("2024-03-15")
         result = dt + timedelta(days=10)
         assert isinstance(result, DateRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_sub_timedelta(self):
         """Subtracting timedelta returns DateRef."""
         dt = DateRef.from_iso("2024-03-15")
         result = dt - timedelta(days=5)
         assert isinstance(result, DateRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_sub_date(self):
         """Subtracting date returns TimedeltaRef."""

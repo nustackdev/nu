@@ -277,7 +277,7 @@ class TestPercentageRefConstruction:
         """Create from float."""
         pt = PercentageRef.from_float(75.5)
         assert isinstance(pt, PercentageRef)
-        assert isinstance(pt._source, FuncCallOp)
+        assert isinstance(pt.source, FuncCallOp)
 
     def test_from_dec(self):
         """Create from decimal."""
@@ -364,25 +364,25 @@ class TestPercentageRefArithmetic:
         pt = PercentageRef.from_float(30.0)
         result = pt + 20.0
         assert isinstance(result, PercentageRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_sub_returns_percentageref(self):
         """Subtraction returns PercentageRef."""
         pt = PercentageRef.from_float(50.0)
         result = pt - 20.0
         assert isinstance(result, PercentageRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_mul_returns_percentageref(self):
         """Multiplication returns PercentageRef."""
         pt = PercentageRef.from_float(25.0)
         result = pt * 2
         assert isinstance(result, PercentageRef)
-        assert isinstance(result._source, MulOp)
+        assert isinstance(result.source, MulOp)
 
     def test_truediv_returns_percentageref(self):
         """Division returns PercentageRef."""
         pt = PercentageRef.from_float(50.0)
         result = pt / 2
         assert isinstance(result, PercentageRef)
-        assert isinstance(result._source, DivOp)
+        assert isinstance(result.source, DivOp)

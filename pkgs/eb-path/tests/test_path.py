@@ -24,7 +24,7 @@ class TestPathRefConstruction:
         """Create from string."""
         pt = PathRef.from_str("/home/user/file.txt")
         assert isinstance(pt, PathRef)
-        assert isinstance(pt._source, FuncCallOp)
+        assert isinstance(pt.source, FuncCallOp)
 
     def test_cwd(self):
         """Create from current working directory."""
@@ -113,7 +113,7 @@ class TestPathRefManipulation:
         pt = PathRef.from_str("/home/user")
         result = pt / "subdir"
         assert isinstance(result, PathRef)
-        assert isinstance(result._source, DivOp)
+        assert isinstance(result.source, DivOp)
 
     def test_joinpath_returns_pathref(self):
         """joinpath() returns PathRef."""

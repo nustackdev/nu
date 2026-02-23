@@ -28,7 +28,7 @@ class TestDatetimeRefConstruction:
         """Create DatetimeRef for now."""
         dt = DatetimeRef.now()
         assert isinstance(dt, DatetimeRef)
-        assert isinstance(dt._source, FuncCallOp)
+        assert isinstance(dt.source, FuncCallOp)
 
     def test_now_with_timezone(self):
         """Create DatetimeRef with timezone."""
@@ -204,14 +204,14 @@ class TestDatetimeRefArithmetic:
         dt = DatetimeRef.from_iso("2024-03-15T10:30:00")
         result = dt + timedelta(hours=5)
         assert isinstance(result, DatetimeRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_sub_timedelta(self):
         """Subtracting timedelta returns DatetimeRef."""
         dt = DatetimeRef.from_iso("2024-03-15T10:30:00")
         result = dt - timedelta(days=1)
         assert isinstance(result, DatetimeRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_sub_datetime(self):
         """Subtracting datetime returns TimedeltaRef."""

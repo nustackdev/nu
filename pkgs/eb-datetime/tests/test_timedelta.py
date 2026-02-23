@@ -24,7 +24,7 @@ class TestTimedeltaRefConstruction:
         """Create from seconds."""
         td = TimedeltaRef.from_seconds(3600)
         assert isinstance(td, TimedeltaRef)
-        assert isinstance(td._source, FuncCallOp)
+        assert isinstance(td.source, FuncCallOp)
 
     def test_from_components(self):
         """Create from time components."""
@@ -118,7 +118,7 @@ class TestTimedeltaRefArithmetic:
         td = TimedeltaRef.from_seconds(3600)
         result = td + timedelta(hours=1)
         assert isinstance(result, TimedeltaRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_radd(self):
         """Right addition works."""
@@ -131,7 +131,7 @@ class TestTimedeltaRefArithmetic:
         td = TimedeltaRef.from_seconds(3600)
         result = td - timedelta(minutes=30)
         assert isinstance(result, TimedeltaRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_rsub(self):
         """Right subtraction works."""
@@ -144,7 +144,7 @@ class TestTimedeltaRefArithmetic:
         td = TimedeltaRef.from_seconds(3600)
         result = td * 2
         assert isinstance(result, TimedeltaRef)
-        assert isinstance(result._source, MulOp)
+        assert isinstance(result.source, MulOp)
 
     def test_mul_float_returns_timedeltaref(self):
         """Multiplication by float returns TimedeltaRef."""
@@ -163,7 +163,7 @@ class TestTimedeltaRefArithmetic:
         td = TimedeltaRef.from_seconds(3600)
         result = td / 2
         assert isinstance(result, TimedeltaRef)
-        assert isinstance(result._source, DivOp)
+        assert isinstance(result.source, DivOp)
 
     def test_truediv_timedelta_returns_floatref(self):
         """Division by timedelta returns FloatRef."""
@@ -176,14 +176,14 @@ class TestTimedeltaRefArithmetic:
         td = TimedeltaRef.from_seconds(3600)
         result = td // 2
         assert isinstance(result, TimedeltaRef)
-        assert isinstance(result._source, FloorDivOp)
+        assert isinstance(result.source, FloorDivOp)
 
     def test_mod_returns_timedeltaref(self):
         """Modulo returns TimedeltaRef."""
         td = TimedeltaRef.from_seconds(5000)
         result = td % timedelta(hours=1)
         assert isinstance(result, TimedeltaRef)
-        assert isinstance(result._source, ModOp)
+        assert isinstance(result.source, ModOp)
 
     def test_neg(self):
         """Negation returns TimedeltaRef."""

@@ -25,7 +25,7 @@ class TestFractionRefConstruction:
         """Create from numerator and denominator."""
         ft = FractionRef.from_components(3, 4)
         assert isinstance(ft, FractionRef)
-        assert isinstance(ft._source, FuncCallOp)
+        assert isinstance(ft.source, FuncCallOp)
 
     def test_from_components_integer(self):
         """Create from integer (denominator defaults to 1)."""
@@ -84,7 +84,7 @@ class TestFractionRefArithmetic:
         ft = FractionRef.from_components(1, 4)
         result = ft + Fraction(1, 2)
         assert isinstance(result, FractionRef)
-        assert isinstance(result._source, AddOp)
+        assert isinstance(result.source, AddOp)
 
     def test_add_int(self):
         """Add integer."""
@@ -103,7 +103,7 @@ class TestFractionRefArithmetic:
         ft = FractionRef.from_components(3, 4)
         result = ft - Fraction(1, 4)
         assert isinstance(result, FractionRef)
-        assert isinstance(result._source, SubOp)
+        assert isinstance(result.source, SubOp)
 
     def test_rsub(self):
         """Right subtraction works."""
@@ -116,7 +116,7 @@ class TestFractionRefArithmetic:
         ft = FractionRef.from_components(1, 2)
         result = ft * Fraction(2, 3)
         assert isinstance(result, FractionRef)
-        assert isinstance(result._source, MulOp)
+        assert isinstance(result.source, MulOp)
 
     def test_rmul(self):
         """Right multiplication works."""
@@ -129,7 +129,7 @@ class TestFractionRefArithmetic:
         ft = FractionRef.from_components(1, 2)
         result = ft / Fraction(1, 4)
         assert isinstance(result, FractionRef)
-        assert isinstance(result._source, DivOp)
+        assert isinstance(result.source, DivOp)
 
     def test_rtruediv(self):
         """Right division works."""
@@ -142,7 +142,7 @@ class TestFractionRefArithmetic:
         ft = FractionRef.from_components(7, 2)
         result = ft // Fraction(3, 2)
         assert isinstance(result, IntRef)
-        assert isinstance(result._source, FloorDivOp)
+        assert isinstance(result.source, FloorDivOp)
 
     def test_rfloordiv(self):
         """Right floor division works."""
@@ -155,7 +155,7 @@ class TestFractionRefArithmetic:
         ft = FractionRef.from_components(7, 2)
         result = ft % Fraction(3, 2)
         assert isinstance(result, FractionRef)
-        assert isinstance(result._source, ModOp)
+        assert isinstance(result.source, ModOp)
 
     def test_rmod(self):
         """Right modulo works."""
@@ -168,7 +168,7 @@ class TestFractionRefArithmetic:
         ft = FractionRef.from_components(2, 3)
         result = ft**2
         assert isinstance(result, FractionRef)
-        assert isinstance(result._source, PowOp)
+        assert isinstance(result.source, PowOp)
 
 
 # =============================================================================

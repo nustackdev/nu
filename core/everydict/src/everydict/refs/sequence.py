@@ -17,7 +17,7 @@ from everybase.abc import (
     StrValue,
     ensure_term,
 )
-from everyshape import MutableSequenceRefBase, Slot
+from everyshape import MutableListRefBase, Slot
 
 from .base import RefBase
 from .items import ItemRef
@@ -43,12 +43,12 @@ def _value_type_for(python_type: type) -> type[Value]:
 
 
 __all__ = [
-    "SequenceRef",
+    "ListRef",
 ]
 
 
-class SequenceRef[T](
-    MutableSequenceRefBase[T, ListValue[T], AnyValue],
+class ListRef[T](
+    MutableListRefBase[T, ListValue[T], AnyValue],
     RefBase[list[T]],
 ):
     """Dict sequence reference — ordered container backed by nested list."""
