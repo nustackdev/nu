@@ -15,7 +15,7 @@ from pv.view import View
 from tkv.tkv.storage import StorageProtocol
 
 from everybase import Context
-from everypv.adapters.storage import rocksdb_storage_inmemory
+from everypv.adapters.storage import memory_storage, rocksdb_storage_inmemory
 from everypv.views import DictView
 
 
@@ -157,6 +157,14 @@ def timed_run(name: str, n_ops: int) -> Generator[list[TimingResult], None, None
 # ============================================================================
 # STORAGE SETUP
 # ============================================================================
+
+
+@contextmanager
+def fresh_memory_ctx() -> Generator[tuple[Context, Any], None, None]:
+    """Create a fresh in-memory context with StorageProtocol handle."""
+    with memory_storage() as storage:
+        ctx = Context().with_handle(StorageProtocol, storage)
+        yield ctx, storage
 
 
 @contextmanager
