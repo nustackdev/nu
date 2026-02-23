@@ -104,11 +104,8 @@ async def main() -> None:
 
     md = "\n".join(lines)
 
-    results_path = _HERE / "RESULTS.md"
-    results_path.write_text(md)
-
     print("=" * 70)
-    print(f"  Results written to {results_path} ({total_time:.1f}s total)")
+    print(md)
     print("=" * 70)
 
 
