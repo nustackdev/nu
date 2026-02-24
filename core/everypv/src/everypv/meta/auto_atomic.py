@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everybase import Term, find
-from everybase.meta import conditional_wrap
 
 from ..spans import Snapshot, Transaction
 
@@ -36,6 +35,33 @@ def _has_impure(node: Node) -> bool:
     return any(not t.is_self_pure for t in find(node, lambda n: isinstance(n, Term)))
 
 
+def _conditional_wrap_skip_spans[N: Node](
+    root: N,
+    pred: object,
+    wrapper: object,
+) -> N:
+    """Like conditional_wrap but skips Transaction/Snapshot spans.
+
+    Explicit Transaction/Snapshot spans placed by user code are respected —
+    their contents won't be re-wrapped.
+    """
+    if pred(root) or root.is_leaf:
+        return root
+
+    # Don't recurse into existing Transaction/Snapshot spans
+    if isinstance(root, (Transaction, Snapshot)):
+        return root
+
+    new_children: list[Node] = []
+    for child in root.children:
+        if pred(child):
+            new_children.append(wrapper(child))
+        else:
+            new_children.append(_conditional_wrap_skip_spans(child, pred, wrapper))
+
+    return root.with_children(*new_children)  # type: ignore[arg-type]
+
+
 def auto_atomic[N: Node](
     tree: N,
     scope: Hashable | None = None,
@@ -48,6 +74,9 @@ def auto_atomic[N: Node](
 
     Purity is resolved at wrap time: impure subtrees get ``Transaction``,
     pure subtrees get ``Snapshot``. No runtime purity check needed.
+
+    Existing Transaction/Snapshot spans (placed explicitly by user code)
+    are respected — their contents won't be re-wrapped.
 
     When ``scope`` is given, only Terms whose refs belong to that scope
     are wrapped. This lets you call auto_atomic multiple times to handle
@@ -87,4 +116,4 @@ def auto_atomic[N: Node](
     if pred(tree):
         return wrap(tree)  # type: ignore[return-value]
 
-    return conditional_wrap(tree, pred, wrap)
+    return _conditional_wrap_skip_spans(tree, pred, wrap)

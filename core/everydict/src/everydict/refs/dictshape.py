@@ -54,6 +54,27 @@ class ShapesDictRef[K, T: Shape](
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
 
+    def result(self, op: Term) -> DictValue:
+        return DictValue(op)
+
+    def _wrap_keys_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_values_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_items_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_iterable_result(self, operand: Term) -> ListValue:
+        return ListValue(operand)
+
+    def _wrap_value_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
+
+    def _wrap_element_result(self, operand: Term) -> AnyValue:
+        return AnyValue(operand)
+
     def __init__(
         self,
         *,
