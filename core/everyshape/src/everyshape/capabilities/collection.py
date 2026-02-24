@@ -1,17 +1,13 @@
 # ruff: noqa: D102
-"""Collection-level capability bases — extract, store, clear, exists.
+"""Collection-level capability bases — get, set, delete, exists.
 
-CollectionExtractableBase: .extract() wrapping ExtractOp
-CollectionStorableBase: .store(data) wrapping StoreCmd
-CollectionClearableBase: .clear() wrapping CollectionClearCmd
+Same API as item capabilities but distinct morphism nodes for deformation
+matching. All use parent[address] primitives.
+
+CollectionGettableBase: .get() wrapping CollectionGetOp
+CollectionSettableBase: .set(data) wrapping CollectionSetCmd
+CollectionDeletableBase: .remove() wrapping CollectionDeleteCmd
 CollectionExistableBase: .exists(), .missing()
-
-These bases are for refs that represent collections/views.
-The ref must implement fetch(ctx) -> storage object.
-
-PV-specific collection capabilities (CollectionInitializableBase,
-CollectionScanPrimitivesBase, CollectionClearPrimitivesBase) live
-in everypv.capabilities.collection.
 """
 
 from __future__ import annotations
@@ -27,10 +23,10 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CollectionClearableBase",
+    "CollectionDeletableBase",
     "CollectionExistableBase",
-    "CollectionExtractableBase",
-    "CollectionStorableBase",
+    "CollectionGettableBase",
+    "CollectionSettableBase",
 ]
 
 
@@ -51,48 +47,44 @@ class CollectionExistableBase:
         return BoolValue(CollectionMissingOp(self))
 
 
-class CollectionExtractableBase[CollectionTypeT]:
-    """Base for collection refs that can extract their contents as a Python value.
+class CollectionGettableBase[CollectionTypeT]:
+    """Base for collection refs that can read their value.
 
-    Provides extract() using ExtractOp. Subclasses must implement result()
-    to wrap the operation in the correct typed container.
+    Provides get() using CollectionGetOp.
     """
 
     @abstractmethod
     def result(self, op: Term) -> CollectionTypeT: ...
 
     def get(self) -> CollectionTypeT:
-        from everyshape.morphisms.collection import ExtractOp
+        from everyshape.morphisms.collection import CollectionGetOp
 
-        return self.result(ExtractOp(self))
+        return self.result(CollectionGetOp(self))
 
 
-class CollectionStorableBase[CollectionTypeT, CollectionT]:
+class CollectionSettableBase[CollectionTypeT, CollectionT]:
     """Base for collection refs that can replace their contents.
 
-    Provides store(data) using StoreCmd. Subclasses must implement result()
-    to wrap the operation in the correct typed container.
+    Provides set(data) using CollectionSetCmd.
     """
 
     @abstractmethod
     def result(self, op: Term) -> CollectionTypeT: ...
 
-    def store(
-        self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]
-    ) -> CollectionTypeT:
+    def set(self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]) -> CollectionTypeT:
         from everybase.abc import ensure_term
-        from everyshape.morphisms.collection import StoreCmd
+        from everyshape.morphisms.collection import CollectionSetCmd
 
-        return self.result(StoreCmd(self, ensure_term(value)))
+        return self.result(CollectionSetCmd(self, ensure_term(value)))
 
 
-class CollectionClearableBase:
-    """Base for collection refs that can be cleared.
+class CollectionDeletableBase:
+    """Base for collection refs that can be deleted from parent.
 
-    Provides clear() using CollectionClearCmd.
+    Provides remove() using CollectionDeleteCmd: del parent[address].
     """
 
-    def clear(self) -> NoneValue:
-        from everyshape.morphisms.collection import CollectionClearCmd
+    def remove(self) -> NoneValue:
+        from everyshape.morphisms.collection import CollectionDeleteCmd
 
-        return NoneValue(CollectionClearCmd(self))
+        return NoneValue(CollectionDeleteCmd(self))

@@ -9,10 +9,10 @@ CollectionClearPrimitivesBase, ItemPrimitive*Base) live in everypv.capabilities.
 """
 
 from .collection import (
-    CollectionClearableBase,
+    CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionExtractableBase,
-    CollectionStorableBase,
+    CollectionGettableBase,
+    CollectionSettableBase,
 )
 from .item import (
     ItemDeletableBase,
@@ -41,10 +41,10 @@ __all__ = [  # noqa: RUF022
     "ItemGettableBase",
     "ItemSettableBase",
     # Collection bases
-    "CollectionClearableBase",
+    "CollectionDeletableBase",
     "CollectionExistableBase",
-    "CollectionExtractableBase",
-    "CollectionStorableBase",
+    "CollectionGettableBase",
+    "CollectionSettableBase",
     # Reactive bases
     "PrimitiveObservableBase",
     "ViewObservableBase",

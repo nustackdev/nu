@@ -1,6 +1,6 @@
 """Scenario: Market Catalog -- 5 categories x 10 products x 4 fields.
 
-Real-world pattern: nested shapes, compound .store(), pre-built trees.
+Real-world pattern: nested shapes, compound .set(), pre-built trees.
 Trees are built once outside the timed section. Only .execute(ctx) is measured.
 
 Modes:
@@ -160,7 +160,7 @@ def _bench_pure_dict(label: str, fn, setup_fn, field_ops: int) -> TimingResult:
 
 # Raw Seq (unwrapped) -- shared base for both modes
 _store_seq = Seq(
-    *[Catalog.categories[cat_key].store(cat_data) for cat_key, cat_data in CATEGORIES.items()]
+    *[Catalog.categories[cat_key].set(cat_data) for cat_key, cat_data in CATEGORIES.items()]
 )
 
 _read_seq = Seq(

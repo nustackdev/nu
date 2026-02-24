@@ -1,7 +1,7 @@
 """Set collection bases — three tiers for the document model.
 
-SetLikeBase     = everybase.SetLikeBase + Existable + Extractable
-MutableSetBase  = everybase.MutableSetBase + Existable + Extractable + Storable
+SetLikeBase     = everybase.SetLikeBase + Existable + Gettable
+MutableSetBase  = everybase.MutableSetBase + Existable + Gettable + Settable + Deletable
 ReactiveSetBase = MutableSetBase + ViewObservable
 
 Substrates implement _wrap_* methods and result() directly on their concrete refs.
@@ -12,9 +12,10 @@ from __future__ import annotations
 from everybase.abc import MutableSetBase as _EB_MutableSetBase
 from everybase.abc import SetLikeBase as _EB_SetLikeBase
 from everyshape.capabilities import (
+    CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionExtractableBase,
-    CollectionStorableBase,
+    CollectionGettableBase,
+    CollectionSettableBase,
     ViewObservableBase,
 )
 
@@ -34,12 +35,12 @@ __all__ = [
 class SetLikeBase[T, CollectionValueT, ElementValueT](
     _EB_SetLikeBase[set[T], T, CollectionValueT, ElementValueT],
     CollectionExistableBase,
-    CollectionExtractableBase[CollectionValueT],
+    CollectionGettableBase[CollectionValueT],
 ):
     """Base for sets — unordered unique-element containers in the document model.
 
     Combines everybase set ops (union, intersection, difference, etc.)
-    with everyshape capabilities (exists, extract).
+    with everyshape capabilities (exists, get).
 
     Substrates implement _wrap_* and result() on their concrete refs.
     """
@@ -48,8 +49,9 @@ class SetLikeBase[T, CollectionValueT, ElementValueT](
 class MutableSetBase[T, CollectionValueT, ElementValueT](
     _EB_MutableSetBase[set[T], T, CollectionValueT, ElementValueT],
     CollectionExistableBase,
-    CollectionExtractableBase[CollectionValueT],
-    CollectionStorableBase[CollectionValueT, set[T]],
+    CollectionGettableBase[CollectionValueT],
+    CollectionSettableBase[CollectionValueT, set[T]],
+    CollectionDeletableBase,
 ):
     """Mutable set — adds add, remove, discard."""
 

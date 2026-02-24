@@ -5,11 +5,11 @@ ClearPrimitivesCmd) live in everypv.morphisms.
 """
 
 from .collection import (
-    CollectionClearCmd,
+    CollectionDeleteCmd,
     CollectionExistsOp,
+    CollectionGetOp,
     CollectionMissingOp,
-    ExtractOp,
-    StoreCmd,
+    CollectionSetCmd,
 )
 from .item import (
     ItemDeleteCmd,
@@ -30,10 +30,11 @@ from .reactive import (
 
 __all__ = [
     "ChangeOp",
-    "CollectionClearCmd",
+    "CollectionDeleteCmd",
     "CollectionExistsOp",
+    "CollectionGetOp",
     "CollectionMissingOp",
-    "ExtractOp",
+    "CollectionSetCmd",
     "ItemDeleteCmd",
     "ItemExistsOp",
     "ItemGetOp",
@@ -44,5 +45,4 @@ __all__ = [
     "OnChildrenChangeOp",
     "OnDescendantsChangeOp",
     "OnPrimitiveChangeOp",
-    "StoreCmd",
 ]

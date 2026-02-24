@@ -65,15 +65,15 @@ async def run_pv() -> None:
 
         # Populate
         await Market.misc_val.set(42).execute(ctx)
-        await Market.signals.store({"vix": 23.5, "sentiment": 0.75, "rsi": 67.2}).execute(ctx)
-        await Market.prices.store([100.5, 101.2, 99.8, 102.0, 98.7]).execute(ctx)
+        await Market.signals.set({"vix": 23.5, "sentiment": 0.75, "rsi": 67.2}).execute(ctx)
+        await Market.prices.set([100.5, 101.2, 99.8, 102.0, 98.7]).execute(ctx)
 
-        # 100K symbols via compound .store()
+        # 100K symbols via compound .set()
         t0 = time.time()
         for i in range(100_000):
             await (
                 Market.symbols[f"SYM_{i:06d}"]
-                .store(
+                .set(
                     {"price": float(i) * 0.01, "volume": i * 10, "exchange": "NYSE"},
                 )
                 .execute(ctx)
@@ -81,13 +81,13 @@ async def run_pv() -> None:
         t1 = time.time()
         print(f"  populated 100K symbols in {t1 - t0:.1f}s")
 
-        await Market.orders.store(
+        await Market.orders.set(
             [
                 {"id": "ORD-001", "symbol": "AAPL", "quantity": 100, "price": 150.0},
                 {"id": "ORD-002", "symbol": "GOOGL", "quantity": 50, "price": 2800.0},
             ]
         ).execute(ctx)
-        await Market.last_order.store(
+        await Market.last_order.set(
             {"id": "ORD-002", "symbol": "GOOGL", "quantity": 50, "price": 2800.0},
         ).execute(ctx)
 

@@ -119,9 +119,8 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
         """Create a slot for Decimal values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> DecimalValue:
-        """Get the Decimal value."""
-        return DecimalValue.from_str(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return DecimalValue.from_str(op)
 
     def set(self, value: Decimal | str | DecimalType) -> DecimalValue:
         """Set the Decimal value."""
@@ -157,9 +156,8 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
         """Create a slot for Fraction values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> FractionValue:
-        """Get the Fraction value."""
-        return FractionValue.from_str(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return FractionValue.from_str(op)
 
     def set(self, value: Fraction | str | FractionType) -> FractionValue:
         """Set the Fraction value."""
@@ -195,14 +193,12 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
         """Create a slot for complex values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> ComplexValue:
-        """Get the complex value."""
-
+    def result(self, op: Term) -> object:  # noqa: D102
         def parse_complex(s: str) -> complex:
             parts = s.split(",")
             return complex(float(parts[0]), float(parts[1]))
 
-        return ComplexValue(FuncCallOp(parse_complex, self))
+        return ComplexValue(FuncCallOp(parse_complex, op))
 
     def set(self, value: complex | str | ComplexType) -> ComplexValue:
         """Set the complex value."""
@@ -242,9 +238,8 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
         """Create a slot for BasisPoint values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> BasisPointValue:
-        """Get the BasisPoint value."""
-        return BasisPointValue.from_int(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return BasisPointValue.from_int(op)
 
     def set(self, value: BasisPoint | int | BasisPointType) -> BasisPointValue:
         """Set the BasisPoint value."""
@@ -280,9 +275,8 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
         """Create a slot for Percentage values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> PercentageValue:
-        """Get the Percentage value."""
-        return PercentageValue.from_float(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return PercentageValue.from_float(op)
 
     def set(self, value: Percentage | float | PercentageType) -> PercentageValue:
         """Set the Percentage value."""
@@ -323,9 +317,8 @@ class DateRef(ItemRef[str, StrValue], DateType):
         """Create a slot for date values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> DateValue:
-        """Get the date value."""
-        return DateValue.from_iso(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return DateValue.from_iso(op)
 
     def set(self, value: date | str | DateType) -> DateValue:
         """Set the date value."""
@@ -363,9 +356,8 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
         """Create a slot for datetime values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> DatetimeValue:
-        """Get the datetime value."""
-        return DatetimeValue.from_iso(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return DatetimeValue.from_iso(op)
 
     def set(self, value: datetime | str | DatetimeType) -> DatetimeValue:
         """Set the datetime value."""
@@ -403,9 +395,8 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
         """Create a slot for time values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> TimeValue:
-        """Get the time value."""
-        return TimeValue.from_iso(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return TimeValue.from_iso(op)
 
     def set(self, value: time | str | TimeType) -> TimeValue:
         """Set the time value."""
@@ -443,9 +434,8 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
         """Create a slot for timedelta values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> TimedeltaValue:
-        """Get the timedelta value."""
-        return TimedeltaValue.from_seconds(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return TimedeltaValue.from_seconds(op)
 
     def set(self, value: timedelta | float | TimedeltaType) -> TimedeltaValue:
         """Set the timedelta value."""
@@ -481,9 +471,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
         """Create a slot for timezone values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> TimezoneValue:
-        """Get the timezone value."""
-
+    def result(self, op: Term) -> object:  # noqa: D102
         def parse_timezone(s: str) -> timezone:
             if s == "UTC":
                 from datetime import UTC
@@ -495,7 +483,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
             minutes = int(parts[1]) if len(parts) > 1 else 0
             return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
 
-        return TimezoneValue(FuncCallOp(parse_timezone, self))
+        return TimezoneValue(FuncCallOp(parse_timezone, op))
 
     def set(self, value: timezone | str | TimezoneType) -> TimezoneValue:
         """Set the timezone value."""
@@ -561,9 +549,8 @@ class PathRef(ItemRef[str, StrValue], PathType):
         """Create a slot for Path values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> PathValue:
-        """Get the Path value."""
-        return PathValue.from_str(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return PathValue.from_str(op)
 
     def set(self, value: Path | str | PathType) -> PathValue:
         """Set the Path value."""
@@ -599,9 +586,8 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
         """Create a slot for UUID values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> UUIDValue:
-        """Get the UUID value."""
-        return UUIDValue.from_str(self)
+    def result(self, op: Term) -> object:  # noqa: D102
+        return UUIDValue.from_str(op)
 
     def set(self, value: UUID | str | UUIDType) -> UUIDValue:
         """Set the UUID value."""

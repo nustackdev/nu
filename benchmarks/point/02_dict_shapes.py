@@ -53,13 +53,13 @@ def _build_terms(n: int) -> dict:
     data = {"name": "Product", "price": 9.99, "stock": 100}
 
     # Create: one Atomic per entry
-    create_terms = [Atomic(Catalog.products[k].store(data)) for k in keys]
+    create_terms = [Atomic(Catalog.products[k].set(data)) for k in keys]
 
     # Create batched: all entries in single Atomic
-    create_batched = Atomic(Seq(*[Catalog.products[k].store(data) for k in keys]))
+    create_batched = Atomic(Seq(*[Catalog.products[k].set(data) for k in keys]))
 
     # Seed: populate for read/update benchmarks
-    seed = Atomic(Seq(*[Catalog.products[f"s_{k}"].store(data) for k in keys]))
+    seed = Atomic(Seq(*[Catalog.products[f"s_{k}"].set(data) for k in keys]))
     seed_keys = [f"s_{k}" for k in keys]
 
     # Read: 3 fields per entry in single Atomic

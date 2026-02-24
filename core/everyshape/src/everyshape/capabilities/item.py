@@ -60,10 +60,15 @@ class ItemGettableBase[ValueT]:
     """Base for item refs that can read their value.
 
     Provides get() using ItemGetOp, returning a typed Value wrapper.
-    Requires self.value_type attribute.
+    Override result() to customize the Value wrapper (e.g. domain types).
     """
 
     value_type: type[ValueT]
+
+    def result(self, op: Term) -> object:
+        from everybase.abc import typed_value
+
+        return typed_value(self.value_type, op)
 
     @overload
     def get(self: ItemGettableBase[int]) -> IntValue: ...
@@ -93,20 +98,24 @@ class ItemGettableBase[ValueT]:
     def get[V](self: ItemGettableBase[set[V]]) -> SetValue[V]: ...
 
     def get(self) -> object:
-        from everybase.abc import typed_value
         from everyshape.morphisms.item import ItemGetOp
 
-        return typed_value(self.value_type, ItemGetOp(self))
+        return self.result(ItemGetOp(self))
 
 
 class ItemSettableBase[ValueT]:
     """Base for item refs that can write a value.
 
     Provides set(value) using ItemSetCmd, returning a typed Value wrapper.
-    Requires self.value_type attribute.
+    Override result() to customize the Value wrapper (e.g. domain types).
     """
 
     value_type: type[ValueT]
+
+    def result(self, op: Term) -> object:
+        from everybase.abc import typed_value
+
+        return typed_value(self.value_type, op)
 
     @overload
     def set(
@@ -154,10 +163,10 @@ class ItemSettableBase[ValueT]:
     ) -> SetValue[V]: ...
 
     def set(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> object:
-        from everybase.abc import ensure_term, typed_value
+        from everybase.abc import ensure_term
         from everyshape.morphisms.item import ItemSetCmd
 
-        return typed_value(self.value_type, ItemSetCmd(self, ensure_term(value)))
+        return self.result(ItemSetCmd(self, ensure_term(value)))
 
 
 class ItemDeletableBase:

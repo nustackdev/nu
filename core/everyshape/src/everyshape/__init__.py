@@ -35,10 +35,10 @@ Refs (collection bases + Ref — everyshape.refs):
 """
 
 from everyshape.capabilities import (
-    CollectionClearableBase,
+    CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionExtractableBase,
-    CollectionStorableBase,
+    CollectionGettableBase,
+    CollectionSettableBase,
     ItemDeletableBase,
     ItemExistableBase,
     ItemGettableBase,
@@ -62,10 +62,11 @@ from everyshape.collections import (
 from everyshape.flows import React, ReactForever, ReactWhile
 from everyshape.morphisms import (
     ChangeOp,
-    CollectionClearCmd,
+    CollectionDeleteCmd,
     CollectionExistsOp,
+    CollectionGetOp,
     CollectionMissingOp,
-    ExtractOp,
+    CollectionSetCmd,
     ItemDeleteCmd,
     ItemExistsOp,
     ItemGetOp,
@@ -76,16 +77,12 @@ from everyshape.morphisms import (
     OnChildrenChangeOp,
     OnDescendantsChangeOp,
     OnPrimitiveChangeOp,
-    StoreCmd,
 )
 from everyshape.protocols import (
     ChildObservableProtocol,
     ChildrenObservableProtocol,
-    ClearableProtocol,
     DescendantsObservableProtocol,
-    ExtractableProtocol,
     ObservableProtocol,
-    StorableProtocol,
 )
 from everyshape.refs import (
     ItemRef,
@@ -125,10 +122,6 @@ from everyshape.types import (
 
 
 __all__ = [  # noqa: RUF022
-    # Protocols — Collection view
-    "ClearableProtocol",
-    "ExtractableProtocol",
-    "StorableProtocol",
     # Protocols — Reactive view
     "ChildObservableProtocol",
     "ChildrenObservableProtocol",
@@ -140,10 +133,10 @@ __all__ = [  # noqa: RUF022
     "ItemGettableBase",
     "ItemSettableBase",
     # Capabilities — Collection bases
-    "CollectionClearableBase",
+    "CollectionDeletableBase",
     "CollectionExistableBase",
-    "CollectionExtractableBase",
-    "CollectionStorableBase",
+    "CollectionGettableBase",
+    "CollectionSettableBase",
     # Capabilities — Reactive bases
     "PrimitiveObservableBase",
     "ViewObservableBase",
@@ -214,9 +207,9 @@ __all__ = [  # noqa: RUF022
     "ItemExistsOp",
     "ItemMissingOp",
     # Morphisms — Collection
-    "ExtractOp",
-    "StoreCmd",
-    "CollectionClearCmd",
+    "CollectionGetOp",
+    "CollectionSetCmd",
+    "CollectionDeleteCmd",
     "CollectionExistsOp",
     "CollectionMissingOp",
     # Morphisms — Reactive

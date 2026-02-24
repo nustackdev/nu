@@ -1,10 +1,5 @@
 """View protocols — structural type contracts for storage/view objects.
 
-Collection protocols (what collection morphisms check):
-    ExtractableProtocol     view.extract()
-    StorableProtocol        view.store(data)
-    ClearableProtocol       view.clear()
-
 Reactive protocols (what reactive morphisms check):
     ObservableProtocol              view.on_change()
     ChildObservableProtocol         view.on_child_change(address)
@@ -12,11 +7,6 @@ Reactive protocols (what reactive morphisms check):
     DescendantsObservableProtocol   view.on_descendents_change(*pattern)
 """
 
-from everyshape.protocols.collection import (
-    ClearableProtocol,
-    ExtractableProtocol,
-    StorableProtocol,
-)
 from everyshape.protocols.reactive import (
     ChildObservableProtocol,
     ChildrenObservableProtocol,
@@ -28,9 +18,6 @@ from everyshape.protocols.reactive import (
 __all__ = [
     "ChildObservableProtocol",
     "ChildrenObservableProtocol",
-    "ClearableProtocol",
     "DescendantsObservableProtocol",
-    "ExtractableProtocol",
     "ObservableProtocol",
-    "StorableProtocol",
 ]

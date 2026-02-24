@@ -6,7 +6,7 @@ ReactiveSequenceRefBase = ReactiveSequenceBase + Ref
 
 Type Parameters:
     T:               Native element type (int, str, etc.)
-    CollectionValueT: Wrapped result for collection-level ops (extract, store)
+    CollectionValueT: Wrapped result for collection-level ops (get, set)
     ItemValueT:       Wrapped result for item-level ops (get, set) — Value subclass
 """
 

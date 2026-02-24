@@ -106,7 +106,7 @@ DICT_SEEDS = {
 LIST_SEED = Atomic(
     Seq(
         ListRoot.data.nested.value.set(99),
-        ListRoot.data.items.store([10, 20, 30, 40, 50]),
+        ListRoot.data.items.set([10, 20, 30, 40, 50]),
     )
 )
 

@@ -106,8 +106,8 @@ class DecimalRef(RefBase[str], DecimalType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> DecimalValue:
-        return DecimalValue.from_str(self)
+    def result(self, op: Term) -> object:
+        return DecimalValue.from_str(op)
 
     def set(self, value: Decimal | str | DecimalType) -> DecimalValue:
         if isinstance(value, Decimal):
@@ -135,8 +135,8 @@ class FractionRef(RefBase[str], FractionType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> FractionValue:
-        return FractionValue.from_str(self)
+    def result(self, op: Term) -> object:
+        return FractionValue.from_str(op)
 
     def set(self, value: Fraction | str | FractionType) -> FractionValue:
         if isinstance(value, Fraction):
@@ -164,12 +164,12 @@ class ComplexRef(RefBase[str], ComplexType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> ComplexValue:
+    def result(self, op: Term) -> object:
         def parse_complex(s: str) -> complex:
             parts = s.split(",")
             return complex(float(parts[0]), float(parts[1]))
 
-        return ComplexValue(FuncCallOp(parse_complex, self))
+        return ComplexValue(FuncCallOp(parse_complex, op))
 
     def set(self, value: complex | str | ComplexType) -> ComplexValue:
         if isinstance(value, complex):
@@ -201,8 +201,8 @@ class BasisPointRef(RefBase[int], BasisPointType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> BasisPointValue:
-        return BasisPointValue.from_int(self)
+    def result(self, op: Term) -> object:
+        return BasisPointValue.from_int(op)
 
     def set(self, value: BasisPoint | int | BasisPointType) -> BasisPointValue:
         if isinstance(value, BasisPoint):
@@ -230,8 +230,8 @@ class PercentageRef(RefBase[float], PercentageType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> PercentageValue:
-        return PercentageValue.from_float(self)
+    def result(self, op: Term) -> object:
+        return PercentageValue.from_float(op)
 
     def set(self, value: Percentage | float | PercentageType) -> PercentageValue:
         if isinstance(value, Percentage):
@@ -264,8 +264,8 @@ class DateRef(RefBase[str], DateType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> DateValue:
-        return DateValue.from_iso(self)
+    def result(self, op: Term) -> object:
+        return DateValue.from_iso(op)
 
     def set(self, value: date | str | DateType) -> DateValue:
         if isinstance(value, date):
@@ -293,8 +293,8 @@ class DatetimeRef(RefBase[str], DatetimeType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> DatetimeValue:
-        return DatetimeValue.from_iso(self)
+    def result(self, op: Term) -> object:
+        return DatetimeValue.from_iso(op)
 
     def set(self, value: datetime | str | DatetimeType) -> DatetimeValue:
         if isinstance(value, datetime):
@@ -322,8 +322,8 @@ class TimeRef(RefBase[str], TimeType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> TimeValue:
-        return TimeValue.from_iso(self)
+    def result(self, op: Term) -> object:
+        return TimeValue.from_iso(op)
 
     def set(self, value: time | str | TimeType) -> TimeValue:
         if isinstance(value, time):
@@ -351,8 +351,8 @@ class TimedeltaRef(RefBase[float], TimedeltaType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> TimedeltaValue:
-        return TimedeltaValue.from_seconds(self)
+    def result(self, op: Term) -> object:
+        return TimedeltaValue.from_seconds(op)
 
     def set(self, value: timedelta | float | TimedeltaType) -> TimedeltaValue:
         if isinstance(value, timedelta):
@@ -380,7 +380,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> TimezoneValue:
+    def result(self, op: Term) -> object:
         def parse_timezone(s: str) -> timezone:
             if s == "UTC":
                 from datetime import UTC
@@ -392,7 +392,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
             minutes = int(parts[1]) if len(parts) > 1 else 0
             return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
 
-        return TimezoneValue(FuncCallOp(parse_timezone, self))
+        return TimezoneValue(FuncCallOp(parse_timezone, op))
 
     def set(self, value: timezone | str | TimezoneType) -> TimezoneValue:
         if isinstance(value, timezone):
@@ -450,8 +450,8 @@ class PathRef(RefBase[str], PathType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> PathValue:
-        return PathValue.from_str(self)
+    def result(self, op: Term) -> object:
+        return PathValue.from_str(op)
 
     def set(self, value: Path | str | PathType) -> PathValue:
         if isinstance(value, Path):
@@ -479,8 +479,8 @@ class UUIDRef(RefBase[str], UUIDType):
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> UUIDValue:
-        return UUIDValue.from_str(self)
+    def result(self, op: Term) -> object:
+        return UUIDValue.from_str(op)
 
     def set(self, value: UUID | str | UUIDType) -> UUIDValue:
         if isinstance(value, UUID):

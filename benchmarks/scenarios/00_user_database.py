@@ -145,7 +145,7 @@ def _bench_pure_dict(label: str, fn, setup_fn, field_ops: int) -> TimingResult:
 
 # ── Trees: PV (built once) ───────────────────────────────────────────────────
 
-_store_seq = Seq(*[UserDB.users[k].store(v) for k, v in USERS.items()])
+_store_seq = Seq(*[UserDB.users[k].set(v) for k, v in USERS.items()])
 
 _read_seq = Seq(
     *[

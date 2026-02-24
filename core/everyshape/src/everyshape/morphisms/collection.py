@@ -1,19 +1,11 @@
 # ruff: noqa: D102
-"""Collection-level morphisms — extract, store, length, clear, existence.
+"""Collection-level morphisms — get, set, delete, exists, missing.
 
-ExtractOp: Read entire collection as Python value — ref.fetch(ctx).extract()
-StoreCmd: Replace collection contents — ref.fetch(ctx).store(data)
-CollectionLenOp: Get collection length — len(ref.fetch(ctx))
-CollectionClearCmd: Clear all items — ref.fetch(ctx).clear()
-CollectionExistsOp: Check if collection exists — try fetch, catch errors
-CollectionMissingOp: Inverse of CollectionExistsOp
+Same logic as item morphisms but distinct tree node types, so substrates
+can match on CollectionGetOp vs ItemGetOp for type-specific deformations
+(e.g. PV primitive optimizations only target Item* variants).
 
-These operate on refs that implement fetch(ctx) -> storage object.
-The storage object must support the relevant protocol (extract(), store(),
-__len__, clear()).
-
-PV-specific collection morphisms (ScanPrimitivesOp, ClearPrimitivesCmd)
-live in everypv.morphisms.collection.
+All ops use the same parent[address] primitives as item morphisms.
 """
 
 from __future__ import annotations
@@ -21,7 +13,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from everybase import EMPTY, Command, Morphism, Operation, Sentinel
-from everyshape.protocols import ClearableProtocol, ExtractableProtocol, StorableProtocol
 
 
 if TYPE_CHECKING:
@@ -29,49 +20,35 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CollectionClearCmd",
+    "CollectionDeleteCmd",
     "CollectionExistsOp",
+    "CollectionGetOp",
     "CollectionMissingOp",
-    "ExtractOp",
-    "StoreCmd",
+    "CollectionSetCmd",
 ]
 
 
-class ExtractOp[T](Operation, Morphism[T | Sentinel]):
-    """Extract entire collection as a Python value.
-
-    Calls extract() on the storage object (Convertible protocol).
-
-    The ref must implement:
-        fetch(ctx) -> storage object with extract() method
-    """
+class CollectionGetOp[T](Operation, Morphism[T | Sentinel]):
+    """Read collection from parent: parent[address]."""
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
     async def execute(self, ctx: Context) -> T | Sentinel:
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
         try:
-            view = await self.ref.fetch(ctx)
+            return parent[address]
         except (KeyError, IndexError):
             return EMPTY
 
-        if not isinstance(view, ExtractableProtocol):
-            raise TypeError(f"{type(view).__name__} does not support extract()")
-        return view.extract()
-
     def __repr__(self) -> str:
-        return f"ExtractOp({self.ref!r})"
+        return f"CollectionGetOp({self.ref!r})"
 
 
-class StoreCmd[T](Command, Morphism[T]):
-    """Replace collection contents from a Python value.
-
-    Calls store(data) on the storage object (Initializable protocol).
-
-    The ref must implement:
-        fetch(ctx) -> storage object with store() method
-    """
+class CollectionSetCmd[T](Command, Morphism[T]):
+    """Write collection to parent: parent[address] = data."""
 
     def __init__(self, ref: object, data: Term[T | Sentinel]) -> None:
         super().__init__(ref, data)
@@ -83,77 +60,59 @@ class StoreCmd[T](Command, Morphism[T]):
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {data}")
 
-        view = await self.ref.fetch(ctx)
-
-        if not isinstance(view, StorableProtocol):
-            raise TypeError(f"{type(view).__name__} does not support store()")
-        view.store(data)
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        parent[address] = data
         return data
 
     def __repr__(self) -> str:
-        return f"StoreCmd({self.ref!r}, {self.data_expr!r})"
+        return f"CollectionSetCmd({self.ref!r}, {self.data_expr!r})"
 
 
-class CollectionClearCmd(Command, Morphism[None]):
-    """Clear all items from collection: view.clear().
-
-    The ref must implement:
-        fetch(ctx) -> storage object with clear() method
-    """
+class CollectionDeleteCmd(Command, Morphism[None]):
+    """Delete collection from parent: del parent[address]."""
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
     async def execute(self, ctx: Context) -> None:
-        view = await self.ref.fetch(ctx)
-        if not isinstance(view, ClearableProtocol):
-            raise TypeError(f"{type(view).__name__} does not support clear()")
-        view.clear()
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        del parent[address]
         return None
 
     def __repr__(self) -> str:
-        return f"CollectionClearCmd({self.ref!r})"
+        return f"CollectionDeleteCmd({self.ref!r})"
 
 
 class CollectionExistsOp(Operation, Morphism[bool]):
-    """Check if collection/view exists.
-
-    Tries to fetch the storage object. Returns True if successful,
-    False if KeyError/IndexError.
-
-    The ref must implement:
-        fetch(ctx) -> storage object
-    """
+    """Check if collection exists in parent: address in parent."""
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
     async def execute(self, ctx: Context) -> bool:
-        try:
-            await self.ref.fetch(ctx)
-            return True
-        except (KeyError, IndexError):
-            return False
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        return address in parent
 
     def __repr__(self) -> str:
         return f"CollectionExistsOp({self.ref!r})"
 
 
 class CollectionMissingOp(Operation, Morphism[bool]):
-    """Check if collection/view is missing. Inverse of CollectionExistsOp."""
+    """Check if collection is missing from parent: address not in parent."""
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
     async def execute(self, ctx: Context) -> bool:
-        try:
-            await self.ref.fetch(ctx)
-            return False
-        except (KeyError, IndexError):
-            return True
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        return address not in parent
 
     def __repr__(self) -> str:
         return f"CollectionMissingOp({self.ref!r})"

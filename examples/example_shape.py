@@ -61,7 +61,7 @@ async def run(ctx: Context) -> None:
 
     # --- List of primitives -------------------------------------------------
     await Market.misc_val.set(1).execute(ctx)
-    await Market.prices.store([100.5, 101.2, 99.8]).execute(ctx)
+    await Market.prices.set([100.5, 101.2, 99.8]).execute(ctx)
     print("price[0]:", await Market.prices[0].get().execute(ctx))
     print("price[1]:", await Market.prices[1].get().execute(ctx))
     print("prices:", await Market.prices.get().execute(ctx))
@@ -75,29 +75,29 @@ async def run(ctx: Context) -> None:
 
     # --- Shape (single) -----------------------------------------------------
     await Market.last_order.id.set("ID").execute(ctx)
-    print("shape extract:", await Market.last_order.extract().execute(ctx))
+    print("shape extract:", await Market.last_order.get().execute(ctx))
 
     # --- Dict of shapes -----------------------------------------------------
     await (
         Market.symbols["AAPL"]
-        .store(
+        .set(
             {"price": 150.0, "volume": 1000000, "exchange": "NASDAQ"},
         )
         .execute(ctx)
     )
     await (
         Market.symbols["GOOGL"]
-        .store(
+        .set(
             {"price": 2800.0, "volume": 500000, "exchange": "NASDAQ"},
         )
         .execute(ctx)
     )
     print("AAPL price:", await Market.symbols["AAPL"].price.get().execute(ctx))
     print("GOOGL exch:", await Market.symbols["GOOGL"].exchange.get().execute(ctx))
-    print("AAPL data:", await Market.symbols["AAPL"].extract().execute(ctx))
+    print("AAPL data:", await Market.symbols["AAPL"].get().execute(ctx))
 
     # --- List of shapes -----------------------------------------------------
-    await Market.orders.store(
+    await Market.orders.set(
         [
             {"id": "ORD001", "symbol": "AAPL", "quantity": 100, "price": 150.0},
             {"id": "ORD002", "symbol": "GOOGL", "quantity": 50, "price": 2800.0},
@@ -105,7 +105,7 @@ async def run(ctx: Context) -> None:
     ).execute(ctx)
     print("order[0].id:", await Market.orders[0].id.get().execute(ctx))
     print("order[1].sym:", await Market.orders[1].symbol.get().execute(ctx))
-    print("order[0]:", await Market.orders[0].extract().execute(ctx))
+    print("order[0]:", await Market.orders[0].get().execute(ctx))
 
 
 # =============================================================================

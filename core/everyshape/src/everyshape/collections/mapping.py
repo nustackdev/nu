@@ -1,7 +1,7 @@
 """Mapping collection bases — three tiers for the document model.
 
-MappingBase         = everybase.MappingBase + Existable + Extractable
-MutableMappingBase  = everybase.MutableMappingBase + MappingBase + Lengthable + Clearable + Storable
+MappingBase         = everybase.MappingBase + Existable + Gettable
+MutableMappingBase  = everybase.MutableMappingBase + MappingBase + Lengthable + Settable + Deletable
 ReactiveMappingBase = MutableMappingBase + ViewObservable
 
 Substrates implement _wrap_* methods and result() directly on their concrete refs.
@@ -12,9 +12,10 @@ from __future__ import annotations
 from everybase.abc import MappingBase as _EB_MappingBase
 from everybase.abc import MutableMappingBase as _EB_MutableMappingBase
 from everyshape.capabilities import (
+    CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionExtractableBase,
-    CollectionStorableBase,
+    CollectionGettableBase,
+    CollectionSettableBase,
     ViewObservableBase,
 )
 
@@ -34,12 +35,12 @@ __all__ = [
 class MappingBase[K, V, CollectionValueT, ValueValueT](
     _EB_MappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     CollectionExistableBase,
-    CollectionExtractableBase[CollectionValueT],
+    CollectionGettableBase[CollectionValueT],
 ):
     """Base for mappings — key-value containers in the document model.
 
     Combines everybase mapping ops (keys_, values_, items_, get_, set_, etc.)
-    with everyshape capabilities (exists, get/extract).
+    with everyshape capabilities (exists, get).
 
     Substrates implement _wrap_* and result() on their concrete refs.
     """
@@ -48,8 +49,9 @@ class MappingBase[K, V, CollectionValueT, ValueValueT](
 class MutableMappingBase[K, V, CollectionValueT, ValueValueT](
     _EB_MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     CollectionExistableBase,
-    CollectionExtractableBase[CollectionValueT],
-    CollectionStorableBase[CollectionValueT, dict[K, V]],
+    CollectionGettableBase[CollectionValueT],
+    CollectionSettableBase[CollectionValueT, dict[K, V]],
+    CollectionDeletableBase,
 ):
     """Mutable mapping — adds set_, delete, update_."""
 
