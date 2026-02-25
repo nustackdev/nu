@@ -81,11 +81,11 @@ That's it. `ValueBase` provides the execution machinery. `PubkeyType` provides a
 
 ### 3. Define the RefBase
 
-The RefBase defines how to read from and write to storage. Use everyshape tools to buld Refs for Shape substrate without much biolerplate.
+The RefBase defines how to read from and write to storage. Use everyshape tools to build Refs for Shape substrate without much boilerplate.
 
 ```python
-from everybase import Arg
-from everybase.abc import ensure_term
+from everybase import Arg, Term
+from everybase.abc import ToStrOp, ensure_term
 from everyshape import ItemRef
 from everyshape import ItemGetOp, ItemSetCmd
 
@@ -93,16 +93,12 @@ from everyshape import ItemGetOp, ItemSetCmd
 class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
     """How to get/set a Pubkey in any storage."""
 
-    def set(self, value: Arg[Pubkey] | StrArg) -> PubkeyValue:
+    def set(self, value: Arg[Pubkey | str]) -> PubkeyValue:
         # Convert to storage format (base58 string)
-        if isinstance(value, Pubkey):
-            val = str(value)
-        elif isinstance(value, PubkeyType):
-            val = value.to_json()
-        elif isinstance(value, str):
-            val = value
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = value
+            val = str(value)
         return PubkeyValue(ItemSetCmd(self, ensure_term(val)))
 
     def get(self) -> PubkeyValue:
@@ -116,6 +112,34 @@ Key points:
 - Inherits `PubkeyType` so you can call methods directly on the ref: `MyShape.pubkey.is_on_curve()`
 - `set()` converts to storage format, `get()` converts back
 - Both return `PubkeyValue` — they're lazy terms, not immediate results
+
+#### The `set()` pattern
+
+Every `set()` method follows a two-branch pattern:
+
+```python
+def set(self, value: Arg[NativeType | StorageType]) -> MyValue:
+    if isinstance(value, Term):
+        val = ToStrOp(value)   # or ToIntOp / ToFloatOp
+    else:
+        val = str(value)       # or int() / float()
+    return MyValue(ItemSetCmd(self, ensure_term(val)))
+```
+
+How it works:
+- **`Arg[T]`** = `T | Term[T] | Term[T | Sentinel]` — accepts both Python objects and term trees
+- **Term branch** — wraps in a conversion op (`ToStrOp`, `ToIntOp`, `ToFloatOp`). At runtime, the term resolves to a value and Python's builtin conversion is called on it.
+- **Else branch** — direct Python conversion (`str()`, `int()`, `float()`). Works for both native types (via dunders like `__int__`) and raw storage types (identity: `int(42)` → `42`).
+
+For this to work, native classes need the appropriate conversion dunder matching their storage type:
+- Stored as `int` → add `__int__` (e.g. `BasisPoint.__int__` returns raw basis points)
+- Stored as `float` → add `__float__` (e.g. `Percentage.__float__` returns raw percentage)
+- Stored as `str` → `__str__` (usually already present, or use stdlib's `str()`)
+
+**Special cases** (custom storage format that doesn't map to a simple dunder):
+- `complex` → stored as `"real,imag"` string, needs `FuncCallOp(format_complex, value)`
+- `timezone` → stored as `"+05:30"` offset string, needs `FuncCallOp(format_timezone, value)`
+- `Keypair` → stored as base58 of secret key, not `str(keypair)`, needs `FuncCallOp(keypair_to_base58, value)`
 
 ### 4. Create Substrate-Specific Refs
 

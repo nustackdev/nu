@@ -169,7 +169,7 @@ slot = Services.solana.get_slot()
 block = Services.solana.get_block(slot)  # slot is still a term
 
 # The tree evaluates when the flow executes
-s.current_block.store(block)  # RPC calls happen here
+s.current_block.set(block)  # RPC calls happen here
 ```
 
 This means you can build entire flow trees in a regular Python function without any async/await. The flow engine handles execution.

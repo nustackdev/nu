@@ -264,7 +264,7 @@ ref.remove()             # → NoneValue (delete from storage)
 
 ```python
 ref.get()                # → typed Value (extract entire collection)
-ref.store(data)          # → typed Value (replace entire collection)
+ref.set(data)            # → typed Value (replace entire collection)
 ref.exists()             # → BoolValue
 ref.missing()            # → BoolValue
 ref.clear()              # → NoneValue (remove all entries)
@@ -445,7 +445,7 @@ token.tx_count.set(token.tx_count + 1)
 ```python
 # When term algebra can't express it yet
 filtered = FuncCallOp(my_filter_fn, raw_data)
-s.buffer.store(filtered)
+s.buffer.set(filtered)
 
 # Wrap in typed value when needed
 count = IntValue(FuncCallOp(len, some_list))
