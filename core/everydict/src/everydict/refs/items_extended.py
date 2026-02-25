@@ -21,11 +21,7 @@ Storage formats:
 from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta, timezone
-from decimal import Decimal
-from fractions import Fraction
-from pathlib import Path
-from typing import TYPE_CHECKING, Self
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from eb_datetime import (
     DatetimeType,
@@ -57,7 +53,15 @@ from eb_math import (
 )
 from eb_path import PathType, PathValue
 from eb_uuid import UUIDType, UUIDValue
-from everybase.abc import FuncCallOp, MethodCallOp, ensure_term
+from everybase import Arg, Term
+from everybase.abc import (
+    FuncCallOp,
+    MethodCallOp,
+    ToFloatOp,
+    ToIntOp,
+    ToStrOp,
+    ensure_term,
+)
 from everyshape import Slot
 from everyshape.morphisms.item import ItemSetCmd
 
@@ -65,7 +69,11 @@ from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from everybase import Term
+    from decimal import Decimal
+    from fractions import Fraction
+    from pathlib import Path
+    from uuid import UUID
+
     from everyshape import Shape
 
 
@@ -103,19 +111,17 @@ class DecimalRef(RefBase[str], DecimalType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> DecimalRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return DecimalValue.from_str(op)
 
-    def set(self, value: Decimal | str | DecimalType) -> DecimalValue:
-        if isinstance(value, Decimal):
-            val = str(value)
-        elif isinstance(value, str):
-            val = value
+    def set(self, value: Arg[Decimal | str]) -> DecimalValue:
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return DecimalValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -132,19 +138,17 @@ class FractionRef(RefBase[str], FractionType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> FractionRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return FractionValue.from_str(op)
 
-    def set(self, value: Fraction | str | FractionType) -> FractionValue:
-        if isinstance(value, Fraction):
-            val = f"{value.numerator}/{value.denominator}"
-        elif isinstance(value, str):
-            val = value
+    def set(self, value: Arg[Fraction | str]) -> FractionValue:
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return FractionValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -161,7 +165,7 @@ class ComplexRef(RefBase[str], ComplexType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> ComplexRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
@@ -171,17 +175,18 @@ class ComplexRef(RefBase[str], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def set(self, value: complex | str | ComplexType) -> ComplexValue:
-        if isinstance(value, complex):
-            val = f"{value.real},{value.imag}"
-        elif isinstance(value, str):
-            val = value
-        else:
+    def set(self, value: Arg[complex | str]) -> ComplexValue:
+        # complex uses custom "real,imag" format — str(complex) gives "(1+2j)"
+        if isinstance(value, Term):
 
             def format_complex(c: complex) -> str:
                 return f"{c.real},{c.imag}"
 
             val = FuncCallOp(format_complex, value)
+        elif isinstance(value, complex):
+            val = f"{value.real},{value.imag}"
+        else:
+            val = str(value)
         return ComplexValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -198,19 +203,17 @@ class BasisPointRef(RefBase[int], BasisPointType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> BasisPointRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return BasisPointValue.from_int(op)
 
-    def set(self, value: BasisPoint | int | BasisPointType) -> BasisPointValue:
-        if isinstance(value, BasisPoint):
-            val = value.value
-        elif isinstance(value, int):
-            val = value
+    def set(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
+        if isinstance(value, Term):
+            val = ToIntOp(value)
         else:
-            val = MethodCallOp(value, "to_int")
+            val = int(value)
         return BasisPointValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -227,19 +230,17 @@ class PercentageRef(RefBase[float], PercentageType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> PercentageRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return PercentageValue.from_float(op)
 
-    def set(self, value: Percentage | float | PercentageType) -> PercentageValue:
-        if isinstance(value, Percentage):
-            val = value.value
-        elif isinstance(value, (int, float)):
-            val = float(value)
+    def set(self, value: Arg[Percentage | float]) -> PercentageValue:
+        if isinstance(value, Term):
+            val = ToFloatOp(value)
         else:
-            val = MethodCallOp(value, "to_float")
+            val = float(value)
         return PercentageValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -261,19 +262,18 @@ class DateRef(RefBase[str], DateType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> DateRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return DateValue.from_iso(op)
 
-    def set(self, value: date | str | DateType) -> DateValue:
-        if isinstance(value, date):
-            val = value.isoformat()
-        elif isinstance(value, str):
-            val = value
+    def set(self, value: Arg[date | str]) -> DateValue:
+        """Stores as ISO string."""
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "isoformat")
+            val = value.isoformat() if isinstance(value, date) else str(value)
         return DateValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -290,19 +290,18 @@ class DatetimeRef(RefBase[str], DatetimeType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> DatetimeRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return DatetimeValue.from_iso(op)
 
-    def set(self, value: datetime | str | DatetimeType) -> DatetimeValue:
-        if isinstance(value, datetime):
-            val = value.isoformat()
-        elif isinstance(value, str):
-            val = value
+    def set(self, value: Arg[datetime | str]) -> DatetimeValue:
+        """Stores as ISO string."""
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "isoformat")
+            val = value.isoformat() if isinstance(value, datetime) else str(value)
         return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -319,19 +318,18 @@ class TimeRef(RefBase[str], TimeType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> TimeRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return TimeValue.from_iso(op)
 
-    def set(self, value: time | str | TimeType) -> TimeValue:
-        if isinstance(value, time):
-            val = value.isoformat()
-        elif isinstance(value, str):
-            val = value
+    def set(self, value: Arg[time | str]) -> TimeValue:
+        """Stores as ISO string."""
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "isoformat")
+            val = value.isoformat() if isinstance(value, time) else str(value)
         return TimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -348,19 +346,21 @@ class TimedeltaRef(RefBase[float], TimedeltaType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> TimedeltaRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return TimedeltaValue.from_seconds(op)
 
-    def set(self, value: timedelta | float | TimedeltaType) -> TimedeltaValue:
-        if isinstance(value, timedelta):
-            val = value.total_seconds()
-        elif isinstance(value, (int, float)):
-            val = float(value)
-        else:
+    def set(self, value: Arg[timedelta | float]) -> TimedeltaValue:
+        """Stores as float (total seconds)."""
+        if isinstance(value, Term):
+            # timedelta is stdlib — no __float__, so use .total_seconds()
             val = MethodCallOp(value, "total_seconds")
+        elif isinstance(value, timedelta):
+            val = value.total_seconds()
+        else:
+            val = float(value)
         return TimedeltaValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -377,7 +377,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> TimezoneRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
@@ -394,23 +394,9 @@ class TimezoneRef(RefBase[str], TimezoneType):
 
         return TimezoneValue(FuncCallOp(parse_timezone, op))
 
-    def set(self, value: timezone | str | TimezoneType) -> TimezoneValue:
-        if isinstance(value, timezone):
-            from datetime import UTC
-
-            if value == UTC:
-                val = "UTC"
-            else:
-                offset = value.utcoffset(None)
-                total_seconds = int(offset.total_seconds())
-                sign = "+" if total_seconds >= 0 else "-"
-                total_seconds = abs(total_seconds)
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                val = f"{sign}{hours:02d}:{minutes:02d}"
-        elif isinstance(value, str):
-            val = value
-        else:
+    def set(self, value: Arg[timezone | str]) -> TimezoneValue:
+        # timezone uses custom offset format — no standard dunder
+        if isinstance(value, Term):
 
             def format_timezone(tz: timezone) -> str:
                 from datetime import UTC
@@ -426,6 +412,21 @@ class TimezoneRef(RefBase[str], TimezoneType):
                 return f"{sign}{hours:02d}:{minutes:02d}"
 
             val = FuncCallOp(format_timezone, value)
+        elif isinstance(value, timezone):
+            from datetime import UTC
+
+            if value == UTC:
+                val = "UTC"
+            else:
+                offset = value.utcoffset(None)
+                total_seconds = int(offset.total_seconds())
+                sign = "+" if total_seconds >= 0 else "-"
+                total_seconds = abs(total_seconds)
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                val = f"{sign}{hours:02d}:{minutes:02d}"
+        else:
+            val = str(value)
         return TimezoneValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -447,19 +448,17 @@ class PathRef(RefBase[str], PathType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> PathRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return PathValue.from_str(op)
 
-    def set(self, value: Path | str | PathType) -> PathValue:
-        if isinstance(value, Path):
-            val = str(value)
-        elif isinstance(value, str):
-            val = value
+    def set(self, value: Arg[Path | str]) -> PathValue:
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return PathValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -476,17 +475,15 @@ class UUIDRef(RefBase[str], UUIDType):
         super().__init__(address=address, parent=parent, owner_shape=owner_shape)
 
     @classmethod
-    def slot(cls) -> Self:
+    def slot(cls) -> UUIDRef:
         return Slot(cls)  # type: ignore[return-value]
 
     def result(self, op: Term) -> object:
         return UUIDValue.from_str(op)
 
-    def set(self, value: UUID | str | UUIDType) -> UUIDValue:
-        if isinstance(value, UUID):
-            val = str(value)
-        elif isinstance(value, str):
-            val = value
+    def set(self, value: Arg[UUID | str]) -> UUIDValue:
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return UUIDValue(ItemSetCmd(self, ensure_term(val)))

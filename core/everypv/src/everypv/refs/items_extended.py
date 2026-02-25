@@ -21,11 +21,7 @@ Storage formats:
 from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta, timezone
-from decimal import Decimal
-from fractions import Fraction
-from pathlib import Path
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 from eb_datetime import (
     DatetimeType,
@@ -57,8 +53,18 @@ from eb_math import (
 )
 from eb_path import PathType, PathValue
 from eb_uuid import UUIDType, UUIDValue
-from everybase import Term
-from everybase.abc import FloatValue, FuncCallOp, IntValue, MethodCallOp, StrValue, ensure_term
+from everybase import Arg, Term
+from everybase.abc import (
+    FloatValue,
+    FuncCallOp,
+    IntValue,
+    MethodCallOp,
+    StrValue,
+    ToFloatOp,
+    ToIntOp,
+    ToStrOp,
+    ensure_term,
+)
 from everyshape import Slot
 from everyshape.morphisms import ItemSetCmd
 
@@ -66,7 +72,11 @@ from .items import ItemRef
 
 
 if TYPE_CHECKING:
+    from decimal import Decimal
+    from fractions import Fraction
+    from pathlib import Path
     from typing import Self
+    from uuid import UUID
 
     from pv.loc import path
 
@@ -122,14 +132,12 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DecimalValue.from_str(op)
 
-    def set(self, value: Decimal | str | DecimalType) -> DecimalValue:
+    def set(self, value: Arg[Decimal | str]) -> DecimalValue:
         """Set the Decimal value."""
-        if isinstance(value, Decimal):
-            val = str(value)
-        elif isinstance(value, str):
-            val = value
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return DecimalValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -159,14 +167,12 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
     def result(self, op: Term) -> object:  # noqa: D102
         return FractionValue.from_str(op)
 
-    def set(self, value: Fraction | str | FractionType) -> FractionValue:
+    def set(self, value: Arg[Fraction | str]) -> FractionValue:
         """Set the Fraction value."""
-        if isinstance(value, Fraction):
-            val = f"{value.numerator}/{value.denominator}"
-        elif isinstance(value, str):
-            val = value
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return FractionValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -200,7 +206,7 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def set(self, value: complex | str | ComplexType) -> ComplexValue:
+    def set(self, value: Arg[complex | str]) -> ComplexValue:
         """Set the complex value."""
         if isinstance(value, complex):
             val = f"{value.real},{value.imag}"
@@ -241,14 +247,12 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
     def result(self, op: Term) -> object:  # noqa: D102
         return BasisPointValue.from_int(op)
 
-    def set(self, value: BasisPoint | int | BasisPointType) -> BasisPointValue:
+    def set(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
         """Set the BasisPoint value."""
-        if isinstance(value, BasisPoint):
-            val = value.value
-        elif isinstance(value, int):
-            val = value
+        if isinstance(value, Term):
+            val = ToIntOp(value)
         else:
-            val = MethodCallOp(value, "to_int")
+            val = int(value)
         return BasisPointValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -278,14 +282,12 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
     def result(self, op: Term) -> object:  # noqa: D102
         return PercentageValue.from_float(op)
 
-    def set(self, value: Percentage | float | PercentageType) -> PercentageValue:
+    def set(self, value: Arg[Percentage | float]) -> PercentageValue:
         """Set the Percentage value."""
-        if isinstance(value, Percentage):
-            val = value.value
-        elif isinstance(value, (int, float)):
-            val = float(value)
+        if isinstance(value, Term):
+            val = ToFloatOp(value)
         else:
-            val = MethodCallOp(value, "to_float")
+            val = float(value)
         return PercentageValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -320,16 +322,12 @@ class DateRef(ItemRef[str, StrValue], DateType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DateValue.from_iso(op)
 
-    def set(self, value: date | str | DateType) -> DateValue:
-        """Set the date value."""
-        if isinstance(value, date):
-            val = value.isoformat()
-        elif isinstance(value, str):
-            val = value
-        elif isinstance(value, Term):
-            val = value  # PV ref — already stores as ISO string
+    def set(self, value: Arg[date | str]) -> DateValue:
+        """Set the date value. Stores as ISO string."""
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "isoformat")
+            val = value.isoformat() if isinstance(value, date) else str(value)
         return DateValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -359,16 +357,12 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DatetimeValue.from_iso(op)
 
-    def set(self, value: datetime | str | DatetimeType) -> DatetimeValue:
-        """Set the datetime value."""
-        if isinstance(value, datetime):
-            val = value.isoformat()
-        elif isinstance(value, str):
-            val = value
-        elif isinstance(value, Term):
-            val = value  # PV ref — already stores as ISO string
+    def set(self, value: Arg[datetime | str]) -> DatetimeValue:
+        """Set the datetime value. Stores as ISO string."""
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "isoformat")
+            val = value.isoformat() if isinstance(value, datetime) else str(value)
         return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -398,16 +392,12 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
     def result(self, op: Term) -> object:  # noqa: D102
         return TimeValue.from_iso(op)
 
-    def set(self, value: time | str | TimeType) -> TimeValue:
-        """Set the time value."""
-        if isinstance(value, time):
-            val = value.isoformat()
-        elif isinstance(value, str):
-            val = value
-        elif isinstance(value, Term):
-            val = value  # PV ref — already stores as ISO string
+    def set(self, value: Arg[time | str]) -> TimeValue:
+        """Set the time value. Stores as ISO string."""
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "isoformat")
+            val = value.isoformat() if isinstance(value, time) else str(value)
         return TimeValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -437,14 +427,15 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
     def result(self, op: Term) -> object:  # noqa: D102
         return TimedeltaValue.from_seconds(op)
 
-    def set(self, value: timedelta | float | TimedeltaType) -> TimedeltaValue:
-        """Set the timedelta value."""
-        if isinstance(value, timedelta):
-            val = value.total_seconds()
-        elif isinstance(value, (int, float)):
-            val = float(value)
-        else:
+    def set(self, value: Arg[timedelta | float]) -> TimedeltaValue:
+        """Set the timedelta value. Stores as float (seconds)."""
+        if isinstance(value, Term):
+            # timedelta is stdlib — no __float__, so use .total_seconds()
             val = MethodCallOp(value, "total_seconds")
+        elif isinstance(value, timedelta):
+            val = value.total_seconds()
+        else:
+            val = float(value)
         return TimedeltaValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -485,7 +476,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
 
         return TimezoneValue(FuncCallOp(parse_timezone, op))
 
-    def set(self, value: timezone | str | TimezoneType) -> TimezoneValue:
+    def set(self, value: Arg[timezone | str]) -> TimezoneValue:
         """Set the timezone value."""
         if isinstance(value, timezone):
             from datetime import UTC
@@ -552,14 +543,12 @@ class PathRef(ItemRef[str, StrValue], PathType):
     def result(self, op: Term) -> object:  # noqa: D102
         return PathValue.from_str(op)
 
-    def set(self, value: Path | str | PathType) -> PathValue:
+    def set(self, value: Arg[Path | str]) -> PathValue:
         """Set the Path value."""
-        if isinstance(value, Path):
-            val = str(value)
-        elif isinstance(value, str):
-            val = value
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return PathValue(ItemSetCmd(self, ensure_term(val)))
 
 
@@ -589,12 +578,10 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
     def result(self, op: Term) -> object:  # noqa: D102
         return UUIDValue.from_str(op)
 
-    def set(self, value: UUID | str | UUIDType) -> UUIDValue:
+    def set(self, value: Arg[UUID | str]) -> UUIDValue:
         """Set the UUID value."""
-        if isinstance(value, UUID):
-            val = str(value)
-        elif isinstance(value, str):
-            val = value
+        if isinstance(value, Term):
+            val = ToStrOp(value)
         else:
-            val = MethodCallOp(value, "__str__")
+            val = str(value)
         return UUIDValue(ItemSetCmd(self, ensure_term(val)))

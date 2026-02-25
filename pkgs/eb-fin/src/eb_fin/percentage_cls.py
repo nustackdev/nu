@@ -62,6 +62,10 @@ class Percentage:
         """Get raw percentage."""
         return self.value
 
+    def __float__(self) -> float:
+        """Convert to float (raw percentage value)."""
+        return self.value
+
     # =========================================================================
     # APPLICATION
     # =========================================================================

@@ -55,6 +55,10 @@ class BasisPoint:
         """Get raw basis points."""
         return self.value
 
+    def __int__(self) -> int:
+        """Convert to int (raw basis points)."""
+        return self.value
+
     # =========================================================================
     # APPLICATION
     # =========================================================================
