@@ -197,6 +197,93 @@ as_json = Token.mint.to_json()
 are_equal = Token.mint.get() == Token.owner.get()
 ```
 
+## Compound Types (dict-stored)
+
+For types with multiple fields (not mappable to a single `int`/`str`/`float`), store as `dict` and use `to_dict()`/`from_dict()` for serialization. Use `@property` on the native class and `GetAttrOp` on the Type for clean property access.
+
+### Native class pattern
+
+```python
+class LocalCurve:
+    __slots__ = ("_vsol", "_vtok", "_rsol", "_rtok")
+
+    def __init__(self, vsol: int, vtok: int, rsol: int, rtok: int) -> None:
+        self._vsol = vsol
+        self._vtok = vtok
+        self._rsol = rsol
+        self._rtok = rtok
+
+    # Serialization — lives on the class, not as free functions
+    @classmethod
+    def from_dict(cls, d: dict) -> LocalCurve:
+        return cls(vsol=d["vsol"], vtok=d["vtok"], rsol=d["rsol"], rtok=d["rtok"])
+
+    def to_dict(self) -> dict:
+        return {"vsol": self._vsol, "vtok": self._vtok, "rsol": self._rsol, "rtok": self._rtok}
+
+    # Methods that return new instances (MethodCallOp on Type)
+    def apply_buy(self, sol_in: int) -> LocalCurve: ...
+
+    # Properties that return domain types (GetAttrOp on Type)
+    @property
+    def virtual_sol_reserves(self) -> Lamport:
+        return Lamport(self._vsol)
+
+    @property
+    def price_lamports(self) -> Lamport:
+        return Lamport(self._vsol * 1_000_000 // self._vtok)
+```
+
+Key: native `@property` returns domain objects (`Lamport`, `TokenAmount`, `Pubkey`) — not raw `int`/`str`. This means the Type doesn't need conversion logic.
+
+### Type pattern
+
+```python
+class LocalCurveType(TypeBase[LocalCurve]):
+    # Constructors
+    @classmethod
+    def from_dict(cls, d: object) -> LocalCurveValue:
+        return LocalCurveValue(FuncCallOp(LocalCurve.from_dict, d))
+
+    # Serialization
+    def to_dict(self) -> DictValue:
+        return DictValue(MethodCallOp(self, "to_dict"))
+
+    # Methods → MethodCallOp
+    def apply_buy(self, sol_in: object) -> LocalCurveValue:
+        return LocalCurveValue(MethodCallOp(self, "apply_buy", sol_in))
+
+    # Properties → GetAttrOp, wrap in domain Value directly (no conversion needed)
+    @property
+    def virtual_sol_reserves(self) -> LamportValue:
+        return LamportValue(GetAttrOp(self, "virtual_sol_reserves"))
+
+    @property
+    def price_lamports(self) -> LamportValue:
+        return LamportValue(GetAttrOp(self, "price_lamports"))
+```
+
+Since the native `@property` already returns a `Lamport`, `GetAttrOp` resolves to `Lamport` at runtime, and `LamportValue(...)` wraps it directly — no `from_int` conversion needed.
+
+### Ref pattern (dict-stored)
+
+```python
+class LocalCurveRef(pv.ItemRef[dict, LocalCurveValue], LocalCurveType):
+    def set(self, value: Arg[LocalCurve | dict]) -> LocalCurveValue:
+        if isinstance(value, Term):
+            val = MethodCallOp(value, "to_dict")      # deferred serialization
+        elif isinstance(value, LocalCurve):
+            val = value.to_dict()                      # immediate serialization
+        else:
+            val = value                                # raw dict passthrough
+        return LocalCurveValue(ItemSetCmd(self, ensure_term(val)))
+
+    def result(self, op: Term) -> object:
+        return LocalCurveValue(FuncCallOp(LocalCurve.from_dict, op))
+```
+
+The `result()` hook deserializes on read (`dict` → `LocalCurve`). Call `.get()` to go through it — using the ref directly as a term resolves to raw `dict`.
+
 ## Capability Bases Reference
 
 Choose which bases to inherit depending on what your type supports:
