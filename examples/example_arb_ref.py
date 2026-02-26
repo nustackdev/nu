@@ -156,7 +156,7 @@ async def main():
         print("=== Write (Atomic → transaction) ===")
         with storage.transaction() as tx:
             root_view = DictView.open_root(tx)
-            ctx = ctx.with_handle(View, root_view, PVSymbolInfo)
+            ctx = ctx.bind(root_view, View, PVSymbolInfo)
 
             await PVSymbolInfo.test_dt.set(datetime.now()).execute(ctx)
             print("Get: ", await PVSymbolInfo.test_dt.get().execute(ctx))

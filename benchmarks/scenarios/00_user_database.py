@@ -236,7 +236,7 @@ async def _bench_pv(label: str, tree, seed_tree, field_ops: int) -> TimingResult
         from everypv.adapters.storage import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await seed_tree.execute(ctx)
             get_counters().reset()
             with timed_run(label, N * field_ops) as results:
@@ -249,7 +249,7 @@ async def _bench_pv(label: str, tree, seed_tree, field_ops: int) -> TimingResult
 
 async def _bench_dict(label: str, tree, seed_tree, field_ops: int) -> TimingResult:
     data: dict = {}
-    ctx = Context().with_handle(dict, data, scope=DUserDB)
+    ctx = Context().bind(data, dict, DUserDB)
     await seed_tree.execute(ctx)
     get_counters().reset()
     with timed_run(label, N * field_ops) as results:

@@ -167,8 +167,8 @@ async def main():
         with memory_storage() as service_store:
             ctx = (
                 Context()
-                .with_handle(StorageProtocol, data_store)
-                .with_handle(StorageProtocol, service_store, scope=Services)
+                .bind(data_store, StorageProtocol)
+                .bind(service_store, StorageProtocol, Services)
             )
 
             tree = pv.auto_atomic(tracker, scope=Services)

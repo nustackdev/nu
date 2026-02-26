@@ -57,10 +57,7 @@ async def run_pv() -> None:
     ):
         root = DictView.open_root(tx)
         ctx = (
-            Context()
-            .with_handle(View, root, SymbolInfo)
-            .with_handle(View, root, Order)
-            .with_handle(View, root, Market)
+            Context().bind(root, View, SymbolInfo).bind(root, View, Order).bind(root, View, Market)
         )
 
         # Populate

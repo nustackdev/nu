@@ -106,7 +106,7 @@ async def main():
     from everypv.adapters.storage import text_storage
 
     with text_storage(".db-weather") as storage:
-        ctx = Context().with_handle(StorageProtocol, storage)
+        ctx = Context().bind(storage, StorageProtocol)
 
         tree = pv.auto_atomic(station)
         await tree.execute(ctx)

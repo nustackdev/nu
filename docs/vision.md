@@ -59,7 +59,7 @@ Term[T]                     executable node
 
 **Infrastructure:**
 
-- Context / Handle — type-keyed handle container for runtime plumbing
+- Context — type-keyed handle container for runtime plumbing
 
 **What everybase.core does NOT own:** any opinion about data models (document, relational, graph). Those are specializations that live in everybase.abc or substrate packages. everybase.core only knows that Terms form trees, Refs point to locations, Values hold data, and Morphisms transform things.
 

@@ -38,7 +38,7 @@ async def main():
     from everypv.adapters.storage import text_storage
 
     with text_storage(".db") as storage:
-        ctx = Context().with_handle(StorageProtocol, storage)
+        ctx = Context().bind(storage, StorageProtocol)
         for demo in demos:
             tree = pv.auto_atomic(demo)
             await tree.execute(ctx)

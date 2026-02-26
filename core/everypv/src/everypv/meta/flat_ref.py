@@ -73,7 +73,7 @@ class FlatRef(Term):
         from pv.loc import path as pv_path_mod
         from pv.view import View
 
-        root_view = ctx.get(View, scope=self._root_shape)
+        root_view = ctx[View, self._root_shape]
         pv_path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
 
         if self._is_primitive:
@@ -94,7 +94,7 @@ class FlatRef(Term):
         from pv.loc import path as pv_path_mod
         from pv.view import View
 
-        root_view = ctx.get(View, scope=self._root_shape)
+        root_view = ctx[View, self._root_shape]
         pv_path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
 
         if not self._is_primitive:

@@ -152,7 +152,7 @@ Name apps specifically — what they do, not what category they belong to.
 
 Avoid generic names like `blocks` or `sync` unless the app is truly generic.
 
-## Type Refs Handle Conversion
+## Type Refs Conversion
 
 Domain-specific refs (like `KeypairRef`, `LamportRef`) handle type conversion in their `set` method. Callers don't need to manually convert:
 

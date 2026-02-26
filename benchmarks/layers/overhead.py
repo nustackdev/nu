@@ -313,7 +313,7 @@ async def bench_l4_put_a(n: int) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_l4a_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await L4_PUT.execute(ctx)  # warm up
 
             get_counters().reset()
@@ -332,7 +332,7 @@ async def bench_l4_get_a(n: int) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_l4a_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await L4_SEED.execute(ctx)  # seed data
 
             get_counters().reset()
@@ -561,7 +561,7 @@ async def bench_l4_put_b(n: int) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_l4b_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await L4_PUT.execute(ctx)  # warm up
 
             get_counters().reset()
@@ -580,7 +580,7 @@ async def bench_l4_get_b(n: int) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_l4b_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await L4_SEED.execute(ctx)  # seed data
 
             get_counters().reset()

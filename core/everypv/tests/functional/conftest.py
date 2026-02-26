@@ -161,7 +161,7 @@ def ctx(root_view: View, tx: TransactionProtocol) -> Context:
 
     Dependency chain: codec → storage → tx → root_view → ctx
     """
-    return Context().with_handle(View, root_view).with_handle(TransactionProtocol, tx)
+    return Context().bind(root_view, View).bind(tx, TransactionProtocol)
 
 
 # ============================================================================

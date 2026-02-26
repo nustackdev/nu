@@ -112,7 +112,7 @@ async def _bench(label: str, loop_body) -> TimingResult:
         from everypv.adapters.storage import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await TERM_SINGLE.execute(ctx)  # warm up
             get_counters().reset()
 

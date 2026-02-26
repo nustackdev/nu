@@ -27,18 +27,16 @@ class TryCatch(Flow):
     Children layout: ``[body, catch?, finally?]``
 
     Executes *body*. If an exception occurs and a *catch* handler is
-    provided, the handler runs (and the optional *error* Ref is written
-    with ``str(exception)``). If no *catch* is provided the exception
+    provided, the handler runs with ctx extended with ``"error"`` tag
+    containing ``str(exception)``. If no *catch* is provided the exception
     propagates after the *finally_* block (if any) completes.
 
     Example::
 
-        err = Var("")
         TryCatch(
             risky_operation,
             catch=error_handler,
             finally_=cleanup,
-            error=err,
         )
     """
 
@@ -48,13 +46,6 @@ class TryCatch(Flow):
         catch: Executable | None = None,
         finally_: Executable | None = None,
     ) -> None:
-        """Initialize try/catch/finally flow.
-
-        Args:
-            body: Main execution body.
-            catch: Executed on exception (optional).
-            finally_: Executed always after body/catch (optional).
-        """
         children: list[Executable] = [body]
 
         self._has_catch = catch is not None
@@ -81,7 +72,8 @@ class TryCatch(Flow):
         except Exception as e:
             caught = e
             if catch_idx is not None:
-                await self.children[catch_idx].execute(ctx)
+                catch_ctx = ctx.bind(str(e), "error")
+                await self.children[catch_idx].execute(catch_ctx)
         finally:
             if finally_idx is not None:
                 await self.children[finally_idx].execute(ctx)
@@ -93,23 +85,25 @@ class TryCatch(Flow):
 class Retry(Flow):
     """Retry child on failure with exponential backoff.
 
-    Children layout: ``[body, max_attempts, delay, backoff, on_retry?]``
+    Children layout: ``[body, max_attempts, delay, backoff,
+                        on_attempt_fail?, on_success?, on_fail?]``
 
-    Executes *body* up to *max_attempts* times. On each failure the
-    optional *on_retry* handler runs, then the flow sleeps for *delay*
-    seconds before the next attempt. After each retry *delay* is
-    multiplied by *backoff* for exponential back-off.
+    Executes *body* up to *max_attempts* times.
+
+    Hooks receive ctx extended with ``"error"`` (str) and ``"attempt"`` (int) tags:
+    - ``on_attempt_fail``: fires on every non-final failure (before sleep + retry)
+    - ``on_success``: fires after successful execution
+    - ``on_fail``: fires on final failure (before re-raise)
 
     Example::
 
-        attempt = Var(0)
         Retry(
             fetch_data,
             max_attempts=5,
             delay=1.0,
             backoff=2.0,
-            on_retry=log_retry,
-            attempt=attempt,
+            on_attempt_fail=log_retry,
+            on_fail=alert_failure,
         )
     """
 
@@ -120,28 +114,49 @@ class Retry(Flow):
         max_attempts: IntArg = 3,
         delay: FloatArg = 0.0,
         backoff: FloatArg = 1.0,
-        on_retry: Executable | None = None,
+        on_attempt_fail: Executable | None = None,
+        on_success: Executable | None = None,
+        on_fail: Executable | None = None,
     ) -> None:
-        """Initialize retry flow.
-
-        Args:
-            body: Execution body to retry on failure.
-            max_attempts: Maximum number of attempts (int or Term).
-            delay: Initial delay in seconds between retries (float or Term).
-            backoff: Multiplier applied to delay after each retry (float or Term).
-            on_retry: Executed after each failed attempt before sleeping (optional).
-
-        """
         children: list[Executable] = [
             body,
             ensure_term(max_attempts),
             ensure_term(delay),
             ensure_term(backoff),
         ]
-        self._has_on_retry = on_retry is not None
-        if on_retry is not None:
-            children.append(on_retry)
+        self._has_on_attempt_fail = on_attempt_fail is not None
+        self._has_on_success = on_success is not None
+        self._has_on_fail = on_fail is not None
+
+        if on_attempt_fail is not None:
+            children.append(on_attempt_fail)
+        if on_success is not None:
+            children.append(on_success)
+        if on_fail is not None:
+            children.append(on_fail)
+
         super().__init__(*children)
+
+    @property
+    def has_hooks(self) -> bool:
+        """True if any hook is set."""
+        return self._has_on_attempt_fail or self._has_on_success or self._has_on_fail
+
+    def _hook_indices(self) -> tuple[int | None, int | None, int | None]:
+        """Return (on_attempt_fail_idx, on_success_idx, on_fail_idx)."""
+        idx = 4
+        af_idx = None
+        s_idx = None
+        f_idx = None
+        if self._has_on_attempt_fail:
+            af_idx = idx
+            idx += 1
+        if self._has_on_success:
+            s_idx = idx
+            idx += 1
+        if self._has_on_fail:
+            f_idx = idx
+        return af_idx, s_idx, f_idx
 
     async def execute(self, ctx: Context) -> None:
         """Execute body with retry logic and exponential backoff."""
@@ -149,16 +164,23 @@ class Retry(Flow):
         max_attempts = await self.children[1].execute(ctx)
         delay = await self.children[2].execute(ctx)
         backoff = await self.children[3].execute(ctx)
+        af_idx, s_idx, f_idx = self._hook_indices()
 
         for attempt in range(1, max_attempts + 1):
             try:
                 await body.execute(ctx)
+                if s_idx is not None:
+                    hook_ctx = ctx.bind(attempt, "attempt")
+                    await self.children[s_idx].execute(hook_ctx)
                 return
-            except Exception:
+            except Exception as e:
+                hook_ctx = ctx.bind(str(e), "error").bind(attempt, "attempt")
                 if attempt >= max_attempts:
+                    if f_idx is not None:
+                        await self.children[f_idx].execute(hook_ctx)
                     raise
-                if self._has_on_retry:
-                    await self.children[4].execute(ctx)
+                if af_idx is not None:
+                    await self.children[af_idx].execute(hook_ctx)
                 await asyncio.sleep(delay)
                 delay *= backoff
 
@@ -178,12 +200,6 @@ class Assert(Flow):
     """
 
     def __init__(self, condition: Any, message: str = "Assertion failed") -> None:
-        """Initialize assertion flow.
-
-        Args:
-            condition: Term or literal evaluated as boolean.
-            message: Error message raised when condition is falsy.
-        """
         super().__init__(ensure_term(condition))
         self._message = message
 

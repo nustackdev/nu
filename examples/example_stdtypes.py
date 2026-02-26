@@ -46,7 +46,7 @@ async def main():
     with Storage(".db-stdtypes", codec=Codec()) as storage:
         with storage.transaction() as tx:
             root = DictView.open_root(tx)
-            ctx = Context().with_handle(View, root, Invoice)
+            ctx = Context().bind(root, View, Invoice)
 
             # -- write fields --
             await Invoice.number.set(1042).execute(ctx)

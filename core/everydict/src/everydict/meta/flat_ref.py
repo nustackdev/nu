@@ -120,7 +120,7 @@ class FlatRef(Term):
 
     def _get_root_data(self, ctx: Context) -> object:
         """Get root data from context."""
-        return ctx.get(dict, scope=self._root_shape)
+        return ctx[dict, self._root_shape]
 
     async def _build_path(self, ctx: Context) -> tuple:
         """Build full path, resolving dynamic segments."""

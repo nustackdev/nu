@@ -7,16 +7,16 @@ from everybase import Context
 
 # Register handles by type
 ctx = Context()
-ctx = ctx.with_handle(SolanaRpc, rpc_client)
-ctx = ctx.with_handle(dict, data, scope=MyShape)
+ctx = ctx.bind(rpc_client, SolanaRpc)
+ctx = ctx.bind(data, dict, MyShape)
 
 # Look up by type
-rpc = ctx.get(SolanaRpc)
-data = ctx.get(dict, scope=MyShape)
+rpc = ctx[SolanaRpc]
+data = ctx[dict, MyShape]
 
 # Lazy factories (created on first access)
-ctx = ctx.with_factory(SolanaRpc, create_rpc)
-rpc = ctx.get(SolanaRpc)  # factory called here, not before
+ctx = ctx.lazy(create_rpc, SolanaRpc)
+rpc = ctx[SolanaRpc]  # factory called here, not before
 
 # Check if lazy factory was materialized
 ctx.was_opened(SolanaRpc)  # True if accessed
@@ -26,12 +26,12 @@ Scope discrimination enables multi-store:
 
 ```python
 ctx = (Context()
-    .with_handle(StorageProtocol, user_db, scope=UserShape)
-    .with_handle(StorageProtocol, order_db, scope=OrderShape)
+    .bind(user_db, StorageProtocol, UserShape)
+    .bind(order_db, StorageProtocol, OrderShape)
 )
 
-user_db = ctx.get(StorageProtocol, scope=UserShape)   # different store
-order_db = ctx.get(StorageProtocol, scope=OrderShape)  # different store
+user_db = ctx[StorageProtocol, UserShape]   # different store
+order_db = ctx[StorageProtocol, OrderShape]  # different store
 ```
 
 ## Example: PVAtomic
@@ -89,8 +89,8 @@ tree = Seq(
 )
 
 ctx = (Context()
-    .with_handle(StorageProtocol, user_db, scope=UserShape)
-    .with_handle(StorageProtocol, order_db, scope=OrderShape)
+    .bind(user_db, StorageProtocol, UserShape)
+    .bind(order_db, StorageProtocol, OrderShape)
 )
 
 await tree.execute(ctx)

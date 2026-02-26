@@ -26,7 +26,6 @@ from .core import (
     FloatArg,
     Flow,
     FrozenSetArg,
-    Handle,
     IntArg,
     Invalid,
     ListArg,
@@ -85,6 +84,32 @@ from .meta import (
 from .tree import Node
 
 
+# Primitive refs — lazy to avoid circular import
+# (abc.refs → abc → abc.flows → everybase.Flow)
+_PRIM_REF_NAMES = {
+    "PrimRef": "PrimRef",
+    "PrimIntRef": "IntRef",
+    "PrimFloatRef": "FloatRef",
+    "PrimStrRef": "StrRef",
+    "PrimBoolRef": "BoolRef",
+    "PrimBytesRef": "BytesRef",
+    "PrimAnyRef": "AnyRef",
+}
+
+
+def __getattr__(name: str) -> object:
+    if name in _PRIM_REF_NAMES:
+        from .abc import refs as _refs
+
+        return getattr(_refs, _PRIM_REF_NAMES[name])
+    if name == "annotate_retries":
+        from .abc.meta import annotate_retries
+
+        return annotate_retries
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
+
+
 __all__ = [  # noqa: RUF022
     # Tree
     "Node",
@@ -140,7 +165,14 @@ __all__ = [  # noqa: RUF022
     "Span",
     # Context
     "Context",
-    "Handle",
+    # Primitive refs
+    "PrimRef",
+    "PrimIntRef",
+    "PrimFloatRef",
+    "PrimStrRef",
+    "PrimBoolRef",
+    "PrimBytesRef",
+    "PrimAnyRef",
     # Walk
     "preorder",
     "postorder",
@@ -167,4 +199,6 @@ __all__ = [  # noqa: RUF022
     # Display
     "format_tree",
     "print_tree",
+    # Meta-transforms
+    "annotate_retries",
 ]

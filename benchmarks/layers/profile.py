@@ -266,7 +266,7 @@ async def run_l4_put():
     tmpdir = tempfile.mkdtemp(prefix="prof_l4_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await L4_PUT.execute(ctx)  # warm up
             for _ in range(N):
                 await L4_PUT.execute(ctx)
@@ -280,7 +280,7 @@ async def run_l4_get():
     tmpdir = tempfile.mkdtemp(prefix="prof_l4_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await L4_SEED.execute(ctx)  # seed data
             for _ in range(N):
                 await L4_GET.execute(ctx)

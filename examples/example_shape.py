@@ -123,7 +123,7 @@ if __name__ == "__main__":
     async def main() -> None:
         with text_storage(path=".db-shape") as storage, storage.transaction() as tx:
             root = DictView.open_root(tx)
-            ctx = Context().with_handle(View, root)
+            ctx = Context().bind(root, View)
             await run(ctx)
 
     asyncio.run(main())

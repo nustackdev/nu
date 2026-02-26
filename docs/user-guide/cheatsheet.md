@@ -334,7 +334,7 @@ import everybase.abc.flows as f
 | Flow | Signature | Description |
 |------|-----------|-------------|
 | `TryCatch` | `TryCatch(body, catch=None, finally_=None)` | Exception handling |
-| `Retry` | `Retry(body, max_attempts=3, delay=0, backoff=1.0, on_retry=None)` | Retry with backoff |
+| `Retry` | `Retry(body, max_attempts=3, delay=0, backoff=1.0, on_attempt_fail=None)` | Retry with backoff |
 | `Assert` | `Assert(cond, message="...")` | Validate condition |
 
 ### Timing

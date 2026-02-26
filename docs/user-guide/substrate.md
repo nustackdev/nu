@@ -27,7 +27,7 @@ class Counter(Shape):
     label = StrRef.slot()
 
 data = {}
-ctx = Context().with_handle(dict, data, scope=Counter)
+ctx = Context().bind(data, dict, Counter)
 
 await Counter.value.set(42).execute(ctx)
 await Counter.label.set("clicks").execute(ctx)
@@ -53,7 +53,7 @@ class AppState(Shape):
     age = IntRef.slot()
 
 with Storage(".db", codec=Codec()) as storage:
-    ctx = Context().with_handle(StorageProtocol, storage, scope=AppState)
+    ctx = Context().bind(storage, StorageProtocol, AppState)
 
     # Write (opens transaction)
     await Atomic(
@@ -162,10 +162,10 @@ class EphemeralCounters(Shape):
 
 # Setup both
 data = {}
-ctx = Context().with_handle(dict, data, scope=EphemeralCounters)
+ctx = Context().bind(data, dict, EphemeralCounters)
 
 with Storage(".db", codec=Codec()) as storage:
-    ctx = ctx.with_handle(StorageProtocol, storage, scope=PersistentData)
+    ctx = ctx.bind(storage, StorageProtocol, PersistentData)
 
     # Both substrates in one tree
     tree = Seq(

@@ -133,7 +133,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
             The parent view, or root view if this is a top-level ref.
         """
         scope = self._root_shape
-        root_view = ctx.get(View, scope=scope)
+        root_view = ctx[View, scope]
         parent = self.parent
         if parent is None:
             return root_view
@@ -152,7 +152,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         """
         view_path = await self.resolve(ctx)
         scope = self._root_shape
-        root_view = ctx.get(View, scope=scope)
+        root_view = ctx[View, scope]
 
         if not view_path:
             return root_view  # type: ignore
@@ -238,7 +238,7 @@ class PrimitiveRef[T](Ref[T]):
         """
         value_path = await self.resolve(ctx)
         scope = self._root_shape
-        root_view = ctx.get(View, scope=scope)
+        root_view = ctx[View, scope]
         parent_view, _key = path.navigate_value(root_view, value_path)
         return parent_view
 
@@ -256,7 +256,7 @@ class PrimitiveRef[T](Ref[T]):
         """
         value_path = await self.resolve(ctx)
         scope = self._root_shape
-        root_view = ctx.get(View, scope=scope)
+        root_view = ctx[View, scope]
 
         try:
             parent_view, key = path.navigate_value(root_view, value_path)

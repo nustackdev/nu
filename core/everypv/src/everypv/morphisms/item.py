@@ -59,7 +59,7 @@ class InitCmd(Command, Morphism[None]):
 class ItemPrimitiveGetUnsafeOp[T](Operation, Morphism[T | Sentinel]):
     """Read primitive value via _unsafe_primitive_read().
 
-    Single ctx.get() call — no marker parsing, no type checks.
+    Single ctx[] call — no marker parsing, no type checks.
     Returns EMPTY if the value doesn't exist.
 
     The ref must implement:
@@ -72,7 +72,7 @@ class ItemPrimitiveGetUnsafeOp[T](Operation, Morphism[T | Sentinel]):
         self.ref = ref
 
     async def execute(self, ctx: Context) -> T | Sentinel:
-        """Read primitive via single ctx.get()."""
+        """Read primitive via single ctx[] lookup."""
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
         value = parent._unsafe_primitive_read(address)

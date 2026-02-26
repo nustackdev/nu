@@ -25,7 +25,7 @@ async def main():
     from everypv.adapters.storage import text_storage
 
     with text_storage(".db") as storage:
-        ctx = Context().with_handle(StorageProtocol, storage)
+        ctx = Context().bind(storage, StorageProtocol)
 
         await e.Atomic(Seq(AppState.name.set("Alice"), AppState.age.set(30))).execute(ctx)
         await e.Atomic(Seq(Print("name", AppState.name), Print("age", AppState.age))).execute(ctx)

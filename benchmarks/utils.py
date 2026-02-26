@@ -163,7 +163,7 @@ def timed_run(name: str, n_ops: int) -> Generator[list[TimingResult], None, None
 def fresh_memory_ctx() -> Generator[tuple[Context, Any], None, None]:
     """Create a fresh in-memory context with StorageProtocol handle."""
     with memory_storage() as storage:
-        ctx = Context().with_handle(StorageProtocol, storage)
+        ctx = Context().bind(storage, StorageProtocol)
         yield ctx, storage
 
 
@@ -175,7 +175,7 @@ def fresh_rocksdb_ctx() -> Generator[Context, None, None]:
         with rocksdb_storage_inmemory(tmpdir) as storage:
             with storage.transaction() as tx:
                 root = DictView.open_root(tx)
-                ctx = Context().with_handle(View, root)
+                ctx = Context().bind(root, View)
                 yield ctx
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -198,7 +198,7 @@ def fresh_storage_ctx() -> Generator[tuple[Context, Any], None, None]:
     tmpdir = tempfile.mkdtemp(prefix="bench_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             yield ctx, storage
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)

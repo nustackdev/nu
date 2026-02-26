@@ -90,7 +90,7 @@ class SolanaRef(Ref[SolanaClient]):
         return "solana"
 
     async def fetch(self, ctx: Context) -> SolanaClient:
-        return ctx.get(SolanaClient)
+        return ctx[SolanaClient]
 
 
 class Solana(SolanaRef):
@@ -112,7 +112,7 @@ async def main():
     client = SolanaClient()
 
     # Bind: service client → context
-    ctx = Context().with_handle(SolanaClient, client)
+    ctx = Context().bind(client, SolanaClient)
 
     # --- print term trees ---
     print("get_slot() tree:")

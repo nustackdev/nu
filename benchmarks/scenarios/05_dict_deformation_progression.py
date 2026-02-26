@@ -93,7 +93,7 @@ def _bench_pure_dict(label: str, fn, setup_fn) -> TimingResult:
 
 async def _bench_dict(label: str, tree, seed_tree) -> TimingResult:
     data: dict = {}
-    ctx = Context().with_handle(dict, data, scope=User)
+    ctx = Context().bind(data, dict, User)
     await seed_tree.execute(ctx)
     t0 = time.perf_counter()
     for _ in range(N):

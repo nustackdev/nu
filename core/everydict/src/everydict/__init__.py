@@ -14,7 +14,7 @@ Usage::
         age = IntRef.slot()
 
     data = {}
-    ctx = Context().with_handle(dict, data, scope=User)
+    ctx = Context().bind(data, dict, User)
 """
 
 from everydict.meta import inline_refs

@@ -1,29 +1,22 @@
-"""Context — type-keyed handle container for execution.
+"""Context — tagged value store for execution.
 
 Context is the runtime environment passed to Executable.execute().
-It holds resolved handles (connections, transactions, etc.) keyed by type,
-optionally discriminated by a scope for multi-store scenarios.
+It holds bindings keyed by tag sets with specificity-based resolution.
 
 Design:
-    - Immutable: with_handle() returns new Context
-    - Type-keyed: handles looked up by type, optionally scoped
-    - Lazy factories: handles can be created on-demand
-    - No Handle base class: any object can be a handle
-
-Scope is any hashable — Shape, Table, tenant ID, etc.
-Context doesn't know what a scope *is*, only that it discriminates handles.
-Fallback: scoped lookup falls back to unscoped.
+    - Immutable: bind() returns new Context
+    - Tag-keyed: values looked up by tag sets with subset fallback
+    - Lazy factories: values can be created on-demand
+    - Any hashable can be a tag (type, string, Shape, etc.)
 """
 
 from __future__ import annotations
 
-from collections.abc import Hashable
 from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Any
+    from collections.abc import Callable, Generator
 
 
 __all__ = [
@@ -31,186 +24,169 @@ __all__ = [
 ]
 
 
-type ContextKey = type | tuple[type, Hashable]
-
-
 class Context:
-    """Container of resolved handles. Passed to Executable.execute().
+    """Tagged value store. The execution address space.
 
-    Immutable — with_handle() returns a new Context with the
-    additional/overridden handle.
-
-    Keys can be:
-        - type: singleton handle (e.g., NotionClient)
-        - (type, scope): scoped handle (e.g., (StorageProtocol, UserShape))
-
-    Scope is any hashable. Context is scope-agnostic — it doesn't
-    know about Shape, Table, or any specific taxonomy. Higher layers
-    decide what to use as scope.
+    Bindings have tags. Resolution matches by tags.
+    More tags = more specific. Fallback = fewer tags.
 
     Usage:
-        # Singleton
-        ctx = Context().with_handle(NotionClient, client)
-        client = ctx.get(NotionClient)
+        ctx = Context()
+        ctx = ctx.bind(rocksdb, Storage)                  # 1 tag
+        ctx = ctx.bind(order_db, Storage, OrderShape)      # 2 tags
+        ctx = ctx.bind("timeout", "error")                 # name tag
 
-        # Scoped
-        ctx = ctx.with_handle(KVStore, user_store, scope=UserShape)
-        store = ctx.get(KVStore, scope=UserShape)
-
-        # Lazy factory
-        ctx = ctx.with_factory(Transaction, lambda: store.begin())
-        txn = ctx.get(Transaction)  # created on first access
+        ctx[Storage]                    # → rocksdb
+        ctx[Storage, OrderShape]        # → order_db
+        ctx["error"]                    # → "timeout"
     """
 
     def __init__(self) -> None:
         """Initialize empty context."""
-        self._handles: dict[ContextKey, Any] = {}
-        self._factories: dict[ContextKey, Callable[[], Any]] = {}
-        self._opened: set[ContextKey] = set()  # track lazily opened handles
+        self._bindings: dict[frozenset, object] = {}
+        self._factories: dict[frozenset, Callable] = {}
+        self._opened: set[frozenset] = set()
 
     def _copy(self) -> Context:
         """Create a shallow copy."""
         ctx = Context.__new__(Context)
-        ctx._handles = dict(self._handles)
+        ctx._bindings = dict(self._bindings)
         ctx._factories = dict(self._factories)
         ctx._opened = set(self._opened)
         return ctx
 
     @staticmethod
-    def _make_key(handle_type: type, scope: Hashable | None) -> ContextKey:
-        """Create lookup key from type and optional scope."""
-        return (handle_type, scope) if scope is not None else handle_type
+    def _normalize(tags: tuple) -> frozenset:
+        """Normalize tags to frozenset."""
+        return frozenset(tags)
 
-    def get[T](self, handle_type: type[T], scope: Hashable | None = None) -> T:
-        """Look up a handle by type, optionally scoped.
-
-        Resolution order:
-          1. Exact match (type, scope)
-          2. Factory for (type, scope)
-          3. Fallback to unscoped type
-          4. Factory for unscoped type
+    def bind(self, value: object, *tags: object) -> Context:
+        """Bind value to tag set. Returns new Context (immutable).
 
         Args:
-            handle_type: The type to look up.
-            scope: Optional scope discriminator (any hashable).
+            value: The value to bind.
+            *tags: One or more tags (types, strings, etc.).
 
         Returns:
-            The handle instance.
-
-        Raises:
-            LookupError: If no handle or factory for this key.
+            New Context with the binding added.
         """
-        key = self._make_key(handle_type, scope)
-
-        # Check existing handles
-        if key in self._handles:
-            return self._handles[key]
-
-        # Try factory (lazy creation)
-        if key in self._factories:
-            handle = self._factories[key]()
-            self._handles[key] = handle
-            self._opened.add(key)  # mark as lazily opened
-            return handle
-
-        # Fallback: try unscoped lookup when scoped fails
-        if scope is not None:
-            unscoped_key = handle_type
-            if unscoped_key in self._handles:
-                return self._handles[unscoped_key]
-            if unscoped_key in self._factories:
-                handle = self._factories[unscoped_key]()
-                self._handles[unscoped_key] = handle
-                self._opened.add(unscoped_key)
-                return handle
-
-        # Build error message
-        if scope is not None:
-            scope_name = scope.__name__ if hasattr(scope, "__name__") else str(scope)
-            msg = f"No handle for {handle_type.__name__} with scope {scope_name}"
-        else:
-            msg = f"No handle for {handle_type.__name__}"
-        raise LookupError(msg)
-
-    def has(self, handle_type: type, scope: Hashable | None = None) -> bool:
-        """Check if a handle or factory is available."""
-        key = self._make_key(handle_type, scope)
-        return key in self._handles or key in self._factories
-
-    def was_opened(self, handle_type: type, scope: Hashable | None = None) -> bool:
-        """Check if a lazy handle was actually opened."""
-        key = self._make_key(handle_type, scope)
-        return key in self._opened
-
-    def with_handle[T](
-        self,
-        handle_type: type[T],
-        handle: T,
-        scope: Hashable | None = None,
-    ) -> Context:
-        """Create new Context with an additional/overridden handle.
-
-        Args:
-            handle_type: Type key for the handle
-            handle: The handle instance
-            scope: Optional scope discriminator
-
-        Returns:
-            New Context with the handle added
-        """
-        key = self._make_key(handle_type, scope)
+        if not tags:
+            msg = "bind() requires at least one tag"
+            raise ValueError(msg)
+        key = self._normalize(tags)
         ctx = self._copy()
-        ctx._handles[key] = handle
-        # Remove any factory for this key (handle takes precedence)
+        ctx._bindings[key] = value
         ctx._factories.pop(key, None)
         return ctx
 
-    def with_factory[T](
-        self,
-        handle_type: type[T],
-        factory: Callable[[], T],
-        scope: Hashable | None = None,
-    ) -> Context:
-        """Create new Context with a lazy handle factory.
-
-        The factory is called on first access to get().
-        The result is cached for subsequent calls.
+    def lazy(self, factory: Callable, *tags: object) -> Context:
+        """Bind lazy factory to tag set. Called on first access, cached.
 
         Args:
-            handle_type: Type key for the handle
-            factory: Callable that creates the handle
-            scope: Optional scope discriminator
+            factory: Callable that creates the value.
+            *tags: One or more tags.
 
         Returns:
-            New Context with the factory added
+            New Context with the factory added.
         """
-        key = self._make_key(handle_type, scope)
+        if not tags:
+            msg = "lazy() requires at least one tag"
+            raise ValueError(msg)
+        key = self._normalize(tags)
         ctx = self._copy()
         ctx._factories[key] = factory
         return ctx
 
-    def __contains__(self, handle_type: type) -> bool:
-        """Check if handle type exists (singleton only)."""
-        return self.has(handle_type)
+    def has(self, *tags: object) -> bool:
+        """Check if binding exists for exact tag set."""
+        key = self._normalize(tags)
+        return key in self._bindings or key in self._factories
 
-    def __getitem__[T](self, handle_type: type[T]) -> T:
-        """Subscript access to singleton handles."""
-        return self.get(handle_type)
+    def was_opened(self, *tags: object) -> bool:
+        """Check if lazy binding was materialized."""
+        key = self._normalize(tags)
+        return key in self._opened
+
+    def _resolve(self, key: frozenset) -> object:
+        """Resolve a frozenset key with specificity fallback.
+
+        Resolution order:
+        1. Exact match in bindings
+        2. Exact match in factories (create + cache)
+        3. Largest subset match, then smaller subsets
+        4. LookupError if nothing found
+        """
+        # Exact match — bindings
+        if key in self._bindings:
+            return self._bindings[key]
+
+        # Exact match — factory
+        if key in self._factories:
+            value = self._factories[key]()
+            self._bindings[key] = value
+            self._opened.add(key)
+            return value
+
+        # Subset fallback: try subsets from largest to smallest
+        if len(key) > 1:
+            for size in range(len(key) - 1, 0, -1):
+                # Generate subsets of this size
+                tags_list = sorted(key, key=id)
+                for subset in _subsets_of_size(tags_list, size):
+                    fset = frozenset(subset)
+                    if fset in self._bindings:
+                        return self._bindings[fset]
+                    if fset in self._factories:
+                        value = self._factories[fset]()
+                        self._bindings[fset] = value
+                        self._opened.add(fset)
+                        return value
+
+        # Nothing found
+        tag_names = ", ".join(t.__name__ if hasattr(t, "__name__") else repr(t) for t in key)
+        msg = f"No binding for tags: {tag_names}"
+        raise LookupError(msg)
+
+    def __getitem__(self, tags: object) -> object:
+        """Resolve by tags with specificity fallback.
+
+        Usage:
+            ctx[StorageProtocol]              # single tag
+            ctx[StorageProtocol, OrderShape]   # multiple tags
+            ctx["error"]                       # string tag
+        """
+        if not isinstance(tags, tuple):
+            tags = (tags,)
+        return self._resolve(frozenset(tags))
+
+    def __contains__(self, tags: object) -> bool:
+        """Check if tags resolve (including subset fallback)."""
+        if not isinstance(tags, tuple):
+            tags = (tags,)
+        try:
+            self._resolve(frozenset(tags))
+        except LookupError:
+            return False
+        return True
 
     def __repr__(self) -> str:
         """String representation."""
         parts = []
-        for key in self._handles:
-            if isinstance(key, tuple):
-                scope_name = key[1].__name__ if hasattr(key[1], "__name__") else str(key[1])
-                parts.append(f"{key[0].__name__}@{scope_name}")
-            else:
-                parts.append(key.__name__)
+        for key in self._bindings:
+            labels = [t.__name__ if hasattr(t, "__name__") else repr(t) for t in key]
+            parts.append("+".join(labels))
         for key in self._factories:
-            if key not in self._handles:
-                if isinstance(key, tuple):
-                    scope_name = key[1].__name__ if hasattr(key[1], "__name__") else str(key[1])
-                    parts.append(f"{key[0].__name__}@{scope_name}(lazy)")
-                else:
-                    parts.append(f"{key.__name__}(lazy)")
+            if key not in self._bindings:
+                labels = [t.__name__ if hasattr(t, "__name__") else repr(t) for t in key]
+                parts.append(f"{'+'.join(labels)}(lazy)")
         return f"Context({', '.join(parts)})"
+
+
+def _subsets_of_size(items: list, size: int) -> Generator[tuple, None, None]:
+    """Generate all subsets of a given size from items."""
+    if size == 0:
+        yield ()
+        return
+    for i in range(len(items)):
+        for rest in _subsets_of_size(items[i + 1 :], size - 1):
+            yield (items[i], *rest)

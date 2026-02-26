@@ -254,6 +254,17 @@ from .morphisms import (
     XorOp,
     ZFillOp,
 )
+from .refs import (
+    AnyRef,
+    BoolRef,
+    BytesRef,
+    FloatRef,
+    IntRef,
+    PrimExistsOp,
+    PrimGetOp,
+    PrimRef,
+    StrRef,
+)
 from .types import (
     AnyType,
     BoolType,
@@ -527,6 +538,16 @@ __all__ = [  # noqa: RUF022
     "ValuesOp",
     "XorOp",
     "ZFillOp",
+    # Primitive refs
+    "PrimRef",
+    "PrimGetOp",
+    "PrimExistsOp",
+    "IntRef",
+    "FloatRef",
+    "StrRef",
+    "BoolRef",
+    "BytesRef",
+    "AnyRef",
     "all_",
     "and_",
     "any_",

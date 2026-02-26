@@ -150,10 +150,8 @@ async def main() -> None:
         with memory_storage() as memdb:
             ctx = Context()
 
-            ctx = ctx.with_handle(StorageProtocol, rocksdb)
-            ctx = ctx.with_handle(
-                StorageProtocol, memdb, scope=Services
-            )  # sharded: Services on memdb
+            ctx = ctx.bind(rocksdb, StorageProtocol)
+            ctx = ctx.bind(memdb, StorageProtocol, Services)  # sharded: Services on memdb
 
             # --- Compose ref methods into flows ---
             print("=== Ref Methods in Flows ===")
@@ -192,7 +190,7 @@ if __name__ == "__main__":
 
 # # --- Ref-based class access ---
 # print("=== Ref-based Class Access ===")
-# ctx_with_calc = ctx.with_handle(Calculator, Calculator(precision=2))
+# ctx_with_calc = ctx.bind(Calculator(precision=2), Calculator)
 
 # # Class-level access creates context-resolved expressions
 # result = await CalculatorRef.add(FloatValue(10.5), FloatValue(20.3)).execute(

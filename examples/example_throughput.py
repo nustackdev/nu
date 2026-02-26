@@ -52,7 +52,7 @@ async def main() -> None:
         tmpdir = tempfile.mkdtemp(prefix="tp_")
         try:
             with rocksdb_storage_inmemory(tmpdir) as storage:
-                ctx = Context().with_handle(StorageProtocol, storage)
+                ctx = Context().bind(storage, StorageProtocol)
 
                 t0 = time.perf_counter()
                 await wt.execute(ctx)

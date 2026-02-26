@@ -203,26 +203,22 @@ Type-keyed handle container. Immutable (returns new Context on mutation).
 
 ```text
 Context
-  .get(handle_type, scope=None)          -> T         # lookup, raises if missing
+  [handle_type]                           -> T         # lookup, raises if missing
+  [handle_type, scope]                   -> T         # lookup with scope
   .has(handle_type, scope=None)          -> bool
   .was_opened(handle_type, scope=None)   -> bool      # lazy factory was materialized
 
-  .with_handle(handle_type, handle, scope=None)   -> Context   # eager
-  .with_factory(handle_type, factory, scope=None) -> Context   # lazy
+  .bind(handle, handle_type, scope=None)    -> Context   # eager
+  .lazy(factory, handle_type, scope=None)   -> Context   # lazy
 ```
 
 Key: `type` or `(type, scope)` for multi-store discrimination.
 
 ---
 
-## Handle
+## Context Handles
 
-Scoped resource consumed by Terms via Context.
-
-```text
-Handle
-  .release() -> None                     # override for cleanup
-```
+Scoped resources consumed by Terms via Context. Any object can be used as a handle -- no base class required.
 
 ---
 

@@ -26,17 +26,17 @@ Context is a type-keyed bag of handles with optional **scope discrimination** fo
 
 ```python
 # Singleton handle (one per type)
-ctx = Context().with_handle(NotionClient, client)
-client = ctx.get(NotionClient)
+ctx = Context().bind(client, NotionClient)
+client = ctx[NotionClient]
 
 # Scope-discriminated handle (one per type+scope)
-ctx = ctx.with_handle(StorageProtocol, user_db, scope=UserShape)
-ctx = ctx.with_handle(StorageProtocol, order_db, scope=OrderShape)
-user_db = ctx.get(StorageProtocol, scope=UserShape)
+ctx = ctx.bind(user_db, StorageProtocol, UserShape)
+ctx = ctx.bind(order_db, StorageProtocol, OrderShape)
+user_db = ctx[StorageProtocol, UserShape]
 
 # Lazy factory (created on first access)
-ctx = ctx.with_factory(TransactionProtocol, lambda: db.begin_txn(), scope=UserShape)
-txn = ctx.get(TransactionProtocol, scope=UserShape)  # opens on first call
+ctx = ctx.lazy(lambda: db.begin_txn(), TransactionProtocol, UserShape)
+txn = ctx[TransactionProtocol, UserShape]  # opens on first call
 
 # Check if lazy handle was actually opened
 ctx.was_opened(TransactionProtocol, scope=UserShape)  # True if accessed
@@ -49,7 +49,7 @@ Each ref knows its scope via `ref.get_root_shape()` and uses it to look up the c
 
 PV (Polymorphic Views) is the primary substrate. Data lives in KV stores (RocksDB, LMDB, etc.) accessed through typed views.
 
-### Handle Lifecycle
+### Lifecycle
 
 ```
 StorageProtocol (long-lived, app-scoped)
@@ -62,12 +62,12 @@ TransactionProtocol / SnapshotProtocol (short-lived, span-scoped)
     v
 View (stateless accessor over storage context)
     |
-    |  ctx.get(View, scope=S) consumed by:
+    |  ctx[View, S] consumed by:
     v
 Term.execute(ctx) -> result
 ```
 
-| Handle | Lifecycle | Purpose |
+| Type | Lifecycle | Purpose |
 |--------|-----------|---------|
 | `StorageProtocol` | App-scoped | Connection to storage |
 | `TransactionProtocol` / `SnapshotProtocol` | Span-scoped | Atomic access |
@@ -100,22 +100,18 @@ class PVAtomic(Span):
         self._txn = None
 
     def enter(self, ctx: Context) -> Context:
-        storage = ctx.get(StorageProtocol, scope=self.scope)
+        storage = ctx[StorageProtocol, self.scope]
 
         def open_txn():
             self._txn = storage.begin_transaction()
             return self._txn
 
         def open_view():
-            txn = ctx_with_txn.get(TransactionProtocol, scope=self.scope)
+            txn = ctx_with_txn[TransactionProtocol, self.scope]
             return self.view_cls.open_root(txn)
 
-        ctx_with_txn = ctx.with_factory(
-            TransactionProtocol, open_txn, scope=self.scope
-        )
-        return ctx_with_txn.with_factory(
-            View, open_view, scope=self.scope
-        )
+        ctx_with_txn = ctx.lazy(open_txn, TransactionProtocol, self.scope)
+        return ctx_with_txn.lazy(open_view, View, self.scope)
 
     def exit_success(self, ctx: Context) -> None:
         if self._txn is not None:
@@ -180,8 +176,8 @@ Primitive refs mix in everybase.abc type bases (IntType, StrType, ...) to get op
    │   └─ Returns child_ctx
    │
    ├─ Term.execute(child_ctx)
-   │   ├─ ctx.get(View, scope=S)  <- triggers View factory
-   │   │   └─ View factory calls ctx.get(TransactionProtocol)  <- triggers txn factory
+   │   ├─ ctx[View, S]  <- triggers View factory
+   │   │   └─ View factory calls ctx[TransactionProtocol]  <- triggers txn factory
    │   │       └─ txn factory calls storage.begin_transaction()
    │   ├─ Navigates view, reads/writes data
    │   └─ Returns result
@@ -201,7 +197,7 @@ class AppState(Shape):
     age = IntRef.slot()
 
 with Storage(".db", codec=Codec()) as storage:
-    ctx = Context().with_handle(StorageProtocol, storage, scope=AppState)
+    ctx = Context().bind(storage, StorageProtocol, AppState)
 
     # Write (transaction)
     await PVAtomic(
@@ -286,9 +282,9 @@ class UserShape(Shape): ...
 class OrderShape(Shape): ...
 
 ctx = (Context()
-    .with_handle(StorageProtocol, rocksdb_users, scope=UserShape)
-    .with_handle(StorageProtocol, rocksdb_orders, scope=OrderShape)
-    .with_handle(NotionClient, notion)  # singleton, no scope
+    .bind(rocksdb_users, StorageProtocol, UserShape)
+    .bind(rocksdb_orders, StorageProtocol, OrderShape)
+    .bind(notion, NotionClient)  # singleton, no scope
 )
 
 tree = Seq(

@@ -133,7 +133,7 @@ async def bench_l4(n: int) -> float:
     tmpdir = tempfile.mkdtemp(prefix="bench_l4_tp_")
     try:
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await seed.execute(ctx)
 
             start = time.perf_counter()

@@ -37,6 +37,11 @@ __all__ = [
 ]
 
 
+def _tags(typ: type, scope: Hashable | None) -> tuple:
+    """Build tag tuple from type and optional scope."""
+    return (typ, scope) if scope is not None else (typ,)
+
+
 class Atomic(Span):
     """Atomic transaction boundary for PV operations.
 
@@ -61,13 +66,6 @@ class Atomic(Span):
         scope: Hashable | None = None,
         view_cls: type[View] = DictView,
     ) -> None:
-        """Initialize atomic span.
-
-        Args:
-            *children: Child nodes to execute within this boundary.
-            scope: Scope for context lookup (any hashable — Shape, table, etc.).
-            view_cls: View class to open on top of the storage context.
-        """
         super().__init__(*children)
         self.scope = scope
         self.view_cls = view_cls
@@ -76,7 +74,7 @@ class Atomic(Span):
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction or snapshot factory."""
-        storage = ctx.get(StorageProtocol, scope=self.scope)
+        storage = ctx[_tags(StorageProtocol, self.scope)]
 
         # Check if subtree is pure (all terms are read-only)
         has_impure = any(not t.is_self_pure for t in find(self, lambda n: isinstance(n, Term)))
@@ -88,34 +86,38 @@ class Atomic(Span):
     def _enter_transaction(self, ctx: Context, storage: StorageProtocol) -> Context:
         view_cls = self.view_cls
         scope = self.scope
+        tags_txn = _tags(TransactionProtocol, scope)
+        tags_view = _tags(View, scope)
 
         def open_txn() -> TransactionProtocol:
             self._txn = storage.begin_transaction()
             return self._txn
 
-        child_ctx = ctx.with_factory(TransactionProtocol, open_txn, scope=scope)
+        child_ctx = ctx.lazy(open_txn, *tags_txn)
 
         def open_view() -> View:
-            txn = child_ctx.get(TransactionProtocol, scope=scope)
+            txn = child_ctx[tags_txn]
             return view_cls.open_root(txn)
 
-        return child_ctx.with_factory(View, open_view, scope=scope)
+        return child_ctx.lazy(open_view, *tags_view)
 
     def _enter_snapshot(self, ctx: Context, storage: StorageProtocol) -> Context:
         view_cls = self.view_cls
         scope = self.scope
+        tags_snap = _tags(SnapshotProtocol, scope)
+        tags_view = _tags(View, scope)
 
         def open_snap() -> SnapshotProtocol:
             self._snap = storage.begin_snapshot()
             return self._snap
 
-        child_ctx = ctx.with_factory(SnapshotProtocol, open_snap, scope=scope)
+        child_ctx = ctx.lazy(open_snap, *tags_snap)
 
         def open_view() -> View:
-            snap = child_ctx.get(SnapshotProtocol, scope=scope)
+            snap = child_ctx[tags_snap]
             return view_cls.open_root(snap)
 
-        return child_ctx.with_factory(View, open_view, scope=scope)
+        return child_ctx.lazy(open_view, *tags_view)
 
     def exit_success(self, ctx: Context) -> None:
         """Commit transaction or close snapshot if opened."""
@@ -157,13 +159,6 @@ class Snapshot(Span):
         scope: Hashable | None = None,
         view_cls: type[View] = DictView,
     ) -> None:
-        """Initialize snapshot span.
-
-        Args:
-            *children: Child nodes to execute within this boundary.
-            scope: Scope for context lookup (any hashable — Shape, table, etc.).
-            view_cls: View class to open on top of the snapshot.
-        """
         super().__init__(*children)
         self.scope = scope
         self.view_cls = view_cls
@@ -171,21 +166,23 @@ class Snapshot(Span):
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy snapshot factory."""
-        storage = ctx.get(StorageProtocol, scope=self.scope)
+        storage = ctx[_tags(StorageProtocol, self.scope)]
         view_cls = self.view_cls
         scope = self.scope
+        tags_snap = _tags(SnapshotProtocol, scope)
+        tags_view = _tags(View, scope)
 
         def open_snap() -> SnapshotProtocol:
             self._snap = storage.begin_snapshot()
             return self._snap
 
-        child_ctx = ctx.with_factory(SnapshotProtocol, open_snap, scope=scope)
+        child_ctx = ctx.lazy(open_snap, *tags_snap)
 
         def open_view() -> View:
-            snap = child_ctx.get(SnapshotProtocol, scope=scope)
+            snap = child_ctx[tags_snap]
             return view_cls.open_root(snap)
 
-        return child_ctx.with_factory(View, open_view, scope=scope)
+        return child_ctx.lazy(open_view, *tags_view)
 
     def exit_success(self, ctx: Context) -> None:
         """Close snapshot if opened."""
@@ -231,21 +228,23 @@ class Transaction(Span):
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction factory."""
-        storage = ctx.get(StorageProtocol, scope=self.scope)
+        storage = ctx[_tags(StorageProtocol, self.scope)]
         view_cls = self.view_cls
         scope = self.scope
+        tags_txn = _tags(TransactionProtocol, scope)
+        tags_view = _tags(View, scope)
 
         def open_txn() -> TransactionProtocol:
             self._txn = storage.begin_transaction()
             return self._txn
 
-        child_ctx = ctx.with_factory(TransactionProtocol, open_txn, scope=scope)
+        child_ctx = ctx.lazy(open_txn, *tags_txn)
 
         def open_view() -> View:
-            txn = child_ctx.get(TransactionProtocol, scope=scope)
+            txn = child_ctx[tags_txn]
             return view_cls.open_root(txn)
 
-        return child_ctx.with_factory(View, open_view, scope=scope)
+        return child_ctx.lazy(open_view, *tags_view)
 
     def exit_success(self, ctx: Context) -> None:
         """Commit transaction if opened."""

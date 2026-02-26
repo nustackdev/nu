@@ -134,7 +134,7 @@ async def _bench(label: str, term, seed_term, seed_key: str | None = None) -> Ti
         from everypv.adapters.storage import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
-            ctx = Context().with_handle(StorageProtocol, storage)
+            ctx = Context().bind(storage, StorageProtocol)
             await seed_term.execute(ctx)
             get_counters().reset()
 

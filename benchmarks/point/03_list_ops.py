@@ -123,7 +123,7 @@ async def run_all() -> list[TimingResult]:
             from everypv.adapters.storage import rocksdb_storage_inmemory
 
             with rocksdb_storage_inmemory(tmpdir) as storage:
-                ctx = Context().with_handle(StorageProtocol, storage)
+                ctx = Context().bind(storage, StorageProtocol)
 
                 results.append(await bench_store_list(ctx, n, terms))
                 results.append(await bench_store_list_str(ctx, n, terms))

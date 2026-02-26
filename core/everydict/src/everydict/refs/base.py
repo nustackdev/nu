@@ -34,7 +34,7 @@ class RefBase[T](Ref[T]):
     Dict refs navigate nested Python dicts using a parent chain
     of string keys. No storage backend, no views, no reactivity.
 
-    The root dict is retrieved from Context via ctx.get(dict, scope=...).
+    The root dict is retrieved from Context via ctx[dict, scope].
     """
 
     async def resolve(self, ctx: Context) -> tuple[str | int, ...]:
@@ -68,7 +68,7 @@ class RefBase[T](Ref[T]):
     def _get_root_data(self, ctx: Context) -> dict:
         """Get the root dict from context."""
         scope = self.get_root_shape()
-        return ctx.get(dict, scope=scope)
+        return ctx[dict, scope]
 
 
 def _navigate(data: object, key_path: tuple[str | int, ...]) -> object:
