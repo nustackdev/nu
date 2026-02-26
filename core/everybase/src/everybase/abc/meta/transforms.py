@@ -2,14 +2,45 @@
 
 from __future__ import annotations
 
-from everybase import map_nodes
+import logging
+
+from everybase import Flow, Span, map_nodes
 from everybase.tree import Node
 
 
 __all__ = [
     "annotate_retries",
     "annotate_steps",
+    "set_logger_name",
 ]
+
+_step_logger = logging.getLogger("everybase.steps")
+
+
+class _StepSpan(Span):
+    """Wraps a Seq child to log step progress. Path is baked at construction."""
+
+    def __init__(self, child: Node, step: int, total: int, path: str) -> None:
+        super().__init__(child)
+        self._step = step
+        self._total = total
+        self._path = path
+
+    def enter(self, ctx: object) -> object:
+        _step_logger.info("[%s] step %d/%d start", self._path, self._step, self._total)
+        return ctx
+
+    def exit_success(self, ctx: object) -> None:
+        _step_logger.info("[%s] step %d/%d done", self._path, self._step, self._total)
+
+    def exit_failure(self, ctx: object, error: BaseException) -> None:
+        _step_logger.warning(
+            "[%s] step %d/%d failed: %s",
+            self._path,
+            self._step,
+            self._total,
+            error,
+        )
 
 
 def annotate_retries[N: Node](tree: N) -> N:
@@ -63,32 +94,77 @@ def annotate_retries[N: Node](tree: N) -> N:
 
 
 def annotate_steps[N: Node](tree: N) -> N:
-    """Add step logging to Seq nodes.
+    """Wrap Seq children in step-tracking spans with baked tree paths.
 
-    Each child of a Seq gets a ``Log`` before and after it, showing
-    which step is running and when it completes.
+    Walks the tree recursively, tracking the structural path from root.
+    Each Flow/Span child of a Seq gets wrapped in a ``_StepSpan`` with
+    the path baked in.  All ``Log`` nodes encountered get their ``_path``
+    set so log messages show their tree position.
 
     Args:
         tree: Tree root.
 
     Returns:
-        New tree with step-annotated Seq nodes.
+        New tree with step-annotated Seq nodes and path-aware Log nodes.
     """
     from ..flows.control import Seq
     from ..flows.io import Log
 
-    def _annotate(node: Node) -> Node:
-        if not isinstance(node, Seq) or len(node.children) < 2:
+    def _walk(node: Node, path: str) -> Node:
+        # Seq with meaningful children: wrap Flow/Span children in _StepSpan
+        if isinstance(node, Seq):
+            meaningful = [c for c in node.children if isinstance(c, (Flow, Span))]
+            if len(meaningful) >= 2:
+                seq_path = f"{path}{type(node).__name__}"
+                total = len(meaningful)
+                step = 0
+                new_children: list = []
+                for child in node.children:
+                    if isinstance(child, (Flow, Span)) and not isinstance(child, _StepSpan):
+                        step += 1
+                        name = type(child).__name__
+                        walked = _walk(child, f"{seq_path}.{name}.")
+                        new_children.append(
+                            _StepSpan(walked, step, total, path=seq_path),
+                        )
+                    else:
+                        new_children.append(_walk(child, f"{seq_path}."))
+                return node.with_children(*new_children)
+
+        # Log nodes: bake the current path
+        if isinstance(node, Log) and path:
+            clone = node.with_children(*node.children)
+            clone._path = path.rstrip(".")
+            return clone
+
+        # Recurse into children
+        if not node.children:
             return node
-
-        total = len(node.children)
-        new_children: list = []
-        for i, child in enumerate(node.children, 1):
-            label = repr(child)
-            new_children.append(Log(f"[{i}/{total}] {label}"))
-            new_children.append(child)
-            new_children.append(Log(f"[{i}/{total}] done"))
-
+        new_children = [_walk(child, path) for child in node.children]
+        if all(new is old for new, old in zip(new_children, node.children, strict=False)):
+            return node
         return node.with_children(*new_children)
 
-    return map_nodes(tree, _annotate, order="bottom_up")
+    return _walk(tree, "")
+
+
+def set_logger_name[N: Node](tree: N, name: str) -> N:
+    """Rename the logger on all Log nodes in the tree.
+
+    Args:
+        tree: Tree root.
+        name: Logger name to set (e.g. ``"mytool.myapp"``).
+
+    Returns:
+        New tree with renamed Log nodes.
+    """
+    from ..flows.io import Log
+
+    def _rename(node: Node) -> Node:
+        if not isinstance(node, Log):
+            return node
+        clone = node.with_children(*node.children)
+        clone._logger_name = name
+        return clone
+
+    return map_nodes(tree, _rename, order="bottom_up")

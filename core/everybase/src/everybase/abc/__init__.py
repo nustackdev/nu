@@ -121,7 +121,7 @@ from .flows import (
     TryCatch,
     While,
 )
-from .meta import annotate_retries, annotate_steps
+from .meta import annotate_retries, annotate_steps, set_logger_name
 from .method import AutoInterface, method, prop
 from .morphisms import (
     AbsOp,
@@ -604,4 +604,5 @@ __all__ = [  # noqa: RUF022
     # Meta-transforms
     "annotate_retries",
     "annotate_steps",
+    "set_logger_name",
 ]

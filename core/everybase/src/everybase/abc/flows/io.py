@@ -94,10 +94,13 @@ class Log(Flow):
         super().__init__(ensure_term(message))
         self._level = level
         self._logger_name = logger_name
+        self._path = ""
 
     async def execute(self, ctx: Context) -> None:
         """Evaluate message and emit a log record."""
         message = await self.children[0].execute(ctx)
+        if self._path:
+            message = f"[{self._path}] {message}"
         logger = logging.getLogger(self._logger_name)
         getattr(logger, self._level)(message)
 
