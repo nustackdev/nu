@@ -64,22 +64,24 @@ class Print(Flow):
 class Log(Flow):
     """Structured logging with configurable level.
 
-    Children layout: ``[message]``
+    Children layout: ``[message, *values]``
 
     The *message* parameter is auto-wrapped via ``ensure_term`` if a literal is
-    passed.  The *level* and *logger_name* are plain strings used at
-    construction time only and are not children.
+    passed.  All *values* are likewise auto-wrapped so the full parameter
+    list lives in the children tree.  The *level* and *logger_name* are plain
+    strings used at construction time only and are not children.
 
     Example::
 
         Log("request received")
+        Log("synced slot", slot_ref, ":", tx_count, "txs")
         Log("disk full", level="error", logger_name="myapp.storage")
     """
 
     def __init__(
         self,
         message: StrArg,
-        *,
+        *values: Any,
         level: str = "info",
         logger_name: str = "everybase.flows",
     ) -> None:
@@ -87,18 +89,25 @@ class Log(Flow):
 
         Args:
             message: Term or literal string to log.
+            values: Additional Terms or literals whose results are logged.
             level: Logging level name -- ``"debug"``, ``"info"``,
                 ``"warning"``, ``"error"``, or ``"critical"``.
             logger_name: Logger name passed to ``logging.getLogger``.
         """
-        super().__init__(ensure_term(message))
+        children: list[Executable] = [ensure_term(message)]
+        for v in values:
+            children.append(ensure_term(v))
+        super().__init__(*children)
         self._level = level
         self._logger_name = logger_name
         self._path = ""
 
     async def execute(self, ctx: Context) -> None:
-        """Evaluate message and emit a log record."""
-        message = await self.children[0].execute(ctx)
+        """Evaluate message and values, then emit a log record."""
+        parts: list[str] = []
+        for child in self.children:
+            parts.append(str(await child.execute(ctx)))
+        message = " ".join(parts)
         if self._path:
             message = f"[{self._path}] {message}"
         logger = logging.getLogger(self._logger_name)
