@@ -121,6 +121,7 @@ from .flows import (
     TryCatch,
     While,
 )
+from .meta import annotate_retries, annotate_steps
 from .method import AutoInterface, method, prop
 from .morphisms import (
     AbsOp,
@@ -600,4 +601,7 @@ __all__ = [  # noqa: RUF022
     "SkipIfExists",
     "SkipIfMissing",
     "SkipIfNotEmpty",
+    # Meta-transforms
+    "annotate_retries",
+    "annotate_steps",
 ]

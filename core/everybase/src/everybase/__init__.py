@@ -102,10 +102,6 @@ def __getattr__(name: str) -> object:
         from .abc import refs as _refs
 
         return getattr(_refs, _PRIM_REF_NAMES[name])
-    if name == "annotate_retries":
-        from .abc.meta import annotate_retries
-
-        return annotate_retries
     msg = f"module {__name__!r} has no attribute {name!r}"
     raise AttributeError(msg)
 
@@ -199,6 +195,4 @@ __all__ = [  # noqa: RUF022
     # Display
     "format_tree",
     "print_tree",
-    # Meta-transforms
-    "annotate_retries",
 ]

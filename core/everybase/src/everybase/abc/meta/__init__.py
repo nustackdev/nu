@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from .transforms import annotate_retries
+from .transforms import annotate_retries, annotate_steps
 
 
 __all__ = [
     "annotate_retries",
+    "annotate_steps",
 ]
