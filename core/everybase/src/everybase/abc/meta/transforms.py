@@ -25,16 +25,21 @@ class _StepSpan(Span):
         self._step = step
         self._total = total
         self._path = path
+        self._logger_name = "everybase.steps"
+
+    def _log(self, level: str, msg: str, *args: object) -> None:
+        logging.getLogger(self._logger_name).log(logging.getLevelName(level), msg, *args)
 
     def enter(self, ctx: object) -> object:
-        _step_logger.info("[%s] step %d/%d start", self._path, self._step, self._total)
+        self._log("INFO", "[%s] step %d/%d start", self._path, self._step, self._total)
         return ctx
 
     def exit_success(self, ctx: object) -> None:
-        _step_logger.info("[%s] step %d/%d done", self._path, self._step, self._total)
+        self._log("INFO", "[%s] step %d/%d done", self._path, self._step, self._total)
 
     def exit_failure(self, ctx: object, error: BaseException) -> None:
-        _step_logger.warning(
+        self._log(
+            "WARNING",
             "[%s] step %d/%d failed: %s",
             self._path,
             self._step,
@@ -161,7 +166,7 @@ def set_logger_name[N: Node](tree: N, name: str) -> N:
     from ..flows.io import Log
 
     def _rename(node: Node) -> Node:
-        if not isinstance(node, Log):
+        if not isinstance(node, (Log, _StepSpan)):
             return node
         clone = node.with_children(*node.children)
         clone._logger_name = name
