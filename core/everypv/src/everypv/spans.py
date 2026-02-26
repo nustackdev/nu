@@ -74,6 +74,8 @@ class Atomic(Span):
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction or snapshot factory."""
+        self._txn = None
+        self._snap = None
         storage = ctx[_tags(StorageProtocol, self.scope)]
 
         # Check if subtree is pure (all terms are read-only)
@@ -126,7 +128,7 @@ class Atomic(Span):
         elif self._snap is not None:
             self._snap.close()
 
-    def exit_failure(self, ctx: Context, error: Exception) -> None:
+    def exit_failure(self, ctx: Context, error: BaseException) -> None:
         """Abort transaction or close snapshot if opened."""
         if self._txn is not None:
             self._txn.abort()
@@ -166,6 +168,7 @@ class Snapshot(Span):
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy snapshot factory."""
+        self._snap = None
         storage = ctx[_tags(StorageProtocol, self.scope)]
         view_cls = self.view_cls
         scope = self.scope
@@ -189,7 +192,7 @@ class Snapshot(Span):
         if self._snap is not None:
             self._snap.close()
 
-    def exit_failure(self, ctx: Context, error: Exception) -> None:
+    def exit_failure(self, ctx: Context, error: BaseException) -> None:
         """Close snapshot if opened."""
         if self._snap is not None:
             self._snap.close()
@@ -228,6 +231,7 @@ class Transaction(Span):
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction factory."""
+        self._txn = None
         storage = ctx[_tags(StorageProtocol, self.scope)]
         view_cls = self.view_cls
         scope = self.scope
@@ -251,7 +255,7 @@ class Transaction(Span):
         if self._txn is not None:
             self._txn.commit()
 
-    def exit_failure(self, ctx: Context, error: Exception) -> None:
+    def exit_failure(self, ctx: Context, error: BaseException) -> None:
         """Abort transaction if opened."""
         if self._txn is not None:
             self._txn.abort()

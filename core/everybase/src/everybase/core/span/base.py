@@ -42,7 +42,7 @@ class Span(Executable[Executable], ABC):
             for child in self.children:
                 result = await child.execute(child_ctx)
             self.exit_success(child_ctx)
-        except Exception as e:
+        except BaseException as e:
             self.exit_failure(child_ctx, e)
             raise
         return result
@@ -54,5 +54,5 @@ class Span(Executable[Executable], ABC):
     def exit_success(self, ctx: Context) -> None:
         """Cleanup after successful execution. Override for commit/close."""
 
-    def exit_failure(self, ctx: Context, error: Exception) -> None:
+    def exit_failure(self, ctx: Context, error: BaseException) -> None:
         """Cleanup after failed execution. Override for abort/close."""
