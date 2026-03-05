@@ -147,6 +147,18 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
+    def key_at_(self, idx: int) -> ValueResultT:
+        """Get key at index position."""
+        from ..morphisms.abc_mapping import KeyAtOp
+
+        return cast("ValueResultT", self._wrap_value_result(KeyAtOp(self, idx)))
+
+    def islice_(self, start: int = 0, stop: int | None = None) -> CollectionResultT:
+        """Slice mapping by iteration order."""
+        from ..morphisms.abc_mapping import ISliceOp
+
+        return cast("CollectionResultT", self._wrap_iterable_result(ISliceOp(self, start, stop)))
+
 
 class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
     MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],

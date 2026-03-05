@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 from pv.container import (
     ContainerNotFoundError,
@@ -406,8 +406,8 @@ class DictView(
         self.ensure_created()
         # Optimization: only clear if container has children
         if replace:
-            current_len = cast("int", self.container.get_metadata("__len__", default=0))
-            if current_len and int(current_len) > 0:
+            current_len = len(self)
+            if current_len > 0:
                 self.clear()
 
         # Batch store and update length once at end

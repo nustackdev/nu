@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Container, Mapping, Sequence, Sized
 
-from everybase.core import INVALID, BinaryOperation, NAryOperation, Sentinel, UnaryOperation
+from everybase.core import BinaryOperation, NAryOperation, Sentinel, UnaryOperation
 
 
 __all__ = [
@@ -42,12 +42,8 @@ class AtOp[ResultT](BinaryOperation[ResultT]):
         if isinstance(left, Sequence):
             if not isinstance(right, int):
                 raise TypeError(f"at() index must be int for sequence, got {type(right).__name__}")
-            if right < -len(left) or right >= len(left):
-                return INVALID
             return left[right]  # type: ignore
         elif isinstance(left, Mapping):
-            if right not in left:
-                return INVALID
             return left[right]  # type: ignore
         else:
             try:

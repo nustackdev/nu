@@ -108,7 +108,7 @@ class DivOp[ResultT](BinaryOperation[ResultT]):
         """Apply."""
         try:
             return left / right  # type: ignore
-        except (TypeError, ZeroDivisionError):
+        except TypeError:
             return INVALID
 
 
@@ -119,7 +119,7 @@ class FloorDivOp[ResultT](BinaryOperation[ResultT]):
         """Apply."""
         try:
             return left // right  # type: ignore
-        except (TypeError, ZeroDivisionError):
+        except TypeError:
             return INVALID
 
 
@@ -130,7 +130,7 @@ class ModOp[ResultT](BinaryOperation[ResultT]):
         """Apply."""
         try:
             return left % right  # type: ignore
-        except (TypeError, ZeroDivisionError):
+        except TypeError:
             return INVALID
 
 
@@ -141,5 +141,5 @@ class PowOp[ResultT](BinaryOperation[ResultT]):
         """Apply."""
         try:
             return left**right  # type: ignore
-        except (TypeError, OverflowError):
+        except TypeError:
             return INVALID
