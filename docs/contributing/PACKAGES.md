@@ -1,22 +1,28 @@
 # Adding Packages
 
-## 1. Create Structure
+Topologies (shape, table, graph) live inside `everybase` itself.
+Extensions (adapters, types, tools) live in `ext/`.
 
-For a core package:
+## Adding a Topology
+
+Topologies are subpackages of everybase. Add directly to `src/everybase/`:
+
 ```bash
-mkdir -p core/everyfoo/{src/everyfoo,tests}
-touch core/everyfoo/{pyproject.toml,README.md}
-touch core/everyfoo/src/everyfoo/__init__.py
+mkdir -p src/everybase/foo
+touch src/everybase/foo/__init__.py
 ```
 
-For an optional extension package:
+No pyproject.toml needed — it's part of the everybase package.
+
+## Adding an Extension
+
 ```bash
-mkdir -p pkgs/eb-foo/{src/eb_foo,tests}
-touch pkgs/eb-foo/{pyproject.toml,README.md}
-touch pkgs/eb-foo/src/eb_foo/__init__.py
+mkdir -p ext/eb-foo/{src/eb_foo,tests}
+touch ext/eb-foo/{pyproject.toml,README.md}
+touch ext/eb-foo/src/eb_foo/__init__.py
 ```
 
-## 2. Create pyproject.toml
+### Create pyproject.toml
 
 See [TEMPLATES.md](TEMPLATES.md) for full template.
 
@@ -28,35 +34,31 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "everyfoo"  # or "eb-foo" for pkgs/
+name = "eb-foo"
 version = "0.1.0"
 description = "Foo for everybase"
 requires-python = ">=3.10"
-dependencies = ["everybase"]
+dependencies = ["everybase>=0.1.0"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/everyfoo"]  # or ["src/eb_foo"]
+packages = ["src/eb_foo"]
 ```
 
-## 3. Register in Workspace
+### Register in Workspace
 
 Edit root `pyproject.toml`:
 
 ```toml
 [tool.uv.workspace]
 members = [
-    "core/everyfoo",  # Add here (or "pkgs/eb-foo")
+    "ext/eb-foo",
 ]
-```
 
-If other packages depend on it:
-
-```toml
 [tool.uv.sources]
-everyfoo = { workspace = true }  # Add here
+eb-foo = { workspace = true }
 ```
 
-## 4. Sync
+### Sync
 
 ```bash
 uv sync
@@ -64,14 +66,17 @@ uv sync
 
 ## Naming
 
-| Tier | Directory | Import | PyPI name |
-|------|-----------|--------|-----------|
-| Core | `core/everyfoo/` | `everyfoo` | `everyfoo` |
-| Pkg | `pkgs/eb-foo/` | `eb_foo` | `eb-foo` |
+All extensions use the `eb-*` prefix:
+
+| Directory | Import | PyPI name |
+|-----------|--------|-----------|
+| `ext/eb-foo/` | `eb_foo` | `eb-foo` |
 
 Use hyphens in directory/PyPI names, underscores in import names.
 
 ## Dependencies
 
-- Core (`core/`) packages should have minimal deps
-- Extension packages (`pkgs/`) depend on everybase and may have external deps
+- `everybase` has minimal deps (attrs only)
+- Extensions depend on `everybase` and may have external deps
+- Adapters (eb-pv, eb-dict) bridge topologies to storage backends
+- Type extensions add domain-specific types with no storage assumptions

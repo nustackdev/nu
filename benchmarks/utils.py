@@ -11,12 +11,12 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from pv.view import View
-from tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.tkv.storage import StorageProtocol
+from virtuals.view import View
 
+from eb_pv.adapters.storage import memory_storage, rocksdb_storage_inmemory
+from eb_pv.views import DictView
 from everybase import Context
-from everypv.adapters.storage import memory_storage, rocksdb_storage_inmemory
-from everypv.views import DictView
 
 
 if TYPE_CHECKING:
@@ -65,10 +65,10 @@ def _patch_method(target: Any, attr: str, counter_name: str) -> tuple[Any, Any]:
 
 def install_counters() -> None:
     """Monkey-patch key subsystems to count operations."""
-    from pv.container import container_ops, node_ops
-    from tkv._storages.rocksdb.context import ReadOperationsMixin, WriteOperationsMixin
-    from tkv._storages.rocksdb.storage import RocksDBStorage
-    from tkv._storages.rocksdb.transaction import RocksDBTransaction
+    from virtuals.container import container_ops, node_ops
+    from virtuals.tkv._storages.rocksdb.context import ReadOperationsMixin, WriteOperationsMixin
+    from virtuals.tkv._storages.rocksdb.storage import RocksDBStorage
+    from virtuals.tkv._storages.rocksdb.transaction import RocksDBTransaction
 
     patches = [
         (RocksDBStorage, "begin_transaction", "storage.begin_transaction"),
@@ -103,7 +103,7 @@ def uninstall_counters() -> None:
 
 def install_observer_counters() -> None:
     """Patch observer notify/match for counting."""
-    from tkv._observers._base import BaseObserver
+    from virtuals.tkv._observers._base import BaseObserver
 
     if "observer.notify" not in _counters._originals:
         orig, patched = _patch_method(BaseObserver, "notify", "observer.notify")

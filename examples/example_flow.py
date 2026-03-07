@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import everypv as e
+import eb_pv as e
 from everybase import Context
 from everybase.abc import Print, Seq
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # --- Shape ---
@@ -20,9 +20,9 @@ class AppState(Shape):
 
 
 async def main():
-    from tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.tkv.storage import StorageProtocol
 
-    from everypv.adapters.storage import text_storage
+    from eb_pv.adapters.storage import text_storage
 
     with text_storage(".db") as storage:
         ctx = Context().bind(storage, StorageProtocol)

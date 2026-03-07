@@ -234,8 +234,8 @@ Both return Terms — they don't execute immediately.
 A **Shape** declares the structure of your data using slots:
 
 ```python
-from everyshape import Shape
-import everydict as d
+from everybase.shape import Shape
+import eb_dict as d
 
 class User(Shape):
     name = d.StrRef.slot()
@@ -291,8 +291,8 @@ tree = Seq(
 Shapes can nest:
 
 ```python
-import everydict as d
-from everyshape import Shape
+import eb_dict as d
+from everybase.shape import Shape
 
 class Address(Shape):
     city = d.StrRef.slot()
@@ -351,9 +351,9 @@ ctx[StorageProtocol, Order]       # → order_db
 The dict substrate stores data in plain Python dicts:
 
 ```python
-import everydict as d
+import eb_dict as d
 from everybase import Context
-from everyshape import Shape
+from everybase.shape import Shape
 
 class User(Shape):
     name = d.StrRef.slot()
@@ -431,8 +431,8 @@ Atomic(
 When using the PV substrate (persistent key-value storage), `Atomic` handles transactions:
 
 ```python
-import everypv as pv
-from everyshape import Shape
+import eb_pv as pv
+from everybase.shape import Shape
 
 class AppState(Shape):
     name = pv.StrRef.slot()
@@ -657,13 +657,13 @@ print(annotated.has_hooks)  # True
 
 A **substrate** is a storage backend. everybase ships two:
 
-### everydict — In-memory dicts
+### eb-dict — In-memory dicts
 
 Simplest substrate. Data lives in plain Python dicts. No persistence, no transactions.
 
 ```python
-import everydict as d
-from everyshape import Shape
+import eb_dict as d
+from everybase.shape import Shape
 
 class Counter(Shape):
     value = d.IntRef.slot()
@@ -682,21 +682,21 @@ await Seq(
 
 Great for: prototyping, testing, in-memory state.
 
-### everypv — Persistent key-value
+### eb-pv — Persistent key-value
 
 Full substrate with persistence (RocksDB), transactions, snapshots, and reactivity.
 
 ```python
-import everypv as pv
-from everyshape import Shape
+import eb_pv as pv
+from everybase.shape import Shape
 
 class AppState(Shape):
     name = pv.StrRef.slot()
     counter = pv.IntRef.slot()
 
 # Setup storage
-from tkv.tkv.storage import StorageProtocol
-from everypv.adapters.storage import text_storage
+from virtuals.tkv.tkv.storage import StorageProtocol
+from eb_pv.adapters.storage import text_storage
 
 with text_storage(".db") as storage:
     ctx = Context().bind(storage, StorageProtocol)
@@ -723,8 +723,8 @@ Features:
 Different Shapes can use different substrates in the same tree:
 
 ```python
-import everydict as d
-import everypv as pv
+import eb_dict as d
+import eb_pv as pv
 
 class Config(Shape):         # in-memory
     debug = d.BoolRef.slot()
@@ -746,9 +746,9 @@ ctx = (Context()
 The PV substrate supports **observability** — you can react to value changes:
 
 ```python
-import everypv as pv
-from everyshape import Shape
-from everyshape.flows import ReactWhile
+import eb_pv as pv
+from everybase.shape import Shape
+from everybase.shape.flows import ReactWhile
 
 class Sensor(Shape):
     temperature = pv.FloatRef.slot()
@@ -787,11 +787,11 @@ Here's a complete, runnable example using the dict substrate (no external depend
 
 ```python
 import asyncio
-import everydict as d
+import eb_dict as d
 from everybase import Context
 from everybase.abc import ForRange, If, Print, Retry, Seq
 
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 class GameState(Shape):
@@ -854,13 +854,13 @@ from everybase.abc import Parallel, Race, TryCatch, Retry
 from everybase.abc import Print, Log, Delay, Timeout
 
 # Dict substrate
-import everydict as d
+import eb_dict as d
 
 # PV substrate
-import everypv as pv
+import eb_pv as pv
 
 # Shapes
-from everyshape import Shape
+from everybase.shape import Shape
 
 # Tree tools
 from everybase import find, map_nodes, format_tree, preorder

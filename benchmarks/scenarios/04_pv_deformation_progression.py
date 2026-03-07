@@ -27,7 +27,6 @@ import time
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
-from tkv.tkv.storage import StorageProtocol
 from utils import (
     TimingResult,
     get_counters,
@@ -36,11 +35,10 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
+from virtuals.tkv.tkv.storage import StorageProtocol
 
-import everypv as pv
-from everybase import Context, replace
-from everybase.abc import Seq
-from everypv import (
+import eb_pv as pv
+from eb_pv import (
     Atomic,
     InitCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
@@ -49,9 +47,11 @@ from everypv import (
     optimize_primitive_reads,
     optimize_primitive_writes,
 )
-from everypv.meta import inline_refs
-from everypv.morphisms.item import ItemPrimitiveSetUnsafeCmd
-from everyshape import Shape
+from eb_pv.meta import inline_refs
+from eb_pv.morphisms.item import ItemPrimitiveSetUnsafeCmd
+from everybase import Context, replace
+from everybase.abc import Seq
+from everybase.shape import Shape
 
 
 # ── Shape ─────────────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ def _bench_pure_dict(label: str, fn, setup_fn) -> TimingResult:
 async def _bench_pv(label: str, tree, seed_tree) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_deform_")
     try:
-        from everypv.adapters.storage import rocksdb_storage_inmemory
+        from eb_pv.adapters.storage import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)

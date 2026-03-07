@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import everypv as pv
+import eb_pv as pv
+from eb_pv import Snapshot, Transaction, optimize_primitive_reads, optimize_primitive_writes
 from everybase.abc import Seq
-from everypv import Snapshot, Transaction, optimize_primitive_reads, optimize_primitive_writes
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 class Record(Shape):
@@ -37,10 +37,10 @@ async def main() -> None:
     import tempfile
     import time
 
-    from tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.tkv.storage import StorageProtocol
 
+    from eb_pv.adapters.storage import rocksdb_storage_inmemory
     from everybase import Context
-    from everypv.adapters.storage import rocksdb_storage_inmemory
 
     total = N * len(FIELDS)
     variants = [

@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self
 
-import everypv as pv
+import eb_pv as pv
 from everybase import Arg, FloatArg, Sentinel, StrArg
 from everybase.abc import (
     AddOp,
@@ -32,7 +32,7 @@ from everybase.abc import (
     ValueBase,
     ensure_term,
 )
-from everyshape import ItemGetOp, ItemRef, ItemSetCmd, Shape, Slot
+from everybase.shape import ItemGetOp, ItemRef, ItemSetCmd, Shape, Slot
 
 
 # =============================================
@@ -144,11 +144,11 @@ class PVSymbolInfo(Shape):
 
 
 async def main():
-    from pv import View
+    from virtuals import View
 
+    from eb_pv.adapters.storage import text_storage
+    from eb_pv.views import DictView
     from everybase import Context
-    from everypv.adapters.storage import text_storage
-    from everypv.views import DictView
 
     with text_storage(".db") as storage:
         ctx = Context()

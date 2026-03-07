@@ -13,7 +13,7 @@ make dev        # Also installs pre-commit hooks
 ```bash
 # Testing
 make test               # Run all tests
-make test-pkg PKG=everybase      # Run specific package tests
+make test-pkg PKG=ext/eb-pv      # Run specific package tests
 make test-fast          # Skip slow tests, fail fast
 
 # Code quality
@@ -30,7 +30,7 @@ make help               # All commands
 
 ```bash
 # Add to specific package
-cd packages/everypv
+cd ext/eb-pv
 uv add attrs
 
 # Add dev dependency (workspace-wide)

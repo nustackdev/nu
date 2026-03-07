@@ -31,9 +31,6 @@ import time
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
-import everydict as ed
-from everydict.meta import inline_refs as dict_inline_refs
-from tkv.tkv.storage import StorageProtocol
 from utils import (
     TimingResult,
     get_counters,
@@ -42,13 +39,16 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
+from virtuals.tkv.tkv.storage import StorageProtocol
 
-import everypv as pv
+import eb_dict as ed
+import eb_pv as pv
+from eb_dict.meta import inline_refs as dict_inline_refs
+from eb_pv import Atomic
+from eb_pv.meta import inline_refs as pv_inline_refs
 from everybase import Context
 from everybase.abc import Seq
-from everypv import Atomic
-from everypv.meta import inline_refs as pv_inline_refs
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # ── Shapes (PV) ──────────────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ def _bench_pure_dict(label: str, fn, setup_data: dict) -> TimingResult:
 async def _bench_pv(label: str, tree, seed_tree) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_deep_")
     try:
-        from everypv.adapters.storage import rocksdb_storage_inmemory
+        from eb_pv.adapters.storage import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)

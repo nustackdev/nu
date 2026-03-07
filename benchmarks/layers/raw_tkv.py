@@ -51,8 +51,8 @@ VALUES_FLOAT = [float(i) * 0.1 for i in range(N)]
 
 def bench_raw_put(n: int) -> TimingResult:
     """Raw txn.put() -- 5 keys per op, one commit per op."""
-    from tkv.codecs import BinaryCodec
-    from tkv.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.codecs import BinaryCodec
+    from virtuals.tkv.storages.rocksdb import RocksDBStorage
 
     tmpdir = tempfile.mkdtemp(prefix="bench_raw_tkv_")
     try:
@@ -74,8 +74,8 @@ def bench_raw_put(n: int) -> TimingResult:
 
 def bench_raw_put_1key(n: int) -> TimingResult:
     """Raw txn.put() -- 1 key per txn."""
-    from tkv.codecs import BinaryCodec
-    from tkv.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.codecs import BinaryCodec
+    from virtuals.tkv.storages.rocksdb import RocksDBStorage
 
     tmpdir = tempfile.mkdtemp(prefix="bench_raw_tkv_")
     try:
@@ -92,8 +92,8 @@ def bench_raw_put_1key(n: int) -> TimingResult:
 
 def bench_raw_get(n: int) -> TimingResult:
     """Raw snapshot.get() -- read 5 keys per op."""
-    from tkv.codecs import BinaryCodec
-    from tkv.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.codecs import BinaryCodec
+    from virtuals.tkv.storages.rocksdb import RocksDBStorage
 
     tmpdir = tempfile.mkdtemp(prefix="bench_raw_tkv_")
     try:
@@ -126,8 +126,8 @@ def bench_raw_get(n: int) -> TimingResult:
 
 def bench_raw_put_single_txn(n: int) -> TimingResult:
     """Raw txn.put() -- 5 keys x N ops in a SINGLE transaction (1 commit total)."""
-    from tkv.codecs import BinaryCodec
-    from tkv.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.codecs import BinaryCodec
+    from virtuals.tkv.storages.rocksdb import RocksDBStorage
 
     tmpdir = tempfile.mkdtemp(prefix="bench_raw_tkv_")
     try:
@@ -149,8 +149,8 @@ def bench_raw_put_single_txn(n: int) -> TimingResult:
 
 def bench_raw_overwrite(n: int) -> TimingResult:
     """Raw txn.put() overwriting same 5 keys -- simulates shape field updates."""
-    from tkv.codecs import BinaryCodec
-    from tkv.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.codecs import BinaryCodec
+    from virtuals.tkv.storages.rocksdb import RocksDBStorage
 
     tmpdir = tempfile.mkdtemp(prefix="bench_raw_tkv_")
     try:

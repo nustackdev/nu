@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 
-import everypv as pv
-from everypv.views import DictView
-from everyshape import Shape
+import eb_pv as pv
+from eb_pv.views import DictView
+from everybase.shape import Shape
 
 
 logging.basicConfig(level=logging.INFO)
@@ -20,9 +20,9 @@ class Doc(Shape):
 
 if __name__ == "__main__":
     from everylens import run_ui
-    from tkv.codecs import BinaryCodec, NoOpCodec
-    from tkv.observers.mem import InMemoryObserver
-    from tkv.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.codecs import BinaryCodec, NoOpCodec
+    from virtuals.tkv.observers.mem import InMemoryObserver
+    from virtuals.tkv.storages.rocksdb import RocksDBStorage
 
     observer = InMemoryObserver(codec=NoOpCodec())
     observer.connect()

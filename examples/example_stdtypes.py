@@ -11,9 +11,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-import everypv as pv
+import eb_pv as pv
 from everybase import Context
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # =============================================
@@ -37,11 +37,11 @@ class Invoice(Shape):
 
 
 async def main():
-    from pv import View
+    from virtuals import View
 
-    from everypv.adapters.codecs import TextCodec as Codec
-    from everypv.adapters.storages.textdb import TextStorage as Storage
-    from everypv.views import DictView
+    from eb_pv.adapters.codecs import TextCodec as Codec
+    from eb_pv.adapters.storages.textdb import TextStorage as Storage
+    from eb_pv.views import DictView
 
     with Storage(".db-stdtypes", codec=Codec()) as storage:
         with storage.transaction() as tx:

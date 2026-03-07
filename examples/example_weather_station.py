@@ -8,15 +8,15 @@ Two subtrees race in parallel:
   react  -> prints on every change, cancelled when feed completes
 
 Flows: Seq, ForRange, If, Race, Delay, Print (from everybase.abc)
-Reactive: ReactWhile (from everyshape)
+Reactive: ReactWhile (from everybase.shape)
 """
 
 from __future__ import annotations
 
-import everypv as pv
+import eb_pv as pv
 from everybase.abc.flows import Delay, ForRange, If, Print, Race, Seq
-from everyshape import Shape
-from everyshape.flows import ReactWhile
+from everybase.shape import Shape
+from everybase.shape.flows import ReactWhile
 
 
 # ---- Shapes ----
@@ -100,10 +100,10 @@ station = Seq(
 
 
 async def main():
-    from tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.tkv.storage import StorageProtocol
 
+    from eb_pv.adapters.storage import text_storage
     from everybase import Context
-    from everypv.adapters.storage import text_storage
 
     with text_storage(".db-weather") as storage:
         ctx = Context().bind(storage, StorageProtocol)

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import everypv as e
+import eb_pv as e
 from everybase import Context
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # =============================================================================
@@ -115,10 +115,10 @@ async def run(ctx: Context) -> None:
 if __name__ == "__main__":
     import asyncio
 
-    from pv import View
+    from virtuals import View
 
-    from everypv.adapters.storage import text_storage
-    from everypv.views import DictView
+    from eb_pv.adapters.storage import text_storage
+    from eb_pv.views import DictView
 
     async def main() -> None:
         with text_storage(path=".db-shape") as storage, storage.transaction() as tx:

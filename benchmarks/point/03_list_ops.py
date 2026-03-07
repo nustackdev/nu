@@ -14,7 +14,6 @@ import tempfile
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
-from tkv.tkv.storage import StorageProtocol
 from utils import (
     TimingResult,
     get_counters,
@@ -23,11 +22,12 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
+from virtuals.tkv.tkv.storage import StorageProtocol
 
-import everypv as pv
+import eb_pv as pv
+from eb_pv import Atomic
 from everybase import Context
-from everypv import Atomic
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # ── Shapes ────────────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ async def run_all() -> list[TimingResult]:
         terms = _build_terms(n)
         tmpdir = tempfile.mkdtemp(prefix="bench_list_")
         try:
-            from everypv.adapters.storage import rocksdb_storage_inmemory
+            from eb_pv.adapters.storage import rocksdb_storage_inmemory
 
             with rocksdb_storage_inmemory(tmpdir) as storage:
                 ctx = Context().bind(storage, StorageProtocol)

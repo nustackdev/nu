@@ -45,7 +45,7 @@ ctx.was_opened(TransactionProtocol, scope=UserShape)  # True if accessed
 Each ref knows its scope via `ref.get_root_shape()` and uses it to look up the correct handle.
 
 
-## Example: PV Substrate (everypv)
+## Example: PV Substrate (eb-pv)
 
 PV (Polymorphic Views) is the primary substrate. Data lives in KV stores (RocksDB, LMDB, etc.) accessed through typed views.
 

@@ -1,6 +1,6 @@
 # Cheatsheet
 
-Quick reference for all Types, Flows, and Ref operations across everybase, everyshape, and everypv.
+Quick reference for all Types, Flows, and Ref operations across everybase, everybase.shape, and eb_pv.
 
 ## Value Types (everybase)
 
@@ -204,7 +204,7 @@ d.update_(other)         # → CollectionValue
 
 ---
 
-## PV Ref Types (everypv)
+## PV Ref Types (eb-pv)
 
 These are what you use in Shape slot definitions.
 
@@ -248,7 +248,7 @@ pv.ShapesDictRef.slot(MyShape, key_type=int)  # dict of shapes (int keys)
 
 ---
 
-## PV Ref Operations (everyshape capabilities)
+## PV Ref Operations (everybase.shape capabilities)
 
 ### Item Refs (primitive slots)
 
@@ -346,7 +346,7 @@ import everybase.abc.flows as f
 | `Throttle` | `Throttle(interval, body=None)` | Rate-limit calls |
 | `Debounce` | `Debounce(delay, body=None)` | Wait for quiet period |
 
-### Reactive (everyshape)
+### Reactive (everybase.shape)
 
 | Flow | Signature | Description |
 |------|-----------|-------------|
@@ -401,8 +401,8 @@ result = GetAttrOp(obj_term, "attr_name")
 ## Shape Declaration
 
 ```python
-from everyshape import Shape
-import everypv as pv
+from everybase.shape import Shape
+import eb_pv as pv
 
 class MyState(Shape):
     counter = pv.IntRef.slot()

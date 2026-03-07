@@ -24,16 +24,16 @@ import time
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
 import rdbpy
-from tkv.codecs import BinaryCodec
-from tkv.storages.rocksdb import RocksDBStorage
-from tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.codecs import BinaryCodec
+from virtuals.tkv.storages.rocksdb import RocksDBStorage
+from virtuals.tkv.tkv.storage import StorageProtocol
 
-import everypv as pv
+import eb_pv as pv
+from eb_pv import Atomic, Snapshot
+from eb_pv.adapters.storage import rocksdb_storage_inmemory
 from everybase import Context
 from everybase.abc import Seq
-from everypv import Atomic, Snapshot
-from everypv.adapters.storage import rocksdb_storage_inmemory
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # ── Shape ─────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ def bench_l1(n: int) -> float:
 
 
 def bench_l3(n: int) -> float:
-    from everypv.views import DictView
+    from eb_pv.views import DictView
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3_tp_")
     try:

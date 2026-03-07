@@ -2,7 +2,7 @@
 # Root pyproject.toml - Monorepo Workspace (Virtual)
 # =============================================================================
 # This is a virtual workspace root - not a package itself.
-# Individual packages are in core/ and pkgs/ directories.
+# everybase (src/) is the unified core. Extensions live in ext/.
 # =============================================================================
 
 [project]
@@ -10,44 +10,49 @@ name = "everybase-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
-dependencies = ["everybase", "everyshape", "everytable", "everystream", "everypv", "everydict", "everygraph", "eb-datetime", "eb-fin", "eb-math", "eb-path", "eb-uuid", "eb-shape-lens", "eb-tree-view"]
+dependencies = [
+    "everybase",
+    "eb-pv",
+    "eb-dict",
+    "eb-datetime",
+    "eb-fin",
+    "eb-math",
+    "eb-path",
+    "eb-uuid",
+    "eb-shape-lens",
+    "eb-tree-view",
+]
 
 # =============================================================================
 # UV Workspace
 # =============================================================================
 [tool.uv.workspace]
 members = [
-    # Core
-    "core/everybase",
-    "core/everyshape",
-    "core/everytable",
-    "core/everystream",
-    "core/everypv",
-    "core/everydict",
-    "core/everygraph",
+    # Core (unified package)
+    "src",
 
-    # Packages — types
-    "pkgs/eb-datetime",
-    "pkgs/eb-fin",
-    "pkgs/eb-math",
-    "pkgs/eb-path",
-    "pkgs/eb-uuid",
+    # Extensions — adapters
+    "ext/eb-pv",
+    "ext/eb-dict",
 
-    # Packages — tools
-    "pkgs/eb-shape-lens",
-    "pkgs/eb-tree-view",
+    # Extensions — types
+    "ext/eb-datetime",
+    "ext/eb-fin",
+    "ext/eb-math",
+    "ext/eb-path",
+    "ext/eb-uuid",
+
+    # Extensions — tools
+    "ext/eb-shape-lens",
+    "ext/eb-tree-view",
 ]
 
 [tool.uv.sources]
 # Core
 everybase = { workspace = true }
-everyshape = { workspace = true }
-everytable = { workspace = true }
-everystream = { workspace = true }
-everypv = { workspace = true }
-everydict = { workspace = true }
-everygraph = { workspace = true }
-# Packages
+# Extensions
+eb-pv = { workspace = true }
+eb-dict = { workspace = true }
 eb-datetime = { workspace = true }
 eb-fin = { workspace = true }
 eb-math = { workspace = true }
@@ -56,8 +61,7 @@ eb-uuid = { workspace = true }
 eb-shape-lens = { workspace = true }
 eb-tree-view = { workspace = true }
 # In-house libs (local editable)
-pv = { path = "../pv", editable = true }
-tkv = { path = "../tkv", editable = true }
+virtuals-py = { path = "../virtuals", editable = true }
 
 [dependency-groups]
 dev = [
@@ -76,7 +80,14 @@ dev = [
 # Pytest
 # =============================================================================
 [tool.pytest.ini_options]
-testpaths = ["core/everybase", "core/everyshape", "core/everytable", "core/everystream", "core/everypv", "pkgs/eb-datetime", "pkgs/eb-fin", "pkgs/eb-math", "pkgs/eb-path", "pkgs/eb-uuid"]
+testpaths = [
+    "tests",
+    "ext/eb-datetime",
+    "ext/eb-fin",
+    "ext/eb-math",
+    "ext/eb-path",
+    "ext/eb-uuid",
+]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -91,7 +102,16 @@ markers = [
 # Coverage
 # =============================================================================
 [tool.coverage.run]
-source = ["core/everybase", "core/everyshape", "core/everytable", "core/everystream", "core/everypv", "pkgs/eb-datetime", "pkgs/eb-fin", "pkgs/eb-math", "pkgs/eb-path", "pkgs/eb-uuid"]
+source = [
+    "src/everybase",
+    "ext/eb-pv",
+    "ext/eb-dict",
+    "ext/eb-datetime",
+    "ext/eb-fin",
+    "ext/eb-math",
+    "ext/eb-path",
+    "ext/eb-uuid",
+]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 parallel = true
@@ -122,7 +142,18 @@ directory = "reports/coverage"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["core/everybase", "core/everyshape", "core/everytable", "core/everystream", "core/everypv", "pkgs/eb-datetime", "pkgs/eb-fin", "pkgs/eb-math", "pkgs/eb-path", "pkgs/eb-uuid"]
+src = [
+    "src",
+    "ext/eb-pv/src",
+    "ext/eb-dict/src",
+    "ext/eb-datetime/src",
+    "ext/eb-fin/src",
+    "ext/eb-math/src",
+    "ext/eb-path/src",
+    "ext/eb-uuid/src",
+    "ext/eb-shape-lens/src",
+    "ext/eb-tree-view/src",
+]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
@@ -195,7 +226,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "everyshape", "everytable", "everystream", "everypv", "eb_datetime", "eb_fin", "eb_math", "eb_path", "eb_uuid", "eb_shape_lens", "eb_tree_view"]
+known-first-party = ["everybase", "eb_pv", "eb_dict", "eb_datetime", "eb_fin", "eb_math", "eb_path", "eb_uuid", "eb_shape_lens", "eb_tree_view"]
 force-single-line = false
 lines-after-imports = 2
 

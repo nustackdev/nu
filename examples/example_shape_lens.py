@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import asyncio
 
-import everypv as pv
+import eb_pv as pv
 from eb_shape_lens import print_shape
 from everybase import Context
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # ── Shapes ────────────────────────────────────────────────────────────────────
@@ -44,10 +44,10 @@ class Market(Shape):
 async def run_pv() -> None:
     import time
 
-    from pv import View
+    from virtuals import View
 
-    from everypv.adapters.storage import rocksdb_storage_inmemory
-    from everypv.views import DictView
+    from eb_pv.adapters.storage import rocksdb_storage_inmemory
+    from eb_pv.views import DictView
 
     db_path = ".db_shape_lens"
 
