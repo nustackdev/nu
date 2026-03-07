@@ -1,7 +1,7 @@
 """Shared utilities for inline ref deformations.
 
 Substrate-specific inline_refs() live in their owning packages
-(everydict.meta, everypv.meta). This module provides the shared
+(everydict.meta, eb_virtuals.meta). This module provides the shared
 building blocks they both use.
 
 Public API:

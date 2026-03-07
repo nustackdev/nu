@@ -12,7 +12,7 @@ description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
 dependencies = [
     "everybase",
-    "eb-pv",
+    "eb-virtuals",
     "eb-dict",
     "eb-datetime",
     "eb-fin",
@@ -32,7 +32,7 @@ members = [
     "src",
 
     # Extensions — adapters
-    "ext/eb-pv",
+    "ext/eb-virtuals",
     "ext/eb-dict",
 
     # Extensions — types
@@ -51,7 +51,7 @@ members = [
 # Core
 everybase = { workspace = true }
 # Extensions
-eb-pv = { workspace = true }
+eb-virtuals = { workspace = true }
 eb-dict = { workspace = true }
 eb-datetime = { workspace = true }
 eb-fin = { workspace = true }
@@ -104,7 +104,7 @@ markers = [
 [tool.coverage.run]
 source = [
     "src/everybase",
-    "ext/eb-pv",
+    "ext/eb-virtuals",
     "ext/eb-dict",
     "ext/eb-datetime",
     "ext/eb-fin",
@@ -144,7 +144,7 @@ line-length = 100
 target-version = "py312"
 src = [
     "src",
-    "ext/eb-pv/src",
+    "ext/eb-virtuals/src",
     "ext/eb-dict/src",
     "ext/eb-datetime/src",
     "ext/eb-fin/src",
@@ -226,7 +226,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "eb_pv", "eb_dict", "eb_datetime", "eb_fin", "eb_math", "eb_path", "eb_uuid", "eb_shape_lens", "eb_tree_view"]
+known-first-party = ["everybase", "eb_virtuals", "eb_dict", "eb_datetime", "eb_fin", "eb_math", "eb_path", "eb_uuid", "eb_shape_lens", "eb_tree_view"]
 force-single-line = false
 lines-after-imports = 2
 

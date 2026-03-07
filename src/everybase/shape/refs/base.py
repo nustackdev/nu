@@ -21,7 +21,7 @@ Hierarchy:
         |
     ItemRef, MappingRef, etc.    # Structural types (everyshape.refs)
         |
-    everypv.RefBase, etc.       # Substrate implementations
+    eb_virtuals.RefBase, etc.       # Substrate implementations
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ class Ref[T](RefABC[T]):
         children[1]: parent ref — parent in navigation chain (if any)
 
     Substrates extend this with storage-specific mechanics:
-    - everypv.RefBase: PV view navigation
+    - eb_virtuals.RefBase: PV view navigation
 
     Attributes:
         address: Location identifier within parent (children[0])

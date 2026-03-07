@@ -7,7 +7,7 @@ extractable, storable, observable).
 For concrete Python types (list, dict, tuple, set, frozenset), see everyshape.types.
 For Ref versions (with address/parent/shape navigation), see everyshape.refs.
 
-Substrates (everypv) inherit from everybase.shape.refs, which
+Substrates (eb_virtuals) inherit from everybase.shape.refs, which
 combine these bases with Ref.
 """
 

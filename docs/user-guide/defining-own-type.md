@@ -147,7 +147,7 @@ For each substrate, create a concrete Ref with `.slot()`:
 
 ```python
 from typing import Self
-from eb_pv import PrimitiveRef
+from eb_virtuals import PrimitiveRef
 from eb_dict import RefBase as DictRefBase
 from everybase.shape import Slot
 
@@ -268,7 +268,7 @@ Since the native `@property` already returns a `Lamport`, `GetAttrOp` resolves t
 ### Ref pattern (dict-stored)
 
 ```python
-class LocalCurveRef(pv.ItemRef[dict, LocalCurveValue], LocalCurveType):
+class LocalCurveRef(ebv.ItemRef[dict, LocalCurveValue], LocalCurveType):
     def set(self, value: Arg[LocalCurve | dict]) -> LocalCurveValue:
         if isinstance(value, Term):
             val = MethodCallOp(value, "to_dict")      # deferred serialization

@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-import eb_pv as pv
-from eb_pv import Snapshot, Transaction, optimize_primitive_reads, optimize_primitive_writes
+import eb_virtuals as ebv
+from eb_virtuals import Snapshot, Transaction, optimize_primitive_reads, optimize_primitive_writes
 from everybase.abc import Seq
 from everybase.shape import Shape
 
 
 class Record(Shape):
-    a = pv.IntRef.slot()
-    b = pv.IntRef.slot()
-    c = pv.IntRef.slot()
-    d = pv.IntRef.slot()
+    a = ebv.IntRef.slot()
+    b = ebv.IntRef.slot()
+    c = ebv.IntRef.slot()
+    d = ebv.IntRef.slot()
 
 
 FIELDS = [Record.a, Record.b, Record.c, Record.d]
@@ -37,9 +37,9 @@ async def main() -> None:
     import tempfile
     import time
 
-    from virtuals.tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.storage import StorageProtocol
 
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
+    from eb_virtuals.presets import rocksdb_storage_inmemory
     from everybase import Context
 
     total = N * len(FIELDS)

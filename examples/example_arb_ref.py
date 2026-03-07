@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self
 
-import eb_pv as pv
+import eb_virtuals as ebv
 from everybase import Arg, FloatArg, Sentinel, StrArg
 from everybase.abc import (
     AddOp,
@@ -118,7 +118,7 @@ class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
 # =============================================
 
 
-class PVDatetimeRef(DatetimeRefBase, pv.PrimitiveRef):
+class VirtualsDatetimeRef(DatetimeRefBase, ebv.PrimitiveRef):
     """PV substrate datetime ref with .slot() factory."""
 
     @classmethod
@@ -135,7 +135,7 @@ class PVDatetimeRef(DatetimeRefBase, pv.PrimitiveRef):
 class PVSymbolInfo(Shape):
     """Symbol info using PV substrate."""
 
-    test_dt = PVDatetimeRef.slot()
+    test_dt = VirtualsDatetimeRef.slot()
 
 
 # =============================================
@@ -145,9 +145,9 @@ class PVSymbolInfo(Shape):
 
 async def main():
     from virtuals import View
+    from virtuals.views import DictView
 
-    from eb_pv.adapters.storage import text_storage
-    from eb_pv.views import DictView
+    from eb_virtuals.presets import text_storage
     from everybase import Context
 
     with text_storage(".db") as storage:

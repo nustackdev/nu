@@ -19,7 +19,7 @@ everybase/
 │   └── graph/              #   Graph topology (stub)
 │
 ├── ext/                    # Extension packages (eb-* prefix)
-│   ├── eb-pv/              #   PV adapter (refs over KV storages)
+│   ├── eb-virtuals/              #   PV adapter (refs over KV storages)
 │   ├── eb-dict/            #   Dict adapter (plain Python dicts)
 │   ├── eb-datetime/        #   Datetime types
 │   ├── eb-math/            #   Math types (Decimal, Fraction, complex)
@@ -57,7 +57,7 @@ Single package, minimal deps (attrs only). Contains:
 
 | Package | Import | Purpose |
 |---------|--------|---------|
-| `eb-pv` | `from eb_pv import ...` | PV adapter — refs over KV storages (RocksDB, memory, text) |
+| `eb-virtuals` | `from eb_virtuals import ...` | PV adapter — refs over KV storages (RocksDB, memory, text) |
 | `eb-dict` | `from eb_dict import ...` | Dict adapter — shapes backed by plain Python dicts |
 
 **Type extensions** add domain-specific types:
@@ -81,7 +81,7 @@ Single package, minimal deps (attrs only). Contains:
 
 ```
 everybase (kernel + toolbox + topologies)
-  ├── eb-pv (PV adapter, depends on virtuals-py)
+  ├── eb-virtuals (PV adapter, depends on virtuals-py)
   ├── eb-dict (dict adapter, no external deps)
   └── eb-* (type extensions, tools)
 ```
@@ -102,5 +102,5 @@ All extensions use the `eb-*` prefix:
 
 | Directory | Import | PyPI name |
 |-----------|--------|-----------|
-| `ext/eb-pv/` | `from eb_pv import ...` | `eb-pv` |
+| `ext/eb-virtuals/` | `from eb_virtuals import ...` | `eb-virtuals` |
 | `ext/eb-math/` | `from eb_math import ...` | `eb-math` |

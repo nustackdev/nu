@@ -1,8 +1,8 @@
-"""E2E Demo: everypv with Shapes and Slots."""
+"""E2E Demo: eb_virtuals with Shapes and Slots."""
 
 from __future__ import annotations
 
-import eb_pv as e
+import eb_virtuals as ebv
 from everybase import Context
 from everybase.abc import Print, Seq
 from everybase.shape import Shape
@@ -12,24 +12,24 @@ from everybase.shape import Shape
 
 
 class AppState(Shape):
-    name = e.StrRef.slot()
-    age = e.IntRef.slot()
+    name = ebv.StrRef.slot()
+    age = ebv.IntRef.slot()
 
 
 # --- Run ---
 
 
 async def main():
-    from virtuals.tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv import StorageProtocol
 
-    from eb_pv.adapters.storage import text_storage
+    from eb_virtuals.presets import text_storage
 
     with text_storage(".db") as storage:
         ctx = Context().bind(storage, StorageProtocol)
 
-        await e.Atomic(Seq(AppState.name.set("Alice"), AppState.age.set(30))).execute(ctx)
-        await e.Atomic(Seq(Print("name", AppState.name), Print("age", AppState.age))).execute(ctx)
-        await e.Atomic(
+        await ebv.Atomic(Seq(AppState.name.set("Alice"), AppState.age.set(30))).execute(ctx)
+        await ebv.Atomic(Seq(Print("name", AppState.name), Print("age", AppState.age))).execute(ctx)
+        await ebv.Atomic(
             Seq(AppState.age.set(31), Print("name", AppState.name), Print("age", AppState.age))
         ).execute(ctx)
 

@@ -33,7 +33,7 @@ make format  # fix lint issues
 
 | Package | Purpose |
 |---------|---------|
-| `eb-pv` | PV adapter — refs over KV storages |
+| `eb-virtuals` | PV adapter — refs over KV storages |
 | `eb-dict` | Dict adapter — plain Python dicts |
 | `eb-datetime` | Datetime types |
 | `eb-math` | Math types |

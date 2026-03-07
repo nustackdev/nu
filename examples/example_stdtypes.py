@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-import eb_pv as pv
+import eb_virtuals as ebv
 from everybase import Context
 from everybase.shape import Shape
 
@@ -22,13 +22,13 @@ from everybase.shape import Shape
 
 
 class Invoice(Shape):
-    number = pv.IntRef.slot()
-    id = pv.UUIDRef.slot()
-    amount = pv.DecimalRef.slot()
-    tax_rate = pv.FloatRef.slot()
-    created_at = pv.DatetimeRef.slot()
-    due_in = pv.TimedeltaRef.slot()
-    receipt_path = pv.PathRef.slot()
+    number = ebv.IntRef.slot()
+    id = ebv.UUIDRef.slot()
+    amount = ebv.DecimalRef.slot()
+    tax_rate = ebv.FloatRef.slot()
+    created_at = ebv.DatetimeRef.slot()
+    due_in = ebv.TimedeltaRef.slot()
+    receipt_path = ebv.PathRef.slot()
 
 
 # =============================================
@@ -38,10 +38,10 @@ class Invoice(Shape):
 
 async def main():
     from virtuals import View
+    from virtuals.codecs import TextCodec as Codec
+    from virtuals.views import DictView
 
-    from eb_pv.adapters.codecs import TextCodec as Codec
-    from eb_pv.adapters.storages.textdb import TextStorage as Storage
-    from eb_pv.views import DictView
+    from eb_virtuals.presetss.textdb import TextStorage as Storage
 
     with Storage(".db-stdtypes", codec=Codec()) as storage:
         with storage.transaction() as tx:

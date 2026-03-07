@@ -13,7 +13,7 @@ Reactive: ReactWhile (from everybase.shape)
 
 from __future__ import annotations
 
-import eb_pv as pv
+import eb_virtuals as ebv
 from everybase.abc.flows import Delay, ForRange, If, Print, Race, Seq
 from everybase.shape import Shape
 from everybase.shape.flows import ReactWhile
@@ -25,14 +25,14 @@ from everybase.shape.flows import ReactWhile
 class Station(Shape):
     """Sensor readings (PV substrate — observable)."""
 
-    temperature = pv.FloatRef.slot()
-    wind_speed = pv.FloatRef.slot()
+    temperature = ebv.FloatRef.slot()
+    wind_speed = ebv.FloatRef.slot()
 
 
 class Dashboard(Shape):
     """Live counters (PV substrate)."""
 
-    warnings = pv.IntRef.slot()
+    warnings = ebv.IntRef.slot()
 
 
 # ---- Config ----
@@ -100,15 +100,15 @@ station = Seq(
 
 
 async def main():
-    from virtuals.tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.storage import StorageProtocol
 
-    from eb_pv.adapters.storage import text_storage
+    from eb_virtuals.presets import text_storage
     from everybase import Context
 
     with text_storage(".db-weather") as storage:
         ctx = Context().bind(storage, StorageProtocol)
 
-        tree = pv.auto_atomic(station)
+        tree = ebv.auto_atomic(station)
         await tree.execute(ctx)
 
 

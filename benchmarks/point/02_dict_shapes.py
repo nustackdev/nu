@@ -22,10 +22,10 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
-from virtuals.tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.storage import StorageProtocol
 
-import eb_pv as pv
-from eb_pv import Atomic
+import eb_virtuals as ebv
+from eb_virtuals import Atomic
 from everybase import Context
 from everybase.abc import Seq
 from everybase.shape import Shape
@@ -35,13 +35,13 @@ from everybase.shape import Shape
 
 
 class Product(Shape):
-    name = pv.StrRef.slot()
-    price = pv.FloatRef.slot()
-    stock = pv.IntRef.slot()
+    name = ebv.StrRef.slot()
+    price = ebv.FloatRef.slot()
+    stock = ebv.IntRef.slot()
 
 
 class Catalog(Shape):
-    products = pv.ShapesDictRef.slot(shape_type=Product)
+    products = ebv.ShapesDictRef.slot(shape_type=Product)
 
 
 # ── Pre-built terms (per N) ──────────────────────────────────────────
@@ -141,7 +141,7 @@ async def run_all() -> list[TimingResult]:
         terms = _build_terms(n)
         tmpdir = tempfile.mkdtemp(prefix="bench_dict_")
         try:
-            from eb_pv.adapters.storage import rocksdb_storage_inmemory
+            from eb_virtuals.presets import rocksdb_storage_inmemory
 
             with rocksdb_storage_inmemory(tmpdir) as storage:
                 ctx = Context().bind(storage, StorageProtocol)

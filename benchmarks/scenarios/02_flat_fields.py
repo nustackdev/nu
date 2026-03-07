@@ -35,13 +35,13 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
-from virtuals.tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.storage import StorageProtocol
 
 import eb_dict as ed
-import eb_pv as pv
+import eb_virtuals as ebv
 from eb_dict.meta import inline_refs as dict_inline_refs
-from eb_pv import Atomic
-from eb_pv.meta import inline_refs as pv_inline_refs
+from eb_virtuals import Atomic
+from eb_virtuals.meta import inline_refs as v_inline_refs
 from everybase import Context
 from everybase.abc import Seq
 from everybase.shape import Shape
@@ -50,11 +50,11 @@ from everybase.shape import Shape
 # ── Shapes ────────────────────────────────────────────────────────────────────
 
 
-class PVRecord(Shape):
-    a = pv.IntRef.slot()
-    b = pv.IntRef.slot()
-    c = pv.IntRef.slot()
-    d = pv.IntRef.slot()
+class VRecord(Shape):
+    a = ebv.IntRef.slot()
+    b = ebv.IntRef.slot()
+    c = ebv.IntRef.slot()
+    d = ebv.IntRef.slot()
 
 
 class DRecord(Shape):
@@ -64,7 +64,7 @@ class DRecord(Shape):
     d = ed.IntRef.slot()
 
 
-PV_FIELDS = [PVRecord.a, PVRecord.b, PVRecord.c, PVRecord.d]
+V_FIELDS = [VRecord.a, VRecord.b, VRecord.c, VRecord.d]
 D_FIELDS = [DRecord.a, DRecord.b, DRecord.c, DRecord.d]
 NUM_FIELDS = 4
 
@@ -86,13 +86,13 @@ def py_read(data: dict) -> None:
 # ── Trees ────────────────────────────────────────────────────────────────────
 
 # PV
-_pv_write = Seq(*[f.set(i) for i, f in enumerate(PV_FIELDS)])
-_pv_read = Seq(*[f.get() for f in PV_FIELDS])
+_v_write = Seq(*[f.set(i) for i, f in enumerate(V_FIELDS)])
+_v_read = Seq(*[f.get() for f in V_FIELDS])
 
-pv_write_at = Atomic(_pv_write)
-pv_read_at = Atomic(_pv_read)
-pv_write_ai = pv_inline_refs(Atomic(_pv_write))
-pv_read_ai = pv_inline_refs(Atomic(_pv_read))
+v_write_at = Atomic(_v_write)
+v_read_at = Atomic(_v_read)
+v_write_ai = v_inline_refs(Atomic(_v_write))
+v_read_ai = v_inline_refs(Atomic(_v_read))
 
 # everydict
 d_write = Seq(*[f.set(i) for i, f in enumerate(D_FIELDS)])
@@ -117,10 +117,10 @@ def _bench_pure_dict(label: str, fn, setup_fn) -> TimingResult:
     return TimingResult(name=label, wall_time_s=elapsed, n_ops=N * NUM_FIELDS, counters={})
 
 
-async def _bench_pv(label: str, tree, seed_tree) -> TimingResult:
+async def _bench_v(label: str, tree, seed_tree) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_flat_")
     try:
-        from eb_pv.adapters.storage import rocksdb_storage_inmemory
+        from eb_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)
@@ -157,12 +157,12 @@ async def run_all() -> list[TimingResult]:
     results.append(_bench_pure_dict("read pure dict", py_read, py_write))
 
     # PV Atomic
-    results.append(await _bench_pv("write PV Atomic", pv_write_at, pv_write_at))
-    results.append(await _bench_pv("read PV Atomic", pv_read_at, pv_write_at))
+    results.append(await _bench_v("write virtuals Atomic", v_write_at, v_write_at))
+    results.append(await _bench_v("read virtuals Atomic", v_read_at, v_write_at))
 
     # PV Atomic+inline
-    results.append(await _bench_pv("write PV Atomic+inline", pv_write_ai, pv_write_ai))
-    results.append(await _bench_pv("read PV Atomic+inline", pv_read_ai, pv_write_ai))
+    results.append(await _bench_v("write virtuals Atomic+inline", v_write_ai, v_write_ai))
+    results.append(await _bench_v("read virtuals Atomic+inline", v_read_ai, v_write_ai))
 
     # everydict
     results.append(await _bench_dict("write everydict", d_write, d_write))

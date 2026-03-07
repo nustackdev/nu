@@ -15,7 +15,7 @@ Any substrate ref that implements fetch_parent(ctx) and resolve_address(ctx)
 can use these morphisms directly.
 
 PV-specific item morphisms (InitCmd, ItemPrimitiveGetOp, ItemPrimitiveSetCmd,
-ItemPrimitiveSetUnsafeCmd, ItemPrimitiveDeleteCmd) live in everypv.morphisms.item.
+ItemPrimitiveSetUnsafeCmd, ItemPrimitiveDeleteCmd) live in eb_virtuals.morphisms.item.
 """
 
 from __future__ import annotations

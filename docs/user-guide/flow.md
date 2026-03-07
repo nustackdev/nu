@@ -145,7 +145,7 @@ f.SkipIfEmpty(results, process_results)   # skip if empty
 
 ```python
 import everybase.abc as f
-from eb_pv import IntRef, FloatRef
+from eb_virtuals import IntRef, FloatRef
 from eb_dict import IntRef as MemIntRef
 from everybase.shape import Shape
 

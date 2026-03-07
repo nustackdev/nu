@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import eb_pv as e
+import eb_virtuals as ebv
 from everybase import Context
 from everybase.shape import Shape
 
@@ -15,29 +15,29 @@ from everybase.shape import Shape
 class SymbolInfo(Shape):
     """Individual symbol information."""
 
-    price = e.FloatRef.slot()
-    volume = e.IntRef.slot()
-    exchange = e.StrRef.slot()
+    price = ebv.FloatRef.slot()
+    volume = ebv.IntRef.slot()
+    exchange = ebv.StrRef.slot()
 
 
 class Order(Shape):
     """Order information."""
 
-    id = e.StrRef.slot()
-    symbol = e.StrRef.slot()
-    quantity = e.IntRef.slot()
-    price = e.FloatRef.slot()
+    id = ebv.StrRef.slot()
+    symbol = ebv.StrRef.slot()
+    quantity = ebv.IntRef.slot()
+    price = ebv.FloatRef.slot()
 
 
 class Market(Shape):
     """Market data with various collection types."""
 
-    misc_val = e.IntRef.slot()
-    signals = e.DictRef.slot(value_type=float)
-    prices = e.ListRef.slot(item_type=float)
-    symbols = e.ShapesDictRef.slot(shape_type=SymbolInfo)
-    orders = e.ShapesListRef.slot(shape_type=Order)
-    last_order = e.ShapeRef.slot(shape_type=Order)
+    misc_val = ebv.IntRef.slot()
+    signals = ebv.DictRef.slot(value_type=float)
+    prices = ebv.ListRef.slot(item_type=float)
+    symbols = ebv.ShapesDictRef.slot(shape_type=SymbolInfo)
+    orders = ebv.ShapesListRef.slot(shape_type=Order)
+    last_order = ebv.ShapeRef.slot(shape_type=Order)
 
 
 # =============================================================================
@@ -116,9 +116,9 @@ if __name__ == "__main__":
     import asyncio
 
     from virtuals import View
+    from virtuals.views import DictView
 
-    from eb_pv.adapters.storage import text_storage
-    from eb_pv.views import DictView
+    from eb_virtuals.presets import text_storage
 
     async def main() -> None:
         with text_storage(path=".db-shape") as storage, storage.transaction() as tx:

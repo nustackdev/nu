@@ -22,10 +22,10 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
-from virtuals.tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.storage import StorageProtocol
 
-import eb_pv as pv
-from eb_pv import Atomic, auto_atomic
+import eb_virtuals as ebv
+from eb_virtuals import Atomic, auto_atomic
 from everybase import Context
 from everybase.abc import Seq
 from everybase.shape import Shape
@@ -35,11 +35,11 @@ from everybase.shape import Shape
 
 
 class BenchShape(Shape):
-    f0 = pv.IntRef.slot()
-    f1 = pv.IntRef.slot()
-    f2 = pv.StrRef.slot()
-    f3 = pv.FloatRef.slot()
-    f4 = pv.IntRef.slot()
+    f0 = ebv.IntRef.slot()
+    f1 = ebv.IntRef.slot()
+    f2 = ebv.StrRef.slot()
+    f3 = ebv.FloatRef.slot()
+    f4 = ebv.IntRef.slot()
 
 
 S = BenchShape
@@ -79,7 +79,7 @@ async def _bench(label: str, loop_body, n_ops: int = N) -> TimingResult:
     """Benchmark with fresh db per measurement."""
     tmpdir = tempfile.mkdtemp(prefix="bench_atomic_")
     try:
-        from eb_pv.adapters.storage import rocksdb_storage_inmemory
+        from eb_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)

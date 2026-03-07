@@ -11,10 +11,10 @@ To install, also add to root `dependencies`:
 ```toml
 # pyproject.toml (root)
 [project]
-dependencies = ["everybase", "eb-pv"]  # <- add here
+dependencies = ["everybase", "eb-virtuals"]  # <- add here
 
 [tool.uv.workspace]
-members = ["src", "ext/eb-pv"]  # <- and here
+members = ["src", "ext/eb-virtuals"]  # <- and here
 ```
 
 ## VS Code / Pylance
@@ -24,7 +24,7 @@ When adding new packages, update `.vscode/settings.json`:
 ```json
 "python.analysis.extraPaths": [
   "src",
-  "ext/eb-pv/src"
+  "ext/eb-virtuals/src"
 ]
 ```
 
@@ -36,10 +36,10 @@ All extensions use the `eb-*` prefix:
 
 | Context | Style | Example |
 |---------|-------|---------|
-| Directory | hyphen | `ext/eb-pv/` |
-| Import | underscore | `from eb_pv import ...` |
-| PyPI name | hyphen | `eb-pv` |
-| pyproject.toml name | hyphen | `name = "eb-pv"` |
+| Directory | hyphen | `ext/eb-virtuals/` |
+| Import | underscore | `from eb_virtuals import ...` |
+| PyPI name | hyphen | `eb-virtuals` |
+| pyproject.toml name | hyphen | `name = "eb-virtuals"` |
 
 ## isort First-Party
 
@@ -47,7 +47,7 @@ When adding packages, update root `pyproject.toml`:
 
 ```toml
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "eb_pv", "eb_dict"]  # <- underscore
+known-first-party = ["everybase", "eb_virtuals", "eb_dict"]  # <- underscore
 ```
 
 ## In-House Dependencies

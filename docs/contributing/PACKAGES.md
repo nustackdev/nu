@@ -78,5 +78,5 @@ Use hyphens in directory/PyPI names, underscores in import names.
 
 - `everybase` has minimal deps (attrs only)
 - Extensions depend on `everybase` and may have external deps
-- Adapters (eb-pv, eb-dict) bridge topologies to storage backends
+- Adapters (eb-virtuals, eb-dict) bridge topologies to storage backends
 - Type extensions add domain-specific types with no storage assumptions

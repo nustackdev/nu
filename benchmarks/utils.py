@@ -11,11 +11,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from virtuals.tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.storage import StorageProtocol
 from virtuals.view import View
+from virtuals.views import DictView
 
-from eb_pv.adapters.storage import memory_storage, rocksdb_storage_inmemory
-from eb_pv.views import DictView
+from eb_virtuals.presets import memory_storage, rocksdb_storage_inmemory
 from everybase import Context
 
 
@@ -77,9 +77,9 @@ def install_counters() -> None:
         (WriteOperationsMixin, "put", "rocksdb.put"),
         (ReadOperationsMixin, "scan", "rocksdb.scan"),
         (RocksDBTransaction, "commit", "rocksdb.commit"),
-        (node_ops, "get_node_info", "pv.get_node_info"),
-        (node_ops, "node_exists", "pv.node_exists"),
-        (container_ops, "create_container", "pv.create_container"),
+        (node_ops, "get_node_info", "virtuals.get_node_info"),
+        (node_ops, "node_exists", "virtuals.node_exists"),
+        (container_ops, "create_container", "virtuals.create_container"),
     ]
 
     for target, attr, name in patches:

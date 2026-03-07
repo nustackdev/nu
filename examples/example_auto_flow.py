@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import eb_pv as pv
+import eb_virtuals as ebv
 import everybase.abc as f
 from everybase.shape import Shape
 
 
 class AppState(Shape):
-    name = pv.StrRef.slot()
-    age = pv.IntRef.slot()
-    online = pv.DatetimeRef.slot()
+    name = ebv.StrRef.slot()
+    age = ebv.IntRef.slot()
+    online = ebv.DatetimeRef.slot()
 
 
 demos = [
@@ -32,15 +32,15 @@ demos = [
 
 
 async def main():
-    from virtuals.tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.storage import StorageProtocol
 
-    from eb_pv.adapters.storage import text_storage
+    from eb_virtuals.presets import text_storage
     from everybase import Context
 
     with text_storage(".db") as storage:
         ctx = Context().bind(storage, StorageProtocol)
         for demo in demos:
-            tree = pv.auto_atomic(demo)
+            tree = ebv.auto_atomic(demo)
             await tree.execute(ctx)
 
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 
-import eb_pv as pv
+import eb_virtuals as ebv
 from eb_shape_lens import print_shape
 from everybase import Context
 from everybase.shape import Shape
@@ -17,37 +17,37 @@ from everybase.shape import Shape
 
 
 class SymbolInfo(Shape):
-    price = pv.FloatRef.slot()
-    volume = pv.IntRef.slot()
-    exchange = pv.StrRef.slot()
+    price = ebv.FloatRef.slot()
+    volume = ebv.IntRef.slot()
+    exchange = ebv.StrRef.slot()
 
 
 class Order(Shape):
-    id = pv.StrRef.slot()
-    symbol = pv.StrRef.slot()
-    quantity = pv.IntRef.slot()
-    price = pv.FloatRef.slot()
+    id = ebv.StrRef.slot()
+    symbol = ebv.StrRef.slot()
+    quantity = ebv.IntRef.slot()
+    price = ebv.FloatRef.slot()
 
 
 class Market(Shape):
-    misc_val = pv.IntRef.slot()
-    signals = pv.DictRef.slot(value_type=float)
-    prices = pv.ListRef.slot(item_type=float)
-    symbols = pv.ShapesDictRef.slot(shape_type=SymbolInfo)
-    orders = pv.ShapesListRef.slot(shape_type=Order)
-    last_order = pv.ShapeRef.slot(shape_type=Order)
+    misc_val = ebv.IntRef.slot()
+    signals = ebv.DictRef.slot(value_type=float)
+    prices = ebv.ListRef.slot(item_type=float)
+    symbols = ebv.ShapesDictRef.slot(shape_type=SymbolInfo)
+    orders = ebv.ShapesListRef.slot(shape_type=Order)
+    last_order = ebv.ShapeRef.slot(shape_type=Order)
 
 
 # ── PV substrate demo ────────────────────────────────────────────────────────
 
 
-async def run_pv() -> None:
+async def run() -> None:
     import time
 
     from virtuals import View
+    from virtuals.views import DictView
 
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
-    from eb_pv.views import DictView
+    from eb_virtuals.presets import rocksdb_storage_inmemory
 
     db_path = ".db_shape_lens"
 
@@ -100,4 +100,4 @@ async def run_pv() -> None:
 if __name__ == "__main__":
     print("=== PV substrate ===")
     print()
-    asyncio.run(run_pv())
+    asyncio.run(run())

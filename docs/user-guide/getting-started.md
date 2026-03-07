@@ -431,14 +431,14 @@ Atomic(
 When using the PV substrate (persistent key-value storage), `Atomic` handles transactions:
 
 ```python
-import eb_pv as pv
+import eb_virtuals as ebv
 from everybase.shape import Shape
 
 class AppState(Shape):
-    name = pv.StrRef.slot()
-    counter = pv.IntRef.slot()
+    name = ebv.StrRef.slot()
+    counter = ebv.IntRef.slot()
 
-tree = pv.Atomic(
+tree = ebv.Atomic(
     Seq(
         AppState.name.set("Alice"),
         AppState.counter.set(0),
@@ -469,7 +469,7 @@ tree = Seq(
 )
 
 # auto_atomic wraps storage-accessing subtrees in Atomic spans
-safe_tree = pv.auto_atomic(tree)
+safe_tree = ebv.auto_atomic(tree)
 await safe_tree.execute(ctx)
 ```
 
@@ -682,26 +682,26 @@ await Seq(
 
 Great for: prototyping, testing, in-memory state.
 
-### eb-pv — Persistent key-value
+### eb-virtuals — Persistent key-value
 
 Full substrate with persistence (RocksDB), transactions, snapshots, and reactivity.
 
 ```python
-import eb_pv as pv
+import eb_virtuals as ebv
 from everybase.shape import Shape
 
 class AppState(Shape):
-    name = pv.StrRef.slot()
-    counter = pv.IntRef.slot()
+    name = ebv.StrRef.slot()
+    counter = ebv.IntRef.slot()
 
 # Setup storage
 from virtuals.tkv.tkv.storage import StorageProtocol
-from eb_pv.adapters.storage import text_storage
+from eb_virtuals.presets import text_storage
 
 with text_storage(".db") as storage:
     ctx = Context().bind(storage, StorageProtocol)
 
-    tree = pv.auto_atomic(Seq(
+    tree = ebv.auto_atomic(Seq(
         AppState.name.set("Alice"),
         AppState.counter.set(0),
         AppState.counter.set(AppState.counter + 1),
@@ -724,13 +724,13 @@ Different Shapes can use different substrates in the same tree:
 
 ```python
 import eb_dict as d
-import eb_pv as pv
+import eb_virtuals as ebv
 
 class Config(Shape):         # in-memory
     debug = d.BoolRef.slot()
 
 class UserDB(Shape):         # persistent
-    name = pv.StrRef.slot()
+    name = ebv.StrRef.slot()
 
 config_data = {}
 ctx = (Context()
@@ -746,12 +746,12 @@ ctx = (Context()
 The PV substrate supports **observability** — you can react to value changes:
 
 ```python
-import eb_pv as pv
+import eb_virtuals as ebv
 from everybase.shape import Shape
 from everybase.shape.flows import ReactWhile
 
 class Sensor(Shape):
-    temperature = pv.FloatRef.slot()
+    temperature = ebv.FloatRef.slot()
 
 # Producer writes sensor data in a loop
 producer = Seq(
@@ -775,7 +775,7 @@ consumer = ReactWhile(
 # Race: producer and consumer run concurrently
 # When producer finishes, consumer is cancelled
 tree = Race(producer, consumer)
-tree = pv.auto_atomic(tree)
+tree = ebv.auto_atomic(tree)
 await tree.execute(ctx)
 ```
 
@@ -857,7 +857,7 @@ from everybase.abc import Print, Log, Delay, Timeout
 import eb_dict as d
 
 # PV substrate
-import eb_pv as pv
+import eb_virtuals as ebv
 
 # Shapes
 from everybase.shape import Shape

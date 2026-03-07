@@ -1,6 +1,6 @@
 # Cheatsheet
 
-Quick reference for all Types, Flows, and Ref operations across everybase, everybase.shape, and eb_pv.
+Quick reference for all Types, Flows, and Ref operations across everybase, everybase.shape, and eb_virtuals.
 
 ## Value Types (everybase)
 
@@ -204,46 +204,46 @@ d.update_(other)         # → CollectionValue
 
 ---
 
-## PV Ref Types (eb-pv)
+## PV Ref Types (eb-virtuals)
 
 These are what you use in Shape slot definitions.
 
 ### Primitive Refs
 
 ```python
-pv.IntRef.slot()         # int storage
-pv.FloatRef.slot()       # float storage
-pv.StrRef.slot()         # string storage
-pv.BoolRef.slot()        # boolean storage
-pv.BytesRef.slot()       # bytes storage
+ebv.IntRef.slot()         # int storage
+ebv.FloatRef.slot()       # float storage
+ebv.StrRef.slot()         # string storage
+ebv.BoolRef.slot()        # boolean storage
+ebv.BytesRef.slot()       # bytes storage
 ```
 
 ### Extended Refs
 
 ```python
-pv.DateRef.slot()        # datetime.date
-pv.DatetimeRef.slot()    # datetime.datetime
-pv.TimeRef.slot()        # datetime.time
-pv.TimedeltaRef.slot()   # datetime.timedelta
-pv.DecimalRef.slot()     # decimal.Decimal
-pv.FractionRef.slot()    # fractions.Fraction
-pv.ComplexRef.slot()     # complex
-pv.PercentageRef.slot()  # percentage
-pv.BasisPointRef.slot()  # basis points
-pv.PathRef.slot()        # pathlib.Path
-pv.UUIDRef.slot()        # uuid.UUID
+ebv.DateRef.slot()        # datetime.date
+ebv.DatetimeRef.slot()    # datetime.datetime
+ebv.TimeRef.slot()        # datetime.time
+ebv.TimedeltaRef.slot()   # datetime.timedelta
+ebv.DecimalRef.slot()     # decimal.Decimal
+ebv.FractionRef.slot()    # fractions.Fraction
+ebv.ComplexRef.slot()     # complex
+ebv.PercentageRef.slot()  # percentage
+ebv.BasisPointRef.slot()  # basis points
+ebv.PathRef.slot()        # pathlib.Path
+ebv.UUIDRef.slot()        # uuid.UUID
 ```
 
 ### Collection Refs
 
 ```python
-pv.ListRef.slot(T)                     # list of T
-pv.DictRef.slot(K, V)                  # dict with K keys, V values
-pv.SetRef.slot(T)                      # set of T
-pv.ShapeRef.slot(MyShape)              # single nested shape
-pv.ShapesListRef.slot(MyShape)         # list of shapes
-pv.ShapesDictRef.slot(MyShape)         # dict of shapes (str keys)
-pv.ShapesDictRef.slot(MyShape, key_type=int)  # dict of shapes (int keys)
+ebv.ListRef.slot(T)                     # list of T
+ebv.DictRef.slot(K, V)                  # dict with K keys, V values
+ebv.SetRef.slot(T)                      # set of T
+ebv.ShapeRef.slot(MyShape)              # single nested shape
+ebv.ShapesListRef.slot(MyShape)         # list of shapes
+ebv.ShapesDictRef.slot(MyShape)         # dict of shapes (str keys)
+ebv.ShapesDictRef.slot(MyShape, key_type=int)  # dict of shapes (int keys)
 ```
 
 ---
@@ -402,14 +402,14 @@ result = GetAttrOp(obj_term, "attr_name")
 
 ```python
 from everybase.shape import Shape
-import eb_pv as pv
+import eb_virtuals as ebv
 
 class MyState(Shape):
-    counter = pv.IntRef.slot()
-    name = pv.StrRef.slot()
-    items = pv.ListRef.slot(str)
-    records = pv.ShapesDictRef.slot(RecordShape)
-    nested = pv.ShapeRef.slot(NestedShape)
+    counter = ebv.IntRef.slot()
+    name = ebv.StrRef.slot()
+    items = ebv.ListRef.slot(str)
+    records = ebv.ShapesDictRef.slot(RecordShape)
+    nested = ebv.ShapeRef.slot(NestedShape)
 
 # Access: MyState.counter, MyState.name, etc.
 # These are class-level refs — Shape is never instantiated.

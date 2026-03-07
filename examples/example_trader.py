@@ -5,7 +5,7 @@ tracks poll stats, reacts to slot changes on terminal.
 
 Uses:
   Ref + method   → Solana JSON-RPC client
-  everypv        → slot data (persistent, observable)
+  eb_virtuals        → slot data (persistent, observable)
   everybase.abc  → flows (Seq, ForRange, Race, Delay, Print)
   everyshape     → reactive flows (ReactWhile)
 """
@@ -16,7 +16,7 @@ import asyncio
 
 import httpx
 
-import eb_pv as pv
+import eb_virtuals as ebv
 from everybase import Context
 from everybase.abc import DictValue, IntValue, TypeBase, ValueBase, method
 from everybase.abc.flows import Delay, ForRange, Print, Race, Seq
@@ -62,7 +62,7 @@ class SolanaValue(SolanaType, ValueBase):
     """Computed Value."""
 
 
-class SolanaRef(pv.ItemRef[SolanaClient, SolanaValue], SolanaType):
+class SolanaRef(ebv.ItemRef[SolanaClient, SolanaValue], SolanaType):
     """Ref that resolves a SolanaClient from PV storage."""
 
     def __init__(
@@ -104,14 +104,14 @@ class Services(Shape):
 class SlotData(Shape):
     """Slot tracking (PV — persistent, observable)."""
 
-    current = pv.IntRef.slot()
-    previous = pv.IntRef.slot()
+    current = ebv.IntRef.slot()
+    previous = ebv.IntRef.slot()
 
 
 class Stats(Shape):
     """Poll counters (PV)."""
 
-    polls = pv.IntRef.slot()
+    polls = ebv.IntRef.slot()
 
 
 # ---- Config ----
@@ -159,9 +159,9 @@ tracker = Seq(
 
 
 async def main():
-    from virtuals.tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.storage import StorageProtocol
 
-    from eb_pv.adapters.storage import memory_storage, text_storage
+    from eb_virtuals.presets import memory_storage, text_storage
 
     with text_storage(".db-trader") as data_store:
         with memory_storage() as service_store:
@@ -171,8 +171,8 @@ async def main():
                 .bind(service_store, StorageProtocol, Services)
             )
 
-            tree = pv.auto_atomic(tracker, scope=Services)
-            tree = pv.auto_atomic(tree)
+            tree = ebv.auto_atomic(tracker, scope=Services)
+            tree = ebv.auto_atomic(tree)
             await tree.execute(ctx)
 
 

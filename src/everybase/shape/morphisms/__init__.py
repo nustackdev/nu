@@ -1,7 +1,7 @@
 """Shape-model morphisms — item CRUD, collection ops, reactive subscriptions.
 
 PV-specific morphisms (InitCmd, ItemPrimitive*, ScanPrimitivesOp,
-ClearPrimitivesCmd) live in everypv.morphisms.
+ClearPrimitivesCmd) live in eb_virtuals.morphisms.
 """
 
 from .collection import (

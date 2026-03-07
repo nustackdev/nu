@@ -3,7 +3,7 @@
 These combine pure collection bases from everybase.shape.collections with
 Ref (address/parent/shape navigation) for substrate implementations.
 
-Substrates (everypv) inherit from these.
+Substrates (eb_virtuals) inherit from these.
 """
 
 from .base import Ref

@@ -34,13 +34,13 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
-from virtuals.tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.storage import StorageProtocol
 
 import eb_dict as ed
-import eb_pv as pv
+import eb_virtuals as ebv
 from eb_dict.meta import inline_refs as dict_inline_refs
-from eb_pv import Atomic, auto_atomic
-from eb_pv.meta import inline_refs as pv_inline_refs
+from eb_virtuals import Atomic, auto_atomic
+from eb_virtuals.meta import inline_refs as v_inline_refs
 from everybase import Context
 from everybase.abc import Seq
 from everybase.shape import Shape
@@ -50,19 +50,19 @@ from everybase.shape import Shape
 
 
 class Product(Shape):
-    name = pv.StrRef.slot()
-    price = pv.FloatRef.slot()
-    stock = pv.IntRef.slot()
-    rating = pv.FloatRef.slot()
+    name = ebv.StrRef.slot()
+    price = ebv.FloatRef.slot()
+    stock = ebv.IntRef.slot()
+    rating = ebv.FloatRef.slot()
 
 
 class Category(Shape):
-    label = pv.StrRef.slot()
-    products = pv.ShapesDictRef.slot(shape_type=Product)
+    label = ebv.StrRef.slot()
+    products = ebv.ShapesDictRef.slot(shape_type=Product)
 
 
 class Catalog(Shape):
-    categories = pv.ShapesDictRef.slot(shape_type=Category)
+    categories = ebv.ShapesDictRef.slot(shape_type=Category)
 
 
 # ── Shapes (dict substrate) ──────────────────────────────────────────────────
@@ -196,9 +196,9 @@ read_tree_at = Atomic(_read_seq)
 update_tree_at = Atomic(_update_seq)
 
 # Atomic + inline_refs
-store_tree_ai = pv_inline_refs(Atomic(_store_seq))
-read_tree_ai = pv_inline_refs(Atomic(_read_seq))
-update_tree_ai = pv_inline_refs(Atomic(_update_seq))
+store_tree_ai = v_inline_refs(Atomic(_store_seq))
+read_tree_ai = v_inline_refs(Atomic(_read_seq))
+update_tree_ai = v_inline_refs(Atomic(_update_seq))
 
 
 # ── Trees: everydict (built once) ───────────────────────────────────────────
@@ -261,11 +261,11 @@ N = 200  # iterations
 FIELD_OPS = {"store": 255, "read": 200, "update": 50}
 
 
-async def _bench_pv(label: str, tree, seed_tree, field_ops: int) -> TimingResult:
+async def _bench_v(label: str, tree, seed_tree, field_ops: int) -> TimingResult:
     """Benchmark with fresh RocksDB: seed once, then time tree N times."""
     tmpdir = tempfile.mkdtemp(prefix="bench_market_")
     try:
-        from eb_pv.adapters.storage import rocksdb_storage_inmemory
+        from eb_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)
@@ -309,19 +309,21 @@ async def run_all() -> list[TimingResult]:
     results.append(_bench_pure_dict("update pure dict", py_update, py_store, u))
 
     # PV auto_atomic (1 txn per field op)
-    results.append(await _bench_pv("store PV auto_atomic", store_tree_aa, store_tree_aa, s))
-    results.append(await _bench_pv("read PV auto_atomic", read_tree_aa, store_tree_aa, r))
-    results.append(await _bench_pv("update PV auto_atomic", update_tree_aa, store_tree_aa, u))
+    results.append(await _bench_v("store virtuals auto_atomic", store_tree_aa, store_tree_aa, s))
+    results.append(await _bench_v("read virtuals auto_atomic", read_tree_aa, store_tree_aa, r))
+    results.append(await _bench_v("update virtuals auto_atomic", update_tree_aa, store_tree_aa, u))
 
     # PV Atomic (1 txn for all ops)
-    results.append(await _bench_pv("store PV Atomic", store_tree_at, store_tree_at, s))
-    results.append(await _bench_pv("read PV Atomic", read_tree_at, store_tree_at, r))
-    results.append(await _bench_pv("update PV Atomic", update_tree_at, store_tree_at, u))
+    results.append(await _bench_v("store virtuals Atomic", store_tree_at, store_tree_at, s))
+    results.append(await _bench_v("read virtuals Atomic", read_tree_at, store_tree_at, r))
+    results.append(await _bench_v("update virtuals Atomic", update_tree_at, store_tree_at, u))
 
     # PV Atomic + inline_refs
-    results.append(await _bench_pv("store PV Atomic+inline", store_tree_ai, store_tree_ai, s))
-    results.append(await _bench_pv("read PV Atomic+inline", read_tree_ai, store_tree_ai, r))
-    results.append(await _bench_pv("update PV Atomic+inline", update_tree_ai, store_tree_ai, u))
+    results.append(await _bench_v("store virtuals Atomic+inline", store_tree_ai, store_tree_ai, s))
+    results.append(await _bench_v("read virtuals Atomic+inline", read_tree_ai, store_tree_ai, r))
+    results.append(
+        await _bench_v("update virtuals Atomic+inline", update_tree_ai, store_tree_ai, u)
+    )
 
     # everydict (no deformation)
     results.append(await _bench_dict("store everydict", d_store_tree, d_store_tree, s))

@@ -10,7 +10,7 @@ everybase               unified core package
   everybase.table       relational topology — (TBD)
   everybase.graph       graph topology — (TBD)
 
-eb_pv                   PV adapter (path resolution, views, spans, adapters)
+eb_virtuals                   PV adapter (path resolution, views, spans, adapters)
 eb_dict                 Dict adapter (plain Python dicts)
 ```
 
@@ -25,7 +25,7 @@ src/everybase/          unified core package
 └── graph/              graph topology (stub)
 
 ext/
-├── eb-pv/              PV adapter
+├── eb-virtuals/              PV adapter
 ├── eb-dict/            Dict adapter
 ├── eb-datetime/        Datetime types
 ├── eb-math/            Math types
@@ -115,7 +115,7 @@ Abstract relational model. (TBD)
               everybase
      (core + abc + topologies)
            /          \
-        eb_pv        eb_dict
+        eb_virtuals        eb_dict
    (PV adapter)  (dict adapter)
 ```
 
@@ -123,5 +123,5 @@ Key constraints:
 
 - Topologies (shape, table, graph) are inside everybase — no separate packages
 - shape has zero PV imports — topology-independent document model
-- eb_pv and eb_dict are adapters — they wire topologies to storage backends
+- eb_virtuals and eb_dict are adapters — they wire topologies to storage backends
 - Flows live in everybase.abc (non-reactive) and everybase.shape (reactive)

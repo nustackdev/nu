@@ -5,7 +5,7 @@ fetch/fetch_parent/resolve_address). Pure pythonic capabilities live in
 everybase.capabilities.
 
 PV-specific capabilities (CollectionInitializableBase, CollectionScanPrimitivesBase,
-CollectionClearPrimitivesBase, ItemPrimitive*Base) live in everypv.capabilities.
+CollectionClearPrimitivesBase, ItemPrimitive*Base) live in eb_virtuals.capabilities.
 """
 
 from .collection import (

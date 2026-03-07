@@ -25,12 +25,12 @@ sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.par
 
 import rdbpy
 from virtuals.tkv.codecs import BinaryCodec
+from virtuals.tkv.storage import StorageProtocol
 from virtuals.tkv.storages.rocksdb import RocksDBStorage
-from virtuals.tkv.tkv.storage import StorageProtocol
 
-import eb_pv as pv
-from eb_pv import Atomic, Snapshot
-from eb_pv.adapters.storage import rocksdb_storage_inmemory
+import eb_virtuals as ebv
+from eb_virtuals import Atomic, Snapshot
+from eb_virtuals.presets import rocksdb_storage_inmemory
 from everybase import Context
 from everybase.abc import Seq
 from everybase.shape import Shape
@@ -40,7 +40,7 @@ from everybase.shape import Shape
 
 
 class FlatShape(Shape):
-    value = pv.IntRef.slot()
+    value = ebv.IntRef.slot()
 
 
 # ── Config ────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ def bench_l1(n: int) -> float:
 
 
 def bench_l3(n: int) -> float:
-    from eb_pv.views import DictView
+    from virtuals.views import DictView
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3_tp_")
     try:

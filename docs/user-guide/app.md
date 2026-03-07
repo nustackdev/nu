@@ -38,8 +38,8 @@ class TransferState(Shape):
 
     # Intermediate / output
     spec = TransactionSpecRef.slot()
-    signature = pv.StrRef.slot()
-    status = pv.StrRef.slot()
+    signature = ebv.StrRef.slot()
+    status = ebv.StrRef.slot()
 ```
 
 ### Flows take Shape, not primitives
@@ -112,8 +112,8 @@ Because flows take `s: type[MyShape]`, they compose naturally. A parent app can 
 
 ```python
 class ParentState(Shape):
-    transfer = pv.ShapeRef.slot(TransferState)
-    other_data = pv.IntRef.slot()
+    transfer = ebv.ShapeRef.slot(TransferState)
+    other_data = ebv.IntRef.slot()
 
 # Parent seeds child shape, then runs child flow
 f.Seq(

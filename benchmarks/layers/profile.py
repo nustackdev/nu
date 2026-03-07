@@ -24,10 +24,10 @@ from io import StringIO
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
 import rdbpy
-from virtuals.tkv.tkv.storage import StorageProtocol
+from virtuals.tkv.storage import StorageProtocol
 
-import eb_pv as pv
-from eb_pv import Atomic
+import eb_virtuals as ebv
+from eb_virtuals import Atomic
 from everybase import Context
 from everybase.shape import Shape
 
@@ -40,7 +40,7 @@ VALUE = 42
 
 
 class FlatShape(Shape):
-    value = pv.IntRef.slot()
+    value = ebv.IntRef.slot()
 
 
 L0_KEYS = [f"k:{i}".encode() for i in range(N)]
@@ -167,7 +167,7 @@ def run_l2_put():
     from virtuals.container.container_ops import create_container
     from virtuals.container.types import ContainerProtocol, ContainerStructure
 
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
+    from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="prof_l2_")
     try:
@@ -192,7 +192,7 @@ def run_l2_get():
     from virtuals.container.container_ops import create_container
     from virtuals.container.types import ContainerProtocol, ContainerStructure
 
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
+    from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="prof_l2_")
     try:
@@ -220,8 +220,9 @@ def run_l2_get():
 
 
 def run_l3_put():
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
-    from eb_pv.views import DictView
+    from virtuals.views import DictView
+
+    from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="prof_l3_")
     try:
@@ -238,8 +239,9 @@ def run_l3_put():
 
 
 def run_l3_get():
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
-    from eb_pv.views import DictView
+    from virtuals.views import DictView
+
+    from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="prof_l3_")
     try:
@@ -261,7 +263,7 @@ def run_l3_get():
 
 
 async def run_l4_put():
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
+    from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="prof_l4_")
     try:
@@ -275,7 +277,7 @@ async def run_l4_put():
 
 
 async def run_l4_get():
-    from eb_pv.adapters.storage import rocksdb_storage_inmemory
+    from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="prof_l4_")
     try:

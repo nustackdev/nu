@@ -36,15 +36,15 @@ print(data)  # {"value": 42, "label": "clicks"}
 
 Use when: prototyping, ephemeral state, in-memory counters.
 
-### eb-pv (persistent, reactive)
+### eb-virtuals (persistent, reactive)
 
 Polymorphic Views over KV stores (RocksDB, LMDB, etc.). Full persistence and reactivity.
 
 ```python
-from eb_pv import IntRef, StrRef, FloatRef, Atomic
-from eb_pv.views import DictView
-from eb_pv.adapters.codecs import TextCodec as Codec
-from eb_pv.adapters.storages.textdb import TextStorage as Storage
+from eb_virtuals import IntRef, StrRef, FloatRef, Atomic
+from virtuals.views import DictView
+from virtuals.codecs import TextCodec as Codec
+from eb_virtuals.presetss.textdb import TextStorage as Storage
 from everybase.shape import Shape
 from everybase import Context
 
@@ -84,7 +84,7 @@ ValueBase          computed result (Python memory)
     |
 ItemRef[T, V]      storage contract (get/set)
     |
-    +-- PrimitiveRef (eb-pv)     persistent leaf ref
+    +-- PrimitiveRef (eb-virtuals)     persistent leaf ref
     +-- DictRefBase (eb_dict)    dict leaf ref
 ```
 
@@ -120,7 +120,7 @@ class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
 **Step 3: Substrate Refs** (one per substrate):
 
 ```python
-from eb_pv import PrimitiveRef
+from eb_virtuals import PrimitiveRef
 from eb_dict import RefBase as DictRefBase
 from everybase.shape import Slot
 
@@ -149,7 +149,7 @@ class Token(Shape):
 Different shapes can use different substrates in the same tree:
 
 ```python
-from eb_pv import StrRef as PVStrRef
+from eb_virtuals import StrRef as PVStrRef
 from eb_dict import IntRef as MemIntRef
 
 class PersistentData(Shape):
@@ -186,7 +186,7 @@ Context routes each ref to the correct store via scope.
 
 Both substrates provide the same ref types:
 
-| Ref Type | Dict (`eb_dict`) | PV (`eb_pv`) |
+| Ref Type | Dict (`eb_dict`) | PV (`eb_virtuals`) |
 |----------|-------|------|
 | Primitives | `IntRef`, `StrRef`, `FloatRef`, `BoolRef`, `BytesRef` | same names |
 | Extended | `DecimalRef`, `DatetimeRef`, `UUIDRef`, `PathRef`, etc. | same names |
@@ -198,7 +198,7 @@ Import from the substrate you want:
 
 ```python
 from eb_dict import IntRef, StrRef, ShapesListRef  # in-memory
-from eb_pv import IntRef, StrRef, ShapesListRef    # persistent
+from eb_virtuals import IntRef, StrRef, ShapesListRef    # persistent
 ```
 
 ## Building a New Substrate

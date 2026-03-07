@@ -27,7 +27,7 @@ ext/               extension packages
 
 | Package | Description |
 |---|---|
-| `eb-pv` | PV adapter — refs over KV storages (RocksDB, memory, text) |
+| `eb-virtuals` | PV adapter — refs over KV storages (RocksDB, memory, text) |
 | `eb-dict` | Dict adapter — shapes backed by plain Python dicts |
 
 **Types:**

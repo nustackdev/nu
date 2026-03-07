@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 
-import eb_pv as pv
-from eb_pv.views import DictView
+from virtuals.views import DictView
+
+import eb_virtuals as ebv
 from everybase.shape import Shape
 
 
@@ -13,9 +14,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Doc(Shape):
-    input_text = pv.StrRef.slot()
-    output_text = pv.StrRef.slot()
-    num = pv.IntRef.slot()
+    input_text = ebv.StrRef.slot()
+    output_text = ebv.StrRef.slot()
+    num = ebv.IntRef.slot()
 
 
 if __name__ == "__main__":
