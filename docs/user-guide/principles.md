@@ -81,9 +81,9 @@ Encode progress in Shape slots so the app can resume from where it stopped.
 
 ```python
 class SyncState(Shape):
-    current_slot = pv.IntRef.slot()    # cursor: where we are now
-    slots_synced = pv.ListRef.slot(int) # completed work
-    completed = pv.BoolRef.slot()      # done flag
+    current_slot = ebv.IntRef.slot()    # cursor: where we are now
+    slots_synced = ebv.ListRef.slot(int) # completed work
+    completed = ebv.BoolRef.slot()      # done flag
 
 # In flow: skip already-processed work
 f.If(

@@ -7,7 +7,7 @@ A Span scopes its children. It answers: **which** steps are grouped together.
 Spans are transparent brackets. They don't compute anything — removing all Spans from a tree doesn't change what is computed, only what is shared during computation.
 
 ```python
-from everypv import Atomic
+from eb_virtuals import Atomic
 from everybase.abc import Seq
 
 # Without Span: two independent writes

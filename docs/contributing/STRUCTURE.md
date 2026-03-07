@@ -1,76 +1,89 @@
 # Project Structure
 
-UV workspace monorepo. Multiple Python packages in one repo.
+UV workspace monorepo. One core package + extensions.
 
 ## Layout
 
 ```text
 everybase/
 ├── pyproject.toml          # Workspace root (not a package)
-├── Makefile                # Dev commands
 ├── uv.lock                 # Lockfile (generated)
 │
-├── core/                   # Core packages (every* prefix)
-│   ├── everybase/          #   Foundation: contracts + base implementations
-│   │   ├── pyproject.toml
-│   │   ├── src/everybase/
-│   │   └── tests/
-│   ├── everyshape/         #   Declarative document model (shapes, slots, refs)
-│   ├── everypv/            #   Polymorphic views over KV storages
-│   ├── everytable/         #   Relational data model (stub)
-│   ├── everystream/        #   Push-based event streams (stub)
-│   └── everygraph/         #   Graph data model (stub)
+├── src/everybase/          # Unified core package
+│   ├── core/               #   Kernel: Term, Flow, Span, Context, Sentinel
+│   ├── abc/                #   Toolbox: types, values, morphisms, flows
+│   ├── tree/               #   Immutable tree nodes
+│   ├── meta/               #   Tree meta-tools (walk, query, transform)
+│   ├── shape/              #   Document topology (shapes, slots, refs)
+│   ├── table/              #   Relational topology (stub)
+│   └── graph/              #   Graph topology (stub)
 │
-├── pkgs/                   # Optional extension packages (eb-* prefix)
+├── ext/                    # Extension packages (eb-* prefix)
+│   ├── eb-virtuals/              #   PV adapter (refs over KV storages)
+│   ├── eb-dict/            #   Dict adapter (plain Python dicts)
 │   ├── eb-datetime/        #   Datetime types
-│   ├── eb-math/            #   Math types
-│   ├── eb-fin/             #   Financial types
-│   ├── eb-path/            #   Path types
-│   ├── eb-uuid/            #   UUID types
+│   ├── eb-math/            #   Math types (Decimal, Fraction, complex)
+│   ├── eb-fin/             #   Financial types (Percentage, BasisPoint)
+│   ├── eb-path/            #   Path type
+│   ├── eb-uuid/            #   UUID type
 │   ├── eb-shape-lens/      #   Terminal shape viewer
 │   └── eb-tree-view/       #   HTML tree explorer
 │
+├── tests/                  # Tests for core + adapters
 ├── docs/                   # Documentation
-│   └── contributing/
 ├── examples/               # Example scripts
-│
 └── .agent/                 # Agent context and tasks
 ```
 
 ## Package Tiers
 
-### everybase — Foundation
+### everybase — Unified Core
 
-The unified core package. Minimal deps. Contains two subpackages:
+Single package, minimal deps (attrs only). Contains:
 
 | Subpackage | Purpose | Import |
 |------------|---------|--------|
-| `everybase.core` | Protocols - Term, Flow, Ref, Model, Sentinel | `from everybase import ...` |
-| `everybase.abc` | Base implementations - Python types, computations, flows | `from everybase.abc import ...` |
+| `everybase.core` | Kernel — Term, Flow, Span, Context, Ref, Sentinel | `from everybase import ...` |
+| `everybase.abc` | Toolbox — types, values, morphisms, capabilities, flows | `from everybase.abc import ...` |
+| `everybase.shape` | Document topology — shapes, slots, collections, reactive | `from everybase.shape import ...` |
+| `everybase.table` | Relational topology (stub) | `from everybase.table import ...` |
+| `everybase.graph` | Graph topology (stub) | `from everybase.graph import ...` |
 
 `everybase.__init__` re-exports everything from `everybase.core`, so top-level imports work directly.
 
-### Core packages — Data substrates
+### ext/ — Extensions
+
+**Adapters** wire topologies to storage backends:
 
 | Package | Import | Purpose |
 |---------|--------|---------|
-| `everyshape` | `from everyshape import ...` | Document model - shapes, slots, items, collections |
-| `everypv` | `from everypv import ...` | PV storage substrate + views + adapters |
-| `everytable` | `from everytable import ...` | Relational model (stub) |
-| `everystream` | `from everystream import ...` | Event streams (stub) |
-| `everygraph` | `from everygraph import ...` | Graph data model (stub) |
+| `eb-virtuals` | `from eb_virtuals import ...` | PV adapter — refs over KV storages (RocksDB, memory, text) |
+| `eb-dict` | `from eb_dict import ...` | Dict adapter — shapes backed by plain Python dicts |
 
-### pkgs/ — Optional extensions
+**Type extensions** add domain-specific types:
 
-Types (`eb-datetime`, `eb-math`, `eb-fin`, `eb-path`, `eb-uuid`) and tools (`eb-shape-lens`, `eb-tree-view`).
+| Package | Import | Purpose |
+|---------|--------|---------|
+| `eb-datetime` | `from eb_datetime import ...` | datetime, date, time, timedelta, timezone |
+| `eb-math` | `from eb_math import ...` | Decimal, Fraction, complex |
+| `eb-fin` | `from eb_fin import ...` | Percentage, BasisPoint |
+| `eb-path` | `from eb_path import ...` | Path |
+| `eb-uuid` | `from eb_uuid import ...` | UUID |
+
+**Tools:**
+
+| Package | Import | Purpose |
+|---------|--------|---------|
+| `eb-shape-lens` | `from eb_shape_lens import ...` | Terminal data viewer for Shapes |
+| `eb-tree-view` | `from eb_tree_view import ...` | Interactive HTML tree explorer |
 
 ## Dependency Graph
 
 ```
-everybase (contracts + base impl)
-  ├── everyshape (document model, reactive flows)
-  │     └── everypv (PV substrate + views)
-  └── everytable, everystream, everygraph (stubs)
+everybase (kernel + toolbox + topologies)
+  ├── eb-virtuals (PV adapter, depends on virtuals-py)
+  ├── eb-dict (dict adapter, no external deps)
+  └── eb-* (type extensions, tools)
 ```
 
 ## Key Files
@@ -78,13 +91,16 @@ everybase (contracts + base impl)
 | File | Purpose |
 |------|---------|
 | `pyproject.toml` (root) | Workspace config, tooling (ruff, pytest) |
-| `<dir>/pyproject.toml` | Package metadata, deps |
-| `<dir>/src/<name>/` | Source code |
-| `<dir>/tests/` | Package tests |
+| `src/pyproject.toml` | everybase package metadata |
+| `ext/<pkg>/pyproject.toml` | Extension package metadata |
+| `tests/` | Tests for everybase core + adapters |
+| `ext/<pkg>/tests/` | Extension-specific tests |
 
 ## Naming Convention
 
-| Tier | Directory | Import | PyPI name |
-|------|-----------|--------|-----------|
-| Core | `core/everyshape/` | `from everyshape import ...` | `everyshape` |
-| Pkg | `pkgs/eb-math/` | `from eb_math import ...` | `eb-math` |
+All extensions use the `eb-*` prefix:
+
+| Directory | Import | PyPI name |
+|-----------|--------|-----------|
+| `ext/eb-virtuals/` | `from eb_virtuals import ...` | `eb-virtuals` |
+| `ext/eb-math/` | `from eb_math import ...` | `eb-math` |

@@ -7,22 +7,28 @@ Term Programming platform for Python — build distributed, persistent and react
 ## Structure
 
 ```
-core/              core libraries
-pkgs/              optional extension packages
+src/everybase/     unified core package
+ext/               extension packages
 ```
 
-### Core (`core/`)
+### Core (`src/everybase/`)
 
-| Package | Description | Status |
+| Subpackage | Description | Status |
 |---|---|---|
-| `everybase` | Contracts + base implementations | exists |
-| `everyshape` | Declarative document model (shapes, slots, refs) | exists |
-| `everypv` | Polymorphic views over KV storages | exists |
-| `everytable` | Relational data model | todo |
-| `everystream` | Push-based event streams | todo |
-| `everygraph` | Graph data model | todo |
+| `core/` | Kernel — Term, Flow, Span, Context, Sentinel | exists |
+| `abc/` | Toolbox — types, values, morphisms, capabilities, flows | exists |
+| `shape/` | Document topology (shapes, slots, refs) | exists |
+| `table/` | Relational topology | todo |
+| `graph/` | Graph topology | todo |
 
-### Packages (`pkgs/`)
+### Extensions (`ext/`)
+
+**Adapters:**
+
+| Package | Description |
+|---|---|
+| `eb-virtuals` | PV adapter — refs over KV storages (RocksDB, memory, text) |
+| `eb-dict` | Dict adapter — shapes backed by plain Python dicts |
 
 **Types:**
 

@@ -18,7 +18,6 @@ import tempfile
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
-from tkv.tkv.storage import StorageProtocol
 from utils import (
     TimingResult,
     get_counters,
@@ -27,61 +26,62 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
+from virtuals.tkv.storage import StorageProtocol
 
-import everypv as pv
+import eb_virtuals as ebv
+from eb_virtuals import Atomic
 from everybase import Context
 from everybase.abc import Seq
-from everypv import Atomic
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # ── Shapes ────────────────────────────────────────────────────────────
 
 
 class Leaf(Shape):
-    value = pv.IntRef.slot()
-    label = pv.StrRef.slot()
+    value = ebv.IntRef.slot()
+    label = ebv.StrRef.slot()
 
 
 class L5(Shape):
-    inner = pv.ShapeRef.slot(shape_type=Leaf)
-    count = pv.IntRef.slot()
+    inner = ebv.ShapeRef.slot(shape_type=Leaf)
+    count = ebv.IntRef.slot()
 
 
 class L4(Shape):
-    inner = pv.ShapeRef.slot(shape_type=L5)
-    count = pv.IntRef.slot()
+    inner = ebv.ShapeRef.slot(shape_type=L5)
+    count = ebv.IntRef.slot()
 
 
 class L3(Shape):
-    inner = pv.ShapeRef.slot(shape_type=L4)
-    count = pv.IntRef.slot()
+    inner = ebv.ShapeRef.slot(shape_type=L4)
+    count = ebv.IntRef.slot()
 
 
 class L2(Shape):
-    inner = pv.ShapeRef.slot(shape_type=L3)
-    count = pv.IntRef.slot()
+    inner = ebv.ShapeRef.slot(shape_type=L3)
+    count = ebv.IntRef.slot()
 
 
 class Root(Shape):
-    inner = pv.ShapeRef.slot(shape_type=L2)
-    count = pv.IntRef.slot()
+    inner = ebv.ShapeRef.slot(shape_type=L2)
+    count = ebv.IntRef.slot()
 
 
 # ── Shapes with lists ────────────────────────────────────────────────
 
 
 class ItemShape(Shape):
-    value = pv.IntRef.slot()
+    value = ebv.IntRef.slot()
 
 
 class WithList(Shape):
-    items = pv.ListRef.slot(item_type=int)
-    nested = pv.ShapeRef.slot(shape_type=ItemShape)
+    items = ebv.ListRef.slot(item_type=int)
+    nested = ebv.ShapeRef.slot(shape_type=ItemShape)
 
 
 class ListRoot(Shape):
-    data = pv.ShapeRef.slot(shape_type=WithList)
+    data = ebv.ShapeRef.slot(shape_type=WithList)
 
 
 # ── Pre-built terms ──────────────────────────────────────────────────
@@ -131,7 +131,7 @@ async def _bench(label: str, term, seed_term, seed_key: str | None = None) -> Ti
     """Benchmark with fresh db per measurement."""
     tmpdir = tempfile.mkdtemp(prefix="bench_nested_")
     try:
-        from everypv.adapters.storage import rocksdb_storage_inmemory
+        from eb_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)

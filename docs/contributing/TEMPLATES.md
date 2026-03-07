@@ -1,6 +1,6 @@
 # Templates
 
-## pyproject.toml - Core Package (everybase/)
+## pyproject.toml - Extension Package (ext/)
 
 ```toml
 [build-system]
@@ -8,15 +8,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "everybase"
+name = "eb-foo"
 version = "0.1.0"
-description = "Core primitives for every"
+description = "Foo for everybase"
 readme = "README.md"
 license = "MIT"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
-dependencies = []
-keywords = ["every", "core"]
+dependencies = ["everybase>=0.1.0"]
+keywords = ["every", "foo"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
@@ -29,47 +29,26 @@ classifiers = [
 Repository = "https://github.com/everyabc/everybase"
 
 [tool.hatch.build.targets.wheel]
-packages = ["core/everybase"]
+packages = ["src/eb_foo"]
 ```
 
-## pyproject.toml - Standard Package (packages/)
-
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "every-foo"
-version = "0.1.0"
-description = "Foo types for every"
-readme = "README.md"
-license = "MIT"
-authors = [{ name = "Your Name", email = "you@example.com" }]
-requires-python = ">=3.10"
-dependencies = ["everybase>=0.1.0"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/every_foo"]
-```
-
-## README.md - Package
+## README.md - Extension Package
 
 ```markdown
-# every-foo
+# eb-foo
 
 Brief description.
 
 ## Install
 
 \`\`\`bash
-pip install every-foo
+pip install eb-foo
 \`\`\`
 
 ## Usage
 
 \`\`\`python
-from every_foo import Thing
+from eb_foo import Thing
 \`\`\`
 
 ## Development
@@ -77,7 +56,7 @@ from every_foo import Thing
 Part of [everybase](https://github.com/everyabc/everybase).
 
 \`\`\`bash
-make test-pkg PKG=packages/every-foo
+uv run pytest ext/eb-foo
 \`\`\`
 ```
 

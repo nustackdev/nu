@@ -3,42 +3,44 @@
 ## Layers
 
 ```
-everybase            unified core — contracts + toolbox
-  everybase.core     contracts — Term, Flow, Span, Ref, Model, Context
-  everybase.abc      toolbox — types, values, morphisms, capabilities, flows
-    ├── everyshape    document model — shapes, items, collections, reactive flows
-    │     └── everypv      PV storage substrate (path resolution, views, spans, adapters)
-    ├── everytable    relational model — (TBD)
-    ├── everystream   push-based event streams — (TBD)
-    └── everygraph    graph data model — (TBD)
+everybase               unified core package
+  everybase.core        contracts — Term, Flow, Span, Ref, Model, Context
+  everybase.abc         toolbox — types, values, morphisms, capabilities, flows
+  everybase.shape       document topology — shapes, items, collections, reactive flows
+  everybase.table       relational topology — (TBD)
+  everybase.graph       graph topology — (TBD)
+
+eb_virtuals                   PV adapter (path resolution, views, spans, adapters)
+eb_dict                 Dict adapter (plain Python dicts)
 ```
 
 ## Directory Layout
 
 ```
-core/
-├── everybase/      everybase (everybase.core + everybase.abc)
-├── everyshape/     everyshape
-├── everypv/        everypv
-├── everytable/     everytable (stub)
-├── everystream/    everystream (stub)
-└── everygraph/     everygraph (stub)
+src/everybase/          unified core package
+├── core/               kernel
+├── abc/                toolbox
+├── shape/              document topology
+├── table/              relational topology (stub)
+└── graph/              graph topology (stub)
 
-pkgs/
-├── eb-datetime/    Datetime types
-├── eb-math/        Math types
-├── eb-fin/         Financial types
-├── eb-path/        Path types
-├── eb-uuid/        UUID types
-├── eb-shape-lens/  Terminal shape viewer
-└── eb-tree-view/   HTML tree explorer
+ext/
+├── eb-virtuals/              PV adapter
+├── eb-dict/            Dict adapter
+├── eb-datetime/        Datetime types
+├── eb-math/            Math types
+├── eb-fin/             Financial types
+├── eb-path/            Path types
+├── eb-uuid/            UUID types
+├── eb-shape-lens/      Terminal shape viewer
+└── eb-tree-view/       HTML tree explorer
 ```
 
 ## Core Package
 
 ### everybase
 
-Unified core package with two subpackages.
+Unified core package. Minimal deps (attrs only).
 
 #### everybase.core (contracts)
 
@@ -74,9 +76,9 @@ Flows           Seq, If, While, ForRange, Parallel, TryCatch, etc.
 Utilities       ensure_term, tree walking, etc.
 ```
 
-### everyshape
+#### everybase.shape (document topology)
 
-Document model. Depends on everybase.
+Document model. Part of everybase (no separate package).
 
 ```
 Shape System    ShapeMeta, Shape (extends Model), SlotDescriptor
@@ -103,25 +105,23 @@ Collections     ShapeRef -> MutableShapeRef -> ReactiveShapeRef
 Flows           React, ReactForever, ReactWhile (reactive flows)
 ```
 
-### everytable
+#### everybase.table (relational topology)
 
-Abstract relational model. Depends on everybase. (TBD)
+Abstract relational model. (TBD)
 
 ## Dependency Graph
 
 ```
-                    everybase
-                  (core + abc)
-                  /     |     \
-          everyshape  everytable  everystream  everygraph
-              |
-          everypv
+              everybase
+     (core + abc + topologies)
+           /          \
+        eb_virtuals        eb_dict
+   (PV adapter)  (dict adapter)
 ```
 
 Key constraints:
 
-- everyshape, everytable, everystream, everygraph are siblings — all depend on everybase
-- everyshape has zero PV imports — substrate-independent document model
-- everytable has zero PV imports — independent data model
-- everypv depends on everyshape (PV substrate: persistent, reactive)
-- Flows live in everybase.abc (non-reactive) and everyshape (reactive)
+- Topologies (shape, table, graph) are inside everybase — no separate packages
+- shape has zero PV imports — topology-independent document model
+- eb_virtuals and eb_dict are adapters — they wire topologies to storage backends
+- Flows live in everybase.abc (non-reactive) and everybase.shape (reactive)

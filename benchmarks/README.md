@@ -1,6 +1,6 @@
 # Everybase Benchmarks
 
-Benchmarking suite for the everybase data layer (pv + everypv + everyshape) and term tree execution.
+Benchmarking suite for the everybase data layer (virtuals + eb_virtuals + everybase.shape) and term tree execution.
 
 ## Structure
 
@@ -138,7 +138,7 @@ uv run python benchmarks/scenarios/01_market.py
 
 - `storage.begin_transaction` / `storage.begin_snapshot` -- transaction open count
 - `rocksdb.get` / `rocksdb.put` / `rocksdb.scan` / `rocksdb.commit` -- storage I/O
-- `pv.create_container` / `pv.get_node_info` / `pv.node_exists` -- PV container ops
+- `virtuals.create_container` / `virtuals.get_node_info` / `virtuals.node_exists` -- virtuals container ops
 - `observer.notify` -- observer notification count
 
 Each benchmark reports wall time, per-op latency, ops/sec, and all counter values. L0 (raw rdbpy) bypasses the monkey-patched tkv layer, so its counters show 0.

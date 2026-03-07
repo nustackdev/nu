@@ -31,9 +31,6 @@ import time
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
-import everydict as ed
-from everydict.meta import inline_refs as dict_inline_refs
-from tkv.tkv.storage import StorageProtocol
 from utils import (
     TimingResult,
     get_counters,
@@ -42,51 +39,54 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
+from virtuals.tkv.storage import StorageProtocol
 
-import everypv as pv
+import eb_dict as ed
+import eb_virtuals as ebv
+from eb_dict.meta import inline_refs as dict_inline_refs
+from eb_virtuals import Atomic
+from eb_virtuals.meta import inline_refs as v_inline_refs
 from everybase import Context
 from everybase.abc import Seq
-from everypv import Atomic
-from everypv.meta import inline_refs as pv_inline_refs
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # ── Shapes (PV) ──────────────────────────────────────────────────────────────
 
 
-class PVL7(Shape):
-    a = pv.IntRef.slot()
-    b = pv.IntRef.slot()
-    c = pv.IntRef.slot()
-    d = pv.IntRef.slot()
+class VL7(Shape):
+    a = ebv.IntRef.slot()
+    b = ebv.IntRef.slot()
+    c = ebv.IntRef.slot()
+    d = ebv.IntRef.slot()
 
 
-class PVL6(Shape):
-    child = pv.ShapesDictRef.slot(shape_type=PVL7)
+class VL6(Shape):
+    child = ebv.ShapesDictRef.slot(shape_type=VL7)
 
 
-class PVL5(Shape):
-    child = pv.ShapesDictRef.slot(shape_type=PVL6)
+class VL5(Shape):
+    child = ebv.ShapesDictRef.slot(shape_type=VL6)
 
 
-class PVL4(Shape):
-    child = pv.ShapesDictRef.slot(shape_type=PVL5)
+class VL4(Shape):
+    child = ebv.ShapesDictRef.slot(shape_type=VL5)
 
 
-class PVL3(Shape):
-    child = pv.ShapesDictRef.slot(shape_type=PVL4)
+class VL3(Shape):
+    child = ebv.ShapesDictRef.slot(shape_type=VL4)
 
 
-class PVL2(Shape):
-    child = pv.ShapesDictRef.slot(shape_type=PVL3)
+class VL2(Shape):
+    child = ebv.ShapesDictRef.slot(shape_type=VL3)
 
 
-class PVL1(Shape):
-    child = pv.ShapesDictRef.slot(shape_type=PVL2)
+class VL1(Shape):
+    child = ebv.ShapesDictRef.slot(shape_type=VL2)
 
 
-class PVL0(Shape):
-    child = pv.ShapesDictRef.slot(shape_type=PVL1)
+class VL0(Shape):
+    child = ebv.ShapesDictRef.slot(shape_type=VL1)
 
 
 # ── Shapes (dict) ────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ class DL0(Shape):
 # ── Path to leaf ─────────────────────────────────────────────────────────────
 
 # PV: L0.child["k0"].child["k1"]...child["k6"].{a,b,c,d}
-_pv_leaf = PVL0.child["k0"].child["k1"].child["k2"].child["k3"].child["k4"].child["k5"].child["k6"]
+_v_leaf = VL0.child["k0"].child["k1"].child["k2"].child["k3"].child["k4"].child["k5"].child["k6"]
 _d_leaf = DL0.child["k0"].child["k1"].child["k2"].child["k3"].child["k4"].child["k5"].child["k6"]
 
 NUM_FIELDS = 4
@@ -174,23 +174,23 @@ def py_read(data: dict) -> None:
 # ── Trees ────────────────────────────────────────────────────────────────────
 
 # PV
-_pv_write = Seq(
-    _pv_leaf.a.set(10),
-    _pv_leaf.b.set(11),
-    _pv_leaf.c.set(12),
-    _pv_leaf.d.set(13),
+_v_write = Seq(
+    _v_leaf.a.set(10),
+    _v_leaf.b.set(11),
+    _v_leaf.c.set(12),
+    _v_leaf.d.set(13),
 )
-_pv_read = Seq(
-    _pv_leaf.a.get(),
-    _pv_leaf.b.get(),
-    _pv_leaf.c.get(),
-    _pv_leaf.d.get(),
+_v_read = Seq(
+    _v_leaf.a.get(),
+    _v_leaf.b.get(),
+    _v_leaf.c.get(),
+    _v_leaf.d.get(),
 )
 
-pv_write_at = Atomic(_pv_write)
-pv_read_at = Atomic(_pv_read)
-pv_write_ai = pv_inline_refs(Atomic(_pv_write))
-pv_read_ai = pv_inline_refs(Atomic(_pv_read))
+v_write_at = Atomic(_v_write)
+v_read_at = Atomic(_v_read)
+v_write_ai = v_inline_refs(Atomic(_v_write))
+v_read_ai = v_inline_refs(Atomic(_v_read))
 
 # everydict
 d_write = Seq(
@@ -209,12 +209,12 @@ di_write = dict_inline_refs(d_write)
 di_read = dict_inline_refs(d_read)
 
 # Seed trees (need to set values before reading)
-_pv_seed = Atomic(
+_v_seed = Atomic(
     Seq(
-        _pv_leaf.a.set(0),
-        _pv_leaf.b.set(1),
-        _pv_leaf.c.set(2),
-        _pv_leaf.d.set(3),
+        _v_leaf.a.set(0),
+        _v_leaf.b.set(1),
+        _v_leaf.c.set(2),
+        _v_leaf.d.set(3),
     )
 )
 _d_seed = Seq(
@@ -240,10 +240,10 @@ def _bench_pure_dict(label: str, fn, setup_data: dict) -> TimingResult:
     return TimingResult(name=label, wall_time_s=elapsed, n_ops=N * NUM_FIELDS, counters={})
 
 
-async def _bench_pv(label: str, tree, seed_tree) -> TimingResult:
+async def _bench_v(label: str, tree, seed_tree) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_deep_")
     try:
-        from everypv.adapters.storage import rocksdb_storage_inmemory
+        from eb_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)
@@ -281,12 +281,12 @@ async def run_all() -> list[TimingResult]:
     results.append(_bench_pure_dict("read pure dict", py_read, nested))
 
     # PV Atomic
-    results.append(await _bench_pv("write PV Atomic", pv_write_at, _pv_seed))
-    results.append(await _bench_pv("read PV Atomic", pv_read_at, _pv_seed))
+    results.append(await _bench_v("write virtuals Atomic", v_write_at, _v_seed))
+    results.append(await _bench_v("read virtuals Atomic", v_read_at, _v_seed))
 
     # PV Atomic+inline
-    results.append(await _bench_pv("write PV Atomic+inline", pv_write_ai, _pv_seed))
-    results.append(await _bench_pv("read PV Atomic+inline", pv_read_ai, _pv_seed))
+    results.append(await _bench_v("write virtuals Atomic+inline", v_write_ai, _v_seed))
+    results.append(await _bench_v("read virtuals Atomic+inline", v_read_ai, _v_seed))
 
     # everydict
     results.append(await _bench_dict("write everydict", d_write, _d_seed))

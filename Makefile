@@ -8,9 +8,9 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-CORE_DIRS := core/everybase core/everyshape core/everypv core/everytable core/everystream core/everygraph
-PKG_DIRS := pkgs/eb-datetime pkgs/eb-fin pkgs/eb-math pkgs/eb-path pkgs/eb-uuid pkgs/eb-shape-lens pkgs/eb-tree-view
-ALL_DIRS := $(CORE_DIRS) $(PKG_DIRS)
+CORE := src
+EXT_DIRS := ext/eb-virtuals ext/eb-dict ext/eb-datetime ext/eb-fin ext/eb-math ext/eb-path ext/eb-uuid ext/eb-shape-lens ext/eb-tree-view
+ALL_SRC := $(CORE) $(addsuffix /src,$(EXT_DIRS))
 
 # =============================================================================
 # Help
@@ -25,9 +25,9 @@ help:
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
 	@echo "  make test            Run all tests"
-	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=core/everybase)"
-	@echo "  make test-core       Run core/ tests"
-	@echo "  make test-packages   Run pkgs/ tests"
+	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=ext/eb-virtuals)"
+	@echo "  make test-core       Run core tests"
+	@echo "  make test-ext        Run extension tests"
 	@echo "  make test-cov        Run tests with coverage"
 	@echo "  make test-fast       Run tests (fail fast, no slow)"
 	@echo ""
@@ -73,23 +73,18 @@ test:
 
 test-pkg:
 ifndef PKG
-	$(error PKG not set. Usage: make test-pkg PKG=core/everybase)
+	$(error PKG not set. Usage: make test-pkg PKG=ext/eb-virtuals)
 endif
 	@echo "$(BLUE)Testing $(PKG)...$(NC)"
 	uv run pytest $(PKG)/tests -v
 
 test-core:
-	@echo "$(BLUE)Running core/ tests...$(NC)"
-	@for dir in $(CORE_DIRS); do \
-		if [ -d "$$dir/tests" ]; then \
-			echo "$(YELLOW)  $$dir$(NC)"; \
-			uv run pytest $$dir/tests -q || exit 1; \
-		fi; \
-	done
+	@echo "$(BLUE)Running core tests...$(NC)"
+	uv run pytest tests/ -q
 
-test-packages:
-	@echo "$(BLUE)Running pkgs/ tests...$(NC)"
-	@for dir in $(PKG_DIRS); do \
+test-ext:
+	@echo "$(BLUE)Running extension tests...$(NC)"
+	@for dir in $(EXT_DIRS); do \
 		if [ -d "$$dir/tests" ]; then \
 			echo "$(YELLOW)  $$dir$(NC)"; \
 			uv run pytest $$dir/tests -q || exit 1; \
@@ -99,7 +94,7 @@ test-packages:
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
 	uv run pytest --cov --cov-report=html --cov-report=term-missing
-	@echo "$(GREEN)Report: tests/reports/coverage/index.html$(NC)"
+	@echo "$(GREEN)Report: reports/coverage/index.html$(NC)"
 
 test-fast:
 	@echo "$(BLUE)Running fast tests...$(NC)"
@@ -110,17 +105,17 @@ test-fast:
 # =============================================================================
 lint:
 	@echo "$(BLUE)Linting...$(NC)"
-	uv run ruff check $(ALL_DIRS)
+	uv run ruff check .
 
 format:
 	@echo "$(BLUE)Formatting...$(NC)"
-	uv run ruff format $(ALL_DIRS)
-	uv run ruff check --fix $(ALL_DIRS)
+	uv run ruff format .
+	uv run ruff check --fix .
 	@echo "$(GREEN)Done$(NC)"
 
 format-check:
 	@echo "$(BLUE)Checking format...$(NC)"
-	uv run ruff format --check $(ALL_DIRS)
+	uv run ruff format --check .
 
 check: format-check lint
 	@echo "$(GREEN)All checks passed$(NC)"
@@ -131,15 +126,15 @@ check: format-check lint
 list:
 	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(GREEN)core/:$(NC)"
-	@ls -d core/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)Core (src/everybase/):$(NC)"
+	@ls -d src/everybase/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 	@echo ""
-	@echo "$(GREEN)pkgs/:$(NC)"
-	@ls -d pkgs/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)Extensions (ext/):$(NC)"
+	@ls -d ext/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 
 build:
 ifndef PKG
-	$(error PKG not set. Usage: make build PKG=core/everybase)
+	$(error PKG not set. Usage: make build PKG=everybase)
 endif
 	@echo "$(BLUE)Building $(PKG)...$(NC)"
 	cd $(PKG) && uv build
@@ -156,7 +151,7 @@ clean:
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "build" -exec rm -rf {} + 2>/dev/null || true
-	rm -rf .coverage htmlcov/ tests/reports/
+	rm -rf .coverage htmlcov/ reports/
 	@echo "$(GREEN)Clean$(NC)"
 
 clean-all: clean

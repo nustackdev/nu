@@ -17,7 +17,7 @@ Each substrate introduces Ref types that express its native topology:
 
 | Substrate | Ref types | Topology expressed |
 |---|---|---|
-| everyshape | ItemRef, ShapeRef, ShapesMappingRef | Hierarchical containment |
+| everybase.shape | ItemRef, ShapeRef, ShapesMappingRef | Hierarchical containment |
 | eb_rest | ResourceRef, ShapesDictRef | HTTP resource hierarchy |
 | eb_service | (none — flat) | Flat method dispatch |
 | everytable (future) | ForeignKeyRef, JoinRef | Relational references |
@@ -31,7 +31,7 @@ The substrate taxonomy classifies integration paradigms by their **modeling topo
 ```
 Topology                 Substrate       Atomic unit      Refs?
 ──────────────────       ─────────       ───────────      ─────
-Hierarchical, in-house   everyshape        item             yes — parent chains, item-level CRUD
+Hierarchical, in-house   everybase.shape        item             yes — parent chains, item-level CRUD
 Hierarchical, HTTP       eb_rest         resource         yes — parent chains, resource-level CRUD
 Flat (RPC)               eb_service      method call      no — no persistent addressing
 Relational               everytable        row              yes — foreign keys, joins
@@ -46,15 +46,15 @@ Flat topology (eb_service) has no Refs because there's nothing to persistently a
 Every substrate follows the same layered architecture:
 
 ```
-Layer       What it provides                    Example (everyshape)
+Layer       What it provides                    Example (everybase.shape)
 ─────       ────────────────                    ──────────────────
 1. core     Term, Ref, Value, Morphism,         everybase
             Context, Model
 
-2. model    Ref types, morphisms,               everyshape
+2. model    Ref types, morphisms,               everybase.shape
             capabilities for the topology       (ItemRef, ItemGetOp, ShapesMappingRef)
 
-3. adapter  Concrete storage wiring             everypv (KV views)
+3. adapter  Concrete storage wiring             eb_virtuals (KV views)
             (resolve → location, fetch → data)  eb_dict (plain dicts)
 
 4. app      Domain-specific definitions         weather station, trading app
@@ -69,11 +69,11 @@ Each layer answers a different question:
 
 ### How This Plays Out Per Substrate
 
-**everyshape** (hierarchical, in-house):
+**everybase.shape** (hierarchical, in-house):
 ```
 core     → everybase (Term, Ref, Context)
-model    → everyshape (ItemRef, ShapesMappingRef, ItemGetOp, Shape)
-adapter  → everypv (KV views, transactions) | eb_dict (plain dicts)
+model    → everybase.shape (ItemRef, ShapesMappingRef, ItemGetOp, Shape)
+adapter  → eb_virtuals (KV views, transactions) | eb_dict (plain dicts)
 app      → Market(Shape), WeatherStation(Shape), etc.
 ```
 
@@ -101,7 +101,7 @@ adapter  → eb_postgres, eb_sqlite, eb_notion, etc.
 app      → UserTable, OrderTable, etc.
 ```
 
-Note: eb_rest and eb_service have no adapter layer. REST always uses HTTP. RPC always uses the service client. There's no alternative backend — the transport IS the substrate. In contrast, everyshape and everytable are storage-agnostic models with pluggable adapters.
+Note: eb_rest and eb_service have no adapter layer. REST always uses HTTP. RPC always uses the service client. There's no alternative backend — the transport IS the substrate. In contrast, everybase.shape and everytable are storage-agnostic models with pluggable adapters.
 
 ## One Algebra, Every Backend
 
@@ -112,10 +112,10 @@ The same expression tree can span multiple substrates:
 await Seq(
     LocalCache.repo.set(
         GitHub.repos["octocat/hello"].get()    # eb_rest → HTTP
-    ),                                          # everyshape → PV storage
+    ),                                          # everybase.shape → PV storage
     Analytics.downloads.set(
         DB.repos.where(name="hello").count()    # everytable → SQL
-    ),                                          # everyshape → PV storage
+    ),                                          # everybase.shape → PV storage
 ).execute(ctx)
 ```
 
@@ -126,7 +126,7 @@ This works because every substrate produces Terms. Terms compose. Context resolv
 Collection refs deserve special attention — they express the **one-to-many relationship** that appears across every topology:
 
 ```python
-# everyshape: dict of shapes
+# everybase.shape: dict of shapes
 Market.symbols["AAPL"]              # ShapesMappingRef → ShapeRef
 
 # eb_rest: collection of resources

@@ -4,25 +4,26 @@ from __future__ import annotations
 
 import logging
 
-import everypv as pv
-from everypv.views import DictView
-from everyshape import Shape
+from virtuals.views import DictView
+
+import eb_virtuals as ebv
+from everybase.shape import Shape
 
 
 logging.basicConfig(level=logging.INFO)
 
 
 class Doc(Shape):
-    input_text = pv.StrRef.slot()
-    output_text = pv.StrRef.slot()
-    num = pv.IntRef.slot()
+    input_text = ebv.StrRef.slot()
+    output_text = ebv.StrRef.slot()
+    num = ebv.IntRef.slot()
 
 
 if __name__ == "__main__":
     from everylens import run_ui
-    from tkv.codecs import BinaryCodec, NoOpCodec
-    from tkv.observers.mem import InMemoryObserver
-    from tkv.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.codecs import BinaryCodec, NoOpCodec
+    from virtuals.tkv.observers.mem import InMemoryObserver
+    from virtuals.tkv.storages.rocksdb import RocksDBStorage
 
     observer = InMemoryObserver(codec=NoOpCodec())
     observer.connect()

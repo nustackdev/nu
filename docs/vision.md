@@ -14,7 +14,7 @@ every_*           substrates — actual storage implementations
 
 **Substrates** are where data actually lives:
 
-- `everypv` — polymorphic views over KV stores (RocksDB, etc.)
+- `eb_virtuals` — polymorphic views over KV stores (RocksDB, etc.)
 - `eb_dict` (future) — Python dict as a bag, in-memory
 - `eb_notion` (future) — Notion API as storage backend
 - `every_sqlite` (future) — SQLite as storage

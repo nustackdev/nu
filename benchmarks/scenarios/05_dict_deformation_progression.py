@@ -22,16 +22,16 @@ import time
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
-import everydict as ed
-from everydict.meta import inline_refs
 from utils import (
     TimingResult,
     print_results,
 )
 
+import eb_dict as ed
+from eb_dict.meta import inline_refs
 from everybase import Context
 from everybase.abc import Seq
-from everyshape import Shape
+from everybase.shape import Shape
 
 
 # ── Shape ─────────────────────────────────────────────────────────────────────

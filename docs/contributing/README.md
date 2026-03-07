@@ -19,19 +19,26 @@ make test    # run tests
 make format  # fix lint issues
 ```
 
-## Core Package (everybase/)
+## Core Package (src/everybase/)
 
 | Subpackage | Purpose |
 |------------|---------|
-| `everybase.core` | Protocols - Term, Flow, Ref |
-| `everybase.abc` | Base implementations - types, computations |
+| `everybase.core` | Kernel — Term, Flow, Span, Context, Ref, Sentinel |
+| `everybase.abc` | Toolbox — types, values, morphisms, flows |
+| `everybase.shape` | Document topology — shapes, slots, refs |
+| `everybase.table` | Relational topology (stub) |
+| `everybase.graph` | Graph topology (stub) |
 
-## Packages (packages/)
+## Extensions (ext/)
 
 | Package | Purpose |
 |---------|---------|
-| `everypv` | PV storage adapter + views |
-| `eb-flow` | Flow primitives |
-| `every-type` | Extended type refs |
-| `every-adapters` | Storage/codec backends |
-| `eb-notion` | Notion integration |
+| `eb-virtuals` | PV adapter — refs over KV storages |
+| `eb-dict` | Dict adapter — plain Python dicts |
+| `eb-datetime` | Datetime types |
+| `eb-math` | Math types |
+| `eb-fin` | Financial types |
+| `eb-path` | Path type |
+| `eb-uuid` | UUID type |
+| `eb-shape-lens` | Terminal shape viewer |
+| `eb-tree-view` | HTML tree explorer |

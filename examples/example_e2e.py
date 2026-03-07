@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 
+from eb_virtuals import ItemRef, auto_atomic
 from everybase import Arg, Context, Term
 from everybase.abc import (
     FloatValue,
@@ -24,8 +25,7 @@ from everybase.abc import (
     method,
     prop,
 )
-from everypv import ItemRef, auto_atomic
-from everyshape import ItemSetCmd, Shape, Slot
+from everybase.shape import ItemSetCmd, Shape, Slot
 
 
 # =============================================================================
@@ -142,9 +142,9 @@ tick_flow = ForRange(IntValue(0), IntValue(3), Print("tick!"))
 
 
 async def main() -> None:
-    from tkv.tkv.storage import StorageProtocol
+    from virtuals.tkv.storage import StorageProtocol
 
-    from everypv.adapters.storage import memory_storage, rocksdb_storage_inmemory
+    from eb_virtuals.presets import memory_storage, rocksdb_storage_inmemory
 
     with rocksdb_storage_inmemory(".db-e2e-test") as rocksdb:
         with memory_storage() as memdb:

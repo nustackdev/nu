@@ -81,7 +81,7 @@ Refs are LValues — they point to a location in storage. The substrate determin
 
 ```python
 from eb_dict import IntRef, StrRef
-from everyshape import Shape
+from everybase.shape import Shape
 
 class Counter(Shape):
     value = IntRef.slot()
@@ -115,7 +115,7 @@ This matters for Spans — a pure subtree can use a read-only snapshot instead o
 
 ```python
 from eb_dict import IntRef, StrRef
-from everyshape import Shape
+from everybase.shape import Shape
 from everybase import Context
 
 class Wallet(Shape):
