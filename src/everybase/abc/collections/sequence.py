@@ -28,7 +28,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from everybase.core import StrArg
+    from everybase.core import Arg, IntArg, StrArg
 
     from ..values import IntValue, NoneValue, StrValue
 
@@ -63,9 +63,9 @@ class SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT]
     def first(self) -> ElementResultT: ...
     def last(self) -> ElementResultT: ...
     def join(self, separator: StrArg) -> StrValue: ...
-    def index(self, value: ElementT) -> IntValue: ...
+    def index(self, value: Arg[ElementT]) -> IntValue: ...
     def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue: ...
-    def count(self, value: ElementT) -> IntValue: ...
+    def count(self, value: Arg[ElementT]) -> IntValue: ...
 
 
 class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -81,11 +81,11 @@ class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementR
         ElementResultT: Result for element-level ops (pop)
     """
 
-    def append(self, value: ElementT) -> NoneValue: ...
-    def extend(self, other: Iterable[ElementT]) -> NoneValue: ...
-    def insert(self, index: int, value: ElementT) -> NoneValue: ...
-    def pop(self, index: int = -1) -> ElementResultT: ...
-    def remove(self, value: ElementT) -> NoneValue: ...
+    def append(self, value: Arg[ElementT]) -> NoneValue: ...
+    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneValue: ...
+    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneValue: ...
+    def pop(self, index: IntArg = -1) -> ElementResultT: ...
+    def remove(self, value: Arg[ElementT]) -> NoneValue: ...
 
 
 # =============================================================================
@@ -125,7 +125,7 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return StrValue(JoinOp(self, separator))
 
-    def index(self, value: ElementT) -> IntValue:
+    def index(self, value: Arg[ElementT]) -> IntValue:
         """Find index of value."""
         from ..morphisms import IndexOfOp
         from ..values import IntValue
@@ -139,7 +139,7 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return IntValue(FindIndexOp(self, predicate))
 
-    def count(self, value: ElementT) -> IntValue:
+    def count(self, value: Arg[ElementT]) -> IntValue:
         """Count occurrences."""
         from ..morphisms import CountOp
         from ..values import IntValue
@@ -159,34 +159,34 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
         ElementResultT: Result for element-level ops (pop)
     """
 
-    def append(self, value: ElementT) -> NoneValue:
+    def append(self, value: Arg[ElementT]) -> NoneValue:
         """Append item to end of sequence."""
         from ..morphisms.collections.sequence import AppendCmd
         from ..values import NoneValue
 
         return NoneValue(AppendCmd(self, value))
 
-    def extend(self, other: Iterable[ElementT]) -> NoneValue:
+    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneValue:
         """Extend sequence with elements from iterable."""
         from ..morphisms.collections.sequence import ExtendCmd
         from ..values import NoneValue
 
         return NoneValue(ExtendCmd(self, other))
 
-    def insert(self, index: int, value: ElementT) -> NoneValue:
+    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneValue:
         """Insert item at index."""
         from ..morphisms.collections.sequence import InsertCmd
         from ..values import NoneValue
 
         return NoneValue(InsertCmd(self, index, value))
 
-    def pop(self, index: int = -1) -> ElementResultT:
+    def pop(self, index: IntArg = -1) -> ElementResultT:
         """Remove and return item at index (default: last)."""
         from ..morphisms.collections.sequence import PopCmd
 
         return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
 
-    def remove(self, value: ElementT) -> NoneValue:
+    def remove(self, value: Arg[ElementT]) -> NoneValue:
         """Remove first occurrence of value."""
         from ..morphisms.collections.sequence import RemoveValueCmd
         from ..values import NoneValue

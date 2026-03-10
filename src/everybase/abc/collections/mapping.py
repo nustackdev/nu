@@ -26,7 +26,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from everybase.core import Term
+    from everybase.core import Arg, IntArg, Term
 
     from ..values import NoneValue
 
@@ -61,7 +61,7 @@ class MappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT
     def keys(self) -> CollectionResultT: ...
     def values(self) -> CollectionResultT: ...
     def items(self) -> CollectionResultT: ...
-    def get(self, key: KeyT, default: ValueT | None = None) -> ValueResultT: ...
+    def get(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
 
 
 class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
@@ -78,12 +78,12 @@ class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, Value
         ValueResultT: Result for value-level ops (set, delete)
     """
 
-    def set(self, key: KeyT, value: ValueT) -> NoneValue: ...
-    def delete(self, key: KeyT) -> NoneValue: ...
-    def update(self, other: Mapping[KeyT, ValueT]) -> NoneValue: ...
-    def pop(self, key: KeyT, default: ValueT | None = None) -> ValueResultT: ...
+    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneValue: ...
+    def delete(self, key: Arg[KeyT]) -> NoneValue: ...
+    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneValue: ...
+    def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
     def popitem(self) -> ValueResultT: ...
-    def setdefault(self, key: KeyT, default: ValueT | None = None) -> ValueResultT: ...
+    def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
     def clear(self) -> NoneValue: ...
     def copy(self) -> ValueResultT: ...
 
@@ -146,13 +146,13 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
         return cast("CollectionResultT", self._wrap_items_result(ItemsOp(self)))
 
-    def get(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
+    def get(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value with default."""
         from ..morphisms.collections.mapping import GetOp
 
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
-    def key_at(self, idx: int) -> ValueResultT:
+    def key_at(self, idx: IntArg) -> ValueResultT:
         """Get key at index position."""
         from ..morphisms.collections.mapping import KeyAtOp
 
@@ -172,28 +172,28 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         ValueResultT: Result for value-level ops (get, key_at)
     """
 
-    def set(self, key: KeyT, value: ValueT) -> NoneValue:
+    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneValue:
         """Set value at key."""
         from ..morphisms.collections.mapping import SetItemCmd
         from ..values import NoneValue
 
         return NoneValue(SetItemCmd(self, key, value))
 
-    def delete(self, key: KeyT) -> NoneValue:
+    def delete(self, key: Arg[KeyT]) -> NoneValue:
         """Delete entry by key."""
         from ..morphisms.collections.mapping import DeleteItemCmd
         from ..values import NoneValue
 
         return NoneValue(DeleteItemCmd(self, key))
 
-    def update(self, other: Mapping[KeyT, ValueT]) -> NoneValue:
+    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneValue:
         """Update mapping with another mapping."""
         from ..morphisms.collections.mapping import UpdateCmd
         from ..values import NoneValue
 
         return NoneValue(UpdateCmd(self, other))
 
-    def pop(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
+    def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Remove key and return value, or default if missing."""
         from ..morphisms.collections.mapping import DictPopCmd
 
@@ -205,7 +205,7 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
         return cast("ValueResultT", self._wrap_value_result(PopItemCmd(self)))
 
-    def setdefault(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
+    def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value at key, setting it to default if missing."""
         from ..morphisms.collections.mapping import SetDefaultCmd
 

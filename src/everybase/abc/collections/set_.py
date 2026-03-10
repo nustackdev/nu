@@ -23,7 +23,7 @@ from .collection import CollectionBase, CollectionProtocol
 
 
 if TYPE_CHECKING:
-    from everybase.core import Term
+    from everybase.core import Arg, Term
 
     from ..values import BoolValue, NoneValue
 
@@ -54,19 +54,17 @@ class SetLikeProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def union(self, other: set[ElementT] | frozenset[ElementT] | Term) -> CollectionResultT: ...
+    def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT: ...
     def intersection(
-        self, other: set[ElementT] | frozenset[ElementT] | Term
+        self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT: ...
-    def difference(
-        self, other: set[ElementT] | frozenset[ElementT] | Term
-    ) -> CollectionResultT: ...
+    def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT: ...
     def symmetric_difference(
-        self, other: set[ElementT] | frozenset[ElementT] | Term
+        self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT: ...
-    def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue: ...
-    def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue: ...
-    def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue: ...
+    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue: ...
+    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue: ...
+    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue: ...
 
 
 class MutableSetProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -82,18 +80,16 @@ class MutableSetProtocol[CollectionT, ElementT, CollectionResultT, ElementResult
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def add(self, value: ElementT) -> NoneValue: ...
-    def remove(self, value: ElementT) -> NoneValue: ...
-    def discard(self, value: ElementT) -> NoneValue: ...
+    def add(self, value: Arg[ElementT]) -> NoneValue: ...
+    def remove(self, value: Arg[ElementT]) -> NoneValue: ...
+    def discard(self, value: Arg[ElementT]) -> NoneValue: ...
     def pop(self) -> ElementResultT: ...
     def clear(self) -> NoneValue: ...
-    def update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue: ...
-    def intersection_update(
-        self, other: set[ElementT] | frozenset[ElementT] | Term
-    ) -> NoneValue: ...
-    def difference_update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue: ...
+    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue: ...
+    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue: ...
+    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue: ...
     def symmetric_difference_update(
-        self, other: set[ElementT] | frozenset[ElementT] | Term
+        self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> NoneValue: ...
 
 
@@ -121,47 +117,47 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         """Override in subclass to wrap result in appropriate set type."""
         raise NotImplementedError()
 
-    def union(self, other: set[ElementT] | frozenset[ElementT] | Term) -> CollectionResultT:
+    def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """Set union."""
         from ..morphisms.collections.set import UnionOp
 
         return cast("CollectionResultT", self._wrap_set_result(UnionOp(self, other)))
 
-    def intersection(self, other: set[ElementT] | frozenset[ElementT] | Term) -> CollectionResultT:
+    def intersection(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """Set intersection."""
         from ..morphisms.collections.set import IntersectionOp
 
         return cast("CollectionResultT", self._wrap_set_result(IntersectionOp(self, other)))
 
-    def difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> CollectionResultT:
+    def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """Set difference."""
         from ..morphisms.collections.set import DifferenceOp
 
         return cast("CollectionResultT", self._wrap_set_result(DifferenceOp(self, other)))
 
     def symmetric_difference(
-        self, other: set[ElementT] | frozenset[ElementT] | Term
+        self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT:
         """Set symmetric difference."""
         from ..morphisms.collections.set import SymmetricDifferenceOp
 
         return cast("CollectionResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
-    def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
+    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue:
         """Check if subset."""
         from ..morphisms.collections.set import IsSubsetOp
         from ..values import BoolValue
 
         return BoolValue(IsSubsetOp(self, other))
 
-    def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
+    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue:
         """Check if superset."""
         from ..morphisms.collections.set import IsSupersetOp
         from ..values import BoolValue
 
         return BoolValue(IsSupersetOp(self, other))
 
-    def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
+    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue:
         """Check if disjoint."""
         from ..morphisms.collections.set import IsDisjointOp
         from ..values import BoolValue
@@ -181,21 +177,21 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def add(self, value: ElementT) -> NoneValue:
+    def add(self, value: Arg[ElementT]) -> NoneValue:
         """Add element to set."""
         from ..morphisms.collections.set import AddCmd
         from ..values import NoneValue
 
         return NoneValue(AddCmd(self, value))
 
-    def remove(self, value: ElementT) -> NoneValue:
+    def remove(self, value: Arg[ElementT]) -> NoneValue:
         """Remove element from set. Returns INVALID if not found."""
         from ..morphisms.collections.set import RemoveCmd
         from ..values import NoneValue
 
         return NoneValue(RemoveCmd(self, value))
 
-    def discard(self, value: ElementT) -> NoneValue:
+    def discard(self, value: Arg[ElementT]) -> NoneValue:
         """Remove element if present (no error if absent)."""
         from ..morphisms.collections.set import DiscardCmd
         from ..values import NoneValue
@@ -215,21 +211,21 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return NoneValue(ClearCmd(self))
 
-    def update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue:
+    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue:
         """Add all elements from other."""
         from ..morphisms.collections.set import SetUpdateCmd
         from ..values import NoneValue
 
         return NoneValue(SetUpdateCmd(self, other))
 
-    def intersection_update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue:
+    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue:
         """Keep only elements found in both."""
         from ..morphisms.collections.set import IntersectionUpdateCmd
         from ..values import NoneValue
 
         return NoneValue(IntersectionUpdateCmd(self, other))
 
-    def difference_update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue:
+    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue:
         """Remove all elements found in other."""
         from ..morphisms.collections.set import DifferenceUpdateCmd
         from ..values import NoneValue
@@ -237,7 +233,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return NoneValue(DifferenceUpdateCmd(self, other))
 
     def symmetric_difference_update(
-        self, other: set[ElementT] | frozenset[ElementT] | Term
+        self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> NoneValue:
         """Keep elements in either set but not both."""
         from ..morphisms.collections.set import SymmetricDifferenceUpdateCmd
