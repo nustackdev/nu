@@ -24,7 +24,7 @@ from io import StringIO
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
 import rdbpy
-from virtuals.tkv.storage import StorageProtocol
+from virtuals.tkv import StorageProtocol
 
 import eb_virtuals as ebv
 from eb_virtuals import Atomic
@@ -48,7 +48,7 @@ L1_KEYS = [("/", "k", str(i)) for i in range(N)]
 STR_KEYS = [f"k{i}" for i in range(N)]
 
 L4_PUT = Atomic(FlatShape.value.store(VALUE))
-L4_GET = Atomic(FlatShape.value.load())
+L4_GET = Atomic(FlatShape.value)
 L4_SEED = Atomic(FlatShape.value.store(VALUE))
 
 

@@ -1,12 +1,11 @@
 # ruff: noqa: D102
-"""Collection-level capability bases — load, store, erase, exists.
+"""Collection-level capability bases — store, erase, exists.
 
-Same API as item capabilities but distinct morphism nodes for deformation
-matching. All use parent[address] primitives.
+Refs ARE terms — executing a collection ref reads its value (via fetch).
+No separate load() needed.
 
-CollectionGettableBase: .load() wrapping CollectionGetOp
-CollectionSettableBase: .store(data) wrapping CollectionSetCmd
-CollectionDeletableBase: .erase() wrapping CollectionDeleteCmd
+CollectionSettableBase: .store(data) wrapping CollectionStoreCmd
+CollectionDeletableBase: .erase() wrapping CollectionEraseCmd
 CollectionExistableBase: .exists(), .missing()
 """
 
@@ -25,7 +24,6 @@ if TYPE_CHECKING:
 __all__ = [
     "CollectionDeletableBase",
     "CollectionExistableBase",
-    "CollectionGettableBase",
     "CollectionSettableBase",
 ]
 
@@ -47,25 +45,10 @@ class CollectionExistableBase:
         return BoolValue(CollectionMissingOp(self))
 
 
-class CollectionGettableBase[CollectionTypeT]:
-    """Base for collection refs that can read their value.
-
-    Provides load() using CollectionGetOp.
-    """
-
-    @abstractmethod
-    def result(self, op: Term) -> CollectionTypeT: ...
-
-    def load(self) -> CollectionTypeT:
-        from everybase.shape.morphisms.collection import CollectionGetOp
-
-        return self.result(CollectionGetOp(self))
-
-
 class CollectionSettableBase[CollectionTypeT, CollectionT]:
     """Base for collection refs that can replace their contents.
 
-    Provides store(data) using CollectionSetCmd.
+    Provides store(data) using CollectionStoreCmd.
     """
 
     @abstractmethod
@@ -75,18 +58,18 @@ class CollectionSettableBase[CollectionTypeT, CollectionT]:
         self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]
     ) -> CollectionTypeT:
         from everybase.abc import ensure_term
-        from everybase.shape.morphisms.collection import CollectionSetCmd
+        from everybase.shape.morphisms.collection import CollectionStoreCmd
 
-        return self.result(CollectionSetCmd(self, ensure_term(value)))
+        return self.result(CollectionStoreCmd(self, ensure_term(value)))
 
 
 class CollectionDeletableBase:
     """Base for collection refs that can be deleted from parent.
 
-    Provides erase() using CollectionDeleteCmd: del parent[address].
+    Provides erase() using CollectionEraseCmd: del parent[address].
     """
 
     def erase(self) -> NoneValue:
-        from everybase.shape.morphisms.collection import CollectionDeleteCmd
+        from everybase.shape.morphisms.collection import CollectionEraseCmd
 
-        return NoneValue(CollectionDeleteCmd(self))
+        return NoneValue(CollectionEraseCmd(self))

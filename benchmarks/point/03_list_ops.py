@@ -49,8 +49,8 @@ def _build_terms(n: int) -> dict:
     return {
         "store_int": Atomic(ListBench.ints.store(int_data)),
         "store_str": Atomic(ListBench.strs.store(str_data)),
-        "read_int": Atomic(ListBench.ints.load()),
-        "read_by_index": [Atomic(ListBench.ints[i].load()) for i in range(n)],
+        "read_int": Atomic(ListBench.ints),
+        "read_by_index": [Atomic(ListBench.ints[i]) for i in range(n)],
         "append": [Atomic(ListBench.ints.append(i)) for i in range(n)],
         "clear": Atomic(ListBench.ints.store([])),
     }

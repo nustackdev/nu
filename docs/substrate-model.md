@@ -52,7 +52,7 @@ Layer       What it provides                    Example (everybase.shape)
             Context, Model
 
 2. model    Ref types, morphisms,               everybase.shape
-            capabilities for the topology       (ItemRef, ItemGetOp, ShapesMappingRef)
+            capabilities for the topology       (ItemRef, ItemLoadOp, ShapesMappingRef)
 
 3. adapter  Concrete storage wiring             eb_virtuals (KV views)
             (resolve → location, fetch → data)  eb_dict (plain dicts)
@@ -72,7 +72,7 @@ Each layer answers a different question:
 **everybase.shape** (hierarchical, in-house):
 ```
 core     → everybase (Term, Ref, Context)
-model    → everybase.shape (ItemRef, ShapesMappingRef, ItemGetOp, Shape)
+model    → everybase.shape (ItemRef, ShapesMappingRef, ItemLoadOp, Shape)
 adapter  → eb_virtuals (KV views, transactions) | eb_dict (plain dicts)
 app      → Market(Shape), WeatherStation(Shape), etc.
 ```

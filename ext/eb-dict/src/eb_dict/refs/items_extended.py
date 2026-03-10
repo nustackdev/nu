@@ -63,7 +63,7 @@ from everybase.abc import (
     ensure_term,
 )
 from everybase.shape import Slot
-from everybase.shape.morphisms.item import ItemSetCmd
+from everybase.shape.morphisms.item import ItemStoreCmd
 
 from .base import RefBase
 
@@ -122,7 +122,7 @@ class DecimalRef(RefBase[str], DecimalType):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return DecimalValue(ItemSetCmd(self, ensure_term(val)))
+        return DecimalValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class FractionRef(RefBase[str], FractionType):
@@ -149,7 +149,7 @@ class FractionRef(RefBase[str], FractionType):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return FractionValue(ItemSetCmd(self, ensure_term(val)))
+        return FractionValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class ComplexRef(RefBase[str], ComplexType):
@@ -187,7 +187,7 @@ class ComplexRef(RefBase[str], ComplexType):
             val = f"{value.real},{value.imag}"
         else:
             val = str(value)
-        return ComplexValue(ItemSetCmd(self, ensure_term(val)))
+        return ComplexValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class BasisPointRef(RefBase[int], BasisPointType):
@@ -214,7 +214,7 @@ class BasisPointRef(RefBase[int], BasisPointType):
             val = ToIntOp(value)
         else:
             val = int(value)
-        return BasisPointValue(ItemSetCmd(self, ensure_term(val)))
+        return BasisPointValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class PercentageRef(RefBase[float], PercentageType):
@@ -241,7 +241,7 @@ class PercentageRef(RefBase[float], PercentageType):
             val = ToFloatOp(value)
         else:
             val = float(value)
-        return PercentageValue(ItemSetCmd(self, ensure_term(val)))
+        return PercentageValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 # =============================================================================
@@ -274,7 +274,7 @@ class DateRef(RefBase[str], DateType):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return DateValue(ItemSetCmd(self, ensure_term(val)))
+        return DateValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class DatetimeRef(RefBase[str], DatetimeType):
@@ -302,7 +302,7 @@ class DatetimeRef(RefBase[str], DatetimeType):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
+        return DatetimeValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class TimeRef(RefBase[str], TimeType):
@@ -330,7 +330,7 @@ class TimeRef(RefBase[str], TimeType):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return TimeValue(ItemSetCmd(self, ensure_term(val)))
+        return TimeValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class TimedeltaRef(RefBase[float], TimedeltaType):
@@ -361,7 +361,7 @@ class TimedeltaRef(RefBase[float], TimedeltaType):
             val = value.total_seconds()
         else:
             val = float(value)
-        return TimedeltaValue(ItemSetCmd(self, ensure_term(val)))
+        return TimedeltaValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class TimezoneRef(RefBase[str], TimezoneType):
@@ -427,7 +427,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
                 val = f"{sign}{hours:02d}:{minutes:02d}"
         else:
             val = str(value)
-        return TimezoneValue(ItemSetCmd(self, ensure_term(val)))
+        return TimezoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 # =============================================================================
@@ -459,7 +459,7 @@ class PathRef(RefBase[str], PathType):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return PathValue(ItemSetCmd(self, ensure_term(val)))
+        return PathValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class UUIDRef(RefBase[str], UUIDType):
@@ -486,4 +486,4 @@ class UUIDRef(RefBase[str], UUIDType):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return UUIDValue(ItemSetCmd(self, ensure_term(val)))
+        return UUIDValue(ItemStoreCmd(self, ensure_term(val)))

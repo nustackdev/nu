@@ -181,10 +181,10 @@ _v_write = Seq(
     _v_leaf.d.store(13),
 )
 _v_read = Seq(
-    _v_leaf.a.load(),
-    _v_leaf.b.load(),
-    _v_leaf.c.load(),
-    _v_leaf.d.load(),
+    _v_leaf.a,
+    _v_leaf.b,
+    _v_leaf.c,
+    _v_leaf.d,
 )
 
 v_write_at = Atomic(_v_write)
@@ -200,10 +200,10 @@ d_write = Seq(
     _d_leaf.d.store(13),
 )
 d_read = Seq(
-    _d_leaf.a.load(),
-    _d_leaf.b.load(),
-    _d_leaf.c.load(),
-    _d_leaf.d.load(),
+    _d_leaf.a,
+    _d_leaf.b,
+    _d_leaf.c,
+    _d_leaf.d,
 )
 di_write = dict_inline_refs(d_write)
 di_read = dict_inline_refs(d_read)

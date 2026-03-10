@@ -91,9 +91,9 @@ DICT_TERMS = {
     "d2_write": Atomic(Root.inner.count.store(42)),
     "d4_write": Atomic(Root.inner.inner.inner.count.store(42)),
     "d6_write": Atomic(Root.inner.inner.inner.inner.inner.value.store(42)),
-    "d2_read": Atomic(Root.inner.count.load()),
-    "d4_read": Atomic(Root.inner.inner.inner.count.load()),
-    "d6_read": Atomic(Root.inner.inner.inner.inner.inner.value.load()),
+    "d2_read": Atomic(Root.inner.count),
+    "d4_read": Atomic(Root.inner.inner.inner.count),
+    "d6_read": Atomic(Root.inner.inner.inner.inner.inner.value),
 }
 
 DICT_SEEDS = {
@@ -111,14 +111,14 @@ LIST_SEED = Atomic(
 )
 
 LIST_TERMS = {
-    "list_pos_read": Atomic(ListRoot.data.items[0].load()),
+    "list_pos_read": Atomic(ListRoot.data.items[0]),
     "list_pos_write": Atomic(ListRoot.data.items[2].store(999)),
     # Negative index — triggers normalize_address (slow path)
-    "list_neg_read": Atomic(ListRoot.data.items[-1].load()),
+    "list_neg_read": Atomic(ListRoot.data.items[-1]),
     "list_neg_write": Atomic(ListRoot.data.items[-1].store(999)),
     # Mixed: dict nav + list access
-    "mixed_pos_read": Atomic(ListRoot.data.items[4].load()),
-    "mixed_neg_read": Atomic(ListRoot.data.items[-2].load()),
+    "mixed_pos_read": Atomic(ListRoot.data.items[4]),
+    "mixed_neg_read": Atomic(ListRoot.data.items[-2]),
 }
 
 

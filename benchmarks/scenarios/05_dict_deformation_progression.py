@@ -52,13 +52,13 @@ WRITE_VALUES = ["Alice", 30, "alice@example.com", 99.5]
 # ── 1. Raw everydict — standard morphisms ────────────────────────────────────
 
 raw_write = Seq(*[f.store(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)])
-raw_read = Seq(*[f.load() for f in FIELDS])
+raw_read = Seq(*FIELDS)
 
 
 # ── 2. Inline refs — inline_refs ─────────────────────────────────────────────
 
 inline_write = inline_refs(Seq(*[f.store(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)]))
-inline_read = inline_refs(Seq(*[f.load() for f in FIELDS]))
+inline_read = inline_refs(Seq(*FIELDS))
 
 
 # ── Pure Python dict baseline ────────────────────────────────────────────────

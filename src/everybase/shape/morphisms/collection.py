@@ -2,7 +2,7 @@
 """Collection-level morphisms — get, set, delete, exists, missing.
 
 Same logic as item morphisms but distinct tree node types, so substrates
-can match on CollectionGetOp vs ItemGetOp for type-specific deformations
+can match on CollectionLoadOp vs ItemLoadOp for type-specific deformations
 (e.g. PV primitive optimizations only target Item* variants).
 
 All ops use the same parent[address] primitives as item morphisms.
@@ -20,15 +20,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CollectionDeleteCmd",
+    "CollectionEraseCmd",
     "CollectionExistsOp",
-    "CollectionGetOp",
+    "CollectionLoadOp",
     "CollectionMissingOp",
-    "CollectionSetCmd",
+    "CollectionStoreCmd",
 ]
 
 
-class CollectionGetOp[T](Operation, Morphism[T | Sentinel]):
+class CollectionLoadOp[T](Operation, Morphism[T | Sentinel]):
     """Read collection from parent: parent[address]."""
 
     def __init__(self, ref: object) -> None:
@@ -44,10 +44,10 @@ class CollectionGetOp[T](Operation, Morphism[T | Sentinel]):
             return EMPTY
 
     def __repr__(self) -> str:
-        return f"CollectionGetOp({self.ref!r})"
+        return f"CollectionLoadOp({self.ref!r})"
 
 
-class CollectionSetCmd[T](Command, Morphism[T]):
+class CollectionStoreCmd[T](Command, Morphism[T]):
     """Write collection to parent: parent[address] = data."""
 
     def __init__(self, ref: object, data: Term[T | Sentinel]) -> None:
@@ -66,10 +66,10 @@ class CollectionSetCmd[T](Command, Morphism[T]):
         return data
 
     def __repr__(self) -> str:
-        return f"CollectionSetCmd({self.ref!r}, {self.data_expr!r})"
+        return f"CollectionStoreCmd({self.ref!r}, {self.data_expr!r})"
 
 
-class CollectionDeleteCmd(Command, Morphism[None]):
+class CollectionEraseCmd(Command, Morphism[None]):
     """Delete collection from parent: del parent[address]."""
 
     def __init__(self, ref: object) -> None:
@@ -83,7 +83,7 @@ class CollectionDeleteCmd(Command, Morphism[None]):
         return None
 
     def __repr__(self) -> str:
-        return f"CollectionDeleteCmd({self.ref!r})"
+        return f"CollectionEraseCmd({self.ref!r})"
 
 
 class CollectionExistsOp(Operation, Morphism[bool]):

@@ -58,22 +58,22 @@ async def main():
             await Invoice.receipt_path.store(Path("/invoices/2025/1042.pdf")).execute(ctx)
 
             # -- read back --
-            amt = await Invoice.amount.load().execute(ctx)
+            amt = await Invoice.amount.execute(ctx)
             print(f"Amount: {amt}")
 
-            tax = await Invoice.tax_rate.load().execute(ctx)
+            tax = await Invoice.tax_rate.execute(ctx)
             print(f"Tax rate: {tax}")
 
-            created = await Invoice.created_at.load().execute(ctx)
+            created = await Invoice.created_at.execute(ctx)
             print(f"Created: {created}")
 
-            due = await Invoice.due_in.load().execute(ctx)
+            due = await Invoice.due_in.execute(ctx)
             print(f"Due in: {due}")
 
-            receipt = await Invoice.receipt_path.load().execute(ctx)
+            receipt = await Invoice.receipt_path.execute(ctx)
             print(f"Receipt: {receipt}")
 
-            uid = await Invoice.id.load().execute(ctx)
+            uid = await Invoice.id.execute(ctx)
             print(f"UUID: {uid}")
 
 

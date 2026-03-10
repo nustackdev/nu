@@ -26,7 +26,7 @@ write_flow = Transaction(
 )
 read_flow = Snapshot(
     Seq(
-        *[f.load() for i in range(N) for f in FIELDS],
+        *[f for i in range(N) for f in FIELDS],
     )
 )
 

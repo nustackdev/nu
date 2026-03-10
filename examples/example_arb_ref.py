@@ -32,7 +32,7 @@ from everybase.abc import (
     ValueBase,
     ensure_term,
 )
-from everybase.shape import ItemGetOp, ItemRef, ItemSetCmd, Shape, Slot
+from everybase.shape import ItemRef, ItemStoreCmd, Shape, Slot
 
 
 # =============================================
@@ -107,10 +107,11 @@ class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
             val = value
         else:
             raise TypeError(f"Unsupported type for datetime: {type(value)}")
-        return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
+        return DatetimeValue(ItemStoreCmd(self, ensure_term(val)))
 
-    def load(self) -> DatetimeValue:
-        return DatetimeValue.from_iso(StrValue(ItemGetOp(self)))
+    def coerce(self, raw: str) -> datetime:
+        """Convert ISO string from storage to datetime."""
+        return datetime.fromisoformat(raw)
 
 
 # =============================================
@@ -159,7 +160,7 @@ async def main():
             ctx = ctx.bind(root_view, View, PVSymbolInfo)
 
             await PVSymbolInfo.test_dt.store(datetime.now()).execute(ctx)
-            print("Get: ", await PVSymbolInfo.test_dt.load().execute(ctx))
+            print("Get: ", await PVSymbolInfo.test_dt.execute(ctx))
 
 
 if __name__ == "__main__":

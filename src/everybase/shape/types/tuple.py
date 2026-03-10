@@ -11,7 +11,6 @@ from everybase.abc import Object
 from everybase.abc import SequenceBase as _EB_SequenceBase
 from everybase.shape.capabilities import (
     CollectionExistableBase,
-    CollectionGettableBase,
 )
 
 
@@ -23,7 +22,6 @@ __all__ = [
 class TupleType[T](
     _EB_SequenceBase[tuple[T, ...], T, object, object],
     CollectionExistableBase,
-    CollectionGettableBase[object],
     Object[tuple],
 ):
     """Tuple — immutable sequence."""

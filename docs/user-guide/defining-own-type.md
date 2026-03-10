@@ -87,7 +87,7 @@ The RefBase defines how to read from and write to storage. Use everybase.shape t
 from everybase import Arg, Term
 from everybase.abc import ToStrOp, ensure_term
 from everybase.shape import ItemRef
-from everybase.shape import ItemGetOp, ItemSetCmd
+from everybase.shape import ItemLoadOp, ItemStoreCmd
 
 
 class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
@@ -99,11 +99,11 @@ class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return PubkeyValue(ItemSetCmd(self, ensure_term(val)))
+        return PubkeyValue(ItemStoreCmd(self, ensure_term(val)))
 
     def get(self) -> PubkeyValue:
         # Read from storage (base58 string) and convert back
-        return PubkeyValue.from_string(StrValue(ItemGetOp(self)))
+        return PubkeyValue.from_string(StrValue(ItemLoadOp(self)))
 ```
 
 Key points:
@@ -123,7 +123,7 @@ def set(self, value: Arg[NativeType | StorageType]) -> MyValue:
         val = ToStrOp(value)   # or ToIntOp / ToFloatOp
     else:
         val = str(value)       # or int() / float()
-    return MyValue(ItemSetCmd(self, ensure_term(val)))
+    return MyValue(ItemStoreCmd(self, ensure_term(val)))
 ```
 
 How it works:
@@ -276,7 +276,7 @@ class LocalCurveRef(ebv.ItemRef[dict, LocalCurveValue], LocalCurveType):
             val = value.to_dict()                      # immediate serialization
         else:
             val = value                                # raw dict passthrough
-        return LocalCurveValue(ItemSetCmd(self, ensure_term(val)))
+        return LocalCurveValue(ItemStoreCmd(self, ensure_term(val)))
 
     def result(self, op: Term) -> object:
         return LocalCurveValue(FuncCallOp(LocalCurve.from_dict, op))

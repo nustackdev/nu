@@ -152,12 +152,12 @@ _read_seq = Seq(
         term
         for k in USERS
         for term in (
-            UserDB.users[k].name.load(),
-            UserDB.users[k].age.load(),
-            UserDB.users[k].email.load(),
-            UserDB.users[k].score.load(),
-            UserDB.users[k].active.load(),
-            UserDB.users[k].tags.load(),
+            UserDB.users[k].name,
+            UserDB.users[k].age,
+            UserDB.users[k].email,
+            UserDB.users[k].score,
+            UserDB.users[k].active,
+            UserDB.users[k].tags,
         )
     ]
 )
@@ -203,13 +203,13 @@ _d_read_seq = Seq(
         term
         for k in USERS
         for term in (
-            DUserDB.users[k].name.load(),
-            DUserDB.users[k].age.load(),
-            DUserDB.users[k].email.load(),
-            DUserDB.users[k].score.load(),
-            DUserDB.users[k].active.load(),
-            # tags: read each individually (collection .load() not supported on dict substrate)
-            *[DUserDB.users[k].tags[j].load() for j in range(NUM_TAGS)],
+            DUserDB.users[k].name,
+            DUserDB.users[k].age,
+            DUserDB.users[k].email,
+            DUserDB.users[k].score,
+            DUserDB.users[k].active,
+            # tags: read each individually (collection load not supported on dict substrate)
+            *[DUserDB.users[k].tags[j] for j in range(NUM_TAGS)],
         )
     ]
 )

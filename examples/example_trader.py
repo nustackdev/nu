@@ -79,17 +79,14 @@ class SolanaRef(ebv.ItemRef[SolanaClient, SolanaValue], SolanaType):
 
         return Slot(cls)  # type: ignore[return-value]
 
-    def load(self) -> SolanaValue:
-        return SolanaValue(self)
-
     def store(self, value: object) -> SolanaValue:
-        from everybase.shape import ItemSetCmd
+        from everybase.shape import ItemStoreCmd
 
         if isinstance(value, SolanaClient):
             val = SolanaValue(value)
         else:
             val = value
-        return SolanaValue(ItemSetCmd(self, val))
+        return SolanaValue(ItemStoreCmd(self, val))
 
 
 # ---- Shapes ----

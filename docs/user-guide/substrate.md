@@ -107,14 +107,14 @@ class PubkeyValue(ValueBase, PubkeyType):
 
 ```python
 from everybase.shape import ItemRef
-from everybase.shape.morphisms import ItemGetOp, ItemSetCmd
+from everybase.shape.morphisms import ItemLoadOp, ItemStoreCmd
 
 class PubkeyRefBase(ItemRef[Pubkey, PubkeyValue], PubkeyType):
     def get(self) -> PubkeyValue:
-        return PubkeyValue.from_string(StrValue(ItemGetOp(self)))
+        return PubkeyValue.from_string(StrValue(ItemLoadOp(self)))
 
     def set(self, value) -> PubkeyValue:
-        return PubkeyValue(ItemSetCmd(self, ensure_term(str(value))))
+        return PubkeyValue(ItemStoreCmd(self, ensure_term(str(value))))
 ```
 
 **Step 3: Substrate Refs** (one per substrate):

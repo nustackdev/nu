@@ -14,7 +14,6 @@ from everybase.abc import MutableMappingBase as _EB_MutableMappingBase
 from everybase.shape.capabilities import (
     CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionGettableBase,
     CollectionSettableBase,
     ViewObservableBase,
 )
@@ -35,7 +34,6 @@ __all__ = [
 class MappingBase[K, V, CollectionValueT, ValueValueT](
     _EB_MappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     CollectionExistableBase,
-    CollectionGettableBase[CollectionValueT],
 ):
     """Base for mappings — key-value containers in the document model.
 
@@ -49,7 +47,6 @@ class MappingBase[K, V, CollectionValueT, ValueValueT](
 class MutableMappingBase[K, V, CollectionValueT, ValueValueT](
     _EB_MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     CollectionExistableBase,
-    CollectionGettableBase[CollectionValueT],
     CollectionSettableBase[CollectionValueT, dict[K, V]],
     CollectionDeletableBase,
 ):

@@ -1,9 +1,9 @@
 # ruff: noqa: D102
 """Item access morphisms — CRUD for items within collections.
 
-ItemGetOp: Read item value — parent[address]
-ItemSetCmd: Write item value — parent[address] = value
-ItemDeleteCmd: Delete item — del parent[address]
+ItemLoadOp: Read item value — parent[address]
+ItemStoreCmd: Write item value — parent[address] = value
+ItemEraseCmd: Delete item — del parent[address]
 ItemExistsOp: Check if item exists — address in parent
 ItemMissingOp: Check if item is missing — address not in parent
 
@@ -30,15 +30,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ItemDeleteCmd",
+    "ItemEraseCmd",
     "ItemExistsOp",
-    "ItemGetOp",
+    "ItemLoadOp",
     "ItemMissingOp",
-    "ItemSetCmd",
+    "ItemStoreCmd",
 ]
 
 
-class ItemGetOp[T](Operation, Morphism[T | Sentinel]):
+class ItemLoadOp[T](Operation, Morphism[T | Sentinel]):
     """Read item from collection: parent[address].
 
     Uses __getitem__ on the parent collection. Returns EMPTY
@@ -62,10 +62,10 @@ class ItemGetOp[T](Operation, Morphism[T | Sentinel]):
             return EMPTY
 
     def __repr__(self) -> str:
-        return f"ItemGetOp({self.ref!r})"
+        return f"ItemLoadOp({self.ref!r})"
 
 
-class ItemSetCmd[T](Command, Morphism[T]):
+class ItemStoreCmd[T](Command, Morphism[T]):
     """Write item to collection: parent[address] = value.
 
     Uses __setitem__ on the parent collection.
@@ -90,10 +90,10 @@ class ItemSetCmd[T](Command, Morphism[T]):
         return value
 
     def __repr__(self) -> str:
-        return f"ItemSetCmd({self.ref!r}, {self.value_expr!r})"
+        return f"ItemStoreCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemDeleteCmd(Command, Morphism[None]):
+class ItemEraseCmd(Command, Morphism[None]):
     """Delete item from collection: del parent[address].
 
     Uses __delitem__ on the parent collection.
@@ -114,7 +114,7 @@ class ItemDeleteCmd(Command, Morphism[None]):
         return None
 
     def __repr__(self) -> str:
-        return f"ItemDeleteCmd({self.ref!r})"
+        return f"ItemEraseCmd({self.ref!r})"
 
 
 class ItemExistsOp(Operation, Morphism[bool]):

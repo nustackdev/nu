@@ -66,9 +66,9 @@ def _build_terms(n: int) -> dict:
     read_terms = [
         Atomic(
             Seq(
-                Catalog.products[k].name.load(),
-                Catalog.products[k].price.load(),
-                Catalog.products[k].stock.load(),
+                Catalog.products[k].name,
+                Catalog.products[k].price,
+                Catalog.products[k].stock,
             ),
         )
         for k in seed_keys

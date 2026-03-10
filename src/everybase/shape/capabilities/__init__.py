@@ -11,13 +11,11 @@ CollectionClearPrimitivesBase, ItemPrimitive*Base) live in eb_virtuals.capabilit
 from .collection import (
     CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionGettableBase,
     CollectionSettableBase,
 )
 from .item import (
     ItemDeletableBase,
     ItemExistableBase,
-    ItemGettableBase,
     ItemSettableBase,
 )
 
@@ -38,12 +36,10 @@ __all__ = [  # noqa: RUF022
     # Item access bases
     "ItemDeletableBase",
     "ItemExistableBase",
-    "ItemGettableBase",
     "ItemSettableBase",
     # Collection bases
     "CollectionDeletableBase",
     "CollectionExistableBase",
-    "CollectionGettableBase",
     "CollectionSettableBase",
     # Reactive bases
     "PrimitiveObservableBase",

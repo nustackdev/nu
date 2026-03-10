@@ -169,10 +169,10 @@ _read_seq = Seq(
         for cat_key, cat_data in CATEGORIES.items()
         for prod_key in cat_data["products"]
         for term in (
-            Catalog.categories[cat_key].products[prod_key].name.load(),
-            Catalog.categories[cat_key].products[prod_key].price.load(),
-            Catalog.categories[cat_key].products[prod_key].stock.load(),
-            Catalog.categories[cat_key].products[prod_key].rating.load(),
+            Catalog.categories[cat_key].products[prod_key].name,
+            Catalog.categories[cat_key].products[prod_key].price,
+            Catalog.categories[cat_key].products[prod_key].stock,
+            Catalog.categories[cat_key].products[prod_key].rating,
         )
     ]
 )
@@ -224,10 +224,10 @@ _d_read_seq = Seq(
         for cat_key, cat_data in CATEGORIES.items()
         for prod_key in cat_data["products"]
         for term in (
-            DCatalog.categories[cat_key].products[prod_key].name.load(),
-            DCatalog.categories[cat_key].products[prod_key].price.load(),
-            DCatalog.categories[cat_key].products[prod_key].stock.load(),
-            DCatalog.categories[cat_key].products[prod_key].rating.load(),
+            DCatalog.categories[cat_key].products[prod_key].name,
+            DCatalog.categories[cat_key].products[prod_key].price,
+            DCatalog.categories[cat_key].products[prod_key].stock,
+            DCatalog.categories[cat_key].products[prod_key].rating,
         )
     ]
 )

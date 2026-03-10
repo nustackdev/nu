@@ -1,9 +1,11 @@
 # ruff: noqa: D102
-"""Item-level capability bases — load, store, erase, exists for items in collections.
+"""Item-level capability bases — store, erase, exists for items in collections.
 
-ItemGettableBase: .load() wrapping ItemGetOp
-ItemSettableBase: .store(value) wrapping ItemSetCmd
-ItemDeletableBase: .erase() wrapping ItemDeleteCmd
+Refs ARE terms — executing a ref reads its value (via fetch/coerce).
+No separate load() needed. The ref itself is the readable term.
+
+ItemSettableBase: .store(value) wrapping ItemStoreCmd
+ItemDeletableBase: .erase() wrapping ItemEraseCmd
 ItemExistableBase: .exists(), .missing()
 
 These bases are for refs that represent items within a collection.
@@ -34,7 +36,6 @@ if TYPE_CHECKING:
 __all__ = [
     "ItemDeletableBase",
     "ItemExistableBase",
-    "ItemGettableBase",
     "ItemSettableBase",
 ]
 
@@ -56,57 +57,10 @@ class ItemExistableBase:
         return BoolValue(ItemMissingOp(self))
 
 
-class ItemGettableBase[ValueT]:
-    """Base for item refs that can read their value.
-
-    Provides load() using ItemGetOp, returning a typed Value wrapper.
-    Override result() to customize the Value wrapper (e.g. domain types).
-    """
-
-    value_type: type[ValueT]
-
-    def result(self, op: Term) -> object:
-        from everybase.abc import typed_value
-
-        return typed_value(self.value_type, op)
-
-    @overload
-    def load(self: ItemGettableBase[int]) -> IntValue: ...
-
-    @overload
-    def load(self: ItemGettableBase[str]) -> StrValue: ...
-
-    @overload
-    def load(self: ItemGettableBase[bool]) -> BoolValue: ...
-
-    @overload
-    def load(self: ItemGettableBase[float]) -> FloatValue: ...
-
-    @overload
-    def load(self: ItemGettableBase[bytes]) -> BytesValue: ...
-
-    @overload
-    def load(self: ItemGettableBase[None]) -> NoneValue: ...
-
-    @overload
-    def load[V](self: ItemGettableBase[list[V]]) -> ListValue[V]: ...
-
-    @overload
-    def load[K, V](self: ItemGettableBase[dict[K, V]]) -> DictValue[K, V]: ...
-
-    @overload
-    def load[V](self: ItemGettableBase[set[V]]) -> SetValue[V]: ...
-
-    def load(self) -> object:
-        from everybase.shape.morphisms.item import ItemGetOp
-
-        return self.result(ItemGetOp(self))
-
-
 class ItemSettableBase[ValueT]:
     """Base for item refs that can write a value.
 
-    Provides store(value) using ItemSetCmd, returning a typed Value wrapper.
+    Provides store(value) using ItemStoreCmd, returning a typed Value wrapper.
     Override result() to customize the Value wrapper (e.g. domain types).
     """
 
@@ -164,18 +118,18 @@ class ItemSettableBase[ValueT]:
 
     def store(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> object:
         from everybase.abc import ensure_term
-        from everybase.shape.morphisms.item import ItemSetCmd
+        from everybase.shape.morphisms.item import ItemStoreCmd
 
-        return self.result(ItemSetCmd(self, ensure_term(value)))
+        return self.result(ItemStoreCmd(self, ensure_term(value)))
 
 
 class ItemDeletableBase:
     """Base for item refs that can be deleted.
 
-    Provides erase() using ItemDeleteCmd.
+    Provides erase() using ItemEraseCmd.
     """
 
     def erase(self) -> NoneValue:
-        from everybase.shape.morphisms.item import ItemDeleteCmd
+        from everybase.shape.morphisms.item import ItemEraseCmd
 
-        return NoneValue(ItemDeleteCmd(self))
+        return NoneValue(ItemEraseCmd(self))

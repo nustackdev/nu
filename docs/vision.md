@@ -128,9 +128,9 @@ Three patterns are generic — they all follow the same design: everybase.abc de
 A ref has a parent (the collection) and an address (key/index). Operations use standard Python protocols on the parent.
 
 ```python
-ItemGetOp(ref)        →  parent[address]           # __getitem__
-ItemSetCmd(ref, val)  →  parent[address] = val     # __setitem__
-ItemDeleteCmd(ref)    →  del parent[address]       # __delitem__
+ItemLoadOp(ref)        →  parent[address]           # __getitem__
+ItemStoreCmd(ref, val)  →  parent[address] = val     # __setitem__
+ItemEraseCmd(ref)    →  del parent[address]       # __delitem__
 ItemExistsOp(ref)     →  address in parent         # __contains__
 ```
 
@@ -138,9 +138,9 @@ The substrate-specific part is entirely in the **ref** — how the parent naviga
 
 Capability bases wire these to methods:
 
-- `ItemGettableBase` → `.get()` wrapping ItemGetOp
-- `ItemSettableBase` → `.set(value)` wrapping ItemSetCmd
-- `ItemDeletableBase` → `.remove()` wrapping ItemDeleteCmd
+- Refs are terms — executing reads the value (no `.load()` needed)
+- `ItemSettableBase` → `.store(value)` wrapping ItemStoreCmd
+- `ItemDeletableBase` → `.erase()` wrapping ItemEraseCmd
 - `ItemExistableBase` → `.exists()`, `.missing()`
 
 ### Extract / Store

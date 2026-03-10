@@ -20,14 +20,14 @@ class TestUUIDStoreAndLoad:
         """Store and retrieve a UUID value."""
         u = uuid4()
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().execute(ctx)
+        result = await uuid_shape.id.execute(ctx)
         assert result == u
 
     async def test_store_uuid_from_string(self, uuid_shape, ctx):
         """Store UUID from string."""
         uuid_str = "12345678-1234-5678-1234-567812345678"
         await uuid_shape.id.store(uuid_str).execute(ctx)
-        result = await uuid_shape.id.load().execute(ctx)
+        result = await uuid_shape.id.execute(ctx)
         assert result == UUID(uuid_str)
 
     async def test_store_multiple_uuids(self, uuid_shape, ctx):
@@ -38,8 +38,8 @@ class TestUUIDStoreAndLoad:
         await uuid_shape.id.store(id1).execute(ctx)
         await uuid_shape.parent_id.store(id2).execute(ctx)
 
-        assert await uuid_shape.id.load().execute(ctx) == id1
-        assert await uuid_shape.parent_id.load().execute(ctx) == id2
+        assert await uuid_shape.id.execute(ctx) == id1
+        assert await uuid_shape.parent_id.execute(ctx) == id2
 
 
 # ============================================================================
@@ -111,21 +111,21 @@ class TestUUIDComponentAccess:
         """Access UUID version."""
         u = await UUIDRef.uuid4().execute(ctx)
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().version().execute(ctx)
+        result = await uuid_shape.id.version().execute(ctx)
         assert result == 4
 
     async def test_variant(self, uuid_shape, ctx):
         """Access UUID variant."""
         u = await UUIDRef.uuid4().execute(ctx)
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().variant().execute(ctx)
+        result = await uuid_shape.id.variant().execute(ctx)
         assert "RFC" in result or "specified" in result.lower()
 
     async def test_time(self, uuid_shape, ctx):
         """Access UUID time (for version 1)."""
         u = await UUIDRef.uuid1().execute(ctx)
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().time().execute(ctx)
+        result = await uuid_shape.id.time().execute(ctx)
         assert isinstance(result, int)
         assert result > 0
 
@@ -133,14 +133,14 @@ class TestUUIDComponentAccess:
         """Access UUID clock sequence (for version 1)."""
         u = await UUIDRef.uuid1().execute(ctx)
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().clock_seq().execute(ctx)
+        result = await uuid_shape.id.clock_seq().execute(ctx)
         assert isinstance(result, int)
 
     async def test_node(self, uuid_shape, ctx):
         """Access UUID node (for version 1)."""
         u = await UUIDRef.uuid1().execute(ctx)
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().node().execute(ctx)
+        result = await uuid_shape.id.node().execute(ctx)
         assert isinstance(result, int)
 
 
@@ -156,21 +156,21 @@ class TestUUIDConversions:
         """Convert to hex string."""
         uuid_str = "12345678-1234-5678-1234-567812345678"
         await uuid_shape.id.store(UUID(uuid_str)).execute(ctx)
-        result = await uuid_shape.id.load().hex().execute(ctx)
+        result = await uuid_shape.id.hex().execute(ctx)
         assert result == "12345678123456781234567812345678"
 
     async def test_urn(self, uuid_shape, ctx):
         """Convert to URN string."""
         uuid_str = "12345678-1234-5678-1234-567812345678"
         await uuid_shape.id.store(UUID(uuid_str)).execute(ctx)
-        result = await uuid_shape.id.load().urn().execute(ctx)
+        result = await uuid_shape.id.urn().execute(ctx)
         assert result == "urn:uuid:12345678-1234-5678-1234-567812345678"
 
     async def test_bytes(self, uuid_shape, ctx):
         """Convert to bytes."""
         u = uuid4()
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().bytes().execute(ctx)
+        result = await uuid_shape.id.bytes().execute(ctx)
         assert len(result) == 16
         assert result == u.bytes
 
@@ -178,7 +178,7 @@ class TestUUIDConversions:
         """Convert to bytes in little-endian order."""
         u = uuid4()
         await uuid_shape.id.store(u).execute(ctx)
-        result = await uuid_shape.id.load().bytes_le().execute(ctx)
+        result = await uuid_shape.id.bytes_le().execute(ctx)
         assert len(result) == 16
         assert result == u.bytes_le
 
@@ -186,7 +186,7 @@ class TestUUIDConversions:
         """Convert to 128-bit integer."""
         uuid_str = "12345678-1234-5678-1234-567812345678"
         await uuid_shape.id.store(UUID(uuid_str)).execute(ctx)
-        result = await uuid_shape.id.load().int_().execute(ctx)
+        result = await uuid_shape.id.int_().execute(ctx)
         assert result == 0x12345678123456781234567812345678
 
 
@@ -204,7 +204,7 @@ class TestUUIDEquality:
         await uuid_shape.id.store(u).execute(ctx)
         await uuid_shape.parent_id.store(u).execute(ctx)
 
-        result = await uuid_shape.id.load().eq(uuid_shape.parent_id.load()).execute(ctx)
+        result = await uuid_shape.id.eq(uuid_shape.parent_id).execute(ctx)
         assert result is True
 
     async def test_not_equals(self, uuid_shape, ctx):
@@ -212,7 +212,7 @@ class TestUUIDEquality:
         await uuid_shape.id.store(uuid4()).execute(ctx)
         await uuid_shape.parent_id.store(uuid4()).execute(ctx)
 
-        result = await uuid_shape.id.load().ne(uuid_shape.parent_id.load()).execute(ctx)
+        result = await uuid_shape.id.ne(uuid_shape.parent_id).execute(ctx)
         assert result is True
 
 

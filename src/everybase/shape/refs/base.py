@@ -239,6 +239,24 @@ class Ref[T](RefABC[T]):
         ...
 
     # =========================================================================
+    # VALUE COERCION — Storage → Domain conversion
+    # =========================================================================
+
+    def coerce(self, raw: object) -> object:
+        """Convert raw storage value to domain type.
+
+        Called by substrate ``fetch()`` after reading the raw value.
+        Default is identity (return as-is). Override in custom types
+        to convert storage representation to domain objects.
+
+        Example (datetime stored as ISO string)::
+
+            def coerce(self, raw: str) -> datetime:
+                return datetime.fromisoformat(raw)
+        """
+        return raw
+
+    # =========================================================================
     # REPR / DEBUG
     # =========================================================================
 

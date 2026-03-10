@@ -5,18 +5,18 @@ ClearPrimitivesCmd) live in eb_virtuals.morphisms.
 """
 
 from .collection import (
-    CollectionDeleteCmd,
+    CollectionEraseCmd,
     CollectionExistsOp,
-    CollectionGetOp,
+    CollectionLoadOp,
     CollectionMissingOp,
-    CollectionSetCmd,
+    CollectionStoreCmd,
 )
 from .item import (
-    ItemDeleteCmd,
+    ItemEraseCmd,
     ItemExistsOp,
-    ItemGetOp,
+    ItemLoadOp,
     ItemMissingOp,
-    ItemSetCmd,
+    ItemStoreCmd,
 )
 from .reactive import (
     ChangeOp,
@@ -30,16 +30,16 @@ from .reactive import (
 
 __all__ = [
     "ChangeOp",
-    "CollectionDeleteCmd",
+    "CollectionEraseCmd",
     "CollectionExistsOp",
-    "CollectionGetOp",
+    "CollectionLoadOp",
     "CollectionMissingOp",
-    "CollectionSetCmd",
-    "ItemDeleteCmd",
+    "CollectionStoreCmd",
+    "ItemEraseCmd",
     "ItemExistsOp",
-    "ItemGetOp",
+    "ItemLoadOp",
     "ItemMissingOp",
-    "ItemSetCmd",
+    "ItemStoreCmd",
     "OnChangeOp",
     "OnChildChangeOp",
     "OnChildrenChangeOp",

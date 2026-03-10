@@ -1,6 +1,6 @@
 """Scenario: Flat Fields -- 1 shape, 4 fields, no nesting.
 
-Simplest possible case: Shape.field.load() / .store() with depth=1 refs.
+Simplest possible case: Shape.field / .store() with depth=1 refs.
 Measures pure framework overhead without any nesting navigation cost.
 Each field op = 1 ref resolve + 1 morphism execute.
 
@@ -87,7 +87,7 @@ def py_read(data: dict) -> None:
 
 # PV
 _v_write = Seq(*[f.store(i) for i, f in enumerate(V_FIELDS)])
-_v_read = Seq(*[f.load() for f in V_FIELDS])
+_v_read = Seq(*V_FIELDS)
 
 v_write_at = Atomic(_v_write)
 v_read_at = Atomic(_v_read)
@@ -96,7 +96,7 @@ v_read_ai = v_inline_refs(Atomic(_v_read))
 
 # everydict
 d_write = Seq(*[f.store(i) for i, f in enumerate(D_FIELDS)])
-d_read = Seq(*[f.load() for f in D_FIELDS])
+d_read = Seq(*D_FIELDS)
 di_write = dict_inline_refs(d_write)
 di_read = dict_inline_refs(d_read)
 

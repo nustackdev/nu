@@ -25,7 +25,7 @@ from everybase.abc import (
     method,
     prop,
 )
-from everybase.shape import ItemSetCmd, Shape, Slot
+from everybase.shape import ItemStoreCmd, Shape, Slot
 
 
 # =============================================================================
@@ -82,17 +82,13 @@ class CalculatorRef(ItemRef[Calculator, CalculatorValue], CalculatorType):
         """Create a slot for Fraction values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def load(self) -> CalculatorValue:
-        """Load the Calculator value."""
-        return CalculatorValue(self)
-
     def store(self, value: Arg[Calculator]) -> CalculatorValue:
         """Store the Calculator value."""
         if isinstance(value, Calculator):
             val = CalculatorValue(value)
         elif isinstance(value, Term):
             val = value
-        return CalculatorValue(ItemSetCmd(self, val))
+        return CalculatorValue(ItemStoreCmd(self, val))
 
 
 # =============================================================================

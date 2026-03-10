@@ -20,13 +20,13 @@ class TestPathStoreAndLoad:
         """Store and retrieve a path value."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        result = await path_shape.config_path.load().execute(ctx)
+        result = await path_shape.config_path.execute(ctx)
         assert result == p
 
     async def test_store_path_from_string(self, path_shape, ctx):
         """Store path from string."""
         await path_shape.config_path.store("/home/user/file.txt").execute(ctx)
-        result = await path_shape.config_path.load().execute(ctx)
+        result = await path_shape.config_path.execute(ctx)
         assert result == Path("/home/user/file.txt")
 
     async def test_store_multiple_paths(self, path_shape, ctx):
@@ -37,8 +37,8 @@ class TestPathStoreAndLoad:
         await path_shape.config_path.store(config).execute(ctx)
         await path_shape.data_dir.store(data).execute(ctx)
 
-        assert await path_shape.config_path.load().execute(ctx) == config
-        assert await path_shape.data_dir.load().execute(ctx) == data
+        assert await path_shape.config_path.execute(ctx) == config
+        assert await path_shape.data_dir.execute(ctx) == data
 
 
 # ============================================================================
@@ -53,52 +53,52 @@ class TestPathComponentAccess:
         """Access path name (final component)."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        assert await path_shape.config_path.load().name().execute(ctx) == "file.txt"
+        assert await path_shape.config_path.name().execute(ctx) == "file.txt"
 
     async def test_stem(self, path_shape, ctx):
         """Access path stem (name without suffix)."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        assert await path_shape.config_path.load().stem().execute(ctx) == "file"
+        assert await path_shape.config_path.stem().execute(ctx) == "file"
 
     async def test_suffix(self, path_shape, ctx):
         """Access path suffix (extension)."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        assert await path_shape.config_path.load().suffix().execute(ctx) == ".txt"
+        assert await path_shape.config_path.suffix().execute(ctx) == ".txt"
 
     async def test_suffixes(self, path_shape, ctx):
         """Access path suffixes for multi-extension files."""
         p = Path("/home/user/archive.tar.gz")
         await path_shape.config_path.store(p).execute(ctx)
-        result = await path_shape.config_path.load().suffixes().execute(ctx)
+        result = await path_shape.config_path.suffixes().execute(ctx)
         assert result == [".tar", ".gz"]
 
     async def test_parent(self, path_shape, ctx):
         """Access parent directory."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        result = await path_shape.config_path.load().parent().execute(ctx)
+        result = await path_shape.config_path.parent().execute(ctx)
         assert result == Path("/home/user")
 
     async def test_parts(self, path_shape, ctx):
         """Access path parts."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        result = await path_shape.config_path.load().parts().execute(ctx)
+        result = await path_shape.config_path.parts().execute(ctx)
         assert result == ("/", "home", "user", "file.txt")
 
     async def test_root(self, path_shape, ctx):
         """Access path root."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        assert await path_shape.config_path.load().root().execute(ctx) == "/"
+        assert await path_shape.config_path.root().execute(ctx) == "/"
 
     async def test_anchor(self, path_shape, ctx):
         """Access path anchor."""
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
-        assert await path_shape.config_path.load().anchor().execute(ctx) == "/"
+        assert await path_shape.config_path.anchor().execute(ctx) == "/"
 
 
 # ============================================================================
@@ -138,7 +138,7 @@ class TestPathManipulation:
         p = Path("/home/user")
         await path_shape.data_dir.store(p).execute(ctx)
 
-        result = await (path_shape.data_dir.load() / "subdir").execute(ctx)
+        result = await (path_shape.data_dir / "subdir").execute(ctx)
         assert result == Path("/home/user/subdir")
 
     async def test_joinpath(self, path_shape, ctx):
@@ -146,7 +146,7 @@ class TestPathManipulation:
         p = Path("/home/user")
         await path_shape.data_dir.store(p).execute(ctx)
 
-        result = await path_shape.data_dir.load().joinpath("subdir", "file.txt").execute(ctx)
+        result = await path_shape.data_dir.joinpath("subdir", "file.txt").execute(ctx)
         assert result == Path("/home/user/subdir/file.txt")
 
     async def test_with_name(self, path_shape, ctx):
@@ -154,7 +154,7 @@ class TestPathManipulation:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().with_name("other.txt").execute(ctx)
+        result = await path_shape.config_path.with_name("other.txt").execute(ctx)
         assert result == Path("/home/user/other.txt")
 
     async def test_with_stem(self, path_shape, ctx):
@@ -162,7 +162,7 @@ class TestPathManipulation:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().with_stem("other").execute(ctx)
+        result = await path_shape.config_path.with_stem("other").execute(ctx)
         assert result == Path("/home/user/other.txt")
 
     async def test_with_suffix(self, path_shape, ctx):
@@ -170,7 +170,7 @@ class TestPathManipulation:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().with_suffix(".md").execute(ctx)
+        result = await path_shape.config_path.with_suffix(".md").execute(ctx)
         assert result == Path("/home/user/file.md")
 
     async def test_relative_to(self, path_shape, ctx):
@@ -178,7 +178,7 @@ class TestPathManipulation:
         p = Path("/home/user/project/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().relative_to("/home/user").execute(ctx)
+        result = await path_shape.config_path.relative_to("/home/user").execute(ctx)
         assert result == Path("project/file.txt")
 
 
@@ -195,7 +195,7 @@ class TestPathTests:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().is_absolute().execute(ctx)
+        result = await path_shape.config_path.is_absolute().execute(ctx)
         assert result is True
 
     async def test_is_absolute_false(self, path_shape, ctx):
@@ -203,7 +203,7 @@ class TestPathTests:
         p = Path("./file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().is_absolute().execute(ctx)
+        result = await path_shape.config_path.is_absolute().execute(ctx)
         assert result is False
 
     async def test_is_relative_to_true(self, path_shape, ctx):
@@ -211,7 +211,7 @@ class TestPathTests:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().is_relative_to("/home").execute(ctx)
+        result = await path_shape.config_path.is_relative_to("/home").execute(ctx)
         assert result is True
 
     async def test_is_relative_to_false(self, path_shape, ctx):
@@ -219,7 +219,7 @@ class TestPathTests:
         p = Path("/var/log/app.log")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().is_relative_to("/home").execute(ctx)
+        result = await path_shape.config_path.is_relative_to("/home").execute(ctx)
         assert result is False
 
     async def test_match_true(self, path_shape, ctx):
@@ -227,7 +227,7 @@ class TestPathTests:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().match("*.txt").execute(ctx)
+        result = await path_shape.config_path.match("*.txt").execute(ctx)
         assert result is True
 
     async def test_match_false(self, path_shape, ctx):
@@ -235,7 +235,7 @@ class TestPathTests:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().match("*.py").execute(ctx)
+        result = await path_shape.config_path.match("*.py").execute(ctx)
         assert result is False
 
 
@@ -252,7 +252,7 @@ class TestPathConversions:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().as_posix().execute(ctx)
+        result = await path_shape.config_path.as_posix().execute(ctx)
         assert result == "/home/user/file.txt"
 
     async def test_as_uri(self, path_shape, ctx):
@@ -260,7 +260,7 @@ class TestPathConversions:
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)
 
-        result = await path_shape.config_path.load().as_uri().execute(ctx)
+        result = await path_shape.config_path.as_uri().execute(ctx)
         assert result == "file:///home/user/file.txt"
 
 
@@ -277,7 +277,7 @@ class TestPathEquality:
         await path_shape.config_path.store(Path("/home/user")).execute(ctx)
         await path_shape.data_dir.store(Path("/home/user")).execute(ctx)
 
-        result = await path_shape.config_path.load().eq(path_shape.data_dir.load()).execute(ctx)
+        result = await path_shape.config_path.eq(path_shape.data_dir).execute(ctx)
         assert result is True
 
     async def test_not_equals(self, path_shape, ctx):
@@ -285,5 +285,5 @@ class TestPathEquality:
         await path_shape.config_path.store(Path("/home/user")).execute(ctx)
         await path_shape.data_dir.store(Path("/var/log")).execute(ctx)
 
-        result = await path_shape.config_path.load().ne(path_shape.data_dir.load()).execute(ctx)
+        result = await path_shape.config_path.ne(path_shape.data_dir).execute(ctx)
         assert result is True
