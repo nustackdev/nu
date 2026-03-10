@@ -59,6 +59,7 @@ from everybase.abc import (
     FuncCallOp,
     IntValue,
     MethodCallOp,
+    NoneValue,
     StrValue,
     ToFloatOp,
     ToIntOp,
@@ -132,13 +133,13 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DecimalValue.from_str(op)
 
-    def store(self, value: Arg[Decimal | str]) -> DecimalValue:
+    def store(self, value: Arg[Decimal | str]) -> NoneValue:
         """Store the Decimal value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return DecimalValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class FractionRef(ItemRef[str, StrValue], FractionType):
@@ -167,13 +168,13 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
     def result(self, op: Term) -> object:  # noqa: D102
         return FractionValue.from_str(op)
 
-    def store(self, value: Arg[Fraction | str]) -> FractionValue:
+    def store(self, value: Arg[Fraction | str]) -> NoneValue:
         """Store the Fraction value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return FractionValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class ComplexRef(ItemRef[str, StrValue], ComplexType):
@@ -206,7 +207,7 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def store(self, value: Arg[complex | str]) -> ComplexValue:
+    def store(self, value: Arg[complex | str]) -> NoneValue:
         """Store the complex value."""
         if isinstance(value, complex):
             val = f"{value.real},{value.imag}"
@@ -218,7 +219,7 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
                 return f"{c.real},{c.imag}"
 
             val = FuncCallOp(format_complex, value)
-        return ComplexValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
@@ -247,13 +248,13 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
     def result(self, op: Term) -> object:  # noqa: D102
         return BasisPointValue.from_int(op)
 
-    def store(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
+    def store(self, value: Arg[BasisPoint | int]) -> NoneValue:
         """Store the BasisPoint value."""
         if isinstance(value, Term):
             val = ToIntOp(value)
         else:
             val = int(value)
-        return BasisPointValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class PercentageRef(ItemRef[float, FloatValue], PercentageType):
@@ -282,13 +283,13 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
     def result(self, op: Term) -> object:  # noqa: D102
         return PercentageValue.from_float(op)
 
-    def store(self, value: Arg[Percentage | float]) -> PercentageValue:
+    def store(self, value: Arg[Percentage | float]) -> NoneValue:
         """Store the Percentage value."""
         if isinstance(value, Term):
             val = ToFloatOp(value)
         else:
             val = float(value)
-        return PercentageValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 # =============================================================================
@@ -322,13 +323,13 @@ class DateRef(ItemRef[str, StrValue], DateType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DateValue.from_iso(op)
 
-    def store(self, value: Arg[date | str]) -> DateValue:
+    def store(self, value: Arg[date | str]) -> NoneValue:
         """Store the date value. Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return DateValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
@@ -357,13 +358,13 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DatetimeValue.from_iso(op)
 
-    def store(self, value: Arg[datetime | str]) -> DatetimeValue:
+    def store(self, value: Arg[datetime | str]) -> NoneValue:
         """Store the datetime value. Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return DatetimeValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class TimeRef(ItemRef[str, StrValue], TimeType):
@@ -392,13 +393,13 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
     def result(self, op: Term) -> object:  # noqa: D102
         return TimeValue.from_iso(op)
 
-    def store(self, value: Arg[time | str]) -> TimeValue:
+    def store(self, value: Arg[time | str]) -> NoneValue:
         """Store the time value. Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return TimeValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
@@ -427,7 +428,7 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
     def result(self, op: Term) -> object:  # noqa: D102
         return TimedeltaValue.from_seconds(op)
 
-    def store(self, value: Arg[timedelta | float]) -> TimedeltaValue:
+    def store(self, value: Arg[timedelta | float]) -> NoneValue:
         """Store the timedelta value. Stores as float (seconds)."""
         if isinstance(value, Term):
             # timedelta is stdlib — no __float__, so use .total_seconds()
@@ -436,7 +437,7 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
             val = value.total_seconds()
         else:
             val = float(value)
-        return TimedeltaValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
@@ -476,7 +477,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
 
         return TimezoneValue(FuncCallOp(parse_timezone, op))
 
-    def store(self, value: Arg[timezone | str]) -> TimezoneValue:
+    def store(self, value: Arg[timezone | str]) -> NoneValue:
         """Store the timezone value."""
         if isinstance(value, timezone):
             from datetime import UTC
@@ -509,7 +510,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
                 return f"{sign}{hours:02d}:{minutes:02d}"
 
             val = FuncCallOp(format_timezone, value)
-        return TimezoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 # =============================================================================
@@ -543,13 +544,13 @@ class PathRef(ItemRef[str, StrValue], PathType):
     def result(self, op: Term) -> object:  # noqa: D102
         return PathValue.from_str(op)
 
-    def store(self, value: Arg[Path | str]) -> PathValue:
+    def store(self, value: Arg[Path | str]) -> NoneValue:
         """Store the Path value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return PathValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class UUIDRef(ItemRef[str, StrValue], UUIDType):
@@ -578,10 +579,10 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
     def result(self, op: Term) -> object:  # noqa: D102
         return UUIDValue.from_str(op)
 
-    def store(self, value: Arg[UUID | str]) -> UUIDValue:
+    def store(self, value: Arg[UUID | str]) -> NoneValue:
         """Store the UUID value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return UUIDValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))

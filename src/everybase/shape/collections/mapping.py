@@ -47,7 +47,7 @@ class MappingBase[K, V, CollectionValueT, ValueValueT](
 class MutableMappingBase[K, V, CollectionValueT, ValueValueT](
     _EB_MutableMappingBase[dict[K, V], K, V, CollectionValueT, ValueValueT],
     CollectionExistableBase,
-    CollectionSettableBase[CollectionValueT, dict[K, V]],
+    CollectionSettableBase[dict[K, V]],
     CollectionDeletableBase,
 ):
     """Mutable mapping — adds set, delete, update."""

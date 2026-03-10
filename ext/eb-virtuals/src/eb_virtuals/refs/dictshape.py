@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableMappingView
 
@@ -121,12 +121,12 @@ class ShapesDictRef[
         )
 
     @classmethod
-    def slot(
+    def slot[DK: (int, str), S: Shape](
         cls,
-        shape_type: type[T],
+        shape_type: type[S],
         view_type: type[MutableMappingView] | None = None,
-        key_type: type[K] = str,
-    ) -> Self:
+        key_type: type[DK] = str,  # type: ignore[assignment]
+    ) -> ShapesDictRef[DK, S, Value]:
         """Create a slot for this shapes dict ref type.
 
         Args:

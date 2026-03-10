@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableSequenceView
 
@@ -75,11 +75,11 @@ class ShapesListRef[T: Shape](
         )
 
     @classmethod
-    def slot(
+    def slot[S: Shape](
         cls,
-        shape_type: type[T],
+        shape_type: type[S],
         view_type: type[MutableSequenceView] | None = None,
-    ) -> Self:
+    ) -> ShapesListRef[S]:
         """Create a slot for this shapes list ref type.
 
         Args:

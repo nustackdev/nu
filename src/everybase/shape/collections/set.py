@@ -47,7 +47,7 @@ class SetLikeBase[T, CollectionValueT, ElementValueT](
 class MutableSetBase[T, CollectionValueT, ElementValueT](
     _EB_MutableSetBase[set[T], T, CollectionValueT, ElementValueT],
     CollectionExistableBase,
-    CollectionSettableBase[CollectionValueT, set[T]],
+    CollectionSettableBase[set[T]],
     CollectionDeletableBase,
 ):
     """Mutable set — adds add, remove, discard."""

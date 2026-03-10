@@ -46,9 +46,13 @@ class ShapesSequenceRefBase[T: ShapeBase](
         """Create a reference to the shape at the given index."""
         ...
 
-    def __getitem__(self, index: IntArg) -> ShapeRef[T]:
-        """Subscript access — returns a ref to the shape at index."""
-        return self._create_item_ref(index)
+    def __getitem__(self, index: IntArg) -> T:  # type: ignore[override]
+        """Subscript access — returns a ref to the shape at index.
+
+        Return type is T (the Shape class) for Pyright slot navigation.
+        Runtime returns ShapeRef[T].
+        """
+        return self._create_item_ref(index)  # type: ignore[return-value]
 
 
 class MutableShapesSequenceRefBase[T: ShapeBase](
@@ -62,9 +66,9 @@ class MutableShapesSequenceRefBase[T: ShapeBase](
         """Create a reference to the shape at the given index."""
         ...
 
-    def __getitem__(self, index: IntArg) -> MutableShapeRef[T]:
+    def __getitem__(self, index: IntArg) -> T:  # type: ignore[override]
         """Subscript access — returns a ref to the shape at index."""
-        return self._create_item_ref(index)
+        return self._create_item_ref(index)  # type: ignore[return-value]
 
 
 class ReactiveShapesSequenceRefBase[T: ShapeBase](
@@ -78,6 +82,6 @@ class ReactiveShapesSequenceRefBase[T: ShapeBase](
         """Create a reference to the shape at the given index."""
         ...
 
-    def __getitem__(self, index: IntArg) -> ReactiveShapeRef[T]:
+    def __getitem__(self, index: IntArg) -> T:  # type: ignore[override]
         """Subscript access — returns a ref to the shape at index."""
-        return self._create_item_ref(index)
+        return self._create_item_ref(index)  # type: ignore[return-value]

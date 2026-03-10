@@ -14,19 +14,9 @@ The ref must implement fetch_parent(ctx) and resolve_address(ctx).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
-from everybase.abc import (
-    BoolValue,
-    BytesValue,
-    DictValue,
-    FloatValue,
-    IntValue,
-    ListValue,
-    NoneValue,
-    SetValue,
-    StrValue,
-)
+from everybase.abc import BoolValue, NoneValue
 
 
 if TYPE_CHECKING:
@@ -60,67 +50,14 @@ class ItemExistableBase:
 class ItemSettableBase[ValueT]:
     """Base for item refs that can write a value.
 
-    Provides store(value) using ItemStoreCmd, returning a typed Value wrapper.
-    Override result() to customize the Value wrapper (e.g. domain types).
+    Provides store(value) using ItemStoreCmd, returning NoneValue.
     """
 
-    value_type: type[ValueT]
-
-    def result(self, op: Term) -> object:
-        from everybase.abc import typed_value
-
-        return typed_value(self.value_type, op)
-
-    @overload
-    def store(
-        self: ItemSettableBase[int], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> IntValue: ...
-
-    @overload
-    def store(
-        self: ItemSettableBase[str], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> StrValue: ...
-
-    @overload
-    def store(
-        self: ItemSettableBase[bool], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> BoolValue: ...
-
-    @overload
-    def store(
-        self: ItemSettableBase[float], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> FloatValue: ...
-
-    @overload
-    def store(
-        self: ItemSettableBase[bytes], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> BytesValue: ...
-
-    @overload
-    def store(
-        self: ItemSettableBase[None], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> NoneValue: ...
-
-    @overload
-    def store[V](
-        self: ItemSettableBase[list[V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> ListValue[V]: ...
-
-    @overload
-    def store[K, V](
-        self: ItemSettableBase[dict[K, V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> DictValue[K, V]: ...
-
-    @overload
-    def store[V](
-        self: ItemSettableBase[set[V]], value: ValueT | Sentinel | Term[ValueT | Sentinel]
-    ) -> SetValue[V]: ...
-
-    def store(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> object:
+    def store(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> NoneValue:
         from everybase.abc import ensure_term
         from everybase.shape.morphisms.item import ItemStoreCmd
 
-        return self.result(ItemStoreCmd(self, ensure_term(value)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(value)))
 
 
 class ItemDeletableBase:

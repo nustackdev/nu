@@ -13,7 +13,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from everybase.shape.collections import MappingBase, MutableMappingBase, ReactiveMappingBase
 
@@ -60,39 +60,10 @@ class ShapeRef[T: ShapeBase](
         result(op): wrap morphism in typed Value
         _wrap_*: wrap operations in substrate Value types
 
-    The _PASSTHROUGH_ATTRS class variable controls which names skip slot
-    lookup entirely (for performance). Substrates can extend this set.
+    Slot navigation uses __getattr__ (fallback). Methods inherited from
+    Ref, MappingBase, etc. resolve via normal MRO first. Only names not
+    found in the class hierarchy trigger slot lookup.
     """
-
-    _PASSTHROUGH_ATTRS: ClassVar[frozenset[str]] = frozenset(
-        {
-            # Python internals
-            "__class__",
-            "__dict__",
-            "__repr__",
-            "__str__",
-            # Ref base
-            "address",
-            "_address",
-            "parent",
-            "shape",
-            "_shape",
-            "resolve",
-            "execute",
-            "fetch",
-            "is_self_pure",
-            "is_subtree_pure",
-            "get_root_shape",
-            "_type_marker",
-            "_resolve_address",
-            # ShapeRef specific
-            "shape_type",
-            "_shape_type",
-            "key_type",
-            "value_type",
-            "_create_child_ref",
-        }
-    )
 
     def __init__(
         self,
@@ -106,9 +77,6 @@ class ShapeRef[T: ShapeBase](
             shape_type: Type of Shape this Ref points to
             **kwargs: Passed to super (address, parent, owner_shape, etc.)
         """
-        # Set before super() — __getattribute__ checks _shape_type during
-        # parent chain traversal triggered by downstream __init__ (e.g.
-        # ViewRef._try_build_static_path).
         self._shape_type = shape_type
         super().__init__(**kwargs)
 
@@ -141,25 +109,23 @@ class ShapeRef[T: ShapeBase](
 
         raise KeyError(f"{self._shape_type.__name__} has no slot '{key}'")
 
-    def __getattribute__(self, name: str) -> object:
-        """Navigate to nested fields via attribute access.
+    def __getattr__(self, name: str) -> object:
+        """Fallback attribute access — navigate to shape slots.
 
-        1. Passthrough or private attrs → default resolution
-        2. Slot match on shape → create child ref
-        3. Otherwise → default resolution (finds capability methods, etc.)
+        Called only when normal MRO lookup fails, so inherited methods
+        (execute, store, keys, etc.) resolve normally. Slot names that
+        match the shape's _slots dict create child refs on the fly.
         """
-        passthrough = object.__getattribute__(self, "_PASSTHROUGH_ATTRS")
-        if name in passthrough or name.startswith("_"):
-            return object.__getattribute__(self, name)
-
-        shape_type: type[ShapeBase] = object.__getattribute__(self, "_shape_type")
+        shape_type = self._shape_type
 
         if hasattr(shape_type, "_slots") and name in shape_type._slots:
             slot: Slot = shape_type._slots[name]
             return slot.create_ref(owner_shape=shape_type, parent_ref=self)
 
-        # Fall back to default resolution (capability methods, etc.)
-        return object.__getattribute__(self, name)
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+            f" (shape '{shape_type.__name__}' has no slot '{name}')"
+        )
 
 
 class MutableShapeRef[T: ShapeBase](

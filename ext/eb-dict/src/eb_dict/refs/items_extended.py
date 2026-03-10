@@ -57,6 +57,7 @@ from everybase import Arg, Term
 from everybase.abc import (
     FuncCallOp,
     MethodCallOp,
+    NoneValue,
     ToFloatOp,
     ToIntOp,
     ToStrOp,
@@ -117,12 +118,12 @@ class DecimalRef(RefBase[str], DecimalType):
     def result(self, op: Term) -> object:
         return DecimalValue.from_str(op)
 
-    def store(self, value: Arg[Decimal | str]) -> DecimalValue:
+    def store(self, value: Arg[Decimal | str]) -> NoneValue:
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return DecimalValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class FractionRef(RefBase[str], FractionType):
@@ -144,12 +145,12 @@ class FractionRef(RefBase[str], FractionType):
     def result(self, op: Term) -> object:
         return FractionValue.from_str(op)
 
-    def store(self, value: Arg[Fraction | str]) -> FractionValue:
+    def store(self, value: Arg[Fraction | str]) -> NoneValue:
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return FractionValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class ComplexRef(RefBase[str], ComplexType):
@@ -175,7 +176,7 @@ class ComplexRef(RefBase[str], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def store(self, value: Arg[complex | str]) -> ComplexValue:
+    def store(self, value: Arg[complex | str]) -> NoneValue:
         # complex uses custom "real,imag" format — str(complex) gives "(1+2j)"
         if isinstance(value, Term):
 
@@ -187,7 +188,7 @@ class ComplexRef(RefBase[str], ComplexType):
             val = f"{value.real},{value.imag}"
         else:
             val = str(value)
-        return ComplexValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class BasisPointRef(RefBase[int], BasisPointType):
@@ -209,12 +210,12 @@ class BasisPointRef(RefBase[int], BasisPointType):
     def result(self, op: Term) -> object:
         return BasisPointValue.from_int(op)
 
-    def store(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
+    def store(self, value: Arg[BasisPoint | int]) -> NoneValue:
         if isinstance(value, Term):
             val = ToIntOp(value)
         else:
             val = int(value)
-        return BasisPointValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class PercentageRef(RefBase[float], PercentageType):
@@ -236,12 +237,12 @@ class PercentageRef(RefBase[float], PercentageType):
     def result(self, op: Term) -> object:
         return PercentageValue.from_float(op)
 
-    def store(self, value: Arg[Percentage | float]) -> PercentageValue:
+    def store(self, value: Arg[Percentage | float]) -> NoneValue:
         if isinstance(value, Term):
             val = ToFloatOp(value)
         else:
             val = float(value)
-        return PercentageValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 # =============================================================================
@@ -268,13 +269,13 @@ class DateRef(RefBase[str], DateType):
     def result(self, op: Term) -> object:
         return DateValue.from_iso(op)
 
-    def store(self, value: Arg[date | str]) -> DateValue:
+    def store(self, value: Arg[date | str]) -> NoneValue:
         """Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return DateValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
 
 
 class DatetimeRef(RefBase[str], DatetimeType):

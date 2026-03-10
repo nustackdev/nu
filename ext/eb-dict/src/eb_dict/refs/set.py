@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from everybase.abc import AnyValue, SetValue
 from everybase.shape import MutableSetRefBase, Slot
@@ -45,5 +45,5 @@ class SetRef[T](
         self.item_type = item_type
 
     @classmethod
-    def slot(cls, item_type: type[T]) -> Self:
+    def slot[E](cls, item_type: type[E]) -> SetRef[E]:
         return Slot(cls, item_type=item_type)  # type: ignore[return-value]

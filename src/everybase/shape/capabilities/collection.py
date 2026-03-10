@@ -11,7 +11,6 @@ CollectionExistableBase: .exists(), .missing()
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from everybase.abc import BoolValue, NoneValue
@@ -45,22 +44,17 @@ class CollectionExistableBase:
         return BoolValue(CollectionMissingOp(self))
 
 
-class CollectionSettableBase[CollectionTypeT, CollectionT]:
+class CollectionSettableBase[CollectionT]:
     """Base for collection refs that can replace their contents.
 
-    Provides store(data) using CollectionStoreCmd.
+    Provides store(data) using CollectionStoreCmd, returning NoneValue.
     """
 
-    @abstractmethod
-    def result(self, op: Term) -> CollectionTypeT: ...
-
-    def store(
-        self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]
-    ) -> CollectionTypeT:
+    def store(self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]) -> NoneValue:
         from everybase.abc import ensure_term
         from everybase.shape.morphisms.collection import CollectionStoreCmd
 
-        return self.result(CollectionStoreCmd(self, ensure_term(value)))
+        return NoneValue(CollectionStoreCmd(self, ensure_term(value)))
 
 
 class CollectionDeletableBase:

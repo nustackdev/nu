@@ -65,8 +65,8 @@ class ItemLoadOp[T](Operation, Morphism[T | Sentinel]):
         return f"ItemLoadOp({self.ref!r})"
 
 
-class ItemStoreCmd[T](Command, Morphism[T]):
-    """Write item to collection: parent[address] = value.
+class ItemStoreCmd[T](Command, Morphism[None]):
+    """Write item to collection: parent[address] = value. Returns None.
 
     Uses __setitem__ on the parent collection.
 
@@ -80,14 +80,14 @@ class ItemStoreCmd[T](Command, Morphism[T]):
         self.ref = ref
         self.value_expr = value
 
-    async def execute(self, ctx: Context) -> T:
+    async def execute(self, ctx: Context) -> None:
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
         value = await self.value_expr.execute(ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent[address] = value
-        return value
+        return None
 
     def __repr__(self) -> str:
         return f"ItemStoreCmd({self.ref!r}, {self.value_expr!r})"

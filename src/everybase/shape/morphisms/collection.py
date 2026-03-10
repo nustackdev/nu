@@ -47,15 +47,15 @@ class CollectionLoadOp[T](Operation, Morphism[T | Sentinel]):
         return f"CollectionLoadOp({self.ref!r})"
 
 
-class CollectionStoreCmd[T](Command, Morphism[T]):
-    """Write collection to parent: parent[address] = data."""
+class CollectionStoreCmd[T](Command, Morphism[None]):
+    """Write collection to parent: parent[address] = data. Returns None."""
 
     def __init__(self, ref: object, data: Term[T | Sentinel]) -> None:
         super().__init__(ref, data)
         self.ref = ref
         self.data_expr = data
 
-    async def execute(self, ctx: Context) -> T:
+    async def execute(self, ctx: Context) -> None:
         data = await self.data_expr.execute(ctx)
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {data}")
@@ -63,7 +63,7 @@ class CollectionStoreCmd[T](Command, Morphism[T]):
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
         parent[address] = data
-        return data
+        return None
 
     def __repr__(self) -> str:
         return f"CollectionStoreCmd({self.ref!r}, {self.data_expr!r})"
