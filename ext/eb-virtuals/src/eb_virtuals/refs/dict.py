@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtuals.collections import MutableMappingView
+from virtuals.collections import MutableMappingBase
 
 from everybase.abc import (
     AnyValue,
@@ -14,6 +14,7 @@ from everybase.abc import (
     DictValue,
     FloatValue,
     IntValue,
+    IteratorValue,
     ListValue,
     SetValue,
     StrValue,
@@ -65,7 +66,7 @@ class DictRef[
     ],
     ViewRef[
         dict[K, V],
-        MutableMappingView,
+        MutableMappingBase,
     ],
 ):
     """PV mapping reference — document model + PV substrate.
@@ -76,17 +77,17 @@ class DictRef[
     def result(self, op: Term) -> DictValue[K, V]:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_keys_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_values_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_items_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyValue:
         return AnyValue(operand)
@@ -100,7 +101,7 @@ class DictRef[
         address: path.PathAddress | Term,
         value_type: type[V],
         key_type: type[K],
-        view_type: type[MutableMappingView],
+        view_type: type[MutableMappingBase],
         key_value_type: type,
         value_value_type: type,
         parent: ViewRef | None = None,
@@ -129,14 +130,14 @@ class DictRef[
     def slot[DK: (int, str), DV: StorageValue](
         cls,
         value_type: type[DV],
-        view_type: type[MutableMappingView] | None = None,
+        view_type: type[MutableMappingBase] | None = None,
         key_type: type[DK] = str,  # type: ignore[assignment]
     ) -> DictRef[DK, DV]:
         """Create a slot for this dict ref type.
 
         Args:
             value_type: Python type of values (primitives)
-            view_type: View class implementing MutableMappingView protocol
+            view_type: View class implementing MutableMappingBase protocol
             key_type: Python type of keys (default: str)
 
         Returns:

@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtuals.collections import MutableSequenceView
+from virtuals.collections import MutableSequenceBase
 
-from everybase.abc import AnyValue, ListValue, ensure_term
+from everybase.abc import AnyValue, IteratorValue, ListValue, ensure_term
 from everybase.shape import ReactiveShapesSequenceRefBase, Shape, Slot
 
 from .base import ViewRef
@@ -29,7 +29,7 @@ class ShapesListRef[T: Shape](
     ReactiveShapesSequenceRefBase[T],
     ViewRef[
         list[dict],
-        MutableSequenceView,
+        MutableSequenceBase,
     ],
 ):
     """PV shapes list reference — document model + PV substrate."""
@@ -37,11 +37,11 @@ class ShapesListRef[T: Shape](
     def result(self, op: Term) -> ListValue:
         return ListValue(op)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
     def _wrap_sliceable_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+        return ListValue(operand)  # slices stay materialized
 
     def _wrap_element_result(self, operand: Term) -> AnyValue:
         return AnyValue(operand)
@@ -51,7 +51,7 @@ class ShapesListRef[T: Shape](
         *,
         address: path.PathAddress | Term,
         shape_type: type[T],
-        view_type: type[MutableSequenceView],
+        view_type: type[MutableSequenceBase],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -78,13 +78,13 @@ class ShapesListRef[T: Shape](
     def slot[S: Shape](
         cls,
         shape_type: type[S],
-        view_type: type[MutableSequenceView] | None = None,
+        view_type: type[MutableSequenceBase] | None = None,
     ) -> ShapesListRef[S]:
         """Create a slot for this shapes list ref type.
 
         Args:
             shape_type: Shape class for items
-            view_type: View class implementing MutableSequenceView protocol
+            view_type: View class implementing MutableSequenceBase protocol
 
         Returns:
             Slot configured to create ShapesListRef instances

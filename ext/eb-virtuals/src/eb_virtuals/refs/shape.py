@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtuals.collections import MutableMappingView
+from virtuals.collections import MutableMappingBase
 from virtuals.types import Value as StorageValue
 
-from everybase.abc import AnyValue, DictValue, ListValue
+from everybase.abc import AnyValue, DictValue, IteratorValue
 from everybase.shape import ReactiveShapeRef, Shape, Slot
 
 from .base import ViewRef
@@ -28,7 +28,7 @@ class ShapeRef[T: Shape](
     ReactiveShapeRef[T],
     ViewRef[
         dict[str, StorageValue],
-        MutableMappingView,
+        MutableMappingBase,
     ],
 ):
     """PV shape reference — document model + PV substrate.
@@ -41,17 +41,17 @@ class ShapeRef[T: Shape](
         """Wrap morphism in DictValue for shape extract/store."""
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_keys_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_values_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_items_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyValue:
         return AnyValue(operand)
@@ -64,7 +64,7 @@ class ShapeRef[T: Shape](
         *,
         address: path.PathAddress | Term,
         shape_type: type[T],
-        view_type: type[MutableMappingView],
+        view_type: type[MutableMappingBase],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -83,13 +83,13 @@ class ShapeRef[T: Shape](
     def slot[S: Shape](
         cls,
         shape_type: type[S],
-        view_type: type[MutableMappingView] | None = None,
+        view_type: type[MutableMappingBase] | None = None,
     ) -> S:
         """Create a slot for this shape ref type.
 
         Args:
             shape_type: Shape class for the nested structure
-            view_type: View class implementing MutableMappingView protocol
+            view_type: View class implementing MutableMappingBase protocol
 
         Returns:
             Slot configured to create ShapeRef instances

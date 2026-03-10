@@ -24,7 +24,7 @@ from .slot import Slot
 
 
 if TYPE_CHECKING:
-    from everybase import Context, Ref, Sentinel, Term
+    from everybase import Context, Ref, Sentinel
     from everybase.abc import NoneValue
 
 
@@ -162,11 +162,11 @@ class Shape(Model, metaclass=ShapeMeta):
     # Market.orders[0].execute(ctx) etc.
     if TYPE_CHECKING:
 
-        async def execute(self, ctx: Context) -> dict[str, object] | Sentinel:  # noqa: D102
+        async def execute(self, ctx: Context) -> object | Sentinel:  # noqa: D102
             ...
 
         def store(  # noqa: D102
-            self, value: dict[str, object] | Sentinel | Term[dict[str, object] | Sentinel]
+            self, value: object
         ) -> NoneValue: ...
 
         def erase(self) -> NoneValue:  # noqa: D102

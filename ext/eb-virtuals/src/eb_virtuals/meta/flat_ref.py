@@ -87,8 +87,8 @@ class FlatRef(Term):
 
     async def fetch(self, ctx: Context) -> object | Sentinel:
         """Fetch value/view from virtuals storage."""
-        import virtuals.traits as view_traits
         from virtuals import Empty as StorageEmpty
+        from virtuals.collections import Subscriptable
         from virtuals.loc import path as path_mod
         from virtuals.view import View
 
@@ -102,7 +102,7 @@ class FlatRef(Term):
 
         try:
             parent_view, key = path_mod.navigate_value(root_view, resolved)
-            if isinstance(parent_view, view_traits.Subscriptable):
+            if isinstance(parent_view, Subscriptable):
                 val = parent_view[key]
                 return val if not isinstance(val, StorageEmpty) else EMPTY
             raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")

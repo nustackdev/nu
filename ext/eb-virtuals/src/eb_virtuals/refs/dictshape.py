@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtuals.collections import MutableMappingView
+from virtuals.collections import MutableMappingBase
 
 from everybase.abc import (
     AnyValue,
@@ -14,6 +14,7 @@ from everybase.abc import (
     DictValue,
     FloatValue,
     IntValue,
+    IteratorValue,
     ListValue,
     SetValue,
     StrValue,
@@ -62,7 +63,7 @@ class ShapesDictRef[
     ],
     ViewRef[
         dict[K, dict],
-        MutableMappingView,
+        MutableMappingBase,
     ],
 ):
     """PV shapes dict reference — document model + PV substrate."""
@@ -70,17 +71,17 @@ class ShapesDictRef[
     def result(self, op: Term) -> DictValue:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_keys_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_values_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_items_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyValue:
         return AnyValue(operand)
@@ -95,7 +96,7 @@ class ShapesDictRef[
         key_type: type[K],
         key_value_type: type[KeyValueT],
         shape_type: type[T],
-        view_type: type[MutableMappingView],
+        view_type: type[MutableMappingBase],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -124,14 +125,14 @@ class ShapesDictRef[
     def slot[DK: (int, str), S: Shape](
         cls,
         shape_type: type[S],
-        view_type: type[MutableMappingView] | None = None,
+        view_type: type[MutableMappingBase] | None = None,
         key_type: type[DK] = str,  # type: ignore[assignment]
     ) -> ShapesDictRef[DK, S, Value]:
         """Create a slot for this shapes dict ref type.
 
         Args:
             shape_type: Shape class for values
-            view_type: View class implementing MutableMappingView protocol
+            view_type: View class implementing MutableMappingBase protocol
             key_type: Python type for keys (default: str)
 
         Returns:

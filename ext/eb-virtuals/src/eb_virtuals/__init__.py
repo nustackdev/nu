@@ -11,6 +11,7 @@ Usage:
         profile = ShapeRef.slot(Profile)
 """
 
+import eb_virtuals._compat  # noqa: F401  — register virtuals ABCs
 from eb_virtuals.meta import (
     auto_atomic,
     inline_refs,

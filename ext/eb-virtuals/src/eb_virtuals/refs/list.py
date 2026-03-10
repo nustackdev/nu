@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtuals.collections import MutableSequenceView
+from virtuals.collections import MutableSequenceBase
 
 from everybase.abc import (
     AnyValue,
@@ -14,6 +14,7 @@ from everybase.abc import (
     DictValue,
     FloatValue,
     IntValue,
+    IteratorValue,
     ListValue,
     SetValue,
     StrValue,
@@ -62,7 +63,7 @@ class ListRef[
     ],
     ViewRef[
         list[T],
-        MutableSequenceView,
+        MutableSequenceBase,
     ],
 ):
     """PV sequence reference — document model + PV substrate.
@@ -73,11 +74,11 @@ class ListRef[
     def result(self, op: Term) -> ListValue[T]:
         return ListValue(op)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue[T]:
-        return ListValue(operand)
+    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
     def _wrap_sliceable_result(self, operand: Term) -> ListValue[T]:
-        return ListValue(operand)
+        return ListValue(operand)  # slices stay materialized
 
     def _wrap_element_result(self, operand: Term) -> AnyValue:
         return AnyValue(operand)
@@ -88,7 +89,7 @@ class ListRef[
         address: path.PathAddress | Term,
         item_type: type[T],
         item_value_type: type[ItemValueT],
-        view_type: type[MutableSequenceView],
+        view_type: type[MutableSequenceBase],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -115,13 +116,13 @@ class ListRef[
     def slot[E](
         cls,
         item_type: type[E],
-        view_type: type[MutableSequenceView] | None = None,
+        view_type: type[MutableSequenceBase] | None = None,
     ) -> ListRef[E, Value]:
         """Create a slot for this list ref type.
 
         Args:
             item_type: Python type of items (primitives)
-            view_type: View class implementing MutableSequenceView protocol
+            view_type: View class implementing MutableSequenceBase protocol
 
         Returns:
             Slot configured to create ListRef instances

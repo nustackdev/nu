@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from virtuals.collections import MutableSetView
+from virtuals.collections import MutableSetBase
 
 from everybase.abc import AnyValue, SetValue
 from everybase.shape import ReactiveSetRefBase, Shape, Slot
@@ -26,7 +26,7 @@ __all__ = [
 
 class SetRef[T](
     ReactiveSetRefBase[T, SetValue[T], AnyValue],
-    ViewRef[set[T], MutableSetView],
+    ViewRef[set[T], MutableSetBase],
 ):
     """PV set reference — document model + PV substrate.
 
@@ -47,7 +47,7 @@ class SetRef[T](
         *,
         address: path.PathAddress | Term,
         item_type: type[T],
-        view_type: type[MutableSetView],
+        view_type: type[MutableSetBase],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -61,13 +61,13 @@ class SetRef[T](
     def slot(
         cls,
         item_type: type[T],
-        view_type: type[MutableSetView] | None = None,
+        view_type: type[MutableSetBase] | None = None,
     ) -> Self:
         """Create a slot for this set ref type.
 
         Args:
             item_type: Python type of items (primitives)
-            view_type: View class implementing MutableSetView protocol
+            view_type: View class implementing MutableSetBase protocol
 
         Returns:
             Slot configured to create SetRef instances

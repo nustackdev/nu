@@ -13,15 +13,23 @@ Hierarchy:
 Core vocabulary:
     resolve(ctx) -> Path    - build path from parent chain
     fetch(ctx) -> T         - navigate views and extract value
+
+Lazy/eager facets:
+    ViewRefs default to lazy. Use .lazy / .eager to switch facet.
+    The facet determines how the fetched view behaves on iteration:
+    - lazy: values()/items() yield child Views for containers (no extraction)
+    - eager: values()/items() extract containers to Python objects
 """
 
 from __future__ import annotations
 
+import copy
+from enum import Enum
 from logging import getLogger
-from typing import Generic, TypeVar
+from typing import Generic, Self, TypeVar
 
-import virtuals.traits as view_traits
 from virtuals import Empty as StorageEmpty
+from virtuals.collections import Subscriptable
 from virtuals.loc import path
 from virtuals.view import View
 
@@ -39,6 +47,13 @@ T = TypeVar("T")
 ViewT = TypeVar("ViewT", bound="View")
 
 logger = getLogger(__name__)
+
+
+class Facet(Enum):
+    """View facet — lazy (default) or eager."""
+
+    LAZY = "lazy"
+    EAGER = "eager"
 
 
 def _try_build_static_path(ref: Ref) -> tuple | None:
@@ -67,7 +82,12 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
 
     Used for collection types like dict, list, set views.
     fetch() navigates to and returns the view itself.
+
+    Supports lazy/eager facets (default: lazy).
+    Use .lazy / .eager to switch facet before calling iteration methods.
     """
+
+    _facet: Facet = Facet.LAZY
 
     def __init__(
         self,
@@ -86,6 +106,24 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         self._static_path = _try_build_static_path(self)
 
     @property
+    def lazy(self) -> Self:
+        """Return lazy-faceted ref. Lazy is default — no-op if already lazy."""
+        if self._facet is Facet.LAZY:
+            return self
+        clone = copy.copy(self)
+        clone._facet = Facet.LAZY
+        return clone
+
+    @property
+    def eager(self) -> Self:
+        """Return eager-faceted ref. Iteration extracts containers to Python objects."""
+        if self._facet is Facet.EAGER:
+            return self
+        clone = copy.copy(self)
+        clone._facet = Facet.EAGER
+        return clone
+
+    @property
     def view_type(self) -> type[ViewT]:
         """The View class type at this location."""
         return self._view_type
@@ -93,6 +131,14 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
     @property
     def _type_marker(self) -> type:
         return self._view_type
+
+    def _apply_facet(self, view: ViewT) -> ViewT:
+        """Apply lazy/eager facet to a view if it supports facets."""
+        if self._facet is Facet.EAGER and hasattr(view, "eager"):
+            return view.eager  # type: ignore[return-value]
+        if self._facet is Facet.LAZY and hasattr(view, "lazy"):
+            return view.lazy  # type: ignore[return-value]
+        return view
 
     async def resolve(self, ctx: Context) -> path.PathToView:
         """Build path from parent chain ending at this view.
@@ -143,21 +189,23 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         """Fetch the view from virtuals storage.
 
         Navigates through the view hierarchy to get this view.
+        Applies lazy/eager facet to the returned view.
 
         Args:
             ctx: Execution context with root_view access
 
         Returns:
-            The view instance
+            The faceted view instance
         """
         view_path = await self.resolve(ctx)
         scope = self._root_shape
         root_view = ctx[View, scope]
 
         if not view_path:
-            return root_view  # type: ignore
+            return self._apply_facet(root_view)  # type: ignore
 
-        return path.navigate_view(root_view, view_path)  # type: ignore
+        view = path.navigate_view(root_view, view_path)
+        return self._apply_facet(view)  # type: ignore
 
 
 class PrimitiveRef[T](Ref[T]):
@@ -260,7 +308,7 @@ class PrimitiveRef[T](Ref[T]):
 
         try:
             parent_view, key = path.navigate_value(root_view, value_path)
-            if isinstance(parent_view, view_traits.Subscriptable):
+            if isinstance(parent_view, Subscriptable):
                 val = parent_view[key]
                 if isinstance(val, StorageEmpty):
                     return EMPTY
