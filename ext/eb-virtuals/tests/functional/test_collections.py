@@ -233,7 +233,6 @@ class TestListRefExecution:
         assert result == "gamma"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Lazy slice not yet implemented in virtuals")
     async def test_store_and_slice(self, portfolio_ctx):
         await store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
         result = await Portfolio.tags.slice(1, 3).execute(portfolio_ctx)
