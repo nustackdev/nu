@@ -7,14 +7,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..capabilities import ComparableBase, LogicalBase
-from .base import TypeBase
+from ...capabilities import ComparableBase, LogicalBase
+from ..base import TypeBase
 
 
 if TYPE_CHECKING:
     from everybase.core import BoolArg, Term  # noqa: F401
 
-    from ..values import BoolValue
+    from ...values import BoolValue
 
 
 __all__ = [
@@ -37,11 +37,11 @@ class BoolType(
     """
 
     def _wrap_logical_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)

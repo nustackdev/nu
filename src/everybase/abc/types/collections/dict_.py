@@ -9,15 +9,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..capabilities import ComparableBase
-from ..collections import MutableMappingBase
-from .base import TypeBase
+from ...capabilities import ComparableBase
+from ...collections import MutableMappingBase
+from ..base import TypeBase
 
 
 if TYPE_CHECKING:
     from everybase.core import DictArg, Term  # noqa: F401
 
-    from ..values import AnyValue, BoolValue, DictValue, ListValue  # noqa: F401
+    from ...values import AnyValue, BoolValue, DictValue, ListValue  # noqa: F401
 
 
 __all__ = [
@@ -36,42 +36,42 @@ class DictType[K, V](
     """
 
     def _wrap_comparison_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)
 
     def _wrap_keys_result(self, operand: Term) -> ListValue:
-        from ..values import ListValue
+        from ...values import ListValue
 
         return ListValue(operand)
 
     def _wrap_values_result(self, operand: Term) -> ListValue:
-        from ..values import ListValue
+        from ...values import ListValue
 
         return ListValue(operand)
 
     def _wrap_items_result(self, operand: Term) -> ListValue:
-        from ..values import ListValue
+        from ...values import ListValue
 
         return ListValue(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyValue:
-        from ..values import AnyValue
+        from ...values import AnyValue
 
         return AnyValue(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        from ..values import ListValue
+        from ...values import ListValue
 
         return ListValue(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyValue:
-        from ..values import AnyValue
+        from ...values import AnyValue
 
         return AnyValue(operand)
 
     def __getitem__(self, key: K) -> AnyValue:
-        from ..morphisms import AtOp
-        from ..values import AnyValue
+        from ...morphisms import AtOp
+        from ...values import AnyValue
 
         return AnyValue(AtOp(self, key))

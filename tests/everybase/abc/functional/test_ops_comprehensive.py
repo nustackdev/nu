@@ -20,6 +20,12 @@ from everybase.abc import (
     ListValue,
     SetValue,
     StrValue,
+    ToBoolOp,
+    ToBytesOp,
+    ToFloatOp,
+    ToIntOp,
+    ToListOp,
+    ToStrOp,
     TupleValue,
     all_,
     any_,
@@ -346,55 +352,55 @@ class TestLogicalOps:
 
 
 class TestConversionOps:
-    """Test all type conversion operations."""
+    """Test all type conversion operations via standalone morphisms."""
 
     async def test_to_int_from_float(self, ctx):
         """int(3.14) = 3."""
-        assert await FloatValue(3.14).to_int().execute(ctx) == 3
+        assert await IntValue(ToIntOp(FloatValue(3.14))).execute(ctx) == 3
 
     async def test_to_int_from_str(self, ctx):
         """int('42') = 42."""
-        assert await StrValue("42").to_int().execute(ctx) == 42
+        assert await IntValue(ToIntOp(StrValue("42"))).execute(ctx) == 42
 
     async def test_to_int_from_bool(self, ctx):
         """int(True) = 1."""
-        assert await BoolValue(True).to_int().execute(ctx) == 1
+        assert await IntValue(ToIntOp(BoolValue(True))).execute(ctx) == 1
 
     async def test_to_float_from_int(self, ctx):
         """float(42) = 42.0."""
-        assert await IntValue(42).to_float().execute(ctx) == 42.0
+        assert await FloatValue(ToFloatOp(IntValue(42))).execute(ctx) == 42.0
 
     async def test_to_float_from_str(self, ctx):
         """float('3.14') = 3.14."""
-        assert await StrValue("3.14").to_float().execute(ctx) == 3.14
+        assert await FloatValue(ToFloatOp(StrValue("3.14"))).execute(ctx) == 3.14
 
     async def test_to_str_from_int(self, ctx):
         """str(42) = '42'."""
-        assert await IntValue(42).to_str().execute(ctx) == "42"
+        assert await StrValue(ToStrOp(IntValue(42))).execute(ctx) == "42"
 
     async def test_to_str_from_float(self, ctx):
         """str(3.14) = '3.14'."""
-        assert await FloatValue(3.14).to_str().execute(ctx) == "3.14"
+        assert await StrValue(ToStrOp(FloatValue(3.14))).execute(ctx) == "3.14"
 
     async def test_to_str_from_bool(self, ctx):
         """str(True) = 'True'."""
-        assert await BoolValue(True).to_str().execute(ctx) == "True"
+        assert await StrValue(ToStrOp(BoolValue(True))).execute(ctx) == "True"
 
     async def test_to_bool_from_int_truthy(self, ctx):
         """bool(42) = True."""
-        assert await IntValue(42).to_bool().execute(ctx) is True
+        assert await BoolValue(ToBoolOp(IntValue(42))).execute(ctx) is True
 
     async def test_to_bool_from_int_falsy(self, ctx):
         """bool(0) = False."""
-        assert await IntValue(0).to_bool().execute(ctx) is False
+        assert await BoolValue(ToBoolOp(IntValue(0))).execute(ctx) is False
 
     async def test_to_list_from_tuple(self, ctx):
         """list((1,2,3)) = [1,2,3]."""
-        assert await TupleValue((1, 2, 3)).to_list().execute(ctx) == [1, 2, 3]
+        assert await ListValue(ToListOp(TupleValue((1, 2, 3)))).execute(ctx) == [1, 2, 3]
 
     async def test_to_bytes_from_str(self, ctx):
         """'hello'.encode() = b'hello'."""
-        assert await StrValue("hello").to_bytes().execute(ctx) == b"hello"
+        assert await BytesValue(ToBytesOp(StrValue("hello"))).execute(ctx) == b"hello"
 
 
 # =============================================================================

@@ -7,14 +7,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..capabilities import ComparableBase, LogicalBase, NumericBase
-from .base import TypeBase
+from ...capabilities import ComparableBase, LogicalBase, NumericBase
+from ..base import TypeBase
 
 
 if TYPE_CHECKING:
     from everybase.core import BoolArg, FloatArg, IntArg, Term  # noqa: F401
 
-    from ..values import BoolValue, FloatValue
+    from ...values import BoolValue, FloatValue
 
 
 __all__ = [
@@ -39,34 +39,34 @@ class FloatType(
     """
 
     def _wrap_arithmetic_result(self, operand: Term) -> FloatValue:
-        from ..values import FloatValue
+        from ...values import FloatValue
 
         return FloatValue(operand)
 
     def _wrap_logical_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)
 
     def _wrap_comparison_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)
 
     def __neg__(self) -> FloatValue:
-        from ..morphisms import NegOp
-        from ..values import FloatValue
+        from ...morphisms import NegOp
+        from ...values import FloatValue
 
         return FloatValue(NegOp(self))
 
     def __pos__(self) -> FloatValue:
-        from ..morphisms import PosOp
-        from ..values import FloatValue
+        from ...morphisms import PosOp
+        from ...values import FloatValue
 
         return FloatValue(PosOp(self))
 
     def __abs__(self) -> FloatValue:
-        from ..morphisms import AbsOp
-        from ..values import FloatValue
+        from ...morphisms import AbsOp
+        from ...values import FloatValue
 
         return FloatValue(AbsOp(self))

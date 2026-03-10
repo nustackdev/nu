@@ -9,14 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..capabilities import LogicalBase
-from .base import TypeBase
+from ...capabilities import LogicalBase
+from ..base import TypeBase
 
 
 if TYPE_CHECKING:
     from everybase.core import NoneArg, Term  # noqa: F401
 
-    from ..values import BoolValue, NoneValue  # noqa: F401
+    from ...values import BoolValue, NoneValue  # noqa: F401
 
 
 __all__ = [
@@ -34,6 +34,6 @@ class NoneType(
     """
 
     def _wrap_logical_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)

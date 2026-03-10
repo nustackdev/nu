@@ -10,15 +10,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..capabilities import ComparableBase
-from ..collections import MutableSetBase, SetLikeBase
-from .base import TypeBase
+from ...capabilities import ComparableBase
+from ...collections import MutableSetBase, SetLikeBase
+from ..base import TypeBase
 
 
 if TYPE_CHECKING:
     from everybase.core import FrozenSetArg, SetArg, Term  # noqa: F401
 
-    from ..values import AnyValue, BoolValue, FrozenSetValue, ListValue, SetValue
+    from ...values import AnyValue, BoolValue, FrozenSetValue, ListValue, SetValue
 
 
 __all__ = [
@@ -39,22 +39,22 @@ class SetType[T](
     """
 
     def _wrap_comparison_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)
 
     def _wrap_set_result(self, operand: Term) -> SetValue[T]:
-        from ..values import SetValue
+        from ...values import SetValue
 
         return SetValue(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        from ..values import ListValue
+        from ...values import ListValue
 
         return ListValue(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyValue:
-        from ..values import AnyValue
+        from ...values import AnyValue
 
         return AnyValue(operand)
 
@@ -70,21 +70,21 @@ class FrozenSetType[T](
     """
 
     def _wrap_comparison_result(self, operand: Term) -> BoolValue:
-        from ..values import BoolValue
+        from ...values import BoolValue
 
         return BoolValue(operand)
 
     def _wrap_set_result(self, operand: Term) -> FrozenSetValue[T]:
-        from ..values import FrozenSetValue
+        from ...values import FrozenSetValue
 
         return FrozenSetValue(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        from ..values import ListValue
+        from ...values import ListValue
 
         return ListValue(operand)
 
     def _wrap_element_result(self, operand: Term) -> AnyValue:
-        from ..values import AnyValue
+        from ...values import AnyValue
 
         return AnyValue(operand)

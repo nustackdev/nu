@@ -21,6 +21,10 @@ from everybase.abc import (
     NoneValue,
     SetValue,
     StrValue,
+    ToBoolOp,
+    ToFloatOp,
+    ToIntOp,
+    ToStrOp,
     TupleValue,
     ensure_term,
 )
@@ -265,24 +269,24 @@ class TestIntRefLogical:
 
 
 class TestIntRefConversions:
-    """IntValue type conversion methods."""
+    """IntValue type conversion via standalone morphisms."""
 
     def test_to_float(self):
-        """IntValue.to_float() returns FloatValue."""
+        """ToFloatOp wrapping returns FloatValue."""
         x = IntValue(42)
-        result = x.to_float()
+        result = FloatValue(ToFloatOp(x))
         assert isinstance(result, FloatValue)
 
     def test_to_str(self):
-        """IntValue.to_str() returns StrValue."""
+        """ToStrOp wrapping returns StrValue."""
         x = IntValue(42)
-        result = x.to_str()
+        result = StrValue(ToStrOp(x))
         assert isinstance(result, StrValue)
 
     def test_to_bool(self):
-        """IntValue.to_bool() returns BoolValue."""
+        """ToBoolOp wrapping returns BoolValue."""
         x = IntValue(42)
-        result = x.to_bool()
+        result = BoolValue(ToBoolOp(x))
         assert isinstance(result, BoolValue)
 
 
@@ -387,9 +391,9 @@ class TestFloatRef:
         assert isinstance(result, BoolValue)
 
     def test_to_int(self):
-        """FloatValue.to_int() returns IntValue."""
+        """ToIntOp wrapping returns IntValue."""
         f = FloatValue(3.14)
-        result = f.to_int()
+        result = IntValue(ToIntOp(f))
         assert isinstance(result, IntValue)
 
 

@@ -1,31 +1,24 @@
-"""Abstract ref bases combining traits.
+"""Type hierarchy for everybase.
 
-These are abstract bases that combine traits for common value types.
-Concrete implementations (like IntValue in py/) inherit from these
-and add substrate-specific get() implementations.
+ObjectType → TypeBase → concrete types (primitives, collections, special).
 
-Example:
-    IntType = Numeric + Comparable + Logical + Bitwise + base execution
-    IntValue(IntType) = IntType + Python memory get()
-    KVIntRef(IntType) = IntType + KV storage get()
+Organized into:
+- object.py: ObjectType (universal base — sentinel checks)
+- base.py: TypeBase (everybase kernel identity)
+- primitives/: int, float, bool, str, bytes, none
+- collections/: list, dict, set, frozenset, tuple
+- special/: any, sentinel, empty, invalid
 """
 
 from .base import TypeBase
-from .type_any import AnyType
-from .type_bool import BoolType
-from .type_bytes import BytesType
-from .type_dict import DictType
-from .type_float import FloatType
-from .type_int import IntType
-from .type_list import ListType
-from .type_none import NoneType
-from .type_sentinel import EmptyType, InvalidType, SentinelType
-from .type_set import FrozenSetType, SetType
-from .type_str import StrType
-from .type_tuple import TupleType
+from .collections import DictType, FrozenSetType, ListType, SetType, TupleType
+from .object import ObjectType
+from .primitives import BoolType, BytesType, FloatType, IntType, NoneType, StrType
+from .special import AnyType, EmptyType, InvalidType, SentinelType
 
 
 __all__ = [  # noqa: RUF022
+    "ObjectType",
     "TypeBase",
     # Primitives
     "BoolType",
@@ -33,6 +26,7 @@ __all__ = [  # noqa: RUF022
     "FloatType",
     "StrType",
     "BytesType",
+    "NoneType",
     # Collections
     "ListType",
     "DictType",
@@ -41,7 +35,6 @@ __all__ = [  # noqa: RUF022
     "TupleType",
     # Special
     "AnyType",
-    "NoneType",
     "SentinelType",
     "EmptyType",
     "InvalidType",
