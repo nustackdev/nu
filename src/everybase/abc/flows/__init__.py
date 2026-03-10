@@ -21,7 +21,7 @@ from .asserts import (
 from .control import DoWhile, Forever, If, Seq, Switch, While
 from .error import Assert, Retry, TryCatch
 from .io import Debug, Log, Print
-from .iteration import ForEach, ForRange
+from .iteration import Fold, ForEach, ForRange
 from .parallel import All, Any, Parallel, Race
 from .timing import Debounce, Delay, Throttle, Timeout
 
@@ -40,6 +40,7 @@ __all__ = [  # noqa: RUF022
     "Parallel",
     "Race",
     # Iteration
+    "Fold",
     "ForEach",
     "ForRange",
     # Error handling

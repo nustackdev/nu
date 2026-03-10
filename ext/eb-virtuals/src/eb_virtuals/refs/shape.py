@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableMappingView
 from virtuals.types import Value as StorageValue
@@ -36,15 +36,6 @@ class ShapeRef[T: Shape](
     Inherits attribute navigation and _create_child_ref from everybase.shape ShapeRef.
     Inherits PV path resolution and view fetching from ViewRef.
     """
-
-    # Extend passthrough with PV-specific attributes
-    _PASSTHROUGH_ATTRS: ClassVar[frozenset[str]] = ReactiveShapeRef._PASSTHROUGH_ATTRS | frozenset(
-        {
-            "view_type",
-            "_view_type",
-            "result",
-        }
-    )
 
     def result(self, op: Term) -> DictValue[str, object]:
         """Wrap morphism in DictValue for shape extract/store."""
@@ -89,11 +80,11 @@ class ShapeRef[T: Shape](
         self.value_type: type = object
 
     @classmethod
-    def slot(
+    def slot[S: Shape](
         cls,
-        shape_type: type[T],
+        shape_type: type[S],
         view_type: type[MutableMappingView] | None = None,
-    ) -> T:
+    ) -> S:
         """Create a slot for this shape ref type.
 
         Args:

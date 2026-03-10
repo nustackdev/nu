@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from everybase.abc import (
     AnyValue,
@@ -98,7 +98,9 @@ class ShapesDictRef[K, T: Shape](
         )
 
     @classmethod
-    def slot(cls, shape_type: type[T], key_type: type[K] = str) -> Self:  # type: ignore[assignment]
+    def slot[DK, S: Shape](
+        cls, shape_type: type[S], key_type: type[DK] = str
+    ) -> ShapesDictRef[DK, S]:  # type: ignore[assignment]
         return Slot(
             cls,
             shape_type=shape_type,

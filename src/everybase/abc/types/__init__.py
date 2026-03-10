@@ -1,47 +1,51 @@
-"""Abstract ref bases combining traits.
+"""Type hierarchy for everybase.
 
-These are abstract bases that combine traits for common value types.
-Concrete implementations (like IntValue in py/) inherit from these
-and add substrate-specific get() implementations.
+Object → concrete types (primitives, collections, special).
 
-Example:
-    IntType = Numeric + Comparable + Logical + Bitwise + base execution
-    IntValue(IntType) = IntType + Python memory get()
-    KVIntRef(IntType) = IntType + KV storage get()
+Organized into:
+- object.py: Object (universal base — sentinel checks)
+- primitives/: int, float, bool, str, bytes, none
+- collections/: list, dict, set, frozenset, tuple
+- special/: any, sentinel, empty, invalid
 """
 
-from .base import TypeBase
-from .type_any import AnyType
-from .type_bool import BoolType
-from .type_bytes import BytesType
-from .type_dict import DictType
-from .type_float import FloatType
-from .type_int import IntType
-from .type_list import ListType
-from .type_none import NoneType
-from .type_sentinel import EmptyType, InvalidType, SentinelType
-from .type_set import FrozenSetType, SetType
-from .type_str import StrType
-from .type_tuple import TupleType
+from .collections import (
+    DictItemsType,
+    DictKeysType,
+    DictType,
+    DictValuesType,
+    FrozenSetType,
+    ListType,
+    SetType,
+    TupleType,
+)
+from .object import Object
+from .primitives import BoolType, BytesType, FloatType, IntType, NoneType, StrType
+from .special import AnyType, EmptyType, InvalidType, IteratorType, SentinelType
 
 
 __all__ = [  # noqa: RUF022
-    "TypeBase",
+    "Object",
     # Primitives
     "BoolType",
     "IntType",
     "FloatType",
     "StrType",
     "BytesType",
+    "NoneType",
     # Collections
     "ListType",
     "DictType",
     "SetType",
     "FrozenSetType",
     "TupleType",
+    # Views
+    "DictKeysType",
+    "DictValuesType",
+    "DictItemsType",
     # Special
     "AnyType",
-    "NoneType",
+    "IteratorType",
     "SentinelType",
     "EmptyType",
     "InvalidType",

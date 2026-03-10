@@ -1,9 +1,9 @@
-"""Collection + Clearable capabilities — protocols + bases.
+"""Collection capability — protocols + bases.
 
-CollectionProtocol/Base = Containable + Lengthable + Iterable
-ClearableProtocol/Base = clear()
+CollectionProtocol/Base = Iterable (wrapping infrastructure only)
 
 Follows Python's collections.abc.Collection pattern.
+Len and Contains are standalone functions in ``abc.fn``.
 
 Type Parameters:
     ElementT: Native Python element type (int, str, dict, etc.)
@@ -15,12 +15,6 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from ..capabilities.collection import (
-    ContainableBase,
-    ContainableProtocol,
-    LengthableBase,
-    LengthableProtocol,
-)
 from .iterable import IterableBase, IterableProtocol
 
 
@@ -36,8 +30,6 @@ __all__ = [
 
 
 class CollectionProtocol[ElementT, CollectionResultT, ElementResultT](
-    ContainableProtocol[ElementT],
-    LengthableProtocol,
     IterableProtocol[ElementT, CollectionResultT, ElementResultT],
     Protocol,
 ):
@@ -45,24 +37,22 @@ class CollectionProtocol[ElementT, CollectionResultT, ElementResultT](
 
     Type Parameters:
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (map_, filter_)
-        ElementResultT: Result for element-level ops (sum_, min_, max_)
+        CollectionResultT: Result for collection-level ops
+        ElementResultT: Result for element-level ops
     """
 
     ...
 
 
 class CollectionBase[ElementT, CollectionResultT, ElementResultT](
-    ContainableBase[ElementT],
-    LengthableBase,
     IterableBase[ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for collection values — like collections.abc.Collection.
 
     Type Parameters:
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (map_, filter_)
-        ElementResultT: Result for element-level ops (sum_, min_, max_)
+        CollectionResultT: Result for collection-level ops
+        ElementResultT: Result for element-level ops
     """
 
     pass

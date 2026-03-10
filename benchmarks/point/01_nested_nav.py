@@ -88,37 +88,37 @@ class ListRoot(Shape):
 
 # Dict-only paths (all static addresses)
 DICT_TERMS = {
-    "d2_write": Atomic(Root.inner.count.set(42)),
-    "d4_write": Atomic(Root.inner.inner.inner.count.set(42)),
-    "d6_write": Atomic(Root.inner.inner.inner.inner.inner.value.set(42)),
-    "d2_read": Atomic(Root.inner.count.get()),
-    "d4_read": Atomic(Root.inner.inner.inner.count.get()),
-    "d6_read": Atomic(Root.inner.inner.inner.inner.inner.value.get()),
+    "d2_write": Atomic(Root.inner.count.store(42)),
+    "d4_write": Atomic(Root.inner.inner.inner.count.store(42)),
+    "d6_write": Atomic(Root.inner.inner.inner.inner.inner.value.store(42)),
+    "d2_read": Atomic(Root.inner.count),
+    "d4_read": Atomic(Root.inner.inner.inner.count),
+    "d6_read": Atomic(Root.inner.inner.inner.inner.inner.value),
 }
 
 DICT_SEEDS = {
-    "d2": Atomic(Root.inner.count.set(42)),
-    "d4": Atomic(Root.inner.inner.inner.count.set(42)),
-    "d6": Atomic(Root.inner.inner.inner.inner.inner.value.set(42)),
+    "d2": Atomic(Root.inner.count.store(42)),
+    "d4": Atomic(Root.inner.inner.inner.count.store(42)),
+    "d6": Atomic(Root.inner.inner.inner.inner.inner.value.store(42)),
 }
 
 # List paths — positive index (static address → fast path)
 LIST_SEED = Atomic(
     Seq(
-        ListRoot.data.nested.value.set(99),
-        ListRoot.data.items.set([10, 20, 30, 40, 50]),
+        ListRoot.data.nested.value.store(99),
+        ListRoot.data.items.store([10, 20, 30, 40, 50]),
     )
 )
 
 LIST_TERMS = {
-    "list_pos_read": Atomic(ListRoot.data.items[0].get()),
-    "list_pos_write": Atomic(ListRoot.data.items[2].set(999)),
+    "list_pos_read": Atomic(ListRoot.data.items[0]),
+    "list_pos_write": Atomic(ListRoot.data.items[2].store(999)),
     # Negative index — triggers normalize_address (slow path)
-    "list_neg_read": Atomic(ListRoot.data.items[-1].get()),
-    "list_neg_write": Atomic(ListRoot.data.items[-1].set(999)),
+    "list_neg_read": Atomic(ListRoot.data.items[-1]),
+    "list_neg_write": Atomic(ListRoot.data.items[-1].store(999)),
     # Mixed: dict nav + list access
-    "mixed_pos_read": Atomic(ListRoot.data.items[4].get()),
-    "mixed_neg_read": Atomic(ListRoot.data.items[-2].get()),
+    "mixed_pos_read": Atomic(ListRoot.data.items[4]),
+    "mixed_neg_read": Atomic(ListRoot.data.items[-2]),
 }
 
 

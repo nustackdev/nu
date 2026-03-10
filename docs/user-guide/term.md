@@ -35,7 +35,7 @@ Term[ResultT]                     executable node, produces a value
 **Operation vs Command:**
 
 - Operation (`is_self_pure = True`): `AddOp`, `EqOp`, `LenOp` — safe to cache, reorder, parallelize
-- Command (`is_self_pure = False`): `ItemSetCmd`, `DeleteCmd` — order matters, may need transactions
+- Command (`is_self_pure = False`): `ItemStoreCmd`, `DeleteCmd` — order matters, may need transactions
 
 ## Values
 

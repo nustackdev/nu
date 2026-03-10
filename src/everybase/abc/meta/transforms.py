@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 
 from everybase import Flow, Span, map_nodes
+from everybase.abc.morphisms import ToStrOp
+from everybase.abc.values import StrValue
 from everybase.tree import Node
 
 
@@ -74,11 +76,14 @@ def annotate_retries[N: Node](tree: N) -> N:
         attempt = IntRef("attempt")
 
         log_af = Log(
-            "retry attempt " + attempt.get().to_str() + " failed: " + error.get(),
+            "retry attempt " + StrValue(ToStrOp(attempt.get())) + " failed: " + error.get(),
             level="warning",
         )
         log_fail = Log(
-            "retry exhausted after " + attempt.get().to_str() + " attempts: " + error.get(),
+            "retry exhausted after "
+            + StrValue(ToStrOp(attempt.get()))
+            + " attempts: "
+            + error.get(),
             level="error",
         )
 

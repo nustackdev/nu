@@ -21,12 +21,12 @@ N = 25_000
 
 write_flow = Transaction(
     Seq(
-        *[f.set(i) for i in range(N) for f in FIELDS],
+        *[f.store(i) for i in range(N) for f in FIELDS],
     )
 )
 read_flow = Snapshot(
     Seq(
-        *[f.get() for i in range(N) for f in FIELDS],
+        *[f for i in range(N) for f in FIELDS],
     )
 )
 

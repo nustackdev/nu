@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableMappingView
 
@@ -126,12 +126,12 @@ class DictRef[
         )
 
     @classmethod
-    def slot(
+    def slot[DK: (int, str), DV: StorageValue](
         cls,
-        value_type: type[V],
+        value_type: type[DV],
         view_type: type[MutableMappingView] | None = None,
-        key_type: type[K] = str,
-    ) -> Self:
+        key_type: type[DK] = str,  # type: ignore[assignment]
+    ) -> DictRef[DK, DV]:
         """Create a slot for this dict ref type.
 
         Args:

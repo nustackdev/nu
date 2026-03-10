@@ -47,12 +47,12 @@ def _build_terms(n: int) -> dict:
     str_data = [f"item_{i}" for i in range(n)]
 
     return {
-        "store_int": Atomic(ListBench.ints.set(int_data)),
-        "store_str": Atomic(ListBench.strs.set(str_data)),
-        "read_int": Atomic(ListBench.ints.get()),
-        "read_by_index": [Atomic(ListBench.ints[i].get()) for i in range(n)],
+        "store_int": Atomic(ListBench.ints.store(int_data)),
+        "store_str": Atomic(ListBench.strs.store(str_data)),
+        "read_int": Atomic(ListBench.ints),
+        "read_by_index": [Atomic(ListBench.ints[i]) for i in range(n)],
         "append": [Atomic(ListBench.ints.append(i)) for i in range(n)],
-        "clear": Atomic(ListBench.ints.set([])),
+        "clear": Atomic(ListBench.ints.store([])),
     }
 
 

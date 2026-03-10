@@ -79,17 +79,14 @@ class SolanaRef(ebv.ItemRef[SolanaClient, SolanaValue], SolanaType):
 
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> SolanaValue:
-        return SolanaValue(self)
-
-    def set(self, value: object) -> SolanaValue:
-        from everybase.shape import ItemSetCmd
+    def store(self, value: object) -> SolanaValue:
+        from everybase.shape import ItemStoreCmd
 
         if isinstance(value, SolanaClient):
             val = SolanaValue(value)
         else:
             val = value
-        return SolanaValue(ItemSetCmd(self, val))
+        return SolanaValue(ItemStoreCmd(self, val))
 
 
 # ---- Shapes ----
@@ -124,10 +121,10 @@ POLL_INTERVAL = 2.0
 
 tracker = Seq(
     # Seed
-    Services.solana.set(SolanaClient()),
-    SlotData.current.set(Services.solana.get_slot()),
-    SlotData.previous.set(SlotData.current),
-    Stats.polls.set(1),
+    Services.solana.store(SolanaClient()),
+    SlotData.current.store(Services.solana.get_slot()),
+    SlotData.previous.store(SlotData.current),
+    Stats.polls.store(1),
     Print("start slot", SlotData.current),
     # Poll + react
     Race(
@@ -137,9 +134,9 @@ tracker = Seq(
             N_POLLS - 1,
             Seq(
                 Delay(POLL_INTERVAL),
-                SlotData.previous.set(SlotData.current),
-                SlotData.current.set(Services.solana.get_slot()),
-                Stats.polls.set(Stats.polls + 1),
+                SlotData.previous.store(SlotData.current),
+                SlotData.current.store(Services.solana.get_slot()),
+                Stats.polls.store(Stats.polls + 1),
             ),
         ),
         # Consumer: react to slot changes

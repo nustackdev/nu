@@ -47,9 +47,13 @@ class ShapesMappingRefBase[K, T: ShapeBase](
         """Create a reference to the shape at the given key."""
         ...
 
-    def __getitem__(self, key: Arg[K]) -> ShapeRef[T]:
-        """Subscript access — returns a ref to the shape at key."""
-        return self._create_child_ref(key)
+    def __getitem__(self, key: Arg[K]) -> T:  # type: ignore[override]
+        """Subscript access — returns a ref to the shape at key.
+
+        Return type is T (the Shape class) for Pyright slot navigation.
+        Runtime returns ShapeRef[T].
+        """
+        return self._create_child_ref(key)  # type: ignore[return-value]
 
 
 class MutableShapesMappingRefBase[K, T: ShapeBase](
@@ -63,9 +67,9 @@ class MutableShapesMappingRefBase[K, T: ShapeBase](
         """Create a reference to the shape at the given key."""
         ...
 
-    def __getitem__(self, key: Arg[K]) -> MutableShapeRef[T]:
+    def __getitem__(self, key: Arg[K]) -> T:  # type: ignore[override]
         """Subscript access — returns a ref to the shape at key."""
-        return self._create_child_ref(key)
+        return self._create_child_ref(key)  # type: ignore[return-value]
 
 
 class ReactiveShapesMappingRefBase[K, T: ShapeBase](
@@ -79,6 +83,6 @@ class ReactiveShapesMappingRefBase[K, T: ShapeBase](
         """Create a reference to the shape at the given key."""
         ...
 
-    def __getitem__(self, key: Arg[K]) -> ReactiveShapeRef[T]:
+    def __getitem__(self, key: Arg[K]) -> T:  # type: ignore[override]
         """Subscript access — returns a ref to the shape at key."""
-        return self._create_child_ref(key)
+        return self._create_child_ref(key)  # type: ignore[return-value]

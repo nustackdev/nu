@@ -17,6 +17,7 @@ from everybase.abc import (
     StrValue,
     all_,
     any_,
+    fn,
 )
 
 
@@ -194,7 +195,7 @@ class TestStringChains:
 
     async def test_string_length_comparison(self, ctx):
         """len('hello') > 3."""
-        result = await (StrValue("hello").len_() > 3).execute(ctx)
+        result = await (fn.Len(StrValue("hello")) > 3).execute(ctx)
         assert result is True
 
     async def test_find_and_slice(self, ctx):
@@ -215,34 +216,34 @@ class TestCollectionChains:
     """Test chained collection expressions."""
 
     async def test_list_operations(self, ctx):
-        """([1,2,3] + [4,5]).len_() = 5."""
-        result = await (ListValue([1, 2, 3]) + [4, 5]).len_().execute(ctx)  # noqa: RUF005
+        """len([1,2,3] + [4,5]) = 5."""
+        result = await fn.Len(ListValue([1, 2, 3]) + [4, 5]).execute(ctx)  # noqa: RUF005
         assert result == 5
 
     async def test_sorted_and_first(self, ctx):
-        """[3,1,2].sorted_().first() = 1."""
-        result = await ListValue([3, 1, 2]).sorted_().first().execute(ctx)
+        """Sorted([3,1,2]).first() = 1."""
+        result = await fn.Sorted(ListValue([3, 1, 2])).first().execute(ctx)
         assert result == 1
 
     async def test_sorted_and_last(self, ctx):
-        """[3,1,2].sorted_().last() = 3."""
-        result = await ListValue([3, 1, 2]).sorted_().last().execute(ctx)
+        """Sorted([3,1,2]).last() = 3."""
+        result = await fn.Sorted(ListValue([3, 1, 2])).last().execute(ctx)
         assert result == 3
 
     async def test_reversed_slice(self, ctx):
-        """[1,2,3,4,5].reversed_()[1:3] = [4,3]."""
-        result = await ListValue([1, 2, 3, 4, 5]).reversed_()[1:3].execute(ctx)
+        """Reversed([1,2,3,4,5]).to_list()[1:3] = [4,3]."""
+        result = await fn.Reversed(ListValue([1, 2, 3, 4, 5])).to_list()[1:3].execute(ctx)
         assert result == [4, 3]
 
     async def test_aggregation_comparison(self, ctx):
-        """sum([1,2,3]) > 5."""
-        result = await (ListValue([1, 2, 3]).sum_() > 5).execute(ctx)
+        """Sum([1,2,3]) > 5."""
+        result = await (fn.Sum(ListValue([1, 2, 3])) > 5).execute(ctx)
         assert result is True
 
     async def test_min_max_comparison(self, ctx):
-        """max([1,2,3]) > min([1,2,3])."""
+        """Max([1,2,3]) > Min([1,2,3])."""
         lst = ListValue([1, 2, 3])
-        result = await (lst.max_() > lst.min_()).execute(ctx)
+        result = await (fn.Max(lst) > fn.Min(lst)).execute(ctx)
         assert result is True
 
 
@@ -307,9 +308,9 @@ class TestRealWorldScenarios:
     async def test_email_basic_validation(self, ctx):
         """Basic email validation (contains @)."""
         email = StrValue("user@example.com")
-        has_at = email.contains("@")
-        has_dot = email.contains(".")
-        not_empty = email.len_() > 0
+        has_at = fn.Contains(email, "@")
+        has_dot = fn.Contains(email, ".")
+        not_empty = fn.Len(email) > 0
         is_valid = all_(has_at, has_dot, not_empty)
         assert await is_valid.execute(ctx) is True
 
@@ -342,10 +343,10 @@ class TestRealWorldScenarios:
         """Calculate basic statistics on a list."""
         data = ListValue([10, 20, 30, 40, 50])
 
-        total = data.sum_()
-        count = data.len_()
-        minimum = data.min_()
-        maximum = data.max_()
+        total = fn.Sum(data)
+        count = fn.Len(data)
+        minimum = fn.Min(data)
+        maximum = fn.Max(data)
 
         assert await total.execute(ctx) == 150
         assert await count.execute(ctx) == 5
@@ -356,8 +357,8 @@ class TestRealWorldScenarios:
         """Validate required keys exist in dict."""
         config = DictValue({"host": "localhost", "port": 8080, "debug": True})
 
-        has_host = config.contains("host")
-        has_port = config.contains("port")
+        has_host = fn.Contains(config, "host")
+        has_port = fn.Contains(config, "port")
         is_valid = has_host.and_(has_port)
 
         assert await is_valid.execute(ctx) is True
@@ -374,24 +375,24 @@ class TestEdgeCases:
     async def test_empty_string_operations(self, ctx):
         """Operations on empty string."""
         s = StrValue("")
-        assert await s.len_().execute(ctx) == 0
+        assert await fn.Len(s).execute(ctx) == 0
         assert await s.upper().execute(ctx) == ""
         assert await s.strip().execute(ctx) == ""
 
     async def test_empty_list_operations(self, ctx):
         """Operations on empty list."""
         lst = ListValue([])
-        assert await lst.len_().execute(ctx) == 0
-        assert await lst.reversed_().execute(ctx) == []
+        assert await fn.Len(lst).execute(ctx) == 0
+        assert await fn.ToList(fn.Reversed(lst)).execute(ctx) == []
 
     async def test_single_element_list(self, ctx):
         """Operations on single-element list."""
         lst = ListValue([42])
         assert await lst.first().execute(ctx) == 42
         assert await lst.last().execute(ctx) == 42
-        assert await lst.sum_().execute(ctx) == 42
-        assert await lst.min_().execute(ctx) == 42
-        assert await lst.max_().execute(ctx) == 42
+        assert await fn.Sum(lst).execute(ctx) == 42
+        assert await fn.Min(lst).execute(ctx) == 42
+        assert await fn.Max(lst).execute(ctx) == 42
 
     async def test_zero_arithmetic(self, ctx):
         """Arithmetic with zero."""

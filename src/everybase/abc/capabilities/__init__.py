@@ -12,7 +12,7 @@ Protocols declare the public interface; Bases provide morphism-wrapping implemen
 
     COLLECTION OPERATIONS
     ─────────────────────────────
-    Atoms:       ContainableBase/Protocol, LengthableBase/Protocol, IndexableBase/Protocol, SliceableBase/Protocol
+    Atoms:       IndexableBase/Protocol, SliceableBase/Protocol
 """
 
 from .arithmetic import (
@@ -52,12 +52,8 @@ from .bitwise import (
     ShiftableProtocol,
 )
 from .collection import (
-    ContainableBase,
-    ContainableProtocol,
     IndexableBase,
     IndexableProtocol,
-    LengthableBase,
-    LengthableProtocol,
     SliceableBase,
     SliceableProtocol,
 )
@@ -143,10 +139,6 @@ __all__ = [  # noqa: RUF022
     # =========================================================================
     # COLLECTION: ATOMS
     # =========================================================================
-    "ContainableBase",
-    "ContainableProtocol",
-    "LengthableBase",
-    "LengthableProtocol",
     "IndexableBase",
     "IndexableProtocol",
     "SliceableBase",

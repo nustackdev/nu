@@ -25,7 +25,7 @@ from everybase.abc import (
     method,
     prop,
 )
-from everybase.shape import ItemSetCmd, Shape, Slot
+from everybase.shape import ItemStoreCmd, Shape, Slot
 
 
 # =============================================================================
@@ -82,17 +82,13 @@ class CalculatorRef(ItemRef[Calculator, CalculatorValue], CalculatorType):
         """Create a slot for Fraction values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def get(self) -> CalculatorValue:
-        """Get the Calculator value."""
-        return CalculatorValue(self)
-
-    def set(self, value: Arg[Calculator]) -> CalculatorValue:
-        """Set the Calculator value."""
+    def store(self, value: Arg[Calculator]) -> CalculatorValue:
+        """Store the Calculator value."""
         if isinstance(value, Calculator):
             val = CalculatorValue(value)
         elif isinstance(value, Term):
             val = value
-        return CalculatorValue(ItemSetCmd(self, val))
+        return CalculatorValue(ItemStoreCmd(self, val))
 
 
 # =============================================================================
@@ -156,7 +152,7 @@ async def main() -> None:
             # --- Compose ref methods into flows ---
             print("=== Ref Methods in Flows ===")
             calc_flow = Seq(
-                Services.calc.set(Calculator(4)),
+                Services.calc.store(Calculator(4)),
                 Print("add", Services.calc.add(FloatValue(1.0), FloatValue(2.0))),
                 Print("mul", Services.calc.multiply(FloatValue(3.0), FloatValue(4.0))),
                 If(

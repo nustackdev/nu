@@ -145,24 +145,24 @@ def _bench_pure_dict(label: str, fn, setup_fn, field_ops: int) -> TimingResult:
 
 # ── Trees: PV (built once) ───────────────────────────────────────────────────
 
-_store_seq = Seq(*[UserDB.users[k].set(v) for k, v in USERS.items()])
+_store_seq = Seq(*[UserDB.users[k].store(v) for k, v in USERS.items()])
 
 _read_seq = Seq(
     *[
         term
         for k in USERS
         for term in (
-            UserDB.users[k].name.get(),
-            UserDB.users[k].age.get(),
-            UserDB.users[k].email.get(),
-            UserDB.users[k].score.get(),
-            UserDB.users[k].active.get(),
-            UserDB.users[k].tags.get(),
+            UserDB.users[k].name,
+            UserDB.users[k].age,
+            UserDB.users[k].email,
+            UserDB.users[k].score,
+            UserDB.users[k].active,
+            UserDB.users[k].tags,
         )
     ]
 )
 
-_update_seq = Seq(*[UserDB.users[k].score.set(99.0) for k in USERS])
+_update_seq = Seq(*[UserDB.users[k].score.store(99.0) for k in USERS])
 
 # auto_atomic
 store_tree_aa = auto_atomic(_store_seq)
@@ -187,13 +187,13 @@ _d_store_seq = Seq(
         term
         for k, v in USERS.items()
         for term in (
-            DUserDB.users[k].name.set(v["name"]),
-            DUserDB.users[k].age.set(v["age"]),
-            DUserDB.users[k].email.set(v["email"]),
-            DUserDB.users[k].score.set(v["score"]),
-            DUserDB.users[k].active.set(v["active"]),
+            DUserDB.users[k].name.store(v["name"]),
+            DUserDB.users[k].age.store(v["age"]),
+            DUserDB.users[k].email.store(v["email"]),
+            DUserDB.users[k].score.store(v["score"]),
+            DUserDB.users[k].active.store(v["active"]),
             # tags: set each tag individually (store() not supported on dict substrate)
-            *[DUserDB.users[k].tags[j].set(v["tags"][j]) for j in range(NUM_TAGS)],
+            *[DUserDB.users[k].tags[j].store(v["tags"][j]) for j in range(NUM_TAGS)],
         )
     ]
 )
@@ -203,18 +203,18 @@ _d_read_seq = Seq(
         term
         for k in USERS
         for term in (
-            DUserDB.users[k].name.get(),
-            DUserDB.users[k].age.get(),
-            DUserDB.users[k].email.get(),
-            DUserDB.users[k].score.get(),
-            DUserDB.users[k].active.get(),
-            # tags: read each individually (collection .get() not supported on dict substrate)
-            *[DUserDB.users[k].tags[j].get() for j in range(NUM_TAGS)],
+            DUserDB.users[k].name,
+            DUserDB.users[k].age,
+            DUserDB.users[k].email,
+            DUserDB.users[k].score,
+            DUserDB.users[k].active,
+            # tags: read each individually (collection load not supported on dict substrate)
+            *[DUserDB.users[k].tags[j] for j in range(NUM_TAGS)],
         )
     ]
 )
 
-_d_update_seq = Seq(*[DUserDB.users[k].score.set(99.0) for k in USERS])
+_d_update_seq = Seq(*[DUserDB.users[k].score.store(99.0) for k in USERS])
 
 d_store_tree = _d_store_seq
 d_read_tree = _d_read_seq

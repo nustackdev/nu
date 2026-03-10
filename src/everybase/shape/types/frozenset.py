@@ -7,11 +7,10 @@ Goes directly to everybase since everyshape's SetLikeBase is set-specific.
 
 from __future__ import annotations
 
+from everybase.abc import Object
 from everybase.abc import SetLikeBase as _EB_SetLikeBase
-from everybase.abc import TypeBase
 from everybase.shape.capabilities import (
     CollectionExistableBase,
-    CollectionGettableBase,
 )
 
 
@@ -23,7 +22,6 @@ __all__ = [
 class FrozenSetType[T](
     _EB_SetLikeBase[frozenset[T], T, object, object],
     CollectionExistableBase,
-    CollectionGettableBase[object],
-    TypeBase[frozenset],
+    Object[frozenset],
 ):
     """FrozenSet — immutable set."""

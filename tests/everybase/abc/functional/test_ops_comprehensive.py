@@ -20,9 +20,16 @@ from everybase.abc import (
     ListValue,
     SetValue,
     StrValue,
+    ToBoolOp,
+    ToBytesOp,
+    ToFloatOp,
+    ToIntOp,
+    ToListOp,
+    ToStrOp,
     TupleValue,
     all_,
     any_,
+    fn,
     none_,
 )
 
@@ -346,55 +353,55 @@ class TestLogicalOps:
 
 
 class TestConversionOps:
-    """Test all type conversion operations."""
+    """Test all type conversion operations via standalone morphisms."""
 
     async def test_to_int_from_float(self, ctx):
         """int(3.14) = 3."""
-        assert await FloatValue(3.14).to_int().execute(ctx) == 3
+        assert await IntValue(ToIntOp(FloatValue(3.14))).execute(ctx) == 3
 
     async def test_to_int_from_str(self, ctx):
         """int('42') = 42."""
-        assert await StrValue("42").to_int().execute(ctx) == 42
+        assert await IntValue(ToIntOp(StrValue("42"))).execute(ctx) == 42
 
     async def test_to_int_from_bool(self, ctx):
         """int(True) = 1."""
-        assert await BoolValue(True).to_int().execute(ctx) == 1
+        assert await IntValue(ToIntOp(BoolValue(True))).execute(ctx) == 1
 
     async def test_to_float_from_int(self, ctx):
         """float(42) = 42.0."""
-        assert await IntValue(42).to_float().execute(ctx) == 42.0
+        assert await FloatValue(ToFloatOp(IntValue(42))).execute(ctx) == 42.0
 
     async def test_to_float_from_str(self, ctx):
         """float('3.14') = 3.14."""
-        assert await StrValue("3.14").to_float().execute(ctx) == 3.14
+        assert await FloatValue(ToFloatOp(StrValue("3.14"))).execute(ctx) == 3.14
 
     async def test_to_str_from_int(self, ctx):
         """str(42) = '42'."""
-        assert await IntValue(42).to_str().execute(ctx) == "42"
+        assert await StrValue(ToStrOp(IntValue(42))).execute(ctx) == "42"
 
     async def test_to_str_from_float(self, ctx):
         """str(3.14) = '3.14'."""
-        assert await FloatValue(3.14).to_str().execute(ctx) == "3.14"
+        assert await StrValue(ToStrOp(FloatValue(3.14))).execute(ctx) == "3.14"
 
     async def test_to_str_from_bool(self, ctx):
         """str(True) = 'True'."""
-        assert await BoolValue(True).to_str().execute(ctx) == "True"
+        assert await StrValue(ToStrOp(BoolValue(True))).execute(ctx) == "True"
 
     async def test_to_bool_from_int_truthy(self, ctx):
         """bool(42) = True."""
-        assert await IntValue(42).to_bool().execute(ctx) is True
+        assert await BoolValue(ToBoolOp(IntValue(42))).execute(ctx) is True
 
     async def test_to_bool_from_int_falsy(self, ctx):
         """bool(0) = False."""
-        assert await IntValue(0).to_bool().execute(ctx) is False
+        assert await BoolValue(ToBoolOp(IntValue(0))).execute(ctx) is False
 
     async def test_to_list_from_tuple(self, ctx):
         """list((1,2,3)) = [1,2,3]."""
-        assert await TupleValue((1, 2, 3)).to_list().execute(ctx) == [1, 2, 3]
+        assert await ListValue(ToListOp(TupleValue((1, 2, 3)))).execute(ctx) == [1, 2, 3]
 
     async def test_to_bytes_from_str(self, ctx):
         """'hello'.encode() = b'hello'."""
-        assert await StrValue("hello").to_bytes().execute(ctx) == b"hello"
+        assert await BytesValue(ToBytesOp(StrValue("hello"))).execute(ctx) == b"hello"
 
 
 # =============================================================================
@@ -593,31 +600,31 @@ class TestCollectionAccessOps:
 
     async def test_len_list(self, ctx):
         """len([1,2,3]) = 3."""
-        assert await ListValue([1, 2, 3]).len_().execute(ctx) == 3
+        assert await fn.Len(ListValue([1, 2, 3])).execute(ctx) == 3
 
     async def test_len_str(self, ctx):
         """len('hello') = 5."""
-        assert await StrValue("hello").len_().execute(ctx) == 5
+        assert await fn.Len(StrValue("hello")).execute(ctx) == 5
 
     async def test_len_dict(self, ctx):
         """len({'a': 1, 'b': 2}) = 2."""
-        assert await DictValue({"a": 1, "b": 2}).len_().execute(ctx) == 2
+        assert await fn.Len(DictValue({"a": 1, "b": 2})).execute(ctx) == 2
 
     async def test_contains_list_true(self, ctx):
         """2 in [1,2,3] = True."""
-        assert await ListValue([1, 2, 3]).contains(2).execute(ctx) is True
+        assert await fn.Contains(ListValue([1, 2, 3]), 2).execute(ctx) is True
 
     async def test_contains_list_false(self, ctx):
         """5 in [1,2,3] = False."""
-        assert await ListValue([1, 2, 3]).contains(5).execute(ctx) is False
+        assert await fn.Contains(ListValue([1, 2, 3]), 5).execute(ctx) is False
 
     async def test_contains_str_true(self, ctx):
         """'ell' in 'hello' = True."""
-        assert await StrValue("hello").contains("ell").execute(ctx) is True
+        assert await fn.Contains(StrValue("hello"), "ell").execute(ctx) is True
 
     async def test_contains_dict_true(self, ctx):
         """'a' in {'a': 1} = True."""
-        assert await DictValue({"a": 1}).contains("a").execute(ctx) is True
+        assert await fn.Contains(DictValue({"a": 1}), "a").execute(ctx) is True
 
 
 # =============================================================================
@@ -629,32 +636,32 @@ class TestCollectionAggregationOps:
     """Test collection aggregation operations."""
 
     async def test_sum(self, ctx):
-        """sum([1,2,3]) = 6."""
-        assert await ListValue([1, 2, 3]).sum_().execute(ctx) == 6
+        """Sum([1,2,3]) = 6."""
+        assert await fn.Sum(ListValue([1, 2, 3])).execute(ctx) == 6
 
     async def test_min(self, ctx):
-        """min([3,1,2]) = 1."""
-        assert await ListValue([3, 1, 2]).min_().execute(ctx) == 1
+        """Min([3,1,2]) = 1."""
+        assert await fn.Min(ListValue([3, 1, 2])).execute(ctx) == 1
 
     async def test_max(self, ctx):
-        """max([3,1,2]) = 3."""
-        assert await ListValue([3, 1, 2]).max_().execute(ctx) == 3
+        """Max([3,1,2]) = 3."""
+        assert await fn.Max(ListValue([3, 1, 2])).execute(ctx) == 3
 
     async def test_any_true(self, ctx):
-        """any([False, True, False]) = True."""
-        assert await ListValue([False, True, False]).any_().execute(ctx) is True
+        """Any([False, True, False]) = True."""
+        assert await fn.Any(ListValue([False, True, False])).execute(ctx) is True
 
     async def test_any_false(self, ctx):
-        """any([False, False]) = False."""
-        assert await ListValue([False, False]).any_().execute(ctx) is False
+        """Any([False, False]) = False."""
+        assert await fn.Any(ListValue([False, False])).execute(ctx) is False
 
     async def test_all_true(self, ctx):
-        """all([True, True]) = True."""
-        assert await ListValue([True, True]).all_().execute(ctx) is True
+        """All([True, True]) = True."""
+        assert await fn.All(ListValue([True, True])).execute(ctx) is True
 
     async def test_all_false(self, ctx):
-        """all([True, False]) = False."""
-        assert await ListValue([True, False]).all_().execute(ctx) is False
+        """All([True, False]) = False."""
+        assert await fn.All(ListValue([True, False])).execute(ctx) is False
 
 
 # =============================================================================
@@ -691,16 +698,16 @@ class TestCollectionTransformOps:
     """Test collection transform operations."""
 
     async def test_sorted(self, ctx):
-        """sorted([3,1,2]) = [1,2,3]."""
-        assert await ListValue([3, 1, 2]).sorted_().execute(ctx) == [1, 2, 3]
+        """Sorted([3,1,2]) = [1,2,3]."""
+        assert await fn.Sorted(ListValue([3, 1, 2])).execute(ctx) == [1, 2, 3]
 
     async def test_sorted_reverse(self, ctx):
-        """sorted([1,2,3], reverse=True) = [3,2,1]."""
-        assert await ListValue([1, 2, 3]).sorted_(reverse=True).execute(ctx) == [3, 2, 1]
+        """Sorted([1,2,3], reverse=True) = [3,2,1]."""
+        assert await fn.Sorted(ListValue([1, 2, 3]), reverse=True).execute(ctx) == [3, 2, 1]
 
     async def test_reversed(self, ctx):
-        """reversed([1,2,3]) = [3,2,1]."""
-        assert await ListValue([1, 2, 3]).reversed_().execute(ctx) == [3, 2, 1]
+        """Reversed([1,2,3]).to_list() = [3,2,1]."""
+        assert await fn.Reversed(ListValue([1, 2, 3])).to_list().execute(ctx) == [3, 2, 1]
 
     async def test_join(self, ctx):
         """['a','b','c'].join(',') = 'a,b,c'."""
@@ -716,27 +723,27 @@ class TestDictOps:
     """Test dict-specific operations."""
 
     async def test_keys(self, ctx):
-        """{'a': 1, 'b': 2}.keys_() returns keys."""
-        result = await DictValue({"a": 1, "b": 2}).keys_().execute(ctx)
+        """{'a': 1, 'b': 2}.keys() returns keys."""
+        result = await DictValue({"a": 1, "b": 2}).keys().execute(ctx)
         assert set(result) == {"a", "b"}
 
     async def test_values(self, ctx):
-        """{'a': 1, 'b': 2}.values_() returns values."""
-        result = await DictValue({"a": 1, "b": 2}).values_().execute(ctx)
+        """{'a': 1, 'b': 2}.values() returns values."""
+        result = await DictValue({"a": 1, "b": 2}).values().execute(ctx)
         assert set(result) == {1, 2}
 
     async def test_items(self, ctx):
-        """{'a': 1}.items_() returns items."""
-        result = await DictValue({"a": 1}).items_().execute(ctx)
-        assert result == [("a", 1)]
+        """{'a': 1}.items() returns items."""
+        result = await DictValue({"a": 1}).items().execute(ctx)
+        assert set(result) == {("a", 1)}
 
     async def test_get_existing(self, ctx):
-        """{'a': 1}.get_('a', 0) = 1."""
-        assert await DictValue({"a": 1}).get_("a", 0).execute(ctx) == 1
+        """{'a': 1}.get('a', 0) = 1."""
+        assert await DictValue({"a": 1}).get("a", 0).execute(ctx) == 1
 
     async def test_get_default(self, ctx):
-        """{'a': 1}.get_('b', 0) = 0."""
-        assert await DictValue({"a": 1}).get_("b", 0).execute(ctx) == 0
+        """{'a': 1}.get('b', 0) = 0."""
+        assert await DictValue({"a": 1}).get("b", 0).execute(ctx) == 0
 
 
 # =============================================================================

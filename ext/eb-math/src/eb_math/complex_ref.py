@@ -1,7 +1,7 @@
 """Complex type for complex number arithmetic.
 
 Pattern:
-    ComplexType = TypeBase[complex] + EqualableBase + arithmetic operations
+    ComplexType = Object[complex] + EqualableBase + arithmetic operations
     ComplexValue = ValueBase + ComplexType (computed results)
 
 Note: Complex numbers are not orderable (no <, >, <=, >=).
@@ -15,8 +15,8 @@ from everybase import Sentinel
 from everybase.abc import (
     EqualableBase,
     FloatValue,
+    Object,
     TupleValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -35,7 +35,7 @@ __all__ = [
 
 class ComplexType(
     EqualableBase["complex | ComplexType"],
-    TypeBase[complex | Sentinel],
+    Object[complex | Sentinel],
 ):
     """Abstract type for complex number operations.
 

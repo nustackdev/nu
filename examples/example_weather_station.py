@@ -51,15 +51,15 @@ station = Seq(
     Race(
         # Producer: seed + generate sensor data
         Seq(
-            Station.temperature.set(18.0),
-            Station.wind_speed.set(10.0),
-            Dashboard.warnings.set(0),
+            Station.temperature.store(18.0),
+            Station.wind_speed.store(10.0),
+            Dashboard.warnings.store(0),
             ForRange(
                 0,
                 N_READINGS,
                 Seq(
-                    Station.temperature.set(Station.temperature + TEMP_DRIFT),
-                    Station.wind_speed.set(Station.wind_speed + WIND_DRIFT),
+                    Station.temperature.store(Station.temperature + TEMP_DRIFT),
+                    Station.wind_speed.store(Station.wind_speed + WIND_DRIFT),
                     Delay(0.02),
                 ),
             ),
@@ -71,7 +71,7 @@ station = Seq(
             If(
                 Station.temperature > TEMP_WARN,
                 Seq(
-                    Dashboard.warnings.set(Dashboard.warnings + 1),
+                    Dashboard.warnings.store(Dashboard.warnings + 1),
                     Print("TEMP", Station.temperature),
                 ),
             ),
@@ -83,7 +83,7 @@ station = Seq(
             If(
                 Station.wind_speed > WIND_WARN,
                 Seq(
-                    Dashboard.warnings.set(Dashboard.warnings + 1),
+                    Dashboard.warnings.store(Dashboard.warnings + 1),
                     Print("WIND", Station.wind_speed),
                 ),
             ),

@@ -1,7 +1,7 @@
 """Date type for date values.
 
 Pattern:
-    DateType = TypeBase[date] + ComparableBase + date operations
+    DateType = Object[date] + ComparableBase + date operations
     DateValue = ValueBase + DateType (computed results)
 """
 
@@ -14,8 +14,8 @@ from everybase import Sentinel
 from everybase.abc import (
     ComparableBase,
     IntValue,
+    Object,
     StrValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -34,7 +34,7 @@ __all__ = [
 
 class DateType(
     ComparableBase["date | DateType"],
-    TypeBase[date | Sentinel],
+    Object[date | Sentinel],
 ):
     """Abstract type for date operations.
 

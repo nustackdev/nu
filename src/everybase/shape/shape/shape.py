@@ -24,7 +24,8 @@ from .slot import Slot
 
 
 if TYPE_CHECKING:
-    from everybase import Ref
+    from everybase import Context, Ref, Sentinel, Term
+    from everybase.abc import NoneValue
 
 
 __all__ = [
@@ -154,3 +155,19 @@ class Shape(Model, metaclass=ShapeMeta):
 
     _slots: ClassVar[dict[str, Slot]] = {}
     """Mapping of field names to Slot definitions."""
+
+    # Type stubs for Ref methods. At runtime, shape refs (ShapeRef[T])
+    # provide these — but since __getitem__ returns T (type lie for slot
+    # navigation), Shape needs the signatures so Pyright can resolve
+    # Market.orders[0].execute(ctx) etc.
+    if TYPE_CHECKING:
+
+        async def execute(self, ctx: Context) -> dict[str, object] | Sentinel:  # noqa: D102
+            ...
+
+        def store(  # noqa: D102
+            self, value: dict[str, object] | Sentinel | Term[dict[str, object] | Sentinel]
+        ) -> NoneValue: ...
+
+        def erase(self) -> NoneValue:  # noqa: D102
+            ...

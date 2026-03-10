@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from everybase.abc import ensure_term
 from everybase.shape import MutableShapesSequenceRefBase, Slot
@@ -47,5 +47,5 @@ class ShapesListRef[T: Shape](
         )
 
     @classmethod
-    def slot(cls, shape_type: type[T]) -> Self:
+    def slot[S: Shape](cls, shape_type: type[S]) -> ShapesListRef[S]:
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]

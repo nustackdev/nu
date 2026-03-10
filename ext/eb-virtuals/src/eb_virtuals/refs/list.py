@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableSequenceView
 
@@ -112,11 +112,11 @@ class ListRef[
         )
 
     @classmethod
-    def slot(
+    def slot[E](
         cls,
-        item_type: type[T],
+        item_type: type[E],
         view_type: type[MutableSequenceView] | None = None,
-    ) -> Self:
+    ) -> ListRef[E, Value]:
         """Create a slot for this list ref type.
 
         Args:

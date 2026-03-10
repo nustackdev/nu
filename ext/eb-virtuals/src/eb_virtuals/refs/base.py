@@ -262,7 +262,9 @@ class PrimitiveRef[T](Ref[T]):
             parent_view, key = path.navigate_value(root_view, value_path)
             if isinstance(parent_view, view_traits.Subscriptable):
                 val = parent_view[key]
-                return val if not isinstance(val, StorageEmpty) else EMPTY
+                if isinstance(val, StorageEmpty):
+                    return EMPTY
+                return self.coerce(val)
             raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
         except (KeyError, IndexError):
             return EMPTY

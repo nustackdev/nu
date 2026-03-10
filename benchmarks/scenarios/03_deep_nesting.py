@@ -175,16 +175,16 @@ def py_read(data: dict) -> None:
 
 # PV
 _v_write = Seq(
-    _v_leaf.a.set(10),
-    _v_leaf.b.set(11),
-    _v_leaf.c.set(12),
-    _v_leaf.d.set(13),
+    _v_leaf.a.store(10),
+    _v_leaf.b.store(11),
+    _v_leaf.c.store(12),
+    _v_leaf.d.store(13),
 )
 _v_read = Seq(
-    _v_leaf.a.get(),
-    _v_leaf.b.get(),
-    _v_leaf.c.get(),
-    _v_leaf.d.get(),
+    _v_leaf.a,
+    _v_leaf.b,
+    _v_leaf.c,
+    _v_leaf.d,
 )
 
 v_write_at = Atomic(_v_write)
@@ -194,16 +194,16 @@ v_read_ai = v_inline_refs(Atomic(_v_read))
 
 # everydict
 d_write = Seq(
-    _d_leaf.a.set(10),
-    _d_leaf.b.set(11),
-    _d_leaf.c.set(12),
-    _d_leaf.d.set(13),
+    _d_leaf.a.store(10),
+    _d_leaf.b.store(11),
+    _d_leaf.c.store(12),
+    _d_leaf.d.store(13),
 )
 d_read = Seq(
-    _d_leaf.a.get(),
-    _d_leaf.b.get(),
-    _d_leaf.c.get(),
-    _d_leaf.d.get(),
+    _d_leaf.a,
+    _d_leaf.b,
+    _d_leaf.c,
+    _d_leaf.d,
 )
 di_write = dict_inline_refs(d_write)
 di_read = dict_inline_refs(d_read)
@@ -211,17 +211,17 @@ di_read = dict_inline_refs(d_read)
 # Seed trees (need to set values before reading)
 _v_seed = Atomic(
     Seq(
-        _v_leaf.a.set(0),
-        _v_leaf.b.set(1),
-        _v_leaf.c.set(2),
-        _v_leaf.d.set(3),
+        _v_leaf.a.store(0),
+        _v_leaf.b.store(1),
+        _v_leaf.c.store(2),
+        _v_leaf.d.store(3),
     )
 )
 _d_seed = Seq(
-    _d_leaf.a.set(0),
-    _d_leaf.b.set(1),
-    _d_leaf.c.set(2),
-    _d_leaf.d.set(3),
+    _d_leaf.a.store(0),
+    _d_leaf.b.store(1),
+    _d_leaf.c.store(2),
+    _d_leaf.d.store(3),
 )
 _di_seed = dict_inline_refs(_d_seed)
 

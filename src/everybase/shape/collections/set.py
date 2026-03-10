@@ -14,7 +14,6 @@ from everybase.abc import SetLikeBase as _EB_SetLikeBase
 from everybase.shape.capabilities import (
     CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionGettableBase,
     CollectionSettableBase,
     ViewObservableBase,
 )
@@ -35,7 +34,6 @@ __all__ = [
 class SetLikeBase[T, CollectionValueT, ElementValueT](
     _EB_SetLikeBase[set[T], T, CollectionValueT, ElementValueT],
     CollectionExistableBase,
-    CollectionGettableBase[CollectionValueT],
 ):
     """Base for sets — unordered unique-element containers in the document model.
 
@@ -49,8 +47,7 @@ class SetLikeBase[T, CollectionValueT, ElementValueT](
 class MutableSetBase[T, CollectionValueT, ElementValueT](
     _EB_MutableSetBase[set[T], T, CollectionValueT, ElementValueT],
     CollectionExistableBase,
-    CollectionGettableBase[CollectionValueT],
-    CollectionSettableBase[CollectionValueT, set[T]],
+    CollectionSettableBase[set[T]],
     CollectionDeletableBase,
 ):
     """Mutable set — adds add, remove, discard."""

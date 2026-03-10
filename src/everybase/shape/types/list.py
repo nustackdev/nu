@@ -6,7 +6,7 @@ ReactiveListBase = ListBase + ViewObservable
 
 from __future__ import annotations
 
-from everybase.abc import TypeBase
+from everybase.abc import Object
 from everybase.shape.collections import MutableSequenceBase, ReactiveSequenceBase
 
 
@@ -18,7 +18,7 @@ __all__ = [
 
 class ListType[T](
     MutableSequenceBase[T, object, object],
-    TypeBase[list],
+    Object[list],
 ):
     """List — mutable sequence."""
 
@@ -26,6 +26,6 @@ class ListType[T](
 class ReactiveListType[T](
     ListType[T],
     ReactiveSequenceBase[T, object, object],
-    TypeBase[list],
+    Object[list],
 ):
     """Reactive list — mutable + observable."""

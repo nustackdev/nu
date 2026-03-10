@@ -14,7 +14,6 @@ from everybase.abc import SequenceBase as _EB_SequenceBase
 from everybase.shape.capabilities import (
     CollectionDeletableBase,
     CollectionExistableBase,
-    CollectionGettableBase,
     CollectionSettableBase,
     ViewObservableBase,
 )
@@ -35,7 +34,6 @@ __all__ = [
 class SequenceBase[T, CollectionValueT, ItemValueT](
     _EB_SequenceBase[list[T], T, CollectionValueT, ItemValueT],
     CollectionExistableBase,
-    CollectionGettableBase[CollectionValueT],
 ):
     """Base for sequences — ordered containers in the document model.
 
@@ -49,8 +47,7 @@ class SequenceBase[T, CollectionValueT, ItemValueT](
 class MutableSequenceBase[T, CollectionValueT, ItemValueT](
     _EB_MutableSequenceBase[list[T], T, CollectionValueT, ItemValueT],
     CollectionExistableBase,
-    CollectionGettableBase[CollectionValueT],
-    CollectionSettableBase[CollectionValueT, list[T]],
+    CollectionSettableBase[list[T]],
     CollectionDeletableBase,
 ):
     """Mutable sequence — adds append, extend, insert, pop, remove."""

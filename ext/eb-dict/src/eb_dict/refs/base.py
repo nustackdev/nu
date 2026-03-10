@@ -52,7 +52,8 @@ class RefBase[T](Ref[T]):
         key_path = await self.resolve(ctx)
         data = self._get_root_data(ctx)
         try:
-            return _navigate(data, key_path)
+            raw = _navigate(data, key_path)
+            return self.coerce(raw)
         except (KeyError, IndexError):
             return EMPTY
 

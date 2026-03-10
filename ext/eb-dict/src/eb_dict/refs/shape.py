@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING
 
 from everybase.abc import AnyValue, DictValue, ListValue
 from everybase.shape import MutableShapeRef, Slot
@@ -26,8 +26,6 @@ class ShapeRef[T: Shape](
     RefBase[dict[str, object]],
 ):
     """Dict shape reference — structured container backed by nested dict."""
-
-    _PASSTHROUGH_ATTRS: ClassVar[frozenset[str]] = MutableShapeRef._PASSTHROUGH_ATTRS
 
     def result(self, op: Term) -> DictValue[str, object]:
         return DictValue(op)
@@ -68,5 +66,5 @@ class ShapeRef[T: Shape](
         self.value_type: type = object
 
     @classmethod
-    def slot(cls, shape_type: type[T]) -> Self:
+    def slot[S: Shape](cls, shape_type: type[S]) -> S:
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]

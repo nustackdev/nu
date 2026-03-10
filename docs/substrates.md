@@ -158,7 +158,7 @@ PVRefBase[T]                    address + parent chain + shape association
     └── PVShapesDictRef[K, S]  dict of shapes
 ```
 
-Primitive refs mix in everybase.abc type bases (IntType, StrType, ...) to get operator methods. Item refs inherit everybase.abc capability bases (ItemGettableBase, ItemSettableBase, ...) for `.get()`, `.set()`, `.exists()`, `.remove()`, `.on_change()`.
+Primitive refs mix in everybase.abc type bases (IntType, StrType, ...) to get operator methods. Item refs inherit everybase.abc capability bases (ItemSettableBase, ItemDeletableBase, ...) for `.store()`, `.erase()`, `.exists()`, `.on_change()`. Refs are terms — executing a ref reads its value directly (no separate `.load()` needed).
 
 ### E2E Flow
 

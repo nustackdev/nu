@@ -1,7 +1,7 @@
 """UUID type for UUID values.
 
 Pattern:
-    UUIDType = TypeBase[UUID] + ComparableBase + UUID operations
+    UUIDType = Object[UUID] + ComparableBase + UUID operations
     UUIDValue = ValueBase + UUIDType (computed results)
 """
 
@@ -15,8 +15,8 @@ from everybase.abc import (
     BytesValue,
     ComparableBase,
     IntValue,
+    Object,
     StrValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -35,7 +35,7 @@ __all__ = [
 
 class UUIDType(
     ComparableBase["UUID | UUIDType"],
-    TypeBase[UUID | Sentinel],
+    Object[UUID | Sentinel],
 ):
     """Abstract type for UUID operations.
 

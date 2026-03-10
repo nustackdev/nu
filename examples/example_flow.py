@@ -27,10 +27,10 @@ async def main():
     with text_storage(".db") as storage:
         ctx = Context().bind(storage, StorageProtocol)
 
-        await ebv.Atomic(Seq(AppState.name.set("Alice"), AppState.age.set(30))).execute(ctx)
+        await ebv.Atomic(Seq(AppState.name.store("Alice"), AppState.age.store(30))).execute(ctx)
         await ebv.Atomic(Seq(Print("name", AppState.name), Print("age", AppState.age))).execute(ctx)
         await ebv.Atomic(
-            Seq(AppState.age.set(31), Print("name", AppState.name), Print("age", AppState.age))
+            Seq(AppState.age.store(31), Print("name", AppState.name), Print("age", AppState.age))
         ).execute(ctx)
 
 

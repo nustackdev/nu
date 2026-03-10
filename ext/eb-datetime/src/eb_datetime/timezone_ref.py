@@ -1,7 +1,7 @@
 """Timezone type for timezone values.
 
 Pattern:
-    TimezoneType = TypeBase[timezone] + EqualableBase + timezone operations
+    TimezoneType = Object[timezone] + EqualableBase + timezone operations
     TimezoneValue = ValueBase + TimezoneType (computed results)
 
 Note: Timezones are not orderable (no <, >, <=, >=).
@@ -16,8 +16,8 @@ from everybase import Sentinel
 from everybase.abc import (
     EqualableBase,
     NoneValue,
+    Object,
     StrValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -36,7 +36,7 @@ __all__ = [
 
 class TimezoneType(
     EqualableBase["timezone | TimezoneType"],
-    TypeBase[timezone | Sentinel],
+    Object[timezone | Sentinel],
 ):
     """Abstract type for timezone operations.
 

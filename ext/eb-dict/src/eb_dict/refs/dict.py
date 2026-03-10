@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from everybase.abc import (
     AnyValue,
@@ -99,7 +99,7 @@ class DictRef[K, V](
         )
 
     @classmethod
-    def slot(cls, value_type: type[V], key_type: type[K] = str) -> Self:  # type: ignore[assignment]
+    def slot[DK, DV](cls, value_type: type[DV], key_type: type[DK] = str) -> DictRef[DK, DV]:  # type: ignore[assignment]
         return Slot(
             cls,
             value_type=value_type,

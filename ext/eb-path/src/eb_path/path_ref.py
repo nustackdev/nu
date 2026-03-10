@@ -1,7 +1,7 @@
 """Path type for filesystem paths.
 
 Pattern:
-    PathType = TypeBase[Path] + ComparableBase + path operations
+    PathType = Object[Path] + ComparableBase + path operations
     PathValue = ValueBase + PathType (computed results)
 """
 
@@ -15,9 +15,9 @@ from everybase.abc import (
     BoolValue,
     ComparableBase,
     ListValue,
+    Object,
     StrValue,
     TupleValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -36,7 +36,7 @@ __all__ = [
 
 class PathType(
     ComparableBase["Path | PurePath | str | PathType"],
-    TypeBase[Path | Sentinel],
+    Object[Path | Sentinel],
 ):
     """Abstract type for Path operations.
 

@@ -17,9 +17,9 @@ class AppState(Shape):
 
 demos = [
     f.Seq(
-        AppState.name.set("Alice"),
-        AppState.age.set(30),
-        AppState.online.set(datetime.now()),
+        AppState.name.store("Alice"),
+        AppState.age.store(30),
+        AppState.online.store(datetime.now()),
     ),
     f.Seq(
         f.Print("name", AppState.name),

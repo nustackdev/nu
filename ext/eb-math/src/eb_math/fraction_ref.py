@@ -1,7 +1,7 @@
 """Fraction type for exact rational arithmetic.
 
 Pattern:
-    FractionType = TypeBase[Fraction] + ComparableBase + arithmetic operations
+    FractionType = Object[Fraction] + ComparableBase + arithmetic operations
     FractionValue = ValueBase + FractionType (computed results)
 """
 
@@ -15,8 +15,8 @@ from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
+    Object,
     TupleValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -35,7 +35,7 @@ __all__ = [
 
 class FractionType(
     ComparableBase["Fraction | int | float | FractionType"],
-    TypeBase[Fraction | Sentinel],
+    Object[Fraction | Sentinel],
 ):
     """Abstract type for Fraction operations.
 

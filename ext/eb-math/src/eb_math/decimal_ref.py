@@ -1,7 +1,7 @@
 """Decimal type for arbitrary precision decimal arithmetic.
 
 Pattern:
-    DecimalType = TypeBase[Decimal] + ComparableBase + arithmetic operations
+    DecimalType = Object[Decimal] + ComparableBase + arithmetic operations
     DecimalValue = ValueBase + DecimalType (computed results)
 """
 
@@ -15,7 +15,7 @@ from everybase.abc import (
     BoolValue,
     ComparableBase,
     IntValue,
-    TypeBase,
+    Object,
     ValueBase,
 )
 
@@ -34,7 +34,7 @@ __all__ = [
 
 class DecimalType(
     ComparableBase["Decimal | int | float | str | DecimalType"],
-    TypeBase[Decimal | Sentinel],
+    Object[Decimal | Sentinel],
 ):
     """Abstract type for Decimal operations.
 

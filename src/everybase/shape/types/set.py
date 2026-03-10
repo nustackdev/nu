@@ -6,7 +6,7 @@ ReactiveSetType = SetType + ViewObservable
 
 from __future__ import annotations
 
-from everybase.abc import TypeBase
+from everybase.abc import Object
 from everybase.shape.collections.set import MutableSetBase as _MutableSetBase
 from everybase.shape.collections.set import ReactiveSetBase as _ReactiveSetBase
 
@@ -19,7 +19,7 @@ __all__ = [
 
 class SetType[T](
     _MutableSetBase[T, object, object],
-    TypeBase[set],
+    Object[set],
 ):
     """Set — mutable set."""
 
@@ -27,6 +27,6 @@ class SetType[T](
 class ReactiveSetType[T](
     SetType[T],
     _ReactiveSetBase[T, object, object],
-    TypeBase[set],
+    Object[set],
 ):
     """Reactive set — mutable + observable."""
