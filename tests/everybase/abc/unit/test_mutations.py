@@ -136,7 +136,7 @@ class TestKeysOp:
 
     async def test_keys_empty(self, ctx):
         op = KeysOp(DictValue({}))
-        assert await op.execute(ctx) == []
+        assert len(await op.execute(ctx)) == 0
 
 
 class TestValuesOp:
@@ -148,7 +148,7 @@ class TestValuesOp:
 
     async def test_values_empty(self, ctx):
         op = ValuesOp(DictValue({}))
-        assert await op.execute(ctx) == []
+        assert len(await op.execute(ctx)) == 0
 
 
 class TestItemsOp:
@@ -156,11 +156,11 @@ class TestItemsOp:
 
     async def test_items(self, ctx):
         op = ItemsOp(DictValue({"a": 1}))
-        assert await op.execute(ctx) == [("a", 1)]
+        assert set(await op.execute(ctx)) == {("a", 1)}
 
     async def test_items_empty(self, ctx):
         op = ItemsOp(DictValue({}))
-        assert await op.execute(ctx) == []
+        assert len(await op.execute(ctx)) == 0
 
 
 class TestGetOp:

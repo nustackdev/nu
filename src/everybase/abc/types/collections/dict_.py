@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from everybase.core import DictArg, Term  # noqa: F401
 
     from ...values import AnyValue, BoolValue, DictValue, ListValue  # noqa: F401
+    from ...values.collections.views import DictItemsValue, DictKeysValue, DictValuesValue
 
 
 __all__ = [
@@ -40,20 +41,20 @@ class DictType[K, V](
 
         return BoolValue(operand)
 
-    def _wrap_keys_result(self, operand: Term) -> ListValue:
-        from ...values import ListValue
+    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+        from ...values.collections.views import DictKeysValue
 
-        return ListValue(operand)
+        return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> ListValue:
-        from ...values import ListValue
+    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+        from ...values.collections.views import DictValuesValue
 
-        return ListValue(operand)
+        return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> ListValue:
-        from ...values import ListValue
+    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+        from ...values.collections.views import DictItemsValue
 
-        return ListValue(operand)
+        return DictItemsValue(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyValue:
         from ...values import AnyValue

@@ -9,7 +9,16 @@ Organized into:
 - special/: any, sentinel, empty, invalid
 """
 
-from .collections import DictType, FrozenSetType, ListType, SetType, TupleType
+from .collections import (
+    DictItemsType,
+    DictKeysType,
+    DictType,
+    DictValuesType,
+    FrozenSetType,
+    ListType,
+    SetType,
+    TupleType,
+)
 from .object import Object
 from .primitives import BoolType, BytesType, FloatType, IntType, NoneType, StrType
 from .special import AnyType, EmptyType, InvalidType, IteratorType, SentinelType
@@ -30,6 +39,10 @@ __all__ = [  # noqa: RUF022
     "SetType",
     "FrozenSetType",
     "TupleType",
+    # Views
+    "DictKeysType",
+    "DictValuesType",
+    "DictItemsType",
     # Special
     "AnyType",
     "IteratorType",

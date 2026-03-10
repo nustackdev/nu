@@ -735,7 +735,7 @@ class TestDictOps:
     async def test_items(self, ctx):
         """{'a': 1}.items_() returns items."""
         result = await DictValue({"a": 1}).items_().execute(ctx)
-        assert result == [("a", 1)]
+        assert set(result) == {("a", 1)}
 
     async def test_get_existing(self, ctx):
         """{'a': 1}.get_('a', 0) = 1."""

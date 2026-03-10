@@ -11,7 +11,16 @@ Organized into:
 """
 
 from .base import ValueBase
-from .collections import DictValue, FrozenSetValue, ListValue, SetValue, TupleValue
+from .collections import (
+    DictItemsValue,
+    DictKeysValue,
+    DictValue,
+    DictValuesValue,
+    FrozenSetValue,
+    ListValue,
+    SetValue,
+    TupleValue,
+)
 from .primitives import BoolValue, BytesValue, FloatValue, IntValue, StrValue
 from .special import AnyValue, EmptyValue, InvalidValue, IteratorValue, NoneValue, SentinelValue
 
@@ -20,7 +29,10 @@ __all__ = [
     "AnyValue",
     "BoolValue",
     "BytesValue",
+    "DictItemsValue",
+    "DictKeysValue",
     "DictValue",
+    "DictValuesValue",
     "EmptyValue",
     "FloatValue",
     "FrozenSetValue",

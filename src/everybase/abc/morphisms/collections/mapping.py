@@ -14,7 +14,7 @@ Commands:
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import ItemsView, KeysView, Mapping, MutableMapping, ValuesView
 
 from everybase.core import (
     INVALID,
@@ -45,34 +45,34 @@ __all__ = [
 # =============================================================================
 
 
-class KeysOp[K](UnaryOperation[list[K]]):
-    """Get keys from mapping: list(mapping.keys())."""
+class KeysOp[K](UnaryOperation[KeysView[K]]):
+    """Get keys view from mapping: mapping.keys()."""
 
-    def apply(self, operand: object) -> list[K]:
+    def apply(self, operand: object) -> KeysView[K]:
         """Apply."""
         if not isinstance(operand, Mapping):
             raise TypeError(f"keys_() requires mapping, got {type(operand).__name__}")
-        return list(operand.keys())  # type: ignore
+        return operand.keys()  # type: ignore
 
 
-class ValuesOp[V](UnaryOperation[list[V]]):
-    """Get values from mapping: list(mapping.values())."""
+class ValuesOp[V](UnaryOperation[ValuesView[V]]):
+    """Get values view from mapping: mapping.values()."""
 
-    def apply(self, operand: object) -> list[V]:
+    def apply(self, operand: object) -> ValuesView[V]:
         """Apply."""
         if not isinstance(operand, Mapping):
             raise TypeError(f"values_() requires mapping, got {type(operand).__name__}")
-        return list(operand.values())  # type: ignore
+        return operand.values()  # type: ignore
 
 
-class ItemsOp[K, V](UnaryOperation[list[tuple[K, V]]]):
-    """Get items from mapping: list(mapping.items())."""
+class ItemsOp[K, V](UnaryOperation[ItemsView[K, V]]):
+    """Get items view from mapping: mapping.items()."""
 
-    def apply(self, operand: object) -> list[tuple[K, V]]:
+    def apply(self, operand: object) -> ItemsView[K, V]:
         """Apply."""
         if not isinstance(operand, Mapping):
             raise TypeError(f"items_() requires mapping, got {type(operand).__name__}")
-        return list(operand.items())  # type: ignore
+        return operand.items()  # type: ignore
 
 
 class GetOp[V](TernaryOperation[V]):

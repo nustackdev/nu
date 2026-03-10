@@ -13,7 +13,10 @@ from everybase.abc import (
     AnyValue,
     BoolValue,
     BytesValue,
+    DictItemsValue,
+    DictKeysValue,
     DictValue,
+    DictValuesValue,
     FloatValue,
     FrozenSetValue,
     IntValue,
@@ -956,22 +959,22 @@ class TestDictRef:
         assert isinstance(result, BoolValue)
 
     def test_keys(self):
-        """DictValue.keys_() returns ListValue."""
+        """DictValue.keys_() returns DictKeysValue."""
         d = DictValue({"a": 1, "b": 2})
         result = d.keys_()
-        assert isinstance(result, ListValue)
+        assert isinstance(result, DictKeysValue)
 
     def test_values(self):
-        """DictValue.values_() returns ListValue."""
+        """DictValue.values_() returns DictValuesValue."""
         d = DictValue({"a": 1, "b": 2})
         result = d.values_()
-        assert isinstance(result, ListValue)
+        assert isinstance(result, DictValuesValue)
 
     def test_items(self):
-        """DictValue.items_() returns ListValue."""
+        """DictValue.items_() returns DictItemsValue."""
         d = DictValue({"a": 1, "b": 2})
         result = d.items_()
-        assert isinstance(result, ListValue)
+        assert isinstance(result, DictItemsValue)
 
     def test_get(self):
         """DictValue.get_() returns AnyValue."""
