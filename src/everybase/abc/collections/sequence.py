@@ -1,8 +1,10 @@
 # ruff: noqa: D102
 """Sequence collection — protocols + bases + mutations.
 
-SequenceProtocol/Base = Collection + Sliceable + first/last/sorted/join/index/find_index/count
+SequenceProtocol/Base = Collection + Sliceable + first/last/join/index/find_index/count
 MutableSequenceProtocol/Base = Sequence + append/insert/pop/extend/remove
+
+Sorted/Reversed are standalone functions in ``abc.fn``.
 
 Follows Python's collections.abc.Sequence / MutableSequence pattern.
 
@@ -10,9 +12,9 @@ Type Parameters:
     CollectionT: Native Python collection type (list[int], tuple[str, ...], etc.)
     ElementT: Native Python element type (int, str, dict, etc.)
     CollectionResultT: Wrapped result for collection-level operations
-        (map_, filter_, reversed_, sorted_, slice_, append, insert, extend, remove)
+        (slice_, append, insert, extend, remove)
     ElementResultT: Wrapped result for element-level operations
-        (first, last, pop, sum_, min_, max_)
+        (first, last, pop)
 """
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from everybase.core import BoolArg, StrArg
+    from everybase.core import StrArg
 
     from ..values import IntValue, NoneValue, StrValue
 
@@ -60,8 +62,6 @@ class SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT]
 
     def first(self) -> ElementResultT: ...
     def last(self) -> ElementResultT: ...
-    def reversed_(self) -> CollectionResultT: ...
-    def sorted_(self, reverse: BoolArg = False) -> CollectionResultT: ...
     def join(self, separator: StrArg) -> StrValue: ...
     def index(self, value: ElementT) -> IntValue: ...
     def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue: ...
@@ -118,18 +118,6 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("ElementResultT", self._wrap_element_result(LastOp(self)))
 
-    def reversed_(self) -> CollectionResultT:
-        """Get reversed sequence."""
-        from ..morphisms import ReversedOp
-
-        return cast("CollectionResultT", self._wrap_sliceable_result(ReversedOp(self)))
-
-    def sorted_(self, reverse: BoolArg = False) -> CollectionResultT:
-        """Get sorted sequence."""
-        from ..morphisms import SortedOp
-
-        return cast("CollectionResultT", self._wrap_sliceable_result(SortedOp(self, reverse)))
-
     def join(self, separator: StrArg) -> StrValue:
         """Join string elements."""
         from ..morphisms import JoinOp
@@ -173,34 +161,34 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def append(self, value: ElementT) -> NoneValue:
         """Append item to end of sequence."""
-        from ..morphisms.abc_sequence import AppendCmd
+        from ..morphisms.collections.sequence import AppendCmd
         from ..values import NoneValue
 
         return NoneValue(AppendCmd(self, value))
 
     def extend(self, other: Iterable[ElementT]) -> NoneValue:
         """Extend sequence with elements from iterable."""
-        from ..morphisms.abc_sequence import ExtendCmd
+        from ..morphisms.collections.sequence import ExtendCmd
         from ..values import NoneValue
 
         return NoneValue(ExtendCmd(self, other))
 
     def insert(self, index: int, value: ElementT) -> NoneValue:
         """Insert item at index."""
-        from ..morphisms.abc_sequence import InsertCmd
+        from ..morphisms.collections.sequence import InsertCmd
         from ..values import NoneValue
 
         return NoneValue(InsertCmd(self, index, value))
 
     def pop(self, index: int = -1) -> ElementResultT:
         """Remove and return item at index (default: last)."""
-        from ..morphisms.abc_sequence import PopCmd
+        from ..morphisms.collections.sequence import PopCmd
 
         return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
 
     def remove(self, value: ElementT) -> NoneValue:
         """Remove first occurrence of value."""
-        from ..morphisms.abc_sequence import RemoveValueCmd
+        from ..morphisms.collections.sequence import RemoveValueCmd
         from ..values import NoneValue
 
         return NoneValue(RemoveValueCmd(self, value))

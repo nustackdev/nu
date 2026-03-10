@@ -29,6 +29,7 @@ from everybase.abc import (
     TupleValue,
     all_,
     any_,
+    fn,
     none_,
 )
 
@@ -635,32 +636,32 @@ class TestCollectionAggregationOps:
     """Test collection aggregation operations."""
 
     async def test_sum(self, ctx):
-        """sum([1,2,3]) = 6."""
-        assert await ListValue([1, 2, 3]).sum_().execute(ctx) == 6
+        """Sum([1,2,3]) = 6."""
+        assert await fn.Sum(ListValue([1, 2, 3])).execute(ctx) == 6
 
     async def test_min(self, ctx):
-        """min([3,1,2]) = 1."""
-        assert await ListValue([3, 1, 2]).min_().execute(ctx) == 1
+        """Min([3,1,2]) = 1."""
+        assert await fn.Min(ListValue([3, 1, 2])).execute(ctx) == 1
 
     async def test_max(self, ctx):
-        """max([3,1,2]) = 3."""
-        assert await ListValue([3, 1, 2]).max_().execute(ctx) == 3
+        """Max([3,1,2]) = 3."""
+        assert await fn.Max(ListValue([3, 1, 2])).execute(ctx) == 3
 
     async def test_any_true(self, ctx):
-        """any([False, True, False]) = True."""
-        assert await ListValue([False, True, False]).any_().execute(ctx) is True
+        """Any([False, True, False]) = True."""
+        assert await fn.Any(ListValue([False, True, False])).execute(ctx) is True
 
     async def test_any_false(self, ctx):
-        """any([False, False]) = False."""
-        assert await ListValue([False, False]).any_().execute(ctx) is False
+        """Any([False, False]) = False."""
+        assert await fn.Any(ListValue([False, False])).execute(ctx) is False
 
     async def test_all_true(self, ctx):
-        """all([True, True]) = True."""
-        assert await ListValue([True, True]).all_().execute(ctx) is True
+        """All([True, True]) = True."""
+        assert await fn.All(ListValue([True, True])).execute(ctx) is True
 
     async def test_all_false(self, ctx):
-        """all([True, False]) = False."""
-        assert await ListValue([True, False]).all_().execute(ctx) is False
+        """All([True, False]) = False."""
+        assert await fn.All(ListValue([True, False])).execute(ctx) is False
 
 
 # =============================================================================
@@ -697,16 +698,16 @@ class TestCollectionTransformOps:
     """Test collection transform operations."""
 
     async def test_sorted(self, ctx):
-        """sorted([3,1,2]) = [1,2,3]."""
-        assert await ListValue([3, 1, 2]).sorted_().execute(ctx) == [1, 2, 3]
+        """Sorted([3,1,2]) = [1,2,3]."""
+        assert await fn.Sorted(ListValue([3, 1, 2])).execute(ctx) == [1, 2, 3]
 
     async def test_sorted_reverse(self, ctx):
-        """sorted([1,2,3], reverse=True) = [3,2,1]."""
-        assert await ListValue([1, 2, 3]).sorted_(reverse=True).execute(ctx) == [3, 2, 1]
+        """Sorted([1,2,3], reverse=True) = [3,2,1]."""
+        assert await fn.Sorted(ListValue([1, 2, 3]), reverse=True).execute(ctx) == [3, 2, 1]
 
     async def test_reversed(self, ctx):
-        """reversed([1,2,3]) = [3,2,1]."""
-        assert await ListValue([1, 2, 3]).reversed_().execute(ctx) == [3, 2, 1]
+        """Reversed([1,2,3]) = [3,2,1]."""
+        assert await fn.Reversed(ListValue([1, 2, 3])).execute(ctx) == [3, 2, 1]
 
     async def test_join(self, ctx):
         """['a','b','c'].join(',') = 'a,b,c'."""

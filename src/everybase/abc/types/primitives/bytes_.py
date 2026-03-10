@@ -93,51 +93,51 @@ class BytesType(
 
     def decode(self, encoding: StrArg = "utf-8") -> StrValue:
         """Decode bytes to string."""
-        from ...morphisms.type_bytes import DecodeOp
+        from ...morphisms.bytes_ import DecodeOp
         from ...values import StrValue
 
         return StrValue(DecodeOp(self, encoding))
 
     def hex_(self) -> StrValue:
         """Convert to hex string."""
-        from ...morphisms.type_bytes import HexOp
+        from ...morphisms.bytes_ import HexOp
         from ...values import StrValue
 
         return StrValue(HexOp(self))
 
     def upper(self) -> BytesValue:
         """Convert to uppercase."""
-        from ...morphisms.type_bytes import BytesUpperOp
+        from ...morphisms.bytes_ import BytesUpperOp
 
         return cast("BytesValue", self._wrap_bytes_result(BytesUpperOp(self)))
 
     def lower(self) -> BytesValue:
         """Convert to lowercase."""
-        from ...morphisms.type_bytes import BytesLowerOp
+        from ...morphisms.bytes_ import BytesLowerOp
 
         return cast("BytesValue", self._wrap_bytes_result(BytesLowerOp(self)))
 
     def strip(self, chars: BytesArg | None = None) -> BytesValue:
         """Strip whitespace or chars."""
-        from ...morphisms.type_bytes import BytesStripOp
+        from ...morphisms.bytes_ import BytesStripOp
 
         return cast("BytesValue", self._wrap_bytes_result(BytesStripOp(self, chars)))
 
     def lstrip(self, chars: BytesArg | None = None) -> BytesValue:
         """Strip leading whitespace or chars."""
-        from ...morphisms.type_bytes import BytesLStripOp
+        from ...morphisms.bytes_ import BytesLStripOp
 
         return cast("BytesValue", self._wrap_bytes_result(BytesLStripOp(self, chars)))
 
     def rstrip(self, chars: BytesArg | None = None) -> BytesValue:
         """Strip trailing whitespace or chars."""
-        from ...morphisms.type_bytes import BytesRStripOp
+        from ...morphisms.bytes_ import BytesRStripOp
 
         return cast("BytesValue", self._wrap_bytes_result(BytesRStripOp(self, chars)))
 
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListValue[bytes]:
         """Split bytes."""
-        from ...morphisms.type_bytes import BytesSplitOp
+        from ...morphisms.bytes_ import BytesSplitOp
         from ...values import ListValue
 
         if sep is not None:
@@ -146,34 +146,34 @@ class BytesType(
 
     def find_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntValue:
         """Find sub-bytes."""
-        from ...morphisms.type_bytes import BytesFindOp
+        from ...morphisms.bytes_ import BytesFindOp
         from ...values import IntValue
 
         return IntValue(BytesFindOp(self, sub, start, end))
 
     def count_bytes(self, sub: BytesArg) -> IntValue:
         """Count sub-bytes occurrences."""
-        from ...morphisms.type_bytes import BytesCountOp
+        from ...morphisms.bytes_ import BytesCountOp
         from ...values import IntValue
 
         return IntValue(BytesCountOp(self, sub))
 
     def startswith(self, prefix: BytesArg) -> BoolValue:
         """Check if starts with prefix."""
-        from ...morphisms.type_bytes import BytesStartsWithOp
+        from ...morphisms.bytes_ import BytesStartsWithOp
         from ...values import BoolValue
 
         return BoolValue(BytesStartsWithOp(self, prefix))
 
     def endswith(self, suffix: BytesArg) -> BoolValue:
         """Check if ends with suffix."""
-        from ...morphisms.type_bytes import BytesEndsWithOp
+        from ...morphisms.bytes_ import BytesEndsWithOp
         from ...values import BoolValue
 
         return BoolValue(BytesEndsWithOp(self, suffix))
 
     def replace(self, old: BytesArg, new: BytesArg, count: IntArg = -1) -> BytesValue:
         """Replace sub-bytes."""
-        from ...morphisms.type_bytes import BytesReplaceOp
+        from ...morphisms.bytes_ import BytesReplaceOp
 
         return cast("BytesValue", self._wrap_bytes_result(BytesReplaceOp(self, old, new, count)))

@@ -1,5 +1,6 @@
-"""Collection aggregation morphisms.
+"""Iterable reduction morphisms — terminal operations that consume iterables.
 
+ReduceOp: Reduce to single value (functools.reduce(fn, seq, initial))
 SumOp: Sum of elements (sum(seq))
 MinOp: Minimum element (min(seq))
 MaxOp: Maximum element (max(seq))
@@ -10,8 +11,9 @@ AllOp: All truthy (all(seq))
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from functools import reduce as functools_reduce
 
-from everybase.core import INVALID, Sentinel, UnaryOperation
+from everybase.core import INVALID, BinaryOperation, Sentinel, UnaryOperation
 
 
 __all__ = [
@@ -19,8 +21,41 @@ __all__ = [
     "AnyOp",
     "MaxOp",
     "MinOp",
+    "ReduceOp",
     "SumOp",
 ]
+
+
+class ReduceOp[T, T2](BinaryOperation[T2]):
+    """Reduce sequence to single value: functools.reduce(fn, seq, initial).
+
+    Example:
+        >>> ReduceOp(prices, lambda acc, x: acc + x, 0)
+        >>> ReduceOp(items, lambda acc, x: acc * x, 1)
+    """
+
+    def __init__(self, operand: object, fn: Callable[[T2, T], T2], initial: T2) -> None:
+        """Initialize reduce operation.
+
+        Args:
+            operand: Term that produces a sequence
+            fn: Reducer function (accumulator, element) -> new_accumulator
+            initial: Initial accumulator value
+        """
+        super().__init__(operand, initial)
+        self._fn = fn
+
+    def apply(self, left: object, right: object) -> T2 | Sentinel:
+        """Apply."""
+        if not isinstance(left, Iterable):
+            raise TypeError(f"reduce_() requires iterable, got {type(left).__name__}")
+        try:
+            return functools_reduce(self._fn, left, right)  # type: ignore
+        except Exception:
+            return INVALID
+
+    def __repr__(self) -> str:
+        return f"ReduceOp({self._children[0]!r}, {self._fn!r}, {self._children[1]!r})"
 
 
 class SumOp[ResultT](UnaryOperation[ResultT]):

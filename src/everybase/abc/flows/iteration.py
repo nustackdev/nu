@@ -1,4 +1,4 @@
-"""Iteration flows -- ForRange, ForEach, ForEachParallel."""
+"""Iteration flows -- ForRange, ForEach, Fold."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "Fold",
     "ForEach",
     "ForRange",
 ]
@@ -100,13 +101,17 @@ class ForRange(Flow):
 class ForEach(Flow):
     """Iterate over a sequence, executing body for each item.
 
-    Children layout (no index): ``[items, body]``
-    Children layout (with index): ``[items, init, body]``
+    Children layout (no item, no index): ``[items, body]``
+    Children layout (with item, no index): ``[items, body]``
+    Children layout (with index, no item): ``[items, init, body]``
+    Children layout (with item and index): ``[items, init, body]``
 
     The ``items`` parameter is auto-wrapped via ``ensure_term`` if a literal is
     passed -- it can be a plain list, a ``Ref.get()``, or any Term that
-    resolves to an iterable.  Optional ``index`` Ref is set with the
-    current iteration index.
+    resolves to an iterable.
+
+    When ``item`` ref is provided, the current element is set on it each
+    iteration — no more scratch shapes needed for simple iteration.
 
     When ``index`` is provided, the body is meta-adjusted:
     ``body = Seq(body, index.set(index + 1))``, init ``index.set(0)``.
@@ -114,12 +119,17 @@ class ForEach(Flow):
     Args:
         items: Iterable (or Term resolving to one) to iterate over.
         body: Executable run for each item.
+        item: Optional Ref set with current element each iteration.
         index: Optional Ref[int] set with current iteration index.
 
     Example::
 
-        idx = Var(0)
-        ForEach([1, 2, 3], process_item, index=idx)
+        item = AnyRef("item")
+        ForEach(tokens, body, item=item)
+        # item ref holds current element each iteration
+
+        idx = IntRef("idx")
+        ForEach([1, 2, 3], process_item, item=item, index=idx)
     """
 
     def __init__(
@@ -127,6 +137,7 @@ class ForEach(Flow):
         items: Any,
         body: Executable,
         *,
+        item: Ref | None = None,
         index: Ref[int] | None = None,
     ) -> None:
         """Initialize for-each loop.
@@ -134,9 +145,12 @@ class ForEach(Flow):
         Args:
             items: Iterable or Term resolving to an iterable.
             body: Executable run for each item.
+            item: Optional Ref set with current element each iteration.
             index: Optional Ref[int] set with current iteration index.
         """
         self._has_index = index is not None
+        self._has_item = item is not None
+        self._item_ref = item
 
         if index is not None:
             init = index.set(0)
@@ -155,5 +169,73 @@ class ForEach(Flow):
         else:
             body = self.children[1]
 
-        for _i, _item in enumerate(items):
+        for _i, elem in enumerate(items):
+            if self._has_item:
+                await self._item_ref.set(elem).execute(ctx)
+            await body.execute(ctx)
+
+
+class Fold(Flow):
+    """Stateful sequential reduction over an iterable.
+
+    Iterates over items, setting the current element on ``item`` ref
+    and executing ``body`` each iteration. The accumulator ``acc`` ref
+    holds the running state.
+
+    Children layout: ``[items, init, body]``
+
+    Args:
+        items: Iterable (or Term resolving to one) to fold over.
+        acc: Ref holding the accumulator state.
+        initial: Initial value for the accumulator.
+        item: Ref set with current element each iteration.
+        body: Executable that updates acc each iteration.
+
+    Example::
+
+        acc = IntRef("acc")
+        item = AnyRef("item")
+        Fold(
+            trades,
+            acc=acc,
+            initial=0,
+            item=item,
+            body=acc.set(acc.get() + item.get()),
+        )
+    """
+
+    def __init__(
+        self,
+        items: Any,
+        *,
+        acc: Ref,
+        initial: Any,
+        item: Ref | None = None,
+        body: Executable,
+    ) -> None:
+        """Initialize fold.
+
+        Args:
+            items: Iterable or Term resolving to an iterable.
+            acc: Ref holding the accumulator.
+            initial: Initial accumulator value.
+            item: Optional Ref set with current element each iteration.
+            body: Executable updating acc each iteration.
+        """
+        self._acc_ref = acc
+        self._item_ref = item
+        self._has_item = item is not None
+
+        init = acc.set(ensure_term(initial))
+        super().__init__(ensure_term(items), init, body)
+
+    async def execute(self, ctx: Context) -> None:
+        """Execute fold over items."""
+        items = await self.children[0].execute(ctx)
+        await self.children[1].execute(ctx)  # init acc
+        body = self.children[2]
+
+        for elem in items:
+            if self._has_item:
+                await self._item_ref.set(elem).execute(ctx)
             await body.execute(ctx)

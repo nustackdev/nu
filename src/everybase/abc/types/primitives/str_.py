@@ -111,35 +111,35 @@ class StrType(
 
     def upper(self) -> StrValue:
         """Convert to uppercase."""
-        from ...morphisms.type_str import UpperOp
+        from ...morphisms.str_ import UpperOp
         from ...values import StrValue
 
         return StrValue(UpperOp(self))
 
     def lower(self) -> StrValue:
         """Convert to lowercase."""
-        from ...morphisms.type_str import LowerOp
+        from ...morphisms.str_ import LowerOp
         from ...values import StrValue
 
         return StrValue(LowerOp(self))
 
     def title(self) -> StrValue:
         """Convert to title case."""
-        from ...morphisms.type_str import TitleOp
+        from ...morphisms.str_ import TitleOp
         from ...values import StrValue
 
         return StrValue(TitleOp(self))
 
     def capitalize(self) -> StrValue:
         """Capitalize first character."""
-        from ...morphisms.type_str import CapitalizeOp
+        from ...morphisms.str_ import CapitalizeOp
         from ...values import StrValue
 
         return StrValue(CapitalizeOp(self))
 
     def swapcase(self) -> StrValue:
         """Swap case."""
-        from ...morphisms.type_str import SwapCaseOp
+        from ...morphisms.str_ import SwapCaseOp
         from ...values import StrValue
 
         return StrValue(SwapCaseOp(self))
@@ -150,21 +150,21 @@ class StrType(
 
     def strip(self, chars: StrArg | None = None) -> StrValue:
         """Strip whitespace or chars."""
-        from ...morphisms.type_str import StripOp
+        from ...morphisms.str_ import StripOp
         from ...values import StrValue
 
         return StrValue(StripOp(self, chars))
 
     def lstrip(self, chars: StrArg | None = None) -> StrValue:
         """Strip leading whitespace or chars."""
-        from ...morphisms.type_str import LStripOp
+        from ...morphisms.str_ import LStripOp
         from ...values import StrValue
 
         return StrValue(LStripOp(self, chars))
 
     def rstrip(self, chars: StrArg | None = None) -> StrValue:
         """Strip trailing whitespace or chars."""
-        from ...morphisms.type_str import RStripOp
+        from ...morphisms.str_ import RStripOp
         from ...values import StrValue
 
         return StrValue(RStripOp(self, chars))
@@ -175,14 +175,14 @@ class StrType(
 
     def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListValue:
         """Split string."""
-        from ...morphisms.type_str import SplitOp
+        from ...morphisms.str_ import SplitOp
         from ...values import ListValue
 
         return ListValue(SplitOp(self, sep, maxsplit))
 
     def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListValue:
         """Right split string."""
-        from ...morphisms.type_str import RSplitOp
+        from ...morphisms.str_ import RSplitOp
         from ...values import ListValue
 
         return ListValue(RSplitOp(self, sep, maxsplit))
@@ -193,21 +193,21 @@ class StrType(
 
     def find(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntValue:
         """Find substring."""
-        from ...morphisms.type_str import FindOp
+        from ...morphisms.str_ import FindOp
         from ...values import IntValue
 
         return IntValue(FindOp(self, sub, start, end))
 
     def rfind(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntValue:
         """Find substring from right."""
-        from ...morphisms.type_str import RFindOp
+        from ...morphisms.str_ import RFindOp
         from ...values import IntValue
 
         return IntValue(RFindOp(self, sub, start, end))
 
     def count_substring(self, sub: StrArg) -> IntValue:
         """Count substring occurrences."""
-        from ...morphisms.type_str import CountSubstringOp
+        from ...morphisms.str_ import CountSubstringOp
         from ...values import IntValue
 
         return IntValue(CountSubstringOp(self, sub))
@@ -218,42 +218,42 @@ class StrType(
 
     def startswith(self, prefix: StrArg) -> BoolValue:
         """Check if starts with prefix."""
-        from ...morphisms.type_str import StartsWithOp
+        from ...morphisms.str_ import StartsWithOp
         from ...values import BoolValue
 
         return BoolValue(StartsWithOp(self, prefix))
 
     def endswith(self, suffix: StrArg) -> BoolValue:
         """Check if ends with suffix."""
-        from ...morphisms.type_str import EndsWithOp
+        from ...morphisms.str_ import EndsWithOp
         from ...values import BoolValue
 
         return BoolValue(EndsWithOp(self, suffix))
 
     def isdigit(self) -> BoolValue:
         """Check if all digits."""
-        from ...morphisms.type_str import IsDigitOp
+        from ...morphisms.str_ import IsDigitOp
         from ...values import BoolValue
 
         return BoolValue(IsDigitOp(self))
 
     def isalpha(self) -> BoolValue:
         """Check if all alphabetic."""
-        from ...morphisms.type_str import IsAlphaOp
+        from ...morphisms.str_ import IsAlphaOp
         from ...values import BoolValue
 
         return BoolValue(IsAlphaOp(self))
 
     def isalnum(self) -> BoolValue:
         """Check if alphanumeric."""
-        from ...morphisms.type_str import IsAlnumOp
+        from ...morphisms.str_ import IsAlnumOp
         from ...values import BoolValue
 
         return BoolValue(IsAlnumOp(self))
 
     def isspace(self) -> BoolValue:
         """Check if all whitespace."""
-        from ...morphisms.type_str import IsSpaceOp
+        from ...morphisms.str_ import IsSpaceOp
         from ...values import BoolValue
 
         return BoolValue(IsSpaceOp(self))
@@ -264,28 +264,28 @@ class StrType(
 
     def center(self, width: IntArg, fillchar: StrArg = " ") -> StrValue:
         """Center in width."""
-        from ...morphisms.type_str import CenterOp
+        from ...morphisms.str_ import CenterOp
         from ...values import StrValue
 
         return StrValue(CenterOp(self, width, fillchar))
 
     def ljust(self, width: IntArg, fillchar: StrArg = " ") -> StrValue:
         """Left justify."""
-        from ...morphisms.type_str import LJustOp
+        from ...morphisms.str_ import LJustOp
         from ...values import StrValue
 
         return StrValue(LJustOp(self, width, fillchar))
 
     def rjust(self, width: IntArg, fillchar: StrArg = " ") -> StrValue:
         """Right justify."""
-        from ...morphisms.type_str import RJustOp
+        from ...morphisms.str_ import RJustOp
         from ...values import StrValue
 
         return StrValue(RJustOp(self, width, fillchar))
 
     def zfill(self, width: IntArg) -> StrValue:
         """Zero-fill."""
-        from ...morphisms.type_str import ZFillOp
+        from ...morphisms.str_ import ZFillOp
         from ...values import StrValue
 
         return StrValue(ZFillOp(self, width))
@@ -296,7 +296,7 @@ class StrType(
 
     def replace(self, old: StrArg, new: StrArg, count: IntArg = -1) -> StrValue:
         """Replace substring."""
-        from ...morphisms.type_str import ReplaceOp
+        from ...morphisms.str_ import ReplaceOp
         from ...values import StrValue
 
         return StrValue(ReplaceOp(self, old, new, count))
@@ -307,7 +307,7 @@ class StrType(
 
     def encode(self, encoding: StrArg = "utf-8") -> BytesValue:
         """Encode string to bytes."""
-        from ...morphisms.type_str import EncodeOp
+        from ...morphisms.str_ import EncodeOp
         from ...values import BytesValue
 
         return BytesValue(EncodeOp(self, encoding))

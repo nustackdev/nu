@@ -113,19 +113,19 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def union(self, other: set[ElementT] | frozenset[ElementT] | Term) -> CollectionResultT:
         """Set union."""
-        from ..morphisms.abc_set import UnionOp
+        from ..morphisms.collections.set import UnionOp
 
         return cast("CollectionResultT", self._wrap_set_result(UnionOp(self, other)))
 
     def intersection(self, other: set[ElementT] | frozenset[ElementT] | Term) -> CollectionResultT:
         """Set intersection."""
-        from ..morphisms.abc_set import IntersectionOp
+        from ..morphisms.collections.set import IntersectionOp
 
         return cast("CollectionResultT", self._wrap_set_result(IntersectionOp(self, other)))
 
     def difference(self, other: set[ElementT] | frozenset[ElementT] | Term) -> CollectionResultT:
         """Set difference."""
-        from ..morphisms.abc_set import DifferenceOp
+        from ..morphisms.collections.set import DifferenceOp
 
         return cast("CollectionResultT", self._wrap_set_result(DifferenceOp(self, other)))
 
@@ -133,27 +133,27 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         self, other: set[ElementT] | frozenset[ElementT] | Term
     ) -> CollectionResultT:
         """Set symmetric difference."""
-        from ..morphisms.abc_set import SymmetricDifferenceOp
+        from ..morphisms.collections.set import SymmetricDifferenceOp
 
         return cast("CollectionResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
     def issubset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
         """Check if subset."""
-        from ..morphisms.abc_set import IsSubsetOp
+        from ..morphisms.collections.set import IsSubsetOp
         from ..values import BoolValue
 
         return BoolValue(IsSubsetOp(self, other))
 
     def issuperset(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
         """Check if superset."""
-        from ..morphisms.abc_set import IsSupersetOp
+        from ..morphisms.collections.set import IsSupersetOp
         from ..values import BoolValue
 
         return BoolValue(IsSupersetOp(self, other))
 
     def isdisjoint(self, other: set[ElementT] | frozenset[ElementT] | Term) -> BoolValue:
         """Check if disjoint."""
-        from ..morphisms.abc_set import IsDisjointOp
+        from ..morphisms.collections.set import IsDisjointOp
         from ..values import BoolValue
 
         return BoolValue(IsDisjointOp(self, other))
@@ -173,21 +173,21 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def add(self, value: ElementT) -> NoneValue:
         """Add element to set."""
-        from ..morphisms.abc_set import AddCmd
+        from ..morphisms.collections.set import AddCmd
         from ..values import NoneValue
 
         return NoneValue(AddCmd(self, value))
 
     def remove(self, value: ElementT) -> NoneValue:
         """Remove element from set. Returns INVALID if not found."""
-        from ..morphisms.abc_set import RemoveCmd
+        from ..morphisms.collections.set import RemoveCmd
         from ..values import NoneValue
 
         return NoneValue(RemoveCmd(self, value))
 
     def discard(self, value: ElementT) -> NoneValue:
         """Remove element if present (no error if absent)."""
-        from ..morphisms.abc_set import DiscardCmd
+        from ..morphisms.collections.set import DiscardCmd
         from ..values import NoneValue
 
         return NoneValue(DiscardCmd(self, value))

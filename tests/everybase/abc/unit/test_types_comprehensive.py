@@ -27,6 +27,7 @@ from everybase.abc import (
     ToStrOp,
     TupleValue,
     ensure_term,
+    fn,
 )
 
 
@@ -827,15 +828,15 @@ class TestListRefSequenceMethods:
         assert isinstance(result, AnyValue)
 
     def test_reversed(self):
-        """ListValue.reversed_() returns ListValue."""
+        """fn.Reversed() returns ListValue."""
         lst = ListValue([1, 2, 3])
-        result = lst.reversed_()
+        result = fn.Reversed(lst)
         assert isinstance(result, ListValue)
 
     def test_sorted(self):
-        """ListValue.sorted_() returns ListValue."""
+        """fn.Sorted() returns ListValue."""
         lst = ListValue([3, 1, 2])
-        result = lst.sorted_()
+        result = fn.Sorted(lst)
         assert isinstance(result, ListValue)
 
     def test_index(self):
@@ -851,37 +852,37 @@ class TestListRefSequenceMethods:
         assert isinstance(result, IntValue)
 
 
-class TestListRefIterableMethods:
-    """ListValue iterable/functional methods."""
+class TestStandaloneFnMethods:
+    """Standalone fn module methods (previously on IterableBase)."""
 
     def test_sum(self):
-        """ListValue.sum_() returns AnyValue."""
+        """fn.Sum() returns AnyValue."""
         lst = ListValue([1, 2, 3])
-        result = lst.sum_()
+        result = fn.Sum(lst)
         assert isinstance(result, AnyValue)
 
     def test_min(self):
-        """ListValue.min_() returns AnyValue."""
+        """fn.Min() returns AnyValue."""
         lst = ListValue([3, 1, 2])
-        result = lst.min_()
+        result = fn.Min(lst)
         assert isinstance(result, AnyValue)
 
     def test_max(self):
-        """ListValue.max_() returns AnyValue."""
+        """fn.Max() returns AnyValue."""
         lst = ListValue([3, 1, 2])
-        result = lst.max_()
+        result = fn.Max(lst)
         assert isinstance(result, AnyValue)
 
     def test_any(self):
-        """ListValue.any_() returns BoolValue."""
+        """fn.Any() returns BoolValue."""
         lst = ListValue([False, True, False])
-        result = lst.any_()
+        result = fn.Any(lst)
         assert isinstance(result, BoolValue)
 
     def test_all(self):
-        """ListValue.all_() returns BoolValue."""
+        """fn.All() returns BoolValue."""
         lst = ListValue([True, True, True])
-        result = lst.all_()
+        result = fn.All(lst)
         assert isinstance(result, BoolValue)
 
 

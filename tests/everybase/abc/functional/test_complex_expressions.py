@@ -17,6 +17,7 @@ from everybase.abc import (
     StrValue,
     all_,
     any_,
+    fn,
 )
 
 
@@ -220,29 +221,29 @@ class TestCollectionChains:
         assert result == 5
 
     async def test_sorted_and_first(self, ctx):
-        """[3,1,2].sorted_().first() = 1."""
-        result = await ListValue([3, 1, 2]).sorted_().first().execute(ctx)
+        """Sorted([3,1,2]).first() = 1."""
+        result = await fn.Sorted(ListValue([3, 1, 2])).first().execute(ctx)
         assert result == 1
 
     async def test_sorted_and_last(self, ctx):
-        """[3,1,2].sorted_().last() = 3."""
-        result = await ListValue([3, 1, 2]).sorted_().last().execute(ctx)
+        """Sorted([3,1,2]).last() = 3."""
+        result = await fn.Sorted(ListValue([3, 1, 2])).last().execute(ctx)
         assert result == 3
 
     async def test_reversed_slice(self, ctx):
-        """[1,2,3,4,5].reversed_()[1:3] = [4,3]."""
-        result = await ListValue([1, 2, 3, 4, 5]).reversed_()[1:3].execute(ctx)
+        """Reversed([1,2,3,4,5])[1:3] = [4,3]."""
+        result = await fn.Reversed(ListValue([1, 2, 3, 4, 5]))[1:3].execute(ctx)
         assert result == [4, 3]
 
     async def test_aggregation_comparison(self, ctx):
-        """sum([1,2,3]) > 5."""
-        result = await (ListValue([1, 2, 3]).sum_() > 5).execute(ctx)
+        """Sum([1,2,3]) > 5."""
+        result = await (fn.Sum(ListValue([1, 2, 3])) > 5).execute(ctx)
         assert result is True
 
     async def test_min_max_comparison(self, ctx):
-        """max([1,2,3]) > min([1,2,3])."""
+        """Max([1,2,3]) > Min([1,2,3])."""
         lst = ListValue([1, 2, 3])
-        result = await (lst.max_() > lst.min_()).execute(ctx)
+        result = await (fn.Max(lst) > fn.Min(lst)).execute(ctx)
         assert result is True
 
 
@@ -342,10 +343,10 @@ class TestRealWorldScenarios:
         """Calculate basic statistics on a list."""
         data = ListValue([10, 20, 30, 40, 50])
 
-        total = data.sum_()
+        total = fn.Sum(data)
         count = data.len_()
-        minimum = data.min_()
-        maximum = data.max_()
+        minimum = fn.Min(data)
+        maximum = fn.Max(data)
 
         assert await total.execute(ctx) == 150
         assert await count.execute(ctx) == 5
@@ -382,16 +383,16 @@ class TestEdgeCases:
         """Operations on empty list."""
         lst = ListValue([])
         assert await lst.len_().execute(ctx) == 0
-        assert await lst.reversed_().execute(ctx) == []
+        assert await fn.Reversed(lst).execute(ctx) == []
 
     async def test_single_element_list(self, ctx):
         """Operations on single-element list."""
         lst = ListValue([42])
         assert await lst.first().execute(ctx) == 42
         assert await lst.last().execute(ctx) == 42
-        assert await lst.sum_().execute(ctx) == 42
-        assert await lst.min_().execute(ctx) == 42
-        assert await lst.max_().execute(ctx) == 42
+        assert await fn.Sum(lst).execute(ctx) == 42
+        assert await fn.Min(lst).execute(ctx) == 42
+        assert await fn.Max(lst).execute(ctx) == 42
 
     async def test_zero_arithmetic(self, ctx):
         """Arithmetic with zero."""

@@ -1,19 +1,19 @@
-"""Collection transformation morphisms.
+"""Iterable transformation morphisms.
 
 MapOp: Map function over sequence (list(map(fn, seq)))
 FilterOp: Filter by predicate (list(filter(fn, seq)))
-ReduceOp: Reduce to single value (functools.reduce(fn, seq, initial))
 SortedOp: Sorted list (sorted(seq, reverse=reverse))
 ReversedOp: Reversed list (list(reversed(seq)))
 PluckOp: Extract field from each element ([x[key] for x in seq])
 ToDictOp: Build dict from sequence ({key_fn(x): val_fn(x) for x in seq})
 FilterByOp: Filter by field value ([x for x in seq if x[key] == value])
+FlattenOp: Flatten one level ([item for sub in seq for item in sub])
+UniqueOp: Unique elements preserving order (list(dict.fromkeys(seq)))
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from functools import reduce as functools_reduce
 from typing import TYPE_CHECKING
 
 from everybase.core import INVALID, BinaryOperation, Sentinel, TernaryOperation, UnaryOperation
@@ -26,12 +26,13 @@ if TYPE_CHECKING:
 __all__ = [
     "FilterByOp",
     "FilterOp",
+    "FlattenOp",
     "MapOp",
     "PluckOp",
-    "ReduceOp",
     "ReversedOp",
     "SortedOp",
     "ToDictOp",
+    "UniqueOp",
 ]
 
 
@@ -117,38 +118,6 @@ class FilterOp[T](UnaryOperation[list[T]]):
         return f"FilterOp({self._children[0]!r}, {self._fn!r})"
 
 
-class ReduceOp[T, T2](BinaryOperation[T2]):
-    """Reduce sequence to single value: functools.reduce(fn, seq, initial).
-
-    Example:
-        >>> ReduceOp(prices, lambda acc, x: acc + x, 0)
-        >>> ReduceOp(items, lambda acc, x: acc * x, 1)
-    """
-
-    def __init__(self, operand: object, fn: Callable[[T2, T], T2], initial: T2) -> None:
-        """Initialize reduce operation.
-
-        Args:
-            operand: Term that produces a sequence
-            fn: Reducer function (accumulator, element) -> new_accumulator
-            initial: Initial accumulator value
-        """
-        super().__init__(operand, initial)
-        self._fn = fn
-
-    def apply(self, left: object, right: object) -> T2 | Sentinel:
-        """Apply."""
-        if not isinstance(left, Iterable):
-            raise TypeError(f"reduce_() requires iterable, got {type(left).__name__}")
-        try:
-            return functools_reduce(self._fn, left, right)  # type: ignore
-        except Exception:
-            return INVALID
-
-    def __repr__(self) -> str:
-        return f"ReduceOp({self._children[0]!r}, {self._fn!r}, {self._children[1]!r})"
-
-
 class PluckOp[T](BinaryOperation[list[T]]):
     """Extract field from each element: [x[key] for x in seq].
 
@@ -223,3 +192,48 @@ class FilterByOp[T](TernaryOperation[list[T]]):
             return [item for item in first if item[second] == third]  # type: ignore
         except (KeyError, TypeError):
             return INVALID
+
+
+class FlattenOp(UnaryOperation[list]):
+    """Flatten one level: [item for sub in iterable for item in sub]."""
+
+    def apply(self, operand: object) -> list | Sentinel:
+        """Apply."""
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"Flatten requires iterable, got {type(operand).__name__}")
+        try:
+            return [item for sub in operand for item in sub]  # type: ignore
+        except TypeError:
+            return INVALID
+
+
+class UniqueOp(UnaryOperation[list]):
+    """Unique elements preserving order: list(dict.fromkeys(iterable))."""
+
+    def __init__(self, operand: object, key_fn: Callable | None = None) -> None:
+        """Initialize."""
+        super().__init__(operand)
+        self._key_fn = key_fn
+
+    def apply(self, operand: object) -> list | Sentinel:
+        """Apply."""
+        if not isinstance(operand, Iterable):
+            raise TypeError(f"Unique requires iterable, got {type(operand).__name__}")
+        try:
+            if self._key_fn is None:
+                return list(dict.fromkeys(operand))
+            seen: set = set()
+            result: list = []
+            for item in operand:
+                k = self._key_fn(item)
+                if k not in seen:
+                    seen.add(k)
+                    result.append(item)
+            return result
+        except Exception:
+            return INVALID
+
+    def __repr__(self) -> str:
+        if self._key_fn is not None:
+            return f"UniqueOp({self._children[0]!r}, key={self._key_fn!r})"
+        return f"UniqueOp({self._children[0]!r})"

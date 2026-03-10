@@ -125,37 +125,37 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
     def keys_(self) -> CollectionResultT:
         """Get all keys."""
-        from ..morphisms.abc_mapping import KeysOp
+        from ..morphisms.collections.mapping import KeysOp
 
         return cast("CollectionResultT", self._wrap_keys_result(KeysOp(self)))
 
     def values_(self) -> CollectionResultT:
         """Get all values."""
-        from ..morphisms.abc_mapping import ValuesOp
+        from ..morphisms.collections.mapping import ValuesOp
 
         return cast("CollectionResultT", self._wrap_values_result(ValuesOp(self)))
 
     def items_(self) -> CollectionResultT:
         """Get all key-value pairs."""
-        from ..morphisms.abc_mapping import ItemsOp
+        from ..morphisms.collections.mapping import ItemsOp
 
         return cast("CollectionResultT", self._wrap_items_result(ItemsOp(self)))
 
     def get_(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
         """Get value with default."""
-        from ..morphisms.abc_mapping import GetOp
+        from ..morphisms.collections.mapping import GetOp
 
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
     def key_at_(self, idx: int) -> ValueResultT:
         """Get key at index position."""
-        from ..morphisms.abc_mapping import KeyAtOp
+        from ..morphisms.collections.mapping import KeyAtOp
 
         return cast("ValueResultT", self._wrap_value_result(KeyAtOp(self, idx)))
 
     def islice_(self, start: int = 0, stop: int | None = None) -> CollectionResultT:
         """Slice mapping by iteration order."""
-        from ..morphisms.abc_mapping import ISliceOp
+        from ..morphisms.collections.mapping import ISliceOp
 
         return cast("CollectionResultT", self._wrap_iterable_result(ISliceOp(self, start, stop)))
 
@@ -175,19 +175,19 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
     def set_(self, key: KeyT, value: ValueT) -> ValueResultT:
         """Set value at key."""
-        from ..morphisms.abc_mapping import SetItemCmd
+        from ..morphisms.collections.mapping import SetItemCmd
 
         return cast("ValueResultT", self._wrap_value_result(SetItemCmd(self, key, value)))
 
     def delete(self, key: KeyT) -> ValueResultT:
         """Delete entry by key."""
-        from ..morphisms.abc_mapping import DeleteItemCmd
+        from ..morphisms.collections.mapping import DeleteItemCmd
 
         return cast("ValueResultT", self._wrap_value_result(DeleteItemCmd(self, key)))
 
     def update_(self, other: Mapping[KeyT, ValueT]) -> NoneValue:
         """Update mapping with another mapping."""
-        from ..morphisms.abc_mapping import UpdateCmd
+        from ..morphisms.collections.mapping import UpdateCmd
         from ..values import NoneValue
 
         return NoneValue(UpdateCmd(self, other))

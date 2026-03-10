@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import eb_virtuals as ebv
 from everybase import Context
+from everybase.abc import fn
 from everybase.shape import Shape
 
 
@@ -67,7 +68,9 @@ async def run(ctx: Context) -> None:
     print("prices:", await Market.prices.get().execute(ctx))
     print(
         "map+filter:",
-        await Market.prices.get().map_(lambda x: x * 2).filter_(lambda x: x > 200).execute(ctx),
+        await fn.Filter(fn.Map(Market.prices.get(), lambda x: x * 2), lambda x: x > 200).execute(
+            ctx
+        ),
     )
     print(
         "dynamic idx:", await (Market.prices[Market.misc_val.get()].get() + 12 > 100).execute(ctx)

@@ -2,90 +2,59 @@
 
 Structure:
 
-op_  — Python operators (syntactic)
-  op_arithmetic.py: NegOp, AbsOp, PosOp, AddOp, SubOp, MulOp, DivOp, etc.
-  op_comparison.py: EqOp, NeOp, GtOp, LtOp, GeOp, LeOp, IdCompOp
-  op_logical.py: NotOp, BoolOp, AndOp, OrOp
-  op_bitwise.py: BitwiseNotOp, BitwiseAndOp, BitwiseOrOp, XorOp, LShiftOp, RShiftOp
+operator/     — Python operators (syntactic)
+  arithmetic.py: NegOp, AbsOp, PosOp, AddOp, SubOp, MulOp, DivOp, FloorDivOp, ModOp, PowOp
+  comparison.py: EqOp, NeOp, GtOp, LtOp, GeOp, LeOp, IdCompOp
+  logical.py: NotOp, BoolOp, AndOp, OrOp
+  bitwise.py: BitwiseNotOp, BitwiseAndOp, BitwiseOrOp, XorOp, LShiftOp, RShiftOp
 
-fn_  — Builtin functions & higher-order
-  fn_transform.py: MapOp, FilterOp, ReduceOp, SortedOp, ReversedOp
-  fn_search.py: FindOp, FindIndexOp
-  fn_aggregate.py: SumOp, MinOp, MaxOp, AnyOp, AllOp
-  fn_conversion.py: ToIntOp, ToStrOp, ToBoolOp, ToFloatOp, ToBytesOp, etc.
-  fn_call.py: FuncCall/Op/Cmd, MethodCall/Op/Cmd
+itertools/    — Higher-order & iteration
+  transform.py: MapOp, FilterOp, SortedOp, ReversedOp, PluckOp, ToDictOp, FilterByOp, FlattenOp, UniqueOp
+  combine.py: ZipOp, ChainOp, EnumerateOp
+  slice.py: TakeOp, DropOp
+  group.py: GroupByOp, PartitionOp
+  reduce.py: ReduceOp, SumOp, MinOp, MaxOp, AnyOp, AllOp
+  search.py: FindOp, FindIndexOp
 
-gen_ — General patterns (protocol-level)
-  gen_access.py: AtOp, SliceOp, LenOp, ContainsOp
-  gen_attr.py: GetAttrOp, SetAttrOp, DelAttrOp
-  gen_special.py: IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
-  gen_conditional.py: ConditionalOp
+builtins/     — General patterns & conversions
+  access.py: AtOp, SliceOp, LenOp, ContainsOp
+  attr.py: GetAttrOp, SetAttrOp, DelAttrOp
+  call.py: FuncCall/Op/Cmd, MethodCall/Op/Cmd
+  conversion.py: ToIntOp, ToStrOp, ToBoolOp, ToFloatOp, ToBytesOp, ToListOp, ToSetOp, ToTupleOp
+  special.py: IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
 
-type_ — Concrete type methods
-  type_str.py: String-specific ops (UpperOp, SplitOp, JoinOp, etc.)
-  type_bytes.py: Bytes-specific ops (DecodeOp, HexOp, etc.)
+collections/  — Collection structural ops & commands
+  sequence.py: FirstOp, LastOp, IndexOfOp, CountOp, AppendCmd, ExtendCmd, InsertCmd, PopCmd, RemoveValueCmd
+  mapping.py: KeysOp, ValuesOp, ItemsOp, GetOp, KeyAtOp, ISliceOp, SetItemCmd, DeleteItemCmd, UpdateCmd
+  set.py: UnionOp...DiscardCmd
+  shared.py: ClearCmd
 
-abc_ — ABC-level operations (pure) + commands (impure)
-  abc_sequence.py: FirstOp, LastOp, IndexOfOp, CountOp, AppendCmd, InsertCmd, PopCmd
-  abc_mapping.py: KeysOp, ValuesOp, ItemsOp, GetOp, SetItemCmd, DeleteItemCmd, UpdateCmd
-  abc_set.py: UnionOp, IntersectionOp, DifferenceOp, etc., AddCmd, RemoveCmd, DiscardCmd
-  cmd_collection.py: ClearCmd (shared across collection types)
+str_.py       — String-specific ops (UpperOp, SplitOp, JoinOp, etc.)
+bytes_.py     — Bytes-specific ops (DecodeOp, HexOp, etc.)
 
 All morphisms use every.Morphism base classes and implement apply().
 """
 
-# ── abc_ — ABC-level operations + commands ────────────────────────────────────
-from .abc_mapping import (
-    DeleteItemCmd,
-    GetOp,
-    ItemsOp,
-    KeysOp,
-    SetItemCmd,
-    UpdateCmd,
-    ValuesOp,
-)
-from .abc_sequence import (
-    AppendCmd,
-    CountOp,
-    ExtendCmd,
-    FirstOp,
-    IndexOfOp,
-    InsertCmd,
-    LastOp,
-    PopCmd,
-    RemoveValueCmd,
-)
-from .abc_set import (
-    AddCmd,
-    DifferenceOp,
-    DiscardCmd,
-    IntersectionOp,
-    IsDisjointOp,
-    IsSubsetOp,
-    IsSupersetOp,
-    RemoveCmd,
-    SymmetricDifferenceOp,
-    UnionOp,
-)
-from .cmd_collection import ClearCmd
-
-# ── fn_ — Builtin functions & higher-order ──────────────────────────────────
-from .fn_aggregate import (
-    AllOp,
-    AnyOp,
-    MaxOp,
-    MinOp,
-    SumOp,
-)
-from .fn_call import (
+# ── operator/ — Python operators ─────────────────────────────────────────────
+# ── builtins/ — General patterns & conversions ───────────────────────────────
+from .builtins import (
+    AtOp,
+    ContainsOp,
+    DelAttrOp,
     FuncCall,
     FuncCallCmd,
     FuncCallOp,
+    GetAttrOp,
+    IsEmptyOp,
+    IsNaNOp,
+    LenOp,
     MethodCall,
     MethodCallCmd,
     MethodCallOp,
-)
-from .fn_conversion import (
+    NotEmptyOp,
+    NotNaNOp,
+    SetAttrOp,
+    SliceOp,
     ToBoolOp,
     ToBytesOp,
     ToFloatOp,
@@ -95,57 +64,9 @@ from .fn_conversion import (
     ToStrOp,
     ToTupleOp,
 )
-from .fn_search import (
-    FindIndexOp,
-    FindOp,
-)
-from .fn_transform import (
-    FilterByOp,
-    FilterOp,
-    MapOp,
-    PluckOp,
-    ReduceOp,
-    ReversedOp,
-    SortedOp,
-    ToDictOp,
-)
 
-# ── gen_ — General patterns ─────────────────────────────────────────────────
-from .gen_access import (
-    AtOp,
-    ContainsOp,
-    LenOp,
-    SliceOp,
-)
-from .gen_attr import DelAttrOp, GetAttrOp, SetAttrOp
-from .gen_special import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
-
-# ── op_ — Python operators ──────────────────────────────────────────────────
-from .op_arithmetic import (
-    AbsOp,
-    AddOp,
-    DivOp,
-    FloorDivOp,
-    ModOp,
-    MulOp,
-    NegOp,
-    PosOp,
-    PowOp,
-    SubOp,
-)
-from .op_bitwise import (
-    BitwiseAndOp,
-    BitwiseNotOp,
-    BitwiseOrOp,
-    LShiftOp,
-    RShiftOp,
-    XorOp,
-)
-from .op_comparison import EqOp, GeOp, GtOp, IdCompOp, LeOp, LtOp, NeOp
-from .op_logical import AndOp, BoolOp, NotOp, OrOp
-
-# ── type_ — Concrete type methods ───────────────────────────────────────────
-from .type_bytes import (
+# ── str/bytes — Type-specific ops ────────────────────────────────────────────
+from .bytes_ import (
     BytesCountOp,
     BytesEndsWithOp,
     BytesFindOp,
@@ -160,7 +81,97 @@ from .type_bytes import (
     DecodeOp,
     HexOp,
 )
-from .type_str import (
+
+# ── collections/ — Collection structural ops & commands ──────────────────────
+from .collections import (
+    AddCmd,
+    AppendCmd,
+    ClearCmd,
+    CountOp,
+    DeleteItemCmd,
+    DifferenceOp,
+    DiscardCmd,
+    ExtendCmd,
+    FirstOp,
+    GetOp,
+    IndexOfOp,
+    InsertCmd,
+    IntersectionOp,
+    IsDisjointOp,
+    ISliceOp,
+    IsSubsetOp,
+    IsSupersetOp,
+    ItemsOp,
+    KeyAtOp,
+    KeysOp,
+    LastOp,
+    PopCmd,
+    RemoveCmd,
+    RemoveValueCmd,
+    SetItemCmd,
+    SymmetricDifferenceOp,
+    UnionOp,
+    UpdateCmd,
+    ValuesOp,
+)
+
+# ── itertools/ — Higher-order & iteration ────────────────────────────────────
+from .itertools import (
+    AllOp,
+    AnyOp,
+    ChainOp,
+    DropOp,
+    EnumerateOp,
+    FilterByOp,
+    FilterOp,
+    FindIndexOp,
+    FindOp,
+    FlattenOp,
+    GroupByOp,
+    MapOp,
+    MaxOp,
+    MinOp,
+    PartitionOp,
+    PluckOp,
+    ReduceOp,
+    ReversedOp,
+    SortedOp,
+    SumOp,
+    TakeOp,
+    ToDictOp,
+    UniqueOp,
+    ZipOp,
+)
+from .operator import (
+    AbsOp,
+    AddOp,
+    AndOp,
+    BitwiseAndOp,
+    BitwiseNotOp,
+    BitwiseOrOp,
+    BoolOp,
+    DivOp,
+    EqOp,
+    FloorDivOp,
+    GeOp,
+    GtOp,
+    IdCompOp,
+    LeOp,
+    LShiftOp,
+    LtOp,
+    ModOp,
+    MulOp,
+    NegOp,
+    NeOp,
+    NotOp,
+    OrOp,
+    PosOp,
+    PowOp,
+    RShiftOp,
+    SubOp,
+    XorOp,
+)
+from .str_ import (
     CapitalizeOp,
     CenterOp,
     CountSubstringOp,
@@ -185,19 +196,19 @@ from .type_str import (
     UpperOp,
     ZFillOp,
 )
-from .type_str import (
+from .str_ import (
     FindOp as StrFindOp,
 )
-from .type_str import (
+from .str_ import (
     RFindOp as StrRFindOp,
 )
-from .type_str import (
+from .str_ import (
     StripOp as StrStripOp,
 )
 
 
 __all__ = [  # noqa: RUF022
-    # op_ — Python operators
+    # operator/ — Python operators
     "AbsOp",
     "AddOp",
     "DivOp",
@@ -225,12 +236,39 @@ __all__ = [  # noqa: RUF022
     "LShiftOp",
     "RShiftOp",
     "XorOp",
-    # fn_ — Builtin functions & higher-order
+    # itertools/ — Higher-order & iteration
     "AllOp",
     "AnyOp",
     "MaxOp",
     "MinOp",
     "SumOp",
+    "FilterByOp",
+    "FilterOp",
+    "MapOp",
+    "PluckOp",
+    "ReduceOp",
+    "ReversedOp",
+    "SortedOp",
+    "ToDictOp",
+    "FlattenOp",
+    "UniqueOp",
+    "ChainOp",
+    "DropOp",
+    "EnumerateOp",
+    "GroupByOp",
+    "PartitionOp",
+    "TakeOp",
+    "ZipOp",
+    "FindOp",
+    "FindIndexOp",
+    # builtins/ — General patterns & conversions
+    "AtOp",
+    "ContainsOp",
+    "LenOp",
+    "SliceOp",
+    "DelAttrOp",
+    "GetAttrOp",
+    "SetAttrOp",
     "FuncCall",
     "FuncCallCmd",
     "FuncCallOp",
@@ -245,34 +283,41 @@ __all__ = [  # noqa: RUF022
     "ToSetOp",
     "ToStrOp",
     "ToTupleOp",
-    "CountOp",
-    "FindIndexOp",
-    "FindOp",
-    "FirstOp",
-    "IndexOfOp",
-    "JoinOp",
-    "LastOp",
-    "FilterByOp",
-    "FilterOp",
-    "MapOp",
-    "PluckOp",
-    "ReduceOp",
-    "ReversedOp",
-    "SortedOp",
-    "ToDictOp",
-    # gen_ — General patterns
-    "AtOp",
-    "ContainsOp",
-    "LenOp",
-    "SliceOp",
-    "DelAttrOp",
-    "GetAttrOp",
-    "SetAttrOp",
     "IsEmptyOp",
     "IsNaNOp",
     "NotEmptyOp",
     "NotNaNOp",
-    # type_ — Concrete type methods
+    # collections/ — Collection structural ops & commands
+    "FirstOp",
+    "LastOp",
+    "IndexOfOp",
+    "CountOp",
+    "AppendCmd",
+    "ExtendCmd",
+    "InsertCmd",
+    "PopCmd",
+    "RemoveValueCmd",
+    "KeysOp",
+    "ValuesOp",
+    "ItemsOp",
+    "GetOp",
+    "KeyAtOp",
+    "ISliceOp",
+    "SetItemCmd",
+    "DeleteItemCmd",
+    "UpdateCmd",
+    "UnionOp",
+    "IntersectionOp",
+    "DifferenceOp",
+    "SymmetricDifferenceOp",
+    "IsSubsetOp",
+    "IsSupersetOp",
+    "IsDisjointOp",
+    "AddCmd",
+    "RemoveCmd",
+    "DiscardCmd",
+    "ClearCmd",
+    # str/bytes — Type-specific ops
     "BytesCountOp",
     "BytesEndsWithOp",
     "BytesFindOp",
@@ -295,6 +340,7 @@ __all__ = [  # noqa: RUF022
     "IsAlphaOp",
     "IsDigitOp",
     "IsSpaceOp",
+    "JoinOp",
     "LJustOp",
     "LStripOp",
     "LowerOp",
@@ -311,36 +357,4 @@ __all__ = [  # noqa: RUF022
     "TitleOp",
     "UpperOp",
     "ZFillOp",
-    # abc_ — ABC-level operations + commands
-    # Sequence
-    "FirstOp",
-    "LastOp",
-    "IndexOfOp",
-    "CountOp",
-    "AppendCmd",
-    "ExtendCmd",
-    "InsertCmd",
-    "PopCmd",
-    "RemoveValueCmd",
-    # Mapping
-    "KeysOp",
-    "ValuesOp",
-    "ItemsOp",
-    "GetOp",
-    "SetItemCmd",
-    "DeleteItemCmd",
-    "UpdateCmd",
-    # Set
-    "UnionOp",
-    "IntersectionOp",
-    "DifferenceOp",
-    "SymmetricDifferenceOp",
-    "IsSubsetOp",
-    "IsSupersetOp",
-    "IsDisjointOp",
-    "AddCmd",
-    "RemoveCmd",
-    "DiscardCmd",
-    # Shared
-    "ClearCmd",
 ]
