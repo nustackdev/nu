@@ -231,8 +231,8 @@ class TestCollectionChains:
         assert result == 3
 
     async def test_reversed_slice(self, ctx):
-        """Reversed([1,2,3,4,5])[1:3] = [4,3]."""
-        result = await fn.Reversed(ListValue([1, 2, 3, 4, 5]))[1:3].execute(ctx)
+        """Reversed([1,2,3,4,5]).to_list()[1:3] = [4,3]."""
+        result = await fn.Reversed(ListValue([1, 2, 3, 4, 5])).to_list()[1:3].execute(ctx)
         assert result == [4, 3]
 
     async def test_aggregation_comparison(self, ctx):
@@ -383,7 +383,7 @@ class TestEdgeCases:
         """Operations on empty list."""
         lst = ListValue([])
         assert await lst.len_().execute(ctx) == 0
-        assert await fn.Reversed(lst).execute(ctx) == []
+        assert await fn.ToList(fn.Reversed(lst)).execute(ctx) == []
 
     async def test_single_element_list(self, ctx):
         """Operations on single-element list."""

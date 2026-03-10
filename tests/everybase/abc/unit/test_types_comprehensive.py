@@ -17,6 +17,7 @@ from everybase.abc import (
     FloatValue,
     FrozenSetValue,
     IntValue,
+    IteratorValue,
     ListValue,
     NoneValue,
     SetValue,
@@ -828,10 +829,10 @@ class TestListRefSequenceMethods:
         assert isinstance(result, AnyValue)
 
     def test_reversed(self):
-        """fn.Reversed() returns ListValue."""
+        """fn.Reversed() returns IteratorValue."""
         lst = ListValue([1, 2, 3])
         result = fn.Reversed(lst)
-        assert isinstance(result, ListValue)
+        assert isinstance(result, IteratorValue)
 
     def test_sorted(self):
         """fn.Sorted() returns ListValue."""

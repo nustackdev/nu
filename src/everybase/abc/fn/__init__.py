@@ -3,30 +3,28 @@
 All operations as standalone functions, not methods on types.
 Follows Python stdlib naming for intuitive navigation.
 
-Transformations (lazy-conceptual, eager execution):
-    Map(iterable, fn) -> ListValue
-    Filter(iterable, pred) -> ListValue
+Transformations (lazy — return IteratorValue):
+    Map(iterable, fn) -> IteratorValue
+    Filter(iterable, pred) -> IteratorValue
+    Reversed(iterable) -> IteratorValue
+    Flatten(iterable) -> IteratorValue
+    Unique(iterable, key=None) -> IteratorValue
+    Pluck(iterable, field) -> IteratorValue
+    FilterBy(iterable, field, value) -> IteratorValue
+
+Combinators (lazy — return IteratorValue):
+    Zip(*iterables) -> IteratorValue[tuple]
+    Chain(*iterables) -> IteratorValue
+    Enumerate(iterable, start=0) -> IteratorValue[tuple[int, T]]
+
+Slicing (lazy — return IteratorValue):
+    Take(iterable, n) -> IteratorValue
+    Drop(iterable, n) -> IteratorValue
+
+Terminals (eager — return concrete values):
     Sorted(iterable, reverse=False) -> ListValue
-    Reversed(iterable) -> ListValue
-    Flatten(iterable) -> ListValue
-    Unique(iterable, key=None) -> ListValue
-    Pluck(iterable, field) -> ListValue
-    FilterBy(iterable, field, value) -> ListValue
-
-Combinators:
-    Zip(*iterables) -> ListValue[tuple]
-    Chain(*iterables) -> ListValue
-    Enumerate(iterable, start=0) -> ListValue[tuple[int, T]]
-
-Slicing:
-    Take(iterable, n) -> ListValue
-    Drop(iterable, n) -> ListValue
-
-Grouping:
     GroupBy(iterable, key_fn) -> ListValue[tuple[K, list]]
     Partition(iterable, predicate) -> TupleValue[list, list]
-
-Reductions (terminal):
     Reduce(iterable, fn, initial) -> AnyValue
     Sum(iterable) -> AnyValue
     Min(iterable, key=None) -> AnyValue
@@ -34,7 +32,7 @@ Reductions (terminal):
     Any(iterable) -> BoolValue
     All(iterable) -> BoolValue
 
-Converters:
+Materializers (eager — consume iterators into collections):
     ToList(iterable) -> ListValue
     ToSet(iterable) -> SetValue
     ToDict(iterable, key_fn, val_fn) -> DictValue
@@ -50,37 +48,44 @@ from ..utils import ensure_term
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..values import AnyValue, BoolValue, DictValue, ListValue, SetValue, TupleValue
+    from ..values import (
+        AnyValue,
+        BoolValue,
+        DictValue,
+        IteratorValue,
+        ListValue,
+        SetValue,
+        TupleValue,
+    )
 
 
 __all__ = [  # noqa: RUF022
-    # Transformations
+    # Transformations (lazy)
     "Map",
     "Filter",
-    "Sorted",
     "Reversed",
     "Flatten",
     "Unique",
     "Pluck",
     "FilterBy",
-    # Combinators
+    # Combinators (lazy)
     "Zip",
     "Chain",
     "Enumerate",
-    # Slicing
+    # Slicing (lazy)
     "Take",
     "Drop",
-    # Grouping
+    # Terminals (eager)
+    "Sorted",
     "GroupBy",
     "Partition",
-    # Reductions
     "Reduce",
     "Sum",
     "Min",
     "Max",
     "Any",
     "All",
-    # Converters
+    # Materializers
     "ToList",
     "ToSet",
     "ToDict",
@@ -88,12 +93,12 @@ __all__ = [  # noqa: RUF022
 
 
 # =============================================================================
-# TRANSFORMATIONS
+# TRANSFORMATIONS (lazy — return IteratorValue)
 # =============================================================================
 
 
-def Map(iterable: object, fn: Callable) -> ListValue:  # noqa: N802
-    """Map function over iterable elements.
+def Map(iterable: object, fn: Callable) -> IteratorValue:  # noqa: N802
+    """Map function over iterable elements. Lazy.
 
     Example::
 
@@ -101,13 +106,13 @@ def Map(iterable: object, fn: Callable) -> ListValue:  # noqa: N802
         Map(names, str.upper)
     """
     from ..morphisms.itertools.transform import MapOp
-    from ..values import ListValue
+    from ..values import IteratorValue
 
-    return ListValue(MapOp(ensure_term(iterable), fn))
+    return IteratorValue(MapOp(ensure_term(iterable), fn))
 
 
-def Filter(iterable: object, predicate: Callable) -> ListValue:  # noqa: N802
-    """Filter iterable by predicate.
+def Filter(iterable: object, predicate: Callable) -> IteratorValue:  # noqa: N802
+    """Filter iterable by predicate. Lazy.
 
     Example::
 
@@ -115,13 +120,160 @@ def Filter(iterable: object, predicate: Callable) -> ListValue:  # noqa: N802
         Filter(items, bool)  # remove falsy
     """
     from ..morphisms.itertools.transform import FilterOp
-    from ..values import ListValue
+    from ..values import IteratorValue
 
-    return ListValue(FilterOp(ensure_term(iterable), predicate))
+    return IteratorValue(FilterOp(ensure_term(iterable), predicate))
+
+
+def Reversed(iterable: object) -> IteratorValue:  # noqa: N802
+    """Reversed sequence. Lazy.
+
+    Example::
+
+        Reversed(items)
+    """
+    from ..morphisms.itertools.transform import ReversedOp
+    from ..values import IteratorValue
+
+    return IteratorValue(ReversedOp(ensure_term(iterable)))
+
+
+def Flatten(iterable: object) -> IteratorValue:  # noqa: N802
+    """Flatten one level of nesting. Lazy.
+
+    Example::
+
+        Flatten([[1, 2], [3, 4]])  # -> iter(1, 2, 3, 4)
+    """
+    from ..morphisms.itertools.transform import FlattenOp
+    from ..values import IteratorValue
+
+    return IteratorValue(FlattenOp(ensure_term(iterable)))
+
+
+def Unique(iterable: object, *, key: Callable | None = None) -> IteratorValue:  # noqa: N802
+    """Unique elements preserving order. Lazy.
+
+    Example::
+
+        Unique([1, 2, 2, 3])  # -> iter(1, 2, 3)
+        Unique(items, key=lambda x: x["id"])
+    """
+    from ..morphisms.itertools.transform import UniqueOp
+    from ..values import IteratorValue
+
+    return IteratorValue(UniqueOp(ensure_term(iterable), key))
+
+
+def Pluck(iterable: object, field: object) -> IteratorValue:  # noqa: N802
+    """Extract field from each element. Lazy.
+
+    Example::
+
+        Pluck(users, "name")  # -> iter("alice", "bob")
+    """
+    from ..morphisms.itertools.transform import PluckOp
+    from ..values import IteratorValue
+
+    return IteratorValue(PluckOp(ensure_term(iterable), ensure_term(field)))
+
+
+def FilterBy(iterable: object, field: object, value: object) -> IteratorValue:  # noqa: N802
+    """Filter elements where field equals value. Lazy.
+
+    Example::
+
+        FilterBy(users, "role", "admin")
+    """
+    from ..morphisms.itertools.transform import FilterByOp
+    from ..values import IteratorValue
+
+    return IteratorValue(FilterByOp(ensure_term(iterable), ensure_term(field), ensure_term(value)))
+
+
+# =============================================================================
+# COMBINATORS (lazy — return IteratorValue)
+# =============================================================================
+
+
+def Zip(*iterables: object) -> IteratorValue:  # noqa: N802
+    """Zip multiple iterables together. Lazy.
+
+    Example::
+
+        Zip(names, ages)  # -> iter(("alice", 30), ("bob", 25))
+    """
+    from ..morphisms.itertools.combine import ZipOp
+    from ..values import IteratorValue
+
+    return IteratorValue(ZipOp(*(ensure_term(it) for it in iterables)))
+
+
+def Chain(*iterables: object) -> IteratorValue:  # noqa: N802
+    """Chain multiple iterables into one. Lazy.
+
+    Example::
+
+        Chain([1, 2], [3, 4])  # -> iter(1, 2, 3, 4)
+    """
+    from ..morphisms.itertools.combine import ChainOp
+    from ..values import IteratorValue
+
+    return IteratorValue(ChainOp(*(ensure_term(it) for it in iterables)))
+
+
+def Enumerate(iterable: object, start: object = 0) -> IteratorValue:  # noqa: N802
+    """Enumerate iterable with index. Lazy.
+
+    Example::
+
+        Enumerate(items)  # -> iter((0, a), (1, b), ...)
+        Enumerate(items, start=1)
+    """
+    from ..morphisms.itertools.combine import EnumerateOp
+    from ..values import IteratorValue
+
+    return IteratorValue(EnumerateOp(ensure_term(iterable), ensure_term(start)))
+
+
+# =============================================================================
+# SLICING (lazy — return IteratorValue)
+# =============================================================================
+
+
+def Take(iterable: object, n: object) -> IteratorValue:  # noqa: N802
+    """Take first N elements. Lazy.
+
+    Example::
+
+        Take(items, 5)
+    """
+    from ..morphisms.itertools.slice import TakeOp
+    from ..values import IteratorValue
+
+    return IteratorValue(TakeOp(ensure_term(iterable), ensure_term(n)))
+
+
+def Drop(iterable: object, n: object) -> IteratorValue:  # noqa: N802
+    """Drop first N elements. Lazy.
+
+    Example::
+
+        Drop(items, 5)
+    """
+    from ..morphisms.itertools.slice import DropOp
+    from ..values import IteratorValue
+
+    return IteratorValue(DropOp(ensure_term(iterable), ensure_term(n)))
+
+
+# =============================================================================
+# TERMINALS (eager — return concrete values)
+# =============================================================================
 
 
 def Sorted(iterable: object, *, reverse: object = False) -> ListValue:  # noqa: N802
-    """Sorted iterable.
+    """Sorted iterable. Terminal — inherently eager.
 
     Example::
 
@@ -134,155 +286,8 @@ def Sorted(iterable: object, *, reverse: object = False) -> ListValue:  # noqa: 
     return ListValue(SortedOp(ensure_term(iterable), ensure_term(reverse)))
 
 
-def Reversed(iterable: object) -> ListValue:  # noqa: N802
-    """Reversed sequence.
-
-    Example::
-
-        Reversed(items)
-    """
-    from ..morphisms.itertools.transform import ReversedOp
-    from ..values import ListValue
-
-    return ListValue(ReversedOp(ensure_term(iterable)))
-
-
-def Flatten(iterable: object) -> ListValue:  # noqa: N802
-    """Flatten one level of nesting.
-
-    Example::
-
-        Flatten([[1, 2], [3, 4]])  # -> [1, 2, 3, 4]
-    """
-    from ..morphisms.itertools.transform import FlattenOp
-    from ..values import ListValue
-
-    return ListValue(FlattenOp(ensure_term(iterable)))
-
-
-def Unique(iterable: object, *, key: Callable | None = None) -> ListValue:  # noqa: N802
-    """Unique elements preserving order.
-
-    Example::
-
-        Unique([1, 2, 2, 3])  # -> [1, 2, 3]
-        Unique(items, key=lambda x: x["id"])
-    """
-    from ..morphisms.itertools.transform import UniqueOp
-    from ..values import ListValue
-
-    return ListValue(UniqueOp(ensure_term(iterable), key))
-
-
-def Pluck(iterable: object, field: object) -> ListValue:  # noqa: N802
-    """Extract field from each element.
-
-    Example::
-
-        Pluck(users, "name")  # -> ["alice", "bob"]
-    """
-    from ..morphisms.itertools.transform import PluckOp
-    from ..values import ListValue
-
-    return ListValue(PluckOp(ensure_term(iterable), ensure_term(field)))
-
-
-def FilterBy(iterable: object, field: object, value: object) -> ListValue:  # noqa: N802
-    """Filter elements where field equals value.
-
-    Example::
-
-        FilterBy(users, "role", "admin")
-    """
-    from ..morphisms.itertools.transform import FilterByOp
-    from ..values import ListValue
-
-    return ListValue(FilterByOp(ensure_term(iterable), ensure_term(field), ensure_term(value)))
-
-
-# =============================================================================
-# COMBINATORS
-# =============================================================================
-
-
-def Zip(*iterables: object) -> ListValue:  # noqa: N802
-    """Zip multiple iterables together.
-
-    Example::
-
-        Zip(names, ages)  # -> [("alice", 30), ("bob", 25)]
-    """
-    from ..morphisms.itertools.combine import ZipOp
-    from ..values import ListValue
-
-    return ListValue(ZipOp(*(ensure_term(it) for it in iterables)))
-
-
-def Chain(*iterables: object) -> ListValue:  # noqa: N802
-    """Chain multiple iterables into one.
-
-    Example::
-
-        Chain([1, 2], [3, 4])  # -> [1, 2, 3, 4]
-    """
-    from ..morphisms.itertools.combine import ChainOp
-    from ..values import ListValue
-
-    return ListValue(ChainOp(*(ensure_term(it) for it in iterables)))
-
-
-def Enumerate(iterable: object, start: object = 0) -> ListValue:  # noqa: N802
-    """Enumerate iterable with index.
-
-    Example::
-
-        Enumerate(items)  # -> [(0, a), (1, b), ...]
-        Enumerate(items, start=1)
-    """
-    from ..morphisms.itertools.combine import EnumerateOp
-    from ..values import ListValue
-
-    return ListValue(EnumerateOp(ensure_term(iterable), ensure_term(start)))
-
-
-# =============================================================================
-# SLICING
-# =============================================================================
-
-
-def Take(iterable: object, n: object) -> ListValue:  # noqa: N802
-    """Take first N elements.
-
-    Example::
-
-        Take(items, 5)
-    """
-    from ..morphisms.itertools.slice import TakeOp
-    from ..values import ListValue
-
-    return ListValue(TakeOp(ensure_term(iterable), ensure_term(n)))
-
-
-def Drop(iterable: object, n: object) -> ListValue:  # noqa: N802
-    """Drop first N elements.
-
-    Example::
-
-        Drop(items, 5)
-    """
-    from ..morphisms.itertools.slice import DropOp
-    from ..values import ListValue
-
-    return ListValue(DropOp(ensure_term(iterable), ensure_term(n)))
-
-
-# =============================================================================
-# GROUPING
-# =============================================================================
-
-
 def GroupBy(iterable: object, key_fn: Callable) -> ListValue:  # noqa: N802
-    """Group elements by key function.
+    """Group elements by key function. Terminal.
 
     Returns list of (key, group_list) tuples. Groups elements regardless
     of input order (unlike itertools.groupby).
@@ -299,7 +304,7 @@ def GroupBy(iterable: object, key_fn: Callable) -> ListValue:  # noqa: N802
 
 
 def Partition(iterable: object, predicate: Callable) -> TupleValue:  # noqa: N802
-    """Partition into (matches, non_matches).
+    """Partition into (matches, non_matches). Terminal.
 
     Example::
 
@@ -318,7 +323,7 @@ def Partition(iterable: object, predicate: Callable) -> TupleValue:  # noqa: N80
 
 
 def Reduce(iterable: object, fn: Callable, initial: object) -> AnyValue:  # noqa: N802
-    """Reduce iterable to single value.
+    """Reduce iterable to single value. Terminal.
 
     Example::
 
@@ -331,7 +336,7 @@ def Reduce(iterable: object, fn: Callable, initial: object) -> AnyValue:  # noqa
 
 
 def Sum(iterable: object) -> AnyValue:  # noqa: N802
-    """Sum all elements.
+    """Sum all elements. Terminal.
 
     Example::
 
@@ -344,7 +349,7 @@ def Sum(iterable: object) -> AnyValue:  # noqa: N802
 
 
 def Min(iterable: object, *, key: Callable | None = None) -> AnyValue:  # noqa: N802
-    """Get minimum element.
+    """Get minimum element. Terminal.
 
     Example::
 
@@ -358,7 +363,7 @@ def Min(iterable: object, *, key: Callable | None = None) -> AnyValue:  # noqa: 
 
 
 def Max(iterable: object, *, key: Callable | None = None) -> AnyValue:  # noqa: N802
-    """Get maximum element.
+    """Get maximum element. Terminal.
 
     Example::
 
@@ -372,7 +377,7 @@ def Max(iterable: object, *, key: Callable | None = None) -> AnyValue:  # noqa: 
 
 
 def Any(iterable: object) -> BoolValue:  # noqa: N802
-    """Check if any element is truthy.
+    """Check if any element is truthy. Terminal.
 
     Example::
 
@@ -385,7 +390,7 @@ def Any(iterable: object) -> BoolValue:  # noqa: N802
 
 
 def All(iterable: object) -> BoolValue:  # noqa: N802
-    """Check if all elements are truthy.
+    """Check if all elements are truthy. Terminal.
 
     Example::
 
@@ -398,7 +403,7 @@ def All(iterable: object) -> BoolValue:  # noqa: N802
 
 
 # =============================================================================
-# CONVERTERS
+# MATERIALIZERS
 # =============================================================================
 
 
@@ -407,7 +412,7 @@ def ToList(iterable: object) -> ListValue:  # noqa: N802
 
     Example::
 
-        ToList(some_iterable)
+        ToList(Map(items, fn))  # explicit materialization
     """
     from ..morphisms.builtins.conversion import ToListOp
     from ..values import ListValue
@@ -429,7 +434,7 @@ def ToSet(iterable: object) -> SetValue:  # noqa: N802
 
 
 def ToDict(iterable: object, key_fn: Callable, val_fn: Callable) -> DictValue:  # noqa: N802
-    """Build dict from iterable using key/value extractors.
+    """Build dict from iterable using key/value extractors. Terminal.
 
     Example::
 

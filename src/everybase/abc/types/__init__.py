@@ -12,7 +12,7 @@ Organized into:
 from .collections import DictType, FrozenSetType, ListType, SetType, TupleType
 from .object import Object
 from .primitives import BoolType, BytesType, FloatType, IntType, NoneType, StrType
-from .special import AnyType, EmptyType, InvalidType, SentinelType
+from .special import AnyType, EmptyType, InvalidType, IteratorType, SentinelType
 
 
 __all__ = [  # noqa: RUF022
@@ -32,6 +32,7 @@ __all__ = [  # noqa: RUF022
     "TupleType",
     # Special
     "AnyType",
+    "IteratorType",
     "SentinelType",
     "EmptyType",
     "InvalidType",

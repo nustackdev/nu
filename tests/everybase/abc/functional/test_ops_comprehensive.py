@@ -706,8 +706,8 @@ class TestCollectionTransformOps:
         assert await fn.Sorted(ListValue([1, 2, 3]), reverse=True).execute(ctx) == [3, 2, 1]
 
     async def test_reversed(self, ctx):
-        """Reversed([1,2,3]) = [3,2,1]."""
-        assert await fn.Reversed(ListValue([1, 2, 3])).execute(ctx) == [3, 2, 1]
+        """Reversed([1,2,3]).to_list() = [3,2,1]."""
+        assert await fn.Reversed(ListValue([1, 2, 3])).to_list().execute(ctx) == [3, 2, 1]
 
     async def test_join(self, ctx):
         """['a','b','c'].join(',') = 'a,b,c'."""

@@ -1,8 +1,8 @@
-"""Iterable slicing morphisms — Take, Drop."""
+"""Iterable slicing morphisms — Take, Drop. Lazy iterators."""
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from itertools import islice
 
 from everybase.core import INVALID, BinaryOperation, Sentinel
@@ -14,27 +14,27 @@ __all__ = [
 ]
 
 
-class TakeOp(BinaryOperation[list]):
-    """Take first N elements: list(islice(iterable, n))."""
+class TakeOp(BinaryOperation[Iterator]):
+    """Take first N elements: islice(iterable, n) -> lazy iterator."""
 
-    def apply(self, left: object, right: object) -> list | Sentinel:
+    def apply(self, left: object, right: object) -> Iterator | Sentinel:
         """Apply: left=iterable, right=n."""
         if not isinstance(left, Iterable):
             raise TypeError(f"Take requires iterable, got {type(left).__name__}")
         try:
-            return list(islice(left, int(right)))  # type: ignore
+            return islice(left, int(right))  # type: ignore
         except (TypeError, ValueError):
             return INVALID
 
 
-class DropOp(BinaryOperation[list]):
-    """Drop first N elements: list(islice(iterable, n, None))."""
+class DropOp(BinaryOperation[Iterator]):
+    """Drop first N elements: islice(iterable, n, None) -> lazy iterator."""
 
-    def apply(self, left: object, right: object) -> list | Sentinel:
+    def apply(self, left: object, right: object) -> Iterator | Sentinel:
         """Apply: left=iterable, right=n."""
         if not isinstance(left, Iterable):
             raise TypeError(f"Drop requires iterable, got {type(left).__name__}")
         try:
-            return list(islice(left, int(right), None))  # type: ignore
+            return islice(left, int(right), None)  # type: ignore
         except (TypeError, ValueError):
             return INVALID
