@@ -1,6 +1,6 @@
 """Float ref base combining numeric traits.
 
-FloatType = TypeBase[float] + Numeric + Comparable + Logical
+FloatType = Object[float] + Numeric + Comparable + Logical
 """
 
 from __future__ import annotations
@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...capabilities import ComparableBase, LogicalBase, NumericBase
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ class FloatType(
     NumericBase["IntArg | FloatArg", "FloatValue"],
     ComparableBase["IntArg | FloatArg"],
     LogicalBase["BoolArg | FloatArg", "BoolValue"],
-    TypeBase[float],
+    Object[float],
 ):
     """Abstract base for float refs.
 

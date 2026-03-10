@@ -6,7 +6,7 @@ ReactiveDictType = DictType + ViewObservable
 
 from __future__ import annotations
 
-from everybase.abc import TypeBase
+from everybase.abc import Object
 from everybase.shape.collections import MutableMappingBase, ReactiveMappingBase
 
 
@@ -18,7 +18,7 @@ __all__ = [
 
 class DictType[K, V](
     MutableMappingBase[K, V, object, object],
-    TypeBase[dict],
+    Object[dict],
 ):
     """Dict — mutable mapping."""
 
@@ -26,6 +26,6 @@ class DictType[K, V](
 class ReactiveDictType[K, V](
     DictType[K, V],
     ReactiveMappingBase[K, V, object, object],
-    TypeBase[dict],
+    Object[dict],
 ):
     """Reactive dict — mutable + observable."""

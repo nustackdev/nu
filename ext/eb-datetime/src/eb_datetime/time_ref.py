@@ -1,7 +1,7 @@
 """Time type for time values.
 
 Pattern:
-    TimeType = TypeBase[time] + ComparableBase + time operations
+    TimeType = Object[time] + ComparableBase + time operations
     TimeValue = ValueBase + TimeType (computed results)
 """
 
@@ -14,8 +14,8 @@ from everybase import Sentinel
 from everybase.abc import (
     ComparableBase,
     IntValue,
+    Object,
     StrValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -32,7 +32,7 @@ __all__ = [
 
 class TimeType(
     ComparableBase["time | TimeType"],
-    TypeBase[time | Sentinel],
+    Object[time | Sentinel],
 ):
     """Abstract type for time operations.
 

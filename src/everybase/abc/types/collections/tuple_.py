@@ -1,6 +1,6 @@
 """Tuple ref base combining sequence traits.
 
-TupleType = TypeBase[tuple] + Sequence + Comparable
+TupleType = Object[tuple] + Sequence + Comparable
 
 Returns concrete py types.
 """
@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, overload
 
 from ...capabilities import ComparableBase
 from ...collections import SequenceBase
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ __all__ = [
 class TupleType[*Ts](
     SequenceBase[tuple[*Ts], object, "ListValue[object]", "AnyValue"],
     ComparableBase["TupleArg[*Ts]"],
-    TypeBase[tuple[*Ts]],
+    Object[tuple[*Ts]],
 ):
     """Abstract base for tuple refs.
 

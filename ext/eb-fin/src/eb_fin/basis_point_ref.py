@@ -1,7 +1,7 @@
 """BasisPoint type for financial rate/fee representation.
 
 Pattern:
-    BasisPointType = TypeBase[BasisPoint] + ComparableBase + arithmetic operations
+    BasisPointType = Object[BasisPoint] + ComparableBase + arithmetic operations
     BasisPointValue = ValueBase + BasisPointType (computed results)
 
 Basis point = 1/100th of a percent (500 bps = 5%).
@@ -16,7 +16,7 @@ from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
-    TypeBase,
+    Object,
     ValueBase,
 )
 
@@ -37,7 +37,7 @@ __all__ = [
 
 class BasisPointType(
     ComparableBase["BasisPoint | int | BasisPointType"],
-    TypeBase[BasisPoint | Sentinel],
+    Object[BasisPoint | Sentinel],
 ):
     """Abstract type for BasisPoint operations.
 

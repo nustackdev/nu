@@ -1,7 +1,7 @@
 """Set ref bases combining set traits.
 
-SetType = TypeBase[set] + MutableSet + Clearable + Comparable
-FrozenSetType = TypeBase[frozenset] + SetLike + Comparable (immutable)
+SetType = Object[set] + MutableSet + Clearable + Comparable
+FrozenSetType = Object[frozenset] + SetLike + Comparable (immutable)
 
 Returns concrete py types.
 """
@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from ...capabilities import ComparableBase
 from ...collections import MutableSetBase, SetLikeBase
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class SetType[T](
     MutableSetBase[set[T], T, "SetValue[T]", "AnyValue"],
     # ClearableBase,
     ComparableBase["SetArg[T]"],
-    TypeBase[set[T]],
+    Object[set[T]],
 ):
     """Abstract base for set refs.
 
@@ -62,7 +62,7 @@ class SetType[T](
 class FrozenSetType[T](
     SetLikeBase[frozenset[T], T, "FrozenSetValue[T]", "AnyValue"],
     ComparableBase["FrozenSetArg[T]"],
-    TypeBase[frozenset[T]],
+    Object[frozenset[T]],
 ):
     """Abstract base for frozenset refs.
 

@@ -1,6 +1,6 @@
 """Any ref base for dynamic/unknown types.
 
-AnyType = TypeBase[object] + Numeric + Comparable + Logical + Bitwise
+AnyType = Object[object] + Numeric + Comparable + Logical + Bitwise
 
 Returns concrete py types.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...capabilities import BitwiseBase, ComparableBase, LogicalBase, NumericBase
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class AnyType(
     ComparableBase["object"],
     LogicalBase["object", "BoolValue"],
     BitwiseBase["object", "AnyValue"],
-    TypeBase[object],
+    Object[object],
 ):
     """Abstract base for any/dynamic type refs.
 

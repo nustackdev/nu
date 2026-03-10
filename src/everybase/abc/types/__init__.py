@@ -1,25 +1,22 @@
 """Type hierarchy for everybase.
 
-ObjectType → TypeBase → concrete types (primitives, collections, special).
+Object → concrete types (primitives, collections, special).
 
 Organized into:
-- object.py: ObjectType (universal base — sentinel checks)
-- base.py: TypeBase (everybase kernel identity)
+- object.py: Object (universal base — sentinel checks)
 - primitives/: int, float, bool, str, bytes, none
 - collections/: list, dict, set, frozenset, tuple
 - special/: any, sentinel, empty, invalid
 """
 
-from .base import TypeBase
 from .collections import DictType, FrozenSetType, ListType, SetType, TupleType
-from .object import ObjectType
+from .object import Object
 from .primitives import BoolType, BytesType, FloatType, IntType, NoneType, StrType
 from .special import AnyType, EmptyType, InvalidType, SentinelType
 
 
 __all__ = [  # noqa: RUF022
-    "ObjectType",
-    "TypeBase",
+    "Object",
     # Primitives
     "BoolType",
     "IntType",

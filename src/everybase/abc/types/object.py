@@ -1,10 +1,11 @@
-"""ObjectType — universal base for all everybase types.
+"""Object — universal base for all everybase types.
 
-ObjectType provides term-algebra methods shared by ALL types:
+Object[T] is the root of the type hierarchy, providing:
+- Generic type parameter [T] for type safety
 - Sentinel checks (is_empty, is_invalid, etc.)
 
-This is the root of the type hierarchy. TypeBase inherits from ObjectType
-and adds everybase-specific kernel identity.
+Substrate-specific bases (PyRef, PVRefBase) implement fetch().
+Type-specific bases (IntType, etc.) add operator traits.
 """
 
 from __future__ import annotations
@@ -17,15 +18,23 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ObjectType",
+    "Object",
 ]
 
 
-class ObjectType:
+class Object[T]:
     """Universal base for all everybase types.
 
-    Provides term-algebra methods that every type shares:
+    Provides:
+    - Generic type parameter [T] for type safety
     - Sentinel checks (is_empty, is_invalid, is_sentinel, not_empty, not_invalid)
+
+    Subclasses (IntType, etc.) add operator traits.
+    Substrate-specific bases (PyRef, PVRefBase) add storage.
+
+    Note: Arithmetic operations return Python memory refs because
+    the result is a computation (lazy expression), not a storage
+    location. A PVIntRef + 5 produces IntValue(AddOp(...)).
     """
 
     # =========================================================================

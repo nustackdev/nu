@@ -103,12 +103,12 @@ class method[V: ValueBase]:  # noqa: N801
 
     Half-code usage::
 
-        class SolanaType(TypeBase[SolanaClient]):
+        class SolanaType(Object[SolanaClient]):
             get_slot = method(IntValue, "getSlot")
 
     Zero-code usage (via AutoInterface)::
 
-        class StrOps(AutoInterface, TypeBase[str], pure=True):
+        class StrOps(AutoInterface, Object[str], pure=True):
             upper: StrValue
             lower: StrValue
     """
@@ -194,12 +194,12 @@ class prop[V: ValueBase]:  # noqa: N801
 class AutoInterface:
     """Base class that auto-creates method descriptors from annotations.
 
-    Inherit alongside TypeBase. Annotations of ValueBase subclasses
+    Inherit alongside Object. Annotations of ValueBase subclasses
     become ``method()`` descriptors automatically.
 
     Usage::
 
-        class StrHelpers(AutoInterface, TypeBase[str], pure=True):
+        class StrHelpers(AutoInterface, Object[str], pure=True):
             upper: StrValue
             lower: StrValue
             strip: StrValue

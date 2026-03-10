@@ -1,6 +1,6 @@
 """Integer ref base combining numeric traits.
 
-IntValue = TypeBase[int] + Numeric + Comparable + Logical + Bitwise
+IntValue = Object[int] + Numeric + Comparable + Logical + Bitwise
 
 Returns concrete py types (IntValue, FloatValue, BoolValue).
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, overload
 
 from ...capabilities import BitwiseBase, ComparableBase, LogicalBase
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class IntType(
     ComparableBase["IntArg | FloatArg"],
     LogicalBase["BoolArg | IntArg", "BoolValue"],
     BitwiseBase["IntArg", "IntValue"],
-    TypeBase[int],
+    Object[int],
 ):
     """Abstract base for integer refs.
 

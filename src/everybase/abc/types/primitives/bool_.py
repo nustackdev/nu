@@ -1,6 +1,6 @@
 """Boolean ref base combining logical traits.
 
-BoolType = TypeBase[bool] + Logical + Comparable
+BoolType = Object[bool] + Logical + Comparable
 """
 
 from __future__ import annotations
@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...capabilities import ComparableBase, LogicalBase
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -25,7 +25,7 @@ __all__ = [
 class BoolType(
     LogicalBase["BoolArg", "BoolValue"],
     ComparableBase["BoolArg"],
-    TypeBase[bool],
+    Object[bool],
 ):
     """Abstract base for boolean refs.
 

@@ -1,7 +1,7 @@
 """Timedelta type for duration values.
 
 Pattern:
-    TimedeltaType = TypeBase[timedelta] + ComparableBase + arithmetic operations
+    TimedeltaType = Object[timedelta] + ComparableBase + arithmetic operations
     TimedeltaValue = ValueBase + TimedeltaType (computed results)
 """
 
@@ -15,7 +15,7 @@ from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
-    TypeBase,
+    Object,
     ValueBase,
 )
 
@@ -34,7 +34,7 @@ __all__ = [
 
 class TimedeltaType(
     ComparableBase["timedelta | TimedeltaType"],
-    TypeBase[timedelta | Sentinel],
+    Object[timedelta | Sentinel],
 ):
     """Abstract type for timedelta operations.
 

@@ -1,6 +1,6 @@
 """Bytes ref base combining sequence traits.
 
-BytesType = TypeBase[bytes] + Lengthable + Sliceable + Containable + Comparable + Logical
+BytesType = Object[bytes] + Lengthable + Sliceable + Containable + Comparable + Logical
 
 Returns concrete py types.
 """
@@ -16,7 +16,7 @@ from ...capabilities import (
     LogicalBase,
     SliceableBase,
 )
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class BytesType(
     ContainableBase["IntArg | BytesArg"],
     ComparableBase["BytesArg"],
     LogicalBase["BytesArg", "BoolValue"],
-    TypeBase[bytes],
+    Object[bytes],
 ):
     """Abstract base for bytes refs.
 

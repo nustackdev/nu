@@ -1,6 +1,6 @@
 """None ref base for nil/null values.
 
-NoneType = TypeBase[None] + Logical
+NoneType = Object[None] + Logical
 
 Returns concrete py types.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...capabilities import LogicalBase
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ __all__ = [
 
 class NoneType(
     LogicalBase["NoneArg", "BoolValue"],
-    TypeBase[None],
+    Object[None],
 ):
     """Abstract base for None/nil refs.
 

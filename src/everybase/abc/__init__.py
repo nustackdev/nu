@@ -278,12 +278,11 @@ from .types import (
     InvalidType,
     ListType,
     NoneType,
-    ObjectType,
+    Object,
     SentinelType,
     SetType,
     StrType,
     TupleType,
-    TypeBase,
 )
 from .utils import ensure_term, typed_value
 from .values import (
@@ -466,7 +465,7 @@ __all__ = [  # noqa: RUF022
     "NegatableProtocol",
     "NoneType",
     "NoneValue",
-    "ObjectType",
+    "Object",
     "NotEmptyOp",
     "NotNaNOp",
     "NotOp",
@@ -533,7 +532,6 @@ __all__ = [  # noqa: RUF022
     "ToTupleOp",
     "TupleType",
     "TupleValue",
-    "TypeBase",
     "UnionOp",
     "UpdateCmd",
     "UpperOp",

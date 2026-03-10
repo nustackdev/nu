@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from everybase.core import Empty, Invalid, Sentinel
 
-from ..base import TypeBase
+from ..object import Object
 
 
 __all__ = [
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class SentinelType[T: Sentinel](TypeBase[T]):
+class SentinelType[T: Sentinel](Object[T]):
     """Base for sentinel refs (Empty, Invalid).
 
     Sentinels represent special values indicating absence or invalidity.

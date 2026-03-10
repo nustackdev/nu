@@ -1,7 +1,7 @@
 """Datetime type for datetime values.
 
 Pattern:
-    DatetimeType = TypeBase[datetime] + ComparableBase + datetime operations
+    DatetimeType = Object[datetime] + ComparableBase + datetime operations
     DatetimeValue = ValueBase + DatetimeType (computed results)
 """
 
@@ -15,8 +15,8 @@ from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
+    Object,
     StrValue,
-    TypeBase,
     ValueBase,
 )
 
@@ -35,7 +35,7 @@ __all__ = [
 
 class DatetimeType(
     ComparableBase["datetime | DatetimeType"],
-    TypeBase[datetime | Sentinel],
+    Object[datetime | Sentinel],
 ):
     """Abstract type for datetime operations.
 

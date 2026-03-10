@@ -1,7 +1,7 @@
 """Percentage type for percentage values.
 
 Pattern:
-    PercentageType = TypeBase[Percentage] + ComparableBase + arithmetic operations
+    PercentageType = Object[Percentage] + ComparableBase + arithmetic operations
     PercentageValue = ValueBase + PercentageType (computed results)
 """
 
@@ -15,7 +15,7 @@ from everybase.abc import (
     ComparableBase,
     FloatValue,
     IntValue,
-    TypeBase,
+    Object,
     ValueBase,
 )
 
@@ -36,7 +36,7 @@ __all__ = [
 
 class PercentageType(
     ComparableBase["Percentage | float | PercentageType"],
-    TypeBase[Percentage | Sentinel],
+    Object[Percentage | Sentinel],
 ):
     """Abstract type for Percentage operations.
 

@@ -1,6 +1,6 @@
 """String ref base combining string traits.
 
-StrType = TypeBase[str] + Addable + Comparable + Logical + Lengthable + Sliceable + Containable
+StrType = Object[str] + Addable + Comparable + Logical + Lengthable + Sliceable + Containable
 
 Includes all string-specific methods.
 """
@@ -17,7 +17,7 @@ from ...capabilities import (
     LogicalBase,
     SliceableBase,
 )
-from ..base import TypeBase
+from ..object import Object
 
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ class StrType(
     ContainableBase["StrArg"],
     ComparableBase["StrArg"],
     LogicalBase["StrArg", "BoolValue"],
-    TypeBase[str],
+    Object[str],
 ):
     """Abstract base for string refs.
 
