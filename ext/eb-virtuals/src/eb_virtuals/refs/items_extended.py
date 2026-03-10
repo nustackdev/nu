@@ -1,7 +1,7 @@
 """PV storage refs for standard library types.
 
 These refs store values in PV storage with serialization/deserialization.
-Pattern: PV*Ref = ItemRef[StorageType, StrValue] + *Type + get/set methods
+Pattern: PV*Ref = ItemRef[StorageType, StrValue] + *Type + load/store methods
 
 Storage formats:
 - Decimal: str (exact representation)
@@ -132,8 +132,8 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DecimalValue.from_str(op)
 
-    def set(self, value: Arg[Decimal | str]) -> DecimalValue:
-        """Set the Decimal value."""
+    def store(self, value: Arg[Decimal | str]) -> DecimalValue:
+        """Store the Decimal value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -167,8 +167,8 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
     def result(self, op: Term) -> object:  # noqa: D102
         return FractionValue.from_str(op)
 
-    def set(self, value: Arg[Fraction | str]) -> FractionValue:
-        """Set the Fraction value."""
+    def store(self, value: Arg[Fraction | str]) -> FractionValue:
+        """Store the Fraction value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -206,8 +206,8 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def set(self, value: Arg[complex | str]) -> ComplexValue:
-        """Set the complex value."""
+    def store(self, value: Arg[complex | str]) -> ComplexValue:
+        """Store the complex value."""
         if isinstance(value, complex):
             val = f"{value.real},{value.imag}"
         elif isinstance(value, str):
@@ -247,8 +247,8 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
     def result(self, op: Term) -> object:  # noqa: D102
         return BasisPointValue.from_int(op)
 
-    def set(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
-        """Set the BasisPoint value."""
+    def store(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
+        """Store the BasisPoint value."""
         if isinstance(value, Term):
             val = ToIntOp(value)
         else:
@@ -282,8 +282,8 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
     def result(self, op: Term) -> object:  # noqa: D102
         return PercentageValue.from_float(op)
 
-    def set(self, value: Arg[Percentage | float]) -> PercentageValue:
-        """Set the Percentage value."""
+    def store(self, value: Arg[Percentage | float]) -> PercentageValue:
+        """Store the Percentage value."""
         if isinstance(value, Term):
             val = ToFloatOp(value)
         else:
@@ -322,8 +322,8 @@ class DateRef(ItemRef[str, StrValue], DateType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DateValue.from_iso(op)
 
-    def set(self, value: Arg[date | str]) -> DateValue:
-        """Set the date value. Stores as ISO string."""
+    def store(self, value: Arg[date | str]) -> DateValue:
+        """Store the date value. Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -357,8 +357,8 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
     def result(self, op: Term) -> object:  # noqa: D102
         return DatetimeValue.from_iso(op)
 
-    def set(self, value: Arg[datetime | str]) -> DatetimeValue:
-        """Set the datetime value. Stores as ISO string."""
+    def store(self, value: Arg[datetime | str]) -> DatetimeValue:
+        """Store the datetime value. Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -392,8 +392,8 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
     def result(self, op: Term) -> object:  # noqa: D102
         return TimeValue.from_iso(op)
 
-    def set(self, value: Arg[time | str]) -> TimeValue:
-        """Set the time value. Stores as ISO string."""
+    def store(self, value: Arg[time | str]) -> TimeValue:
+        """Store the time value. Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -427,8 +427,8 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
     def result(self, op: Term) -> object:  # noqa: D102
         return TimedeltaValue.from_seconds(op)
 
-    def set(self, value: Arg[timedelta | float]) -> TimedeltaValue:
-        """Set the timedelta value. Stores as float (seconds)."""
+    def store(self, value: Arg[timedelta | float]) -> TimedeltaValue:
+        """Store the timedelta value. Stores as float (seconds)."""
         if isinstance(value, Term):
             # timedelta is stdlib — no __float__, so use .total_seconds()
             val = MethodCallOp(value, "total_seconds")
@@ -476,8 +476,8 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
 
         return TimezoneValue(FuncCallOp(parse_timezone, op))
 
-    def set(self, value: Arg[timezone | str]) -> TimezoneValue:
-        """Set the timezone value."""
+    def store(self, value: Arg[timezone | str]) -> TimezoneValue:
+        """Store the timezone value."""
         if isinstance(value, timezone):
             from datetime import UTC
 
@@ -543,8 +543,8 @@ class PathRef(ItemRef[str, StrValue], PathType):
     def result(self, op: Term) -> object:  # noqa: D102
         return PathValue.from_str(op)
 
-    def set(self, value: Arg[Path | str]) -> PathValue:
-        """Set the Path value."""
+    def store(self, value: Arg[Path | str]) -> PathValue:
+        """Store the Path value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -578,8 +578,8 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
     def result(self, op: Term) -> object:  # noqa: D102
         return UUIDValue.from_str(op)
 
-    def set(self, value: Arg[UUID | str]) -> UUIDValue:
-        """Set the UUID value."""
+    def store(self, value: Arg[UUID | str]) -> UUIDValue:
+        """Store the UUID value."""
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:

@@ -7,7 +7,7 @@ Layers:
   L0  raw rdbpy get (C++ bindings)
   L1  tkv snapshot get (codec, tuple keys)
   L3  DictView __getitem__ (view + container)
-  L4  Shape .get() via Snapshot (term execution + view)
+  L4  Shape .load() via Snapshot (term execution + view)
 
 All layers use a single snapshot for N reads — no per-op span cost.
 """
@@ -127,8 +127,8 @@ def bench_l3(n: int) -> float:
 
 
 async def bench_l4(n: int) -> float:
-    seed = Atomic(FlatShape.value.set(VALUE))
-    batch = Snapshot(Seq(*[FlatShape.value.get() for _ in range(n)]), scope=FlatShape)
+    seed = Atomic(FlatShape.value.store(VALUE))
+    batch = Snapshot(Seq(*[FlatShape.value.load() for _ in range(n)]), scope=FlatShape)
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4_tp_")
     try:

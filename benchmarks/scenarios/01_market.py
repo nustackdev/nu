@@ -1,6 +1,6 @@
 """Scenario: Market Catalog -- 5 categories x 10 products x 4 fields.
 
-Real-world pattern: nested shapes, compound .set(), pre-built trees.
+Real-world pattern: nested shapes, compound .store(), pre-built trees.
 Trees are built once outside the timed section. Only .execute(ctx) is measured.
 
 Modes:
@@ -160,7 +160,7 @@ def _bench_pure_dict(label: str, fn, setup_fn, field_ops: int) -> TimingResult:
 
 # Raw Seq (unwrapped) -- shared base for both modes
 _store_seq = Seq(
-    *[Catalog.categories[cat_key].set(cat_data) for cat_key, cat_data in CATEGORIES.items()]
+    *[Catalog.categories[cat_key].store(cat_data) for cat_key, cat_data in CATEGORIES.items()]
 )
 
 _read_seq = Seq(
@@ -169,17 +169,17 @@ _read_seq = Seq(
         for cat_key, cat_data in CATEGORIES.items()
         for prod_key in cat_data["products"]
         for term in (
-            Catalog.categories[cat_key].products[prod_key].name.get(),
-            Catalog.categories[cat_key].products[prod_key].price.get(),
-            Catalog.categories[cat_key].products[prod_key].stock.get(),
-            Catalog.categories[cat_key].products[prod_key].rating.get(),
+            Catalog.categories[cat_key].products[prod_key].name.load(),
+            Catalog.categories[cat_key].products[prod_key].price.load(),
+            Catalog.categories[cat_key].products[prod_key].stock.load(),
+            Catalog.categories[cat_key].products[prod_key].rating.load(),
         )
     ]
 )
 
 _update_seq = Seq(
     *[
-        Catalog.categories[cat_key].products[prod_key].price.set(0.99)
+        Catalog.categories[cat_key].products[prod_key].price.store(0.99)
         for cat_key, cat_data in CATEGORIES.items()
         for prod_key in cat_data["products"]
     ]
@@ -209,11 +209,11 @@ _d_store_seq = Seq(
         for cat_key, cat_data in CATEGORIES.items()
         for prod_key, prod_data in cat_data["products"].items()
         for term in (
-            DCatalog.categories[cat_key].label.set(cat_data["label"]),
-            DCatalog.categories[cat_key].products[prod_key].name.set(prod_data["name"]),
-            DCatalog.categories[cat_key].products[prod_key].price.set(prod_data["price"]),
-            DCatalog.categories[cat_key].products[prod_key].stock.set(prod_data["stock"]),
-            DCatalog.categories[cat_key].products[prod_key].rating.set(prod_data["rating"]),
+            DCatalog.categories[cat_key].label.store(cat_data["label"]),
+            DCatalog.categories[cat_key].products[prod_key].name.store(prod_data["name"]),
+            DCatalog.categories[cat_key].products[prod_key].price.store(prod_data["price"]),
+            DCatalog.categories[cat_key].products[prod_key].stock.store(prod_data["stock"]),
+            DCatalog.categories[cat_key].products[prod_key].rating.store(prod_data["rating"]),
         )
     ]
 )
@@ -224,17 +224,17 @@ _d_read_seq = Seq(
         for cat_key, cat_data in CATEGORIES.items()
         for prod_key in cat_data["products"]
         for term in (
-            DCatalog.categories[cat_key].products[prod_key].name.get(),
-            DCatalog.categories[cat_key].products[prod_key].price.get(),
-            DCatalog.categories[cat_key].products[prod_key].stock.get(),
-            DCatalog.categories[cat_key].products[prod_key].rating.get(),
+            DCatalog.categories[cat_key].products[prod_key].name.load(),
+            DCatalog.categories[cat_key].products[prod_key].price.load(),
+            DCatalog.categories[cat_key].products[prod_key].stock.load(),
+            DCatalog.categories[cat_key].products[prod_key].rating.load(),
         )
     ]
 )
 
 _d_update_seq = Seq(
     *[
-        DCatalog.categories[cat_key].products[prod_key].price.set(0.99)
+        DCatalog.categories[cat_key].products[prod_key].price.store(0.99)
         for cat_key, cat_data in CATEGORIES.items()
         for prod_key in cat_data["products"]
     ]

@@ -54,48 +54,48 @@ S = FlatShape
 
 # ── Pre-built terms ──────────────────────────────────────────────────
 
-TERM_SINGLE = Atomic(S.f0.set(42))
+TERM_SINGLE = Atomic(S.f0.store(42))
 
 TERMS_10_SEPARATE = [
-    Atomic(S.f0.set(1)),
-    Atomic(S.f1.set(2)),
-    Atomic(S.f2.set("val")),
-    Atomic(S.f3.set(3.14)),
-    Atomic(S.f4.set(True)),
-    Atomic(S.f5.set(10)),
-    Atomic(S.f6.set("str")),
-    Atomic(S.f7.set(0.5)),
-    Atomic(S.f8.set(100)),
-    Atomic(S.f9.set("end")),
+    Atomic(S.f0.store(1)),
+    Atomic(S.f1.store(2)),
+    Atomic(S.f2.store("val")),
+    Atomic(S.f3.store(3.14)),
+    Atomic(S.f4.store(True)),
+    Atomic(S.f5.store(10)),
+    Atomic(S.f6.store("str")),
+    Atomic(S.f7.store(0.5)),
+    Atomic(S.f8.store(100)),
+    Atomic(S.f9.store("end")),
 ]
 
 TERM_10_SINGLE = Atomic(
     Seq(
-        S.f0.set(1),
-        S.f1.set(2),
-        S.f2.set("val"),
-        S.f3.set(3.14),
-        S.f4.set(True),
-        S.f5.set(10),
-        S.f6.set("str"),
-        S.f7.set(0.5),
-        S.f8.set(100),
-        S.f9.set("end"),
+        S.f0.store(1),
+        S.f1.store(2),
+        S.f2.store("val"),
+        S.f3.store(3.14),
+        S.f4.store(True),
+        S.f5.store(10),
+        S.f6.store("str"),
+        S.f7.store(0.5),
+        S.f8.store(100),
+        S.f9.store("end"),
     ),
 )
 
 TERM_10_AUTO = auto_atomic(
     Seq(
-        S.f0.set(1),
-        S.f1.set(2),
-        S.f2.set("val"),
-        S.f3.set(3.14),
-        S.f4.set(True),
-        S.f5.set(10),
-        S.f6.set("str"),
-        S.f7.set(0.5),
-        S.f8.set(100),
-        S.f9.set("end"),
+        S.f0.store(1),
+        S.f1.store(2),
+        S.f2.store("val"),
+        S.f3.store(3.14),
+        S.f4.store(True),
+        S.f5.store(10),
+        S.f6.store("str"),
+        S.f7.store(0.5),
+        S.f8.store(100),
+        S.f9.store("end"),
     ),
 )
 

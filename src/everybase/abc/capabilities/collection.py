@@ -1,10 +1,8 @@
 # ruff: noqa: D102
 """Atomic collection capabilities — protocols + bases.
 
-ContainableProtocol/Base: contains()       — like collections.abc.Container
-LengthableProtocol/Base: len_()            — like collections.abc.Sized
 IndexableProtocol/Base: __getitem__        — index/key access
-SliceableProtocol/Base: slice_()           — slice access
+SliceableProtocol/Base: slice()            — slice access
 """
 
 from __future__ import annotations
@@ -15,16 +13,10 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 if TYPE_CHECKING:
     from everybase.core import IntArg, Term
 
-    from ..values import BoolValue, IntValue
-
 
 __all__ = [
-    "ContainableBase",
-    "ContainableProtocol",
     "IndexableBase",
     "IndexableProtocol",
-    "LengthableBase",
-    "LengthableProtocol",
     "SliceableBase",
     "SliceableProtocol",
 ]
@@ -33,20 +25,6 @@ __all__ = [
 # =============================================================================
 # PROTOCOLS
 # =============================================================================
-
-
-@runtime_checkable
-class ContainableProtocol[ItemT](Protocol):
-    """Protocol for values that support containment testing."""
-
-    def contains(self, item: ItemT) -> BoolValue: ...
-
-
-@runtime_checkable
-class LengthableProtocol(Protocol):
-    """Protocol for values that have a length."""
-
-    def len_(self) -> IntValue: ...
 
 
 @runtime_checkable
@@ -60,7 +38,7 @@ class IndexableProtocol[KeyT, ResultValue](Protocol):
 class SliceableProtocol[ResultT](Protocol):
     """Protocol for values that support slicing."""
 
-    def slice_(
+    def slice(
         self, start: IntArg | None, stop: IntArg | None, step: IntArg | None = None
     ) -> ResultT: ...
 
@@ -68,28 +46,6 @@ class SliceableProtocol[ResultT](Protocol):
 # =============================================================================
 # BASES
 # =============================================================================
-
-
-class ContainableBase[ItemT]:
-    """Base for values that support containment testing."""
-
-    def contains(self, item: ItemT) -> BoolValue:
-        """Check if item is in this value."""
-        from ..morphisms import ContainsOp
-        from ..values import BoolValue
-
-        return BoolValue(ContainsOp(self, item))
-
-
-class LengthableBase:
-    """Base for values that have a length."""
-
-    def len_(self) -> IntValue:
-        """Get length of this value."""
-        from ..morphisms import LenOp
-        from ..values import IntValue
-
-        return IntValue(LenOp(self))
 
 
 class IndexableBase[KeyT, ResultValue]:
@@ -113,7 +69,7 @@ class SliceableBase[ResultT]:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
-    def slice_(
+    def slice(
         self, start: IntArg | None, stop: IntArg | None, step: IntArg | None = None
     ) -> ResultT:
         """Get slice of this value."""

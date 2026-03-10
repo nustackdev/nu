@@ -32,6 +32,10 @@ Terminals (eager — return concrete values):
     Any(iterable) -> BoolValue
     All(iterable) -> BoolValue
 
+Builtins (standalone equivalents of Python builtins):
+    Len(obj) -> IntValue
+    Contains(collection, item) -> BoolValue
+
 Materializers (eager — consume iterators into collections):
     ToList(iterable) -> ListValue
     ToSet(iterable) -> SetValue
@@ -52,6 +56,7 @@ if TYPE_CHECKING:
         AnyValue,
         BoolValue,
         DictValue,
+        IntValue,
         IteratorValue,
         ListValue,
         SetValue,
@@ -85,6 +90,9 @@ __all__ = [  # noqa: RUF022
     "Max",
     "Any",
     "All",
+    # Builtins
+    "Len",
+    "Contains",
     # Materializers
     "ToList",
     "ToSet",
@@ -400,6 +408,40 @@ def All(iterable: object) -> BoolValue:  # noqa: N802
     from ..values import BoolValue
 
     return BoolValue(AllOp(ensure_term(iterable)))
+
+
+# =============================================================================
+# BUILTINS (standalone equivalents of Python builtins)
+# =============================================================================
+
+
+def Len(obj: object) -> IntValue:  # noqa: N802
+    """Get length of a sized object. Like Python's ``len()``.
+
+    Example::
+
+        Len(my_list)
+        Len(my_dict)
+        Len(my_str)
+    """
+    from ..morphisms import LenOp
+    from ..values import IntValue
+
+    return IntValue(LenOp(ensure_term(obj)))
+
+
+def Contains(collection: object, item: object) -> BoolValue:  # noqa: N802
+    """Check if item is in collection. Like Python's ``in`` operator.
+
+    Example::
+
+        Contains(my_list, 42)
+        Contains(my_str, "hello")
+    """
+    from ..morphisms import ContainsOp
+    from ..values import BoolValue
+
+    return BoolValue(ContainsOp(ensure_term(collection), item))
 
 
 # =============================================================================

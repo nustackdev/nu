@@ -364,12 +364,12 @@ class TestSetItemCmd:
     async def test_execute_sets_key(self, ctx):
         cmd = SetItemCmd[str, int](DictValue({"a": 1}), "b", 2)
         result = await cmd.execute(ctx)
-        assert result == 2
+        assert result is None
 
     async def test_execute_overwrites_key(self, ctx):
         cmd = SetItemCmd[str, int](DictValue({"a": 1}), "a", 99)
         result = await cmd.execute(ctx)
-        assert result == 99
+        assert result is None
 
 
 class TestDeleteItemCmd:
@@ -498,19 +498,19 @@ class TestListTypeMutations:
 class TestDictTypeMutations:
     """DictType exposes mutation methods via MutableMappingBase."""
 
-    def test_set_returns_any_value(self):
+    def test_set_returns_none_value(self):
         d = DictValue({"a": 1})
-        result = d.set_("b", 2)
-        assert isinstance(result, AnyValue)
+        result = d.set("b", 2)
+        assert isinstance(result, NoneValue)
 
-    def test_delete_returns_any_value(self):
+    def test_delete_returns_none_value(self):
         d = DictValue({"a": 1})
         result = d.delete("a")
-        assert isinstance(result, AnyValue)
+        assert isinstance(result, NoneValue)
 
     def test_update_returns_none_value(self):
         d = DictValue({"a": 1})
-        result = d.update_({"b": 2})
+        result = d.update({"b": 2})
         assert isinstance(result, NoneValue)
 
     def test_clear_returns_value(self):
@@ -578,8 +578,8 @@ class TestMutationExecution:
 
     async def test_dict_set_execute(self, ctx):
         d = DictValue({"a": 1})
-        result = await d.set_("b", 2).execute(ctx)
-        assert result == 2
+        result = await d.set("b", 2).execute(ctx)
+        assert result is None
 
     async def test_dict_delete_execute(self, ctx):
         d = DictValue({"a": 1, "b": 2})
@@ -588,7 +588,7 @@ class TestMutationExecution:
 
     async def test_dict_update_execute(self, ctx):
         d = DictValue({"a": 1})
-        result = await d.update_({"b": 2}).execute(ctx)
+        result = await d.update({"b": 2}).execute(ctx)
         assert result is None
 
     async def test_set_add_execute(self, ctx):

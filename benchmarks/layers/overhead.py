@@ -82,15 +82,15 @@ L1_KEYS = [("/", "k", str(i)) for i in range(N_MAX)]
 STR_KEYS = [f"k{i}" for i in range(N_MAX)]
 
 # L4: pre-built term trees (Mode B -- single op per Atomic)
-L4_PUT = Atomic(FlatShape.value.set(VALUE))
-L4_GET = Atomic(FlatShape.value.get())
-L4_SEED = Atomic(FlatShape.value.set(VALUE))
+L4_PUT = Atomic(FlatShape.value.store(VALUE))
+L4_GET = Atomic(FlatShape.value.load())
+L4_SEED = Atomic(FlatShape.value.store(VALUE))
 
 
 def _build_l4_batched(n: int) -> tuple[Atomic, Atomic]:
     """Build Mode A batched terms for a given N."""
-    put = Atomic(Seq(*[FlatShape.value.set(VALUE) for _ in range(n)]))
-    get = Atomic(Seq(*[FlatShape.value.get() for _ in range(n)]))
+    put = Atomic(Seq(*[FlatShape.value.store(VALUE) for _ in range(n)]))
+    get = Atomic(Seq(*[FlatShape.value.load() for _ in range(n)]))
     return put, get
 
 
@@ -559,7 +559,7 @@ def bench_l3_get_b(n: int) -> TimingResult:
 
 
 async def bench_l4_put_b(n: int) -> TimingResult:
-    """L4 Mode B: Atomic(Shape.field.set(v)).execute() -- 1 txn per op."""
+    """L4 Mode B: Atomic(Shape.field.store(v)).execute() -- 1 txn per op."""
     from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4b_")
@@ -578,7 +578,7 @@ async def bench_l4_put_b(n: int) -> TimingResult:
 
 
 async def bench_l4_get_b(n: int) -> TimingResult:
-    """L4 Mode B: Atomic(Shape.field.get()).execute() -- 1 snapshot per op."""
+    """L4 Mode B: Atomic(Shape.field.load()).execute() -- 1 snapshot per op."""
     from eb_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4b_")

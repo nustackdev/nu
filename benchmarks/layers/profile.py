@@ -47,9 +47,9 @@ L0_KEYS = [f"k:{i}".encode() for i in range(N)]
 L1_KEYS = [("/", "k", str(i)) for i in range(N)]
 STR_KEYS = [f"k{i}" for i in range(N)]
 
-L4_PUT = Atomic(FlatShape.value.set(VALUE))
-L4_GET = Atomic(FlatShape.value.get())
-L4_SEED = Atomic(FlatShape.value.set(VALUE))
+L4_PUT = Atomic(FlatShape.value.store(VALUE))
+L4_GET = Atomic(FlatShape.value.load())
+L4_SEED = Atomic(FlatShape.value.store(VALUE))
 
 
 # ── Profiling helper ──────────────────────────────────────────────────

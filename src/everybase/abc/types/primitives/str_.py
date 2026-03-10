@@ -1,6 +1,6 @@
 """String ref base combining string traits.
 
-StrType = Object[str] + Addable + Comparable + Logical + Lengthable + Sliceable + Containable
+StrType = Object[str] + Addable + Comparable + Logical + Sliceable
 
 Includes all string-specific methods.
 """
@@ -12,8 +12,6 @@ from typing import TYPE_CHECKING, overload
 from ...capabilities import (
     AddableBase,
     ComparableBase,
-    ContainableBase,
-    LengthableBase,
     LogicalBase,
     SliceableBase,
 )
@@ -33,9 +31,7 @@ __all__ = [
 
 class StrType(
     AddableBase["StrArg", "StrValue"],
-    LengthableBase,
     SliceableBase["StrValue"],
-    ContainableBase["StrArg"],
     ComparableBase["StrArg"],
     LogicalBase["StrArg", "BoolValue"],
     Object[str],
@@ -44,11 +40,11 @@ class StrType(
 
     Combines:
     - Addable: + (concatenation)
-    - Lengthable: len_()
-    - Sliceable: slice_()
-    - Containable: contains()
+    - Sliceable: slice()
     - Comparable: >, <, >=, <=, eq(), ne(), is_()
     - Logical: and_(), or_(), not_(), bool_()
+
+    Standalone functions: Len(), Contains() in abc.fn
 
     String-specific methods:
     - Case: upper(), lower(), title(), capitalize(), swapcase()

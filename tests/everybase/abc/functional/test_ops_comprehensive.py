@@ -600,31 +600,31 @@ class TestCollectionAccessOps:
 
     async def test_len_list(self, ctx):
         """len([1,2,3]) = 3."""
-        assert await ListValue([1, 2, 3]).len_().execute(ctx) == 3
+        assert await fn.Len(ListValue([1, 2, 3])).execute(ctx) == 3
 
     async def test_len_str(self, ctx):
         """len('hello') = 5."""
-        assert await StrValue("hello").len_().execute(ctx) == 5
+        assert await fn.Len(StrValue("hello")).execute(ctx) == 5
 
     async def test_len_dict(self, ctx):
         """len({'a': 1, 'b': 2}) = 2."""
-        assert await DictValue({"a": 1, "b": 2}).len_().execute(ctx) == 2
+        assert await fn.Len(DictValue({"a": 1, "b": 2})).execute(ctx) == 2
 
     async def test_contains_list_true(self, ctx):
         """2 in [1,2,3] = True."""
-        assert await ListValue([1, 2, 3]).contains(2).execute(ctx) is True
+        assert await fn.Contains(ListValue([1, 2, 3]), 2).execute(ctx) is True
 
     async def test_contains_list_false(self, ctx):
         """5 in [1,2,3] = False."""
-        assert await ListValue([1, 2, 3]).contains(5).execute(ctx) is False
+        assert await fn.Contains(ListValue([1, 2, 3]), 5).execute(ctx) is False
 
     async def test_contains_str_true(self, ctx):
         """'ell' in 'hello' = True."""
-        assert await StrValue("hello").contains("ell").execute(ctx) is True
+        assert await fn.Contains(StrValue("hello"), "ell").execute(ctx) is True
 
     async def test_contains_dict_true(self, ctx):
         """'a' in {'a': 1} = True."""
-        assert await DictValue({"a": 1}).contains("a").execute(ctx) is True
+        assert await fn.Contains(DictValue({"a": 1}), "a").execute(ctx) is True
 
 
 # =============================================================================
@@ -723,27 +723,27 @@ class TestDictOps:
     """Test dict-specific operations."""
 
     async def test_keys(self, ctx):
-        """{'a': 1, 'b': 2}.keys_() returns keys."""
-        result = await DictValue({"a": 1, "b": 2}).keys_().execute(ctx)
+        """{'a': 1, 'b': 2}.keys() returns keys."""
+        result = await DictValue({"a": 1, "b": 2}).keys().execute(ctx)
         assert set(result) == {"a", "b"}
 
     async def test_values(self, ctx):
-        """{'a': 1, 'b': 2}.values_() returns values."""
-        result = await DictValue({"a": 1, "b": 2}).values_().execute(ctx)
+        """{'a': 1, 'b': 2}.values() returns values."""
+        result = await DictValue({"a": 1, "b": 2}).values().execute(ctx)
         assert set(result) == {1, 2}
 
     async def test_items(self, ctx):
-        """{'a': 1}.items_() returns items."""
-        result = await DictValue({"a": 1}).items_().execute(ctx)
+        """{'a': 1}.items() returns items."""
+        result = await DictValue({"a": 1}).items().execute(ctx)
         assert set(result) == {("a", 1)}
 
     async def test_get_existing(self, ctx):
-        """{'a': 1}.get_('a', 0) = 1."""
-        assert await DictValue({"a": 1}).get_("a", 0).execute(ctx) == 1
+        """{'a': 1}.get('a', 0) = 1."""
+        assert await DictValue({"a": 1}).get("a", 0).execute(ctx) == 1
 
     async def test_get_default(self, ctx):
-        """{'a': 1}.get_('b', 0) = 0."""
-        assert await DictValue({"a": 1}).get_("b", 0).execute(ctx) == 0
+        """{'a': 1}.get('b', 0) = 0."""
+        assert await DictValue({"a": 1}).get("b", 0).execute(ctx) == 0
 
 
 # =============================================================================

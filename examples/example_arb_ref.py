@@ -94,7 +94,7 @@ class DatetimeValue(ValueBase, DatetimeType):
 
 
 class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
-    def set(self, value: Arg[datetime] | StrArg | FloatArg) -> DatetimeValue:
+    def store(self, value: Arg[datetime] | StrArg | FloatArg) -> DatetimeValue:
         if isinstance(value, datetime):
             val = str(value)
         elif isinstance(value, DatetimeType):
@@ -109,7 +109,7 @@ class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
             raise TypeError(f"Unsupported type for datetime: {type(value)}")
         return DatetimeValue(ItemSetCmd(self, ensure_term(val)))
 
-    def get(self) -> DatetimeValue:
+    def load(self) -> DatetimeValue:
         return DatetimeValue.from_iso(StrValue(ItemGetOp(self)))
 
 
@@ -158,8 +158,8 @@ async def main():
             root_view = DictView.open_root(tx)
             ctx = ctx.bind(root_view, View, PVSymbolInfo)
 
-            await PVSymbolInfo.test_dt.set(datetime.now()).execute(ctx)
-            print("Get: ", await PVSymbolInfo.test_dt.get().execute(ctx))
+            await PVSymbolInfo.test_dt.store(datetime.now()).execute(ctx)
+            print("Get: ", await PVSymbolInfo.test_dt.load().execute(ctx))
 
 
 if __name__ == "__main__":

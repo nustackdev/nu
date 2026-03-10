@@ -56,7 +56,7 @@ What work is included in the timed region beyond the raw read/write.
 |-------|------------------------------|---------|
 | **pure op** | Only the get/put call itself | `root.put_child_primitive(key, val)` with `root` already resolved |
 | **init + op** | Container/View/Shape resolution + the op | `Container.get(path, tx)` then `put_child_primitive(...)` |
-| **full execute** | Term tree `.execute(ctx)` which opens span, resolves view, does op, commits | `Atomic(Shape.field.set(v)).execute(ctx)` |
+| **full execute** | Term tree `.execute(ctx)` which opens span, resolves view, does op, commits | `Atomic(Shape.field.store(v)).execute(ctx)` |
 
 Higher layers inherently bundle more init work — you can't call
 `DictView.__setitem__` without first calling `open_root()`, and you can't use
@@ -68,7 +68,7 @@ meaningful unit — the term tree is the API.
 
 ### 3. Tree construction vs execution
 
-Term trees (`Atomic(Seq(Shape.f.set(v), ...))`) have two costs:
+Term trees (`Atomic(Seq(Shape.f.store(v), ...))`) have two costs:
 
 | Phase | What happens | When to measure |
 |-------|-------------|-----------------|

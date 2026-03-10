@@ -195,7 +195,7 @@ class TestStringChains:
 
     async def test_string_length_comparison(self, ctx):
         """len('hello') > 3."""
-        result = await (StrValue("hello").len_() > 3).execute(ctx)
+        result = await (fn.Len(StrValue("hello")) > 3).execute(ctx)
         assert result is True
 
     async def test_find_and_slice(self, ctx):
@@ -216,8 +216,8 @@ class TestCollectionChains:
     """Test chained collection expressions."""
 
     async def test_list_operations(self, ctx):
-        """([1,2,3] + [4,5]).len_() = 5."""
-        result = await (ListValue([1, 2, 3]) + [4, 5]).len_().execute(ctx)  # noqa: RUF005
+        """len([1,2,3] + [4,5]) = 5."""
+        result = await fn.Len(ListValue([1, 2, 3]) + [4, 5]).execute(ctx)  # noqa: RUF005
         assert result == 5
 
     async def test_sorted_and_first(self, ctx):
@@ -308,9 +308,9 @@ class TestRealWorldScenarios:
     async def test_email_basic_validation(self, ctx):
         """Basic email validation (contains @)."""
         email = StrValue("user@example.com")
-        has_at = email.contains("@")
-        has_dot = email.contains(".")
-        not_empty = email.len_() > 0
+        has_at = fn.Contains(email, "@")
+        has_dot = fn.Contains(email, ".")
+        not_empty = fn.Len(email) > 0
         is_valid = all_(has_at, has_dot, not_empty)
         assert await is_valid.execute(ctx) is True
 
@@ -344,7 +344,7 @@ class TestRealWorldScenarios:
         data = ListValue([10, 20, 30, 40, 50])
 
         total = fn.Sum(data)
-        count = data.len_()
+        count = fn.Len(data)
         minimum = fn.Min(data)
         maximum = fn.Max(data)
 
@@ -357,8 +357,8 @@ class TestRealWorldScenarios:
         """Validate required keys exist in dict."""
         config = DictValue({"host": "localhost", "port": 8080, "debug": True})
 
-        has_host = config.contains("host")
-        has_port = config.contains("port")
+        has_host = fn.Contains(config, "host")
+        has_port = fn.Contains(config, "port")
         is_valid = has_host.and_(has_port)
 
         assert await is_valid.execute(ctx) is True
@@ -375,14 +375,14 @@ class TestEdgeCases:
     async def test_empty_string_operations(self, ctx):
         """Operations on empty string."""
         s = StrValue("")
-        assert await s.len_().execute(ctx) == 0
+        assert await fn.Len(s).execute(ctx) == 0
         assert await s.upper().execute(ctx) == ""
         assert await s.strip().execute(ctx) == ""
 
     async def test_empty_list_operations(self, ctx):
         """Operations on empty list."""
         lst = ListValue([])
-        assert await lst.len_().execute(ctx) == 0
+        assert await fn.Len(lst).execute(ctx) == 0
         assert await fn.ToList(fn.Reversed(lst)).execute(ctx) == []
 
     async def test_single_element_list(self, ctx):

@@ -6,7 +6,7 @@ User shape (name, age, email, score -- 4 scalar fields).
 Realistic pattern: one Transaction/Snapshot per 4-field batch, repeated N times.
 
 Progression:
-  1. Raw virtuals         -- Atomic(Seq(ref.set/get))           standard morphisms
+  1. Raw virtuals         -- Atomic(Seq(ref.store/load))           standard morphisms
   2. Unsafe ops     -- optimize_primitive_reads/writes     ItemGetOp->UnsafeGet etc.
   3. Inline refs    -- inline_refs                         flatten Ref parent-chains
   4. Manual optimal -- Transaction + Init + ParentSkipSet  hand-built, no deformation
@@ -71,26 +71,26 @@ WRITE_VALUES = ["Alice", 30, "alice@example.com", 99.5]
 
 # ── 1. Raw virtuals — standard morphisms ───────────────────────────────────────────
 
-raw_write = Atomic(Seq(*[f.set(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)]))
-raw_read = Atomic(Seq(*[f.get() for f in FIELDS]))
+raw_write = Atomic(Seq(*[f.store(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)]))
+raw_read = Atomic(Seq(*[f.load() for f in FIELDS]))
 
 
 # ── 2. Unsafe ops — optimize_primitive_reads/writes ──────────────────────────
 
 unsafe_write = optimize_primitive_writes(
-    Atomic(Seq(*[f.set(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)]))
+    Atomic(Seq(*[f.store(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)]))
 )
-unsafe_read = optimize_primitive_reads(Atomic(Seq(*[f.get() for f in FIELDS])))
+unsafe_read = optimize_primitive_reads(Atomic(Seq(*[f.load() for f in FIELDS])))
 
 
 # ── 3. Inline refs — inline_refs ─────────────────────────────────────────────
 
 inline_write = inline_refs(
     optimize_primitive_writes(
-        Atomic(Seq(*[f.set(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)]))
+        Atomic(Seq(*[f.store(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)]))
     )
 )
-inline_read = inline_refs(optimize_primitive_reads(Atomic(Seq(*[f.get() for f in FIELDS]))))
+inline_read = inline_refs(optimize_primitive_reads(Atomic(Seq(*[f.load() for f in FIELDS]))))
 
 
 # ── 4. Manual optimal — Transaction + Init + ParentSkipSet ───────────────────
@@ -107,7 +107,7 @@ _init_ref = FIELDS[0]  # any ref to materialize the User container chain
 
 # Write: Transaction(Init + ParentSkipSet x 4)
 _manual_write_unsafe = optimize_primitive_writes(
-    Seq(*[f.set(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)])
+    Seq(*[f.store(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)])
 )
 _manual_write_parentskip = replace(
     _manual_write_unsafe,
@@ -119,7 +119,7 @@ _init_inlined = inline_refs(InitCmd(_init_ref))
 manual_write = Transaction(Seq(_init_inlined, _manual_write_inlined))
 
 # Read: Snapshot(UnsafeGet x 4) with inlined refs
-_manual_read_unsafe = optimize_primitive_reads(Seq(*[f.get() for f in FIELDS]))
+_manual_read_unsafe = optimize_primitive_reads(Seq(*[f.load() for f in FIELDS]))
 _manual_read_inlined = inline_refs(_manual_read_unsafe)
 manual_read = Snapshot(_manual_read_inlined)
 

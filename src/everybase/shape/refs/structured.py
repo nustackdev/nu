@@ -46,7 +46,7 @@ class ShapeRef[T: ShapeBase](
     """Reference to a shape — a structured container with named fields.
 
     A shape IS a mapping (dict[str, object]) by nature. Inherits full mapping
-    ops (keys_, values_, items_, get_, extract, exists, etc.) from MappingBase.
+    ops (keys, values, items, get, extract, exists, etc.) from MappingBase.
 
     Attribute access is intercepted to look up slots on the shape class.
     If the name matches a slot, a child ref is created via slot.create_ref().
@@ -166,7 +166,7 @@ class MutableShapeRef[T: ShapeBase](
     ShapeRef[T],
     MutableMappingBase[str, object, object, object],
 ):
-    """Shape + mapping mutations (set_, delete, update_) + store/length/clear."""
+    """Shape + mapping mutations (set, delete, update) + store/length/clear."""
 
 
 class ReactiveShapeRef[T: ShapeBase](

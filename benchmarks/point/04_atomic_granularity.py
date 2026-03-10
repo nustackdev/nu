@@ -45,11 +45,11 @@ class BenchShape(Shape):
 S = BenchShape
 
 WRITES = [
-    S.f0.set(1),
-    S.f1.set(2),
-    S.f2.set("val"),
-    S.f3.set(0.1),
-    S.f4.set(100),
+    S.f0.store(1),
+    S.f1.store(2),
+    S.f2.store("val"),
+    S.f3.store(0.1),
+    S.f4.store(100),
 ]
 
 

@@ -3,7 +3,6 @@
 from .mapping import (
     DeleteItemCmd,
     GetOp,
-    ISliceOp,
     ItemsOp,
     KeyAtOp,
     KeysOp,
@@ -48,7 +47,6 @@ __all__ = [
     "ExtendCmd",
     "FirstOp",
     "GetOp",
-    "ISliceOp",
     "IndexOfOp",
     "InsertCmd",
     "IntersectionOp",

@@ -49,31 +49,31 @@ async def main():
             ctx = Context().bind(root, View, Invoice)
 
             # -- write fields --
-            await Invoice.number.set(1042).execute(ctx)
-            await Invoice.id.set("550e8400-e29b-41d4-a716-446655440000").execute(ctx)
-            await Invoice.amount.set(Decimal("1499.99")).execute(ctx)
-            await Invoice.tax_rate.set(8.25).execute(ctx)
-            await Invoice.created_at.set(datetime(2025, 6, 15, 14, 30)).execute(ctx)
-            await Invoice.due_in.set(timedelta(days=30)).execute(ctx)
-            await Invoice.receipt_path.set(Path("/invoices/2025/1042.pdf")).execute(ctx)
+            await Invoice.number.store(1042).execute(ctx)
+            await Invoice.id.store("550e8400-e29b-41d4-a716-446655440000").execute(ctx)
+            await Invoice.amount.store(Decimal("1499.99")).execute(ctx)
+            await Invoice.tax_rate.store(8.25).execute(ctx)
+            await Invoice.created_at.store(datetime(2025, 6, 15, 14, 30)).execute(ctx)
+            await Invoice.due_in.store(timedelta(days=30)).execute(ctx)
+            await Invoice.receipt_path.store(Path("/invoices/2025/1042.pdf")).execute(ctx)
 
             # -- read back --
-            amt = await Invoice.amount.get().execute(ctx)
+            amt = await Invoice.amount.load().execute(ctx)
             print(f"Amount: {amt}")
 
-            tax = await Invoice.tax_rate.get().execute(ctx)
+            tax = await Invoice.tax_rate.load().execute(ctx)
             print(f"Tax rate: {tax}")
 
-            created = await Invoice.created_at.get().execute(ctx)
+            created = await Invoice.created_at.load().execute(ctx)
             print(f"Created: {created}")
 
-            due = await Invoice.due_in.get().execute(ctx)
+            due = await Invoice.due_in.load().execute(ctx)
             print(f"Due in: {due}")
 
-            receipt = await Invoice.receipt_path.get().execute(ctx)
+            receipt = await Invoice.receipt_path.load().execute(ctx)
             print(f"Receipt: {receipt}")
 
-            uid = await Invoice.id.get().execute(ctx)
+            uid = await Invoice.id.load().execute(ctx)
             print(f"UUID: {uid}")
 
 

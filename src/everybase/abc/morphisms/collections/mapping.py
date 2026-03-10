@@ -5,6 +5,7 @@ Operations:
     ValuesOp: Get all values
     ItemsOp: Get all key-value pairs
     GetOp: Get value by key with default
+    KeyAtOp: Get key at index position
 
 Commands:
     SetItemCmd: Set value at key
@@ -30,7 +31,6 @@ from everybase.core import (
 __all__ = [
     "DeleteItemCmd",
     "GetOp",
-    "ISliceOp",
     "ItemsOp",
     "KeyAtOp",
     "KeysOp",
@@ -51,7 +51,7 @@ class KeysOp[K](UnaryOperation[KeysView[K]]):
     def apply(self, operand: object) -> KeysView[K]:
         """Apply."""
         if not isinstance(operand, Mapping):
-            raise TypeError(f"keys_() requires mapping, got {type(operand).__name__}")
+            raise TypeError(f"keys() requires mapping, got {type(operand).__name__}")
         return operand.keys()  # type: ignore
 
 
@@ -61,7 +61,7 @@ class ValuesOp[V](UnaryOperation[ValuesView[V]]):
     def apply(self, operand: object) -> ValuesView[V]:
         """Apply."""
         if not isinstance(operand, Mapping):
-            raise TypeError(f"values_() requires mapping, got {type(operand).__name__}")
+            raise TypeError(f"values() requires mapping, got {type(operand).__name__}")
         return operand.values()  # type: ignore
 
 
@@ -71,7 +71,7 @@ class ItemsOp[K, V](UnaryOperation[ItemsView[K, V]]):
     def apply(self, operand: object) -> ItemsView[K, V]:
         """Apply."""
         if not isinstance(operand, Mapping):
-            raise TypeError(f"items_() requires mapping, got {type(operand).__name__}")
+            raise TypeError(f"items() requires mapping, got {type(operand).__name__}")
         return operand.items()  # type: ignore
 
 
@@ -81,7 +81,7 @@ class GetOp[V](TernaryOperation[V]):
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
         if not isinstance(first, Mapping):
-            raise TypeError(f"get_() requires mapping, got {type(first).__name__}")
+            raise TypeError(f"get() requires mapping, got {type(first).__name__}")
         if third is None:
             return first[second]  # type: ignore
         return first.get(second, third)  # type: ignore
@@ -98,7 +98,7 @@ class KeyAtOp(BinaryOperation):
     def apply(self, first: object, second: object) -> object | Sentinel:
         """Apply."""
         if not isinstance(first, Mapping):
-            raise TypeError(f"key_at_() requires mapping, got {type(first).__name__}")
+            raise TypeError(f"key_at() requires mapping, got {type(first).__name__}")
         idx = int(second)  # type: ignore[arg-type]
         if hasattr(first, "key_at"):
             return first.key_at(idx)  # type: ignore[union-attr]
@@ -111,44 +111,20 @@ class KeyAtOp(BinaryOperation):
         return keys[0]
 
 
-class ISliceOp(TernaryOperation):
-    """Slice a mapping by iteration order: mapping.islice(start, stop).
-
-    If the mapping has an ``islice`` method (e.g. IndexedDictView), calls it
-    directly for O(1) key-index access.  Otherwise falls back to
-    ``itertools.islice`` over items.
-    """
-
-    def apply(self, first: object, second: object, third: object) -> object | Sentinel:
-        """Apply."""
-        if not isinstance(first, Mapping):
-            raise TypeError(f"islice_() requires mapping, got {type(first).__name__}")
-        start = int(second)  # type: ignore[arg-type]
-        stop = int(third) if third is not None else None  # type: ignore[arg-type]
-        # Prefer native islice if available (IndexedDictView)
-        if hasattr(first, "islice"):
-            return first.islice(start, stop)  # type: ignore[union-attr]
-        # Fallback: build a dict from itertools.islice
-        import itertools
-
-        sliced = itertools.islice(first.items(), start, stop)
-        return dict(sliced)
-
-
 # =============================================================================
 # COMMANDS (impure)
 # =============================================================================
 
 
-class SetItemCmd[K, V](TernaryCommand[V]):
-    """Set value at key: mapping[key] = value. Returns the set value."""
+class SetItemCmd[K, V](TernaryCommand[None]):
+    """Set value at key: mapping[key] = value. Returns None."""
 
-    def apply(self, operand: object, key: object, value: object) -> V | Sentinel:
+    def apply(self, operand: object, key: object, value: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableMapping):
-            raise TypeError(f"setitem() requires mutable mapping, got {type(operand).__name__}")
+            raise TypeError(f"set() requires mutable mapping, got {type(operand).__name__}")
         operand[key] = value
-        return value  # type: ignore[return-value]
+        return None
 
 
 class DeleteItemCmd[K](BinaryCommand[None]):
@@ -157,7 +133,7 @@ class DeleteItemCmd[K](BinaryCommand[None]):
     def apply(self, operand: object, key: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableMapping):
-            raise TypeError(f"delitem() requires mutable mapping, got {type(operand).__name__}")
+            raise TypeError(f"delete() requires mutable mapping, got {type(operand).__name__}")
         try:
             del operand[key]
         except KeyError:

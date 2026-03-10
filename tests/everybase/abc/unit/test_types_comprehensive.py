@@ -672,15 +672,15 @@ class TestStrRefOtherMethods:
         assert isinstance(result, BytesValue)
 
     def test_len(self):
-        """StrValue.len_() returns IntValue."""
+        """fn.Len(StrValue) returns IntValue."""
         s = StrValue("hello")
-        result = s.len_()
+        result = fn.Len(s)
         assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """StrValue.contains() returns BoolValue."""
+        """fn.Contains(StrValue, ...) returns BoolValue."""
         s = StrValue("hello")
-        result = s.contains("ell")
+        result = fn.Contains(s, "ell")
         assert isinstance(result, BoolValue)
 
 
@@ -767,9 +767,9 @@ class TestBytesRef:
         assert isinstance(result, BoolValue)
 
     def test_len(self):
-        """BytesValue.len_() returns IntValue."""
+        """fn.Len(BytesValue) returns IntValue."""
         b = BytesValue(b"hello")
-        result = b.len_()
+        result = fn.Len(b)
         assert isinstance(result, IntValue)
 
 
@@ -808,15 +808,15 @@ class TestListRefSequenceMethods:
     """ListValue sequence methods."""
 
     def test_len(self):
-        """ListValue.len_() returns IntValue."""
+        """fn.Len(ListValue) returns IntValue."""
         lst = ListValue([1, 2, 3])
-        result = lst.len_()
+        result = fn.Len(lst)
         assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """ListValue.contains() returns BoolValue."""
+        """fn.Contains(ListValue, ...) returns BoolValue."""
         lst = ListValue([1, 2, 3])
-        result = lst.contains(2)
+        result = fn.Contains(lst, 2)
         assert isinstance(result, BoolValue)
 
     def test_first(self):
@@ -916,15 +916,15 @@ class TestTupleRef:
         assert isinstance(result, TupleValue)
 
     def test_len(self):
-        """TupleValue.len_() returns IntValue."""
+        """fn.Len(TupleValue) returns IntValue."""
         t = TupleValue((1, 2, 3))
-        result = t.len_()
+        result = fn.Len(t)
         assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """TupleValue.contains() returns BoolValue."""
+        """fn.Contains(TupleValue, ...) returns BoolValue."""
         t = TupleValue((1, 2, 3))
-        result = t.contains(2)
+        result = fn.Contains(t, 2)
         assert isinstance(result, BoolValue)
 
 
@@ -947,39 +947,39 @@ class TestDictRef:
         assert isinstance(result, AnyValue)
 
     def test_len(self):
-        """DictValue.len_() returns IntValue."""
+        """fn.Len(DictValue) returns IntValue."""
         d = DictValue({"a": 1, "b": 2})
-        result = d.len_()
+        result = fn.Len(d)
         assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """DictValue.contains() returns BoolValue."""
+        """fn.Contains(DictValue, ...) returns BoolValue."""
         d = DictValue({"a": 1, "b": 2})
-        result = d.contains("a")
+        result = fn.Contains(d, "a")
         assert isinstance(result, BoolValue)
 
     def test_keys(self):
-        """DictValue.keys_() returns DictKeysValue."""
+        """DictValue.keys() returns DictKeysValue."""
         d = DictValue({"a": 1, "b": 2})
-        result = d.keys_()
+        result = d.keys()
         assert isinstance(result, DictKeysValue)
 
     def test_values(self):
-        """DictValue.values_() returns DictValuesValue."""
+        """DictValue.values() returns DictValuesValue."""
         d = DictValue({"a": 1, "b": 2})
-        result = d.values_()
+        result = d.values()
         assert isinstance(result, DictValuesValue)
 
     def test_items(self):
-        """DictValue.items_() returns DictItemsValue."""
+        """DictValue.items() returns DictItemsValue."""
         d = DictValue({"a": 1, "b": 2})
-        result = d.items_()
+        result = d.items()
         assert isinstance(result, DictItemsValue)
 
     def test_get(self):
-        """DictValue.get_() returns AnyValue."""
+        """DictValue.get() returns AnyValue."""
         d = DictValue({"a": 1, "b": 2})
-        result = d.get_("a", 0)
+        result = d.get("a", 0)
         assert isinstance(result, AnyValue)
 
 
@@ -996,15 +996,15 @@ class TestSetRef:
         SetValue({1, 2, 3})
 
     def test_len(self):
-        """SetValue.len_() returns IntValue."""
+        """fn.Len(SetValue) returns IntValue."""
         s = SetValue({1, 2, 3})
-        result = s.len_()
+        result = fn.Len(s)
         assert isinstance(result, IntValue)
 
     def test_contains(self):
-        """SetValue.contains() returns BoolValue."""
+        """fn.Contains(SetValue, ...) returns BoolValue."""
         s = SetValue({1, 2, 3})
-        result = s.contains(2)
+        result = fn.Contains(s, 2)
         assert isinstance(result, BoolValue)
 
     def test_union(self):

@@ -25,7 +25,7 @@ builtins/     — General patterns & conversions
 
 collections/  — Collection structural ops & commands
   sequence.py: FirstOp, LastOp, IndexOfOp, CountOp, AppendCmd, ExtendCmd, InsertCmd, PopCmd, RemoveValueCmd
-  mapping.py: KeysOp, ValuesOp, ItemsOp, GetOp, KeyAtOp, ISliceOp, SetItemCmd, DeleteItemCmd, UpdateCmd
+  mapping.py: KeysOp, ValuesOp, ItemsOp, GetOp, KeyAtOp, SetItemCmd, DeleteItemCmd, UpdateCmd
   set.py: UnionOp...DiscardCmd
   shared.py: ClearCmd
 
@@ -98,7 +98,6 @@ from .collections import (
     InsertCmd,
     IntersectionOp,
     IsDisjointOp,
-    ISliceOp,
     IsSubsetOp,
     IsSupersetOp,
     ItemsOp,
@@ -302,7 +301,6 @@ __all__ = [  # noqa: RUF022
     "ItemsOp",
     "GetOp",
     "KeyAtOp",
-    "ISliceOp",
     "SetItemCmd",
     "DeleteItemCmd",
     "UpdateCmd",

@@ -39,7 +39,7 @@ class MappingBase[K, V, CollectionValueT, ValueValueT](
 ):
     """Base for mappings — key-value containers in the document model.
 
-    Combines everybase mapping ops (keys_, values_, items_, get_, set_, etc.)
+    Combines everybase mapping ops (keys, values, items, get, set, etc.)
     with everyshape capabilities (exists, get).
 
     Substrates implement _wrap_* and result() on their concrete refs.
@@ -53,7 +53,7 @@ class MutableMappingBase[K, V, CollectionValueT, ValueValueT](
     CollectionSettableBase[CollectionValueT, dict[K, V]],
     CollectionDeletableBase,
 ):
-    """Mutable mapping — adds set_, delete, update_."""
+    """Mutable mapping — adds set, delete, update."""
 
 
 class ReactiveMappingBase[K, V, CollectionValueT, ValueValueT](

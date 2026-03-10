@@ -1,8 +1,8 @@
 # ruff: noqa: D102
 """Mapping collection — protocols + bases + mutations.
 
-MappingProtocol/Base = Collection + keys_/values_/items_/get_
-MutableMappingProtocol/Base = Mapping + set_/delete/update_
+MappingProtocol/Base = Collection + keys/values/items/get
+MutableMappingProtocol/Base = Mapping + set/delete/update
 
 Follows Python's collections.abc.Mapping / MutableMapping pattern.
 
@@ -11,9 +11,9 @@ Type Parameters:
     KeyT: Native Python key type (str, int, etc.)
     ValueT: Native Python value type (int, str, dict, etc.)
     CollectionResultT: Wrapped result for collection-level operations
-        (map_, filter_, keys_, values_, items_, update_)
+        (keys, values, items, update)
     ValueResultT: Wrapped result for value-level operations
-        (get_, set_, delete, sum_, min_, max_)
+        (get, key_at)
 """
 
 from __future__ import annotations
@@ -54,14 +54,14 @@ class MappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT
         CollectionT: Native Python collection type (dict[str, int])
         KeyT: Native Python key type
         ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (keys_, values_, items_)
-        ValueResultT: Result for value-level ops (get_)
+        CollectionResultT: Result for collection-level ops (keys, values, items)
+        ValueResultT: Result for value-level ops (get)
     """
 
-    def keys_(self) -> CollectionResultT: ...
-    def values_(self) -> CollectionResultT: ...
-    def items_(self) -> CollectionResultT: ...
-    def get_(self, key: KeyT, default: ValueT | None = None) -> ValueResultT: ...
+    def keys(self) -> CollectionResultT: ...
+    def values(self) -> CollectionResultT: ...
+    def items(self) -> CollectionResultT: ...
+    def get(self, key: KeyT, default: ValueT | None = None) -> ValueResultT: ...
 
 
 class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
@@ -74,13 +74,13 @@ class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, Value
         CollectionT: Native Python collection type
         KeyT: Native Python key type
         ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (update_)
-        ValueResultT: Result for value-level ops (set_, delete)
+        CollectionResultT: Result for collection-level ops (update)
+        ValueResultT: Result for value-level ops (set, delete)
     """
 
-    def set_(self, key: KeyT, value: ValueT) -> ValueResultT: ...
-    def delete(self, key: KeyT) -> ValueResultT: ...
-    def update_(self, other: Mapping[KeyT, ValueT]) -> NoneValue: ...
+    def set(self, key: KeyT, value: ValueT) -> NoneValue: ...
+    def delete(self, key: KeyT) -> NoneValue: ...
+    def update(self, other: Mapping[KeyT, ValueT]) -> NoneValue: ...
 
 
 # =============================================================================
@@ -103,8 +103,8 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         CollectionT: Native Python collection type (dict[str, int])
         KeyT: Native Python key type
         ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (keys_, values_, items_)
-        ValueResultT: Result for value-level ops (get_)
+        CollectionResultT: Result for collection-level ops (keys, values, items)
+        ValueResultT: Result for value-level ops (get)
     """
 
     def _wrap_keys_result(self, operand: Term) -> CollectionResultT:
@@ -123,41 +123,35 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         """Override in subclass to wrap single value result."""
         raise NotImplementedError()
 
-    def keys_(self) -> CollectionResultT:
+    def keys(self) -> CollectionResultT:
         """Get all keys."""
         from ..morphisms.collections.mapping import KeysOp
 
         return cast("CollectionResultT", self._wrap_keys_result(KeysOp(self)))
 
-    def values_(self) -> CollectionResultT:
+    def values(self) -> CollectionResultT:
         """Get all values."""
         from ..morphisms.collections.mapping import ValuesOp
 
         return cast("CollectionResultT", self._wrap_values_result(ValuesOp(self)))
 
-    def items_(self) -> CollectionResultT:
+    def items(self) -> CollectionResultT:
         """Get all key-value pairs."""
         from ..morphisms.collections.mapping import ItemsOp
 
         return cast("CollectionResultT", self._wrap_items_result(ItemsOp(self)))
 
-    def get_(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
+    def get(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
         """Get value with default."""
         from ..morphisms.collections.mapping import GetOp
 
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
-    def key_at_(self, idx: int) -> ValueResultT:
+    def key_at(self, idx: int) -> ValueResultT:
         """Get key at index position."""
         from ..morphisms.collections.mapping import KeyAtOp
 
         return cast("ValueResultT", self._wrap_value_result(KeyAtOp(self, idx)))
-
-    def islice_(self, start: int = 0, stop: int | None = None) -> CollectionResultT:
-        """Slice mapping by iteration order."""
-        from ..morphisms.collections.mapping import ISliceOp
-
-        return cast("CollectionResultT", self._wrap_iterable_result(ISliceOp(self, start, stop)))
 
 
 class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
@@ -169,23 +163,25 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         CollectionT: Native Python collection type
         KeyT: Native Python key type
         ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (update_)
-        ValueResultT: Result for value-level ops (set_, delete)
+        CollectionResultT: Result for collection-level ops (update)
+        ValueResultT: Result for value-level ops (get, key_at)
     """
 
-    def set_(self, key: KeyT, value: ValueT) -> ValueResultT:
+    def set(self, key: KeyT, value: ValueT) -> NoneValue:
         """Set value at key."""
         from ..morphisms.collections.mapping import SetItemCmd
+        from ..values import NoneValue
 
-        return cast("ValueResultT", self._wrap_value_result(SetItemCmd(self, key, value)))
+        return NoneValue(SetItemCmd(self, key, value))
 
-    def delete(self, key: KeyT) -> ValueResultT:
+    def delete(self, key: KeyT) -> NoneValue:
         """Delete entry by key."""
         from ..morphisms.collections.mapping import DeleteItemCmd
+        from ..values import NoneValue
 
-        return cast("ValueResultT", self._wrap_value_result(DeleteItemCmd(self, key)))
+        return NoneValue(DeleteItemCmd(self, key))
 
-    def update_(self, other: Mapping[KeyT, ValueT]) -> NoneValue:
+    def update(self, other: Mapping[KeyT, ValueT]) -> NoneValue:
         """Update mapping with another mapping."""
         from ..morphisms.collections.mapping import UpdateCmd
         from ..values import NoneValue

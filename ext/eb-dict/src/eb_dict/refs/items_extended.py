@@ -117,7 +117,7 @@ class DecimalRef(RefBase[str], DecimalType):
     def result(self, op: Term) -> object:
         return DecimalValue.from_str(op)
 
-    def set(self, value: Arg[Decimal | str]) -> DecimalValue:
+    def store(self, value: Arg[Decimal | str]) -> DecimalValue:
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -144,7 +144,7 @@ class FractionRef(RefBase[str], FractionType):
     def result(self, op: Term) -> object:
         return FractionValue.from_str(op)
 
-    def set(self, value: Arg[Fraction | str]) -> FractionValue:
+    def store(self, value: Arg[Fraction | str]) -> FractionValue:
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -175,7 +175,7 @@ class ComplexRef(RefBase[str], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def set(self, value: Arg[complex | str]) -> ComplexValue:
+    def store(self, value: Arg[complex | str]) -> ComplexValue:
         # complex uses custom "real,imag" format — str(complex) gives "(1+2j)"
         if isinstance(value, Term):
 
@@ -209,7 +209,7 @@ class BasisPointRef(RefBase[int], BasisPointType):
     def result(self, op: Term) -> object:
         return BasisPointValue.from_int(op)
 
-    def set(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
+    def store(self, value: Arg[BasisPoint | int]) -> BasisPointValue:
         if isinstance(value, Term):
             val = ToIntOp(value)
         else:
@@ -236,7 +236,7 @@ class PercentageRef(RefBase[float], PercentageType):
     def result(self, op: Term) -> object:
         return PercentageValue.from_float(op)
 
-    def set(self, value: Arg[Percentage | float]) -> PercentageValue:
+    def store(self, value: Arg[Percentage | float]) -> PercentageValue:
         if isinstance(value, Term):
             val = ToFloatOp(value)
         else:
@@ -268,7 +268,7 @@ class DateRef(RefBase[str], DateType):
     def result(self, op: Term) -> object:
         return DateValue.from_iso(op)
 
-    def set(self, value: Arg[date | str]) -> DateValue:
+    def store(self, value: Arg[date | str]) -> DateValue:
         """Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
@@ -296,7 +296,7 @@ class DatetimeRef(RefBase[str], DatetimeType):
     def result(self, op: Term) -> object:
         return DatetimeValue.from_iso(op)
 
-    def set(self, value: Arg[datetime | str]) -> DatetimeValue:
+    def store(self, value: Arg[datetime | str]) -> DatetimeValue:
         """Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
@@ -324,7 +324,7 @@ class TimeRef(RefBase[str], TimeType):
     def result(self, op: Term) -> object:
         return TimeValue.from_iso(op)
 
-    def set(self, value: Arg[time | str]) -> TimeValue:
+    def store(self, value: Arg[time | str]) -> TimeValue:
         """Stores as ISO string."""
         if isinstance(value, Term):
             val = ToStrOp(value)
@@ -352,7 +352,7 @@ class TimedeltaRef(RefBase[float], TimedeltaType):
     def result(self, op: Term) -> object:
         return TimedeltaValue.from_seconds(op)
 
-    def set(self, value: Arg[timedelta | float]) -> TimedeltaValue:
+    def store(self, value: Arg[timedelta | float]) -> TimedeltaValue:
         """Stores as float (total seconds)."""
         if isinstance(value, Term):
             # timedelta is stdlib — no __float__, so use .total_seconds()
@@ -394,7 +394,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
 
         return TimezoneValue(FuncCallOp(parse_timezone, op))
 
-    def set(self, value: Arg[timezone | str]) -> TimezoneValue:
+    def store(self, value: Arg[timezone | str]) -> TimezoneValue:
         # timezone uses custom offset format — no standard dunder
         if isinstance(value, Term):
 
@@ -454,7 +454,7 @@ class PathRef(RefBase[str], PathType):
     def result(self, op: Term) -> object:
         return PathValue.from_str(op)
 
-    def set(self, value: Arg[Path | str]) -> PathValue:
+    def store(self, value: Arg[Path | str]) -> PathValue:
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:
@@ -481,7 +481,7 @@ class UUIDRef(RefBase[str], UUIDType):
     def result(self, op: Term) -> object:
         return UUIDValue.from_str(op)
 
-    def set(self, value: Arg[UUID | str]) -> UUIDValue:
+    def store(self, value: Arg[UUID | str]) -> UUIDValue:
         if isinstance(value, Term):
             val = ToStrOp(value)
         else:

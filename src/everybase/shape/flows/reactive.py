@@ -90,7 +90,7 @@ class React(Flow):
             await event.wait()
 
             if self._changed_key is not None:
-                await self._changed_key.set(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
+                await self._changed_key.store(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
 
             if self.child_count > 1:
                 await self.children[1].execute(ctx)
@@ -158,7 +158,7 @@ class ReactForever(Flow):
                 event.clear()
 
                 if self._changed_key is not None:
-                    await self._changed_key.set(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
+                    await self._changed_key.store(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
 
                 await self.children[1].execute(ctx)
         finally:
@@ -236,7 +236,7 @@ class ReactWhile(Flow):
                     break
 
                 if self._changed_key is not None:
-                    await self._changed_key.set(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
+                    await self._changed_key.store(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
 
                 await self.children[2].execute(ctx)
         finally:
