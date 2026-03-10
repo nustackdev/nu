@@ -12,6 +12,7 @@ from everybase.abc import (
     DictValue,
     FloatValue,
     IntValue,
+    IteratorValue,
     ListValue,
     SetValue,
     StrValue,
@@ -56,11 +57,11 @@ class ListRef[T](
     def result(self, op: Term) -> ListValue[T]:
         return ListValue(op)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue[T]:
-        return ListValue(operand)
+    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
     def _wrap_sliceable_result(self, operand: Term) -> ListValue[T]:
-        return ListValue(operand)
+        return ListValue(operand)  # slices stay materialized
 
     def _wrap_element_result(self, operand: Term) -> AnyValue:
         return AnyValue(operand)

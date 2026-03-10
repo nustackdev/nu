@@ -5,7 +5,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from everybase.abc import AnyValue, DictValue, ListValue
+from everybase.abc import (
+    AnyValue,
+    DictItemsValue,
+    DictKeysValue,
+    DictValue,
+    DictValuesValue,
+    IteratorValue,
+)
 from everybase.shape import MutableShapeRef, Slot
 
 from .base import RefBase
@@ -30,17 +37,17 @@ class ShapeRef[T: Shape](
     def result(self, op: Term) -> DictValue[str, object]:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+        return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+        return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+        return DictItemsValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue:
-        return ListValue(operand)
+    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+        return IteratorValue(operand)
 
     def _wrap_value_result(self, operand: Term) -> AnyValue:
         return AnyValue(operand)

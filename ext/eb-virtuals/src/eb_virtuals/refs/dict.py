@@ -11,7 +11,10 @@ from everybase.abc import (
     AnyValue,
     BoolValue,
     BytesValue,
+    DictItemsValue,
+    DictKeysValue,
     DictValue,
+    DictValuesValue,
     FloatValue,
     IntValue,
     IteratorValue,
@@ -77,14 +80,14 @@ class DictRef[
     def result(self, op: Term) -> DictValue[K, V]:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+        return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+        return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+        return DictItemsValue(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
         return IteratorValue(operand)

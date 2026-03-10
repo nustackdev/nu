@@ -7,7 +7,14 @@ from typing import TYPE_CHECKING
 from virtuals.collections import MutableMappingBase
 from virtuals.types import Value as StorageValue
 
-from everybase.abc import AnyValue, DictValue, IteratorValue
+from everybase.abc import (
+    AnyValue,
+    DictItemsValue,
+    DictKeysValue,
+    DictValue,
+    DictValuesValue,
+    IteratorValue,
+)
 from everybase.shape import ReactiveShapeRef, Shape, Slot
 
 from .base import ViewRef
@@ -41,14 +48,14 @@ class ShapeRef[T: Shape](
         """Wrap morphism in DictValue for shape extract/store."""
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+        return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+        return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+        return DictItemsValue(operand)
 
     def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
         return IteratorValue(operand)
