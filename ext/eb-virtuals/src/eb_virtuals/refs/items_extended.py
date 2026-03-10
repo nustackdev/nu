@@ -130,6 +130,11 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
         """Create a slot for Decimal values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> Decimal:  # noqa: D102
+        from decimal import Decimal as DecimalCls
+
+        return DecimalCls(raw) if not isinstance(raw, DecimalCls) else raw
+
     def result(self, op: Term) -> object:  # noqa: D102
         return DecimalValue.from_str(op)
 
@@ -165,6 +170,11 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
         """Create a slot for Fraction values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> Fraction:  # noqa: D102
+        from fractions import Fraction as FractionCls
+
+        return FractionCls(raw) if not isinstance(raw, FractionCls) else raw
+
     def result(self, op: Term) -> object:  # noqa: D102
         return FractionValue.from_str(op)
 
@@ -199,6 +209,12 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
     def slot(cls) -> Self:
         """Create a slot for complex values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> complex:  # noqa: D102
+        if isinstance(raw, complex):
+            return raw
+        parts = str(raw).split(",")
+        return complex(float(parts[0]), float(parts[1]))
 
     def result(self, op: Term) -> object:  # noqa: D102
         def parse_complex(s: str) -> complex:
@@ -245,6 +261,9 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
         """Create a slot for BasisPoint values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> BasisPoint:  # noqa: D102
+        return BasisPoint(int(raw)) if not isinstance(raw, BasisPoint) else raw
+
     def result(self, op: Term) -> object:  # noqa: D102
         return BasisPointValue.from_int(op)
 
@@ -279,6 +298,9 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
     def slot(cls) -> Self:
         """Create a slot for Percentage values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> Percentage:  # noqa: D102
+        return Percentage(float(raw)) if not isinstance(raw, Percentage) else raw
 
     def result(self, op: Term) -> object:  # noqa: D102
         return PercentageValue.from_float(op)
@@ -320,6 +342,11 @@ class DateRef(ItemRef[str, StrValue], DateType):
         """Create a slot for date values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> date:  # noqa: D102
+        if isinstance(raw, date):
+            return raw
+        return date.fromisoformat(str(raw))
+
     def result(self, op: Term) -> object:  # noqa: D102
         return DateValue.from_iso(op)
 
@@ -354,6 +381,11 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
     def slot(cls) -> Self:
         """Create a slot for datetime values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> datetime:  # noqa: D102
+        if isinstance(raw, datetime):
+            return raw
+        return datetime.fromisoformat(str(raw))
 
     def result(self, op: Term) -> object:  # noqa: D102
         return DatetimeValue.from_iso(op)
@@ -390,6 +422,11 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
         """Create a slot for time values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> time:  # noqa: D102
+        if isinstance(raw, time):
+            return raw
+        return time.fromisoformat(str(raw))
+
     def result(self, op: Term) -> object:  # noqa: D102
         return TimeValue.from_iso(op)
 
@@ -424,6 +461,11 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
     def slot(cls) -> Self:
         """Create a slot for timedelta values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> timedelta:  # noqa: D102
+        if isinstance(raw, timedelta):
+            return raw
+        return timedelta(seconds=float(raw))
 
     def result(self, op: Term) -> object:  # noqa: D102
         return TimedeltaValue.from_seconds(op)
@@ -462,6 +504,20 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
     def slot(cls) -> Self:
         """Create a slot for timezone values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> timezone:  # noqa: D102
+        if isinstance(raw, timezone):
+            return raw
+        s = str(raw)
+        if s == "UTC":
+            from datetime import UTC
+
+            return UTC
+        sign = 1 if s[0] == "+" else -1
+        parts = s[1:].split(":")
+        hours = int(parts[0])
+        minutes = int(parts[1]) if len(parts) > 1 else 0
+        return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
 
     def result(self, op: Term) -> object:  # noqa: D102
         def parse_timezone(s: str) -> timezone:
@@ -541,6 +597,11 @@ class PathRef(ItemRef[str, StrValue], PathType):
         """Create a slot for Path values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> Path:  # noqa: D102
+        from pathlib import PurePath
+
+        return PurePath(raw) if not isinstance(raw, PurePath) else raw
+
     def result(self, op: Term) -> object:  # noqa: D102
         return PathValue.from_str(op)
 
@@ -575,6 +636,11 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
     def slot(cls) -> Self:
         """Create a slot for UUID values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> UUID:  # noqa: D102
+        import uuid
+
+        return uuid.UUID(raw) if not isinstance(raw, uuid.UUID) else raw
 
     def result(self, op: Term) -> object:  # noqa: D102
         return UUIDValue.from_str(op)

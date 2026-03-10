@@ -8,6 +8,7 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from everybase import EMPTY, Command, Morphism, Operation, Sentinel
@@ -23,11 +24,11 @@ __all__ = [
 ]
 
 
-class ScanPrimitivesUnsafeOp[T](Operation, Morphism[list[T] | Sentinel]):
+class ScanPrimitivesUnsafeOp[T](Operation, Morphism[Iterator[T] | Sentinel]):
     """Scan all direct primitive child values via _unsafe_primitive_scan_values().
 
     Single ctx.scan() call — no marker parsing, no type checks.
-    Returns list of raw values.
+    Returns lazy iterator of raw values.
 
     The ref must implement:
         fetch(ctx) -> view with _unsafe_primitive_scan_values() method
@@ -37,13 +38,13 @@ class ScanPrimitivesUnsafeOp[T](Operation, Morphism[list[T] | Sentinel]):
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> list[T] | Sentinel:
+    async def execute(self, ctx: Context) -> Iterator[T] | Sentinel:
         """Scan all primitive children via raw storage scan."""
         try:
             view = await self.ref.fetch(ctx)
         except (KeyError, IndexError):
             return EMPTY
-        return list(view._unsafe_primitive_scan_values())
+        return view._unsafe_primitive_scan_values()
 
     def __repr__(self) -> str:
         return f"ScanPrimitivesUnsafeOp({self.ref!r})"
